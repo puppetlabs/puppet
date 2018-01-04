@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-182-ge97a37d\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-185-g165a799\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-03 22:36+0000\n"
-"PO-Revision-Date: 2018-01-03 22:36+0000\n"
+"POT-Creation-Date: 2018-01-04 21:33+0000\n"
+"PO-Revision-Date: 2018-01-04 21:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3899,123 +3899,51 @@ msgstr ""
 msgid "Only subclasses can override parameters"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:177 ../lib/puppet/parser/resource.rb:212
-msgid "Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:179 ../lib/puppet/parser/resource.rb:226
-msgid "Attempt to override an already evaluated resource, defined in %{file}, with new values"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:183 ../lib/puppet/parser/resource.rb:228
-msgid "Attempt to override an already evaluated resource, defined at line %{line}, with new values"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:185 ../lib/puppet/parser/resource.rb:236
+#: ../lib/puppet/parser/resource.rb:174
 msgid "Attempt to override an already evaluated resource with new values"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:193
-msgid "Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values at %{resource_file}:%{resource_line}"
+#: ../lib/puppet/parser/resource.rb:176
+msgid "Attempt to override an already evaluated resource, defined at %{error_location}, with new values"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:198
-msgid "Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values in %{resource_file}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:201
-msgid "Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values at line %{resource_line}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:204
-msgid "Attempt to override an already evaluated resource, defined in %{file}, with new values at %{resource_file}:%{resource_line}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:207
-msgid "Attempt to override an already evaluated resource, defined at line %{line}, with new values at %{resource_file}:%{resource_line}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:214
-msgid "Attempt to override an already evaluated resource, defined in %{file}, with new values in %{resource_file}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:216
-msgid "Attempt to override an already evaluated resource, defined in %{file}, with new values at line %{resource_line}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:218
-msgid "Attempt to override an already evaluated resource, defined at line %{line}, with new values in %{resource_file}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:220
-msgid "Attempt to override an already evaluated resource, defined at line %{line}, with new values at line %{resource_line}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:222
-msgid "Attempt to override an already evaluated resource with new values at %{resource_file}:%{resource_line}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:230
-msgid "Attempt to override an already evaluated resource with new values in %{resource_file}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:232
-msgid "Attempt to override an already evaluated resource with new values at line %{resource_line}"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:327
+#: ../lib/puppet/parser/resource.rb:273
 msgid "Invalid consume in %{value0}: %{ref} is not a resource"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:334
+#: ../lib/puppet/parser/resource.rb:280
 msgid "Resource %{ref} could not be found; it might not have been produced yet"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:338
+#: ../lib/puppet/parser/resource.rb:284
 msgid "Invalid consume in %{ref}: %{cap} is not a capability resource"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:347
+#: ../lib/puppet/parser/resource.rb:293
 msgid "Resource %{res} tries to consume %{cns} but no 'consumes' mapping exists for %{resource_type} and %{cns_type}"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:366
+#: ../lib/puppet/parser/resource.rb:312
 msgid "Attempt to reassign attribute '%{name}' in '%{resource}' caused by multiple consumed mappings to the same attribute"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:416
-msgid "Parameter '%{name}' is already set on %{resource} at %{file}:%{line}; cannot redefine"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:419
-msgid "Parameter '%{name}' is already set on %{resource} in %{file}; cannot redefine"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:424
-msgid "Parameter '%{name}' is already set on %{resource} at line %{line}; cannot redefine"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:427
+#: ../lib/puppet/parser/resource.rb:362
 msgid "Parameter '%{name}' is already set on %{resource}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:434
-msgid "Parameter '%{name}' is already set on %{resource} by %{source} at %{file}:%{line}; cannot redefine"
+#: ../lib/puppet/parser/resource.rb:365
+msgid "Parameter '%{name}' is already set on %{resource} at %{error_location}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:437
-msgid "Parameter '%{name}' is already set on %{resource} by %{source} in %{file}; cannot redefine"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:442
-msgid "Parameter '%{name}' is already set on %{resource} by %{source} at line %{line}; cannot redefine"
-msgstr ""
-
-#: ../lib/puppet/parser/resource.rb:445
+#: ../lib/puppet/parser/resource.rb:370
 msgid "Parameter '%{name}' is already set on %{resource} by %{source}; cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/parser/resource.rb:485
+#: ../lib/puppet/parser/resource.rb:373
+msgid "Parameter '%{name}' is already set on %{resource} by %{source} at %{error_location}; cannot redefine"
+msgstr ""
+
+#: ../lib/puppet/parser/resource.rb:412
 msgid "Duplicate parameter '%{param}' for on %{resource}"
 msgstr ""
 
@@ -6141,6 +6069,14 @@ msgstr ""
 msgid "Could not create resource file %{file}: %{detail}"
 msgstr ""
 
+#: ../lib/puppet/resource/catalog.rb:596
+msgid "Duplicate declaration: %{resource} is already declared; cannot redeclare"
+msgstr ""
+
+#: ../lib/puppet/resource/catalog.rb:598
+msgid "Duplicate declaration: %{resource} is already declared at %{error_location}; cannot redeclare"
+msgstr ""
+
 #: ../lib/puppet/resource/status.rb:135 ../lib/puppet/transaction.rb:255
 msgid "Could not evaluate: %{detail}"
 msgstr ""
@@ -7642,19 +7578,27 @@ msgstr ""
 msgid "Cannot provide diff without the diff/lcs Ruby library"
 msgstr ""
 
-#: ../lib/puppet/util/errors.rb:40
-msgid " at %{file}:%{line}"
+#: ../lib/puppet/util/errors.rb:43
+msgid "(file: %{file}, line: %{line}, column: %{column})"
 msgstr ""
 
-#: ../lib/puppet/util/errors.rb:42
-msgid " at line %{line}"
+#: ../lib/puppet/util/errors.rb:45
+msgid "(file: %{file}, line: %{line})"
 msgstr ""
 
-#: ../lib/puppet/util/errors.rb:44
-msgid " in %{file}"
+#: ../lib/puppet/util/errors.rb:47
+msgid "(line: %{line}, column: %{column})"
 msgstr ""
 
-#: ../lib/puppet/util/errors.rb:68
+#: ../lib/puppet/util/errors.rb:49
+msgid "(line: %{line})"
+msgstr ""
+
+#: ../lib/puppet/util/errors.rb:51
+msgid "(file: %{file})"
+msgstr ""
+
+#: ../lib/puppet/util/errors.rb:97
 msgid "%{klass} failed with error %{error_type}: %{detail}"
 msgstr ""
 
@@ -7813,30 +7757,10 @@ msgid "Reopening log files"
 msgstr ""
 
 #: ../lib/puppet/util/log.rb:398
-msgid "Could not parse for environment %{env}: %{msg}"
+msgid "Could not parse for environment %{environment}: %{msg}"
 msgstr ""
 
 #: ../lib/puppet/util/log.rb:400
-msgid "%{msg} at %{file}:%{line}:%{pos}"
-msgstr ""
-
-#: ../lib/puppet/util/log.rb:402
-msgid "%{msg}  at %{file}:%{line}"
-msgstr ""
-
-#: ../lib/puppet/util/log.rb:404
-msgid "%{msg}  at line %{line}:%{pos}"
-msgstr ""
-
-#: ../lib/puppet/util/log.rb:406
-msgid "%{msg}  at line %{line}"
-msgstr ""
-
-#: ../lib/puppet/util/log.rb:408
-msgid "%{msg}  in %{file}"
-msgstr ""
-
-#: ../lib/puppet/util/log.rb:410
 msgid "%{msg} on node %{node}"
 msgstr ""
 
