@@ -164,7 +164,7 @@ class ResourceTypeImpl
           # the 'package' type where 'provider' attribute is handled as part of the key without being
           # set from the title.
           #
-          raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
+          raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
         end
         @title_patterns_hash.nil? ? [] : @title_patterns_hash.map { |k,v| [ k, v.map { |n| [ n.to_sym] } ] }
       end

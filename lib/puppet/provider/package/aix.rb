@@ -136,7 +136,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     unless upd.nil?
       return "#{upd[:version]}"
     else
-      raise Puppet::DevError, "Tried to get latest on a missing package" if properties[:ensure] == :absent
+      raise Puppet::DevError, _("Tried to get latest on a missing package") if properties[:ensure] == :absent
 
       return properties[:ensure]
     end

@@ -211,7 +211,7 @@ class Puppet::Property < Puppet::Parameter
     rescue Puppet::Error, Puppet::DevError
       raise
     rescue => detail
-      message = "Could not convert change '#{name}' to string: #{detail}"
+      message = _("Could not convert change '%{name}' to string: %{detail}") % { name: name, detail: detail }
       Puppet.log_exception(detail, message)
       raise Puppet::DevError, message, detail.backtrace
     end

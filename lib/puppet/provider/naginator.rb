@@ -10,7 +10,7 @@ class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
     unless @nagios_type
       name = resource_type.name.to_s.sub(/^nagios_/, '')
       unless @nagios_type = Nagios::Base.type(name.to_sym)
-        raise Puppet::DevError, "Could not find nagios type '#{name}'"
+        raise Puppet::DevError, _("Could not find nagios type '%{name}'") % { name: name }
       end
 
       # And add our 'ensure' settings, since they aren't a part of

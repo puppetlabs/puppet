@@ -41,7 +41,9 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     def options(name, hash)
-      raise Puppet::DevError, "#{name} is not a valid attribute for #{resource_type.name}" unless resource_type.valid_parameter?(name)
+      unless resource_type.valid_parameter?(name)
+        raise Puppet::DevError, _("%{name} is not a valid attribute for %{resource_type}") % { name: name, resource_type: resource_type.name }
+      end
       @options ||= {}
       @options[name] ||= {}
 
@@ -115,7 +117,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   end
 
   # Autogenerate a value.  Mostly used for uid/gid, but also used heavily
-  # with DirectoryServices, because DirectoryServices is stupid.
+  # with DirectoryServices
   def autogen(field)
     field = field.intern
     id_generators = {:user => :uid, :group => :gid}
@@ -141,7 +143,8 @@ class Puppet::Provider::NameService < Puppet::Provider
     when :user;   database = :passwd;  method = :uid
     when :group;  database = :group;   method = :gid
     else
-      raise Puppet::DevError, "Invalid resource name #{resource}"
+      #TRANSLATORS "autogen_id()" is a method name and should not be translated
+      raise Puppet::DevError, _("autogen_id() does not support auto generation of id for resource type %{resource_type}") % { resource_type: resource_type }
     end
 
     # Initialize from the data set, if needed.
@@ -291,7 +294,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   def set(param, value)
     self.class.validate(param, value)
     cmd = modifycmd(param, munge(param, value))
-    raise Puppet::DevError, "Nameservice command must be an array" unless cmd.is_a?(Array)
+    raise Puppet::DevError, _("Nameservice command must be an array") unless cmd.is_a?(Array)
     begin
       execute(cmd)
     rescue Puppet::ExecutionFailure => detail

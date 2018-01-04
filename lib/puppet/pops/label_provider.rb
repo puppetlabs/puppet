@@ -73,7 +73,7 @@ module Puppet::Pops::LabelProvider
     end
 
     if char == ""
-      raise Puppet::DevError, "<#{string}> does not appear to contain a word"
+      raise Puppet::DevError, _("<%{string}> does not appear to contain a word") % { string: string }
     end
 
     char
