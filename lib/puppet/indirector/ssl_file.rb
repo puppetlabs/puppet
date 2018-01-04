@@ -49,7 +49,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   def initialize
     Puppet.settings.use(:main, :ssl)
 
-    (collection_directory || file_location) or raise Puppet::DevError, "No file or directory setting provided; terminus #{self.class.name} cannot function"
+    (collection_directory || file_location) or raise Puppet::DevError, _("No file or directory setting provided; terminus %{class_name} cannot function") % { class_name: self.class.name }
   end
 
   def path(name)
@@ -190,7 +190,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         raise Puppet::Error, _("Could not write %{path} to %{setting}: %{detail}") % { path: path, setting: setting, detail: detail }, detail.backtrace
       end
     else
-      raise Puppet::DevError, "You must provide a setting to determine where the files are stored"
+      raise Puppet::DevError, _("You must provide a setting to determine where the files are stored")
     end
   end
 end

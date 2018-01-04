@@ -36,7 +36,7 @@ class Puppet::Parser::Compiler
     Puppet.log_exception(detail)
     raise
   rescue => detail
-    message = "#{detail} on node #{node.name}"
+    message = _("%{message} on node %{node}") % { message: detail, node: node.name }
     Puppet.log_exception(detail, message)
     raise Puppet::Error, message, detail.backtrace
  end
@@ -352,7 +352,7 @@ class Puppet::Parser::Compiler
   # evaluated later in the process.
   #
   def evaluate_classes(classes, scope, lazy_evaluate = true)
-    raise Puppet::DevError, "No source for scope passed to evaluate_classes" unless scope.source
+    raise Puppet::DevError, _("No source for scope passed to evaluate_classes") unless scope.source
     class_parameters = nil
     # if we are a param class, save the classes hash
     # and transform classes to be the keys

@@ -37,7 +37,7 @@ class Puppet::Indirector::Indirection
 
   # Create and return our cache terminus.
   def cache
-    raise(Puppet::DevError, "Tried to cache when no cache class was set") unless cache_class
+    raise Puppet::DevError, _("Tried to cache when no cache class was set") unless cache_class
     terminus(cache_class)
   end
 
@@ -118,7 +118,7 @@ class Puppet::Indirector::Indirection
   # Return the singleton terminus for this indirection.
   def terminus(terminus_name = nil)
     # Get the name of the terminus.
-    raise Puppet::DevError, "No terminus specified for #{self.name}; cannot redirect" unless terminus_name ||= terminus_class
+    raise Puppet::DevError, _("No terminus specified for %{name}; cannot redirect") % { name: self.name } unless terminus_name ||= terminus_class
 
     termini[terminus_name] ||= make_terminus(terminus_name)
   end
@@ -132,7 +132,7 @@ class Puppet::Indirector::Indirection
       if setting = self.terminus_setting
         self.terminus_class = Puppet.settings[setting]
       else
-        raise Puppet::DevError, "No terminus class nor terminus setting was provided for indirection #{self.name}"
+        raise Puppet::DevError, _("No terminus class nor terminus setting was provided for indirection %{name}") % { name: self.name}
       end
     end
     @terminus_class
@@ -268,7 +268,7 @@ class Puppet::Indirector::Indirection
     terminus = prepare(request)
 
     if result = terminus.search(request)
-      raise Puppet::DevError, "Search results from terminus #{terminus.name} are not an array" unless result.is_a?(Array)
+      raise Puppet::DevError, _("Search results from terminus %{terminus_name} are not an array") % { terminus_name: terminus.name } unless result.is_a?(Array)
       result.each do |instance|
         next unless instance.respond_to? :expiration
         instance.expiration ||= self.expiration
