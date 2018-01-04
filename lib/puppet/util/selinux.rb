@@ -240,7 +240,7 @@ module Puppet::Util::SELinux
     # while we try and figure out what file-system the target lives on.
     path = Pathname(path).cleanpath
     unless path.absolute?
-      raise Puppet::DevError, "got a relative path in SELinux find_fs: #{path}"
+      raise Puppet::DevError, _("got a relative path in SELinux find_fs: %{path}") % { path: path }
     end
 
     # Now, walk up the tree until we find a match for that path in the hash.

@@ -219,10 +219,11 @@ module Util
                args.pop
              end
 
-    raise Puppet::DevError, "Failed to provide level to :benchmark" unless level
+    #TRANSLATORS 'benchmark' is a method name and should not be translated
+    raise Puppet::DevError, _("Failed to provide level to benchmark") unless level
 
     unless level == :none or object.respond_to? level
-      raise Puppet::DevError, "Benchmarked object does not respond to #{level}"
+      raise Puppet::DevError, _("Benchmarked object does not respond to %{value}") % { value: level }
     end
 
     # Only benchmark if our log level is high enough
@@ -306,7 +307,7 @@ module Util
             when :posix
               AbsolutePathPosix
             else
-              raise Puppet::DevError, "unknown platform #{platform} in absolute_path"
+              raise Puppet::DevError, _("unknown platform %{platform} in absolute_path") % { platform: platform }
             end
 
     !! (path =~ regex)
@@ -562,11 +563,11 @@ module Util
   DEFAULT_WINDOWS_MODE = nil
 
   def replace_file(file, default_mode, &block)
-    raise Puppet::DevError, "replace_file requires a block" unless block_given?
+    raise Puppet::DevError, _("replace_file requires a block") unless block_given?
 
     if default_mode
       unless valid_symbolic_mode?(default_mode)
-        raise Puppet::DevError, "replace_file default_mode: #{default_mode} is invalid"
+        raise Puppet::DevError, _("replace_file default_mode: %{default_mode} is invalid") % { default_mode: default_mode }
       end
 
       mode = symbolic_mode_to_int(normalize_symbolic_mode(default_mode))

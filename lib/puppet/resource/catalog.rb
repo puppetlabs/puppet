@@ -572,7 +572,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
                      when "random"
                        Puppet::Graph::RandomPrioritizer.new
                      else
-                       raise Puppet::DevError, "Unknown ordering type #{Puppet[:ordering]}"
+                       raise Puppet::DevError, _("Unknown ordering type %{ordering}") % { ordering: Puppet[:ordering] }
                      end
   end
 
@@ -643,11 +643,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       next if block_given? and yield edge.target
 
       unless source = map[edge.source.ref]
-        raise Puppet::DevError, "Could not find resource #{edge.source.ref} when converting #{message} resources"
+        raise Puppet::DevError, _("Could not find resource %{resource} when converting %{message} resources") % { resource: edge.source.ref, message: message }
       end
 
       unless target = map[edge.target.ref]
-        raise Puppet::DevError, "Could not find resource #{edge.target.ref} when converting #{message} resources"
+        raise Puppet::DevError, _("Could not find resource %{resource} when converting %{message} resources") % { resource: edge.target.ref, message: message }
       end
 
       result.add_edge(source, target, edge.label)
