@@ -378,7 +378,7 @@ class Puppet::Parser::Scope
     if compiler.is_a? Puppet::Parser::Compiler
       @compiler = compiler
     else
-      raise Puppet::DevError, "you must pass a compiler instance to a new scope object"
+      raise Puppet::DevError, _("you must pass a compiler instance to a new scope object")
     end
 
     set_options(options)
@@ -997,17 +997,17 @@ class Puppet::Parser::Scope
 
   # @api private
   def find_resource_type(type)
-    raise Puppet::DevError, "Scope#find_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
+    raise Puppet::DevError, _("Scope#find_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead")
   end
 
   # @api private
   def find_builtin_resource_type(type)
-    raise Puppet::DevError, "Scope#find_builtin_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
+    raise Puppet::DevError, _("Scope#find_builtin_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead")
   end
 
   # @api private
   def find_defined_resource_type(type)
-    raise Puppet::DevError, "Scope#find_defined_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
+    raise Puppet::DevError, _("Scope#find_defined_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead")
   end
 
 
@@ -1021,14 +1021,14 @@ class Puppet::Parser::Scope
     if respond_to? method
       send(method, *args)
     else
-      raise Puppet::DevError, "Function #{name} not defined despite being loaded!"
+      raise Puppet::DevError, _("Function %{name} not defined despite being loaded!") % { name: name }
     end
   end
 
   # To be removed when enough time has passed after puppet 5.0.0
   # @api private
   def resolve_type_and_titles(type, titles)
-    raise Puppet::DevError, "Scope#resolve_type_and_title() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
+    raise Puppet::DevError, _("Scope#resolve_type_and_title() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead")
   end
 
   # Transforms references to classes to the form suitable for

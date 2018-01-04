@@ -74,8 +74,8 @@ class Puppet::Provider::Ldap < Puppet::Provider
   end
 
   def initialize(*args)
-    raise(Puppet::DevError, "No LDAP Configuration defined for #{self.class}") unless self.class.manager
-    raise(Puppet::DevError, "Invalid LDAP Configuration defined for #{self.class}") unless self.class.manager.valid?
+    raise(Puppet::DevError, _("No LDAP Configuration defined for %{class_name}") % { class_name: self.class }) unless self.class.manager
+    raise(Puppet::DevError, _("Invalid LDAP Configuration defined for %{class_name}") % { class_name: self.class }) unless self.class.manager.valid?
     super
 
     @property_hash = @property_hash.inject({}) do |result, ary|

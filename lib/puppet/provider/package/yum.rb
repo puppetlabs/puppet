@@ -230,7 +230,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     else
       # Yum didn't find updates, pretend the current version is the latest
       version = properties[:ensure]
-      raise Puppet::DevError, "Tried to get latest on a missing package" if version == :absent || version == :purged
+      raise Puppet::DevError, _("Tried to get latest on a missing package") if version == :absent || version == :purged
       return version
     end
   end
