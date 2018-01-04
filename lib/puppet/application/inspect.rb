@@ -170,6 +170,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
       finishtime = Time.now
       @report.add_times("inspect", finishtime - inspect_starttime)
+
+      @report.transaction_completed = true
       @report.finalize_report
 
       begin
