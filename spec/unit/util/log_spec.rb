@@ -249,7 +249,7 @@ describe Puppet::Util::Log do
       end
       expect(logs.size).to eq(1)
       log = logs[0]
-      expect(log.message).to match(/ at \/tmp\/test\.pp:30:15/)
+      expect(log.message).to match(/ \(file: \/tmp\/test\.pp, line: 30, column: 15\)/)
       expect(log.message).to be(log.to_s)
     end
 
@@ -267,8 +267,8 @@ describe Puppet::Util::Log do
       end
       expect(logs.size).to eq(1)
       log = logs[0]
-      expect(log.message).to_not match(/ at \/tmp\/test\.pp:30:15/)
-      expect(log.to_s).to match(/ at \/tmp\/test\.pp:30:15/)
+      expect(log.message).to_not match(/ \(file: \/tmp\/test\.pp, line: 30, column: 15\)/)
+      expect(log.to_s).to match(/ \(file: \/tmp\/test\.pp, line: 30, column: 15\)/)
       expect(log.issue_code).to eq(:SYNTAX_ERROR)
       expect(log.file).to eq('/tmp/test.pp')
       expect(log.line).to eq(30)

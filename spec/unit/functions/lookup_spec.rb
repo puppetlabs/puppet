@@ -168,7 +168,7 @@ describe "The lookup function" do
           YAML
 
         it 'fails and reports error' do
-          expect { lookup('a') }.to raise_error("This runtime does not support hiera.yaml version 6 in #{code_dir}/hiera.yaml")
+          expect { lookup('a') }.to raise_error("This runtime does not support hiera.yaml version 6 (file: #{code_dir}/hiera.yaml)")
         end
       end
 
@@ -183,7 +183,7 @@ describe "The lookup function" do
 
         it 'fails and reports error' do
           expect { lookup('a') }.to raise_error(
-            "Backend 'yaml' is defined more than once. First defined at line 3 at #{code_dir}/hiera.yaml:5")
+            "Backend 'yaml' is defined more than once. First defined at line 3 (file: #{code_dir}/hiera.yaml, line: 5)")
         end
       end
 
@@ -194,7 +194,7 @@ describe "The lookup function" do
 
         it 'fails and reports error' do
           expect { lookup('a') }.to raise_error(
-            "hiera.yaml version 4 cannot be used in the global layer in #{code_dir}/hiera.yaml")
+            "hiera.yaml version 4 cannot be used in the global layer (file: #{code_dir}/hiera.yaml)")
         end
       end
 
@@ -213,7 +213,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
-              "Hierarchy name 'Common' defined more than once. First defined at line 3 at #{code_dir}/hiera.yaml:7")
+              "Hierarchy name 'Common' defined more than once. First defined at line 3 (file: #{code_dir}/hiera.yaml, line: 7)")
           end
         end
 
@@ -228,7 +228,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
-              "Use \"data_hash: hocon_data\" instead of \"hiera3_backend: hocon\" at #{code_dir}/hiera.yaml:4")
+              "Use \"data_hash: hocon_data\" instead of \"hiera3_backend: hocon\" (file: #{code_dir}/hiera.yaml, line: 4)")
           end
         end
 
@@ -244,7 +244,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
-              "One of data_hash, lookup_key, data_dig, or hiera3_backend must be defined in hierarchy 'Common' in #{code_dir}/hiera.yaml")
+              "One of data_hash, lookup_key, data_dig, or hiera3_backend must be defined in hierarchy 'Common' (file: #{code_dir}/hiera.yaml)")
           end
         end
 
@@ -262,7 +262,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
-              "Only one of data_hash, lookup_key, data_dig, or hiera3_backend can be defined in defaults in #{code_dir}/hiera.yaml")
+              "Only one of data_hash, lookup_key, data_dig, or hiera3_backend can be defined in defaults (file: #{code_dir}/hiera.yaml)")
           end
         end
 
@@ -278,7 +278,7 @@ describe "The lookup function" do
           it 'fails and reports error' do
             Puppet[:strict] = :error
             expect { lookup('a') }.to raise_error(
-              "Unable to find 'data_hash' function named 'nonesuch_txt_data' in #{code_dir}/hiera.yaml")
+              "Unable to find 'data_hash' function named 'nonesuch_txt_data' (file: #{code_dir}/hiera.yaml)")
           end
         end
 
@@ -296,7 +296,7 @@ describe "The lookup function" do
           it 'fails and reports error' do
             Puppet[:strict] = :error
             expect { lookup('a') }.to raise_error(
-              "'default_hierarchy' is only allowed in the module layer at #{code_dir}/hiera.yaml:5")
+              "'default_hierarchy' is only allowed in the module layer (file: #{code_dir}/hiera.yaml, line: 5)")
           end
         end
 
@@ -311,7 +311,7 @@ describe "The lookup function" do
 
           it 'fails and reports errors when strict == error' do
             Puppet[:strict] = :error
-            expect { lookup('a') }.to raise_error("Undefined variable '::nonesuch' at #{code_dir}/hiera.yaml:4")
+            expect { lookup('a') }.to raise_error("Undefined variable '::nonesuch' (file: #{code_dir}/hiera.yaml, line: 4)")
           end
         end
 
@@ -325,7 +325,7 @@ describe "The lookup function" do
 
           it 'fails and reports errors when strict == error' do
             Puppet[:strict] = :error
-            expect { lookup('a') }.to raise_error("Interpolation using method syntax is not allowed in this context in #{code_dir}/hiera.yaml")
+            expect { lookup('a') }.to raise_error("Interpolation using method syntax is not allowed in this context (file: #{code_dir}/hiera.yaml)")
           end
         end
       end
@@ -344,7 +344,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
-              "No data provider is registered for backend 'nonesuch' at #{env_dir}/spec/hiera.yaml:4")
+              "No data provider is registered for backend 'nonesuch' (file: #{env_dir}/spec/hiera.yaml, line: 4)")
           end
         end
 
@@ -365,7 +365,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
-              "Hierarchy name 'Common' defined more than once. First defined at line 3 at #{env_dir}/spec/hiera.yaml:9")
+              "Hierarchy name 'Common' defined more than once. First defined at line 3 (file: #{env_dir}/spec/hiera.yaml, line: 9)")
           end
         end
       end
@@ -381,7 +381,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
-              "'hiera3_backend' is only allowed in the global layer at #{env_dir}/spec/hiera.yaml:4")
+              "'hiera3_backend' is only allowed in the global layer (file: #{env_dir}/spec/hiera.yaml, line: 4)")
           end
         end
 
@@ -399,7 +399,7 @@ describe "The lookup function" do
           it 'fails and reports error' do
             Puppet[:strict] = :error
             expect { lookup('a') }.to raise_error(
-              "'default_hierarchy' is only allowed in the module layer at #{env_dir}/spec/hiera.yaml:5")
+              "'default_hierarchy' is only allowed in the module layer (file: #{env_dir}/spec/hiera.yaml, line: 5)")
           end
         end
       end

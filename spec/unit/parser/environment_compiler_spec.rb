@@ -590,7 +590,7 @@ EOS
       it "fails if there are non component resources in the site" do
         expect {
         catalog = compile_to_env_catalog(MANIFEST_WITH_ILLEGAL_RESOURCE).to_resource
-        }.to raise_error(/Only application components can appear inside a site - Notify\[fail me\] is not allowed at line 20/)
+        }.to raise_error(/Only application components can appear inside a site - Notify\[fail me\] is not allowed \(line: 20\)/)
       end
     end
 

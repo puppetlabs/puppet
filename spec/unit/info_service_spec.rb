@@ -332,7 +332,7 @@ describe "Puppet::InfoService" do
        expect(result).to eq({
          "production"=>{
             "#{code_dir}/borked.pp"=>
-              {:error=>"Syntax error at '+' at #{code_dir}/borked.pp:1:30",
+              {:error=>"Syntax error at '+' (file: #{code_dir}/borked.pp, line: 1, column: 30)",
               },
             } # end production env
          })
