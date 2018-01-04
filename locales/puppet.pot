@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-185-g165a799\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-188-ge5e6a24\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-04 21:33+0000\n"
-"PO-Revision-Date: 2018-01-04 21:33+0000\n"
+"POT-Creation-Date: 2018-01-04 21:46+0000\n"
+"PO-Revision-Date: 2018-01-04 21:46+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -547,6 +547,22 @@ msgstr ""
 
 #: ../lib/puppet/context/trusted_information.rb:48
 msgid "TrustedInformation expected a certificate, but none was given."
+msgstr ""
+
+#: ../lib/puppet/daemon.rb:82
+msgid "Cannot reexec unless ARGV arguments are set"
+msgstr ""
+
+#: ../lib/puppet/daemon.rb:143
+msgid "Daemons must have an agent, server, or both"
+msgstr ""
+
+#: ../lib/puppet/error.rb:67
+msgid "Could not parse for environment %{environment}: %{message}"
+msgstr ""
+
+#: ../lib/puppet/error.rb:68 ../lib/puppet/parser/compiler.rb:39
+msgid "%{message} on node %{node}"
 msgstr ""
 
 #: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:7 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
@@ -2249,6 +2265,10 @@ msgstr ""
 msgid "State %{state} invalid; Must specify desired state of 'signed' or 'revoked' for host %{request}"
 msgstr ""
 
+#: ../lib/puppet/indirector/exec.rb:11
+msgid "Exec commands must be an array"
+msgstr ""
+
 #: ../lib/puppet/indirector/exec.rb:14
 msgid "You must set the exec parameter to a fully qualified command"
 msgstr ""
@@ -2325,6 +2345,22 @@ msgstr ""
 msgid "Could not set '%{indirection}' terminus to '%{from}' (%{detail}); valid terminus types are %{types}"
 msgstr ""
 
+#: ../lib/puppet/indirector/facts/facter.rb:14
+msgid "You cannot destroy facts in the code store; it is only used for getting facts from Facter"
+msgstr ""
+
+#: ../lib/puppet/indirector/facts/facter.rb:18
+msgid "You cannot save facts to the code store; it is only used for getting facts from Facter"
+msgstr ""
+
+#: ../lib/puppet/indirector/facts/network_device.rb:21
+msgid "You cannot destroy facts in the code store; it is only used for getting facts from a remote device"
+msgstr ""
+
+#: ../lib/puppet/indirector/facts/network_device.rb:25
+msgid "You cannot save facts to the code store; it is only used for getting facts from a remote device"
+msgstr ""
+
 #: ../lib/puppet/indirector/file_bucket_file/file.rb:28
 msgid "could not find diff_with %{diff}"
 msgstr ""
@@ -2391,9 +2427,21 @@ msgstr ""
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
 msgstr ""
 
+#: ../lib/puppet/indirector/indirection.rb:40
+msgid "Tried to cache when no cache class was set"
+msgstr ""
+
 #. TRANSLATORS "TTL" stands for "time to live" and refers to a duration of time
 #: ../lib/puppet/indirector/indirection.rb:64
 msgid "Indirection TTL must be an integer"
+msgstr ""
+
+#: ../lib/puppet/indirector/indirection.rb:121
+msgid "No terminus specified for %{name}; cannot redirect"
+msgstr ""
+
+#: ../lib/puppet/indirector/indirection.rb:135
+msgid "No terminus class nor terminus setting was provided for indirection %{name}"
 msgstr ""
 
 #: ../lib/puppet/indirector/indirection.rb:169
@@ -2414,6 +2462,10 @@ msgstr ""
 
 #: ../lib/puppet/indirector/indirection.rb:246
 msgid "Cached %{indirection} for %{request} failed: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/indirector/indirection.rb:271
+msgid "Search results from terminus %{terminus_name} are not an array"
 msgstr ""
 
 #: ../lib/puppet/indirector/indirection.rb:332
@@ -2450,6 +2502,14 @@ msgstr ""
 
 #: ../lib/puppet/indirector/key/file.rb:47
 msgid "Could not write %{request}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/indirector/ldap.rb:13
+msgid "The 'process' method has not been overridden for the LDAP terminus for %{name}"
+msgstr ""
+
+#: ../lib/puppet/indirector/ldap.rb:27
+msgid "No search string set for LDAP terminus for %{name}"
 msgstr ""
 
 #: ../lib/puppet/indirector/ldap.rb:33
@@ -2590,6 +2650,10 @@ msgstr ""
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
+#: ../lib/puppet/indirector/ssl_file.rb:52
+msgid "No file or directory setting provided; terminus %{class_name} cannot function"
+msgstr ""
+
 #: ../lib/puppet/indirector/ssl_file.rb:75
 msgid "Removing file %{model} %{request} at '%{path}'"
 msgstr ""
@@ -2618,8 +2682,24 @@ msgstr ""
 msgid "Could not write %{path} to %{setting}: %{detail}"
 msgstr ""
 
+#: ../lib/puppet/indirector/ssl_file.rb:193
+msgid "You must provide a setting to determine where the files are stored"
+msgstr ""
+
 #: ../lib/puppet/indirector/terminus.rb:35
 msgid "Could not find indirection instance %{name} for %{terminus}"
+msgstr ""
+
+#: ../lib/puppet/indirector/terminus.rb:49
+msgid "Terminus subclasses must have associated constants"
+msgstr ""
+
+#: ../lib/puppet/indirector/terminus.rb:74
+msgid "Could not discern indirection model from class constant"
+msgstr ""
+
+#: ../lib/puppet/indirector/terminus.rb:132
+msgid "Cannot create instances of abstract terminus types"
 msgstr ""
 
 #: ../lib/puppet/indirector/terminus.rb:160
@@ -3196,6 +3276,10 @@ msgstr ""
 msgid "Denying access: %{authorization_failure_exception}"
 msgstr ""
 
+#: ../lib/puppet/network/authstore.rb:22
+msgid "Name and IP must be passed to 'allowed?'"
+msgstr ""
+
 #: ../lib/puppet/network/authstore.rb:36
 msgid "defaulting to no access for %{name}"
 msgstr ""
@@ -3529,6 +3613,18 @@ msgstr ""
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
+#: ../lib/puppet/parameter.rb:341
+msgid "No resource set for %{name}"
+msgstr ""
+
+#: ../lib/puppet/parameter.rb:428
+msgid "Munging failed for value %{value} in class %{class_name}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/parameter.rb:462
+msgid "Validate method failed for class %{class_name}: %{detail}"
+msgstr ""
+
 #: ../lib/puppet/parameter/package_options.rb:22
 msgid "Expected either a string or hash of options"
 msgstr ""
@@ -3539,6 +3635,10 @@ msgstr ""
 
 #: ../lib/puppet/parameter/path.rb:30
 msgid "%{name} must be a fully qualified path"
+msgstr ""
+
+#: ../lib/puppet/parameter/value_collection.rb:22
+msgid "Cannot alias nonexistent value %{value}"
 msgstr ""
 
 #: ../lib/puppet/parameter/value_collection.rb:136
@@ -3555,6 +3655,14 @@ msgstr ""
 
 #: ../lib/puppet/parameter/value_collection.rb:186
 msgid "Valid values match %{pattern}."
+msgstr ""
+
+#: ../lib/puppet/parser/ast/leaf.rb:31
+msgid "'%{value}' is not a valid hostname"
+msgstr ""
+
+#: ../lib/puppet/parser/ast/node.rb:7
+msgid "Node inheritance is removed in Puppet 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
 msgstr ""
 
 #: ../lib/puppet/parser/ast/pops_bridge.rb:125
@@ -3662,6 +3770,10 @@ msgstr ""
 
 #: ../lib/puppet/parser/compiler.rb:326
 msgid "Application %{app} maps component %{res} to multiple nodes"
+msgstr ""
+
+#: ../lib/puppet/parser/compiler.rb:355
+msgid "No source for scope passed to evaluate_classes"
 msgstr ""
 
 #: ../lib/puppet/parser/compiler.rb:371
