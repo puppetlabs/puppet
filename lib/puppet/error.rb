@@ -64,8 +64,8 @@ module Puppet
 
     def to_s
       msg = super
-      msg = "Could not parse for environment #{environment}: #{msg}" if environment
-      msg = "#{msg} on node #{node}" if node
+      msg = _("Could not parse for environment %{environment}: %{message}") % { environment: environment, message: msg } if environment
+      msg = _("%{message} on node %{node}") % { message: msg, node: node } if node
       msg
     end
   end
