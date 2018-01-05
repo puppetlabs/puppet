@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-191-gfe756b4\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-194-gcfbc07c\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-05 00:06+0000\n"
-"PO-Revision-Date: 2018-01-05 00:06+0000\n"
+"POT-Creation-Date: 2018-01-05 18:44+0000\n"
+"PO-Revision-Date: 2018-01-05 18:44+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -5168,7 +5168,7 @@ msgstr ""
 msgid "illegal comma separated argument list"
 msgstr ""
 
-#: ../lib/puppet/pops/resource/resource_type_impl.rb:167
+#: ../lib/puppet/pops/resource/resource_type_impl.rb:167 ../lib/puppet/type.rb:428
 msgid "you must specify title patterns when there are two or more key attributes"
 msgstr ""
 
@@ -6297,8 +6297,36 @@ msgstr ""
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
-#: ../lib/puppet/resource/capability_finder.rb:75
-msgid "Looking up capability %{cap} in PuppetDB: %{query_terms}"
+#: ../lib/puppet/resource/capability_finder.rb:27
+msgid "PuppetDB is not available"
+msgstr ""
+
+#: ../lib/puppet/resource/capability_finder.rb:45
+msgid "Unexpected response from PuppetDB when looking up %{capability}:"
+msgstr ""
+
+#: ../lib/puppet/resource/capability_finder.rb:46
+msgid "expected exactly one resource but got %{count};"
+msgstr ""
+
+#: ../lib/puppet/resource/capability_finder.rb:47
+msgid ""
+"returned data is:\n"
+"%{resources}"
+msgstr ""
+
+#: ../lib/puppet/resource/capability_finder.rb:78
+msgid "Looking up capability %{capability} in PuppetDB: %{query_terms}"
+msgstr ""
+
+#: ../lib/puppet/resource/capability_finder.rb:102
+msgid "Unexpected response from PuppetDB when looking up %{capability}: expected an Array but got %{result}"
+msgstr ""
+
+#: ../lib/puppet/resource/capability_finder.rb:109
+msgid ""
+"Invalid JSON from PuppetDB when looking up %{capability}\n"
+"%{detail}"
 msgstr ""
 
 #. TRANSLATORS "resource" here is a Puppet type and should not be translated
@@ -6314,12 +6342,20 @@ msgstr ""
 msgid "Could not create resource file %{file}: %{detail}"
 msgstr ""
 
+#: ../lib/puppet/resource/catalog.rb:575
+msgid "Unknown ordering type %{ordering}"
+msgstr ""
+
 #: ../lib/puppet/resource/catalog.rb:596
 msgid "Duplicate declaration: %{resource} is already declared; cannot redeclare"
 msgstr ""
 
 #: ../lib/puppet/resource/catalog.rb:598
 msgid "Duplicate declaration: %{resource} is already declared at %{error_location}; cannot redeclare"
+msgstr ""
+
+#: ../lib/puppet/resource/catalog.rb:646 ../lib/puppet/resource/catalog.rb:650
+msgid "Could not find resource %{resource} when converting %{message} resources"
 msgstr ""
 
 #: ../lib/puppet/resource/status.rb:135 ../lib/puppet/transaction.rb:255
@@ -6360,6 +6396,18 @@ msgstr ""
 
 #: ../lib/puppet/resource/type.rb:296
 msgid "Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:423
+msgid "Parameter '%{name}' is given a type, but is not a valid parameter."
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:426
+msgid "Parameter '%{name}' is given a type that is not a Puppet Type, got %{class_name}"
+msgstr ""
+
+#: ../lib/puppet/resource/type.rb:466
+msgid "Could not find scope for %{class_name}"
 msgstr ""
 
 #: ../lib/puppet/resource/type.rb:487
@@ -6420,6 +6468,14 @@ msgstr ""
 
 #: ../lib/puppet/resource/type_collection.rb:237
 msgid "Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:259
+msgid "Attempting to initialize global default settings more than once!"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:833
+msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
 #: ../lib/puppet/settings/array_setting.rb:14
@@ -6490,8 +6546,16 @@ msgstr ""
 msgid "Invalid 'time to live' format '%{value}' for parameter: %{param_name}"
 msgstr ""
 
+#: ../lib/puppet/ssl/base.rb:27
+msgid "%{name} has not declared what class it wraps"
+msgstr ""
+
 #: ../lib/puppet/ssl/base.rb:32
 msgid "Certname %{name} must not contain unprintable or non-ASCII characters"
+msgstr ""
+
+#: ../lib/puppet/ssl/base.rb:43
+msgid "%{class_name} did not override 'generate'"
 msgstr ""
 
 #: ../lib/puppet/ssl/base.rb:144
@@ -6994,12 +7058,50 @@ msgstr ""
 msgid "audit change: newly-recorded value %s"
 msgstr ""
 
-#: ../lib/puppet/type.rb:677
+#: ../lib/puppet/type.rb:503
+msgid "Options must be a hash, not %{type}"
+msgstr ""
+
+#: ../lib/puppet/type.rb:506
+msgid "Class %{class_name} already has a property named %{property}"
+msgstr ""
+
+#: ../lib/puppet/type.rb:592
+msgid "Class %{class_name} has not defined parameters"
+msgstr ""
+
+#: ../lib/puppet/type.rb:676
 msgid "Parameter %{name} failed on %{ref}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1498
+#: ../lib/puppet/type.rb:699
+msgid "Undefined attribute '%{attribute}' in %{name}"
+msgstr ""
+
+#. TRANSLATORS 'is' is a variable name and should not be translated
+#. TRANSLATORS 'is' is a variable name and should not be translated
+#: ../lib/puppet/type.rb:1022 ../lib/puppet/type.rb:1033
+msgid "The 'is' value is not in the 'is' array for '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/type.rb:1159
+msgid "%{name} has no providers and has not overridden 'instances'"
+msgstr ""
+
+#: ../lib/puppet/type.rb:1497
 msgid "Could not find %{description} %{ref} for %{resource}"
+msgstr ""
+
+#: ../lib/puppet/type.rb:1843
+msgid "Could not find parent provider %{parent} of %{name}"
+msgstr ""
+
+#: ../lib/puppet/type.rb:2119
+msgid "You cannot add relationships without a catalog"
+msgstr ""
+
+#: ../lib/puppet/type.rb:2485
+msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/type/augeas.rb:167
@@ -7160,6 +7262,10 @@ msgstr ""
 msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
 msgstr ""
 
+#: ../lib/puppet/type/file/source.rb:131
+msgid "No source for content was stored with the metadata"
+msgstr ""
+
 #: ../lib/puppet/type/filebucket.rb:69
 msgid "You can only have one filebucket path"
 msgstr ""
@@ -7170,6 +7276,10 @@ msgstr ""
 
 #: ../lib/puppet/type/filebucket.rb:109
 msgid "Could not create %{type} filebucket: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/type/group.rb:57
+msgid "GID cannot be deleted"
 msgstr ""
 
 #: ../lib/puppet/type/group.rb:69
@@ -7232,6 +7342,10 @@ msgstr ""
 msgid "Unexpected change from %{current} to unmounted"
 msgstr ""
 
+#: ../lib/puppet/type/mount.rb:115
+msgid "Parent has property %{name} but it doesn't appear in the current values"
+msgstr ""
+
 #: ../lib/puppet/type/mount.rb:134
 msgid "device must not contain whitespace: %{value}"
 msgstr ""
@@ -7290,6 +7404,10 @@ msgstr ""
 
 #: ../lib/puppet/type/resources.rb:103
 msgid "The 'ensure' attribute on %{name} resources does not accept 'absent' as a value"
+msgstr ""
+
+#: ../lib/puppet/type/resources.rb:130
+msgid "Could not find resource type"
 msgstr ""
 
 #: ../lib/puppet/type/schedule.rb:96
@@ -7513,6 +7631,10 @@ msgstr ""
 msgid "Waiting for zone to finish processing"
 msgstr ""
 
+#: ../lib/puppet/type/zone.rb:118
+msgid "Cannot move %{direction} from %{name}"
+msgstr ""
+
 #: ../lib/puppet/type/zone.rb:199
 msgid "The zone base must be fully qualified"
 msgstr ""
@@ -7577,18 +7699,39 @@ msgstr ""
 msgid "Could not change to user %{user}: %{detail}"
 msgstr ""
 
+#. TRANSLATORS 'benchmark' is a method name and should not be translated
+#: ../lib/puppet/util.rb:223
+msgid "Failed to provide level to benchmark"
+msgstr ""
+
+#: ../lib/puppet/util.rb:226
+msgid "Benchmarked object does not respond to %{value}"
+msgstr ""
+
 #. TRANSLATORS PATH and HOME are environment variables and should not be translated
-#: ../lib/puppet/util.rb:265
+#: ../lib/puppet/util.rb:266
 msgid "PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'."
 msgstr ""
 
 #. TRANSLATORS PATH is an environment variable and should not be translated
-#: ../lib/puppet/util.rb:269
+#: ../lib/puppet/util.rb:270
 msgid "Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'."
 msgstr ""
 
-#: ../lib/puppet/util.rb:343
+#: ../lib/puppet/util.rb:310
+msgid "unknown platform %{platform} in absolute_path"
+msgstr ""
+
+#: ../lib/puppet/util.rb:344
 msgid "Failed to convert '%{path}' to URI: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util.rb:566
+msgid "replace_file requires a block"
+msgstr ""
+
+#: ../lib/puppet/util.rb:570
+msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
 #: ../lib/puppet/util/at_fork.rb:22
@@ -7879,7 +8022,7 @@ msgstr ""
 msgid "Cannot have fields named %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/fileparsing.rb:53 ../lib/puppet/util/fileparsing.rb:308
+#: ../lib/puppet/util/fileparsing.rb:53 ../lib/puppet/util/fileparsing.rb:306
 msgid "Invalid record type %{record_type}"
 msgstr ""
 
@@ -7887,19 +8030,31 @@ msgstr ""
 msgid "Field '%{field}' is required"
 msgstr ""
 
-#: ../lib/puppet/util/fileparsing.rb:230
+#: ../lib/puppet/util/fileparsing.rb:154
+msgid "Process record type %{record_name} returned non-hash"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:229
 msgid "Could not parse line %{line}"
 msgstr ""
 
-#: ../lib/puppet/util/fileparsing.rb:273
+#: ../lib/puppet/util/fileparsing.rb:238
+msgid "No record types defined; cannot parse lines"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:249
+msgid "Somehow got invalid line type %{record_type}"
+msgstr ""
+
+#: ../lib/puppet/util/fileparsing.rb:271
 msgid "Must include a list of fields"
 msgstr ""
 
-#: ../lib/puppet/util/fileparsing.rb:288
+#: ../lib/puppet/util/fileparsing.rb:286
 msgid "You must provide a :match regex for text lines"
 msgstr ""
 
-#: ../lib/puppet/util/fileparsing.rb:364
+#: ../lib/puppet/util/fileparsing.rb:362
 msgid "Line type %{name} is already defined"
 msgstr ""
 
@@ -7987,25 +8142,46 @@ msgstr ""
 msgid "Failed to set process priority to '%{priority}'"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:172
+#. TRANSLATORS "Log.close_all" is a method name and should not be translated
+#: ../lib/puppet/util/log.rb:67
+msgid "Log.close_all failed to close %{destinations}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:86
+msgid "Logs require a level"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:87
+msgid "Invalid log level %{level}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:109
+msgid "Invalid loglevel %{level}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:136
+msgid "Unknown destination type %{dest}"
+msgstr ""
+
+#: ../lib/puppet/util/log.rb:173
 msgid "Received a Log attribute with invalid encoding:%{log_message}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:174
+#: ../lib/puppet/util/log.rb:175
 msgid ""
 "Backtrace:\n"
 "%{backtrace}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:229
+#: ../lib/puppet/util/log.rb:230
 msgid "Reopening log files"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:398
+#: ../lib/puppet/util/log.rb:399
 msgid "Could not parse for environment %{environment}: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:400
+#: ../lib/puppet/util/log.rb:401
 msgid "%{msg} on node %{node}"
 msgstr ""
 
@@ -8025,39 +8201,48 @@ msgstr ""
 msgid "Wrapped exception:"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:183
+#. TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
+#: ../lib/puppet/util/logging.rb:150
+msgid "Need either :file and :line, or :key"
+msgstr ""
+
+#: ../lib/puppet/util/logging.rb:184
 msgid ""
 "\n"
 "   (at %{file}:%{line})"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:185
+#: ../lib/puppet/util/logging.rb:186
 msgid ""
 "\n"
 "   (in %{file})"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:187
+#: ../lib/puppet/util/logging.rb:188
 msgid ""
 "\n"
 "   (in unknown file, line %{line})"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:189
+#: ../lib/puppet/util/logging.rb:190
 msgid ""
 "\n"
 "   (file & line not available)"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:287
+#: ../lib/puppet/util/logging.rb:288
 msgid "unknown"
 msgstr ""
 
 #. TRANSLATORS error message with origin location
-#: ../lib/puppet/util/logging.rb:292
+#: ../lib/puppet/util/logging.rb:293
 msgid ""
 "%{message}\n"
 "   (at %{call_trace})"
+msgstr ""
+
+#: ../lib/puppet/util/nagios_maker.rb:12
+msgid "No nagios type for %{name}"
 msgstr ""
 
 #: ../lib/puppet/util/network_device.rb:10
@@ -8150,6 +8335,10 @@ msgstr ""
 msgid "Unable to write the file %{file_path}. %{error}"
 msgstr ""
 
+#: ../lib/puppet/util/posix.rb:20
+msgid "Did not get id from caller"
+msgstr ""
+
 #: ../lib/puppet/util/posix.rb:24 ../lib/puppet/util/posix.rb:49
 msgid "Tried to get %{field} field for silly id %{id}"
 msgstr ""
@@ -8160,6 +8349,10 @@ msgstr ""
 
 #: ../lib/puppet/util/profiler/wall_clock.rb:15
 msgid "took %{context} seconds"
+msgstr ""
+
+#: ../lib/puppet/util/provider_features.rb:66
+msgid "Feature %{name} is already defined"
 msgstr ""
 
 #: ../lib/puppet/util/provider_features.rb:72
@@ -8238,6 +8431,10 @@ msgstr ""
 
 #: ../lib/puppet/util/selinux.rb:176
 msgid "Could not open SELinux category translation file %{path}."
+msgstr ""
+
+#: ../lib/puppet/util/selinux.rb:243
+msgid "got a relative path in SELinux find_fs: %{path}"
 msgstr ""
 
 #: ../lib/puppet/util/splayer.rb:14
