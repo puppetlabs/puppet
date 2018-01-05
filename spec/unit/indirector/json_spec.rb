@@ -198,16 +198,5 @@ describe Puppet::Indirector::JSON do
       create_file('foo.json~', 'foo-backup')
       expect(subject.search(request('f*')).map(&:value)).to eq(['foo-json'])
     end
-
-    it "raises if the content contains binary" do
-      binary = "\xC0\xFF".force_encoding(Encoding::BINARY)
-
-      File.binwrite(subject.path('foo.json', ''), "foo-json")
-      File.binwrite(subject.path("foo#{binary}.bin", ''), "foo-binary")
-
-      expect {
-        subject.search(request('*'))
-      }.to raise_error Puppet::Error, /Could not parse JSON data/
-    end
   end
 end
