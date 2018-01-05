@@ -9,7 +9,7 @@ module Puppet::Util::NagiosMaker
     name = name.to_sym
     full_name = ("nagios_#{name}").to_sym
 
-    raise(Puppet::DevError, "No nagios type for #{name}") unless nagtype = Nagios::Base.type(name)
+    raise Puppet::DevError, _("No nagios type for %{name}") % { name: name } unless nagtype = Nagios::Base.type(name)
 
     type = Puppet::Type.newtype(full_name) do
 

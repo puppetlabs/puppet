@@ -115,7 +115,7 @@ end
       # everything between it and us.
       self.class.state_sequence(self.retrieve, self.should).each do |state|
         method = state[direction]
-        raise Puppet::DevError, "Cannot move #{direction} from #{st[:name]}" unless method
+        raise Puppet::DevError, _("Cannot move %{direction} from %{name}") % { direction: direction, name: st[:name] } unless method
         provider_sync_send(method)
       end
 

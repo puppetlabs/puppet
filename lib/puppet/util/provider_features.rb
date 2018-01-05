@@ -63,7 +63,7 @@ module Puppet::Util::ProviderFeatures
   # @todo How methods that determine if the feature is present are specified.
   def feature(name, docs, hash = {})
     @features ||= {}
-    raise(Puppet::DevError, "Feature #{name} is already defined") if @features.include?(name)
+    raise Puppet::DevError, _("Feature %{name} is already defined") % { name: name } if @features.include?(name)
     begin
       obj = ProviderFeature.new(name, docs, hash)
       @features[obj.name] = obj

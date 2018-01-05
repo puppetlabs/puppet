@@ -63,7 +63,8 @@ class Puppet::Util::Log
     destinations.keys.each { |dest|
       close(dest)
     }
-    raise Puppet::DevError.new("Log.close_all failed to close #{@destinations.keys.inspect}") if !@destinations.empty?
+    #TRANSLATORS "Log.close_all" is a method name and should not be translated
+    raise Puppet::DevError.new(_("Log.close_all failed to close %{destinations}") % { destinations: @destinations.keys.inspect }) if !@destinations.empty?
   end
 
   # Flush any log destinations that support such operations.
@@ -82,8 +83,8 @@ class Puppet::Util::Log
   # Create a new log message.  The primary role of this method is to
   # avoid creating log messages below the loglevel.
   def Log.create(hash)
-    raise Puppet::DevError, "Logs require a level" unless hash.include?(:level)
-    raise Puppet::DevError, "Invalid log level #{hash[:level]}" unless @levels.index(hash[:level])
+    raise Puppet::DevError, _("Logs require a level") unless hash.include?(:level)
+    raise Puppet::DevError, _("Invalid log level %{level}") % { level: hash[:level] } unless @levels.index(hash[:level])
     @levels.index(hash[:level]) >= @loglevel ? Puppet::Util::Log.new(hash) : nil
   end
 
@@ -105,7 +106,7 @@ class Puppet::Util::Log
   def Log.level=(level)
     level = level.intern unless level.is_a?(Symbol)
 
-    raise Puppet::DevError, "Invalid loglevel #{level}" unless @levels.include?(level)
+    raise Puppet::DevError, _("Invalid loglevel %{level}") % { level: level } unless @levels.include?(level)
 
     @loglevel = @levels.index(level)
 
@@ -132,7 +133,7 @@ class Puppet::Util::Log
       return
     end
 
-    raise Puppet::DevError, "Unknown destination type #{dest}" unless type
+    raise Puppet::DevError, _("Unknown destination type %{dest}") % { dest: dest} unless type
 
     begin
       if type.instance_method(:initialize).arity == 1

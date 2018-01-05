@@ -54,7 +54,7 @@ module Puppet
 
       def sync
         if self.should == :absent
-          raise Puppet::DevError, "GID cannot be deleted"
+          raise Puppet::DevError, _("GID cannot be deleted")
         else
           provider.gid = self.should
         end

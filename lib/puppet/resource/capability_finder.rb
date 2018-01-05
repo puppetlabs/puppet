@@ -23,7 +23,8 @@ module Puppet::Resource::CapabilityFinder
   # @return [Puppet::Resource,nil] The found capability resource or `nil` if it could not be found
   def self.find(environment, code_id, cap)
     unless Puppet::Util.const_defined?('Puppetdb')
-      raise Puppet::DevError, 'PuppetDB is not available'
+      #TRANSLATOR PuppetDB is a product name and should not be translated
+      raise Puppet::DevError, _('PuppetDB is not available')
     end
 
     resources = search(nil, nil, cap)
@@ -40,10 +41,11 @@ module Puppet::Resource::CapabilityFinder
     elsif code_id_resource = disambiguate_by_code_id(environment, code_id, cap)
       resource_hash = code_id_resource
     else
-      raise Puppet::DevError,
-        "Unexpected response from PuppetDB when looking up #{cap}:\n" \
-        "expected exactly one resource but got #{resources.size};\n" \
-        "returned data is:\n#{resources.inspect}"
+      #TRANSLATOR PuppetDB is a product name and should not be translated
+      message = _("Unexpected response from PuppetDB when looking up %{capability}:") % { capability: cap }
+      message += "\n" + _("expected exactly one resource but got %{count};") % { count: resources.size }
+      message += "\n" + _("returned data is:\n%{resources}") % { resources: resources.inspect }
+      raise Puppet::DevError, message
     end
 
     if resource_hash
@@ -72,7 +74,8 @@ module Puppet::Resource::CapabilityFinder
             ['=', 'code_id', code_id]]]]
     end
 
-    Puppet.notice _("Looking up capability %{cap} in PuppetDB: %{query_terms}") % { cap: cap, query_terms: query_terms }
+    #TRANSLATOR PuppetDB is a product name and should not be translated
+    Puppet.notice _("Looking up capability %{capability} in PuppetDB: %{query_terms}") % { capability: cap, query_terms: query_terms }
 
     query_puppetdb(query_terms)
   end
@@ -95,15 +98,15 @@ module Puppet::Resource::CapabilityFinder
       # The format of the response body is documented at
       #   https://docs.puppetlabs.com/puppetdb/3.0/api/query/v4/resources.html#response-format
       unless result.is_a?(Array)
-        raise Puppet::DevError,
-        "Unexpected response from PuppetDB when looking up #{cap}: " \
-          "expected an Array but got #{result.inspect}"
+        #TRANSLATOR PuppetDB is a product name and should not be translated
+        raise Puppet::DevError, _("Unexpected response from PuppetDB when looking up %{capability}: expected an Array but got %{result}") %
+            { capability: cap, result: result.inspect }
       end
 
       result
     rescue JSON::JSONError => e
-      raise Puppet::DevError,
-        "Invalid JSON from PuppetDB when looking up #{cap}\n#{e}"
+      #TRANSLATOR PuppetDB is a product name and should not be translated
+      raise Puppet::DevError, _("Invalid JSON from PuppetDB when looking up %{capability}\n%{detail}") % { capability: cap, detail: e }
     end
   end
 

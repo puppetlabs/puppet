@@ -24,7 +24,7 @@ class Puppet::SSL::Base
   end
 
   def self.wrapped_class
-    raise(Puppet::DevError, "#{self} has not declared what class it wraps") unless defined?(@wrapped_class)
+    raise(Puppet::DevError, _("%{name} has not declared what class it wraps") % { name: self }) unless defined?(@wrapped_class)
     @wrapped_class
   end
 
@@ -40,7 +40,7 @@ class Puppet::SSL::Base
   end
 
   def generate
-    raise Puppet::DevError, "#{self.class} did not override 'generate'"
+    raise Puppet::DevError, _("%{class_name} did not override 'generate'") % { class_name: self.class }
   end
 
   def initialize(name)

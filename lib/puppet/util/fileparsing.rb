@@ -151,8 +151,7 @@ module Puppet::Util::FileParsing
     if record.respond_to?(:process)
       if ret = record.send(:process, line.dup)
         unless ret.is_a?(Hash)
-          raise Puppet::DevError,
-            "Process record type #{record.name} returned non-hash"
+          raise Puppet::DevError, _("Process record type %{record_name} returned non-hash") % { record_name: record.name }
         end
       else
         return nil
@@ -236,7 +235,7 @@ module Puppet::Util::FileParsing
 
   # Handle parsing a single line.
   def parse_line(line)
-    raise Puppet::DevError, "No record types defined; cannot parse lines" unless records?
+    raise Puppet::DevError, _("No record types defined; cannot parse lines") unless records?
 
     @record_order.each do |record|
       # These are basically either text or record lines.
@@ -247,8 +246,7 @@ module Puppet::Util::FileParsing
           return result
         end
       else
-        raise Puppet::DevError,
-          "Somehow got invalid line type #{record.type}"
+        raise Puppet::DevError, _("Somehow got invalid line type %{record_type}") % { record_type: record.type }
       end
     end
 
