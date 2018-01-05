@@ -25,15 +25,15 @@ bundle install --path=.bundle/gems
 
 By default if you are installing from source, packages will be installed from Github, from their puppetlabs forks.  This can be selectively overridden for all installed projects, or per project, by setting environment variables.
 
-GIT_SERVER => this will be the address the git server used for all installed projects.  Defaults to 'github.com'.
-FORK => this will be the fork of the project for all installed projects.  Defaults to 'puppetlabs'.
+* SERVER => this will be the address the git server used for all installed projects.  Defaults to 'github.com'.
+* FORK => this will be the fork of the project for all installed projects.  Defaults to 'puppetlabs'.
 
-To customize the server or fork for a specific project use PROJECT_NAME_GIT_SERVER and PROJECT_NAME_FORK.
+To customize the server or fork for a specific project use PROJECT_NAME_SERVER and PROJECT_NAME_FORK.
 
 For example, run with these options:
 
 ```sh
-bundle exec rake ci:test:git CONFIG=config/nodes/win2008r2.yaml SHA=abcd PUPPET_GIT_SERVER=percival.corp.puppetlabs.net GIT_SERVER=github.delivery.puppetlabs.net
+bundle exec rake ci:test:git CONFIG=config/nodes/win2008r2.yaml SHA=abcd PUPPET_SERVER=percival.corp.puppetlabs.net SERVER=github.delivery.puppetlabs.net
 ```
 
 Beaker will install the following:
@@ -225,7 +225,7 @@ to read the full description of this task.
 From the description, we can see that we'll need to set a few environment variables:
   + CONFIG should be set to point to the CentOS beaker config file we created above.
   + SHA should be the SHA of the commit we want to test.
-  + GIT_SERVER should be the IP address of the host (i.e. your machine) in the vagrant private network created for the test box.
+  + SERVER should be the IP address of the host (i.e. your machine) in the vagrant private network created for the test box.
     This is derived from the test box's ip by replacing the last octet with 1.
     For our example above, the host IP is 192.168.80.1
   + FORK should be the path to a 'puppetlabs-puppet.git' directory that points to the repo.
@@ -234,7 +234,7 @@ From the description, we can see that we'll need to set a few environment variab
 
 Putting it all together, we construct the following command-line invocation to run the tests:
 ```sh
-CONFIG=config/nodes/centos6-local.yaml SHA=#{test-commit-sha} GIT_SERVER='192.168.80.1' FORK='puppet' bundle exec rake --trace ci:test:git
+CONFIG=config/nodes/centos6-local.yaml SHA=#{test-commit-sha} SERVER='192.168.80.1' FORK='puppet' bundle exec rake --trace ci:test:git
 ```
 Go ahead and run that sucker!
 
