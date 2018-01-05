@@ -11,7 +11,15 @@ agents.each do |agent|
 
   step "Content Attribute: using raw content"
 
-  checksums = ['md5', 'md5lite', 'sha256', 'sha256lite']
+  checksums_fips = ['sha256', 'sha256lite']
+  checksums_no_fips = ['md5', 'md5lite', 'sha256', 'sha256lite']
+
+  if on(agent, facter("fips_enabled")).stdout =~ /true/
+    checksums = checksums_fips
+  else
+    checksums = checksums_no_fips
+  end
+
   manifest = "file { '#{target}': content => 'This is the test file content', ensure => present }"
   manifest += checksums.collect {|checksum_type|
     "file { '#{target+checksum_type}': content => 'This is the test file content', ensure => present, checksum => #{checksum_type} }"
@@ -48,7 +56,7 @@ agents.each do |agent|
 
   dir = on(agent, puppet_filebucket("--configprint clientbucketdir")).stdout.chomp
 
-  manifest = %Q|
+  md5_manifest = %Q|
     filebucket { 'local':
       path => '#{dir}',
     }
@@ -60,8 +68,24 @@ agents.each do |agent|
     }
   |
 
+  sha256_manifest = %Q|
+    filebucket { 'local':
+      path => '#{dir}',
+    }
+
+    file { '#{target}':
+      ensure  => present,
+      content => '{sha256}3b9238769b033b48073267b8baea00fa51c598dc14081da51f2e510c37c46a28',
+      backup  => local,
+    }
+  |
+
   step "Applying Manifest on Agent"
-  apply_manifest_on agent, manifest
+  if on(agent, facter("fips_enabled")).stdout =~ /true/
+    apply_manifest_on agent, sha256_manifest
+  else    
+    apply_manifest_on agent, md5_manifest
+  end
 
   step "Validate filebucket checksum file contents"
   on agent, "cat #{target}" do

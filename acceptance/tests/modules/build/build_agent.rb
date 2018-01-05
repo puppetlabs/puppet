@@ -4,6 +4,12 @@ tag 'audit:medium',
     'audit:acceptance'
 
 agents.each do |agent|
+
+  if on(agent, facter("fips_enabled")).stdout =~ /true/
+    puts "Module build, loading and installing not supported on fips enabled platforms"
+    next
+  end
+
   teardown do
     on agent, 'rm -rf bar'
   end

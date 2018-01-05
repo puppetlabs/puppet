@@ -6,7 +6,13 @@ test_name 'C99977 corrupted clientbucket' do
   agents.each do |agent|
     tmpfile = agent.tmpfile('c99977file')
     unmanaged_content = "unmanaged\n"
-    unmanaged_sha = Digest::MD5.hexdigest(unmanaged_content)
+    
+    if on(agent, facter("fips_enabled")).stdout =~ /true/
+      unmanaged_sha = Digest::SHA256.hexdigest(unmanaged_content)
+    else
+      unmanaged_sha = Digest::MD5.hexdigest(unmanaged_content)
+    end
+
     managed_content = "managed\n"
     manifest = "file { '#{tmpfile}': content => '#{managed_content}', }"
 

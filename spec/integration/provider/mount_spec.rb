@@ -19,12 +19,14 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
     @fake_fstab = tmpfile('fstab')
     @current_options = "local"
     @current_device = "/dev/disk1s1"
+    Puppet[:digest_algorithm] = 'md5' 
     Puppet::Type.type(:mount).defaultprovider.stubs(:default_target).returns(@fake_fstab)
     Facter.stubs(:value).with(:hostname).returns('some_host')
     Facter.stubs(:value).with(:domain).returns('some_domain')
     Facter.stubs(:value).with(:kernel).returns('Linux')
     Facter.stubs(:value).with(:operatingsystem).returns('RedHat')
     Facter.stubs(:value).with(:osfamily).returns('RedHat')
+    Facter.stubs(:value).with(:fips_enabled).returns(false)
     Puppet::Util::ExecutionStub.set do |command, options|
       case command[0]
       when %r{/s?bin/mount}

@@ -18,6 +18,12 @@ teardown do
 end
 
 agents.each do |agent|
+
+  if on(agent, facter("fips_enabled")).stdout =~ /true/
+    puts "Module build, loading and installing not supported on fips enabled platforms"
+    next
+  end
+
   step 'setup'
   stub_forge_on(agent)
 
