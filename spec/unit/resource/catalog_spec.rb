@@ -401,9 +401,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
           expect(error).to be_a Puppet::Resource::Catalog::DuplicateResourceError
 
           expect(error.message).to match %r[Duplicate declaration: Notify\[duplicate-title\] is already declared]
-          expect(error.message).to match %r[in file /path/to/orig/file:42]
+          expect(error.message).to match %r[at \(file: /path/to/orig/file, line: 42\)]
           expect(error.message).to match %r[cannot redeclare]
-          expect(error.message).to match %r[at /path/to/dupe/file:314]
+          expect(error.message).to match %r[\(file: /path/to/dupe/file, line: 314\)]
         }
       end
     end
@@ -656,6 +656,16 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should set ignoreschedules on the transaction if specified in apply()" do
       @transaction.expects(:ignoreschedules=).with(true)
       @catalog.apply(:ignoreschedules => true)
+    end
+
+    it "should detect transaction failure and report it" do
+      @transaction.stubs(:evaluate).raises(RuntimeError, 'transaction failed.')
+      report = Puppet::Transaction::Report.new('apply')
+
+      expect { @catalog.apply(:report => report) }.to raise_error(RuntimeError)
+      report.finalize_report
+
+      expect(report.status).to eq('failed')
     end
 
     describe "host catalogs" do

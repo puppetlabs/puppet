@@ -18,10 +18,10 @@ class Puppet::Node::Facts::NetworkDevice < Puppet::Indirector::Code
   end
 
   def destroy(facts)
-    raise Puppet::DevError, "You cannot destroy facts in the code store; it is only used for getting facts from a remote device"
+    raise Puppet::DevError, _("You cannot destroy facts in the code store; it is only used for getting facts from a remote device")
   end
 
   def save(facts)
-    raise Puppet::DevError, "You cannot save facts to the code store; it is only used for getting facts from a remote device"
+    raise Puppet::DevError, _("You cannot save facts to the code store; it is only used for getting facts from a remote device")
   end
 end

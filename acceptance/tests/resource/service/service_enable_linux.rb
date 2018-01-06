@@ -21,6 +21,8 @@ package_name = {'el'     => 'httpd',
 
 agents.each do |agent|
   platform = agent.platform.variant
+  osname = on(agent, facter('os.name')).stdout.chomp.to_i
+  osreleasefull = on(agent, facter('os.release.full')).stdout.chomp.to_f
   majrelease = on(agent, facter('operatingsystemmajrelease')).stdout.chomp.to_i
 
   init_script_systemd = "/usr/lib/systemd/system/#{package_name[platform]}.service"
@@ -65,11 +67,12 @@ agents.each do |agent|
   apply_manifest_on(agent, manifest_install_package, :catch_failures => true)
 
   step "ensure enabling service creates the start & kill symlinks"
-  # amazon linux is based on el-6 but uses the year for its majrelease
-  # version. The condition for a version > 2016 should be removed and
-  # replaced with a discrete amazon condition if/when Beaker understands
-  # amazon as a platform. BKR-1148
-  is_sysV = ((platform == 'centos' || platform == 'el') && (majrelease < 7 || majrelease > 2016)) ||
+  # amazon linux is based on el: 2017.09 and earlier is based on el-6
+  # (sysV) and 2017.12 and later is based on el-7 (systemd). In beaker
+  # we still use the el platform name, hence the use of facts below
+  # when checking for amazon linux.
+  is_sysV = ((platform == 'centos' || platform == 'el') && majrelease < 7) ||
+              (osname == 'Amazon' && osreleasefull < 2017.12) ||
               platform == 'debian' || platform == 'ubuntu' ||
              (platform == 'sles'                        && majrelease < 12)
   apply_manifest_on(agent, manifest_service_disabled, :catch_failures => true)

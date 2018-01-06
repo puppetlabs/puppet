@@ -115,7 +115,7 @@ module Puppet
         # Determine if there are any out-of-sync properties.
         oos = @resource.send(:properties).find_all do |prop|
           unless currentvalues.include?(prop)
-            raise Puppet::DevError, "Parent has property %s but it doesn't appear in the current values", [prop.name]
+            raise Puppet::DevError, _("Parent has property %{name} but it doesn't appear in the current values") % { name: prop.name }
           end
           if prop.name == :ensure
             false

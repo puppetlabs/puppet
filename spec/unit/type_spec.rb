@@ -641,7 +641,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       it "should include the file/line in the error" do
         Puppet::Type.type(:file).any_instance.stubs(:file).returns("example.pp")
         Puppet::Type.type(:file).any_instance.stubs(:line).returns(42)
-        expect { Puppet::Type.type(:file).new(:title => "/foo", :source => "unknown:///") }.to raise_error(Puppet::ResourceError, /example.pp:42/)
+        expect { Puppet::Type.type(:file).new(:title => "/foo", :source => "unknown:///") }.to raise_error(Puppet::ResourceError, /\(file: example\.pp, line: 42\)/)
       end
     end
 
@@ -731,7 +731,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
             :source => "puppet:///",
             :content => "foo"
           )
-        end.to raise_error(Puppet::ResourceError, /Validation.*example.pp:42/)
+        end.to raise_error(Puppet::ResourceError, /Validation.*\(file: example\.pp, line: 42\)/)
       end
     end
   end
@@ -1147,7 +1147,7 @@ describe Puppet::Type::RelationshipMetaparam do
         expect { param.validate_relationship }.to raise_error do |error|
           expect(error).to be_a Puppet::ResourceError
           expect(error.message).to match %r[Class\[Test\]]
-          expect(error.message).to match %r[/hitchhikers/guide/to/the/galaxy:42]
+          expect(error.message).to match %r[\(file: /hitchhikers/guide/to/the/galaxy, line: 42\)]
         end
       end
     end

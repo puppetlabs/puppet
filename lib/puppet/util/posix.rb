@@ -17,7 +17,7 @@ module Puppet::Util::POSIX
   # method search_posix_field in the gid and uid methods if a sanity check
   # fails
   def get_posix_field(space, field, id)
-    raise Puppet::DevError, "Did not get id from caller" unless id
+    raise Puppet::DevError, _("Did not get id from caller") unless id
 
     if id.is_a?(Integer)
       if id > Puppet[:maximum_uid].to_i

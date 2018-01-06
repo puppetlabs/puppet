@@ -152,7 +152,7 @@ module Puppet::Parser::Functions
     ftype = options[:type] || :statement
 
     unless ftype == :statement or ftype == :rvalue
-      raise Puppet::DevError, "Invalid statement type #{ftype.inspect}"
+      raise Puppet::DevError, _("Invalid statement type %{type}") % { type: ftype.inspect }
     end
 
     # the block must be installed as a method because it may use "return",

@@ -63,7 +63,8 @@ class Puppet::Util::Log
     destinations.keys.each { |dest|
       close(dest)
     }
-    raise Puppet::DevError.new("Log.close_all failed to close #{@destinations.keys.inspect}") if !@destinations.empty?
+    #TRANSLATORS "Log.close_all" is a method name and should not be translated
+    raise Puppet::DevError.new(_("Log.close_all failed to close %{destinations}") % { destinations: @destinations.keys.inspect }) if !@destinations.empty?
   end
 
   # Flush any log destinations that support such operations.
@@ -82,8 +83,8 @@ class Puppet::Util::Log
   # Create a new log message.  The primary role of this method is to
   # avoid creating log messages below the loglevel.
   def Log.create(hash)
-    raise Puppet::DevError, "Logs require a level" unless hash.include?(:level)
-    raise Puppet::DevError, "Invalid log level #{hash[:level]}" unless @levels.index(hash[:level])
+    raise Puppet::DevError, _("Logs require a level") unless hash.include?(:level)
+    raise Puppet::DevError, _("Invalid log level %{level}") % { level: hash[:level] } unless @levels.index(hash[:level])
     @levels.index(hash[:level]) >= @loglevel ? Puppet::Util::Log.new(hash) : nil
   end
 
@@ -105,7 +106,7 @@ class Puppet::Util::Log
   def Log.level=(level)
     level = level.intern unless level.is_a?(Symbol)
 
-    raise Puppet::DevError, "Invalid loglevel #{level}" unless @levels.include?(level)
+    raise Puppet::DevError, _("Invalid loglevel %{level}") % { level: level } unless @levels.include?(level)
 
     @loglevel = @levels.index(level)
 
@@ -132,7 +133,7 @@ class Puppet::Util::Log
       return
     end
 
-    raise Puppet::DevError, "Unknown destination type #{dest}" unless type
+    raise Puppet::DevError, _("Unknown destination type %{dest}") % { dest: dest} unless type
 
     begin
       if type.instance_method(:initialize).arity == 1
@@ -395,18 +396,8 @@ class Puppet::Util::Log
     # Issue based messages do not have details in the message. It
     # must be appended here
     unless issue_code.nil?
-      msg = _("Could not parse for environment %{env}: %{msg}") % { env: environment, msg: msg } unless environment.nil?
-      if file && line && pos
-        msg = _("%{msg} at %{file}:%{line}:%{pos}") % { msg: msg, file: file, line: line, pos: pos }
-      elsif file and line
-        msg = _("%{msg}  at %{file}:%{line}") % { msg: msg, file: file, line: line }
-      elsif line && pos
-        msg = _("%{msg}  at line %{line}:%{pos}") % { msg: msg, line: line, pos: pos }
-      elsif line
-        msg = _("%{msg}  at line %{line}") % { msg: msg, line: line }
-      elsif file
-        msg = _("%{msg}  in %{file}") % { msg: msg, file: file }
-      end
+      msg = _("Could not parse for environment %{environment}: %{msg}") % { environment: environment, msg: msg } unless environment.nil?
+      msg += Puppet::Util::Errors.error_location_with_space(file, line, pos)
       msg = _("%{msg} on node %{node}") % { msg: msg, node: node } unless node.nil?
       if @backtrace.is_a?(Array)
         msg += "\n"

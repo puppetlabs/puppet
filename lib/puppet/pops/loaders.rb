@@ -165,7 +165,7 @@ class Loaders
   # @api private
   def self.loaders
     loaders = Puppet.lookup(:loaders) { nil }
-    raise Puppet::ParseError, "Internal Error: Puppet Context ':loaders' missing" if loaders.nil?
+    raise Puppet::ParseError, _("Internal Error: Puppet Context ':loaders' missing") if loaders.nil?
     loaders
   end
 
@@ -199,7 +199,9 @@ class Loaders
       # TODO : Later check if definition is private, and then add it to private_loader_for_module
       #
       loader = public_loader_for_module(module_name)
-      raise Puppet::ParseError, "Internal Error: did not find public loader for module: '#{module_name}'" if loader.nil?
+      if loader.nil?
+        raise Puppet::ParseError, _("Internal Error: did not find public loader for module: '%{module_name}'") % { module_name: module_name }
+      end
       loader
     end
   end
@@ -238,7 +240,9 @@ class Loaders
 
   def add_loader_by_name(loader)
     name = loader.loader_name
-    raise Puppet::ParseError, "Internal Error: Attempt to redefine loader named '#{name}'" if @loaders_by_name.include?(name)
+    if @loaders_by_name.include?(name)
+      raise Puppet::ParseError, _("Internal Error: Attempt to redefine loader named '%{name}'") % { name: name }
+    end
     @loaders_by_name[name] = loader
   end
 

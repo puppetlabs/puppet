@@ -88,6 +88,6 @@ describe 'the next function' do
         # line 2
         next()
       CODE
-    end.to raise_error(/next\(\) from context where this is illegal at unknown:3 on node.*/)
+    end.to raise_error(/next\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
   end
 end

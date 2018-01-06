@@ -32,6 +32,6 @@ describe Puppet::Util::Errors do
   it "should have a method for converting error context into a string" do
     @tester.file = "/my/file"
     @tester.line = 50
-    expect(@tester.error_context).to eq(" at /my/file:50")
+    expect(@tester.error_context).to eq(" (file: /my/file, line: 50)")
   end
 end

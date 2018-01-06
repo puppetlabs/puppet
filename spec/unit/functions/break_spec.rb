@@ -149,7 +149,7 @@ describe 'the break function' do
           }
           include(does_break)
         CODE
-      end.to raise_error(/break\(\) from context where this is illegal at unknown:3 on node.*/)
+      end.to raise_error(/break\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
     end
 
     it 'does not provide early exit from a define' do
@@ -166,7 +166,7 @@ describe 'the break function' do
           }
             does_break { 'no_you_cannot': }
         CODE
-      end.to raise_error(/break\(\) from context where this is illegal at unknown:3 on node.*/)
+      end.to raise_error(/break\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
     end
 
     it 'can be called when nested in a function to make that function behave as a break' do
@@ -191,7 +191,7 @@ describe 'the break function' do
           $result = with(1) |$x| { with($x) |$x| {break() }}
           notice $result
         CODE
-      end.to raise_error(/break\(\) from context where this is illegal at unknown:3 on node.*/)
+      end.to raise_error(/break\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
     end
 
     it 'can not be called from top scope' do
@@ -201,7 +201,7 @@ describe 'the break function' do
           # line 2
           break()
         CODE
-      end.to raise_error(/break\(\) from context where this is illegal at unknown:3 on node.*/)
+      end.to raise_error(/break\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
     end
   end
 end

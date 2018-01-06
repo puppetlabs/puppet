@@ -490,7 +490,7 @@ describe 'the 4x function api' do
               end
             end
           CODE
-        end.to raise_error(/MyType \+\= Array.*<Syntax error at '\+\=' at line 1:[0-9]+>.*functions4_spec\.rb.*/m)
+        end.to raise_error(/MyType \+\= Array.*<Syntax error at '\+\=' \(line: 1, column: [0-9]+\)>.*functions4_spec\.rb.*/m)
         # Note that raised error reports this spec file as the function source since the function is defined here
       end
 
@@ -508,7 +508,7 @@ describe 'the 4x function api' do
               end
             end
           CODE
-        end.to raise_error(/Parsing of type string '"Array\[1\+=1\]"' failed with message: <Syntax error at '\]' at line 1:[0-9]+/m)
+        end.to raise_error(/Parsing of type string '"Array\[1\+=1\]"' failed with message: <Syntax error at '\]' \(line: 1, column: [0-9]+\)>/m)
       end
 
     end

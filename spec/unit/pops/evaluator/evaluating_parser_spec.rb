@@ -1017,7 +1017,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
 
     it "provides location information on error in unparenthesized call logic" do
-    expect{parser.evaluate_string(scope, "include non_existing_class", __FILE__)}.to raise_error(Puppet::ParseError, /:1:1/)
+    expect{parser.evaluate_string(scope, "include non_existing_class", __FILE__)}.to raise_error(Puppet::ParseError, /line: 1, column: 1/)
     end
 
     it 'defaults can be given in a lambda and used only when arg is missing' do
@@ -1204,7 +1204,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "a lex error should be raised for '$foo::::bar'" do
-      expect { parser.evaluate_string(scope, "$foo::::bar") }.to raise_error(Puppet::ParseErrorWithIssue, /Illegal fully qualified name at line 1:7/)
+      expect { parser.evaluate_string(scope, "$foo::::bar") }.to raise_error(Puppet::ParseErrorWithIssue, /Illegal fully qualified name \(line: 1, column: 7\)/)
     end
 
     { '$a = $0'   => nil,
@@ -1394,7 +1394,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       source = "\nimport foo"
       # Error references position 5 at the opening '{'
       # Set file to nil to make it easier to match with line number (no file name in output)
-      expect { parser.evaluate_string(scope, source) }.to raise_error(/'import' has been discontinued.*line 2:1/)
+      expect { parser.evaluate_string(scope, source) }.to raise_error(/'import' has been discontinued.* \(line: 2, column: 1\)/)
     end
   end
 
@@ -1404,15 +1404,15 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       # Error references position 5 at the opening '{'
       # Set file to nil to make it easier to match with line number (no file name in output)
       expect { parser.evaluate_string(scope, source) }.to raise_error(
-        /Illegal Resource Type expression, expected result to be a type name, or untitled Resource.*line 1:2/)
+        /Illegal Resource Type expression, expected result to be a type name, or untitled Resource.* \(line: 1, column: 2\)/)
     end
 
     it 'for non r-value producing <| |>' do
-      expect { parser.parse_string("$a = File <| |>", nil) }.to raise_error(/A Virtual Query does not produce a value at line 1:6/)
+      expect { parser.parse_string("$a = File <| |>", nil) }.to raise_error(/A Virtual Query does not produce a value \(line: 1, column: 6\)/)
     end
 
     it 'for non r-value producing <<| |>>' do
-      expect { parser.parse_string("$a = File <<| |>>", nil) }.to raise_error(/An Exported Query does not produce a value at line 1:6/)
+      expect { parser.parse_string("$a = File <<| |>>", nil) }.to raise_error(/An Exported Query does not produce a value \(line: 1, column: 6\)/)
     end
 
     it 'for non r-value producing define' do
@@ -1433,7 +1433,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       yyy
       SOURCE
       # first char after opening " reported as being in error.
-      expect { parser.parse_string(source) }.to raise_error(/Unclosed quote after '"' followed by 'xx\\nyy\.\.\.' at line 1:7/)
+      expect { parser.parse_string(source) }.to raise_error(/Unclosed quote after '"' followed by 'xx\\nyy\.\.\.' \(line: 1, column: 7\)/)
     end
 
     it 'for multiple errors with a summary exception' do
@@ -1445,7 +1445,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     it 'for a bad hostname' do
       expect {
         parser.parse_string("node 'macbook+owned+by+name' { }", nil)
-      }.to raise_error(/The hostname 'macbook\+owned\+by\+name' contains illegal characters.*at line 1:6/)
+      }.to raise_error(/The hostname 'macbook\+owned\+by\+name' contains illegal characters.* \(line: 1, column: 6\)/)
     end
 
     it 'for a hostname with interpolation' do
@@ -1455,7 +1455,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       SOURCE
       expect {
         parser.parse_string(source, nil)
-      }.to raise_error(/An interpolated expression is not allowed in a hostname of a node at line 2:23/)
+      }.to raise_error(/An interpolated expression is not allowed in a hostname of a node \(line: 2, column: 23\)/)
     end
 
   end

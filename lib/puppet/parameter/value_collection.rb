@@ -19,7 +19,7 @@ class Puppet::Parameter::ValueCollection
   def aliasvalue(name, other)
     other = other.to_sym
     unless value = match?(other)
-      raise Puppet::DevError, "Cannot alias nonexistent value #{other}"
+      raise Puppet::DevError, _("Cannot alias nonexistent value %{value}") % { value: other }
     end
 
     value.alias(name)

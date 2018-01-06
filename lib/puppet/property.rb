@@ -211,7 +211,7 @@ class Puppet::Property < Puppet::Parameter
     rescue Puppet::Error, Puppet::DevError
       raise
     rescue => detail
-      message = "Could not convert change '#{name}' to string: #{detail}"
+      message = _("Could not convert change '%{name}' to string: %{detail}") % { name: name, detail: detail }
       Puppet.log_exception(detail, message)
       raise Puppet::DevError, message, detail.backtrace
     end
@@ -489,7 +489,8 @@ class Puppet::Property < Puppet::Parameter
       rescue Puppet::Error
         raise
       rescue => detail
-        error = Puppet::ResourceError.new("Could not set '#{value}' on #{self.class.name}: #{detail}", @resource.file, @resource.line, detail)
+        error = Puppet::ResourceError.new(_("Could not set '%{value}' on %{class_name}: %{detail}") %
+                                              { value: value, class_name: self.class.name, detail: detail }, @resource.file, @resource.line, detail)
         error.set_backtrace detail.backtrace
         Puppet.log_exception(detail, error.message)
         raise error

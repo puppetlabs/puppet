@@ -277,7 +277,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     target_records = prefetch_hook(target_records) if respond_to?(:prefetch_hook)
 
-    raise Puppet::DevError, "Prefetching #{target} for provider #{self.name} returned nil" unless target_records
+    raise Puppet::DevError, _("Prefetching %{target} for provider %{name} returned nil") % { target: target, name: self.name } unless target_records
 
     target_records
   end
@@ -350,7 +350,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.targets(resources = nil)
     targets = []
     # First get the default target
-    raise Puppet::DevError, "Parsed Providers must define a default target" unless self.default_target
+    raise Puppet::DevError, _("Parsed Providers must define a default target") unless self.default_target
     targets << self.default_target
 
     # Then get each of the file objects
@@ -439,7 +439,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Retrieve the current state from disk.
   def prefetch
-    raise Puppet::DevError, "Somehow got told to prefetch with no resource set" unless @resource
+    raise Puppet::DevError, _("Somehow got told to prefetch with no resource set") unless @resource
     self.class.prefetch(@resource[:name] => @resource)
   end
 

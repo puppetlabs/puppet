@@ -143,7 +143,10 @@ class PObjectType < PMetaType
     def assert_override(parent_members)
       parent_member = parent_members[@name]
       if parent_member.nil?
-        raise Puppet::ParseError, "expected #{label} to override an inherited #{feature_type}, but no such #{feature_type} was found" if @override
+        if @override
+          raise Puppet::ParseError, _("expected %{label} to override an inherited %{feature_type}, but no such %{feature_type} was found") %
+              { label: label, feature_type: feature_type }
+        end
         self
       else
         parent_member.assert_can_be_overridden(self)
@@ -157,10 +160,19 @@ class PObjectType < PMetaType
     # @raises [Puppet::ParseError] if the assertion fails
     # @api private
     def assert_can_be_overridden(member)
-      raise Puppet::ParseError, "#{member.label} attempts to override #{label}" unless self.class == member.class
-      raise Puppet::ParseError, "#{member.label} attempts to override final #{label}" if @final && !(constant? && member.constant?)
-      raise Puppet::ParseError, "#{member.label} attempts to override #{label} without having override => true" unless member.override?
-      raise Puppet::ParseError, "#{member.label} attempts to override #{label} with a type that does not match" unless @type.assignable?(member.type)
+      unless self.class == member.class
+        raise Puppet::ParseError, _("%{member} attempts to override %{label}") % { member: member.label, label: label }
+      end
+      if @final && !(constant? && member.constant?)
+        raise Puppet::ParseError, _("%{member} attempts to override final %{label}") % { member: member.label, label: label }
+      end
+      unless member.override?
+        #TRANSLATOR 'override => true' is a puppet syntax and should not be translated
+        raise Puppet::ParseError, _("%{member} attempts to override %{label} without having override => true") % { member: member.label, label: label }
+      end
+      unless @type.assignable?(member.type)
+        raise Puppet::ParseError, _("%{member} attempts to override %{label} with a type that does not match") % { member: member.label, label: label }
+      end
       member
     end
 
@@ -275,19 +287,20 @@ class PObjectType < PMetaType
       @kind = init_hash[KEY_KIND]
       if @kind == ATTRIBUTE_KIND_CONSTANT # final is implied
         if init_hash.include?(KEY_FINAL) && !@final
-          raise Puppet::ParseError, "#{label} of kind 'constant' cannot be combined with final => false"
+          #TRANSLATOR 'final => false' is puppet syntax and should not be translated
+          raise Puppet::ParseError, _("%{label} of kind 'constant' cannot be combined with final => false") % { label: label }
         end
         @final = true
       end
 
       if init_hash.include?(KEY_VALUE)
         if @kind == ATTRIBUTE_KIND_DERIVED || @kind == ATTRIBUTE_KIND_GIVEN_OR_DERIVED
-          raise Puppet::ParseError, "#{label} of kind '#{@kind}' cannot be combined with an attribute value"
+          raise Puppet::ParseError, _("%{label} of kind '%{kind}' cannot be combined with an attribute value") % { label: label, kind: @kind }
         end
         v = init_hash[KEY_VALUE]
         @value = v == :default ? v : TypeAsserter.assert_instance_of(nil, type, v) {"#{label} #{KEY_VALUE}" }
       else
-        raise Puppet::ParseError, "#{label} of kind 'constant' requires a value" if @kind == ATTRIBUTE_KIND_CONSTANT
+        raise Puppet::ParseError, _("%{label} of kind 'constant' requires a value") % { label: label } if @kind == ATTRIBUTE_KIND_CONSTANT
         @value = :undef # Not to be confused with nil or :default
       end
     end
@@ -703,7 +716,9 @@ class PObjectType < PMetaType
     end
     unless constants.nil? || constants.empty?
       constants.each do |key, value|
-        raise Puppet::ParseError, "attribute #{label}[#{key}] is defined as both a constant and an attribute" if attr_specs.include?(key)
+        if attr_specs.include?(key)
+          raise Puppet::ParseError, _("attribute %{label}[%{key}] is defined as both a constant and an attribute") % { label: label, key: key }
+        end
         attr_spec = {
           # Type must be generic here, or overrides would become impossible
           KEY_TYPE => TypeCalculator.infer(value).generalize,
@@ -734,7 +749,7 @@ class PObjectType < PMetaType
         func_spec = { KEY_TYPE => TypeAsserter.assert_instance_of(nil, TYPE_FUNCTION_TYPE, func_spec) { "function #{label}[#{key}]" } } unless func_spec.is_a?(Hash)
         func = PFunction.new(key, self, func_spec)
         name = func.name
-        raise Puppet::ParseError, "#{func.label} conflicts with attribute with the same name" if @attributes.include?(name)
+        raise Puppet::ParseError, _("%{label} conflicts with attribute with the same name") % { label: func.label } if @attributes.include?(name)
         [name, func.assert_override(parent_members)]
       end].freeze
     end
@@ -746,7 +761,8 @@ class PObjectType < PMetaType
     equality = [equality] if equality.is_a?(String)
     if equality.is_a?(Array)
       unless equality.empty?
-        raise Puppet::ParseError, 'equality_include_type = false cannot be combined with non empty equality specification' unless @equality_include_type
+        #TRANSLATORS equality_include_type = false should not be translated
+        raise Puppet::ParseError, _('equality_include_type = false cannot be combined with non empty equality specification') unless @equality_include_type
         parent_eq_attrs = nil
         equality.each do |attr_name|
 
@@ -758,16 +774,21 @@ class PObjectType < PMetaType
             parent_eq_attrs ||= parent_object_type.equality_attributes
             if parent_eq_attrs.include?(attr_name)
               including_parent = find_equality_definer_of(attr)
-              raise Puppet::ParseError, "#{label} equality is referencing #{attr.label} which is included in equality of #{including_parent.label}"
+              raise Puppet::ParseError, _("%{label} equality is referencing %{attribute} which is included in equality of %{including_parent}") %
+                  { label: label, attribute: attr.label, including_parent: including_parent.label }
             end
           end
 
           unless attr.is_a?(PAttribute)
-            raise Puppet::ParseError, "#{label} equality is referencing non existent attribute '#{attr_name}'" if attr.nil?
-            raise Puppet::ParseError, "#{label} equality is referencing #{attr.label}. Only attribute references are allowed"
+            if attr.nil?
+              raise Puppet::ParseError, _("%{label} equality is referencing non existent attribute '%{attribute}'") % { label: label, attribute: attr_name }
+            end
+            raise Puppet::ParseError, _("%{label} equality is referencing %{attribute}. Only attribute references are allowed") %
+                { label: label, attribute: attr.label }
           end
           if attr.kind == ATTRIBUTE_KIND_CONSTANT
-            raise Puppet::ParseError, "#{label} equality is referencing constant #{attr.label}. Reference to constant is not allowed in equality"
+            raise Puppet::ParseError, _("%{label} equality is referencing constant %{attribute}.") % { label: label, attribute: attr.label } + ' ' +
+                _("Reference to constant is not allowed in equality")
           end
         end
       end

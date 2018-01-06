@@ -420,10 +420,10 @@ class Puppet::Resource::Type
     name_to_type_hash.each do |name, t|
       # catch internal errors
       unless @arguments.include?(name)
-        raise Puppet::DevError, "Parameter '#{name}' is given a type, but is not a valid parameter."
+        raise Puppet::DevError, _("Parameter '%{name}' is given a type, but is not a valid parameter.") % { name: name }
       end
       unless t.is_a? Puppet::Pops::Types::PAnyType
-        raise Puppet::DevError, "Parameter '#{name}' is given a type that is not a Puppet Type, got #{t.class}"
+        raise Puppet::DevError, _("Parameter '%{name}' is given a type that is not a Puppet Type, got %{class_name}") % { name: name, class_name: t.class }
       end
       @argument_types[name] = t
     end
@@ -463,7 +463,7 @@ class Puppet::Resource::Type
   end
 
   def parent_scope(scope, klass)
-    scope.class_scope(klass) || raise(Puppet::DevError, "Could not find scope for #{klass.name}")
+    scope.class_scope(klass) || raise(Puppet::DevError, _("Could not find scope for %{class_name}") % { class_name: klass.name })
   end
 
   def set_name_and_namespace(name)

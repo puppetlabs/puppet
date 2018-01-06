@@ -738,7 +738,8 @@ class EvaluatorImpl
       #evaluate(o.body, scope)
     rescue Puppet::Pops::Evaluator::PuppetStopIteration => ex
       # breaking out of a file level program is not allowed
-      raise Puppet::ParseError.new("break() from context where this is illegal", ex.file, ex.line)
+      #TRANSLATOR break() is a method that should not be translated
+      raise Puppet::ParseError.new(_("break() from context where this is illegal"), ex.file, ex.line)
     end
   end
 

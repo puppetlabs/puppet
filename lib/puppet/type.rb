@@ -425,7 +425,7 @@ class Type
     when 1;
       [ [ /(.*)/m, [ [key_attributes.first] ] ] ]
     else
-      raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
+      raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
     end
   end
 
@@ -500,11 +500,10 @@ class Type
     # This is here for types that might still have the old method of defining
     # a parent class.
     unless options.is_a? Hash
-      raise Puppet::DevError,
-        "Options must be a hash, not #{options.inspect}"
+      raise Puppet::DevError, _("Options must be a hash, not %{type}") % { type: options.inspect }
     end
 
-    raise Puppet::DevError, "Class #{self.name} already has a property named #{name}" if @validproperties.include?(name)
+    raise Puppet::DevError, _("Class %{class_name} already has a property named %{property}") % { class_name: self.name, property: name } if @validproperties.include?(name)
 
     if parent = options[:parent]
       options.delete(:parent)
@@ -590,7 +589,7 @@ class Type
 
   # @return [Boolean] Returns true if the given name is the name of an existing parameter
   def self.validparameter?(name)
-    raise Puppet::DevError, "Class #{self} has not defined parameters" unless defined?(@parameters)
+    raise Puppet::DevError, _("Class %{class_name} has not defined parameters") % { class_name: self } unless defined?(@parameters)
     !!(@paramhash.include?(name) or @@metaparamhash.include?(name))
   end
 
@@ -674,7 +673,8 @@ class Type
         # make sure the parameter doesn't have any errors
         property.value = value
       rescue Puppet::Error, ArgumentError => detail
-        error = Puppet::ResourceError.new("Parameter #{name} failed on #{ref}: #{detail}")
+        error = Puppet::ResourceError.new(_("Parameter %{name} failed on %{ref}: %{detail}") %
+                                              { name: name, ref: ref, detail: detail })
         adderrorcontext(error, detail)
         raise error
       end
@@ -696,7 +696,7 @@ class Type
     if @parameters.has_key?(attr)
       @parameters.delete(attr)
     else
-      raise Puppet::DevError.new("Undefined attribute '#{attr}' in #{self}")
+      raise Puppet::DevError.new(_("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self})
     end
   end
 
@@ -1018,8 +1018,8 @@ class Type
 
     if property = @parameters[:ensure]
       unless is.include? property
-        raise Puppet::DevError,
-          "The is value is not in the is array for '#{property.name}'"
+        #TRANSLATORS 'is' is a variable name and should not be translated
+        raise Puppet::DevError, _("The 'is' value is not in the 'is' array for '%{name}'") % { name: property.name }
       end
       ensureis = is[property]
       if property.safe_insync?(ensureis) and property.should == :absent
@@ -1029,8 +1029,8 @@ class Type
 
     properties.each { |prop|
       unless is.include? prop
-        raise Puppet::DevError,
-          "The is value is not in the is array for '#{prop.name}'"
+        #TRANSLATORS 'is' is a variable name and should not be translated
+        raise Puppet::DevError, _("The 'is' value is not in the 'is' array for '%{name}'") % { name: prop.name }
       end
 
       propis = is[prop]
@@ -1156,7 +1156,7 @@ class Type
   # Either requires providers or must be overridden.
   # @raise [Puppet::DevError] when there are no providers and the implementation has not overridden this method.
   def self.instances
-    raise Puppet::DevError, "#{self.name} has no providers and has not overridden 'instances'" if provider_hash.empty?
+    raise Puppet::DevError, _("%{name} has no providers and has not overridden 'instances'") % { name: self.name } if provider_hash.empty?
 
     # Put the default provider first, then the rest of the suitable providers.
     provider_instances = {}
@@ -1494,7 +1494,8 @@ class Type
       @value.each do |ref|
         unless @resource.catalog.resource(ref.to_s)
           description = self.class.direction == :in ? "dependency" : "dependent"
-          fail ResourceError, "Could not find #{description} #{ref} for #{resource.ref}"
+          fail ResourceError, _("Could not find %{description} %{ref} for %{resource}") %
+              { description: description, ref: ref, resource: resource.ref }
         end
       end
     end
@@ -1852,8 +1853,7 @@ end
         if provider = self.provider(pname)
           provider
         else
-          raise Puppet::DevError,
-            "Could not find parent provider #{pname} of #{name}"
+          raise Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name }
         end
       end
     else
@@ -2129,7 +2129,7 @@ end
   #
   def autorelation(rel_type, rel_catalog = nil)
     rel_catalog ||= catalog
-    raise(Puppet::DevError, "You cannot add relationships without a catalog") unless rel_catalog
+    raise Puppet::DevError, _("You cannot add relationships without a catalog") unless rel_catalog
 
     reqs = []
 
@@ -2495,7 +2495,7 @@ end
       rescue ArgumentError, Puppet::Error, TypeError
         raise
       rescue => detail
-        error = Puppet::DevError.new( "Could not set #{attr} on #{self.class.name}: #{detail}")
+        error = Puppet::DevError.new(_("Could not set %{attribute} on %{class_name}: %{detail}") % { attribute: attr, class_name: self.class.name, detail: detail })
         error.set_backtrace(detail.backtrace)
         raise error
       end

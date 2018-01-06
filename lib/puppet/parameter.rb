@@ -338,7 +338,7 @@ class Puppet::Parameter
       self.resource = resource
       options.delete(:resource)
     else
-      raise Puppet::DevError, "No resource set for #{self.class.name}"
+      raise Puppet::DevError, _("No resource set for %{name}") % { name: self.class.name }
     end
 
     set_options(options)
@@ -425,7 +425,7 @@ class Puppet::Parameter
       Puppet.debug "Reraising #{detail}"
       raise
     rescue => detail
-      raise Puppet::DevError, "Munging failed for value #{value.inspect} in class #{self.name}: #{detail}", detail.backtrace
+      raise Puppet::DevError, _("Munging failed for value %{value} in class %{class_name}: %{detail}") % { value: value.inspect, class_name: self.name, detail: detail }, detail.backtrace
     end
     ret
   end
@@ -459,7 +459,7 @@ class Puppet::Parameter
     rescue Puppet::Error, TypeError
       raise
     rescue => detail
-      raise Puppet::DevError, "Validate method failed for class #{self.name}: #{detail}", detail.backtrace
+      raise Puppet::DevError, _("Validate method failed for class %{class_name}: %{detail}") % { class_name: self.name, detail: detail }, detail.backtrace
     end
   end
 

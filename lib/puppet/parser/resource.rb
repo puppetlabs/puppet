@@ -169,72 +169,18 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
 
     if evaluated?
+      error_location_str = Puppet::Util::Errors.error_location(file, line)
+      msg = if error_location_str.empty?
+              _('Attempt to override an already evaluated resource with new values')
+            else
+              _('Attempt to override an already evaluated resource, defined at %{error_location}, with new values') % { error_location: error_location_str }
+            end
       strict = Puppet[:strict]
       unless strict == :off
         if strict == :error
-          msg = if file && file != ''
-                  if line
-                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values') % { file: file, line: line }
-                  else
-                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values') % { file: file }
-                  end
-                else
-                  if line
-                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values') % { line: line }
-                  else
-                    _('Attempt to override an already evaluated resource with new values')
-                  end
-                end
           raise Puppet::ParseError.new(msg, resource.file, resource.line)
         else
-          msg = case
-                  # all 4 variables set
-                  when file && file != '' && line && resource.file && resource.file != '' && resource.line
-                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values at %{resource_file}:%{resource_line}') %
-                        { file: file, line: line, resource_file: resource.file, resource_line: resource.line }
-
-                  # 3 variables set
-                  when file && file != '' && line && resource.file && resource.file != ''
-                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values in %{resource_file}') %
-                        { file: file, line: line, resource_file: resource.file }
-                  when file && file != '' && line && resource.line
-                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values at line %{resource_line}') %
-                        { file: file, line: line, resource_line: resource.line }
-                  when file && file != '' && resource.file && resource.file != '' && resource.line
-                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values at %{resource_file}:%{resource_line}') %
-                        { file: file, resource_file: resource.file, resource_line: resource.line }
-                  when line && resource.file && resource.file != '' && resource.line
-                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values at %{resource_file}:%{resource_line}') %
-                        { line: line, resource_file: resource.file, resource_line: resource.line }
-
-                  # 2 variables set
-                  when file && file != '' && line
-                    _('Attempt to override an already evaluated resource, defined at %{file}:%{line}, with new values') % { file: file, line: line }
-                  when file && file != '' && resource.file && resource.file != ''
-                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values in %{resource_file}') % { file: file, resource_file: resource.file }
-                  when file && file != '' && resource.line
-                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values at line %{resource_line}') % { file: file, resource_line: resource.line }
-                  when line && resource.file && resource.file != ''
-                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values in %{resource_file}') % { line: line, resource_file: resource.file }
-                  when line && resource.line
-                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values at line %{resource_line}') % { line: line, resource_line: resource.line }
-                  when resource.file && resource.file != '' && resource.line
-                    _('Attempt to override an already evaluated resource with new values at %{resource_file}:%{resource_line}') % { resource_file: resource.file, resource_line: resource.line }
-
-                  # 1 variable set
-                  when file && file != ''
-                    _('Attempt to override an already evaluated resource, defined in %{file}, with new values') % { file: file }
-                  when line
-                    _('Attempt to override an already evaluated resource, defined at line %{line}, with new values') % { line: line }
-                  when resource.file && resource.file != ''
-                    _('Attempt to override an already evaluated resource with new values in %{resource_file}') % { resource_file: resource.file }
-                  when resource.line
-                    _('Attempt to override an already evaluated resource with new values at line %{resource_line}') % { resource_line: resource.line }
-
-                  else
-                    # no variables set
-                    _('Attempt to override an already evaluated resource with new values')
-                end
+          msg += Puppet::Util::Errors.error_location_with_space(resource.file, resource.line)
           Puppet.warning(msg)
         end
       end
@@ -410,41 +356,22 @@ class Puppet::Parser::Resource < Puppet::Resource
 
     # The parameter is already set.  Fail if they're not allowed to override it.
     unless param.source.child_of?(current.source) || param.source.equal?(current.source) && scope.is_default?(type, param.name, current.value)
+      error_location_str = Puppet::Util::Errors.error_location(current.file, current.line)
       msg = if current.source.to_s == ''
-              if current.file && current.file != ''
-                if current.line
-                  _("Parameter '%{name}' is already set on %{resource} at %{file}:%{line}; cannot redefine") %
-                      { name: param.name, resource: ref, file: current.file, line: current.line }
-                else
-                  _("Parameter '%{name}' is already set on %{resource} in %{file}; cannot redefine") %
-                      { name: param.name, resource: ref, file: current.file }
-                end
+              if error_location_str.empty?
+                _("Parameter '%{name}' is already set on %{resource}; cannot redefine") %
+                    { name: param.name, resource: ref }
               else
-                if current.line
-                  _("Parameter '%{name}' is already set on %{resource} at line %{line}; cannot redefine") %
-                      { name: param.name, resource: ref, line: current.line }
-                else
-                  _("Parameter '%{name}' is already set on %{resource}; cannot redefine") %
-                      { name: param.name, resource: ref }
-                end
+                _("Parameter '%{name}' is already set on %{resource} at %{error_location}; cannot redefine") %
+                    { name: param.name, resource: ref, error_location: error_location_str }
               end
             else
-              if current.file && current.file != ''
-                if current.line
-                  _("Parameter '%{name}' is already set on %{resource} by %{source} at %{file}:%{line}; cannot redefine") %
-                      { name: param.name, resource: ref, source: current.source.to_s, file: current.file, line: current.line }
-                else
-                  _("Parameter '%{name}' is already set on %{resource} by %{source} in %{file}; cannot redefine") %
-                      { name: param.name, resource: ref, source: current.source.to_s, file: current.file }
-                end
+              if error_location_str.empty?
+                _("Parameter '%{name}' is already set on %{resource} by %{source}; cannot redefine") %
+                    { name: param.name, resource: ref, source: current.source.to_s }
               else
-                if current.line
-                  _("Parameter '%{name}' is already set on %{resource} by %{source} at line %{line}; cannot redefine") %
-                      { name: param.name, resource: ref, source: current.source.to_s, line: current.line }
-                else
-                  _("Parameter '%{name}' is already set on %{resource} by %{source}; cannot redefine") %
-                      { name: param.name, resource: ref, source: current.source.to_s }
-                end
+                _("Parameter '%{name}' is already set on %{resource} by %{source} at %{error_location}; cannot redefine") %
+                    { name: param.name, resource: ref, source: current.source.to_s, error_location: error_location_str }
               end
             end
       raise Puppet::ParseError.new(msg, param.file, param.line)

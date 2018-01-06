@@ -79,7 +79,7 @@ class Puppet::Daemon
   end
 
   def reexec
-    raise Puppet::DevError, "Cannot reexec unless ARGV arguments are set" unless argv
+    raise Puppet::DevError, _("Cannot reexec unless ARGV arguments are set") unless argv
     command = $0 + " " + argv.join(" ")
     Puppet.notice "Restarting with '#{command}'"
     stop(:exit => false)
@@ -140,7 +140,7 @@ class Puppet::Daemon
   def start
     create_pidfile
 
-    raise Puppet::DevError, "Daemons must have an agent, server, or both" unless agent or server
+    raise Puppet::DevError, _("Daemons must have an agent, server, or both") unless agent or server
 
     # Start the listening server, if required.
     server.start if server

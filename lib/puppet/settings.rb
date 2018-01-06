@@ -256,7 +256,7 @@ class Puppet::Settings
   end
 
   def initialize_global_settings(args = [])
-    raise Puppet::DevError, "Attempting to initialize global default settings more than once!" if global_defaults_initialized?
+    raise Puppet::DevError, _("Attempting to initialize global default settings more than once!") if global_defaults_initialized?
 
     # The first two phases of the lifecycle of a puppet application are:
     # 1) Parse the command line options and handle any of them that are
@@ -830,7 +830,7 @@ class Puppet::Settings
     when :environment
       ValuesFromEnvironmentConf.new(source.name)
     else
-      raise(Puppet::DevError, "Unknown searchpath case: #{source.type} for the #{source} settings path element.")
+      raise Puppet::DevError, _("Unknown searchpath case: %{source_type} for the %{source} settings path element.") % { source_type: source.type, source: source}
     end
   end
 

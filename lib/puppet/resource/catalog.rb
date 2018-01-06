@@ -572,7 +572,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
                      when "random"
                        Puppet::Graph::RandomPrioritizer.new
                      else
-                       raise Puppet::DevError, "Unknown ordering type #{Puppet[:ordering]}"
+                       raise Puppet::DevError, _("Unknown ordering type %{ordering}") % { ordering: Puppet[:ordering] }
                      end
   end
 
@@ -591,12 +591,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     return unless existing_resource = @resource_table[title_key]
 
     # If we've gotten this far, it's a real conflict
-    msg = "Duplicate declaration: #{resource.ref} is already declared"
-
-    msg << " in file #{existing_resource.file}:#{existing_resource.line}" if existing_resource.file and existing_resource.line
-
-    msg << "; cannot redeclare"
-
+    error_location_str = Puppet::Util::Errors.error_location(existing_resource.file, existing_resource.line)
+    msg = if error_location_str.empty?
+            _("Duplicate declaration: %{resource} is already declared; cannot redeclare") % { resource: resource.ref }
+          else
+            _("Duplicate declaration: %{resource} is already declared at %{error_location}; cannot redeclare") % { resource: resource.ref, error_location: error_location_str }
+          end
     raise DuplicateResourceError.new(msg, resource.file, resource.line)
   end
 
@@ -643,11 +643,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       next if block_given? and yield edge.target
 
       unless source = map[edge.source.ref]
-        raise Puppet::DevError, "Could not find resource #{edge.source.ref} when converting #{message} resources"
+        raise Puppet::DevError, _("Could not find resource %{resource} when converting %{message} resources") % { resource: edge.source.ref, message: message }
       end
 
       unless target = map[edge.target.ref]
-        raise Puppet::DevError, "Could not find resource #{edge.target.ref} when converting #{message} resources"
+        raise Puppet::DevError, _("Could not find resource %{resource} when converting %{message} resources") % { resource: edge.target.ref, message: message }
       end
 
       result.add_edge(source, target, edge.label)
