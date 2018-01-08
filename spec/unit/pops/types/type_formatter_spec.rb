@@ -150,7 +150,7 @@ FORMATTED
     it "should yield 'String' and from/to for PStringType" do
       expect(s.string(f.string(f.range(1,1)))).to eq('String[1, 1]')
       expect(s.string(f.string(f.range(1,2)))).to eq('String[1, 2]')
-      expect(s.string(f.string(f.range(:default, 2)))).to eq('String[default, 2]')
+      expect(s.string(f.string(f.range(:default, 2)))).to eq('String[0, 2]')
       expect(s.string(f.string(f.range(2, :default)))).to eq('String[2]')
     end
 
@@ -175,14 +175,14 @@ FORMATTED
     it "should yield 'Collection' and from/to for PCollectionType" do
       expect(s.string(f.collection(f.range(1,1)))).to eq('Collection[1, 1]')
       expect(s.string(f.collection(f.range(1,2)))).to eq('Collection[1, 2]')
-      expect(s.string(f.collection(f.range(:default, 2)))).to eq('Collection[default, 2]')
+      expect(s.string(f.collection(f.range(:default, 2)))).to eq('Collection[0, 2]')
       expect(s.string(f.collection(f.range(2, :default)))).to eq('Collection[2]')
     end
 
     it "should yield 'Array' and from/to for PArrayType" do
       expect(s.string(f.array_of(f.string, f.range(1,1)))).to eq('Array[String, 1, 1]')
       expect(s.string(f.array_of(f.string, f.range(1,2)))).to eq('Array[String, 1, 2]')
-      expect(s.string(f.array_of(f.string, f.range(:default, 2)))).to eq('Array[String, default, 2]')
+      expect(s.string(f.array_of(f.string, f.range(:default, 2)))).to eq('Array[String, 0, 2]')
       expect(s.string(f.array_of(f.string, f.range(2, :default)))).to eq('Array[String, 2]')
     end
 
@@ -265,7 +265,7 @@ FORMATTED
     it "should yield 'Hash' and from/to for PHashType" do
       expect(s.string(f.hash_of(f.string, f.string, f.range(1,1)))).to eq('Hash[String, String, 1, 1]')
       expect(s.string(f.hash_of(f.string, f.string, f.range(1,2)))).to eq('Hash[String, String, 1, 2]')
-      expect(s.string(f.hash_of(f.string, f.string, f.range(:default, 2)))).to eq('Hash[String, String, default, 2]')
+      expect(s.string(f.hash_of(f.string, f.string, f.range(:default, 2)))).to eq('Hash[String, String, 0, 2]')
       expect(s.string(f.hash_of(f.string, f.string, f.range(2, :default)))).to eq('Hash[String, String, 2]')
     end
 

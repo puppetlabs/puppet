@@ -1313,7 +1313,7 @@ class PCollectionType < PAnyType
   attr_reader :size_type
 
   def initialize(size_type)
-    @size_type = size_type
+    @size_type = size_type.nil? ? nil : size_type.to_size
   end
 
   def accept(visitor, guard)
@@ -1508,7 +1508,7 @@ class PStringType < PScalarDataType
       end
       size_type_or_value = deprecated_multi_args[0]
     end
-    @size_type_or_value = size_type_or_value
+    @size_type_or_value = size_type_or_value.is_a?(PIntegerType) ? size_type_or_value.to_size : size_type_or_value
   end
 
   def accept(visitor, guard)
