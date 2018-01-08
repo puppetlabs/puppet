@@ -346,6 +346,23 @@ describe 'The Loader' do
               'fum.conf' => <<-CONF.unindent,
                 text=This is not a task because it has .conf extension
                 CONF
+              'bad_syntax.sh' => '',
+              'bad_syntax.json' => <<-TXT.unindent,
+                text => This is not a task because JSON is unparsable
+                TXT
+              'bad_content.sh' => '',
+              'bad_content.json' => <<-JSON.unindent,
+                {
+                  "description": "This is not a task because parameters is misspelled",
+                  "paramters": { "string_param": { "type": "String[1]" } }
+                }
+                JSON
+              'missing_adjacent.json' => <<-JSON.unindent,
+                {
+                  "description": "This is not a task because there is no adjacent file with the same base name",
+                  "parameters": { "string_param": { "type": "String[1]" } }
+                }
+                JSON
             }
           }
 
@@ -370,7 +387,7 @@ describe 'The Loader' do
           end
 
           it 'discover is only called once on dependent loader' do
-            ModuleLoaders::FileBased.any_instance.expects(:discover).times(4).with(:type, Pcore::RUNTIME_NAME_AUTHORITY).returns([])
+            ModuleLoaders::FileBased.any_instance.expects(:discover).times(4).with(:type, nil, Pcore::RUNTIME_NAME_AUTHORITY).returns([])
             expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(contain_exactly())
           end
 
@@ -410,6 +427,33 @@ describe 'The Loader' do
             it 'module loader does not consider files with .md and .conf extension to be tasks' do
               expect(Loaders.find_loader('c').discover(:task) { |t| t.name =~ /(?:foo|fee|fum)\z/ }).to(
                 contain_exactly(tn(:task, 'c::foo')))
+            end
+
+            it 'without error_collector, invalid task metadata results in warnings' do
+              logs = []
+              Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+                expect(Loaders.find_loader('c').discover(:task)).to(
+                  contain_exactly(tn(:task, 'environment::envtask'), tn(:task, 'globtask'), tn(:task, 'c::foo')))
+              end
+              expect(logs.select { |log| log.level == :warning }.map { |log| log.message }).to(
+                contain_exactly(/unexpected token/, /unrecognized key/, /No source besides task metadata was found/)
+              )
+            end
+
+            it 'with error_collector, errors are collected and no warnings are logged' do
+              logs = []
+              error_collector = []
+              Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+                expect(Loaders.find_loader('c').discover(:task, error_collector)).to(
+                  contain_exactly(tn(:task, 'environment::envtask'), tn(:task, 'globtask'), tn(:task, 'c::foo')))
+              end
+              expect(logs.select { |log| log.level == :warning }.map { |log| log.message }).to be_empty
+              expect(error_collector.size).to eql(3)
+              expect(error_collector.all? { |e| e.is_a?(Puppet::DataTypes::Error) })
+              expect(error_collector.all? { |e| e.issue_code == Puppet::Pops::Issues::LOADER_FAILURE.issue_code })
+              expect(error_collector.map { |e| e.details['original_error'] }).to(
+                contain_exactly(/unexpected token/, /unrecognized key/, /No source besides task metadata was found/)
+              )
             end
 
             context 'and an environment without directory' do

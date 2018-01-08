@@ -78,7 +78,7 @@ class StaticLoader < Loader
     create_built_in_types
   end
 
-  def discover(type, name_authority = Pcore::RUNTIME_NAME_AUTHORITY)
+  def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY)
     # Static loader only contains runtime types
     return EMPTY_ARRAY unless type == :type && name_authority == name_authority = Pcore::RUNTIME_NAME_AUTHORITY
 

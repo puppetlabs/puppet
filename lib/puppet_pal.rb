@@ -77,28 +77,19 @@ module Pal
     # The returned array has more information than just the leaf name - the typical thing is to just get
     # the name as showing the following example.
     #
-    # @example getting the names of all functions
-    #   compiler.list_functions.map {|tn| tn.name }
-    #
-    # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
-    # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
-    #
-    def list_functions(filter_regex = nil)
-      list_loadable_kind(:function, filter_regex)
-    end
-
-    # Returns an array of TypedName objects for all functions, optionally filtered by a regular expression.
-    # The returned array has more information than just the leaf name - the typical thing is to just get
-    # the name as showing the following example.
+    # Errors that occur during function discovery will either be logged as warnings or collected by the optional
+    # `error_collector` array. When provided, it will receive {Puppet::DataTypes::Error} instances describing
+    # each error in detail and no warnings will be logged.
     #
     # @example getting the names of all functions
     #   compiler.list_functions.map {|tn| tn.name }
     #
     # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @param error_collector [Array<Puppet::DataTypes::Error>] an optional array that will receive errors during load
     # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
     #
-    def list_functions(filter_regex = nil)
-      list_loadable_kind(:function, filter_regex)
+    def list_functions(filter_regex = nil, error_collector = nil)
+      list_loadable_kind(:function, filter_regex, error_collector)
     end
 
     # Evaluates a string of puppet language code in top scope.
@@ -228,12 +219,12 @@ module Pal
 
     protected
 
-    def list_loadable_kind(kind, filter_regex = nil)
+    def list_loadable_kind(kind, filter_regex = nil, error_collector = nil)
       loader = internal_compiler.loaders.private_environment_loader
       if filter_regex.nil?
-        loader.discover(kind)
+        loader.discover(kind, error_collector)
       else
-        loader.discover(kind) {|f| f.name =~ filter_regex }
+        loader.discover(kind, error_collector) {|f| f.name =~ filter_regex }
       end
     end
 
@@ -262,14 +253,19 @@ module Pal
     # The returned array has more information than just the leaf name - the typical thing is to just get
     # the name as showing the following example.
     #
+    # Errors that occur during plan discovery will either be logged as warnings or collected by the optional
+    # `error_collector` array. When provided, it will receive {Puppet::DataTypes::Error} instances describing
+    # each error in detail and no warnings will be logged.
+    #
     # @example getting the names of all plans
     #   compiler.list_plans.map {|tn| tn.name }
     #
     # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @param error_collector [Array<Puppet::DataTypes::Error>] an optional array that will receive errors during load
     # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
     #
-    def list_plans(filter_regex = nil)
-      list_loadable_kind(:plan, filter_regex)
+    def list_plans(filter_regex = nil, error_collector = nil)
+      list_loadable_kind(:plan, filter_regex, error_collector)
     end
 
     # Returns the signature callable of the given task (the arguments it accepts, and the data type it returns)
@@ -292,11 +288,16 @@ module Pal
     # @example getting the names of all tasks
     #   compiler.list_tasks.map {|tn| tn.name }
     #
+    # Errors that occur during task discovery will either be logged as warnings or collected by the optional
+    # `error_collector` array. When provided, it will receive {Puppet::DataTypes::Error} instances describing
+    # each error in detail and no warnings will be logged.
+    #
     # @param filter_regex [Regexp] an optional regexp that filters based on name (matching names are included in the result)
+    # @param error_collector [Array<Puppet::DataTypes::Error>] an optional array that will receive errors during load
     # @return [Array<Puppet::Pops::Loader::TypedName>] an array of typed names
     #
-    def list_tasks(filter_regex = nil)
-      list_loadable_kind(:task, filter_regex)
+    def list_tasks(filter_regex = nil, error_collector = nil)
+      list_loadable_kind(:task, filter_regex, error_collector)
     end
   end
 
