@@ -68,8 +68,13 @@ class IssueReporter
         emitted += 1
         break if emitted >= max_errors
       end
-      warnings_message = (emit_warnings && warnings.size > 0) ? ", and #{warnings.size} warnings" : ""
-      giving_up_message = "Language validation logged #{errors.size} errors#{warnings_message}. Giving up"
+      giving_up_message = if (emit_warnings && warnings.size > 0)
+                            _("Language validation logged %{error_count} errors, and %{warning_count} warnings. Giving up") %
+                                { error_count: errors.size, warning_count: warnings.size }
+                          else
+                            _("Language validation logged %{error_count} errors. Giving up") %
+                                { error_count: errors.size }
+                          end
       exception = emit_exception.new(giving_up_message)
       exception.file = errors[0].file
       raise exception
