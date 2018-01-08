@@ -1304,7 +1304,7 @@ Generated on #{Time.now}.
           rescue InterpolationError => err
             # This happens because we don't have access to the param name when the
             # exception is originally raised, but we want it in the message
-            raise InterpolationError, "Error converting value for param '#{name}': #{err}", err.backtrace
+            raise InterpolationError, _("Error converting value for param '%{name}': %{detail}") % { name: name, detail: err }, err.backtrace
           end
 
           setting.munge(val)
@@ -1333,7 +1333,7 @@ Generated on #{Time.now}.
             elsif !(pval = interpolate(varname.to_sym)).nil?
               pval
             else
-              raise InterpolationError, "Could not find value for #{expression}"
+              raise InterpolationError, _("Could not find value for %{expression}") % { expression: expression }
             end
           else
             failed_environment_interpolation = true
@@ -1342,7 +1342,9 @@ Generated on #{Time.now}.
           interpolated_expression
         end
         if failed_environment_interpolation
-          Puppet.warning("You cannot interpolate $environment within '#{setting_name}' when using directory environments.  Its value will remain #{interpolated_value}.")
+          #TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
+          Puppet.warning(_("You cannot interpolate $environment within '%{setting_name}' when using directory environments.") % { setting_name: setting_name } +
+                             ' ' + _("Its value will remain %{value}.") % { value: interpolated_value })
         end
         interpolated_value
       else

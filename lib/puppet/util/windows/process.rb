@@ -243,7 +243,7 @@ module Puppet::Util::Windows::Process
       .reject do |env_str|
         # reject any string containing the Unicode replacement character
         if env_str.include?("\uFFFD")
-          Puppet.warning("Discarding environment variable #{env_str} which contains invalid bytes")
+          Puppet.warning(_("Discarding environment variable %{string} which contains invalid bytes") % { string: env_str })
           true
         end
       end

@@ -67,9 +67,7 @@ module Puppet::Util::InstanceLoader
     unless instances.include? name
       if instance_loader(type).load(name)
         unless instances.include? name
-          Puppet.warning(
-            _("Loaded %{type} file for %{name} but %{type} was not defined") % { type: type, name: name }
-          )
+          Puppet.warning(_("Loaded %{type} file for %{name} but %{type} was not defined") % { type: type, name: name })
           return nil
         end
       else

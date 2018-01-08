@@ -71,7 +71,7 @@ module HieraPuppet
     if Puppet::FileSystem.exist?(hiera_config)
       hiera_config
     else
-      Puppet.warning "Config file #{hiera_config} not found, using Hiera defaults"
+      Puppet.warning _("Config file %{hiera_config} not found, using Hiera defaults") % { hiera_config: hiera_config }
       nil
     end
   end
