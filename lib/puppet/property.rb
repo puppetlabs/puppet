@@ -367,7 +367,9 @@ class Puppet::Property < Puppet::Parameter
     rescue => detail
       # Certain operations may fail, but we don't want to fail the transaction if we can
       # avoid it
-      msg = "Unknown failure using insync_values? on type: #{self.resource.ref} / property: #{self.name} to compare values #{should} and #{is}"
+      #TRANSLATORS 'insync_values?' should not be translated
+      msg = _("Unknown failure using insync_values? on type: %{type} / property: %{name} to compare values %{should} and %{is}") %
+          { type: self.resource.ref, name: self.name, should: should, is: is }
       Puppet.info(msg)
 
       # Return nil, ie. unknown

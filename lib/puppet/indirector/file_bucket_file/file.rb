@@ -29,6 +29,7 @@ module Puppet::FileBucketFile
           raise _("Unable to diff on this platform") unless Puppet[:diff] != ""
           return diff(Puppet::FileSystem.path_string(contents_file), Puppet::FileSystem.path_string(other_contents_file))
         else
+          #TRANSLATORS "FileBucket" should not be translated
           Puppet.info _("FileBucket read %{checksum}") % { checksum: checksum }
           model.new(Puppet::FileSystem.binread(contents_file))
         end
@@ -158,7 +159,8 @@ module Puppet::FileBucketFile
         Puppet::FileSystem.exclusive_open(paths_file, 0640, 'a+:external') do |f|
           if Puppet::FileSystem.exist?(contents_file)
             if verify_identical_file(contents_file, bucket_file)
-              Puppet.info "FileBucket got a duplicate file #{bucket_file.checksum}"
+              #TRANSLATORS "FileBucket" should not be translated
+              Puppet.info _("FileBucket got a duplicate file %{file_checksum}") % { file_checksum: bucket_file.checksum }
               Puppet::FileSystem.touch(contents_file)
             elsif contents_file_matches_checksum?(contents_file, bucket_file.checksum_data, bucket_file.checksum_type)
               # If the contents or sizes don't match, but the checksum does,
@@ -167,6 +169,7 @@ module Puppet::FileBucketFile
               # needed, but ask the user to validate.
               # Note: Don't print the full path to the bucket file in the
               # exception to avoid disclosing file system layout on server.
+              #TRANSLATORS "FileBucket" should not be translated
               Puppet.err(_("Unable to verify existing FileBucket backup at '%{path}'.") % { path: contents_file.to_path })
               raise Puppet::FileBucket::BucketError, _("Existing backup and new file have different content but same checksum, %{value}. Verify existing backup and remove if incorrect.") %
                 { value: bucket_file.checksum }
