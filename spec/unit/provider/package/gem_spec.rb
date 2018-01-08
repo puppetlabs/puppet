@@ -322,5 +322,34 @@ context 'uninstalling myresource' do
         provider.uninstall
       end
     end
+
+    context "when run from a bundled environment", :if => Puppet.features.bundled_environment? do
+      let(:expected) do
+        require 'rubygems'
+        require 'rubygems/command_manager'
+        require 'rubygems/commands/list_command'
+
+        stdout = StringIO.new
+
+        command = Gem::Commands::ListCommand.new
+        command.ui = Gem::StreamUI.new(StringIO.new, stdout)
+        command.execute
+
+        stdout.string.lines
+          .map { |set| provider_class.gemsplit(set) }
+          .reject { |x| x.nil? }
+      end
+
+      let(:resource) do
+        Puppet::Type.type(:package).new(
+          :name   => 'puppet',
+          :ensure => :installed,
+        )
+      end
+
+      it 'is isolated' do
+        expect(provider_class.gemlist(:local => true)).not_to eq(expected)
+      end
+    end
   end
 end
