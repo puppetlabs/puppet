@@ -55,7 +55,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       # print out each .rb in the facts directory as module
       # developers may find that information useful for debugging purposes
       if Puppet::Util::Log.sendlevel?(:info)
-        Puppet.info "Loading facts"
+        Puppet.info _("Loading facts")
         Dir.glob("#{dir}/*.rb").each do |file|
           Puppet.debug "Loading facts from #{file}"
         end

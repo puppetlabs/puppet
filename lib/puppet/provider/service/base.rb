@@ -115,7 +115,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     else
       pid = getpid
       unless pid
-        self.info "#{self.name} is not running"
+        self.info _("%{name} is not running") % { name: self.name }
         return false
       end
       begin
