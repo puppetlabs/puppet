@@ -29,7 +29,9 @@ describe provider_class do
       it "should use the supplied source as the explicit path to a package to install" do
         resource[:ensure] = :present
         resource[:source] = "/foo/bar/baz-1.1.0.rpm"
-        provider.expects(:execute).with(["/usr/bin/yum", "-d", "0", "-e", "0", "-y", :install, "/foo/bar/baz-1.1.0.rpm"])
+        provider.expects(:execute).with do |arr|
+          expect(arr[-2..-1]).to eq([:install, "/foo/bar/baz-1.1.0.rpm"])
+        end
         provider.install
       end
     end
@@ -41,7 +43,9 @@ describe provider_class do
         provider.expects(:query).twice.returns({:ensure => "1.1.0"}, {:ensure => "1.2.0"})
         resource[:ensure] = "1.2.0"
         resource[:source] = "http://foo.repo.com/baz-1.2.0.rpm"
-        provider.expects(:execute).with(["/usr/bin/yum", "-d", "0", "-e", "0", "-y", 'update',  "http://foo.repo.com/baz-1.2.0.rpm"])
+        provider.expects(:execute).with do |arr|
+          expect(arr[-2..-1]).to eq(['update', "http://foo.repo.com/baz-1.2.0.rpm"])
+        end
         provider.install
       end
     end
