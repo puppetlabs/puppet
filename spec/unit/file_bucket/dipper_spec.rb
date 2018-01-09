@@ -311,7 +311,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         file = make_tmp_file(plaintext)
 
-        Puppet::FileBucket::File.indirection.expects(:head).returns true
+        Puppet::FileBucket::File.indirection.expects(:head).with(
+          regexp_matches(%r{#{digest_algorithm}/#{checksum}}), :bucket_path => "/my/bucket"
+        ).returns true
         Puppet::FileBucket::File.indirection.expects(:save).never
         expect(@dipper.backup(file)).to eq(checksum)
       end
