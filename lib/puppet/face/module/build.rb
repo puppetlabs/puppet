@@ -4,6 +4,7 @@ Puppet::Face.define(:module, '1.0.0') do
     description <<-EOT
       Prepares a local module for release on the Puppet Forge by building a
       ready-to-upload archive file.
+      Note: Module build uses MD5 checksums, which are prohibited on FIPS enabled systems.
 
       This action uses the metadata.json file in the module directory to set metadata
       used by the Forge. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for more

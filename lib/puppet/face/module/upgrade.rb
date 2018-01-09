@@ -5,6 +5,7 @@ Puppet::Face.define(:module, '1.0.0') do
     summary _("Upgrade a puppet module.")
     description <<-EOT
       Upgrades a puppet module.
+      Note: Module upgrade uses MD5 checksums, which are prohibited on FIPS enabled systems.
     EOT
 
     returns "Hash"
