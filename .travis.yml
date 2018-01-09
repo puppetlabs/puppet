@@ -1,12 +1,5 @@
 language: ruby
 sudo: false
-# Travis Ruby 1.9.3 stack is defaulting to version 1.7.6 of bundler
-# which is incompatible with the Rubygems 2.6.13 security release.
-#
-# TODO: Remove when Travis updates its default:
-#   https://github.com/travis-ci/travis-ci/issues/8357
-before_install:
-  - gem install bundler --version 1.15.4
 bundler_args: --without development extra
 script:
   - "bundle exec rake $CHECK"
