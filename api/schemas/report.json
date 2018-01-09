@@ -14,6 +14,7 @@
         "report_format",
         "puppet_version",
         "status",
+        "transaction_completed",
         "noop",
         "noop_pending",
         "environment"
@@ -126,7 +127,7 @@
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["7", 7]
+            "enum":        ["8", 8]
         },
 
         "puppet_version": {
@@ -142,6 +143,11 @@
                 "unchanged"
             ]
         },
+
+        "transaction_completed": {
+                    "description": "Whether the transaction completed (e.g. didn't have an unrescued exception).",
+                    "type":        "boolean"
+                },
 
         "noop": {
             "description": "Whether the puppet run was started in noop mode",

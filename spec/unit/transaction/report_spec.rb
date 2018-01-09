@@ -587,6 +587,7 @@ describe Puppet::Transaction::Report do
     expect(tripped.report_format).to eq(report.report_format)
     expect(tripped.puppet_version).to eq(report.puppet_version)
     expect(tripped.status).to eq(report.status)
+    expect(tripped.transaction_completed).to eq(report.transaction_completed)
     expect(tripped.environment).to eq(report.environment)
     expect(tripped.corrective_change).to eq(report.corrective_change)
 
