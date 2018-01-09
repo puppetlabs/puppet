@@ -186,7 +186,7 @@ module Puppet
       # Set the declaration type.  Either :allow or :deny.
       def type=(type)
         type = type.intern
-        raise ArgumentError, "Invalid declaration type #{type}" unless VALID_TYPES.include?(type)
+        raise ArgumentError, _("Invalid declaration type %{type}") % { type: type } unless VALID_TYPES.include?(type)
         @type = type
       end
 

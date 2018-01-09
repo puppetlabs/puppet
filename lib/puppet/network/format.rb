@@ -40,7 +40,7 @@ class Puppet::Network::Format
       init_attribute(method, value)
     end
 
-    raise ArgumentError, "Unsupported option(s) #{@options.keys}" unless @options.empty?
+    raise ArgumentError, _("Unsupported option(s) %{options_list}") % { options_list: @options.keys } unless @options.empty?
 
     @options = nil
 

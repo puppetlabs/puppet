@@ -97,7 +97,7 @@ class Puppet::Indirector::Indirection
     @cache_class = nil
     @terminus_class = nil
 
-    raise(ArgumentError, "Indirection #{@name} is already defined") if @@indirections.find { |i| i.name == @name }
+    raise(ArgumentError, _("Indirection %{name} is already defined") % { name: @name }) if @@indirections.find { |i| i.name == @name }
     @@indirections << self
 
     @indirected_class = options.delete(:indirected_class)
@@ -150,9 +150,12 @@ class Puppet::Indirector::Indirection
 
   # This is used by terminus_class= and cache=.
   def validate_terminus_class(terminus_class)
-    raise ArgumentError, "Invalid terminus name #{terminus_class.inspect}" unless terminus_class and terminus_class.to_s != ""
+    unless terminus_class and terminus_class.to_s != ""
+      raise ArgumentError, _("Invalid terminus name %{terminus_class}") % { terminus_class: terminus_class.inspect }
+    end
     unless Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
-      raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{self.name}"
+      raise ArgumentError, _("Could not find terminus %{terminus_class} for indirection %{name}") %
+          { terminus_class: terminus_class, name: self.name }
     end
   end
 
@@ -304,8 +307,13 @@ class Puppet::Indirector::Indirection
     return unless terminus.respond_to?(:authorized?)
 
     unless terminus.authorized?(request)
-      msg = "Not authorized to call #{request.method} on #{request.description}"
-      msg += " with #{request.options.inspect}" unless request.options.empty?
+      msg = if request.options.empty?
+              _("Not authorized to call %{method} on %{description}") %
+                  { method: request.method, description: request.description }
+            else
+              _("Not authorized to call %{method} on %{description} with %{option}") %
+                  { method: request.method, description: request.description, option: request.options.inspect }
+            end
       raise ArgumentError, msg
     end
   end
