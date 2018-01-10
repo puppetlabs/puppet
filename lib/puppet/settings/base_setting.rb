@@ -14,7 +14,10 @@ class Puppet::Settings::BaseSetting
       Puppet.warning "Setting :#{name} :call_hook is nil, defaulting to :on_write_only"
       value = :on_write_only
     end
-    raise ArgumentError, "Invalid option #{value} for call_hook" unless self.class.available_call_hook_values.include? value
+    unless self.class.available_call_hook_values.include?(value)
+      #TRANSLATORS 'call_hook' is a Puppet option name and should not be translated
+      raise ArgumentError, _("Invalid option %{value} for call_hook") % { value: value }
+    end
     @call_hook = value
   end
 
@@ -67,16 +70,23 @@ class Puppet::Settings::BaseSetting
     @call_hook = :on_write_only if args[:hook] and not args[:call_hook]
     @has_hook = false
 
-    raise ArgumentError, "Cannot reference :call_hook for :#{@name} if no :hook is defined" if args[:call_hook] and not args[:hook]
+    if args[:call_hook] and not args[:hook]
+      #TRANSLATORS ':call_hook' and ':hook' are specific setting names and should not be translated
+      raise ArgumentError, _("Cannot reference :call_hook for :%{name} if no :hook is defined") % { name: @name }
+    end
 
     args.each do |param, value|
       method = param.to_s + "="
-      raise ArgumentError, "#{self.class} (setting '#{args[:name]}') does not accept #{param}" unless self.respond_to? method
+      unless self.respond_to? method
+        raise ArgumentError, _("%{class_name} (setting '%{setting}') does not accept %{parameter}") %
+            { class_name: self.class, setting: args[:name], parameter: param }
+      end
 
       self.send(method, value)
     end
-
-    raise ArgumentError, "You must provide a description for the #{self.name} config option" unless self.desc
+    unless self.desc
+      raise ArgumentError, _("You must provide a description for the %{class_name} config option") % { class_name: self.name }
+    end
   end
 
   def iscreated
@@ -89,7 +99,7 @@ class Puppet::Settings::BaseSetting
 
   # short name for the celement
   def short=(value)
-    raise ArgumentError, "Short names can only be one character." if value.to_s.length != 1
+    raise ArgumentError, _("Short names can only be one character.") if value.to_s.length != 1
     @short = value.to_s
   end
 
@@ -151,7 +161,11 @@ class Puppet::Settings::BaseSetting
   end
 
   def deprecated=(deprecation)
-    raise(ArgumentError, "'#{deprecation}' is an unknown setting deprecation state.  Must be either :completely or :allowed_on_commandline") unless [:completely, :allowed_on_commandline].include?(deprecation)
+    unless [:completely, :allowed_on_commandline].include?(deprecation)
+      #TRANSLATORS 'deprecated' is a Puppet setting and ':completely' and ':allowed_on_commandline' are possible values and should not be translated
+      raise ArgumentError, _("Unsupported deprecated value '%{deprecation}'.") % { deprecation: deprecation } +
+          ' ' + _("Supported values for deprecated are ':completely' or ':allowed_on_commandline'")
+    end
     @deprecated = deprecation
   end
 

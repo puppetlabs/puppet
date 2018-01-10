@@ -126,13 +126,15 @@ private
         if str =~ /^\s*(\w+)\s*=\s*([\w\d]+)\s*$/
           param, value = $1.intern, $2
           result[param] = value
-          raise ArgumentError, "Invalid file option '#{param}'" unless [:owner, :mode, :group].include?(param)
+          unless [:owner, :mode, :group].include?(param)
+            raise ArgumentError, _("Invalid file option '%{parameter}'") % { parameter: param }
+          end
 
           if param == :mode and value !~ /^\d+$/
-            raise ArgumentError, "File modes must be numbers"
+            raise ArgumentError, _("File modes must be numbers")
           end
         else
-          raise ArgumentError, "Could not parse '#{string}'"
+          raise ArgumentError, _("Could not parse '%{string}'") % { string: string }
         end
       end
       ''

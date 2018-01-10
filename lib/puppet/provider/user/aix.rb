@@ -169,9 +169,11 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def verify_group(value)
     if value.is_a? Integer
       groupname = groupname_by_id(value)
-      raise ArgumentError, "AIX group must be a valid existing group" unless groupname
+      #TRANSLATORS 'AIX' is the name of the operating system and should not be translated
+      raise ArgumentError, _("AIX group must be a valid existing group") unless groupname
     else
-      raise ArgumentError, "AIX group must be a valid existing group" unless groupid_by_name(value)
+      #TRANSLATORS 'AIX' is the name of the operating system and should not be translated
+      raise ArgumentError, _("AIX group must be a valid existing group") unless groupid_by_name(value)
       groupname = value
     end
     groupname

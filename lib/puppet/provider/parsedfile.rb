@@ -43,7 +43,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     elsif klass = Puppet::Util::FileType.filetype(type)
       @filetype = klass
     else
-      raise ArgumentError, "Invalid filetype #{type}"
+      raise ArgumentError, _("Invalid filetype %{type}") % { type: type }
     end
   end
 

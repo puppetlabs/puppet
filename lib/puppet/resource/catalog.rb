@@ -100,7 +100,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     resources.each do |resource|
       other_title_key = title_key_for_ref(other.ref)
       idx = @resources.index(other_title_key)
-      raise ArgumentError, "Cannot add resource #{resource.ref} before #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      if idx.nil?
+        raise ArgumentError, _("Cannot add resource %{resource_1} before %{resource_2} because %{resource_2} is not yet in the catalog") %
+            { resource_1: resource.ref, resource_2: other.ref }
+      end
       add_one_resource(resource, idx)
     end
   end
@@ -112,7 +115,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     resources.each do |resource|
       other_title_key = title_key_for_ref(other.ref)
       idx = @resources.index(other_title_key)
-      raise ArgumentError, "Cannot add resource #{resource.ref} after #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      if idx.nil?
+        raise ArgumentError, _("Cannot add resource %{resource_1} after %{resource_2} because %{resource_2} is not yet in the catalog") %
+            { resource_1: resource.ref, resource_2: other.ref }
+      end
       add_one_resource(resource, idx+1)
     end
   end
@@ -271,7 +277,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Create a new resource and register it in the catalog.
   def create_resource(type, options)
     unless klass = Puppet::Type.type(type)
-      raise ArgumentError, "Unknown resource type #{type}"
+      raise ArgumentError, _("Unknown resource type %{type}") % { type: type }
     end
     return unless resource = klass.new(options)
 
@@ -433,12 +439,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       edges.each do |edge_hash|
         edge = Puppet::Relationship.from_data_hash(edge_hash)
         unless source = result.resource(edge.source)
-          raise ArgumentError, "Could not intern from data: Could not find relationship source #{edge.source.inspect} for #{edge.target.to_s}"
+          raise ArgumentError, _("Could not intern from data: Could not find relationship source %{source} for %{target}") %
+              { source: edge.source.inspect, target: edge.target.to_s }
         end
         edge.source = source
 
         unless target = result.resource(edge.target)
-          raise ArgumentError, "Could not intern from data: Could not find relationship target #{edge.target.inspect} for #{edge.source.to_s}"
+          raise ArgumentError, _("Could not intern from data: Could not find relationship target %{target} for %{source}") %
+              { target: edge.target.inspect, source: edge.source.to_s }
         end
         edge.target = target
 

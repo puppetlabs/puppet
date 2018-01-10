@@ -13,7 +13,7 @@ module Puppet::Util::MethodHelper
       if respond_to? method
         self.send(method, value)
       else
-        raise ArgumentError, "Invalid parameter #{param} to object class #{self.class}"
+        raise ArgumentError, _("Invalid parameter %{parameter} to object class %{class_name}") % { parameter: param, class_name: self.class }
       end
     end
   end
