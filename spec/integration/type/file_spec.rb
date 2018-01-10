@@ -479,7 +479,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
   describe "when writing files" do
     shared_examples "files are backed up" do |resource_options|
-      it "should backup files to a filebucket when one is configured" do
+      it "should backup files to a filebucket when one is configured" do |example|
+        if Puppet::Util::Platform.windows? && ['sha512', 'sha384'].include?(example.metadata[:digest_algorithm])
+          skip "PUP-8257: Skip file bucket test on windows for #{example.metadata[:digest_algorithm]} due to long path names"
+        end
+
         filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
         file = described_class.new({:path => path, :backup => "mybucket", :content => "foo"}.merge(resource_options))
         catalog.add_resource file
@@ -562,7 +566,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         expect(File.read(File.join(backup, "foo"))).to eq("yay")
       end
 
-      it "should backup directories to filebuckets by backing up each file separately" do
+      it "should backup directories to filebuckets by backing up each file separately" do |example|
+        if Puppet::Util::Platform.windows? && ['sha512', 'sha384'].include?(example.metadata[:digest_algorithm])
+          skip "PUP-8257: Skip file bucket test on windows for #{example.metadata[:digest_algorithm]} due to long path names"
+        end
+        
         bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
         file = described_class.new({:path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true}.merge(resource_options))
         catalog.add_resource file
