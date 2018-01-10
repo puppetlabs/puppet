@@ -108,6 +108,7 @@ module Puppet::GettextConfig
   def self.delete_all_text_domains
     FastGettext.translation_repositories.clear
     FastGettext.default_text_domain = nil
+    FastGettext.text_domain = nil
   end
 
   # @api private
@@ -117,6 +118,9 @@ module Puppet::GettextConfig
     return if @gettext_disabled || !gettext_loaded?
 
     FastGettext.translation_repositories.delete(domain_name)
+    if FastGettext.text_domain == domain_name
+      FastGettext.text_domain = nil
+    end
   end
 
   # @api private
@@ -130,6 +134,7 @@ module Puppet::GettextConfig
 
       FastGettext.translation_repositories.delete(key)
     end
+    FastGettext.text_domain = nil
   end
 
   # @api private
