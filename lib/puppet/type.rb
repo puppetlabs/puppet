@@ -1754,9 +1754,8 @@ end
     defaults = defaults.find_all { |provider| provider.specificity == max }
 
     if defaults.length > 1
-      Puppet.warning(
-        "Found multiple default providers for #{self.name}: #{defaults.collect { |i| i.name.to_s }.join(", ")}; using #{defaults[0].name}"
-      )
+      Puppet.warning(_("Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}") %
+                         { name: self.name, provider_list:  defaults.collect { |i| i.name.to_s }.join(", "), selected_provider: defaults[0].name })
     end
 
     @defaultprovider = defaults.shift unless defaults.empty?

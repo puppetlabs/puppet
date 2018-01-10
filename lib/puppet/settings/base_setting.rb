@@ -11,7 +11,8 @@ class Puppet::Settings::BaseSetting
 
   def call_hook=(value)
     if value.nil?
-      Puppet.warning "Setting :#{name} :call_hook is nil, defaulting to :on_write_only"
+      #TRANSLATORS ':%{name}', ':call_hook', and ':on_write_only' should not be translated
+      Puppet.warning _("Setting :%{name} :call_hook is nil, defaulting to :on_write_only") % { name: name }
       value = :on_write_only
     end
     raise ArgumentError, "Invalid option #{value} for call_hook" unless self.class.available_call_hook_values.include? value

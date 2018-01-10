@@ -111,7 +111,7 @@ module Puppet::Interface::FaceCollection
     nil
   rescue SyntaxError => e
     raise unless e.message =~ %r{#{path}\.rb:\d+: }
-    Puppet.err "Failed to load face #{name}:\n#{e}"
+    Puppet.err _("Failed to load face %{name}:\n%{detail}") % { name: name, detail: e }
     # ...but we just carry on after complaining.
     nil
   end
