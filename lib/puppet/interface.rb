@@ -149,7 +149,7 @@ class Puppet::Interface
   # @api private
   def initialize(name, version, &block)
     unless SemanticPuppet::Version.valid?(version)
-      raise ArgumentError, "Cannot create face #{name.inspect} with invalid version number '#{version}'!"
+      raise ArgumentError, _("Cannot create face %{name} with invalid version number '%{version}'!") % { name: name.inspect, version: version }
     end
 
     @name    = Puppet::Interface::FaceCollection.underscorize(name)

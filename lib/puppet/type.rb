@@ -1415,7 +1415,7 @@ class Type
     munge do |aliases|
       aliases = [aliases] unless aliases.is_a?(Array)
 
-      raise(ArgumentError, "Cannot add aliases without a catalog") unless @resource.catalog
+      raise(ArgumentError, _("Cannot add aliases without a catalog")) unless @resource.catalog
 
       aliases.each do |other|
         if obj = @resource.catalog.resource(@resource.class.name, other)
@@ -1916,7 +1916,7 @@ end
         provider_class = provider_class.class.name if provider_class.is_a?(Puppet::Provider)
 
         unless @resource.class.provider(provider_class)
-          raise ArgumentError, "Invalid #{@resource.class.name} provider '#{provider_class}'"
+          raise ArgumentError, _("Invalid %{resource} provider '%{provider_class}'") % { resource: @resource.class.name, provider_class: provider_class}
         end
       end
 
@@ -1999,7 +1999,7 @@ end
     elsif klass = self.class.provider(name)
       @provider = klass.new(self)
     else
-      raise ArgumentError, "Could not find #{name} provider of #{self.class.name}"
+      raise ArgumentError, _("Could not find %{name} provider of %{provider}") % { name: name, provider: self.class.name }
     end
   end
 

@@ -686,7 +686,7 @@ class Puppet::Settings
 
     if type = hash[:type]
       unless klass = SETTING_TYPES[type]
-        raise ArgumentError, "Invalid setting type '#{type}'"
+        raise ArgumentError, _("Invalid setting type '%{type}'") % { type: type }
       end
       hash.delete(:type)
     else
@@ -892,16 +892,16 @@ class Puppet::Settings
     section = section.to_sym
     call = []
     defs.each do |name, hash|
-      raise ArgumentError, "setting definition for '#{name}' is not a hash!" unless hash.is_a? Hash
+      raise ArgumentError, _("setting definition for '%{name}' is not a hash!") % { name: name } unless hash.is_a? Hash
 
       name = name.to_sym
       hash[:name] = name
       hash[:section] = section
-      raise ArgumentError, "Setting #{name} is already defined" if @config.include?(name)
+      raise ArgumentError, _("Setting %{name} is already defined") % { name: name } if @config.include?(name)
       tryconfig = newsetting(hash)
       if short = tryconfig.short
         if other = @shortnames[short]
-          raise ArgumentError, "Setting #{other.name} is already using short name '#{short}'"
+          raise ArgumentError, _("Setting %{name} is already using short name '%{short}'") % { name: other.name, short: short }
         end
         @shortnames[short] = tryconfig
       end
@@ -1373,8 +1373,7 @@ Generated on #{Time.now}.
       default = @defaults[name]
 
       if !default
-        raise ArgumentError,
-          "Attempt to assign a value to unknown setting #{name.inspect}"
+        raise ArgumentError, _("Attempt to assign a value to unknown setting %{name}") % { name: name.inspect }
       end
 
       # This little exception-handling dance ensures that a hook is

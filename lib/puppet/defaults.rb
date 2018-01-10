@@ -99,7 +99,8 @@ module Puppet
         valid   = %w[deprecations undefined_variables undefined_resources]
         invalid = values - (values & valid)
         if not invalid.empty?
-          raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
+          raise ArgumentError, _("Cannot disable unrecognized warning types %{invalid}.") % { invalid: invalid.inspect } +
+              ' ' + _("Valid values are %{values}.") % { values: valid.inspect}
         end
       end
     },
@@ -695,7 +696,7 @@ module Puppet
           for a normal node.
 
         Defaults to the node's fully qualified domain name.",
-      :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case") unless value == value.downcase }},
+      :hook => proc { |value| raise(ArgumentError, _("Certificate names must be lower case")) unless value == value.downcase }},
     :dns_alt_names => {
       :default => '',
       :desc    => <<EOT,
@@ -930,7 +931,8 @@ EOT
         valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha1', 'sha1lite', 'mtime', 'ctime']
         invalid = values.reject {|alg| valid.include?(alg)}
         if not invalid.empty?
-          raise ArgumentError, "Unrecognized checksum types #{invalid} are not supported. Valid values are #{valid}."
+          raise ArgumentError, _("Unrecognized checksum types %{invalid} are not supported.") % { invalid: invalid } +
+              ' ' + _("Valid values are %{values}.") % { values: valid }
         end
       end
     }
