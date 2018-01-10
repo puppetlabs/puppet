@@ -70,7 +70,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     if @blockers[resource] > 0
       @blockers[resource] -= 1
     else
-      resource.warning "appears to have a negative number of dependencies"
+      resource.warning _("appears to have a negative number of dependencies")
     end
     @blockers[resource] <= 0
   end

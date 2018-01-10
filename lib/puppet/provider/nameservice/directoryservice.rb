@@ -372,7 +372,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   # expects to be returned by addcmd. Thus we don't bother defining addcmd.
   def create
     if exists?
-      info "already exists"
+      info _("already exists")
       return nil
     end
 

@@ -727,7 +727,7 @@ Puppet::Type.newtype(:file) do
       if can_backup?(current_type)
         backup_existing
       else
-        self.warning "Could not back up file of type #{current_type}"
+        self.warning _("Could not back up file of type %{current_type}") % { current_type: current_type }
       end
     end
 
@@ -752,6 +752,7 @@ Puppet::Type.newtype(:file) do
     # catalog validation (because that would be a breaking change from Puppet 4).
     if Puppet.features.microsoft_windows? && parameter(:source) &&
       [:use, :use_when_creating].include?(self[:source_permissions])
+      #TRANSLATORS "source_permissions => ignore" should not be translated
       err_msg = _("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
       if self[:owner] == nil || self[:group] == nil || self[:mode] == nil
         # Fail on Windows if source permissions are being used and the file resource

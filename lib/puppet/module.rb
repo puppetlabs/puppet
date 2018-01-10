@@ -206,7 +206,8 @@ class Puppet::Module
   rescue Errno::ENOENT
     {}
   rescue JSON::JSONError => e
-    msg = "#{name} has an invalid and unparsable metadata.json file. The parse error: #{e.message}"
+    #TRANSLATORS 'metadata.json' is a specific file name and should not be translated.
+    msg = _("%{name} has an invalid and unparsable metadata.json file. The parse error: %{error}") % { name: name, error: e.message }
     case Puppet[:strict]
     when :off
       Puppet.debug(msg)
