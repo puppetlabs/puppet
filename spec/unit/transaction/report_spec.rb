@@ -36,10 +36,6 @@ describe Puppet::Transaction::Report do
     expect(Puppet::Transaction::Report.new("some configuration version", "some environment", "some transaction uuid").transaction_uuid).to eq("some transaction uuid")
   end
 
-  it "should take a 'transaction_uuid' as an argument" do
-    expect(Puppet::Transaction::Report.new("some configuration version", "some environment", "some transaction uuid").transaction_uuid).to eq("some transaction uuid")
-  end
-
   it "should take a 'job_id' as an argument" do
     expect(Puppet::Transaction::Report.new('cv', 'env', 'tid', 'some job id').job_id).to eq('some job id')
   end
