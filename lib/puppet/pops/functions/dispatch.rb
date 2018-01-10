@@ -79,7 +79,7 @@ class Dispatch < Evaluator::CallableSignature
               # currently only supports :scope injection
               scope
             else
-              raise_error ArgumentError, "Unknown injection #{injection_data[3]}"
+              raise_error ArgumentError, _("Unknown injection %{detail}") % { detail: injection_data[3] }
             end
         else
           # Careful so no new nil arguments are added since they would override default
