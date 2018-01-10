@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-212-gc90b9b0\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-217-gafca7f1\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-08 23:31+0000\n"
-"PO-Revision-Date: 2018-01-08 23:31+0000\n"
+"POT-Creation-Date: 2018-01-10 20:01+0000\n"
+"PO-Revision-Date: 2018-01-10 20:01+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -421,6 +421,11 @@ msgstr ""
 msgid "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
 msgstr ""
 
+#. TRANSLATORS 'NameBindings' is a class name and should not be translated, 'Proc' refers to a Ruby proc.
+#: ../lib/puppet/bindings.rb:138
+msgid "Given value must be a NamedBindings, or a Proc producing one, got: %{class_name}."
+msgstr ""
+
 #: ../lib/puppet/configurer.rb:22
 msgid "Puppet configuration client"
 msgstr ""
@@ -555,6 +560,22 @@ msgstr ""
 
 #: ../lib/puppet/daemon.rb:143
 msgid "Daemons must have an agent, server, or both"
+msgstr ""
+
+#: ../lib/puppet/defaults.rb:102
+msgid "Cannot disable unrecognized warning types %{invalid}."
+msgstr ""
+
+#: ../lib/puppet/defaults.rb:103 ../lib/puppet/defaults.rb:935
+msgid "Valid values are %{values}."
+msgstr ""
+
+#: ../lib/puppet/defaults.rb:699
+msgid "Certificate names must be lower case"
+msgstr ""
+
+#: ../lib/puppet/defaults.rb:934
+msgid "Unrecognized checksum types %{invalid} are not supported."
 msgstr ""
 
 #: ../lib/puppet/error.rb:67
@@ -1833,15 +1854,23 @@ msgstr ""
 msgid "The current user does not have the necessary permission to manage symlinks."
 msgstr ""
 
-#: ../lib/puppet/forge.rb:201
+#: ../lib/puppet/forge.rb:137
+msgid "Malformed dependency: %{name}."
+msgstr ""
+
+#: ../lib/puppet/forge.rb:138
+msgid "Exception was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/forge.rb:202
 msgid "Downloaded release for %{name} did not match expected checksum"
 msgstr ""
 
-#: ../lib/puppet/forge.rb:209 ../lib/puppet/module_tool/applications/unpacker.rb:58 ../lib/puppet/module_tool/local_tarball.rb:86
+#: ../lib/puppet/forge.rb:210 ../lib/puppet/module_tool/applications/unpacker.rb:58 ../lib/puppet/module_tool/local_tarball.rb:86
 msgid "Could not extract contents of module archive: %{message}"
 msgstr ""
 
-#: ../lib/puppet/forge.rb:222
+#: ../lib/puppet/forge.rb:223
 msgid "Cannot consider release %{name}-%{version}: %{error}"
 msgstr ""
 
@@ -2751,6 +2780,10 @@ msgstr ""
 
 #: ../lib/puppet/info_service/task_information_service.rb:26
 msgid "Task %{task_name} not found in module %{module_name}."
+msgstr ""
+
+#: ../lib/puppet/interface.rb:152
+msgid "Cannot create face %{name} with invalid version number '%{version}'!"
 msgstr ""
 
 #: ../lib/puppet/module.rb:68
@@ -5453,17 +5486,31 @@ msgstr ""
 msgid "Issue %{issue_code}: Cannot pass a %{class_name} as a semantic object when it does not support #pos(), #file() and #line()"
 msgstr ""
 
-#: ../lib/puppet/property.rb:214
+#. TRANSLATORS 'Property#array_matching', 'first', and 'all' should not be translated
+#: ../lib/puppet/property.rb:99
+msgid "Supported values for Property#array_matching are 'first' and 'all'"
+msgstr ""
+
+#: ../lib/puppet/property.rb:171
+msgid "Attempt to redefine method %{method} with block"
+msgstr ""
+
+#: ../lib/puppet/property.rb:215
 msgid "Could not convert change '%{name}' to string: %{detail}"
 msgstr ""
 
 #. TRANSLATORS 'insync_values?' should not be translated
-#: ../lib/puppet/property.rb:371
+#: ../lib/puppet/property.rb:372
 msgid "Unknown failure using insync_values? on type: %{type} / property: %{name} to compare values %{should} and %{is}"
 msgstr ""
 
-#: ../lib/puppet/property.rb:494
+#: ../lib/puppet/property.rb:495
 msgid "Could not set '%{value}' on %{class_name}: %{detail}"
+msgstr ""
+
+#. TRANSLATORS 'Provider' refers to a Puppet provider class
+#: ../lib/puppet/property.rb:593
+msgid "Provider %{provider} must have features '%{needed_features}' to set '%{property}' to '%{value}'"
 msgstr ""
 
 #: ../lib/puppet/property/ensure.rb:53
@@ -6303,6 +6350,11 @@ msgstr ""
 msgid "No docs for %{type}[%{sname}]"
 msgstr ""
 
+#. TRANSLATORS 'NONE' should not be translated
+#: ../lib/puppet/relationship.rb:34
+msgid "You must pass a callback for non-NONE events"
+msgstr ""
+
 #: ../lib/puppet/reports/http.rb:34
 msgid "Unable to submit report to %{url} [%{code}] %{message}"
 msgstr ""
@@ -6315,31 +6367,52 @@ msgstr ""
 msgid "No resource title provided in serialized data"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:481
+#. TRANSLATORS 'Puppet::Resource.new' should not be translated
+#: ../lib/puppet/resource.rb:255
+msgid "Puppet::Resource.new does not take a hash as the first argument."
+msgstr ""
+
+#: ../lib/puppet/resource.rb:256
+msgid "Did you mean (%{type}, %{title}) ?"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:294
+msgid "Could not find declared class %{title}"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:296
+msgid "Invalid resource type %{type}"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:483
 msgid "The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:486
+#: ../lib/puppet/resource.rb:488
 msgid "Cannot evaluate default parameters for %{resource} - not a parser resource"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:526
+#: ../lib/puppet/resource.rb:528
 msgid "The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:532
+#: ../lib/puppet/resource.rb:534
 msgid "Must pass %{param} to %{resource}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:543
+#: ../lib/puppet/resource.rb:545
 msgid "Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:549
+#: ../lib/puppet/resource.rb:551
 msgid "no parameter named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:664
+#: ../lib/puppet/resource.rb:593
+msgid "No title provided and %{type} is not a valid resource reference"
+msgstr ""
+
+#: ../lib/puppet/resource.rb:666
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
@@ -6520,8 +6593,28 @@ msgstr ""
 msgid "Attempting to initialize global default settings more than once!"
 msgstr ""
 
+#: ../lib/puppet/settings.rb:689
+msgid "Invalid setting type '%{type}'"
+msgstr ""
+
 #: ../lib/puppet/settings.rb:833
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
+msgstr ""
+
+#: ../lib/puppet/settings.rb:895
+msgid "setting definition for '%{name}' is not a hash!"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:900
+msgid "Setting %{name} is already defined"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:904
+msgid "Setting %{name} is already using short name '%{short}'"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:1376
+msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
 #: ../lib/puppet/settings/array_setting.rb:14
@@ -7143,12 +7236,24 @@ msgstr ""
 msgid "%{name} has no providers and has not overridden 'instances'"
 msgstr ""
 
+#: ../lib/puppet/type.rb:1418
+msgid "Cannot add aliases without a catalog"
+msgstr ""
+
 #: ../lib/puppet/type.rb:1497
 msgid "Could not find %{description} %{ref} for %{resource}"
 msgstr ""
 
 #: ../lib/puppet/type.rb:1843
 msgid "Could not find parent provider %{parent} of %{name}"
+msgstr ""
+
+#: ../lib/puppet/type.rb:1919
+msgid "Invalid %{resource} provider '%{provider_class}'"
+msgstr ""
+
+#: ../lib/puppet/type.rb:2002
+msgid "Could not find %{name} provider of %{provider}"
 msgstr ""
 
 #: ../lib/puppet/type.rb:2119
@@ -7801,6 +7906,10 @@ msgstr ""
 
 #: ../lib/puppet/util.rb:344
 msgid "Failed to convert '%{path}' to URI: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/util.rb:448
+msgid "path may not be nil"
 msgstr ""
 
 #: ../lib/puppet/util.rb:566
