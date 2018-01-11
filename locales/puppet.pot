@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-234-g863df23\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-237-gb6f44db\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-11 23:01+0000\n"
-"PO-Revision-Date: 2018-01-11 23:01+0000\n"
+"POT-Creation-Date: 2018-01-11 23:32+0000\n"
+"PO-Revision-Date: 2018-01-11 23:32+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3864,6 +3864,10 @@ msgstr ""
 msgid "'%{value}' is not a valid hostname"
 msgstr ""
 
+#: ../lib/puppet/parser/ast/node.rb:5
+msgid "names should be an array"
+msgstr ""
+
 #: ../lib/puppet/parser/ast/node.rb:7
 msgid "Node inheritance is removed in Puppet 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
 msgstr ""
@@ -4406,12 +4410,21 @@ msgstr ""
 msgid "Cannot use %{key} where %{expected} is expected"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/collector_transformer.rb:104
+#. TRANSLATORS 'CollectExpression' is a class name and should not be translated
+#: ../lib/puppet/pops/evaluator/collector_transformer.rb:14
+msgid "Expected CollectExpression"
+msgstr ""
+
+#: ../lib/puppet/pops/evaluator/collector_transformer.rb:105
 msgid "Cannot transform a number to a tag"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/collector_transformer.rb:167 ../lib/puppet/pops/evaluator/collector_transformer.rb:229
+#: ../lib/puppet/pops/evaluator/collector_transformer.rb:168 ../lib/puppet/pops/evaluator/collector_transformer.rb:230
 msgid "Cannot transform object of class %{klass}"
+msgstr ""
+
+#: ../lib/puppet/pops/evaluator/collectors/abstract_collector.rb:30
+msgid "Exported resource try to override without parameters"
 msgstr ""
 
 #: ../lib/puppet/pops/evaluator/collectors/exported_collector.rb:50
@@ -4446,8 +4459,48 @@ msgstr ""
 msgid "Only Strings, Numbers, Timespans, Timestamps, and Versions are comparable"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:36
+#. TRANSLATORS 'inline_epp()' is a method name and 'epp' refers to 'Embedded Puppet (EPP) template' and should not be translated
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:8
+msgid "inline_epp(): the first argument must be a String with the epp source text, got a %{class_name}"
+msgstr ""
+
+#. TRANSLATORS 'inline_epp()' is a method name and 'EPP' refers to 'Embedded Puppet (EPP) template' and should not be translated
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:18
+msgid "inline_epp(): Invalid EPP: %{detail}"
+msgstr ""
+
+#. TRANSLATORS 'epp()' is a method name and should not be translated
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:28
+msgid "epp(): the first argument must be a String with the filename, got a %{class_name}"
+msgstr ""
+
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:40
 msgid "Could not find template '%{file}'"
+msgstr ""
+
+#. TRANSLATORS 'epp()' is a method name and 'EPP' refers to 'Embedded Puppet (EPP) template' and should not be translated
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:49
+msgid "epp(): Invalid EPP: %{detail}"
+msgstr ""
+
+#. TRANSLATORS 'LambdaExpression' is a class name and should not be translated
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:64
+msgid "%{function_name}(): the parser did not produce a LambdaExpression, got '%{class_name}'"
+msgstr ""
+
+#. TRANSLATORS 'EppExpression' is a class name and should not be translated
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:69
+msgid "%{function_name}(): the parser did not produce an EppExpression, got '%{class_name}'"
+msgstr ""
+
+#. TRANSLATORS 'EPP' refers to 'Embedded Puppet (EPP) template'
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:74
+msgid "%{function_name}(): The EPP template contains illegal expressions (definitions)"
+msgstr ""
+
+#. TRANSLATORS 'template_args' is a variable name and should not be translated
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:101
+msgid "%{function_name}(): the template_args must be a Hash, got a %{class_name}"
 msgstr ""
 
 #: ../lib/puppet/pops/evaluator/evaluator_impl.rb:728
@@ -4466,8 +4519,41 @@ msgstr ""
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
+#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:22 ../lib/puppet/pops/evaluator/runtime3_support.rb:23 ../lib/puppet/pops/evaluator/runtime3_support.rb:529
+msgid "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+msgstr ""
+
 #: ../lib/puppet/pops/evaluator/runtime3_converter.rb:102
 msgid "Use of an Iterator is not supported here"
+msgstr ""
+
+#. TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
+#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:147
+msgid "Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType."
+msgstr ""
+
+#: ../lib/puppet/pops/evaluator/runtime3_resource_support.rb:31
+msgid "Unknown resource type: '%{type}'"
+msgstr ""
+
+#: ../lib/puppet/pops/evaluator/runtime3_support.rb:153
+msgid "Internal error - attempt to create a local scope without a hash"
+msgstr ""
+
+#: ../lib/puppet/pops/evaluator/runtime3_support.rb:291
+msgid "Unknown function '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/pops/functions/dispatch.rb:82
+msgid "Unknown injection %{detail}"
+msgstr ""
+
+#: ../lib/puppet/pops/functions/function.rb:112
+msgid "Function %{class_name}(): cannot call function '%{function_name}' - no loader specified"
+msgstr ""
+
+#: ../lib/puppet/pops/functions/function.rb:128
+msgid "Function %{class_name}(): Unknown function: '%{function_name}'"
 msgstr ""
 
 #: ../lib/puppet/pops/issue_reporter.rb:72
@@ -5357,6 +5443,20 @@ msgstr ""
 
 #: ../lib/puppet/pops/lookup/sub_lookup.rb:75
 msgid "Data Provider type mismatch: Got %{klass} when a hash-like object was expected to access value using '%{segment}' from key '%{key}'"
+msgstr ""
+
+#. TRANSLATORS 'merge' is a variable name and 'strategy' is a key and should not be translated
+#: ../lib/puppet/pops/merge_strategy.rb:28
+msgid "The hash given as 'merge' must contain the name of a strategy in string form for the key 'strategy'"
+msgstr ""
+
+#: ../lib/puppet/pops/merge_strategy.rb:37
+msgid "Unknown merge strategy: '%{strategy}'"
+msgstr ""
+
+#. TRANSLATORS 'MergeStrategies.add_strategy' is a method, 'stratgey_class' is a variable and 'MergeStrategy' is a class name and should not be translated
+#: ../lib/puppet/pops/merge_strategy.rb:56
+msgid "MergeStrategies.add_strategy 'strategy_class' must be a 'MergeStrategy' class. Got %{strategy_class}"
 msgstr ""
 
 #: ../lib/puppet/pops/migration/migration_checker.rb:21 ../lib/puppet/pops/migration/migration_checker.rb:26 ../lib/puppet/pops/migration/migration_checker.rb:31 ../lib/puppet/pops/migration/migration_checker.rb:36 ../lib/puppet/pops/migration/migration_checker.rb:41 ../lib/puppet/pops/migration/migration_checker.rb:46 ../lib/puppet/pops/migration/migration_checker.rb:51 ../lib/puppet/pops/migration/migration_checker.rb:56
