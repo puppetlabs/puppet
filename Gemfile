@@ -77,6 +77,8 @@ group(:development) do
   if RUBY_PLATFORM != 'java'
     gem 'ruby-prof', '>= 0.16.0', :require => false
   end
+
+  gem 'gettext-setup', '~> 0.28', :require => false
 end
 
 group(:extra) do
