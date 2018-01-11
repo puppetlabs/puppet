@@ -263,6 +263,11 @@ class TypeParser
 
         'Uri'          => TypeFactory.uri,
         'URI'          => TypeFactory.uri,
+
+        'Optional[Integer]'      => TypeFactory.optional(TypeFactory.integer),
+        'Optional[String]'       => TypeFactory.optional(TypeFactory.string),
+        'Optional[String[1]]'    => TypeFactory.optional(TypeFactory.string(TypeFactory.range(1, :default))),
+
     }.freeze
   end
 
