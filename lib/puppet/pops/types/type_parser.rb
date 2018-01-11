@@ -33,6 +33,10 @@ class TypeParser
   # @api public
   #
   def parse(string, context = nil)
+    # quick "peephole" optimization of common data types
+    if t = self.class.opt_type_map[string]
+      return t
+    end
     model = @parser.parse_string(string)
     interpret(model.model.body, context)
   end
@@ -202,6 +206,63 @@ class TypeParser
         'timestamp'    => TypeFactory.timestamp,
         'timespan'     => TypeFactory.timespan,
         'uri'          => TypeFactory.uri,
+    }.freeze
+  end
+
+  # @api private
+  def self.opt_type_map
+    # Map of common (and simple to optimize) data types in string form
+    # (Note that some types are the result of evaluation even if they appear to be simple
+    # - for example 'Data' and they cannot be optimized this way since the factory calls
+    # back to the parser for evaluation).
+    #
+    @opt_type_map ||= {
+        'Integer'      => TypeFactory.integer,
+        'Float'        => TypeFactory.float,
+        'Numeric'      => TypeFactory.numeric,
+
+        'String'       => TypeFactory.string,
+        'String[1]'    => TypeFactory.string(TypeFactory.range(1, :default)),
+
+        'Binary'       => TypeFactory.binary,
+
+        'Boolean'      => TypeFactory.boolean,
+        'Boolean[true]'  => TypeFactory.boolean(true),
+        'Boolean[false]' => TypeFactory.boolean(false),
+
+        'Array'        => TypeFactory.array_of_any,
+        'Array[1]'     => TypeFactory.array_of(TypeFactory.any, TypeFactory.range(1, :default)),
+
+        'Hash'         => TypeFactory.hash_of_any,
+        'Collection'   => TypeFactory.collection,
+        'Scalar'       => TypeFactory.scalar,
+
+        'Scalardata'   => TypeFactory.scalar_data,
+        'ScalarData'   => TypeFactory.scalar_data,
+
+        'Catalogentry' => TypeFactory.catalog_entry,
+        'CatalogEntry' => TypeFactory.catalog_entry,
+
+        'Undef'        => TypeFactory.undef,
+        'Default'      => TypeFactory.default,
+        'Any'          => TypeFactory.any,
+        'Type'         => TypeFactory.type_type,
+        'Callable'     => TypeFactory.all_callables,
+
+        'Semver'       => TypeFactory.sem_ver,
+        'SemVer'       => TypeFactory.sem_ver,
+
+        'Semverrange'  => TypeFactory.sem_ver_range,
+        'SemVerRange'  => TypeFactory.sem_ver_range,
+
+        'Timestamp'    => TypeFactory.timestamp,
+        'TimeStamp'    => TypeFactory.timestamp,
+
+        'Timespan'     => TypeFactory.timespan,
+        'TimeSpan'     => TypeFactory.timespan,
+
+        'Uri'          => TypeFactory.uri,
+        'URI'          => TypeFactory.uri,
     }.freeze
   end
 
