@@ -359,15 +359,18 @@ class Puppet::Util::Log
   end
 
   def message=(msg)
-    raise ArgumentError, "Puppet::Util::Log requires a message" unless msg
+    #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
+    raise ArgumentError, _("Puppet::Util::Log requires a message") unless msg
     @message = msg.to_s
   end
 
   def level=(level)
-    raise ArgumentError, "Puppet::Util::Log requires a log level" unless level
-    raise ArgumentError, "Puppet::Util::Log requires a symbol or string" unless level.respond_to? "to_sym"
+    #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
+    raise ArgumentError, _("Puppet::Util::Log requires a log level") unless level
+    #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
+    raise ArgumentError, _("Puppet::Util::Log requires a symbol or string") unless level.respond_to? "to_sym"
     @level = level.to_sym
-    raise ArgumentError, "Invalid log level #{@level}" unless self.class.validlevel?(@level)
+    raise ArgumentError, _("Invalid log level %{level}") % { level: @level } unless self.class.validlevel?(@level)
 
     # Tag myself with my log level
     tag(level)
