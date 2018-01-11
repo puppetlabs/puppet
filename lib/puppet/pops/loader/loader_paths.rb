@@ -251,8 +251,8 @@ module LoaderPaths
       n = ''
       n << module_name unless module_name.nil?
 
-      # Remove extension regardless of what it is. A task name cannot contain dots
-      relative_path = relative_path.sub(/\.[^\/]*\z/, '')
+      # Remove the file extension, defined as everything after the *last* dot.
+      relative_path = relative_path.sub(%r{\.[^/.]*\z}, '')
 
       if relative_path == 'init' && !(module_name.nil? || module_name.empty?)
         TypedName.new(type, module_name, name_authority)
