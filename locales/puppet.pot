@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-220-g44df5c1\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-231-gf620693\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-11 00:20+0000\n"
-"PO-Revision-Date: 2018-01-11 00:20+0000\n"
+"POT-Creation-Date: 2018-01-11 21:31+0000\n"
+"PO-Revision-Date: 2018-01-11 21:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -588,6 +588,14 @@ msgstr ""
 
 #: ../lib/puppet/error.rb:68 ../lib/puppet/parser/compiler.rb:39
 msgid "%{message} on node %{node}"
+msgstr ""
+
+#: ../lib/puppet/external/pson/common.rb:46
+msgid "can't find const for unregistered document type %{path}"
+msgstr ""
+
+#: ../lib/puppet/external/pson/common.rb:311
+msgid "exceed depth limit"
 msgstr ""
 
 #: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:7 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
@@ -1648,11 +1656,16 @@ msgstr ""
 msgid "Computing checksum on file %{path}"
 msgstr ""
 
-#: ../lib/puppet/file_serving/base.rb:56
+#. TRANSLATORS ':link', ':manage', ':follow' should not be translated
+#: ../lib/puppet/file_serving/base.rb:50
+msgid ":links can only be set to :manage or :follow"
+msgstr ""
+
+#: ../lib/puppet/file_serving/base.rb:57
 msgid "Paths must be fully qualified"
 msgstr ""
 
-#: ../lib/puppet/file_serving/base.rb:64
+#: ../lib/puppet/file_serving/base.rb:65
 msgid "Relative paths must not be fully qualified"
 msgstr ""
 
@@ -2019,7 +2032,12 @@ msgstr ""
 msgid "The given data does not contain a Collection at %{walked_path}, got '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/functions/eyaml_lookup_key.rb:51 ../lib/puppet/functions/yaml_data.rb:28
+#. TRANSLATORS 'eyaml_lookup_key':, 'path', 'paths' 'glob', 'globs', 'mapped_paths', and lookup_key should not be translated
+#: ../lib/puppet/functions/eyaml_lookup_key.rb:31
+msgid "'eyaml_lookup_key': one of 'path', 'paths' 'glob', 'globs' or 'mapped_paths' must be declared in hiera.yaml when using this lookup_key function"
+msgstr ""
+
+#: ../lib/puppet/functions/eyaml_lookup_key.rb:53 ../lib/puppet/functions/yaml_data.rb:28
 msgid "%{path}: file does not contain a valid yaml hash"
 msgstr ""
 
@@ -2155,6 +2173,10 @@ msgstr ""
 
 #: ../lib/puppet/indirector/catalog/compiler.rb:70
 msgid "Setup server facts for compiling"
+msgstr ""
+
+#: ../lib/puppet/indirector/catalog/compiler.rb:94
+msgid "Unsupported facts format"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
@@ -2484,6 +2506,10 @@ msgstr ""
 msgid "Indirection TTL must be an integer"
 msgstr ""
 
+#: ../lib/puppet/indirector/indirection.rb:100
+msgid "Indirection %{name} is already defined"
+msgstr ""
+
 #: ../lib/puppet/indirector/indirection.rb:121
 msgid "No terminus specified for %{name}; cannot redirect"
 msgstr ""
@@ -2492,31 +2518,47 @@ msgstr ""
 msgid "No terminus class nor terminus setting was provided for indirection %{name}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:169
+#: ../lib/puppet/indirector/indirection.rb:154
+msgid "Invalid terminus name %{terminus_class}"
+msgstr ""
+
+#: ../lib/puppet/indirector/indirection.rb:157
+msgid "Could not find terminus %{terminus_class} for indirection %{name}"
+msgstr ""
+
+#: ../lib/puppet/indirector/indirection.rb:172
 msgid "Expiring the %{cache} cache of %{instance}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:199
+#: ../lib/puppet/indirector/indirection.rb:202
 msgid "Caching %{indirection} for %{request}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:210
+#: ../lib/puppet/indirector/indirection.rb:213
 msgid "Filtered result for %{indirection} %{request}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:239
+#: ../lib/puppet/indirector/indirection.rb:242
 msgid "Not using expired %{indirection} for %{request} from cache; expired at %{expiration}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:246
+#: ../lib/puppet/indirector/indirection.rb:249
 msgid "Cached %{indirection} for %{request} failed: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:271
+#: ../lib/puppet/indirector/indirection.rb:274
 msgid "Search results from terminus %{terminus_name} are not an array"
 msgstr ""
 
-#: ../lib/puppet/indirector/indirection.rb:332
+#: ../lib/puppet/indirector/indirection.rb:311
+msgid "Not authorized to call %{method} on %{description}"
+msgstr ""
+
+#: ../lib/puppet/indirector/indirection.rb:314
+msgid "Not authorized to call %{method} on %{description} with %{option}"
+msgstr ""
+
+#: ../lib/puppet/indirector/indirection.rb:340
 msgid "Could not find terminus %{terminus_class} for indirection %{indirection}"
 msgstr ""
 
@@ -2793,6 +2835,64 @@ msgstr ""
 
 #: ../lib/puppet/interface.rb:152
 msgid "Cannot create face %{name} with invalid version number '%{version}'!"
+msgstr ""
+
+#: ../lib/puppet/interface/action.rb:81 ../lib/puppet/interface/action.rb:125
+msgid "The rendering format must be a symbol, not %{class_name}"
+msgstr ""
+
+#. TRANSLATORS 'set_rendering_method_for' and 'Proc' should not be translated
+#: ../lib/puppet/interface/action.rb:99
+msgid "The second argument to set_rendering_method_for must be a Proc"
+msgstr ""
+
+#. TRANSLATORS 'set_rendering_method_for' and 'Proc' should not be translated
+#: ../lib/puppet/interface/action.rb:102
+msgid "The second argument to set_rendering_method_for must be a Proc, not %{class_name}"
+msgstr ""
+
+#. TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
+#: ../lib/puppet/interface/action.rb:111
+msgid "The when_rendering method for the %{face} face %{name} action takes either just one argument, the result of when_invoked, or the result plus the %{arg_count} arguments passed to the when_invoked block, not a variable number"
+msgstr ""
+
+#. TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
+#: ../lib/puppet/interface/action.rb:117
+msgid "The when_rendering method for the %{face} face %{name} action takes either just one argument, the result of when_invoked, or the result plus the %{arg_count} arguments passed to the when_invoked block, not %{string}"
+msgstr ""
+
+#: ../lib/puppet/interface/action.rb:128
+msgid "You can't define a rendering method for %{type} twice"
+msgstr ""
+
+#. TRANSLATORS 'when_invoked' should not be translated
+#: ../lib/puppet/interface/action.rb:227
+msgid "when_invoked requires at least one argument (options) for action %{name}"
+msgstr ""
+
+#: ../lib/puppet/interface/action.rb:273
+msgid "Option %{option} conflicts with existing option %{conflict}"
+msgstr ""
+
+#: ../lib/puppet/interface/action.rb:276
+msgid "Option %{option} conflicts with existing option %{conflict} on %{face}"
+msgstr ""
+
+#. TRANSLATORS 'Puppet.settings' should not be translated
+#: ../lib/puppet/interface/action.rb:303
+msgid "Global option %{option} does not exist in Puppet.settings"
+msgstr ""
+
+#: ../lib/puppet/interface/action.rb:351
+msgid "Multiple aliases for the same option passed: %{overlap_list}"
+msgstr ""
+
+#: ../lib/puppet/interface/action.rb:357
+msgid "Unknown options passed: %{unknown_list}"
+msgstr ""
+
+#: ../lib/puppet/interface/action.rb:375
+msgid "The following options are required: %{missing_list}"
 msgstr ""
 
 #: ../lib/puppet/interface/action_manager.rb:20
@@ -3371,8 +3471,20 @@ msgstr ""
 msgid "defaulting to no access for %{name}"
 msgstr ""
 
+#: ../lib/puppet/network/authstore.rb:189
+msgid "Invalid declaration type %{type}"
+msgstr ""
+
 #: ../lib/puppet/network/authstore.rb:257
 msgid "Invalid IP pattern %{value}"
+msgstr ""
+
+#: ../lib/puppet/network/client_request.rb:15
+msgid "Request is not set up; cannot build call"
+msgstr ""
+
+#: ../lib/puppet/network/format.rb:43
+msgid "Unsupported option(s) %{options_list}"
 msgstr ""
 
 #: ../lib/puppet/network/format.rb:72
@@ -3488,6 +3600,10 @@ msgstr ""
 
 #: ../lib/puppet/network/http/api/indirected_routes.rb:243
 msgid "No support for plurality %{indirection} for %{http_method} operations"
+msgstr ""
+
+#: ../lib/puppet/network/http/api/indirection_type.rb:29
+msgid "Not a valid indirection type"
 msgstr ""
 
 #: ../lib/puppet/network/http/api/master/v3/environment.rb:11
@@ -8370,7 +8486,7 @@ msgstr ""
 msgid "Could not write crontab for %{path}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/http_proxy.rb:195
+#: ../lib/puppet/util/http_proxy.rb:203
 msgid "Too many HTTP redirections for %{uri}"
 msgstr ""
 
