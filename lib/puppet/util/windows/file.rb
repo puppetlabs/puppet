@@ -177,6 +177,18 @@ module Puppet::Util::Windows::File
         "#{flags_and_attributes.to_s(8)}, #{template_file_handle})")
   end
 
+  IO_REPARSE_TAG_MOUNT_POINT  = 0xA0000003
+  IO_REPARSE_TAG_HSM          = 0xC0000004
+  IO_REPARSE_TAG_HSM2         = 0x80000006
+  IO_REPARSE_TAG_SIS          = 0x80000007
+  IO_REPARSE_TAG_WIM          = 0x80000008
+  IO_REPARSE_TAG_CSV          = 0x80000009
+  IO_REPARSE_TAG_DFS          = 0x8000000A
+  IO_REPARSE_TAG_SYMLINK      = 0xA000000C
+  IO_REPARSE_TAG_DFSR         = 0x80000012
+  IO_REPARSE_TAG_DEDUP        = 0x80000013
+  IO_REPARSE_TAG_NFS          = 0x80000014
+
   def self.get_reparse_point_data(handle, &block)
     # must be multiple of 1024, min 10240
     FFI::MemoryPointer.new(MAXIMUM_REPARSE_DATA_BUFFER_SIZE) do |reparse_data_buffer_ptr|
@@ -184,11 +196,11 @@ module Puppet::Util::Windows::File
 
       reparse_tag = reparse_data_buffer_ptr.read_win32_ulong
       buffer_type = case reparse_tag
-      when 0xA000000C
+      when IO_REPARSE_TAG_SYMLINK
         SYMLINK_REPARSE_DATA_BUFFER
-      when 0xA0000003
+      when IO_REPARSE_TAG_MOUNT_POINT
         MOUNT_POINT_REPARSE_DATA_BUFFER
-      when 0x80000014
+      when IO_REPARSE_TAG_NFS
         raise Puppet::Util::Windows::Error.new("Retrieving NFS reparse point data is unsupported")
       else
         raise Puppet::Util::Windows::Error.new("DeviceIoControl(#{handle}, " +
