@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-217-gafca7f1\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-220-g44df5c1\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-10 20:01+0000\n"
-"PO-Revision-Date: 2018-01-10 20:01+0000\n"
+"POT-Creation-Date: 2018-01-11 00:20+0000\n"
+"PO-Revision-Date: 2018-01-11 00:20+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -25,6 +25,10 @@ msgstr ""
 
 #: ../lib/hiera_puppet.rb:41
 msgid "Please supply a parameter to perform a Hiera lookup"
+msgstr ""
+
+#: ../lib/hiera_puppet.rb:74 ../lib/puppet/indirector/hiera.rb:79
+msgid "Config file %{hiera_config} not found, using Hiera defaults"
 msgstr ""
 
 #: ../lib/puppet.rb:4
@@ -2015,6 +2019,10 @@ msgstr ""
 msgid "The given data does not contain a Collection at %{walked_path}, got '%{klass}'"
 msgstr ""
 
+#: ../lib/puppet/functions/eyaml_lookup_key.rb:51 ../lib/puppet/functions/yaml_data.rb:28
+msgid "%{path}: file does not contain a valid yaml hash"
+msgstr ""
+
 #: ../lib/puppet/functions/hiera_include.rb:101
 msgid "Could not find data item %{key}"
 msgstr ""
@@ -2467,10 +2475,6 @@ msgstr ""
 msgid "Unrecognized value for request 'merge' parameter: '%{merge}'"
 msgstr ""
 
-#: ../lib/puppet/indirector/hiera.rb:79
-msgid "Config file %{hiera_config} not found, using Hiera defaults"
-msgstr ""
-
 #: ../lib/puppet/indirector/indirection.rb:40
 msgid "Tried to cache when no cache class was set"
 msgstr ""
@@ -2686,11 +2690,16 @@ msgstr ""
 msgid "PUT does not accept options"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:311
+#. TRANSLATORS "PSON" should not be translated
+#: ../lib/puppet/indirector/rest.rb:270
+msgid "Downgrading to PSON for future requests"
+msgstr ""
+
+#: ../lib/puppet/indirector/rest.rb:312
 msgid "Error %{code} on SERVER: %{returned_message}"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:323
+#: ../lib/puppet/indirector/rest.rb:324
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
@@ -2784,6 +2793,31 @@ msgstr ""
 
 #: ../lib/puppet/interface.rb:152
 msgid "Cannot create face %{name} with invalid version number '%{version}'!"
+msgstr ""
+
+#: ../lib/puppet/interface/action_manager.rb:20
+msgid "Redefining action %{name} for %{self}"
+msgstr ""
+
+#: ../lib/puppet/interface/face_collection.rb:114
+msgid ""
+"Failed to load face %{name}:\n"
+"%{detail}"
+msgstr ""
+
+#. TRANSLATORS 'Puppet::Type.newtype' should not be translated
+#: ../lib/puppet/metatype/manager.rb:76
+msgid "Puppet::Type.newtype(%{name}) now expects a hash as the second argument, not %{argument}"
+msgstr ""
+
+#. TRANSLATORS 'new%{method}' will become a method name, do not translate this string
+#: ../lib/puppet/metatype/manager.rb:113
+msgid "'new%{method}' method already exists; skipping"
+msgstr ""
+
+#. TRANSLATORS 'puppet/type/%{name}' should not be translated
+#: ../lib/puppet/metatype/manager.rb:176
+msgid "Loaded puppet/type/%{name} but no class was created"
 msgstr ""
 
 #: ../lib/puppet/module.rb:68
@@ -3736,6 +3770,14 @@ msgstr ""
 
 #: ../lib/puppet/parser/ast/resourceparam.rb:7
 msgid "Use of Puppet::Parser::AST::ResourceParam is deprecated and not fully functional"
+msgstr ""
+
+#: ../lib/puppet/parser/compiler.rb:27
+msgid "Compilation has been halted because: %{error}"
+msgstr ""
+
+#: ../lib/puppet/parser/compiler.rb:28
+msgid "For more information, see https://docs.puppet.com/puppet/latest/reference/environments.html"
 msgstr ""
 
 #. TRANSLATORS "stage" is a keyword in Puppet and should not be translated
@@ -6142,6 +6184,10 @@ msgstr ""
 msgid "No version of %{name} matching %{should} is installable, even though the package is currently installed"
 msgstr ""
 
+#: ../lib/puppet/provider/package/pkg.rb:182
+msgid "pkg warning: %{warnings}"
+msgstr ""
+
 #: ../lib/puppet/provider/package/pkg.rb:218 ../lib/puppet/provider/package/pkg.rb:238
 msgid "Unable to update %{package}"
 msgstr ""
@@ -6295,9 +6341,19 @@ msgstr ""
 msgid "%{name} is not running"
 msgstr ""
 
+#. TRANSLATORS 'plist' and label' should not be translated
+#: ../lib/puppet/provider/service/launchd.rb:145
+msgid "The %{file} plist does not contain a 'label' key; Puppet is skipping it"
+msgstr ""
+
 #. TRANSLATORS 'runsvdir' is a linux service name and should not be translated
 #: ../lib/puppet/provider/service/runit.rb:93
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
+msgstr ""
+
+#. TRANSLATORS 'ruby-shadow' is a Ruby gem library
+#: ../lib/puppet/provider/user/openbsd.rb:50
+msgid "ruby-shadow doesn't support %{method}"
 msgstr ""
 
 #: ../lib/puppet/provider/yumrepo/inifile.rb:192
@@ -6613,7 +6669,24 @@ msgstr ""
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1376
+#: ../lib/puppet/settings.rb:1307
+msgid "Error converting value for param '%{name}': %{detail}"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:1336
+msgid "Could not find value for %{expression}"
+msgstr ""
+
+#. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
+#: ../lib/puppet/settings.rb:1346
+msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
+msgstr ""
+
+#: ../lib/puppet/settings.rb:1347
+msgid "Its value will remain %{value}."
+msgstr ""
+
+#: ../lib/puppet/settings.rb:1378
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -6623,6 +6696,11 @@ msgstr ""
 
 #: ../lib/puppet/settings/autosign_setting.rb:19
 msgid "Invalid autosign value %{value}: must be 'true'/'false' or an absolute path"
+msgstr ""
+
+#. TRANSLATORS ':%{name}', ':call_hook', and ':on_write_only' should not be translated
+#: ../lib/puppet/settings/base_setting.rb:15
+msgid "Setting :%{name} :call_hook is nil, defaulting to :on_write_only"
 msgstr ""
 
 #: ../lib/puppet/settings/boolean_setting.rb:25
@@ -7244,35 +7322,39 @@ msgstr ""
 msgid "Could not find %{description} %{ref} for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1843
+#: ../lib/puppet/type.rb:1757
+msgid "Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}"
+msgstr ""
+
+#: ../lib/puppet/type.rb:1842
 msgid "Could not find parent provider %{parent} of %{name}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1919
+#: ../lib/puppet/type.rb:1918
 msgid "Invalid %{resource} provider '%{provider_class}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2002
+#: ../lib/puppet/type.rb:2001
 msgid "Could not find %{name} provider of %{provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2119
+#: ../lib/puppet/type.rb:2118
 msgid "You cannot add relationships without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2430
+#: ../lib/puppet/type.rb:2429
 msgid "Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2433
+#: ../lib/puppet/type.rb:2432
 msgid "Unable to mark '%{name}' as sensitive: the property itself was not assigned a value."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2435
+#: ../lib/puppet/type.rb:2434
 msgid "Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2486
+#: ../lib/puppet/type.rb:2485
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
@@ -8308,7 +8390,7 @@ msgstr ""
 msgid "Section %{name} is already defined, cannot redefine"
 msgstr ""
 
-#: ../lib/puppet/util/instance_loader.rb:71
+#: ../lib/puppet/util/instance_loader.rb:70
 msgid "Loaded %{type} file for %{name} but %{type} was not defined"
 msgstr ""
 
@@ -8814,6 +8896,10 @@ msgstr ""
 
 #: ../lib/puppet/util/windows/process.rb:217
 msgid "GetVersionEx failed"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:246
+msgid "Discarding environment variable %{string} which contains invalid bytes"
 msgstr ""
 
 #: ../lib/puppet/util/windows/process.rb:262
