@@ -111,11 +111,15 @@ module Puppet::Util::Windows::File
 
       # return true if path exists and it's not a symlink
       # Other file attributes are ignored. https://msdn.microsoft.com/en-us/library/windows/desktop/gg258117(v=vs.85).aspx
-      return true if (result & FILE_ATTRIBUTE_REPARSE_POINT) != FILE_ATTRIBUTE_REPARSE_POINT
-
-      # walk the symlink and try again...
-      seen_paths << path.downcase
-      path = readlink(path)
+      reparse_point = (result & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT
+      if reparse_point && symlink_reparse_point?(path)
+        # walk the symlink and try again...
+        seen_paths << path.downcase
+        path = readlink(path)
+      else
+        # file was found and its not a symlink
+        return true
+      end
     end
 
     false
@@ -214,6 +218,20 @@ module Puppet::Util::Windows::File
     nil
   end
 
+  def self.get_reparse_point_tag(handle)
+    reparse_tag = nil
+
+    # must be multiple of 1024, min 10240
+    FFI::MemoryPointer.new(MAXIMUM_REPARSE_DATA_BUFFER_SIZE) do |reparse_data_buffer_ptr|
+      device_io_control(handle, FSCTL_GET_REPARSE_POINT, nil, reparse_data_buffer_ptr)
+
+      # DWORD ReparseTag is the first member of the struct
+      reparse_tag = reparse_data_buffer_ptr.read_win32_ulong
+    end
+
+    reparse_tag
+  end
+
   def self.device_io_control(handle, io_control_code, in_buffer = nil, out_buffer = nil)
     if out_buffer.nil?
       raise Puppet::Util::Windows::Error.new("out_buffer is required")
@@ -241,11 +259,17 @@ module Puppet::Util::Windows::File
   end
 
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
-  def symlink?(file_name)
+  def reparse_point?(file_name)
     attributes = get_attributes(file_name, false)
 
     return false if (attributes == INVALID_FILE_ATTRIBUTES)
     (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT
+  end
+  module_function :reparse_point?
+
+  def symlink?(file_name)
+    # Puppet currently only handles mount point and symlink reparse points, ignores others
+    reparse_point?(file_name) && symlink_reparse_point?(file_name)
   end
   module_function :symlink?
 
@@ -385,6 +409,22 @@ module Puppet::Util::Windows::File
     end
 
     path
+  end
+
+  # these reparse point types are the only ones Puppet currently understands
+  # so rather than raising an exception in readlink, prefer to not consider
+  # the path a symlink when stat'ing later
+  def self.symlink_reparse_point?(path)
+    symlink = false
+
+    open_symlink(path) do |handle|
+      symlink = [
+        IO_REPARSE_TAG_SYMLINK,
+        IO_REPARSE_TAG_MOUNT_POINT
+      ].include?(get_reparse_point_tag(handle))
+    end
+
+    symlink
   end
 
   ffi_convention :stdcall
