@@ -28,7 +28,7 @@ module Runtime3ResourceSupport
     # from the raised exception. (It may be good enough).
     unless resolved_type
       # TODO: do this the right way
-      raise ArgumentError, "Unknown resource type: '#{type_name}'"
+      raise ArgumentError, _("Unknown resource type: '%{type}'") % { type: type_name }
     end
 
     # Build a resource for each title - use the resolved *type* as opposed to a reference
