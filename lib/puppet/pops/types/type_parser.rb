@@ -267,6 +267,8 @@ class TypeParser
         'Optional[Integer]'      => TypeFactory.optional(TypeFactory.integer),
         'Optional[String]'       => TypeFactory.optional(TypeFactory.string),
         'Optional[String[1]]'    => TypeFactory.optional(TypeFactory.string(TypeFactory.range(1, :default))),
+        'Optional[Array]'        => TypeFactory.optional(TypeFactory.array_of_any),
+        'Optional[Hash]'         => TypeFactory.optional(TypeFactory.hash_of_any),
 
     }.freeze
   end
