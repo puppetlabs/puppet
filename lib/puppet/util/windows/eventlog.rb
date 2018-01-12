@@ -55,7 +55,9 @@ class Puppet::Util::Windows::EventLog
   # @return [void]
   # @api public
   def report_event(args = {})
-    raise ArgumentError, "data must be a string, not #{args[:data].class}" unless args[:data].is_a?(String)
+    unless args[:data].is_a?(String)
+      raise ArgumentError, _("data must be a string, not %{class_name}") % { class_name: args[:data].class }
+    end
     from_string_to_wide_string(args[:data]) do |message_ptr|
       FFI::MemoryPointer.new(:pointer) do |message_array_ptr|
         message_array_ptr.write_pointer(message_ptr)
@@ -92,7 +94,7 @@ class Puppet::Util::Windows::EventLog
       when :err,:alert,:emerg,:crit
         [EVENTLOG_ERROR_TYPE, 0x03]
       else
-        raise ArgumentError, "Invalid log level #{level}"
+        raise ArgumentError, _("Invalid log level %{level}") % { level: level }
       end
     end
   end
