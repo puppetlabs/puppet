@@ -1,12 +1,15 @@
 .\" generated with Ronn/v0.7.3
-.\" https://github.com/rtomayko/ronn/tree/0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-INSPECT" "8" "May 2015" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-INSPECT" "8" "January 2018" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-inspect\fR \- Send an inspection report
 .
 .SH "SYNOPSIS"
+Note: this command is deprecated
+.
+.P
 Prepares and submits an inspection report to the puppet master\.
 .
 .SH "USAGE"
@@ -19,7 +22,7 @@ This command uses the cached catalog from the previous run of \'puppet agent\' t
 Puppet inspect does not run as a daemon, and must be run manually or from cron\.
 .
 .SH "OPTIONS"
-Any configuration setting which is valid in the configuration file is also a valid long argument, e\.g\. \'\-\-server=master\.domain\.com\'\. See the configuration file documentation at https://docs\.puppetlabs\.com/references/latest/configuration\.html for the full list of acceptable settings\.
+Any configuration setting which is valid in the configuration file is also a valid long argument, e\.g\. \'\-\-server=master\.domain\.com\'\. See the configuration file documentation at https://docs\.puppetlabs\.com/puppet/latest/reference/configuration\.html for the full list of acceptable settings\.
 .
 .TP
 \-\-archive_files
@@ -30,7 +33,7 @@ During an inspect run, whether to archive files whose contents are audited to a 
 During an inspect run, the file bucket server to archive files to if archive_files is set\. The default value is \'$server\'\.
 .
 .SH "AUTHOR"
-Puppet Labs
+Puppet Inc\.
 .
 .SH "COPYRIGHT"
-Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2\.0 License
+Copyright (c) 2011 Puppet Inc\., LLC Licensed under the Apache 2\.0 License
