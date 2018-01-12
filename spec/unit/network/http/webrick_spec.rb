@@ -26,15 +26,19 @@ describe Puppet::Network::HTTP::WEBrick do
     stub('ssl_context', :ciphers= => nil)
   end
 
+  let(:socket) { mock('socket') }
   let(:mock_webrick) do
-    stub('webrick',
-         :[] => {},
-         :listeners => [],
-         :status => :Running,
-         :mount => nil,
-         :start => nil,
-         :shutdown => nil,
-         :ssl_context => mock_ssl_context)
+    server = stub('webrick',
+                  :[] => {},
+                  :listeners => [],
+                  :status => :Running,
+                  :mount => nil,
+                  :shutdown => nil,
+                  :ssl_context => mock_ssl_context)
+    server.stubs(:start).yields(socket)
+    IO.stubs(:select).with([socket], nil, nil, anything).returns(true)
+    server.stubs(:run).with(socket)
+    server
   end
 
   before :each do
