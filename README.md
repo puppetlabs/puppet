@@ -14,35 +14,31 @@ Documentation
 -------------
 
 Documentation for Puppet and related projects can be found online at the
-[Puppet Docs site](https://docs.puppetlabs.com).
+[Puppet Docs site](https://puppet.com/docs).
 
 HTTP API
 --------
-[HTTP API Index](https://docs.puppetlabs.com/puppet/latest/reference/http_api/http_api_index.html)
+[HTTP API Index](https://puppet.com/docs/puppet/latest/http_api/http_api_index.html)
 
 Installation
 ------------
 
-The best way to run Puppet is with [Puppet Enterprise](https://puppetlabs.com/puppet/puppet-enterprise),
+The best way to run Puppet is with [Puppet Enterprise](https://puppet.com/products/puppet-enterprise),
 which also includes orchestration features, a web console, and professional support.
-[The PE documentation is available here.](https://docs.puppetlabs.com/pe/latest)
+The PE documentation is available [here](https://puppet.com/docs/pe/latest).
 
-To install an open source release of Puppet,
-[see the installation guide on the docs site.](https://docs.puppetlabs.com/puppet/latest/reference/install_pre.html)
-
-If you need to run Puppet from source as a tester or developer,
-[see the running from source guide on the docs site.](https://docs.puppetlabs.com/guides/from_source.html)
+To install an open source release of Puppet, see the [Installation Guide](https://puppet.com/docs/puppet/latest/install_pre.html) on the docs site.
 
 Developing and Contributing
 ------
 
 We'd love to get contributions from you! For a quick guide to getting your
-system setup for developing take a look at our [Quickstart
+system setup for developing, take a look at our [Quickstart
 Guide](docs/quickstart.md). Once you are up and running, take a look at the
 [Contribution Documents](CONTRIBUTING.md) to see how to get your changes merged
 in.
 
-For more complete docs on developing with puppet you can take a look at the
+For more complete docs on developing with Puppet, you can take a look at the
 rest of the [developer documents](docs/index.md).
 
 License
@@ -55,10 +51,10 @@ Support
 
 Please log tickets and issues at our [JIRA tracker](https://tickets.puppetlabs.com).  A [mailing
 list](https://groups.google.com/forum/?fromgroups#!forum/puppet-users) is
-available for asking questions and getting help from others. In addition there
+available for asking questions and getting help from others. In addition, there
 is an active #puppet channel on Freenode.
 
-We use semantic version numbers for our releases, and recommend that users stay
+We use semantic version numbers for our releases and recommend that users stay
 as up-to-date as possible by upgrading to patch releases and minor releases as
 they become available.
 
@@ -73,4 +69,4 @@ a best effort to backport that fix onto the latest Puppet 3 release.
 Long-term support, including security patches and bug fixes, is available for
 commercial customers. Please see the following page for more details:
 
-[Puppet Enterprise Support Lifecycle](https://puppetlabs.com/misc/puppet-enterprise-lifecycle)
+[Puppet Enterprise Support Lifecycle](https://puppet.com/misc/puppet-enterprise-lifecycle)
