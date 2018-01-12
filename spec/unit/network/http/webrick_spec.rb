@@ -92,6 +92,11 @@ describe Puppet::Network::HTTP::WEBrick do
       expect(server).to be_listening
     end
 
+    it "is passed an already connected socket" do
+      socket.expects(:accept).never
+      server.listen(address, port)
+    end
+
     describe "when the REST protocol is requested" do
       it "should register the REST handler at /" do
         # We don't care about the options here.

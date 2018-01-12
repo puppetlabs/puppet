@@ -29,7 +29,6 @@ class Puppet::Network::HTTP::WEBrick
         if ! IO.select([sock],nil,nil,timeout)
           raise "Client did not send data within %.1f seconds of connecting" % timeout
         end
-        sock.accept
         @server.run(sock)
       end
     end
