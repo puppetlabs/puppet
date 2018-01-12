@@ -1,3 +1,5 @@
+require 'puppet/util/platform'
+
 module Puppet
 
   def self.default_diffargs
@@ -9,7 +11,7 @@ module Puppet
   end
 
   def self.default_digest_alg
-    if Facter.value(:fips_enabled) == true
+    if Puppet::Util::Platform.fips_enabled?
       "sha256"
     else
       "md5"
@@ -17,7 +19,7 @@ module Puppet
   end
 
   def self.default_checksum_types 
-    if Facter.value(:fips_enabled) == true
+    if Puppet::Util::Platform.fips_enabled?
       ['sha256', 'sha384', 'sha512', 'sha224']
     else
       ['md5', 'sha256', 'sha384', 'sha512', 'sha224']

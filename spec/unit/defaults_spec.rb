@@ -43,12 +43,32 @@ describe "Defaults" do
   end
 
   describe ".default_digest_alg" do
-    describe "on everything else" do
+    describe "on windows platform" do
       before(:each) do
-        Facter.stubs(:value).with(:fips_enabled).returns(false)
+        Puppet::Util::Platform.stubs(:windows?).returns true
       end
-      it "should be false" do
+      it "should be md5" do
         expect(Puppet.default_digest_alg).to eq('md5')
+      end
+    end
+
+    describe "on non-windows not fips platform" do
+      before(:each) do
+        Puppet::Util::Platform.stubs(:windows?).returns false
+        Puppet::Util::Platform.stubs(:fips_enabled?).returns false
+      end
+      it "should be md5" do
+        expect(Puppet.default_digest_alg).to eq('md5')
+      end
+    end
+
+    describe "on non-windows fips-enabled platform" do
+      before(:each) do
+        Puppet::Util::Platform.stubs(:windows?).returns false
+        Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+      end
+      it "should be sha256" do
+        expect(Puppet.default_digest_alg).to eq('sha256')
       end
     end
   end
@@ -68,6 +88,37 @@ describe "Defaults" do
 
     it 'should fail if given an invalid value' do
       expect {Puppet.settings[:strict] = 'ignore'}.to raise_exception(/Invalid value 'ignore' for parameter strict\./)
+    end
+  end
+
+  describe 'supported_checksum_types in fips mode testing' do
+    describe "on windows platform" do
+      before(:each) do
+        Puppet::Util::Platform.stubs(:windows?).returns true
+      end
+      it "should return all checksums" do
+        expect(Puppet.default_checksum_types).to eq(['md5', 'sha256', 'sha384', 'sha512', 'sha224'])
+      end
+    end
+
+    describe "on non-windows non fips platform" do
+      before(:each) do
+        Puppet::Util::Platform.stubs(:windows?).returns false
+        Puppet::Util::Platform.stubs(:fips_enabled?).returns false
+      end
+      it "should return all checksums" do
+        expect(Puppet.default_checksum_types).to eq(['md5', 'sha256', 'sha384', 'sha512', 'sha224'])
+      end
+    end
+
+    describe "on non-windows fips-enabled platform" do
+      before(:each) do
+        Puppet::Util::Platform.stubs(:windows?).returns false
+        Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+      end
+      it "should exclude md5" do
+        expect(Puppet.default_checksum_types).to eq(['sha256', 'sha384', 'sha512', 'sha224'])
+      end
     end
   end
 
