@@ -790,7 +790,9 @@ class Factory
       end
     else
       # Bad number should already have been caught by lexer - this should never happen
-      raise ArgumentError, "Internal Error, NUMBER token does not contain a valid number, #{name_or_numeric}"
+      #TRANSLATORS 'NUMBER' refers to a method name and the 'name_or_numeric' was the passed in value and should not be translated
+      raise ArgumentError, _("Internal Error, NUMBER token does not contain a valid number, %{name_or_numeric}") %
+          { name_or_numeric: name_or_numeric }
     end
   end
 
@@ -1082,7 +1084,7 @@ class Factory
       elsif e.is_a?(String)
         result << e
       else
-        raise ArgumentError, "can only concatenate strings, got #{e.class}"
+        raise ArgumentError, _("can only concatenate strings, got %{class_name}") % { class_name: e.class }
       end
     end
     infer(result)

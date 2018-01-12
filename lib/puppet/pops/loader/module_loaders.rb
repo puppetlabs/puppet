@@ -98,7 +98,8 @@ module ModuleLoaders
       @loaders = loaders
       @loadables = loadables
       unless (loadables - LOADABLE_KINDS).empty?
-        raise ArgumentError, 'given loadables are not of supported loadable kind'
+        #TRANSLATORS 'loadables' is a variable containing loadable modules and should not be translated
+        raise ArgumentError, _('given loadables are not of supported loadable kind')
       end
       loaders.add_loader_by_name(self)
     end
@@ -149,7 +150,9 @@ module ModuleLoaders
               return set_entry(typed_name, value, origin)
             end
 
-            raise ArgumentError,"The code loaded from #{origin} does not define the TypeSet '#{module_name.capitalize}'"
+            #TRANSLATORS 'TypeSet' should not be translated
+            raise ArgumentError, _("The code loaded from %{origin} does not define the TypeSet '%{module_name}'") %
+                { origin: origin, module_name: module_name.capitalize }
           end
         else
           # anything else cannot possibly be in this module
