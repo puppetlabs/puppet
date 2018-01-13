@@ -210,6 +210,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     if self.class.yaourt?
       yaourt *cmd
+      cmd = ["/usr/bin/sudo -S -u nobody"] + cmd
     else
       pacman *cmd
     end
@@ -259,6 +260,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
     if self.class.yaourt?
       yaourt *cmd
+      cmd = ["/usr/bin/sudo -S -u nobody"] + cmd
     else
       pacman *cmd
     end
