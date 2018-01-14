@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'puppet/util/windows/taskscheduler' if Puppet.features.microsoft_windows?
+require 'puppet/util/windows/taskscheduler2_v1task' if Puppet.features.microsoft_windows?
 
 shared_examples_for "a trigger that handles start_date and start_time" do
   let(:trigger) do
@@ -13,6 +14,7 @@ shared_examples_for "a trigger that handles start_date and start_time" do
 
   before :each do
     Win32::TaskScheduler.any_instance.stubs(:save)
+    Puppet::Util::Windows::TaskScheduler2V1Task.any_instance.stubs(:save)
   end
 
   describe 'the given start_date' do
@@ -109,7 +111,20 @@ shared_examples_for "a trigger that handles start_date and start_time" do
   end
 end
 
-describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if => Puppet.features.microsoft_windows? do
+# The Win32::TaskScheduler and Puppet::Util::Windows::TaskScheduler2V1Task classes should be
+# API compatible and behave the same way.  What differs is which Windows API is used to query
+# and affect the system.  This means for testing, any tests should be the same no matter what
+# provider or concrete class (which the provider uses) is used.
+klass_list = Puppet.features.microsoft_windows? ? [Win32::TaskScheduler, Puppet::Util::Windows::TaskScheduler2V1Task] : []
+klass_list.each do |concrete_klass|
+
+if concrete_klass == Puppet::Util::Windows::TaskScheduler2V1Task
+  task_provider = :taskscheduler_api2
+else
+  task_provider = :win32_taskscheduler
+end
+
+describe Puppet::Type.type(:scheduled_task).provider(task_provider), :if => Puppet.features.microsoft_windows? do
   before :each do
     Puppet::Type.type(:scheduled_task).stubs(:defaultprovider).returns(described_class)
   end
@@ -588,14 +603,14 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
   describe '#exists?' do
     before :each do
       @mock_task = stub
-      @mock_task.responds_like(Win32::TaskScheduler.new)
+      @mock_task.responds_like(concrete_klass.new)
       described_class.any_instance.stubs(:task).returns(@mock_task)
 
-      Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+      concrete_klass.stubs(:new).returns(@mock_task)
     end
     let(:resource) { Puppet::Type.type(:scheduled_task).new(:name => 'Test Task', :command => 'C:\Windows\System32\notepad.exe') }
 
-    it "should delegate to Win32::TaskScheduler using the resource's name" do
+    it "should delegate to #{concrete_klass.name.to_s} using the resource's name" do
       @mock_task.expects(:exists?).with('Test Task').returns(true)
 
       expect(resource.provider.exists?).to eq(true)
@@ -606,9 +621,9 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     before :each do
       @mock_task     = stub
       @new_mock_task = stub
-      @mock_task.responds_like(Win32::TaskScheduler.new)
-      @new_mock_task.responds_like(Win32::TaskScheduler.new)
-      Win32::TaskScheduler.stubs(:new).returns(@mock_task, @new_mock_task)
+      @mock_task.responds_like(concrete_klass.new)
+      @new_mock_task.responds_like(concrete_klass.new)
+      concrete_klass.stubs(:new).returns(@mock_task, @new_mock_task)
 
       described_class.any_instance.stubs(:exists?).returns(false)
     end
@@ -675,7 +690,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
   describe '.instances' do
     it 'should use the list of .job files to construct the list of scheduled_tasks' do
       job_files = ['foo.job', 'bar.job', 'baz.job']
-      Win32::TaskScheduler.any_instance.stubs(:tasks).returns(job_files)
+      concrete_klass.any_instance.stubs(:tasks).returns(job_files)
       job_files.each do |job|
         job = File.basename(job, '.job')
 
@@ -1559,10 +1574,10 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
     before :each do
       @mock_task = stub
-      @mock_task.responds_like(Win32::TaskScheduler.new)
+      @mock_task.responds_like(concrete_klass.new)
       @mock_task.stubs(:exists?).returns(true)
       @mock_task.stubs(:activate)
-      Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+      concrete_klass.stubs(:new).returns(@mock_task)
 
       @command = 'C:\Windows\System32\notepad.exe'
     end
@@ -1627,10 +1642,10 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
     before :each do
         @mock_task = stub
-        @mock_task.responds_like(Win32::TaskScheduler.new)
+        @mock_task.responds_like(concrete_klass.new)
         @mock_task.stubs(:exists?).returns(true)
         @mock_task.stubs(:activate)
-        Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+        concrete_klass.stubs(:new).returns(@mock_task)
     end
 
     describe '#command=' do
@@ -1684,10 +1699,10 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
       before :each do
         @mock_task = stub
-        @mock_task.responds_like(Win32::TaskScheduler.new)
+        @mock_task.responds_like(concrete_klass.new)
         @mock_task.stubs(:exists?).returns(true)
         @mock_task.stubs(:activate)
-        Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+        concrete_klass.stubs(:new).returns(@mock_task)
       end
 
       it 'should not consider all duplicate current triggers in sync with a single desired trigger' do
@@ -1738,10 +1753,10 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     describe '#user=', :if => Puppet.features.microsoft_windows? do
       before :each do
         @mock_task = stub
-        @mock_task.responds_like(Win32::TaskScheduler.new)
+        @mock_task.responds_like(concrete_klass.new)
         @mock_task.stubs(:exists?).returns(true)
         @mock_task.stubs(:activate)
-        Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+        concrete_klass.stubs(:new).returns(@mock_task)
       end
 
       it 'should use nil for user and password when setting the user to the SYSTEM account' do
@@ -2057,4 +2072,6 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
     end
   end
+end
+
 end
