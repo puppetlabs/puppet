@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-246-g3c0841f\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-255-gc922dee\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-12 23:24+0000\n"
-"PO-Revision-Date: 2018-01-12 23:24+0000\n"
+"POT-Creation-Date: 2018-01-16 22:22+0000\n"
+"PO-Revision-Date: 2018-01-16 22:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -18,6 +18,15 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#. TRANSLATORS 'lookup' is a puppet function and should not be translated
+#: ../lib/hiera/puppet_function.rb:64
+msgid "The function '%{class_name}' is deprecated in favor of using 'lookup'."
+msgstr ""
+
+#: ../lib/hiera/puppet_function.rb:65
+msgid "See https://docs.puppet.com/puppet/%{minor_version}/reference/deprecated_language.html"
+msgstr ""
 
 #: ../lib/hiera_puppet.rb:14
 msgid "Could not find data item %{key} in any Hiera data file and no default supplied"
@@ -2680,7 +2689,8 @@ msgstr ""
 msgid "Node entry %{entry} specifies more than one parent: %{parents}"
 msgstr ""
 
-#: ../lib/puppet/indirector/node/write_only_yaml.rb:15
+#. TRANSLATORS 'Puppet::Node::WriteOnlyYaml' is a class and should not be translated
+#: ../lib/puppet/indirector/node/write_only_yaml.rb:16
 msgid "Puppet::Node::WriteOnlyYaml is deprecated and will be removed in a future release of Puppet."
 msgstr ""
 
@@ -5916,6 +5926,20 @@ msgstr ""
 msgid "Options 'include_containers' and 'include_values' cannot both be false"
 msgstr ""
 
+#. TRANSLATORS 'TypeFactory#string' is a class and method name and should not be translated
+#: ../lib/puppet/pops/types/type_factory.rb:104
+msgid "Passing more than one argument to TypeFactory#string is deprecated"
+msgstr ""
+
+#. TRANSLATORS TypeMismatchDescriber is a class name and 'tense' is a method name and should not be translated
+#: ../lib/puppet/pops/types/type_mismatch_describer.rb:516
+msgid "Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored."
+msgstr ""
+
+#: ../lib/puppet/pops/types/type_mismatch_describer.rb:517
+msgid "Everything is now reported using present tense"
+msgstr ""
+
 #: ../lib/puppet/pops/types/type_parser.rb:345
 msgid "Enum parameters must be identifiers or strings"
 msgstr ""
@@ -5934,6 +5958,20 @@ msgstr ""
 
 #: ../lib/puppet/pops/types/type_parser.rb:582
 msgid "Unknown type <%{type}>"
+msgstr ""
+
+#. TRANSLATORS 'PStringType#initialize' is a class and method name and should not be translated
+#: ../lib/puppet/pops/types/types.rb:1434
+msgid "Passing more than one argument to PStringType#initialize is deprecated"
+msgstr ""
+
+#. TRANSLATORS 'PStringType#values' and '#value' are classes and method names and should not be translated
+#: ../lib/puppet/pops/types/types.rb:1488
+msgid "Method PStringType#values is deprecated. Use #value instead"
+msgstr ""
+
+#: ../lib/puppet/pops/types/types.rb:2609
+msgid "Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead"
 msgstr ""
 
 #: ../lib/puppet/pops/validation.rb:129
@@ -8812,7 +8850,11 @@ msgstr ""
 msgid "(file: %{file})"
 msgstr ""
 
-#: ../lib/puppet/util/errors.rb:97
+#: ../lib/puppet/util/errors.rb:77 ../lib/puppet/util/errors.rb:78
+msgid "unknown"
+msgstr ""
+
+#: ../lib/puppet/util/errors.rb:108
 msgid "%{klass} failed with error %{error_type}: %{detail}"
 msgstr ""
 
@@ -9051,48 +9093,21 @@ msgstr ""
 msgid "Unable to set ownership to %{user}:%{group} for log file: %{path}"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:83 ../lib/puppet/util/logging.rb:106
+#: ../lib/puppet/util/logging.rb:82 ../lib/puppet/util/logging.rb:105
 msgid "Wrapped exception:"
 msgstr ""
 
 #. TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
-#: ../lib/puppet/util/logging.rb:150
+#: ../lib/puppet/util/logging.rb:149
 msgid "Need either :file and :line, or :key"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:184
-msgid ""
-"\n"
-"   (at %{file}:%{line})"
+#: ../lib/puppet/util/logging.rb:179
+msgid "(file & line not available)"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:186
-msgid ""
-"\n"
-"   (in %{file})"
-msgstr ""
-
-#: ../lib/puppet/util/logging.rb:188
-msgid ""
-"\n"
-"   (in unknown file, line %{line})"
-msgstr ""
-
-#: ../lib/puppet/util/logging.rb:190
-msgid ""
-"\n"
-"   (file & line not available)"
-msgstr ""
-
-#: ../lib/puppet/util/logging.rb:288
-msgid "unknown"
-msgstr ""
-
-#. TRANSLATORS error message with origin location
-#: ../lib/puppet/util/logging.rb:293
-msgid ""
-"%{message}\n"
-"   (at %{call_trace})"
+#: ../lib/puppet/util/logging.rb:281
+msgid "(location: %{location})"
 msgstr ""
 
 #: ../lib/puppet/util/methodhelper.rb:16
