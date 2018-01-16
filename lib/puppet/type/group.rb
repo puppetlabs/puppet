@@ -37,7 +37,7 @@ module Puppet
         provider.delete
       end
 
-    defaultto :present
+      defaultto :present
 
     end
 
