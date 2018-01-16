@@ -89,4 +89,11 @@ class Puppet::Transaction::Persistence
   def save
     Puppet::Util::Yaml.dump(@new_data, Puppet[:transactionstorefile])
   end
+
+  # Use the catalog and run_mode to determine if persistence should be enabled or not
+  # @param [Puppet::Resource::Catalog] catalog catalog being processed
+  # @return [boolean] true if persistence is enabled
+  def enabled?(catalog)
+    catalog.host_config? && Puppet.run_mode.name == :agent
+  end
 end

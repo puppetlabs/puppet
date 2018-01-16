@@ -134,6 +134,11 @@ describe Puppet::Transaction do
     end
 
     describe "when evaluating a skipped resource for corrective change it" do
+      before :each do
+        # Enable persistence during tests
+        Puppet::Transaction::Persistence.any_instance.stubs(:enabled?).returns(true)
+      end
+
       it "should persist in the transactionstore" do
         Puppet[:transactionstorefile] = tmpfile('persistence_test')
 
