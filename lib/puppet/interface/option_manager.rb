@@ -9,7 +9,10 @@ module Puppet::Interface::OptionManager
   def display_global_options(*args)
     @display_global_options ||= []
     [args].flatten.each do |refopt|
-      raise ArgumentError, "Global option #{refopt} does not exist in Puppet.settings" unless Puppet.settings.include? refopt
+      unless Puppet.settings.include?(refopt)
+        #TRANSLATORS 'Puppet.settings' references to the Puppet settings options and should not be translated
+        raise ArgumentError, _("Global option %{option} does not exist in Puppet.settings") % { option: refopt }
+      end
       @display_global_options << refopt if refopt
     end
     @display_global_options.uniq!
@@ -51,13 +54,15 @@ module Puppet::Interface::OptionManager
 
     option.aliases.each do |name|
       if conflict = get_option(name) then
-        raise ArgumentError, "Option #{option} conflicts with existing option #{conflict}"
+        raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict}") %
+            { option: option, conflict: conflict }
       end
 
       actions.each do |action|
         action = get_action(action)
         if conflict = action.get_option(name) then
-          raise ArgumentError, "Option #{option} conflicts with existing option #{conflict} on #{action}"
+          raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict} on %{action}") %
+              { option: option, conflict: conflict, action: action }
         end
       end
     end

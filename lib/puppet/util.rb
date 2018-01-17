@@ -445,7 +445,7 @@ module Util
   #   query will encode + as %2B and space as %20
   #   fragment behaves like query
   def uri_encode(path, opts = { :allow_fragment => false })
-    raise ArgumentError.new('path may not be nil') if path.nil?
+    raise ArgumentError.new(_('path may not be nil')) if path.nil?
 
     # ensure string starts as UTF-8 for the sake of Ruby 1.9.3
     encoded = ''.encode!(Encoding::UTF_8)

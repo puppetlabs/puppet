@@ -1504,7 +1504,9 @@ class PStringType < PScalarDataType
   def initialize(size_type_or_value, deprecated_multi_args = EMPTY_ARRAY)
     unless deprecated_multi_args.empty?
       if Puppet[:strict] != :off
-        Puppet.warn_once('deprecations', "PStringType#initialize_multi_args", "Passing more than one argument to PStringType#initialize is deprecated")
+        #TRANSLATORS 'PStringType#initialize' is a class and method name and should not be translated
+        Puppet.warn_once('deprecations', "PStringType#initialize_multi_args",
+                         _("Passing more than one argument to PStringType#initialize is deprecated"))
       end
       size_type_or_value = deprecated_multi_args[0]
     end
@@ -1557,7 +1559,8 @@ class PStringType < PScalarDataType
   # @api private
   def values
     if Puppet[:strict] != :off
-      Puppet.warn_once('deprecations', "PStringType#values", "Method PStringType#values is deprecated. Use #value instead")
+      #TRANSLATORS 'PStringType#values' and '#value' are classes and method names and should not be translated
+      Puppet.warn_once('deprecations', "PStringType#values", _("Method PStringType#values is deprecated. Use #value instead"))
     end
     @value.is_a?(String) ? [@value] : EMPTY_ARRAY
   end
@@ -2704,8 +2707,9 @@ class PHashType < PCollectionType
 
   def element_type
     if Puppet[:strict] != :off
+      #TRANSLATOR 'Puppet::Pops::Types::PHashType#element_type' and '#value_type' are class and method names and should not be translated
       Puppet.warn_once('deprecations', 'Puppet::Pops::Types::PHashType#element_type',
-        'Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead')
+        _('Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead'))
     end
     @value_type
   end

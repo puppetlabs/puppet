@@ -213,4 +213,41 @@ describe Puppet::Util::HttpProxy do
       end
     end
   end
+
+  describe '.request_with_redirects' do
+    let(:dest) { URI.parse('http://mydomain.com/some/path') }
+    let(:http_ok) { stub('http ok', :code => 200, :message => 'HTTP OK') }
+
+    it 'generates accept and accept-encoding headers' do
+      Net::HTTP.any_instance.stubs(:head).returns(http_ok)
+      Net::HTTP.any_instance.expects(:get).with do |_, headers|
+        expect(headers)
+          .to match({'Accept' => '*/*',
+                     'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+                     'User-Agent' => /Puppet/})
+      end.returns(http_ok)
+
+      subject.request_with_redirects(dest, :get, 0)
+    end
+
+    it 'generates accept and accept-encoding headers when a block is provided' do
+      Net::HTTP.any_instance.stubs(:head).returns(http_ok)
+      Net::HTTP.any_instance.expects(:request_get).with do |_, headers, &block|
+        expect(headers)
+          .to match({'Accept' => '*/*',
+                     'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+                     'User-Agent' => /Puppet/})
+      end.returns(http_ok)
+
+      subject.request_with_redirects(dest, :get, 0) do
+        # unused
+      end
+    end
+
+    it 'only makes a single HEAD request' do
+      Net::HTTP.any_instance.expects(:head).with(anything, anything).returns(http_ok)
+
+      subject.request_with_redirects(dest, :head, 0)
+    end
+  end
 end

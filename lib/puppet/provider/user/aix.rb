@@ -140,8 +140,10 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def get_arguments(key, value, mapping, objectinfo)
     # In the case of attributes, return a list of key=vlaue
     if key == :attributes
-      raise Puppet::Error, "Attributes must be a list of pairs key=value on #{@resource.class.name}[#{@resource.name}]" \
-        unless value and value.is_a? Hash
+      unless value and value.is_a? Hash
+        raise Puppet::Error, _("Attributes must be a list of pairs key=value on %{class_name}[%{resource_name}]") %
+            { class_name: @resource.class.name, resource_name: @resource.name }
+      end
       return value.map { |k,v| k.to_s.strip + "=" + v.to_s.strip}
     end
 
@@ -170,9 +172,11 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def verify_group(value)
     if value.is_a? Integer
       groupname = groupname_by_id(value)
-      raise ArgumentError, "AIX group must be a valid existing group" unless groupname
+      #TRANSLATORS 'AIX' is the name of the operating system and should not be translated
+      raise ArgumentError, _("AIX group must be a valid existing group") unless groupname
     else
-      raise ArgumentError, "AIX group must be a valid existing group" unless groupid_by_name(value)
+      #TRANSLATORS 'AIX' is the name of the operating system and should not be translated
+      raise ArgumentError, _("AIX group must be a valid existing group") unless groupid_by_name(value)
       groupname = value
     end
     groupname
@@ -208,8 +212,11 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       #expiry_date = d.strftime("%Y-%m-%d")
       expiry_date = "20#{$5}-#{$1}-#{$2}"
     else
-      Puppet.warn("Could not convert AIX expires date '#{value}' on #{@resource.class.name}[#{@resource.name}]") \
-        unless value == '0'
+      unless value == '0'
+        #TRANSLATORS 'AIX' is the name of an operating system and should not be translated
+        Puppet.warn(_("Could not convert AIX expires date '%{value}' on %{class_name}[%{resource_name}]") %
+                        { value: value, class_name: @resource.class.name, resource_name: @resource.name })
+      end
       expiry_date = :absent
     end
     expiry_date

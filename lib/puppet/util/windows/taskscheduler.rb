@@ -919,7 +919,7 @@ module Win32
             if ValidTypeKeys.include?(subkey)
               new_type_hash[subkey] = subvalue
             else
-              raise ArgumentError, "Invalid type key '#{subkey}'"
+              raise ArgumentError, _("Invalid type key '%{key}'") % { key: subkey }
             end
           }
           new_hash[key] = new_type_hash
@@ -927,7 +927,7 @@ module Win32
           if ValidTriggerKeys.include?(key)
             new_hash[key] = value
           else
-            raise ArgumentError, "Invalid key '#{key}'"
+            raise ArgumentError, _("Invalid key '%{key}'") % { key: key }
           end
         end
       }

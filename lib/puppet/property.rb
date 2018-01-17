@@ -95,7 +95,8 @@ class Puppet::Property < Puppet::Parameter
     #
     def array_matching=(value)
       value = value.intern if value.is_a?(String)
-      raise ArgumentError, "Supported values for Property#array_matching are 'first' and 'all'" unless [:first, :all].include?(value)
+      #TRANSLATORS 'Property#array_matching', 'first', and 'all' should not be translated
+      raise ArgumentError, _("Supported values for Property#array_matching are 'first' and 'all'") unless [:first, :all].include?(value)
       @array_matching = value
     end
 
@@ -167,7 +168,7 @@ class Puppet::Property < Puppet::Parameter
       method = value.method.to_sym
       if value.block
         if instance_methods(false).include?(method)
-          raise ArgumentError, "Attempt to redefine method #{method} with block"
+          raise ArgumentError, _("Attempt to redefine method %{method} with block") % { method: method }
         end
         define_method(method, &value.block)
       else
@@ -587,7 +588,11 @@ class Puppet::Property < Puppet::Parameter
     if features = self.class.value_option(self.class.value_name(value), :required_features)
       features = Array(features)
       needed_features = features.collect { |f| f.to_s }.join(", ")
-      raise ArgumentError, "Provider #{provider.class.name} must have features '#{needed_features}' to set '#{self.class.name}' to '#{value}'" unless provider.satisfies?(features)
+      unless provider.satisfies?(features)
+        #TRANSLATORS 'Provider' refers to a Puppet provider class
+        raise ArgumentError, _("Provider %{provider} must have features '%{needed_features}' to set '%{property}' to '%{value}'") %
+            { provider: provider.class.name, needed_features: needed_features, property: self.class.name, value: value }
+      end
     end
   end
 

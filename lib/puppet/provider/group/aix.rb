@@ -98,8 +98,10 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   def get_arguments(key, value, mapping, objectinfo)
     # In the case of attributes, return a list of key=value
     if key == :attributes
-      raise Puppet::Error, _("Attributes must be a list of pairs key=value on %{resource}[%{name}]") % { resource: @resource.class.name, name: @resource.name } \
-        unless value and value.is_a? Hash
+      unless value and value.is_a? Hash
+        raise Puppet::Error, _("Attributes must be a list of pairs key=value on %{resource}[%{name}]") %
+            { resource: @resource.class.name, name: @resource.name }
+      end
       return value.select { |k,v| true }.map { |pair| pair.join("=") }
     end
     super(key, value, mapping, objectinfo)

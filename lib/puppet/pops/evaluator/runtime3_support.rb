@@ -20,7 +20,7 @@ module Runtime3Support
   def fail(issue, semantic, options={}, except=nil)
     optionally_fail(issue, semantic, options, except)
     # an error should have been raised since fail always fails
-    raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+    raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
   end
 
   # Optionally (based on severity) Fails the evaluation of _semantic_ with a given issue
@@ -150,7 +150,7 @@ module Runtime3Support
     # case - it is just wrong, the error should be reported by the caller who knows in more detail where it
     # is in the source.
     #
-    raise ArgumentError, "Internal error - attempt to create a local scope without a hash" unless hash.is_a?(Hash)
+    raise ArgumentError, _("Internal error - attempt to create a local scope without a hash") unless hash.is_a?(Hash)
     scope.ephemeral_from(hash)
   end
 
@@ -288,7 +288,7 @@ module Runtime3Support
     end
 
     # Call via 3x API if function exists there
-    raise ArgumentError, "Unknown function '#{name}'" unless Puppet::Parser::Functions.function(name)
+    raise ArgumentError, _("Unknown function '%{name}'") % { name: name } unless Puppet::Parser::Functions.function(name)
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
@@ -526,7 +526,7 @@ module Runtime3Support
         :exception_class => Puppet::PreformattedError
       })
       if errors?
-        raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+        raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
       end
     end
   end

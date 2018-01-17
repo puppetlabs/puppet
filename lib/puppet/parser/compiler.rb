@@ -26,8 +26,8 @@ class Puppet::Parser::Compiler
     if !errors.empty?
       errors.each { |e| Puppet.err(e) } if errors.size > 1
       errmsg = [
-        "Compilation has been halted because: #{errors.first}",
-        "For more information, see https://docs.puppet.com/puppet/latest/reference/environments.html",
+        _("Compilation has been halted because: %{error}") % { error: errors.first },
+        _("For more information, see https://docs.puppet.com/puppet/latest/reference/environments.html"),
       ]
       raise(Puppet::Error, errmsg.join(' '))
     end

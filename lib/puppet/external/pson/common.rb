@@ -43,7 +43,7 @@ module PSON
         case
         when c.empty?             then p
         when p.const_defined?(c)  then p.const_get(c)
-        else                      raise ArgumentError, "can't find const for unregistered document type #{path}"
+        else                      raise ArgumentError, _("can't find const for unregistered document type %{path}") % { path: path}
         end
       end
     end
@@ -308,7 +308,7 @@ module PSON
       result
     end
   rescue PSON::NestingError
-    raise ArgumentError, "exceed depth limit", $!.backtrace
+    raise ArgumentError, _("exceed depth limit"), $!.backtrace
   end
 
 

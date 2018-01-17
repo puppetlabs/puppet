@@ -143,7 +143,9 @@ class Runtime3Converter
           [type_name.nil? ? nil : type_name.sub(/^::/, '').downcase, title.nil? ? '' : title]
         end
       else
-        raise ArgumentError, "Cannot split the type #{catalog_type.class}, it represents neither a PClassType, nor a PResourceType."
+        #TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
+        raise ArgumentError, _("Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType.") %
+            { class_name: catalog_type.class }
     end
   end
 

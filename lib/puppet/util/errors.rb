@@ -66,6 +66,17 @@ module Puppet::Util::Errors
     end
   end
 
+  # Return a human-readable string of this object's file and line
+  # where unknown entries are listed as 'unknown'
+  #
+  # @return [String] description of file, and line
+  def self.error_location_with_unknowns(file, line)
+    file = nil if (file.is_a?(String) && file.empty?)
+    file = _('unknown') unless file
+    line = _('unknown') unless line
+    error_location(file, line)
+  end
+
   # Return a human-readable string of this object's file and line attributes,
   # if set.
   #
