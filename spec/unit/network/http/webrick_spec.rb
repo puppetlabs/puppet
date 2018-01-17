@@ -36,6 +36,7 @@ describe Puppet::Network::HTTP::WEBrick do
                   :ssl_context => mock_ssl_context)
     server.stubs(:start).yields(socket)
     IO.stubs(:select).with([socket], nil, nil, anything).returns(true)
+    socket.stubs(:accept)
     server.stubs(:run).with(socket)
     server
   end
@@ -93,9 +94,11 @@ describe Puppet::Network::HTTP::WEBrick do
       expect(server).to be_listening
     end
 
-    it "is passed an already connected socket" do
-      socket.expects(:accept).never
+    it "is passed a yet to be accepted socket" do
+      socket.expects(:accept)
+
       server.listen(address, port)
+      server.unlisten
     end
 
     describe "when the REST protocol is requested" do
@@ -234,8 +237,8 @@ describe Puppet::Network::HTTP::WEBrick do
       expect(server.setup_ssl[:SSLCACertificateFile]).to eq(ssl_server_ca_auth)
     end
 
-    it "should start ssl immediately" do
-      expect(server.setup_ssl[:SSLStartImmediately]).to be_truthy
+    it "should not start ssl immediately" do
+      expect(server.setup_ssl[:SSLStartImmediately]).to eq(false)
     end
 
     it "should enable ssl" do
