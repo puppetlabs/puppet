@@ -26,15 +26,19 @@ describe Puppet::Network::HTTP::WEBrick do
     stub('ssl_context', :ciphers= => nil)
   end
 
+  let(:socket) { mock('socket') }
   let(:mock_webrick) do
-    stub('webrick',
-         :[] => {},
-         :listeners => [],
-         :status => :Running,
-         :mount => nil,
-         :start => nil,
-         :shutdown => nil,
-         :ssl_context => mock_ssl_context)
+    server = stub('webrick',
+                  :[] => {},
+                  :listeners => [],
+                  :status => :Running,
+                  :mount => nil,
+                  :shutdown => nil,
+                  :ssl_context => mock_ssl_context)
+    server.stubs(:start).yields(socket)
+    IO.stubs(:select).with([socket], nil, nil, anything).returns(true)
+    server.stubs(:run).with(socket)
+    server
   end
 
   before :each do
@@ -86,6 +90,11 @@ describe Puppet::Network::HTTP::WEBrick do
     it "should be listening" do
       server.listen(address, port)
       expect(server).to be_listening
+    end
+
+    it "is passed an already connected socket" do
+      socket.expects(:accept).never
+      server.listen(address, port)
     end
 
     describe "when the REST protocol is requested" do
