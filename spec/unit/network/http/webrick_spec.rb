@@ -14,13 +14,12 @@ describe Puppet::Network::HTTP::WEBrick do
 
   let(:address) { '127.0.0.1' }
   let(:port) { 31337 }
-
-  let(:server) do
-    s = Puppet::Network::HTTP::WEBrick.new
-    s.stubs(:setup_logger).returns(Hash.new)
-    s.stubs(:setup_ssl).returns(Hash.new)
-    s
-  end
+  let(:server) { Puppet::Network::HTTP::WEBrick.new }
+  let(:localcacert) { make_absolute("/ca/crt") }
+  let(:ssl_server_ca_auth) { make_absolute("/ca/ssl_server_auth_file") }
+  let(:key) { stub 'key', :content => "mykey" }
+  let(:cert) { stub 'cert', :content => "mycert" }
+  let(:host) { stub 'host', :key => key, :certificate => cert, :name => "yay", :ssl_store => "mystore" }
 
   let(:mock_ssl_context) do
     stub('ssl_context', :ciphers= => nil)
@@ -43,6 +42,8 @@ describe Puppet::Network::HTTP::WEBrick do
 
   before :each do
     WEBrick::HTTPServer.stubs(:new).returns(mock_webrick)
+    Puppet::SSL::Certificate.indirection.stubs(:find).with('ca').returns cert
+    Puppet::SSL::Host.stubs(:localhost).returns host
   end
 
   describe "when turning on listening" do
@@ -201,18 +202,6 @@ describe Puppet::Network::HTTP::WEBrick do
   end
 
   describe "when configuring ssl" do
-    let(:server) { Puppet::Network::HTTP::WEBrick.new }
-    let(:localcacert) { make_absolute("/ca/crt") }
-    let(:ssl_server_ca_auth) { make_absolute("/ca/ssl_server_auth_file") }
-    let(:key) { stub 'key', :content => "mykey" }
-    let(:cert) { stub 'cert', :content => "mycert" }
-    let(:host) { stub 'host', :key => key, :certificate => cert, :name => "yay", :ssl_store => "mystore" }
-
-    before :each do
-      Puppet::SSL::Certificate.indirection.stubs(:find).with('ca').returns cert
-      Puppet::SSL::Host.stubs(:localhost).returns host
-    end
-
     it "should use the key from the localhost SSL::Host instance" do
       Puppet::SSL::Host.expects(:localhost).returns host
       host.expects(:key).returns key
