@@ -15,7 +15,7 @@ package_name = {'el'     => 'httpd',
 
 agents.each do |agent|
   platform = agent.platform.variant
-  osname = on(agent, facter('os.name')).stdout.chomp.to_i
+  osname = on(agent, facter('os.name')).stdout.chomp
   osreleasefull = on(agent, facter('os.release.full')).stdout.chomp.to_f
   majrelease = on(agent, facter('operatingsystemmajrelease')).stdout.chomp.to_i
 
