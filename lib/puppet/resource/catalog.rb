@@ -199,10 +199,17 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # isn't sufficient.
     if existing = @resource_table[newref]
       return if existing == resource
-      resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
-      existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
-      #TRANSLATORS "resource" here is a Puppet type and should not be translated
-      msg = _("Cannot alias %{ref} to %{key}%{resource_declaration}; resource %{newref} already declared%{existing_declaration}") % { ref: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect, existing_declaration: existing_declaration }
+      resource_declaration = Puppet::Util::Errors.error_location(resource.file, resource.line)
+      msg = if resource_declaration.empty?
+              #TRANSLATORS 'alias' should not be translated
+              _("Cannot alias %{resource} to %{key}; resource %{newref} already declared") %
+                  { resource: ref, key: key.inspect, newref: newref.inspect }
+            else
+              #TRANSLATORS 'alias' should not be translated
+              _("Cannot alias %{resource} to %{key} at %{resource_declaration}; resource %{newref} already declared") %
+                  { resource: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect }
+            end
+      msg += Puppet::Util::Errors.error_location_with_space(existing.file, existing.line)
       raise ArgumentError, msg
     end
     @resource_table[newref] = resource
