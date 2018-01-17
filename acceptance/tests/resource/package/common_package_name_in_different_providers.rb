@@ -2,7 +2,10 @@ test_name "ticket 1073: common package name in two different providers should be
 
 confine :to, {:platform => /(?:centos|el-|fedora)/}, agents
 confine :except, :platform => /centos-4|el-4/ # PUP-5227
-confine :except, :hypervisor => 'ec2' # PUP-7774
+# Skipping tests if facter finds this is an ec2 host, PUP-7774
+agents.each do |agent|
+  skip_test('Skipping EC2 Hosts') if fact_on(agent, 'ec2_metadata')
+end
 
 require 'puppet/acceptance/rpm_util'
 extend Puppet::Acceptance::RpmUtils
