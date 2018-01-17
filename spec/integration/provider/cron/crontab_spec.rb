@@ -10,6 +10,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
 
   before :each do
     Puppet::Type.type(:cron).stubs(:defaultprovider).returns described_class
+    described_class.stubs(:suitable?).returns true
     Puppet::FileBucket::Dipper.any_instance.stubs(:backup) # Don't backup to filebucket
 
     # I don't want to execute anything
