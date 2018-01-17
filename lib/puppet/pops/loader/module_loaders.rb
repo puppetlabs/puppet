@@ -427,8 +427,13 @@ module ModuleLoaders
     end
 
     def existing_paths(effective_path)
-      # Select all paths starting with effective_path but reject any path that continues into a subdirectory
-      @path_index.select { |path| path.start_with?(effective_path) }.reject { |path| path[effective_path.size..-1].include?('/')}
+      dirname = File.dirname(effective_path)
+      basename = File.basename(effective_path)
+      # Select all paths matching `effective_path` up until an optional file extension
+      @path_index.select do |path|
+        File.basename(path, '.*') == basename &&
+          File.dirname(path) == dirname
+      end
     end
 
     def meaningful_to_search?(smart_path)
