@@ -442,7 +442,11 @@ module Puppet
         if Puppet[:strict] != :off
           s_val = value.to_s # because sometimes the value is a symbol
           unless s_val == 'hiera' || s_val == 'none' || value == '' || value.nil?
-            Puppet.deprecation_warning "Setting 'data_binding_terminus' is deprecated. Convert custom terminus to hiera 5 API."
+            #TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
+            message = _("Setting 'data_binding_terminus' is deprecated.")
+            #TRANSLATORS 'hiera' should not be translated
+            message += ' ' + _("Convert custom terminus to hiera 5 API.")
+            Puppet.deprecation_warning(message)
           end
         end
       end
@@ -594,7 +598,8 @@ module Puppet
       custom data providers see the respective module documentation. This setting is deprecated.",
       :hook => proc { |value|
         unless value.nil? || Puppet[:strict] == :off
-          Puppet.deprecation_warning "Setting 'environment_data_provider' is deprecated."
+          #TRANSLATORS 'environment_data_provider' is a setting and should not be translated
+          Puppet.deprecation_warning(_("Setting 'environment_data_provider' is deprecated."))
         end
       }
     },
@@ -1455,7 +1460,10 @@ EOT
       :call_hook => :on_initialize_and_write,
       :hook => proc { |value|
         if Puppet.settings.set_by_config?(:server) && Puppet.settings.set_by_config?(:server_list)
-          Puppet.deprecation_warning('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
+          #TRANSLATOR 'server' and 'server_list' are setting names and should not be translated
+          message = _('Attempted to set both server and server_list.')
+          message += ' ' + _('Server setting will not be used.')
+          Puppet.deprecation_warning(message, :SERVER_DUPLICATION)
         end
       }
     },
@@ -1467,7 +1475,10 @@ EOT
       :call_hook => :on_initialize_and_write,
       :hook => proc { |value|
         if Puppet.settings.set_by_config?(:server) && Puppet.settings.set_by_config?(:server_list)
-          Puppet.deprecation_warning('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
+          #TRANSLATOR 'server' and 'server_list' are setting names and should not be translated
+          message = _('Attempted to set both server and server_list.')
+          message += ' ' + _('Server setting will not be used.')
+          Puppet.deprecation_warning(message, :SERVER_DUPLICATION)
         end
       }
     },
@@ -1775,7 +1786,8 @@ EOT
       :desc       => "Whether plugins should be synced with the central server. This setting is
         deprecated.",
       :hook => proc { |value|
-        Puppet.deprecation_warning "Setting 'pluginsync' is deprecated."
+        #TRANSLATORS 'pluginsync' is a setting and should not be translated
+        Puppet.deprecation_warning(_("Setting 'pluginsync' is deprecated."))
       }
     },
     :pluginsignore => {

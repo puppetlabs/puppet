@@ -1158,9 +1158,14 @@ Generated on #{Time.now}.
       msg << " #{ref}" if ref
       Puppet.deprecation_warning(msg)
     when setting.completely_deprecated?
-      Puppet.deprecation_warning("Setting #{name} is deprecated. #{ref}", "setting-#{name}")
+      message = _("Setting %{name} is deprecated.") % { name: name }
+      message += " #{ref}"
+      Puppet.deprecation_warning(message, "setting-#{name}")
     when setting.allowed_on_commandline?
-      Puppet.deprecation_warning("Setting #{name} is deprecated in puppet.conf. #{ref}", "puppet-conf-setting-#{name}")
+      #TRANSLATORS 'puppet.conf' is a file name and should not be translated
+      message = _("Setting %{name} is deprecated in puppet.conf.") % { name: name }
+      message += " #{ref}"
+      Puppet.deprecation_warning(message, "puppet-conf-setting-#{name}")
     end
   end
 
