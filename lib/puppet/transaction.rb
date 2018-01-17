@@ -265,6 +265,7 @@ class Puppet::Transaction
       resource_status(resource).skipped = true
       resource.debug("Resource is being skipped, unscheduling all events")
       event_manager.dequeue_all_events_for_resource(resource)
+      persistence.copy_skipped(resource.ref)
     else
       resource_status(resource).scheduled = true
       apply(resource, ancestor)

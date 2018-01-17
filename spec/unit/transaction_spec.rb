@@ -133,6 +133,27 @@ describe Puppet::Transaction do
     end
   end
 
+  describe "when evaluating a skipped resource for corrective change it" do
+    it "should persist in the transactionstore" do
+      Puppet[:transactionstorefile] = tmpfile('persistence_test')
+
+      resource = Puppet::Type.type(:notify).new :title => "foobar"
+      transaction = transaction_with_resource(resource)
+      transaction.evaluate
+      expect(transaction.resource_status(resource)).to be_changed
+
+      transaction = transaction_with_resource(resource)
+      transaction.expects(:skip?).with(resource).returns true
+      transaction.event_manager.expects(:process_events).with(resource).never
+      transaction.evaluate
+      expect(transaction.resource_status(resource)).to be_skipped
+
+      persistence = Puppet::Transaction::Persistence.new
+      persistence.load
+      expect(persistence.get_system_value(resource.ref, "message")).to eq(["foobar"])
+    end
+  end
+
   describe "when applying a resource" do
     before do
       @catalog = Puppet::Resource::Catalog.new
