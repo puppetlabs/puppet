@@ -200,7 +200,7 @@ module Serialization
     end
 
     def unknown_to_string(value)
-      value.is_a?(Regexp) ? value.inspect : value.to_s
+      value.is_a?(Regexp) ? Puppet::Pops::Types::PRegexpType.regexp_to_s_with_delimiters(value) : value.to_s
     end
 
     def non_string_keyed_hash_to_data(hash)
