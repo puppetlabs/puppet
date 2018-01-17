@@ -871,19 +871,33 @@ describe Puppet::Util do
       end
     end
 
-    it "should copy the permissions of the source file before yielding on Unix", :if => !Puppet.features.microsoft_windows? do
+    it "should copy the permissions of the source file after yielding on Unix", :if => !Puppet.features.microsoft_windows? do
       set_mode(0555, target.path)
       inode = Puppet::FileSystem.stat(target.path).ino
 
       yielded = false
-      subject.replace_file(target.path, 0600) do |fh|
-        expect(get_mode(fh.path)).to eq(0555)
+      subject.replace_file(target.path, 0660) do |fh|
+        expect(get_mode(fh.path)).to eq(0600)
         yielded = true
       end
       expect(yielded).to be_truthy
 
       expect(Puppet::FileSystem.stat(target.path).ino).not_to eq(inode)
       expect(get_mode(target.path)).to eq(0555)
+    end
+
+    it "should be able to create a new file with read-only permissions when it doesn't already exist" do
+      temp_file = Tempfile.new('puppet-util-replace-file')
+      temp_path = temp_file.path
+      temp_file.close
+      temp_file.unlink
+
+      subject.replace_file(temp_path, 0440) do |fh|
+        fh.puts('some text in there')
+      end
+      
+      expect(File.read(temp_path)).to eq("some text in there\n")
+      expect(get_mode(temp_path)).to eq(0440)
     end
 
     it "should use the default permissions if the source file doesn't exist" do

@@ -584,17 +584,10 @@ module Util
       # encoding for Uniquefile is not important here because the caller writes to it as it sees fit
       tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
 
-      # Set properties of the temporary file before we write the content, because
-      # Tempfile doesn't promise to be safe from reading by other people, just
-      # that it avoids races around creating the file.
-      #
-      # Our Windows emulation is pretty limited, and so we have to carefully
-      # and specifically handle the platform, which has all sorts of magic.
-      # So, unlike Unix, we don't pre-prep security; we use the default "quite
-      # secure" tempfile permissions instead.  Magic happens later.
+      effective_mode =
       if !Puppet.features.microsoft_windows?
         # Grab the current file mode, and fall back to the defaults.
-        effective_mode =
+        
         if Puppet::FileSystem.exist?(file)
           stat = Puppet::FileSystem.lstat(file)
           tempfile.chown(stat.uid, stat.gid)
@@ -602,16 +595,16 @@ module Util
         else
           mode
         end
-
-        if effective_mode
-          # We only care about the bottom four slots, which make the real mode,
-          # and not the rest of the platform stat call fluff and stuff.
-          tempfile.chmod(effective_mode & 07777)
-        end
       end
 
       # OK, now allow the caller to write the content of the file.
       yield tempfile
+
+      if effective_mode
+        # We only care about the bottom four slots, which make the real mode,
+        # and not the rest of the platform stat call fluff and stuff.
+        tempfile.chmod(effective_mode & 07777)
+      end
 
       # Now, make sure the data (which includes the mode) is safe on disk.
       tempfile.flush
