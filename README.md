@@ -12,41 +12,41 @@ Documentation
 -------------
 
 Documentation for Puppet and related projects can be found online at the
-[Puppet Docs site](https://docs.puppetlabs.com).
+[Puppet Docs site](https://puppet.com/docs).
 
 HTTP API
 --------
-[HTTP API Index](https://docs.puppetlabs.com/puppet/latest/reference/http_api/http_api_index.html)
+[HTTP API Index](https://puppet.com/docs/puppet/4.10/http_api/http_api_index.html)
 
 Installation
 ------------
 
-The best way to run Puppet is with [Puppet Enterprise](https://puppetlabs.com/puppet/puppet-enterprise),
+The best way to run Puppet is with [Puppet Enterprise](https://puppet.com/puppet/puppet-enterprise),
 which also includes orchestration features, a web console, and professional support.
-[The PE documentation is available here.](https://docs.puppetlabs.com/pe/latest)
+[The PE documentation is available here.](https://puppet.com/docs/pe/latest)
 
 To install an open source release of Puppet,
-[see the installation guide on the docs site.](http://docs.puppetlabs.com/puppet/latest/reference/install_pre.html)
+[see the installation guide on the docs site.](http://puppet.com/docs/puppet/4.10/install_pre.html)
 
 If you need to run Puppet from source as a tester or developer,
-[see the running from source guide on the docs site.](https://docs.puppetlabs.com/guides/from_source.html)
+[see the running from source guide on the docs site.](https://docs.puppet.com/puppet/3.8/from_source.html)
 
 Developing and Contributing
 ------
 
 We'd love to get contributions from you! For a quick guide to getting your
 system setup for developing take a look at our [Quickstart
-Guide](docs/quickstart.md). Once you are up and running, take a look at the
-[Contribution Documents](CONTRIBUTING.md) to see how to get your changes merged
+Guide](https://github.com/puppetlabs/puppet/blob/master/docs/quickstart.md). Once you are up and running, take a look at the
+[Contribution Documents](https://github.com/puppetlabs/puppet/blob/master/CONTRIBUTING.md) to see how to get your changes merged
 in.
 
 For more complete docs on developing with puppet you can take a look at the
-rest of the [developer documents](docs/index.md).
+rest of the [developer documents](https://github.com/puppetlabs/puppet/blob/master/docs/index.md).
 
 License
 -------
 
-See [LICENSE](LICENSE) file.
+See [LICENSE](https://github.com/puppetlabs/puppet/blob/master/LICENSE) file.
 
 Support
 -------
@@ -71,4 +71,4 @@ a best effort to backport that fix onto the latest Puppet 3 release.
 Long-term support, including security patches and bug fixes, is available for
 commercial customers. Please see the following page for more details:
 
-[Puppet Enterprise Support Lifecycle](https://puppetlabs.com/misc/puppet-enterprise-lifecycle)
+[Puppet Enterprise Support Lifecycle](https://puppet.com/misc/puppet-enterprise-lifecycle)
