@@ -898,13 +898,22 @@ describe Puppet::Parser::Compiler do
         end.to raise_error(/Class\[Foo\]: parameter 'x' expects an Integer value, got Undef/)
       end
 
-      it 'denies a regexp (rich data) argument given to String parameter (even if later encoding of it is a string)' do
+      it 'denies a regexp (rich data) argument given to class String parameter (even if later encoding of it is a string)' do
         expect do
           catalog = compile_to_catalog(<<-MANIFEST)
             class foo(String $x) { }
             class { 'foo':  x => /I am a regexp and I don't want to be a String/}
           MANIFEST
         end.to raise_error(/Class\[Foo\]: parameter 'x' expects a String value, got Regexp/)
+      end
+
+      it 'denies a regexp (rich data) argument given to define String parameter (even if later encoding of it is a string)' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            define foo(String $x) { }
+            foo { 'foo':  x => /I am a regexp and I don't want to be a String/}
+          MANIFEST
+        end.to raise_error(/Foo\[foo\]: parameter 'x' expects a String value, got Regexp/)
       end
 
       it 'accepts a Resource as a Type' do
