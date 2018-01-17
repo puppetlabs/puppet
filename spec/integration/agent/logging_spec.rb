@@ -71,6 +71,8 @@ describe 'agent logging' do
     before(:each) do
       # Don't actually run the agent, bypassing cert checks, forking and the puppet run itself
       Puppet::Application::Agent.any_instance.stubs(:run_command)
+      # Let exceptions be raised instead of exiting
+      Puppet::Application::Agent.any_instance.stubs(:exit_on_fail).yields
     end
 
     def double_of_bin_puppet_agent_call(argv)
