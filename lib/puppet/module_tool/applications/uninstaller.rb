@@ -16,6 +16,9 @@ module Puppet::ModuleTool
       end
 
       def run
+        # Disallow anything that invokes md5 to avoid un-friendly termination due to FIPS
+        raise _("Module uninstall is prohibited in FIPS mode.") if Facter.value(:fips_enabled)
+
         results = {
           :module_name       => @name,
           :requested_version => @version,
