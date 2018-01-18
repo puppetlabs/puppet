@@ -777,7 +777,7 @@ module Issues
     msg = _("Backend '%{name}' is defined more than once.") % { name: name }
     fl = first_line
     if fl
-      msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location("", fl) }
+      msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location(nil, fl) }
     end
     msg
   end
@@ -790,7 +790,7 @@ module Issues
     msg = _("Hierarchy name '%{name}' defined more than once.") % { name: name }
     fl = first_line
     if fl
-      msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location("", fl) }
+      msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location(nil, fl) }
     end
     msg
   end
