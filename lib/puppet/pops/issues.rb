@@ -782,9 +782,12 @@ module Issues
   end
 
   HIERA_BACKEND_MULTIPLY_DEFINED = hard_issue :HIERA_BACKEND_MULTIPLY_DEFINED, :name, :first_line do
-    msg = _("Backend '%{name}' is defined more than once") % { name: name }
+    msg = _("Backend '%{name}' is defined more than once.") % { name: name }
     fl = first_line
-    fl ? _("%{msg}. First defined at line %{line}") % { msg: msg, line: fl } : msg
+    if fl
+      msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location("", fl) }
+    end
+    msg
   end
 
   HIERA_NO_PROVIDER_FOR_BACKEND = hard_issue :HIERA_NO_PROVIDER_FOR_BACKEND, :name do
@@ -792,9 +795,12 @@ module Issues
   end
 
   HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED = hard_issue :HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED, :name, :first_line do
-    msg = _("Hierarchy name '%{name}' defined more than once") % { name: name }
+    msg = _("Hierarchy name '%{name}' defined more than once.") % { name: name }
     fl = first_line
-    fl ? _("%{msg}. First defined at line %{line}") % { msg: msg, line: fl } : msg
+    if fl
+      msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location("", fl) }
+    end
+    msg
   end
 
   HIERA_V3_BACKEND_NOT_GLOBAL = hard_issue :HIERA_V3_BACKEND_NOT_GLOBAL do

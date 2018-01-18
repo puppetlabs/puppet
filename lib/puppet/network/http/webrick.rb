@@ -17,8 +17,6 @@ class Puppet::Network::HTTP::WEBrick
   def listen(address, port)
     @server = create_server(address, port)
 
-    @server.listeners.each { |l| l.start_immediately = false }
-
     @server.mount('/', Puppet::Network::HTTP::WEBrickREST)
 
     raise _("WEBrick server is already listening") if @listening
@@ -29,6 +27,7 @@ class Puppet::Network::HTTP::WEBrick
         if ! IO.select([sock],nil,nil,timeout)
           raise _("Client did not send data within %{timeout} seconds of connecting") % { timeout: ("%.1f") % timeout }
         end
+        sock.accept
         @server.run(sock)
       end
     end
@@ -101,7 +100,7 @@ class Puppet::Network::HTTP::WEBrick
 
     results[:SSLPrivateKey] = host.key.content
     results[:SSLCertificate] = host.certificate.content
-    results[:SSLStartImmediately] = true
+    results[:SSLStartImmediately] = false
     results[:SSLEnable] = true
     results[:SSLOptions] = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
 

@@ -123,7 +123,7 @@ badline
 
     expect { config.parse_file(filename, text, [:legal]) }.
       to raise_error Puppet::Error,
-        /Illegal section 'legal' in config file #{filename} at line 1/
+        /Illegal section 'legal' in config file at \(file: #{filename}, line: 1\)/
   end
 
   it "transforms values with the given function" do

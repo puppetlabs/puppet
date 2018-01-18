@@ -386,9 +386,15 @@ module Puppet
     end
 
     newparam(:managehome, :boolean => true, :parent => Puppet::Parameter::Boolean) do
-      desc "Whether to manage the home directory when managing the user.
-        This will create the home directory when `ensure => present`, and
-        delete the home directory when `ensure => absent`. Defaults to `false`."
+      desc "Whether to manage the home directory when Puppet creates or removes the user.
+        This creates the home directory if Puppet also creates the user account, and deletes the
+        home directory if Puppet also removes the user account. Defaults to `false`.
+
+        This parameter has no effect unless Puppet is also creating or removing the user in the
+        resource at the same time. For instance, Puppet creates a home directory for a managed
+        user if `ensure => present` and the user does not exist at the time of the Puppet run.
+        If the home directory is then deleted manually, Puppet will not recreate it on the next
+        run."
 
       defaultto false
 
