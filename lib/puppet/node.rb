@@ -27,10 +27,10 @@ class Puppet::Node
     @name       = data['name']       || (raise ArgumentError, _("No name provided in serialized data"))
     @classes    = data['classes']    || []
     @parameters = data['parameters'] || {}
-    env_name = data['environment']
+    env_name = data['environment'] || @parameters[ENVIRONMENT]
     env_name = env_name.intern unless env_name.nil?
     @environment_name = env_name
-    environment = env_name
+    self.environment = env_name
   end
 
   def self.from_data_hash(data)
@@ -84,7 +84,8 @@ class Puppet::Node
 
     # Keep environment_name attribute and parameter in sync if they have been set
     unless @environment.nil?
-      @parameters[ENVIRONMENT] = @environment.name.to_s if @parameters.include?(ENVIRONMENT)
+      # always set the environment parameter. It becomes top scope $environment for a manifest during catalog compilation.
+      @parameters[ENVIRONMENT] = @environment.name.to_s
       self.environment_name = @environment.name if instance_variable_defined?(:@environment_name)
     end
     @environment
@@ -138,7 +139,10 @@ class Puppet::Node
 
     if !@facts.nil?
       @facts.sanitize
+      # facts should never modify the environment parameter
+      orig_param_env = @parameters[ENVIRONMENT]
       merge(@facts.values)
+      @parameters[ENVIRONMENT] = orig_param_env
     end
   end
 
@@ -151,8 +155,6 @@ class Puppet::Node
         @parameters[name] = value
       end
     end
-
-    @parameters[ENVIRONMENT] ||= self.environment.name.to_s
   end
 
   # Add extra facts, such as facts given to lookup on the command line The
