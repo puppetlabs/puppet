@@ -155,6 +155,12 @@ describe Puppet::Node do
       expect(@node).to set_json_attribute('parameters').to({"a" => "b", "c" => "d"})
     end
 
+    it "does not include the environment parameter in the json" do
+      @node.parameters = {"a" => "b", "c" => "d", "environment" => "production"}
+      expect(@node.parameters).to eq({"a"=>"b", "c"=>"d", "environment"=>"production"})
+      expect(@node).to set_json_attribute('parameters').to({"a" => "b", "c" => "d"})
+    end
+
     it "does not include the parameters if there are none" do
       expect(@node).to_not set_json_attribute('parameters')
     end

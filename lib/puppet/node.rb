@@ -45,8 +45,14 @@ class Puppet::Node
       'environment' => environment.name.to_s,
     }
     result['classes'] = classes unless classes.empty?
-    result['parameters'] = parameters unless parameters.empty?
+    result['parameters'] = serializable_parameters unless serializable_parameters.empty?
     result
+  end
+
+  def serializable_parameters
+    new_params = parameters.dup
+    new_params.delete(ENVIRONMENT)
+    new_params
   end
 
   def environment
