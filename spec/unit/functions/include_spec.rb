@@ -98,6 +98,20 @@ describe 'The "include" function' do
     }.to raise_error(Puppet::Error)
   end
 
+    { "''"      => 'empty string', 
+      'undef'   => 'undef',
+      "['']"    => 'empty string',
+      "[undef]" => 'undef'
+    }.each_pair do |value, name_kind|
+      it "raises an error if class is #{name_kind}" do
+        expect {
+          catalog = compile_to_catalog(<<-MANIFEST)
+            include #{value}
+          MANIFEST
+        }.to raise_error(/Cannot use #{name_kind}/)
+      end
+    end
+
   it "does not contained the included class in the current class" do
     catalog = compile_to_catalog(<<-MANIFEST)
       class not_contained {
