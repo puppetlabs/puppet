@@ -45,10 +45,15 @@ tag 'audit:medium',
 
 echo -n "custom_time=$(date +%s%N)"
   FILE
-  create_remote_file(master, "#{fq_tmp_environmentpath}/modules/custom_time/facts.d/custom_time.ps1", <<-FILE)
-  echo "custom_time=$(get-date -format HHmmssffffff)"
-  FILE
+
   on(master, "chmod -R 0777 #{fq_tmp_environmentpath}/")
+
+  windows_fact_location = "#{fq_tmp_environmentpath}/modules/custom_time/facts.d/custom_time.ps1"
+  create_remote_file(master, windows_fact_location, <<-FILE)
+echo "custom_time=$(get-date -format HHmmssffffff)"
+FILE
+
+  on(master, "chmod -R 0666 #{windows_fact_location}")
 
 
   step "run agent in #{tmp_environment}, ensure it increments the customtime with each run" do
