@@ -169,6 +169,10 @@ class Puppet::Settings::IniFile
       fh.write(value)
       fh.puts(suffix)
     end
+
+    def ==(other)
+      super(other) && self.line_number == other.line_number
+    end
   end
 
   SectionLine = Struct.new(:prefix, :name, :suffix) do
