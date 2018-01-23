@@ -105,8 +105,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
   describe "when applying" do
     before do
-      # We use a real object here, because :verify can't be stubbed, apparently.
-      @ca = Object.new
+      @ca = mock
     end
 
     describe "with an empty array specified and the method is not list" do
@@ -134,15 +133,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
     describe ":verify" do
       before { @method = :verify }
-      #it_should_behave_like "a normal interface method"
-
-      it "should call the method on the CA for each host specified if an array was provided" do
-        # LAK:NOTE Mocha apparently doesn't allow you to mock :verify, but I'm confident this works in real life.
-      end
-
-      it "should call the method on the CA for all existing certificates if :all was provided" do
-        # LAK:NOTE Mocha apparently doesn't allow you to mock :verify, but I'm confident this works in real life.
-      end
+      it_should_behave_like "a normal interface method"
     end
 
     describe ":destroy" do
