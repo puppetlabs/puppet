@@ -11,19 +11,24 @@ module Puppet
   end
 
   def self.default_digest_alg
-    if Puppet::Util::Platform.fips_enabled?
-      "sha256"
-    else
-      "md5"
-    end
+    Puppet::Util::Platform.fips_enabled? ? "sha256" : "md5"
+  end
+
+  def self.valid_digest_algorithms
+    Puppet::Util::Platform.fips_enabled? ?
+          ["sha256", "sha384", "sha512", "sha224"] :
+          ["md5", "sha256", "sha384", "sha512", "sha224"]
   end
 
   def self.default_checksum_types 
-    if Puppet::Util::Platform.fips_enabled?
-      ['sha256', 'sha384', 'sha512', 'sha224']
-    else
+    Puppet::Util::Platform.fips_enabled? ? ['sha256', 'sha384', 'sha512', 'sha224'] :
       ['md5', 'sha256', 'sha384', 'sha512', 'sha224']
-    end
+  end
+
+  def self.valid_checksum_types
+    Puppet::Util::Platform.fips_enabled? ?
+      ["sha256", "sha256lite", "sha384", "sha512", "sha224", "sha1", "sha1lite", "mtime", "ctime"] :
+      ["md5", "md5lite", "sha256", "sha256lite", "sha384", "sha512", "sha224", "sha1", "sha1lite", "mtime", "ctime"]
   end
 
   ############################################################################################
@@ -944,6 +949,9 @@ EOT
         :values => ["md5", "sha256", "sha384", "sha512", "sha224"],
         :desc     => 'Which digest algorithm to use for file resources and the filebucket.
                       Valid values are md5, sha256, sha384, sha512, sha224. Default is md5.',
+        :hook    => proc do |value|
+          Puppet::Settings.validate_digest_algorithm(value)
+        end
     },
     :supported_checksum_types => {
       :default => lambda { default_checksum_types },
@@ -952,14 +960,8 @@ EOT
                    static catalog. Values must be comma-separated. Valid types are md5,
                    md5lite, sha256, sha256lite, sha384, sha512, 
 		   sha1, sha1lite, sha224, mtime, ctime.',
-      :hook    => proc do |value|
-        values = munge(value)
-        valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha384', 'sha512', 'sha224', 'sha1', 'sha1lite', 'mtime', 'ctime']
-        invalid = values.reject {|alg| valid.include?(alg)}
-        if not invalid.empty?
-          raise ArgumentError, _("Unrecognized checksum types %{invalid} are not supported.") % { invalid: invalid } +
-              ' ' + _("Valid values are %{values}.") % { values: valid }
-        end
+      :hook    => proc do |values|
+          Puppet::Settings.validate_checksum_types(values)
       end
     }
   )

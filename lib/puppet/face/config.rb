@@ -1,4 +1,5 @@
 require 'puppet/face'
+require 'puppet/settings'
 require 'puppet/settings/ini_file'
 
 Puppet::Face.define(:config, '0.0.1') do
@@ -117,6 +118,21 @@ section by using the `--section` flag. For example,
 `puppet config --section user set environment foo`. For more information, see
 https://puppet.com/docs/puppet/latest/configuration.html#environment
         EOM
+      end
+
+      # REMIND - we want to be able to make this check more specific to account
+      # for master node which is in fips mode then the fips restrictions
+      # should be based only when the setting is going to be agent specific
+      # and/or applicable to agent.
+      # It would depend on whether the digest_algorithm and supported_checksum_types
+      # settings are consumed by server.
+      if name == 'digest_algorithm'
+        Puppet::Settings.validate_digest_algorithm(value)
+      end
+
+      if name == 'supported_checksum_types'
+        values = value.split(/\s*,\s*/)
+        Puppet::Settings.validate_checksum_types(values)
       end
 
       path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
