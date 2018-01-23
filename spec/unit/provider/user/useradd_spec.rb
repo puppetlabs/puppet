@@ -5,10 +5,13 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   before :each do
     described_class.stubs(:command).with(:password).returns '/usr/bin/chage'
+    described_class.stubs(:command).with(:localpassword).returns '/usr/sbin/lchage'
     described_class.stubs(:command).with(:add).returns '/usr/sbin/useradd'
     described_class.stubs(:command).with(:localadd).returns '/usr/sbin/luseradd'
     described_class.stubs(:command).with(:modify).returns '/usr/sbin/usermod'
+    described_class.stubs(:command).with(:localmodify).returns '/usr/sbin/lusermod'
     described_class.stubs(:command).with(:delete).returns '/usr/sbin/userdel'
+    described_class.stubs(:command).with(:localdelete).returns '/usr/sbin/luserdel'
   end
 
   let(:resource) do
@@ -122,10 +125,10 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         expect { provider.create }.to raise_error(Puppet::Error, "UID 505 already exists, use allowdupe to force user creation")
       end
 
-      it "should not use -G for luseradd and should call usermod with -G after luseradd when groups property is set" do
+      it "should not use -G for luseradd and should call lusermod with -G after luseradd when groups property is set" do
         resource[:groups] = ['group1', 'group2']
         provider.expects(:execute).with(Not(includes("-G")), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
-        provider.expects(:execute).with(includes('/usr/sbin/usermod'))
+        provider.expects(:execute).with(includes('/usr/sbin/lusermod'))
         provider.create
       end
 
@@ -135,18 +138,11 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         provider.create
       end
 
-      it "should not use -e with luseradd, should call usermod with -e after luseradd when expiry is set" do
+      it "should not use -e with luseradd, should call lusermod with -e after luseradd when expiry is set" do
         resource[:expiry] = '2038-01-24'
         provider.expects(:execute).with(all_of(includes('/usr/sbin/luseradd'), Not(includes('-e'))), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
-        provider.expects(:execute).with(all_of(includes('/usr/sbin/usermod'), includes('-e')))
+        provider.expects(:execute).with(all_of(includes('/usr/sbin/lusermod'), includes('-e')))
         provider.create
-      end
-
-      it "should use userdel to delete users" do
-        resource[:ensure] = :absent
-        provider.stubs(:exists?).returns(true)
-        provider.expects(:execute).with(includes('/usr/sbin/userdel'))
-        provider.delete
       end
     end
 
@@ -159,6 +155,46 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       end
     end
 
+  end
+
+  describe '#modify' do
+    describe "on systems with the libuser and forcelocal=false" do
+      before do
+         described_class.has_feature :libuser
+         resource[:forcelocal] = false
+      end
+      it "should use usermod" do
+        provider.expects(:execute).with(['/usr/sbin/usermod', '-u', 150, 'myuser'])
+        provider.uid = 150
+      end
+      it "should use -o when allowdupe=true" do
+        resource[:allowdupe] = :true
+        provider.expects(:execute).with(includes('-o'))
+        provider.uid = 505
+      end
+    end
+
+    describe "on systems with the libuser and forcelocal=true" do
+      before do
+         described_class.has_feature :libuser
+         resource[:forcelocal] = true
+      end
+      it "should use lusermod and not usermod" do
+        provider.expects(:execute).with(['/usr/sbin/lusermod', '-u', 150, 'myuser'])
+        provider.uid = 150
+      end
+      it "should NOT use -o when allowdupe=true" do
+        resource[:allowdupe] = :true
+        provider.expects(:execute).with(Not(includes('-o')))
+        provider.uid = 505
+      end
+
+      it "should raise an exception for duplicate UIDs" do
+        resource[:uid] = 505
+        provider.stubs(:finduser).returns(true)
+        expect { provider.uid = 505 }.to raise_error(Puppet::Error, "UID 505 already exists, use allowdupe to force user creation")
+      end
+    end
   end
 
   describe "#uid=" do
@@ -338,6 +374,17 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
       expect(provider.addcmd).to eq(['/usr/sbin/useradd', '-e', '', '-G', 'somegroup', '-o', '-m', '-r', 'myuser'])
     end
+
+    it "should use lgroupadd with forcelocal=true" do
+      resource[:forcelocal] = :true
+      expect(provider.addcmd[0]).to eq('/usr/sbin/luseradd')
+    end
+
+    it "should not pass -o with forcelocal=true and allowdupe=true" do
+      resource[:forcelocal] = :true
+      resource[:allowdupe] = :true
+      expect(provider.addcmd).not_to include("-o")
+    end
   end
 
   {
@@ -471,4 +518,30 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
   end
 
+  describe "#delete" do
+    before do
+       provider.stubs(:exists?).returns(true)
+       resource[:ensure] = :absent
+    end
+    describe "on systems with the libuser and forcelocal=false" do
+      before do
+         described_class.has_feature :libuser
+         resource[:forcelocal] = false
+      end
+      it "should use userdel to delete users" do
+        provider.expects(:execute).with(includes('/usr/sbin/userdel'))
+        provider.delete
+      end
+    end
+    describe "on systems with the libuser and forcelocal=true" do
+      before do
+         described_class.has_feature :libuser
+         resource[:forcelocal] = true
+      end
+      it "should use luserdel to delete users" do
+        provider.expects(:execute).with(includes('/usr/sbin/luserdel'))
+        provider.delete
+      end
+    end
+  end
 end
