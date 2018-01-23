@@ -42,7 +42,7 @@ test_name 'C100566: puppet agent with module should translate messages when usin
 
   agents.each do |agent|
     skip_test('on windows this test only works on a machine with a japanese code page set') if agent['platform'] =~ /windows/ && agent['locale'] != 'ja'
-    skip_test('PUP-8368') if agent['platform'] =~ /windows/ && agent['locale'] =~ 'ja'
+    skip_test('PUP-8368') if agent['platform'] =~ /windows/ && agent['locale'] =~ /ja/
 
     agent_language = enable_locale_language(agent, language)
     skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
