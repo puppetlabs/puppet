@@ -1,5 +1,7 @@
 test_name 'C100568: puppet apply of module for an unsupported language should fall back to english' do
 
+  confine :except, :platform => /^solaris-10/ # PUP-8377
+
   tag 'audit:medium',
       'audit:acceptance'
 
