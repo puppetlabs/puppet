@@ -67,7 +67,7 @@ describe Puppet::GettextConfig do
 
     context 'when given a valid locale file location' do
       it 'should return true' do
-        Puppet::GettextConfig.expects(:add_repository_to_domain).with('puppet', local_path, :po)
+        Puppet::GettextConfig.expects(:add_repository_to_domain).with('puppet', local_path, :po, anything)
 
         expect(Puppet::GettextConfig.load_translations('puppet', local_path, :po)).to be true
       end
@@ -81,8 +81,14 @@ describe Puppet::GettextConfig do
   end
 
   describe "setting up text domains" do
+    it 'can create the default text domain after another is set' do
+      Puppet::GettextConfig.delete_all_text_domains
+      FastGettext.text_domain = 'other'
+      Puppet::GettextConfig.create_default_text_domain
+    end
+
     it 'should add puppet translations to the default text domain' do
-      Puppet::GettextConfig.expects(:load_translations).with('puppet', local_path, :po).returns(true)
+      Puppet::GettextConfig.expects(:load_translations).with('puppet', local_path, :po, Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN).returns(true)
 
       Puppet::GettextConfig.create_default_text_domain
       expect(Puppet::GettextConfig.loaded_text_domains).to include(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN)
