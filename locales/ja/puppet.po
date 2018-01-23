@@ -11,7 +11,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
 "POT-Creation-Date: 2018-01-18 17:52+0000\n"
 "PO-Revision-Date: 2018-01-18 17:52+0000\n"
-"Last-Translator: 下宮 祐子 <meow@ann.hi-ho.ne.jp>, 2018\n"
+"Last-Translator: Erwin Hom <erwin.hom@puppet.com>, 2018\n"
 "Language-Team: Japanese (Japan) (https://www.transifex.com/puppet/teams/29089/ja_JP/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -718,7 +718,7 @@ msgstr "environment%{environment}を解析できませんでした: %{message}"
 
 #: ../lib/puppet/error.rb:68 ../lib/puppet/parser/compiler.rb:39
 msgid "%{message} on node %{node}"
-msgstr "ノード%{node}の%{msg}"
+msgstr "ノード%{node}での%{message}"
 
 #: ../lib/puppet/external/pson/common.rb:46
 msgid "can't find const for unregistered document type %{path}"
