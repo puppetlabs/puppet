@@ -236,6 +236,27 @@ updated = new
     CONFIG
   end
 
+  it "adds a new setting to the appropriate section, when it would be added behind a setting with an identical value in a preceeding section" do
+    config_fh = a_config_file_containing(<<-CONFIG)
+    [different]
+    name = some value
+    [section]
+    name = some value
+    CONFIG
+
+    Puppet::Settings::IniFile.update(config_fh) do |config|
+      config.set("section", "new", "new value")
+    end
+
+    expect(config_fh.string).to eq <<-CONFIG
+    [different]
+    name = some value
+    [section]
+    name = some value
+new = new value
+    CONFIG
+  end
+
   def a_config_file_containing(text)
     # set_encoding required for Ruby 1.9.3 as ASCII is the default
     StringIO.new(text).set_encoding(Encoding::UTF_8)
