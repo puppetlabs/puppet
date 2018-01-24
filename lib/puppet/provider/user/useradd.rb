@@ -157,7 +157,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # sort them to have a predictable command line in tests
     Puppet::Type.type(:user).validproperties.sort.each do |property|
       next if property == :ensure
-      next if property.to_s =~ /password_.+_age/
+      next if property_manages_password_age?(property)
       next if property == :groups and @resource.forcelocal?
       next if property == :expiry and @resource.forcelocal?
       # the value needs to be quoted, mostly because -c might
@@ -188,10 +188,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def modifycmd(param, value)
     if @resource.forcelocal?
-      cmd = [command(param.to_s =~ /password_.+_age/ ? :localpassword : :localmodify)]
+      cmd = [command(property_manages_password_age?(param) ? :localpassword : :localmodify)]
       @custom_environment = Puppet::Util::Libuser.getenv
     else
-      cmd = [command(param.to_s =~ /password_.+_age/ ? :password : :modify)]
+      cmd = [command(property_manages_password_age?(param) ? :password : :modify)]
     end
     cmd << flag(param) << value
     cmd += check_allow_dup
@@ -253,5 +253,9 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def groups?
     !!@resource[:groups]
+  end
+
+  def property_manages_password_age?(property)
+    property.to_s =~ /password_.+_age|password_warn_days/
   end
 end
