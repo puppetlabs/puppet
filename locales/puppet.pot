@@ -4015,11 +4015,11 @@ msgstr ""
 msgid "WEBrick server is not listening"
 msgstr ""
 
-#: ../lib/puppet/network/http/webrick.rb:99
+#: ../lib/puppet/network/http/webrick.rb:98
 msgid "Could not retrieve certificate for %{host} and not running on a valid certificate authority"
 msgstr ""
 
-#: ../lib/puppet/network/http/webrick.rb:107
+#: ../lib/puppet/network/http/webrick.rb:106
 msgid "Could not find CA certificate"
 msgstr ""
 
@@ -9303,7 +9303,7 @@ msgstr ""
 msgid "Logs require a level"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:87 ../lib/puppet/util/log.rb:373 ../lib/puppet/util/windows/eventlog.rb:97
+#: ../lib/puppet/util/log.rb:87 ../lib/puppet/util/log.rb:373 ../lib/puppet/util/windows/eventlog.rb:99
 msgid "Invalid log level %{level}"
 msgstr ""
 
@@ -9741,8 +9741,23 @@ msgstr ""
 msgid "FormatMessageW failed to allocate buffer for code %{code}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/eventlog.rb:59
+#. TRANSLATORS 'Windows' is the operating system and 'RegisterEventSourceW' is a API call and should not be translated
+#: ../lib/puppet/util/windows/eventlog.rb:35
+msgid "RegisterEventSourceW failed to open Windows eventlog"
+msgstr ""
+
+#: ../lib/puppet/util/windows/eventlog.rb:60
 msgid "data must be a string, not %{class_name}"
+msgstr ""
+
+#. TRANSLATORS 'Windows' is the operating system and 'ReportEventW' is a API call and should not be translated
+#: ../lib/puppet/util/windows/eventlog.rb:76
+msgid "ReportEventW failed to report event to Windows eventlog"
+msgstr ""
+
+#. TRANSLATORS 'Win32' is the Windows API and should not be translated
+#: ../lib/puppet/util/windows/eventlog.rb:118
+msgid "(Win32 error: %{detail})"
 msgstr ""
 
 #: ../lib/puppet/util/windows/file.rb:158

@@ -96,7 +96,6 @@ describe "The lookup function" do
     Puppet[:code] = code
     Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
       scope = compiler.topscope
-      scope['environment'] = env_name
       scope['domain'] = 'example.com'
       scope_additions.each_pair { |k, v| scope[k] = v }
       if explain
