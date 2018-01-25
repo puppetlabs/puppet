@@ -1,6 +1,10 @@
 test_name "C97172: static catalogs support utf8" do
-require 'puppet/acceptance/environment_utils'
-extend Puppet::Acceptance::EnvironmentUtils
+
+  confine :except, :platform => /^cisco_/ # skip the test because some of the machines have LANG=C as the default and we break
+  confine :except, :platform => /^solaris/ # skip the test because some of the machines have LANG=C as the default and we break
+
+  require 'puppet/acceptance/environment_utils'
+  extend Puppet::Acceptance::EnvironmentUtils
 
   app_type = File.basename(__FILE__, '.*')
   tmp_environment   = mk_tmp_environment_with_teardown(master, app_type)
