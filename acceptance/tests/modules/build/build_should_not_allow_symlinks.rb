@@ -11,6 +11,12 @@ defaultversion = '0.1.0'
 buildpath = "#{modname}/pkg/#{modname}-#{defaultversion}"
 
 agents.each do |agent|
+
+  if on(agent, facter("fips_enabled")).stdout =~ /true/
+    puts "Module build, loading and installing is not supported on fips enabled platforms"
+    next
+  end
+
   tmpdir = agent.tmpdir('pmtbuildsymlink')
 
   teardown do
