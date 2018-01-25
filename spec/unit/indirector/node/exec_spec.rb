@@ -56,7 +56,7 @@ describe Puppet::Node::Exec do
     it "should set the resulting parameters as the node parameters" do
       @result[:parameters] = {"a" => "b", "c" => "d"}
       @searcher.find(request)
-      expect(@node.parameters).to eq({"a" => "b", "c" => "d"})
+      expect(@node.parameters).to eq({"a" => "b", "c" => "d", "environment" => "*root*"})
     end
 
     it "should set the resulting classes as the node classes" do
