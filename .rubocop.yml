@@ -802,3 +802,6 @@ GetText/DecorateStringFormattingUsingInterpolation:
 
 GetText/DecorateStringFormattingUsingPercent:
   Enabled: false
+
+Style/SafeNavigation:
+  Enabled: false
