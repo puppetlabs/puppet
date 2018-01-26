@@ -129,7 +129,7 @@ describe 'the strftime function' do
       log = collect_log("notice(strftime('%F %T'))")
       warnings = log.select { |log_entry| log_entry.level == :warning }.map { |log_entry| log_entry.message }
       expect(warnings).not_to be_empty
-      expect(warnings[0]).to match(/The argument signature \(String format, \[String timezone\]\) is deprecated for #strfime/)
+      expect(warnings[0]).to match(/The argument signature \(String format, \[String timezone\]\) is deprecated for #strftime/)
     end
 
     it 'produces the current time formatted with specific timezone when used with two arguments' do
@@ -145,7 +145,7 @@ describe 'the strftime function' do
       log = collect_log("notice(strftime('%F %T', 'EST'))")
       warnings = log.select { |log_entry| log_entry.level == :warning }.map { |log_entry| log_entry.message }
       expect(warnings).not_to be_empty
-      expect(warnings[0]).to match(/The argument signature \(String format, \[String timezone\]\) is deprecated for #strfime/)
+      expect(warnings[0]).to match(/The argument signature \(String format, \[String timezone\]\) is deprecated for #strftime/)
     end
   end
 end
