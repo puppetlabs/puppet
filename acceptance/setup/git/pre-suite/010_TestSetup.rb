@@ -70,6 +70,20 @@ END
           create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
           on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']} --shebang #{host['puppetbindir']}/ruby"
           puppet_bundler_install_dir = on(host, "cd #{puppet_dir} && bundle show puppet").stdout.chomp
+        when /osx/
+          create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
+          # NOTE: /usr/bin is read-only and /usr/local/bin is writable because of OSX SIP
+          # therefore 000_EnvSetup has configured puppetbindir as /usr/local/bin
+
+          # NOTE: specific_platform must be set to install platform-specific Facter gem
+          on host, "cd #{puppet_dir} && bundle config specific_platform true"
+
+          # NOTE: OSX system Ruby is in /usr/bin but binstubs go to /usr/local/bin
+          on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']} --shebang /usr/bin/ruby"
+          puppet_bundler_install_dir = on(host, "cd #{puppet_dir} && bundle show puppet").stdout.chomp
+          # by default, calling install.rb explodes on OSX as it configures bindir as RbConfig::CONFIG["bindir"]
+          # which on OSX 10.11 is read-only /System/Library/Frameworks/Ruby.framework/Versions/2.0/usr/bin/puppet
+          install_options = "--bindir=#{host['puppetbindir']}"
         else
           create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
           on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']}"
@@ -78,7 +92,7 @@ END
 
         # install.rb should also be called from the Puppet gem install dir
         # this is required for the puppetres.dll event log dll on Windows
-        on host, "cd #{puppet_bundler_install_dir} && if [ -f install.rb ]; then ruby ./install.rb ; else true; fi"
+        on host, "cd #{puppet_bundler_install_dir} && if [ -f install.rb ]; then ruby ./install.rb #{install_options}; else true; fi"
       end
     end
   end
