@@ -36,7 +36,7 @@ Puppet::Functions.create_function(:strftime) do
       line = nil
     end
     Puppet.warn_once('deprecations', 'legacy#strftime',
-      _('The argument signature (String format, [String timezone]) is deprecated for #strfime. See #strftime documentation and Timespan type for more info'),
+      _('The argument signature (String format, [String timezone]) is deprecated for #strftime. See #strftime documentation and Timespan type for more info'),
       file, line)
     Puppet::Pops::Time::Timestamp.format_time(format, Time.now.utc, timezone)
   end
