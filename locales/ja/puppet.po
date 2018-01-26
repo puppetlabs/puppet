@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-305-gc78696b\n"
+"Project-Id-Version: Puppet automation framework 5.3.3-362-gf61e966\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-18 17:52+0000\n"
-"PO-Revision-Date: 2018-01-18 17:52+0000\n"
+"POT-Creation-Date: 2018-01-26 22:31+0000\n"
+"PO-Revision-Date: 2018-01-26 22:31+0000\n"
 "Last-Translator: Erwin Hom <erwin.hom@puppet.com>, 2018\n"
 "Language-Team: Japanese (Japan) (https://www.transifex.com/puppet/teams/29089/ja_JP/)\n"
 "MIME-Version: 1.0\n"
@@ -2351,10 +2351,10 @@ msgstr ""
 #: ../lib/puppet/functions/strftime.rb:39
 msgid ""
 "The argument signature (String format, [String timezone]) is deprecated for "
-"#strfime. See #strftime documentation and Timespan type for more info"
+"#strftime. See #strftime documentation and Timespan type for more info"
 msgstr ""
 "引数署名(文字列フォーマット、[String "
-"timezone])は、#strfimeでは廃止予定です。詳細については、#strftimeマニュアルとTimespanタイプを参照してください。"
+"timezone])は、#strftimeでは廃止予定です。詳細については、#strftimeマニュアルとTimespanタイプを参照してください。"
 
 #: ../lib/puppet/generate/models/type/type.rb:46
 msgid "title patterns that use procs are not supported."
@@ -4511,26 +4511,26 @@ msgstr "アンリッスンできません -- 現在リッスンしていませ�
 msgid "No name provided in serialized data"
 msgstr "シリアライズされたデータで名前が提供されていません。"
 
-#: ../lib/puppet/node.rb:92
+#: ../lib/puppet/node.rb:100
 msgid "Node names cannot be nil"
 msgstr "ノード名は空にできません。"
 
-#: ../lib/puppet/node.rb:128
+#: ../lib/puppet/node.rb:136
 msgid "Could not retrieve facts for %{name}: %{detail}"
 msgstr "%{name}のfactsを取得できませんでした: %{detail}"
 
-#: ../lib/puppet/node.rb:143
+#: ../lib/puppet/node.rb:154
 msgid ""
 "The node parameter '%{param_name}' for node '%{node_name}' was already set "
 "to '%{value}'. It could not be set to '%{desired_value}'"
 msgstr ""
 "ノード'%{node_name}'のノードパラメータ'%{param_name}'は、すでに'%{value}'に設定されています。'%{desired_value}'に設定できませんでした。"
 
-#: ../lib/puppet/node.rb:184
+#: ../lib/puppet/node.rb:193
 msgid "Host is missing hostname and/or domain: %{name}"
 msgstr "ホストがホスト名またはドメインを見つけられません: %{name}"
 
-#: ../lib/puppet/node.rb:216
+#: ../lib/puppet/node.rb:225
 msgid "Trusted node data modified for node %{name}"
 msgstr "ノード%{name}の信頼できるノードデータが修正されました。"
 
@@ -5105,50 +5105,50 @@ msgstr "変数: %{name}"
 msgid "Undefined variable '%{name}'; %{reason}"
 msgstr "定義されていない変数'%{name}'; %{reason}"
 
-#: ../lib/puppet/parser/scope.rb:659
+#: ../lib/puppet/parser/scope.rb:657
 msgid "class %{classname} could not be found"
 msgstr "クラス%{classname}が見つかりませんでした。"
 
-#: ../lib/puppet/parser/scope.rb:660
+#: ../lib/puppet/parser/scope.rb:658
 msgid "class %{classname} has not been evaluated"
 msgstr "クラス%{classname}は検証されていません。"
 
-#: ../lib/puppet/parser/scope.rb:705
+#: ../lib/puppet/parser/scope.rb:703
 msgid "Default already defined for %{type} { %{param} }; cannot redefine"
 msgstr "%{type} { %{param} }のデフォルトはすでに定義されています; 再定義はできません。"
 
-#: ../lib/puppet/parser/scope.rb:762
+#: ../lib/puppet/parser/scope.rb:760
 msgid "Cannot assign to a numeric match result variable '$%{name}'"
 msgstr "数字の一致結果変数'$%{name}'に割り当てることはできません。"
 
-#: ../lib/puppet/parser/scope.rb:765
+#: ../lib/puppet/parser/scope.rb:763
 msgid "Scope variable name %{name} is a %{class_type}, not a string"
 msgstr "範囲変数名%{name}は%{class_type}であり、文字列ではありません。"
 
-#: ../lib/puppet/parser/scope.rb:770 ../lib/puppet/parser/scope.rb:775
+#: ../lib/puppet/parser/scope.rb:768 ../lib/puppet/parser/scope.rb:773
 msgid "Attempt to assign to a reserved variable name: '%{name}'"
 msgstr "予約されている変数名: '%{name}'に割り当てようとしています。"
 
-#: ../lib/puppet/parser/scope.rb:780
+#: ../lib/puppet/parser/scope.rb:778
 msgid "Cannot reassign variable '$%{name}'"
 msgstr "変数'$%{name}'の再割り当てはできません。"
 
-#: ../lib/puppet/parser/scope.rb:834
+#: ../lib/puppet/parser/scope.rb:832
 msgid "Unsupported data type: '%{klass}'"
 msgstr "サポートされていないデータタイプ: '%{klass}'"
 
-#: ../lib/puppet/parser/scope.rb:992
+#: ../lib/puppet/parser/scope.rb:990
 msgid "Invalid regex match data. Got a %{klass}"
 msgstr "正規表現一致データが正しくありません。%{klass}が与えられています。"
 
-#: ../lib/puppet/parser/scope.rb:1000
+#: ../lib/puppet/parser/scope.rb:998
 msgid ""
 "Scope#find_resource_type() is no longer supported, use "
 "Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 "Scope#find_resource_type()のサポートは終了しました。代わりにPuppet::Pops::Evaluator::Runtime3ResourceSupporを使用してください。"
 
-#: ../lib/puppet/parser/scope.rb:1005
+#: ../lib/puppet/parser/scope.rb:1003
 msgid ""
 "Scope#find_builtin_resource_type() is no longer supported, use "
 "Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
@@ -5156,18 +5156,18 @@ msgstr ""
 "Scope#find_builtin_resource_type()のサポートは終了しました。代わりにPuppet::Pops::Evaluator::Runtime3ResourceSupport"
 " insteadを使用してください。"
 
-#: ../lib/puppet/parser/scope.rb:1010
+#: ../lib/puppet/parser/scope.rb:1008
 msgid ""
 "Scope#find_defined_resource_type() is no longer supported, use "
 "Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
 "Scope#find_defined_resource_type()のサポートは終了しました。代わりにPuppet::Pops::Evaluator::Runtime3ResourceSupportを使用してください。"
 
-#: ../lib/puppet/parser/scope.rb:1024
+#: ../lib/puppet/parser/scope.rb:1022
 msgid "Function %{name} not defined despite being loaded!"
 msgstr "関数%{name}は読み込まれていますが、定義されていません。"
 
-#: ../lib/puppet/parser/scope.rb:1031
+#: ../lib/puppet/parser/scope.rb:1029
 msgid ""
 "Scope#resolve_type_and_title() is no longer supported, use "
 "Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
@@ -5176,26 +5176,26 @@ msgstr ""
 
 #. TRANSLATORS "Class" and "Type" are Puppet keywords and should not be
 #. translated
-#: ../lib/puppet/parser/scope.rb:1059
+#: ../lib/puppet/parser/scope.rb:1057
 msgid "Cannot use an unspecific Class[] Type"
 msgstr "指定されていないClass[] Typeは使用できません。"
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1086
+#: ../lib/puppet/parser/scope.rb:1084
 msgid ""
 "Cannot use an unspecific Resource[] where a Resource['class', name] is "
 "expected"
 msgstr "Resource['class', name]が要求されている場合は、指定されていないResource[]は使用できません。"
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1090
+#: ../lib/puppet/parser/scope.rb:1088
 msgid ""
 "Cannot use a Resource[%{type_name}] where a Resource['class', name] is "
 "expected"
 msgstr "Resource['class', name]が要求されている場合は、Resource[%{type_name}]を使用できません。"
 
 #. TRANSLATORS "Resource" is a class name and should not be translated
-#: ../lib/puppet/parser/scope.rb:1094
+#: ../lib/puppet/parser/scope.rb:1092
 msgid ""
 "Cannot use an unspecific Resource['class'] where a Resource['class', name] "
 "is expected"
@@ -10254,31 +10254,31 @@ msgstr "Trollop::dieは、Trollop::optionsの後にのみ呼び出せます。"
 msgid "Cannot provide diff without the diff/lcs Ruby library"
 msgstr "diff/lcs Rubyライブラリなしで比較することはできません。"
 
-#: ../lib/puppet/util/errors.rb:43
+#: ../lib/puppet/util/errors.rb:49
 msgid "(file: %{file}, line: %{line}, column: %{column})"
 msgstr "(ファイル: %{file}、行: %{line}、列: %{column})"
 
-#: ../lib/puppet/util/errors.rb:45
+#: ../lib/puppet/util/errors.rb:51
 msgid "(file: %{file}, line: %{line})"
 msgstr "(ファイル: %{file}、行: %{line})"
 
-#: ../lib/puppet/util/errors.rb:47
+#: ../lib/puppet/util/errors.rb:53
 msgid "(line: %{line}, column: %{column})"
 msgstr "(行: %{line}、列: %{column})"
 
-#: ../lib/puppet/util/errors.rb:49
+#: ../lib/puppet/util/errors.rb:55
 msgid "(line: %{line})"
 msgstr "(行: %{line})"
 
-#: ../lib/puppet/util/errors.rb:51
+#: ../lib/puppet/util/errors.rb:57
 msgid "(file: %{file})"
 msgstr "(ファイル: %{file})"
 
-#: ../lib/puppet/util/errors.rb:77 ../lib/puppet/util/errors.rb:78
+#: ../lib/puppet/util/errors.rb:90 ../lib/puppet/util/errors.rb:91
 msgid "unknown"
 msgstr "不明"
 
-#: ../lib/puppet/util/errors.rb:108
+#: ../lib/puppet/util/errors.rb:121
 msgid "%{klass} failed with error %{error_type}: %{detail}"
 msgstr "エラー%{error_type}により%{klass}に失敗しました: %{detail}"
 
@@ -10938,15 +10938,15 @@ msgstr "ReportEventWはWindowsイベントログにイベントをレポート�
 msgid "(Win32 error: %{detail})"
 msgstr "(Win32エラー: %{detail})"
 
-#: ../lib/puppet/util/windows/file.rb:158
+#: ../lib/puppet/util/windows/file.rb:162
 msgid "Failed to set file attributes"
 msgstr "ファイル属性の設定に失敗しました。"
 
-#: ../lib/puppet/util/windows/file.rb:207
+#: ../lib/puppet/util/windows/file.rb:237
 msgid "out_buffer is required"
 msgstr "out_bufferが必要です。"
 
-#: ../lib/puppet/util/windows/file.rb:288
+#: ../lib/puppet/util/windows/file.rb:324
 msgid "Failed to call GetLongPathName"
 msgstr "GetLongPathNameのコールに失敗しました。"
 
