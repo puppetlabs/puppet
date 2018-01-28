@@ -48,7 +48,7 @@ will taint the development version
 
 The following enviornment variables configure the behavior of envpuppet
 
-    ENVPUPPET_BASEDIR=${HOME}/src 
+    ENVPUPPET_BASEDIR="${HOME}/src"
       the base directory where puppet, facter, etc...  live.
 
     ENVPUPPET_BLEEDING=true   Enables bleeding edge prototypes like
