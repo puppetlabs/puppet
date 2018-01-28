@@ -179,7 +179,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def prepare_error_message(name, action, exception)
     error_return = "Systemd #{action} for #{name} failed!\n"
     journalctl_command = "journalctl -n 50 --since '5 minutes ago' -u #{name} --no-pager"
-    Puppet.debug("Runing journalctl command to get logs for systemd #{action} failure: #{journalctl_command}")
+    Puppet.debug("Running journalctl command to get logs for systemd #{action} failure: #{journalctl_command}")
     journalctl_output = execute(journalctl_command)
     error_return << "journalctl log for #{name}:\n#{journalctl_output}"
   end
