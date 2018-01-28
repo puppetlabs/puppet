@@ -13,7 +13,7 @@
 set -x
 
 # If $GEM_SOURCE is not set, fall back to rubygems.org
-if [ -z $GEM_SOURCE ]; then
+if [ -z "$GEM_SOURCE" ]; then
   export GEM_SOURCE='https://rubygems.org'
 fi
 
@@ -37,7 +37,7 @@ if [[ "${platform}" =~ 'solaris' ]]; then
 fi
 
 # If the platform is Windows and $ruby_arch is set, append it
-if [[ "${platform}" =~ 'win' && ! -z $ruby_arch ]]; then
+if [[ "${platform}" =~ 'win' && ! -z "$ruby_arch" ]]; then
     platform="${platform}-${ruby_arch}"
 fi
 
