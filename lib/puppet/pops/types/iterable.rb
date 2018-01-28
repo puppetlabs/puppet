@@ -33,7 +33,7 @@ module Puppet::Pops::Types
       iter
     end
 
-    # Produces an `Iterable` for one of the following types with the following characterstics:
+    # Produces an `Iterable` for one of the following types with the following characteristics:
     #
     # `String`       - yields each character in the string
     # `Array`        - yields each element in the array

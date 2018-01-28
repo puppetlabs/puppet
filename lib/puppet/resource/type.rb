@@ -43,7 +43,7 @@ class Puppet::Resource::Type
   #   :capability  - the type name of the capres produced/consumed
   #   :mappings    - a hash of attribute_name => Expression
   # These two attributes are populated in
-  # PopsBridge::instantiate_CapabilityMaping
+  # PopsBridge::instantiate_CapabilityMapping
 
   # Map from argument (aka parameter) names to Puppet Type
   # @return [Hash<Symbol, Puppet::Pops::Types::PAnyType] map from name to type

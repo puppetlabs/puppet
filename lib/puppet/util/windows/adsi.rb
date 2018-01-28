@@ -4,7 +4,7 @@ module Puppet::Util::Windows::ADSI
   class << self
     extend FFI::Library
 
-    def connectable?(uri)
+    def connectible?(uri)
       begin
         !! connect(uri)
       rescue

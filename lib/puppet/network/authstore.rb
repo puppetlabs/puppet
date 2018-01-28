@@ -16,7 +16,7 @@ module Puppet
     # is provided, then the authstore is considered local and defaults to "true".
     def allowed?(name, ip)
       if name or ip
-        # This is probably unnecessary, and can cause some weirdnesses in
+        # This is probably unnecessary, and can cause some weirdness in
         # cases where we're operating over localhost but don't have a real
         # IP defined.
         raise Puppet::DevError, _("Name and IP must be passed to 'allowed?'") unless name and ip

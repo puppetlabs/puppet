@@ -108,7 +108,7 @@ class TypeCalculator
   # Answers, does the given callable accept the arguments given in args (an array or a tuple)
   # @param callable [PCallableType] - the callable
   # @param args [PArrayType, PTupleType] args optionally including a lambda callable at the end
-  # @return [Boolan] true if the callable accepts the arguments
+  # @return [Boolean] true if the callable accepts the arguments
   #
   # @api public
   def self.callable?(callable, args)

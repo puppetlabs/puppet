@@ -161,7 +161,7 @@ module SemanticPuppet
       else
         # Compare all prerelease identifier segments that can be compared. Should
         # all segments compare equal up to the point where one of the prereleases
-        # have no more segments, then the one with more segements is greater.
+        # have no more segments, then the one with more segments is greater.
         your_max = yours.size
         mine.each_with_index do |x, idx|
           # 'mine' win if 'your' list of segments is exhausted
@@ -181,7 +181,7 @@ module SemanticPuppet
           return cmp unless cmp == 0
         end
 
-        # All segments, up to the point where at least one list of segement is exhausted,
+        # All segments, up to the point where at least one list of segment is exhausted,
         # compared equal. The one with the highest segment count wins.
         mine.size <=> your_max
       end

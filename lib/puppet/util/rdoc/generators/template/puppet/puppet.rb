@@ -558,17 +558,17 @@ END:toc
 ENDIF:toc
    </div>
 
-<!-- if childs -->
-IF:childs
-       <div id="childs">
+<!-- if children -->
+IF:children
+       <div id="children">
          <h3 class="section-bar">Inherited by</h3>
-         <div id="childs-list">
-START:childs
+         <div id="children-list">
+START:children
            <span class="child-name">HREF:aref:name:</span>
-END:childs
+END:children
          </div>
        </div>
-ENDIF:childs
+ENDIF:children
 
 IF:methods
     <div id="method-list">

@@ -22,7 +22,7 @@ module Puppet::Util::CharacterEncoding
             Puppet.debug(_("%{value} is already labeled as UTF-8 but this encoding is invalid. It cannot be transcoded by Puppet.") %
               { value: string.dump })
           end
-          # String is aleady valid UTF-8 - noop
+          # String is already valid UTF-8 - noop
           return string_copy
         else
           # If the string comes to us as BINARY encoded, we don't know what it
@@ -47,7 +47,7 @@ module Puppet::Util::CharacterEncoding
     end
 
     # Given a string, tests if that string's bytes represent valid UTF-8, and if
-    # so return a copy of the string with external enocding set to UTF-8. Does
+    # so return a copy of the string with external encoding set to UTF-8. Does
     # not modify the byte representation of the string. If the string does not
     # represent valid UTF-8, does not set the external encoding.
     #

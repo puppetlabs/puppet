@@ -10,7 +10,7 @@ module Puppet::Pops::Parser::InterpolationSupport
 
   # This is the starting point for a double quoted string with possible interpolation
   # The structure mimics that of the grammar.
-  # The logic is explicit (where the former implementation used parameters/strucures) given to a
+  # The logic is explicit (where the former implementation used parameters/structures) given to a
   # generic handler.
   # (This is both easier to understand and faster).
   #

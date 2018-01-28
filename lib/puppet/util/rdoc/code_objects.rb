@@ -96,14 +96,14 @@ module RDoc
   class PuppetClass < ClassModule
     include AddClassModuleComment
 
-    attr_accessor :resource_list, :requires, :childs, :realizes
+    attr_accessor :resource_list, :requires, :children, :realizes
 
     def initialize(name, superclass)
       super(name,superclass)
       @resource_list = []
       @requires = []
       @realizes = []
-      @childs = []
+      @children = []
     end
 
     def aref_prefix
@@ -134,7 +134,7 @@ module RDoc
     end
 
     def add_child(child)
-      @childs << child
+      @children << child
     end
 
     # Look up the given symbol. RDoc only looks for class1::class2.method
