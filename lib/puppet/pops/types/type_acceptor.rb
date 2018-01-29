@@ -10,7 +10,7 @@ module Types
 #
 module TypeAcceptor
   # @param type [PAnyType] the type that we accept a visit from
-  # @param quard [RecursionGuard] the guard against self recursion
+  # @param guard [RecursionGuard] the guard against self recursion
   def visit(type, guard)
   end
 end

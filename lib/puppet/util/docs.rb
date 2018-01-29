@@ -96,7 +96,7 @@ module Puppet::Util::Docs
   # formatting of the code they're embedded in. Since indents are syntactic
   # elements in Markdown, we need to make sure we remove any indent that was
   # added solely to preserve surrounding code formatting, but LEAVE any indent
-  # that delineates a Markdown element (code blocks, multi-line bulleted list
+  # that delineates a Markdown element (code blocks, multi-line bullet list
   # items). We can do this by removing the *least common indent* from each line.
   #
   # Least common indent is defined as follows:

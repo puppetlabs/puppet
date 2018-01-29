@@ -160,7 +160,7 @@ module Generators
         @allfiles << { "file" => file, "modules" => modules, "classes" => classes, "methods" => methods, "nodes" => nodes }
       end
 
-      # scan all classes to create the childs references
+      # scan all classes to create the child's references
       @allclasses.values.each do |klass|
         if superklass = klass.context.superclass
           if superklass = AllReferences[superklass] and (superklass.is_a?(HTMLPuppetClass) or superklass.is_a?(HTMLPuppetNode))
@@ -432,7 +432,7 @@ module Generators
       @values["realizes"] = rl unless rl.empty?
 
       cl = build_child_list(@context)
-      @values["childs"] = cl unless cl.empty?
+      @values["children"] = cl unless cl.empty?
 
       @values
     end
@@ -446,7 +446,7 @@ module Generators
     end
 
     def build_child_list(context)
-      build_referenced_list(context.childs)
+      build_referenced_list(context.children)
     end
   end
 
@@ -530,7 +530,7 @@ module Generators
       @values["realizes"] = rl unless rl.empty?
 
       cl = build_child_list(@context)
-      @values["childs"] = cl unless cl.empty?
+      @values["children"] = cl unless cl.empty?
 
       @values["sections"] = @context.sections.map do |section|
 
@@ -637,7 +637,7 @@ module Generators
     end
 
     def build_child_list(context)
-      build_referenced_list(context.childs)
+      build_referenced_list(context.children)
     end
 
     def <=>(other)

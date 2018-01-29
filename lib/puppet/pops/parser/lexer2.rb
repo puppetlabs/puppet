@@ -1,4 +1,4 @@
-# The Lexer is responsbile for turning source text into tokens.
+# The Lexer is responsible for turning source text into tokens.
 # This version is a performance enhanced lexer (in comparison to the 3.x and earlier "future parser" lexer.
 #
 # Old returns tokens [:KEY, value, { locator = }

@@ -12,7 +12,7 @@ Puppet::Type.newtype(:cron) do
     by Puppet with cron resources.
 
     If an existing crontab entry happens to match the scheduling and command of a
-    cron resource that has never been synched, Puppet will defer to the existing
+    cron resource that has never been synced, Puppet will defer to the existing
     crontab entry and will not create a new entry tagged with the `# Puppet Name: `
     comment.
 

@@ -1,7 +1,7 @@
 require 'puppet/coercion'
 
 # This specialized {Puppet::Parameter} handles Boolean options, accepting lots
-# of strings and symbols for both truthiness and falsehood.
+# of strings and symbols for both truth and falsehood.
 #
 class Puppet::Parameter::Boolean < Puppet::Parameter
   def unsafe_munge(value)

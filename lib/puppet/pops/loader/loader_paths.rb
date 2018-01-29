@@ -305,7 +305,7 @@ module LoaderPaths
     #
     def effective_path(typed_name, start_index_in_name)
       # Resource type to name does not skip the name-space
-      # i.e. <module>/mymodule/resource_types/foo.pp is the reource type foo
+      # i.e. <module>/mymodule/resource_types/foo.pp is the resource type foo
       "#{File.join(generic_path, typed_name.name_parts)}.pp"
     end
   end

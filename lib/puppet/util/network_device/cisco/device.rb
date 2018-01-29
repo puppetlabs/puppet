@@ -99,7 +99,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
     :VirtualAccess => %w{Virtual-Access Virtual-A Virtual Virt}
   }
 
-  def canonalize_ifname(interface)
+  def canonicalize_ifname(interface)
     IF.each do |k,ifnames|
       if found = ifnames.find { |ifname| interface =~ /^#{ifname}\s*\d/i }
         found = /^#{found}(.+)\Z/i.match(interface)
@@ -119,7 +119,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   end
 
   def interface(name)
-    ifname = canonalize_ifname(name)
+    ifname = canonicalize_ifname(name)
     interface = parse_interface(ifname)
     return { :ensure => :absent } if interface.empty?
     interface.merge!(parse_trunking(ifname))
@@ -127,7 +127,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   end
 
   def new_interface(name)
-    Puppet::Util::NetworkDevice::Cisco::Interface.new(canonalize_ifname(name), transport)
+    Puppet::Util::NetworkDevice::Cisco::Interface.new(canonicalize_ifname(name), transport)
   end
 
   def parse_interface(name)
@@ -192,13 +192,13 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
       when /^(\d+)\s+(\w+)\s+(\w+)\s+([a-zA-Z0-9,\/. ]+)\s*$/
         vlan = { :name => $1, :description => $2, :status => $3, :interfaces => [] }
         if $4.strip.length > 0
-          vlan[:interfaces] = $4.strip.split(/\s*,\s*/).map{ |ifn| canonalize_ifname(ifn) }
+          vlan[:interfaces] = $4.strip.split(/\s*,\s*/).map{ |ifn| canonicalize_ifname(ifn) }
         end
         vlans[vlan[:name]] = vlan
       when /^\s+([a-zA-Z0-9,\/. ]+)\s*$/
         raise _("invalid sh vlan summary output") unless vlan
         if $1.strip.length > 0
-          vlan[:interfaces] += $1.strip.split(/\s*,\s*/).map{ |ifn| canonalize_ifname(ifn) }
+          vlan[:interfaces] += $1.strip.split(/\s*,\s*/).map{ |ifn| canonicalize_ifname(ifn) }
         end
       else
       end

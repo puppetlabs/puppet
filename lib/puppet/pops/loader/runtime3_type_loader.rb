@@ -88,7 +88,7 @@ class Runtime3TypeLoader < BaseLoader
   end
   private :find_impl
 
-  # Allows shadowing since this loader is populalted with all loaded resource types at time
+  # Allows shadowing since this loader is populated with all loaded resource types at time
   # of loading. This loading will, for built in types override the aliases configured in the static
   # loader.
   #

@@ -5,7 +5,7 @@ require 'puppet/generate/models/type/type'
 
 module Puppet
   module Generate
-    # Reponsible for generating type definitions in Puppet
+    # Responsible for generating type definitions in Puppet
     class Type
       # Represents an input to the type generator
       class Input

@@ -23,6 +23,7 @@
 module Puppet
   require 'puppet/util/selinux'
 
+  # noinspection SpellCheckingInspection
   class SELFileContext < Puppet::Property
     include Puppet::Util::SELinux
 

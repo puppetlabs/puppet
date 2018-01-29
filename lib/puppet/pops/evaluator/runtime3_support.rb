@@ -374,7 +374,7 @@ module Runtime3Support
     evaluated_parameters = evaluated_parameters.flatten
     evaluated_resources.each do |r|
       unless r.is_a?(Types::PResourceType) && r.type_name != 'class'
-        fail(Issues::ILLEGAL_OVERRIDEN_TYPE, o, {:actual => r} )
+        fail(Issues::ILLEGAL_OVERRIDDEN_TYPE, o, {:actual => r} )
       end
       t = Runtime3ResourceSupport.find_resource_type(scope, r.type_name)
       resource = Puppet::Parser::Resource.new(
