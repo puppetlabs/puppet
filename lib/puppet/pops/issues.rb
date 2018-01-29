@@ -617,7 +617,7 @@ module Issues
     _("Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation")
   end
 
-  ILLEGAL_OVERRIDEN_TYPE = issue :ILLEGAL_OVERRIDEN_TYPE, :actual do
+  ILLEGAL_OVERRIDDEN_TYPE = issue :ILLEGAL_OVERRIDDEN_TYPE, :actual do
     _("Resource Override can only operate on resources, got: %{actual}") % { actual: label.label(actual) }
   end
 

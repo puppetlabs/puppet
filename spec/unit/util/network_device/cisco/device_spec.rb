@@ -184,7 +184,7 @@ eos
       "VLAN99" => "VLAN99"
     }.each do |input,expected|
       it "should canonicalize #{input} to #{expected}" do
-        expect(@cisco.canonalize_ifname(input)).to eq(expected)
+        expect(@cisco.canonicalize_ifname(input)).to eq(expected)
       end
     end
 

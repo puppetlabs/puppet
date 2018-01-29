@@ -46,7 +46,7 @@ apply_manifest_on(agents, manifest) do
 end
 
 ########################################################################
-step "should allow param class defaults to be overriden"
+step "should allow param class defaults to be overridden"
 manifest = %q{
 class x($y, $z='2') {
   notice("${y}-${z}")
