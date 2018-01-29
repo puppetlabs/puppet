@@ -37,7 +37,7 @@
 # ~~~
 #
 # With three arguments, an `Annotation` type, an object, and an the string `clear`, the function will
-# clear the annotatation of the given type in the given object. The old annotation is returned if
+# clear the annotation of the given type in the given object. The old annotation is returned if
 # it existed.
 #
 # @example Using `annotate` with three arguments where third argument is the string 'clear'

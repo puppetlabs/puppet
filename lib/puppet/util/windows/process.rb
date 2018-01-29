@@ -232,7 +232,7 @@ module Puppet::Util::Windows::Process
   # Note - Some env variable names start with '=' and are excluded from the return value
   # Note - The env_ptr MUST be freed using the FreeEnvironmentStringsW function
   # Note - There is no technical limitation to the size of the environment block returned.
-  #   However a pracitcal limit of 64K is used as no single environment variable can exceed 32KB
+  #   However a practical limit of 64K is used as no single environment variable can exceed 32KB
   def get_environment_strings
     env_ptr = GetEnvironmentStringsW()
 

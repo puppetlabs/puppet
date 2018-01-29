@@ -11,7 +11,7 @@ def self.register_ptypes(loader, ir)
 end
 
 class ResourceTypeImpl
-  # Make instances of this class directly createable from the Puppet Language
+  # Make instances of this class directly creatable from the Puppet Language
   # as object.
   #
   include Puppet::Pops::Types::PuppetObject

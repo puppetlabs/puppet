@@ -346,7 +346,7 @@ class PAnyType < TypedModelObject
   # Answers the question if instances of this type can represent themselves as a string that
   # can then be passed to the create method
   #
-  # @return [Boolean] wether or not the instance has a canonical string representation
+  # @return [Boolean] whether or not the instance has a canonical string representation
   def roundtrip_with_string?
     false
   end

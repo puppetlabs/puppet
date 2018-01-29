@@ -14,9 +14,7 @@ module Loader
 # modules" to determine which module loader to use for each individual module. (There could be differences in
 # internal layout etc.)
 #
-# A module loader is also not aware of the mapping of name to relative paths - this is performed by the
-# included module PathBasedInstantatorConfig which knows about the map from type/name to
-# relative path, and the logic that can instantiate what is expected to be found in the content of that path.
+# A module loader is also not aware of the mapping of name to relative paths.
 #
 # @api private
 #

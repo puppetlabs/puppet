@@ -27,7 +27,7 @@
 #
 # Would notice `true` if the looked up hash had a value that is neither `false` nor `undef` for at least
 # one of the keys. That is, it is equivalent to the expression
-# `$lookued_up[routers] || $looked_up[servers] || $looked_up[workstations]`.
+# `$looked_up[routers] || $looked_up[servers] || $looked_up[workstations]`.
 #
 # When the first argument is a `Hash`, Puppet passes each key and value pair to the lambda
 # as an array in the form `[key, value]`.

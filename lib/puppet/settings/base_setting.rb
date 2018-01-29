@@ -98,7 +98,7 @@ class Puppet::Settings::BaseSetting
     @iscreated
   end
 
-  # short name for the celement
+  # short name for the element
   def short=(value)
     raise ArgumentError, _("Short names can only be one character.") if value.to_s.length != 1
     @short = value.to_s

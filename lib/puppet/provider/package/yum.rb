@@ -145,7 +145,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     # Quote the DNF docs:
     # "Yum does this if its obsoletes config option is enabled but
     # the behavior is not properly documented and can be harmful."
-    # So we'll stick with the safter option
+    # So we'll stick with the safer option
     # If a user wants to remove obsoletes, they can use { :install_options => '--obsoletes' }
     # More detail here: https://bugzilla.redhat.com/show_bug.cgi?id=1096506
     'update'

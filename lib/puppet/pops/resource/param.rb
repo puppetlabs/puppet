@@ -15,7 +15,7 @@
 module Puppet::Pops
 module Resource
 class Param
-  # This make this class instantiateable from Puppet
+  # This make this class instantiable from Puppet
   include Puppet::Pops::Types::PuppetObject
 
   def self.register_ptype(loader, ir)

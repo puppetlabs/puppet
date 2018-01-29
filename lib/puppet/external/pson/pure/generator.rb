@@ -341,7 +341,7 @@ module PSON
             '"' << PSON.utf8_to_pson(self) << '"'
           end
 
-          # Module that holds the extinding methods if, the String module is
+          # Module that holds the extending methods if, the String module is
           # included.
           module Extend
             # Raw Strings are PSON Objects (the raw bytes are stored in an array for the

@@ -407,8 +407,8 @@ module SemanticPuppet
 
       # Merge two ranges so that the result matches the intersection of all matching versions.
       #
-      # @param range [AbastractRange] the range to intersect with
-      # @return [AbastractRange,nil] the intersection between the ranges
+      # @param range [AbstractRange] the range to intersect with
+      # @return [AbstractRange,nil] the intersection between the ranges
       #
       # @api private
       def intersection(range)
@@ -456,8 +456,8 @@ module SemanticPuppet
       # Merge two ranges so that the result matches the sum of all matching versions. A merge
       # is only possible when the ranges are either adjacent or have an overlap.
       #
-      # @param other [AbastractRange] the range to merge with
-      # @return [AbastractRange,nil] the result of the merge
+      # @param other [AbstractRange] the range to merge with
+      # @return [AbstractRange,nil] the result of the merge
       #
       # @api private
       def merge(other)
@@ -508,7 +508,7 @@ module SemanticPuppet
       # Checks if this matcher accepts a prerelease with the same major, minor, patch triple as the given version. Only matchers
       # where this has been explicitly stated will respond `true` to this method
       #
-      # @return [Boolean] `true` if this matcher accepts a prerelase with the tuple from the given version
+      # @return [Boolean] `true` if this matcher accepts a prerelease with the tuple from the given version
       def test_prerelease?(_)
         false
       end
