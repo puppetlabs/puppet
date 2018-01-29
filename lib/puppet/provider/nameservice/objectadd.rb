@@ -12,17 +12,6 @@ class Puppet::Provider::NameService
       self.class.option(name, :flag) || "-" + name.to_s[0, 1]
     end
 
-    def modifycmd(param, value)
-      cmd = [command(param.to_s =~ /password_.+_age/ ? :password : :modify)]
-      cmd << flag(param) << value
-      if @resource.allowdupe? && ((param == :uid) || (param == :gid and self.class.name == :groupadd))
-        cmd << "-o"
-      end
-      cmd << @resource[:name]
-
-      cmd
-    end
-
     def posixmethod(name)
       name   = name.intern if name.is_a? String
       method = self.class.option(name, :method) || name

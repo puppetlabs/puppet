@@ -144,6 +144,16 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         provider.expects(:execute).with(all_of(includes('/usr/sbin/lusermod'), includes('-e')))
         provider.create
       end
+
+      it 'should set password age rules locally' do
+        described_class.has_feature :manages_password_age
+        resource[:password_min_age] = 5
+        resource[:password_max_age] = 10
+        resource[:password_warn_days] = 15
+        provider.expects(:execute).with(includes('/usr/sbin/luseradd'), kind_of(Hash))
+        provider.expects(:execute).with(['/usr/sbin/lchage', '-m', 5, '-M', 10, '-W', 15, 'myuser'])
+        provider.create
+      end
     end
 
     describe "on systems that allow to set shell" do
@@ -163,14 +173,31 @@ describe Puppet::Type.type(:user).provider(:useradd) do
          described_class.has_feature :libuser
          resource[:forcelocal] = false
       end
+
       it "should use usermod" do
         provider.expects(:execute).with(['/usr/sbin/usermod', '-u', 150, 'myuser'])
         provider.uid = 150
       end
+
       it "should use -o when allowdupe=true" do
         resource[:allowdupe] = :true
         provider.expects(:execute).with(includes('-o'))
         provider.uid = 505
+      end
+
+      it 'should use chage for password_min_age' do
+        provider.expects(:execute).with(['/usr/bin/chage', '-m', 100, 'myuser'])
+        provider.password_min_age = 100
+      end
+
+      it 'should use chage for password_max_age' do
+        provider.expects(:execute).with(['/usr/bin/chage', '-M', 101, 'myuser'])
+        provider.password_max_age = 101
+      end
+
+      it 'should use chage for password_warn_days' do
+        provider.expects(:execute).with(['/usr/bin/chage', '-W', 99, 'myuser'])
+        provider.password_warn_days = 99
       end
     end
 
@@ -179,10 +206,12 @@ describe Puppet::Type.type(:user).provider(:useradd) do
          described_class.has_feature :libuser
          resource[:forcelocal] = true
       end
+
       it "should use lusermod and not usermod" do
         provider.expects(:execute).with(['/usr/sbin/lusermod', '-u', 150, 'myuser'])
         provider.uid = 150
       end
+
       it "should NOT use -o when allowdupe=true" do
         resource[:allowdupe] = :true
         provider.expects(:execute).with(Not(includes('-o')))
@@ -193,6 +222,21 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         resource[:uid] = 505
         provider.stubs(:finduser).returns(true)
         expect { provider.uid = 505 }.to raise_error(Puppet::Error, "UID 505 already exists, use allowdupe to force user creation")
+      end
+
+      it 'should use lchage for password_warn_days' do
+        provider.expects(:execute).with(['/usr/sbin/lchage', '-W', 99, 'myuser'])
+        provider.password_warn_days = 99
+      end
+
+      it 'should use lchage for password_min_age' do
+        provider.expects(:execute).with(['/usr/sbin/lchage', '-m', 100, 'myuser'])
+        provider.password_min_age = 100
+      end
+
+      it 'should use lchage for password_max_age' do
+        provider.expects(:execute).with(['/usr/sbin/lchage', '-M', 101, 'myuser'])
+        provider.password_max_age = 101
       end
     end
   end
@@ -385,6 +429,28 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:allowdupe] = :true
       expect(provider.addcmd).not_to include("-o")
     end
+
+    context 'when forcelocal=true' do
+      before do
+        resource[:forcelocal] = :true
+      end
+
+      it 'does not pass lchage options to luseradd for password_max_age' do
+        resource[:password_max_age] = 100
+        expect(provider.addcmd).not_to include('-M')
+      end
+
+      it 'does not pass lchage options to luseradd for password_min_age' do
+        resource[:managehome] = false  # This needs to be set so that we don't pass in -m to create the home
+        resource[:password_min_age] = 100
+        expect(provider.addcmd).not_to include('-m')
+      end
+
+      it 'does not pass lchage options to luseradd for password_warn_days' do
+        resource[:password_warn_days] = 100
+        expect(provider.addcmd).not_to include('-W')
+      end
+    end
   end
 
   {
@@ -478,30 +544,43 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should return a chage command array with -m <value> and the user name if password_min_age is set" do
       resource[:password_min_age] = 123
-      expect(provider.passcmd).to eq(['/usr/bin/chage','-m',123,'myuser'])
+      expect(provider.passcmd).to eq(['/usr/bin/chage', '-m', 123, 'myuser'])
     end
 
     it "should return a chage command array with -M <value> if password_max_age is set" do
       resource[:password_max_age] = 999
-      expect(provider.passcmd).to eq(['/usr/bin/chage','-M',999,'myuser'])
+      expect(provider.passcmd).to eq(['/usr/bin/chage', '-M', 999, 'myuser'])
     end
 
     it "should return a chage command array with -W <value> if password_warn_days is set" do
       resource[:password_warn_days] = 999
-      expect(provider.passcmd).to eq(['/usr/bin/chage','-W',999,'myuser'])
+      expect(provider.passcmd).to eq(['/usr/bin/chage', '-W', 999, 'myuser'])
     end
 
     it "should return a chage command array with -M <value> -m <value> if both password_min_age and password_max_age are set" do
       resource[:password_min_age] = 123
       resource[:password_max_age] = 999
-      expect(provider.passcmd).to eq(['/usr/bin/chage','-m',123,'-M',999,'myuser'])
+      expect(provider.passcmd).to eq(['/usr/bin/chage', '-m', 123, '-M', 999, 'myuser'])
     end
 
     it "should return a chage command array with -M <value> -m <value> -W <value> if password_min_age, password_max_age and password_warn_days are set" do
       resource[:password_min_age] = 123
       resource[:password_max_age] = 999
       resource[:password_warn_days] = 555
-      expect(provider.passcmd).to eq(['/usr/bin/chage','-m',123,'-M',999,'-W',555,'myuser'])
+      expect(provider.passcmd).to eq(['/usr/bin/chage', '-m', 123, '-M', 999, '-W', 555, 'myuser'])
+    end
+
+    context 'with forcelocal=true' do
+      before do
+        resource[:forcelocal] = true
+      end
+
+      it 'should return a lchage command array with -M <value> -m <value> -W <value> if password_min_age, password_max_age and password_warn_days are set' do
+        resource[:password_min_age] = 123
+        resource[:password_max_age] = 999
+        resource[:password_warn_days] = 555
+        expect(provider.passcmd).to eq(['/usr/sbin/lchage', '-m', 123, '-M', 999, '-W', 555, 'myuser'])
+      end
     end
   end
 
