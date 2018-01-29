@@ -15,6 +15,14 @@ test_name 'C100568: puppet apply of module for an unsupported language should fa
   shell_env_language = { 'LANGUAGE' => unsupported_language, 'LANG' => unsupported_language }
 
   agents.each do |agent|
+    # REMIND - It was noted that skipping tests on certain platforms sometimes causes
+    # beaker to mark the test as a failed even if the test succeeds on other targets. 
+    # Hence we just print a message and skip w/o telling beaker about it.
+    if on(agent, facter("fips_enabled")).stdout =~ /true/
+      puts "Module build, loading and installing is not supported on fips enabled platforms"
+      next
+    end
+
     step 'install a i18ndemo module' do
       install_i18n_demo_module(agent)
     end
