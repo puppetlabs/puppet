@@ -74,8 +74,8 @@ FILE
           assert_match(/Notice: #{local_custom_time_pattern}/, result.stdout, 'first custom time was not as expected')
           assert_match(/Notice: #{module_custom_time_pattern}/, result.stdout, 'first module uptime was not as expected')
 
-          local_custom_time1 = Integer(result.stdout.match(/Notice: #{local_custom_time_pattern}/)[1])
-          module_custom_time1 = Integer(result.stdout.match(/Notice: #{module_custom_time_pattern}/)[1])
+          local_custom_time1 = result.stdout.match(/Notice: #{local_custom_time_pattern}/)[1].to_i
+          module_custom_time1 = result.stdout.match(/Notice: #{module_custom_time_pattern}/)[1].to_i
         end
 
         sleep 1
@@ -85,8 +85,8 @@ FILE
           assert_match(/Notice: #{local_custom_time_pattern}/, result.stdout, 'second custom time was not as expected')
           assert_match(/Notice: #{module_custom_time_pattern}/, result.stdout, 'second module uptime was not as expected')
 
-          local_custom_time2 = Integer(result.stdout.match(/Notice: #{local_custom_time_pattern}/)[1])
-          module_custom_time2 = Integer(result.stdout.match(/Notice: #{module_custom_time_pattern}/)[1])
+          local_custom_time2 = result.stdout.match(/Notice: #{local_custom_time_pattern}/)[1].to_i
+          module_custom_time2 = result.stdout.match(/Notice: #{module_custom_time_pattern}/)[1].to_i
         end
 
         assert(local_custom_time2 > local_custom_time1, 'local custom time did not change as expected if at all')
