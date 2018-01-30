@@ -22,12 +22,13 @@ where <target> is one of:
   ci:test:git
   ci:test:aio
   ci:test:gem
+  ci:test:quick
 
 See `bundle exec rake -D <target>` for information about each target. Each rake
 task accepts the following environment variables:
 
-HOSTS: A beaker hosts file must be provided either as an environment variable or
-       a beaker-hostgenerator string. It can also be specified as TEST_TARGET.
+HOSTS: (Optional) The hosts to run against. Must be specified as a path to a
+       file or a beaker-hostgenerator string. Defaults to #{DEFAULT_TEST_TARGETS}
 
     HOSTS=mynodes.yaml
     HOSTS=redhat7-64ma
@@ -35,7 +36,8 @@ HOSTS: A beaker hosts file must be provided either as an environment variable or
 SHA: The git SHA of either the puppet-agent package or component repo must be
      specified.
 
-TESTS: A comma-delimited list of files/directories containing tests to run:
+TESTS: (Optional) A comma-delimited list of files/directories containing tests
+       to run. Defaults to running all tests, except for `ci:test:quick`
 
     TESTS=tests
 
@@ -43,7 +45,12 @@ OPTIONS: Additional options to pass to beaker:
 
     OPTIONS='--dry-run --no-color'
 
-MASTER_TEST_TARGET: (Optional) to override the default master test target
+BEAKER_HOSTS: Same as HOSTS
+
+TEST_TARGET: Same as HOSTS.
+
+MASTER_TEST_TARGET: (Optional) to override the default master test target. Should
+                    only be used with TEST_TARGET.
 EOS
 
 namespace :ci do
@@ -74,22 +81,23 @@ namespace :ci do
         # By default we assume TEST_TARGET is an agent-only string
         if agent_target = ENV['TEST_TARGET']
           master_target = ENV['MASTER_TEST_TARGET'] || DEFAULT_MASTER_TEST_TARGET
-          targets = "#{master_target}-#{agent_target}"
+          "#{master_target}-#{agent_target}"
         else
-          targets = DEFAULT_TEST_TARGETS
+          DEFAULT_TEST_TARGETS
         end
-
-        hosts_file = "tmp/#{targets}-#{SecureRandom.uuid}.yaml"
-        cli = BeakerHostGenerator::CLI.new([targets, '--disable-default-role', '--osinfo-version', '1'])
-        FileUtils.mkdir_p('tmp') # -p ignores when dir already exists
-        File.open(hosts_file, 'w') do |fh|
-          fh.print(cli.execute)
-        end
-
-        hosts_file
       end
 
-    ENV['HOSTS'] = hosts
+    if File.exists?(hosts)
+      ENV['HOSTS'] = hosts
+    else
+      hosts_file = "tmp/#{hosts}-#{SecureRandom.uuid}.yaml"
+      cli = BeakerHostGenerator::CLI.new([hosts, '--disable-default-role', '--osinfo-version', '1'])
+      FileUtils.mkdir_p('tmp') # -p ignores when dir already exists
+      File.open(hosts_file, 'w') do |fh|
+        fh.print(cli.execute)
+      end
+      ENV['HOSTS'] = hosts_file
+    end
   end
 
   namespace :test do
@@ -150,12 +158,17 @@ FORK: to test against your fork, defaults to 'puppetlabs'
 SERVER: to git fetch from an alternate GIT server, defaults to 'github.com'
 EOS
     task :git => ['ci:check_env', 'ci:gen_hosts'] do
-      beaker(:init, '--hosts', ENV['HOSTS'])
+      beaker(:init, '--hosts', ENV['HOSTS'], '--options-file', 'config/git/options.rb')
       beaker(:provision)
       beaker(:exec, 'pre-suite')
       beaker(:exec, ENV['TESTS'])
       beaker(:destroy)
     end
+  end
+
+  task :test_and_preserve_hosts => ['ci:check_env', 'ci:gen_hosts'] do
+    puts "WARNING, the test_and_preserve_hosts task is deprecated, use ci:test:aio instead."
+    Rake::Task['ci:test:aio'].execute
   end
 end
 
