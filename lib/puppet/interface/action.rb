@@ -149,6 +149,17 @@ class Puppet::Interface::Action
     @render_as = value.to_sym
   end
 
+  # @api private
+  # @return [void]
+  def deprecate
+    @deprecated = true
+  end
+
+  # @api private
+  # @return [Boolean]
+  def deprecated?
+    @deprecated
+  end
 
   ########################################################################
   # Initially, this was defined to allow the @action.invoke pattern, which is
