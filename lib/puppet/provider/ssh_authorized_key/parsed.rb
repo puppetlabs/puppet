@@ -58,7 +58,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(
 
     Puppet::Util::SUIDManager.asuser(@resource.should(:user)) do
         unless Puppet::FileSystem.exist?(dir = File.dirname(target))
-          Puppet.debug "Creating #{dir}"
+          Puppet.debug "Creating #{dir} as #{@resource.should(:user)}"
           Dir.mkdir(dir, dir_perm)
         end
 
