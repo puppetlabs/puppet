@@ -590,6 +590,98 @@ describe Puppet::Transaction do
 
       transaction.prefetch_if_necessary(resource)
     end
+
+    it "should not prefetch a provider which has failed" do
+      transaction.prefetch_failed_providers[:sshkey][:parsed] = true
+
+      resource.provider.class.expects(:prefetch).never
+
+      transaction.prefetch_if_necessary(resource)
+    end
+
+    describe "and prefetching fails" do
+      before :each do
+        resource.provider.class.expects(:prefetch).raises(Puppet::Error, "message")
+      end
+
+      context "without future_features flag" do
+        before :each do
+          Puppet.settings[:future_features] = false
+        end
+
+        it "should not rescue prefetch executions" do
+          expect { transaction.prefetch_if_necessary(resource) }.to raise_error(Puppet::Error)
+        end
+      end
+
+      context "with future_features flag" do
+        before :each do
+          Puppet.settings[:future_features] = true
+        end
+
+        it "should rescue prefetch executions" do
+          transaction.prefetch_if_necessary(resource)
+
+          expect(transaction.prefetched_providers[:sshkey][:parsed]).to be_truthy
+        end
+
+        it "should mark resources as failed" do
+          transaction.evaluate
+
+          expect(transaction.resource_status(resource).failed?).to be_truthy
+        end
+
+        it "should mark a provider that has failed prefetch" do
+          transaction.prefetch_if_necessary(resource)
+
+          expect(transaction.prefetch_failed_providers[:sshkey][:parsed]).to be_truthy
+        end
+
+        describe "and new resources are generated" do
+          let(:generator) { Puppet::Type.type(:notify).new :title => "generator" }
+          let(:generated) do
+            %w[a b c].map { |name| Puppet::Type.type(:sshkey).new :title => "foo", :name => name, :type => :dsa, :key => "eh", :provider => :parsed }
+          end
+
+          before :each do
+            catalog.add_resource generator
+            generator.stubs(:generate).returns generated
+            catalog.stubs(:container_of).returns generator
+          end
+
+          it "should not evaluate resources with a failed provider, even if the prefetch is rescued" do
+            #Only the generator resource should be applied, all the other resources are failed, and skipped.
+            catalog.remove_resource resource2
+            transaction.expects(:apply).once
+
+            transaction.evaluate
+          end
+
+          it "should not fail other resources added after the failing resource" do
+            new_resource = Puppet::Type.type(:notify).new :name => "baz"
+            catalog.add_resource(new_resource)
+
+            transaction.evaluate
+
+            expect(transaction.resource_status(new_resource).failed?).to be_falsey
+          end
+
+          it "should fail other resources that require the failing resource" do
+            new_resource = Puppet::Type.type(:notify).new(:name => "baz", :require => resource)
+            catalog.add_resource(new_resource)
+
+            catalog.remove_resource resource2
+            transaction.expects(:apply).once
+
+            transaction.evaluate
+
+            expect(transaction.resource_status(resource).failed?).to be_truthy
+            expect(transaction.resource_status(new_resource).dependency_failed?).to be_truthy
+            expect(transaction.skip?(new_resource)).to be_truthy
+          end
+        end
+      end
+    end
   end
 
   describe "during teardown" do
