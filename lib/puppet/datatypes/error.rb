@@ -5,11 +5,13 @@ Puppet::DataTypes.create_type('Error') do
       issue_code => Optional[Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef],Type[Undef]]]
     },
     attributes => {
-      message => String[1],
+      msg => String[1],
       kind => { type => Optional[String[1]], value => undef },
-      issue_code => { type => Optional[String[1]], value => undef },
-      partial_result => { type => Data, value => undef },
       details => { type => Optional[Hash[String[1],Data]], value => undef },
+      issue_code => { type => Optional[String[1]], value => undef },
+    },
+    functions => {
+      message => Callable[[], String[1]]
     }
     PUPPET
 
