@@ -860,6 +860,20 @@ describe Puppet::Configurer do
       @agent.retrieve_catalog({})
       expect(@agent.instance_variable_get(:@cached_catalog_status)).to eq('on_failure')
     end
+
+    it "should not update the cached catalog in noop mode" do
+      Puppet[:noop] = true
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:ignore_cache => true, :ignore_cache_save => true)).returns(@catalog)
+
+      @agent.retrieve_catalog({})
+    end
+
+    it "should update the cached catalog when not in noop mode" do
+      Puppet[:noop] = false
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entries(:ignore_cache => true, :ignore_cache_save => false)).returns(@catalog)
+
+      @agent.retrieve_catalog({})
+    end
   end
 
   describe "when converting the catalog" do

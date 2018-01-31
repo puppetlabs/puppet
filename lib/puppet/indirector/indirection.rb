@@ -161,7 +161,7 @@ class Puppet::Indirector::Indirection
   def expire(key, options={})
     request = request(:expire, key, nil, options)
 
-    return nil unless cache?
+    return nil unless cache? && !request.ignore_cache_save?
 
     return nil unless instance = cache.find(request(:find, key, nil, options))
 
@@ -194,7 +194,7 @@ class Puppet::Indirector::Indirection
       result = terminus.find(request)
       if not result.nil?
         result.expiration ||= self.expiration if result.respond_to?(:expiration)
-        if cache?
+        if cache? && !request.ignore_cache_save?
           Puppet.info "Caching #{self.name} for #{request.key}"
           begin
             cache.save request(:save, key, result, options)
@@ -285,7 +285,7 @@ class Puppet::Indirector::Indirection
     result = terminus.save(request)
 
     # If caching is enabled, save our document there
-    cache.save(request) if cache?
+    cache.save(request) if cache? && !request.ignore_cache_save?
 
     result
   end
