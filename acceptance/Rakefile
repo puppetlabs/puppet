@@ -27,33 +27,57 @@ where <target> is one of:
 See `bundle exec rake -D <target>` for information about each target. Each rake
 task accepts the following environment variables:
 
-HOSTS: (Optional) The hosts to run against. Must be specified as a path to a
-       file or a beaker-hostgenerator string. Defaults to #{DEFAULT_TEST_TARGETS}
+REQUIRED
+--------
+
+SHA:
+    The git SHA of either the puppet-agent package or component repo must be
+    specified depending on the target. The `git` and `gem` use the component
+    SHA, where as `aio` and `quick` use the puppet-agent package SHA.
+
+OPTIONAL
+--------
+
+HOSTS:
+    The hosts to run against. Must be specified as a path to a file or a
+    beaker-hostgenerator string. Defaults to #{DEFAULT_TEST_TARGETS}.
 
     HOSTS=mynodes.yaml
     HOSTS=redhat7-64ma
 
-SHA: The git SHA of either the puppet-agent package or component repo must be
-     specified.
-
-TESTS: (Optional) A comma-delimited list of files/directories containing tests
-       to run. Defaults to running all tests, except for `ci:test:quick`
+TESTS:
+    A comma-delimited list of files/directories containing tests to run.
+    Defaults to running all tests, except for `ci:test:quick` which only
+    runs a predefined set of tests.
 
     TESTS=tests
 
-OPTIONS: Additional options to pass to beaker:
+OPTIONS:
+    Additional options to pass to beaker. Defaults to ''.
 
     OPTIONS='--dry-run --no-color'
 
-BEAKER_HOSTS: Same as HOSTS
+BEAKER_HOSTS:
+    Same as HOSTS.
 
-TEST_TARGET: Same as HOSTS.
+TEST_TARGET:
+    A beaker-hostgenerator string of agent-only hosts to run against.
+    The MASTER_TEST_TARGET host will added this list. This option is only
+    intended to be used in CI.
 
-MASTER_TEST_TARGET: (Optional) to override the default master test target. Should
-                    only be used with TEST_TARGET.
+MASTER_TEST_TARGET:
+    Override the default master test target. Should only be used with
+    TEST_TARGET, and is only intended to be used in CI. Defaults to
+    #{DEFAULT_MASTER_TEST_TARGET}.
 EOS
 
 namespace :ci do
+  desc "Print usage information"
+  task :help do
+    puts USAGE
+    exit 1
+  end
+
   task :check_env do
     if ENV['SHA'].nil?
       puts "Error: A SHA must be specified"
