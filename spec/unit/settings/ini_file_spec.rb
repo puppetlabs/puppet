@@ -109,6 +109,46 @@ name = value
     CONFIG
   end
 
+  it "updates existing empty settings" do
+    config_fh = a_config_file_containing(<<-CONFIG)
+    # this is the preceding comment
+     [section]
+    name = 
+    # this is the trailing comment
+    CONFIG
+
+    Puppet::Settings::IniFile.update(config_fh) do |config|
+      config.set("section", "name", "changed value")
+    end
+
+    expect(config_fh.string).to eq <<-CONFIG
+    # this is the preceding comment
+     [section]
+    name = changed value
+    # this is the trailing comment
+    CONFIG
+  end
+
+  it "can set empty settings" do
+    config_fh = a_config_file_containing(<<-CONFIG)
+    # this is the preceding comment
+     [section]
+    name = original value
+    # this is the trailing comment
+    CONFIG
+
+    Puppet::Settings::IniFile.update(config_fh) do |config|
+      config.set("section", "name", "")
+    end
+
+    expect(config_fh.string).to eq <<-CONFIG
+    # this is the preceding comment
+     [section]
+    name = 
+    # this is the trailing comment
+    CONFIG
+  end
+
   it "updates existing UTF-8 name / values in place" do
     config_fh = a_config_file_containing(<<-CONFIG)
     # this is the preceding comment
