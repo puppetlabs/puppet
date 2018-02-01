@@ -205,6 +205,55 @@ describe 'the tree_each function' do
     end
   end
 
+  context 'a produced iterator' do
+    ['depth_first', 'breadth_first'].each do |order|
+      context "for #{order} can be unrolled by creating an Array using" do
+        it "the () operator" do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            $a = [1, 3, 2]
+            $b = Array($a.tree_each({order => #{order}}))
+            $msg = inline_epp(@(TEMPLATE))
+              <% $b.each() |$v| { -%>
+              path: <%= $v[0] %> value: <%= $v[1] %>
+              <% } -%>
+              | TEMPLATE
+            notify {'test': message => $msg}
+          MANIFEST
+
+          expect(catalog.resource(:notify, "test")['message']).to eq([
+            'path: [] value: [1, 3, 2]',
+            'path: [0] value: 1',
+            'path: [1] value: 3',
+            'path: [2] value: 2',
+            ''
+            ].join("\n"))
+        end
+
+        it "the splat operator" do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            $a = [1, 3, 2]
+            $b = *$a.tree_each({order => #{order}})
+            assert_type(Array[Array], $b)
+            $msg = inline_epp(@(TEMPLATE))
+              <% $b.each() |$v| { -%>
+              path: <%= $v[0] %> value: <%= $v[1] %>
+              <% } -%>
+              | TEMPLATE
+            notify {'test': message => $msg}
+          MANIFEST
+
+          expect(catalog.resource(:notify, "test")['message']).to eq([
+            'path: [] value: [1, 3, 2]',
+            'path: [0] value: 1',
+            'path: [1] value: 3',
+            'path: [2] value: 2',
+            ''
+            ].join("\n"))
+        end
+      end
+    end
+  end
+
   context 'recursively yields under the control of options such that' do
     it 'both containers and leafs are included by default' do
       catalog = compile_to_catalog(<<-MANIFEST)
