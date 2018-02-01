@@ -257,6 +257,254 @@ new = new value
     CONFIG
   end
 
+  context 'config with no main section' do
+    it 'file does not change when there are no sections or entries' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('main', 'missing')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      CONFIG
+    end
+
+    it 'when there is only 1 entry we can delete it' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      base = value
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('main', 'base')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      CONFIG
+    end
+
+    it 'we delete 1 entry from the default section and add the [main] section header' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      base = value
+      other = another value
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('main', 'base')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+[main]
+      other = another value
+      CONFIG
+    end
+
+    it 'we add [main] to the config file when attempting to delete a setting in another section' do
+      config_fh = a_config_file_containing(<<-CONF)
+      name = different value
+      CONF
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('section', 'name')
+      end
+
+      expect(config_fh.string).to eq(<<-CONF)
+[main]
+      name = different value
+      CONF
+    end
+  end
+
+  context 'config with 1 section' do
+    it 'file does not change when entry to delete does not exist' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      [main]
+      base = value
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('main', 'missing')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      [main]
+      base = value
+      CONFIG
+    end
+
+    it 'deletes the 1 entry in the section' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      [main]
+      base = DELETING
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('main', 'base')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      [main]
+      CONFIG
+    end
+
+    it 'deletes the entry and leaves another entry' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      [main]
+      base = DELETING
+      after = value to keep
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('main', 'base')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      [main]
+      after = value to keep
+      CONFIG
+    end
+
+    it 'deletes the entry while leaving other entries' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      [main]
+      before = value to keep before
+      base = DELETING
+      after = value to keep
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('main', 'base')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      [main]
+      before = value to keep before
+      after = value to keep
+      CONFIG
+    end
+
+    it 'when there are two entries of the same setting name delete one of them' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      [main]
+      base = value
+      base = value
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('main', 'base')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      [main]
+      base = value
+      CONFIG
+    end
+  end
+
+  context 'with 2 sections' do
+    it 'file does not change when entry to delete does not exist' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      [main]
+      base = value
+      [section]
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('section', 'missing')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      [main]
+      base = value
+      [section]
+      CONFIG
+    end
+
+    it 'deletes the 1 entry in the specified section' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      [main]
+      base = value
+      [section]
+      base = value
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('section', 'base')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      [main]
+      base = value
+      [section]
+      CONFIG
+    end
+
+    it 'deletes the entry while leaving other entries' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      [main]
+      before = value also staying
+      base = value staying
+      after = value to keep
+      [section]
+      before value in section keeping
+      base = DELETING
+      after = value to keep
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('section', 'base')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      [main]
+      before = value also staying
+      base = value staying
+      after = value to keep
+      [section]
+      before value in section keeping
+      after = value to keep
+      CONFIG
+    end
+  end
+
+  context 'with 2 sections' do
+    it 'deletes the entry while leaving other entries' do
+      config_fh = a_config_file_containing(<<-CONFIG)
+      [main]
+      before = value also staying
+      base = value staying
+      after = value to keep
+      [section]
+      before value in section keeping
+      base = DELETING
+      after = value to keep
+      [otherSection]
+      before value in section keeping
+      base = value to keep really
+      after = value to keep
+      CONFIG
+
+      Puppet::Settings::IniFile.update(config_fh) do |config|
+        config.delete('section', 'base')
+      end
+
+      expect(config_fh.string).to eq <<-CONFIG
+      [main]
+      before = value also staying
+      base = value staying
+      after = value to keep
+      [section]
+      before value in section keeping
+      after = value to keep
+      [otherSection]
+      before value in section keeping
+      base = value to keep really
+      after = value to keep
+      CONFIG
+    end
+  end
+
+
   def a_config_file_containing(text)
     # set_encoding required for Ruby 1.9.3 as ASCII is the default
     StringIO.new(text).set_encoding(Encoding::UTF_8)

@@ -129,4 +129,49 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
       nil
     end
   end
+
+  action(:delete) do
+    summary _("Delete a Puppet setting.")
+    arguments _("(<setting>")
+    #TRANSLATORS 'main' is a specific section name and should not be translated
+    description "Deletes a setting from the specified section. (The default is the section 'main')."
+    notes <<-'EOT'
+      By default, this action deletes the configuration setting from the 'main'
+      configuration domain. Use the '--section' flags to delete settings from other
+      configuration domains.
+    EOT
+    examples <<-'EOT'
+      Delete the setting 'setting_name' from the 'main' configuration domain:
+
+      $ puppet config delete setting_name
+
+      Delete the setting 'setting_name' from the 'master' configuration domain:
+
+      $ puppet config delete setting_name --section master
+    EOT
+
+    when_invoked do |name, options|
+      options[:section] = options[:section].to_s # If value was left as default - set to default string
+
+      path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
+      if Puppet::FileSystem.exist?(path)
+        Puppet::FileSystem.open(path, nil, 'r+:UTF-8') do |file|
+          Puppet::Settings::IniFile.update(file) do |config|
+            setting_string = config.delete(options[:section], name)
+            if setting_string
+              puts(_("Deleted setting from '%{section_name}': '%{setting_string}'") %
+                       { section_name: options[:section], name: name, setting_string: setting_string.strip })
+            else
+              Puppet.warning(_("No setting found in configuration file for section '%{section_name}' setting name '%{name}'") %
+                                 { section_name: options[:section], name: name })
+            end
+          end
+        end
+      else
+        #TRANSLATORS the 'puppet.conf' is a specific file and should not be translated
+        Puppet.warning(_("The puppet.conf file does not exist %{puppet_conf}") % { puppet_conf: path })
+      end
+      nil
+    end
+  end
 end

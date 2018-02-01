@@ -34,6 +34,15 @@ class Puppet::Settings::IniFile
     @lines << line
   end
 
+  def delete(section, name)
+    delete_offset = @lines.index(setting(section, name))
+    next_offset = delete_offset + 1
+    if next_offset < @lines.length
+      @lines[next_offset].previous = @lines[delete_offset].previous
+    end
+    @lines.delete_at(delete_offset)
+  end
+
   def insert_after(line, new_line)
     new_line.previous = line
 
@@ -122,6 +131,14 @@ class Puppet::Settings::IniFile
       end
     end
 
+    def delete(section_name, name)
+      setting = @config.setting(section_name, name)
+      if setting
+        @config.delete(section_name, name)
+        setting.to_s.chomp
+      end
+    end
+
     private
 
     def add_setting(section_name, name, value)
@@ -154,20 +171,24 @@ class Puppet::Settings::IniFile
   Line = Struct.new(:text) do
     include LineNumber
 
+    def to_s
+      text
+    end
+
     def write(fh)
-      fh.puts(text)
+      fh.puts(to_s)
     end
   end
 
   SettingLine = Struct.new(:prefix, :name, :infix, :value, :suffix) do
     include LineNumber
 
+    def to_s
+      "#{prefix}#{name}#{infix}#{value}#{suffix}"
+    end
+
     def write(fh)
-      fh.write(prefix)
-      fh.write(name)
-      fh.write(infix)
-      fh.write(value)
-      fh.puts(suffix)
+      fh.puts(to_s)
     end
 
     def ==(other)
@@ -178,12 +199,12 @@ class Puppet::Settings::IniFile
   SectionLine = Struct.new(:prefix, :name, :suffix) do
     include LineNumber
 
+    def to_s
+      "#{prefix}[#{name}]#{suffix}"
+    end
+
     def write(fh)
-      fh.write(prefix)
-      fh.write("[")
-      fh.write(name)
-      fh.write("]")
-      fh.puts(suffix)
+      fh.puts(to_s)
     end
   end
 
