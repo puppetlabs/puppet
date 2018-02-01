@@ -17,6 +17,14 @@ class Puppet::Interface::ActionBuilder
     new(face, name, &block).action
   end
 
+  # Deprecates the action
+  # @return [void]
+  # @api private
+  # @dsl Faces
+  def deprecate
+    @action.deprecate
+  end
+
   # Ideally the method we're defining here would be added to the action, and a
   # method on the face would defer to it, but we can't get scope correct, so
   # we stick with this. --daniel 2011-03-24
