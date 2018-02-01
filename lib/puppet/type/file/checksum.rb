@@ -41,4 +41,10 @@ Puppet::Type.type(:file).newparam(:checksum) do
   def digest_algorithm
     value || Puppet[:digest_algorithm].to_sym
   end
+
+  validate do |value|
+    if Puppet::Util::Platform.fips_enabled? && value =~ /^md5/
+      raise ArgumentError, "MD5 is not supported in FIPS mode"
+    end
+  end
 end

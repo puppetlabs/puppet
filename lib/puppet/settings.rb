@@ -1460,4 +1460,46 @@ Generated on #{Time.now}.
       %Q{<#{self.class}:#{self.object_id} @environment_name="#{@environment_name}" @conf="#{@conf}">}
     end
   end
+
+  def self.validate_digest_algorithm(value)
+
+    if value.nil?
+      # We get thrown all kinds of garbage when running spec tests
+      return
+    end
+
+    # Make sure it is not an array first
+    if value.is_a?(Array)
+      raise ArgumentError, "Digest algorithm cannot be an array."
+    end
+
+    valid = Puppet::valid_digest_algorithms
+    if Puppet::Util::Platform.fips_enabled?
+      if value.upcase == 'MD5'
+        raise ArgumentError, _("MD5 digest is prohited in fips mode. Valid values are %{values}.") % { values: valid }
+      end
+    end
+    if !valid.include?(value)
+      raise ArgumentError, _("Unrecognized digest_algorithm %{value} is not supported.") % { value: value} + 
+             ' ' + _("Valid values are %{values}.") % { values: valid }
+    end
+  end
+
+  def self.validate_checksum_types(values)
+    valid = Puppet::valid_checksum_types
+    if Puppet::Util::Platform.fips_enabled?
+      fips_prohibited = ['md5', 'md5lite']
+      if !(values & fips_prohibited).empty?
+        raise ArgumentError, _("%{fips_prohibited} checksum types are prohibited in FIPS mode.") % { fips_prohibited: fips_prohibited} +
+         ' ' + _("Valid values are %{values}.") % { values: valid }
+      end
+    end
+
+    invalid = values.reject {|alg| valid.include?(alg)}
+    if not invalid.empty?
+      raise ArgumentError, _("Unrecognized checksum types %{invalid} are not supported.") % { invalid: invalid } +
+         ' ' + _("Valid values are %{values}.") % { values: valid }
+    end
+  end
+
 end

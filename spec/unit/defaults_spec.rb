@@ -70,6 +70,16 @@ describe "Defaults" do
       it "should be sha256" do
         expect(Puppet.default_digest_alg).to eq('sha256')
       end
+      it 'should raise an error on a prohibited digest_algorithm in fips mode' do
+        expect { Puppet.settings[:digest_algorithm] = 'md5' }.to raise_exception ArgumentError, 'MD5 digest is prohited in fips mode. Valid values are ["sha256", "sha384", "sha512", "sha224"].'
+      end
+      it 'should not raise an error on setting a valid list of checksum types when in fips mode' do
+        Puppet.settings[:digest_algorithm] = 'sha384'
+        expect(Puppet.settings[:digest_algorithm]).to eq('sha384')
+      end
+      it 'should raise an error on an invalid digest_algorithm' do
+        expect { Puppet.settings[:digest_algorithm] = 'foo' }.to raise_exception ArgumentError, 'Unrecognized digest_algorithm foo is not supported. Valid values are ["sha256", "sha384", "sha512", "sha224"].'
+      end
     end
   end
 
@@ -119,6 +129,13 @@ describe "Defaults" do
       it "should exclude md5" do
         expect(Puppet.default_checksum_types).to eq(['sha256', 'sha384', 'sha512', 'sha224'])
       end
+      it 'should raise an error on a prohibited checksum type in fips mode' do
+        expect { Puppet.settings[:supported_checksum_types] = ['md5', 'foo'] }.to raise_exception ArgumentError, '["md5", "md5lite"] checksum types are prohibited in FIPS mode. Valid values are ["sha256", "sha256lite", "sha384", "sha512", "sha224", "sha1", "sha1lite", "mtime", "ctime"].'
+      end
+      it 'should not raise an error on setting a valid list of checksum types when in fips mode' do
+        Puppet.settings[:supported_checksum_types] = ['sha256', 'sha384', 'mtime']
+        expect(Puppet.settings[:supported_checksum_types]).to eq(['sha256', 'sha384', 'mtime'])
+      end
     end
   end
 
@@ -135,6 +152,7 @@ describe "Defaults" do
       Puppet.settings[:supported_checksum_types] = ['sha256', 'md5lite', 'mtime']
       expect(Puppet.settings[:supported_checksum_types]).to eq(['sha256', 'md5lite', 'mtime'])
     end
+
   end
 
   describe 'server vs server_list' do
