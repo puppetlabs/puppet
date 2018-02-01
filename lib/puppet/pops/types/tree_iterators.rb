@@ -67,12 +67,16 @@ class TreeIterator
     false
   end
 
-  def to_array
+  def to_a
     result = []
     loop do
       result << self.next
     end
     result
+  end
+
+  def to_array
+    to_a
   end
 
   def reverse_each(&block)

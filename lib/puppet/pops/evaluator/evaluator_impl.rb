@@ -330,7 +330,7 @@ class EvaluatorImpl
       candidate
     when Hash
       candidate.to_a
-    when Puppet::Pops::Types::Iterator
+    when Puppet::Pops::Types::Iterable
       candidate.to_a
     else
       # turns anything else into an array (so result can be unfolded)
