@@ -219,7 +219,7 @@ describe 'when pcore described resources types are in use' do
       generate_and_in_a_compilers_context do |compiler|
         t1 = find_resource_type(compiler.topscope, 'test1')
         expect(t1.title_patterns.size).to be(1)
-        expect(t1.title_patterns[0][0]).to eql(/(.*)/m)
+        expect(t1.title_patterns[0][0]).to eql(/(?m-ix:(.*))/)
       end
     end
 
