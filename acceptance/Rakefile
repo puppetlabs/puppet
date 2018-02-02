@@ -47,10 +47,11 @@ HOSTS:
 
 TESTS:
     A comma-delimited list of files/directories containing tests to run.
-    Defaults to running all tests, except for `ci:test:quick` which only
-    runs a predefined set of tests.
+    Defaults to running all tests, except for `ci:test:quick` which defaults
+    to running a predefined set of tests.
 
-    TESTS=tests
+    TESTS=tests/cycle_detection.rb
+    TESTS=tests/pluginsync,tests/language
 
 OPTIONS:
     Additional options to pass to beaker. Defaults to ''.
@@ -62,8 +63,8 @@ BEAKER_HOSTS:
 
 TEST_TARGET:
     A beaker-hostgenerator string of agent-only hosts to run against.
-    The MASTER_TEST_TARGET host will added this list. This option is only
-    intended to be used in CI.
+    The MASTER_TEST_TARGET host will be added this list. This option is
+    only intended to be used in CI.
 
 MASTER_TEST_TARGET:
     Override the default master test target. Should only be used with
