@@ -60,27 +60,27 @@ describe "Defaults" do
     end
   end
 
-  describe '.default_digest_alg' do
+  describe '.default_digest_algorithm' do
     it 'defaults to md5 when FIPS is not enabled' do
       Puppet::Util::Platform.stubs(:fips_enabled?).returns false
-      expect(Puppet.default_digest_alg).to eq('md5')
+      expect(Puppet.default_digest_algorithm).to eq('md5')
     end
 
     it 'defaults to sha256 when FIPS is enabled' do
       Puppet::Util::Platform.stubs(:fips_enabled?).returns true
-      expect(Puppet.default_digest_alg).to eq('sha256')
+      expect(Puppet.default_digest_algorithm).to eq('sha256')
     end
   end
 
   describe '.supported_checksum_types' do
     it 'defaults to md5, sha256, sha384, sha512, sha224 when FIPS is not enabled' do
       Puppet::Util::Platform.stubs(:fips_enabled?).returns false
-      expect(Puppet.default_checksum_types).to eq(%w[md5 sha256 sha384 sha512 sha224])
+      expect(Puppet.default_file_checksum_types).to eq(%w[md5 sha256 sha384 sha512 sha224])
     end
 
     it 'defaults to sha256, sha384, sha512, sha224 when FIPS is enabled' do
       Puppet::Util::Platform.stubs(:fips_enabled?).returns true
-      expect(Puppet.default_checksum_types).to eq(%w[sha256 sha384 sha512 sha224])
+      expect(Puppet.default_file_checksum_types).to eq(%w[sha256 sha384 sha512 sha224])
     end
   end
 
@@ -90,12 +90,23 @@ describe "Defaults" do
     end
 
     it 'should raise an error on an unsupported checksum type' do
-      expect { Puppet.settings[:supported_checksum_types] = %w[md5 foo] }.to raise_exception ArgumentError, 'Unrecognized checksum types foo are not supported. Valid values are md5, md5lite, sha256, sha256lite, sha384, sha512, sha224, sha1, sha1lite, mtime, ctime.'
+      expect {
+        Puppet.settings[:supported_checksum_types] = %w[md5 foo]
+      }.to raise_exception ArgumentError,
+                           /Invalid value 'foo' for parameter supported_checksum_types. Allowed values are/
     end
 
     it 'should not raise an error on setting a valid list of checksum types' do
       Puppet.settings[:supported_checksum_types] = %w[sha256 md5lite mtime]
       expect(Puppet.settings[:supported_checksum_types]).to eq(%w[sha256 md5lite mtime])
+    end
+
+    it 'raises when setting md5 in FIPS mode' do
+      Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+      expect {
+        Puppet.settings[:supported_checksum_types] = %w[md5]
+      }.to raise_error(ArgumentError,
+                       /Invalid value 'md5' for parameter supported_checksum_types. Allowed values are 'sha256'/)
     end
   end
 

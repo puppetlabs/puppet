@@ -10,20 +10,26 @@ module Puppet
     end
   end
 
-  def self.default_digest_alg
-    if Puppet::Util::Platform.fips_enabled?
-      "sha256"
-    else
-      "md5"
-    end
+  def self.default_digest_algorithm
+    Puppet::Util::Platform.fips_enabled? ? 'sha256' : 'md5'
   end
 
-  def self.default_checksum_types 
-    if Puppet::Util::Platform.fips_enabled?
-      ['sha256', 'sha384', 'sha512', 'sha224']
-    else
-      ['md5', 'sha256', 'sha384', 'sha512', 'sha224']
-    end
+  def self.valid_digest_algorithms
+    Puppet::Util::Platform.fips_enabled? ?
+      %w[sha256 sha384 sha512 sha224] :
+      %w[md5 sha256 sha384 sha512 sha224]
+  end
+
+  def self.default_file_checksum_types
+    Puppet::Util::Platform.fips_enabled? ?
+      %w[sha256 sha384 sha512 sha224] :
+      %w[md5 sha256 sha384 sha512 sha224]
+  end
+
+  def self.valid_file_checksum_types
+    Puppet::Util::Platform.fips_enabled? ?
+      %w[sha256 sha256lite sha384 sha512 sha224 sha1 sha1lite mtime ctime] :
+      %w[md5 md5lite sha256 sha256lite sha384 sha512 sha224 sha1 sha1lite mtime ctime]
   end
 
   ############################################################################################
@@ -939,27 +945,28 @@ attempt to download the CRL.
 EOT
     },
     :digest_algorithm => {
-        :default  => lambda { default_digest_alg },
+        :default  => lambda { default_digest_algorithm },
         :type     => :enum,
-        :values => ["md5", "sha256", "sha384", "sha512", "sha224"],
-        :desc     => 'Which digest algorithm to use for file resources and the filebucket.
-                      Valid values are md5, sha256, sha384, sha512, sha224. Default is md5.',
+        :values   => valid_digest_algorithms,
+        :desc     => "Which digest algorithm to use for file resources and the filebucket.
+                      Valid values are #{valid_digest_algorithms.join(', ')}. Default is
+                      #{default_digest_algorithm}.",
     },
     :supported_checksum_types => {
-      :default => lambda { default_checksum_types },
+      :default => lambda { default_file_checksum_types },
       :type    => :array,
-      :desc    => 'Checksum types supported by this agent for use in file resources of a
-                   static catalog. Values must be comma-separated. Valid types are md5,
-                   md5lite, sha256, sha256lite, sha384, sha512, 
-		   sha1, sha1lite, sha224, mtime, ctime.',
+      :desc    => "Checksum types supported by this agent for use in file resources of a
+                   static catalog. Values must be comma-separated. Valid types are
+                   #{valid_file_checksum_types.join(', ')}. Default is
+                   #{default_file_checksum_types.join(', ')}.",
       :hook    => proc do |value|
         values = munge(value)
-        valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha384', 'sha512', 'sha224', 'sha1', 'sha1lite', 'mtime', 'ctime']
-        invalid = values.reject {|alg| valid.include?(alg)}
-        if not invalid.empty?
 
-          raise ArgumentError, _("Unrecognized checksum types %{invalid} are not supported.") % { invalid: invalid.join(', ') } +
-              ' ' + _("Valid values are %{values}.") % { values: valid.join(', ') }
+        invalid = values - Puppet.valid_file_checksum_types
+        if not invalid.empty?
+          raise ArgumentError, _("Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'") % {
+            value: invalid.first, name: @name, allowed_values: Puppet.valid_file_checksum_types.join("', '")
+          }
         end
       end
     }
