@@ -90,7 +90,7 @@ describe "Defaults" do
     end
 
     it 'should raise an error on an unsupported checksum type' do
-      expect { Puppet.settings[:supported_checksum_types] = %w[md5 foo] }.to raise_exception ArgumentError, 'Unrecognized checksum types ["foo"] are not supported. Valid values are ["md5", "md5lite", "sha256", "sha256lite", "sha384", "sha512", "sha224", "sha1", "sha1lite", "mtime", "ctime"].'
+      expect { Puppet.settings[:supported_checksum_types] = %w[md5 foo] }.to raise_exception ArgumentError, 'Unrecognized checksum types foo are not supported. Valid values are md5, md5lite, sha256, sha256lite, sha384, sha512, sha224, sha1, sha1lite, mtime, ctime.'
     end
 
     it 'should not raise an error on setting a valid list of checksum types' do

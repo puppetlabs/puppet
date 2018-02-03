@@ -957,8 +957,9 @@ EOT
         valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha384', 'sha512', 'sha224', 'sha1', 'sha1lite', 'mtime', 'ctime']
         invalid = values.reject {|alg| valid.include?(alg)}
         if not invalid.empty?
-          raise ArgumentError, _("Unrecognized checksum types %{invalid} are not supported.") % { invalid: invalid } +
-              ' ' + _("Valid values are %{values}.") % { values: valid }
+
+          raise ArgumentError, _("Unrecognized checksum types %{invalid} are not supported.") % { invalid: invalid.join(', ') } +
+              ' ' + _("Valid values are %{values}.") % { values: valid.join(', ') }
         end
       end
     }
