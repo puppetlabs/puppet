@@ -82,12 +82,57 @@ trace = true
 
       manipulator.expects(:set).with("baz", "foo", "bar")
       subject.set('foo', 'bar', {:section => "baz"})
-
     end
 
     it "opens the file with UTF-8 encoding" do
       Puppet::FileSystem.expects(:open).with(path, nil, 'r+:UTF-8')
       subject.set('foo', 'bar')
+    end
+  end
+
+  context 'when the puppet.conf file does not exist' do
+    let(:config_file) { '/foo/puppet.conf' }
+    let(:path) { Pathname.new(config_file).expand_path }
+    before(:each) do
+      Puppet[:config] = config_file
+      Puppet::FileSystem.stubs(:pathname).with(path.to_s).returns(path)
+    end
+
+    it 'prints a message when the puppet.conf file does not exist' do
+      Puppet::FileSystem.stubs(:exist?).with(path).returns(false)
+      Puppet.expects(:warning).with("The puppet.conf file does not exist #{path.to_s}")
+      subject.delete('setting', {:section => 'main'})
+    end
+  end
+
+  context 'when deleting config values' do
+    let(:config_file) { '/foo/puppet.conf' }
+    let(:path) { Pathname.new(config_file).expand_path }
+    before(:each) do
+      Puppet[:config] = config_file
+      Puppet::FileSystem.stubs(:pathname).with(path.to_s).returns(path)
+      Puppet::FileSystem.stubs(:exist?).with(path).returns(true)
+    end
+
+    it 'prints a message about what was deleted' do
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
+      manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
+      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+
+      manipulator.expects(:delete).with('main', 'setting').returns('    setting=value')
+      expect { subject.delete('setting', {:section => 'main'}) }.to have_printed("Deleted setting from 'main': 'setting=value'")
+    end
+
+    it 'prints a warning when a setting is not found to delete' do
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
+      manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
+      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+
+      manipulator.expects(:delete).with('main', 'setting').returns(nil)
+      Puppet.expects(:warning).with("No setting found in configuration file for section 'main' setting name 'setting'")
+      subject.delete('setting', {:section => 'main'})
     end
   end
 
