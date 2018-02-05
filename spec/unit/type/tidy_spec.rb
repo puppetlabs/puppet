@@ -440,6 +440,20 @@ describe tidy do
       result = @tidy.generate.inject({}) { |hash, res| hash[res[:path]] = res; hash }
       expect(result[@basepath + '/a'][:require].collect{|a| a.name[('File//a/' + @basepath).length..-1]}.join()).to eq('321')
     end
+
+    it "generates resources whose noop parameter matches the managed resource's noop parameter" do
+      @tidy[:recurse] = true
+      @tidy[:noop] = true
+
+      fileset = mock 'fileset'
+      Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true).returns fileset
+      fileset.expects(:files).returns %w{. a a/2 a/1 a/3}
+      @tidy.stubs(:tidy?).returns true
+
+      result = @tidy.generate.inject({}) { |hash, res| hash[res[:path]] = res; hash }
+
+      expect(result.values).to all(be_noop)
+    end
   end
 
   def lstat_is(path, stat)
