@@ -16,9 +16,9 @@
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
 lockfile=/var/lock/subsys/puppet
 piddir=/var/run/puppetlabs
-pidfile=${piddir}/agent.pid
+pidfile="${piddir}/agent.pid"
 puppetd=/opt/puppetlabs/puppet/bin/puppet
-pid=$(cat $pidfile 2> /dev/null)
+pid=$(cat "$pidfile" 2> /dev/null)
 RETVAL=0
 
 PUPPET_OPTS="agent "

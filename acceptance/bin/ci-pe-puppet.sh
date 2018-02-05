@@ -33,7 +33,7 @@ bundle install --path=./.bundle/gems
 
 #export pe_version=${pe_version_override:-$pe_version}
 #export pe_family=3.4
-if ! bundle exec genconfig ${platform}-${layout} > hosts.cfg; then
+if ! bundle exec genconfig "${platform}-${layout}" > hosts.cfg; then
   echo "Usage: ensure Gemfile.local exists requiring sqa-utils"
 fi
 
@@ -47,9 +47,9 @@ bundle exec beaker           \
   --debug                    \
   --repo-proxy               \
   --config hosts.cfg         \
-  --pre-suite ${PRE_SUITE}  \
-  --tests=${tests}           \
-  --keyfile ${HOME}/.ssh/id_rsa-acceptance \
+  --pre-suite "${PRE_SUITE}" \
+  --tests="${tests}"         \
+  --keyfile "${HOME}/.ssh/id_rsa-acceptance" \
   --root-keys \
   --helper lib/helper.rb \
   --preserve-hosts always \
@@ -57,4 +57,4 @@ bundle exec beaker           \
 
 RESULT=$?
 
-exit $RESULT
+exit "$RESULT"
