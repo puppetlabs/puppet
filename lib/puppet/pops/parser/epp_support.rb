@@ -123,7 +123,7 @@ module EppSupport
   # The scanner supports
   # * scanning text until <%, <%-, <%=
   # * while scanning text:
-  #   * tokens <%% and %%> are translated to <% and %> respetively and is returned as text.
+  #   * tokens <%% and %%> are translated to <% and %>, respectively, and is returned as text.
   #   * tokens <%# and %> (or ending with -%>) and the enclosed text is a comment and is not included in the returned text
   #   * text following a comment that ends with -%> gets trailing whitespace (up to and including a line break) trimmed
   #     and this whitespace is not included in the returned text.

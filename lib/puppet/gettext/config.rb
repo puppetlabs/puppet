@@ -191,7 +191,7 @@ module Puppet::GettextConfig
   end
 
   # @api private
-  # Attempt to load tranlstions for the given project.
+  # Attempt to load translations for the given project.
   # @param [String] project_name the project whose translations we want to load
   # @param [String] locale_dir the path to the directory containing translations
   # @param [Symbol] file_format translation file format to use, either :po or :mo
@@ -218,7 +218,7 @@ module Puppet::GettextConfig
   # chain for the currently selected text domain, if needed.
   # @param [String] project_name the name of the project for which to load translations
   # @param [String] locale_dir the path to the directory containing translations
-  # @param [Symbol] file_format the fomat of the translations files, :po or :mo
+  # @param [Symbol] file_format the format of the translations files, :po or :mo
   def self.add_repository_to_domain(project_name, locale_dir, file_format, text_domain = FastGettext.text_domain)
     return if @gettext_disabled || !gettext_loaded?
 

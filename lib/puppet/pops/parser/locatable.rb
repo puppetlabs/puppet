@@ -1,4 +1,4 @@
-# Interface for something that is "locateable" (holds offset and length).
+# Interface for something that is "locatable" (holds offset and length).
 class Puppet::Pops::Parser::Locatable
 
   # The offset in the locator's content

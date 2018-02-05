@@ -166,7 +166,7 @@ end
 class Runtime3FunctionArgumentConverter < Runtime3Converter
 
   def convert_Regexp(o, scope, undef_value)
-    # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
+    # Puppet 3x cannot handle parameter values that are regular expressions. Turn into regexp string in
     # source form
     o.inspect
   end

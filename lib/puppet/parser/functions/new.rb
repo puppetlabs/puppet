@@ -178,7 +178,7 @@ function Timespan.new(
 )
 ```
 
-#### Timespan from days, hours, mintues, seconds, and fractions of a second
+#### Timespan from days, hours, minutes, seconds, and fractions of a second
 
 The arguments can be passed separately in which case the first four, days, hours, minutes, and seconds are mandatory and the rest are optional.
 All values may overflow and/or be negative. The internal 128-bit nano-second integer is calculated as:

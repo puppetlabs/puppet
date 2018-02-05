@@ -133,7 +133,7 @@ class CompareOperator
   def include_String(a, b, scope)
     case b
     when String
-      # subsstring search downcased
+      # substring search downcased
       a.downcase.include?(b.downcase)
     when Regexp
       matched = a.match(b)           # nil, or MatchData

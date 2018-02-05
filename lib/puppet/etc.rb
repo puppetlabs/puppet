@@ -109,7 +109,7 @@ module Puppet::Etc
     # Defines Puppet::Etc::Passwd struct class. Contains all of the original
     # member fields of Etc::Passwd, and additional "canonical_" versions of
     # these fields as well. API compatible with Etc::Passwd. Because Struct.new
-    # defines a new Class object, we memozie to avoid superfluous extra Class
+    # defines a new Class object, we memoize to avoid superfluous extra Class
     # instantiations.
     def puppet_etc_passwd_class
       @password_class ||= Struct.new(*Etc::Passwd.members, *Etc::Passwd.members.map { |member| "canonical_#{member}".to_sym })
@@ -133,7 +133,7 @@ module Puppet::Etc
     # @api private
     # @param [Etc::Passwd or Etc::Group struct]
     # @return [Puppet::Etc::Passwd or Puppet::Etc::Group struct] a new struct
-    #   object with the original struct values overidden to UTF-8, if valid. For
+    #   object with the original struct values overridden to UTF-8, if valid. For
     #   invalid values originating in UTF-8, invalid characters are replaced with
     #   '?'. For each member the struct also contains a corresponding
     #   :canonical_<member name> struct member.

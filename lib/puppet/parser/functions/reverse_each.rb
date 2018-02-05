@@ -40,7 +40,7 @@ $reverse_data = reverse_each($data)
 When no second argument is present, Puppet returns an `Iterable` that represents the reverse
 order of its first argument. This allows methods on `Iterable` to be chained.
 
-When a lamdba is given as the second argument, Puppet iterates the first argument in reverse
+When a lambda is given as the second argument, Puppet iterates the first argument in reverse
 order and passes each value in turn to the lambda, then returns `undef`.
 
 **Example:** Using the `reverse_each` function with an array and a one-parameter lambda

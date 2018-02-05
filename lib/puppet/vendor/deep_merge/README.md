@@ -105,8 +105,8 @@ Simple Example Code
     y.deep_merge!(x)
     # results: y = {:x => [1,2,3,4,5]}
 
-Availablility
-=============
+Availability
+============
 
 `deep_merge` was written by Steve Midgley, and is now maintained by Daniel DeLeo. The official home of `deep_merge` on the internet is now https://github.com/danielsdeleo/deep_merge
 

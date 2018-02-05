@@ -160,7 +160,7 @@ module Generators
         @allfiles << { "file" => file, "modules" => modules, "classes" => classes, "methods" => methods, "nodes" => nodes }
       end
 
-      # scan all classes to create the childs references
+      # scan all classes to create the child's references
       @allclasses.values.each do |klass|
         if superklass = klass.context.superclass
           if superklass = AllReferences[superklass] and (superklass.is_a?(HTMLPuppetClass) or superklass.is_a?(HTMLPuppetNode))
