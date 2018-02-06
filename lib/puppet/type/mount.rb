@@ -16,9 +16,6 @@ module Puppet
       that is, other mount points higher up in the filesystem --- the child
       mount will autorequire them.
 
-      **Autorequires:** If Puppet is managing a `File` resource for the mount
-      point of a mount resource, the mount will autorequire it.
-
       **Autobefores:**  If Puppet is managing any child file paths of a mount
       point, the mount resource will autobefore them."
 
@@ -301,12 +298,6 @@ module Puppet
         dependencies.unshift parent.to_s
       end
       dependencies[0..-2]
-    end
-
-    # Ensure that the mountpoint is created first
-    autorequire(:file) do
-      dependencies = []
-      dependencies.unshift @parameters[:name].value
     end
 
     # Autobefore the mount point's child file paths
