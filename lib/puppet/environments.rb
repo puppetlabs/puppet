@@ -115,7 +115,7 @@ module Puppet::Environments
     def get_conf(name)
       env = get(name)
       if env
-        Puppet::Settings::EnvironmentConf.static_for(env, 0, Puppet[:static_catalogs], Puppet[:rich_data])
+        Puppet::Settings::EnvironmentConf.static_for(env, Puppet[:environment_timeout], Puppet[:static_catalogs], Puppet[:rich_data])
       else
         nil
       end

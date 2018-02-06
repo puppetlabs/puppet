@@ -555,7 +555,8 @@ describe Puppet::Settings do
           :two    => { :default => "$one TWO", :desc => "b"},
           :three  => { :default => "$one $two THREE", :desc => "c"},
           :four   => { :default => "$two $three FOUR", :desc => "d"},
-          :five   => { :default => nil, :desc => "e" }
+          :five   => { :default => nil, :desc => "e" },
+          :code   => { :default => "", :desc => "my code"}
       Puppet::FileSystem.stubs(:exist?).returns true
     end
 
@@ -609,6 +610,13 @@ describe Puppet::Settings do
       expect(@settings[:two]).to eq("ONE TWO")
       @settings[:one] = "one"
       expect(@settings[:two]).to eq("one TWO")
+    end
+
+    it "should not interpolate the value of the :code setting" do
+      @code = @settings.setting(:code)
+      @code.expects(:munge).never
+
+      expect(@settings[:code]).to eq("")
     end
 
     it "should have a run_mode that defaults to user" do

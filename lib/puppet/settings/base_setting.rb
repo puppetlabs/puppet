@@ -157,6 +157,11 @@ class Puppet::Settings::BaseSetting
     value
   end
 
+  # Print the value for the user in a config compatible format
+  def print(value)
+    munge(value)
+  end
+
   def set_meta(meta)
     Puppet.notice("#{name} does not support meta data. Ignoring.")
   end

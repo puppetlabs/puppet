@@ -31,6 +31,21 @@ trace = true
     OUTPUT
   end
 
+  it "prints environment_timeout=unlimited correctly" do
+    Puppet[:environment_timeout] = "unlimited"
+
+    result = subject.print("environment_timeout")
+    expect(render(:print, result)).to eq("unlimited\n")
+  end
+
+  it "prints arrays correctly" do
+    pending "Still doesn't print arrays like they would appear in config"
+    Puppet[:server_list] = %w{server1 server2}
+
+    result = subject.print("server_list")
+    expect(render(:print, result)).to eq("server1, server2\n")
+  end
+
   it "prints the setting from the selected section" do
     Puppet.settings.parse_config(<<-CONF)
     [user]

@@ -25,6 +25,11 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
     self.class.munge(value, @name)
   end
 
+  def print(value)
+    val = munge(value)
+    val == Float::INFINITY ? 'unlimited' : val
+  end
+
   # Convert the value to Numeric, parsing numeric string with units if necessary.
   def self.munge(value, param_name)
     case
