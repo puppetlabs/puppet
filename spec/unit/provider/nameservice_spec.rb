@@ -393,20 +393,20 @@ describe Puppet::Provider::NameService do
 
     it "should execute the modify command on valid values" do
       provider.expects(:modifycmd).with(:foo, 100).returns ['/bin/modify', '-f', '100' ]
-      provider.expects(:execute).with ['/bin/modify', '-f', '100']
+      provider.expects(:execute).with(['/bin/modify', '-f', '100'], has_entry(:custom_environment, {}))
       provider.set(:foo, 100)
     end
 
     it "should munge the value first" do
       described_class.options(:foo, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
-      provider.expects(:modifycmd).with(:foo, 200).returns ['/bin/modify', '-f', '200' ]
-      provider.expects(:execute).with ['/bin/modify', '-f', '200']
+      provider.expects(:modifycmd).with(:foo, 200).returns(['/bin/modify', '-f', '200' ])
+      provider.expects(:execute).with(['/bin/modify', '-f', '200'], has_entry(:custom_environment, {}))
       provider.set(:foo, 100)
     end
 
     it "should fail if the modify command fails" do
-      provider.expects(:modifycmd).with(:foo, 100).returns ['/bin/modify', '-f', '100' ]
-      provider.expects(:execute).with(['/bin/modify', '-f', '100']).raises(Puppet::ExecutionFailure, "Execution of '/bin/modify' returned 1: some_failure")
+      provider.expects(:modifycmd).with(:foo, 100).returns(['/bin/modify', '-f', '100' ])
+      provider.expects(:execute).with(['/bin/modify', '-f', '100'], kind_of(Hash)).raises(Puppet::ExecutionFailure, "Execution of '/bin/modify' returned 1: some_failure")
       expect { provider.set(:foo, 100) }.to raise_error Puppet::Error, /Could not set foo/
     end
   end

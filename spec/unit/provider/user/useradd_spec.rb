@@ -99,7 +99,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:password_max_age] = 10
       resource[:password_warn_days] = 15
       provider.expects(:execute).with(includes('/usr/sbin/useradd'), kind_of(Hash))
-      provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, '-W', 15, 'myuser'])
+      provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, '-W', 15, 'myuser'], has_entry(:custom_environment, {}))
       provider.create
     end
 
@@ -128,7 +128,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       it "should not use -G for luseradd and should call lusermod with -G after luseradd when groups property is set" do
         resource[:groups] = ['group1', 'group2']
         provider.expects(:execute).with(Not(includes("-G")), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
-        provider.expects(:execute).with(includes('/usr/sbin/lusermod'))
+        provider.expects(:execute).with(includes('/usr/sbin/lusermod'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
 
@@ -141,7 +141,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       it "should not use -e with luseradd, should call lusermod with -e after luseradd when expiry is set" do
         resource[:expiry] = '2038-01-24'
         provider.expects(:execute).with(all_of(includes('/usr/sbin/luseradd'), Not(includes('-e'))), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
-        provider.expects(:execute).with(all_of(includes('/usr/sbin/lusermod'), includes('-e')))
+        provider.expects(:execute).with(all_of(includes('/usr/sbin/lusermod'), includes('-e')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
 
@@ -150,8 +150,8 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         resource[:password_min_age] = 5
         resource[:password_max_age] = 10
         resource[:password_warn_days] = 15
-        provider.expects(:execute).with(includes('/usr/sbin/luseradd'), kind_of(Hash))
-        provider.expects(:execute).with(['/usr/sbin/lchage', '-m', 5, '-M', 10, '-W', 15, 'myuser'])
+        provider.expects(:execute).with(includes('/usr/sbin/luseradd'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        provider.expects(:execute).with(['/usr/sbin/lchage', '-m', 5, '-M', 10, '-W', 15, 'myuser'], has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
     end
@@ -175,28 +175,28 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       end
 
       it "should use usermod" do
-        provider.expects(:execute).with(['/usr/sbin/usermod', '-u', 150, 'myuser'])
+        provider.expects(:execute).with(['/usr/sbin/usermod', '-u', 150, 'myuser'], has_entry(:custom_environment, {}))
         provider.uid = 150
       end
 
       it "should use -o when allowdupe=true" do
         resource[:allowdupe] = :true
-        provider.expects(:execute).with(includes('-o'))
+        provider.expects(:execute).with(includes('-o'), has_entry(:custom_environment, {}))
         provider.uid = 505
       end
 
       it 'should use chage for password_min_age' do
-        provider.expects(:execute).with(['/usr/bin/chage', '-m', 100, 'myuser'])
+        provider.expects(:execute).with(['/usr/bin/chage', '-m', 100, 'myuser'], has_entry(:custom_environment, {}))
         provider.password_min_age = 100
       end
 
       it 'should use chage for password_max_age' do
-        provider.expects(:execute).with(['/usr/bin/chage', '-M', 101, 'myuser'])
+        provider.expects(:execute).with(['/usr/bin/chage', '-M', 101, 'myuser'], has_entry(:custom_environment, {}))
         provider.password_max_age = 101
       end
 
       it 'should use chage for password_warn_days' do
-        provider.expects(:execute).with(['/usr/bin/chage', '-W', 99, 'myuser'])
+        provider.expects(:execute).with(['/usr/bin/chage', '-W', 99, 'myuser'], has_entry(:custom_environment, {}))
         provider.password_warn_days = 99
       end
     end
@@ -208,13 +208,13 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       end
 
       it "should use lusermod and not usermod" do
-        provider.expects(:execute).with(['/usr/sbin/lusermod', '-u', 150, 'myuser'])
+        provider.expects(:execute).with(['/usr/sbin/lusermod', '-u', 150, 'myuser'], has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.uid = 150
       end
 
       it "should NOT use -o when allowdupe=true" do
         resource[:allowdupe] = :true
-        provider.expects(:execute).with(Not(includes('-o')))
+        provider.expects(:execute).with(Not(includes('-o')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.uid = 505
       end
 
@@ -225,17 +225,17 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       end
 
       it 'should use lchage for password_warn_days' do
-        provider.expects(:execute).with(['/usr/sbin/lchage', '-W', 99, 'myuser'])
+        provider.expects(:execute).with(['/usr/sbin/lchage', '-W', 99, 'myuser'], has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.password_warn_days = 99
       end
 
       it 'should use lchage for password_min_age' do
-        provider.expects(:execute).with(['/usr/sbin/lchage', '-m', 100, 'myuser'])
+        provider.expects(:execute).with(['/usr/sbin/lchage', '-m', 100, 'myuser'], has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.password_min_age = 100
       end
 
       it 'should use lchage for password_max_age' do
-        provider.expects(:execute).with(['/usr/sbin/lchage', '-M', 101, 'myuser'])
+        provider.expects(:execute).with(['/usr/sbin/lchage', '-M', 101, 'myuser'], has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.password_max_age = 101
       end
     end
@@ -244,7 +244,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   describe "#uid=" do
     it "should add -o when allowdupe is enabled and the uid is being modified" do
       resource[:allowdupe] = :true
-      provider.expects(:execute).with(['/usr/sbin/usermod', '-u', 150, '-o', 'myuser'])
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-u', 150, '-o', 'myuser'], has_entry(:custom_environment, {}))
       provider.uid = 150
     end
   end
@@ -253,20 +253,20 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     it "should pass expiry to usermod as MM/DD/YY when on Solaris" do
       Facter.expects(:value).with(:operatingsystem).returns 'Solaris'
       resource[:expiry] = '2012-10-31'
-      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '10/31/2012', 'myuser'])
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '10/31/2012', 'myuser'], has_entry(:custom_environment, {}))
       provider.expiry = '2012-10-31'
     end
 
     it "should pass expiry to usermod as YYYY-MM-DD when not on Solaris" do
       Facter.expects(:value).with(:operatingsystem).returns 'not_solaris'
       resource[:expiry] = '2012-10-31'
-      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '2012-10-31', 'myuser'])
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '2012-10-31', 'myuser'], has_entry(:custom_environment, {}))
       provider.expiry = '2012-10-31'
     end
 
     it "should use -e with an empty string when the expiry property is removed" do
       resource[:expiry] = :absent
-      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '', 'myuser'])
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '', 'myuser'], has_entry(:custom_environment, {}))
       provider.expiry = :absent
     end
   end
@@ -313,7 +313,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   describe "#check_manage_home" do
     it "should return an array with -m flag if home is managed" do
       resource[:managehome] = :true
-      provider.expects(:execute).with(includes('-m'), kind_of(Hash))
+      provider.expects(:execute).with(includes('-m'), has_entry(:custom_environment, {}))
       provider.create
     end
 
@@ -321,7 +321,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:managehome] = :true
       resource[:ensure] = :absent
       provider.stubs(:exists?).returns(true)
-      provider.expects(:execute).with(includes('-r'))
+      provider.expects(:execute).with(includes('-r'), has_entry(:custom_environment, {}))
       provider.delete
     end
 
@@ -608,7 +608,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
          resource[:forcelocal] = false
       end
       it "should use userdel to delete users" do
-        provider.expects(:execute).with(includes('/usr/sbin/userdel'))
+        provider.expects(:execute).with(includes('/usr/sbin/userdel'), has_entry(:custom_environment, {}))
         provider.delete
       end
     end
@@ -618,7 +618,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
          resource[:forcelocal] = true
       end
       it "should use luserdel to delete users" do
-        provider.expects(:execute).with(includes('/usr/sbin/luserdel'))
+        provider.expects(:execute).with(includes('/usr/sbin/luserdel'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.delete
       end
     end
