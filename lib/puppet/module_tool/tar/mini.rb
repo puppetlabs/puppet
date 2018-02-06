@@ -42,7 +42,7 @@ class Puppet::ModuleTool::Tar::Mini
       stats[:mode] = EXECUTABLE
     elsif stats.key?(:entry)
       old_mode = stats[:entry].instance_variable_get(:@mode)
-      if old_mode.is_a?(Fixnum)
+      if old_mode.is_a?(Integer)
         stats[:entry].instance_variable_set(:@mode, EXECUTABLE)
       end
     end
@@ -61,7 +61,7 @@ class Puppet::ModuleTool::Tar::Mini
     elsif stats.key?(:entry)
       old_mode = stats[:entry].instance_variable_get(:@mode)
       # If the user can execute the file, set 0755, otherwise 0644.
-      if old_mode.is_a?(Fixnum)
+      if old_mode.is_a?(Integer)
         new_mode = sanitized_mode(old_mode)
         stats[:entry].instance_variable_set(:@mode, new_mode)
       end
