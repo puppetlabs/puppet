@@ -230,6 +230,17 @@ describe 'loaders' do
       expect(function.call({})).to eql("usee2::callee() was told 'passed value' + I am user::caller2()")
     end
 
+    it 'all other modules are visible when tasks are enabled' do
+      Puppet[:tasks] = true
+
+      env = environment_for(File.join(dependent_modules_with_metadata, 'modules'))
+      loaders = Puppet::Pops::Loaders.new(env)
+
+      moduleb_loader = loaders.private_loader_for_module('user')
+      function = moduleb_loader.load_typed(typed_name(:function, 'user::caller')).value
+      expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
+    end
+
     [ 'outside a function', 'a puppet function declared under functions', 'a puppet function declared in init.pp', 'a ruby function'].each_with_index do |from, from_idx|
       [ {:from => from, :called => 'a puppet function declared under functions', :expects => "I'm the function usee::usee_puppet()"},
         {:from => from, :called => 'a puppet function declared in init.pp', :expects => "I'm the function usee::usee_puppet_init()"},
@@ -246,15 +257,21 @@ describe 'loaders' do
           expect(resource['message']).to eq(desc[:expects])
         end
 
-        it "can call #{desc[:called]} from #{desc[:from]} when dependency is not present in metadata.json" do
-          File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ ]).to_pson
-          File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-          File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+        it "can call #{desc[:called]} from #{desc[:from]} when no metadata is present" do
+          Puppet::Module.any_instance.expects('has_metadata?').at_least_once.returns(false)
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
           expect(resource).not_to be_nil
           expect(resource['message']).to eq(desc[:expects])
+        end
+
+        it "can not call #{desc[:called]} from #{desc[:from]} if dependency is missing in existing metadata.json" do
+          File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => []).to_pson
+          File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+          File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+          Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
+          expect { catalog = compiler.compile }.to raise_error(Puppet::Error, /Unknown function/)
         end
       end
     end
@@ -270,15 +287,15 @@ describe 'loaders' do
     end
 
     it "a type can reference an autoloaded type alias from another module when no metadata is present" do
-      # Puppet::Module.any_instance.expects('has_metadata?').at_least_once.returns(false)
+      Puppet::Module.any_instance.expects('has_metadata?').at_least_once.returns(false)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(Usee::Zero, 0)
         notice(ok)
       CODE
     end
 
-    it "a type can reference a type alias from another module when other module has it declared in init.pp without required dependency" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ ]).to_pson
+    it "a type can reference a type alias from another module when other module has it declared in init.pp" do
+      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
       File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
@@ -288,8 +305,8 @@ describe 'loaders' do
       CODE
     end
 
-    it "an autoloaded type can reference an autoloaded type alias from another module" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ ]).to_pson
+    it "an autoloaded type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
+      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
       File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
@@ -299,7 +316,7 @@ describe 'loaders' do
     end
 
     it "an autoloaded type can reference an autoloaded type alias from another module when other module has it declared in init.pp" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ ]).to_pson
+      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
       File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
@@ -545,22 +562,22 @@ describe 'loaders' do
         expect(type).to be_a(Puppet::Pops::Types::PIntegerType)
       end
 
-      it 'will resolve implicit transitive dependencies, a -> c' do
+      it 'will not resolve implicit transitive dependencies, a -> c' do
         type = Puppet::Pops::Types::TypeParser.singleton.parse('A::N', Puppet::Pops::Loaders.find_loader('a'))
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.name).to eql('A::N')
         type = type.resolved_type
-        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
-        expect(type.name).to eql('C::C')
+        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
+        expect(type.type_string).to eql('C::C')
       end
 
-      it 'will resolve reverse dependencies, b -> a' do
+      it 'will not resolve reverse dependencies, b -> a' do
         type = Puppet::Pops::Types::TypeParser.singleton.parse('B::X', Puppet::Pops::Loaders.find_loader('b'))
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.name).to eql('B::X')
         type = type.resolved_type
-        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
-        expect(type.name).to eql('A::A')
+        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
+        expect(type.type_string).to eql('A::A')
       end
 
       it 'does not resolve init_typeset when more qualified type is found in typeset' do
