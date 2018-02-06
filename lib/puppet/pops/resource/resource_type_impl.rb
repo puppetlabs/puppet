@@ -149,7 +149,7 @@ class ResourceTypeImpl
         # Here it is silently ignored.
         nil
       when 1
-        if @title_pattners_hash.nil?
+        if @title_patterns_hash.nil?
           [ [ /(.*)/m, [ [@key_attributes.first] ] ] ]
         else
           # TechDebt: The case of having one namevar and an empty title patterns is unspecified behavior in puppet.

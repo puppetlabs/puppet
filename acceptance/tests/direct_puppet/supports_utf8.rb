@@ -1,6 +1,13 @@
 test_name "C97172: static catalogs support utf8" do
-require 'puppet/acceptance/environment_utils'
-extend Puppet::Acceptance::EnvironmentUtils
+
+  confine :except, :platform => /^cisco_/ # skip the test because some of the machines have LANG=C as the default and we break
+  confine :except, :platform => /^solaris/ # skip the test because some of the machines have LANG=C as the default and we break
+
+  require 'puppet/acceptance/environment_utils'
+  extend Puppet::Acceptance::EnvironmentUtils
+
+  require 'puppet/acceptance/agent_fqdn_utils'
+  extend Puppet::Acceptance::AgentFqdnUtils
 
   tag 'audit:medium',
       'audit:acceptance',
@@ -18,13 +25,15 @@ extend Puppet::Acceptance::EnvironmentUtils
       #   so we can't easily use expect_failure here
       skip_test 'PUP-6217'
     end
-    tmp_file[agent.hostname] = agent.tmpfile(tmp_environment)
+    tmp_file[agent_to_fqdn(agent)] = agent.tmpfile(tmp_environment)
   end
 
   teardown do
     step 'clean out produced resources' do
       agents.each do |agent|
-        on(agent, "rm #{tmp_file[agent.hostname]}", :accept_all_exit_codes => true)
+        if tmp_file.has_key?(agent_to_fqdn(agent)) && !tmp_file[agent_to_fqdn(agent)].empty?
+          on(agent, "rm -f '#{tmp_file[agent_to_fqdn(agent)]}'")
+        end
       end
     end
   end
@@ -50,22 +59,24 @@ MANIFEST
   step 'run agent(s)' do
     with_puppet_running_on(master, {}) do
       agents.each do |agent|
-        fqdn = agent.hostname
         config_version = ''
         config_version_matcher = /configuration version '(\d+)'/
-        on(agent, puppet("agent -t --environment #{tmp_environment} --server #{master.hostname}"),
-           :acceptable_exit_codes => 2).stdout do |agent_out|
-          config_version = agent_out.match(config_version_matcher)
+        on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"),
+           :acceptable_exit_codes => 2).stdout do |result|
+          config_version = result.match(config_version_matcher)[1]
         end
-        on(agent, "cat #{tmp_file[fqdn]}").stdout do |result|
+        on(agent, "cat '#{tmp_file[agent_to_fqdn(agent)]}'").stdout do |result|
           assert_equal(file_contents, result, 'file contents did not match accepted')
         end
-        on(agent, "rm #{tmp_file[fqdn]}", :accept_all_exit_codes => true)
-        on(agent, puppet("agent -t --environment #{tmp_environment} --server #{master.hostname} --use_cached_catalog"),
-           :acceptable_exit_codes => 2).stdout do |agent_out|
+
+        on(agent, "rm -f '#{tmp_file[agent_to_fqdn(agent)]}'")
+        on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname} --use_cached_catalog"),
+           :acceptable_exit_codes => 2).stdout do |result|
           assert_match(config_version_matcher, result, 'agent did not use cached catalog')
+          second_config_version = result.match(config_version_matcher)[1]
+          asset_equal(config_version, second_config_version, 'config version should have been the same')
         end
-        on(agent, "cat #{tmp_file[fqdn]}").stdout do |result|
+        on(agent, "cat '#{tmp_file[agent_to_fqdn(agent)]}'").stdout do |result|
           assert_equal(file_contents, result, 'file contents did not match accepted')
         end
       end
