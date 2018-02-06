@@ -53,7 +53,7 @@ trace = true
     CONF
 
     Puppet.expects(:warning).once
-    subject.expects(:report_section_and_environment).with('main', 'production')
+    subject.expects(:report_section_and_environment).with(:main, 'production')
 
     expect { subject.print("syslogfacility") }.to have_printed('elif')
   end
@@ -98,7 +98,7 @@ trace = true
       manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
       Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
 
-      manipulator.expects(:set).with("main", "foo", "bar")
+      manipulator.expects(:set).with(:main, "foo", "bar")
       subject.set('foo', 'bar')
     end
 

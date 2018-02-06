@@ -62,8 +62,6 @@ Puppet::Face.define(:config, '0.0.1') do
       @default_section = false
 
       if options[:section].is_a? Symbol
-        # If value was left as default - set to default string
-        options[:section] = options[:section].to_s
         @default_section = true
       end
 
@@ -130,10 +128,7 @@ Puppet::Face.define(:config, '0.0.1') do
     EOT
 
     when_invoked do |name, value, options|
-
-      options[:section] = options[:section].to_s # If value was left as default - set to default string
-
-      if name == 'environment' && options[:section] == 'main'
+      if name == 'environment' && options[:section].to_s == 'main'
         messages = []
         #TRANSLATORS `[user]`, `[agent]`, and `[master]` are section names and should not be translated
         messages << _("The environment should be set in either the `[user]`, `[agent]`, or `[master]` section.")
@@ -182,8 +177,6 @@ Puppet::Face.define(:config, '0.0.1') do
     EOT
 
     when_invoked do |name, options|
-      options[:section] = options[:section].to_s # If value was left as default - set to default string
-
       path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.open(path, nil, 'r+:UTF-8') do |file|
