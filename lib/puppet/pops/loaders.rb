@@ -494,7 +494,7 @@ class Loaders
         nil
       else
         module_data.private_loader =
-          if module_data.restrict_to_dependencies?
+          if module_data.restrict_to_dependencies? && !Puppet[:tasks]
             create_loader_with_only_dependencies_visible(module_data)
           else
             create_loader_with_all_modules_visible(module_data)
