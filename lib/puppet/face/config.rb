@@ -2,6 +2,8 @@ require 'puppet/face'
 require 'puppet/settings/ini_file'
 
 Puppet::Face.define(:config, '0.0.1') do
+  extend Puppet::Util::Colors
+
   copyright "Puppet Inc.", 2011
   license   _("Apache 2 license; see COPYING")
 
@@ -12,7 +14,7 @@ Puppet::Face.define(:config, '0.0.1') do
     see https://docs.puppetlabs.com/puppet/latest/reference/configuration.html."
 
   option "--section " + _("SECTION_NAME") do
-    default_to { "main" }
+    default_to { :main } #Setting a non-string object as default here, so we can detect later if the default was used...
     summary _("The section of the configuration file to interact with.")
     description <<-EOT
       The section of the puppet.conf configuration file to interact with.
@@ -57,6 +59,12 @@ Puppet::Face.define(:config, '0.0.1') do
     when_invoked do |*args|
       options = args.pop
 
+      @default_section = false
+
+      if options[:section].is_a? Symbol
+        @default_section = true
+      end
+
       args = Puppet.settings.to_a.collect(&:first) if args.empty? || args == ['all']
 
       values_from_the_selected_section =
@@ -71,7 +79,21 @@ Puppet::Face.define(:config, '0.0.1') do
                      _("New environment loaders generated from the requested section.")) do
         # And now we can lookup values that include those from environments configured from
         # the requested section
+
+        if @default_section
+          messages = []
+          messages << _("No section specified; defaulting to '%{section_name}'.") %
+            { section_name: options[:section] }
+          #TRANSLATORS '--section' is a command line option and should not be translated
+          messages << _("Set the config section by using the `--section` flag.")
+          #TRANSLATORS `puppet config --section user print foo` is a command line example and should not be translated
+          messages << _("For example, `puppet config --section user print foo`.")
+          messages << _("For more information, see https://puppet.com/docs/puppet/latest/configuration.html")
+          Puppet.warning(messages.join("\n"))
+        end
+
         values = Puppet.settings.values(Puppet[:environment].to_sym, options[:section].to_sym)
+        report_section_and_environment(options[:section], Puppet.settings[:environment])
         if args.length == 1
           puts values.interpolate(args[0].to_sym)
         else
@@ -106,17 +128,21 @@ Puppet::Face.define(:config, '0.0.1') do
     EOT
 
     when_invoked do |name, value, options|
-      if name == 'environment' && options[:section] == 'main'
-        Puppet.warning _(<<-EOM).chomp
-The environment should be set in either the `[user]`, `[agent]`, or `[master]`
-section. Variables set in the `[agent]` section are used when running
-`puppet agent`. Variables set in the `[user]` section are used when running
-various other puppet subcommands, like `puppet apply` and `puppet module`; these
-require the defined environment directory to exist locally. Set the config
-section by using the `--section` flag. For example,
-`puppet config --section user set environment foo`. For more information, see
-https://puppet.com/docs/puppet/latest/configuration.html#environment
-        EOM
+      if name == 'environment' && options[:section].to_s == 'main'
+        messages = []
+        #TRANSLATORS `[user]`, `[agent]`, and `[master]` are section names and should not be translated
+        messages << _("The environment should be set in either the `[user]`, `[agent]`, or `[master]` section.")
+        #TRANSLATORS `[agent]` is a section name and `puppet agent` is a command line example and should not be translated
+        messages << _("Variables set in the `[agent]` section are used when running `puppet agent`.")
+        #TRANSLATORS `[user]` is a section name and `puppet apply` and `puppet module` are command line examples and should not be translated
+        messages << _("Variables set in the `[user]` section are used when running various other puppet subcommands, "\
+          "like `puppet apply` and `puppet module`;\n  these require the defined environment directory to exist locally.")
+        #TRANSLATORS '--section' is a command line option and should not be translated
+        messages << _("Set the config section by using the `--section` flag.")
+        #TRANSLATORS `puppet config --section user set environment foo` is a command line example and should not be translated
+        messages << _("For example, `puppet config --section user set environment foo`.")
+        messages << _("For more information, see https://puppet.com/docs/puppet/latest/configuration.html#environment")
+        Puppet.warning(messages.join("\n"))
       end
 
       path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
@@ -151,8 +177,6 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
     EOT
 
     when_invoked do |name, options|
-      options[:section] = options[:section].to_s # If value was left as default - set to default string
-
       path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.open(path, nil, 'r+:UTF-8') do |file|
@@ -173,5 +197,10 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
       end
       nil
     end
+  end
+
+  def report_section_and_environment(section_name, environment)
+        $stderr.puts colorize( :hyellow, _("Resolving settings from section '%{section_name}' in environment '%{environment}'") %
+            { section_name: section_name, environment: environment })
   end
 end
