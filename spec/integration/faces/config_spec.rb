@@ -60,8 +60,7 @@ rando_key=foobar
     # key must be a defined setting
     ['rando_key', MIXED_UTF8].each do |key|
       it "can change '#{key}' keyed ASCII value to a UTF-8 value and read it back" do
-        key = "rando_key"
-        value = "value#{MIXED_UTF8.reverse}value"
+        value = "value#{key.reverse}value"
 
         # needed for the subject.set to write to correct file
         Puppet.settings.stubs(:which_configuration_file).returns(tmp_config)
