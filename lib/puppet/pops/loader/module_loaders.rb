@@ -142,8 +142,8 @@ module ModuleLoaders
                 err = Puppet::DataTypes::Error.new(
                   Issues::LOADER_FAILURE.format(:type => type),
                   'PUPPET_LOADER_FAILURE',
-                  Issues::LOADER_FAILURE.issue_code, nil,
-                  { 'original_error' => e.message })
+                  { 'original_error' => e.message },
+                  Issues::LOADER_FAILURE.issue_code)
                 error_collector << err unless error_collector.include?(err)
               end
             end

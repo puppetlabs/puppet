@@ -90,26 +90,58 @@ module Puppet::Pops
         context 'an Error instance' do
           it 'can be created using positional arguments' do
             code = <<-CODE
-              $o = Error('bad things happened', 'puppet/error', 'OOPS')
+              $o = Error('bad things happened', 'puppet/error', {'detail' => 'val'}, 'OOPS')
               notice($o)
               notice(type($o))
               CODE
             expect(eval_and_collect_notices(code)).to eq([
-              "Error({'message' => 'bad things happened', 'kind' => 'puppet/error', 'issue_code' => 'OOPS'})",
+              "Error({'msg' => 'bad things happened', 'kind' => 'puppet/error', 'details' => {'detail' => 'val'}, 'issue_code' => 'OOPS'})",
               "Error['puppet/error', 'OOPS']"
             ])
           end
 
           it 'can be created using named arguments' do
             code = <<-CODE
-              $o = Error(message => 'Sorry, not implemented', kind => 'puppet/error', issue_code => 'NOT_IMPLEMENTED')
+              $o = Error(msg => 'Sorry, not implemented', kind => 'puppet/error', issue_code => 'NOT_IMPLEMENTED')
               notice($o)
               notice(type($o))
               CODE
             expect(eval_and_collect_notices(code)).to eq([
-              "Error({'message' => 'Sorry, not implemented', 'kind' => 'puppet/error', 'issue_code' => 'NOT_IMPLEMENTED'})",
+              "Error({'msg' => 'Sorry, not implemented', 'kind' => 'puppet/error', 'issue_code' => 'NOT_IMPLEMENTED'})",
               "Error['puppet/error', 'NOT_IMPLEMENTED']"
             ])
+          end
+
+          it 'exposes message' do
+            code = <<-CODE
+              $o = Error(msg => 'Sorry, not implemented', kind => 'puppet/error', issue_code => 'NOT_IMPLEMENTED')
+              notice($o.message)
+              CODE
+            expect(eval_and_collect_notices(code)).to eq(["Sorry, not implemented"])
+          end
+
+          it 'exposes kind' do
+            code = <<-CODE
+              $o = Error(msg => 'Sorry, not implemented', kind => 'puppet/error', issue_code => 'NOT_IMPLEMENTED')
+              notice($o.kind)
+              CODE
+            expect(eval_and_collect_notices(code)).to eq(["puppet/error"])
+          end
+
+          it 'exposes issue_code' do
+            code = <<-CODE
+              $o = Error(msg => 'Sorry, not implemented', kind => 'puppet/error', issue_code => 'NOT_IMPLEMENTED')
+              notice($o.issue_code)
+              CODE
+            expect(eval_and_collect_notices(code)).to eq(["NOT_IMPLEMENTED"])
+          end
+
+          it 'exposes details' do
+            code = <<-CODE
+              $o = Error(msg => 'Sorry, not implemented', kind => 'puppet/error', details => { 'detailk' => 'detailv' })
+              notice($o.details)
+              CODE
+            expect(eval_and_collect_notices(code)).to eq(["{detailk => detailv}"])
           end
 
           it 'is an instance of its inferred type' do
@@ -130,7 +162,7 @@ module Puppet::Pops
 
           it 'is an instance of Error with matching issue_code' do
             code = <<-CODE
-              $o = Error('bad things happened', 'puppet/error', 'FEE')
+              $o = Error('bad things happened', 'puppet/error', {}, 'FEE')
               notice($o =~ Error[default, 'FEE'])
               CODE
             expect(eval_and_collect_notices(code)).to eq(['true'])
@@ -138,7 +170,7 @@ module Puppet::Pops
 
           it 'is an instance of Error with matching kind and issue_code' do
             code = <<-CODE
-              $o = Error('bad things happened', 'puppet/error', 'FEE')
+              $o = Error('bad things happened', 'puppet/error', {}, 'FEE')
               notice($o =~ Error['puppet/error', 'FEE'])
               CODE
             expect(eval_and_collect_notices(code)).to eq(['true'])
@@ -154,7 +186,7 @@ module Puppet::Pops
 
           it 'is not an instance of Error unless issue_code matches' do
             code = <<-CODE
-              $o = Error('bad things happened', 'puppetlabs/error', 'BAR')
+              $o = Error('bad things happened', 'puppetlabs/error', {}, 'BAR')
               notice($o =~ Error[default, 'FOO'])
               CODE
             expect(eval_and_collect_notices(code)).to eq(['false'])
@@ -162,7 +194,7 @@ module Puppet::Pops
 
           it 'is not an instance of Error unless both kind and issue is a match' do
             code = <<-CODE
-              $o = Error('bad things happened', 'puppet/error', 'FEE')
+              $o = Error('bad things happened', 'puppet/error', {}, 'FEE')
               notice($o =~ Error['puppetlabs/error', 'FEE'])
               notice($o =~ Error['puppet/error', 'FUM'])
               CODE
