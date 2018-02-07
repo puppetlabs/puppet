@@ -157,8 +157,10 @@ module Puppet::Util::HttpProxy
     proxy
   end
 
-  # Retrieve a document through HTTP(s), following redirects if necessary.
-  # 
+  # Retrieve a document through HTTP(s), following redirects if necessary. The
+  # returned response body may be compressed, and it is the caller's
+  # responsibility to decompress it based on the 'content-encoding' header.
+  #
   # Based on the the client implementation in the HTTP pool.
   #
   # @see Puppet::Network::HTTP::Connection#request_with_redirects
