@@ -15,6 +15,12 @@ Puppet::Type.type(:file).newparam(:checksum) do
     Puppet[:digest_algorithm].to_sym
   end
 
+  validate do |value|
+    if Puppet::Util::Platform.fips_enabled? && (value == :md5 || value == :md5lite)
+      raise ArgumentError, _("MD5 is not supported in FIPS mode")
+    end
+  end
+
   def sum(content)
     content = content.is_a?(Puppet::Pops::Types::PBinaryType::Binary) ? content.binary_buffer : content
     type = digest_algorithm()
