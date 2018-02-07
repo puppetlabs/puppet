@@ -165,6 +165,16 @@ context 'installing myresource' do
         ])
       end
 
+      it "should not list 'default: ' text from rubygems''" do
+        provider_class.expects(:execute).with(%w{/my/gem list --local}, anything).returns <<-HEREDOC.gsub(/        /, '')
+        bundler (1.16.1, default: 1.16.0, 1.15.1)
+        HEREDOC
+
+        expect(provider_class.instances.map {|p| p.properties}).to eq([
+          {:name => 'bundler', :ensure => ["1.16.1", "1.16.0", "1.15.1"], :provider => :gem}
+        ])
+      end
+
       it "should not fail when an unmatched line is returned" do
         provider_class.expects(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).
           returns(File.read(my_fixture('line-with-1.8.5-warning')))
