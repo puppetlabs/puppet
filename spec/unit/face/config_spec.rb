@@ -44,12 +44,12 @@ trace = true
 
   it "defaults to all when no arguments are given" do
     result = subject.print
-    expect(render(:print, result).lines.length).to eq(Puppet.settings.to_a.length)
+    expect(render(:print, result).lines.to_a.length).to eq(Puppet.settings.to_a.length)
   end
 
   it "prints out all of the settings when asked for 'all'" do
     result = subject.print('all')
-    expect(render(:print, result).lines.length).to eq(Puppet.settings.to_a.length)
+    expect(render(:print, result).lines.to_a.length).to eq(Puppet.settings.to_a.length)
   end
 
   it "stringifies all keys for network format handlers to consume" do
