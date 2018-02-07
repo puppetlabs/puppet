@@ -14,4 +14,4 @@
     'setup/git/pre-suite/060_InstallModules.rb',
     'setup/git/pre-suite/070_InstallCACerts.rb',
   ],
-}
+}.merge(eval File.read('config/common/options.rb'))
