@@ -271,7 +271,10 @@ describe 'loaders' do
           File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
           File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
-          expect { compiler.compile }.to raise_error(Puppet::Error, /Unknown function/)
+          catalog = compiler.compile
+          resource = catalog.resource('Notify', "case_#{case_number}")
+          expect(resource).not_to be_nil
+          expect(resource['message']).to eq(desc[:expects])
         end
       end
     end
