@@ -22,18 +22,17 @@ be added in modules. Exceptions would be things like new cross-OS providers
 and updates to existing core types.
 
 If you are unsure of whether your contribution should be implemented as a
-module or part of Puppet Core, you may visit
-[#puppet-dev on Freenode IRC](https://freenode.net) or ask on the
-[puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev)
-for advice.
+module or part of Puppet Core, you may visit [#puppet-dev on slack](https://puppetcommunity.slack.com/), or ask on
+the [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev) for advice.
 
 ## Getting Started
 
 * Make sure you have a [Jira account](https://tickets.puppetlabs.com).
 * Make sure you have a [GitHub account](https://github.com/signup/free).
-* Submit a ticket for your issue, assuming one does not already exist.
+* Submit a Jira ticket for your issue if one does not already exist.
   * Clearly describe the issue including steps to reproduce when it is a bug.
   * Make sure you fill in the earliest version that you know has the issue.
+  * A ticket is not necessary for [trivial changes](https://docs.puppet.com/community/trivial_patch_exemption.html)
 * Fork the repository on GitHub.
 
 ## Making Changes
@@ -45,7 +44,7 @@ for advice.
   * To quickly create a topic branch based on master, run `git checkout -b
     fix/master/my_contribution master`. Please avoid working directly on the
     `master` branch.
-* Make commits of logical units.
+* Make commits of logical and atomic units.
 * Check for unnecessary whitespace with `git diff --check` before committing.
 * Make sure your commit messages are in the proper format. If the commit
   addresses an issue filed in the
@@ -91,12 +90,10 @@ user-facing strings are marked in new PRs before merging.
 
 ## Making Trivial Changes
 
-### Documentation
-
-For changes of a trivial nature to comments and documentation, it is not
-always necessary to create a new ticket in Jira. In this case, it is
-appropriate to start the first line of a commit with `(docs)` instead of
-a ticket number.
+For [changes of a trivial nature](https://docs.puppet.com/community/trivial_patch_exemption.html), it is not always necessary to create a new
+ticket in Jira. In this case, it is appropriate to start the first line of a
+commit with one of  `(docs)`, `(maint)`, or `(packaging)` instead of a ticket
+number.
 
 If a Jira ticket exists for the documentation commit, you can include it
 after the `(docs)` token.
