@@ -37,4 +37,8 @@ class Puppet::DataTypes::Error
   def to_s
     Puppet::Pops::Types::StringConverter.singleton.convert(self)
   end
+
+  def to_json(opts = nil)
+    _pcore_init_hash.to_json(opts)
+  end
 end
