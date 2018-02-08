@@ -121,7 +121,7 @@ describe 'Timespan type' do
         expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /parameter 'format' variant 1 expects size to be at least 1, got 0/)
       end
 
-      it 'can be created from a integer that represents seconds since epoch' do
+      it 'can be created from a integer that represents seconds' do
         code = <<-CODE
             $o = Timespan(6800)
             notice(Integer($o) == 6800)
@@ -130,7 +130,7 @@ describe 'Timespan type' do
         expect(eval_and_collect_notices(code)).to eq(%w(true true))
       end
 
-      it 'can be created from a float that represents seconds with fraction since epoch' do
+      it 'can be created from a float that represents seconds with fraction' do
         code = <<-CODE
             $o = Timespan(6800.123456789)
             notice(Float($o) == 6800.123456789)
