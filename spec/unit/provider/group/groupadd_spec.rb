@@ -78,13 +78,13 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
 
       it "should use groupmod" do
-        provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, 'mygroup'])
+        provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, 'mygroup'], has_entry(:custom_environment, {}))
         provider.gid = 150
       end
 
       it "should pass -o to groupmod" do
         resource[:allowdupe] = :true
-        provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'])
+        provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], has_entry(:custom_environment, {}))
         provider.gid = 150
       end
     end
@@ -95,13 +95,13 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
 
       it "should use lgroupmod instead of groupmod" do
-        provider.expects(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'])
+        provider.expects(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'], has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.gid = 150
       end
 
       it "should NOT pass -o to lgroupmod" do
         resource[:allowdupe] = :true
-        provider.expects(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'])
+        provider.expects(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'], has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.gid = 150
       end
       it "should raise an exception for duplicate GID if allowdupe is not set and duplicate GIDs exist" do
@@ -116,7 +116,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
   describe "#gid=" do
     it "should add -o when allowdupe is enabled and the gid is being modified" do
       resource[:allowdupe] = :true
-      provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'])
+      provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], has_entry(:custom_environment, {}))
       provider.gid = 150
     end
   end
@@ -132,7 +132,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
 
       it "should use groupdel" do
-        provider.expects(:execute).with(['/usr/sbin/groupdel', 'mygroup'])
+        provider.expects(:execute).with(['/usr/sbin/groupdel', 'mygroup'], has_entry(:custom_environment, {}))
         provider.delete
       end
     end
@@ -143,7 +143,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
 
       it "should use lgroupdel instead of groupdel" do
-        provider.expects(:execute).with(['/usr/sbin/lgroupdel', 'mygroup'])
+        provider.expects(:execute).with(['/usr/sbin/lgroupdel', 'mygroup'], has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.delete
       end
     end

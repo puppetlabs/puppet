@@ -33,13 +33,13 @@ describe Puppet::Type.type(:user).provider(:openbsd) do
   describe "#expiry=" do
     it "should pass expiry to usermod as MM/DD/YY" do
       resource[:expiry] = '2014-11-05'
-      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', 'November 05 2014', 'myuser'])
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', 'November 05 2014', 'myuser'], has_entry(:custom_environment, {}))
       provider.expiry = '2014-11-05'
     end
 
     it "should use -e with an empty string when the expiry property is removed" do
       resource[:expiry] = :absent
-      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '', 'myuser'])
+      provider.expects(:execute).with(['/usr/sbin/usermod', '-e', '', 'myuser'], has_entry(:custom_environment, {}))
       provider.expiry = :absent
     end
   end
