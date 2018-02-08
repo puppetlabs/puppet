@@ -350,15 +350,6 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
-    it "should set catalog cache class to nil during a noop run" do
-      Puppet[:catalog_cache_terminus] = "json"
-      Puppet[:noop] = true
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(nil)
-
-      @puppetd.initialize_app_defaults
-      @puppetd.setup
-    end
-
     it "should default facts_terminus setting to 'facter'" do
       @puppetd.initialize_app_defaults
       expect(Puppet[:facts_terminus]).to eq(:facter)
