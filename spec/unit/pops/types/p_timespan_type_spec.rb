@@ -47,9 +47,16 @@ describe 'Timespan type' do
         expect(eval_and_collect_notices(code)).to eq(%w(true true))
       end
 
-      it 'using just one parameter is the same as using that parameter twice' do
+      it 'using just one parameter is the same as using default for the second parameter' do
         code = <<-CODE
-            notice(Timespan['01:00:00'] == Timespan['01:00:00', '01:00:00'])
+            notice(Timespan['01:00:00'] == Timespan['01:00:00', default])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true))
+      end
+
+      it 'if the second parameter is default, it is unlimited' do
+        code = <<-CODE
+            notice(Timespan('12345-23:59:59') =~ Timespan['01:00:00', default])
         CODE
         expect(eval_and_collect_notices(code)).to eq(%w(true))
       end

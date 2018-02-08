@@ -210,8 +210,6 @@ module TypeFactory
     case args.size
     when 0
       PTimestampType::DEFAULT
-    when 1
-      PTimestampType.new(args[0], args[0])
     else
       PTimestampType.new(*args)
     end
@@ -221,8 +219,6 @@ module TypeFactory
     case args.size
     when 0
       PTimespanType::DEFAULT
-    when 1
-      PTimespanType.new(args[0], args[0])
     else
       PTimespanType.new(*args)
     end
