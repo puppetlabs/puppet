@@ -314,7 +314,7 @@ module Puppet::Environments
     end
 
     # Returns the end of time (the next Mesoamerican Long Count cycle-end after 2012 (5125+2012) = 7137,
-    # of for a 32 bit machine using Ruby < 1.9.3, the year 2038.
+    # or for a 32 bit machine using Ruby < 1.9.3, the year 2038.
     def self.end_of_time
       begin
         Time.gm(7137)

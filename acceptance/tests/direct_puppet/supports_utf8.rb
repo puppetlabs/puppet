@@ -1,8 +1,5 @@
 test_name "C97172: static catalogs support utf8" do
 
-  confine :except, :platform => /^cisco_/ # skip the test because some of the machines have LANG=C as the default and we break
-  confine :except, :platform => /^solaris/ # skip the test because some of the machines have LANG=C as the default and we break
-
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils
 
@@ -11,20 +8,13 @@ test_name "C97172: static catalogs support utf8" do
 
   tag 'audit:medium',
       'audit:acceptance',
-      'audit:refactor',  # Review for agent side UTF validation.
-      'server'
-
+      'audit:refactor'  # Review for agent side UTF validation.
 
   app_type = File.basename(__FILE__, '.*')
   tmp_environment   = mk_tmp_environment_with_teardown(master, app_type)
 
   tmp_file = {}
   agents.each do |agent|
-    if agent.platform =~ /^(eos-4-i386|cumulus-2\.5|osx|sles-10)/
-      # skip_test doesn't work in with_puppet_running_on blocks (tableflip)
-      #   so we can't easily use expect_failure here
-      skip_test 'PUP-6217'
-    end
     tmp_file[agent_to_fqdn(agent)] = agent.tmpfile(tmp_environment)
   end
 

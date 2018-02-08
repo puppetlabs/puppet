@@ -205,6 +205,15 @@ describe Puppet::Node do
         expect(Puppet::Node).to read_json_attribute('environment_name').from(@node.to_json).as(:bar)
       end
     end
+
+    it "does not immediately populate the environment instance" do
+      node = described_class.from_data_hash("name" => "foo", "environment" => "production")
+
+      expect(node.environment_name).to eq(:production)
+      expect(node).not_to be_has_environment_instance
+      node.environment
+      expect(node).to be_has_environment_instance
+    end
   end
 end
 

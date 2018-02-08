@@ -10,7 +10,7 @@ require 'puppet/util/psych_support'
 class Puppet::Indirector::Request
   include Puppet::Util::PsychSupport
 
-  attr_accessor :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_terminus
+  attr_accessor :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_cache_save, :ignore_terminus
 
   attr_accessor :server, :port, :uri, :protocol
 
@@ -18,7 +18,7 @@ class Puppet::Indirector::Request
 
   # trusted_information is specifically left out because we can't serialize it
   # and keep it "trusted"
-  OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
+  OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :ignore_cache_save, :instance, :environment]
 
   # Is this an authenticated request?
   def authenticated?
@@ -48,6 +48,10 @@ class Puppet::Indirector::Request
   # not be any better.
   def ignore_cache?
     ignore_cache
+  end
+
+  def ignore_cache_save?
+    ignore_cache_save
   end
 
   def ignore_terminus?
