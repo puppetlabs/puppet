@@ -28,9 +28,10 @@ class Puppet::Node
     @classes    = data['classes']    || []
     @parameters = data['parameters'] || {}
     env_name = data['environment'] || @parameters[ENVIRONMENT]
-    env_name = env_name.intern unless env_name.nil?
-    @environment_name = env_name
-    self.environment = env_name
+    unless env_name.nil?
+      @parameters[ENVIRONMENT] = env_name
+      @environment_name = env_name.intern
+    end
   end
 
   def self.from_data_hash(data)
