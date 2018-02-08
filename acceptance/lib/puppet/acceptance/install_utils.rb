@@ -120,7 +120,7 @@ module Puppet
       def install_repos_on(host, project, sha, repo_configs_dir)
         platform = host['platform'].with_version_codename
         platform_configs_dir = File.join(repo_configs_dir,platform)
-        tld     = sha == 'nightly' ? 'nightlies.puppetlabs.com' : 'builds.puppetlabs.lan'
+        tld     = sha == 'nightly' ? 'ravi.puppetlabs.com' : 'builds.puppetlabs.lan'
         project = sha == 'nightly' ? project + '-latest'        :  project
         sha     = sha == 'nightly' ? nil                        :  sha
 
