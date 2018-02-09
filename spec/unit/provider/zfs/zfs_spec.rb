@@ -139,7 +139,28 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
         provider.send("zoned=", "value")
       end
     end
+  end
+  describe "acltype" do
+    context "when available" do
+      it "should get 'acltype' property" do
+        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :acltype, name).returns("value\n")
+        expect(provider.send("acltype")).to eq('value')
+      end
+      it "should set acltype=value" do
+        provider.expects(:zfs).with(:set, "acltype=value", name)
+        provider.send("acltype=", "value")
+      end
+    end
 
-
+    context "when not available" do
+      it "should get '-' for the acltype property" do
+        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :acltype, name).raises(RuntimeError, 'not valid')
+        expect(provider.send("acltype")).to eq('-')
+      end
+      it "should not error out when trying to set acltype" do
+        provider.expects(:zfs).with(:set, "acltype=value", name).raises(RuntimeError, 'not valid')
+        expect{provider.send("acltype=", "value")}.to_not raise_error
+      end
+    end
   end
 end
