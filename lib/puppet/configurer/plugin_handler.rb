@@ -35,7 +35,7 @@ class Puppet::Configurer::PluginHandler
         "locales",
         Puppet[:localedest],
         Puppet[:localesource],
-        Puppet[:localeignore],
+        Puppet[:pluginsignore] + " *.pot config.yaml",
         environment
       )
       result += locales_downloader.evaluate
