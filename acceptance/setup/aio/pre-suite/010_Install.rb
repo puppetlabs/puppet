@@ -62,7 +62,7 @@ step "Install puppetserver..." do
   else
     if ENV['SERVER_VERSION'].nil? || ENV['SERVER_VERSION'] == 'latest'
       server_version = 'latest'
-      server_download_url = "http://nightlies.puppet.com"
+      server_download_url = "http://ravi.puppetlabs.com"
       install_puppetlabs_dev_repo(master, 'puppetserver', server_version, nil, :dev_builds_url => server_download_url)
       master.install_package('puppetserver')
     else
