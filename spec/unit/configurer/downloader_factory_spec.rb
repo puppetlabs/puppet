@@ -119,7 +119,7 @@ describe Puppet::Configurer::DownloaderFactory do
     it 'ignores files from Puppet[:pluginsignore], plus config.yaml' do
       Puppet[:pluginsignore] = 'lignore'
 
-      expect(locales_downloader.file[:ignore]).to eq(['lignore', 'config.yaml'])
+      expect(locales_downloader.file[:ignore]).to eq(['lignore', '*.pot', 'config.yaml'])
     end
 
     it "ignores source permissions" do

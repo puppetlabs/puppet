@@ -1791,7 +1791,7 @@ EOT
       }
     },
     :pluginsignore => {
-        :default  => ".svn CVS .git .hg *.pot",
+        :default  => ".svn CVS .git .hg",
         :desc     => "What files to ignore when pulling down plugins.",
     }
   )

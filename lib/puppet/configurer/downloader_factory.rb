@@ -37,7 +37,7 @@ class Puppet::Configurer::DownloaderFactory
       "locales",
       Puppet[:localedest],
       Puppet[:localesource],
-      Puppet[:pluginsignore] + " config.yaml",
+      Puppet[:pluginsignore] + " *.pot config.yaml",
       environment
     )
   end
