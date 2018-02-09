@@ -191,9 +191,9 @@ describe Puppet::Application::Cert => true do
       @cert_app.subcommand = :destroy
       @cert_app.command_line.stubs(:args).returns(["unsigned-node"])
 
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| cert_mode == :destroy
-        to[:to] == ["unsigned-node"]
-      }
+      Puppet::SSL::CertificateAuthority::Interface.unstub(:new)
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:revoke, anything).never
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:destroy, {:to => ['unsigned-node'], :digest => nil}).returns(@iface)
 
       @cert_app.main
     end
