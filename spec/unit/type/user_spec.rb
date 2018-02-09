@@ -52,13 +52,20 @@ describe Puppet::Type.type(:user) do
     expect(described_class.provider_feature(:manages_shell)).not_to be_nil
   end
 
-  context "managehome" do
+  context "defaults" do
     let (:provider) { @provider_class.new(:name => 'foo', :ensure => :absent) }
     let (:instance) { described_class.new(:name => 'foo', :provider => provider) }
 
-    it "defaults to false" do
-      expect(instance[:managehome]).to be_falsey
+    [:system, :allowdupe, :managehome].each do |default_param|
+      it "defaults #{default_param} to false" do
+        expect(instance[default_param]).to eq(false)
+      end
     end
+  end
+
+  context "managehome" do
+    let (:provider) { @provider_class.new(:name => 'foo', :ensure => :absent) }
+    let (:instance) { described_class.new(:name => 'foo', :provider => provider) }
 
     it "can be set to false" do
       instance[:managehome] = 'false'
