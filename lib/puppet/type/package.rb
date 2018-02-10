@@ -65,6 +65,7 @@ module Puppet
       provider-specific.",
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
     feature :virtual_packages, "The provider accepts virtual package names for install and uninstall."
+    feature :user, "The provider accepts a username to run the package install as."
 
     ensurable do
       desc <<-EOT
@@ -499,6 +500,10 @@ module Puppet
       desc 'Specifies if virtual package names are allowed for install and uninstall.'
 
       defaultto true
+    end
+
+    newparam(:user, :required_features => :user) do
+      desc 'A user to install the package as.'
     end
 
     autorequire(:file) do

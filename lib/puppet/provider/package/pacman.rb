@@ -24,6 +24,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   has_feature :uninstall_options
   has_feature :upgradeable
   has_feature :virtual_packages
+  has_feature :user
 
   # Checks if a given name is a group
   def self.group?(name)
@@ -209,8 +210,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     cmd << resource_name
 
     if self.class.yaourt?
-      yaourt *cmd
-      cmd.unshift("/usr/bin/sudo -S -u nobody")
+      Puppet::Util::Execution.execute([command(:yaourt)] + cmd, :uid => user, :failonfail => true, :combine => true)
     else
       pacman *cmd
     end
@@ -224,6 +224,14 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   def uninstall_options
     join_options(@resource[:uninstall_options])
+  end
+
+  def user
+    if @resource[:user] then
+      @resource[:user]
+    else
+      'nobody'
+    end
   end
 
   def install_from_file
@@ -259,8 +267,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     cmd << "-Sy" << resource_name
 
     if self.class.yaourt?
-      yaourt *cmd
-      cmd.unshift("/usr/bin/sudo -S -u nobody")
+      Puppet::Util::Execution.execute([command(:yaourt)] + cmd, :uid => user, :failonfail => true, :combine => true)
     else
       pacman *cmd
     end
