@@ -276,22 +276,6 @@ updated = new
     CONFIG
   end
 
-  it "finds settings when given a symbol for section" do
-    config_fh = a_config_file_containing(<<-CONFIG)
-      [section]
-      name = original value
-      CONFIG
-
-    Puppet::Settings::IniFile.update(config_fh) do |config|
-      config.set(:section, "name", "changed value")
-    end
-
-    expect(config_fh.string).to eq <<-CONFIG
-      [section]
-      name = changed value
-      CONFIG
-  end
-
   it "adds a new setting to the appropriate section, when it would be added behind a setting with an identical value in a preceeding section" do
     config_fh = a_config_file_containing(<<-CONFIG)
     [different]
