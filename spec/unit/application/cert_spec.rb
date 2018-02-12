@@ -213,6 +213,18 @@ describe Puppet::Application::Cert => true do
 
       @cert_app.main
     end
+
+    it "should refuse to destroy all certificates" do
+      @cert_app.subcommand = :destroy
+      @cert_app.all = true
+
+      Puppet::SSL::CertificateAuthority::Interface.unstub(:new)
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).never
+
+      Puppet.expects(:log_exception).with {|e| e.message == "Refusing to destroy all certs, provide an explicit list of certs to destroy"}
+
+      expect { @cert_app.main }.to exit_with(24)
+    end
   end
 
   describe "when identifying subcommands" do
