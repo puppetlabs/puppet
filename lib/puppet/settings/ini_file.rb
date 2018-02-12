@@ -68,7 +68,6 @@ class Puppet::Settings::IniFile
   end
 
   def lines_in(section_name)
-    section_name = section_name.to_s
     section_lines = []
     current_section_name = DEFAULT_SECTION_NAME
     @lines.each do |line|

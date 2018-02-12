@@ -32,42 +32,14 @@ trace = true
     expect { subject.print("syslogfacility", :section => "user") }.to have_printed('file')
   end
 
-  it "does not print a warning when a section is given" do
-    Puppet.settings.parse_config(<<-CONF)
-    [user]
-    syslogfacility = file
-    CONF
-
-    Puppet.expects(:warning).never
-    subject.expects(:report_section_and_environment).with('user', 'production')
-
-    expect { subject.print("syslogfacility", :section => "user") }.to have_printed('file')
-    end
-
-  it "does print a warning when a section is not given" do
-    Puppet.settings.parse_config(<<-CONF)
-    [main]
-    syslogfacility = elif
-    [user]
-    syslogfacility = file
-    CONF
-
-    Puppet.expects(:warning).once
-    subject.expects(:report_section_and_environment).with(:main, 'production')
-
-    expect { subject.print("syslogfacility") }.to have_printed('elif')
-  end
-
-  it "prints out all of the settings when no arguments are given" do
+  it "defaults to all when no arguments are given" do
     subject.expects(:puts).times(Puppet.settings.to_a.length)
-    subject.expects(:report_section_and_environment)
 
     subject.print
   end
 
   it "prints out all of the settings when asked for 'all'" do
     subject.expects(:puts).times(Puppet.settings.to_a.length)
-    subject.expects(:report_section_and_environment)
 
     subject.print('all')
   end
@@ -98,7 +70,7 @@ trace = true
       manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
       Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
 
-      manipulator.expects(:set).with(:main, "foo", "bar")
+      manipulator.expects(:set).with("main", "foo", "bar")
       subject.set('foo', 'bar')
     end
 
