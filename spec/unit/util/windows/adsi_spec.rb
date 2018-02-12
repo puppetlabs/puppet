@@ -303,11 +303,14 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       it "should provide its groups as a list of names" do
         names = ['user1', 'user2']
 
-        users = names.map { |name| stub('user', :Name => name) }
+        users = names.map { |name| stub('user', :Name => name, :objectSID => name) }
 
         adsi_group.expects(:Members).returns(users)
 
-        expect(group.members).to match(names)
+        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with('user1').returns(stub(:domain_account => 'HOSTNAME\user1'))
+        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with('user2').returns(stub(:domain_account => 'HOSTNAME\user2'))
+
+        expect(group.members).to match(['HOSTNAME\user1', 'HOSTNAME\user2'])
       end
 
       context "calling .set_members" do
@@ -500,13 +503,14 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns(wmi_groups)
 
       native_group = stub('IADsGroup')
-      native_group.expects(:Members).returns([stub(:Name => 'Administrator')])
+      Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([]).returns(stub(:domain_account => '.\Administrator'))
+      native_group.expects(:Members).returns([stub(:Name => 'Administrator', :objectSID => [])])
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},group").returns(native_group)
 
       groups = Puppet::Util::Windows::ADSI::Group.to_a
       expect(groups.length).to eq(1)
       expect(groups[0].name).to eq(name)
-      expect(groups[0].members).to eq(['Administrator'])
+      expect(groups[0].members).to eq(['.\Administrator'])
     end
   end
 

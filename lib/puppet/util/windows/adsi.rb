@@ -464,12 +464,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def members
-      # WIN32OLE objects aren't enumerable, so no map
-      members = []
-      # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
-      # values are returned as UTF-8
-      native_group.Members.each {|m| members << m.Name}
-      members
+      member_sids.map(&:domain_account)
     end
 
     def member_sids
