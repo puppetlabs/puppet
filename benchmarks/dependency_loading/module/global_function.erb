@@ -1,0 +1,5 @@
+Puppet::Functions.create_function(:'f<%= name %>') do
+  def f<%= name %>
+    'global f<%= name %>'
+  end
+end
