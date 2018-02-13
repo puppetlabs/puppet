@@ -26,7 +26,7 @@ Puppet::Type.type(:zfs).provide(:zfs) do
   end
 
   def create
-    zfs *([:create] + add_properties + [@resource[:name]])
+    zfs(*([:create] + add_properties + [@resource[:name]]))
   end
 
   def destroy

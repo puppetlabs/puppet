@@ -59,7 +59,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
     it "should parse all sample records at once" do
       subject.parse(text).zip(records).each do |round|
-        compare_crontab_record *round
+        compare_crontab_record(*round)
       end
     end
 
@@ -95,7 +95,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
           it "should parse the records from the text" do
             subject.parse(text).zip(records).each do |round|
-              compare_crontab_record *round
+              compare_crontab_record(*round)
             end
           end
         end
@@ -103,7 +103,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
       it "should parse the whole set of records from the text" do
         subject.parse(all_text).zip(all_records).each do |round|
-          compare_crontab_record *round
+          compare_crontab_record(*round)
         end
       end
 

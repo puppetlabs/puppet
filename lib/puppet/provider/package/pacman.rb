@@ -209,9 +209,9 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     cmd << resource_name
 
     if self.class.yaourt?
-      yaourt *cmd
+      yaourt(*cmd)
     else
-      pacman *cmd
+      pacman(*cmd)
     end
   end
 
@@ -258,9 +258,9 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     cmd << "-Sy" << resource_name
 
     if self.class.yaourt?
-      yaourt *cmd
+      yaourt(*cmd)
     else
-      pacman *cmd
+      pacman(*cmd)
     end
   end
 

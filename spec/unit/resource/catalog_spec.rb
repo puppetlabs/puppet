@@ -160,7 +160,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     before do
       @original = Puppet::Resource::Catalog.new("mynode")
       @original.tag(*%w{one two three})
-      @original.add_class *%w{four five six}
+      @original.add_class(*%w{four five six})
 
       @top            = Puppet::Resource.new :class, 'top'
       @topobject      = Puppet::Resource.new :file, @basepath+'/topobject'
@@ -233,7 +233,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     before :each do
       @original = Puppet::Resource::Catalog.new("mynode")
       @original.tag(*%w{one two three})
-      @original.add_class *%w{four five six}
+      @original.add_class(*%w{four five six})
 
       @r1 = stub_everything 'r1', :ref => "File[/a]"
       @r1.stubs(:respond_to?).with(:ref).returns(true)
