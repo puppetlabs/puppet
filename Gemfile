@@ -74,6 +74,8 @@ group(:development, :test) do
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
   gem "hiera-eyaml", :require => false
+
+  gem 'memory_profiler', :platforms => [:mri_21, :mri_22, :mri_23, :mri_24, :mri_25]
 end
 
 group(:development) do
