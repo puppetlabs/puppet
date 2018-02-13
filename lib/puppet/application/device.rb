@@ -24,6 +24,7 @@ class Puppet::Application::Device < Puppet::Application
     end
 
     {
+      :apply => nil,
       :waitforcert => nil,
       :detailed_exitcodes => false,
       :verbose => false,
@@ -44,6 +45,10 @@ class Puppet::Application::Device < Puppet::Application
 
   option("--detailed-exitcodes") do |arg|
     options[:detailed_exitcodes] = true
+  end
+
+  option("--apply MANIFEST") do |arg|
+    options[:apply] = arg.to_s
   end
 
   option("--logdest DEST", "-l DEST") do |arg|
@@ -82,10 +87,11 @@ a scheduled task, or a similar tool.
 
 USAGE
 -----
-  puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
-                [-h|--help] [-l|--logdest syslog|<file>|console]
+  puppet device [-a|--apply <file>] [-d|--debug] [--detailed-exitcodes]
+                [--deviceconfig <file>] [-h|--help]
+                [-l|--logdest syslog|<file>|console] [-t|--target <device>]
+                [--user=<user>] [-V|--version]
                 [-v|--verbose] [-w|--waitforcert <seconds>]
-                [-t|--target <device>] [--user=<user>] [-V|--version]
 
 
 DESCRIPTION
@@ -122,6 +128,9 @@ OPTIONS
 Note that any setting that's valid in the configuration file is also a valid 
 long argument. For example, 'server' is a valid configuration parameter, so 
 you can specify '--server <servername>' as an argument.
+
+* --apply:
+  Apply a manifest against a remote target. Target must be specified.
 
 * --debug:
   Enable full debugging.
@@ -198,6 +207,16 @@ Licensed under the Apache 2.0 License
       if options[:target]
         devices.select! { |key, value| key == options[:target] }
       end
+      unless options[:apply].nil?
+        if options[:target].nil?
+          Puppet.err _("missing argument: --target, When using --apply")
+          exit(1)
+        end
+        unless File.file?(options[:apply])
+          Puppet.err _("%{file} does not exist, cannot apply") % { file: options[:apply] }
+          exit(1)
+        end
+      end
       if devices.empty?
         if options[:target]
           Puppet.err _("Target device / certificate '%{target}' not found in %{config}") % { target: options[:target], config: Puppet[:deviceconfig] }
@@ -219,20 +238,36 @@ Licensed under the Apache 2.0 License
           Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:certname] = device.name
 
-          # this will reload and recompute default settings and create the devices sub vardir, or we hope so :-)
-          Puppet.settings.use :main, :agent, :ssl
-
           # this init the device singleton, so that the facts terminus
           # and the various network_device provider can use it
           Puppet::Util::NetworkDevice.init(device)
 
-          # ask for a ssl cert if needed, but at least
-          # setup the ssl system for this device.
-          setup_host
+          if options[:apply]
+            # avoid reporting to server
+            Puppet::Transaction::Report.indirection.terminus_class = :yaml
+            Puppet::Resource::Catalog.indirection.cache_class = nil
 
-          require 'puppet/configurer'
-          configurer = Puppet::Configurer.new
-          configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
+            require 'puppet/application/apply'
+            begin
+
+              Puppet[:node_terminus] = :plain
+              Puppet[:catalog_terminus] = :compiler
+              Puppet[:catalog_cache_terminus] = nil
+              Puppet[:facts_terminus] = :network_device
+              Puppet::Application::Apply.new(Puppet::Util::CommandLine.new('puppet', ["apply", options[:apply]])).run_command
+            end
+          else
+            # Running puppet device
+            # this will reload and recompute default settings and create the devices sub vardir
+            Puppet.settings.use :main, :agent, :ssl
+            # ask for a ssl cert if needed, but at least
+            # setup the ssl system for this device.
+            setup_host
+
+            require 'puppet/configurer'
+            configurer = Puppet::Configurer.new
+            configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
+          end
         rescue => detail
           Puppet.log_exception(detail)
           # If we rescued an error, then we return 1 as the exit code

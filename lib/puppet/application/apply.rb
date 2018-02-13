@@ -351,6 +351,10 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
   def apply_catalog(catalog)
     configurer = Puppet::Configurer.new
-    configurer.run(:catalog => catalog, :pluginsync => false)
+    if Puppet[:facts_terminus] ==  :network_device
+      configurer.run(:network_device => true, :catalog => catalog, :pluginsync => false)
+    else
+      configurer.run(:catalog => catalog, :pluginsync => false)
+    end
   end
 end
