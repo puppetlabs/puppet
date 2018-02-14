@@ -13,7 +13,7 @@ class Puppet::Parser::AST::Branch < Puppet::Parser::AST
   end
 
   def initialize(arghash)
-    super(arghash)
-    @children ||= []
+    @children = arghash.delete(:children) || []
+    super
   end
 end

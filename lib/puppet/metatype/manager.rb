@@ -93,8 +93,6 @@ module Manager
       end
     end
 
-    options = symbolize_options(options)
-
     # Then create the class.
 
     klass = genclass(

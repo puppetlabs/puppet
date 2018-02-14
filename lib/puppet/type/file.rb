@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'digest/md5'
 require 'cgi'
 require 'etc'
@@ -12,7 +13,6 @@ require 'puppet/util/backups'
 require 'puppet/util/symbolic_file_mode'
 
 Puppet::Type.newtype(:file) do
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Checksums
   include Puppet::Util::Backups
   include Puppet::Util::SymbolicFileMode

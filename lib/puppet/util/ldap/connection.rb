@@ -1,9 +1,6 @@
 require 'puppet/util/ldap'
-require 'puppet/util/methodhelper'
 
 class Puppet::Util::Ldap::Connection
-  include Puppet::Util::MethodHelper
-
   attr_accessor :host, :port, :user, :password, :reset, :ssl
 
   attr_reader :connection
@@ -39,7 +36,12 @@ class Puppet::Util::Ldap::Connection
 
     @host, @port = host, port
 
-    set_options(options)
+    @user = options.delete(:user)
+    @password = options.delete(:password)
+    @reset = options.delete(:reset)
+    @ssl = options.delete(:ssl)
+
+    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
   end
 
   # Create a per-connection unique name.

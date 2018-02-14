@@ -7,7 +7,6 @@ class Puppet::Parser::AST
   AST = Puppet::Parser::AST
 
   include Puppet::Util::Errors
-  include Puppet::Util::MethodHelper
 
   attr_accessor :parent, :scope, :file, :line, :pos
 
@@ -49,9 +48,12 @@ class Puppet::Parser::AST
   # method for them.  This is probably pretty inefficient and should
   # likely be changed at some point.
   def initialize(args)
-    set_options(args)
-  end
+    @file = args.delete(:file)
+    @line = args.delete(:line)
+    @pos = args.delete(:pos)
 
+    raise ArgumentError, "Unknown hash arguments #{args}" unless args.empty?
+  end
 end
 
 # And include all of the AST subclasses.

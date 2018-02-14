@@ -24,15 +24,12 @@
 # You could then call 'parser.to_line(hash)' on any of those hashes to generate
 # the text line again.
 
-require 'puppet/util/methodhelper'
-
 module Puppet::Util::FileParsing
   include Puppet::Util
   attr_writer :line_separator, :trailing_separator
 
   class FileRecord
     include Puppet::Util
-    include Puppet::Util::MethodHelper
     attr_accessor :absent, :joiner, :rts, :separator, :rollup, :name, :match, :block_eval
 
     attr_reader :fields, :optional, :type
@@ -52,7 +49,22 @@ module Puppet::Util::FileParsing
       @type = type.intern
       raise ArgumentError, _("Invalid record type %{record_type}") % { record_type: @type } unless [:record, :text].include?(@type)
 
-      set_options(options)
+      self.absent = options.delete(:absent) if options[:absent]
+      self.block_eval = options.delete(:block_eval) if options[:block_eval]
+      self.fields = options.delete(:fields) if options[:fields]
+      self.joiner = options.delete(:joiner) if options[:joiner]
+      self.match = options.delete(:match)
+      self.optional = options.delete(:optional) if options[:optional]
+      self.post_parse = options.delete(:post_parse) if options[:post_parse]
+      self.pre_gen = options.delete(:pre_gen) if options[:pre_gen]
+      self.rollup = options.delete(:rollup) if options[:rollup]
+      self.rts = options.delete(:rts)
+      self.separator = options.delete(:separator) if options[:separator]
+      self.to_line = options.delete(:to_line) if options[:to_line]
+
+      unless options.empty?
+        raise ArgumentError, "Unknown hash arguments #{options}"
+      end
 
       if self.type == :record
         # Now set defaults.

@@ -7,8 +7,6 @@ require 'puppet/parser'
 require 'puppet/parser/templatewrapper'
 require 'puppet/parser/resource'
 
-require 'puppet/util/methodhelper'
-
 # This class is part of the internal parser/evaluator/compiler functionality of Puppet.
 # It is passed between the various classes that participate in evaluation.
 # None of its methods are API except those that are clearly marked as such.
@@ -16,7 +14,6 @@ require 'puppet/util/methodhelper'
 # @api public
 class Puppet::Parser::Scope
   extend Forwardable
-  include Puppet::Util::MethodHelper
 
   # Variables that always exist with nil value even if not set
   BUILT_IN_VARS = ['module_name'.freeze, 'caller_module_name'.freeze].freeze
@@ -374,14 +371,17 @@ class Puppet::Parser::Scope
   end
 
   # Initialize our new scope.  Defaults to having no parent.
-  def initialize(compiler, options = EMPTY_HASH)
+  def initialize(compiler, options = {})
     if compiler.is_a? Puppet::Parser::AbstractCompiler
       @compiler = compiler
     else
       raise Puppet::DevError, _("you must pass a compiler instance to a new scope object")
     end
 
-    set_options(options)
+    @source = options.delete(:source)
+    @resource = options.delete(:resource)
+
+    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
 
     extend_with_functions_module
 

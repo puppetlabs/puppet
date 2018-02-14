@@ -690,7 +690,6 @@ end
 
 
 require 'puppet/util/errors'
-require 'puppet/util/methodhelper'
 require 'puppet/util/metaid'
 require 'puppet/util/classgen'
 require 'puppet/util/docs'

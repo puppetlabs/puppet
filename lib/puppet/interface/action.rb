@@ -1,4 +1,4 @@
-require 'puppet/util/methodhelper'
+# coding: utf-8
 require 'prettyprint'
 
 # This represents an action that is attached to a face. Actions should
@@ -7,12 +7,11 @@ require 'prettyprint'
 # {Puppet::Interface::ActionBuilder} in the supplied block.
 # @api private
 class Puppet::Interface::Action
-  include Puppet::Util::MethodHelper
   extend  Puppet::Interface::DocGen
   include Puppet::Interface::FullDocs
 
   # @api private
-  def initialize(face, name, attrs = {})
+  def initialize(face, name)
     raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/
     @face    = face
     @name    = name.to_sym
@@ -22,8 +21,6 @@ class Puppet::Interface::Action
     # report it as a bug, please. --daniel 2011-04-26
     @authors = []
     @license  = 'All Rights Reserved'
-
-    set_options(attrs)
 
     # @options collects the added options in the order they're declared.
     # @options_hash collects the options keyed by alias for quick lookups.

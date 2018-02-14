@@ -1,12 +1,10 @@
 require 'puppet/transaction'
 require 'puppet/util/tagging'
 require 'puppet/util/logging'
-require 'puppet/util/methodhelper'
 require 'puppet/network/format_support'
 
 # A simple struct for storing what happens on the system.
 class Puppet::Transaction::Event
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Tagging
   include Puppet::Util::Logging
   include Puppet::Network::FormatSupport
@@ -29,7 +27,25 @@ class Puppet::Transaction::Event
     @redacted = false
     @corrective_change = false
 
-    set_options(options)
+    self.resource = options.delete(:resource) if options.include?(:resource)
+    self.file = options.delete(:file) if options.include?(:file)
+    self.line = options.delete(:line) if options.include?(:line)
+    self.tags = options.delete(:tags) if options.include?(:tags)
+    self.name = options.delete(:name) if options.include?(:name)
+    self.desired_value = options.delete(:desired_value) if options.include?(:desired_value)
+    self.property = options.delete(:property) if options.include?(:property)
+    self.source_description = options.delete(:source_description) if options.include?(:source_description)
+    self.previous_value = options.delete(:previous_value) if options.include?(:previous_value)
+    self.historical_value = options.delete(:historical_value) if options.include?(:historical_value)
+    self.redacted = options.delete(:redacted) if options.include?(:redacted)
+    self.status = options.delete(:status) if options.include?(:status)
+    self.message = options.delete(:message) if options.include?(:message)
+    self.invalidate_refreshes = options.delete(:invalidate_refreshes) if options.include?(:invalidate_refreshes)
+    self.audited = options.delete(:audited) if options.include?(:audited)
+    self.corrective_change = options.delete(:corrective_change) if options.include?(:corrective_change)
+
+    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
+
     @time = Time.now
   end
 

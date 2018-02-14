@@ -1,11 +1,9 @@
 require 'puppet/util/instance_loader'
-require 'puppet/util/methodhelper'
 require 'fileutils'
 
 # Manage Reference Documentation.
 class Puppet::Util::Reference
   include Puppet::Util
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Docs
 
   extend Puppet::Util::InstanceLoader
@@ -80,7 +78,12 @@ class Puppet::Util::Reference
 
   def initialize(name, options = {}, &block)
     @name = name
-    set_options(options)
+    @title = options.delete(:title)
+    @depth = options.delete(:depth)
+    @dynamic = options.delete(:dynamic)
+    @doc = options.delete(:doc)
+
+    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
 
     meta_def(:generate, &block)
 

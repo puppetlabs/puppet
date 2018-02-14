@@ -12,12 +12,12 @@ module Puppet::Util::InstanceLoader
   end
 
   # Define a new type of autoloading.
-  def instance_load(type, path, options = {})
+  def instance_load(type, path)
     @autoloaders ||= {}
     @instances ||= {}
     type = type.intern
     @instances[type] = {}
-    @autoloaders[type] = Puppet::Util::Autoload.new(self, path, options)
+    @autoloaders[type] = Puppet::Util::Autoload.new(self, path)
 
     # Now define our new simple methods
     unless respond_to?(type)
