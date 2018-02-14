@@ -497,7 +497,7 @@ EOS
     end
 
     it "ignores usage of hiera_include() at topscope for classification" do
-      Puppet.expects(:debug).with(regexp_matches /Ignoring hiera_include/)
+      Puppet.expects(:debug).with(regexp_matches(/Ignoring hiera_include/))
 
       expect {
         catalog = compile_to_env_catalog(<<-EOC).to_resource

@@ -212,7 +212,7 @@ describe "A very basic provider based on ParsedFile" do
     end
 
     it "should move the native header to the top" do
-      expect(provider.to_file(input_records)).not_to match /\A#{provider.header}/
+      expect(provider.to_file(input_records)).not_to match(/\A#{provider.header}/)
     end
 
     context "and dropping native headers found in input" do

@@ -31,6 +31,6 @@ describe "the versioncmp function" do
   it "should call Puppet::Util::Package.versioncmp (included in scope)" do
     Puppet::Util::Package.expects(:versioncmp).with('1.2', '1.3').returns(-1)
 
-    expect(versioncmp('1.2', '1.3')).to eq -1
+    expect(versioncmp('1.2', '1.3')).to eq(-1)
   end
 end
