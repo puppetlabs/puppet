@@ -140,14 +140,14 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
         Puppet::Util::POSIX::LOCALE_ENV_VARS.each { |var| orig_env[var] = ENV[var] if ENV[var] }
 
         orig_env.keys.each do |var|
-          output, status = provider.run(command % var)
+          output, _ = provider.run(command % var)
           expect(output.strip).to eq(orig_env[var])
         end
 
         # now, once more... but with our sentinel values
         Puppet::Util.withenv(locale_sentinel_env) do
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
-            output, status = provider.run(command % var)
+            output, _ = provider.run(command % var)
             expect(output.strip).to eq(locale_sentinel_env[var])
           end
         end
@@ -155,9 +155,9 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
 
       it "should respect locale overrides in user's 'environment' configuration" do
         provider.resource[:environment] = ['LANG=C', 'LC_ALL=C']
-        output, status = provider.run(command % 'LANG')
+        output, _ = provider.run(command % 'LANG')
         expect(output.strip).to eq('C')
-        output, status = provider.run(command % 'LC_ALL')
+        output, _ = provider.run(command % 'LC_ALL')
         expect(output.strip).to eq('C')
       end
     end
@@ -180,7 +180,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
             expect(ENV[var]).to eq(user_sentinel_env[var])
 
             # run an "exec" via the provider and ensure that it unsets the vars
-            output, status = provider.run(command % var)
+            output, _ = provider.run(command % var)
             expect(output.strip).to eq("")
 
             # ensure that after the exec, our temporary env is still intact
@@ -199,7 +199,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
         # loop over the posix user-related environment variables
         Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
           # run an 'exec' to get the value of each variable
-          output, status = provider.run(command % var)
+          output, _ = provider.run(command % var)
           # ensure that it matches our expected sentinel value
           expect(output.strip).to eq(sentinel_value)
         end

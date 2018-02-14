@@ -260,8 +260,6 @@ describe Puppet::Indirector::Request do
   end
 
   it "should use the current environment when none is provided" do
-    configured = Puppet::Node::Environment.create(:foo, [])
-
     Puppet[:environment] = "foo"
 
     expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil).environment).to eq(Puppet.lookup(:current_environment))

@@ -38,8 +38,9 @@ describe Puppet::Graph::TitleHashPrioritizer do
     resource = resource(:notify, "title")
     different_resource = resource(:notify, "title")
 
-    generated = prioritizer.generate_priority_for(resource)
+    prioritizer.generate_priority_for(resource)
 
+    expect(prioritizer.priority_of(resource)).not_to be_nil
     expect(prioritizer.priority_of(different_resource)).to be_nil
   end
 

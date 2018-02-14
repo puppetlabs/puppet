@@ -234,11 +234,11 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
   describe "inheritance" do
     let :resource do
-      resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
+      Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
     end
 
     let :provider do
-      provider = provider_class.new(resource)
+      provider_class.new(resource)
     end
 
     describe "when upstart job" do

@@ -495,7 +495,6 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
         path = "/base/path/my/file"
         @file = Puppet::FileServing::Metadata.new(path, :links => :manage)
         stat = stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
-        stub_file = stub(:readlink => "/some/other/path", :lstat => stat)
         Puppet::FileSystem.expects(:lstat).with(path).at_least_once.returns stat
         Puppet::FileSystem.expects(:readlink).with(path).at_least_once.returns "/some/other/path"
         @file.stubs("#{digest_algorithm}_file".intern).returns(checksum) # Remove these when :managed links are no longer checksumed.

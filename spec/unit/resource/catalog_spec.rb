@@ -438,7 +438,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should optionally support an initialization block and should finalize after such blocks" do
       @one.expects :finish
       @two.expects :finish
-      config = Puppet::Resource::Catalog.new("host") do |conf|
+      Puppet::Resource::Catalog.new("host") do |conf|
         conf.add_resource @one
         conf.add_resource @two
       end

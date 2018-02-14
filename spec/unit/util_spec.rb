@@ -680,7 +680,7 @@ describe Puppet::Util do
       Kernel.expects(:fork).returns(pid).yields
 
       Puppet::Util.safe_posix_fork do
-        message = "Fork this!"
+        "Fork this!"
       end
     end
 

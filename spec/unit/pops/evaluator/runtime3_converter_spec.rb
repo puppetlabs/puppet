@@ -31,22 +31,18 @@ describe 'when converting to 3.x' do
   end
 
   it 'converts the symbol :undef to the undef value' do
-    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert(:undef, {}, 'undef value')).to eql('undef value')
   end
 
   it 'converts the nil to the undef value' do
-    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert(nil, {}, 'undef value')).to eql('undef value')
   end
 
   it 'does not convert a symbol nested in an array' do
-    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert({'foo' => :undef}, {}, 'undef value')).to eql({'foo' => :undef})
   end
 
   it 'converts nil to :undef when nested in an array' do
-    v = SemanticPuppet::Version.parse('1.0.0')
     expect(converter.convert({'foo' => nil}, {}, 'undef value')).to eql({'foo' => :undef})
   end
 

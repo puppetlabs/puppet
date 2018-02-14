@@ -92,7 +92,7 @@ describe 'The "include" function' do
 
   it "raises an error if class does not exist" do
     expect {
-      catalog = compile_to_catalog(<<-MANIFEST)
+      compile_to_catalog(<<-MANIFEST)
         include the_god_in_your_religion
       MANIFEST
     }.to raise_error(Puppet::Error)
@@ -105,7 +105,7 @@ describe 'The "include" function' do
     }.each_pair do |value, name_kind|
       it "raises an error if class is #{name_kind}" do
         expect {
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             include #{value}
           MANIFEST
         }.to raise_error(/Cannot use #{name_kind}/)

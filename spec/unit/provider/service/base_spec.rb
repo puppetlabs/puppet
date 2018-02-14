@@ -3,8 +3,6 @@ require 'spec_helper'
 require 'rbconfig'
 require 'fileutils'
 
-provider_class = Puppet::Type.type(:service).provider(:init)
-
 describe "base service provider" do
   include PuppetSpec::Files
 

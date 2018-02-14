@@ -100,7 +100,7 @@ EOL
   it "should parse without error" do
     parser =  Nagios::Parser.new
     expect {
-      results = parser.parse(NONESCAPED_SEMICOLON_COMMENT)
+      parser.parse(NONESCAPED_SEMICOLON_COMMENT)
     }.to_not raise_error
   end
 
@@ -117,14 +117,14 @@ EOL
   it "should raise an error when an incorrect object definition is present" do
     parser =  Nagios::Parser.new
     expect {
-      results = parser.parse(UNKNOWN_NAGIOS_OBJECT_DEFINITION)
+      parser.parse(UNKNOWN_NAGIOS_OBJECT_DEFINITION)
     }.to raise_error Nagios::Base::UnknownNagiosType
   end
 
   it "should raise an error when syntax is not correct" do
     parser =  Nagios::Parser.new
     expect {
-      results = parser.parse(MISSING_CLOSING_CURLY_BRACKET)
+      parser.parse(MISSING_CLOSING_CURLY_BRACKET)
     }.to raise_error Nagios::Parser::SyntaxError
   end
 
@@ -132,7 +132,7 @@ EOL
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
       expect {
-        results = parser.parse(ESCAPED_SEMICOLON)
+        parser.parse(ESCAPED_SEMICOLON)
       }.to_not raise_error
     end
 
@@ -154,7 +154,7 @@ EOL
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
       expect {
-        results = parser.parse(POUND_SIGN_HASH_SYMBOL_NOT_IN_FIRST_COLUMN)
+        parser.parse(POUND_SIGN_HASH_SYMBOL_NOT_IN_FIRST_COLUMN)
       }.to_not raise_error
     end
 
@@ -177,7 +177,7 @@ EOL
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
       expect {
-        results = parser.parse(ANOTHER_ESCAPED_SEMICOLON)
+        parser.parse(ANOTHER_ESCAPED_SEMICOLON)
       }.to_not raise_error
     end
 

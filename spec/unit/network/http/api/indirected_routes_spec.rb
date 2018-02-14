@@ -128,7 +128,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
     it "should not URI unescape the indirection key" do
       escaped = Puppet::Util.uri_encode("foo bar")
-      indirection, _, key, _ = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
+      _, _, key, _ = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
       expect(key).to eq(escaped)
     end
 
@@ -136,7 +136,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       key_escaped = Puppet::Util.uri_encode("foo bar")
       uri_escaped = "#{master_url_prefix}/node/#{key_escaped}"
       handler.expects(:check_authorization).with(anything, uri_escaped, anything)
-      indirection, _, _, _ = handler.uri2indirection("GET", uri_escaped, params)
+      _, _, _, _ = handler.uri2indirection("GET", uri_escaped, params)
     end
 
     it "should not pass through an environment to check_authorization and fail if the environment is unknown" do

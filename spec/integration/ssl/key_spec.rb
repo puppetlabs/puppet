@@ -84,7 +84,7 @@ describe Puppet::SSL::Key do
       # note incorrect password is an error
       expect do
         Puppet::FileSystem.open(pem_path, nil, 'r:ASCII') do |f|
-          reloaded_key = OpenSSL::PKey::RSA.new(f.read, 'invalid_password')
+          OpenSSL::PKey::RSA.new(f.read, 'invalid_password')
         end
       end.to raise_error(OpenSSL::PKey::RSAError)
 

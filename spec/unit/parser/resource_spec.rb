@@ -177,7 +177,6 @@ describe Puppet::Parser::Resource do
     end
 
     it "should add edges from the class resources to the parent's stage if no stage is specified" do
-      main      = @compiler.catalog.resource(:stage, :main)
       foo_stage = Puppet::Parser::Resource.new(:stage, :foo_stage, :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, foo_stage)
       @compiler.environment.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})

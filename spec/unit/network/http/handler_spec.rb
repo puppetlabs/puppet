@@ -52,9 +52,10 @@ describe Puppet::Network::HTTP::Handler do
 
     it "raises an error if multiple routes with the same path regex are registered" do
       expect do
-        handler = PuppetSpec::Handler.new(
+        PuppetSpec::Handler.new(
           Puppet::Network::HTTP::Route.path(%r{^/foo}).get(respond("ignored")),
-          Puppet::Network::HTTP::Route.path(%r{^/foo}).post(respond("also ignored")))
+          Puppet::Network::HTTP::Route.path(%r{^/foo}).post(respond("also ignored"))
+        )
       end.to raise_error(ArgumentError)
     end
 

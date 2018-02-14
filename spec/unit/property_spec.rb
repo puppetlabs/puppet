@@ -294,7 +294,7 @@ describe Puppet::Property do
     end
 
     it "should validate that all required features are present for regexes" do
-      value = subclass.newvalue(/./, :required_features => [:a, :b])
+      subclass.newvalue(/./, :required_features => [:a, :b])
 
       resource.provider.expects(:satisfies?).with([:a, :b]).returns true
 
@@ -302,7 +302,7 @@ describe Puppet::Property do
     end
 
     it "should support specifying an individual required feature" do
-      value = subclass.newvalue(/./, :required_features => :a)
+      subclass.newvalue(/./, :required_features => :a)
 
       resource.provider.expects(:satisfies?).returns true
 

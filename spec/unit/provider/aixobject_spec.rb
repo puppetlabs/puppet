@@ -10,7 +10,7 @@ describe Puppet::Provider::AixObject do
   end
 
   let(:provider) do
-    provider = Puppet::Provider::AixObject.new resource
+    Puppet::Provider::AixObject.new resource
   end
 
   describe "base provider methods" do

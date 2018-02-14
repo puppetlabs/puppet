@@ -344,7 +344,7 @@ describe Puppet::Network::HTTP::Connection do
 
       ::Kernel.expects(:sleep).with(30)
 
-      result = subject.get('/foo')
+      subject.get('/foo')
     end
   end
 

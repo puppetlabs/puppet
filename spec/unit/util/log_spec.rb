@@ -532,7 +532,7 @@ describe Puppet::Util::Log do
       it "should not try to copy over file, version, line, or tag information" do
         source = mock
         source.expects(:file).never
-        log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
+        Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
       end
     end
   end

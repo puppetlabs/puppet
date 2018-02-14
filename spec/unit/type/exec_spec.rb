@@ -22,7 +22,6 @@ describe Puppet::Type.type(:exec) do
 
     exec = Puppet::Type.type(:exec).new(args)
 
-    status = stub "process", :exitstatus => exitstatus
     Puppet::Util::Execution.expects(:execute).times(tries).
       with() { |*args|
         args[0] == command &&

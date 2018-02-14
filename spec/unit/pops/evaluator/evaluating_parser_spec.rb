@@ -1146,7 +1146,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       source = '"value is ${{a=>1,b=>2}} yo"'
       # This test requires testing against two options because a hash to string
       # produces a result that is unordered
-      hashstr = {'a' => 1, 'b' => 2}.to_s
       alt_results = ["value is {a => 1, b => 2} yo", "value is {b => 2, a => 1} yo" ]
       populate
       parse_result = parser.evaluate_string(scope, source, __FILE__)
@@ -1494,8 +1493,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   end
 
   matcher :have_relationship do |expected|
-    calc = Puppet::Pops::Types::TypeCalculator.new
-
     match do |compiler|
       op_name = {'->' => :relationship, '~>' => :subscription}
       compiler.relationships.any? do | relation |

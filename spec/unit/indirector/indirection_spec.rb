@@ -788,7 +788,7 @@ describe Puppet::Indirector::Indirection do
 
     it "should not create a terminus instance until one is actually needed" do
       Puppet::Indirector.expects(:terminus).never
-      indirection = Puppet::Indirector::Indirection.new(mock('model'), :lazytest)
+      Puppet::Indirector::Indirection.new(mock('model'), :lazytest)
     end
 
     after do

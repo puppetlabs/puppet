@@ -75,7 +75,6 @@ require 'spec_helper'
     end
 
     it "should be able to set a new context" do
-      stat = stub 'stat', :ftype => "foo"
       @sel.should = %w{newone}
       @sel.expects(:set_selinux_context).with(@path, ["newone"], param)
       @sel.sync

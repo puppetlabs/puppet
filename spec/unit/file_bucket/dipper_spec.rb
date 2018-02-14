@@ -153,9 +153,6 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         @dipper = Puppet::FileBucket::Dipper.new(:Path => file_bucket)
 
-        onehour=60*60
-        twohours=onehour*2
-
         #First File
         file1 = make_tmp_file(plaintext)
         real_path = Pathname.new(file1).realpath
@@ -182,7 +179,6 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         checksum = digest(plaintext)
         expect(digest(plaintext)).to eq(checksum)
         expect(@dipper.backup(file3)).to eq(checksum)
-        date = Time.now
         expected_list3 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{real_path}\n/
 
         result = @dipper.list(nil, nil)

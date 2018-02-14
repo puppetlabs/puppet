@@ -87,7 +87,7 @@ describe Puppet::Transaction::Report do
     end
 
     def get_cc_count(report)
-      cc = report.metrics["resources"].values.each do |v|
+      report.metrics["resources"].values.each do |v|
         if v[0] == "corrective_change"
           return v[2]
         end

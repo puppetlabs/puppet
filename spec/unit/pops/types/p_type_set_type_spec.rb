@@ -418,7 +418,7 @@ module Puppet::Pops
             pcore_version => '1.0.0',
             types => { Car => Object[{}] }
         OBJECT
-        tt = parse_type_set('Transports', <<-OBJECT)
+        parse_type_set('Transports', <<-OBJECT)
             version => '1.0.0',
             pcore_version => '1.0.0',
             references => {

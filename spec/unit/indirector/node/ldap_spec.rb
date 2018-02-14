@@ -46,11 +46,11 @@ describe Puppet::Node::Ldap do
       end
 
       it "should add the entry's common name to the hash if fqdn if false" do
-        expect(node_indirection.entry2hash(@entry,fqdn = false)[:name]).to eq("mynode")
+        expect(node_indirection.entry2hash(@entry, false)[:name]).to eq("mynode")
       end
 
       it "should add the entry's fqdn name to the hash if fqdn if true" do
-        expect(node_indirection.entry2hash(@entry,fqdn = true)[:name]).to eq("mynode.madstop.com")
+        expect(node_indirection.entry2hash(@entry, true)[:name]).to eq("mynode.madstop.com")
       end
 
       it "should add all of the entry's classes to the hash" do

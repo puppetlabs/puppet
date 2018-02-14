@@ -90,7 +90,7 @@ describe "A catalog" do
   end
 
   def master_catalog_for(manifest)
-    master_catalog = Puppet::Resource::Catalog::Compiler.new.filter(compile_to_catalog(manifest, node))
+    Puppet::Resource::Catalog::Compiler.new.filter(compile_to_catalog(manifest, node))
   end
 
   def master_and_agent_catalogs_for(manifest)

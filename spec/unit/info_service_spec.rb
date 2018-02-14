@@ -20,7 +20,7 @@ describe "Puppet::InfoService" do
     context 'tasks_per_environment method' do
       it "returns task data for the tasks in an environment" do
         Puppet.override(:environments => env_loader) do
-          mod = PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask']]})
+          PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask']]})
           expect(Puppet::InfoService.tasks_per_environment(env_name)).to eq([{:name => task_name, :module => {:name => mod_name}}])
         end
       end

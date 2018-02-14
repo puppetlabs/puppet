@@ -374,14 +374,13 @@ describe Puppet::SSL::CertificateRequest do
     end
 
     it "should raise an error if neither SHA256/SHA1/SHA512/SHA384/SHA224 are available" do
-      csr = OpenSSL::X509::Request.new
       OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
       OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(false)
       OpenSSL::Digest.expects(:const_defined?).with("SHA512").returns(false)
       OpenSSL::Digest.expects(:const_defined?).with("SHA384").returns(false)
       OpenSSL::Digest.expects(:const_defined?).with("SHA224").returns(false)
       expect {
-        signer = Puppet::SSL::CertificateSigner.new
+        Puppet::SSL::CertificateSigner.new
       }.to raise_error(Puppet::Error)
     end
   end

@@ -89,7 +89,6 @@ describe Puppet::Resource::Catalog::Compiler do
 
     it "should pass the found node to the compiler for compiling" do
       Puppet::Node.indirection.expects(:find).with(node_name, anything).returns(node)
-      config = mock 'config'
       Puppet::Parser::Compiler.expects(:compile).with(node, anything)
       compiler.find(@request)
     end
@@ -287,21 +286,12 @@ describe Puppet::Resource::Catalog::Compiler do
       it "accepts PSON facts from older agents" do
         request = a_legacy_request_that_contains(@facts)
 
-        options = {
-          :environment => request.environment,
-          :transaction_uuid => request.options[:transaction_uuid],
-        }
         facts = compiler.extract_facts_from_request(request)
         expect(facts).to eq(@facts)
       end
 
       it "rejects YAML facts" do
         request = a_legacy_request_that_contains(@facts, :yaml)
-
-        options = {
-          :environment => request.environment,
-          :transaction_uuid => request.options[:transaction_uuid],
-        }
 
         expect {
           compiler.extract_facts_from_request(request)
@@ -311,11 +301,6 @@ describe Puppet::Resource::Catalog::Compiler do
       it "rejects unknown fact formats" do
         request = a_request_that_contains(@facts)
         request.options[:facts_format] = 'unknown-format'
-
-        options = {
-          :environment => request.environment,
-          :transaction_uuid => request.options[:transaction_uuid],
-        }
 
         expect {
           compiler.extract_facts_from_request(request)

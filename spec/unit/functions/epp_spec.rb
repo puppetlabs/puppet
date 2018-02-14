@@ -164,6 +164,6 @@ describe "the epp function" do
   end
 
   def epp_function()
-    epp_func = scope.compiler.loaders.public_environment_loader.load(:function, 'epp')
+    scope.compiler.loaders.public_environment_loader.load(:function, 'epp')
   end
 end

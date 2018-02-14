@@ -146,7 +146,6 @@ describe Puppet::Transaction do
   # Verify that one component requiring another causes the contained
   # resources in the requiring component to get refreshed.
   it "should propagate events from a contained resource through its container to its dependent container's contained resources" do
-    transaction = nil
     file = Puppet::Type.type(:file).new :path => tmpfile("event_propagation"), :ensure => :present
     execfile = File.join(tmpdir("exec_event"), "exectestingness2")
     exec = Puppet::Type.type(:exec).new :command => touch(execfile), :path => ENV['PATH']

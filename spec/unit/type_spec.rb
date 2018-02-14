@@ -353,7 +353,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should be registered as a provider of the child type" do
-        child_provider = @type.provide(:child_provider, :parent => @parent_provider)
+        @type.provide(:child_provider, :parent => @parent_provider)
         expect(@type.providers).to include(:child_provider)
         expect(@parent_type.providers).not_to include(:child_provider)
       end
@@ -379,14 +379,14 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
   context "autorelations" do
     before :each do
-      type = Puppet::Type.newtype(:autorelation_one) do
+      Puppet::Type.newtype(:autorelation_one) do
         newparam(:name) { isnamevar }
       end
     end
 
     describe "when building autorelations" do
       it "should be able to autorequire resources" do
-        type = Puppet::Type.newtype(:autorelation_two) do
+        Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autorequire(:autorelation_one) { ['foo'] }
         end
@@ -404,7 +404,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it 'should not fail autorequire contains undef entries' do
-        type = Puppet::Type.newtype(:autorelation_two) do
+        Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autorequire(:autorelation_one) { [nil, 'foo'] }
         end
@@ -422,7 +422,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should be able to autosubscribe resources" do
-        type = Puppet::Type.newtype(:autorelation_two) do
+        Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autosubscribe(:autorelation_one) { ['foo'] }
         end
@@ -440,7 +440,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it 'should not fail if autosubscribe contains undef entries' do
-        type = Puppet::Type.newtype(:autorelation_two) do
+        Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autosubscribe(:autorelation_one) { [nil, 'foo'] }
         end
@@ -458,7 +458,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should be able to autobefore resources" do
-        type = Puppet::Type.newtype(:autorelation_two) do
+        Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autobefore(:autorelation_one) { ['foo'] }
         end
@@ -476,7 +476,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should not fail when autobefore contains undef entries" do
-        type = Puppet::Type.newtype(:autorelation_two) do
+        Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autobefore(:autorelation_one) { [nil, 'foo'] }
         end
@@ -494,7 +494,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should be able to autonotify resources" do
-        type = Puppet::Type.newtype(:autorelation_two) do
+        Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autonotify(:autorelation_one) { ['foo'] }
         end
@@ -512,7 +512,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it 'should not fail if autonotify contains undef entries' do
-        type = Puppet::Type.newtype(:autorelation_two) do
+        Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
           autonotify(:autorelation_one) { [nil, 'foo'] }
         end
@@ -1312,7 +1312,6 @@ describe Puppet::Type.metaparamclass(:audit) do
 
     it "should handle proprieties correctly" do
       # Order of assignment is significant in this test.
-      props = {}
       [:one, :two, :three].each {|prop| type.newproperty(prop) {} }
       instance = type.new(:name => "test")
 
@@ -1335,9 +1334,9 @@ describe Puppet::Type.metaparamclass(:audit) do
       type.feature :feature1, "one"
       type.feature :feature2, "two"
 
-      none = type.newproperty(:none) {}
-      one  = type.newproperty(:one, :required_features => :feature1) {}
-      two  = type.newproperty(:two, :required_features => [:feature1, :feature2]) {}
+      type.newproperty(:none) {}
+      type.newproperty(:one, :required_features => :feature1) {}
+      type.newproperty(:two, :required_features => [:feature1, :feature2]) {}
 
       nope  = type.provide(:nope)  {}
       maybe = type.provide(:maybe) { has_features :feature1 }

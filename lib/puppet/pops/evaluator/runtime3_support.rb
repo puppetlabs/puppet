@@ -301,10 +301,13 @@ module Runtime3Support
   def call_function(name, args, o, scope, &block)
     file, line = extract_file_line(o)
     loader = Adapters::LoaderAdapter.loader_for_model_object(o, file)
-    if loader && func = loader.load(:function, name)
+    # 'ruby -wc' thinks that _func is unused, because the only reference to it
+    # is inside of the Kernel.eval string below. By prefixing it with the
+    # underscore, we let Ruby know to not worry about whether it's unused or not.
+    if loader && _func = loader.load(:function, name)
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
         # Add stack frame when calling. See Puppet::Pops::PuppetStack
-        return Kernel.eval('func.call(scope, *args, &block)', Kernel.binding, file || '', line)
+        return Kernel.eval('_func.call(scope, *args, &block)', Kernel.binding, file || '', line)
       end
     end
     # Call via 3x API if function exists there
