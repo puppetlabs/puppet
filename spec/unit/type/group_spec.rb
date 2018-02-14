@@ -19,6 +19,12 @@ describe Puppet::Type.type(:group) do
   end
 
   describe "when validating attributes" do
+    [:auth_membership, :allowdupe, :system].each do |default_param|
+      it "should set the default for #{default_param} to false" do
+        expect(@class.new(:name => "foo")[default_param]).to eq(false)
+      end
+    end
+
     [:name, :allowdupe].each do |param|
       it "should have a #{param} parameter" do
         expect(@class.attrtype(param)).to eq(:param)

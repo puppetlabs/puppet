@@ -82,6 +82,10 @@ describe augeas do
     it "should be false for type_check" do
       expect(augeas.new(:name => :type_check)[:type_check]).to eq(:false)
     end
+
+    it "should be false for :force" do
+      expect(augeas.new(:name => :type_check)[:force]).to eq(false)
+    end
   end
 
   describe "provider interaction" do
