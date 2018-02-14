@@ -71,7 +71,7 @@ module Issues
 
     def format(hash, &block)
       @data = hash
-      instance_eval &block
+      instance_eval(&block)
     end
 
     # Obtains the label provider given as a key `:label` in the hash passed to #format. The label provider is

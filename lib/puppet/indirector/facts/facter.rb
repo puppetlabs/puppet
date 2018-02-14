@@ -64,7 +64,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       true
     end
 
-    Facter.search *dirs
+    Facter.search(*dirs)
   end
 
   def self.setup_external_search_paths(request)

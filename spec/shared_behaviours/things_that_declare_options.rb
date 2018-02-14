@@ -87,8 +87,8 @@ shared_examples_for "things that declare options" do
     it "should detect conflicts between #{base.inspect} and #{conflict.inspect}" do
       expect {
         add_options_to do
-          option *base
-          option *conflict
+          option(*base)
+          option(*conflict)
         end
       }.to raise_error ArgumentError, /conflicts with existing option/
     end

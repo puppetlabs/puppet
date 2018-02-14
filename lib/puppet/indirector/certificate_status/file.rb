@@ -70,7 +70,7 @@ class Puppet::Indirector::CertificateStatus::File < Puppet::Indirector::Code
       klass.indirection.search(request.key, request.options)
     end.flatten.collect do |result|
       result.name
-    end.uniq.collect &Puppet::SSL::Host.method(:new)
+    end.uniq.collect(&Puppet::SSL::Host.method(:new))
   end
 
   def find(request)

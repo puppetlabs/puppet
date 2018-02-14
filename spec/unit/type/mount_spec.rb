@@ -518,7 +518,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
     def run_in_catalog(*resources)
       Puppet::Util::Storage.stubs(:store)
       catalog = Puppet::Resource::Catalog.new
-      catalog.add_resource *resources
+      catalog.add_resource(*resources)
       catalog.apply
     end
 

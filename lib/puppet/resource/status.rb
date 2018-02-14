@@ -31,7 +31,7 @@ module Puppet
 
       # Boolean status types set while evaluating `@real_resource`.
       STATES = [:skipped, :failed, :failed_to_restart, :restarted, :changed, :out_of_sync, :scheduled, :corrective_change]
-      attr_accessor *STATES
+      attr_accessor(*STATES)
 
       # @!attribute [r] source_description
       #   @return [String] The textual description of the path to `@real_resource`

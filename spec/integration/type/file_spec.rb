@@ -292,13 +292,14 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             Puppet::FileSystem.symlink(link_target, link)
           end
 
-          it "should not set the executable bit on the link nor the target" do
+          it "should not set the executable bit on the link target" do
             catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => '0666', :target => link_target, :links => :manage)
 
             catalog.apply
 
-            (Puppet::FileSystem.stat(link).mode & 07777) == 0666
-            (Puppet::FileSystem.lstat(link_target).mode & 07777) == 0444
+            expected_target_permissions = Puppet::Util::Platform.windows? ? 0700 : 0444
+
+            expect(Puppet::FileSystem.stat(link_target).mode & 07777).to eq(expected_target_permissions)
           end
 
           it "should ignore dangling symlinks (#6856)" do
