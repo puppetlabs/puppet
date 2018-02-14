@@ -159,7 +159,7 @@ class TypeCalculator
       t = type(t)
     end
     t.is_a?(PAnyType) ? t.assignable?(t2) : false
- end
+  end
 
   # Returns an iterable if the t represents something that can be iterated
   def enumerable(t)

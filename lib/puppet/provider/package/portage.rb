@@ -170,8 +170,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       end
 
       if @resource[:name].match(/^@/)
-         if package_sets.include?(@resource[:name][1..-1].to_s)
-           return({:name => "#{@resource[:name]}", :ensure => '9999', :version_available => nil, :installed_versions => nil, :installable_versions => "9999,"})
+        if package_sets.include?(@resource[:name][1..-1].to_s)
+          return({:name => "#{@resource[:name]}", :ensure => '9999', :version_available => nil, :installed_versions => nil, :installable_versions => "9999,"})
         end
       end
 

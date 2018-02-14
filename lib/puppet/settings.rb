@@ -1397,7 +1397,7 @@ Generated on #{Time.now}.
         @values[name] = old_value
         raise e
       end
-     end
+    end
 
     def inspect
       %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">}

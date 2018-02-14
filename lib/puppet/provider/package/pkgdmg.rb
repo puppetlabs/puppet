@@ -90,12 +90,12 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
         elsif http_proxy_host and not http_proxy_port
           args << "--proxy" << http_proxy_host
         end
-      begin
-        curl(*args)
-          Puppet.debug "Success: curl transferred [#{name}] (via: curl #{args.join(" ")})"
+        begin
+          curl(*args)
+            Puppet.debug "Success: curl transferred [#{name}] (via: curl #{args.join(" ")})"
         rescue Puppet::ExecutionFailure
           Puppet.debug "curl #{args.join(" ")} did not transfer [#{name}].  Falling back to local file." # This used to fall back to open-uri. -NF
-          cached_source = source
+            cached_source = source
         end
       end
 

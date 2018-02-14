@@ -41,7 +41,7 @@ class Puppet::Parser::Compiler
     message = _("%{message} on node %{node}") % { message: detail, node: node.name }
     Puppet.log_exception(detail, message)
     raise Puppet::Error, message, detail.backtrace
- end
+  end
 
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
   attr_reader :qualified_variables

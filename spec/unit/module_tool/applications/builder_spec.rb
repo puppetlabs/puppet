@@ -27,7 +27,7 @@ describe Puppet::ModuleTool::Applications::Builder do
       builder.run
     end
 
-      def create_regular_files
+    def create_regular_files
       Puppet::FileSystem.touch(File.join(path, '.dotfile'))
       Puppet::FileSystem.touch(File.join(path, 'file.foo'))
       Puppet::FileSystem.touch(File.join(path, 'REVISION'))

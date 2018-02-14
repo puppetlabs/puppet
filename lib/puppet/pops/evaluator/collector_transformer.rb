@@ -124,7 +124,7 @@ protected
     end
   end
 
- def query_AccessExpression(o, scope)
+  def query_AccessExpression(o, scope)
     pops_object = @@evaluator.evaluate(o, scope)
 
     # Convert to Puppet 3 style objects since that is how they are represented
