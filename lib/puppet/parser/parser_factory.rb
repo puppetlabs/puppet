@@ -16,7 +16,7 @@ module Puppet::Parser
     # EvaluatingParser to the 3x way of parsing.
     #
     def self.evaluating_parser
-      unless defined?(Puppet::Pops::Parser::E4ParserAdapter)
+      unless defined?(Puppet::Parser::E4ParserAdapter)
         require 'puppet/parser/e4_parser_adapter'
         require 'puppet/pops/parser/code_merger'
       end
