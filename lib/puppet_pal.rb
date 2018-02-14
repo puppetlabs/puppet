@@ -784,56 +784,56 @@ module Pal
 
     # TRANSLATORS, the string "For puppet PAL" is not user facing
     Puppet.override({:current_environment => apply_environment}, "For puppet PAL") do
-        begin
-          # support the following features when evaluating puppet code
-          # * $facts with facts from host running the script
-          # * $settings with 'settings::*' namespace populated, and '$settings::all_local' hash
-          # * $trusted as setup when using puppet apply
-          # * an environment
-          #
+      begin
+        # support the following features when evaluating puppet code
+        # * $facts with facts from host running the script
+        # * $settings with 'settings::*' namespace populated, and '$settings::all_local' hash
+        # * $trusted as setup when using puppet apply
+        # * an environment
+        #
 
-          # fixup trusted information
-          node.sanitize()
+        # fixup trusted information
+        node.sanitize()
 
-          compiler = Puppet::Parser::ScriptCompiler.new(node.environment, node.name)
-          topscope = compiler.topscope
+        compiler = Puppet::Parser::ScriptCompiler.new(node.environment, node.name)
+        topscope = compiler.topscope
 
-          # When scripting the trusted data are always local, but set them anyway
-          topscope.set_trusted(node.trusted_data)
+        # When scripting the trusted data are always local, but set them anyway
+        topscope.set_trusted(node.trusted_data)
 
-          # Server facts are always about the local node's version etc.
-          topscope.set_server_facts(node.server_facts)
+        # Server facts are always about the local node's version etc.
+        topscope.set_server_facts(node.server_facts)
 
-          # Set $facts for the node running the script
-          facts_hash = node.facts.nil? ? {} : node.facts.values
-          topscope.set_facts(facts_hash)
+        # Set $facts for the node running the script
+        facts_hash = node.facts.nil? ? {} : node.facts.values
+        topscope.set_facts(facts_hash)
 
-          # create the $settings:: variables
-          topscope.merge_settings(node.environment.name, false)
+        # create the $settings:: variables
+        topscope.merge_settings(node.environment.name, false)
 
-          add_variables(topscope, pal_variables)
+        add_variables(topscope, pal_variables)
 
-          # compiler.compile(&block)
-          compiler.compile do | internal_compiler |
-            # wrap the internal compiler to prevent it from leaking in the PAL API
-            if block_given?
-              script_compiler = ScriptCompiler.new(internal_compiler)
+        # compiler.compile(&block)
+        compiler.compile do | internal_compiler |
+          # wrap the internal compiler to prevent it from leaking in the PAL API
+          if block_given?
+            script_compiler = ScriptCompiler.new(internal_compiler)
 
-              # Make compiler available to Puppet#lookup
-              overrides[:pal_script_compiler] = script_compiler
-              Puppet.override(overrides, "PAL::with_script_compiler") do # TRANSLATORS: Do not translate, symbolic name
-                yield(script_compiler)
-              end
+            # Make compiler available to Puppet#lookup
+            overrides[:pal_script_compiler] = script_compiler
+            Puppet.override(overrides, "PAL::with_script_compiler") do # TRANSLATORS: Do not translate, symbolic name
+              yield(script_compiler)
             end
           end
+        end
 
-        rescue Puppet::ParseErrorWithIssue, Puppet::Error
-          # already logged and handled by the compiler for these two cases
-          raise
+      rescue Puppet::ParseErrorWithIssue, Puppet::Error
+        # already logged and handled by the compiler for these two cases
+        raise
 
-        rescue => detail
-          Puppet.log_exception(detail)
-          raise
+      rescue => detail
+        Puppet.log_exception(detail)
+        raise
       end
     end
   end

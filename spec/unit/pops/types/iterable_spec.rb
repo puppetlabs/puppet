@@ -230,7 +230,7 @@ describe 'The iterable support' do
     include Enumerable
     include Iterable
 
-     def step(step_size)
+    def step(step_size)
       if block_given?
         begin
           current = 0

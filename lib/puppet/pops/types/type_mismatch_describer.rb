@@ -19,7 +19,7 @@ module Types
     def eql?(o)
       self == o
     end
-   end
+  end
 
   # @api private
   class SubjectPathElement < TypePathElement

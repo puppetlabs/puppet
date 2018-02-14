@@ -182,7 +182,7 @@ COPYRIGHT
 Copyright (c) 2011 Puppet Inc., LLC
 Licensed under the Apache 2.0 License
       HELP
-    end
+  end
 
 
   def main

@@ -1,5 +1,5 @@
 module Puppet::Pops
-  module Functions
+module Functions
 # Defines a connection between a implementation method and the signature that
 # the method will handle.
 #

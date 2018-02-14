@@ -576,7 +576,7 @@ class PNotUndefType < PTypeWithContainedType
         n.type
       else
         n
-       end
+      end
     end
   end
 

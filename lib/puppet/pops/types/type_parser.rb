@@ -489,9 +489,9 @@ class TypeParser
         end
       elsif parameters.size != 2
         raise_invalid_parameters_error('Integer', '1 or 2', parameters.size)
-     else
-       TypeFactory.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
-     end
+      else
+        TypeFactory.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
+      end
 
     when 'object'
       raise_invalid_parameters_error('Object', 1, parameters.size) unless parameters.size == 1
@@ -529,9 +529,9 @@ class TypeParser
         end
       elsif parameters.size != 2
         raise_invalid_parameters_error('Float', '1 or 2', parameters.size)
-     else
-       TypeFactory.float_range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
-     end
+      else
+        TypeFactory.float_range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
+      end
 
     when 'string'
       size_type =
