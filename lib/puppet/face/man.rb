@@ -39,12 +39,28 @@ Puppet::Face.define(:man, '0.0.1') do
     EOT
 
     default
-    when_invoked do |name, options|
-      if legacy_applications.include? name then
-        return Puppet::Application[name].help
+    when_invoked do |*args|
+      # 'args' is an array of the subcommand and arguments from the command line and an options hash
+      # [<arg1>, ..., {options}]
+      _options = args.pop
+
+      unless valid_command_line?(args)
+        print_man_help
+        #TRANSLATORS 'puppet man' is a specific command line and should not be translated
+        raise ArgumentError, _("The 'puppet man' command takes a single subcommand to review the subcommand's manpage")
       end
 
-      face = Puppet::Face[name.to_sym, :current]
+      manpage = args.first
+      if default_case?(manpage)
+        print_man_help
+        return nil
+      end
+
+      if legacy_applications.include?(manpage)
+        return Puppet::Application[manpage].help
+      end
+
+      @face = Puppet::Face[manpage.to_sym, :current]
 
       file = (Pathname(__FILE__).dirname + "help" + 'man.erb')
       erb = ERB.new(file.read, nil, '-')
@@ -54,7 +70,6 @@ Puppet::Face.define(:man, '0.0.1') do
       # variables we established just above. --daniel 2011-04-11
       return erb.result(binding)
     end
-
 
     when_rendering :console do |text|
       # OK, if we have Ronn on the path we can delegate to it and override the
@@ -72,16 +87,16 @@ Puppet::Face.define(:man, '0.0.1') do
       pager = [ENV['MANPAGER'], ENV['PAGER'], 'less', 'most', 'more'].
         detect {|x| x and x.length > 0 and Puppet::Util.which(x) }
 
-      if ronn then
+      if ronn
         # ronn is a stupid about pager selection, we can be smarter. :)
-        if pager then ENV['PAGER'] = pager end
+        ENV['PAGER'] = pager if pager
 
         args  = "--man --manual='Puppet Manual' --organization='Puppet Inc., LLC'"
         # manual pages could contain UTF-8 text
         IO.popen("#{ronn} #{args}", 'w:UTF-8') do |fh| fh.write text end
 
         ''                      # suppress local output, neh?
-      elsif pager then
+      elsif pager
         # manual pages could contain UTF-8 text
         IO.popen(pager, 'w:UTF-8') do |fh| fh.write text end
         ''
@@ -89,6 +104,20 @@ Puppet::Face.define(:man, '0.0.1') do
         text
       end
     end
+  end
+
+  def valid_command_line?(args)
+    # not too many arguments and not
+    # "puppet man man man" (it's the default case, so of course, remove one of the "man"'s from the arg list..., thanks face_base)
+    args.length <= 1 && !(args.length == 1 && args.first == "man")
+  end
+
+  def default_case?(manpage)
+    manpage.nil?
+  end
+
+  def print_man_help
+    puts Puppet::Face[:help, :current].help(:man)
   end
 
   def legacy_applications
