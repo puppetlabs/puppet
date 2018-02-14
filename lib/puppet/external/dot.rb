@@ -181,9 +181,6 @@ module DOT
   # node element
 
   class DOTNode < DOTElement
-
-    @ports
-
     def initialize (params = {}, option_list = NODE_OPTS)
       super(params, option_list)
       @ports = params['ports'] ? params['ports'] : []
@@ -235,10 +232,6 @@ module DOT
   # notation.
 
   class DOTSubgraph < DOTElement
-
-    @nodes
-    @dot_string
-
     def initialize (params = {}, option_list = GRAPH_OPTS)
       super(params, option_list)
       @nodes      = params['nodes'] ? params['nodes'] : []

@@ -89,7 +89,6 @@ class ExternalNode
   # parameters
   def initialize(hostname, classdir = 'classes/', parameterdir = 'parameters/', environmentdir = 'environment/')
     # instance variables that contain the lists of classes and parameters
-    @hostname
     @classes = Set.new
     @parameters = Hash.new("unknown")  # sets a default value of "unknown"
     @environment = "production"
@@ -134,13 +133,13 @@ class ExternalNode
     patternlist = []
 
     begin
-      open(filepath).each { |l|
+      open(filepath).each do |l|
         l.chomp!
 
         next if l =~ /^$/
         next if l =~ /^#/
 
-		if l =~ /^\s*(\S+)/
+        if l =~ /^\s*(\S+)/
           m = Regexp.last_match
           log("found a non-comment line, transforming [#{l}] into [#{m[1]}]")
           l.gsub!(l,m[1])
@@ -151,7 +150,7 @@ class ExternalNode
         pattern = %r{#{l}}
         patternlist <<  pattern
         log("appending [#{pattern}] to patternlist for [#{filepath}]")
-      }
+      end
     rescue StandardError
       log("Problem reading #{filepath}: #{$!}",:err)
       exit(1)

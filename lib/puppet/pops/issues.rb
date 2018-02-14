@@ -49,7 +49,6 @@ module Issues
         # Evaluate the message block in the msg data's binding
         msgdata.format(hash, &message_block)
       rescue StandardError => e
-        MessageData
         raise RuntimeError, _("Error while reporting issue: %{code}. %{message}") % { code: issue_code, message: e.message }, caller
       end
     end
