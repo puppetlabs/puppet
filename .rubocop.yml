@@ -144,9 +144,8 @@ Lint/UselessAccessModifier:
 Lint/UselessAssignment:
   Enabled: true
 
-# DISABLED - TODO
 Lint/Void:
-  Enabled: false
+  Enabled: true
 
 Layout/AccessModifierIndentation:
   Enabled: false
