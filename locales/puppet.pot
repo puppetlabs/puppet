@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 4.10.9-68-gf02ce86\n"
+"Project-Id-Version: Puppet automation framework 4.10.10-64-gd0a56b1\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-03 19:17+0000\n"
-"PO-Revision-Date: 2018-01-03 19:17+0000\n"
+"POT-Creation-Date: 2018-02-13 23:59+0000\n"
+"PO-Revision-Date: 2018-02-13 23:59+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -29,6 +29,10 @@ msgstr ""
 
 #: ../lib/puppet/application.rb:370
 msgid "`puppet %{name}` is deprecated and will be removed in a future release."
+msgstr ""
+
+#: ../lib/puppet/application/cert.rb:268
+msgid "Refusing to destroy all certs, provide an explicit list of certs to destroy"
 msgstr ""
 
 #: ../lib/puppet/defaults.rb:1749
