@@ -493,7 +493,7 @@ class amod::bad_type {
 
       it 'will log a warning that a value of unknown type is converted into a string' do
         logs = []
-        json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           compile_to_catalog('include amod::bad_type', node).to_json
         end
         logs = logs.select { |log| log.level == :warning }.map { |log| log.message }

@@ -680,7 +680,7 @@ describe Puppet::Util do
       Kernel.expects(:fork).returns(pid).yields
 
       Puppet::Util.safe_posix_fork do
-        message = "Fork this!"
+        "Fork this!"
       end
     end
 
@@ -837,7 +837,7 @@ describe Puppet::Util do
     end
 
     it "should fail if no block is given" do
-      expect { subject.replace_file(target.path, 0600) }.to raise_error /block/
+      expect { subject.replace_file(target.path, 0600) }.to raise_error(/block/)
     end
 
     it "should replace a file when invoked" do

@@ -7,13 +7,13 @@ module EgrammarLexer2Spec
   def tokens_scanned_from(s)
     lexer = Puppet::Pops::Parser::Lexer2.new
     lexer.string = s
-    tokens = lexer.fullscan[0..-2]
+    lexer.fullscan[0..-2]
   end
 
   def epp_tokens_scanned_from(s)
     lexer = Puppet::Pops::Parser::Lexer2.new
     lexer.string = s
-    tokens = lexer.fullscan_epp[0..-2]
+    lexer.fullscan_epp[0..-2]
   end
 end
 
@@ -893,7 +893,7 @@ describe Puppet::Pops::Parser::Lexer2 do
         manifest = file_containing('manifest.pp', manifest_code)
 
         expect {
-          lexed_file = described_class.new.lex_file(manifest)
+          described_class.new.lex_file(manifest)
         }.to raise_error(Puppet::ParseErrorWithIssue,
           'Illegal UTF-8 Byte Order mark at beginning of input: [EF BB BF] - remove these from the puppet source')
     end

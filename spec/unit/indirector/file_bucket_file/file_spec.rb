@@ -96,7 +96,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
               if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
                 skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
               else
-                checksum = save_bucket_file(plaintext, "/foo/bar")
+                save_bucket_file(plaintext, "/foo/bar")
   
                 dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
                 contents_file = "#{dir_path}/contents"
@@ -139,7 +139,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
               skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
             else
-              checksum = save_bucket_file(plaintext, "")
+              save_bucket_file(plaintext, "")
   
               dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
               expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)

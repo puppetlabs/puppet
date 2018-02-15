@@ -413,7 +413,7 @@ describe Puppet::Type.type(:user) do
       testuser = described_class.new(:name => "testuser", :roles => ['testrole'] )
       testrole = described_class.new(:name => "testrole")
 
-      config = Puppet::Resource::Catalog.new :testing do |conf|
+      Puppet::Resource::Catalog.new :testing do |conf|
         [testuser, testrole].each { |resource| conf.add_resource resource }
       end
       Puppet::Type::User::ProviderDirectoryservice.stubs(:get_macosx_version_major).returns "10.5"

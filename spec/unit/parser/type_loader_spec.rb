@@ -161,7 +161,7 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should skip modules that don't have manifests" do
-      module1 = mk_module(modulebase1, "one")
+      mk_module(modulebase1, "one")
       module2 = mk_module(modulebase2, "two")
       mk_manifests(modulebase2, module2, %w{c d})
 

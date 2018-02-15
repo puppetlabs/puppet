@@ -72,7 +72,6 @@ describe Puppet::Provider::Ldap do
 
     describe "resources that do not exist" do
       it "should create a provider with :ensure => :absent" do
-        result = mock 'result'
         @manager.expects(:find).with("one").returns nil
 
         @class.expects(:new).with(:ensure => :absent).returns "myprovider"

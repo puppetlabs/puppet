@@ -59,7 +59,7 @@ module FactoryRspecHelper
   end
 
   def unindent x
-    (x.gsub /^#{x[/\A\s*/]}/, '').chomp
+    x.gsub(/^#{x[/\A\s*/]}/, '').chomp
   end
   factory ||= Puppet::Pops::Model::Factory
 end

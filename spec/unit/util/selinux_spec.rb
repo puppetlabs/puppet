@@ -109,7 +109,7 @@ describe Puppet::Util::SELinux do
 
     it "should return nil if lgetfilecon fails" do
       self.expects(:selinux_support?).returns true
-      Selinux.expects(:lgetfilecon).with("/foo").returns -1
+      Selinux.expects(:lgetfilecon).with("/foo").returns(-1)
       expect(get_selinux_current_context("/foo")).to be_nil
     end
   end
@@ -153,7 +153,7 @@ describe Puppet::Util::SELinux do
       fstat = stub 'File::Stat', :mode => 0
       Puppet::FileSystem.expects(:lstat).with('/foo').returns(fstat)
       self.expects(:find_fs).with("/foo").returns "ext3"
-      Selinux.expects(:matchpathcon).with("/foo", 0).returns -1
+      Selinux.expects(:matchpathcon).with("/foo", 0).returns(-1)
 
       expect(get_selinux_default_context("/foo")).to be_nil
     end

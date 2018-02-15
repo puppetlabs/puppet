@@ -270,8 +270,7 @@ describe Puppet::Forge do
     end
 
     it "ignores modules with unparseable dependencies" do
-      expect { result = forge.fetch('puppetlabs/bacula') }.to_not raise_error
-      expect { result.to be_empty }
+      expect(forge.fetch('puppetlabs/bacula')).to be_empty
     end
   end
 end

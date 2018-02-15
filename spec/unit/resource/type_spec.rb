@@ -524,7 +524,6 @@ describe Puppet::Resource::Type do
       subscope = stub 'subscope', :compiler => @compiler
       @scope.expects(:newscope).with(:source => @type, :resource => @resource).returns subscope
 
-      elevel = 876
       subscope.expects(:with_guarded_scope).yields
       subscope.expects(:ephemeral_from).with(match, nil, nil).returns subscope
       code.expects(:safeevaluate).with(subscope)
@@ -778,7 +777,7 @@ describe Puppet::Resource::Type do
 
   describe "when merging code from another instance" do
     def code(str)
-      factory = Puppet::Pops::Model::Factory.literal(str)
+      Puppet::Pops::Model::Factory.literal(str)
     end
 
     it "should fail unless it is a class" do
@@ -811,7 +810,7 @@ describe Puppet::Resource::Type do
     it "should copy the other class's parent if it has not parent" do
       dest = Puppet::Resource::Type.new(:hostclass, "bar")
 
-      parent = Puppet::Resource::Type.new(:hostclass, "parent")
+      Puppet::Resource::Type.new(:hostclass, "parent")
       source = Puppet::Resource::Type.new(:hostclass, "foo", :parent => "parent")
       dest.merge(source)
 

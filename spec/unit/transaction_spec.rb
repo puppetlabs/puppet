@@ -91,7 +91,7 @@ describe Puppet::Transaction do
 
       report.expects(:add_times).with(:config_retrieval, 5)
 
-      transaction = Puppet::Transaction.new(catalog, report, nil)
+      Puppet::Transaction.new(catalog, report, nil)
     end
   end
 

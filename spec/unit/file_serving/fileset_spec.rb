@@ -277,7 +277,6 @@ describe Puppet::FileServing::Fileset do
     it "works when paths have regexp significant characters" do
       @path = make_absolute("/my/path/rV1x2DafFr0R6tGG+1bbk++++TM")
       stat = stub('dir_stat', :directory? => true)
-      stub_file = stub(@path, :stat => stat, :lstat => stat)
       Puppet::FileSystem.expects(:lstat).with(@path).returns stub(@path, :stat => stat, :lstat => stat)
       @fileset = Puppet::FileServing::Fileset.new(@path)
       mock_dir_structure(@path)

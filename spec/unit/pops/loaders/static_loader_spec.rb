@@ -91,7 +91,7 @@ describe 'the static loader' do
   end
 
   context 'without init_runtime3 initialization' do
-    let(:loader) { loader = Puppet::Pops::Loader::StaticLoader.new() }
+    let(:loader) { Puppet::Pops::Loader::StaticLoader.new() }
 
     it 'does not provide access to resource types built into puppet' do
       expect(loader.load(:type, 'file')).to be_nil

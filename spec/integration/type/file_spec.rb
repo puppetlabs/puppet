@@ -542,8 +542,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         File.open(dest1, "w") { |f| f.puts "whatever" }
         Puppet::FileSystem.symlink(dest1, link)
 
-        d = filebucket_digest.call(File.read(file[:path]))
-
         catalog.apply
 
         expect(Puppet::FileSystem.readlink(link)).to eq(dest2)
@@ -1031,8 +1029,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     before do
       source = tmpdir("generating_in_catalog_source")
 
-      s1 = file_in_dir_with_contents(source, "one", "uno")
-      s2 = file_in_dir_with_contents(source, "two", "dos")
+      file_in_dir_with_contents(source, "one", "uno")
+      file_in_dir_with_contents(source, "two", "dos")
 
       @file = described_class.new(
         :name => path,

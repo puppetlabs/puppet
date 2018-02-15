@@ -291,8 +291,6 @@ describe 'Puppet Ruby Generator' do
         end)
       end
 
-      after(:each) { typeset = nil }
-
       context 'the generated class' do
         it 'inherits the PuppetObject module' do
           expect(first < PuppetObject).to be_truthy
@@ -740,7 +738,6 @@ describe 'Puppet Ruby Generator' do
         # Ideally, this would be in a before(:all) but that is impossible since lots of Puppet
         # environment specific settings are configured by the spec_helper in before(:each)
         if module_def.nil?
-          typeset = nil
           eval_and_collect_notices(source) do
             typeset1 = parser.parse('MyModule')
             typeset2 = parser.parse('OtherModule')

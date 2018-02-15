@@ -58,7 +58,7 @@ describe Puppet::Node do
     end
 
     it "can round-trip through json" do
-      facts = Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
+      Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
       node = Puppet::Node.new("hello",
                               :environment => 'bar',
                               :classes => ['erth', 'aiu'],
@@ -72,7 +72,7 @@ describe Puppet::Node do
     end
 
     it "validates against the node json schema", :unless => Puppet.features.microsoft_windows? do
-      facts = Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
+      Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
       node = Puppet::Node.new("hello",
                               :environment => 'bar',
                               :classes => ['erth', 'aiu'],
@@ -82,7 +82,7 @@ describe Puppet::Node do
     end
 
     it "when missing optional parameters validates against the node json schema", :unless => Puppet.features.microsoft_windows? do
-      facts = Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
+      Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
       node = Puppet::Node.new("hello",
                               :environment => 'bar'
                              )

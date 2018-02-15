@@ -235,7 +235,6 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should set the parent scope of the new scope to its topscope if the parent passed in is nil" do
-      scope = mock 'scope'
       newscope = @compiler.newscope(nil)
 
       expect(newscope.parent).to equal(@compiler.topscope)
@@ -725,7 +724,7 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should ensure class is in catalog without params" do
-      @node.classes = klasses = {'foo'=>nil}
+      @node.classes = {'foo'=>nil}
       foo = Puppet::Resource::Type.new(:hostclass, 'foo')
       @compiler.environment.known_resource_types.add foo
       catalog = @compiler.compile

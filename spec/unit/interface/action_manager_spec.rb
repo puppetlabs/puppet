@@ -232,7 +232,7 @@ describe Puppet::Interface::ActionManager do
           when_invoked do |options| true end
           default
         }
-      }.to raise_error /cannot both be default/
+      }.to raise_error(/cannot both be default/)
     end
   end
 

@@ -69,7 +69,7 @@ EOT
     it "has no side effects on original input string" do
       input       = "First line \n        second line \n        \n            indented line \n        \n        last line\n\n"
       clean_input = "First line \n        second line \n        \n            indented line \n        \n        last line\n\n"
-      not_used = Puppet::Util::Docs.scrub(input)
+      Puppet::Util::Docs.scrub(input)
       expect(input).to eq clean_input
     end
 

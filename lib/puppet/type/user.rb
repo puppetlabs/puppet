@@ -411,7 +411,7 @@ module Puppet
            a zero-padded YYYY-MM-DD format -- for example, 2010-02-19."
 
       newvalues :absent
-      newvalues /^\d{4}-\d{2}-\d{2}$/
+      newvalues(/^\d{4}-\d{2}-\d{2}$/)
 
       validate do |value|
         if value.intern != :absent and value !~ /^\d{4}-\d{2}-\d{2}$/

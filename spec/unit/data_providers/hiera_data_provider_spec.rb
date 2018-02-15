@@ -201,7 +201,7 @@ describe "when using a hiera data provider" do
     it 'will report config path (original and resolved), data path (original and resolved), and interpolation (before and after)' do
       compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
-        value = Puppet::Pops::Lookup.lookup('km_scope', nil, nil, nil, nil, lookup_invocation)
+        Puppet::Pops::Lookup.lookup('km_scope', nil, nil, nil, nil, lookup_invocation)
         expect(lookup_invocation.explainer.explain).to include(<<-EOS)
       Path "#{environmentpath}/hiera_misc/data/common.yaml"
         Original path: "common.yaml"
@@ -216,7 +216,7 @@ describe "when using a hiera data provider" do
     it 'will report that merge options was found in the lookup_options hash' do
       compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
-        value = Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
+        Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
         expect(lookup_invocation.explainer.explain).to include("Using merge options from \"lookup_options\" hash")
       end
     end
@@ -224,7 +224,7 @@ describe "when using a hiera data provider" do
     it 'will report lookup_options details in combination with details of found value' do
       compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, Puppet::Pops::Lookup::Explainer.new(true))
-        value = Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
+        Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
         expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Searching for "lookup_options"
   Global Data Provider (hiera configuration version 5)
@@ -314,7 +314,7 @@ EOS
     it 'will report config path (original and resolved), data path (original and resolved), and interpolation (before and after)' do
       compile('hiera_misc', '$target_scope = "with scope"') do |compiler|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, Puppet::Pops::Lookup::Explainer.new(true, true))
-        value = Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
+        Puppet::Pops::Lookup.lookup('one::loptsm_test::hash', nil, nil, nil, nil, lookup_invocation)
         expect(lookup_invocation.explainer.explain).to eq(<<EOS)
 Merge strategy hash
   Global Data Provider (hiera configuration version 5)

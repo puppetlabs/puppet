@@ -6,7 +6,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
 
   let (:current_user_sid) { Puppet::Util::Windows::ADSI::User.current_user_sid }
   let (:system_bytes) { [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] }
-  let (:null_sid_bytes) { bytes = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
+  let (:null_sid_bytes) { [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
   let (:administrator_bytes) { [1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0] }
   let (:computer_sid) { Puppet::Util::Windows::SID.name_to_sid_object(Puppet::Util::Windows::ADSI.computer_name) }
   # BUILTIN is localized on German Windows, but not French

@@ -307,7 +307,6 @@ describe Puppet::Face[:epp, :current] do
       end
 
       it "renders multiple files separated by headers by default" do
-        modules_dir = File.join(dir, 'environments', 'production', 'modules')
         # chomp the last newline, it is put there by heredoc
         expect(eppface.render('m1/greetings.epp', 'm2/goodbye.epp')).to eq(<<-EOT.chomp)
 --- m1/greetings.epp
@@ -318,7 +317,6 @@ goodbye world
       end
 
       it "outputs multiple files verbatim when --no-headers is given" do
-        modules_dir = File.join(dir, 'environments', 'production', 'modules')
         expect(eppface.render('m1/greetings.epp', 'm2/goodbye.epp', :header => false)).to eq("hello worldgoodbye world")
       end
     end

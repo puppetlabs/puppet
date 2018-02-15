@@ -294,13 +294,13 @@ describe Puppet::Parser::Scope do
       end
 
       it "should return nil for qualified variables that cannot be found in other classes" do
-        other_scope = create_class_scope("other::deep::klass")
+        create_class_scope("other::deep::klass")
 
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
       it "should warn and return nil for qualified variables whose classes have not been evaluated" do
-        klass = newclass("other::deep::klass")
+        newclass("other::deep::klass")
         Puppet.expects(:warn_once)
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
@@ -316,7 +316,7 @@ describe Puppet::Parser::Scope do
 
       it "should return nil when asked for a non-string qualified variable from a class that has not been evaluated" do
         @scope.stubs(:warning)
-        klass = newclass("other::deep::klass")
+        newclass("other::deep::klass")
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
     end

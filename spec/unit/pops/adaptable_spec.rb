@@ -42,7 +42,6 @@ describe Puppet::Pops::Adaptable::Adapter do
 
   it "should return the correct adapter if there are several" do
     d = Duck.new
-    other = OtherAdapter.adapt(d)
     a = ValueAdapter.adapt(d)
     a.value = 10
     b = ValueAdapter.adapt(d)

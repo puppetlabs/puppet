@@ -56,8 +56,6 @@ describe Puppet::FileServing::TerminusSelector do
       end
 
       it "should choose :file_server when default_file_terminus is file_server and no server is specified on the request" do
-        modules = mock 'modules'
-
         @request.expects(:protocol).returns "puppet"
         @request.expects(:server).returns nil
         Puppet[:default_file_terminus] = 'file_server'

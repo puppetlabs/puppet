@@ -734,11 +734,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       let (:explorer) { File.join(Dir::WINDOWS, "explorer.exe") }
 
       it "should get the owner" do
-        expect(winsec.get_owner(explorer)).to match /^S-1-5-/
+        expect(winsec.get_owner(explorer)).to match(/^S-1-5-/)
       end
 
       it "should get the group" do
-        expect(winsec.get_group(explorer)).to match /^S-1-5-/
+        expect(winsec.get_group(explorer)).to match(/^S-1-5-/)
       end
 
       it "should get the mode" do

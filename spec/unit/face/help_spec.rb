@@ -143,7 +143,7 @@ describe Puppet::Face[:help, '0.0.1'] do
     it 'appends a deprecation warning for deprecated faces' do
       # Stub the module face as deprecated
       Puppet::Face[:module, :current].expects(:deprecated?).returns(true)
-      result = Puppet::Face[:help, :current].all_application_summaries.each do |appname,summary|
+      Puppet::Face[:help, :current].all_application_summaries.each do |appname,summary|
         expect(summary).to match(/Deprecated/) if appname == 'module'
       end
     end
