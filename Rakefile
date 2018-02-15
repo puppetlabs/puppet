@@ -19,6 +19,7 @@ rescue LoadError
 end
 
 require 'rake'
+require 'open3'
 
 Dir['tasks/**/*.rake'].each { |t| load t }
 
@@ -108,6 +109,31 @@ task(:commits) do
     end
     puts "...passed"
   end
+end
+
+desc "verify that changed files are clean of Ruby warnings"
+task(:warnings) do
+  # This rake task looks at all files modified in this branch. This is
+  # accomplished by using the TRAVIS_COMMIT_RANGE environment variable, which
+  # is present in travis CI and populated with the range of commits the PR
+  # contains. If not available, this falls back to `master..HEAD` as a next
+  # best bet as `master` is unlikely to ever be absent.
+  commit_range = ENV['TRAVIS_COMMIT_RANGE'].nil? ? 'master...HEAD' : ENV['TRAVIS_COMMIT_RANGE']
+  ruby_files_ok = true
+  puts "Checking modified files #{commit_range}"
+  %x{git diff --name-only #{commit_range}}.each_line do |modified_file|
+    modified_file.chomp!
+    next unless File.extname(modified_file) == '.rb'
+    puts modified_file
+
+    stdout, stderr, _ = Open3.capture3("ruby -wc \"#{modified_file}\"")
+    unless stderr.empty?
+      ruby_files_ok = false
+      puts stderr
+    end
+    puts stdout
+  end
+  raise "One or more ruby files contain warnings." unless ruby_files_ok
 end
 
 if Rake.application.top_level_tasks.grep(/^gettext:/).any?
