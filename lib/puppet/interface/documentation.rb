@@ -307,7 +307,7 @@ class Puppet::Interface
         elsif input > (future = Time.now.year + 2) then
           fault = "after #{future}"
         end
-        if fault and if Time.now.year != 1970 then
+        if fault and Time.now.year != 1970 then
           #TRANSLATORS 'copyright' is an attribute name and should not be translate
           raise ArgumentError, _("copyright with a year %{value} is very strange; did you accidentally add or subtract two years?") %
               { value: fault }
