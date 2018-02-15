@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-694-g15b25d3\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-705-gf4ab7ad\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-02-12 23:41+0000\n"
-"PO-Revision-Date: 2018-02-12 23:41+0000\n"
+"POT-Creation-Date: 2018-02-15 16:43+0000\n"
+"PO-Revision-Date: 2018-02-15 16:43+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -225,7 +225,11 @@ msgstr ""
 msgid "Manage certificates and requests"
 msgstr ""
 
-#: ../lib/puppet/application/cert.rb:332
+#: ../lib/puppet/application/cert.rb:272
+msgid "Refusing to destroy all certs, provide an explicit list of certs to destroy"
+msgstr ""
+
+#: ../lib/puppet/application/cert.rb:334
 msgid "You must specify the hosts to apply to; valid values are an array or the symbol :all"
 msgstr ""
 
@@ -9743,7 +9747,7 @@ msgstr ""
 msgid "Group update failed: %{error}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:505
+#: ../lib/puppet/util/windows/adsi.rb:500
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
