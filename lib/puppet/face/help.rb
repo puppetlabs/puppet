@@ -26,53 +26,47 @@ Puppet::Face.define(:help, '0.0.1') do
 
     default
     when_invoked do |*args|
-      # Check our invocation, because we want varargs and can't do defaults
-      # yet.  REVISIT: when we do option defaults, and positional options, we
-      # should rewrite this to use those. --daniel 2011-04-04
       options = args.pop
-      if options.nil? or args.length > 2 then
-        if args.select { |x| x == 'help' }.length > 2 then
-          c = "\n %'(),-./=ADEFHILORSTUXY\\_`gnv|".split('')
-          i = <<-'EOT'.gsub(/\s*/, '').to_i(36)
-            3he6737w1aghshs6nwrivl8mz5mu9nywg9tbtlt081uv6fq5kvxse1td3tj1wvccmte806nb
-            cy6de2ogw0fqjymbfwi6a304vd56vlq71atwmqsvz3gpu0hj42200otlycweufh0hylu79t3
-            gmrijm6pgn26ic575qkexyuoncbujv0vcscgzh5us2swklsp5cqnuanlrbnget7rt3956kam
-            j8adhdrzqqt9bor0cv2fqgkloref0ygk3dekiwfj1zxrt13moyhn217yy6w4shwyywik7w0l
-            xtuevmh0m7xp6eoswin70khm5nrggkui6z8vdjnrgdqeojq40fya5qexk97g4d8qgw0hvokr
-            pli1biaz503grqf2ycy0ppkhz1hwhl6ifbpet7xd6jjepq4oe0ofl575lxdzjeg25217zyl4
-            nokn6tj5pq7gcdsjre75rqylydh7iia7s3yrko4f5ud9v8hdtqhu60stcitirvfj6zphppmx
-            7wfm7i9641d00bhs44n6vh6qvx39pg3urifgr6ihx3e0j1ychzypunyou7iplevitkyg6gbg
-            wm08oy1rvogcjakkqc1f7y1awdfvlb4ego8wrtgu9vzw4vmj59utwifn2ejcs569dh1oaavi
-            sc581n7jjg1dugzdu094fdobtx6rsvk3sfctvqnr36xctold
-          EOT
-          353.times{i,x=i.divmod(1184);a,b=x.divmod(37);print(c[a]*b)}
-        end
-        raise ArgumentError, _("Puppet help only takes two (optional) arguments: a subcommand and an action")
+
+      if default_case?(args) || help_for_help?(args)
+        return erb('global.erb').result(binding)
+      end
+
+      if args.length > 2
+        #TRANSLATORS 'puppet help' is a command line and should not be translated
+        raise ArgumentError, _("The 'puppet help' command takes two (optional) arguments: a subcommand and an action")
       end
 
       version = :current
-      if options.has_key? :version then
-        if options[:version].to_s !~ /^current$/i then
+      if options.has_key? :version
+        if options[:version].to_s !~ /^current$/i
           version = options[:version]
         else
-          if args.length == 0 then
-            raise ArgumentError, _("Version only makes sense when a Faces subcommand is given")
+          if args.length == 0
+            #TRANSLATORS '--version' is a command line option and should not be translated
+            raise ArgumentError, _("Supplying a '--version' only makes sense when a Faces subcommand is given")
           end
         end
       end
 
-      return erb('global.erb').result(binding) if args.empty?
-
       facename, actionname = args
-      if legacy_applications.include? facename then
-        if actionname then
-          raise ArgumentError, _("Legacy subcommands don't take actions")
+      if legacy_applications.include? facename
+        if actionname
+          raise ArgumentError, _("The legacy subcommand '%{sub_command}' does not support supplying an action") % { sub_command: facename }
         end
         return render_application_help(facename)
       else
         return render_face_help(facename, actionname, version)
       end
     end
+  end
+
+  def default_case?(args)
+    args.empty?
+  end
+
+  def help_for_help?(args)
+    args.length == 1 && args.first == 'help'
   end
 
   def render_application_help(applicationname)
@@ -102,7 +96,7 @@ Puppet::Face.define(:help, '0.0.1') do
     face = Puppet::Face[facename.to_sym, version]
     if actionname
       action = face.get_action(actionname.to_sym)
-      if not action
+      if ! action
         fail ArgumentError, _("Unable to load action %{actionname} from %{face}") % { actionname: actionname, face: face }
       end
     end
@@ -145,10 +139,12 @@ Puppet::Face.define(:help, '0.0.1') do
         begin
           face = Puppet::Face[appname, :current]
           # Add deprecation message to summary if the face is deprecated
-          summary = face.deprecated? ? face.summary + _(" (Deprecated)") : face.summary
+          summary = face.deprecated? ? face.summary + ' ' + _("(Deprecated)") : face.summary
           result << [appname, summary]
         rescue StandardError, LoadError
-          result << [ "! #{appname}", _("! Subcommand unavailable due to error. Check error logs.") ]
+          error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
+          error_message += ' ' + _("Check error logs.")
+          result << [ error_message ]
         end
       else
         begin
@@ -158,7 +154,9 @@ Puppet::Face.define(:help, '0.0.1') do
           end
           result << [appname, summary]
         rescue StandardError, LoadError
-          result << ["! #{appname}", _("! Subcommand unavailable due to error. Check error logs.")]
+          error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
+          error_message += ' ' + _("Check error logs.")
+          result << [ error_message ]
         end
       end
     end
@@ -171,7 +169,7 @@ Puppet::Face.define(:help, '0.0.1') do
     # formatted.  If we can't match the pattern we expect we return the empty
     # string to ensure we don't blow up in the summary. --daniel 2011-04-11
     while line = help.shift do
-      if md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line) then
+      if md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line)
         return md[1]
       end
     end

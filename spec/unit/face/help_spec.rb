@@ -3,31 +3,30 @@ require 'spec_helper'
 require 'puppet/face'
 
 describe Puppet::Face[:help, '0.0.1'] do
-  it "has a help action" do
+  it 'has a help action' do
     expect(subject).to be_action :help
   end
 
-  it "has a default action of help" do
+  it 'has a default action of help' do
     expect(subject.get_action('help')).to be_default
   end
 
-  it "accepts a call with no arguments" do
+  it 'accepts a call with no arguments' do
     expect {
       subject.help()
     }.to_not raise_error
   end
 
-  it "accepts a face name" do
+  it 'accepts a face name' do
     expect { subject.help(:help) }.to_not raise_error
   end
 
-  it "accepts a face and action name" do
+  it 'accepts a face and action name' do
     expect { subject.help(:help, :help) }.to_not raise_error
   end
 
-  it "fails if more than a face and action are given" do
-    expect { subject.help(:help, :help, :for_the_love_of_god) }.
-      to raise_error ArgumentError
+  it 'fails if more than a face and action are given' do
+    expect { subject.help(:help, :help, :for_the_love_of_god) }.to raise_error ArgumentError
   end
 
   it "treats :current and 'current' identically" do
@@ -36,37 +35,48 @@ describe Puppet::Face[:help, '0.0.1'] do
     )
   end
 
-  it "raises an error when the face is unavailable" do
+  it 'raises an error when the face is unavailable' do
     expect {
       subject.help(:huzzah, :bar, :version => '17.0.0')
     }.to raise_error(ArgumentError, /Could not find version 17\.0\.0/)
   end
 
-  it "finds a face by version" do
+  it 'finds a face by version' do
     face = Puppet::Face[:huzzah, :current]
     expect(subject.help(:huzzah, :version => face.version)).
       to eq(subject.help(:huzzah, :version => :current))
   end
 
-  it "raises an ArgumentError if the face raises a StandardError" do
-    face = Puppet::Face[:module, :current]
-    face.stubs(:short_description).raises(StandardError, "whoops")
+  context 'rendering has an error' do
+    it 'raises an ArgumentError if the face raises a StandardError' do
+      face = Puppet::Face[:module, :current]
+      face.stubs(:short_description).raises(StandardError, 'whoops')
 
-    expect {
-      subject.help(:module)
-    }.to raise_error(ArgumentError, /Detail: "whoops"/)
+      expect {
+        subject.help(:module)
+      }.to raise_error(ArgumentError, /Detail: "whoops"/)
+    end
+
+    it 'raises an ArgumentError if the face raises a LoadError' do
+      face = Puppet::Face[:module, :current]
+      face.stubs(:short_description).raises(LoadError, 'cannot load such file -- yard')
+
+      expect {
+        subject.help(:module)
+      }.to raise_error(ArgumentError, /Detail: "cannot load such file -- yard"/)
+    end
+
+    context 'with face actions' do
+      it 'returns an error if we can not get an action for the module' do
+        face = Puppet::Face[:module, :current]
+        face.stubs(:get_action).returns(nil)
+
+        expect {subject.help('module', 'list')}.to raise_error(ArgumentError, /Unable to load action list from Puppet::Face/)
+      end
+    end
   end
 
-  it "raises an ArgumentError if the face raises a LoadError" do
-    face = Puppet::Face[:module, :current]
-    face.stubs(:short_description).raises(LoadError, "cannot load such file -- yard")
-
-    expect {
-      subject.help(:module)
-    }.to raise_error(ArgumentError, /Detail: "cannot load such file -- yard"/)
-  end
-
-  context "when listing subcommands" do
+  context 'when listing subcommands' do
     subject { Puppet::Face[:help, :current].help }
 
     RSpec::Matchers.define :have_a_summary do
@@ -78,13 +88,13 @@ describe Puppet::Face[:help, '0.0.1'] do
     # Check a precondition for the next block; if this fails you have
     # something odd in your set of face, and we skip testing things that
     # matter. --daniel 2011-04-10
-    it "has at least one face with a summary" do
+    it 'has at least one face with a summary' do
       expect(Puppet::Face.faces).to be_any do |name|
         Puppet::Face[name, :current].summary
       end
     end
 
-    it "lists all faces which are runnable from the command line" do
+    it 'lists all faces which are runnable from the command line' do
       help_face = Puppet::Face[:help, :current]
       # The main purpose of the help face is to provide documentation for
       #  command line users.  It shouldn't show documentation for faces
@@ -102,36 +112,17 @@ describe Puppet::Face[:help, '0.0.1'] do
       end
     end
 
-    it "returns an 'unavailable' summary if the 'agent' application fails to generate help" do
-      Puppet::Application['agent'].class.any_instance.stubs(:summary).raises(ArgumentError, "whoops")
-
-      expect(subject).to match(/agent\s+! Subcommand unavailable due to error\. Check error logs\./)
-    end
-
-    it "returns an 'unavailable' summary if the legacy application raises a LoadError" do
-      Puppet::Application['agent'].class.any_instance.stubs(:summary).raises(LoadError, "cannot load such file -- yard")
-
-      expect(subject).to match(/agent\s+! Subcommand unavailable due to error\. Check error logs\./)
-    end
-
-    context "face summaries" do
-      it "can generate face summaries" do
+    context 'face summaries' do
+      it 'can generate face summaries' do
         faces = Puppet::Face.faces
         expect(faces.length).to be > 0
         faces.each do |name|
           expect(Puppet::Face[name, :current]).to have_a_summary
         end
       end
-
-      it "returns an 'unavailable' summary if the face application raises a LoadError" do
-        face = Puppet::Face[:module, :current]
-        face.stubs(:summary).raises(LoadError, "cannot load such file -- yard")
-
-        expect(Puppet::Face[:help, :current].help).to match(/module\s+! Subcommand unavailable due to error\. Check error logs\./)
-      end
     end
 
-    it "lists all legacy applications" do
+    it 'lists all legacy applications' do
       Puppet::Face[:help, :current].legacy_applications.each do |appname|
         expect(subject).to match(%r{ #{appname} })
 
@@ -141,15 +132,15 @@ describe Puppet::Face[:help, '0.0.1'] do
     end
   end
 
-  context "deprecated faces" do
-    it "prints a deprecation warning for deprecated faces" do
+  context 'deprecated faces' do
+    it 'prints a deprecation warning for deprecated faces' do
       Puppet::Face[:module, :current].stubs(:deprecated?).returns(true)
       expect(Puppet::Face[:help, :current].help(:module)).to match(/Warning: 'puppet module' is deprecated/)
     end
   end
 
-  context "#all_application_summaries" do
-    it "appends a deprecation warning for deprecated faces" do
+  context '#all_application_summaries' do
+    it 'appends a deprecation warning for deprecated faces' do
       # Stub the module face as deprecated
       Puppet::Face[:module, :current].expects(:deprecated?).returns(true)
       result = Puppet::Face[:help, :current].all_application_summaries.each do |appname,summary|
@@ -158,7 +149,7 @@ describe Puppet::Face[:help, '0.0.1'] do
     end
   end
 
-  context "#legacy_applications" do
+  context '#legacy_applications' do
     subject { Puppet::Face[:help, :current].legacy_applications }
 
     # If we don't, these tests are ... less than useful, because they assume
@@ -175,7 +166,7 @@ describe Puppet::Face[:help, '0.0.1'] do
     end
   end
 
-  context "help for legacy applications" do
+  context 'help for legacy applications' do
     subject { Puppet::Face[:help, :current] }
     let :appname do subject.legacy_applications.first end
 
@@ -183,7 +174,7 @@ describe Puppet::Face[:help, '0.0.1'] do
     # we don't get into a loop where we either test a face-based replacement
     # and fail to notice breakage, or where we have to constantly rewrite this
     # test and all. --daniel 2011-04-11
-    it "returns the legacy help when given the subcommand" do
+    it 'returns the legacy help when given the subcommand' do
       help = subject.help(appname)
       expect(help).to match(/puppet-#{appname}/)
       %w{SYNOPSIS USAGE DESCRIPTION OPTIONS COPYRIGHT}.each do |heading|
@@ -191,25 +182,27 @@ describe Puppet::Face[:help, '0.0.1'] do
       end
     end
 
-    it "fails when asked for an action on a legacy command" do
+    it 'fails when asked for an action on a legacy command' do
       expect { subject.help(appname, :whatever) }.
-        to raise_error ArgumentError, /Legacy subcommands don't take actions/
+        to raise_error(ArgumentError, /The legacy subcommand '#{appname}' does not support supplying an action/)
     end
 
-    it "raises an ArgumentError if a legacy application raises a StandardError" do
-      Puppet::Application[appname].class.any_instance.stubs(:help).raises(StandardError, "whoops")
+    context 'rendering has an error' do
+      it 'raises an ArgumentError if a legacy application raises a StandardError' do
+        Puppet::Application[appname].class.any_instance.stubs(:help).raises(StandardError, 'whoops')
 
-      expect {
-        subject.help(appname)
-      }.to raise_error ArgumentError, /Detail: "whoops"/
-    end
+        expect {
+          subject.help(appname)
+        }.to raise_error(ArgumentError, /Detail: "whoops"/)
+      end
 
-    it "raises an ArgumentError if a legacy application raises a LoadError" do
-      Puppet::Application[appname].class.any_instance.stubs(:help).raises(LoadError, "cannot load such file -- yard")
+      it 'raises an ArgumentError if a legacy application raises a LoadError' do
+        Puppet::Application[appname].class.any_instance.stubs(:help).raises(LoadError, 'cannot load such file -- yard')
 
-      expect {
-        subject.help(appname)
-      }.to raise_error ArgumentError, /Detail: "cannot load such file -- yard"/
+        expect {
+          subject.help(appname)
+        }.to raise_error(ArgumentError, /Detail: "cannot load such file -- yard"/)
+      end
     end
   end
 end
