@@ -21,9 +21,9 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     described_class.new(:name => 'sshd.service')
   end
 
-  osfamily = [ 'archlinux', 'coreos' ]
+  osfamilies = [ 'archlinux', 'coreos' ]
 
-  osfamily.each do |osfamily|
+  osfamilies.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.stubs(:value).with(:osfamily).returns(osfamily)
       expect(described_class).to be_default

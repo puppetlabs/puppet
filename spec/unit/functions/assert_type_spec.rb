@@ -42,7 +42,7 @@ describe 'the assert_type function' do
   end
 
   it 'can be called with a callable that receives a specific type' do
-    expected, actual, actual2 = func.call({}, 'Optional[String]', 1) { |expected, actual| [expected, actual, actual] }
+    expected, actual, actual2 = func.call({}, 'Optional[String]', 1) { |expctd, actul| [expctd, actul, actul] }
     expect(expected.to_s).to eql('Optional[String]')
     expect(actual.to_s).to eql('Integer[1, 1]')
     expect(actual2.to_s).to eql('Integer[1, 1]')

@@ -298,8 +298,8 @@ describe Puppet::Transaction::Report do
                                                            :content => "mystuff1"),
                               Puppet::Type.type(:file).new(:title => file,
                                                            :content => "mystuff2")) do
-          File.open(file, 'w') do |file|
-            file.write "some content"
+          File.open(file, 'w') do |f|
+            f.write "some content"
           end
         end
 

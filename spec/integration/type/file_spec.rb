@@ -661,13 +661,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       catalog.apply
 
       expect(@dirs).not_to be_empty
-      @dirs.each do |path|
-        expect(get_mode(path) & 007777).to eq(0755)
+      @dirs.each do |dir|
+        expect(get_mode(dir) & 007777).to eq(0755)
       end
 
       expect(@files).not_to be_empty
-      @files.each do |path|
-        expect(get_mode(path) & 007777).to eq(0644)
+      @files.each do |dir|
+        expect(get_mode(dir) & 007777).to eq(0644)
       end
     end
 
