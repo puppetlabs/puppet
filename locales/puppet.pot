@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-715-g7ece5de\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-722-g8752d86\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-02-15 16:48+0000\n"
-"PO-Revision-Date: 2018-02-15 16:48+0000\n"
+"POT-Creation-Date: 2018-02-15 22:33+0000\n"
+"PO-Revision-Date: 2018-02-15 22:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1120,44 +1120,50 @@ msgstr ""
 msgid "The version of the subcommand for which to show help."
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:50
-msgid "Puppet help only takes two (optional) arguments: a subcommand and an action"
+#. TRANSLATORS 'puppet help' is a command line and should not be translated
+#: ../lib/puppet/face/help.rb:37
+msgid "The 'puppet help' command takes two (optional) arguments: a subcommand and an action"
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:59
-msgid "Version only makes sense when a Faces subcommand is given"
+#. TRANSLATORS '--version' is a command line option and should not be translated
+#: ../lib/puppet/face/help.rb:47
+msgid "Supplying a '--version' only makes sense when a Faces subcommand is given"
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:69
-msgid "Legacy subcommands don't take actions"
+#: ../lib/puppet/face/help.rb:55
+msgid "The legacy subcommand '%{sub_command}' does not support supplying an action"
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:82
+#: ../lib/puppet/face/help.rb:76
 msgid "Could not load help for the application %{application_name}."
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:83 ../lib/puppet/face/help.rb:95
+#: ../lib/puppet/face/help.rb:77 ../lib/puppet/face/help.rb:89
 msgid "Please check the error logs for more information."
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:85 ../lib/puppet/face/help.rb:97
+#: ../lib/puppet/face/help.rb:79 ../lib/puppet/face/help.rb:91
 msgid "Detail: \"%{detail}\""
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:94
+#: ../lib/puppet/face/help.rb:88
 msgid "Could not load help for the face %{face_name}."
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:106
+#: ../lib/puppet/face/help.rb:100
 msgid "Unable to load action %{actionname} from %{face}"
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:148
-msgid " (Deprecated)"
+#: ../lib/puppet/face/help.rb:142
+msgid "(Deprecated)"
 msgstr ""
 
-#: ../lib/puppet/face/help.rb:151 ../lib/puppet/face/help.rb:161
-msgid "! Subcommand unavailable due to error. Check error logs."
+#: ../lib/puppet/face/help.rb:145 ../lib/puppet/face/help.rb:157
+msgid "!%{sub_command}! Subcommand unavailable due to error."
+msgstr ""
+
+#: ../lib/puppet/face/help.rb:146 ../lib/puppet/face/help.rb:158
+msgid "Check error logs."
 msgstr ""
 
 #: ../lib/puppet/face/key.rb:7
@@ -4847,7 +4853,7 @@ msgstr ""
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:22 ../lib/puppet/pops/evaluator/runtime3_support.rb:23 ../lib/puppet/pops/evaluator/runtime3_support.rb:528
+#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:22 ../lib/puppet/pops/evaluator/runtime3_support.rb:23 ../lib/puppet/pops/evaluator/runtime3_support.rb:531
 msgid "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
 msgstr ""
 
