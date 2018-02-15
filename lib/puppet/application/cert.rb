@@ -269,8 +269,10 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     end
     begin
       if subcommand == :destroy
+        raise _("Refusing to destroy all certs, provide an explicit list of certs to destroy") if hosts == :all
+
         signed_hosts = hosts - @ca.waiting?
-        apply(@ca, :revoke, options.merge(:to => signed_hosts))
+        apply(@ca, :revoke, options.merge(:to => signed_hosts)) unless signed_hosts.empty?
       end
       apply(@ca, subcommand, options.merge(:to => hosts, :digest => @digest))
     rescue => detail
