@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby
+# coding: utf-8
 require 'spec_helper'
 
 require 'puppet/util/tagging'
@@ -9,13 +10,6 @@ describe Puppet::Util::Tagging do
   it "should add tags to the returned tag list" do
     tagger.tag("one")
     expect(tagger.tags).to include("one")
-  end
-
-  it "should return a duplicate of the tag list, rather than the original" do
-    tagger.tag("one")
-    tags = tagger.tags
-    tags << "two"
-    expect(tagger.tags).to_not include("two")
   end
 
   it "should add all provided tags to the tag list" do

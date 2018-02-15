@@ -332,7 +332,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def add_scope_tags
     scope_resource = scope.resource
     unless scope_resource.nil? || scope_resource.equal?(self)
-      merge_tags(scope_resource)
+      merge_tags_from(scope_resource)
     end
   end
 

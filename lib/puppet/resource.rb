@@ -63,7 +63,7 @@ class Puppet::Resource
     end
 
     if tags = data['tags']
-      tags.each { |t| tag(t) }
+      tag(*tags)
     end
 
     ATTRIBUTES.each do |a|

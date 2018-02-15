@@ -381,7 +381,7 @@ class Puppet::Util::Log
   def source=(source)
     if defined?(Puppet::Type) && source.is_a?(Puppet::Type)
       @source = source.path
-      source.tags.each { |t| tag(t) }
+      merge_tags_from(source)
       self.file = source.file
       self.line = source.line
     else

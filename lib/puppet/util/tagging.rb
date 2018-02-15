@@ -87,7 +87,7 @@ module Puppet::Util::Tagging
 
   # Merge tags from a tagged instance with no attempts to split, downcase
   # or verify the tags
-  def merge_tags(tag_source)
+  def merge_tags_from(tag_source)
     @tags ||= new_tags
     tag_source.merge_into(@tags)
   end
