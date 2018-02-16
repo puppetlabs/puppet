@@ -127,15 +127,13 @@ module Puppet
         case platform
         when /^(fedora|el|centos)-(\d+)-(.+)$/
           variant = (($1 == 'centos') ? 'el' : $1)
-          fedora_prefix = ((variant == 'fedora') ? 'f' : '')
           version = $2
           arch = $3
 
-          repo_filename = "pl-%s%s-%s-%s%s-%s.repo" % [
+          repo_filename = "pl-%s%s-%s-%s-%s.repo" % [
             project,
             sha ? '-' + sha : '',
             variant,
-            fedora_prefix,
             version,
             arch
           ]
