@@ -139,10 +139,12 @@ module Puppet::Util::Windows::ADSI
       return account, domain
     end
 
+    # returns Puppet::Util::Windows::SID::Principal[]
+    # may contain objects that represent unresolvable SIDs
     def get_sids(adsi_child_collection)
       sids = []
       adsi_child_collection.each do |m|
-        sids << Puppet::Util::Windows::SID.octet_string_to_sid_object(m.objectSID)
+        sids << Puppet::Util::Windows::SID.ads_to_sid_object(m)
       end
 
       sids
@@ -463,13 +465,13 @@ module Puppet::Util::Windows::ADSI
       end
     end
 
+    # returns Puppet::Util::Windows::SID::Principal[]
+    # may contain objects that represent unresolvable SIDs
+    # qualified account names are returned by calling #domain_account
     def members
-      member_sids.map(&:domain_account)
-    end
-
-    def member_sids
       self.class.get_sids(native_group.Members)
     end
+    alias member_sids members
 
     def set_members(desired_members, inclusive = true)
       return if desired_members.nil?

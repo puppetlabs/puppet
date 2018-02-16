@@ -97,6 +97,37 @@ module Puppet::Util::Windows
     end
     module_function :octet_string_to_sid_object
 
+    # Converts a COM instance of IAdsUser or IAdsGroup to a SID object,
+    # Raises an Error for nil or an object without an objectSID / Name property.
+    # This method returns a SID::Principal with the account, domain, SID, etc
+    # This method will return instances even when the SID is unresolvable, as
+    # may be the case when domain users have been added to local groups, but
+    # removed from the domain
+    def ads_to_sid_object(ads_object)
+      if !ads_object || !ads_object.respond_to?(:ole_respond_to?) ||
+        !ads_object.ole_respond_to?(:objectSID) || !ads_object.ole_respond_to?(:Name)
+        raise Puppet::Error.new("ads_object must be an IAdsUser or IAdsGroup instance")
+      end
+      octet_string_to_sid_object(ads_object.objectSID)
+    rescue Puppet::Util::Windows::Error => e
+      # SID could not be mapped but is a valid SID representation that matches Name
+      unresolvable = e.code == ERROR_NONE_MAPPED &&
+        valid_sid?(ads_object.Name) &&
+        octet_string_to_sid_string(ads_object.objectSID) == ads_object.Name
+
+      raise if !unresolvable
+
+      Principal.new(
+        ads_object.Name + " (unresolvable)", # account
+        ads_object.objectSID, # sid_bytes
+        ads_object.Name, # sid string
+        nil, #domain
+        # https://msdn.microsoft.com/en-us/library/cc245534.aspx?f=255&MSPPError=-2147217396
+        # Indicates that the type of object could not be determined. For example, no object with that SID exists.
+        :SidTypeUnknown)
+    end
+    module_function :ads_to_sid_object
+
     # Convert a SID string, e.g. "S-1-5-32-544" to a name,
     # e.g. 'BUILTIN\Administrators'. Returns nil if an account
     # for that SID does not exist.
@@ -192,6 +223,19 @@ module Puppet::Util::Windows
       GetLengthSid(sid_ptr)
     end
     module_function :get_length_sid
+
+    private
+
+    def self.octet_string_to_sid_string(sid_bytes)
+      sid_string = nil
+
+      FFI::MemoryPointer.new(:byte, sid_bytes.length) do |sid_ptr|
+        sid_ptr.write_array_of_uchar(sid_bytes)
+        sid_string = Puppet::Util::Windows::SID.sid_ptr_to_string(sid_ptr)
+      end
+
+      sid_string
+    end
 
     ffi_convention :stdcall
 

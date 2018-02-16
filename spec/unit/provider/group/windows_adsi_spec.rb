@@ -48,15 +48,28 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
     describe "#members_insync?" do
       it "should return true for same lists of members" do
-        expect(provider.members_insync?(['user1', 'user2'], ['user1', 'user2'])).to be_truthy
+        current = [
+          Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+          Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+        ]
+        expect(provider.members_insync?(current, ['user1', 'user2'])).to be_truthy
       end
 
       it "should return true for same lists of unordered members" do
-        expect(provider.members_insync?(['user1', 'user2'], ['user2', 'user1'])).to be_truthy
+        current = [
+          Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+          Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+        ]
+        expect(provider.members_insync?(current, ['user2', 'user1'])).to be_truthy
       end
 
       it "should return true for same lists of members irrespective of duplicates" do
-        expect(provider.members_insync?(['user1', 'user2', 'user2'], ['user2', 'user1', 'user1'])).to be_truthy
+        current = [
+          Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+          Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+          Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+        ]
+        expect(provider.members_insync?(current, ['user2', 'user1', 'user1'])).to be_truthy
       end
 
       it "should return true when current and should members are empty lists" do
@@ -77,7 +90,12 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         end
 
         it "should return true when current and should contain the same users in a different order" do
-          expect(provider.members_insync?(['user1', 'user2', 'user3'], ['user3', 'user1', 'user2'])).to be_truthy
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+            Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+            Puppet::Util::Windows::SID.name_to_sid_object('user3'),
+          ]
+          expect(provider.members_insync?(current, ['user3', 'user1', 'user2'])).to be_truthy
         end
 
         it "should return false when current is nil" do
@@ -85,15 +103,24 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         end
 
         it "should return false when should is nil" do
-          expect(provider.members_insync?(['user1'], nil)).to be_falsey
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+          ]
+          expect(provider.members_insync?(current, nil)).to be_falsey
         end
 
         it "should return false when current contains different users than should" do
-          expect(provider.members_insync?(['user1'], ['user2'])).to be_falsey
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+          ]
+          expect(provider.members_insync?(current, ['user2'])).to be_falsey
         end
 
         it "should return false when current contains members and should is empty" do
-          expect(provider.members_insync?(['user1'], [])).to be_falsey
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+          ]
+          expect(provider.members_insync?(current, [])).to be_falsey
         end
 
         it "should return false when current is empty and should contains members" do
@@ -101,11 +128,19 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         end
 
         it "should return false when should user(s) are not the only items in the current" do
-          expect(provider.members_insync?(['user1', 'user2'], ['user1'])).to be_falsey
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+            Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+          ]
+          expect(provider.members_insync?(current, ['user1'])).to be_falsey
         end
 
         it "should return false when current user(s) is not empty and should is an empty list" do
-          expect(provider.members_insync?(['user1','user2'], [])).to be_falsey
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+            Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+          ]
+          expect(provider.members_insync?(current, [])).to be_falsey
         end
       end
 
@@ -120,15 +155,24 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         end
 
         it "should return true when should is nil" do
-          expect(provider.members_insync?(['user1'], nil)).to be_truthy
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+          ]
+          expect(provider.members_insync?(current, nil)).to be_truthy
         end
 
         it "should return false when current contains different users than should" do
-          expect(provider.members_insync?(['user1'], ['user2'])).to be_falsey
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+          ]
+          expect(provider.members_insync?(current, ['user2'])).to be_falsey
         end
 
         it "should return true when current contains members and should is empty" do
-          expect(provider.members_insync?(['user1'], [])).to be_truthy
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+          ]
+          expect(provider.members_insync?(current, [])).to be_truthy
         end
 
         it "should return false when current is empty and should contains members" do
@@ -136,15 +180,28 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         end
 
         it "should return true when current user(s) contains at least the should list" do
-          expect(provider.members_insync?(['user1','user2'], ['user1'])).to be_truthy
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+            Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+          ]
+          expect(provider.members_insync?(current, ['user1'])).to be_truthy
         end
 
         it "should return true when current user(s) is not empty and should is an empty list" do
-          expect(provider.members_insync?(['user1','user2'], [])).to be_truthy
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+            Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+          ]
+          expect(provider.members_insync?(current, [])).to be_truthy
         end
 
         it "should return true when current user(s) contains at least the should list, even unordered" do
-          expect(provider.members_insync?(['user3','user1','user2'], ['user2','user1'])).to be_truthy
+          current = [
+            Puppet::Util::Windows::SID.name_to_sid_object('user3'),
+            Puppet::Util::Windows::SID.name_to_sid_object('user1'),
+            Puppet::Util::Windows::SID.name_to_sid_object('user2'),
+          ]
+          expect(provider.members_insync?(current, ['user2','user1'])).to be_truthy
         end
       end
     end

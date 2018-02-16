@@ -162,6 +162,77 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
   end
 
+  context "#ads_to_sid_object" do
+    it "should raise an error for non-WIN32OLE input" do
+      expect {
+        subject.ads_to_sid_object(stub('WIN32OLE', { :Name => 'foo' }))
+      }.to raise_error(Puppet::Error, /ads_object must be an IAdsUser or IAdsGroup instance/)
+    end
+
+    it "should raise an error for an empty byte array in the objectSID property" do
+      expect {
+        subject.ads_to_sid_object(stub('WIN32OLE', { :objectSID => [], :Name => '', :ole_respond_to? => true }))
+      }.to raise_error(Puppet::Error, /Octet string must be an array of bytes/)
+    end
+
+    it "should raise an error for a malformed byte array" do
+      expect {
+        invalid_octet = [2]
+        subject.ads_to_sid_object(stub('WIN32OLE', { :objectSID => invalid_octet, :Name => '', :ole_respond_to? => true }))
+      }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Util::Windows::Error)
+        expect(error.code).to eq(87) # ERROR_INVALID_PARAMETER
+      end
+    end
+
+    it "should raise an error when a valid byte array for SID is unresolvable and its Name does not match" do
+      expect {
+        # S-1-1-1 is a valid SID that will not resolve
+        valid_octet_invalid_user = [1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0]
+        subject.ads_to_sid_object(stub('WIN32OLE', { :objectSID => valid_octet_invalid_user, :Name => unknown_name, :ole_respond_to? => true }))
+      }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Util::Windows::Error)
+        expect(error.code).to eq(1332) # ERROR_NONE_MAPPED
+      end
+    end
+
+    it "should return a Principal object even when the SID is unresolvable, as long as the Name matches" do
+      # S-1-1-1 is a valid SID that will not resolve
+      valid_octet_invalid_user = [1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0]
+      unresolvable_user = stub('WIN32OLE', { :objectSID => valid_octet_invalid_user, :Name => 'S-1-1-1', :ole_respond_to? => true })
+      principal = subject.ads_to_sid_object(unresolvable_user)
+
+      expect(principal).to be_an_instance_of(Puppet::Util::Windows::SID::Principal)
+      expect(principal.account).to eq('S-1-1-1 (unresolvable)')
+      expect(principal.domain).to eq(nil)
+      expect(principal.domain_account).to eq('S-1-1-1 (unresolvable)')
+      expect(principal.sid).to eq('S-1-1-1')
+      expect(principal.sid_bytes).to eq(valid_octet_invalid_user)
+      expect(principal.account_type).to eq(:SidTypeUnknown)
+    end
+
+    it "should return a Puppet::Util::Windows::SID::Principal instance for any valid sid" do
+      system_bytes = [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0]
+      adsuser = stub('WIN32OLE', { :objectSID => system_bytes, :Name => 'SYSTEM', :ole_respond_to? => true })
+      expect(subject.ads_to_sid_object(adsuser)).to be_an_instance_of(Puppet::Util::Windows::SID::Principal)
+    end
+
+    it "should properly convert an array of bytes for a well-known non-localized SID, ignoring the Name from the WIN32OLE object" do
+      bytes = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      adsuser = stub('WIN32OLE', { :objectSID => bytes, :Name => unknown_name, :ole_respond_to? => true })
+      converted = subject.ads_to_sid_object(adsuser)
+
+      expect(converted).to be_an_instance_of Puppet::Util::Windows::SID::Principal
+      expect(converted.sid_bytes).to eq(bytes)
+      expect(converted.sid).to eq(null_sid)
+
+      # carefully select a SID here that is not localized on international Windows
+      expect(converted.account).to eq('NULL SID')
+      # garbage name supplied does not carry forward as SID is looked up again
+      expect(converted.account).to_not eq(adsuser.Name)
+    end
+  end
+
   context "#sid_to_name" do
     it "should return nil if given a sid for an account that doesn't exist" do
       expect(subject.sid_to_name(unknown_sid)).to be_nil

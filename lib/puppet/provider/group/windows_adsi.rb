@@ -24,7 +24,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
     # since the default array_matching comparison is not commutative
 
     # dupes automatically weeded out when hashes built
-    current_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current)
+    current_users = Hash[ current.map { |u| [ u.sid, u ] } ]
     specified_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
 
     current_sids = current_users.keys.to_a
