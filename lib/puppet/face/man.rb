@@ -60,7 +60,9 @@ Puppet::Face.define(:man, '0.0.1') do
         return Puppet::Application[manpage].help
       end
 
-      @face = Puppet::Face[manpage.to_sym, :current]
+      # set 'face' as it's used in the erb processing.
+      face = Puppet::Face[manpage.to_sym, :current]
+      _face = face # suppress the unused variable warning
 
       file = (Pathname(__FILE__).dirname + "help" + 'man.erb')
       erb = ERB.new(file.read, nil, '-')
@@ -107,11 +109,15 @@ Puppet::Face.define(:man, '0.0.1') do
   end
 
   def valid_command_line?(args)
-    # not too many arguments and not
-    # "puppet man man man" (it's the default case, so of course, remove one of the "man"'s from the arg list..., thanks face_base)
-    args.length <= 1 && !(args.length == 1 && args.first == "man")
+    # not too many arguments
+    # This allows the command line case of "puppet man man man" to not throw an error because face_based eats
+    # one of the "man"'s, which means this command line ends up looking like this in the code: 'manface.man("man")'
+    # However when we generate manpages, we do the same call. So we have to allow it and generate the real manpage.
+    args.length <= 1
   end
 
+  # by default, if you ask for the man manpage "puppet man man" face_base removes the "man" from the args that we
+  # are passed, so we get nil instead
   def default_case?(manpage)
     manpage.nil?
   end
