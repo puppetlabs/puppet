@@ -3,6 +3,10 @@ require 'spec_helper'
 require 'puppet/face'
 
 describe Puppet::Face[:man, '0.0.1'] do
+  it 'should be deprecated' do
+    expect(subject.deprecated?).to be_truthy
+  end
+
   it 'has a man action' do
     expect(subject).to be_action(:man)
   end
