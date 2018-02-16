@@ -23,6 +23,7 @@ module Puppet
     require 'semantic_puppet'
 
     require 'puppet/pops/patterns'
+    require 'puppet/pops/pn'
     require 'puppet/pops/utils'
     require 'puppet/pops/puppet_stack'
 
