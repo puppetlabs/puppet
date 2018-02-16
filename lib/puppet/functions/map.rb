@@ -123,7 +123,7 @@ Puppet::Functions.create_function(:map) do
     begin
       loop do
         result << yield(index, enum.next)
-        index = index +1
+        index = index + 1
       end
     rescue StopIteration
     end
