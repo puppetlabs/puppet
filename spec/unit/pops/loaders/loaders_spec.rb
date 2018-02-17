@@ -194,7 +194,7 @@ describe 'loaders' do
 
     def compile_and_get_notifications(code)
       Puppet[:code] = code
-      catalog = block_given? ? compiler.compile { |catalog| yield(compiler.topscope); catalog } : compiler.compile
+      catalog = block_given? ? compiler.compile { |c| yield(compiler.topscope); c } : compiler.compile
       catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
     end
 

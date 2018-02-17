@@ -691,7 +691,7 @@ describe 'Puppet Pal' do
         end.to raise_error(/A block must be given to 'in_tmp_environment/)
       end
 
-      it 'errors if an env_name is given and is not a String[1]' do |ctx|
+      it 'errors if an env_name is given and is not a String[1]' do
         expect do
           Puppet::Pal.in_tmp_environment('', modulepath: modulepath, facts: node_facts) { |ctx| }
         end.to raise_error(/temporary environment name has wrong type/)
@@ -874,7 +874,7 @@ describe 'Puppet Pal' do
         end.to raise_error(/The environment directory '.*' does not exist/)
       end
 
-      it 'errors if an env_name is given and is not a String[1]' do |ctx|
+      it 'errors if an env_name is given and is not a String[1]' do
         expect do
           Puppet::Pal.in_environment('', env_dir: testing_env_dir, facts: node_facts)  { |ctx| }
         end.to raise_error(/env_name has wrong type/)

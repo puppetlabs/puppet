@@ -131,7 +131,7 @@ private
     value = string.sub(/\{\s*([^}]+)\s*\}/) do
       params = $1
       params.split(/\s*,\s*/).each do |str|
-        if str =~ /^\s*(\w+)\s*=\s*([\w\d]+)\s*$/
+        if str =~ /^\s*(\w+)\s*=\s*([\w]+)\s*$/
           param, value = $1.intern, $2
           result[param] = value
           unless [:owner, :mode, :group].include?(param)

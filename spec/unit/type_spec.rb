@@ -276,7 +276,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     it "should have documentation for the 'provider' parameter if there are providers" do
       @type.provide(:test_provider)
-      expect(@type.paramdoc(:provider)).to match(/`provider_test_type`[\s\r]+resource/)
+      expect(@type.paramdoc(:provider)).to match(/`provider_test_type`[\s]+resource/)
     end
 
     it "should not have documentation for the 'provider' parameter if there are no providers" do

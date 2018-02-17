@@ -390,8 +390,9 @@ describe Puppet::Type.type(:file) do
   describe "#mark_children_for_purging" do
     it "should set each child's ensure to absent" do
       paths = %w[foo bar baz]
-      children = paths.inject({}) do |children,child|
-        children.merge child => described_class.new(:path => File.join(path, child), :ensure => :present)
+      children = {}
+      paths.each do |child|
+        children[child] = described_class.new(:path => File.join(path, child), :ensure => :present)
       end
 
       file.mark_children_for_purging(children)
