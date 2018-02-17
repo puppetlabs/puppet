@@ -74,6 +74,10 @@ module Puppet
       #   @return [String] The class name of `@real_resource`
       attr_reader :resource_type
 
+      # @!attribute [rw] provider_used
+      #   @return [String] The class name of the provider used for the resource
+      attr_accessor :provider_used
+
       # @!attribute [r] title
       #   @return [String] The title of `@real_resource`
       attr_reader :title
@@ -167,11 +171,13 @@ module Puppet
         @time = Time.now
         @events = []
         @resource_type = resource.type.to_s.capitalize
+        @provider_used = resource.provider.class.name.to_s unless resource.provider.nil?
         @title = resource.title
       end
 
       def initialize_from_hash(data)
         @resource_type = data['resource_type']
+        @provider_used = data['provider_used']
         @title = data['title']
         @resource = data['resource']
         @containment_path = data['containment_path']
@@ -201,6 +207,7 @@ module Puppet
           'line' => @line,
           'resource' => @resource,
           'resource_type' => @resource_type,
+          'provider_used' => @provider_used,
           'containment_path' => @containment_path,
           'evaluation_time' => @evaluation_time,
           'tags' => @tags.to_a,

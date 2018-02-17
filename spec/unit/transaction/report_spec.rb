@@ -613,6 +613,7 @@ describe Puppet::Transaction::Report do
       expect(status.line).to eq(expected.line)
       expect(status.resource).to eq(expected.resource)
       expect(status.resource_type).to eq(expected.resource_type)
+      expect(status.provider_used).to eq(expected.provider_used)
       expect(status.containment_path).to eq(expected.containment_path)
       expect(status.evaluation_time).to eq(expected.evaluation_time)
       expect(status.tags).to eq(expected.tags)
