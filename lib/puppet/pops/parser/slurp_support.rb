@@ -12,6 +12,7 @@ module SlurpSupport
   include LexerSupport
 
   SLURP_SQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*[']/
+  SLURP_BT_PATTERN  = /`/
   SLURP_DQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*(["]|[$]\{?)/
   SLURP_UQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*([$]\{?|\z)/
   # unquoted, no escapes
@@ -19,6 +20,7 @@ module SlurpSupport
   SLURP_ALL_PATTERN = /.*(\z)/m
   SQ_ESCAPES = %w{ \\ ' }
   DQ_ESCAPES = %w{ \\  $ ' " r n t s u}+["\r\n", "\n"]
+  DQ_ESCAPES_WITH_HEX = %w{ \\  $ ' " r n t s u x}+["\r\n", "\n"]
   UQ_ESCAPES = %w{ \\  $ r n t s u}+["\r\n", "\n"]
 
   def slurp_sqstring
@@ -29,10 +31,18 @@ module SlurpSupport
     str[0..-2] # strip closing "'" from result
   end
 
+  def slurp_btstring
+    # skip the leading `
+    @scanner.pos += 1
+    str = @scanner.scan_until(SLURP_BT_PATTERN)
+    lex_error(Issues::UNCLOSED_QUOTE, :after => "\"`\"", :followed_by => followed_by) unless str
+    str[0..-2] # strip closing "`" from result
+  end
+
   def slurp_dqstring
     scn = @scanner
     last = scn.matched
-    str = slurp(scn, SLURP_DQ_PATTERN, DQ_ESCAPES, false)
+    str = slurp(scn, SLURP_DQ_PATTERN, @handle_hex_escapes ?  DQ_ESCAPES_WITH_HEX : DQ_ESCAPES, false)
     unless str
       lex_error(Issues::UNCLOSED_QUOTE, :after => format_quote(last), :followed_by => followed_by)
     end
@@ -75,6 +85,13 @@ module SlurpSupport
     if escapes.include?('u')
       # gsub must be repeated to cater for adjacent escapes
       while(str.gsub!(/((?:[^\\]|^)(?:[\\]{2})*)\\u(?:([\da-fA-F]{4})|\{([\da-fA-F]{1,6})\})/m) { $1 + [($2 || $3).hex].pack("U") })
+        # empty block. Everything happens in the gsub block
+      end
+    end
+
+    if @handle_hex_escapes && escapes.include?('x')
+      # gsub must be repeated to cater for adjacent escapes
+      while(str.gsub!(/((?:[^\\]|^)(?:[\\]{2})*)\\x([\da-fA-F]{2})/m) { $1 + [$2.hex].pack("U") })
         # empty block. Everything happens in the gsub block
       end
     end

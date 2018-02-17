@@ -4,8 +4,8 @@ require 'puppet/pops'
 require 'puppet/pops/parser/lexer2'
 
 module EgrammarLexer2Spec
-  def tokens_scanned_from(s)
-    lexer = Puppet::Pops::Parser::Lexer2.new
+  def tokens_scanned_from(s, options = Puppet::Pops::EMPTY_HASH)
+    lexer = Puppet::Pops::Parser::Lexer2.new(options)
     lexer.string = s
     tokens = lexer.fullscan[0..-2]
   end
@@ -193,6 +193,25 @@ describe 'Lexer2' do
     end
   end
 
+  context 'with option :backtick_strings' do
+    { '``' => '',
+      '`a`' => 'a',
+      '`\t`' => '\t',
+      '`\r`' => '\r',
+      '`\n`' => '\n',
+      <<-BT.unindent => "x\ny\\n\nz\n"
+      `x
+      y\\n
+      z
+      `
+      BT
+    }.each do |source, expected|
+      it "should lex a backtick quoted STRING on the form #{source}" do
+        expect(tokens_scanned_from(source, :backtick_strings => true)).to match_tokens2([:STRING, expected])
+      end
+    end
+  end
+
   { "''"      => '',
     "'a'"     => 'a',
     "'a\\'b'" =>"a'b",
@@ -283,6 +302,12 @@ describe 'Lexer2' do
   }.each do |source, expected|
     it "should lex interpolation including false starts #{source}" do
       expect(tokens_scanned_from(source)).to match_tokens2([:STRING, expected])
+    end
+  end
+
+  context 'with option :hex_escapes' do
+    it 'should recognize \xNN as an hexadecimal codepoint' do
+      expect(tokens_scanned_from('"x\x09y\x0az\x20"', :hex_escapes => true)).to match_tokens2([:STRING, "x\ty\nz "])
     end
   end
 
