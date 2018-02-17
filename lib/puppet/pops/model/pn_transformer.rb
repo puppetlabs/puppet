@@ -7,8 +7,12 @@ class PNTransformer
     @visitor ||= Visitor.new(nil, 'transform', 0, 0)
   end
 
+  def self.singleton
+    @singleton ||= new(visitor)
+  end
+
   def self.transform(ast)
-    new(visitor).transform(ast)
+    singleton.transform(ast)
   end
 
   def initialize(visitor)

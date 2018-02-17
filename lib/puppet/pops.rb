@@ -23,7 +23,6 @@ module Puppet
     require 'semantic_puppet'
 
     require 'puppet/pops/patterns'
-    require 'puppet/pops/pn'
     require 'puppet/pops/utils'
     require 'puppet/pops/puppet_stack'
 
@@ -53,7 +52,6 @@ module Puppet
       require 'puppet/pops/model/ast'
       require 'puppet/pops/model/tree_dumper'
       require 'puppet/pops/model/ast_transformer'
-      require 'puppet/pops/model/pn_transformer'
       require 'puppet/pops/model/factory'
       require 'puppet/pops/model/model_tree_dumper'
       require 'puppet/pops/model/model_label_provider'

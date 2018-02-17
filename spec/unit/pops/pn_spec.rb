@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
+require 'puppet/pops/pn'
 
 module Puppet::Pops::PN
 

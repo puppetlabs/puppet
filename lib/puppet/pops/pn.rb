@@ -14,6 +14,10 @@ module PN
     [self]
   end
 
+  def ==(o)
+    eql?(o)
+  end
+
   def to_s
     s = ''
     format(s)
@@ -60,7 +64,8 @@ module PN
 
   class Call
     include PN
-    attr_reader :name
+    attr_reader :name, :elements
+
     def initialize(name, *elements)
       @name = name
       @elements = elements
@@ -72,6 +77,10 @@ module PN
 
     def as_parameters
       List.new(@elements)
+    end
+
+    def eql?(o)
+      o.is_a?(Call) && @name == o.name && @elements == o.elements
     end
 
     def format(b)
@@ -94,10 +103,18 @@ module PN
       @key = key
       @value = value
     end
+
+    def eql?(o)
+      o.is_a?(Entry) && @key == o.key && @value == o.value
+    end
+
+    alias == eql?
   end
 
   class List
     include PN
+    attr_reader :elements
+
     def initialize(elements)
       @elements = elements
     end
@@ -108,6 +125,10 @@ module PN
 
     def as_parameters
       @elements
+    end
+
+    def eql?(o)
+      o.is_a?(List) && @elements == o.elements
     end
 
     def format(b)
@@ -124,6 +145,7 @@ module PN
   class Literal
     include PN
     attr_reader :value
+
     def initialize(value)
       @value = value
     end
@@ -138,6 +160,10 @@ module PN
       end
     end
 
+    def eql?(o)
+      o.is_a?(Literal) && @value == o.value
+    end
+
     def to_data
       @value
     end
@@ -145,9 +171,15 @@ module PN
 
   class Map
     include PN
+    attr_reader :entries
+
     def initialize(entries)
       entries.each { |e| pnError("key #{e.key} does not conform to pattern /#{KEY_PATTERN.source}/)") unless e.key =~ KEY_PATTERN }
       @entries = entries
+    end
+
+    def eql?(o)
+      o.is_a?(Map) && @entries == o.entries
     end
 
     def format(b)
@@ -169,3 +201,6 @@ module PN
   end
 end
 end
+
+require_relative 'model/pn_transformer'
+require_relative 'parser/pn_parser'
