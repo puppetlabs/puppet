@@ -184,10 +184,8 @@ class Lexer2
   attr_reader :locator
 
   # @param [Hash] options
-  # @option options [Boolean] :backtick_strings `true` if the should recognize strings quoted using the backtick character
-  # @option options [Boolean] :hex_escapes `true` if the should recognize \xNN and \XNN constructs in double qouted strings
+  # @option options [Boolean] :backtick_strings `true` if the lexer should recognize strings quoted using the backtick character
   def initialize(options = EMPTY_HASH)
-    @handle_hex_escapes = options[:hex_escapes]
     @selector = {
       '.' =>  lambda { emit(TOKEN_DOT, @scanner.pos) },
       ',' => lambda {  emit(TOKEN_COMMA, @scanner.pos) },

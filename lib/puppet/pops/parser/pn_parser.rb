@@ -40,7 +40,7 @@ class PNParser
     @locator = locator
     @offset = offset
     @text = text
-    @codepoints = text.codepoints.freeze
+    @codepoints = text.codepoints.to_a.freeze
     @pos = 0
     @token = TOKEN_END
     @token_value = nil
@@ -48,7 +48,7 @@ class PNParser
     parse_next
   end
 
-  :private
+  private
 
   def parse_next
     case @token
@@ -126,7 +126,7 @@ class PNParser
     elements
   end
 
-  # All methods below belong to the lexer
+  # All methods below belong to the PN lexer
   def self.char_types
     unless instance_variable_defined?(:@char_types)
       @char_types = Array.new(0x80, TYPE_IDENTIFIER)

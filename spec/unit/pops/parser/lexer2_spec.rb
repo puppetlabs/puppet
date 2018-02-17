@@ -305,12 +305,6 @@ describe 'Lexer2' do
     end
   end
 
-  context 'with option :hex_escapes' do
-    it 'should recognize \xNN as an hexadecimal codepoint' do
-      expect(tokens_scanned_from('"x\x09y\x0az\x20"', :hex_escapes => true)).to match_tokens2([:STRING, "x\ty\nz "])
-    end
-  end
-
   it "differentiates between foo[x] and foo [x] (whitespace)" do
     expect(tokens_scanned_from("$a[1]")).to match_tokens2(:VARIABLE, :LBRACK, :NUMBER, :RBRACK)
     expect(tokens_scanned_from("$a [1]")).to match_tokens2(:VARIABLE, :LISTSTART, :NUMBER, :RBRACK)
