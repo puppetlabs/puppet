@@ -399,6 +399,9 @@ class Puppet::Transaction::Report
   #
   def exit_status
     status = 0
+    if @noop && @metrics["resources"] && @metrics["resources"]["out_of_sync"]
+      status |= 2 if @metrics["resources"]["out_of_sync"] > 0
+    end
     if @metrics["changes"] && @metrics["changes"][TOTAL] &&
         @metrics["resources"] && @metrics["resources"]["failed"] &&
         @metrics["resources"]["failed_to_restart"]

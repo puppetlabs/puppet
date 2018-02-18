@@ -277,6 +277,32 @@ end
   end
 
   context "handles errors" do
+    let (:testfile) { tmpfile('test123') }
+    it 'returns 2 when resources changed and --detailed-exitcodes and --noop are specified' do
+      Puppet.initialize_settings([])
+      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => ['--noop', '--detailed-exitcodes']))
+      apply.options[:code] = "file{ '#{testfile}': ensure => present }"
+      expect { apply.run }.to exit_with(2)
+    end
+    it 'returns 0 when no resources changed and --detailed-exitcodes and --noop are specified' do
+      Puppet.initialize_settings([])
+      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => ['--noop', '--detailed-exitcodes']))
+      apply.options[:code] = ""
+      expect { apply.run }.to exit_with(0)
+    end
+    it 'returns 0 when no resources changed and --detailed-exitcodes is specified' do
+      Puppet.initialize_settings([])
+      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => ['--detailed-exitcodes']))
+      apply.options[:code] = ""
+      expect { apply.run }.to exit_with(0)
+    end
+    it 'returns 2 when resources changed and --detailed-exitcodes is specified' do
+      Puppet.initialize_settings([])
+      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => ['--detailed-exitcodes']))
+      apply.options[:code] = "file{ '#{testfile}': ensure => present }"
+      expect { apply.run }.to exit_with(2)
+    end
+
     it "logs compile errors once" do
       Puppet.initialize_settings([])
       apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => []))
