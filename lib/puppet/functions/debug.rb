@@ -1,4 +1,4 @@
-# Log a message on the server at level debug.
+# Logs a message on the server at level `debug`.
 Puppet::Functions.create_function(:debug, Puppet::Functions::InternalFunction) do
   # @param values The values to log.
   # @return [Undef]
