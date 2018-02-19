@@ -18,12 +18,12 @@
 #
 # @example Using the `any` function with an Array and a one-parameter lambda
 #
-# ~~~ puppet
+# ```puppet
 # # For the array $data, run a lambda that checks if an unknown hash contains those keys
 # $data = ["routers", "servers", "workstations"]
 # $looked_up = lookup('somekey', Hash)
 # notice $data.any |$item| { $looked_up[$item] }
-# ~~~
+# ```
 #
 # Would notice `true` if the looked up hash had a value that is neither `false` nor `undef` for at least
 # one of the keys. That is, it is equivalent to the expression
@@ -34,12 +34,12 @@
 #
 # @example Using the `any` function with a `Hash` and a one-parameter lambda
 #
-# ~~~ puppet
+# ```puppet
 # # For the hash $data, run a lambda using each item as a key-value array.
 # $data = {"rtr" => "Router", "svr" => "Server", "wks" => "Workstation"}
 # $looked_up = lookup('somekey', Hash)
 # notice $data.any |$item| { $looked_up[$item[0]] }
-# ~~~
+# ```
 #
 # Would notice `true` if the looked up hash had a value for one of the wanted key that is
 # neither `false` nor `undef`.
@@ -50,11 +50,11 @@
 #
 # @example Using the `any` function with an array and a two-parameter lambda
 #
-# ~~~ puppet
+# ```puppet
 # # Check if there is an even numbered index that has a non String value
 # $data = [key1, 1, 2, 2]
 # notice $data.any |$index, $value| { $index % 2 == 0 and $value !~ String }
-# ~~~
+# ```
 #
 # Would notice true as the index `2` is even and not a `String`
 #

@@ -7,14 +7,14 @@
 #
 # @example 'convert_to' instead of 'new'
 #
-# ~~~ puppet
+# ```puppet
 #   # using new operator - that is "calling the type" with operator ()
 #   Hash(Array("abc").map |$i,$v| { [$i, $v] })
 #
 #   # using 'convert_to'
 #   "abc".convert_to(Array).map |$i,$v| { [$i, $v] }.convert_to(Hash)
 #
-# ~~~
+# ```
 #
 # @since 5.4.0
 #

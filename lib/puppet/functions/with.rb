@@ -6,7 +6,7 @@
 #
 # @example Using `with`
 #
-# ~~~ puppet
+# ```puppet
 # # Concatenate three strings into a single string formatted as a list.
 # $fruit = with("apples", "oranges", "bananas") |$x, $y, $z| { 
 #   "${x}, ${y}, and ${z}" 
@@ -14,7 +14,7 @@
 # $check_var = $x
 # # $fruit contains "apples, oranges, and bananas"
 # # $check_var is undefined, as the value of $x is local to the lambda.
-# ~~~
+# ```
 #
 # @since 4.0.0
 #

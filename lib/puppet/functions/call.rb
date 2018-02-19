@@ -8,20 +8,20 @@
 #
 # @example Using the `call` function
 #
-# ~~~ puppet
+# ```puppet
 # $a = 'notice'
 # call($a, 'message')
-# ~~~
+# ```
 #
 # @example Using the `call` function with a lambda
 #
-# ~~~ puppet
+# ```puppet
 # $a = 'each'
 # $b = [1,2,3]
 # call($a, $b) |$item| {
 #  notify { $item: }
 # }
-# ~~~
+# ```
 #
 # The `call` function can be used to call either Ruby functions or Puppet language
 # functions.

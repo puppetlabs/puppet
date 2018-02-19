@@ -11,21 +11,21 @@
 #
 # @example Using unique with a String
 #
-# ~~~puppet
+# ```puppet
 # # will produce 'abc'
 # "abcaabb".unique
-# ~~~
+# ```
 #
 # @example Using unique with an Array
 #
-# ~~~puppet
+# ```puppet
 # # will produce ['a', 'b', 'c']
 # ['a', 'b', 'c', 'a', 'a', 'b'].unique
-# ~~~
+# ```
 #
 # @example Using unique with a Hash
 #
-# ~~~puppet
+# ```puppet
 # # will produce { ['a', 'b'] => [10], ['c'] => [20]}
 # {'a' => 10, 'b' => 10, 'c' => 20}.unique
 #
@@ -34,18 +34,18 @@
 #
 # # will produce { 'b' => 10, 'c' => 20 } (use last key with first value)
 # Hash.new({'a' => 10, 'b' => 10, 'c' => 20}.unique.map |$k, $v| { [ $k[-1] , $v[0]] })
-# ~~~
+# ```
 #
 # @example Using unique with an Iterable
 #
-# ~~~
+# ```
 # # will produce [3, 2, 1]
 # [1,2,2,3,3].reverse_each.unique
-# ~~~
+# ```
 #
 # @example Using unique with a lambda
 #
-# ~~~puppet
+# ```puppet
 # # will produce [['sam', 'smith'], ['sue', 'smith']]
 # [['sam', 'smith'], ['sam', 'brown'], ['sue', 'smith']].unique |$x| { $x[0] }
 #
@@ -57,7 +57,7 @@
 #
 # # will produce {[a] => [10], [b, c, d, e] => [11, 12, 100]}
 # {a => 10, b => 11, c => 12, d => 100, e => 11}.unique |$v| { if $v > 10 { big } else { $v } } 
-# ~~~
+# ```
 #
 # Note that for `Hash` the result is slightly different than for the other data types. For those the result contains the
 # *first-found* unique value, but for `Hash` it contains associations from a set of keys to the set of values clustered by the
@@ -70,7 +70,7 @@
 #
 # @example turning a string or array into a hash with index keys
 #
-# ~~~puppet
+# ```puppet
 # # Array ['a', 'b', 'c'] to Hash with index results in
 # # {0 => 'a', 1 => 'b', 2 => 'c'}
 # Hash(['a', 'b', 'c'].map |$i, $v| { [$i, $v]})
@@ -79,7 +79,7 @@
 # # {0 => 'a', 1 => 'b', 2 => 'c'}
 # Hash(Array("abc").map |$i,$v| { [$i, $v]})
 # "abc".to(Array).map |$i,$v| { [$i, $v]}.to(Hash)
-# ~~~
+# ```
 #
 # @since Puppet 5.0.0
 #
