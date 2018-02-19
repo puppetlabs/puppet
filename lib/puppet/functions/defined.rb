@@ -4,13 +4,15 @@
 # being declared or assigned).
 #
 # This function takes at least one string argument, which can be a class name, type name,
-# resource reference, or variable reference of the form `'$name'`.
+# resource reference, or variable reference of the form `'$name'`. (Note that the `$` sign
+# is included in the string which must be in single quotes to prevent the `$` character
+# to be interpreted as interpolation.
 #
 # The `defined` function checks both native and defined types, including types
 # provided by modules. Types and classes are matched by their names. The function matches
 # resource declarations by using resource references.
 #
-# **Examples**: Different types of `defined` function matches
+# @example Different types of `defined` function matches
 #
 # ```puppet
 # # Matching resource types
@@ -21,7 +23,7 @@
 # defined("foo")
 # defined("foo::bar")
 #
-# # Matching variables
+# # Matching variables (note the single quotes)
 # defined('$name')
 #
 # # Matching declared resources
