@@ -25,7 +25,7 @@ require 'hiera/puppet_function'
 #
 # @example Using `hiera`
 #
-# ~~~ yaml
+# ```yaml
 # # Assuming hiera.yaml
 # # :hierarchy:
 # #   - web01.example.com
@@ -44,16 +44,16 @@ require 'hiera/puppet_function'
 #   regular:
 #     - "Iris Jackson"
 #     - "Kelly Lambert"
-# ~~~
+# ```
 #
-# ~~~ puppet
+# ```puppet
 # # Assuming we are not web01.example.com:
 #
 # $users = hiera('users', undef)
 #
 # # $users contains {admins  => ["Edith Franklin", "Ginny Hamilton"],
 # #                  regular => ["Iris Jackson", "Kelly Lambert"]}
-# ~~~
+# ```
 #
 # You can optionally generate the default value with a
 # [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that
@@ -61,7 +61,7 @@ require 'hiera/puppet_function'
 #
 # @example Using `hiera` with a lambda
 #
-# ~~~ puppet
+# ```puppet
 # # Assuming the same Hiera data as the previous example:
 #
 # $users = hiera('users') | $key | { "Key \'${key}\' not found" }
@@ -70,7 +70,7 @@ require 'hiera/puppet_function'
 # #                  regular => ["Iris Jackson", "Kelly Lambert"]}
 # # If hiera couldn't match its key, it would return the lambda result,
 # # "Key 'users' not found".
-# ~~~
+# ```
 #
 # The returned value's data type depends on the types of the results. In the example 
 # above, Hiera matches the 'users' key and returns it as a hash.

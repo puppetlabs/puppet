@@ -12,7 +12,7 @@
 #
 # **Examples**: Different types of `defined` function matches
 #
-# ~~~ puppet
+# ```puppet
 # # Matching resource types
 # defined("file")
 # defined("customtype")
@@ -26,14 +26,14 @@
 #
 # # Matching declared resources
 # defined(File['/tmp/file'])
-# ~~~
+# ```
 #
 # Puppet depends on the configuration's evaluation order when checking whether a resource
 # is declared.
 #
 # @example Importance of evaluation order when using `defined`
 #
-# ~~~ puppet
+# ```puppet
 # # Assign values to $is_defined_before and $is_defined_after using identical `defined`
 # # functions.
 #
@@ -46,7 +46,7 @@
 # $is_defined_after = defined(File['/tmp/file'])
 #
 # # $is_defined_before returns false, but $is_defined_after returns true.
-# ~~~
+# ```
 #
 # This order requirement only refers to evaluation order. The order of resources in the
 # configuration graph (e.g. with `before` or `require`) does not affect the `defined`
@@ -64,7 +64,7 @@
 #
 # @example Matching multiple resources and resources by different types with `defined`
 #
-# ~~~ puppet
+# ```puppet
 # file { "/tmp/file1":
 #   ensure => file,
 # }
@@ -90,7 +90,7 @@
 # defined(Resource['exec','/tmp/file2'])
 # defined(File['/tmp/file3'])
 # defined('$tmp_file2')
-# ~~~
+# ```
 #
 # @since 2.7.0
 # @since 3.6.0 variable reference and future parser types
