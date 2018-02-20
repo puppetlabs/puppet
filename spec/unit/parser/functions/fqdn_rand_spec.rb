@@ -38,6 +38,30 @@ describe "the fqdn_rand function" do
     expect(val1).not_to eql(val2)
   end
 
+  it "should return a specific value with given set of inputs on non-fips enabled host" do
+    Puppet::Util::Platform.stubs(:fips_enabled?).returns false
+
+    expect(fqdn_rand(3000, :host => 'dummy.fqdn.net')).to eql(338)
+  end
+
+  it "should return a specific value with given set of inputs on fips enabled host" do
+    Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+
+    expect(fqdn_rand(3000, :host => 'dummy.fqdn.net')).to eql(278)
+  end
+
+  it "should return a specific value with given seed on a non-fips enabled host" do
+    Puppet::Util::Platform.stubs(:fips_enabled?).returns false
+
+    expect(fqdn_rand(5000, :extra_identifier => ['expensive job 33'])).to eql(3374)
+  end
+
+  it "should return a specific value with given seed on a fips enabled host" do
+    Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+
+    expect(fqdn_rand(5000, :extra_identifier => ['expensive job 33'])).to eql(2389)
+  end
+
   def fqdn_rand(max, args = {})
     host = args[:host] || '127.0.0.1'
     extra = args[:extra_identifier] || []
