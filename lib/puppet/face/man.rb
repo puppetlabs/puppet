@@ -10,8 +10,10 @@ Puppet::Face.define(:man, '0.0.1') do
   summary _("Display Puppet manual pages.")
 
   description <<-EOT
-    This subcommand displays manual pages for all Puppet subcommands. If the
-    `ronn` gem (<https://github.com/rtomayko/ronn/>) is installed on your
+    Please use the command 'puppet help <subcommand>' or the system manpage system
+    'man puppet-<subcommand>' to display information about Puppet subcommands. The
+    deprecated man subcommand displays manual pages for all Puppet subcommands. If
+    the `ronn` gem (<https://github.com/rtomayko/ronn/>) is installed on your
     system, puppet man will display fully-formatted man pages. If `ronn` is not
     available, puppet man will display the raw (but human-readable) source text
     in a pager.
@@ -33,9 +35,13 @@ Puppet::Face.define(:man, '0.0.1') do
       text (e.g. for use in a pipeline), call this action with '--render-as s'.
     EOT
     examples <<-'EOT'
-      View the manual page for a subcommand:
+      View the installed manual page for the subcommand 'config':
 
-      $ puppet man facts
+      $ man puppet-config
+
+      (Deprecated) View the manual page for the subcommand 'config':
+
+      $ puppet man config
     EOT
 
     default
@@ -134,4 +140,6 @@ Puppet::Face.define(:man, '0.0.1') do
         %w{face_base indirection_base}.include? appname
     end
   end
+
+  deprecate
 end
