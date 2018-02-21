@@ -290,7 +290,14 @@ class TypeParser
 
   # @api private
   def loader_from_context(ast, context)
-    Adapters::LoaderAdapter.loader_for_model_object(ast, nil, context)
+    model_loader = Adapters::LoaderAdapter.loader_for_model_object(ast, nil, context)
+    if context.is_a?(PTypeSetType::TypeSetLoader)
+      # Only swap a given TypeSetLoader for another loader when the other loader is different
+      # from the one associated with the TypeSet expression
+      context.model_loader.equal?(model_loader.parent) ? context : model_loader
+    else
+      model_loader
+    end
   end
 
   # @api private
