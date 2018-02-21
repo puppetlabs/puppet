@@ -12,14 +12,14 @@ describe "egrammar parsing resource declarations" do
     ["File", "file"].each do |word|
       it "#{word} { 'title': }" do
         expect(dump(parse("#{word} { 'title': }"))).to eq([
-          "(resource file",
+          "(resource #{word}",
           "  ('title'))"
         ].join("\n"))
       end
 
       it "#{word} { 'title': path => '/somewhere', mode => '0777'}" do
         expect(dump(parse("#{word} { 'title': path => '/somewhere', mode => '0777'}"))).to eq([
-          "(resource file",
+          "(resource #{word}",
           "  ('title'",
           "    (path => '/somewhere')",
           "    (mode => '0777')))"
@@ -28,7 +28,7 @@ describe "egrammar parsing resource declarations" do
 
       it "#{word} { 'title': path => '/somewhere', }" do
         expect(dump(parse("#{word} { 'title': path => '/somewhere', }"))).to eq([
-          "(resource file",
+          "(resource #{word}",
           "  ('title'",
           "    (path => '/somewhere')))"
         ].join("\n"))
@@ -36,21 +36,21 @@ describe "egrammar parsing resource declarations" do
 
       it "#{word} { 'title': , }" do
         expect(dump(parse("#{word} { 'title': , }"))).to eq([
-          "(resource file",
+          "(resource #{word}",
           "  ('title'))"
         ].join("\n"))
       end
 
       it "#{word} { 'title': ; }" do
         expect(dump(parse("#{word} { 'title': ; }"))).to eq([
-          "(resource file",
+          "(resource #{word}",
           "  ('title'))"
         ].join("\n"))
       end
 
       it "#{word} { 'title': ; 'other_title': }" do
         expect(dump(parse("#{word} { 'title': ; 'other_title': }"))).to eq([
-          "(resource file",
+          "(resource #{word}",
           "  ('title')",
           "  ('other_title'))"
         ].join("\n"))
@@ -59,7 +59,7 @@ describe "egrammar parsing resource declarations" do
       # PUP-2898, trailing ';'
       it "#{word} { 'title': ; 'other_title': ; }" do
         expect(dump(parse("#{word} { 'title': ; 'other_title': ; }"))).to eq([
-          "(resource file",
+          "(resource #{word}",
           "  ('title')",
           "  ('other_title'))"
         ].join("\n"))
@@ -67,7 +67,7 @@ describe "egrammar parsing resource declarations" do
 
       it "#{word} { 'title1': path => 'x'; 'title2': path => 'y'}" do
         expect(dump(parse("#{word} { 'title1': path => 'x'; 'title2': path => 'y'}"))).to eq([
-          "(resource file",
+          "(resource #{word}",
           "  ('title1'",
           "    (path => 'x'))",
           "  ('title2'",
@@ -77,7 +77,7 @@ describe "egrammar parsing resource declarations" do
 
       it "#{word} { title: * => {mode => '0777'} }" do
         expect(dump(parse("#{word} { title: * => {mode => '0777'}}"))).to eq([
-          "(resource file",
+          "(resource #{word}",
           "  (title",
           "    (* => ({} (mode '0777')))))"
         ].join("\n"))
@@ -87,19 +87,19 @@ describe "egrammar parsing resource declarations" do
 
   context "When parsing (type based) resource defaults" do
     it "File {  }" do
-      expect(dump(parse("File { }"))).to eq("(resource-defaults file)")
+      expect(dump(parse("File { }"))).to eq("(resource-defaults File)")
     end
 
     it "File { mode => '0777' }" do
       expect(dump(parse("File { mode => '0777'}"))).to eq([
-        "(resource-defaults file",
+        "(resource-defaults File",
         "  (mode => '0777'))"
       ].join("\n"))
     end
 
     it "File { * => {mode => '0777'} } (even if validated to be illegal)" do
       expect(dump(parse("File { * => {mode => '0777'}}"))).to eq([
-        "(resource-defaults file",
+        "(resource-defaults File",
         "  (* => ({} (mode '0777'))))"
       ].join("\n"))
     end
@@ -107,12 +107,12 @@ describe "egrammar parsing resource declarations" do
 
   context "When parsing resource override" do
     it "File['x'] {  }" do
-      expect(dump(parse("File['x'] { }"))).to eq("(override (slice file 'x'))")
+      expect(dump(parse("File['x'] { }"))).to eq("(override (slice File 'x'))")
     end
 
     it "File['x'] { x => 1 }" do
       expect(dump(parse("File['x'] { x => 1}"))).to eq([
-        "(override (slice file 'x')",
+        "(override (slice File 'x')",
         "  (x => 1))"
         ].join("\n"))
     end
@@ -120,14 +120,14 @@ describe "egrammar parsing resource declarations" do
 
     it "File['x', 'y'] { x => 1 }" do
       expect(dump(parse("File['x', 'y'] { x => 1}"))).to eq([
-        "(override (slice file ('x' 'y'))",
+        "(override (slice File ('x' 'y'))",
         "  (x => 1))"
         ].join("\n"))
     end
 
     it "File['x'] { x => 1, y => 2 }" do
       expect(dump(parse("File['x'] { x => 1, y=> 2}"))).to eq([
-        "(override (slice file 'x')",
+        "(override (slice File 'x')",
         "  (x => 1)",
         "  (y => 2))"
         ].join("\n"))
@@ -135,14 +135,14 @@ describe "egrammar parsing resource declarations" do
 
     it "File['x'] { x +> 1 }" do
       expect(dump(parse("File['x'] { x +> 1}"))).to eq([
-        "(override (slice file 'x')",
+        "(override (slice File 'x')",
         "  (x +> 1))"
         ].join("\n"))
     end
 
     it "File['x'] { * => {mode => '0777'} } (even if validated to be illegal)" do
       expect(dump(parse("File['x'] { * => {mode => '0777'}}"))).to eq([
-        "(override (slice file 'x')",
+        "(override (slice File 'x')",
         "  (* => ({} (mode '0777'))))"
       ].join("\n"))
     end
@@ -173,28 +173,28 @@ describe "egrammar parsing resource declarations" do
 
     it "parses global defaults with @ (even if validated to be illegal)" do
       expect(dump(parse("@File { mode => '0777' }"))).to eq([
-        "(virtual-resource-defaults file",
+        "(virtual-resource-defaults File",
         "  (mode => '0777'))"
         ].join("\n"))
     end
 
     it "parses global defaults with @@ (even if validated to be illegal)" do
       expect(dump(parse("@@File { mode => '0777' }"))).to eq([
-        "(exported-resource-defaults file",
+        "(exported-resource-defaults File",
         "  (mode => '0777'))"
         ].join("\n"))
     end
 
     it "parses override with @ (even if validated to be illegal)" do
       expect(dump(parse("@File[foo] { mode => '0777' }"))).to eq([
-        "(virtual-override (slice file foo)",
+        "(virtual-override (slice File foo)",
         "  (mode => '0777'))"
         ].join("\n"))
     end
 
     it "parses override combined with @@ (even if validated to be illegal)" do
       expect(dump(parse("@@File[foo] { mode => '0777' }"))).to eq([
-        "(exported-override (slice file foo)",
+        "(exported-override (slice File foo)",
         "  (mode => '0777'))"
         ].join("\n"))
     end
@@ -253,19 +253,19 @@ describe "egrammar parsing resource declarations" do
 
   context "When parsing Relationships" do
     it "File[a] -> File[b]" do
-      expect(dump(parse("File[a] -> File[b]"))).to eq("(-> (slice file a) (slice file b))")
+      expect(dump(parse("File[a] -> File[b]"))).to eq("(-> (slice File a) (slice File b))")
     end
 
     it "File[a] <- File[b]" do
-      expect(dump(parse("File[a] <- File[b]"))).to eq("(<- (slice file a) (slice file b))")
+      expect(dump(parse("File[a] <- File[b]"))).to eq("(<- (slice File a) (slice File b))")
     end
 
     it "File[a] ~> File[b]" do
-      expect(dump(parse("File[a] ~> File[b]"))).to eq("(~> (slice file a) (slice file b))")
+      expect(dump(parse("File[a] ~> File[b]"))).to eq("(~> (slice File a) (slice File b))")
     end
 
     it "File[a] <~ File[b]" do
-      expect(dump(parse("File[a] <~ File[b]"))).to eq("(<~ (slice file a) (slice file b))")
+      expect(dump(parse("File[a] <~ File[b]"))).to eq("(<~ (slice File a) (slice File b))")
     end
 
     it "Should chain relationships" do
@@ -276,13 +276,13 @@ describe "egrammar parsing resource declarations" do
 
     it "Should chain relationships" do
       expect(dump(parse("File[a] -> File[b] ~> File[c] <- File[d] <~ File[e]"))).to eq(
-      "(<~ (<- (~> (-> (slice file a) (slice file b)) (slice file c)) (slice file d)) (slice file e))"
+      "(<~ (<- (~> (-> (slice File a) (slice File b)) (slice File c)) (slice File d)) (slice File e))"
       )
     end
 
     it "should create relationships between collects" do
       expect(dump(parse("File <| mode == 0644 |> -> File <| mode == 0755 |>"))).to eq(
-      "(-> (collect file\n  (<| |> (== mode 0644))) (collect file\n  (<| |> (== mode 0755))))"
+      "(-> (collect File\n  (<| |> (== mode 0644))) (collect File\n  (<| |> (== mode 0755))))"
       )
     end
   end
@@ -290,38 +290,38 @@ describe "egrammar parsing resource declarations" do
   context "When parsing collection" do
     context "of virtual resources" do
       it "File <| |>" do
-        expect(dump(parse("File <| |>"))).to eq("(collect file\n  (<| |>))")
+        expect(dump(parse("File <| |>"))).to eq("(collect File\n  (<| |>))")
       end
     end
 
     context "of exported resources" do
       it "File <<| |>>" do
-        expect(dump(parse("File <<| |>>"))).to eq("(collect file\n  (<<| |>>))")
+        expect(dump(parse("File <<| |>>"))).to eq("(collect File\n  (<<| |>>))")
       end
     end
 
     context "queries are parsed with correct precedence" do
       it "File <| tag == 'foo' |>" do
-        expect(dump(parse("File <| tag == 'foo' |>"))).to eq("(collect file\n  (<| |> (== tag 'foo')))")
+        expect(dump(parse("File <| tag == 'foo' |>"))).to eq("(collect File\n  (<| |> (== tag 'foo')))")
       end
 
       it "File <| tag == 'foo' and mode != '0777' |>" do
-        expect(dump(parse("File <| tag == 'foo' and mode != '0777' |>"))).to eq("(collect file\n  (<| |> (&& (== tag 'foo') (!= mode '0777'))))")
+        expect(dump(parse("File <| tag == 'foo' and mode != '0777' |>"))).to eq("(collect File\n  (<| |> (&& (== tag 'foo') (!= mode '0777'))))")
       end
 
       it "File <| tag == 'foo' or mode != '0777' |>" do
-        expect(dump(parse("File <| tag == 'foo' or mode != '0777' |>"))).to eq("(collect file\n  (<| |> (|| (== tag 'foo') (!= mode '0777'))))")
+        expect(dump(parse("File <| tag == 'foo' or mode != '0777' |>"))).to eq("(collect File\n  (<| |> (|| (== tag 'foo') (!= mode '0777'))))")
       end
 
       it "File <| tag == 'foo' or tag == 'bar' and mode != '0777' |>" do
         expect(dump(parse("File <| tag == 'foo' or tag == 'bar' and mode != '0777' |>"))).to eq(
-        "(collect file\n  (<| |> (|| (== tag 'foo') (&& (== tag 'bar') (!= mode '0777')))))"
+        "(collect File\n  (<| |> (|| (== tag 'foo') (&& (== tag 'bar') (!= mode '0777')))))"
         )
       end
 
       it "File <| (tag == 'foo' or tag == 'bar') and mode != '0777' |>" do
         expect(dump(parse("File <| (tag == 'foo' or tag == 'bar') and mode != '0777' |>"))).to eq(
-        "(collect file\n  (<| |> (&& (|| (== tag 'foo') (== tag 'bar')) (!= mode '0777'))))"
+        "(collect File\n  (<| |> (&& (|| (== tag 'foo') (== tag 'bar')) (!= mode '0777'))))"
         )
       end
     end
