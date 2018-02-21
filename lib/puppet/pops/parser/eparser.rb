@@ -2543,7 +2543,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 524)
 module_eval(<<'.,.,', 'egrammar.ra', 531)
   def _reduce_154(val, _values, result)
         result = Factory.CAPABILITY_MAPPING(val[1][:value],
-                                        Factory.QNAME(classname(val[0][:value])),
+                                        Factory.QREF(classname(val[0][:value])),
                                         classname(val[2][:value]), val[4])
     loc result, val[0], val[6]
     add_mapping(result)
@@ -3310,6 +3310,6 @@ def _reduce_none(val, _values, result)
 end
 
       end   # class Parser
-    end   # module Parser
-  end   # module Pops
-end   # module Puppet
+      end   # module Parser
+    end   # module Pops
+  end   # module Puppet

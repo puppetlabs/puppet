@@ -292,8 +292,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_CapabilityMapping(o)
     ok =
     case o.component
-    when Model::QualifiedName
-      name = o.component.value
+    when Model::QualifiedReference
+      name = o.component.cased_value
       acceptor.accept(Issues::ILLEGAL_CLASSREF, o.component, {:name=>name}) unless name =~ Patterns::CLASSREF_EXT
       true
     when Model::AccessExpression

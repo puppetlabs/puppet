@@ -460,10 +460,10 @@ class Puppet::Parser::Compiler
       component_ref = args['component']
       kind = args['kind']
 
-      # That component_ref is either a QNAME or a Class['literal'|QREF] is asserted during validation so no
+      # That component_ref is either a QREF or a Class['literal'|QREF] is asserted during validation so no
       # need to check that here
-      if component_ref.is_a?(Puppet::Pops::Model::QualifiedName)
-        component_name = component_ref.value
+      if component_ref.is_a?(Puppet::Pops::Model::QualifiedReference)
+        component_name = component_ref.cased_value
         component_type = 'type'
         component = krt.find_definition(component_name)
       else
