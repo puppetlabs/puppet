@@ -1,5 +1,7 @@
 # Unwraps a Sensitive value and returns the wrapped object.
 #
+# @example Usage of unwrap
+#
 # ```puppet
 # $plaintext = 'hunter2'
 # $pw = Sensitive.new($plaintext)
@@ -10,6 +12,8 @@
 #
 # You can optionally pass a block to unwrap in order to limit the scope where the
 # unwrapped value is visible.
+#
+# @example Unwrapping with a block of code
 #
 # ```puppet
 # $pw = Sensitive.new('hunter2')
