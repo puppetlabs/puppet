@@ -1,4 +1,4 @@
-# The `unique` function returns a unique set of values from an `Iterable` argument.
+# Produces a unique set of values from an `Iterable` argument.
 #
 # * If the argument is a `String`, the unique set of characters are returned as a new `String`.
 # * If the argument is a `Hash`, the resulting hash associates a set of keys with a set of unique values.
