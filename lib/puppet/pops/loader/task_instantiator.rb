@@ -27,11 +27,11 @@ class TaskInstantiator
 
   def self.create_task(loader, name, task_source, metadata)
     if metadata.nil?
-      create_task_from_hash(loader, name, task_source, EMPTY_HASH)
+      create_task_from_hash(name, task_source, EMPTY_HASH)
     else
       json_text = loader.get_contents(metadata)
       begin
-        create_task_from_hash(loader, name, task_source, JSON.parse(json_text) || EMPTY_HASH)
+        create_task_from_hash(name, task_source, JSON.parse(json_text) || EMPTY_HASH)
       rescue JSON::ParserError => ex
         raise Puppet::ParseError.new(ex.message, metadata)
       rescue Types::TypeAssertionError => ex
@@ -43,7 +43,7 @@ class TaskInstantiator
     end
   end
 
-  def self.create_task_from_hash(loader, name, task_source, hash)
+  def self.create_task_from_hash(name, task_source, hash)
     arguments = {
       'name' => name,
       'executable' => task_source
@@ -54,7 +54,7 @@ class TaskInstantiator
         value.each_pair do |k, v|
           pd = v.dup
           t = v['type']
-          pd['type'] = t.nil? ? Types::TypeFactory.data : Types::TypeParser.singleton.parse(t, loader)
+          pd['type'] = t.nil? ? Types::TypeFactory.data : Types::TypeParser.singleton.parse(t)
           ps[k] = pd
         end
         value = ps
