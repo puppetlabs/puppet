@@ -179,7 +179,8 @@ class Factory
   end
 
   def build_ConcatenatedString(o, args)
-    @init_hash['segments'] = args
+    # Strip empty segments
+    @init_hash['segments'] = args.reject { |arg| arg.model_class == LiteralString && arg['value'].empty? }
   end
 
   def build_HeredocExpression(o, name, expr)

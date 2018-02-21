@@ -339,11 +339,11 @@ describe "egrammar parsing basic expressions" do
 
   context "When parsing string interpolation" do
     it "should interpolate a bare word as a variable name, \"${var}\"" do
-      expect(dump(parse("$a = \"$var\""))).to eq("(= $a (cat '' (str $var) ''))")
+      expect(dump(parse("$a = \"$var\""))).to eq("(= $a (cat (str $var)))")
     end
 
     it "should interpolate a variable in a text expression, \"${$var}\"" do
-      expect(dump(parse("$a = \"${$var}\""))).to eq("(= $a (cat '' (str $var) ''))")
+      expect(dump(parse("$a = \"${$var}\""))).to eq("(= $a (cat (str $var)))")
     end
 
     it "should interpolate a variable, \"yo${var}yo\"" do
@@ -372,11 +372,11 @@ describe "egrammar parsing basic expressions" do
     end
 
     it "should interpolate interpolated expressions with a variable, \"yo${\"$var\"}yo\"" do
-      expect(dump(parse("$a = \"yo${\"$var\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat '' (str $var) '')) 'yo'))")
+      expect(dump(parse("$a = \"yo${\"$var\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat (str $var))) 'yo'))")
     end
 
     it "should interpolate interpolated expressions with an expression, \"yo${\"${$var+2}\"}yo\"" do
-      expect(dump(parse("$a = \"yo${\"${$var+2}\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat '' (str (+ $var 2)) '')) 'yo'))")
+      expect(dump(parse("$a = \"yo${\"${$var+2}\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat (str (+ $var 2)))) 'yo'))")
     end
   end
 end
