@@ -199,6 +199,12 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         provider.expects(:execute).with(['/usr/bin/chage', '-W', 99, 'myuser'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.password_warn_days = 99
       end
+
+      it 'should not call check_allow_dup if not modifying the uid' do
+        provider.expects(:check_allow_dup).never
+        provider.expects(:execute)
+        provider.home = 'foo/bar'
+      end
     end
 
     describe "on systems with the libuser and forcelocal=true" do
