@@ -99,7 +99,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       resource[:password_max_age] = 10
       resource[:password_warn_days] = 15
       provider.expects(:execute).with(includes('/usr/sbin/useradd'), kind_of(Hash))
-      provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, '-W', 15, 'myuser'], has_entry(:custom_environment, {}))
+      provider.expects(:execute).with(['/usr/bin/chage', '-m', 5, '-M', 10, '-W', 15, 'myuser'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
       provider.create
     end
 
@@ -175,28 +175,28 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       end
 
       it "should use usermod" do
-        provider.expects(:execute).with(['/usr/sbin/usermod', '-u', 150, 'myuser'], has_entry(:custom_environment, {}))
+        provider.expects(:execute).with(['/usr/sbin/usermod', '-u', 150, 'myuser'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.uid = 150
       end
 
       it "should use -o when allowdupe=true" do
         resource[:allowdupe] = :true
-        provider.expects(:execute).with(includes('-o'), has_entry(:custom_environment, {}))
+        provider.expects(:execute).with(includes('-o'), has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.uid = 505
       end
 
       it 'should use chage for password_min_age' do
-        provider.expects(:execute).with(['/usr/bin/chage', '-m', 100, 'myuser'], has_entry(:custom_environment, {}))
+        provider.expects(:execute).with(['/usr/bin/chage', '-m', 100, 'myuser'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.password_min_age = 100
       end
 
       it 'should use chage for password_max_age' do
-        provider.expects(:execute).with(['/usr/bin/chage', '-M', 101, 'myuser'], has_entry(:custom_environment, {}))
+        provider.expects(:execute).with(['/usr/bin/chage', '-M', 101, 'myuser'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.password_max_age = 101
       end
 
       it 'should use chage for password_warn_days' do
-        provider.expects(:execute).with(['/usr/bin/chage', '-W', 99, 'myuser'], has_entry(:custom_environment, {}))
+        provider.expects(:execute).with(['/usr/bin/chage', '-W', 99, 'myuser'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.password_warn_days = 99
       end
     end
