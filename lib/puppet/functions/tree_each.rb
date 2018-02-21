@@ -45,9 +45,9 @@
 # ```puppet
 # [1, [2, 3], 4]
 # ```
-# 
+#
 # Results in:
-# 
+#
 # If containers are skipped:
 #
 # * `depth_first` order `1`, `2`, `3`, `4` 
@@ -93,7 +93,7 @@
 #
 # This would call the lambda 2 times with the following values in sequence:
 # `[3, [4, 5]]`, `[4, 5]`
-
+#
 # Any Puppet Type system data type can be used to filter what is
 # considered to be a container, but it must be a narrower type than one of
 # the default Array, Hash, Object types - for example it is not possible to make a
@@ -105,12 +105,12 @@
 # $data = [1, {a => 'hello', b => [100, 200]}, [3, [4, 5]]]
 # $data.tree_each({container_type => Array, include_containers => false} |$v| { notice "$v" }
 # ```
-# 
+#
 # Would call the lambda 5 times with `1`, `{a => 'hello', b => [100, 200]}`, `3`, `4`, `5`
 #
 # **Chaining** When calling `tree_each` without a lambda the function produces an `Iterator`
 # that can be chained into another iteration. Thus it is easy to use one of:
-# 
+#
 # * `reverse_each` - get "leaves before root" 
 # * `filter` - prune the tree
 # * `map` - transform each element
@@ -118,8 +118,8 @@
 #
 # Note than when chaining, the value passed on is a `Tuple` with `[path, value]`.
 #
-# @example pruning a tree
-# 
+# @example Pruning a tree
+#
 # ```puppet
 # # A tree of some complexity (here very simple for readability)
 # $tree = [
