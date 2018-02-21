@@ -15,7 +15,6 @@ class Loaders
   attr_reader :puppet_system_loader
   attr_reader :public_environment_loader
   attr_reader :private_environment_loader
-  attr_reader :implementation_registry
   attr_reader :environment
 
   def self.new(environment, for_agent = false)
@@ -55,12 +54,9 @@ class Loaders
       create_environment_loader(environment)
     end
 
-    # 3. The implementation registry maintains mappings between Puppet types and Runtime types for
-    #    the current environment
-    @implementation_registry = Types::ImplementationRegistry.new
-    Pcore.init(@puppet_system_loader, @implementation_registry, for_agent)
+    Pcore.init_env(@private_environment_loader)
 
-    # 4. module loaders are set up from the create_environment_loader, they register themselves
+    # 3. module loaders are set up from the create_environment_loader, they register themselves
   end
 
   # Called after loader has been added to Puppet Context as :loaders so that dynamic types can
@@ -91,11 +87,21 @@ class Loaders
     loaders.find_loader(module_name)
   end
 
+  def self.static_implementation_registry
+    if !class_variable_defined?(:@@static_implementation_registry) || @@static_implementation_registry.nil?
+      ir = Types::ImplementationRegistry.new
+      Types::TypeParser.type_map.values.each { |t| ir.register_implementation(t.simple_name, t.class.name) }
+      @@static_implementation_registry = ir
+    end
+    @@static_implementation_registry
+  end
+
   def self.static_loader
     # The static loader can only be changed after a reboot
     if !class_variable_defined?(:@@static_loader) || @@static_loader.nil?
       @@static_loader = Loader::StaticLoader.new()
       @@static_loader.register_aliases
+      Pcore.init(@@static_loader, static_implementation_registry)
     end
     @@static_loader
   end
@@ -204,6 +210,11 @@ class Loaders
       end
       loader
     end
+  end
+
+  def implementation_registry
+    # Environment specific implementation registry
+    @implementation_registry ||= Types::ImplementationRegistry.new(self.class.static_implementation_registry)
   end
 
   def static_loader
