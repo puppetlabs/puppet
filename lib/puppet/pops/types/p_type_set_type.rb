@@ -23,6 +23,10 @@ class PTypeSetType < PMetaType
       @type_set.name_authority
     end
 
+    def model_loader
+      @type_set.loader
+    end
+
     def find(typed_name)
       if typed_name.type == :type && typed_name.name_authority == @type_set.name_authority
         type = @type_set[typed_name.name]

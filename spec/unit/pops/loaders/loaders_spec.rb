@@ -534,6 +534,20 @@ describe 'loaders' do
               },
               'metadata.json' => sprintf(metadata_json, 'c', '')
             },
+            'd' => {
+              'types' => {
+                'init_typeset.pp' => <<-PUPPET.unindent,
+                  type D = TypeSet[{
+                    pcore_version => '1.0.0',
+                    types => {
+                      P => Object[{}],
+                      O => Object[{ parent => P }]
+                    }
+                  }]
+                  PUPPET
+              },
+              'metadata.json' => sprintf(metadata_json, 'd', '')
+            }
           }
         }
       end
@@ -623,6 +637,14 @@ describe 'loaders' do
         type = p.parse('C::D::Y', l)
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.resolved_type).to be_a(Puppet::Pops::Types::PFloatType)
+      end
+
+      it 'loads an object type from a typeset that references another type defined in the same typeset' do
+        l = Puppet::Pops::Loaders.find_loader('d').private_loader
+        p = Puppet::Pops::Types::TypeParser.singleton
+        type = p.parse('D::O', l)
+        expect(type).to be_a(Puppet::Pops::Types::PObjectType)
+        expect(type.resolved_parent).to be_a(Puppet::Pops::Types::PObjectType)
       end
     end
   end
