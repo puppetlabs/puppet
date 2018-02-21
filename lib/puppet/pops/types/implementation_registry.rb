@@ -10,7 +10,9 @@ module Types
 
     # Create a new instance. This method is normally only called once
     #
-    def initialize
+    # @param parent [ImplementationRegistry, nil] the parent of this registry
+    def initialize(parent = nil)
+      @parent = parent
       @type_names_per_implementation = {}
       @implementations_per_type_name = {}
       @type_name_substitutions = []
@@ -76,7 +78,8 @@ module Types
     # @return [String,nil] the name of the implementation module, or `nil` if no mapping was found
     def module_name_for_type(type)
       type = type.name if type.is_a?(PAnyType)
-      find_mapping(type, @implementations_per_type_name, @type_name_substitutions)
+      name = @parent.module_name_for_type(type) unless @parent.nil?
+      name.nil? ? find_mapping(type, @implementations_per_type_name, @type_name_substitutions) : name
     end
 
     # Find the module that corresponds to the given type or type name
@@ -95,7 +98,8 @@ module Types
     # @return [String,nil] the name of the type, or `nil` if no mapping was found
     def type_name_for_module(impl_module)
       impl_module = impl_module.name if impl_module.is_a?(Module)
-      find_mapping(impl_module, @type_names_per_implementation, @impl_name_substitutions)
+      name = @parent.type_name_for_module(impl_module) unless @parent.nil?
+      name.nil? ? find_mapping(impl_module, @type_names_per_implementation, @impl_name_substitutions) : name
     end
 
     # Find the name for, and then load, the type  that corresponds to the given runtime module or module name
