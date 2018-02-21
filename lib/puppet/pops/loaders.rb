@@ -57,7 +57,7 @@ class Loaders
 
     # 3. The implementation registry maintains mappings between Puppet types and Runtime types for
     #    the current environment
-    @implementation_registry = Types::ImplementationRegistry.new(@private_environment_loader)
+    @implementation_registry = Types::ImplementationRegistry.new
     Pcore.init(@puppet_system_loader, @implementation_registry, for_agent)
 
     # 4. module loaders are set up from the create_environment_loader, they register themselves
@@ -337,7 +337,7 @@ class Loaders
     tf = Types::TypeParser.singleton
     lhs = tf.interpret(type_mapping.type_expr, loader)
     rhs = tf.interpret_any(type_mapping.mapping_expr, loader)
-    implementation_registry.register_type_mapping(lhs, rhs, loader)
+    implementation_registry.register_type_mapping(lhs, rhs)
     nil
   end
 

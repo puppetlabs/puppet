@@ -87,9 +87,9 @@ module Pcore
 
     @type = create_object_type(loader, ir, Pcore, 'Pcore', nil)
 
-    ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore', loader)
-    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
-    ir.register_implementation('Puppet::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19', loader)
+    ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore')
+    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model')
+    ir.register_implementation('Puppet::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19')
     unless for_agent
       Resource.register_ptypes(loader, ir)
       Lookup::Context.register_ptype(loader, ir);
@@ -116,7 +116,7 @@ module Pcore
     init_hash[Types::KEY_ATTRIBUTES] = attributes_hash unless attributes_hash.empty?
     init_hash[Types::KEY_FUNCTIONS] = functions_hash unless functions_hash.empty?
     init_hash[Types::KEY_EQUALITY] = equality unless equality.nil?
-    ir.register_implementation(type_name, impl_class, loader)
+    ir.register_implementation(type_name, impl_class)
     add_type(Types::PObjectType.new(type_name, init_hash), loader)
   end
 

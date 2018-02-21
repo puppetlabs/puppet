@@ -532,14 +532,13 @@ class PObjectType < PMetaType
   def implementation_class(create = true)
     if @implementation_class.nil? && create
       ir = Loaders.implementation_registry
-      impl_name = ir.nil? ? nil : ir.module_name_for_type(self)
-      if impl_name.nil?
+      class_name = ir.nil? ? nil : ir.module_name_for_type(self)
+      if class_name.nil?
         # Use generator to create a default implementation
         @implementation_class = RubyGenerator.new.create_class(self)
         @implementation_class.class_eval(&@implementation_override) if instance_variable_defined?(:@implementation_override)
       else
         # Can the mapping be loaded?
-        class_name = impl_name[0]
         @implementation_class = ClassLoader.provide(class_name)
 
         raise Puppet::Error, "Unable to load class #{class_name}" if @implementation_class.nil?
