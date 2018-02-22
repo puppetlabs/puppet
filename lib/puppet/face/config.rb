@@ -56,8 +56,9 @@ Puppet::Face.define(:config, '0.0.1') do
 
     when_invoked do |*args|
       options = args.pop
+      render_all_settings = args.empty? || args == ['all']
 
-      args = Puppet.settings.to_a.collect(&:first) if args.empty? || args == ['all']
+      args = Puppet.settings.to_a.collect(&:first) if render_all_settings
 
       values_from_the_selected_section =
         Puppet.settings.values(nil, options[:section].to_sym)
@@ -67,21 +68,53 @@ Puppet::Face.define(:config, '0.0.1') do
         :basemodulepath => values_from_the_selected_section.interpolate(:basemodulepath),
       }
 
+      to_be_rendered = nil
       Puppet.override(Puppet.base_context(loader_settings),
                      _("New environment loaders generated from the requested section.")) do
         # And now we can lookup values that include those from environments configured from
         # the requested section
         values = Puppet.settings.values(Puppet[:environment].to_sym, options[:section].to_sym)
-        if args.length == 1
-          puts values.interpolate(args[0].to_sym)
-        else
-          args.sort.each do |setting_name|
-            puts "#{setting_name} = #{values.interpolate(setting_name.to_sym)}"
-          end
+
+        to_be_rendered = {}
+        args.sort.each do |setting_name|
+          to_be_rendered[setting_name] = values.interpolate(setting_name.to_sym)
         end
       end
-      nil
+
+      # convert symbols to strings before formatting output
+      if render_all_settings
+        to_be_rendered = stringifyhash(to_be_rendered)
+      end
+      to_be_rendered
     end
+
+    when_rendering :console do |to_be_rendered|
+      output = ''
+      if to_be_rendered.keys.length > 1
+        to_be_rendered.keys.sort.each do |setting|
+          output << "#{setting} = #{to_be_rendered[setting]}\n"
+        end
+      else
+        output << "#{to_be_rendered.to_a[0].last}\n"
+      end
+
+      output
+    end
+  end
+
+  def stringifyhash(hash)
+    newhash = {}
+    hash.each do |key, val|
+      key = key.to_s
+      if val.is_a? Hash
+        newhash[key] = stringifyhash(val)
+      elsif val.is_a? Symbol
+        newhash[key] = val.to_s
+      else
+        newhash[key] = val
+      end
+    end
+    newhash
   end
 
   action(:set) do

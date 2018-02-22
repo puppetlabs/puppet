@@ -57,11 +57,17 @@ rando_key=foobar
   end
 
   context 'when getting / setting UTF8 values' do
+
+    let(:config) { described_class }
+
+    def render(action, result)
+      config.get_action(action).when_rendering(:console).call(result)
+    end
+
     # key must be a defined setting
     ['rando_key', MIXED_UTF8].each do |key|
       it "can change '#{key}' keyed ASCII value to a UTF-8 value and read it back" do
-        key = "rando_key"
-        value = "value#{MIXED_UTF8.reverse}value"
+        value = "value#{key.reverse}value"
 
         # needed for the subject.set to write to correct file
         Puppet.settings.stubs(:which_configuration_file).returns(tmp_config)
@@ -72,8 +78,10 @@ rando_key=foobar
         # instead of the default Puppet.settings (implementation detail)
         Puppet.stubs(:settings).returns(test_settings)
 
-        expect { subject.print() }.to have_printed("#{key} = #{value}")
-        expect { subject.print(key, :section => 'main') }.to have_printed("#{value}")
+        result = subject.print()
+        expect(render(:print, result)).to match(/^#{key} = #{value}$/)
+        result = subject.print(key, :section => 'main')
+        expect(render(:print, result)).to eq("#{value}\n")
       end
     end
   end

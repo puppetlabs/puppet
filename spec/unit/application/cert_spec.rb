@@ -191,10 +191,9 @@ describe Puppet::Application::Cert => true do
       @cert_app.subcommand = :destroy
       @cert_app.command_line.stubs(:args).returns(["unsigned-node"])
 
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with do |cert_mode,to|
-        cert_mode == :destroy &&
-        to[:to] == ["unsigned-node"]
-      end
+      Puppet::SSL::CertificateAuthority::Interface.unstub(:new)
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:revoke, anything).never
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:destroy, {:to => ['unsigned-node'], :digest => nil}).returns(@iface)
 
       @cert_app.main
     end
@@ -213,6 +212,18 @@ describe Puppet::Application::Cert => true do
       end
 
       @cert_app.main
+    end
+
+    it "should refuse to destroy all certificates" do
+      @cert_app.subcommand = :destroy
+      @cert_app.all = true
+
+      Puppet::SSL::CertificateAuthority::Interface.unstub(:new)
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).never
+
+      Puppet.expects(:log_exception).with {|e| e.message == "Refusing to destroy all certs, provide an explicit list of certs to destroy"}
+
+      expect { @cert_app.main }.to exit_with(24)
     end
   end
 

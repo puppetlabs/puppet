@@ -278,6 +278,14 @@ describe Puppet::Parser::Compiler do
       expect(@compiler.topscope['wat']).to eq('this is how the sausage is made')
     end
 
+    it "sets the environment based on node.environment instead of the parameters" do
+      compile_stub(:set_node_parameters)
+      @node.parameters['environment'] = "Not actually #{@node.environment.name}"
+
+      @compiler.compile
+      expect(@compiler.topscope['environment']).to eq('testing')
+    end
+
     it "should set the client and server versions on the catalog" do
       params = {"clientversion" => "2", "serverversion" => "3"}
       @node.stubs(:parameters).returns(params)
