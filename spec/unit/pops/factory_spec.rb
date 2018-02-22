@@ -191,7 +191,7 @@ describe Puppet::Pops::Model::Factory do
     it "should handle 'just a string'" do
       model = string('blah blah').model
       expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      model.segments.size == 1
+      expect(model.segments.size).to eq(1)
       expect(model.segments[0].class).to eq(Puppet::Pops::Model::LiteralString)
       expect(model.segments[0].value).to eq("blah blah")
     end
@@ -199,7 +199,7 @@ describe Puppet::Pops::Model::Factory do
     it "should handle one expression in the middle" do
       model = string('blah blah', TEXT(literal(1)+literal(2)), 'blah blah').model
       expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      model.segments.size == 3
+      expect(model.segments.size).to eq(3)
       expect(model.segments[0].class).to eq(Puppet::Pops::Model::LiteralString)
       expect(model.segments[0].value).to eq("blah blah")
       expect(model.segments[1].class).to eq(Puppet::Pops::Model::TextExpression)
@@ -211,7 +211,7 @@ describe Puppet::Pops::Model::Factory do
     it "should handle one expression at the end" do
       model = string('blah blah', TEXT(literal(1)+literal(2))).model
       expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      model.segments.size == 2
+      expect(model.segments.size).to eq(2)
       expect(model.segments[0].class).to eq(Puppet::Pops::Model::LiteralString)
       expect(model.segments[0].value).to eq("blah blah")
       expect(model.segments[1].class).to eq(Puppet::Pops::Model::TextExpression)
@@ -221,7 +221,7 @@ describe Puppet::Pops::Model::Factory do
     it "should handle only one expression" do
       model = string(TEXT(literal(1)+literal(2))).model
       expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      model.segments.size == 1
+      expect(model.segments.size).to eq(1)
       expect(model.segments[0].class).to eq(Puppet::Pops::Model::TextExpression)
       expect(model.segments[0].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
     end
@@ -229,7 +229,7 @@ describe Puppet::Pops::Model::Factory do
     it "should handle several expressions" do
       model = string(TEXT(literal(1)+literal(2)), TEXT(literal(1)+literal(2))).model
       expect(model.class).to eq(Puppet::Pops::Model::ConcatenatedString)
-      model.segments.size == 2
+      expect(model.segments.size).to eq(2)
       expect(model.segments[0].class).to eq(Puppet::Pops::Model::TextExpression)
       expect(model.segments[0].expr.class).to eq(Puppet::Pops::Model::ArithmeticExpression)
       expect(model.segments[1].class).to eq(Puppet::Pops::Model::TextExpression)
