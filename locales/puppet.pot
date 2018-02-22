@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-722-g8752d86\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-823-g93b40d7\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-02-15 22:33+0000\n"
-"PO-Revision-Date: 2018-02-15 22:33+0000\n"
+"POT-Creation-Date: 2018-02-22 19:33+0000\n"
+"PO-Revision-Date: 2018-02-22 19:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -225,7 +225,11 @@ msgstr ""
 msgid "Manage certificates and requests"
 msgstr ""
 
-#: ../lib/puppet/application/cert.rb:332
+#: ../lib/puppet/application/cert.rb:272
+msgid "Refusing to destroy all certs, provide an explicit list of certs to destroy"
+msgstr ""
+
+#: ../lib/puppet/application/cert.rb:334
 msgid "You must specify the hosts to apply to; valid values are an array or the symbol :all"
 msgstr ""
 
@@ -870,19 +874,19 @@ msgstr ""
 msgid "(all | <setting> [<setting> ...]"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:71
+#: ../lib/puppet/face/config.rb:73
 msgid "New environment loaders generated from the requested section."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:88
+#: ../lib/puppet/face/config.rb:121
 msgid "Set Puppet's settings."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:89
+#: ../lib/puppet/face/config.rb:122
 msgid "[setting_name] [setting_value]"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:110
+#: ../lib/puppet/face/config.rb:143
 msgid ""
 "The environment should be set in either the `[user]`, `[agent]`, or `[master]`\n"
 "section. Variables set in the `[agent]` section are used when running\n"
@@ -894,24 +898,24 @@ msgid ""
 "https://puppet.com/docs/puppet/latest/configuration.html#environment\n"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:134
+#: ../lib/puppet/face/config.rb:167
 msgid "Delete a Puppet setting."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:135
+#: ../lib/puppet/face/config.rb:168
 msgid "(<setting>"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:162
+#: ../lib/puppet/face/config.rb:195
 msgid "Deleted setting from '%{section_name}': '%{setting_string}'"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:165
+#: ../lib/puppet/face/config.rb:198
 msgid "No setting found in configuration file for section '%{section_name}' setting name '%{name}'"
 msgstr ""
 
 #. TRANSLATORS the 'puppet.conf' is a specific file and should not be translated
-#: ../lib/puppet/face/config.rb:172
+#: ../lib/puppet/face/config.rb:205
 msgid "The puppet.conf file does not exist %{puppet_conf}"
 msgstr ""
 
@@ -1174,16 +1178,16 @@ msgstr ""
 msgid "Display Puppet manual pages."
 msgstr ""
 
-#: ../lib/puppet/face/man.rb:26
+#: ../lib/puppet/face/man.rb:28
 msgid "Display the manual page for a Puppet subcommand."
 msgstr ""
 
-#: ../lib/puppet/face/man.rb:27
+#: ../lib/puppet/face/man.rb:29
 msgid "<subcommand>"
 msgstr ""
 
 #. TRANSLATORS '--render-as s' is a command line option and should not be translated
-#: ../lib/puppet/face/man.rb:29
+#: ../lib/puppet/face/man.rb:31
 msgid ""
 "      The man data, in Markdown format, suitable for consumption by Ronn.\n"
 "\n"
@@ -1192,7 +1196,7 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS 'puppet man' is a specific command line and should not be translated
-#: ../lib/puppet/face/man.rb:50
+#: ../lib/puppet/face/man.rb:56
 msgid "The 'puppet man' command takes a single subcommand to review the subcommand's manpage"
 msgstr ""
 
@@ -2125,23 +2129,23 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS the string "binary_file()" should not be translated
-#: ../lib/puppet/functions/binary_file.rb:16
+#: ../lib/puppet/functions/binary_file.rb:28
 msgid "binary_file(): The given file '%{unresolved_path}' does not exist"
 msgstr ""
 
-#: ../lib/puppet/functions/defined.rb:130
+#: ../lib/puppet/functions/defined.rb:132
 msgid "The given resource type is a reference to all kind of types"
 msgstr ""
 
-#: ../lib/puppet/functions/defined.rb:135 ../lib/puppet/functions/defined.rb:149
+#: ../lib/puppet/functions/defined.rb:137 ../lib/puppet/functions/defined.rb:151
 msgid "The given class type is a reference to all classes"
 msgstr ""
 
-#: ../lib/puppet/functions/defined.rb:153
+#: ../lib/puppet/functions/defined.rb:155
 msgid "Invalid argument of type '%{value_class}' to 'defined'"
 msgstr ""
 
-#: ../lib/puppet/functions/dig.rb:17
+#: ../lib/puppet/functions/dig.rb:41
 msgid "The given data does not contain a Collection at %{walked_path}, got '%{klass}'"
 msgstr ""
 
@@ -2174,19 +2178,19 @@ msgstr ""
 msgid "Given Regexp Type has no regular expression"
 msgstr ""
 
-#: ../lib/puppet/functions/require.rb:36
+#: ../lib/puppet/functions/require.rb:70
 msgid "Could not find class %{klass}"
 msgstr ""
 
-#: ../lib/puppet/functions/slice.rb:102
+#: ../lib/puppet/functions/slice.rb:116
 msgid "slice(): block must define at least one parameter. Block has 0."
 msgstr ""
 
-#: ../lib/puppet/functions/slice.rb:105
+#: ../lib/puppet/functions/slice.rb:119
 msgid "slice(): block must define one parameter, or the same number of parameters as the given size of the slice (%{slice_size}). Block has %{serving_size}; %{parameter_names}"
 msgstr ""
 
-#: ../lib/puppet/functions/strftime.rb:39
+#: ../lib/puppet/functions/strftime.rb:213
 msgid "The argument signature (String format, [String timezone]) is deprecated for #strftime. See #strftime documentation and Timespan type for more info"
 msgstr ""
 
@@ -4124,7 +4128,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:564 ../lib/puppet/pops/loaders.rb:287
+#: ../lib/puppet/node/environment.rb:564 ../lib/puppet/pops/loaders.rb:298
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -5743,23 +5747,23 @@ msgstr ""
 msgid "The code loaded from %{source_ref} contains additional logic - can only contain the type '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:32
+#: ../lib/puppet/pops/loaders.rb:31
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:168
+#: ../lib/puppet/pops/loaders.rb:174
 msgid "Internal Error: Puppet Context ':loaders' missing"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:182
+#: ../lib/puppet/pops/loaders.rb:188
 msgid "Unable to find loader named '%{loader_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:203
+#: ../lib/puppet/pops/loaders.rb:209
 msgid "Internal Error: did not find public loader for module: '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:244
+#: ../lib/puppet/pops/loaders.rb:255
 msgid "Internal Error: Attempt to redefine loader named '%{name}'"
 msgstr ""
 
@@ -5901,11 +5905,11 @@ msgid "Unacceptable transform - found an Object without a rule: %{klass}"
 msgstr ""
 
 #. TRANSLATORS 'NUMBER' refers to a method name and the 'name_or_numeric' was the passed in value and should not be translated
-#: ../lib/puppet/pops/model/factory.rb:806
+#: ../lib/puppet/pops/model/factory.rb:809
 msgid "Internal Error, NUMBER token does not contain a valid number, %{name_or_numeric}"
 msgstr ""
 
-#: ../lib/puppet/pops/model/factory.rb:1114
+#: ../lib/puppet/pops/model/factory.rb:1117
 msgid "can only concatenate strings, got %{class_name}"
 msgstr ""
 
@@ -6094,40 +6098,40 @@ msgstr ""
 msgid "%{label} of kind 'constant' requires a value"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:684
+#: ../lib/puppet/pops/types/p_object_type.rb:683
 msgid "reference to unresolved type '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:720
+#: ../lib/puppet/pops/types/p_object_type.rb:719
 msgid "attribute %{label}[%{key}] is defined as both a constant and an attribute"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:752
+#: ../lib/puppet/pops/types/p_object_type.rb:751
 msgid "%{label} conflicts with attribute with the same name"
 msgstr ""
 
 #. TRANSLATORS equality_include_type = false should not be translated
-#: ../lib/puppet/pops/types/p_object_type.rb:765
+#: ../lib/puppet/pops/types/p_object_type.rb:764
 msgid "equality_include_type = false cannot be combined with non empty equality specification"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:777
+#: ../lib/puppet/pops/types/p_object_type.rb:776
 msgid "%{label} equality is referencing %{attribute} which is included in equality of %{including_parent}"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:784
+#: ../lib/puppet/pops/types/p_object_type.rb:783
 msgid "%{label} equality is referencing non existent attribute '%{attribute}'"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:786
+#: ../lib/puppet/pops/types/p_object_type.rb:785
 msgid "%{label} equality is referencing %{attribute}. Only attribute references are allowed"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:790
+#: ../lib/puppet/pops/types/p_object_type.rb:789
 msgid "%{label} equality is referencing constant %{attribute}."
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:791
+#: ../lib/puppet/pops/types/p_object_type.rb:790
 msgid "Reference to constant is not allowed in equality"
 msgstr ""
 
@@ -6173,23 +6177,23 @@ msgstr ""
 msgid "Everything is now reported using present tense"
 msgstr ""
 
-#: ../lib/puppet/pops/types/type_parser.rb:420
+#: ../lib/puppet/pops/types/type_parser.rb:427
 msgid "Enum parameters must be identifiers or strings"
 msgstr ""
 
-#: ../lib/puppet/pops/types/type_parser.rb:656
+#: ../lib/puppet/pops/types/type_parser.rb:663
 msgid "The expression <%{expression}> is not a valid type specification."
 msgstr ""
 
-#: ../lib/puppet/pops/types/type_parser.rb:661
+#: ../lib/puppet/pops/types/type_parser.rb:668
 msgid "Invalid number of type parameters specified: %{type} requires %{required}, %{given} provided"
 msgstr ""
 
-#: ../lib/puppet/pops/types/type_parser.rb:666
+#: ../lib/puppet/pops/types/type_parser.rb:673
 msgid "Not a parameterized type <%{type}>"
 msgstr ""
 
-#: ../lib/puppet/pops/types/type_parser.rb:670
+#: ../lib/puppet/pops/types/type_parser.rb:677
 msgid "Unknown type <%{type}>"
 msgstr ""
 
@@ -7339,7 +7343,7 @@ msgstr ""
 msgid "Could not find resource %{resource} when converting %{message} resources"
 msgstr ""
 
-#: ../lib/puppet/resource/status.rb:135 ../lib/puppet/transaction.rb:264
+#: ../lib/puppet/resource/status.rb:139 ../lib/puppet/transaction.rb:264
 msgid "Could not evaluate: %{detail}"
 msgstr ""
 
@@ -9754,7 +9758,7 @@ msgstr ""
 msgid "Group update failed: %{error}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:505
+#: ../lib/puppet/util/windows/adsi.rb:500
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
