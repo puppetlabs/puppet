@@ -20,7 +20,7 @@ module PN
 
   def to_s
     s = ''
-    format(s)
+    format(nil, s)
     s
   end
 
@@ -55,10 +55,26 @@ module PN
     bld << '"'
   end
 
-  def format_elements(elements, b)
+  def format_elements(elements, indent, b)
     elements.each_with_index do |e, i|
-      b << ' ' if i > 0
-      e.format(b)
+      if indent
+        b << "\n" << indent.current
+      elsif i > 0
+        b << ' '
+      end
+      e.format(indent, b)
+    end
+  end
+
+  class Indent
+    attr_reader :current
+    def initialize(indent = '  ', current = '')
+      @indent = indent
+      @current = current
+    end
+
+    def increase
+      Indent.new(@indent, @current + @indent)
     end
   end
 
@@ -87,11 +103,11 @@ module PN
       o.is_a?(Call) && @name == o.name && @elements == o.elements
     end
 
-    def format(b)
+    def format(indent, b)
       b << '(' << @name
       if @elements.size > 0
-        b << ' '
-        format_elements(@elements, b)
+        b << ' ' unless indent
+        format_elements(@elements, indent ? indent.increase : nil, b)
       end
       b << ')'
     end
@@ -139,9 +155,9 @@ module PN
       o.is_a?(List) && @elements == o.elements
     end
 
-    def format(b)
+    def format(indent, b)
       b << '['
-      format_elements(@elements, b)
+      format_elements(@elements, indent ? indent.increase : nil, b) unless @elements.empty?
       b << ']'
     end
 
@@ -158,7 +174,7 @@ module PN
       @value = value
     end
 
-    def format(b)
+    def format(indent, b)
       if @value.nil?
         b << 'nil'
       elsif value.is_a?(String)
@@ -190,13 +206,18 @@ module PN
       o.is_a?(Map) && @entries == o.entries
     end
 
-    def format(b)
+    def format(indent, b)
+      local_indent = indent ? indent.increase : nil
       b << '{'
       @entries.each_with_index do |e,i|
-        b << ' ' if i > 0
+        if indent
+          b << "\n" << local_indent.current
+        elsif i > 0
+          b << ' '
+        end
         b << ':' << e.key
         b << ' '
-        e.value.format(b)
+        e.value.format(local_indent, b)
       end
       b << '}'
     end
