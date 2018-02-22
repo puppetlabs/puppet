@@ -930,6 +930,13 @@ describe Puppet::Configurer do
 
       @agent.convert_catalog(catalog, 10)
     end
+
+    it "should set catalog conversion time on the report" do
+      report = Puppet::Transaction::Report.new
+
+      report.expects(:add_times).with(:convert_catalog, kind_of(Numeric))
+      @agent.convert_catalog(catalog, 10, {:report => report})
+    end
   end
 
   describe "when determining whether to pluginsync" do
