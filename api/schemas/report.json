@@ -127,7 +127,7 @@
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["8", 8]
+            "enum":        ["9", 9]
         },
 
         "puppet_version": {
@@ -458,6 +458,14 @@
                 "resource": {
                     "description": "The resource name, in the form Type[title]. **Deprecated**. This is always the same string as the name of the property where this Status object is the value.",
                     "type":        "string"
+                },
+
+                "provider_used": {
+                    "description": "The provider name used by the resource",
+                    "oneOf":       [
+                        {"type": "string"},
+                        {"type": "null"}
+                    ]
                 },
 
                 "file": {
