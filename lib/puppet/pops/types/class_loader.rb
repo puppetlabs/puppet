@@ -66,7 +66,7 @@ class ClassLoader
     when PPatternType  ; String
     when PEnumType     ; String
     when PFloatType    ; Float
-    when PUndefType      ; NilClass
+    when PUndefType    ; NilClass
     when PCallableType ; Proc
     else
       nil
