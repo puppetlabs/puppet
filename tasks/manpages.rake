@@ -19,7 +19,7 @@ task :gen_manpages do
   bins  = Dir.glob(%w{bin/*})
   non_face_applications = helpface.legacy_applications
   faces = Puppet::Face.faces
-  ronn_args = '--manual="Puppet manual" --organization="Puppet Labs, LLC" -r'
+  ronn_args = '--manual="Puppet manual" --organization="Puppet, Inc." -r'
 
   # Locate ronn
   ronn = %x{which ronn}.chomp
