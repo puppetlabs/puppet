@@ -164,7 +164,7 @@ class PNParser
       end
 
     when TYPE_DIGIT
-      dc = skip_decimal_digits
+      skip_decimal_digits
       c = peek_cp
       if c == 0x2e # '.'
         @pos += 1
