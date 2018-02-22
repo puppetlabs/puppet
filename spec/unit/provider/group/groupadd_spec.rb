@@ -78,13 +78,13 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
 
       it "should use groupmod" do
-        provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, 'mygroup'], has_entry(:custom_environment, {}))
+        provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, 'mygroup'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.gid = 150
       end
 
       it "should pass -o to groupmod" do
         resource[:allowdupe] = :true
-        provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], has_entry(:custom_environment, {}))
+        provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.gid = 150
       end
     end
@@ -116,7 +116,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
   describe "#gid=" do
     it "should add -o when allowdupe is enabled and the gid is being modified" do
       resource[:allowdupe] = :true
-      provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], has_entry(:custom_environment, {}))
+      provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
       provider.gid = 150
     end
   end
@@ -132,7 +132,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
 
       it "should use groupdel" do
-        provider.expects(:execute).with(['/usr/sbin/groupdel', 'mygroup'], has_entry(:custom_environment, {}))
+        provider.expects(:execute).with(['/usr/sbin/groupdel', 'mygroup'], has_entries({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.delete
       end
     end

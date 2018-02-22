@@ -92,7 +92,9 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
       cmd = [command(:modify)]
     end
     cmd << flag(param) << value
-    cmd += check_allow_dup
+    # TODO the group type only really manages gid, so there are currently no
+    # tests for this behavior
+    cmd += check_allow_dup if param == :gid
     cmd << @resource[:name]
 
     cmd

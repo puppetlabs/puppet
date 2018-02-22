@@ -194,7 +194,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       cmd = [command(property_manages_password_age?(param) ? :password : :modify)]
     end
     cmd << flag(param) << value
-    cmd += check_allow_dup
+    cmd += check_allow_dup if param == :uid
     cmd << @resource[:name]
 
     cmd
