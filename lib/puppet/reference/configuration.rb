@@ -34,6 +34,8 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
       val = 'Unix/Linux: /var/log/puppetlabs/puppet -- Windows: C:\ProgramData\PuppetLabs\puppet\var\log -- Non-root user: ~/.puppetlabs/var/log'
     elsif name.to_s == 'hiera_config'
       val = '$confdir/hiera.yaml. However, if a file exists at $codedir/hiera.yaml, Puppet uses that instead.'
+    elsif name.to_s == 'certname'
+      val = "the Host's fully qualified domain name, as determined by facter"
     end
 
     # Leave out the section information; it was apparently confusing people.
