@@ -86,6 +86,21 @@ class IssueReporter
     [prefix, message].join(' ')
   end
 
+  def self.warning(semantic, issue, args)
+    Puppet::Util::Log.create({
+      :level => :warning,
+      :message => issue.format(args),
+      :issue_code => issue.issue_code,
+      :file => semantic.file,
+      :line => semantic.line,
+      :pos => semantic.pos,
+    })
+  end
+
+  def self.error(exception_class, semantic, issue, args)
+    raise exception_class.new(issue.format(args), semantic.file, semantic.line, semantic.pos, nil, issue.issue_code)
+  end
+
   def self.create_exception(exception_class, emit_message, formatter, diagnostic)
     file = diagnostic.file
     file = (file.is_a?(String) && file.empty?) ? nil : file

@@ -453,10 +453,12 @@ class Factory
       #
       parent = type_expr['key']
       hash = type_expr['value']
-      unless parent['cased_value'] == 'Object'
+      pn = parent['cased_value']
+      unless pn == 'Object' || pn == 'TypeSet'
         hash['entries'] << Factory.KEY_ENTRY(Factory.QNAME('parent'), parent)
+        parent = Factory.QREF('Object')
       end
-      type_expr = Factory.QREF('Object').access([hash])
+      type_expr = parent.access([hash])
     elsif type_expr.model_class <= LiteralHash
       # LiteralHash is used for the form:
       #
