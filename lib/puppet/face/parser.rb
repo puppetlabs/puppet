@@ -64,11 +64,19 @@ Puppet::Face.define(:parser, '0.0.1') do
 
   action (:dump) do
     summary _("Outputs a dump of the internal parse tree for debugging")
-    arguments "-e " + _("<source>| [<manifest> ...] ")
+    arguments "[--format <old|pn|json>] [--pretty] { -e <source> | [<templates> ...] } "
     returns _("A dump of the resulting AST model unless there are syntax or validation errors.")
     description <<-'EOT'
       This action parses and validates the Puppet DSL syntax without compiling a catalog
       or syncing any resources.
+
+      The output format can be controlled using the --format <old|pn|json>
+      'old' is the default, but now deprecated format which is not API.
+      'pn' is the Puppet Extended S-Expression Notation.
+      'json' outputs the same graph as 'pn' but with JSON syntax.
+
+      The output will be "pretty printed" when the option --pretty is given together with --format 'pn' or'json'. 
+      This option has no effect on the 'old' format.
 
       The command accepts one or more manifests (.pp) files, or an -e followed by the puppet
       source text.
@@ -85,6 +93,14 @@ Puppet::Face.define(:parser, '0.0.1') do
 
     option("--[no-]validate") do
       summary _("Whether or not to validate the parsed result, if no-validate only syntax errors are reported")
+    end
+
+    option('--format ' + _('<old, pn, or json>')) do
+      summary _("Get result in 'old' (deprecated format), 'pn' (new format), or 'json' (new format in JSON).")
+    end
+
+    option('--pretty') do
+      summary _('Pretty print output. Only applicable together with --format pn or json')
     end
 
     when_invoked do |*args|
@@ -120,7 +136,6 @@ Puppet::Face.define(:parser, '0.0.1') do
 
   def dump_parse(source, filename, options, show_filename = true)
     output = ""
-    dumper = Puppet::Pops::Model::ModelTreeDumper.new
     evaluating_parser = Puppet::Pops::Parser::EvaluatingParser.new
     begin
       if options[:validate]
@@ -132,7 +147,19 @@ Puppet::Face.define(:parser, '0.0.1') do
       if show_filename
         output << "--- #{filename}"
       end
-      output << dumper.dump(parse_result) << "\n"
+      fmt = options[:format]
+      if fmt.nil? || fmt == 'old'
+        output << Puppet::Pops::Model::ModelTreeDumper.new.dump(parse_result) << "\n"
+      else
+        require 'puppet/pops/pn'
+        pn = Puppet::Pops::Model::PNTransformer.transform(parse_result)
+        case fmt
+        when 'json'
+          options[:pretty] ? JSON.pretty_unparse(pn.to_data) : JSON.dump(pn.to_data)
+        else
+          pn.format(options[:pretty] ? Puppet::Pops::PN::Indent.new('  ') : nil, output)
+        end
+      end
     rescue Puppet::ParseError => detail
       if show_filename
         Puppet.err("--- #{filename}")
