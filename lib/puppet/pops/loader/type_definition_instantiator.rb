@@ -73,7 +73,9 @@ class TypeDefinitionInstantiator
     case type_name
     when 'Object'
       # No need for an alias. The Object type itself will receive the name instead
-      type_expr = type_expr.keys.empty? ? nil : type_expr.keys[0] unless type_expr.is_a?(Hash)
+      unless type_expr.is_a?(Model::LiteralHash)
+        type_expr = type_expr.keys.empty? ? nil : type_expr.keys[0] unless type_expr.is_a?(Hash)
+      end
       Types::PObjectType.new(name, type_expr)
     when 'TypeSet'
       # No need for an alias. The Object type itself will receive the name instead
@@ -86,6 +88,7 @@ class TypeDefinitionInstantiator
 
   # @api private
   def self.named_definition(te)
+    return 'Object' if te.is_a?(Model::LiteralHash)
     te.is_a?(Model::AccessExpression) && (left = te.left_expr).is_a?(Model::QualifiedReference) ? left.cased_value : nil
   end
 
