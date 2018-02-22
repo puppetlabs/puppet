@@ -238,8 +238,6 @@ DOC
     end
   end
 
-  private
-
   PRIVATE_EXTENSIONS = [
     'subjectAltName', '2.5.29.17',
   ]

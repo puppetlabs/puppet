@@ -393,8 +393,6 @@ module Puppet::Util::Windows::File
   end
   module_function :lstat
 
-  private
-
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364571(v=vs.85).aspx
   FSCTL_GET_REPARSE_POINT = 0x900a8
 
@@ -410,6 +408,7 @@ module Puppet::Util::Windows::File
 
     path
   end
+  private_class_method :resolve_symlink
 
   # these reparse point types are the only ones Puppet currently understands
   # so rather than raising an exception in readlink, prefer to not consider
@@ -426,6 +425,7 @@ module Puppet::Util::Windows::File
 
     symlink
   end
+  private_class_method :symlink_reparse_point?
 
   ffi_convention :stdcall
 

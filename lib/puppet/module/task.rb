@@ -72,8 +72,6 @@ class Puppet::Module
       self.module == other.module
     end
 
-    private
-
     def self.new_with_files(pup_module, name, tasks_files)
       files = tasks_files.map do |filename|
         File.join(pup_module.tasks_directory, File.basename(filename))
@@ -82,9 +80,11 @@ class Puppet::Module
       metadata_files, exe_files = files.partition { |f| is_tasks_metadata_filename?(f) }
       Puppet::Module::Task.new(pup_module, name, exe_files, metadata_files.first)
     end
+    private_class_method :new_with_files
 
     def self.task_name_from_path(path)
       return File.basename(path, '.*')
     end
+    private_class_method :task_name_from_path
   end
 end

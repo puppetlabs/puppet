@@ -155,8 +155,6 @@ class Locator
     end
   end
 
-  private
-
   class AbstractLocator < Locator
     attr_accessor :line_index
     attr_accessor :string

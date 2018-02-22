@@ -54,8 +54,6 @@ module Puppet::SSL::CertificateFactory
     return cert
   end
 
-  private
-
   # Add X509v3 extensions to the given certificate.
   #
   # @param cert [OpenSSL::X509::Certificate] The certificate to add the
@@ -114,6 +112,7 @@ module Puppet::SSL::CertificateFactory
       generate_extension(ef, oid, *val)
     end
   end
+  private_class_method :add_extensions_to
 
   # Woot! We're a CA.
   def self.build_ca_extensions
@@ -216,4 +215,5 @@ module Puppet::SSL::CertificateFactory
       OpenSSL::X509::Extension.new(oid, OpenSSL::ASN1::UTF8String.new(val).to_der, crit)
     end
   end
+  private_class_method :generate_extension
 end

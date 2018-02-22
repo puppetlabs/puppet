@@ -12,8 +12,6 @@ module Win32
     # The error class raised if any task scheduler specific calls fail.
     class Error < Puppet::Util::Windows::Error; end
 
-    private
-
     class << self
       attr_accessor :com_initialized
     end
@@ -91,8 +89,6 @@ module Win32
     SCHED_E_NO_SECURITY_SERVICES          = -2147216622 # 0x80041312
     # No mapping between account names and security IDs was done.
     ERROR_NONE_MAPPED                     = -2147023564 # 0x80070534  WIN32 Error CODE 1332 (0x534)
-
-    public
 
     # :startdoc:
 
@@ -935,8 +931,6 @@ module Win32
       new_hash
     end
 
-    private
-
     def reset_current_task
       # Ensure that COM reference is decremented properly
       @pITask.Release if @pITask && ! @pITask.null?
@@ -1052,11 +1046,8 @@ module Win32
 
     module COM
       extend FFI::Library
-      private
 
       com = Puppet::Util::Windows::COM
-
-      public
 
       # https://msdn.microsoft.com/en-us/library/windows/desktop/aa381811(v=vs.85).aspx
       ITaskScheduler = com::Interface[com::IUnknown,

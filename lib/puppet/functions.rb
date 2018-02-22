@@ -650,8 +650,6 @@ module Puppet::Functions
     end
   end
 
-  private
-
   # @note WARNING: This style of creating functions is not public. It is a system
   #   under development that will be used for creating "system" functions.
   #

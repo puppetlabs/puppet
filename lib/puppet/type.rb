@@ -2233,8 +2233,6 @@ end
 
   # class methods dealing with Type management
 
-  public
-
   # The Type class attribute accessors
   class << self
     # @return [String] the name of the resource type; e.g., "File"
@@ -2343,8 +2341,6 @@ end
 
   # instance methods related to instance intrinsics
   # e.g., initialize and name
-
-  public
 
   # @return [Hash] hash of parameters originally defined
   # @api private

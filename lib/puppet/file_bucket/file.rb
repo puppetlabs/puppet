@@ -74,8 +74,6 @@ class Puppet::FileBucket::File
     self.new(contents)
   end
 
-  private
-
   class StringContents
     def initialize(content)
       @contents = content;

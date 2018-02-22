@@ -680,8 +680,6 @@ module Pal
     in_environment_context(environments, env, facts, variables, &block)
   end
 
-  private
-
   # Prepares the puppet context with pal information - and delegates to the block
   # No set up is performed at this step - it is delayed until it is known what the
   # operation is going to be (for example - using a ScriptCompiler).
@@ -701,6 +699,7 @@ module Pal
       return block.call(self)
     end
   end
+  private_class_method :in_environment_context
 
   # Prepares the node for use by giving it node_facts (if given)
   # If a hash of facts values is given, then the operation of creating a node with facts is much
@@ -717,6 +716,7 @@ module Pal
       node.add_server_facts({})
     end
   end
+  private_class_method :prepare_node_facts
 
   def self.add_variables(scope, variables)
     return if variables.nil?
@@ -737,6 +737,7 @@ module Pal
       scope.setvar(k, v)
     end
   end
+  private_class_method :add_variables
 
   # The main routine for script compiler
   # Picks up information from the puppet context and configures a script compiler which is given to
@@ -837,6 +838,7 @@ module Pal
       end
     end
   end
+  private_class_method :main
 
   T_STRING = Puppet::Pops::Types::PStringType::NON_EMPTY
   T_STRING_ARRAY = Puppet::Pops::Types::TypeFactory.array_of(T_STRING)
@@ -857,18 +859,21 @@ module Pal
   def self.assert_optionally_empty_array(a, what, allow_nil=false)
     assert_type(T_STRING_ARRAY, a, what, allow_nil)
   end
+  private_class_method :assert_optionally_empty_array
 
   def self.assert_mutually_exclusive(a, b, a_term, b_term)
     if a && b
       raise ArgumentError, _("Cannot use '%{a_term}' and '%{b_term}' at the same time") % { a_term: a_term, b_term: b_term }
     end
   end
+  private_class_method :assert_mutually_exclusive
 
   def self.assert_block_given(block)
     if block.nil?
       raise ArgumentError, _("A block must be given")
     end
   end
+  private_class_method :assert_block_given
 end
 end
 
