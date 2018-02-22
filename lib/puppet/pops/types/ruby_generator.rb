@@ -158,7 +158,7 @@ class RubyGenerator < TypeFormatter
       ir = Loaders.implementation_registry
       impl_name = ir.module_name_for_type(type)
       raise Puppet::Error, "Unable to create an instance of #{type.name}. No mapping exists to runtime object" if impl_name.nil?
-      impl_name[0]
+      impl_name
     end
   end
 
@@ -179,9 +179,8 @@ class RubyGenerator < TypeFormatter
     unless obj.parent.nil?
       if impl_subst.empty?
         ir = Loaders.implementation_registry
-        parent_impl = ir.module_name_for_type(obj.parent)
-        raise Puppet::Error, "Unable to create an instance of #{obj.parent.name}. No mapping exists to runtime object" if parent_impl.nil?
-        parent_name = parent_impl[0]
+        parent_name = ir.module_name_for_type(obj.parent)
+        raise Puppet::Error, "Unable to create an instance of #{obj.parent.name}. No mapping exists to runtime object" if parent_name.nil?
       else
         parent_name = obj.parent.name.gsub(*impl_subst)
       end
