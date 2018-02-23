@@ -1,4 +1,4 @@
-# Applies a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # to every value in a data structure and returns an array or hash containing any elements
 # for which the lambda evaluates to `true`.
 #
@@ -21,23 +21,24 @@
 #
 # @example Using the `filter` function with an array and a one-parameter lambda
 #
-# ~~~ puppet
+# ``` puppet
 # # For the array $data, return an array containing the values that end with "berry"
 # $data = ["orange", "blueberry", "raspberry"]
 # $filtered_data = $data.filter |$items| { $items =~ /berry$/ }
 # # $filtered_data = [blueberry, raspberry]
-# ~~~
+# ```
 #
 # When the first argument is a hash, Puppet passes each key and value pair to the lambda
 # as an array in the form `[key, value]` and returns a hash containing the results.
 #
 # @example Using the `filter` function with a hash and a one-parameter lambda
 #
-# ~~~ puppet
+# ``` puppet
 # # For the hash $data, return a hash containing all values of keys that end with "berry"
 # $data = { "orange" => 0, "blueberry" => 1, "raspberry" => 2 }
 # $filtered_data = $data.filter |$items| { $items[0] =~ /berry$/ }
 # # $filtered_data = {blueberry => 1, raspberry => 2}
+# ```
 #
 # When the first argument is an array and the lambda has two parameters, Puppet passes the
 # array's indexes (enumerated from 0) in the first parameter and its values in the second
@@ -45,26 +46,26 @@
 #
 # @example Using the `filter` function with an array and a two-parameter lambda
 #
-# ~~~ puppet
+# ``` puppet
 # # For the array $data, return an array of all keys that both end with "berry" and have
 # # an even-numbered index
 # $data = ["orange", "blueberry", "raspberry"]
 # $filtered_data = $data.filter |$indexes, $values| { $indexes % 2 == 0 and $values =~ /berry$/ }
 # # $filtered_data = [raspberry]
-# ~~~
+# ```
 #
 # When the first argument is a hash, Puppet passes its keys to the first parameter and its
 # values to the second parameter.
 #
 # @example Using the `filter` function with a hash and a two-parameter lambda
 #
-# ~~~ puppet
-# # For the hash $data, return a hash of all keys that both end with "berry" and have 
+# ``` puppet
+# # For the hash $data, return a hash of all keys that both end with "berry" and have
 # # values less than or equal to 1
 # $data = { "orange" => 0, "blueberry" => 1, "raspberry" => 2 }
 # $filtered_data = $data.filter |$keys, $values| { $keys =~ /berry$/ and $values <= 1 }
 # # $filtered_data = {blueberry => 1}
-# ~~~
+# ```
 #
 # @since 4.0.0
 #
