@@ -6,10 +6,9 @@
 # Puppet does not apply a contained class before it begins applying the containing class,
 # and finishes applying a contained class before it finishes applying the containing class.
 #
-# You must use the class's full name;
-# relative names are not allowed. In addition to names in string form,
-# you can also use Class and Resource Type values produced by
-# evaluating resource and relationship expressions.
+# You must use a class's full name; relative names are not allowed. In addition to
+# providing class names in string form, you can also directly use Class and Resource Type
+# values produced by evaluating resource and relationship expressions.
 #
 # The function returns an array of references to the classes that were contained,
 # which allows the function call to `contain` to directly continue.
