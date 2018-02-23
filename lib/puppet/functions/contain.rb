@@ -14,10 +14,8 @@
 # The function returns an array of references to the classes that were contained,
 # which allows the function call to `contain` to directly continue.
 #
-# - Since 4.0.0: support for Class and Resource Type values, absolute names
-# - Since 4.7.0: an `Array[Type[Class[n]]]` is returned with all the contained classes
-#
-# @since 4.0.0
+# @since 4.0.0 support for Class and Resource Type values, absolute names
+# @since 4.7.0 an Array[Type[Class[n]]] is returned with all the contained classes
 #
 Puppet::Functions.create_function(:contain, Puppet::Functions::InternalFunction) do
   dispatch :contain do
