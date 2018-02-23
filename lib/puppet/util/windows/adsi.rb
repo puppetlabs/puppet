@@ -66,7 +66,7 @@ module Puppet::Util::Windows::ADSI
       return sid_uri(sid) if sid.kind_of?(Puppet::Util::Windows::SID::Principal)
 
       begin
-        sid = Puppet::Util::Windows::SID.name_to_sid_object(sid)
+        sid = Puppet::Util::Windows::SID.name_to_principal(sid)
         sid_uri(sid)
       rescue Puppet::Util::Windows::Error, Puppet::Error
         nil
@@ -114,7 +114,7 @@ module Puppet::Util::Windows::ADSI
         Puppet::Util::Windows::SID.sid_to_name('S-1-5-32').upcase,
         # localized version of NT AUTHORITY (can't use S-1-5)
         # for instance AUTORITE NT on French Windows
-        Puppet::Util::Windows::SID.name_to_sid_object('SYSTEM').domain.upcase
+        Puppet::Util::Windows::SID.name_to_principal('SYSTEM').domain.upcase
       ]
     end
 
@@ -144,7 +144,7 @@ module Puppet::Util::Windows::ADSI
     def get_sids(adsi_child_collection)
       sids = []
       adsi_child_collection.each do |m|
-        sids << Puppet::Util::Windows::SID.ads_to_sid_object(m)
+        sids << Puppet::Util::Windows::SID.ads_to_principal(m)
       end
 
       sids
@@ -154,7 +154,7 @@ module Puppet::Util::Windows::ADSI
       return {} if names.nil? || names.empty?
 
       sids = names.map do |name|
-        sid = Puppet::Util::Windows::SID.name_to_sid_object(name)
+        sid = Puppet::Util::Windows::SID.name_to_principal(name)
         raise Puppet::Error.new( "Could not resolve name: #{name}" ) if !sid
         [sid.sid, sid]
       end
@@ -185,7 +185,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def sid
-      @sid ||= Puppet::Util::Windows::SID.octet_string_to_sid_object(native_user.objectSID)
+      @sid ||= Puppet::Util::Windows::SID.octet_string_to_principal(native_user.objectSID)
     end
 
     def uri
@@ -338,12 +338,12 @@ module Puppet::Util::Windows::ADSI
     end
 
     def self.current_user_sid
-      Puppet::Util::Windows::SID.name_to_sid_object(current_user_name)
+      Puppet::Util::Windows::SID.name_to_principal(current_user_name)
     end
 
     def self.exists?(name_or_sid)
       well_known = false
-      if (sid = Puppet::Util::Windows::SID.name_to_sid_object(name_or_sid))
+      if (sid = Puppet::Util::Windows::SID.name_to_principal(name_or_sid))
         return true if sid.account_type == :SidTypeUser
 
         # 'well known group' is special as it can be a group like Everyone OR a user like SYSTEM
@@ -433,7 +433,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def sid
-      @sid ||= Puppet::Util::Windows::SID.octet_string_to_sid_object(native_group.objectSID)
+      @sid ||= Puppet::Util::Windows::SID.octet_string_to_principal(native_group.objectSID)
     end
 
     def commit
@@ -505,7 +505,7 @@ module Puppet::Util::Windows::ADSI
 
     def self.exists?(name_or_sid)
       well_known = false
-      if (sid = Puppet::Util::Windows::SID.name_to_sid_object(name_or_sid))
+      if (sid = Puppet::Util::Windows::SID.name_to_principal(name_or_sid))
         return true if sid.account_type == :SidTypeGroup
 
         # 'well known group' is special as it can be a group like Everyone OR a user like SYSTEM

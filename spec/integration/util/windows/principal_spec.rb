@@ -8,7 +8,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
   let (:system_bytes) { [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] }
   let (:null_sid_bytes) { bytes = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
   let (:administrator_bytes) { [1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0] }
-  let (:computer_sid) { Puppet::Util::Windows::SID.name_to_sid_object(Puppet::Util::Windows::ADSI.computer_name) }
+  let (:computer_sid) { Puppet::Util::Windows::SID.name_to_principal(Puppet::Util::Windows::ADSI.computer_name) }
   # BUILTIN is localized on German Windows, but not French
   # looking this up like this dilutes the values of the tests as we're comparing two mechanisms
   # for returning the same values, rather than to a known good

@@ -87,7 +87,7 @@ describe Puppet::Util::Windows::ADSI::Group,
 
       # select a virtual account that requires an authority to be able to resolve to SID
       # the Dhcp service is chosen for no particular reason aside from it's a service available on all Windows versions
-      dhcp_virtualaccount = Puppet::Util::Windows::SID.name_to_sid_object('NT SERVICE\Dhcp')
+      dhcp_virtualaccount = Puppet::Util::Windows::SID.name_to_principal('NT SERVICE\Dhcp')
 
       # adding :SidTypeGroup as a group member will cause error in IAdsUser::Add
       # adding :SidTypeDomain (such as S-1-5-80 / NT SERVICE or computer name) won't error

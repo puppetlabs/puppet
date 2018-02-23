@@ -37,7 +37,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   def members_to_s(users)
     return '' if users.nil? or !users.kind_of?(Array)
     users = users.map do |user_name|
-      sid = Puppet::Util::Windows::SID.name_to_sid_object(user_name)
+      sid = Puppet::Util::Windows::SID.name_to_principal(user_name)
       if !sid
         resource.debug("#{user_name} (unresolvable to SID)")
         next user_name
@@ -55,7 +55,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def member_valid?(user_name)
-    ! Puppet::Util::Windows::SID.name_to_sid_object(user_name).nil?
+    ! Puppet::Util::Windows::SID.name_to_principal(user_name).nil?
   end
 
   def group

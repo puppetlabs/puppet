@@ -106,14 +106,14 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should be able to check the existence of a user" do
-      Puppet::Util::Windows::SID.expects(:name_to_sid_object).with(username).returns nil
+      Puppet::Util::Windows::SID.expects(:name_to_principal).with(username).returns nil
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{username},user").returns connection
       connection.expects(:Class).returns('User')
       expect(Puppet::Util::Windows::ADSI::User.exists?(username)).to be_truthy
     end
 
     it "should be able to check the existence of a domain user" do
-      Puppet::Util::Windows::SID.expects(:name_to_sid_object).with("#{domain}\\#{username}").returns nil
+      Puppet::Util::Windows::SID.expects(:name_to_principal).with("#{domain}\\#{username}").returns nil
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://#{domain}/#{username},user").returns connection
       connection.expects(:Class).returns('User')
       expect(Puppet::Util::Windows::ADSI::User.exists?(domain_username)).to be_truthy
@@ -213,7 +213,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       end
 
       it "should generate the correct URI" do
-        Puppet::Util::Windows::SID.stubs(:octet_string_to_sid_object).returns(sid)
+        Puppet::Util::Windows::SID.stubs(:octet_string_to_principal).returns(sid)
         expect(user.uri).to eq("WinNT://testcomputername/#{username},user")
       end
 
@@ -276,8 +276,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       let(:someone_sid){ stub(:account => 'someone', :domain => 'testcomputername')}
 
       describe "should be able to use SID objects" do
-        let(:system)     { Puppet::Util::Windows::SID.name_to_sid_object('SYSTEM') }
-        let(:invalid)    { Puppet::Util::Windows::SID.name_to_sid_object('foobar') }
+        let(:system)     { Puppet::Util::Windows::SID.name_to_principal('SYSTEM') }
+        let(:invalid)    { Puppet::Util::Windows::SID.name_to_principal('foobar') }
 
         it "to add a member" do
           adsi_group.expects(:Add).with("WinNT://S-1-5-18")
@@ -307,8 +307,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
         adsi_group.expects(:Members).returns(users)
 
-        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with('user1').returns(stub(:domain_account => 'HOSTNAME\user1'))
-        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with('user2').returns(stub(:domain_account => 'HOSTNAME\user2'))
+        Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with('user1').returns(stub(:domain_account => 'HOSTNAME\user1'))
+        Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with('user2').returns(stub(:domain_account => 'HOSTNAME\user2'))
 
         expect(group.members.map(&:domain_account)).to match(['HOSTNAME\user1', 'HOSTNAME\user2'])
       end
@@ -323,11 +323,11 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           ]
 
           # use stubbed objectSid on member to return stubbed SID
-          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
-          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(sids[0])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([1]).returns(sids[1])
 
-          Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('user2').returns(sids[1])
-          Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('DOMAIN2\user3').returns(sids[2])
+          Puppet::Util::Windows::SID.expects(:name_to_principal).with('user2').returns(sids[1])
+          Puppet::Util::Windows::SID.expects(:name_to_principal).with('DOMAIN2\user3').returns(sids[2])
 
           Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
           Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")
@@ -350,11 +350,11 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           ]
 
           # use stubbed objectSid on member to return stubbed SID
-          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
-          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(sids[0])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([1]).returns(sids[1])
 
-          Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('user2').returns(sids[1])
-          Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('DOMAIN2\user3').returns(sids[2])
+          Puppet::Util::Windows::SID.expects(:name_to_principal).with('user2').returns(sids[1])
+          Puppet::Util::Windows::SID.expects(:name_to_principal).with('DOMAIN2\user3').returns(sids[2])
 
           Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")
 
@@ -385,8 +385,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           ]
 
           # use stubbed objectSid on member to return stubbed SID
-          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
-          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(sids[0])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([1]).returns(sids[1])
 
           Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
           Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[1]).returns("WinNT://testcomputername/user2,user")
@@ -407,8 +407,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
               stub(:account => 'user2', :domain => 'testcomputername', :sid => 2 ),
           ]
           # use stubbed objectSid on member to return stubbed SID
-          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
-          Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(sids[0])
+          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([1]).returns(sids[1])
 
           members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i], :ole_respond_to? => true)}
           adsi_group.expects(:Members).returns members
@@ -431,7 +431,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         adsi_group.expects(:objectSID).returns([0])
         Socket.expects(:gethostname).returns('TESTcomputerNAME')
         computer_sid = stub(:account => groupname,:domain => 'testcomputername')
-        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(computer_sid)
+        Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(computer_sid)
         expect(group.uri).to eq("WinNT://./#{groupname},group")
       end
     end
@@ -461,7 +461,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should be able to confirm the existence of a group" do
-      Puppet::Util::Windows::SID.expects(:name_to_sid_object).with(groupname).returns nil
+      Puppet::Util::Windows::SID.expects(:name_to_principal).with(groupname).returns nil
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{groupname},group").returns connection
       connection.expects(:Class).returns('Group')
 
@@ -503,7 +503,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns(wmi_groups)
 
       native_group = stub('IADsGroup')
-      Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([]).returns(stub(:domain_account => '.\Administrator'))
+      Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([]).returns(stub(:domain_account => '.\Administrator'))
       native_group.expects(:Members).returns([stub(:Name => 'Administrator', :objectSID => [], :ole_respond_to? => true)])
       Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},group").returns(native_group)
 
