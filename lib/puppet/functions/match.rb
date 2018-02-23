@@ -9,28 +9,28 @@
 # subsequent index values. If the value or expression being matched is an array, the
 # function returns an array with mapped match results.
 #
-# If the function doesn't find a match, it returns 'undef'.
+# If the function doesn't find a match, it returns `undef`.
 #
 # @example Matching a regular expression in a string
 #
-# ~~~ ruby
+# ``` puppet
 # $matches = "abc123".match(/[a-z]+[1-9]+/)
 # # $matches contains [abc123]
-# ~~~
+# ```
 #
 # @example Matching a regular expressions with grouping captures in a string
 #
-# ~~~ ruby
+# ``` puppet
 # $matches = "abc123".match(/([a-z]+)([1-9]+)/)
 # # $matches contains [abc123, abc, 123]
-# ~~~
+# ```
 #
 # @example Matching a regular expression with grouping captures in an array of strings
 #
-# ~~~ ruby
+# ``` puppet
 # $matches = ["abc123","def456"].match(/([a-z]+)([1-9]+)/)
 # # $matches contains [[abc123, abc, 123], [def456, def, 456]]
-# ~~~
+# ```
 #
 # @since 4.0.0
 #
