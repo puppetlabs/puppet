@@ -1,4 +1,34 @@
-# Make iteration break as if there were no more values to process
+# Breaks the innermost iteration as if it encountered an end of input.
+# This function does not return to the caller.
+#
+# The signal produced to stop the iteration bubbles up through
+# the call stack until either terminating the innermost iteration or
+# raising an error if the end of the call stack is reached.
+#
+# This function does not accept an argument.
+#
+# @example Using `break`
+#
+# ```puppet
+# $data = [1,2,3]
+# notice $data.map |$x| { if $x == 3 { break() } $x*10 }
+# ```
+#
+# Would notice the value `[10, 20]`
+#
+# @example Using a nested `break`
+#
+# ```puppet
+# function break_if_even($x) {
+#   if $x % 2 == 0 { break() }
+# }
+# $data = [1,2,3]
+# notice $data.map |$x| { break_if_even($x); $x*10 }
+# ```
+#
+# The example produces the notice `[10]`.
+#
+# Also see the functions `next` and `return`.
 #
 # @since 4.7.0
 #
