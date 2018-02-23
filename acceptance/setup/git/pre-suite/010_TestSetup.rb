@@ -1,21 +1,14 @@
 test_name "Install packages and repositories on target machines..." do
-require 'beaker/dsl/install_utils'
-extend Beaker::DSL::InstallUtils
+  require 'beaker/dsl/install_utils'
+  extend Beaker::DSL::InstallUtils
 
   SourcePath  = Beaker::DSL::InstallUtils::SourcePath
-  GitURI      = Beaker::DSL::InstallUtils::GitURI
   GitHubSig   = Beaker::DSL::InstallUtils::GitHubSig
 
-  tmp_repositories = []
-  options[:install].each do |uri|
-    raise(ArgumentError, "Missing GitURI argument. URI is nil.") if uri.nil?
-    raise(ArgumentError, "#{uri} is not recognized.") unless(uri =~ GitURI)
-    tmp_repositories << extract_repo_info_from(uri)
+  repositories = options[:install].map do |url|
+    extract_repo_info_from(build_git_url(url))
   end
 
-  repositories = order_packages(tmp_repositories)
-
-  versions = {}
   hosts.each_with_index do |host, index|
     on host, "echo #{GitHubSig} >> $HOME/.ssh/known_hosts"
 
@@ -32,21 +25,24 @@ extend Beaker::DSL::InstallUtils
         puppet_dir = host.tmpdir('puppet')
         on(host, "chmod 755 #{puppet_dir}")
 
+        sha = ENV['SHA'] || `git rev-parse HEAD`.chomp
+        gem_source = ENV["GEM_SOURCE"] || "https://rubygems.org"
         gemfile_contents = <<END
-source '#{ENV["GEM_SOURCE"] || "https://rubygems.org"}'
-gem '#{repository[:name]}', :git => '#{repository[:path]}', :ref => '#{ENV['SHA']}'
+source '#{gem_source}'
+gem '#{repository[:name]}', :git => '#{repository[:path]}', :ref => '#{sha}'
 END
         case host['platform']
         when /windows/
           create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
           # bundle must be passed a Windows style path for a binstubs location
-          binstubs_dir = on(host, "cygpath -m \"#{host['puppetbindir']}\"").stdout.chomp
+          bindir = host['puppetbindir'].split(':').first
+          binstubs_dir = on(host, "cygpath -m \"#{bindir}\"").stdout.chomp
           # note passing --shebang to bundle is not useful because Cygwin
           # already finds the Ruby interpreter OK with the standard shebang of:
           # !/usr/bin/env ruby
           # the problem is a Cygwin style path is passed to the interpreter and this can't be modified:
           # http://cygwin.1069669.n5.nabble.com/Pass-windows-style-paths-to-the-interpreter-from-the-shebang-line-td43870.html
-          on host, "cd #{puppet_dir} && cmd.exe /c \"bundle install --system --binstubs #{binstubs_dir}\""
+          on host, "cd #{puppet_dir} && cmd.exe /c \"bundle install --system --binstubs '#{binstubs_dir}'\""
           # puppet.bat isn't written by Bundler, but facter.bat is - copy this generic file
           on host, "cd #{host['puppetbindir']} && test -f ./puppet.bat || cp ./facter.bat ./puppet.bat"
           # to access gem / facter / puppet / bundle / irb with Cygwin generally requires aliases
@@ -62,8 +58,7 @@ END
           # note that this WILL NOT impact Beaker runs though
           puppet_bundler_install_dir = on(host, "cd #{puppet_dir} && cmd.exe /c bundle show puppet").stdout.chomp
         when /el-7/
-          gemfile_contents = gemfile_contents + "gem 'json'\n"
-          create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents)
+          create_remote_file(host, "#{puppet_dir}/Gemfile", gemfile_contents + "gem 'json'\n")
           on host, "cd #{puppet_dir} && bundle install --system --binstubs #{host['puppetbindir']}"
           puppet_bundler_install_dir = on(host, "cd #{puppet_dir} && bundle show puppet").stdout.chomp
         when /solaris/

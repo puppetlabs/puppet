@@ -1,0 +1,15 @@
+---
+ssh:
+  keys:
+    - id_rsa_acceptance
+    - ~/.ssh/id_rsa-acceptance
+xml:                         true
+timesync:                    false
+repo_proxy:                  true
+add_el_extras:               false
+forge_host:                  forge-aio01-petest.puppetlabs.com
+'master-start-curl-retries': 30
+log_level:                   debug
+preserve_hosts:              onfail
+helper:                      ./lib/helper.rb
+options_file:                ./config/aio/options.rb
