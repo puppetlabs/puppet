@@ -9,17 +9,21 @@
 # [hash](/puppet/latest/reference/lang_data_hash.html) that contains parameters to
 # pass to the template.
 #
-# - See the [template](/puppet/latest/reference/lang_template.html) documentation
-# for general template usage information.
-# - See the [EPP syntax](/puppet/latest/reference/lang_template_epp.html)
+# - See the [template](https://puppet.com/docs/puppet/latest/lang_template.html)
+# documentation for general template usage information.
+# - See the [EPP syntax](https://puppet.com/docs/puppet/latest/lang_template_epp.html)
 # documentation for examples of EPP.
 #
-# For example, to call the apache module's `templates/vhost/_docroot.epp`
+# @example Calling a template with parameters
+#
+# To call the apache module's `templates/vhost/_docroot.epp`
 # template and pass the `docroot` and `virtual_docroot` parameters, call the `epp`
 # function like this:
 #
-# `epp('apache/vhost/_docroot.epp', { 'docroot' => '/var/www/html',
-# 'virtual_docroot' => '/var/www/example' })`
+# ```puppet
+# epp('apache/vhost/_docroot.epp', { 'docroot' => '/var/www/html',
+# 'virtual_docroot' => '/var/www/example' })
+# ```
 #
 # This function can also accept an absolute path, which can load a template file
 # from anywhere on disk.
@@ -30,7 +34,7 @@
 #
 # Parameters are required only if they are declared in the called template's
 # parameter tag without default values. Puppet produces an error if the `epp`
-# function fails to pass any required parameter.
+# function fails to pass any required parameters.
 #
 # @since 4.0.0
 #
