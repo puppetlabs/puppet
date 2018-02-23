@@ -9,9 +9,9 @@
 # [hash](/puppet/latest/reference/lang_data_hash.html) that contains parameters to
 # pass to the template.
 #
-# - See the [template](https://puppet.com/docs/puppet/latest/lang_template.html)
+# -   See the [template](https://puppet.com/docs/puppet/latest/lang_template.html)
 # documentation for general template usage information.
-# - See the [EPP syntax](https://puppet.com/docs/puppet/latest/lang_template_epp.html)
+# -   See the [EPP syntax](https://puppet.com/docs/puppet/latest/lang_template_epp.html)
 # documentation for examples of EPP.
 #
 # @example Calling a template with parameters

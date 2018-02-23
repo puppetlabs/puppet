@@ -1,8 +1,8 @@
 require 'hiera/puppet_function'
 
-# Finds all matches of a key throughout the hierarchy and returns them as a single flattened
-# array of unique values. If any of the matched values are arrays, they're flattened and
-# included in the results. This is called an
+# Finds all matches of a key throughout the hierarchy and returns them as a single
+# flattened array of unique values. If any of the matched values are arrays, they're
+# flattened and included in the results. This is called an
 # [array merge lookup](https://puppet.com/docs/hiera/latest/lookup_types.html#array-merge).
 #
 # > **Deprecation note:** This function is deprecated in favor of the `lookup` function.

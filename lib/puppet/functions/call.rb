@@ -2,9 +2,9 @@
 #
 # This function takes one mandatory argument and one or more optional arguments:
 #
-# 1. A string corresponding to a function name.
-# 2. Any number of arguments to be passed to the called function.
-# 3. An optional lambda, if the function being called supports it.
+# 1.  A string corresponding to a function name.
+# 2.  Any number of arguments to be passed to the called function.
+# 3.  An optional lambda, if the function being called supports it.
 #
 # @example Using the `call` function
 #

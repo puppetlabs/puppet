@@ -1,4 +1,4 @@
-# The `convert_to(value, type)` is a convenience function that serves the same purpose as `new(type, value)`.
+# A convenience function that serves the same purpose as `new(type, value)`.
 # The different argument ordering allows it to be used in chained style for
 # improved readability from left to right.
 #

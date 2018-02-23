@@ -5,8 +5,8 @@
 #
 # The function takes two mandatory arguments, in this order:
 #
-# 1. The expected data type.
-# 2. A value to compare against the expected data type.
+# 1.  The expected data type.
+# 2.  A value to compare against the expected data type.
 #
 # @example Using `assert_type`
 #
@@ -24,8 +24,8 @@
 # You can use an optional lambda to provide enhanced feedback. The lambda takes two
 # mandatory parameters, in this order:
 #
-# 1. The expected data type as described in the function's first argument.
-# 2. The actual data type of the value.
+# 1.  The expected data type as described in the function's first argument.
+# 2.  The actual data type of the value.
 #
 # @example Using `assert_type` with a warning and default value
 #

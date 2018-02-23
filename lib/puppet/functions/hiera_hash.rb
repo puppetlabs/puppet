@@ -26,8 +26,8 @@ require 'hiera/puppet_function'
 #     [hierarchy level](https://puppet.com/docs/hiera/latest/hierarchy.html) to insert at
 #     the top of the hierarchy. This lets you temporarily modify the hierarchy for a
 #     single lookup.
-#     -   If Hiera doesn't find a matching key in the overriding hierarchy level, it continues
-#         searching the rest of the hierarchy.
+#     -   If Hiera doesn't find a matching key in the overriding hierarchy level, it
+#         continues searching the rest of the hierarchy.
 #
 # @example Using `hiera_hash`
 #
