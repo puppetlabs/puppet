@@ -1,6 +1,7 @@
-# The `hocon_data` is a hiera 5 `data_hash` data provider function.
-# See [the configuration guide documentation](https://docs.puppet.com/puppet/latest/hiera_config_yaml_5.html#configuring-a-hierarchy-level-built-in-backends) for
-# how to use this function.
+# The `hocon_data()` function is a Hiera 5 `data_hash` data provider function.
+#
+# See [the configuration guide documentation](https://https://puppet.com/docs/puppet/latest/hiera_config_yaml_5.html#configuring-a-hierarchy-level-built-in-backends)
+# for information on how to use this function.
 #
 # Note that this function is not supported without a hocon library being present.
 #
