@@ -1,6 +1,20 @@
-# Called within a class definition, establishes a containment
-# relationship with another class
-# For documentation, see the 3.x stub
+# Contain one or more classes inside the current class. If any of
+# these classes are undeclared, Puppet declares them as if they were called with the
+# `include` function. Accepts a class name, an array of class names, or a
+# comma-separated list of class names.
+#
+# Puppet does not apply a contained class before it begins applying the containing class,
+# and finishes applying a contained class before it finishes applying the containing class.
+#
+# You must use a class's full name; relative names are not allowed. In addition to
+# providing class names in string form, you can also directly use Class and Resource Type
+# values produced by evaluating resource and relationship expressions.
+#
+# The function returns an array of references to the classes that were contained,
+# which allows the function call to `contain` to directly continue.
+#
+# @since 4.0.0 support for Class and Resource Type values, absolute names
+# @since 4.7.0 an Array[Type[Class[n]]] is returned with all the contained classes
 #
 Puppet::Functions.create_function(:contain, Puppet::Functions::InternalFunction) do
   dispatch :contain do

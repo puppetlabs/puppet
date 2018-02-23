@@ -5,19 +5,23 @@
 #
 # The first argument to this function should be a string containing an EPP
 # template. In most cases, the last argument is optional; if used, it should be a
-# [hash](/puppet/latest/reference/lang_data_hash.html) that contains parameters to
-# pass to the template.
+# [hash](https://puppet.com/docs/puppet/latest/lang_data_hash.html) that contains
+# parameters to pass to the template.
 #
-# - See the [template](/puppet/latest/reference/lang_template.html) documentation
-# for general template usage information.
-# - See the [EPP syntax](/puppet/latest/reference/lang_template_epp.html)
-# documentation for examples of EPP.
+# -   See the [template](/puppet/latest/reference/lang_template.html) documentation
+#     for general template usage information.
+# -   See the [EPP syntax](/puppet/latest/reference/lang_template_epp.html)
+#     documentation for examples of EPP.
 #
-# For example, to evaluate an inline EPP template and pass it the `docroot` and
+# @example Evaluating an inline EPP template with parameters
+#
+# To evaluate an inline EPP template and pass it the `docroot` and
 # `virtual_docroot` parameters, call the `inline_epp` function like this:
 #
-# `inline_epp('docroot: <%= $docroot %> Virtual docroot: <%= $virtual_docroot %>',
-# { 'docroot' => '/var/www/html', 'virtual_docroot' => '/var/www/example' })`
+# ``` puppet
+# inline_epp('docroot: <%= $docroot %> Virtual docroot: <%= $virtual_docroot %>',
+# { 'docroot' => '/var/www/html', 'virtual_docroot' => '/var/www/example' })
+# ```
 #
 # Puppet produces a syntax error if you pass more parameters than are declared in
 # the template's parameter tag. When passing parameters to a template that
@@ -25,23 +29,23 @@
 #
 # Parameters are required only if they are declared in the called template's
 # parameter tag without default values. Puppet produces an error if the
-# `inline_epp` function fails to pass any required parameter.
+# `inline_epp` function fails to pass any required parameters.
 #
 # An inline EPP template should be written as a single-quoted string or
-# [heredoc](/puppet/latest/reference/lang_data_string.html#heredocs).
+# [heredoc](https://puppet.com/docs/puppet/latest/lang_data_string.html#heredocs).
 # A double-quoted string is subject to expression interpolation before the string
 # is parsed as an EPP template.
 #
 # For example, to evaluate an inline EPP template using a heredoc, call the
 # `inline_epp` function like this:
 #
-# ~~~ puppet
+# ``` puppet
 # # Outputs 'Hello given argument planet!'
 # inline_epp(@(END), { x => 'given argument' })
 # <%- | $x, $y = planet | -%>
 # Hello <%= $x %> <%= $y %>!
 # END
-# ~~~
+# ```
 #
 # @since 4.0.0
 #

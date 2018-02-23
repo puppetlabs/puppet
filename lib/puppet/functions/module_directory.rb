@@ -1,18 +1,18 @@
 # Finds an existing module and returns the path to its root directory.
 #
 # The argument to this function should be a module name String
-# For example, the reference `mysql` will search for the
-# directory `<MODULES DIRECTORY>/mysql` and return the first
+# For example, the reference `mysql` searches for the
+# directory `<MODULES DIRECTORY>/mysql` and returns the first
 # found on the modulepath.
 #
 # This function can also accept:
 #
-# * Multiple String arguments, which will return the path of the **first** module
-#  found, skipping non existing modules.
-# * An array of module names, which will return the path of the **first** module
-#  found from the given names in the array, skipping non existing modules.
+# -   Multiple String arguments, which will return the path of the **first** module
+#     found, skipping non existing modules.
+# -   An array of module names, which will return the path of the **first** module
+#     found from the given names in the array, skipping non existing modules.
 #
-# The function returns `undef` if none of the given modules were found
+# The function returns `undef` if it doesn't find any of the given modules.
 #
 # @since 5.4.0
 #

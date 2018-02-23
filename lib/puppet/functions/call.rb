@@ -2,26 +2,26 @@
 #
 # This function takes one mandatory argument and one or more optional arguments:
 #
-# 1. A string corresponding to a function name.
-# 2. Any number of arguments to be passed to the called function.
-# 3. An optional lambda, if the function being called supports it.
+# 1.  A string corresponding to a function name.
+# 2.  Any number of arguments to be passed to the called function.
+# 3.  An optional lambda, if the function being called supports it.
 #
 # @example Using the `call` function
 #
-# ~~~ puppet
+# ``` puppet
 # $a = 'notice'
 # call($a, 'message')
-# ~~~
+# ```
 #
 # @example Using the `call` function with a lambda
 #
-# ~~~ puppet
+# ``` puppet
 # $a = 'each'
 # $b = [1,2,3]
 # call($a, $b) |$item| {
 #  notify { $item: }
 # }
-# ~~~
+# ```
 #
 # The `call` function can be used to call either Ruby functions or Puppet language
 # functions.

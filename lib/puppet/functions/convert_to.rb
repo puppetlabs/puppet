@@ -1,20 +1,18 @@
-# The `convert_to(value, type)` is a convenience function does the same as `new(type, value)`.
-# The difference in the argument ordering allows it to be used in chained style for
-# improved readability "left to right".
+# A convenience function that serves the same purpose as `new(type, value)`.
+# The different argument ordering allows it to be used in chained style for
+# improved readability from left to right.
 #
-# When the function is given a lambda, it is called with the converted value, and the function
-# returns what the lambda returns, otherwise the converted value.
+# When this function is given a lambda, Puppet calls it with the converted value, and the function
+# returns what the lambda returns. Otherwise, Puppet returns the converted value.
 #
 # @example 'convert_to' instead of 'new'
 #
-# ~~~ puppet
-#   # using new operator - that is "calling the type" with operator ()
-#   Hash(Array("abc").map |$i,$v| { [$i, $v] })
-#
-#   # using 'convert_to'
+# ``` puppet
+#   # Using 'convert_to()' explicitly
 #   "abc".convert_to(Array).map |$i,$v| { [$i, $v] }.convert_to(Hash)
-#
-# ~~~
+#   # Calling a type with the () operator
+#   Hash(Array("abc").map |$i,$v| { [$i, $v] })
+# ```
 #
 # @since 5.4.0
 #

@@ -5,36 +5,36 @@
 #
 # @example Using `annotate` with two arguments
 #
-# ~~~ puppet
+# ``` puppet
 # $annotation = Mod::NickNameAdapter.annotate(o)
 #
 # $annotation = annotate(Mod::NickNameAdapter.annotate, o)
-# ~~~
+# ```
 #
 # With three arguments, an `Annotation` type, an object, and a block, the function returns the
 # annotation for the object of the given type, or annotates it with a new annotation initialized
-# from the hash returned by the given block when no such annotation exists. The block will not
-# be called when an annotation of the given type is already present.
+# from the hash returned by the given block when no such annotation exists. The block is not
+# called when an annotation of the given type is already present.
 #
 # @example Using `annotate` with two arguments and a block
 #
-# ~~~ puppet
+# ``` puppet
 # $annotation = Mod::NickNameAdapter.annotate(o) || { { 'nick_name' => 'Buddy' } }
 #
 # $annotation = annotate(Mod::NickNameAdapter.annotate, o) || { { 'nick_name' => 'Buddy' } }
-# ~~~
+# ```
 #
-# With three arguments, an `Annotation` type, an object, and an `Hash`, the function will annotate
+# With three arguments, an `Annotation` type, an object, and an `Hash`, the function annotates
 # the given object with a new annotation of the given type that is initialized from the given hash.
 # An existing annotation of the given type is discarded.
 #
 # @example Using `annotate` with three arguments where third argument is a Hash
 #
-# ~~~ puppet
+# ``` puppet
 # $annotation = Mod::NickNameAdapter.annotate(o, { 'nick_name' => 'Buddy' })
 #
 # $annotation = annotate(Mod::NickNameAdapter.annotate, o, { 'nick_name' => 'Buddy' })
-# ~~~
+# ```
 #
 # With three arguments, an `Annotation` type, an object, and an the string `clear`, the function will
 # clear the annotation of the given type in the given object. The old annotation is returned if
@@ -42,11 +42,11 @@
 #
 # @example Using `annotate` with three arguments where third argument is the string 'clear'
 #
-# ~~~ puppet
+# ``` puppet
 # $annotation = Mod::NickNameAdapter.annotate(o, clear)
 #
 # $annotation = annotate(Mod::NickNameAdapter.annotate, o, clear)
-# ~~~
+# ```
 #
 # With three arguments, the type `Pcore`, an object, and a Hash of hashes keyed by `Annotation` types,
 # the function will annotate the given object with all types used as keys in the given hash. Each annotation
@@ -54,12 +54,12 @@
 #
 # @example Add multiple annotations to a new instance of `Mod::Person` using the `Pcore` type.
 #
-# ~~~ puppet
+# ``` puppet
 #   $person = Pcore.annotate(Mod::Person({'name' => 'William'}), {
 #     Mod::NickNameAdapter >= { 'nick_name' => 'Bill' },
 #     Mod::HobbiesAdapter => { 'hobbies' => ['Ham Radio', 'Philatelist'] }
 #   })
-# ~~~
+# ```
 #
 # @since 5.0.0
 #

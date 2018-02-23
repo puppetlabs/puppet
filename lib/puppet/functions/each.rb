@@ -1,11 +1,11 @@
-# Runs a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# Runs a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # repeatedly using each value in a data structure, then returns the values unchanged.
 #
 # This function takes two mandatory arguments, in this order:
 #
-# 1. An array, hash, or other iterable object that the function will iterate over.
-# 2. A lambda, which the function calls for each element in the first argument. It can
-# request one or two parameters.
+# 1.  An array, hash, or other iterable object that the function will iterate over.
+# 2.  A lambda, which the function calls for each element in the first argument. It can
+#     request one or two parameters.
 #
 # @example Using the `each` function
 #
@@ -20,7 +20,7 @@
 #
 # @example Using the `each` function with an array and a one-parameter lambda
 #
-# ~~~ puppet
+# ``` puppet
 # # For the array $data, run a lambda that creates a resource for each item.
 # $data = ["routers", "servers", "workstations"]
 # $data.each |$item| {
@@ -30,14 +30,14 @@
 # }
 # # Puppet creates one resource for each of the three items in $data. Each resource is
 # # named after the item's value and uses the item's value in a parameter.
-# ~~~
+# ```
 #
 # When the first argument is a hash, Puppet passes each key and value pair to the lambda
 # as an array in the form `[key, value]` and returns the original hash.
 #
 # @example Using the `each` function with a hash and a one-parameter lambda
 #
-# ~~~ puppet
+# ``` puppet
 # # For the hash $data, run a lambda using each item as a key-value array that creates a
 # # resource for each item.
 # $data = {"rtr" => "Router", "svr" => "Server", "wks" => "Workstation"}
@@ -48,7 +48,7 @@
 # }
 # # Puppet creates one resource for each of the three items in $data, each named after the
 # # item's key and containing a parameter using the item's value.
-# ~~~
+# ```
 #
 # When the first argument is an array and the lambda has two parameters, Puppet passes the
 # array's indexes (enumerated from 0) in the first parameter and its values in the second
@@ -56,7 +56,7 @@
 #
 # @example Using the `each` function with an array and a two-parameter lambda
 #
-# ~~~ puppet
+# ``` puppet
 # # For the array $data, run a lambda using each item's index and value that creates a
 # # resource for each item.
 # $data = ["routers", "servers", "workstations"]
@@ -67,14 +67,14 @@
 # }
 # # Puppet creates one resource for each of the three items in $data, each named after the
 # # item's value and containing a parameter using the item's index.
-# ~~~
+# ```
 #
 # When the first argument is a hash, Puppet passes its keys to the first parameter and its
 # values to the second parameter.
 #
 # @example Using the `each` function with a hash and a two-parameter lambda
 #
-# ~~~ puppet
+# ``` puppet
 # # For the hash $data, run a lambda using each item's key and value to create a resource
 # # for each item.
 # $data = {"rtr" => "Router", "svr" => "Server", "wks" => "Workstation"}
@@ -85,11 +85,11 @@
 # }
 # # Puppet creates one resource for each of the three items in $data, each named after the
 # # item's key and containing a parameter using the item's value.
-# ~~~
+# ```
 #
 # For an example that demonstrates how to create multiple `file` resources using `each`,
 # see the Puppet
-# [iteration](https://docs.puppetlabs.com/puppet/latest/reference/lang_iteration.html)
+# [iteration](https://puppet.com/docs/puppet/latest/lang_iteration.html)
 # documentation.
 #
 # @since 4.0.0
