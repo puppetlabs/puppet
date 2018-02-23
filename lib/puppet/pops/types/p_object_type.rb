@@ -484,6 +484,7 @@ class PObjectType < PMetaType
     # @api private
   def create_new_function
     impl_class = implementation_class
+    return impl_class.create_new_function(self) if impl_class.respond_to?(:create_new_function)
 
     (param_names, param_types, required_param_count) = parameter_info(impl_class)
 

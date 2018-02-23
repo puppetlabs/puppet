@@ -229,6 +229,55 @@ describe "Puppet::DataTypes" do
     end
   end
 
+  context 'when creating type with custom new_function' do
+    let(:datatypes) {
+      {
+        'mytest.rb' => <<-RUBY.unindent,
+          Puppet::DataTypes.create_type('Mytest') do
+            interface <<-PUPPET
+              attributes => {
+                strings => { type => Array[String] },
+                ints => { type => Array[Integer] },
+              }
+              PUPPET
+
+          implementation_class PuppetSpec::DataTypes::MyTest
+        end
+      RUBY
+      }
+    }
+
+    before(:each) do
+      class ::PuppetSpec::DataTypes::MyTest
+        def self.create_new_function(t)
+          Puppet::Functions.create_function('new_%s' % t.name) do
+            dispatch :create do
+              repeated_param 'Variant[String,Integer]', :args
+            end
+
+            def create(*args)
+              ::PuppetSpec::DataTypes::MyTest.new(*args.partition { |arg| arg.is_a?(String) })
+            end
+          end
+        end
+        attr_reader :strings, :ints
+
+        def initialize(strings, ints)
+          @strings = strings
+          @ints = ints
+        end
+      end
+    end
+
+    after(:each) do
+      ::PuppetSpec::DataTypes.send(:remove_const, :MyTest)
+    end
+
+    it 'loads and calls custom new function' do
+      expect(eval_and_collect_notices('notice(Mytest("A", 32, "B", 20).ints)', node)).to eql(['[32, 20]'])
+    end
+  end
+
   context 'with data type and class defined in a module' do
     let(:mytest_classes) {
       {
