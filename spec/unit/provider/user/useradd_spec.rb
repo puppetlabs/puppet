@@ -125,10 +125,10 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         expect { provider.create }.to raise_error(Puppet::Error, "UID 505 already exists, use allowdupe to force user creation")
       end
 
-      it "should not use -G for luseradd and should call lusermod with -G after luseradd when groups property is set" do
+      it "should not use -G for luseradd and should call usermod with -G after luseradd when groups property is set" do
         resource[:groups] = ['group1', 'group2']
-        provider.expects(:execute).with(Not(includes("-G")), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
-        provider.expects(:execute).with(includes('/usr/sbin/lusermod'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        provider.expects(:execute).with(all_of(includes('/usr/sbin/luseradd'), Not(includes('-G'))), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        provider.expects(:execute).with(all_of(includes('/usr/sbin/usermod'), includes('-G')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
 
