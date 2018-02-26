@@ -183,7 +183,9 @@ class Lexer2
 
   attr_reader :locator
 
-  def initialize()
+  # @param [Hash] options
+  # @option options [Boolean] :backtick_strings `true` if the lexer should recognize strings quoted using the backtick character
+  def initialize(options = EMPTY_HASH)
     @selector = {
       '.' =>  lambda { emit(TOKEN_DOT, @scanner.pos) },
       ',' => lambda {  emit(TOKEN_COMMA, @scanner.pos) },
@@ -555,6 +557,14 @@ class Lexer2
           scn.pos = scn.pos + 1
           lex_error(Issues::ILLEGAL_CLASS_REFERENCE)
         end
+      end
+    end
+
+    if options[:backtick_strings]
+      @selector['`'] = lambda do
+        scn = @scanner
+        before = scn.pos
+        emit_completed([:STRING, slurp_btstring.freeze, scn.pos - before], before)
       end
     end
 

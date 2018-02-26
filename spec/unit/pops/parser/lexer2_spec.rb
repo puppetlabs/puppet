@@ -4,8 +4,8 @@ require 'puppet/pops'
 require 'puppet/pops/parser/lexer2'
 
 module EgrammarLexer2Spec
-  def tokens_scanned_from(s)
-    lexer = Puppet::Pops::Parser::Lexer2.new
+  def tokens_scanned_from(s, options = Puppet::Pops::EMPTY_HASH)
+    lexer = Puppet::Pops::Parser::Lexer2.new(options)
     lexer.string = s
     lexer.fullscan[0..-2]
   end
@@ -190,6 +190,25 @@ describe 'Lexer2' do
   [ '0x0', '0x1', '0xa', '0xA', '0xabcdef', '0xABCDEF'].each do |string|
     it "should lex an hex integer NUMBER on the form '#{string}'" do
       expect(tokens_scanned_from(string)).to match_tokens2([:NUMBER, string])
+    end
+  end
+
+  context 'with option :backtick_strings' do
+    { '``' => '',
+      '`a`' => 'a',
+      '`\t`' => '\t',
+      '`\r`' => '\r',
+      '`\n`' => '\n',
+      <<-BT.unindent => "x\ny\\n\nz\n"
+      `x
+      y\\n
+      z
+      `
+      BT
+    }.each do |source, expected|
+      it "should lex a backtick quoted STRING on the form #{source}" do
+        expect(tokens_scanned_from(source, :backtick_strings => true)).to match_tokens2([:STRING, expected])
+      end
     end
   end
 

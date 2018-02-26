@@ -81,8 +81,8 @@ class Parser
     _parse
   end
 
-  def initialize()
-    @lexer = Lexer2.new
+  def initialize(options = EMPTY_HASH)
+    @lexer = Lexer2.new(options)
     @namestack = []
     @definitions = []
   end

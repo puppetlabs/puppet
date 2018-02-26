@@ -12,6 +12,7 @@ module SlurpSupport
   include LexerSupport
 
   SLURP_SQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*[']/
+  SLURP_BT_PATTERN  = /`/
   SLURP_DQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*(["]|[$]\{?)/
   SLURP_UQ_PATTERN  = /(?:[^\\]|^)(?:[\\]{2})*([$]\{?|\z)/
   # unquoted, no escapes
@@ -27,6 +28,14 @@ module SlurpSupport
     str = slurp(@scanner, SLURP_SQ_PATTERN, SQ_ESCAPES, :ignore_invalid_escapes)
     lex_error(Issues::UNCLOSED_QUOTE, :after => "\"'\"", :followed_by => followed_by) unless str
     str[0..-2] # strip closing "'" from result
+  end
+
+  def slurp_btstring
+    # skip the leading `
+    @scanner.pos += 1
+    str = @scanner.scan_until(SLURP_BT_PATTERN)
+    lex_error(Issues::UNCLOSED_QUOTE, :after => "\"`\"", :followed_by => followed_by) unless str
+    str[0..-2] # strip closing "`" from result
   end
 
   def slurp_dqstring
