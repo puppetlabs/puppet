@@ -134,11 +134,10 @@ describe Puppet::Util::Windows::ADSI::Group,
 
     it 'should return a list of Principal objects even with unresolvable SIDs' do
       members = [
-        # SYSTEM account is legitimate
-        # Use sid_to_name to get localized names of SIDs - BUILTIN, SYSTEM, NT AUTHORITY, Everyone are all localized
+        # NULL SID is not localized
         stub('WIN32OLE', {
-          :objectSID => [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0],
-          :Name => Puppet::Util::Windows::SID.sid_to_name('S-1-5-18'),
+          :objectSID => [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          :Name => 'NULL SID',
           :ole_respond_to? => true,
         }),
         # unresolvable SID is a different story altogether
@@ -157,8 +156,8 @@ describe Puppet::Util::Windows::ADSI::Group,
       admins.native_group
       admins.native_group.stubs(:Members).returns(members)
 
-      # well-known SYSTEM
-      expect(admins.members[0].sid).to eq('S-1-5-18')
+      # well-known NULL SID
+      expect(admins.members[0].sid).to eq('S-1-0-0')
       expect(admins.members[0].account_type).to eq(:SidTypeWellKnownGroup)
 
       # unresolvable SID
