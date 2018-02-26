@@ -34,33 +34,14 @@
       "name": "Ethan J. Brown"
     },
     {
-      "github": "HAIL9000",
-      "email": "hailee@puppet.com",
-      "name": "Hailee Kenney"
-    },
-    {
       "github": "er0ck",
       "email": "eric.thompson@puppet.com",
       "name": "Eric Thompson"
     },
     {
-      "github": "johnduarte",
-      "email": "john.duarte@puppet.com",
-      "name": "John Duarte"
-    },
-    {
-      "github": "adrienthebo",
-      "name": "Adrien Thebo"
-    },
-    {
       "github": "jtappa",
       "email": "jorie@puppet.com",
       "name": "Jorie Tappa"
-    },
-    {
-      "github": "MosesMendoza",
-      "email": "moses@puppet.com",
-      "name": "Moses Mendoza"
     }
   ]
 }
