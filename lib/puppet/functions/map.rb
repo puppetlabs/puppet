@@ -129,6 +129,7 @@ Puppet::Functions.create_function(:map) do
         end
       rescue StopIteration
       end
+
       result
     end
   end
