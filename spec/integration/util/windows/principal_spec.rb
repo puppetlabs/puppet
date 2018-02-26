@@ -8,7 +8,7 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
   let (:system_bytes) { [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] }
   let (:null_sid_bytes) { bytes = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
   let (:administrator_bytes) { [1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0] }
-  let (:computer_sid) { Puppet::Util::Windows::SID.name_to_principal(Puppet::Util::Windows::ADSI.computer_name) }
+  let (:computer_sid) { Puppet::Util::Windows::SID.name_to_sid_object(Puppet::Util::Windows::ADSI.computer_name) }
   # BUILTIN is localized on German Windows, but not French
   # looking this up like this dilutes the values of the tests as we're comparing two mechanisms
   # for returning the same values, rather than to a known good
@@ -23,7 +23,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.domain).to eq('')
       expect(principal.domain_account).to eq('NULL SID')
       expect(principal.account_type).to eq(:SidTypeWellKnownGroup)
-      expect(principal.to_s).to eq('NULL SID')
     end
 
     it "should create an instance from a well-known account prefixed with NT AUTHORITY" do
@@ -40,7 +39,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
         expect(principal.account).to eq('SYSTEM')
         expect(principal.domain).to eq('NT AUTHORITY')
         expect(principal.domain_account).to eq('NT AUTHORITY\\SYSTEM')
-        expect(principal.to_s).to eq('NT AUTHORITY\\SYSTEM')
       end
 
       # Windows API LookupAccountSid behaves differently if current user is SYSTEM
@@ -89,7 +87,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.domain).to eq(domain)
       expect(principal.domain_account).to eq(qualified_name)
       expect(principal.account_type).to eq(:SidTypeAlias)
-      expect(principal.to_s).to eq(qualified_name)
     end
 
     it "should raise an error when trying to lookup an account that doesn't exist" do
@@ -109,7 +106,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.account).to eq(builtin_localized)
       expect(principal.domain).to eq(builtin_localized)
       expect(principal.domain_account).to eq(builtin_localized)
-      expect(principal.to_s).to eq(builtin_localized)
     end
 
     it "should return a BUILTIN domain principal for BUILTIN account names" do
@@ -119,7 +115,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.account).to eq(builtin_localized)
       expect(principal.domain).to eq(builtin_localized)
       expect(principal.domain_account).to eq(builtin_localized)
-      expect(principal.to_s).to eq(builtin_localized)
     end
 
   end
@@ -140,7 +135,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.domain).to eq(computer_sid.domain)
       expect(principal.domain_account).to eq(guest_name)
       expect(principal.account_type).to eq(:SidTypeUser)
-      expect(principal.to_s).to eq(guest_name)
     end
 
     it "should create an instance from a well-known group SID" do
@@ -151,7 +145,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.domain).to eq('')
       expect(principal.domain_account).to eq('NULL SID')
       expect(principal.account_type).to eq(:SidTypeWellKnownGroup)
-      expect(principal.to_s).to eq('NULL SID')
     end
 
     it "should create an instance from a well-known BUILTIN Alias SID" do
@@ -167,7 +160,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.domain).to eq(domain)
       expect(principal.domain_account).to eq(qualified_name)
       expect(principal.account_type).to eq(:SidTypeAlias)
-      expect(principal.to_s).to eq(qualified_name)
     end
 
     it "should raise an error when trying to lookup nil" do
@@ -222,7 +214,6 @@ describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft
       expect(principal.account).to eq(builtin_localized)
       expect(principal.domain).to eq(builtin_localized)
       expect(principal.domain_account).to eq(builtin_localized)
-      expect(principal.to_s).to eq(builtin_localized)
     end
   end
 
