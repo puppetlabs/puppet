@@ -53,8 +53,6 @@ class Puppet::Pops::Evaluator::EppEvaluator
     evaluate(parser, 'epp', scope, true, result, template_args)
   end
 
-  private
-
   def self.evaluate(parser, func_name, scope, use_global_scope_only, parse_result, template_args)
     template_args, template_args_set = handle_template_args(func_name, template_args)
 
@@ -104,6 +102,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
       parser.closure(body, scope).call_by_name(template_args, enforce_parameters)
     end
   end
+  private_class_method :evaluate
 
   def self.handle_template_args(func_name, template_args)
     if template_args.nil?
@@ -117,4 +116,5 @@ class Puppet::Pops::Evaluator::EppEvaluator
       [template_args, true]
     end
   end
+  private_class_method :handle_template_args
 end

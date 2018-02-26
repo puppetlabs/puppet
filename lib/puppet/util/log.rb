@@ -164,8 +164,6 @@ class Puppet::Util::Log
     end
   end
 
-  private
-  # produces UTF-8 strings or dumps strings when they cannot be re-encoded
   def Log.coerce_string(str)
     return Puppet::Util::CharacterEncoding.convert_to_utf_8(str) if str.valid_encoding?
 
@@ -175,8 +173,7 @@ class Puppet::Util::Log
     message += '\n' + _("Backtrace:\n%{backtrace}") % { backtrace: caller[0..10].join("\n") }
     message
   end
-
-  public
+  private_class_method :coerce_string
 
   # Route the actual message. FIXME There are lots of things this method
   # should do, like caching and a bit more.  It's worth noting that there's

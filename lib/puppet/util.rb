@@ -366,11 +366,7 @@ module Util
   end
   module_function :uri_to_path
 
-  private
-
   RFC_3986_URI_REGEX = /^(?<scheme>([^:\/?#]+):)?(?<authority>\/\/([^\/?#]*))?(?<path>[^?#]*)(\?(?<query>[^#]*))?(#(?<fragment>.*))?$/
-
-  public
 
   # Percent-encodes a URI query parameter per RFC3986 - https://tools.ietf.org/html/rfc3986
   #

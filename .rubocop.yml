@@ -137,9 +137,8 @@ Lint/UnusedBlockArgument:
 Lint/UnusedMethodArgument:
   Enabled: false
 
-# DISABLED - TODO
 Lint/UselessAccessModifier:
-  Enabled: false
+  Enabled: true
 
 Lint/UselessAssignment:
   Enabled: true

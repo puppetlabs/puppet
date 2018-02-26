@@ -110,8 +110,6 @@ module Puppet::Resource::CapabilityFinder
     end
   end
 
-  private
-
   # Find a distinct copy of the given capability resource by searching for only
   # resources matching the given code_id. Returns `nil` if no code_id is
   # supplied or if there isn't exactly one matching resource.
@@ -132,6 +130,7 @@ module Puppet::Resource::CapabilityFinder
       end
     end
   end
+  private_class_method :disambiguate_by_code_id
 
   def self.instantiate_resource(resource_hash)
     real_type = resource_hash['type']
@@ -147,4 +146,5 @@ module Puppet::Resource::CapabilityFinder
     end
     return resource
   end
+  private_class_method :instantiate_resource
 end

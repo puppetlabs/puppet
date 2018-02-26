@@ -40,8 +40,6 @@ module Puppet::Network::Resolver
     end
   end
 
-  private
-
   def self.each_priority(records)
     pri_hash = records.inject({}) do |groups, element|
       groups[element.priority] ||= []
@@ -53,6 +51,7 @@ module Puppet::Network::Resolver
       yield key, pri_hash[key]
     end
   end
+  private_class_method :each_priority
 
   def self.find_weighted_server(records)
     return nil if records.nil? || records.empty?
