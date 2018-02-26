@@ -32,9 +32,10 @@ module Puppet::Util::Windows::SID
         @sid_bytes == compare.sid_bytes
     end
 
-    # added for backward compatibility
+    # returns authority qualified account name
+    # prefer to compare Principal instances with == operator or by #sid
     def to_s
-      @sid
+      @domain_account
     end
 
     # = 8 + max sub identifiers (15) * 4
