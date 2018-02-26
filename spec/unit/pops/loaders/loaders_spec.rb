@@ -579,22 +579,22 @@ describe 'loaders' do
         expect(type).to be_a(Puppet::Pops::Types::PIntegerType)
       end
 
-      it 'will not resolve implicit transitive dependencies, a -> c' do
+      it 'will resolve implicit transitive dependencies, a -> c' do
         type = Puppet::Pops::Types::TypeParser.singleton.parse('A::N', Puppet::Pops::Loaders.find_loader('a'))
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.name).to eql('A::N')
         type = type.resolved_type
-        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
-        expect(type.type_string).to eql('C::C')
+        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+        expect(type.name).to eql('C::C')
       end
 
-      it 'will not resolve reverse dependencies, b -> a' do
+      it 'will resolve reverse dependencies, b -> a' do
         type = Puppet::Pops::Types::TypeParser.singleton.parse('B::X', Puppet::Pops::Loaders.find_loader('b'))
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.name).to eql('B::X')
         type = type.resolved_type
-        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
-        expect(type.type_string).to eql('A::A')
+        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+        expect(type.name).to eql('A::A')
       end
 
       it 'does not resolve init_typeset when more qualified type is found in typeset' do
