@@ -73,7 +73,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   end
 
   describe "when diffing on a local filebucket" do
-    describe "in non-windows environments", :unless => Puppet.features.microsoft_windows? do
+    describe "in non-windows environments", :unless => Puppet::Util::Platform.windows? do
       with_digest_algorithms do
 
         it "should fail in an informative way when one or more checksum doesn't exists" do
@@ -121,7 +121,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         end
       end
-      describe "in windows environment", :if => Puppet.features.microsoft_windows? do
+      describe "in windows environment", :if => Puppet::Util::Platform.windows? do
         it "should fail in an informative way when trying to diff" do
           @dipper = Puppet::FileBucket::Dipper.new(:Path => tmpdir("bucket"))
           wrong_checksum = "DEADBEEF"
@@ -250,7 +250,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   end
 
   describe "when diffing on a remote filebucket" do
-    describe "in non-windows environments", :unless => Puppet.features.microsoft_windows? do
+    describe "in non-windows environments", :unless => Puppet::Util::Platform.windows? do
       with_digest_algorithms do
         it "should fail in an informative way when one or more checksum doesn't exists" do
           @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
@@ -271,7 +271,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
       end
     end
 
-    describe "in windows environment", :if => Puppet.features.microsoft_windows? do
+    describe "in windows environment", :if => Puppet::Util::Platform.windows? do
       it "should fail in an informative way when trying to diff" do
         @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
         wrong_checksum = "DEADBEEF"

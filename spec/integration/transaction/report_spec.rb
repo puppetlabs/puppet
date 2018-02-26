@@ -385,7 +385,7 @@ describe Puppet::Transaction::Report do
         expect(get_cc_count(report)).to eq(0)
       end
 
-      it "link with ensure property change present => absent", :unless => Puppet.features.microsoft_windows? do
+      it "link with ensure property change present => absent", :unless => Puppet::Util::Platform.windows? do
         file = tmpfile("test_file")
         FileUtils.symlink(file, tmpfile("test_link"))
 
@@ -440,7 +440,7 @@ describe Puppet::Transaction::Report do
         expect(get_cc_count(report)).to eq(0)
       end
 
-      it "exec with idempotence issue", :unless => Puppet.features.microsoft_windows? do
+      it "exec with idempotence issue", :unless => Puppet::Util::Platform.windows? do
         report = run_catalogs(Puppet::Type.type(:exec).new(:title => "exec1",
                                                            :command => "/bin/echo foo"),
                               Puppet::Type.type(:exec).new(:title => "exec1",
@@ -458,7 +458,7 @@ describe Puppet::Transaction::Report do
         expect(get_cc_count(report)).to eq(1)
       end
 
-      it "exec with no idempotence issue", :unless => Puppet.features.microsoft_windows? do
+      it "exec with no idempotence issue", :unless => Puppet::Util::Platform.windows? do
         report = run_catalogs(Puppet::Type.type(:exec).new(:title => "exec1",
                                                            :command => "echo foo",
                                                            :path => "/bin",

@@ -115,7 +115,7 @@ shared_examples_for "all path parameters" do |param, options|
     end
   end
 
-  describe "on a Windows-like platform it", :if => Puppet.features.microsoft_windows? do
+  describe "on a Windows-like platform it", :if => Puppet::Util::Platform.windows?  do
     if array then
       it_should_behave_like "all pathname parameters with arrays", true
     end

@@ -3,7 +3,7 @@
 
 require 'spec_helper'
 
-describe "FFI::MemoryPointer", :if => Puppet.features.microsoft_windows? do
+describe "FFI::MemoryPointer", :if => Puppet::Util::Platform.windows? do
   # use 2 bad bytes at end so we have even number of bytes / characters
   let (:bad_string) { "hello invalid world".encode(Encoding::UTF_16LE) + "\xDD\xDD".force_encoding(Encoding::UTF_16LE) }
   let (:bad_string_bytes) { bad_string.bytes.to_a }

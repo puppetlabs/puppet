@@ -4,7 +4,7 @@ require 'spec_helper'
 checksum = Puppet::Type.type(:file).attrclass(:checksum)
 describe checksum do
   before do
-    @path = Puppet.features.microsoft_windows? ? "c:/foo/bar" : "/foo/bar"
+    @path = Puppet::Util::Platform.windows? ? "c:/foo/bar" : "/foo/bar"
     @resource = Puppet::Type.type(:file).new :path => @path
     @checksum = @resource.parameter(:checksum)
   end

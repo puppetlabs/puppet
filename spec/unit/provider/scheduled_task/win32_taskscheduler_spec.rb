@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/util/windows/taskscheduler' if Puppet.features.microsoft_windows?
+require 'puppet/util/windows/taskscheduler' if Puppet::Util::Platform.windows?
 
 shared_examples_for "a trigger that handles start_date and start_time" do
   let(:trigger) do
@@ -109,7 +109,7 @@ shared_examples_for "a trigger that handles start_date and start_time" do
   end
 end
 
-describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if => Puppet::Util::Platform.windows? do
   before :each do
     Puppet::Type.type(:scheduled_task).stubs(:defaultprovider).returns(described_class)
   end
@@ -686,7 +686,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
   end
 
-  describe '#user_insync?', :if => Puppet.features.microsoft_windows? do
+  describe '#user_insync?', :if => Puppet::Util::Platform.windows? do
     let(:resource) { described_class.new(:name => 'foobar', :command => 'C:\Windows\System32\notepad.exe') }
 
     it 'should consider the user as in sync if the name matches' do
@@ -1735,7 +1735,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
     end
 
-    describe '#user=', :if => Puppet.features.microsoft_windows? do
+    describe '#user=', :if => Puppet::Util::Platform.windows? do
       before :each do
         @mock_task = stub
         @mock_task.responds_like(Win32::TaskScheduler.new)
@@ -1848,7 +1848,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
   end
 
-  describe "Win32::TaskScheduler", :if => Puppet.features.microsoft_windows? do
+  describe "Win32::TaskScheduler", :if => Puppet::Util::Platform.windows? do
 
     let(:name) { SecureRandom.uuid }
 

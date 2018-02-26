@@ -70,7 +70,7 @@ environment=#{rune_utf8}
     expect(settings[:environment]).to eq(rune_utf8)
   end
 
-  it "reparses configuration if configuration file is touched", :if => !Puppet.features.microsoft_windows? do
+  it "reparses configuration if configuration file is touched", :if => !Puppet::Util::Platform.windows? do
     config = tmpfile("config")
     define_settings(:main,
       :config => {

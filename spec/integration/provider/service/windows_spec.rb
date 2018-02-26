@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:windows), '(integration)',
-  :if => Puppet.features.microsoft_windows? do
+  :if => Puppet::Util::Platform.windows? do
 
   require 'puppet/util/windows'
 

@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'puppet/util/windows'
 
-describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.microsoft_windows? do
+describe "Puppet::Util::Windows::AccessControlList", :if => Puppet::Util::Platform.windows? do
   let(:klass) { Puppet::Util::Windows::AccessControlList }
   let(:system_sid) { 'S-1-5-18' }
   let(:admins_sid) { 'S-1-5-544' }

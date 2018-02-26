@@ -4,7 +4,7 @@ require 'spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:bsd)
 
-describe provider_class, :unless => Puppet.features.microsoft_windows? do
+describe provider_class, :unless => Puppet::Util::Platform.windows? do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     Facter.stubs(:value).with(:operatingsystem).returns :netbsd

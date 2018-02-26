@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:cron), :unless => Puppet::Util::Platform.windows? do
   let(:simple_provider) do
     @provider_class = described_class.provide(:simple) { mk_resource_methods }
     @provider_class.stubs(:suitable?).returns true

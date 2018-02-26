@@ -281,7 +281,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
       end
     end
 
-    describe "when diffing files", :unless => Puppet.features.microsoft_windows? do
+    describe "when diffing files", :unless => Puppet::Util::Platform.windows? do
       with_digest_algorithms do
         let(:not_bucketed_plaintext) { "other stuff" }
         let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }

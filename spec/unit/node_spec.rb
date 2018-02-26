@@ -71,7 +71,7 @@ describe Puppet::Node do
       expect(new_node.name).to eq(node.name)
     end
 
-    it "validates against the node json schema", :unless => Puppet.features.microsoft_windows? do
+    it "validates against the node json schema", :unless => Puppet::Util::Platform.windows? do
       Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
       node = Puppet::Node.new("hello",
                               :environment => 'bar',
@@ -81,7 +81,7 @@ describe Puppet::Node do
       expect(node.to_json).to validate_against('api/schemas/node.json')
     end
 
-    it "when missing optional parameters validates against the node json schema", :unless => Puppet.features.microsoft_windows? do
+    it "when missing optional parameters validates against the node json schema", :unless => Puppet::Util::Platform.windows? do
       Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
       node = Puppet::Node.new("hello",
                               :environment => 'bar'

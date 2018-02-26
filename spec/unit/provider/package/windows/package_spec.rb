@@ -32,7 +32,7 @@ describe Puppet::Provider::Package::Windows::Package do
     end
   end
 
-  context '::with_key', :if => Puppet.features.microsoft_windows? do
+  context '::with_key', :if => Puppet::Util::Platform.windows? do
     it 'should search HKLM (64 & 32) and HKCU (64 & 32)' do
       seq = sequence('reg')
 

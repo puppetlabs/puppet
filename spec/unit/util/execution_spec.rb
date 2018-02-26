@@ -19,10 +19,10 @@ describe Puppet::Util::Execution do
     let(:process_handle) { 0xDEADBEEF }
     let(:thread_handle) { 0xCAFEBEEF }
     let(:proc_info_stub) { stub 'processinfo', :process_handle => process_handle, :thread_handle => thread_handle, :process_id => pid}
-    let(:null_file) { Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null' }
+    let(:null_file) { Puppet::Util::Platform.windows? ? 'NUL' : '/dev/null' }
 
     def stub_process_wait(exitstatus)
-      if Puppet.features.microsoft_windows?
+      if Puppet::Util::Platform.windows?
         Puppet::Util::Windows::Process.stubs(:wait_process).with(process_handle).returns(exitstatus)
         FFI::WIN32.stubs(:CloseHandle).with(process_handle)
         FFI::WIN32.stubs(:CloseHandle).with(thread_handle)
@@ -33,7 +33,7 @@ describe Puppet::Util::Execution do
     end
 
 
-    describe "#execute_posix (stubs)", :unless => Puppet.features.microsoft_windows? do
+    describe "#execute_posix (stubs)", :unless => Puppet::Util::Platform.windows? do
       before :each do
         # Most of the things this method does are bad to do during specs. :/
         Kernel.stubs(:fork).returns(pid).yields
@@ -124,7 +124,7 @@ describe Puppet::Util::Execution do
       end
     end
 
-    describe "#execute_windows (stubs)", :if => Puppet.features.microsoft_windows? do
+    describe "#execute_windows (stubs)", :if => Puppet::Util::Platform.windows? do
       before :each do
         Process.stubs(:create).returns(proc_info_stub)
         stub_process_wait(0)
@@ -183,8 +183,8 @@ describe Puppet::Util::Execution do
 
       describe "when setting up input and output files" do
         include PuppetSpec::Files
-        let(:executor) { Puppet.features.microsoft_windows? ? 'execute_windows' : 'execute_posix' }
-        let(:rval) { Puppet.features.microsoft_windows? ? proc_info_stub : pid }
+        let(:executor) { Puppet::Util::Platform.windows? ? 'execute_windows' : 'execute_posix' }
+        let(:rval) { Puppet::Util::Platform.windows? ? proc_info_stub : pid }
 
         before :each do
           Puppet::Util::Execution.stubs(:wait_for_output)
@@ -271,7 +271,7 @@ describe Puppet::Util::Execution do
           end
         end
 
-        describe "on Windows", :if => Puppet.features.microsoft_windows? do
+        describe "on Windows", :if => Puppet::Util::Platform.windows? do
           describe "when squelch is not set" do
             it "should set stdout to a temporary output file" do
               outfile = Puppet::FileSystem::Uniquefile.new('stdout')
@@ -353,7 +353,7 @@ describe Puppet::Util::Execution do
         end
       end
 
-      describe "on Windows", :if => Puppet.features.microsoft_windows? do
+      describe "on Windows", :if => Puppet::Util::Platform.windows? do
         it "should always close the process and thread handles" do
           Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
 
@@ -376,7 +376,7 @@ describe Puppet::Util::Execution do
       end
     end
 
-    describe "#execute (posix locale)", :unless => Puppet.features.microsoft_windows?  do
+    describe "#execute (posix locale)", :unless => Puppet::Util::Platform.windows?  do
 
       before :each do
         # there is a danger here that ENV will be modified by exec_posix.  Normally it would only affect the ENV
@@ -469,7 +469,7 @@ describe Puppet::Util::Execution do
       end
     end
 
-    describe "#execute (posix user env vars)", :unless => Puppet.features.microsoft_windows?  do
+    describe "#execute (posix user env vars)", :unless => Puppet::Util::Platform.windows?  do
       # build up a printf-style string that contains a command to get the value of an environment variable
       # from the operating system.  We can substitute into this with the names of the desired environment variables later.
       get_env_var_cmd = 'echo $%s'
@@ -531,7 +531,7 @@ describe Puppet::Util::Execution do
       before :each do
         stub_process_wait(0)
 
-        if Puppet.features.microsoft_windows?
+        if Puppet::Util::Platform.windows?
           Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
         else
           Puppet::Util::Execution.stubs(:execute_posix).returns(pid)
@@ -580,7 +580,7 @@ describe Puppet::Util::Execution do
       before :each do
         stub_process_wait(0)
 
-        if Puppet.features.microsoft_windows?
+        if Puppet::Util::Platform.windows?
           Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
         else
           Puppet::Util::Execution.stubs(:execute_posix).returns(pid)
@@ -652,7 +652,7 @@ describe Puppet::Util::Execution do
           r, w = IO.pipe
           IO.expects(:pipe).returns([r, w])
 
-          if Puppet.features.microsoft_windows?
+          if Puppet::Util::Platform.windows?
             Puppet::Util::Execution.expects(:execute_windows).raises(Exception, 'execution failed')
           else
             Puppet::Util::Execution.expects(:execute_posix).raises(Exception, 'execution failed')
@@ -665,7 +665,7 @@ describe Puppet::Util::Execution do
           expect(w.closed?)
         end
       end
-      describe "on Windows", :if => Puppet.features.microsoft_windows? do
+      describe "on Windows", :if => Puppet::Util::Platform.windows? do
         context "reading the output" do
           before :each do
             stdout = Puppet::FileSystem::Uniquefile.new('test')
