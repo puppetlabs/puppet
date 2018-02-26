@@ -21,7 +21,7 @@ task :gen_manpages do
   faces = Puppet::Face.faces.map(&:to_s)
   apps = non_face_applications + faces
 
-  ronn_args = '--manual="Puppet manual" --organization="Puppet Labs, LLC" -r'
+  ronn_args = '--manual="Puppet manual" --organization="Puppet, Inc." -r'
 
   # Locate ronn
   ronn = %x{which ronn}.chomp
