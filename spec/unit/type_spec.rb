@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
-describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type, :unless => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
 

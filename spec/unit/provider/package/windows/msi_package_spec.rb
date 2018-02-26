@@ -18,7 +18,7 @@ describe Puppet::Provider::Package::Windows::MsiPackage do
     subject.expects(:installer).returns(inst)
   end
 
-  context '::installer', :if => Puppet.features.microsoft_windows? do
+  context '::installer', :if => Puppet::Util::Platform.windows? do
     it 'should return an instance of the COM interface' do
       expect(subject.installer).not_to be_nil
     end

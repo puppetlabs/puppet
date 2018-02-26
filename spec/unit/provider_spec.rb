@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 def existing_command
-  Puppet.features.microsoft_windows? ? "cmd" : "echo"
+  Puppet::Util::Platform.windows? ? "cmd" : "echo"
 end
 
 describe Puppet::Provider do

@@ -17,7 +17,7 @@ describe provider_class do
     provider
   end
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     let(:puppet_gem) { 'gem' }
   else
     let(:puppet_gem) { '/opt/puppetlabs/puppet/bin/gem' }

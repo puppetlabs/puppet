@@ -7,8 +7,8 @@ describe Puppet::Transaction::ResourceHarness do
   include PuppetSpec::Files
 
   before do
-    @mode_750 = Puppet.features.microsoft_windows? ? '644' : '750'
-    @mode_755 = Puppet.features.microsoft_windows? ? '644' : '755'
+    @mode_750 = Puppet::Util::Platform.windows? ? '644' : '750'
+    @mode_755 = Puppet::Util::Platform.windows? ? '644' : '755'
     path = make_absolute("/my/file")
 
     @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)

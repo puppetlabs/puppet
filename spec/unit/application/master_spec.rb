@@ -5,7 +5,7 @@ require 'puppet/application/master'
 require 'puppet/daemon'
 require 'puppet/network/server'
 
-describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Application::Master, :unless => Puppet::Util::Platform.windows? do
   before :each do
     @master = Puppet::Application[:master]
     @daemon = stub_everything 'daemon'

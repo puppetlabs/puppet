@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet_spec/files'
 
-if Puppet.features.microsoft_windows?
+if Puppet::Util::Platform.windows?
   require 'puppet/util/windows'
   class WindowsSecurity
     extend Puppet::Util::Windows::Security
@@ -1100,7 +1100,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       uri_path = resource.parameters[:source].uri.path
 
       # note that Windows file:// style URIs get an extra / in front of c:/ like /c:/
-      source_prefix = Puppet.features.microsoft_windows? ? '/' : ''
+      source_prefix = Puppet::Util::Platform.windows? ? '/' : ''
 
       # the URI can be round-tripped through unescape
       expect(URI.unescape(uri_path)).to eq(source_prefix + source)
@@ -1393,7 +1393,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       end
     end
 
-    describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
       def expects_sid_granted_full_access_explicitly(path, sid)
         inherited_ace = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE
 

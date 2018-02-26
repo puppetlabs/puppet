@@ -147,7 +147,7 @@ describe Puppet::Transaction::Persistence do
       Dir.mkdir(Puppet[:transactionstorefile])
       persistence = Puppet::Transaction::Persistence.new
 
-      if Puppet.features.microsoft_windows?
+      if Puppet::Util::Platform.windows?
         expect do
           persistence.save
         end.to raise_error do |error|

@@ -42,12 +42,12 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       expect(lambda { resource[:source] = %w{ftp://foo/bar} }).to raise_error(Puppet::Error, /Cannot use URLs of type 'ftp' as source for fileserving/)
     end
 
-    it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
+    it "should strip trailing forward slashes", :unless => Puppet::Util::Platform.windows? do
       resource[:source] = "/foo/bar\\//"
       expect(resource[:source]).to eq(%w{file:/foo/bar\\})
     end
 
-    it "should strip trailing forward and backslashes", :if => Puppet.features.microsoft_windows? do
+    it "should strip trailing forward and backslashes", :if => Puppet::Util::Platform.windows? do
       resource[:source] = "X:/foo/bar\\//"
       expect(resource[:source]).to eq(%w{file:/X:/foo/bar})
     end
@@ -450,7 +450,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
         end
       end
 
-      describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+      describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
         ['', "file:/", "file:///"].each do |prefix|
           it "should be local with prefix '#{prefix}'" do
             resource[:source] = "#{prefix}#{sourcepath}"

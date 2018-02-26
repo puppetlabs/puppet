@@ -6,7 +6,7 @@ require 'puppet_spec/files'
 require 'puppet_spec/compiler'
 
 describe Puppet::Type.type(:sshkey).provider(:parsed), '(integration)',
-  :unless => Puppet.features.microsoft_windows? do
+  :unless => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
 

@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/inventory'
 
-describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::SSL::Inventory, :unless => Puppet::Util::Platform.windows? do
   let(:cert_inventory) { File.expand_path("/inven/tory") }
 
   # different UTF-8 widths

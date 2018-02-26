@@ -40,7 +40,7 @@ describe Puppet::Type.type(:exec) do
   describe "when not stubbing the provider" do
     before do
       path = tmpdir('path')
-      ext = Puppet.features.microsoft_windows? ? '.exe' : ''
+      ext = Puppet::Util::Platform.windows? ? '.exe' : ''
       true_cmd = File.join(path, "true#{ext}")
       false_cmd = File.join(path, "false#{ext}")
 
@@ -257,7 +257,7 @@ describe Puppet::Type.type(:exec) do
       end
     end
 
-    describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
       before :each do
         Puppet.features.stubs(:root?).returns(true)
       end
@@ -437,14 +437,14 @@ describe Puppet::Type.type(:exec) do
           Puppet::Type.type(:exec).new(:name => "#{ruby_path} -e 'sleep 1'", :timeout => '0.1')
         end
 
-        context 'on POSIX', :unless => Puppet.features.microsoft_windows? do
+        context 'on POSIX', :unless => Puppet::Util::Platform.windows? do
           it 'sends a SIGTERM and raises a Puppet::Error' do
             Process.expects(:kill).at_least_once
             expect { subject.refresh }.to raise_error Puppet::Error, "Command exceeded timeout"
           end
         end
 
-        context 'on Windows', :if => Puppet.features.microsoft_windows? do
+        context 'on Windows', :if => Puppet::Util::Platform.windows? do
           it 'raises a Puppet::Error' do
             expect { subject.refresh }.to raise_error Puppet::Error, "Command exceeded timeout"
           end

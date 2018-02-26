@@ -104,7 +104,7 @@ describe Puppet::Configurer::Downloader do
       end
     end
 
-    describe "on Windows", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows", :if => Puppet::Util::Platform.windows? do
       it "should omit the owner" do
         file = generate_file_resource(:path => 'C:/path')
 

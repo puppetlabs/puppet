@@ -19,15 +19,15 @@ describe Puppet::Transaction do
   end
 
   def touch_path
-    Puppet.features.microsoft_windows? ? "#{ENV['windir']}\\system32" : "/usr/bin:/bin"
+    Puppet::Util::Platform.windows? ? "#{ENV['windir']}\\system32" : "/usr/bin:/bin"
   end
 
   def usr_bin_touch(path)
-    Puppet.features.microsoft_windows? ? "#{ENV['windir']}\\system32\\cmd.exe /c \"type NUL >> \"#{path}\"\"" : "/usr/bin/touch #{path}"
+    Puppet::Util::Platform.windows? ? "#{ENV['windir']}\\system32\\cmd.exe /c \"type NUL >> \"#{path}\"\"" : "/usr/bin/touch #{path}"
   end
 
   def touch(path)
-    Puppet.features.microsoft_windows? ? "cmd.exe /c \"type NUL >> \"#{path}\"\"" : "touch #{path}"
+    Puppet::Util::Platform.windows? ? "cmd.exe /c \"type NUL >> \"#{path}\"\"" : "touch #{path}"
   end
 
   it "should not apply generated resources if the parent resource fails" do

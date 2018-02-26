@@ -87,7 +87,7 @@ describe Puppet::SSL::Host do
     expect(Puppet::SSL::Host.localhost).to equal(host)
   end
 
-  it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using DNS alt names", :unless => Puppet.features.microsoft_windows? do
+  it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using DNS alt names", :unless => Puppet::Util::Platform.windows? do
     Puppet[:autosign] = true
     Puppet[:confdir] = tmpdir('conf')
     Puppet[:dns_alt_names] = "foo,bar,baz"
@@ -825,7 +825,7 @@ describe Puppet::SSL::Host do
     end
   end
 
-  describe "when handling JSON", :unless => Puppet.features.microsoft_windows? do
+  describe "when handling JSON", :unless => Puppet::Util::Platform.windows? do
     include PuppetSpec::Files
 
     before do

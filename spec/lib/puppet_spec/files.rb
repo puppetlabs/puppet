@@ -20,7 +20,7 @@ module PuppetSpec::Files
   def make_absolute(path) PuppetSpec::Files.make_absolute(path) end
   def self.make_absolute(path)
     path = File.expand_path(path)
-    path[0] = 'c' if Puppet.features.microsoft_windows?
+    path[0] = 'c' if Puppet::Util::Platform.windows?
     path
   end
 
@@ -46,7 +46,7 @@ module PuppetSpec::Files
   def script_containing(name, contents) PuppetSpec::Files.script_containing(name, contents) end
   def self.script_containing(name, contents)
     file = tmpfile(name)
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       file += '.bat'
       text = contents[:windows]
     else
@@ -93,7 +93,7 @@ module PuppetSpec::Files
 
   def expect_file_mode(file, mode)
     actual_mode = "%o" % Puppet::FileSystem.stat(file).mode
-    target_mode = if Puppet.features.microsoft_windows?
+    target_mode = if Puppet::Util::Platform.windows?
       mode
     else
       "10" + "%04i" % mode.to_i

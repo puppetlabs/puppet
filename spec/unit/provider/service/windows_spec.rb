@@ -5,9 +5,9 @@
 
 require 'spec_helper'
 
-require 'win32/service' if Puppet.features.microsoft_windows?
+require 'win32/service' if Puppet::Util::Platform.windows?
 
-describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:service).provider(:windows), :if => Puppet::Util::Platform.windows? do
   let(:name)     { 'nonexistentservice' }
   let(:resource) { Puppet::Type.type(:service).new(:name => name, :provider => :windows) }
   let(:provider) { resource.provider }
@@ -172,7 +172,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
 
     # We need to guard this section explicitly since rspec will always
     # construct all examples, even if it isn't going to run them.
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       [Win32::Service::SERVICE_AUTO_START, Win32::Service::SERVICE_BOOT_START, Win32::Service::SERVICE_SYSTEM_START].each do |start_type_const|
         start_type = Win32::Service.get_start_type(start_type_const)
         it "should report a service with a startup type of '#{start_type}' as true" do

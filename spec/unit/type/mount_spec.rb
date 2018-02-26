@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:mount), :unless => Puppet::Util::Platform.windows? do
 
   before :each do
     Puppet::Type.type(:mount).stubs(:defaultprovider).returns providerclass

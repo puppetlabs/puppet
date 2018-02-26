@@ -1,14 +1,14 @@
 #! /usr/bin/env ruby
 
 require 'spec_helper'
-if Puppet.features.microsoft_windows?
+if Puppet::Util::Platform.windows?
   require 'puppet/util/windows'
   class WindowsSecurity
     extend Puppet::Util::Windows::Security
   end
 end
 
-describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:file).provider(:windows), :if => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
 
   let(:path) { tmpfile('windows_file_spec') }

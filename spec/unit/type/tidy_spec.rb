@@ -12,7 +12,7 @@ describe tidy do
     Puppet.settings.stubs(:use)
   end
 
-  context "when normalizing 'path' on windows", :if => Puppet.features.microsoft_windows? do
+  context "when normalizing 'path' on windows", :if => Puppet::Util::Platform.windows? do
     it "replaces backslashes with forward slashes" do
       resource = tidy.new(:path => 'c:\directory')
       expect(resource[:path]).to eq('c:/directory')

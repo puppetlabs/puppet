@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 require 'spec_helper'
 
-describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows? do
-  if Puppet.features.microsoft_windows?
+describe "Puppet::Util::Windows::SID", :if => Puppet::Util::Platform.windows? do
+  if Puppet::Util::Platform.windows?
     require 'puppet/util/windows'
   end
 

@@ -33,7 +33,7 @@ describe Puppet::ModuleTool::Applications::Installer do
     installer.stubs(:module_repository).returns(remote_source)
   end
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     before :each do
       Puppet.settings.stubs(:[])
       Puppet.settings.stubs(:[]).with(:module_working_dir).returns(Dir.mktmpdir('installertmp'))

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet::Util::Platform.windows? do
   let(:resource) do
     Puppet::Type.type(:user).new(
       :title => 'testuser',

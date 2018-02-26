@@ -255,7 +255,7 @@ end
     expect(@logs.map(&:to_s)).to include(/{environment =>.*/)
   end
 
-  it "applies a given file even when an ENC is configured", :if => !Puppet.features.microsoft_windows? do
+  it "applies a given file even when an ENC is configured", :if => !Puppet::Util::Platform.windows? do
     manifest = file_containing("manifest.pp", "notice('specific manifest applied')")
     enc = script_containing('enc_script',
       :windows => '@echo classes: []' + "\n" + '@echo environment: special',

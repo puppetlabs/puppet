@@ -115,7 +115,7 @@ describe "Puppet defaults" do
     end
   end
 
-  describe "on a Windows-like platform it", :if => Puppet.features.microsoft_windows? do
+  describe "on a Windows-like platform it", :if => Puppet::Util::Platform.windows? do
     let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
 
     it "path should not add anything" do
@@ -196,11 +196,11 @@ describe "Puppet defaults" do
   end
 
   describe "daemonize" do
-    it "should default to true", :unless => Puppet.features.microsoft_windows? do
+    it "should default to true", :unless => Puppet::Util::Platform.windows? do
       expect(Puppet.settings[:daemonize]).to eq(true)
     end
 
-    describe "on Windows", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows", :if => Puppet::Util::Platform.windows? do
       it "should default to false" do
         expect(Puppet.settings[:daemonize]).to eq(false)
       end
@@ -212,11 +212,11 @@ describe "Puppet defaults" do
   end
 
   describe "diff" do
-    it "should default to 'diff' on POSIX", :unless => Puppet.features.microsoft_windows? do
+    it "should default to 'diff' on POSIX", :unless => Puppet::Util::Platform.windows? do
       expect(Puppet.settings[:diff]).to eq('diff')
     end
 
-    it "should default to '' on Windows", :if => Puppet.features.microsoft_windows? do
+    it "should default to '' on Windows", :if => Puppet::Util::Platform.windows? do
       expect(Puppet.settings[:diff]).to eq('')
     end
   end

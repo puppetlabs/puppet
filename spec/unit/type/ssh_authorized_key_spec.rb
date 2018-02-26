@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 
-describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
 
   before do

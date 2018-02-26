@@ -48,7 +48,7 @@ describe Puppet::Node::Facts::Facter do
     it "should resolve external facts" do
       external_fact = File.join(factdir, 'external')
 
-      if Puppet.features.microsoft_windows?
+      if Puppet::Util::Platform.windows?
         external_fact += '.bat'
         File.open(external_fact, 'wb') { |file| file.write(<<-EOF)}
         @echo foo=bar

@@ -18,7 +18,7 @@ describe Puppet::Util::ExecutionStub do
 
   it "should restore normal execution after 'reset' is called" do
     # Note: "true" exists at different paths in different OSes
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       true_command = [Puppet::Util.which('cmd.exe').tr('/', '\\'), '/c', 'exit 0']
     else
       true_command = [Puppet::Util.which('true')]

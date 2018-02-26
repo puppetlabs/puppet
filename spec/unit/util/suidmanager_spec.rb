@@ -250,7 +250,7 @@ describe Puppet::Util::SUIDManager do
       end
     end
 
-    describe "on Microsoft Windows", :if => Puppet.features.microsoft_windows? do
+    describe "on Microsoft Windows", :if => Puppet::Util::Platform.windows? do
       it "should be root if user is privileged" do
         Puppet::Util::Windows::User.stubs(:admin?).returns true
 

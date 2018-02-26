@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'puppet/file_bucket/dipper'
 
-describe "mount provider (integration)", :unless => Puppet.features.microsoft_windows? do
+describe "mount provider (integration)", :unless => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
 
   family = Facter.value(:osfamily)

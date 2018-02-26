@@ -101,7 +101,7 @@ module JSONMatchers
     end
   end
 
-  if !Puppet.features.microsoft_windows?
+  if !Puppet::Util::Platform.windows?
     require 'json'
     require 'json-schema'
 
@@ -120,7 +120,7 @@ module JSONMatchers
   end
 
   def validate_against(schema_file)
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       pending("Schema checks cannot be done on windows because of json-schema problems")
     else
       schema = JSON.parse(File.read(schema_file))

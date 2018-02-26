@@ -7,7 +7,7 @@ require 'shared_behaviours/all_parsedfile_providers'
 # remove, but I don't want to do so just yet, in case we get pushback to
 # restore Solaris spec tests.
 
-describe Puppet::Type.type(:mount).provider(:parsed), :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:mount).provider(:parsed), :unless => Puppet::Util::Platform.windows? do
   before :each do
     Facter.clear
   end

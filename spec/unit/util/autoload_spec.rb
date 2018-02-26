@@ -266,7 +266,7 @@ describe Puppet::Util::Autoload do
       expect(Puppet::Util::Autoload.cleanpath(path)).to eq(path)
     end
 
-    describe "on Windows", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows", :if => Puppet::Util::Platform.windows? do
       it "should convert c:\ to c:/" do
         expect(Puppet::Util::Autoload.cleanpath('c:\\')).to eq('c:/')
       end
