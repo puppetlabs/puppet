@@ -1,10 +1,10 @@
 test_name 'C98115 compilation should get new values in variables on each compilation' do
-require 'puppet/acceptance/environment_utils'
-extend Puppet::Acceptance::EnvironmentUtils
+  require 'puppet/acceptance/environment_utils'
+  extend Puppet::Acceptance::EnvironmentUtils
 
-tag 'audit:medium',
-    'audit:integration',
-    'server'
+  tag 'audit:medium',
+      'audit:integration',
+      'server'
 
   app_type               = File.basename(__FILE__, '.*')
   tmp_environment        = mk_tmp_environment_with_teardown(master, app_type)
@@ -46,46 +46,46 @@ tag 'audit:medium',
 echo -n "custom_time=$(date +%s%N)"
   FILE
 
-  on(master, "chmod -R 0777 #{fq_tmp_environmentpath}/")
+  on(master, "chmod -R 0777 '#{fq_tmp_environmentpath}/'")
 
   windows_fact_location = "#{fq_tmp_environmentpath}/modules/custom_time/facts.d/custom_time.ps1"
   create_remote_file(master, windows_fact_location, <<-FILE)
 echo "custom_time=$(get-date -format HHmmssffffff)"
-FILE
+  FILE
 
-  on(master, "chmod -R 0666 #{windows_fact_location}")
+  on(master, "chmod -R 0666 '#{windows_fact_location}'")
 
 
   step "run agent in #{tmp_environment}, ensure it increments the customtime with each run" do
-    with_puppet_running_on(master,{}) do
-      local_custom_time_pattern = 'local_(\d+)_local'
+    with_puppet_running_on(master, {}) do
+      local_custom_time_pattern  = 'local_(\d+)_local'
       module_custom_time_pattern = 'module_(\d+)_module'
       agents.each do |agent|
         # ensure our custom facts have been synced
         on(agent,
-           puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
+           puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'"),
            :accept_all_exit_codes => true)
 
         local_custom_time1 = module_custom_time1 = nil
         local_custom_time2 = module_custom_time2 = nil
 
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'"),
            :accept_all_exit_codes => [2]) do |result|
           assert_match(/Notice: #{local_custom_time_pattern}/, result.stdout, 'first custom time was not as expected')
           assert_match(/Notice: #{module_custom_time_pattern}/, result.stdout, 'first module uptime was not as expected')
 
-          local_custom_time1 = result.stdout.match(/Notice: #{local_custom_time_pattern}/)[1].to_i
+          local_custom_time1  = result.stdout.match(/Notice: #{local_custom_time_pattern}/)[1].to_i
           module_custom_time1 = result.stdout.match(/Notice: #{module_custom_time_pattern}/)[1].to_i
         end
 
         sleep 1
 
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'"),
            :accept_all_exit_codes => [2]) do |result|
           assert_match(/Notice: #{local_custom_time_pattern}/, result.stdout, 'second custom time was not as expected')
           assert_match(/Notice: #{module_custom_time_pattern}/, result.stdout, 'second module uptime was not as expected')
 
-          local_custom_time2 = result.stdout.match(/Notice: #{local_custom_time_pattern}/)[1].to_i
+          local_custom_time2  = result.stdout.match(/Notice: #{local_custom_time_pattern}/)[1].to_i
           module_custom_time2 = result.stdout.match(/Notice: #{module_custom_time_pattern}/)[1].to_i
         end
 
