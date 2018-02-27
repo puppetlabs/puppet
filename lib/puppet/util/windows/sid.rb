@@ -112,21 +112,17 @@ module Puppet::Util::Windows
       end
       octet_string_to_principal(ads_object.objectSID)
     rescue Puppet::Util::Windows::Error => e
-      # SID could not be mapped but is a valid SID representation that matches Name
-      unresolvable = e.code == ERROR_NONE_MAPPED &&
-        valid_sid?(ads_object.Name) &&
-        octet_string_to_sid_string(ads_object.objectSID) == ads_object.Name
+      # if the error is not a lookup / mapping problem, immediately re-raise
+      raise if e.code != ERROR_NONE_MAPPED
 
-      raise if !unresolvable
+      # if the Name property isn't formatted like a SID, OR
+      if !valid_sid?(ads_object.Name) ||
+        # if the objectSID doesn't match the Name property, also raise
+        ((converted = octet_string_to_sid_string(ads_object.objectSID)) != ads_object.Name)
+        raise Puppet::Error.new("ads_object Name: #{ads_object.Name} invalid or does not match objectSID: #{ads_object.objectSID} (#{converted})", e)
+      end
 
-      Principal.new(
-        ads_object.Name + " (unresolvable)", # account
-        ads_object.objectSID, # sid_bytes
-        ads_object.Name, # sid string
-        nil, #domain
-        # https://msdn.microsoft.com/en-us/library/cc245534.aspx?f=255&MSPPError=-2147217396
-        # Indicates that the type of object could not be determined. For example, no object with that SID exists.
-        :SidTypeUnknown)
+      unresolved_principal(ads_object.Name, ads_object.objectSID)
     end
     module_function :ads_to_principal
 
@@ -237,6 +233,18 @@ module Puppet::Util::Windows
       sid_string
     end
     module_function :octet_string_to_sid_string
+
+    # @api private
+    def self.unresolved_principal(name, sid_bytes)
+      Principal.new(
+        name + " (unresolvable)", # account
+        sid_bytes, # sid_bytes
+        name, # sid string
+        nil, #domain
+        # https://msdn.microsoft.com/en-us/library/cc245534.aspx?f=255&MSPPError=-2147217396
+        # Indicates that the type of object could not be determined. For example, no object with that SID exists.
+        :SidTypeUnknown)
+    end
 
     ffi_convention :stdcall
 

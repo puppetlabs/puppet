@@ -191,8 +191,8 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
         valid_octet_invalid_user = [1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0]
         subject.ads_to_principal(stub('WIN32OLE', { :objectSID => valid_octet_invalid_user, :Name => unknown_name, :ole_respond_to? => true }))
       }.to raise_error do |error|
-        expect(error).to be_a(Puppet::Util::Windows::Error)
-        expect(error.code).to eq(1332) # ERROR_NONE_MAPPED
+        expect(error).to be_a(Puppet::Error)
+        expect(error.cause.code).to eq(1332) # ERROR_NONE_MAPPED
       end
     end
 
