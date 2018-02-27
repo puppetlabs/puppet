@@ -144,7 +144,7 @@ describe Puppet::Util::Windows::ADSI::Group,
         stub('WIN32OLE', {
           # completely valid SID, but Name is just a stringified version
           :objectSID => [1, 5, 0, 0, 0, 0, 0, 5, 21, 0, 0, 0, 5, 113, 65, 218, 15, 127, 9, 57, 219, 4, 84, 126, 88, 4, 0, 0],
-          :Name => 'S-1-5-21-3661721861-956923663-2119435483-1111',
+          :Name => 'S-1-5-21-3661721861-956923663-2119435483-1112',
           :ole_respond_to? => true,
         })
       ]
@@ -161,8 +161,8 @@ describe Puppet::Util::Windows::ADSI::Group,
       expect(admins.members[0].account_type).to eq(:SidTypeWellKnownGroup)
 
       # unresolvable SID
-      expect(admins.members[1].sid).to eq('S-1-5-21-3661721861-956923663-2119435483-1111')
-      expect(admins.members[1].account).to eq('S-1-5-21-3661721861-956923663-2119435483-1111 (unresolvable)')
+      expect(admins.members[1].sid).to eq('S-1-5-21-3661721861-956923663-2119435483-1112')
+      expect(admins.members[1].account).to eq('S-1-5-21-3661721861-956923663-2119435483-1112 (unresolvable)')
       expect(admins.members[1].account_type).to eq(:SidTypeUnknown)
     end
 
