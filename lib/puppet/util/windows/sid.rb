@@ -226,9 +226,7 @@ module Puppet::Util::Windows
     end
     module_function :get_length_sid
 
-    private
-
-    def self.octet_string_to_sid_string(sid_bytes)
+    def octet_string_to_sid_string(sid_bytes)
       sid_string = nil
 
       FFI::MemoryPointer.new(:byte, sid_bytes.length) do |sid_ptr|
@@ -238,6 +236,7 @@ module Puppet::Util::Windows
 
       sid_string
     end
+    module_function :octet_string_to_sid_string
 
     ffi_convention :stdcall
 
