@@ -1,4 +1,4 @@
-require 'json'
+require 'multi_json'
 
 module Puppet::Pops
 module Serialization
@@ -146,12 +146,12 @@ module JSON
     end
 
     def to_a
-      ::JSON.parse(io_string)
+      ::MultiJson.load(io_string)
     end
 
     def to_json
       if @indent > 0
-        ::JSON.pretty_unparse(to_a, { :indent => ' ' * @indent })
+        ::MultiJson.dump(to_a, { :pretty => true, :indent => ' ' * @indent })
       else
         io_string
       end
@@ -284,9 +284,9 @@ module JSON
     def parse_io(io)
       case io
       when IO, StringIO
-        ::JSON.parse(io.read)
+        ::MultiJson.load(io.read)
       when String
-        ::JSON.parse(io)
+        ::MultiJson.load(io)
       else
         io
       end

@@ -1,5 +1,5 @@
 require 'fileutils'
-require 'json'
+require 'multi_json'
 require 'puppet/file_system'
 require 'pathspec'
 require 'facter'
@@ -140,7 +140,7 @@ module Puppet::ModuleTool
         end
 
         Puppet::FileSystem.open(File.join(build_path, 'checksums.json'), nil, 'wb') do |f|
-          f.write(JSON.pretty_generate(Checksums.new(build_path)))
+          f.write(MultiJson.dump(Checksums.new(build_path), :pretty => true))
         end
       end
 

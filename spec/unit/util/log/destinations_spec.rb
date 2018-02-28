@@ -1,6 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'json'
+require 'multi_json'
 
 require 'puppet/util/log'
 
@@ -143,7 +143,7 @@ describe Puppet::Util::Log.desttypes[:logstash_event] do
     it "format returns a structure that can be converted to json" do
       dest = described_class.new
       hash = dest.format(@msg)
-      JSON.parse(hash.to_json)
+      MultiJson.load(hash.to_json)
     end
 
     it "handle should send the output to stdout" do

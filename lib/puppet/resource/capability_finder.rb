@@ -7,7 +7,7 @@
 
 require 'net/http'
 require 'cgi'
-require 'json'
+require 'multi_json'
 
 # @api private
 module Puppet::Resource::CapabilityFinder
@@ -92,7 +92,7 @@ module Puppet::Resource::CapabilityFinder
         response = Puppet::Util::Puppetdb::Http.action(url) do |conn, uri|
           conn.get(uri, { 'Accept' => 'application/json'})
         end
-        JSON.parse(response.body)
+        MultiJson.load(response.body)
       end
 
       # The format of the response body is documented at
@@ -104,7 +104,7 @@ module Puppet::Resource::CapabilityFinder
       end
 
       result
-    rescue JSON::JSONError => e
+    rescue MultiJson::ParseError => e
       #TRANSLATOR PuppetDB is a product name and should not be translated
       raise Puppet::DevError, _("Invalid JSON from PuppetDB when looking up %{capability}\n%{detail}") % { capability: cap, detail: e }
     end

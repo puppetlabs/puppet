@@ -2,7 +2,7 @@ require 'puppet/util/methodhelper'
 require 'puppet/module_tool'
 require 'puppet/network/format_support'
 require 'uri'
-require 'json'
+require 'multi_json'
 require 'set'
 
 module Puppet::ModuleTool
@@ -102,7 +102,7 @@ module Puppet::ModuleTool
       data = @data.dup.merge('dependencies' => dependencies)
 
       contents = data.keys.map do |k|
-        value = (JSON.pretty_generate(data[k]) rescue data[k].to_json)
+        value = (MultiJson.dump(data[k], :pretty => true) rescue data[k].to_json)
         "#{k.to_json}: #{value}"
       end
 

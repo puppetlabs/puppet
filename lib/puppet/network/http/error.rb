@@ -1,4 +1,4 @@
-require 'json'
+require 'multi_json'
 
 module Puppet::Network::HTTP::Error
   Issues = Puppet::Network::HTTP::Issues
@@ -13,7 +13,7 @@ module Puppet::Network::HTTP::Error
     end
 
     def to_json
-      JSON({:message => message, :issue_kind => @issue_kind})
+      MultiJson.dump({:message => message, :issue_kind => @issue_kind})
     end
   end
 
@@ -67,7 +67,7 @@ module Puppet::Network::HTTP::Error
     end
 
     def to_json
-      JSON({:message => message, :issue_kind => @issue_kind})
+      MultiJson.dump({:message => message, :issue_kind => @issue_kind})
     end
   end
 end

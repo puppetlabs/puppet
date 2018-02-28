@@ -20,7 +20,7 @@ class Puppet::SyntaxCheckers::Json < Puppet::Plugins::SyntaxCheckers::SyntaxChec
     #raise ArgumentError.new("Json syntax checker: location_info must be a Hash") unless location_info.is_a?(Hash)
 
     begin
-      JSON.parse(text)
+      MultiJson.load(text)
     rescue => e
       # Cap the message to 100 chars and replace newlines
       msg = _("JSON syntax checker: Cannot parse invalid JSON string. \"%{message}\"") % { message: e.message().slice(0,100).gsub(/\r?\n/, "\\n") }

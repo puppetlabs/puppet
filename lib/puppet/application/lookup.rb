@@ -341,7 +341,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
     if fact_file
       if fact_file.end_with?("json")
-        given_facts = JSON.parse(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+        given_facts = MultiJson.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       else
         given_facts = YAML.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       end
