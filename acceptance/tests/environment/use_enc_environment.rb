@@ -6,7 +6,7 @@ test_name "Agent should use environment given by ENC" do
       'audit:integration',
       'server'
 
-  testdir = create_tmpdir_for_user master, 'use_enc_env'
+  testdir = create_tmpdir_for_user(master, 'use_enc_env')
 
   if master.is_pe?
     group = {
@@ -18,14 +18,14 @@ test_name "Agent should use environment given by ENC" do
     create_group_for_nodes(agents, group)
   else
 
-    create_remote_file master, "#{testdir}/enc.rb", <<END
+    create_remote_file(master, "#{testdir}/enc.rb", <<END)
 #!#{master['privatebindir']}/ruby
 puts <<YAML
 parameters:
 environment: special
 YAML
 END
-    on master, "chmod 755 #{testdir}/enc.rb"
+    on(master, "chmod 755 '#{testdir}/enc.rb'")
 
   end
 
@@ -65,7 +65,7 @@ END
       'external_nodes' => "#{testdir}/enc.rb",
   } if !master.is_pe?
 
-  with_puppet_running_on master, master_opts, testdir do
+  with_puppet_running_on(master, master_opts, testdir) do
 
     agents.each do |agent|
       run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose") do |result|

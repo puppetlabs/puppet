@@ -8,15 +8,15 @@ test_name "Agent should use agent environment if there is an enc that does not s
 
   classify_nodes_as_agent_specified_if_classifer_present
 
-  testdir = create_tmpdir_for_user master, 'use_agent_env'
+  testdir = create_tmpdir_for_user(master, 'use_agent_env')
 
-  create_remote_file master, "#{testdir}/enc.rb", <<END
+  create_remote_file(master, "#{testdir}/enc.rb", <<END)
 #!#{master['privatebindir']}/ruby
 puts <<YAML
 parameters:
 YAML
 END
-  on master, "chmod 755 #{testdir}/enc.rb"
+  on(master, "chmod 755 '#{testdir}/enc.rb'")
 
   apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   File {
@@ -52,7 +52,7 @@ END
       },
   }
 
-  with_puppet_running_on master, master_opts, testdir do
+  with_puppet_running_on(master, master_opts, testdir) do
 
     agents.each do |agent|
       run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --environment more_different") do |result|

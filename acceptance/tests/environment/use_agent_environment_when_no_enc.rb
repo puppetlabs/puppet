@@ -5,7 +5,7 @@ test_name "Agent should use agent environment if there is no enc-specified envir
       'audit:refactor', # This can be combined with use_agent_environment_when_enc_doesnt_specify test
       'server'
 
-  testdir = create_tmpdir_for_user master, 'use_agent_env'
+  testdir = create_tmpdir_for_user(master, 'use_agent_env')
 
   apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
   File {
@@ -42,7 +42,7 @@ test_name "Agent should use agent environment if there is no enc-specified envir
       },
   }
 
-  with_puppet_running_on master, master_opts, testdir do
+  with_puppet_running_on(master, master_opts, testdir) do
 
     agents.each do |agent|
       run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --environment more_different") do |result|

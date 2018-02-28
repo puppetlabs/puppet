@@ -8,7 +8,7 @@ test_name "Use environments from the environmentpath" do
 
   classify_nodes_as_agent_specified_if_classifer_present
 
-  testdir = create_tmpdir_for_user master, 'use_environmentpath'
+  testdir = create_tmpdir_for_user(master, 'use_environmentpath')
 
   def generate_environment(path_to_env, environment)
     env_content = <<-EOS
@@ -121,6 +121,10 @@ file {
     step "running an agent in environment '#{environment}'"
     atmp = agent.tmpdir("use_environmentpath_#{environment}")
 
+    teardown do
+      on(agent, "rm -rf '#{atmp}'")
+    end
+
     agent_config = [
         "-t",
         "--server", master,
@@ -139,8 +143,6 @@ file {
 
       yield atmp, result
     end
-
-    on agent, "rm -rf #{atmp}"
   end
 
   master_opts = {
@@ -153,7 +155,7 @@ file {
     master_opts['master']['basemodulepath'] << ":#{master['sitemoduledir']}"
   end
 
-  with_puppet_running_on master, master_opts, testdir do
+  with_puppet_running_on(master, master_opts, testdir) do
     agents.each do |agent|
       run_with_environment(agent, "shadowed") do |tmpdir, catalog_result|
         ["module-atmp-from-shadowed", "module-globalmod"].each do |expected|
@@ -161,7 +163,7 @@ file {
         end
 
         ["module-atmp-from-shadowed", "module-globalmod"].each do |expected|
-          on agent, "cat #{tmpdir}/file-#{expected}" do |file_result|
+          on(agent, "cat '#{tmpdir}/file-#{expected}'") do |file_result|
             assert_match(/data file from #{expected}/, file_result.stdout)
           end
         end
@@ -173,7 +175,7 @@ file {
         end
 
         ["module-atmp-from-onlybase", "module-globalmod"].each do |expected|
-          on agent, "cat #{tmpdir}/file-#{expected}" do |file_result|
+          on(agent, "cat '#{tmpdir}/file-#{expected}'") do |file_result|
             assert_match(/data file from #{expected}/, file_result.stdout)
           end
         end
@@ -184,7 +186,7 @@ file {
 
         assert_match(/environment fact from module-globalmod/, catalog_result.stdout)
 
-        on agent, "cat #{tmpdir}/file-module-globalmod" do |file_result|
+        on(agent, "cat '#{tmpdir}/file-module-globalmod'") do |file_result|
           assert_match(/data file from module-globalmod/, file_result.stdout)
         end
       end

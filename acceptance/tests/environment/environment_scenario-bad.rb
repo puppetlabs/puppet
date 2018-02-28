@@ -16,7 +16,7 @@ test_name 'Test behavior of directory environments when environmentpath is set t
 
   stub_forge_on(master)
 
-  testdir                = create_tmpdir_for_user master, 'confdir'
+  testdir                = create_tmpdir_for_user(master, 'confdir')
   puppet_conf_backup_dir = create_tmpdir_for_user(master, "puppet-conf-backup-dir")
 
   apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true)
