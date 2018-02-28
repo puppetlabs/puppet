@@ -49,9 +49,7 @@ group(:development, :test) do
   gem "yarjuf", "~> 2.0"
 
   # json-schema does not support windows, so omit it from the platforms list
-  # json-schema uses multi_json, but chokes with multi_json 1.7.9, so prefer 1.7.7
-  gem "multi_json", "1.7.7", :require => false, :platforms => [:ruby, :jruby]
-  gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
+  gem "json-schema", "~> 2.0", :require => false, :platforms => [:ruby, :jruby]
 
   if RUBY_VERSION >= '2.0'
     # pin rubocop as 0.50 requires a higher version of the rainbow gem (see below)
