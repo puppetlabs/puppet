@@ -1296,30 +1296,42 @@ Generated on #{Time.now}.
     # @api public
     def interpolate(name)
       setting = @defaults[name]
+      return nil unless setting
 
-      if setting
-        val = lookup(name)
-        # if we interpolate code, all hell breaks loose.
-        if name == :code
-          val
-        else
-          # Convert it if necessary
-          begin
-            val = convert(val, name)
-          rescue InterpolationError => err
-            # This happens because we don't have access to the param name when the
-            # exception is originally raised, but we want it in the message
-            raise InterpolationError, _("Error converting value for param '%{name}': %{detail}") % { name: name, detail: err }, err.backtrace
-          end
+      lookup_and_convert(name) do |val|
+        setting.munge(val)
+      end
+    end
 
-          setting.munge(val)
-        end
-      else
-        nil
+    def print(name)
+      setting = @defaults[name]
+      return nil unless setting
+
+      lookup_and_convert(name) do |val|
+        setting.print(val)
       end
     end
 
     private
+
+    def lookup_and_convert(name, &block)
+      val = lookup(name)
+      # if we interpolate code, all hell breaks loose.
+      if name == :code
+        val
+      else
+        # Convert it if necessary
+        begin
+          val = convert(val, name)
+        rescue InterpolationError => err
+          # This happens because we don't have access to the param name when the
+          # exception is originally raised, but we want it in the message
+          raise InterpolationError, _("Error converting value for param '%{name}': %{detail}") % { name: name, detail: err }, err.backtrace
+        end
+
+        yield val
+      end
+    end
 
     def convert(value, setting_name)
       case value

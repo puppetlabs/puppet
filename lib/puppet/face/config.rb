@@ -77,7 +77,7 @@ Puppet::Face.define(:config, '0.0.1') do
 
         to_be_rendered = {}
         args.sort.each do |setting_name|
-          to_be_rendered[setting_name] = values.interpolate(setting_name.to_sym)
+          to_be_rendered[setting_name] = values.print(setting_name.to_sym)
         end
       end
 
