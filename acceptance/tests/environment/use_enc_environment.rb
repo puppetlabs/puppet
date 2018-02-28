@@ -1,4 +1,4 @@
-test_name "Agent should use environment given by ENC" do
+test_name 'Agent should use environment given by ENC and only compile a catalog once' do
   require 'puppet/acceptance/classifier_utils.rb'
   extend Puppet::Acceptance::ClassifierUtils
 
@@ -70,6 +70,8 @@ END
     agents.each do |agent|
       run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose") do |result|
         assert_match(/expected_string/, result.stdout, "Did not find expected_string from \"special\" environment")
+        caching_catalog_message_count = result.stdout.split(/Info: Caching catalog for/).length - 1
+        assert_equal(caching_catalog_message_count, 1, 'Should only compile and cache the catalog once during the run')
       end
     end
   end
