@@ -2,6 +2,7 @@ require 'puppet/face'
 require 'puppet/settings/ini_file'
 
 Puppet::Face.define(:config, '0.0.1') do
+  extend Puppet::Util::Colors
   copyright "Puppet Inc.", 2011
   license   _("Apache 2 license; see COPYING")
 
@@ -11,8 +12,10 @@ Puppet::Face.define(:config, '0.0.1') do
     'puppet.conf' configuration file. For documentation about individual settings,
     see https://docs.puppetlabs.com/puppet/latest/reference/configuration.html."
 
+  DEFAULT_SECTION_MARKER = Object.new
+  DEFAULT_SECTION = "main"
   option "--section " + _("SECTION_NAME") do
-    default_to { "main" }
+    default_to { DEFAULT_SECTION_MARKER } #Sentinel object for default detection during commands
     summary _("The section of the configuration file to interact with.")
     description <<-EOT
       The section of the puppet.conf configuration file to interact with.
@@ -56,6 +59,13 @@ Puppet::Face.define(:config, '0.0.1') do
 
     when_invoked do |*args|
       options = args.pop
+
+      @default_section = false
+      if options[:section] == DEFAULT_SECTION_MARKER
+        options[:section] = DEFAULT_SECTION
+        @default_section = true
+      end
+
       render_all_settings = args.empty? || args == ['all']
 
       args = Puppet.settings.to_a.collect(&:first) if render_all_settings
@@ -74,6 +84,9 @@ Puppet::Face.define(:config, '0.0.1') do
         # And now we can lookup values that include those from environments configured from
         # the requested section
         values = Puppet.settings.values(Puppet[:environment].to_sym, options[:section].to_sym)
+
+        warn_default_section(options[:section]) if @default_section
+        report_section_and_environment(options[:section], Puppet.settings[:environment])
 
         to_be_rendered = {}
         args.sort.each do |setting_name|
@@ -117,6 +130,25 @@ Puppet::Face.define(:config, '0.0.1') do
     newhash
   end
 
+  def warn_default_section(section_name)
+    messages = []
+    messages << _("No section specified; defaulting to '%{section_name}'.") %
+      { section_name: section_name }
+    #TRANSLATORS '--section' is a command line option and should not be translated
+    messages << _("Set the config section by using the `--section` flag.")
+    #TRANSLATORS `puppet config --section user print foo` is a command line example and should not be translated
+    messages << _("For example, `puppet config --section user print foo`.")
+    messages << _("For more information, see https://puppet.com/docs/puppet/latest/configuration.html")
+
+    Puppet.warning(messages.join("\n"))
+  end
+
+  def report_section_and_environment(section_name, environment_name)
+      $stderr.puts colorize(:hyellow,
+        _("Resolving settings from section '%{section_name}' in environment '%{environment_name}'") %
+          { section_name: section_name, environment_name: environment_name })
+  end
+
   action(:set) do
     summary _("Set Puppet's settings.")
     arguments _("[setting_name] [setting_value]")
@@ -139,6 +171,13 @@ Puppet::Face.define(:config, '0.0.1') do
     EOT
 
     when_invoked do |name, value, options|
+
+      @default_section = false
+      if options[:section] == DEFAULT_SECTION_MARKER
+        options[:section] = DEFAULT_SECTION
+        @default_section = true
+      end
+
       if name == 'environment' && options[:section] == 'main'
         Puppet.warning _(<<-EOM).chomp
 The environment should be set in either the `[user]`, `[agent]`, or `[master]`
@@ -151,6 +190,8 @@ section by using the `--section` flag. For example,
 https://puppet.com/docs/puppet/latest/configuration.html#environment
         EOM
       end
+
+      report_section_and_environment(options[:section], Puppet.settings[:environment])
 
       path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
       Puppet::FileSystem.touch(path)
@@ -184,7 +225,12 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
     EOT
 
     when_invoked do |name, options|
-      options[:section] = options[:section].to_s # If value was left as default - set to default string
+
+      @default_section = false
+      if options[:section] == DEFAULT_SECTION_MARKER
+        options[:section] = DEFAULT_SECTION
+        @default_section = true
+      end
 
       path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
       if Puppet::FileSystem.exist?(path)
@@ -192,6 +238,9 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
           Puppet::Settings::IniFile.update(file) do |config|
             setting_string = config.delete(options[:section], name)
             if setting_string
+
+              report_section_and_environment(options[:section], Puppet.settings[:environment])
+
               puts(_("Deleted setting from '%{section_name}': '%{setting_string}'") %
                        { section_name: options[:section], name: name, setting_string: setting_string.strip })
             else
