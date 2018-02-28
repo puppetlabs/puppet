@@ -1,4 +1,4 @@
-test_name "Agent should use agent environment if there is an enc that does not specify the environment"
+test_name "Agent should use agent environment if there is an enc that does not specify the environment" do
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
@@ -55,8 +55,10 @@ master_opts = {
 with_puppet_running_on master, master_opts, testdir do
 
   agents.each do |agent|
-    run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --environment more_different")
-    assert_match(/more_different_string/, stdout, "Did not find more_different_string from \"more_different\" environment")
+    run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --environment more_different") do |result|
+    assert_match(/more_different_string/, result.stdout, "Did not find more_different_string from \"more_different\" environment")
+    end
   end
 
+end
 end

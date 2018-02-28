@@ -1,4 +1,4 @@
-test_name "Agent should use environment given by ENC for pluginsync"
+test_name "Agent should use environment given by ENC for pluginsync" do
 
 tag 'audit:medium',
     'audit:integration',
@@ -58,7 +58,9 @@ with_puppet_running_on master, master_opts, testdir do
     end
 
     run_agent_on(agent, "--no-daemonize --onetime --server #{master}")
-    on agent, "cat \"#{agent_vardir}/lib/puppet/foo.rb\""
-    assert_match(/#special_version/, stdout, "The plugin from environment 'special' was not synced")
+    on agent, "cat \"#{agent_vardir}/lib/puppet/foo.rb\"" do |result|
+    assert_match(/#special_version/, result.stdout, "The plugin from environment 'special' was not synced")
+    end
   end
+end
 end

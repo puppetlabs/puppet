@@ -1,4 +1,4 @@
-test_name "Use environments from the environmentpath"
+test_name "Use environments from the environmentpath" do
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
@@ -189,4 +189,5 @@ with_puppet_running_on master, master_opts, testdir do
       end
     end
   end
+end
 end

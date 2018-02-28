@@ -1,4 +1,4 @@
-test_name "Agent should use environment given by ENC for fetching remote files"
+test_name "Agent should use environment given by ENC for fetching remote files" do
 
 tag 'audit:medium',
     'audit:integration',
@@ -72,4 +72,5 @@ END
 
     on agent, "rm -rf #{atmp}"
   end
+end
 end

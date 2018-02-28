@@ -1,4 +1,4 @@
-test_name "Master should produce error if enc specifies a nonexistent environment"
+test_name "Master should produce error if enc specifies a nonexistent environment" do
 require 'puppet/acceptance/classifier_utils.rb'
 extend Puppet::Acceptance::ClassifierUtils
 
@@ -60,9 +60,10 @@ master_opts['master'] = {
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    on(agent, puppet("agent -t --server #{master} --verbose"), :acceptable_exit_codes => [1]) do
-      assert_match(/Could not find a directory environment named 'doesnotexist'/, stderr, "Errors when nonexistent environment is specified") unless agent['locale'] == 'ja'
-      assert_not_match(/In the production environment/, stdout, "Executed manifest from production environment")
+    on(agent, puppet("agent -t --server #{master} --verbose"), :acceptable_exit_codes => [1]) do |result|
+      assert_match(/Could not find a directory environment named 'doesnotexist'/, result.stderr, "Errors when nonexistent environment is specified") unless agent['locale'] == 'ja'
+      assert_not_match(/In the production environment/, result.stdout, "Executed manifest from production environment")
     end
   end
+end
 end
