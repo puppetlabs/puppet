@@ -26,12 +26,12 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
   end
 
   step "Create module with binary data file on master" do
-    on(master, "mkdir -p #{environmentpath}/#{tmp_environment}/modules/#{test_num}/{manifests,files}")
+    on(master, "mkdir -p '#{environmentpath}/#{tmp_environment}/modules/#{test_num}'/{manifests,files}")
     master_module_manifest    = "#{environmentpath}/#{tmp_environment}/modules/#{test_num}/manifests/init.pp"
     master_module_binary_file = "#{environmentpath}/#{tmp_environment}/modules/#{test_num}/files/binary_data"
 
     create_remote_file(master, master_module_binary_file, "\xC0\xFF")
-    on(master, "chmod 644 #{master_module_binary_file}")
+    on(master, "chmod 644 '#{master_module_binary_file}'")
 
     manifest = <<-MANIFEST
       class #{test_num}(
@@ -45,7 +45,7 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
       }
     MANIFEST
     create_remote_file(master, master_module_manifest, manifest)
-    on(master, "chmod 644 #{master_module_manifest}")
+    on(master, "chmod 644 '#{master_module_manifest}'")
   end
 
   step "Create site.pp to classify nodes to include module" do
@@ -56,7 +56,7 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
       }
     SITE_PP
     create_remote_file(master, site_pp_file, site_pp)
-    on(master, "chmod 644 #{site_pp_file}")
+    on(master, "chmod 644 '#{site_pp_file}'")
   end
 
   step "start the master" do

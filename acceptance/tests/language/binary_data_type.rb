@@ -27,10 +27,10 @@ test_name 'C98346: Binary data type' do
     else
       tmp_filename = tmp_filename_else
     end
-    on agent, "echo 'old content' > /tmp/#{tmp_environment}.txt"
+    on(agent, "echo 'old content' > '/tmp/#{tmp_environment}.txt'")
   end
   # create a fake module files... file for binary_file()
-  on master, puppet_apply("-e 'file{[\"#{environmentpath}/#{tmp_environment}/modules\",\"#{environmentpath}/#{tmp_environment}/modules/empty\",\"#{environmentpath}/#{tmp_environment}/modules/empty/files\"]: ensure => \"directory\"} file{\"#{environmentpath}/#{tmp_environment}/modules/empty/files/blah.txt\": content => \"binary, yo\"}'")
+  on(master, puppet_apply("-e 'file{[\"#{environmentpath}/#{tmp_environment}/modules\",\"#{environmentpath}/#{tmp_environment}/modules/empty\",\"#{environmentpath}/#{tmp_environment}/modules/empty/files\"]: ensure => \"directory\"} file{\"#{environmentpath}/#{tmp_environment}/modules/empty/files/blah.txt\": content => \"binary, yo\"}'"))
 
   base64_relaxed = Base64.encode64("invasionfromspace#{random_string}").strip
   base64_strict  = Base64.strict_encode64("invasion from space #{random_string}\n")
@@ -71,7 +71,7 @@ test_name 'C98346: Binary data type' do
   step "run agent in #{tmp_environment}, run all assertions" do
     with_puppet_running_on(master, {}) do
       agents.each do |agent|
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"), :accept_all_exit_codes => true) do |result|
+        on(agent, puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'"), :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, 'puppet agent run failed')
           run_assertions(assertion_code, result)
         end

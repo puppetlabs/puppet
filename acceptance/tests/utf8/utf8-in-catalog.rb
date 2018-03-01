@@ -18,17 +18,17 @@ test_name 'utf-8 characters in cached catalog' do
   utf8chars     = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
   file_content  = "This is the file content. file #{utf8chars}"
   codedir       = master.tmpdir("code")
-  on(master, "rm -rf #{codedir}")
+  on(master, "rm -rf '#{codedir}'")
   env_dir = "#{codedir}/environments"
   agents.each do |agent|
     puts "agent name: #{agent.hostname}, platform: #{agent.platform}"
     agent_vardir = agent.tmpdir("agent_vardir")
     agent_file   = agent.tmpfile("file" + utf8chars)
     teardown do
-      on(agent, "rm -rf #{agent_vardir} #{agent_file}")
+      on(agent, "rm -rf '#{agent_vardir}' '#{agent_file}'")
     end
     step "Apply manifest" do
-      on(agent, "rm -rf #{agent_file}", :environment => { :LANG => "en_US.UTF-8" })
+      on(agent, "rm -rf '#{agent_file}'", :environment => { :LANG => "en_US.UTF-8" })
 
       master_manifest = <<PP
 File {
@@ -72,23 +72,23 @@ PP
 
     with_puppet_running_on(master, master_opts, codedir) do
       step "apply utf-8 catalog" do
-        on(agent, puppet("agent -t --vardir #{agent_vardir} --server #{master.hostname}"),
+        on(agent, puppet("agent -t --vardir '#{agent_vardir}' --server #{master.hostname}"),
            { :acceptable_exit_codes => [2], :environment => { :LANG => "en_US.UTF-8" } })
       end
 
       step "verify cached catalog" do
         catalog_file_name = "#{agent_vardir}/client_data/catalog/#{agent.node_name}.json"
 
-        on(agent, "cat #{catalog_file_name}", :environment => { :LANG => "en_US.UTF-8" }) do |result|
+        on(agent, "cat '#{catalog_file_name}'", :environment => { :LANG => "en_US.UTF-8" }) do |result|
           assert_match(/#{agent_file}/, result.stdout, "cached catalog does not contain expected agent file name")
           assert_match(/#{file_content}/, result.stdout, "cached catalog does not contain expected file content")
         end
       end
 
       step "apply cached catalog" do
-        on(agent, puppet("resource file #{agent_file} ensure=absent"), :environment => { :LANG => "en_US.UTF-8" })
-        on(agent, puppet("catalog apply --vardir #{agent_vardir} --terminus json"), :environment => { :LANG => "en_US.UTF-8" })
-        on(agent, "cat #{agent_file}", :environment => { :LANG => "en_US.UTF-8" }) do |result|
+        on(agent, puppet("resource file '#{agent_file}' ensure=absent"), :environment => { :LANG => "en_US.UTF-8" })
+        on(agent, puppet("catalog apply --vardir '#{agent_vardir}' --terminus json"), :environment => { :LANG => "en_US.UTF-8" })
+        on(agent, "cat '#{agent_file}'", :environment => { :LANG => "en_US.UTF-8" }) do |result|
           assert_match(/#{utf8chars}/, result.stdout, "result stdout did not contain \"#{utf8chars}\"")
         end
       end

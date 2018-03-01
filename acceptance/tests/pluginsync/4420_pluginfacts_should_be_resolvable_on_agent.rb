@@ -78,7 +78,7 @@ MANIFEST
       }
   }
 
-  with_puppet_running_on master, master_opts, codedir do
+  with_puppet_running_on(master, master_opts, codedir) do
     agents.each do |agent|
       factsd         = agent.tmpdir('facts.d')
       pluginfactdest = agent.tmpdir('facts.d')
@@ -86,9 +86,9 @@ MANIFEST
       testfile       = File.join(tmpdir, 'testfile')
 
       teardown do
-        on(master, "rm -rf #{codedir}")
-        on(agent, "rm -rf #{factsd}")
-        on(agent, "rm -rf #{pluginfactdest}")
+        on(master, "rm -rf '#{codedir}'")
+        on(agent, "rm -rf '#{factsd}'")
+        on(agent, "rm -rf '#{pluginfactdest}'")
       end
 
       step "Pluginsync the external fact to the agent and ensure it resolves correctly" do
@@ -109,7 +109,7 @@ MANIFEST
       next if agent['platform'] =~ /windows/
 
       step "In Linux, ensure the pluginsync'ed external fact has the same permissions as its source" do
-        on(agent, puppet('resource', "file #{factsd}/unix_external_fact.sh")) do |result|
+        on(agent, puppet('resource', "file '#{factsd}/unix_external_fact.sh'")) do |result|
           assert_match(/0755/, result.stdout)
         end
       end

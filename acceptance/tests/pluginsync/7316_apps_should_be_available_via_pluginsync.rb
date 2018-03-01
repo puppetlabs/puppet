@@ -96,7 +96,7 @@ end
 
           step "run the agent" do
             agents.each do |agent|
-              on(agent, puppet('agent', "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\" --test --trace --server #{master}"))
+              on(agent, puppet('agent', "--libdir='#{get_test_file_path(agent, agent_lib_dir)}' --test --trace --server #{master}"))
             end
           end
 
@@ -113,7 +113,7 @@ end
 
       step "verify that the application shows up in help" do
         agents.each do |agent|
-          on(agent, PuppetCommand.new(:help, "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do |result|
+          on(agent, PuppetCommand.new(:help, "--libdir='#{get_test_file_path(agent, agent_lib_dir)}'")) do |result|
             assert_match(/^\s+#{app_name}\s+#{app_desc % mode}/, result.stdout)
           end
         end
@@ -121,7 +121,7 @@ end
 
       step "verify that we can run the application" do
         agents.each do |agent|
-          on(agent, PuppetCommand.new(:"#{app_name}", "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do |result|
+          on(agent, PuppetCommand.new(:"#{app_name}", "--libdir='#{get_test_file_path(agent, agent_lib_dir)}'")) do |result|
             assert_match(/^#{app_output % mode}/, result.stdout)
           end
         end
@@ -129,7 +129,7 @@ end
 
       step "clear out the libdir on the agents in preparation for the next test" do
         agents.each do |agent|
-          on(agent, "rm -rf #{get_test_file_path(agent, agent_lib_dir)}/*")
+          on(agent, "rm -rf '#{get_test_file_path(agent, agent_lib_dir)}'/*")
         end
       end
 
