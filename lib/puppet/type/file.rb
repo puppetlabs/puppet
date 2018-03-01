@@ -74,7 +74,7 @@ Puppet::Type.newtype(:file) do
       (`File { backup => main }`), so it can affect all file resources.
 
       * If set to `false`, file content won't be backed up.
-      * If set to a string beginning with `.` (e.g., `.puppet-bak`), Puppet will
+      * If set to a string beginning with `.`, such as `.puppet-bak`, Puppet will
         use copy the file in the same directory with that value as the extension
         of the backup. (A value of `true` is a synonym for `.puppet-bak`.)
       * If set to any other string, Puppet will try to back up to a filebucket
@@ -187,8 +187,7 @@ Puppet::Type.newtype(:file) do
       Setting `recurselimit => 2` will manage the direct contents of the
       directory, as well as the contents of the _first_ level of subdirectories.
 
-      And so on --- 3 will manage the contents of the second level of
-      subdirectories, etc."
+      This pattern continues for each incremental value of `recurselimit`."
 
     newvalues(/^[0-9]+$/)
 
@@ -225,9 +224,9 @@ Puppet::Type.newtype(:file) do
   newparam(:ignore) do
     desc "A parameter which omits action on files matching
       specified patterns during recursion.  Uses Ruby's builtin globbing
-      engine, so shell metacharacters are fully supported, e.g. `[a-z]*`.
+      engine, so shell metacharacters such as `[a-z]*` are fully supported.
       Matches that would descend into the directory structure are ignored,
-      e.g., `*/*`."
+      such as `*/*`."
 
     validate do |value|
       unless value.is_a?(Array) or value.is_a?(String) or value == false

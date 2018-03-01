@@ -107,10 +107,10 @@ Puppet::Type.newtype(:scheduled_task) do
             minutes_interval.
       * For `daily` triggers:
           * `every` --- How often the task should run, as a number of days. Defaults
-            to 1. ("2" means every other day, "3" means every three days, etc.)
+            to 1. ("2" means every other day, "3" means every three days, and so on)
       * For `weekly` triggers:
           * `every` --- How often the task should run, as a number of weeks. Defaults
-            to 1. ("2" means every other week, "3" means every three weeks, etc.)
+            to 1. ("2" means every other week, "3" means every three weeks, and so on)
           * `day_of_week` --- Which days of the week the task should run, as an array.
             Defaults to all days. Each day must be one of `mon`, `tues`,
             `wed`, `thurs`, `fri`, `sat`, `sun`, or `all`.
