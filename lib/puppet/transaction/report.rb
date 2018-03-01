@@ -151,8 +151,12 @@ class Puppet::Transaction::Report
   end
 
   # @api private
-  def add_times(name, value)
-    @external_times[name] = value
+  def add_times(name, value, accumulate = true)
+    if @external_times[name] && accumulate
+      @external_times[name] += value
+    else
+      @external_times[name] = value
+    end
   end
 
   # @api private

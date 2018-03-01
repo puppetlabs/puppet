@@ -357,6 +357,20 @@ describe Puppet::Transaction::Report do
         expect(metric(:time, "tidy")).to eq(9)
       end
 
+      it "should accrue times when called for one resource more than once" do
+        @report.add_times :foobar, 50
+        @report.add_times :foobar, 30
+        @report.finalize_report
+        expect(metric(:time, "foobar")).to eq(80)
+      end
+
+      it "should not accrue times when called for one resource more than once when set" do
+        @report.add_times :foobar, 50, false
+        @report.add_times :foobar, 30, false
+        @report.finalize_report
+        expect(metric(:time, "foobar")).to eq(30)
+      end
+
       it "should add any provided times from external sources" do
         @report.add_times :foobar, 50
         @report.finalize_report
