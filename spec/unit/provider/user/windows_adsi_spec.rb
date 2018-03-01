@@ -81,9 +81,9 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
     let(:group3) { stub(:account => 'group3', :domain => '.', :sid => 'group3sid') }
 
     before :each do
-      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('group1').returns(group1)
-      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('group2').returns(group2)
-      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('group3').returns(group3)
+      Puppet::Util::Windows::SID.stubs(:name_to_principal).with('group1').returns(group1)
+      Puppet::Util::Windows::SID.stubs(:name_to_principal).with('group2').returns(group2)
+      Puppet::Util::Windows::SID.stubs(:name_to_principal).with('group3').returns(group3)
     end
 
     it "should return true for same lists of members" do
@@ -267,7 +267,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
   end
 
   it 'should be able to test whether a user exists' do
-    Puppet::Util::Windows::SID.stubs(:name_to_sid_object).returns(nil)
+    Puppet::Util::Windows::SID.stubs(:name_to_principal).returns(nil)
     Puppet::Util::Windows::ADSI.stubs(:connect).returns stub('connection', :Class => 'User')
     expect(provider).to be_exists
 
