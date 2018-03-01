@@ -1,4 +1,4 @@
-test_name "the pluginsync functionality should sync app definitions, and they should be runnable afterwards"
+test_name "the pluginsync functionality should sync app definitions, and they should be runnable afterwards" do
 
 tag 'audit:medium',
     'audit:integration',
@@ -116,7 +116,7 @@ begin
 
     step "verify that the application shows up in help" do
       agents.each do |agent|
-        on(agent, PuppetCommand.new(:help, "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do
+        on(agent, PuppetCommand.new(:help, "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do |result|
           assert_match(/^\s+#{app_name}\s+#{app_desc % mode}/, result.stdout)
         end
       end
@@ -124,7 +124,7 @@ begin
 
     step "verify that we can run the application" do
       agents.each do |agent|
-        on(agent, PuppetCommand.new(:"#{app_name}", "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do
+        on(agent, PuppetCommand.new(:"#{app_name}", "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\"")) do |result|
           assert_match(/^#{app_output % mode}/, result.stdout)
         end
       end
@@ -149,4 +149,5 @@ ensure
   if all_tests_passed then
     remove_temp_dirs()
   end
+end
 end

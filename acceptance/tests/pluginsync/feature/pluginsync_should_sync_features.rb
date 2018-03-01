@@ -1,4 +1,4 @@
-test_name "the pluginsync functionality should sync feature definitions"
+test_name "the pluginsync functionality should sync feature definitions" do
 
 tag 'audit:medium',
     'audit:integration',
@@ -145,7 +145,7 @@ begin
       step "run the agent and verify that it loaded the feature" do
         agents.each do |agent|
           on(agent, puppet('agent', agent_args % get_test_file_path(agent, agent_lib_dir)),
-                       :acceptable_exit_codes => agent_exit_codes) do
+                       :acceptable_exit_codes => agent_exit_codes) do |result|
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
               "Expected agent stdout to include confirmation that the feature was 'true'")
           end
@@ -165,7 +165,7 @@ begin
       step "run the agent again" do
         agents.each do |agent|
           on(agent, puppet('agent', agent_args % get_test_file_path(agent, agent_lib_dir)),
-                          :acceptable_exit_codes => agent_exit_codes) do
+                          :acceptable_exit_codes => agent_exit_codes) do |result|
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
                          "Expected agent stdout to include confirmation that the feature was 'true'")
           end
@@ -193,4 +193,5 @@ ensure
   if all_tests_passed then
     remove_temp_dirs()
   end
+end
 end

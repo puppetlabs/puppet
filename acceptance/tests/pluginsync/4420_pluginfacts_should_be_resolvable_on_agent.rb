@@ -1,4 +1,4 @@
-test_name "Pluginsync'ed external facts should be resolvable on the agent"
+test_name "Pluginsync'ed external facts should be resolvable on the agent" do
 confine :except, :platform => 'cisco_nexus' #See BKR-749
 
 tag 'audit:medium',
@@ -91,26 +91,29 @@ with_puppet_running_on master, master_opts, codedir do
       on(agent, "rm -rf #{pluginfactdest}")
     end
 
-    step "Pluginsync the external fact to the agent and ensure it resolves correctly"
-    on(agent, puppet('agent', '-t', '--server', master, '--pluginfactdest', factsd), :acceptable_exit_codes => [2])
-    assert_match(/foo is bar/, stdout)
-
+    step "Pluginsync the external fact to the agent and ensure it resolves correctly" do
+    on(agent, puppet('agent', '-t', '--server', master, '--pluginfactdest', factsd), :acceptable_exit_codes => [2]) do |result|
+    assert_match(/foo is bar/, result.stdout)
+      end
+    end
     step "Use plugin face to download to the agent"
     on(agent, puppet('plugin', 'download', '--server', master, '--pluginfactdest', pluginfactdest))
     assert_match(/Downloaded these plugins: .*external_fact/, stdout) unless agent['locale'] == 'ja'
 
-    step "Ensure it resolves correctly"
-    on(agent, puppet('apply', '--pluginfactdest', pluginfactdest, '-e', "'notify { \"foo is ${foo}\": }'"))
-    assert_match(/foo is bar/, stdout)
-
+    step "Ensure it resolves correctly" do
+    on(agent, puppet('apply', '--pluginfactdest', pluginfactdest, '-e', "'notify { \"foo is ${foo}\": }'")) do |result|
+    assert_match(/foo is bar/, result.stdout)
+      end
+    end
     # Linux specific tests
     next if agent['platform'] =~ /windows/
 
-    step "In Linux, ensure the pluginsync'ed external fact has the same permissions as its source"
-    on(agent, puppet('resource', "file #{factsd}/unix_external_fact.sh"))
-    assert_match(/0755/, stdout)
-
-    step "In Linux, ensure puppet apply uses the correct permissions"
+    step "In Linux, ensure the pluginsync'ed external fact has the same permissions as its source" do
+    on(agent, puppet('resource', "file #{factsd}/unix_external_fact.sh")) do |result|
+    assert_match(/0755/, result.stdout)
+      end
+    end
+    step "In Linux, ensure puppet apply uses the correct permissions" do
     test_source = File.join('/', 'tmp', 'test')
     on(agent, puppet('apply', "-e \"file { '#{test_source}': ensure => file, mode => '0456' }\""))
 
@@ -119,10 +122,13 @@ with_puppet_running_on master, master_opts, codedir do
      ''                              => /0644/
     }.each do |source_permissions, mode|
       on(agent, puppet('apply', "-e \"file { '/tmp/test_target': ensure => file, #{source_permissions} source => '#{test_source}' }\""))
-      on(agent, puppet('resource', "file /tmp/test_target"))
-      assert_match(mode, stdout)
+      on(agent, puppet('resource', "file /tmp/test_target")) do |result|
+      assert_match(mode, result.stdout)
+      end
 
       on(agent, "rm /tmp/test_target")
     end
+    end
   end
+end
 end

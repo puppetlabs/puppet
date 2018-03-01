@@ -1,4 +1,4 @@
-test_name "Pluginsync'ed custom facts should be resolvable during application runs"
+test_name "Pluginsync'ed custom facts should be resolvable during application runs" do
 
 tag 'audit:medium',
     'audit:integration',
@@ -68,11 +68,12 @@ MANIFEST
 
   on agent, puppet('resource', 'test4847',
                    '--libdir', File.join(codedir, 'lib'),
-                   '--factpath', File.join(codedir, 'facts')) do
-    assert_match(/fact foo=bar, snafu=zifnab/, stderr)
+                   '--factpath', File.join(codedir, 'facts')) do |result|
+    assert_match(/fact foo=bar, snafu=zifnab/, result.stderr)
   end
 
   teardown do
     on(agent, "rm -rf #{codedir}")
   end
+end
 end

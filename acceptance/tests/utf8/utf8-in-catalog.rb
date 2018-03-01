@@ -106,15 +106,15 @@ PP
           agent,
           "cat #{catalog_file_name}",
           :environment => {:LANG => "en_US.UTF-8"}
-        ) do
+        ) do |result|
           assert_match(
             /#{agent_file}/,
-            stdout,
+            result.stdout,
             "cached catalog does not contain expected agent file name"
           )
           assert_match(
             /#{file_content}/,
-            stdout,
+            result.stdout,
             "cached catalog does not contain expected file content"
           )
         end
@@ -135,10 +135,10 @@ PP
           agent,
           "cat #{agent_file}",
           :environment => {:LANG => "en_US.UTF-8"}
-        ) do
+        ) do |result|
           assert_match(
             /#{utf8chars}/,
-            stdout,
+            result.stdout,
             "result stdout did not contain \"#{utf8chars}\""
           )
         end
