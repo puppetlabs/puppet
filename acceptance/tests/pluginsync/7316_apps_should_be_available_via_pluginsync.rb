@@ -96,10 +96,7 @@ end
 
           step "run the agent" do
             agents.each do |agent|
-              on(agent, puppet('agent',
-                               "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\" ",
-                               "--test --trace --server #{master}")
-              )
+              on(agent, puppet('agent', "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\" --test --trace --server #{master}"))
             end
           end
 
