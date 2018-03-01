@@ -11,29 +11,29 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
   tag 'risk:medium',
       'server'
 
-  test_num = 'c100300'
+  test_num        = 'c100300'
   tmp_environment = mk_tmp_environment_with_teardown(master, File.basename(__FILE__, '.*'))
-  agent_tmp_dirs = {}
+  agent_tmp_dirs  = {}
   agents.each do |agent|
     agent_tmp_dirs[agent_to_fqdn(agent)] = agent.tmpdir(tmp_environment)
   end
 
   teardown do
     step 'remove all test files on agents' do
-      agents.each { |agent| on(agent, "rm -r '#{agent_tmp_dirs[agent_to_fqdn(agent)]}'", :accept_all_exit_codes => true) }
+      agents.each {|agent| on(agent, "rm -r '#{agent_tmp_dirs[agent_to_fqdn(agent)]}'", :accept_all_exit_codes => true)}
     end
     # note - master teardown is registered by #mk_tmp_environment_with_teardown
   end
 
   step "Create module with binary data file on master" do
     on(master, "mkdir -p #{environmentpath}/#{tmp_environment}/modules/#{test_num}/{manifests,files}")
-    master_module_manifest = "#{environmentpath}/#{tmp_environment}/modules/#{test_num}/manifests/init.pp"
+    master_module_manifest    = "#{environmentpath}/#{tmp_environment}/modules/#{test_num}/manifests/init.pp"
     master_module_binary_file = "#{environmentpath}/#{tmp_environment}/modules/#{test_num}/files/binary_data"
 
     create_remote_file(master, master_module_binary_file, "\xC0\xFF")
     on(master, "chmod 644 #{master_module_binary_file}")
 
-    manifest =<<-MANIFEST
+    manifest = <<-MANIFEST
       class #{test_num}(
       ) {
         \$test_path = \$::fqdn ? #{agent_tmp_dirs}
@@ -50,7 +50,7 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
 
   step "Create site.pp to classify nodes to include module" do
     site_pp_file = "#{environmentpath}/#{tmp_environment}/manifests/site.pp"
-    site_pp =<<-SITE_PP
+    site_pp      = <<-SITE_PP
       node default {
         include #{test_num}
       }
