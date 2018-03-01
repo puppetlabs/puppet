@@ -70,12 +70,12 @@ Puppet::Face.define(:parser, '0.0.1') do
       This action parses and validates the Puppet DSL syntax without compiling a catalog
       or syncing any resources.
 
-      The output format can be controlled using the --format <old|pn|json>
-      'old' is the default, but now deprecated format which is not API.
-      'pn' is the Puppet Extended S-Expression Notation.
-      'json' outputs the same graph as 'pn' but with JSON syntax.
+      The output format can be controlled using the --format <old|pn|json> where:
+      * 'old' is the default, but now deprecated format which is not API.
+      * 'pn' is the Puppet Extended S-Expression Notation.
+      * 'json' outputs the same graph as 'pn' but with JSON syntax.
 
-      The output will be "pretty printed" when the option --pretty is given together with --format 'pn' or'json'. 
+      The output will be "pretty printed" when the option --pretty is given together with --format 'pn' or 'json'. 
       This option has no effect on the 'old' format.
 
       The command accepts one or more manifests (.pp) files, or an -e followed by the puppet

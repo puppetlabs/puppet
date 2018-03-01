@@ -147,12 +147,12 @@ describe Puppet::Face[:parser, :current] do
     end
 
     context "using 'pn' format" do
-      it "prints the AST of the passed expression in PN format" do
+      it "prints the AST of the given expression in PN format" do
         expect(parser.dump({ :format => 'pn', :e => 'if $x { "hi ${x[2]}" }' })).to eq(
           '(if {:test (var "x") :then [(concat "hi " (str (access (var "x") 2)))]})')
       end
 
-      it "pretty prints the AST of the passed expression in PN format when --pretty is given" do
+      it "pretty prints the AST of the given expression in PN format when --pretty is given" do
         expect(parser.dump({ :pretty => true, :format => 'pn', :e => 'if $x { "hi ${x[2]}" }' })).to eq(<<-RESULT.unindent[0..-2])
         (if
           {
@@ -171,12 +171,12 @@ describe Puppet::Face[:parser, :current] do
     end
 
     context "using 'json' format" do
-      it "prints the AST of the passed expression in JSON based on the PN format" do
+      it "prints the AST of the given expression in JSON based on the PN format" do
         expect(parser.dump({ :format => 'json', :e => 'if $x { "hi ${x[2]}" }' })).to eq(
           '{"^":["if",{"#":["test",{"^":["var","x"]},"then",[{"^":["concat","hi ",{"^":["str",{"^":["access",{"^":["var","x"]},2]}]}]}]]}]}')
       end
 
-      it "pretty prints the AST of the passed expression in JSON based on the PN format when --pretty is given" do
+      it "pretty prints the AST of the given expression in JSON based on the PN format when --pretty is given" do
         expect(parser.dump({ :pretty => true, :format => 'json', :e => 'if $x { "hi ${x[2]}" }' })).to eq(<<-RESULT.unindent[0..-2])
         {
           "^": [
