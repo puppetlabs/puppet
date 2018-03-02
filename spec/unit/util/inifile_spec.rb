@@ -159,8 +159,8 @@ describe Puppet::Util::IniConfig::PhysicalFile do
 
     end
 
-    describe "parsing properties" do
-      it "raises an error if the property is not within a section" do
+    describe 'parsing properties' do
+      it 'raises an error if the property is not within a section' do
         text = "key=val\n"
 
         expect {
@@ -169,13 +169,44 @@ describe Puppet::Util::IniConfig::PhysicalFile do
                          /Property with key "key" outside of a section/)
       end
 
-      it "adds the property to the current section" do
+      it 'adds the property to the current section' do
         text = "[main]\nkey=val\n"
 
         subject.parse(text)
         expect(subject.contents).to have(1).items
         sect = subject.contents[0]
-        expect(sect['key']).to eq "val"
+        expect(sect['key']).to eq 'val'
+      end
+
+      context 'with white space' do
+        let(:section) do
+          text = <<-INIFILE
+[main]
+  leading_white_space=value1
+white_space_after_key =value2
+white_space_after_equals= value3
+white_space_after_value=value4\t
+INIFILE
+          subject.parse(text)
+          expect(subject.contents).to have(1).items
+          subject.contents[0]
+        end
+
+        it 'allows and ignores white space before the key' do
+          expect(section['leading_white_space']).to eq('value1')
+        end
+
+        it 'allows and ignores white space before the equals' do
+          expect(section['white_space_after_key']).to eq('value2')
+        end
+
+        it 'allows and ignores white space after the equals' do
+          expect(section['white_space_after_equals']).to eq('value3')
+        end
+
+        it 'allows and ignores white spaces after the value' do
+          expect(section['white_space_after_value']).to eq('value4')
+        end
       end
     end
 
