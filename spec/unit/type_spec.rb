@@ -78,12 +78,6 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     expect(params).not_to be_include(nil)
   end
 
-  it "can return any `false` values when retrieving all set parameters" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present, :tag => 'foo', :remounts => false)
-    params = resource.parameters_with_value
-    expect(params).to be_include(resource.parameter(:remounts))
-  end
-
   it "can return an iterator for all set parameters" do
     resource = Puppet::Type.type(:notify).new(:name=>'foo',:message=>'bar',:tag=>'baz',:require=> "File['foo']")
     params = [:name, :message, :withpath, :loglevel, :tag, :require]
@@ -98,10 +92,6 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
   it "should do nothing for attributes that have no defaults and no specified value" do
     expect(Puppet::Type.type(:mount).new(:name => "foo").parameter(:noop)).to be_nil
-  end
-
-  it "should set attributes that have a default value of false and no user specified value" do
-    expect(Puppet::Type.type(:group).new(:name => "foo")[:system]).to eq(false)
   end
 
   it "should have a method for adding tags" do
@@ -743,59 +733,6 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
           )
         end.to raise_error(Puppet::ResourceError, /Validation.*\(file: example\.pp, line: 42\)/)
       end
-    end
-  end
-
-  describe "#set_default" do
-    let(:test_defaults_type) do
-      Puppet::Type.newtype(:default_test) do
-        newparam(:name) { isnamevar }
-        newparam(:default_to_false) { defaultto false }
-        newparam(:default_to_true) { defaultto true }
-        newparam(:default_to_string) { defaultto 'foo' }
-        newparam(:default_to_symbol) { defaultto :false }
-        newparam(:default_to_empty_array) { defaultto [] }
-        newparam(:default_to_array) { defaultto ['foo', 'baz'] }
-        newparam(:default_to_empty_hash) { defaultto ({}) }
-        newparam(:default_to_hash) { defaultto ({'foo' => 'baz'}) }
-        newparam(:no_default)
-      end
-    end
-
-    it "populates a parameter when the default is false" do
-      expect(test_defaults_type.new(:name => 'bar')[:default_to_false]).to be false
-    end
-
-    it "populates a parameter when the default is true" do
-      expect(test_defaults_type.new(:name => 'bar')[:default_to_true]).to be true
-    end
-
-    it "populates a parameter when the default is a string" do
-      expect(test_defaults_type.new(:name => 'bar')[:default_to_string]).to eq 'foo'
-    end
-
-    it "populates a parameter when the default is a symbol" do
-      expect(test_defaults_type.new(:name => 'bar')[:default_to_symbol]).to eq :false
-    end
-
-    it "populates a parameter when the default is an empty array" do
-      expect(test_defaults_type.new(:name => 'bar')[:default_to_empty_array]).to match_array([])
-    end
-
-    it "populates a parameter when the default is an array" do
-      expect(test_defaults_type.new(:name => 'bar')[:default_to_array]).to match_array(['foo', 'baz'])
-    end
-
-    it "populates a parameter when the default is an empty array" do
-      expect(test_defaults_type.new(:name => 'bar')[:default_to_empty_hash]).to eq ({})
-    end
-
-    it "populates a parameter when the default is a hash" do
-      expect(test_defaults_type.new(:name => 'bar')[:default_to_hash]).to eq ({'foo' => 'baz'})
-    end
-
-    it "does not populates a parameter when there is no default" do
-      expect(test_defaults_type.new(:name => 'bar')[:no_default]).to be_nil
     end
   end
 

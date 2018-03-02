@@ -677,6 +677,7 @@ module Puppet
 
       defaultto :false
 
+      # Use Symbols instead of booleans until PUP-1967 is resolved.
       newvalues(:true, :false)
 
       validate do |value|
