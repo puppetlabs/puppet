@@ -215,7 +215,8 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
       create = sequence('create')
       group.expects(:commit).in_sequence(create)
-      group.expects(:set_members).with(['user1', 'user2'], false).in_sequence(create)
+      # due to PUP-1967, defaultto false will set the default to nil
+      group.expects(:set_members).with(['user1', 'user2'], nil).in_sequence(create)
 
       provider.create
     end

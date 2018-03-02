@@ -191,12 +191,6 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "the force parameter" do
-    it "should default to false" do
-      expect(file[:force]).to eq(false)
-    end
-  end
-
   describe ".instances" do
     it "should return an empty array" do
       expect(described_class.instances).to eq([])
