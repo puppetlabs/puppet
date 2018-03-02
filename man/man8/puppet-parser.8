@@ -29,18 +29,34 @@ Whether to log debug information\.
 .
 .SH "ACTIONS"
 .
-.TP
-\fBdump\fR \- Outputs a dump of the internal parse tree for debugging
-\fBSYNOPSIS\fR
+.IP "\(bu" 4
+\fBdump\fR \- Outputs a dump of the internal parse tree for debugging: \fBSYNOPSIS\fR
 .
 .IP
-puppet parser dump [\-\-e \fIsource\fR] [\-\-[no\-]validate] \-e \fIsource\fR| [\fImanifest\fR \.\.\.]
+puppet parser dump [\-\-e \fIsource\fR] [\-\-[no\-]validate] [\-\-format \fIold, pn, or json\fR] [\-\-pretty] [\-\-format \fIold|pn|json\fR] [\-\-pretty] { \-e \fIsource\fR | [\fItemplates\fR \.\.\.] }
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
 This action parses and validates the Puppet DSL syntax without compiling a catalog or syncing any resources\.
+.
+.IP
+The output format can be controlled using the \-\-format \fIold|pn|json\fR where:
+.
+.IP "\(bu" 4
+\'old\' is the default, but now deprecated format which is not API\.
+.
+.IP "\(bu" 4
+\'pn\' is the Puppet Extended S\-Expression Notation\.
+.
+.IP "\(bu" 4
+\'json\' outputs the same graph as \'pn\' but with JSON syntax\.
+.
+.IP "" 0
+.
+.IP
+The output will be "pretty printed" when the option \-\-pretty is given together with \-\-format \'pn\' or \'json\'\. This option has no effect on the \'old\' format\.
 .
 .IP
 The command accepts one or more manifests (\.pp) files, or an \-e followed by the puppet source text\. If no arguments are given, the stdin is read (unless it is attached to a terminal)
@@ -52,6 +68,12 @@ The output format of the dumped tree is intended for debugging purposes and is n
 \fBOPTIONS\fR \fI\-\-e <source\fR> \- dump one source expression given on the command line\.
 .
 .IP
+\fI\-\-format <old, pn, or json\fR> \- Get result in \'old\' (deprecated format), \'pn\' (new format), or \'json\' (new format in JSON)\.
+.
+.IP
+\fI\-\-pretty\fR \- Pretty print output\. Only applicable together with \-\-format pn or json
+.
+.IP
 \fI\-\-[no\-]validate\fR \- Whether or not to validate the parsed result, if no\-validate only syntax errors are reported
 .
 .IP
@@ -60,9 +82,8 @@ The output format of the dumped tree is intended for debugging purposes and is n
 .IP
 A dump of the resulting AST model unless there are syntax or validation errors\.
 .
-.TP
-\fBvalidate\fR \- Validate the syntax of one or more Puppet manifests\.
-\fBSYNOPSIS\fR
+.IP "\(bu" 4
+\fBvalidate\fR \- Validate the syntax of one or more Puppet manifests\.: \fBSYNOPSIS\fR
 .
 .IP
 puppet parser validate [\fImanifest\fR] [\fImanifest\fR \.\.\.]
@@ -81,6 +102,8 @@ When validating multiple issues per file are reported up to the settings of max_
 .
 .IP
 Nothing, or the first syntax error encountered\.
+.
+.IP "" 0
 .
 .SH "EXAMPLES"
 \fBvalidate\fR
