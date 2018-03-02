@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-1180-gb8c1ccc\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-1201-g9441bc8\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-02-26 19:51+0000\n"
-"PO-Revision-Date: 2018-02-26 19:51+0000\n"
+"POT-Creation-Date: 2018-03-02 10:48+0000\n"
+"PO-Revision-Date: 2018-03-02 10:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -389,7 +389,7 @@ msgstr ""
 msgid "Unknown rendering format '%{format}'"
 msgstr ""
 
-#: ../lib/puppet/application/lookup.rb:350 ../lib/puppet/face/epp.rb:493
+#: ../lib/puppet/application/lookup.rb:350 ../lib/puppet/face/epp.rb:518
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr ""
 
@@ -951,7 +951,7 @@ msgstr ""
 msgid "No template specified. No action taken"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:95 ../lib/puppet/face/epp.rb:184
+#: ../lib/puppet/face/epp.rb:95 ../lib/puppet/face/epp.rb:198
 msgid ""
 "One or more file(s) specified did not exist:\n"
 "%{missing_files_list}"
@@ -969,95 +969,107 @@ msgstr ""
 msgid "A dump of the resulting AST model unless there are syntax or validation errors."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:131 ../lib/puppet/face/epp.rb:295 ../lib/puppet/face/parser.rb:81
+#: ../lib/puppet/face/epp.rb:137 ../lib/puppet/face/epp.rb:309 ../lib/puppet/face/parser.rb:89
 msgid "<source>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:133
+#: ../lib/puppet/face/epp.rb:139
 msgid "Dump one epp source expression given on the command line."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:137
+#: ../lib/puppet/face/epp.rb:143
 msgid "Whether or not to validate the parsed result, if no-validate only syntax errors are reported."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:141
+#: ../lib/puppet/face/epp.rb:146 ../lib/puppet/face/parser.rb:98
+msgid "<old, pn, or json>"
+msgstr ""
+
+#: ../lib/puppet/face/epp.rb:147 ../lib/puppet/face/parser.rb:99
+msgid "Get result in 'old' (deprecated format), 'pn' (new format), or 'json' (new format in JSON)."
+msgstr ""
+
+#: ../lib/puppet/face/epp.rb:151 ../lib/puppet/face/parser.rb:103
+msgid "Pretty print output. Only applicable together with --format pn or json"
+msgstr ""
+
+#: ../lib/puppet/face/epp.rb:155
 msgid "Whether or not to show a file name header between files."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:165 ../lib/puppet/face/parser.rb:99
+#: ../lib/puppet/face/epp.rb:179 ../lib/puppet/face/parser.rb:115
 msgid "No input to parse given on command line or stdin"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:193
+#: ../lib/puppet/face/epp.rb:207
 msgid "Renders an epp template as text"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:195
+#: ../lib/puppet/face/epp.rb:209
 msgid "A rendered result of one or more given templates."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:291
+#: ../lib/puppet/face/epp.rb:305
 msgid "<node_name>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:292
+#: ../lib/puppet/face/epp.rb:306
 msgid "The name of the node for which facts are obtained. Defaults to facts for the local node."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:297
+#: ../lib/puppet/face/epp.rb:311
 msgid "Render one inline epp template given on the command line."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:300
+#: ../lib/puppet/face/epp.rb:314
 msgid "<values_hash>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:301
+#: ../lib/puppet/face/epp.rb:315
 msgid "A Hash in Puppet DSL form given as arguments to the template being rendered."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:304
+#: ../lib/puppet/face/epp.rb:318
 msgid "<pp_or_yaml_file>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:305
+#: ../lib/puppet/face/epp.rb:319
 msgid "A .pp or .yaml file that is processed to produce a hash of values for the template."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:308
+#: ../lib/puppet/face/epp.rb:322
 msgid "<facts_file>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:309
+#: ../lib/puppet/face/epp.rb:323
 msgid "A .yaml or .json file containing a hash of facts made available in $facts and $trusted"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:313
+#: ../lib/puppet/face/epp.rb:327
 msgid "Whether or not to show a file name header between rendered results."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:334
+#: ../lib/puppet/face/epp.rb:348
 msgid "No input to process given on command line or stdin"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:348
+#: ../lib/puppet/face/epp.rb:362
 msgid "error while rendering epp"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:388
+#: ../lib/puppet/face/epp.rb:413
 msgid "Only .yaml or .pp can be used as a --values_file"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:391
+#: ../lib/puppet/face/epp.rb:416
 msgid "Could not load --values_file %{error}"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:394
+#: ../lib/puppet/face/epp.rb:419
 msgid "--values_file option must evaluate to a Hash or undef/nil, got: '%{template_class}'"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:407
+#: ../lib/puppet/face/epp.rb:432
 msgid "--values option must evaluate to a Hash or undef, got: '%{values_class}'"
 msgstr ""
 
@@ -1588,24 +1600,20 @@ msgstr ""
 msgid "Outputs a dump of the internal parse tree for debugging"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:67
-msgid "<source>| [<manifest> ...] "
-msgstr ""
-
-#: ../lib/puppet/face/parser.rb:83
+#: ../lib/puppet/face/parser.rb:91
 msgid "dump one source expression given on the command line."
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:87
+#: ../lib/puppet/face/parser.rb:95
 msgid "Whether or not to validate the parsed result, if no-validate only syntax errors are reported"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:115
+#: ../lib/puppet/face/parser.rb:131
 msgid ""
 "One or more file(s) specified did not exist:\n"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:149
+#: ../lib/puppet/face/parser.rb:176
 msgid "For puppet parser validate"
 msgstr ""
 
@@ -1760,11 +1768,11 @@ msgstr ""
 msgid "Unknown option(s): %{opts}"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/file.rb:98
+#: ../lib/puppet/file_bucket/file.rb:96
 msgid "Computing checksum on string"
 msgstr ""
 
-#: ../lib/puppet/file_bucket/file.rb:123
+#: ../lib/puppet/file_bucket/file.rb:121
 msgid "Computing checksum on file %{path}"
 msgstr ""
 
@@ -2541,7 +2549,7 @@ msgstr ""
 msgid "You cannot save facts to the code store; it is only used for getting facts from Facter"
 msgstr ""
 
-#: ../lib/puppet/indirector/facts/facter.rb:58
+#: ../lib/puppet/indirector/facts/facter.rb:56
 msgid "Loading facts"
 msgstr ""
 
@@ -4826,22 +4834,22 @@ msgid "epp(): Invalid EPP: %{detail}"
 msgstr ""
 
 #. TRANSLATORS 'LambdaExpression' is a class name and should not be translated
-#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:64
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:62
 msgid "%{function_name}(): the parser did not produce a LambdaExpression, got '%{class_name}'"
 msgstr ""
 
 #. TRANSLATORS 'EppExpression' is a class name and should not be translated
-#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:69
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:67
 msgid "%{function_name}(): the parser did not produce an EppExpression, got '%{class_name}'"
 msgstr ""
 
 #. TRANSLATORS 'EPP' refers to 'Embedded Puppet (EPP) template'
-#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:74
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:72
 msgid "%{function_name}(): The EPP template contains illegal expressions (definitions)"
 msgstr ""
 
 #. TRANSLATORS 'template_args' is a variable name and should not be translated
-#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:114
+#: ../lib/puppet/pops/evaluator/epp_evaluator.rb:113
 msgid "%{function_name}(): the template_args must be a Hash, got a %{class_name}"
 msgstr ""
 
@@ -5927,6 +5935,42 @@ msgstr ""
 
 #: ../lib/puppet/pops/parser/parser_support.rb:197
 msgid "illegal comma separated argument list"
+msgstr ""
+
+#: ../lib/puppet/pops/parser/pn_parser.rb:64
+msgid "unexpected end of input"
+msgstr ""
+
+#: ../lib/puppet/pops/parser/pn_parser.rb:66
+msgid "unexpected %{value}"
+msgstr ""
+
+#: ../lib/puppet/pops/parser/pn_parser.rb:103
+msgid "map key expected"
+msgstr ""
+
+#: ../lib/puppet/pops/parser/pn_parser.rb:114
+msgid "expected identifier to follow '('"
+msgstr ""
+
+#: ../lib/puppet/pops/parser/pn_parser.rb:125
+msgid "missing '%{token}' to end list"
+msgstr ""
+
+#: ../lib/puppet/pops/parser/pn_parser.rb:186
+msgid "expected identifier after ':'"
+msgstr ""
+
+#: ../lib/puppet/pops/parser/pn_parser.rb:225
+msgid "unterminated quote"
+msgstr ""
+
+#: ../lib/puppet/pops/parser/pn_parser.rb:251
+msgid "malformed octal quote"
+msgstr ""
+
+#: ../lib/puppet/pops/parser/pn_parser.rb:266 ../lib/puppet/pops/parser/pn_parser.rb:271 ../lib/puppet/pops/parser/pn_parser.rb:275
+msgid "digit expected"
 msgstr ""
 
 #: ../lib/puppet/pops/resource/resource_type_impl.rb:167 ../lib/puppet/type.rb:428
@@ -7504,24 +7548,24 @@ msgstr ""
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1312
+#: ../lib/puppet/settings.rb:1329
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1341
+#: ../lib/puppet/settings.rb:1353
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1351
+#: ../lib/puppet/settings.rb:1363
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1352
+#: ../lib/puppet/settings.rb:1364
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1383
+#: ../lib/puppet/settings.rb:1395
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -7561,11 +7605,11 @@ msgid "Short names can only be one character."
 msgstr ""
 
 #. TRANSLATORS 'deprecated' is a Puppet setting and ':completely' and ':allowed_on_commandline' are possible values and should not be translated
-#: ../lib/puppet/settings/base_setting.rb:167
+#: ../lib/puppet/settings/base_setting.rb:172
 msgid "Unsupported deprecated value '%{deprecation}'."
 msgstr ""
 
-#: ../lib/puppet/settings/base_setting.rb:168
+#: ../lib/puppet/settings/base_setting.rb:173
 msgid "Supported values for deprecated are ':completely' or ':allowed_on_commandline'"
 msgstr ""
 
@@ -7651,11 +7695,11 @@ msgstr ""
 msgid "Invalid terminus setting: %{value}"
 msgstr ""
 
-#: ../lib/puppet/settings/ttl_setting.rb:33
+#: ../lib/puppet/settings/ttl_setting.rb:38
 msgid "Invalid negative 'time to live' %{value} - did you mean 'unlimited'?"
 msgstr ""
 
-#: ../lib/puppet/settings/ttl_setting.rb:43
+#: ../lib/puppet/settings/ttl_setting.rb:48
 msgid "Invalid 'time to live' format '%{value}' for parameter: %{param_name}"
 msgstr ""
 
@@ -7853,31 +7897,31 @@ msgstr ""
 msgid "Cannot create CSR with attribute %{oid}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:255
+#: ../lib/puppet/ssl/certificate_request.rb:253
 msgid "Cannot specify CSR extension request %{oid}: conflicts with internally used extension request"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:261
+#: ../lib/puppet/ssl/certificate_request.rb:259
 msgid "Cannot create CSR with extension request %{oid}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:304
+#: ../lib/puppet/ssl/certificate_request.rb:302
 msgid "In %{attr}, expected Set but found %{klass}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:308
+#: ../lib/puppet/ssl/certificate_request.rb:306
 msgid "In %{attr}, expected Set[Array] but found %{klass}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:312
+#: ../lib/puppet/ssl/certificate_request.rb:310
 msgid "In %{attr}, expected Set[Array] with one value but found %{count} elements"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:316
+#: ../lib/puppet/ssl/certificate_request.rb:314
 msgid "In %{attr}, expected Set[Array[Sequence[...]]], but found %{klass}"
 msgstr ""
 
-#: ../lib/puppet/ssl/certificate_request.rb:320
+#: ../lib/puppet/ssl/certificate_request.rb:318
 msgid "In %{attr}, expected Set[Array[Sequence[Array[...]]]], but found %{klass}"
 msgstr ""
 
@@ -8245,19 +8289,19 @@ msgstr ""
 msgid "You cannot add relationships without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2443
+#: ../lib/puppet/type.rb:2439
 msgid "Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2446
+#: ../lib/puppet/type.rb:2442
 msgid "Unable to mark '%{name}' as sensitive: the property itself was not assigned a value."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2448
+#: ../lib/puppet/type.rb:2444
 msgid "Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2499
+#: ../lib/puppet/type.rb:2495
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
@@ -8897,15 +8941,15 @@ msgstr ""
 msgid "Failed to convert '%{path}' to URI: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:448
+#: ../lib/puppet/util.rb:444
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:566
+#: ../lib/puppet/util.rb:562
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:570
+#: ../lib/puppet/util.rb:566
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
@@ -9360,7 +9404,7 @@ msgstr ""
 msgid "Logs require a level"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:87 ../lib/puppet/util/log.rb:373 ../lib/puppet/util/windows/eventlog.rb:99
+#: ../lib/puppet/util/log.rb:87 ../lib/puppet/util/log.rb:370 ../lib/puppet/util/windows/eventlog.rb:99
 msgid "Invalid log level %{level}"
 msgstr ""
 
@@ -9372,40 +9416,40 @@ msgstr ""
 msgid "Unknown destination type %{dest}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:173
+#: ../lib/puppet/util/log.rb:171
 msgid "Received a Log attribute with invalid encoding:%{log_message}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:175
+#: ../lib/puppet/util/log.rb:173
 msgid ""
 "Backtrace:\n"
 "%{backtrace}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:230
+#: ../lib/puppet/util/log.rb:227
 msgid "Reopening log files"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
-#: ../lib/puppet/util/log.rb:363
+#: ../lib/puppet/util/log.rb:360
 msgid "Puppet::Util::Log requires a message"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
-#: ../lib/puppet/util/log.rb:369
+#: ../lib/puppet/util/log.rb:366
 msgid "Puppet::Util::Log requires a log level"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
-#: ../lib/puppet/util/log.rb:371
+#: ../lib/puppet/util/log.rb:368
 msgid "Puppet::Util::Log requires a symbol or string"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:402
+#: ../lib/puppet/util/log.rb:399
 msgid "Could not parse for environment %{environment}: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:404
+#: ../lib/puppet/util/log.rb:401
 msgid "%{msg} on node %{node}"
 msgstr ""
 
@@ -9968,59 +10012,59 @@ msgstr ""
 msgid "Failed to convert string SID: %{string_sid}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:213 ../lib/puppet/util/windows/taskscheduler.rb:246 ../lib/puppet/util/windows/taskscheduler.rb:262 ../lib/puppet/util/windows/taskscheduler.rb:314 ../lib/puppet/util/windows/taskscheduler.rb:341 ../lib/puppet/util/windows/taskscheduler.rb:373 ../lib/puppet/util/windows/taskscheduler.rb:398 ../lib/puppet/util/windows/taskscheduler.rb:417 ../lib/puppet/util/windows/taskscheduler.rb:433 ../lib/puppet/util/windows/taskscheduler.rb:454 ../lib/puppet/util/windows/taskscheduler.rb:470 ../lib/puppet/util/windows/taskscheduler.rb:489 ../lib/puppet/util/windows/taskscheduler.rb:507 ../lib/puppet/util/windows/taskscheduler.rb:540 ../lib/puppet/util/windows/taskscheduler.rb:555 ../lib/puppet/util/windows/taskscheduler.rb:596 ../lib/puppet/util/windows/taskscheduler.rb:612 ../lib/puppet/util/windows/taskscheduler.rb:623 ../lib/puppet/util/windows/taskscheduler.rb:641 ../lib/puppet/util/windows/taskscheduler.rb:661 ../lib/puppet/util/windows/taskscheduler.rb:689
+#: ../lib/puppet/util/windows/taskscheduler.rb:209 ../lib/puppet/util/windows/taskscheduler.rb:242 ../lib/puppet/util/windows/taskscheduler.rb:258 ../lib/puppet/util/windows/taskscheduler.rb:310 ../lib/puppet/util/windows/taskscheduler.rb:337 ../lib/puppet/util/windows/taskscheduler.rb:369 ../lib/puppet/util/windows/taskscheduler.rb:394 ../lib/puppet/util/windows/taskscheduler.rb:413 ../lib/puppet/util/windows/taskscheduler.rb:429 ../lib/puppet/util/windows/taskscheduler.rb:450 ../lib/puppet/util/windows/taskscheduler.rb:466 ../lib/puppet/util/windows/taskscheduler.rb:485 ../lib/puppet/util/windows/taskscheduler.rb:503 ../lib/puppet/util/windows/taskscheduler.rb:536 ../lib/puppet/util/windows/taskscheduler.rb:551 ../lib/puppet/util/windows/taskscheduler.rb:592 ../lib/puppet/util/windows/taskscheduler.rb:608 ../lib/puppet/util/windows/taskscheduler.rb:619 ../lib/puppet/util/windows/taskscheduler.rb:637 ../lib/puppet/util/windows/taskscheduler.rb:657 ../lib/puppet/util/windows/taskscheduler.rb:685
 msgid "No current task scheduler. ITaskScheduler is NULL."
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:273 ../lib/puppet/util/windows/taskscheduler.rb:285 ../lib/puppet/util/windows/taskscheduler.rb:306 ../lib/puppet/util/windows/taskscheduler.rb:342 ../lib/puppet/util/windows/taskscheduler.rb:374 ../lib/puppet/util/windows/taskscheduler.rb:399 ../lib/puppet/util/windows/taskscheduler.rb:418 ../lib/puppet/util/windows/taskscheduler.rb:434 ../lib/puppet/util/windows/taskscheduler.rb:455 ../lib/puppet/util/windows/taskscheduler.rb:471 ../lib/puppet/util/windows/taskscheduler.rb:490 ../lib/puppet/util/windows/taskscheduler.rb:508 ../lib/puppet/util/windows/taskscheduler.rb:541 ../lib/puppet/util/windows/taskscheduler.rb:597 ../lib/puppet/util/windows/taskscheduler.rb:613 ../lib/puppet/util/windows/taskscheduler.rb:624 ../lib/puppet/util/windows/taskscheduler.rb:642 ../lib/puppet/util/windows/taskscheduler.rb:662 ../lib/puppet/util/windows/taskscheduler.rb:674 ../lib/puppet/util/windows/taskscheduler.rb:690 ../lib/puppet/util/windows/taskscheduler.rb:700 ../lib/puppet/util/windows/taskscheduler.rb:726 ../lib/puppet/util/windows/taskscheduler.rb:745 ../lib/puppet/util/windows/taskscheduler.rb:763 ../lib/puppet/util/windows/taskscheduler.rb:777 ../lib/puppet/util/windows/taskscheduler.rb:795 ../lib/puppet/util/windows/taskscheduler.rb:810 ../lib/puppet/util/windows/taskscheduler.rb:826 ../lib/puppet/util/windows/taskscheduler.rb:846 ../lib/puppet/util/windows/taskscheduler.rb:862
+#: ../lib/puppet/util/windows/taskscheduler.rb:269 ../lib/puppet/util/windows/taskscheduler.rb:281 ../lib/puppet/util/windows/taskscheduler.rb:302 ../lib/puppet/util/windows/taskscheduler.rb:338 ../lib/puppet/util/windows/taskscheduler.rb:370 ../lib/puppet/util/windows/taskscheduler.rb:395 ../lib/puppet/util/windows/taskscheduler.rb:414 ../lib/puppet/util/windows/taskscheduler.rb:430 ../lib/puppet/util/windows/taskscheduler.rb:451 ../lib/puppet/util/windows/taskscheduler.rb:467 ../lib/puppet/util/windows/taskscheduler.rb:486 ../lib/puppet/util/windows/taskscheduler.rb:504 ../lib/puppet/util/windows/taskscheduler.rb:537 ../lib/puppet/util/windows/taskscheduler.rb:593 ../lib/puppet/util/windows/taskscheduler.rb:609 ../lib/puppet/util/windows/taskscheduler.rb:620 ../lib/puppet/util/windows/taskscheduler.rb:638 ../lib/puppet/util/windows/taskscheduler.rb:658 ../lib/puppet/util/windows/taskscheduler.rb:670 ../lib/puppet/util/windows/taskscheduler.rb:686 ../lib/puppet/util/windows/taskscheduler.rb:696 ../lib/puppet/util/windows/taskscheduler.rb:722 ../lib/puppet/util/windows/taskscheduler.rb:741 ../lib/puppet/util/windows/taskscheduler.rb:759 ../lib/puppet/util/windows/taskscheduler.rb:773 ../lib/puppet/util/windows/taskscheduler.rb:791 ../lib/puppet/util/windows/taskscheduler.rb:806 ../lib/puppet/util/windows/taskscheduler.rb:822 ../lib/puppet/util/windows/taskscheduler.rb:842 ../lib/puppet/util/windows/taskscheduler.rb:858
 msgid "No currently active task. ITask is NULL."
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:286
+#: ../lib/puppet/util/windows/taskscheduler.rb:282
 msgid "Account information must be set on the current task to save it properly."
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:351
+#: ../lib/puppet/util/windows/taskscheduler.rb:347
 msgid "User has exceeded maximum allowed length %{max}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:363
+#: ../lib/puppet/util/windows/taskscheduler.rb:359
 msgid "job created, but password was invalid"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:423
+#: ../lib/puppet/util/windows/taskscheduler.rb:419
 msgid "Application name has exceeded maximum allowed length %{max}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:459
+#: ../lib/puppet/util/windows/taskscheduler.rb:455
 msgid "Parameters has exceeded maximum allowed length %{max}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:494
+#: ../lib/puppet/util/windows/taskscheduler.rb:490
 msgid "Working directory has exceeded maximum allowed length %{max}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:560
+#: ../lib/puppet/util/windows/taskscheduler.rb:556
 msgid "task '%{task}' already exists"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:767
+#: ../lib/puppet/util/windows/taskscheduler.rb:763
 msgid "Comment has exceeded maximum allowed length %{max}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:799
+#: ../lib/puppet/util/windows/taskscheduler.rb:795
 msgid "Creator has exceeded maximum allowed length %{max}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:922
+#: ../lib/puppet/util/windows/taskscheduler.rb:918
 msgid "Invalid type key '%{key}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:930
+#: ../lib/puppet/util/windows/taskscheduler.rb:926
 msgid "Invalid key '%{key}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/taskscheduler.rb:980 ../lib/puppet/util/windows/taskscheduler.rb:1047
+#: ../lib/puppet/util/windows/taskscheduler.rb:974 ../lib/puppet/util/windows/taskscheduler.rb:1041
 msgid "Unknown trigger type %{type}"
 msgstr ""
 
@@ -10105,14 +10149,14 @@ msgstr ""
 msgid "Given value for '%{varname}' has illegal type - got: %{type}"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:850
+#: ../lib/puppet_pal.rb:852
 msgid "Puppet Pal: %{what}"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:863
+#: ../lib/puppet_pal.rb:866
 msgid "Cannot use '%{a_term}' and '%{b_term}' at the same time"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:869
+#: ../lib/puppet_pal.rb:873
 msgid "A block must be given"
 msgstr ""
