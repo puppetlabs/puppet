@@ -188,7 +188,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def modifycmd(param, value)
     if @resource.forcelocal?
-      cmd = [command(property_manages_password_age?(param) ? :localpassword : :localmodify)]
+      if param == :groups
+        cmd = [command(:modify)]
+      else
+        cmd = [command(property_manages_password_age?(param) ? :localpassword : :localmodify)]
+      end
       @custom_environment = Puppet::Util::Libuser.getenv
     else
       cmd = [command(property_manages_password_age?(param) ? :password : :modify)]
