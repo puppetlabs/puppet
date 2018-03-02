@@ -21,12 +21,14 @@ test_name 'utf-8 characters in cached catalog' do
   on(master, "rm -rf '#{codedir}'")
   env_dir = "#{codedir}/environments"
   agents.each do |agent|
-    puts "agent name: #{agent.hostname}, platform: #{agent.platform}"
+
+    step "agent name: #{agent.hostname}, platform: #{agent.platform}"
     agent_vardir = agent.tmpdir("agent_vardir")
     agent_file   = agent.tmpfile("file" + utf8chars)
     teardown do
       on(agent, "rm -rf '#{agent_vardir}' '#{agent_file}'")
     end
+
     step "Apply manifest" do
       on(agent, "rm -rf '#{agent_file}'", :environment => { :LANG => "en_US.UTF-8" })
 
@@ -47,13 +49,13 @@ file { '#{env_dir}/production/manifests/site.pp' :
   ensure => file,
   mode => '0644',
   content => '
-file { "#{agent_file}" :
-  ensure => file,
-  mode => "0644",
-  content => "#{file_content}
-",
-}
-',
+    file { "#{agent_file}" :
+      ensure => file,
+      mode => "0644",
+      content => "#{file_content}
+    ",
+    }
+  ',
 }
 PP
 

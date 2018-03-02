@@ -87,8 +87,7 @@ MANIFEST
 
       teardown do
         on(master, "rm -rf '#{codedir}'")
-        on(agent, "rm -rf '#{factsd}'")
-        on(agent, "rm -rf '#{pluginfactdest}'")
+        on(agent, "rm -rf '#{factsd}' '#{pluginfactdest}'")
       end
 
       step "Pluginsync the external fact to the agent and ensure it resolves correctly" do
@@ -96,9 +95,11 @@ MANIFEST
           assert_match(/foo is bar/, result.stdout)
         end
       end
-      step "Use plugin face to download to the agent"
-      on(agent, puppet('plugin', 'download', '--server', master, '--pluginfactdest', pluginfactdest))
-      assert_match(/Downloaded these plugins: .*external_fact/, stdout) unless agent['locale'] == 'ja'
+      step "Use plugin face to download to the agent" do
+        on(agent, puppet('plugin', 'download', '--server', master, '--pluginfactdest', pluginfactdest)) do |result|
+          assert_match(/Downloaded these plugins: .*external_fact/, result.stdout) unless agent['locale'] == 'ja'
+        end
+      end
 
       step "Ensure it resolves correctly" do
         on(agent, puppet('apply', '--pluginfactdest', pluginfactdest, '-e', "'notify { \"foo is ${foo}\": }'")) do |result|
@@ -126,7 +127,7 @@ MANIFEST
             assert_match(mode, result.stdout)
           end
 
-          on(agent, "rm /tmp/test_target")
+          on(agent, "rm -f /tmp/test_target")
         end
       end
     end
