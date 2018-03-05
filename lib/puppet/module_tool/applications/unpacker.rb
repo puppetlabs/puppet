@@ -1,6 +1,6 @@
 require 'pathname'
 require 'tmpdir'
-require 'multi_json'
+require 'puppet/util/json'
 require 'puppet/file_system'
 
 module Puppet::ModuleTool
@@ -75,7 +75,7 @@ module Puppet::ModuleTool
 
       # @api private
       def module_name
-        metadata = MultiJson.load((root_dir + 'metadata.json').read)
+        metadata = Puppet::Util::Json.load((root_dir + 'metadata.json').read)
         metadata['name'][/-(.*)/, 1]
       end
 

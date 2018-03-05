@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'multi_json'
+require 'puppet/util/json'
 
 require 'puppet/module_tool/applications'
 require 'puppet/file_system'
@@ -23,7 +23,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
       FileUtils.mkdir(File.join(dest, 'extractedmodule'))
       File.open(File.join(dest, 'extractedmodule', 'metadata.json'), 'w+') do |file|
-        file.puts MultiJson.dump('name' => module_name, 'version' => '1.0.0')
+        file.puts Puppet::Util::Json.dump('name' => module_name, 'version' => '1.0.0')
       end
       true
     end
@@ -39,7 +39,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
       FileUtils.mkdir(File.join(dest, 'extractedmodule'))
       File.open(File.join(dest, 'extractedmodule', 'metadata.json'), 'w+') do |file|
-        file.puts MultiJson.dump('name' => module_name, 'version' => '1.0.0')
+        file.puts Puppet::Util::Json.dump('name' => module_name, 'version' => '1.0.0')
       end
       FileUtils.touch(File.join(dest, 'extractedmodule/tempfile'))
       Puppet::FileSystem.symlink(File.join(dest, 'extractedmodule/tempfile'), File.join(dest, 'extractedmodule/tempfile2'))
@@ -58,7 +58,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
       FileUtils.mkdir(File.join(dest, 'extractedmodule'))
       File.open(File.join(dest, 'extractedmodule', 'metadata.json'), 'w+') do |file|
-        file.puts MultiJson.dump('name' => module_name, 'version' => '1.0.0')
+        file.puts Puppet::Util::Json.dump('name' => module_name, 'version' => '1.0.0')
       end
       FileUtils.mkdir(File.join(dest, 'extractedmodule/manifests'))
       FileUtils.touch(File.join(dest, 'extractedmodule/manifests/tempfile'))

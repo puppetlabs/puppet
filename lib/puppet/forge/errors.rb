@@ -1,4 +1,4 @@
-require 'multi_json'
+require 'puppet/util/json'
 require 'puppet/error'
 require 'puppet/forge'
 
@@ -82,11 +82,11 @@ module Puppet::Forge::Errors
       @response = "#{response.code} #{response.message.strip}"
 
       begin
-        body = MultiJson.load(response.body)
+        body = Puppet::Util::Json.load(response.body)
         if body['message']
           @message ||= body['message'].strip
         end
-      rescue MultiJson::ParseError
+      rescue Puppet::Util::Json::ParseError
       end
 
       message = if @message

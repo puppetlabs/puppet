@@ -9,7 +9,7 @@ module JSONMatchers
     end
 
     def json(instance)
-      MultiJson.load(instance.to_json)
+      Puppet::Util::Json.load(instance.to_json)
     end
 
     def attr_value(attrs, instance)
@@ -102,11 +102,11 @@ module JSONMatchers
   end
 
   if !Puppet.features.microsoft_windows?
-    require 'multi_json'
+    require 'puppet/util/json'
     require 'json-schema'
 
     class SchemaMatcher
-      JSON_META_SCHEMA = MultiJson.load(File.read('api/schemas/json-meta-schema.json'))
+      JSON_META_SCHEMA = Puppet::Util::Json.load(File.read('api/schemas/json-meta-schema.json'))
 
       def initialize(schema)
         @schema = schema
@@ -123,7 +123,7 @@ module JSONMatchers
     if Puppet.features.microsoft_windows?
       pending("Schema checks cannot be done on windows because of json-schema problems")
     else
-      schema = MultiJson.load(File.read(schema_file))
+      schema = Puppet::Util::Json.load(File.read(schema_file))
       SchemaMatcher.new(schema)
     end
   end

@@ -1,4 +1,4 @@
-require 'multi_json'
+require 'puppet/util/json'
 
 module PuppetSpec
   module ModuleTool
@@ -15,7 +15,7 @@ module PuppetSpec
         moddir = File.join(options[:into], name)
         FileUtils.mkdir_p(moddir)
         File.open(File.join(moddir, 'metadata.json'), 'w') do |file|
-          file.puts(MultiJson.dump(release.metadata))
+          file.puts(Puppet::Util::Json.dump(release.metadata))
         end
       end
 

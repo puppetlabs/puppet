@@ -31,8 +31,8 @@ class TaskInstantiator
     else
       json_text = loader.get_contents(metadata)
       begin
-        create_task_from_hash(name, task_source, MultiJson.load(json_text) || EMPTY_HASH)
-      rescue MultiJson::ParseError => ex
+        create_task_from_hash(name, task_source, Puppet::Util::Json.load(json_text) || EMPTY_HASH)
+      rescue Puppet::Util::Json::ParseError => ex
         raise Puppet::ParseError.new(ex.message, metadata)
       rescue Types::TypeAssertionError => ex
         # Not strictly a parser error but from the users perspective, the file content didn't parse properly. The

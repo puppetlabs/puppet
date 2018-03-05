@@ -1,5 +1,5 @@
 require 'puppet/network/format_handler'
-require 'multi_json'
+require 'puppet/util/json'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20, :mime => "application/x-msgpack", :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
 
@@ -101,11 +101,11 @@ end
 
 Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'application/json', :charset => Encoding::UTF_8, :weight => 15, :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
   def intern(klass, text)
-    data_to_instance(klass, MultiJson.load(text))
+    data_to_instance(klass, Puppet::Util::Json.load(text))
   end
 
   def intern_multiple(klass, text)
-    MultiJson.load(text).collect do |data|
+    Puppet::Util::Json.load(text).collect do |data|
       data_to_instance(klass, data)
     end
   end
@@ -164,7 +164,7 @@ Puppet::Network::FormatHandler.create(:console,
     end
 
     # ...or pretty-print the inspect outcome.
-    MultiJson.dump(datum, :pretty => true, :quirks_mode => true)
+    Puppet::Util::Json.dump(datum, :pretty => true, :quirks_mode => true)
   end
 
   def render_multiple(data)

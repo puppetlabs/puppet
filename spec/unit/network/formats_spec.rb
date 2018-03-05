@@ -333,10 +333,6 @@ describe "Puppet Network Format" do
       expect(json.weight).to eq(15)
     end
 
-    it "should use the native JSON gem" do
-      expect(MultiJson.adapter).to eq(MultiJson::Adapters::JsonGem)
-    end
-
     it "should render an instance as JSON" do
       instance = FormatsTest.new("foo")
       expect(json.render(instance)).to eq({"string" => "foo"}.to_json)
@@ -348,20 +344,20 @@ describe "Puppet Network Format" do
     end
 
     it "should intern an instance from a JSON hash" do
-      text = MultiJson.dump({"string" => "parsed_json"})
+      text = Puppet::Util::Json.dump({"string" => "parsed_json"})
       instance = json.intern(FormatsTest, text)
       expect(instance.string).to eq("parsed_json")
     end
 
     it "should skip data_to_hash if data is already an instance of the specified class" do
       # The rest terminus for the report indirected type relies on this behavior
-      data = MultiJson.dump([1, 2])
+      data = Puppet::Util::Json.dump([1, 2])
       instance = json.intern(Array, data)
       expect(instance).to eq([1, 2])
     end
 
     it "should intern multiple instances from a JSON array of hashes" do
-      text = MultiJson.dump(
+      text = Puppet::Util::Json.dump(
         [
           {
             "string" => "BAR"
@@ -375,7 +371,7 @@ describe "Puppet Network Format" do
     end
 
     it "should reject wrapped data from legacy clients as they've never supported JSON" do
-      text = MultiJson.dump(
+      text = Puppet::Util::Json.dump(
         {
           "type" => "FormatsTest",
           "data" => {
@@ -389,8 +385,8 @@ describe "Puppet Network Format" do
 
     it "fails intelligibly when given invalid data" do
       expect do
-        json.intern(Puppet::Node, ' ')
-      end.to raise_error(MultiJson::ParseError)
+        json.intern(Puppet::Node, '')
+      end.to raise_error(Puppet::Util::Json::ParseError)
     end
   end
 

@@ -484,7 +484,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       if fact_file.is_a?(Hash) # when used via the Face API
         given_facts = fact_file
       elsif fact_file.end_with?("json")
-        given_facts = MultiJson.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+        given_facts = Puppet::Util::Json.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       else
         given_facts = YAML.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       end
