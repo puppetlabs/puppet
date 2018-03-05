@@ -9,8 +9,8 @@ require 'puppet/parameter/boolean'
 module Puppet
   Type.newtype(:package) do
     @doc = "Manage packages.  There is a basic dichotomy in package
-      support right now:  Some package types (e.g., yum and apt) can
-      retrieve their own package files, while others (e.g., rpm and sun)
+      support right now:  Some package types (such as yum and apt) can
+      retrieve their own package files, while others (such as rpm and sun)
       cannot.  For those package formats that cannot retrieve their own files,
       you can use the `source` parameter to point to the correct file.
 
@@ -242,7 +242,7 @@ module Puppet
             name   => $ssl,
           }
 
-          . etc. .
+          ...
 
           $ssh = $operatingsystem ? {
             solaris => SMCossh,

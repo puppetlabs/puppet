@@ -25,8 +25,8 @@ module Puppet
         Make sure to omit the following in this attribute (and specify them in
         other attributes):
 
-        * Key headers (e.g. 'ssh-rsa') --- put these in the `type` attribute.
-        * Key identifiers / comments (e.g. 'joescomputer.local') --- put these in
+        * Key headers, such as 'ssh-rsa' --- put these in the `type` attribute.
+        * Key identifiers / comments, such as 'joescomputer.local' --- put these in
           the `name` attribute/resource title."
     end
 

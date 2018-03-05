@@ -150,13 +150,13 @@ Puppet::Type.newtype(:augeas) do
   end
 
   newparam(:lens) do
-    desc "Use a specific lens, e.g. `Hosts.lns`. When this parameter is set, you
+    desc "Use a specific lens, such as `Hosts.lns`. When this parameter is set, you
       must also set the `incl` parameter to indicate which file to load.
       The Augeas documentation includes [a list of available lenses](http://augeas.net/stock_lenses.html)."
   end
 
   newparam(:incl) do
-    desc "Load only a specific file, e.g. `/etc/hosts`. This can greatly speed
+    desc "Load only a specific file, such as `/etc/hosts`. This can greatly speed
       up the execution the resource. When this parameter is set, you must also
       set the `lens` parameter to indicate which lens to use."
   end
