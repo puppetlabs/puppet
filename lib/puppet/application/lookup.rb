@@ -318,7 +318,17 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       Puppet.settings[:node_cache_terminus] = nil
     end
 
-    node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
+    unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
+      ni = Puppet::Node.indirection
+      tc = ni.terminus_class
+      if tc == :plain || options[:compile]
+        node = ni.find(node)
+      else
+        ni.terminus_class = :plain
+        node = ni.find(node)
+        ni.terminus_class = tc
+      end
+    end
 
     fact_file = options[:fact_file]
 
