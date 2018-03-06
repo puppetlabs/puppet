@@ -202,7 +202,7 @@ class Puppet::Module
 
   def read_metadata
     md_file = metadata_file
-    md_file.nil? ? {} : Puppet::Util::Json::load(File.read(md_file, :encoding => 'utf-8'))
+    md_file.nil? ? {} : Puppet::Util::Json.load(File.read(md_file, :encoding => 'utf-8'))
   rescue Errno::ENOENT
     {}
   rescue Puppet::Util::Json::ParseError => e

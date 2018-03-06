@@ -159,7 +159,7 @@ module JSON
 
     # Write a payload object. Not subject to extensions
     def write_pl(obj)
-      @io << obj.to_json << ','
+      @io << Puppet::Util::Json.dump(obj) << ','
     end
 
     def io_string
@@ -198,7 +198,7 @@ module JSON
       if ext.nil?
         case obj
         when Numeric, String, true, false, nil
-          @io << obj.to_json
+          @io << Puppet::Util::Json.dump(obj)
           write_delim
         else
           raise SerializationError, _("Unable to serialize a %{obj}") % { obj: obj.class.name }

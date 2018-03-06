@@ -110,12 +110,8 @@ Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'applic
     end
   end
 
-  # JSON monkey-patches Array, so this works.
-  # https://github.com/ruby/ruby/blob/ruby_1_9_3/ext/json/generator/generator.c#L1416
-  # If we ever change what JSON backend we are using, we will need to make sure this is
-  # still true.
   def render_multiple(instances)
-    instances.to_json
+    Puppet::Util::Json.dump(instances)
   end
 
   # Unlike PSON, we do not need to unwrap the data envelope, because legacy 3.x agents

@@ -102,8 +102,8 @@ module Puppet::ModuleTool
       data = @data.dup.merge('dependencies' => dependencies)
 
       contents = data.keys.map do |k|
-        value = (Puppet::Util::Json.dump(data[k], :pretty => true) rescue data[k].to_json)
-        "#{k.to_json}: #{value}"
+        value = (Puppet::Util::Json.dump(data[k], :pretty => true) rescue Puppet::Util::Json.dump(data[k]))
+        %Q("#{k.to_s}": #{value})
       end
 
       "{\n" + contents.join(",\n").gsub(/^/, '  ') + "\n}\n"

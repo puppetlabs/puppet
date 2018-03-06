@@ -23,7 +23,7 @@ class Puppet::Util::JsonLockfile < Puppet::Util::Lockfile
   def lock(lock_data = nil)
     return false if locked?
 
-    super(lock_data.to_json)
+    super(Puppet::Util::Json.dump(lock_data))
   end
 
   # Retrieve the (optional) lock data that was specified at the time the file
