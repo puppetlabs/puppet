@@ -2543,6 +2543,9 @@ with_puppet_running_on master, @master_opts, @coderoot do
     "puppet.conf specified environment env4 mod1::module_key lookup failed, expeccted /module-env4-mod1-hiera/"
   )
 
+=begin
+The following should be replaced with tests asserting that :plain node_terminus is used unless lookup is called
+with --compile option
   step 'apply enc manifest'
   apply_manifest_on(master, @encmanifest, :catch_failures => true)
 
@@ -2563,5 +2566,5 @@ with_puppet_running_on master, @master_opts, @coderoot do
     result,
     "enc specified environment env2 environment_key lookup failed"
   )
-
+=end
 end
