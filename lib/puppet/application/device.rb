@@ -24,6 +24,7 @@ class Puppet::Application::Device < Puppet::Application
     end
 
     {
+      :apply => nil,
       :waitforcert => nil,
       :detailed_exitcodes => false,
       :verbose => false,
@@ -48,6 +49,10 @@ class Puppet::Application::Device < Puppet::Application
 
   option("--detailed-exitcodes") do |arg|
     options[:detailed_exitcodes] = true
+  end
+
+  option("--apply MANIFEST") do |arg|
+    options[:apply] = arg.to_s
   end
 
   option("--logdest DEST", "-l DEST") do |arg|
@@ -89,7 +94,7 @@ USAGE
   puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
                 [-h|--help] [-l|--logdest syslog|<file>|console]
                 [-v|--verbose] [-w|--waitforcert <seconds>]
-                [-r|--resource <type> [name]]
+                [-a|--apply <file>] [-r|--resource <type> [name]]
                 [-t|--target <device>] [--user=<user>] [-V|--version]
 
 
@@ -155,6 +160,9 @@ you can specify '--server <servername>' as an argument.
   appending nature of logging. It must be appended manually to make the content
   valid JSON.
 
+* --apply:
+  Apply a manifest against a remote target. Target must be specified.
+
 * --resource:
   Displays a resource state as Puppet code, roughly equivalent to
   `puppet resource`.  Can be filterd by title. Requires --target be specified.
@@ -202,6 +210,16 @@ Licensed under the Apache 2.0 License
     if options[:resource] and !options[:target]
       Puppet.err _("resource command requires target")
       exit(1)
+    end
+    unless options[:apply].nil?
+      if options[:target].nil?
+        Puppet.err _("missing argument: --target is required when using --apply")
+        exit(1)
+      end
+      unless File.file?(options[:apply])
+        Puppet.err _("%{file} does not exist, cannot apply") % { file: options[:apply] }
+        exit(1)
+      end
     end
     vardir = Puppet[:vardir]
     confdir = Puppet[:confdir]
@@ -256,6 +274,22 @@ Licensed under the Apache 2.0 License
               end.join("\n")
             end
             (puts text)
+          elsif options[:apply]
+            # avoid reporting to server
+            Puppet::Transaction::Report.indirection.terminus_class = :yaml
+            Puppet::Resource::Catalog.indirection.cache_class = nil
+
+            require 'puppet/application/apply'
+            begin
+
+              Puppet[:node_terminus] = :plain
+              Puppet[:catalog_terminus] = :compiler
+              Puppet[:catalog_cache_terminus] = nil
+              Puppet[:facts_terminus] = :network_device
+              Puppet.override(:network_device => true) do
+                Puppet::Application::Apply.new(Puppet::Util::CommandLine.new('puppet', ["apply", options[:apply]])).run_command
+              end
+            end
           else
             Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
             # this will reload and recompute default settings and create the devices sub vardir

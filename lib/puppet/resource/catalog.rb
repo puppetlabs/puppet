@@ -595,7 +595,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     transaction = Puppet::Transaction.new(self, options[:report], prioritizer)
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
-    transaction.for_network_device = options[:network_device]
+    transaction.for_network_device = Puppet.lookup(:network_device) { nil } || options[:network_device]
 
     transaction
   end
