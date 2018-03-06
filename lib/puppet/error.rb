@@ -46,7 +46,7 @@ module Puppet
 
   # Contains an issue code and can be annotated with an environment and a node
   class ParseErrorWithIssue < Puppet::ParseError
-    attr_reader :issue_code, :basic_message
+    attr_reader :issue_code, :basic_message, :arguments
     attr_accessor :environment, :node
 
     # @param message [String] The error message
@@ -55,11 +55,13 @@ module Puppet
     # @param pos [Integer] The position on the line
     # @param original [Exception] Original exception
     # @param issue_code [Symbol] The issue code
+    # @param arguments [Hash{Symbol=>Object}] Issue arguments
     #
-    def initialize(message, file=nil, line=nil, pos=nil, original=nil, issue_code= nil)
+    def initialize(message, file=nil, line=nil, pos=nil, original=nil, issue_code= nil, arguments = nil)
       super(message, file, line, pos, original)
       @issue_code = issue_code
       @basic_message = message
+      @arguments = arguments
     end
 
     def to_s
@@ -83,7 +85,8 @@ module Puppet
             line,
             nil,
             nil,
-            issue.issue_code)
+            issue.issue_code,
+            args)
     end
   end
 
