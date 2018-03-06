@@ -5,6 +5,12 @@ module Puppet::Util
 
     begin
       require 'multi_json'
+      # Force backend detection before attempting to use the library
+      # or load any other JSON libraries
+      MultiJson.default_adapter
+
+      # Preserve core type monkey-patching done by the built-in JSON gem
+      require 'json'
     rescue LoadError
       require 'json'
     end

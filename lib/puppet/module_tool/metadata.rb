@@ -102,7 +102,7 @@ module Puppet::ModuleTool
       data = @data.dup.merge('dependencies' => dependencies)
 
       contents = data.keys.map do |k|
-        value = (Puppet::Util::Json.dump(data[k], :pretty => true) rescue Puppet::Util::Json.dump(data[k]))
+        value = (Puppet::Util::Json.dump(data[k], :pretty => true) rescue data[k].to_json)
         %Q("#{k.to_s}": #{value})
       end
 
