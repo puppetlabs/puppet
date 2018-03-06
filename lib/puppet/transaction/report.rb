@@ -134,6 +134,8 @@ class Puppet::Transaction::Report
   #
   attr_accessor :transaction_completed
 
+  TOTAL = "total".freeze
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
@@ -208,7 +210,7 @@ class Puppet::Transaction::Report
     resource_metrics = add_metric(:resources, calculate_resource_metrics)
     add_metric(:time, calculate_time_metrics)
     change_metric = calculate_change_metric
-    add_metric(:changes, {"total" => change_metric})
+    add_metric(:changes, {TOTAL => change_metric})
     add_metric(:events, calculate_event_metrics)
     @status = compute_status(resource_metrics, change_metric)
     @noop_pending = @resource_statuses.any? { |name,res| has_noop_events?(res) }
@@ -379,7 +381,7 @@ class Puppet::Transaction::Report
       metric.values.each do |metric_name, label, value|
         report[key][metric_name.to_s] = value
       end
-      report[key]["total"] = 0 unless key == "time" or report[key].include?("total")
+      report[key][TOTAL] = 0 unless key == "time" or report[key].include?(TOTAL)
     end
     (report["time"] ||= {})["last_run"] = Time.now.tv_sec
     report
@@ -397,10 +399,10 @@ class Puppet::Transaction::Report
   #
   def exit_status
     status = 0
-    if @metrics["changes"] && @metrics["changes"]["total"] &&
+    if @metrics["changes"] && @metrics["changes"][TOTAL] &&
         @metrics["resources"] && @metrics["resources"]["failed"] &&
         @metrics["resources"]["failed_to_restart"]
-      status |= 2 if @metrics["changes"]["total"] > 0
+      status |= 2 if @metrics["changes"][TOTAL] > 0
       status |= 4 if @metrics["resources"]["failed"] > 0
       status |= 4 if @metrics["resources"]["failed_to_restart"] > 0
     else
@@ -426,7 +428,7 @@ class Puppet::Transaction::Report
     metrics = Hash.new(0)
     %w{total failure success}.each { |m| metrics[m] = 0 }
     resource_statuses.each do |name, status|
-      metrics["total"] += status.events.length
+      metrics[TOTAL] += status.events.length
       status.events.each do |event|
         metrics[event.status] += 1
       end
@@ -437,7 +439,7 @@ class Puppet::Transaction::Report
 
   def calculate_resource_metrics
     metrics = {}
-    metrics["total"] = resource_statuses.length
+    metrics[TOTAL] = resource_statuses.length
 
     # force every resource key in the report to be present
     # even if no resources is in this given state
@@ -465,7 +467,7 @@ class Puppet::Transaction::Report
       metrics[name.to_s.downcase] = value
     end
 
-    metrics["total"] = metrics.values.inject(0) { |a,b| a+b }
+    metrics[TOTAL] = metrics.values.inject(0) { |a,b| a+b }
 
     metrics
   end
