@@ -480,6 +480,7 @@ describe Puppet::Transaction::Report do
 
   describe "when producing a summary" do
     before do
+      Benchmark.stubs(:realtime).returns(5.05683418)
       resource = Puppet::Type.type(:notify).new(:name => "testing")
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource resource
@@ -527,6 +528,15 @@ describe Puppet::Transaction::Report do
       it "should include information on #{main} in the textual summary" do
         expect(@report.summary).to be_include(main)
       end
+    end
+
+    it 'should sort total at the very end of the time metrics' do
+      expect(@report.summary).to match(/
+         Last run: \d+
+   Transaction evaluation: \d+.\d{2}
+            Total: \d+.\d{2}
+Version:
+/)
     end
   end
 

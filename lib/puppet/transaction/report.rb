@@ -351,9 +351,9 @@ class Puppet::Transaction::Report
 
       report[key].keys.sort { |a,b|
         # sort by label
-        if a == :total
+        if a == TOTAL
           1
-        elsif b == :total
+        elsif b == TOTAL
           -1
         else
           report[key][a].to_s <=> report[key][b].to_s
