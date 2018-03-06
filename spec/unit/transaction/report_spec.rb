@@ -357,6 +357,22 @@ describe Puppet::Transaction::Report do
         expect(metric(:time, "tidy")).to eq(9)
       end
 
+      it "should provide the total time for all time metrics collected" do
+        add_statuses(3, :file) do |status|
+          status.evaluation_time = 1
+        end
+        add_statuses(3, :exec) do |status|
+          status.evaluation_time = 2
+        end
+        add_statuses(3, :tidy) do |status|
+          status.evaluation_time = 3
+        end
+
+        @report.finalize_report
+
+        expect(metric(:time, "total")).to eq(18)
+      end
+
       it "should accrue times when called for one resource more than once" do
         @report.add_times :foobar, 50
         @report.add_times :foobar, 30
