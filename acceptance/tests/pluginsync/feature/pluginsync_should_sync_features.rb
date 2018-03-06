@@ -1,8 +1,7 @@
 test_name "the pluginsync functionality should sync feature definitions" do
 
   tag 'audit:medium',
-      'audit:integration',
-      'server'
+      'audit:integration'
 
   #
   # This test is intended to ensure that pluginsync syncs feature definitions to

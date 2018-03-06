@@ -8,8 +8,7 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
   require 'puppet/acceptance/agent_fqdn_utils'
   extend Puppet::Acceptance::AgentFqdnUtils
 
-  tag 'risk:medium',
-      'server'
+  tag 'risk:medium'
 
   test_num        = 'c100300'
   tmp_environment = mk_tmp_environment_with_teardown(master, File.basename(__FILE__, '.*'))

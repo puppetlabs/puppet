@@ -2,8 +2,7 @@ test_name "Pluginsync'ed external facts should be resolvable on the agent" do
   confine :except, :platform => 'cisco_nexus' #See BKR-749
 
   tag 'audit:medium',
-      'audit:integration',
-      'server'
+      'audit:integration'
 
 #
 # This test is intended to ensure that external facts downloaded onto an agent via
