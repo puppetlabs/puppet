@@ -165,7 +165,8 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newproperty(:exclude) do
-    desc "List of shell globs. Matching packages will never be
+    desc "The string of package names or shell globs separated by spaces to exclude.
+      Packages that match the package name given or shell globs will never be
       considered in updates or installs for this repo.
       #{ABSENT_DOC}"
 
@@ -187,9 +188,10 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newproperty(:includepkgs) do
-    desc "List of shell globs. If this is set, only packages
-      matching one of the globs will be considered for
-      update or install from this repository. #{ABSENT_DOC}"
+    desc "The string of package names or shell globs separated by spaces to
+      include. If this is set, only packages matching one of the package
+      names or shell globs will be considered for update or install
+      from this repository. #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
   end
