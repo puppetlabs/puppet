@@ -47,6 +47,14 @@ module Puppet::Util
 
     def self.dump(object, options = {})
       if defined? MultiJson
+        # MultiJson calls `merge` on the options it is passed, which relies
+        # on the options' defining a `to_hash` method. In Ruby 1.9.3,
+        # JSON::Ext::Generator::State only defines `to_h`, not `to_hash`, so we
+        # need to convert it first, similar to what is done in the `else` block
+        # below. Later versions of the JSON gem alias `to_h` to `to_hash`, so this
+        # can be removed once we drop Ruby 1.9.3 support.
+        options = options.to_h if options.class.name == "JSON::Ext::Generator::State"
+
         MultiJson.dump(object, options)
       else
         options.merge!(::JSON::PRETTY_STATE_PROTOTYPE.to_h) if options.delete(:pretty)
