@@ -344,9 +344,6 @@ describe Puppet::Application::Device do
     it "should error if target is passed and the apply path is incorrect" do
       @device.options.stubs(:[]).with(:apply).returns('file.pp')
       @device.options.stubs(:[]).with(:target).returns('device1')
-      device_hash = {
-        "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
-      }
 
       File.expects(:file?).returns(false)
       Puppet.expects(:err).with(regexp_matches(/does not exist, cannot apply/))

@@ -203,11 +203,11 @@ describe Puppet::Application::Cert => true do
       @cert_app.command_line.stubs(:args).returns(["host","unsigned-node"])
 
       Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to|
-        cert_mode == :revoke
+        cert_mode == :revoke &&
         to[:to] == ["host"]
       }
       Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to|
-        cert_mode == :destroy
+        cert_mode == :destroy &&
         to[:to] == ["host","unsigned-node"]
       }
 
