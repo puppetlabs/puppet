@@ -3,9 +3,11 @@
 # This function can answer if one of the following is empty:
 # * `Array`, `Hash` - having zero entries
 # * `String`, `Binary` - having zero length
-# * `Numeric` - for backwards compatibility with the stdlib function with the same name,
-#   a result of `false` is returned for all `Numeric` values instead of raising an error.
-#   This may be changed in a future release of puppet.
+#
+# For backwards compatibility with the stdlib function with the same name the
+# following data types are also accepted by the function instead of raising an error:
+# * `Numeric` - `false` is returned for all `Numeric` values.
+# * `Undef` - `true` is returned for all `Undef` values.
 #
 # @example Using `empty`
 #
@@ -34,6 +36,10 @@ Puppet::Functions.create_function(:empty) do
     param 'Binary', :bin
   end
 
+  dispatch :undef_empty do
+    param 'Undef', :x
+  end
+
   def collection_empty(coll)
     coll.empty?
   end
@@ -53,4 +59,10 @@ Puppet::Functions.create_function(:empty) do
     bin.length == 0
   end
 
+  # For compatibility reasons - return true rather than error on undef
+  # (Yes, it is strange, but undef was passed as empty string in 3.x API)
+  #
+  def undef_empty(x)
+    true
+  end
 end

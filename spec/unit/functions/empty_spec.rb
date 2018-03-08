@@ -56,4 +56,10 @@ describe 'the empty function' do
       expect(compile_to_catalog("notify { String(empty(Binary('b25l'))): }")).to have_resource('Notify[false]')
     end
   end
+
+  context 'for undef it' do
+    it 'returns true' do
+      expect(compile_to_catalog("notify { String(empty(undef)): }")).to have_resource('Notify[true]')
+    end
+  end
 end
