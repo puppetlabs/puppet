@@ -7,6 +7,9 @@ describe 'the empty function' do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
+  let(:logs) { [] }
+  let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+
   context 'for an array it' do
     it 'returns true when empty' do
       expect(compile_to_catalog("notify { String(empty([])): }")).to have_resource('Notify[true]')
@@ -29,11 +32,17 @@ describe 'the empty function' do
 
   context 'for numeric values it' do
     it 'always returns false for integer values (including 0)' do
-      expect(compile_to_catalog("notify { String(empty(0)): }")).to have_resource('Notify[false]')
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        expect(compile_to_catalog("notify { String(empty(0)): }")).to have_resource('Notify[false]')
+      end
+      expect(warnings).to include(/Calling function empty\(\) with Numeric value is deprecated/)
     end
 
     it 'always returns false for float values (including 0.0)' do
-      expect(compile_to_catalog("notify { String(empty(0.0)): }")).to have_resource('Notify[false]')
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        expect(compile_to_catalog("notify { String(empty(0.0)): }")).to have_resource('Notify[false]')
+      end
+      expect(warnings).to include(/Calling function empty\(\) with Numeric value is deprecated/)
     end
   end
 
@@ -54,6 +63,15 @@ describe 'the empty function' do
 
     it 'returns false when not empty' do
       expect(compile_to_catalog("notify { String(empty(Binary('b25l'))): }")).to have_resource('Notify[false]')
+    end
+  end
+
+  context 'for undef it' do
+    it 'returns true and issues deprecation warning' do
+      Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        expect(compile_to_catalog("notify { String(empty(undef)): }")).to have_resource('Notify[true]')
+      end
+      expect(warnings).to include(/Calling function empty\(\) with Undef value is deprecated/)
     end
   end
 end
