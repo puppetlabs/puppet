@@ -30,7 +30,7 @@ module LexerSupport
 
   # Raises a Puppet::LexError with the given message
   def lex_error_without_pos(issue, args = {})
-    raise Puppet::ParseErrorWithIssue.new(issue.format(args), nil, nil, nil, nil, issue.issue_code)
+    raise Puppet::ParseErrorWithIssue.new(issue.format(args), nil, nil, nil, nil, issue.issue_code, args)
   end
 
   # Raises a Puppet::ParserErrorWithIssue with the given issue and arguments
@@ -73,7 +73,8 @@ module LexerSupport
         line(pos),
         position(pos),
         nil,
-        issue.issue_code)
+        issue.issue_code,
+        args)
   end
 
   # Asserts that the given string value is a float, or an integer in decimal, octal or hex form.
