@@ -5,7 +5,9 @@
 # * `String`, `Binary` - having zero length
 #
 # For backwards compatibility with the stdlib function with the same name the
-# following data types are also accepted by the function instead of raising an error:
+# following data types are also accepted by the function instead of raising an error.
+# Using these is deprecated and will raise a warning:
+#
 # * `Numeric` - `false` is returned for all `Numeric` values.
 # * `Undef` - `true` is returned for all `Undef` values.
 #
