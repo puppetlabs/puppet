@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-1201-g9441bc8\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-1224-gb468cd4\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-03-02 10:48+0000\n"
-"PO-Revision-Date: 2018-03-02 10:48+0000\n"
+"POT-Creation-Date: 2018-03-08 11:49+0000\n"
+"PO-Revision-Date: 2018-03-08 11:49+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2163,6 +2163,10 @@ msgstr ""
 
 #: ../lib/puppet/functions/dig.rb:41
 msgid "The given data does not contain a Collection at %{walked_path}, got '%{klass}'"
+msgstr ""
+
+#: ../lib/puppet/functions/empty.rb:76
+msgid "Calling function empty() with %{arg_type} value is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'eyaml_lookup_key':, 'path', 'paths' 'glob', 'globs', 'mapped_paths', and lookup_key should not be translated
@@ -6150,40 +6154,40 @@ msgstr ""
 msgid "%{label} of kind 'constant' requires a value"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:683
+#: ../lib/puppet/pops/types/p_object_type.rb:684
 msgid "reference to unresolved type '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:719
+#: ../lib/puppet/pops/types/p_object_type.rb:720
 msgid "attribute %{label}[%{key}] is defined as both a constant and an attribute"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:751
+#: ../lib/puppet/pops/types/p_object_type.rb:752
 msgid "%{label} conflicts with attribute with the same name"
 msgstr ""
 
 #. TRANSLATORS equality_include_type = false should not be translated
-#: ../lib/puppet/pops/types/p_object_type.rb:764
+#: ../lib/puppet/pops/types/p_object_type.rb:765
 msgid "equality_include_type = false cannot be combined with non empty equality specification"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:776
+#: ../lib/puppet/pops/types/p_object_type.rb:777
 msgid "%{label} equality is referencing %{attribute} which is included in equality of %{including_parent}"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:783
+#: ../lib/puppet/pops/types/p_object_type.rb:784
 msgid "%{label} equality is referencing non existent attribute '%{attribute}'"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:785
+#: ../lib/puppet/pops/types/p_object_type.rb:786
 msgid "%{label} equality is referencing %{attribute}. Only attribute references are allowed"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:789
+#: ../lib/puppet/pops/types/p_object_type.rb:790
 msgid "%{label} equality is referencing constant %{attribute}."
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:790
+#: ../lib/puppet/pops/types/p_object_type.rb:791
 msgid "Reference to constant is not allowed in equality"
 msgstr ""
 
@@ -8253,55 +8257,55 @@ msgstr ""
 
 #. TRANSLATORS 'is' is a variable name and should not be translated
 #. TRANSLATORS 'is' is a variable name and should not be translated
-#: ../lib/puppet/type.rb:1023 ../lib/puppet/type.rb:1034
+#: ../lib/puppet/type.rb:1022 ../lib/puppet/type.rb:1033
 msgid "The 'is' value is not in the 'is' array for '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1160
+#: ../lib/puppet/type.rb:1159
 msgid "%{name} has no providers and has not overridden 'instances'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1419
+#: ../lib/puppet/type.rb:1418
 msgid "Cannot add aliases without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1498
+#: ../lib/puppet/type.rb:1497
 msgid "Could not find %{description} %{ref} for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1771
+#: ../lib/puppet/type.rb:1770
 msgid "Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1856
+#: ../lib/puppet/type.rb:1855
 msgid "Could not find parent provider %{parent} of %{name}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:1932
+#: ../lib/puppet/type.rb:1931
 msgid "Invalid %{resource} provider '%{provider_class}'"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2015
+#: ../lib/puppet/type.rb:2014
 msgid "Could not find %{name} provider of %{provider}"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2132
+#: ../lib/puppet/type.rb:2131
 msgid "You cannot add relationships without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type.rb:2439
+#: ../lib/puppet/type.rb:2438
 msgid "Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2442
+#: ../lib/puppet/type.rb:2441
 msgid "Unable to mark '%{name}' as sensitive: the property itself was not assigned a value."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2444
+#: ../lib/puppet/type.rb:2443
 msgid "Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2495
+#: ../lib/puppet/type.rb:2494
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
@@ -8321,11 +8325,11 @@ msgstr ""
 msgid "Invalid special schedule %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/cron.rb:324
+#: ../lib/puppet/type/cron.rb:329
 msgid "Invalid environment setting %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/cron.rb:419
+#: ../lib/puppet/type/cron.rb:424
 msgid "%{cron} cannot specify both a special schedule and a value for %{field}"
 msgstr ""
 
@@ -8397,74 +8401,74 @@ msgstr ""
 msgid "Invalid recurse value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:201
+#: ../lib/puppet/type/file.rb:200
 msgid "Invalid recurselimit value %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:371
+#: ../lib/puppet/type/file.rb:370
 msgid "You cannot specify more than one of %{creators}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:373
+#: ../lib/puppet/type/file.rb:372
 msgid "You cannot specify a remote recursion without a source"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:375
+#: ../lib/puppet/type/file.rb:374
 msgid "You cannot specify source when using checksum 'none'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:378
+#: ../lib/puppet/type/file.rb:377
 msgid "You cannot specify content when using checksum '%{checksum_type}'"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:381
+#: ../lib/puppet/type/file.rb:380
 msgid "Possible error: recurselimit is set but not recurse, no recursion will happen"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:389
+#: ../lib/puppet/type/file.rb:388
 msgid "Checksum value '%{value}' is not a valid checksum type %{checksum}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:392
+#: ../lib/puppet/type/file.rb:391
 msgid "Checksum value is ignored unless content or source are specified"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:430
+#: ../lib/puppet/type/file.rb:429
 msgid "Can not find filebucket for backups without a catalog"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:434
+#: ../lib/puppet/type/file.rb:433
 msgid "Could not find filebucket %{backup} specified in backup"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:730
+#: ../lib/puppet/type/file.rb:729
 msgid "Could not back up file of type %{current_type}"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:745
+#: ../lib/puppet/type/file.rb:744
 msgid "Could not remove files of type %{current_type}"
 msgstr ""
 
 #. TRANSLATORS "source_permissions => ignore" should not be translated
-#: ../lib/puppet/type/file.rb:756
+#: ../lib/puppet/type/file.rb:755
 msgid "Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore."
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:837 ../lib/puppet/type/tidy.rb:341
+#: ../lib/puppet/type/file.rb:836 ../lib/puppet/type/tidy.rb:341
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:962
+#: ../lib/puppet/type/file.rb:961
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:987
+#: ../lib/puppet/type/file.rb:986
 msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1001
+#: ../lib/puppet/type/file.rb:1000
 msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
 msgstr ""
 
@@ -8810,35 +8814,35 @@ msgstr ""
 msgid "Key/value pairs must be separated by an ="
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:690
+#: ../lib/puppet/type/user.rb:691
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:693
+#: ../lib/puppet/type/user.rb:694
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:697
+#: ../lib/puppet/type/user.rb:698
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:709
+#: ../lib/puppet/type/user.rb:710
 msgid "purge_ssh_keys can only be true for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:716
+#: ../lib/puppet/type/user.rb:717
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:730
+#: ../lib/puppet/type/user.rb:731
 msgid "Class name must be provided."
 msgstr ""
 
-#: ../lib/puppet/type/yumrepo.rb:65 ../lib/puppet/type/yumrepo.rb:82 ../lib/puppet/type/yumrepo.rb:138 ../lib/puppet/type/yumrepo.rb:162 ../lib/puppet/type/yumrepo.rb:184 ../lib/puppet/type/yumrepo.rb:312 ../lib/puppet/type/yumrepo.rb:378
+#: ../lib/puppet/type/yumrepo.rb:65 ../lib/puppet/type/yumrepo.rb:82 ../lib/puppet/type/yumrepo.rb:138 ../lib/puppet/type/yumrepo.rb:162 ../lib/puppet/type/yumrepo.rb:185 ../lib/puppet/type/yumrepo.rb:314 ../lib/puppet/type/yumrepo.rb:380
 msgid "Must be a valid URL"
 msgstr ""
 
-#: ../lib/puppet/type/yumrepo.rb:270
+#: ../lib/puppet/type/yumrepo.rb:272
 msgid "Must be within range 1-99"
 msgstr ""
 
