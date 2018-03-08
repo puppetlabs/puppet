@@ -32,9 +32,10 @@ module Puppet::Util::Windows::SID
         @sid_bytes == compare.sid_bytes
     end
 
-    # added for backward compatibility
+    # returns authority qualified account name
+    # prefer to compare Principal instances with == operator or by #sid
     def to_s
-      @sid
+      @domain_account
     end
 
     # = 8 + max sub identifiers (15) * 4
@@ -64,14 +65,14 @@ module Puppet::Util::Windows::SID
                 last_error = FFI.errno
 
                 if (success == FFI::WIN32_FALSE && last_error != ERROR_INSUFFICIENT_BUFFER)
-                  raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountNameW'), last_error)
+                  raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountNameW with account: %{account_name}') % { account_name: account_name}, last_error)
                 end
 
                 FFI::MemoryPointer.new(:lpwstr, domain_length_ptr.read_dword) do |domain_ptr|
                   if LookupAccountNameW(system_name_ptr, account_name_ptr,
                       sid_ptr, sid_length_ptr,
                       domain_ptr, domain_length_ptr, name_use_enum_ptr) == FFI::WIN32_FALSE
-                   raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountNameW'))
+                  raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountNameW with account: %{account_name}') % { account_name: account_name} )
                   end
 
                   # with a SID returned, loop back through lookup_account_sid to retrieve official name
@@ -116,14 +117,14 @@ module Puppet::Util::Windows::SID
                 last_error = FFI.errno
 
                 if (success == FFI::WIN32_FALSE && last_error != ERROR_INSUFFICIENT_BUFFER)
-                  raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountSidW'), last_error)
+                  raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountSidW with bytes: %{sid_bytes}') % { sid_bytes: sid_bytes}, last_error)
                 end
 
                 FFI::MemoryPointer.new(:lpwstr, name_length_ptr.read_dword) do |name_ptr|
                   FFI::MemoryPointer.new(:lpwstr, domain_length_ptr.read_dword) do |domain_ptr|
                     if LookupAccountSidW(system_name_ptr, sid_ptr, name_ptr, name_length_ptr,
                         domain_ptr, domain_length_ptr, name_use_enum_ptr) == FFI::WIN32_FALSE
-                     raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountSidW'))
+                     raise Puppet::Util::Windows::Error.new(_('Failed to call LookupAccountSidW with bytes: %{sid_bytes}') % { sid_bytes: sid_bytes} )
                     end
 
                     return new(
