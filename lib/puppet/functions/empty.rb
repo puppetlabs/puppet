@@ -52,6 +52,7 @@ Puppet::Functions.create_function(:empty) do
   # (Yes, it is strange)
   #
   def numeric_empty(num)
+    deprecation_warning_for('Numeric')
     false
   end
 
@@ -63,6 +64,14 @@ Puppet::Functions.create_function(:empty) do
   # (Yes, it is strange, but undef was passed as empty string in 3.x API)
   #
   def undef_empty(x)
+    deprecation_warning_for('Undef')
     true
+  end
+
+  def deprecation_warning_for(arg_type)
+    stacktrace = Puppet::Pops::PuppetStack.stacktrace()
+    file, line = stacktrace[0] # defaults to nil
+    msg = _("Calling function empty() with %{arg_type} value is deprecated.") % { arg_type: arg_type }
+    Puppet.warn_once('deprecations', "empty-from-#{file}-#{line}", msg, file, line)
   end
 end
