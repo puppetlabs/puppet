@@ -399,5 +399,23 @@ describe Puppet::Type.type(:yumrepo) do
       it_behaves_like "a yumrepo parameter that can be absent", :deltarpm_metadata_percentage
       it_behaves_like "a yumrepo parameter that expects a natural value", :deltarpm_metadata_percentage
     end
+
+    describe "username" do
+      it_behaves_like "a yumrepo parameter that can be absent", :username
+    end
+
+    describe "password" do
+      it_behaves_like "a yumrepo parameter that can be absent", :password
+
+      it "redacts password information from the logs" do
+        resource = described_class.new(:name => 'puppetlabs', :password => 'top secret')
+        harness = Puppet::Transaction::ResourceHarness.new(Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil))
+        harness.evaluate(resource)
+        resource[:password] = 'super classified'
+        status = harness.evaluate(resource)
+        sync_event = status.events[0]
+        expect(sync_event.message).to eq 'changed [redacted] to [redacted]'
+      end
+    end
   end
 end
