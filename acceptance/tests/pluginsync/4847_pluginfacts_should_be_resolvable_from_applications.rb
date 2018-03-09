@@ -1,78 +1,62 @@
-test_name "Pluginsync'ed custom facts should be resolvable during application runs"
+test_name "Pluginsync'ed custom facts should be resolvable during application runs" do
 
-tag 'audit:medium',
-    'audit:integration',
-    'server'
+  tag 'audit:medium',
+      'audit:integration'
 
-#
-# This test is intended to ensure that custom facts downloaded onto an agent via
-# pluginsync are resolvable by puppet applications besides agent/apply.
-#
+  #
+  # This test is intended to ensure that custom facts downloaded onto an agent via
+  # pluginsync are resolvable by puppet applications besides agent/apply.
+  #
 
-agents.each do |agent|
-  step "Create a codedir with a test module with external fact"
-  codedir = agent.tmpdir('4847-codedir')
-  on agent, "mkdir -p #{codedir}/facts"
-  on agent, "mkdir -p #{codedir}/lib/facter"
-  on agent, "mkdir -p #{codedir}/lib/puppet/{type,provider/test4847}"
+  require 'puppet/acceptance/environment_utils'
+  extend Puppet::Acceptance::EnvironmentUtils
 
-  on agent, "cat > #{codedir}/lib/puppet/type/test4847.rb", :stdin => <<TYPE
-Puppet::Type.newtype(:test4847) do
-  newparam(:name, :namevar => true)
-end
-TYPE
-
-  on agent, "cat > #{codedir}/lib/puppet/provider/test4847/only.rb", :stdin => <<PROVIDER
-Puppet::Type.type(:test4847).provide(:only) do
-  commands :anything => "#{codedir}/must_exist.exe"
-  def self.instances
-    warn "fact foo=\#{Facter.value('foo')}, snafu=\#{Facter.value('snafu')}"
-    []
-  end
-end
-PROVIDER
-
-  foo_fact = <<FACT
-Facter.add('foo') do
-  setcode do
-    'bar'
-  end
-end
-FACT
-
-  snafu_fact = <<FACT
-Facter.add('snafu') do
-  setcode do
-    'zifnab'
-  end
-end
-FACT
-
-  on agent, puppet('apply'), :stdin => <<MANIFEST
-  # The file name is chosen to work on Windows and *nix.
-  file { "#{codedir}/must_exist.exe":
-    ensure => file,
-    mode   => "0755",
-  }
-
-  file { "#{codedir}/lib/facter/foo.rb":
-    ensure  => file,
-    content => "#{foo_fact}",
-  }
-
-  file { "#{codedir}/facts/snafu.rb":
-    ensure  => file,
-    content => "#{snafu_fact}"
-  }
-MANIFEST
-
-  on agent, puppet('resource', 'test4847',
-                   '--libdir', File.join(codedir, 'lib'),
-                   '--factpath', File.join(codedir, 'facts')) do
-    assert_match(/fact foo=bar, snafu=zifnab/, stderr)
-  end
-
+  tmp_environment         = mk_tmp_environment_with_teardown(master, 'resolve')
+  master_module_dir       = "#{environmentpath}/#{tmp_environment}/modules/module_name"
+  master_type_dir         = "#{master_module_dir}/lib/puppet/type"
+  master_module_type_file = "#{master_type_dir}/test4847.rb"
+  master_provider_dir     = "#{master_module_dir}/lib/puppet/provider/test4847"
+  master_provider_file    = "#{master_provider_dir}/only.rb"
+  master_facter_dir       = "#{master_module_dir}/lib/facter"
+  master_facter_file      = "#{master_facter_dir}/foo.rb"
+  on(master, "mkdir -p '#{master_type_dir}' '#{master_provider_dir}' '#{master_facter_dir}'")
   teardown do
-    on(agent, "rm -rf #{codedir}")
+    on(master, "rm -rf '#{master_module_dir}'")
+  end
+
+  test_type = <<-TYPE
+      Puppet::Type.newtype(:test4847) do
+        newparam(:name, :namevar => true)
+      end
+  TYPE
+  create_remote_file(master, master_module_type_file, test_type)
+
+  test_provider = <<-PROVIDER
+      Puppet::Type.type(:test4847).provide(:only) do
+        def self.instances
+          warn "fact foo=\#{Facter.value('foo')}"
+          []
+        end
+      end
+  PROVIDER
+  create_remote_file(master, master_provider_file, test_provider)
+
+  foo_fact_content = <<-FACT_FOO
+      Facter.add('foo') do
+        setcode do
+          'bar'
+        end
+      end
+  FACT_FOO
+  create_remote_file(master, master_facter_file, foo_fact_content)
+  on(master, "chmod 755 '#{master_module_type_file}' '#{master_provider_file}' '#{master_facter_file}'")
+
+  with_puppet_running_on(master, {}) do
+    agents.each do |agent|
+      on(agent, puppet("agent -t --server #{master} --environment #{tmp_environment}"))
+      on(agent, puppet('resource test4847')) do |result|
+        assert_match(/fact foo=bar/, result.stderr)
+      end
+    end
   end
 end

@@ -2552,22 +2552,22 @@ with_puppet_running_on master, @master_opts, @coderoot do
   step 'apply enc manifest'
   apply_manifest_on(master, @encmanifest, :catch_failures => true)
 
-  step "enc specified node1 environment environment_key"
-  r = on(master, puppet('lookup', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
+  step "--compile uses environment specified in ENC"
+  r = on(master, puppet('lookup', '--compile', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
   result = r.stdout
   assert_match(
     /env-env2-ruby-function/,
     result,
-    "enc specified environment env2 environment_key lookup failed"
+    "lookup in ENC specified environment failed"
   )
 
-  step "enc specified node2 environment environment_key"
-  r = on(master, puppet('lookup', "--node #{@node2}", "--confdir #{@confdir}", 'environment_key'))
+  step "without --compile does not use environment specified in ENC"
+  r = on(master, puppet('lookup', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
   result = r.stdout
   assert_match(
-    /env-env3-puppet-function/,
+    /env-production hiera provided value/,
     result,
-    "enc specified environment env2 environment_key lookup failed"
+    "lookup in production environment failed"
   )
 
 end

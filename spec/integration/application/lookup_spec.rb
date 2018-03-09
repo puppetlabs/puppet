@@ -90,6 +90,27 @@ describe 'lookup' do
       expect(lookup('a')).to eql('value a')
     end
 
+    context 'uses node_terminus' do
+      require 'puppet/indirector/node/exec'
+      require 'puppet/indirector/node/plain'
+
+      let(:node) { Puppet::Node.new('testnode', :environment => env) }
+
+      it ':plain without --compile' do
+        Puppet.settings[:node_terminus] = 'exec'
+        Puppet::Node::Plain.any_instance.expects(:find).returns(node)
+        Puppet::Node::Exec.any_instance.expects(:find).never
+        expect(lookup('a')).to eql('value a')
+      end
+
+      it 'configured in Puppet settings with --compile' do
+        Puppet.settings[:node_terminus] = 'exec'
+        Puppet::Node::Plain.any_instance.expects(:find).never
+        Puppet::Node::Exec.any_instance.expects(:find).returns(node)
+        expect(lookup('a', :compile => true)).to eql('value a')
+      end
+    end
+
     context 'configured with the wrong environment' do
       let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, env_name, 'modules')]) }
       it 'does not find data in non-existing environment' do
