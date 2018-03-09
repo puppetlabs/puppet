@@ -1,6 +1,17 @@
 module Puppet::Util
   module Json
     class ParseError < StandardError
+      attr_reader :cause, :data
+
+      def self.build(original_exception, data)
+        new(original_exception.message).tap do |exception|
+          exception.instance_eval do
+            @cause = original_exception
+            set_backtrace original_exception.backtrace
+            @data = data
+          end
+        end
+      end
     end
 
     begin
@@ -17,20 +28,16 @@ module Puppet::Util
 
     # These methods do similar processing to the fallback implemented by MultiJson
     # when using the built-in JSON backend, to ensure consistent behavior
-    # whether or not Puppet::Util::Json can be loaded.
+    # whether or not MultiJson can be loaded.
     def self.load(string, options = {})
       if defined? MultiJson
         begin
           MultiJson.load(string, options)
         rescue MultiJson::ParseError => e
-          raise Puppet::Util::Json::ParseError, e.cause
+          raise Puppet::Util::Json::ParseError.build(e, string)
         end
       else
         begin
-          if string.nil?
-            raise Puppet::Util::Json::ParseError, "Invalid JSON: nil input"
-          end
-
           string = string.read if string.respond_to?(:read)
 
           if string.respond_to?(:force_encoding)
@@ -40,7 +47,7 @@ module Puppet::Util
           options[:symbolize_names] = true if options.delete(:symbolize_keys)
           ::JSON.parse(string, options)
         rescue JSON::ParserError => e
-          raise Puppet::Util::Json::ParseError, e.message
+          raise Puppet::Util::Json::ParseError.build(e, string)
         end
       end
     end
