@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-1305-g5c7279b\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-1319-ga6cba64\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-03-09 11:16+0000\n"
-"PO-Revision-Date: 2018-03-09 11:16+0000\n"
+"POT-Creation-Date: 2018-03-09 23:46+0000\n"
+"PO-Revision-Date: 2018-03-09 23:46+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1091,6 +1091,14 @@ msgstr ""
 
 #: ../lib/puppet/face/facts.rb:17
 msgid "[<node_certname>]"
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:40
+msgid "Upload local facts to the puppet master."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:80
+msgid "Uploading facts for '%{node}' to: '%{server}'"
 msgstr ""
 
 #: ../lib/puppet/face/generate.rb:9
@@ -2573,6 +2581,10 @@ msgstr ""
 msgid "You cannot save facts to the code store; it is only used for getting facts from a remote device"
 msgstr ""
 
+#: ../lib/puppet/indirector/facts/rest.rb:8 ../lib/puppet/indirector/rest.rb:235
+msgid "PUT does not accept options"
+msgstr ""
+
 #: ../lib/puppet/indirector/file_bucket_file/file.rb:28
 msgid "could not find diff_with %{diff}"
 msgstr ""
@@ -2872,10 +2884,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/rest.rb:220
 msgid "DELETE does not accept options"
-msgstr ""
-
-#: ../lib/puppet/indirector/rest.rb:235
-msgid "PUT does not accept options"
 msgstr ""
 
 #. TRANSLATORS "PSON" should not be translated
@@ -8467,7 +8475,7 @@ msgid "Copying owner/mode/group from the source file on Windows is not supported
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:836 ../lib/puppet/type/tidy.rb:341
+#: ../lib/puppet/type/file.rb:836 ../lib/puppet/type/k5login.rb:97 ../lib/puppet/type/tidy.rb:341
 msgid "Could not stat; permission denied"
 msgstr ""
 
@@ -8549,7 +8557,7 @@ msgstr ""
 msgid "Invalid interface ip address"
 msgstr ""
 
-#: ../lib/puppet/type/k5login.rb:24
+#: ../lib/puppet/type/k5login.rb:25
 msgid "File paths must be fully qualified."
 msgstr ""
 
