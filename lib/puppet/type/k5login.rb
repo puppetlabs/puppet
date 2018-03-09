@@ -1,6 +1,7 @@
 # Plug-in type for handling k5login files
 require 'puppet/util'
 require 'puppet/util/selinux'
+require 'puppet/type/file/selcontext'
 
 Puppet::Type.newtype(:k5login) do
   @doc = "Manage the `.k5login` file for a user.  Specify the full path to
@@ -33,7 +34,7 @@ Puppet::Type.newtype(:k5login) do
   end
 
   # To manage the selinux user of the file
-  newproperty(:seluser) do
+  newproperty(:seluser, :parent => Puppet::SELFileContext) do
     desc "What the SELinux user component of the context of the file should be.
       Any valid SELinux user component is accepted.  For example `user_u`.
       If not specified it defaults to the value returned by matchpathcon for
@@ -44,7 +45,7 @@ Puppet::Type.newtype(:k5login) do
   end
 
   # To manage the selinux role of the file
-  newproperty(:selrole) do
+  newproperty(:selrole, :parent => Puppet::SELFileContext) do
     desc "What the SELinux role component of the context of the file should be.
       Any valid SELinux role component is accepted.  For example `role_r`.
       If not specified it defaults to the value returned by matchpathcon for
@@ -55,7 +56,7 @@ Puppet::Type.newtype(:k5login) do
   end
 
   # To manage the selinux type of the file
-  newproperty(:seltype) do
+  newproperty(:seltype, :parent => Puppet::SELFileContext) do
     desc "What the SELinux type component of the context of the file should be.
       Any valid SELinux type component is accepted.  For example `tmp_t`.
       If not specified it defaults to the value returned by matchpathcon for
@@ -67,7 +68,7 @@ Puppet::Type.newtype(:k5login) do
   end
 
   # To manage the selinux range of the file
-  newproperty(:selrange) do
+  newproperty(:selrange, :parent => Puppet::SELFileContext) do
     desc "What the SELinux range component of the context of the file should be.
       Any valid SELinux range component is accepted.  For example `s0` or
       `SystemHigh`.  If not specified it defaults to the value returned by
@@ -76,6 +77,31 @@ Puppet::Type.newtype(:k5login) do
       Security)."
 
     defaultto { "s0" }
+  end
+
+  # Stat our file.
+  #
+  # We use the initial value :needs_stat to ensure we only stat the file once,
+  # but can also keep track of a failed stat (@stat == nil). This also allows
+  # us to re-stat on demand by setting @stat = :needs_stat.
+  def stat
+    return @stat unless @stat == :needs_stat
+
+    @stat = begin
+      Puppet::FileSystem.stat(self[:path])
+    rescue Errno::ENOENT
+      nil
+    rescue Errno::ENOTDIR
+      nil
+    rescue Errno::EACCES
+      warning _("Could not stat; permission denied")
+      nil
+    end
+  end
+
+  def initialize(args)
+    @stat = :needs_stat
+    super
   end
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -127,56 +153,6 @@ Puppet::Type.newtype(:k5login) do
     # Set the file mode, converting from a string to an integer.
     def mode=(value)
       File.chmod(Integer("0#{value}"), @resource[:name])
-    end
-
-    # Set the file seluser
-    def seluser
-      if selinux_support?
-        context = get_selinux_current_context(@resource[:name])
-        return parse_selinux_context(:seluser, context)
-      end
-    end
-
-    def seluser=(value)
-      set_selinux_context(@resource[:name], value, :seluser)
-    end
-
-    # Set the file selrole
-    def selrole
-      if selinux_support?
-        context = get_selinux_current_context(@resource[:name])
-        return parse_selinux_context(:selrole, context)
-      end
-    end
-
-    # Set the file seltype
-    def selrole=(value)
-      set_selinux_context(@resource[:name], value, :selrole)
-    end
-
-    # Set the file seltype
-    def seltype
-      if selinux_support?
-        context = get_selinux_current_context(@resource[:name])
-        return parse_selinux_context(:seltype, context)
-      end
-    end
-
-    # Set the file selrange
-    def seltype=(value)
-      set_selinux_context(@resource[:name], value, :seltype)
-    end
-
-    # Set the file selrange
-    def selrange
-      if selinux_support?
-        context = get_selinux_current_context(@resource[:name])
-        return parse_selinux_context(:selrange, context)
-      end
-    end
-
-    def selrange=(value)
-      set_selinux_context(@resource[:name], value, :selrange)
     end
 
     private
