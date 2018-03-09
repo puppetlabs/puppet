@@ -100,6 +100,43 @@ puppet facts save [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIkey\fR
 .IP
 API only: create or overwrite an object\. As the Faces framework does not currently accept data from STDIN, save actions cannot currently be invoked from the command line\.
 .
+.TP
+\fBupload\fR \- Upload local facts to the puppet master\.
+\fBSYNOPSIS\fR
+.
+.IP
+puppet facts upload [\-\-terminus _TERMINUS] [\-\-extra HASH]
+.
+.IP
+\fBDESCRIPTION\fR
+.
+.IP
+Reads facts from the local system using the \fBfacter\fR terminus, then saves the returned facts using the rest terminus\.
+.
+.IP
+\fBRETURNS\fR
+.
+.IP
+Nothing\.
+.
+.IP
+\fBNOTES\fR
+.
+.IP
+This action requires that the puppet master\'s \fBauth\.conf\fR file allow \fBPUT\fR or \fBsave\fR access to the \fB/puppet/v3/facts\fR API endpoint\.
+.
+.IP
+For details on configuring Puppet Server\'s \fBauth\.conf\fR, see:
+.
+.IP
+\fIhttps://puppet\.com/docs/puppetserver/latest/config_file_auth\.html\fR
+.
+.IP
+For legacy Rack\-based Puppet Masters, see:
+.
+.IP
+\fIhttps://puppet\.com/docs/puppet/latest/config_file_auth\.html\fR
+.
 .SH "EXAMPLES"
 \fBfind\fR
 .
@@ -108,6 +145,15 @@ Get facts from the local system:
 .
 .P
 $ puppet facts find
+.
+.P
+\fBupload\fR
+.
+.P
+Upload facts:
+.
+.P
+$ puppet facts upload
 .
 .SH "NOTES"
 This subcommand is an indirector face, which exposes \fBfind\fR, \fBsearch\fR, \fBsave\fR, and \fBdestroy\fR actions for an indirected subsystem of Puppet\. Valid termini for this face include:
@@ -120,6 +166,9 @@ This subcommand is an indirector face, which exposes \fBfind\fR, \fBsearch\fR, \
 .
 .IP "\(bu" 4
 \fBnetwork_device\fR
+.
+.IP "\(bu" 4
+\fBrest\fR
 .
 .IP "\(bu" 4
 \fBstore_configs\fR
