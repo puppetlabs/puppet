@@ -23,12 +23,9 @@ Puppet::Type.type(:group).provide :windows_adsi do
     # Cannot use munge of the group property to canonicalize @should
     # since the default array_matching comparison is not commutative
 
+    current_sids = current.map(&:sid)
     # dupes automatically weeded out when hashes built
-    current_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current)
-    specified_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
-
-    current_sids = current_users.keys.to_a
-    specified_sids = specified_users.keys.to_a
+    specified_sids = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should).keys.to_a
 
     if @resource[:auth_membership]
       current_sids.sort == specified_sids.sort
@@ -40,7 +37,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   def members_to_s(users)
     return '' if users.nil? or !users.kind_of?(Array)
     users = users.map do |user_name|
-      sid = Puppet::Util::Windows::SID.name_to_sid_object(user_name)
+      sid = Puppet::Util::Windows::SID.name_to_principal(user_name)
       if !sid
         resource.debug("#{user_name} (unresolvable to SID)")
         next user_name
@@ -58,7 +55,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def member_valid?(user_name)
-    ! Puppet::Util::Windows::SID.name_to_sid_object(user_name).nil?
+    ! Puppet::Util::Windows::SID.name_to_principal(user_name).nil?
   end
 
   def group

@@ -15,4 +15,4 @@
   'puppetservice'              => 'puppetserver',
   'puppetserver-confdir'       => '/etc/puppetlabs/puppetserver/conf.d',
   'puppetserver-config'        => '/etc/puppetlabs/puppetserver/conf.d/puppetserver.conf'
-}.merge(eval File.read('config/common/options.rb'))
+}
