@@ -118,7 +118,7 @@ module Issues
   # @see MessageData
   # @api public
   #
-  def self.issue (issue_code, *args, &block)
+  def self.issue(issue_code, *args, &block)
     Issue.new(issue_code, *args, &block)
   end
 
