@@ -307,7 +307,7 @@ module Runtime3Support
     if loader && _func = loader.load(:function, name)
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
         # Add stack frame when calling. See Puppet::Pops::PuppetStack
-        return Kernel.eval('_func.call(scope, *args, &block)', Kernel.binding, file || '', line)
+        return Kernel.eval('_func.call(scope, *args, &block)'.freeze, Kernel.binding, file || '', line)
       end
     end
     # Call via 3x API if function exists there

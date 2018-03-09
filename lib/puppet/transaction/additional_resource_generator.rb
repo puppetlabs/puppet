@@ -86,7 +86,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
     # tags such as the type name to support implicit filtering as well as
     # explicit. Note that resource#tags returns a duplicate of the resource's
     # tags.
-    sentinel.tag(*resource.tags)
+    sentinel.merge_tags_from(resource)
     priority = @prioritizer.generate_priority_contained_in(resource, sentinel)
     @relationship_graph.add_vertex(sentinel, priority)
 
@@ -131,7 +131,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
 
   def add_resource(res, parent_resource, priority=nil)
     if @catalog.resource(res.ref).nil?
-      res.tag(*parent_resource.tags)
+      res.merge_tags_from(parent_resource)
       if parent_resource.depthfirst?
         @catalog.add_resource_before(parent_resource, res)
       else

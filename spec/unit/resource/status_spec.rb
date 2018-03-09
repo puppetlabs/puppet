@@ -59,7 +59,7 @@ describe Puppet::Resource::Status do
   end
 
   it "should copy the resource's tags" do
-    resource.expects(:tags).returns %w{foo bar}
+    resource.tag('foo', 'bar')
     status = Puppet::Resource::Status.new(resource)
     expect(status).to be_tagged("foo")
     expect(status).to be_tagged("bar")

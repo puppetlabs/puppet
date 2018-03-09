@@ -671,7 +671,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     map.clear
 
     result.add_class(*self.classes)
-    result.tag(*self.tags)
+    result.merge_tags_from(self)
 
     result
   end
