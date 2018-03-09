@@ -283,7 +283,9 @@ describe "validating 4x" do
       'Foo[a] -> Foo[b]',
       '($a=1)',
       'foo()',
-      '$a.foo()'
+      '$a.foo()',
+      '"foo" =~ /foo/', # may produce or modify $n vars
+      '"foo" !~ /foo/', # may produce or modify $n vars
       ].each do |expr|
 
       it "does not produce error when for productive: #{expr}" do
