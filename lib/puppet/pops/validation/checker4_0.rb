@@ -908,6 +908,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     true
   end
 
+  def idem_MatchExpression(o)
+    false # can have side effect of setting $n match variables
+  end
+
   def idem_RelationshipExpression(o)
     # Always side effect
     false
