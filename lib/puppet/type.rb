@@ -2384,7 +2384,7 @@ end
       end
     end
 
-    @tags = resource.tags
+    merge_tags_from(resource)
 
     @original_parameters = resource.to_hash
 
@@ -2628,7 +2628,7 @@ end
   #
   def to_resource
     resource = self.retrieve_resource
-    resource.tag(*self.tags)
+    resource.merge_tags_from(self)
 
     @parameters.each do |name, param|
       # Avoid adding each instance name twice
