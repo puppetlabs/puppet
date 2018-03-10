@@ -33,7 +33,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     end
 
     it "should call yaourt to install the right package quietly when yaourt is installed" do
-      described_class.stubs(:yaourt?).returns(true)
+      provider.stubs(:yaourt?).returns(true)
       args = ['--noconfirm', '--needed', '--noprogressbar', '-Sy', resource[:name]]
       provider.expects(:yaourt).at_least_once.with(*args).returns ''
       provider.install
@@ -75,7 +75,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       end
 
       it "should call yaourt to install the right package quietly when yaourt is installed" do
-        described_class.stubs(:yaourt?).returns(true)
+        provider.stubs(:yaourt?).returns(true)
         args = ['--noconfirm', '--needed', '--noprogressbar', '-x', '--arg=value', '-Sy', resource[:name]]
         provider.expects(:yaourt).at_least_once.with(*args).returns ''
         provider.install
@@ -175,7 +175,7 @@ describe Puppet::Type.type(:package).provider(:pacman) do
     end
 
     it "should call yaourt to remove the right package quietly" do
-      described_class.stubs(:yaourt?).returns(true)
+      provider.stubs(:yaourt?).returns(true)
       args = ["--noconfirm", "--noprogressbar", "-R", resource[:name]]
       provider.expects(:yaourt).with(*args)
       provider.uninstall
