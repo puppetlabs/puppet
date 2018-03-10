@@ -34,7 +34,7 @@ module HeredocSupport
       endtag = $1.strip
     end
 
-    lex_error(Issues::HEREDOC_MISSING_ENDTAG) unless endtag.length >= 1
+    lex_error(Issues::HEREDOC_EMPTY_ENDTAG) unless endtag.length >= 1
 
     resulting_escapes = []
     if escapes
