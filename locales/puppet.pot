@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-1296-g7bb619e\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-1328-g4957abd\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-03-09 04:48+0000\n"
-"PO-Revision-Date: 2018-03-09 04:48+0000\n"
+"POT-Creation-Date: 2018-03-10 07:48+0000\n"
+"PO-Revision-Date: 2018-03-10 07:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1091,6 +1091,14 @@ msgstr ""
 
 #: ../lib/puppet/face/facts.rb:17
 msgid "[<node_certname>]"
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:40
+msgid "Upload local facts to the puppet master."
+msgstr ""
+
+#: ../lib/puppet/face/facts.rb:80
+msgid "Uploading facts for '%{node}' to: '%{server}'"
 msgstr ""
 
 #: ../lib/puppet/face/generate.rb:9
@@ -2573,6 +2581,10 @@ msgstr ""
 msgid "You cannot save facts to the code store; it is only used for getting facts from a remote device"
 msgstr ""
 
+#: ../lib/puppet/indirector/facts/rest.rb:8 ../lib/puppet/indirector/rest.rb:235
+msgid "PUT does not accept options"
+msgstr ""
+
 #: ../lib/puppet/indirector/file_bucket_file/file.rb:28
 msgid "could not find diff_with %{diff}"
 msgstr ""
@@ -2872,10 +2884,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/rest.rb:220
 msgid "DELETE does not accept options"
-msgstr ""
-
-#: ../lib/puppet/indirector/rest.rb:235
-msgid "PUT does not accept options"
 msgstr ""
 
 #. TRANSLATORS "PSON" should not be translated
@@ -5486,146 +5494,150 @@ msgid "Heredoc without any following lines of text"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:744
-msgid "An escape char for @() may only appear once. Got '%{escapes}'"
+msgid "Heredoc with an empty endtag"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:748
-msgid "Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source"
+msgid "An escape char for @() may only appear once. Got '%{escapes}'"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:752
-msgid "No such file or directory: %{file}"
+msgid "Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:756
+msgid "No such file or directory: %{file}"
+msgstr ""
+
+#: ../lib/puppet/pops/issues.rb:760
 msgid "%{file} is not a file"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:761
+#: ../lib/puppet/pops/issues.rb:765
 msgid "%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:763
+#: ../lib/puppet/pops/issues.rb:767
 msgid "%{expression} resulted in a value outside of Puppet Integer min range, got '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:768
+#: ../lib/puppet/pops/issues.rb:772
 msgid "This runtime does not support hiera.yaml version %{version}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:772
+#: ../lib/puppet/pops/issues.rb:776
 msgid "hiera.yaml version 3 cannot be used in %{location}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:776
+#: ../lib/puppet/pops/issues.rb:780
 msgid "hiera.yaml version 4 cannot be used in the global layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:780
+#: ../lib/puppet/pops/issues.rb:784
 msgid "Undefined variable '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:784
+#: ../lib/puppet/pops/issues.rb:788
 msgid "Backend '%{name}' is defined more than once."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:787 ../lib/puppet/pops/issues.rb:800
+#: ../lib/puppet/pops/issues.rb:791 ../lib/puppet/pops/issues.rb:804
 msgid "First defined at %{error_location}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:793
+#: ../lib/puppet/pops/issues.rb:797
 msgid "No data provider is registered for backend '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:797
+#: ../lib/puppet/pops/issues.rb:801
 msgid "Hierarchy name '%{name}' defined more than once."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:806
+#: ../lib/puppet/pops/issues.rb:810
 msgid "'hiera3_backend' is only allowed in the global layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:810
+#: ../lib/puppet/pops/issues.rb:814
 msgid "'default_hierarchy' is only allowed in the module layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:814
+#: ../lib/puppet/pops/issues.rb:818
 msgid "Use \"data_hash: %{function_name}_data\" instead of \"hiera3_backend: %{function_name}\""
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:818
+#: ../lib/puppet/pops/issues.rb:822
 msgid "One of %{keys} must be defined in hierarchy '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:822 ../lib/puppet/pops/issues.rb:830
+#: ../lib/puppet/pops/issues.rb:826 ../lib/puppet/pops/issues.rb:834
 msgid "Only one of %{keys} can be defined in hierarchy '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:826
+#: ../lib/puppet/pops/issues.rb:830
 msgid "Only one of %{keys} can be defined in defaults"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:834
+#: ../lib/puppet/pops/issues.rb:838
 msgid "Option key '%{key}' used in hierarchy '%{name}' is reserved by Puppet"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:838
+#: ../lib/puppet/pops/issues.rb:842
 msgid "Option key '%{key}' used in defaults is reserved by Puppet"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:842
+#: ../lib/puppet/pops/issues.rb:846
 msgid "Unable to find '%{function_type}' function named '%{function_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:846
+#: ../lib/puppet/pops/issues.rb:850
 msgid "'alias' interpolation is only permitted if the expression is equal to the entire string"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:850
+#: ../lib/puppet/pops/issues.rb:854
 msgid "Unknown interpolation method '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:854
+#: ../lib/puppet/pops/issues.rb:858
 msgid "Interpolation using method syntax is not allowed in this context"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:858
+#: ../lib/puppet/pops/issues.rb:862
 msgid "Endless recursion detected when attempting to serialize value of class %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:862
+#: ../lib/puppet/pops/issues.rb:866
 msgid "%{path} contains the special value default. It will be converted to the String 'default'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:866
+#: ../lib/puppet/pops/issues.rb:870
 msgid "%{path} contains %{klass} value. It will be converted to the String '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:870
+#: ../lib/puppet/pops/issues.rb:874
 msgid "%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:874
+#: ../lib/puppet/pops/issues.rb:878
 msgid "The feature '%{feature}' is only available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:878
+#: ../lib/puppet/pops/issues.rb:882
 msgid "The catalog operation '%{operation}' is only available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:882
+#: ../lib/puppet/pops/issues.rb:886
 msgid "The task operation '%{operation}' is not available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:886
+#: ../lib/puppet/pops/issues.rb:890
 msgid "The 'bolt' library is required to %{action}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:890
+#: ../lib/puppet/pops/issues.rb:894
 msgid "Task not found: %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:894
+#: ../lib/puppet/pops/issues.rb:898
 msgid "Failed to load: %{type_name}"
 msgstr ""
 
@@ -8463,7 +8475,7 @@ msgid "Copying owner/mode/group from the source file on Windows is not supported
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:836 ../lib/puppet/type/tidy.rb:341
+#: ../lib/puppet/type/file.rb:836 ../lib/puppet/type/k5login.rb:97 ../lib/puppet/type/tidy.rb:341
 msgid "Could not stat; permission denied"
 msgstr ""
 
@@ -8545,7 +8557,7 @@ msgstr ""
 msgid "Invalid interface ip address"
 msgstr ""
 
-#: ../lib/puppet/type/k5login.rb:24
+#: ../lib/puppet/type/k5login.rb:25
 msgid "File paths must be fully qualified."
 msgstr ""
 
