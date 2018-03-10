@@ -5,6 +5,8 @@ module Puppet::Pops
 module Lookup
   LOOKUP_OPTIONS = 'lookup_options'.freeze
   GLOBAL = '__global__'.freeze
+  CONVERT_TO = 'convert_to'.freeze
+  NEW = 'new'.freeze
 
   # Performs a lookup in the configured scopes and optionally merges the default.
   #
@@ -55,6 +57,18 @@ module Lookup
       else
         lookup_invocation.emit_debug_info(debug_preamble(names)) if Puppet[:debug]
         fail_lookup(names)
+      end
+    else
+      opt_key = Puppet::Pops::Lookup::LookupKey.new(result_with_name[0])
+      options = lookup_invocation.lookup_adapter.lookup_lookup_options(opt_key, lookup_invocation)
+      ct = options[CONVERT_TO] unless options.nil?
+      if !ct.nil?
+        ct = ct.is_a?(Array) ? ct : [ct]
+        if ct[0].is_a?(String)
+          ct[0] = Puppet::Pops::Types::TypeParser.singleton.parse(ct[0])
+        end
+        # TODO: if this fails the error needs to reference the lookup_option file/line
+        answer = lookup_invocation.scope.call_function(NEW, [ct[0], answer, *(ct[1..-1])])
       end
     end
     lookup_invocation.emit_debug_info(debug_preamble(names)) if Puppet[:debug]
