@@ -14,31 +14,37 @@ describe Puppet::Network::HTTP::WEBrick do
 
   let(:address) { '127.0.0.1' }
   let(:port) { 31337 }
-
-  let(:server) do
-    s = Puppet::Network::HTTP::WEBrick.new
-    s.stubs(:setup_logger).returns(Hash.new)
-    s.stubs(:setup_ssl).returns(Hash.new)
-    s
-  end
+  let(:server) { Puppet::Network::HTTP::WEBrick.new }
+  let(:localcacert) { make_absolute("/ca/crt") }
+  let(:ssl_server_ca_auth) { make_absolute("/ca/ssl_server_auth_file") }
+  let(:key) { stub 'key', :content => "mykey" }
+  let(:cert) { stub 'cert', :content => "mycert" }
+  let(:host) { stub 'host', :key => key, :certificate => cert, :name => "yay", :ssl_store => "mystore" }
 
   let(:mock_ssl_context) do
     stub('ssl_context', :ciphers= => nil)
   end
 
+  let(:socket) { mock('socket') }
   let(:mock_webrick) do
-    stub('webrick',
-         :[] => {},
-         :listeners => [],
-         :status => :Running,
-         :mount => nil,
-         :start => nil,
-         :shutdown => nil,
-         :ssl_context => mock_ssl_context)
+    server = stub('webrick',
+                  :[] => {},
+                  :listeners => [],
+                  :status => :Running,
+                  :mount => nil,
+                  :shutdown => nil,
+                  :ssl_context => mock_ssl_context)
+    server.stubs(:start).yields(socket)
+    IO.stubs(:select).with([socket], nil, nil, anything).returns(true)
+    socket.stubs(:accept)
+    server.stubs(:run).with(socket)
+    server
   end
 
   before :each do
     WEBrick::HTTPServer.stubs(:new).returns(mock_webrick)
+    Puppet::SSL::Certificate.indirection.stubs(:find).with('ca').returns cert
+    Puppet::SSL::Host.stubs(:localhost).returns host
   end
 
   describe "when turning on listening" do
@@ -86,6 +92,13 @@ describe Puppet::Network::HTTP::WEBrick do
     it "should be listening" do
       server.listen(address, port)
       expect(server).to be_listening
+    end
+
+    it "is passed a yet to be accepted socket" do
+      socket.expects(:accept)
+
+      server.listen(address, port)
+      server.unlisten
     end
 
     describe "when the REST protocol is requested" do
@@ -192,18 +205,6 @@ describe Puppet::Network::HTTP::WEBrick do
   end
 
   describe "when configuring ssl" do
-    let(:server) { Puppet::Network::HTTP::WEBrick.new }
-    let(:localcacert) { make_absolute("/ca/crt") }
-    let(:ssl_server_ca_auth) { make_absolute("/ca/ssl_server_auth_file") }
-    let(:key) { stub 'key', :content => "mykey" }
-    let(:cert) { stub 'cert', :content => "mycert" }
-    let(:host) { stub 'host', :key => key, :certificate => cert, :name => "yay", :ssl_store => "mystore" }
-
-    before :each do
-      Puppet::SSL::Certificate.indirection.stubs(:find).with('ca').returns cert
-      Puppet::SSL::Host.stubs(:localhost).returns host
-    end
-
     it "should use the key from the localhost SSL::Host instance" do
       Puppet::SSL::Host.expects(:localhost).returns host
       host.expects(:key).returns key
@@ -236,8 +237,8 @@ describe Puppet::Network::HTTP::WEBrick do
       expect(server.setup_ssl[:SSLCACertificateFile]).to eq(ssl_server_ca_auth)
     end
 
-    it "should start ssl immediately" do
-      expect(server.setup_ssl[:SSLStartImmediately]).to be_truthy
+    it "should not start ssl immediately" do
+      expect(server.setup_ssl[:SSLStartImmediately]).to eq(false)
     end
 
     it "should enable ssl" do

@@ -108,7 +108,7 @@ class TypeCalculator
   # Answers, does the given callable accept the arguments given in args (an array or a tuple)
   # @param callable [PCallableType] - the callable
   # @param args [PArrayType, PTupleType] args optionally including a lambda callable at the end
-  # @return [Boolan] true if the callable accepts the arguments
+  # @return [Boolean] true if the callable accepts the arguments
   #
   # @api public
   def self.callable?(callable, args)
@@ -159,11 +159,12 @@ class TypeCalculator
       t = type(t)
     end
     t.is_a?(PAnyType) ? t.assignable?(t2) : false
- end
+  end
 
   # Returns an iterable if the t represents something that can be iterated
   def enumerable(t)
-    Puppet.deprecation_warning('TypeCalculator.enumerable is deprecated. Use iterable')
+    #TRANSLATOR 'TypeCalculator.enumerable' and 'iterable' are methods and should not be translated
+    Puppet.deprecation_warning(_('TypeCalculator.enumerable is deprecated. Use iterable'))
     iterable(t)
   end
 

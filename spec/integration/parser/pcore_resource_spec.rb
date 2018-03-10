@@ -219,7 +219,7 @@ describe 'when pcore described resources types are in use' do
       generate_and_in_a_compilers_context do |compiler|
         t1 = find_resource_type(compiler.topscope, 'test1')
         expect(t1.title_patterns.size).to be(1)
-        expect(t1.title_patterns[0][0]).to eql(/(.*)/m)
+        expect(t1.title_patterns[0][0]).to eql(/(?m-ix:(.*))/)
       end
     end
 
@@ -227,7 +227,7 @@ describe 'when pcore described resources types are in use' do
       pending "assertion of parameter types not yet implemented"
       genface.types
       expect {
-      catalog = compile_to_catalog(<<-MANIFEST)
+      compile_to_catalog(<<-MANIFEST)
         test2 { 'b':
           color => 'white is not a color'
         }
@@ -237,7 +237,7 @@ describe 'when pcore described resources types are in use' do
   end
 
   def find_resource_type(scope, name)
-    t1 = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, name)
+    Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, name)
   end
 
   def generate_and_in_a_compilers_context(&block)

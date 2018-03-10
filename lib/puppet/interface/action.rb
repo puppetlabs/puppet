@@ -78,7 +78,7 @@ class Puppet::Interface::Action
   # @api private
   def when_rendering(type)
     unless type.is_a? Symbol
-      raise ArgumentError, "The rendering format must be a symbol, not #{type.class.name}"
+      raise ArgumentError, _("The rendering format must be a symbol, not %{class_name}") % { class_name: type.class.name }
     end
     # Do we have a rendering hook for this name?
     return @when_rendering[type].bind(@face) if @when_rendering.has_key? type
@@ -94,28 +94,38 @@ class Puppet::Interface::Action
   # @api private
   def set_rendering_method_for(type, proc)
     unless proc.is_a? Proc
-      msg = "The second argument to set_rendering_method_for must be a Proc"
-      msg += ", not #{proc.class.name}" unless proc.nil?
+      msg = if proc.nil?
+              #TRANSLATORS 'set_rendering_method_for' and 'Proc' should not be translated
+              _("The second argument to set_rendering_method_for must be a Proc")
+            else
+              #TRANSLATORS 'set_rendering_method_for' and 'Proc' should not be translated
+              _("The second argument to set_rendering_method_for must be a Proc, not %{class_name}") %
+                  { class_name: proc.class.name }
+            end
       raise ArgumentError, msg
     end
 
     if proc.arity != 1 and proc.arity != (@positional_arg_count + 1)
-      msg =  "the when_rendering method for the #{@face.name} face #{name} action "
-      msg += "takes either just one argument, the result of when_invoked, "
-      msg += "or the result plus the #{@positional_arg_count} arguments passed "
-      msg += "to the when_invoked block, not "
-      if proc.arity < 0 then
-        msg += "a variable number"
-      else
-        msg += proc.arity.to_s
-      end
+      msg = if proc.arity < 0 then
+              #TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
+              _("The when_rendering method for the %{face} face %{name} action takes either just one argument,"\
+                  " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
+                  " when_invoked block, not a variable number") %
+                  { face: @face.name, name: name, arg_count: @positional_arg_count }
+            else
+              #TRANSLATORS 'when_rendering', 'when_invoked' are method names and should not be translated
+              _("The when_rendering method for the %{face} face %{name} action takes either just one argument,"\
+                  " the result of when_invoked, or the result plus the %{arg_count} arguments passed to the"\
+                  " when_invoked block, not %{string}") %
+                  { face: @face.name, name: name, arg_count: @positional_arg_count, string: proc.arity.to_s }
+            end
       raise ArgumentError, msg
     end
     unless type.is_a? Symbol
-      raise ArgumentError, "The rendering format must be a symbol, not #{type.class.name}"
+      raise ArgumentError, _("The rendering format must be a symbol, not %{class_name}") % { class_name: type.class.name }
     end
     if @when_rendering.has_key? type then
-      raise ArgumentError, "You can't define a rendering method for #{type} twice"
+      raise ArgumentError, _("You can't define a rendering method for %{type} twice") % { type: type }
     end
     # Now, the ugly bit.  We add the method to our interface object, and
     # retrieve it, to rotate through the dance of getting a suitable method
@@ -139,6 +149,17 @@ class Puppet::Interface::Action
     @render_as = value.to_sym
   end
 
+  # @api private
+  # @return [void]
+  def deprecate
+    @deprecated = true
+  end
+
+  # @api private
+  # @return [Boolean]
+  def deprecated?
+    @deprecated
+  end
 
   ########################################################################
   # Initially, this was defined to allow the @action.invoke pattern, which is
@@ -213,7 +234,8 @@ class Puppet::Interface::Action
       # but will on 1.9.2, which treats it as "no arguments".  Which bites,
       # because this just begs for us to wind up in the horrible situation
       # where a 1.8 vs 1.9 error bites our end users. --daniel 2011-04-19
-      raise ArgumentError, "when_invoked requires at least one argument (options) for action #{@name}"
+      #TRANSLATORS 'when_invoked' should not be translated
+      raise ArgumentError, _("when_invoked requires at least one argument (options) for action %{name}") % { name: @name }
     elsif arity > 0 then
       range = Range.new(1, arity - 1)
       decl = range.map { |x| "arg#{x}" } << "options = {}"
@@ -259,9 +281,11 @@ WRAPPER
   def add_option(option)
     option.aliases.each do |name|
       if conflict = get_option(name) then
-        raise ArgumentError, "Option #{option} conflicts with existing option #{conflict}"
+        raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict}") %
+            { option: option, conflict: conflict }
       elsif conflict = @face.get_option(name) then
-        raise ArgumentError, "Option #{option} conflicts with existing option #{conflict} on #{@face}"
+        raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict} on %{face}") %
+            { option: option, conflict: conflict, face: @face }
       end
     end
 
@@ -285,7 +309,10 @@ WRAPPER
   def add_display_global_options(*args)
     @display_global_options ||= []
     [args].flatten.each do |refopt|
-      raise ArgumentError, "Global option #{refopt} does not exist in Puppet.settings" unless Puppet.settings.include? refopt
+      unless Puppet.settings.include? refopt
+        #TRANSLATORS 'Puppet.settings' should not be translated
+        raise ArgumentError, _("Global option %{option} does not exist in Puppet.settings") % { option: refopt }
+      end
       @display_global_options << refopt
     end
     @display_global_options.uniq!
@@ -331,13 +358,14 @@ WRAPPER
     end
 
     unless overlap.empty?
-      msg = overlap.map {|k, v| "(#{k}, #{v.sort.join(', ')})" }.join(", ")
-      raise ArgumentError, "Multiple aliases for the same option passed: #{msg}"
+      overlap_list = overlap.map {|k, v| "(#{k}, #{v.sort.join(', ')})" }.join(", ")
+      raise ArgumentError, _("Multiple aliases for the same option passed: %{overlap_list}") %
+          { overlap_list: overlap_list }
     end
 
     unless unknown.empty?
-      msg = unknown.sort.join(", ")
-      raise ArgumentError, "Unknown options passed: #{msg}"
+      unknown_list = unknown.sort.join(", ")
+      raise ArgumentError, _("Unknown options passed: %{unknown_list}") % { unknown_list: unknown_list }
     end
 
     # Inject default arguments and check for missing mandating options.
@@ -354,8 +382,8 @@ WRAPPER
     end
 
     unless missing.empty?
-      msg = missing.sort.join(', ')
-      raise ArgumentError, "The following options are required: #{msg}"
+      missing_list = missing.sort.join(', ')
+      raise ArgumentError, _("The following options are required: %{missing_list}") % { missing_list: missing_list }
     end
 
     # All done.

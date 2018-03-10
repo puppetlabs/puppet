@@ -26,7 +26,7 @@ Puppet::Type.type(:zfs).provide(:zfs) do
   end
 
   def create
-    zfs *([:create] + add_properties + [@resource[:name]])
+    zfs(*([:create] + add_properties + [@resource[:name]]))
   end
 
   def destroy
@@ -57,8 +57,9 @@ Puppet::Type.type(:zfs).provide(:zfs) do
   # https://docs.oracle.com/cd/E19963-01/html/821-1448/gbscy.html
   # shareiscsi (added in build 120) was removed from S11 build 136
   # aclmode was removed from S11 in build 139 but it may have been added back
+  # acltype is for ZFS on Linux, and allows disabling or enabling POSIX ACLs
   # http://webcache.googleusercontent.com/search?q=cache:-p74K0DVsdwJ:developers.slashdot.org/story/11/11/09/2343258/solaris-11-released+&cd=13
-  [:aclmode, :shareiscsi].each do |field|
+  [:aclmode, :acltype, :shareiscsi].each do |field|
     # The zfs commands use the property value '-' to indicate that the
     # property is not set. We make use of this value to indicate that the
     # property is not set since it is not available. Conversely, if these

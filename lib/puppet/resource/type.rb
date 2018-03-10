@@ -43,7 +43,7 @@ class Puppet::Resource::Type
   #   :capability  - the type name of the capres produced/consumed
   #   :mappings    - a hash of attribute_name => Expression
   # These two attributes are populated in
-  # PopsBridge::instantiate_CapabilityMaping
+  # PopsBridge::instantiate_CapabilityMapping
 
   # Map from argument (aka parameter) names to Puppet Type
   # @return [Hash<Symbol, Puppet::Pops::Types::PAnyType] map from name to type
@@ -140,7 +140,7 @@ class Puppet::Resource::Type
 
   def initialize(type, name, options = {})
     @type = type.to_s.downcase.to_sym
-    raise ArgumentError, "Invalid resource supertype '#{type}'" unless RESOURCE_KINDS.include?(@type)
+    raise ArgumentError, _("Invalid resource supertype '%{type}'") % { type: type } unless RESOURCE_KINDS.include?(@type)
 
     name = convert_from_ast(name) if name.is_a?(Puppet::Parser::AST::HostName)
 
@@ -223,7 +223,7 @@ class Puppet::Resource::Type
     resource_type =
     case type
     when :definition
-      raise ArgumentError, 'Cannot create resources for defined resource types'
+      raise ArgumentError, _('Cannot create resources for defined resource types')
     when :hostclass
       :class
     when :node
@@ -258,7 +258,7 @@ class Puppet::Resource::Type
     end
 
     if ['Class', 'Node'].include? resource.type
-      scope.catalog.tag(*resource.tags)
+      scope.catalog.merge_tags_from(resource)
     end
   end
 

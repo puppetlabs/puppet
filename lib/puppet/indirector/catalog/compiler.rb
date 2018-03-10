@@ -91,7 +91,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     elsif format == 'application/json'
       return Puppet::Node::Facts.convert_from('json', CGI.unescape(facts))
     else
-      raise ArgumentError, "Unsupported facts format"
+      raise ArgumentError, _("Unsupported facts format")
     end
   end
 

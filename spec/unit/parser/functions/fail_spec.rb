@@ -23,6 +23,6 @@ describe "the 'fail' parser function" do
   end
 
   it "should join arguments into a string in the error" do
-    expect { scope.function_fail(["hello", "world"]) }.to raise_error /hello world/
+    expect { scope.function_fail(["hello", "world"]) }.to raise_error(/hello world/)
   end
 end

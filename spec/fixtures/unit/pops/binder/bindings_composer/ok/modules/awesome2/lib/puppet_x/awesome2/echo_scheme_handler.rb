@@ -11,7 +11,7 @@ module PuppetX
         factory = ::Puppet::Pops::Binder::BindingsFactory
         bindings = factory.named_bindings("echo")
         bindings.bind.name(uri.path.gsub(/\//, '::')).to("echo: #{uri.path.gsub(/\//, ' ').strip!}")
-        result = factory.contributed_bindings("echo", bindings.model) ### , nil)
+        factory.contributed_bindings("echo", bindings.model) ### , nil)
       end
     end
   end

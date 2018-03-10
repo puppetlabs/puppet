@@ -10,7 +10,8 @@ class CollectorTransformer
   end
 
   def transform(o, scope)
-    raise ArgumentError, "Expected CollectExpression" unless o.is_a? Model::CollectExpression
+    #TRANSLATORS 'CollectExpression' is a class name and should not be translated
+    raise ArgumentError, _("Expected CollectExpression") unless o.is_a? Model::CollectExpression
 
     raise "LHS is not a type" unless o.type_expr.is_a? Model::QualifiedReference
     type = o.type_expr.value().downcase()
@@ -123,7 +124,7 @@ protected
     end
   end
 
- def query_AccessExpression(o, scope)
+  def query_AccessExpression(o, scope)
     pops_object = @@evaluator.evaluate(o, scope)
 
     # Convert to Puppet 3 style objects since that is how they are represented

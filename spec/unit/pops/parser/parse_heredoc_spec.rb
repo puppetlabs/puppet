@@ -66,7 +66,7 @@ describe "egrammar parsing heredoc" do
     CODE
     expect(dump(parse(src))).to eq([
       "(@()",
-      "  (sublocated (cat 'Hello ' (str $name) ''))",
+      "  (sublocated (cat 'Hello ' (str $name)))",
       ")"
     ].join("\n"))
   end
@@ -79,7 +79,7 @@ describe "egrammar parsing heredoc" do
     CODE
     expect(dump(parse(src))).to eq([
       "(@()",
-      "  (sublocated (cat 'Hello \\' (str $name) ''))",
+      "  (sublocated (cat 'Hello \\' (str $name)))",
       ")"
     ].join("\n"))
   end
@@ -92,7 +92,7 @@ describe "egrammar parsing heredoc" do
     CODE
     expect(dump(parse(src))).to eq([
       "(@()",
-      "  (sublocated (cat 'Hello \\' (str $name) ''))",
+      "  (sublocated (cat 'Hello \\' (str $name)))",
       ")"
     ].join("\n"))
   end

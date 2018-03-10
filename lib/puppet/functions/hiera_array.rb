@@ -24,7 +24,7 @@ require 'hiera/puppet_function'
 #
 # @example Using `hiera_array`
 #
-# ~~~ yaml
+# ```yaml
 # # Assuming hiera.yaml
 # # :hierarchy:
 # #   - web01.example.com
@@ -37,13 +37,13 @@ require 'hiera/puppet_function'
 #
 # # Assuming web01.example.com.yaml:
 # # users: 'abarry = admin'
-# ~~~
+# ```
 #
-# ~~~ puppet
+# ```puppet
 # $allusers = hiera_array('users', undef)
 #
 # # $allusers contains ["cdouglas = regular", "efranklin = regular", "abarry = admin"].
-# ~~~
+# ```
 #
 # You can optionally generate the default value with a
 # [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that
@@ -51,7 +51,7 @@ require 'hiera/puppet_function'
 #
 # @example Using `hiera_array` with a lambda
 #
-# ~~~ puppet
+# ```puppet
 # # Assuming the same Hiera data as the previous example:
 #
 # $allusers = hiera_array('users') | $key | { "Key \'${key}\' not found" }
@@ -59,7 +59,7 @@ require 'hiera/puppet_function'
 # # $allusers contains ["cdouglas = regular", "efranklin = regular", "abarry = admin"].
 # # If hiera_array couldn't match its key, it would return the lambda result,
 # # "Key 'users' not found".
-# ~~~
+# ```
 #
 # `hiera_array` expects that all values returned will be strings or arrays. If any matched
 # value is a hash, Puppet raises a type mismatch error.

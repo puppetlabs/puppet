@@ -125,7 +125,7 @@ module Interpolation
     interpolate_method
   end
 
-  # Because the semanitcs of Puppet::Parser::Scope#include? differs from Hash#include?
+  # Because the semantics of Puppet::Parser::Scope#include? differs from Hash#include?
   def nil_in_scope?(scope, key)
     if scope.is_a?(Hash)
       scope.include?(key)

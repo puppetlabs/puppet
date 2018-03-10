@@ -22,12 +22,9 @@ test_name 'C100559: puppet agent run output with a supported language should be 
     step "Run Puppet apply with language #{language} and check the output" do
       on(agent, puppet("agent -t --server #{master}", 'ENV' => {'LANGUAGE' => language})) do |apply_result|
         # Info: Applying configuration version '1505773208'
-        # Info: 設定バージョン'1505767114'を適用しています。
         assert_match(/設定バージョン'[^']*'を適用しています。/, apply_result.stdout, "agent run does not contain 'Applying configuration version' translation")
         # Notice: Applied catalog in 0.03 seconds
-        # Notice: カタログが適用されました。 0.01 秒
-        # TODO PUP-8252 need to update and re-enable this when translation is updated
-        #assert_match(/カタログが適用されました。\s+[0-9.]*\s+秒/, apply_result.stdout, "agent run does not contain 'Applied catalog' translation")
+        assert_match(/[0-9.]*\s*秒でカタログを適用しました。/, apply_result.stdout, "agent run does not contain 'Applied catalog in #.## seconds' translation")
       end
     end
   end

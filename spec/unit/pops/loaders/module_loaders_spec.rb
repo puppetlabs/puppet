@@ -90,6 +90,49 @@ describe 'FileBased module loader' do
     expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
   end
 
+  context 'loading tasks' do
+    before(:each) do
+      Puppet[:tasks] = true
+      Puppet.push_context(:loaders => loaders)
+    end
+    after(:each) { Puppet.pop_context }
+
+    it 'can load tasks with multiple files' do
+      module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '', 'foo.json' => '{}'})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+
+      task = module_loader.load_typed(typed_name(:task, 'testmodule::foo')).value
+      expect(task.name).to eq('testmodule::foo')
+      expect(File.basename(task.executable)).to eq('foo.py')
+    end
+
+    it 'can load multiple tasks with multiple files' do
+      module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '', 'foo.json' => '{}', 'foobar.py' => '', 'foobar.json' => '{}'})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+
+      foo_task = module_loader.load_typed(typed_name(:task, 'testmodule::foo')).value
+      foobar_task = module_loader.load_typed(typed_name(:task, 'testmodule::foobar')).value
+
+      expect(foo_task.name).to eq('testmodule::foo')
+      expect(File.basename(foo_task.executable)).to eq('foo.py')
+      expect(foobar_task.name).to eq('testmodule::foobar')
+      expect(File.basename(foobar_task.executable)).to eq('foobar.py')
+    end
+
+    it "won't load tasks with invalid names" do
+      module_dir = dir_containing('testmodule', 'tasks' => {'a-b.py' => '', 'foo.tar.gz' => ''})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+
+      tasks = module_loader.discover(:task)
+      expect(tasks).to be_empty
+
+      expect(module_loader.load_typed(typed_name(:task, 'testmodule::foo'))).to be_nil
+    end
+  end
+
   def typed_name(type, name)
     Puppet::Pops::Loader::TypedName.new(type, name)
   end

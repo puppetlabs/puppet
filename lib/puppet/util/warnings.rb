@@ -20,8 +20,6 @@ module Puppet::Util::Warnings
     nil
   end
 
-  protected
-
   def self.maybe_log(message, klass)
     @stampwarnings ||= {}
     @stampwarnings[klass] ||= []

@@ -19,7 +19,7 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
     if acceptor.error_count > 0
       checker_message = "Invalid produced text having syntax: '#{syntax}'."
       Puppet::Pops::IssueReporter.assert_and_report(acceptor, :message => checker_message)
-      raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+      raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
     end
   end
 

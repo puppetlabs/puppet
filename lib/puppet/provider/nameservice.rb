@@ -174,7 +174,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     begin
       execute(self.addcmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
       if feature?(:manages_password_age) && (cmd = passcmd)
-        execute(cmd)
+        execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
       end
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not create %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
@@ -189,7 +189,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     begin
-      execute(self.deletecmd)
+      execute(self.deletecmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not delete %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
@@ -301,7 +301,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     cmd = modifycmd(param, munge(param, value))
     raise Puppet::DevError, _("Nameservice command must be an array") unless cmd.is_a?(Array)
     begin
-      execute(cmd)
+      execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end

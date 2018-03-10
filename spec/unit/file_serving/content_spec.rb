@@ -25,7 +25,6 @@ describe Puppet::FileServing::Content do
   it "should not retrieve and store its contents when its attributes are collected" do
     content = Puppet::FileServing::Content.new(path)
 
-    result = "foo"
     File.expects(:read).with(path).never
     content.collect
 

@@ -82,13 +82,14 @@ Puppet::Face.define(:module, '1.0.0') do
       highlight = proc do |s|
         s = s.gsub(term, colorize(:green, term))
         s = s.gsub(term.gsub('/', '-'), colorize(:green, term.gsub('/', '-'))) if term =~ /\//
+        s = s.gsub(' DEPRECATED', colorize(:red, ' DEPRECATED'))
         s
       end
 
       format % [ headers['full_name'], headers['desc'], headers['author'], headers['tag_list'] ] +
       results[:answers].map do |match|
         name, desc, author, keywords = %w{full_name desc author tag_list}.map { |k| match[k] }
-        name += " #{colorize(:red, 'DEPRECATED')}" unless match['deprecated_at'].nil?
+        name += ' DEPRECATED' unless match['deprecated_at'].nil?
         desc = desc[0...(columns['desc'] - 3)] + '...' if desc.length > columns['desc']
         highlight[format % [ name.sub('/', '-'), desc, "@#{author}", [keywords].flatten.join(' ') ]]
       end.join

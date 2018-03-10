@@ -27,10 +27,11 @@ class Puppet::Node
     @name       = data['name']       || (raise ArgumentError, _("No name provided in serialized data"))
     @classes    = data['classes']    || []
     @parameters = data['parameters'] || {}
-    env_name = data['environment']
-    env_name = env_name.intern unless env_name.nil?
-    @environment_name = env_name
-    environment = env_name # rubocop:disable Lint/UselessAssignment
+    env_name = data['environment'] || @parameters[ENVIRONMENT]
+    unless env_name.nil?
+      @parameters[ENVIRONMENT] = env_name
+      @environment_name = env_name.intern
+    end
   end
 
   def self.from_data_hash(data)
@@ -45,8 +46,15 @@ class Puppet::Node
       'environment' => environment.name.to_s,
     }
     result['classes'] = classes unless classes.empty?
-    result['parameters'] = parameters unless parameters.empty?
+    serialized_params = self.serializable_parameters
+    result['parameters'] = serialized_params unless serialized_params.empty?
     result
+  end
+
+  def serializable_parameters
+    new_params = parameters.dup
+    new_params.delete(ENVIRONMENT)
+    new_params
   end
 
   def environment
@@ -60,7 +68,7 @@ class Puppet::Node
       else
         # This should not be :current_environment, this is the default
         # for a node when it has not specified its environment
-        # Tt will be used to establish what the current environment is.
+        # it will be used to establish what the current environment is.
         #
         self.environment = Puppet.lookup(:environments).get!(Puppet[:environment])
       end
@@ -78,7 +86,8 @@ class Puppet::Node
 
     # Keep environment_name attribute and parameter in sync if they have been set
     unless @environment.nil?
-      @parameters[ENVIRONMENT] = @environment.name.to_s if @parameters.include?(ENVIRONMENT)
+      # always set the environment parameter. It becomes top scope $environment for a manifest during catalog compilation.
+      @parameters[ENVIRONMENT] = @environment.name.to_s
       self.environment_name = @environment.name if instance_variable_defined?(:@environment_name)
     end
     @environment
@@ -132,7 +141,10 @@ class Puppet::Node
 
     if !@facts.nil?
       @facts.sanitize
+      # facts should never modify the environment parameter
+      orig_param_env = @parameters[ENVIRONMENT]
       merge(@facts.values)
+      @parameters[ENVIRONMENT] = orig_param_env
     end
   end
 
@@ -145,8 +157,6 @@ class Puppet::Node
         @parameters[name] = value
       end
     end
-
-    @parameters[ENVIRONMENT] ||= self.environment.name.to_s
   end
 
   # Add extra facts, such as facts given to lookup on the command line The

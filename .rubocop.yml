@@ -137,16 +137,14 @@ Lint/UnusedBlockArgument:
 Lint/UnusedMethodArgument:
   Enabled: false
 
-# DISABLED - TODO
 Lint/UselessAccessModifier:
-  Enabled: false
+  Enabled: true
 
 Lint/UselessAssignment:
   Enabled: true
 
-# DISABLED - TODO
 Lint/Void:
-  Enabled: false
+  Enabled: true
 
 Layout/AccessModifierIndentation:
   Enabled: false
@@ -800,4 +798,7 @@ GetText/DecorateStringFormattingUsingInterpolation:
   Enabled: true
 
 GetText/DecorateStringFormattingUsingPercent:
+  Enabled: false
+
+Style/SafeNavigation:
   Enabled: false

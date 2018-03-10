@@ -291,7 +291,7 @@ describe Puppet::Network::HTTP::Connection do
       expect(result.code).to eq(503)
     end
 
-    it "should return a 503 response if Retry-After is not convertable to an Integer or RFC 2822 Date" do
+    it "should return a 503 response if Retry-After is not convertible to an Integer or RFC 2822 Date" do
       httpunavailable['Retry-After'] = 'foo'
       http.stubs(:request).returns(httpunavailable)
 
@@ -344,7 +344,7 @@ describe Puppet::Network::HTTP::Connection do
 
       ::Kernel.expects(:sleep).with(30)
 
-      result = subject.get('/foo')
+      subject.get('/foo')
     end
   end
 

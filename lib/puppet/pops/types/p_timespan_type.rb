@@ -3,7 +3,7 @@ module Types
   class PAbstractTimeDataType < PScalarType
     # @param from [AbstractTime] lower bound for this type. Nil or :default means unbounded
     # @param to [AbstractTime] upper bound for this type. Nil or :default means unbounded
-    def initialize(from, to)
+    def initialize(from, to = nil)
       @from = convert_arg(from, true)
       @to = convert_arg(to, false)
       raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{@from}, #{@to}" unless @from <= @to
@@ -161,7 +161,7 @@ module Types
         end
 
         def from_fields(days, hours, minutes, seconds, milliseconds = 0, microseconds = 0, nanoseconds = 0)
-          Time::Timespan.from_fields(days, hours, minutes, seconds, milliseconds, microseconds, nanoseconds)
+          Time::Timespan.from_fields(false, days, hours, minutes, seconds, milliseconds, microseconds, nanoseconds)
         end
 
         def from_string_hash(args_hash)

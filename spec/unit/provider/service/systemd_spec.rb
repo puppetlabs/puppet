@@ -21,9 +21,9 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     described_class.new(:name => 'sshd.service')
   end
 
-  osfamily = [ 'archlinux', 'coreos' ]
+  osfamilies = [ 'archlinux', 'coreos' ]
 
-  osfamily.each do |osfamily|
+  osfamilies.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.stubs(:value).with(:osfamily).returns(osfamily)
       expect(described_class).to be_default
@@ -58,11 +58,10 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     end
   end
 
-  it "should be the default provider on Amazon Linux 2017.12" do
+  it "should be the default provider on Amazon Linux 2.0" do
     Facter.stubs(:value).with(:osfamily).returns(:redhat)
     Facter.stubs(:value).with(:operatingsystem).returns(:amazon)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("2017")
-    Facter.stubs(:value).with(:operatingsystemrelease).returns("2017.12")
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("2")
     expect(described_class).to be_default
   end
 
@@ -70,7 +69,6 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     Facter.stubs(:value).with(:osfamily).returns(:redhat)
     Facter.stubs(:value).with(:operatingsystem).returns(:amazon)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("2017")
-    Facter.stubs(:value).with(:operatingsystemrelease).returns("2017.09")
     expect(described_class).not_to be_default
   end
 

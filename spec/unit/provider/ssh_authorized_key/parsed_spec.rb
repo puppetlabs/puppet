@@ -188,13 +188,11 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should absolutely not chown the directory to the user" do
-        uid = Puppet::Util.uid("random_bob")
         File.expects(:chown).never
         @provider.flush
       end
 
       it "should absolutely not chown the key file to the user" do
-        uid = Puppet::Util.uid("random_bob")
         File.expects(:chown).never
         @provider.flush
       end
@@ -233,7 +231,6 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       it "should absolutely not chown the directory to the user if it creates it" do
         Puppet::FileSystem.stubs(:exist?).with(@dir).returns false
         Dir.stubs(:mkdir).with(@dir,0700)
-        uid = Puppet::Util.uid("nobody")
         File.expects(:chown).never
         @provider.flush
       end
@@ -246,7 +243,6 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should absolutely not chown the key file to the user" do
-        uid = Puppet::Util.uid("nobody")
         File.expects(:chown).never
         @provider.flush
       end

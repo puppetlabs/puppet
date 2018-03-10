@@ -67,7 +67,7 @@ describe 'The type calculator' do
   end
 
   def empty_array_t
-  empty_array = array_t(unit_t, range_t(0,0))
+    array_t(unit_t, range_t(0,0))
   end
 
   def hash_t(k,v,s = nil)

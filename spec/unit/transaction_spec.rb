@@ -91,7 +91,7 @@ describe Puppet::Transaction do
 
       report.expects(:add_times).with(:config_retrieval, 5)
 
-      transaction = Puppet::Transaction.new(catalog, report, nil)
+      Puppet::Transaction.new(catalog, report, nil)
     end
   end
 
@@ -130,6 +130,32 @@ describe Puppet::Transaction do
         transaction.event_manager.expects(:dequeue_all_events_for_resource).with(resource)
         transaction.evaluate
       end
+    end
+  end
+
+  describe "when evaluating a skipped resource for corrective change it" do
+    before :each do
+      # Enable persistence during tests
+      Puppet::Transaction::Persistence.any_instance.stubs(:enabled?).returns(true)
+    end
+
+    it "should persist in the transactionstore" do
+      Puppet[:transactionstorefile] = tmpfile('persistence_test')
+
+      resource = Puppet::Type.type(:notify).new :title => "foobar"
+      transaction = transaction_with_resource(resource)
+      transaction.evaluate
+      expect(transaction.resource_status(resource)).to be_changed
+
+      transaction = transaction_with_resource(resource)
+      transaction.expects(:skip?).with(resource).returns true
+      transaction.event_manager.expects(:process_events).with(resource).never
+      transaction.evaluate
+      expect(transaction.resource_status(resource)).to be_skipped
+
+      persistence = Puppet::Transaction::Persistence.new
+      persistence.load
+      expect(persistence.get_system_value(resource.ref, "message")).to eq(["foobar"])
     end
   end
 
@@ -563,6 +589,98 @@ describe Puppet::Transaction do
       resource.provider.class.expects(:prefetch).with('bar' => resource, 'other' => other)
 
       transaction.prefetch_if_necessary(resource)
+    end
+
+    it "should not prefetch a provider which has failed" do
+      transaction.prefetch_failed_providers[:sshkey][:parsed] = true
+
+      resource.provider.class.expects(:prefetch).never
+
+      transaction.prefetch_if_necessary(resource)
+    end
+
+    describe "and prefetching fails" do
+      before :each do
+        resource.provider.class.expects(:prefetch).raises(Puppet::Error, "message")
+      end
+
+      context "without future_features flag" do
+        before :each do
+          Puppet.settings[:future_features] = false
+        end
+
+        it "should not rescue prefetch executions" do
+          expect { transaction.prefetch_if_necessary(resource) }.to raise_error(Puppet::Error)
+        end
+      end
+
+      context "with future_features flag" do
+        before :each do
+          Puppet.settings[:future_features] = true
+        end
+
+        it "should rescue prefetch executions" do
+          transaction.prefetch_if_necessary(resource)
+
+          expect(transaction.prefetched_providers[:sshkey][:parsed]).to be_truthy
+        end
+
+        it "should mark resources as failed" do
+          transaction.evaluate
+
+          expect(transaction.resource_status(resource).failed?).to be_truthy
+        end
+
+        it "should mark a provider that has failed prefetch" do
+          transaction.prefetch_if_necessary(resource)
+
+          expect(transaction.prefetch_failed_providers[:sshkey][:parsed]).to be_truthy
+        end
+
+        describe "and new resources are generated" do
+          let(:generator) { Puppet::Type.type(:notify).new :title => "generator" }
+          let(:generated) do
+            %w[a b c].map { |name| Puppet::Type.type(:sshkey).new :title => "foo", :name => name, :type => :dsa, :key => "eh", :provider => :parsed }
+          end
+
+          before :each do
+            catalog.add_resource generator
+            generator.stubs(:generate).returns generated
+            catalog.stubs(:container_of).returns generator
+          end
+
+          it "should not evaluate resources with a failed provider, even if the prefetch is rescued" do
+            #Only the generator resource should be applied, all the other resources are failed, and skipped.
+            catalog.remove_resource resource2
+            transaction.expects(:apply).once
+
+            transaction.evaluate
+          end
+
+          it "should not fail other resources added after the failing resource" do
+            new_resource = Puppet::Type.type(:notify).new :name => "baz"
+            catalog.add_resource(new_resource)
+
+            transaction.evaluate
+
+            expect(transaction.resource_status(new_resource).failed?).to be_falsey
+          end
+
+          it "should fail other resources that require the failing resource" do
+            new_resource = Puppet::Type.type(:notify).new(:name => "baz", :require => resource)
+            catalog.add_resource(new_resource)
+
+            catalog.remove_resource resource2
+            transaction.expects(:apply).once
+
+            transaction.evaluate
+
+            expect(transaction.resource_status(resource).failed?).to be_truthy
+            expect(transaction.resource_status(new_resource).dependency_failed?).to be_truthy
+            expect(transaction.skip?(new_resource)).to be_truthy
+          end
+        end
+      end
     end
   end
 

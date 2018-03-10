@@ -94,4 +94,12 @@ describe checksum do
     Puppet.settings[:supported_checksum_types] = values
     expect(Puppet.settings[:supported_checksum_types]).to eq(values)
   end
+
+  it 'rejects md5 checksums in FIPS mode' do
+    Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+    expect {
+      @resource[:checksum] = :md5
+    }.to raise_error(Puppet::ResourceError,
+                     /Parameter checksum failed.* MD5 is not supported in FIPS mode/)
+  end
 end

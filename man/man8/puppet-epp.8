@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-EPP" "8" "June 2017" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-EPP" "8" "March 2018" "Puppet, Inc." "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-epp\fR \- Interact directly with the EPP template parser/renderer\.
@@ -29,18 +29,34 @@ Whether to log debug information\.
 .
 .SH "ACTIONS"
 .
-.TP
-\fBdump\fR \- Outputs a dump of the internal template parse tree for debugging
-\fBSYNOPSIS\fR
+.IP "\(bu" 4
+\fBdump\fR \- Outputs a dump of the internal template parse tree for debugging: \fBSYNOPSIS\fR
 .
 .IP
-puppet epp dump [\-\-e \fIsource\fR] [\-\-[no\-]validate] [\-\-[no\-]header] \-e \fIsource\fR | [\fItemplates\fR \.\.\.]
+puppet epp dump [\-\-e \fIsource\fR] [\-\-[no\-]validate] [\-\-format \fIold, pn, or json\fR] [\-\-pretty] [\-\-[no\-]header] [\-\-format \fIold|pn|json\fR] [\-\-pretty] { \-e \fIsource\fR | [\fItemplates\fR \.\.\.] }
 .
 .IP
 \fBDESCRIPTION\fR
 .
 .IP
-The dump action parses and validates the EPP syntax and dumps the resulting AST model in a human readable (but not necessarily an easy to understand) format\. The output format of the dumped tree is intended for epp parser debugging purposes and is not API, and may thus change between versions without deprecation warnings\.
+The dump action parses and validates the EPP syntax and dumps the resulting AST model in a human readable (but not necessarily an easy to understand) format\.
+.
+.IP
+The output format can be controlled using the \-\-format \fIold|pn|json\fR where:
+.
+.IP "\(bu" 4
+\'old\' is the default, but now deprecated format which is not API\.
+.
+.IP "\(bu" 4
+\'pn\' is the Puppet Extended S\-Expression Notation\.
+.
+.IP "\(bu" 4
+\'json\' outputs the same graph as \'pn\' but with JSON syntax\.
+.
+.IP "" 0
+.
+.IP
+The output will be "pretty printed" when the option \-\-pretty is given together with \-\-format \'pn\' or \'json\'\. This option has no effect on the \'old\' format\.
 .
 .IP
 The command accepts one or more templates (\.epp) files, or an \-e followed by the template source text\. The given templates can be paths to template files, or references to templates in modules when given on the form \fImodulename\fR/\fItemplate\-name\fR\.epp\. If no arguments are given, the stdin is read (unless it is attached to a terminal)
@@ -58,7 +74,13 @@ This command ignores the \-\-render\-as setting/option\.
 \fBOPTIONS\fR \fI\-\-e <source\fR> \- Dump one epp source expression given on the command line\.
 .
 .IP
+\fI\-\-format <old, pn, or json\fR> \- Get result in \'old\' (deprecated format), \'pn\' (new format), or \'json\' (new format in JSON)\.
+.
+.IP
 \fI\-\-[no\-]header\fR \- Whether or not to show a file name header between files\.
+.
+.IP
+\fI\-\-pretty\fR \- Pretty print output\. Only applicable together with \-\-format pn or json
 .
 .IP
 \fI\-\-[no\-]validate\fR \- Whether or not to validate the parsed result, if no\-validate only syntax errors are reported\.
@@ -69,9 +91,8 @@ This command ignores the \-\-render\-as setting/option\.
 .IP
 A dump of the resulting AST model unless there are syntax or validation errors\.
 .
-.TP
-\fBrender\fR \- Renders an epp template as text
-\fBSYNOPSIS\fR
+.IP "\(bu" 4
+\fBrender\fR \- Renders an epp template as text: \fBSYNOPSIS\fR
 .
 .IP
 puppet epp render [\-\-node \fInode_name\fR] [\-\-e \fIsource\fR] [\-\-values \fIvalues_hash\fR] [\-\-values_file \fIpp_or_yaml_file\fR] [\-\-facts \fIfacts_file\fR] [\-\-[no\-]header] \-e \fIsource\fR | [\fItemplates\fR \.\.\.]
@@ -139,9 +160,8 @@ When designing EPP templates, it is strongly recommended to define all template 
 .IP
 A rendered result of one or more given templates\.
 .
-.TP
-\fBvalidate\fR \- Validate the syntax of one or more EPP templates\.
-\fBSYNOPSIS\fR
+.IP "\(bu" 4
+\fBvalidate\fR \- Validate the syntax of one or more EPP templates\.: \fBSYNOPSIS\fR
 .
 .IP
 puppet epp validate [\-\-[no\-]continue_on_error] [\fItemplate\fR] [\fItemplate\fR \.\.\.]
@@ -169,6 +189,8 @@ Exits with 0 if there were no validation errors\.
 .
 .IP
 Nothing, or encountered syntax errors\.
+.
+.IP "" 0
 .
 .SH "EXAMPLES"
 \fBrender\fR

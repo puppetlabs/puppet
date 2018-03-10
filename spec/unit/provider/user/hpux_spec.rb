@@ -59,14 +59,14 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     it "should add modprpw to modifycmd if Trusted System" do
       resource.stubs(:allowdupe?).returns true
       provider.expects(:exec_getprpw).with('root','-m uid').returns('uid=0')
-      provider.expects(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F', ';', '/usr/lbin/modprpw', '-v', '-l', 'testuser'])
+      provider.expects(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F', ';', '/usr/lbin/modprpw', '-v', '-l', 'testuser'], has_entry(:custom_environment, {}))
       provider.uid = 1000
     end
 
     it "should not add modprpw if not Trusted System" do
       resource.stubs(:allowdupe?).returns true
       provider.expects(:exec_getprpw).with('root','-m uid').returns('System is not trusted')
-      provider.expects(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F'])
+      provider.expects(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F'], has_entry(:custom_environment, {}))
       provider.uid = 1000
     end
   end

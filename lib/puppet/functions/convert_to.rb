@@ -1,4 +1,4 @@
-# The `convert_to(value, type)` is a convenience function does the same as `new(type, value)`.
+# The `convert_to(value, type)` is a convenience function that does the same as `new(type, value)`.
 # The difference in the argument ordering allows it to be used in chained style for
 # improved readability "left to right".
 #
@@ -7,14 +7,15 @@
 #
 # @example 'convert_to' instead of 'new'
 #
-# ~~~ puppet
-#   # using new operator - that is "calling the type" with operator ()
+# ```puppet
+#   # The harder to read variant:
+#   # Using new operator - that is "calling the type" with operator ()
 #   Hash(Array("abc").map |$i,$v| { [$i, $v] })
 #
+#   # The easier to read variant:
 #   # using 'convert_to'
 #   "abc".convert_to(Array).map |$i,$v| { [$i, $v] }.convert_to(Hash)
-#
-# ~~~
+# ```
 #
 # @since 5.4.0
 #

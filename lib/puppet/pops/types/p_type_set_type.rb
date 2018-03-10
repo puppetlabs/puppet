@@ -23,6 +23,10 @@ class PTypeSetType < PMetaType
       @type_set.name_authority
     end
 
+    def model_loader
+      @type_set.loader
+    end
+
     def find(typed_name)
       if typed_name.type == :type && typed_name.name_authority == @type_set.name_authority
         type = @type_set[typed_name.name]
@@ -48,7 +52,7 @@ class PTypeSetType < PMetaType
     TypeFactory.optional(KEY_NAME_AUTHORITY) => Pcore::TYPE_URI,
     TypeFactory.optional(KEY_NAME) => Pcore::TYPE_QUALIFIED_REFERENCE,
     TypeFactory.optional(KEY_VERSION) => TYPE_STRING_OR_VERSION,
-    TypeFactory.optional(KEY_TYPES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, PTypeType::DEFAULT, PCollectionType::NOT_EMPTY_SIZE),
+    TypeFactory.optional(KEY_TYPES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, PVariantType.new([PTypeType::DEFAULT, PObjectType::TYPE_OBJECT_I12N]), PCollectionType::NOT_EMPTY_SIZE),
     TypeFactory.optional(KEY_REFERENCES) => TypeFactory.hash_kv(Pcore::TYPE_SIMPLE_TYPE_NAME, TYPE_TYPE_REFERENCE_I12N, PCollectionType::NOT_EMPTY_SIZE),
     TypeFactory.optional(KEY_ANNOTATIONS) => TYPE_ANNOTATIONS,
   })
@@ -288,6 +292,25 @@ class PTypeSetType < PMetaType
       types.each do |type_name, value|
         full_name = "#{@name}::#{type_name}".freeze
         typed_name = Loader::TypedName.new(:type, full_name, name_auth)
+        if value.is_a?(Model::ResourceDefaultsExpression)
+          # This is actually a <Parent> { <key-value entries> } notation. Convert to a literal hash that contains the parent
+          n = value.type_ref
+          name = n.cased_value
+          entries = []
+          unless name == 'Object' or name == 'TypeSet'
+            if value.operations.any? { |op| op.attribute_name == KEY_PARENT }
+              case Puppet[:strict]
+              when :warning
+                IssueReporter.warning(value, Issues::DUPLICATE_KEY, :key => KEY_PARENT)
+              when :error
+                IssueReporter.error(Puppet::ParseErrorWithIssue, value, Issues::DUPLICATE_KEY, :key => KEY_PARENT)
+              end
+            end
+            entries << Model::KeyedEntry.new(n.locator, n.offset, n.length, KEY_PARENT, n)
+          end
+          value.operations.each { |op| entries << Model::KeyedEntry.new(op.locator, op.offset, op.length, op.attribute_name, op.value_expr) }
+          value = Model::LiteralHash.new(value.locator, value.offset, value.length, entries)
+        end
         type = Loader::TypeDefinitionInstantiator.create_type(full_name, value, name_auth)
         loader.set_entry(typed_name, type, value.locator.to_uri(value))
         types[type_name] = type

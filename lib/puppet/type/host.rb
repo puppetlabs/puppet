@@ -80,7 +80,7 @@ module Puppet
 
       validate do |value|
         value.split('.').each do |hostpart|
-          unless hostpart =~ /^([\d\w]+|[\d\w][\d\w\-]+[\d\w])$/
+          unless hostpart =~ /^([\w]+|[\w][\w\-]+[\w])$/
             raise Puppet::Error, _("Invalid host name")
           end
         end

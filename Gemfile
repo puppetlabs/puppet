@@ -65,18 +65,25 @@ group(:development, :test) do
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
   gem 'yard'
 
+  # ronn is used for generating manpages.
+  gem 'ronn', '~> 0.7.3', :platforms => [:ruby]
+
   # webmock requires addressable as as of 2.5.0 addressable started
   # requiring the public_suffix gem which requires Ruby 2
   gem 'addressable', '< 2.5.0'
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
   gem "hiera-eyaml", :require => false
+
+  gem 'memory_profiler', :platforms => [:mri_21, :mri_22, :mri_23, :mri_24, :mri_25]
 end
 
 group(:development) do
   if RUBY_PLATFORM != 'java'
     gem 'ruby-prof', '>= 0.16.0', :require => false
   end
+
+  gem 'gettext-setup', '~> 0.28', :require => false
 end
 
 group(:extra) do

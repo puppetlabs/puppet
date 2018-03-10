@@ -34,24 +34,25 @@ describe "Puppet::Pops::IssueReporter" do
     stub("positioned_#{number}", :line => number, :pos => number)
   end
 
-  def diagnostic(severity,  number)
+  def diagnostic(severity,  number, args)
     Puppet::Pops::Validation::Diagnostic.new(
       severity,
       Puppet::Pops::Issues::Issue.new(number) { "#{severity}#{number}" },
       "#{severity}file",
-      fake_positioned(number))
+      fake_positioned(number),
+      args)
   end
 
-  def warning(number)
-    diagnostic(:warning, number)
+  def warning(number, args = {})
+    diagnostic(:warning, number, args)
   end
 
-  def deprecation(number)
-    diagnostic(:deprecation, number)
+  def deprecation(number, args = {})
+    diagnostic(:deprecation, number, args)
   end
 
-  def error(number)
-    diagnostic(:error, number)
+  def error(number, args = {})
+    diagnostic(:error, number, args)
   end
 
   context "given warnings" do
@@ -96,6 +97,13 @@ describe "Puppet::Pops::IssueReporter" do
     it "does not emit deprecation warnings, but does emit regular warnings if disable_warnings includes deprecations" do
       Puppet[:disable_warnings] = 'deprecations'
       Puppet::Log.expects(:create).once.with(has_entries(:level => :warning, :message => regexp_matches(/warning1/)))
+      Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :emit_warnings => true })
+    end
+
+    it "includes diagnostic arguments in logged entry" do
+      acceptor.accept( warning(2, :n => 'a') )
+      Puppet::Log.expects(:create).twice.with(has_entries(:level => :warning, :message => regexp_matches(/warning1|deprecation1/)))
+      Puppet::Log.expects(:create).once.with(has_entries(:level => :warning, :message => regexp_matches(/warning2/), :arguments => {:n => 'a'}))
       Puppet::Pops::IssueReporter.assert_and_report(acceptor, { :emit_warnings => true })
     end
   end
@@ -174,6 +182,13 @@ describe "Puppet::Pops::IssueReporter" do
       expect do
         Puppet::Pops::IssueReporter.assert_and_report(acceptor, { })
       end.to raise_error(Puppet::ParseError, /Giving up/)
+    end
+
+    it "includes diagnostic arguments in raised error" do
+      acceptor.accept( error(1, :n => 'a') )
+      expect do
+        Puppet::Pops::IssueReporter.assert_and_report(acceptor, { })
+      end.to raise_error(Puppet::ParseErrorWithIssue, /error1/) { |ex| expect(ex.arguments).to eq(:n => 'a')}
     end
   end
 

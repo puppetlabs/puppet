@@ -56,8 +56,9 @@ Puppet::Face.define(:config, '0.0.1') do
 
     when_invoked do |*args|
       options = args.pop
+      render_all_settings = args.empty? || args == ['all']
 
-      args = Puppet.settings.to_a.collect(&:first) if args.empty? || args == ['all']
+      args = Puppet.settings.to_a.collect(&:first) if render_all_settings
 
       values_from_the_selected_section =
         Puppet.settings.values(nil, options[:section].to_sym)
@@ -67,21 +68,53 @@ Puppet::Face.define(:config, '0.0.1') do
         :basemodulepath => values_from_the_selected_section.interpolate(:basemodulepath),
       }
 
+      to_be_rendered = nil
       Puppet.override(Puppet.base_context(loader_settings),
                      _("New environment loaders generated from the requested section.")) do
         # And now we can lookup values that include those from environments configured from
         # the requested section
         values = Puppet.settings.values(Puppet[:environment].to_sym, options[:section].to_sym)
-        if args.length == 1
-          puts values.interpolate(args[0].to_sym)
-        else
-          args.sort.each do |setting_name|
-            puts "#{setting_name} = #{values.interpolate(setting_name.to_sym)}"
-          end
+
+        to_be_rendered = {}
+        args.sort.each do |setting_name|
+          to_be_rendered[setting_name] = values.print(setting_name.to_sym)
         end
       end
-      nil
+
+      # convert symbols to strings before formatting output
+      if render_all_settings
+        to_be_rendered = stringifyhash(to_be_rendered)
+      end
+      to_be_rendered
     end
+
+    when_rendering :console do |to_be_rendered|
+      output = ''
+      if to_be_rendered.keys.length > 1
+        to_be_rendered.keys.sort.each do |setting|
+          output << "#{setting} = #{to_be_rendered[setting]}\n"
+        end
+      else
+        output << "#{to_be_rendered.to_a[0].last}\n"
+      end
+
+      output
+    end
+  end
+
+  def stringifyhash(hash)
+    newhash = {}
+    hash.each do |key, val|
+      key = key.to_s
+      if val.is_a? Hash
+        newhash[key] = stringifyhash(val)
+      elsif val.is_a? Symbol
+        newhash[key] = val.to_s
+      else
+        newhash[key] = val
+      end
+    end
+    newhash
   end
 
   action(:set) do
@@ -125,6 +158,51 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
         Puppet::Settings::IniFile.update(file) do |config|
           config.set(options[:section], name, value)
         end
+      end
+      nil
+    end
+  end
+
+  action(:delete) do
+    summary _("Delete a Puppet setting.")
+    arguments _("(<setting>")
+    #TRANSLATORS 'main' is a specific section name and should not be translated
+    description "Deletes a setting from the specified section. (The default is the section 'main')."
+    notes <<-'EOT'
+      By default, this action deletes the configuration setting from the 'main'
+      configuration domain. Use the '--section' flags to delete settings from other
+      configuration domains.
+    EOT
+    examples <<-'EOT'
+      Delete the setting 'setting_name' from the 'main' configuration domain:
+
+      $ puppet config delete setting_name
+
+      Delete the setting 'setting_name' from the 'master' configuration domain:
+
+      $ puppet config delete setting_name --section master
+    EOT
+
+    when_invoked do |name, options|
+      options[:section] = options[:section].to_s # If value was left as default - set to default string
+
+      path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
+      if Puppet::FileSystem.exist?(path)
+        Puppet::FileSystem.open(path, nil, 'r+:UTF-8') do |file|
+          Puppet::Settings::IniFile.update(file) do |config|
+            setting_string = config.delete(options[:section], name)
+            if setting_string
+              puts(_("Deleted setting from '%{section_name}': '%{setting_string}'") %
+                       { section_name: options[:section], name: name, setting_string: setting_string.strip })
+            else
+              Puppet.warning(_("No setting found in configuration file for section '%{section_name}' setting name '%{name}'") %
+                                 { section_name: options[:section], name: name })
+            end
+          end
+        end
+      else
+        #TRANSLATORS the 'puppet.conf' is a specific file and should not be translated
+        Puppet.warning(_("The puppet.conf file does not exist %{puppet_conf}") % { puppet_conf: path })
       end
       nil
     end

@@ -40,12 +40,17 @@ class Puppet::Interface::OptionBuilder
   # @api public
   # @dsl Faces
   def before_action(&block)
-    block or raise ArgumentError, "#{@option} before_action requires a block"
+    unless block
+      #TRANSLATORS 'before_action' is a method name and should not be translated
+      raise ArgumentError, _("%{option} before_action requires a block") % { option: @option }
+    end
     if @option.before_action
-      raise ArgumentError, "#{@option} already has a before_action set"
+      #TRANSLATORS 'before_action' is a method name and should not be translated
+      raise ArgumentError, _("%{option} already has a before_action set") % { option: @option }
     end
     unless block.arity == 3 then
-      raise ArgumentError, "before_action takes three arguments, action, args, and options"
+      #TRANSLATORS 'before_action' is a method name and should not be translated
+      raise ArgumentError, _("before_action takes three arguments, action, args, and options")
     end
     @option.before_action = block
   end
@@ -55,12 +60,17 @@ class Puppet::Interface::OptionBuilder
   # @api public
   # @dsl Faces
   def after_action(&block)
-    block or raise ArgumentError, "#{@option} after_action requires a block"
+    unless block
+      #TRANSLATORS 'after_action' is a method name and should not be translated
+      raise ArgumentError, _("%{option} after_action requires a block") % { option: @option }
+    end
     if @option.after_action
-      raise ArgumentError, "#{@option} already has an after_action set"
+      #TRANSLATORS 'after_action' is a method name and should not be translated
+      raise ArgumentError, _("%{option} already has an after_action set") % { option: @option }
     end
     unless block.arity == 3 then
-      raise ArgumentError, "after_action takes three arguments, action, args, and options"
+      #TRANSLATORS 'after_action' is a method name and should not be translated
+      raise ArgumentError, _("after_action takes three arguments, action, args, and options")
     end
     @option.after_action = block
   end
@@ -79,12 +89,16 @@ class Puppet::Interface::OptionBuilder
   # @api public
   # @dsl Faces
   def default_to(&block)
-    block or raise ArgumentError, "#{@option} default_to requires a block"
+    unless block
+      #TRANSLATORS 'default_to' is a method name and should not be translated
+      raise ArgumentError, _("%{option} default_to requires a block") % { option: @option }
+    end
     if @option.has_default?
-      raise ArgumentError, "#{@option} already has a default value"
+      raise ArgumentError, _("%{option} already has a default value") % { option: @option }
     end
     unless block.arity == 0
-      raise ArgumentError, "#{@option} default_to block should not take any arguments"
+      #TRANSLATORS 'default_to' is a method name and should not be translated
+      raise ArgumentError, _("%{option} default_to block should not take any arguments") % { option: @option }
     end
     @option.default = block
   end

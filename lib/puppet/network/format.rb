@@ -40,7 +40,7 @@ class Puppet::Network::Format
       init_attribute(method, value)
     end
 
-    raise ArgumentError, "Unsupported option(s) #{@options.keys}" unless @options.empty?
+    raise ArgumentError, _("Unsupported option(s) %{options_list}") % { options_list: @options.keys } unless @options.empty?
 
     @options = nil
 
@@ -69,8 +69,8 @@ class Puppet::Network::Format
   def render_multiple(instances)
     # This method implicitly assumes that all instances are of the same type.
     return instances[0].class.send(render_multiple_method, instances) if instances[0].class.respond_to?(render_multiple_method)
-    raise NotImplementedError, _("%{klass} does not respond to %{method}; can not render multiple instances to %{mime}") \
-                               % { klass: instances[0].class, method: render_multiple_method, mime: mime }
+    raise NotImplementedError, _("%{klass} does not respond to %{method}; can not render multiple instances to %{mime}") %
+        { klass: instances[0].class, method: render_multiple_method, mime: mime }
   end
 
   def required_methods_present?(klass)

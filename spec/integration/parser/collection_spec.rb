@@ -180,7 +180,7 @@ describe 'collectors' do
     it "does not collect classes" do
       node = Puppet::Node.new('the node')
       expect do
-        catalog = compile_to_catalog(<<-MANIFEST, node)
+        compile_to_catalog(<<-MANIFEST, node)
           class theclass {
             @notify { "testing": message => "good message" }
           }
@@ -192,7 +192,7 @@ describe 'collectors' do
     it "does not collect resources that don't exist" do
       node = Puppet::Node.new('the node')
       expect do
-        catalog = compile_to_catalog(<<-MANIFEST, node)
+        compile_to_catalog(<<-MANIFEST, node)
           class theclass {
             @notify { "testing": message => "good message" }
           }

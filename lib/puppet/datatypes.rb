@@ -169,7 +169,7 @@ module Puppet::DataTypes
             end
           end
         else
-          Puppet::Pops::Loaders.implementation_registry.register_implementation(created_type, @implementation_class, loader)
+          Puppet::Pops::Loaders.implementation_registry.register_implementation(created_type, @implementation_class)
         end
         created_type.implementation_class = @implementation_class
       elsif !@implementation.nil?

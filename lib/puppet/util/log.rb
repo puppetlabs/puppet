@@ -164,8 +164,6 @@ class Puppet::Util::Log
     end
   end
 
-  private
-  # produces UTF-8 strings or dumps strings when they cannot be re-encoded
   def Log.coerce_string(str)
     return Puppet::Util::CharacterEncoding.convert_to_utf_8(str) if str.valid_encoding?
 
@@ -175,8 +173,7 @@ class Puppet::Util::Log
     message += '\n' + _("Backtrace:\n%{backtrace}") % { backtrace: caller[0..10].join("\n") }
     message
   end
-
-  public
+  private_class_method :coerce_string
 
   # Route the actual message. FIXME There are lots of things this method
   # should do, like caching and a bit more.  It's worth noting that there's
@@ -359,15 +356,18 @@ class Puppet::Util::Log
   end
 
   def message=(msg)
-    raise ArgumentError, "Puppet::Util::Log requires a message" unless msg
+    #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
+    raise ArgumentError, _("Puppet::Util::Log requires a message") unless msg
     @message = msg.to_s
   end
 
   def level=(level)
-    raise ArgumentError, "Puppet::Util::Log requires a log level" unless level
-    raise ArgumentError, "Puppet::Util::Log requires a symbol or string" unless level.respond_to? "to_sym"
+    #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
+    raise ArgumentError, _("Puppet::Util::Log requires a log level") unless level
+    #TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
+    raise ArgumentError, _("Puppet::Util::Log requires a symbol or string") unless level.respond_to? "to_sym"
     @level = level.to_sym
-    raise ArgumentError, "Invalid log level #{@level}" unless self.class.validlevel?(@level)
+    raise ArgumentError, _("Invalid log level %{level}") % { level: @level } unless self.class.validlevel?(@level)
 
     # Tag myself with my log level
     tag(level)
@@ -378,7 +378,7 @@ class Puppet::Util::Log
   def source=(source)
     if defined?(Puppet::Type) && source.is_a?(Puppet::Type)
       @source = source.path
-      source.tags.each { |t| tag(t) }
+      merge_tags_from(source)
       self.file = source.file
       self.line = source.line
     else

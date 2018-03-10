@@ -209,7 +209,7 @@ module Puppet::Network::HTTP
     # it by sleeping for the indicated number of seconds. The response is
     # returned unmodified if no Retry-After header is present.
     #
-    # @param response [Net::HTTPResponse] A response recieved from the
+    # @param response [Net::HTTPResponse] A response received from the
     #   HTTP client.
     #
     # @return [nil] Sleeps and returns nil if the response contained a

@@ -31,7 +31,8 @@ class Puppet::Util::Windows::EventLog
   def initialize(source_name = 'Puppet')
     @eventlog_handle = RegisterEventSourceW(FFI::Pointer::NULL, wide_string(source_name))
     if @eventlog_handle == NULL_HANDLE
-      raise EventLogError.new("RegisterEventSourceW failed to open Windows eventlog", FFI.errno)
+      #TRANSLATORS 'Windows' is the operating system and 'RegisterEventSourceW' is a API call and should not be translated
+      raise EventLogError.new(_("RegisterEventSourceW failed to open Windows eventlog"), FFI.errno)
     end
   end
 
@@ -55,7 +56,9 @@ class Puppet::Util::Windows::EventLog
   # @return [void]
   # @api public
   def report_event(args = {})
-    raise ArgumentError, "data must be a string, not #{args[:data].class}" unless args[:data].is_a?(String)
+    unless args[:data].is_a?(String)
+      raise ArgumentError, _("data must be a string, not %{class_name}") % { class_name: args[:data].class }
+    end
     from_string_to_wide_string(args[:data]) do |message_ptr|
       FFI::MemoryPointer.new(:pointer) do |message_array_ptr|
         message_array_ptr.write_pointer(message_ptr)
@@ -69,7 +72,8 @@ class Puppet::Util::Windows::EventLog
           num_strings, raw_data_size, message_array_ptr, raw_data)
 
         if report_result == WIN32_FALSE
-          raise EventLogError.new("ReportEventW failed to report event to Windows eventlog", FFI.errno)
+          #TRANSLATORS 'Windows' is the operating system and 'ReportEventW' is a API call and should not be translated
+          raise EventLogError.new(_("ReportEventW failed to report event to Windows eventlog"), FFI.errno)
         end
       end
     end
@@ -92,7 +96,7 @@ class Puppet::Util::Windows::EventLog
       when :err,:alert,:emerg,:crit
         [EVENTLOG_ERROR_TYPE, 0x03]
       else
-        raise ArgumentError, "Invalid log level #{level}"
+        raise ArgumentError, _("Invalid log level %{level}") % { level: level }
       end
     end
   end
@@ -110,7 +114,8 @@ class Puppet::Util::Windows::EventLog
   else
     class EventLogError < RuntimeError
       def initialize(msg, code)
-        super(msg + " (Win32 error: #{code})")
+        #TRANSLATORS 'Win32' is the Windows API and should not be translated
+        super(msg + ' ' + _("(Win32 error: %{detail})") % { detail: code})
       end
     end
   end

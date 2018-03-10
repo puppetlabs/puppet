@@ -110,20 +110,20 @@ class Puppet::Parser::TypeLoader
     # There is currently one user in indirector/resourcetype/parser
     #
     if Puppet.lookup(:squelch_parse_errors) {|| false }
-        begin
-          loaded_asts << parse_file(file)
-        rescue => e
-          # Resume from errors so that all parseable files may
-          # still be parsed. Mark this file as loaded so that
-          # it would not be parsed next time (handle it as if
-          # it was successfully parsed).
-          Puppet.debug("Unable to parse '#{file}': #{e.message}")
-        end
-      else
+      begin
         loaded_asts << parse_file(file)
+      rescue => e
+        # Resume from errors so that all parseable files may
+        # still be parsed. Mark this file as loaded so that
+        # it would not be parsed next time (handle it as if
+        # it was successfully parsed).
+        Puppet.debug("Unable to parse '#{file}': #{e.message}")
       end
+    else
+      loaded_asts << parse_file(file)
+    end
 
-      @loaded[file] = true
+    @loaded[file] = true
     end
 
     loaded_asts.collect do |ast|

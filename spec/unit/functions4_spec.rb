@@ -96,7 +96,6 @@ describe 'the 4x function api' do
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
-    signature = 'Any x, Any y'
     expect do
       func.call({}, 10)
     end.to raise_error(ArgumentError, "'min' expects 2 arguments, got 1")
@@ -107,7 +106,6 @@ describe 'the 4x function api' do
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
-    signature = 'Any x, Any y'
     expect do
       func.call({}, 10, 10, 10)
     end.to raise_error(ArgumentError, "'min' expects 2 arguments, got 3")
@@ -122,7 +120,7 @@ describe 'the 4x function api' do
 
   it 'an error is raised if simple function-name and method are not matched' do
     expect do
-      f = create_badly_named_method_function_class()
+      create_badly_named_method_function_class()
     end.to raise_error(ArgumentError, /Function Creation Error, cannot create a default dispatcher for function 'mix', no method with this name found/)
   end
 
@@ -477,7 +475,7 @@ describe 'the 4x function api' do
         the_loader = loader()
         here = get_binding(the_loader)
         expect do
-          fc = eval(<<-CODE, here)
+          eval(<<-CODE, here)
             Puppet::Functions.create_function('testing::test') do
               local_types do
                 type 'MyType += Array[Integer]'
@@ -498,7 +496,7 @@ describe 'the 4x function api' do
         the_loader = loader()
         here = get_binding(the_loader)
         expect do
-          fc = eval(<<-CODE, here)
+          eval(<<-CODE, here)
             Puppet::Functions.create_function('testing::test') do
               dispatch :test do
                 param 'Array[1+=1]', :x
@@ -647,7 +645,7 @@ describe 'the 4x function api' do
 
 
   def create_noargs_function_class
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       def test()
         10
       end
@@ -655,7 +653,7 @@ describe 'the 4x function api' do
   end
 
   def create_min_function_class
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       def min(x,y)
         x <= y ? x : y
       end
@@ -663,7 +661,7 @@ describe 'the 4x function api' do
   end
 
   def create_max_function_class
-    f = Puppet::Functions.create_function('max') do
+    Puppet::Functions.create_function('max') do
       def max(x,y)
         x >= y ? x : y
       end
@@ -671,7 +669,7 @@ describe 'the 4x function api' do
   end
 
   def create_badly_named_method_function_class
-    f = Puppet::Functions.create_function('mix') do
+    Puppet::Functions.create_function('mix') do
       def mix_up(x,y)
         x <= y ? x : y
       end
@@ -679,7 +677,7 @@ describe 'the 4x function api' do
   end
 
   def create_min_function_class_using_dispatch
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
         dispatch :min do
           param 'Numeric', :a
           param 'Numeric', :b
@@ -691,7 +689,7 @@ describe 'the 4x function api' do
   end
 
   def create_min_function_class_disptaching_to_two_methods
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       dispatch :min do
         param 'Numeric', :a
         param 'Numeric', :b
@@ -714,7 +712,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optionals_and_repeated
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       def min(x,y,a=1, b=1, *c)
         x <= y ? x : y
       end
@@ -722,7 +720,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optionals_and_repeated_via_dispatch
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       dispatch :min do
         param 'Numeric', :x
         param 'Numeric', :y
@@ -737,7 +735,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optionals_and_repeated_via_multiple_dispatch
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       dispatch :min do
         param 'Numeric', :x
         param 'Numeric', :y
@@ -757,7 +755,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_repeated_via_dispatch
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       dispatch :min do
         param 'Numeric', :x
         param 'Numeric', :y
@@ -770,7 +768,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_repeated
-    f = Puppet::Functions.create_function('count_args') do
+    Puppet::Functions.create_function('count_args') do
       dispatch :count_args do
         repeated_param 'Any', :c
       end
@@ -781,7 +779,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optional_repeated
-    f = Puppet::Functions.create_function('count_args') do
+    Puppet::Functions.create_function('count_args') do
       dispatch :count_args do
         optional_repeated_param 'Any', :c
       end
@@ -792,7 +790,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_repeated
-    f = Puppet::Functions.create_function('count_args') do
+    Puppet::Functions.create_function('count_args') do
       dispatch :count_args do
         required_repeated_param 'Any', :c
       end
@@ -803,7 +801,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_inexact_dispatch
-    f = Puppet::Functions.create_function('t1') do
+    Puppet::Functions.create_function('t1') do
       dispatch :t1 do
         param 'Numeric', :x
         param 'Numeric', :y
@@ -821,7 +819,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_rq_after_opt
-    f = Puppet::Functions.create_function('t1') do
+    Puppet::Functions.create_function('t1') do
       dispatch :t1 do
         optional_param 'Numeric', :x
         param 'Numeric', :y
@@ -833,7 +831,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_rq_repeated_after_opt
-    f = Puppet::Functions.create_function('t1') do
+    Puppet::Functions.create_function('t1') do
       dispatch :t1 do
         optional_param 'Numeric', :x
         required_repeated_param 'Numeric', :y
@@ -845,7 +843,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_param_after_repeated
-    f = Puppet::Functions.create_function('t1') do
+    Puppet::Functions.create_function('t1') do
       dispatch :t1 do
         repeated_param 'Numeric', :x
         param 'Numeric', :y
@@ -857,7 +855,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_param_injection_regular
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
       attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
       attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
@@ -877,7 +875,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_block_all_defaults
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         # use defaults, any callable, name is 'block'
@@ -890,7 +888,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_scope_required_block_all_defaults
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       dispatch :test do
         scope_param
         param 'Integer', :x
@@ -904,7 +902,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_block_default_type
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         # use defaults, any callable, name is 'block'
@@ -917,7 +915,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_scope_param_required_repeat
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       dispatch :test do
         scope_param
         param 'Any', :extra
@@ -930,7 +928,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_block_given_type
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         required_block_param
@@ -942,7 +940,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_block_fully_specified
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         # use defaults, any callable, name is 'block'
@@ -955,7 +953,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optional_block_all_defaults
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         # use defaults, any callable, name is 'block'
@@ -968,7 +966,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_no_parameter_dispatch
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test_no_args do
       end
       dispatch :test_one_arg do
@@ -984,7 +982,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_mismatch_handler
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
       end

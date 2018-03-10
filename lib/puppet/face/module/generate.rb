@@ -129,6 +129,8 @@ Puppet::Face.define(:module, '1.0.0') do
       puts _("Finished; module generated in %{path}.") % { path: path }
       result.join("\n")
     end
+
+    deprecate
   end
 end
 
@@ -136,6 +138,9 @@ module Puppet::ModuleTool::Generate
   module_function
 
   def generate(metadata, skip_interview = false)
+    #TRANSLATORS 'puppet module generate' is the name of the puppet command and 'Puppet Development Kit' is the name of the software package replacing this action and should not be translated. 
+    Puppet.deprecation_warning _("`puppet module generate` is deprecated and will be removed in a future release. This action has been replaced by Puppet Development Kit. For more information visit https://puppet.com/docs/pdk/latest/pdk.html.")
+
     interview(metadata) unless skip_interview
     destination = duplicate_skeleton(metadata)
     all_files = destination.basename + '**/*'

@@ -19,7 +19,7 @@ module Types
     def eql?(o)
       self == o
     end
-   end
+  end
 
   # @api private
   class SubjectPathElement < TypePathElement
@@ -512,7 +512,10 @@ module Types
     end
 
     def tense_deprecated
-      Puppet.warn_once('deprecations', 'typemismatch#tense', "Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored. Everything is now reported using present tense")
+      #TRANSLATORS TypeMismatchDescriber is a class name and 'tense' is a method name and should not be translated
+      message = _("Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored.")
+      message += ' ' + _("Everything is now reported using present tense")
+      Puppet.warn_once('deprecations', 'typemismatch#tense', message)
     end
 
     # Validates that all entries in the give_hash exists in the given param_struct, that their type conforms

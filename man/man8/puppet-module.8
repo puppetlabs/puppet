@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-MODULE" "8" "June 2017" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-MODULE" "8" "March 2018" "Puppet, Inc." "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-module\fR \- Creates, installs and searches for modules on the Puppet Forge\.
@@ -32,7 +32,16 @@ Whether to log debug information\.
 .
 .TP
 \-\-environment production
-The environment Puppet is running in\. For clients (e\.g\., \fBpuppet agent\fR) this determines the environment itself, which is used to find modules and much more\. For servers (i\.e\., \fBpuppet master\fR) this provides the default environment for nodes we know nothing about\.
+The environment in which Puppet is running\. For clients, such as \fBpuppet agent\fR, this determines the environment itself, which Puppet uses to find modules and much more\. For servers, such as \fBpuppet master\fR, this provides the default environment for nodes that Puppet knows nothing about\.
+.
+.IP
+When defining an environment in the \fB[agent]\fR section, this refers to the environment that the agent requests from the master\. The environment doesn\'t have to exist on the local filesystem because the agent fetches it from the master\. This definition is used when running \fBpuppet agent\fR\.
+.
+.IP
+When defined in the \fB[user]\fR section, the environment refers to the path that Puppet uses to search for code and modules related to its execution\. This requires the environment to exist locally on the filesystem where puppet is being executed\. Puppet subcommands, including \fBpuppet module\fR and \fBpuppet apply\fR, use this definition\.
+.
+.IP
+Given that the context and effects vary depending on the config section \fIhttps://puppet\.com/docs/puppet/latest/config_file_main\.html#config\-sections\fR in which the \fBenvironment\fR setting is defined, do not set it globally\.
 .
 .TP
 \-\-modulepath
@@ -54,7 +63,7 @@ puppet module build [\fIpath\fR]
 \fBDESCRIPTION\fR
 .
 .IP
-Prepares a local module for release on the Puppet Forge by building a ready\-to\-upload archive file\.
+Prepares a local module for release on the Puppet Forge by building a ready\-to\-upload archive file\. Note: Module build uses MD5 checksums, which are prohibited on FIPS enabled systems\.
 .
 .IP
 This action uses the metadata\.json file in the module directory to set metadata used by the Forge\. See \fIhttps://docs\.puppetlabs\.com/puppet/latest/reference/modules_publishing\.html\fR for more about writing metadata\.json files\.
@@ -123,7 +132,7 @@ puppet module install [\-\-force | \-f] [\-\-target\-dir DIR | \-i DIR] [\-\-ign
 \fBDESCRIPTION\fR
 .
 .IP
-Installs a module from the Puppet Forge or from a release archive file\.
+Installs a module from the Puppet Forge or from a release archive file\. Note: Module install uses MD5 checksums, which are prohibited on FIPS enabled systems\.
 .
 .IP
 The specified module will be installed into the directory specified with the \fB\-\-target\-dir\fR option, which defaults to the first directory in the modulepath\.
@@ -210,7 +219,7 @@ puppet module uninstall [\-\-force | \-f] [\-\-ignore\-changes | \-c] [\-\-versi
 \fBDESCRIPTION\fR
 .
 .IP
-Uninstalls a puppet module from the modulepath (or a specific target directory)\.
+Uninstalls a puppet module from the modulepath (or a specific target directory)\. Note: Module uninstall uses MD5 checksums, which are prohibited on FIPS enabled systems\.
 .
 .IP
 \fBOPTIONS\fR \fI\-\-force\fR | \fI\-f\fR \- Force the uninstall of an installed module even if there are local changes or the possibility of causing broken dependencies\.
@@ -241,7 +250,7 @@ puppet module upgrade [\-\-force | \-f] [\-\-ignore\-dependencies] [\-\-ignore\-
 \fBDESCRIPTION\fR
 .
 .IP
-Upgrades a puppet module\.
+Upgrades a puppet module\. Note: Module upgrade uses MD5 checksums, which are prohibited on FIPS enabled systems\.
 .
 .IP
 \fBOPTIONS\fR \fI\-\-force\fR | \fI\-f\fR \- Force the upgrade of an installed module even if there are local changes or the possibility of causing broken dependencies\. Implies \-\-ignore\-dependencies\.

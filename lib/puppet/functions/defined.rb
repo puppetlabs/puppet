@@ -4,15 +4,17 @@
 # being declared or assigned).
 #
 # This function takes at least one string argument, which can be a class name, type name,
-# resource reference, or variable reference of the form `'$name'`.
+# resource reference, or variable reference of the form `'$name'`. (Note that the `$` sign
+# is included in the string which must be in single quotes to prevent the `$` character
+# to be interpreted as interpolation.
 #
 # The `defined` function checks both native and defined types, including types
 # provided by modules. Types and classes are matched by their names. The function matches
 # resource declarations by using resource references.
 #
-# **Examples**: Different types of `defined` function matches
+# @example Different types of `defined` function matches
 #
-# ~~~ puppet
+# ```puppet
 # # Matching resource types
 # defined("file")
 # defined("customtype")
@@ -21,19 +23,19 @@
 # defined("foo")
 # defined("foo::bar")
 #
-# # Matching variables
+# # Matching variables (note the single quotes)
 # defined('$name')
 #
 # # Matching declared resources
 # defined(File['/tmp/file'])
-# ~~~
+# ```
 #
 # Puppet depends on the configuration's evaluation order when checking whether a resource
 # is declared.
 #
 # @example Importance of evaluation order when using `defined`
 #
-# ~~~ puppet
+# ```puppet
 # # Assign values to $is_defined_before and $is_defined_after using identical `defined`
 # # functions.
 #
@@ -46,7 +48,7 @@
 # $is_defined_after = defined(File['/tmp/file'])
 #
 # # $is_defined_before returns false, but $is_defined_after returns true.
-# ~~~
+# ```
 #
 # This order requirement only refers to evaluation order. The order of resources in the
 # configuration graph (e.g. with `before` or `require`) does not affect the `defined`
@@ -64,7 +66,7 @@
 #
 # @example Matching multiple resources and resources by different types with `defined`
 #
-# ~~~ puppet
+# ```puppet
 # file { "/tmp/file1":
 #   ensure => file,
 # }
@@ -90,7 +92,7 @@
 # defined(Resource['exec','/tmp/file2'])
 # defined(File['/tmp/file3'])
 # defined('$tmp_file2')
-# ~~~
+# ```
 #
 # @since 2.7.0
 # @since 3.6.0 variable reference and future parser types

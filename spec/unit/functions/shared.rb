@@ -88,7 +88,7 @@ shared_examples_for 'an inclusion function, when --tasks is on,' do |function|
   it "is not available when --tasks is on" do
     Puppet[:tasks] = true
     expect do
-      catalog = compile_to_catalog(<<-MANIFEST)
+      compile_to_catalog(<<-MANIFEST)
         #{function}(bar)
       MANIFEST
     end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)

@@ -80,7 +80,7 @@ class Closure < CallableSignature
 
   def call_by_name_with_scope(scope, args_hash, enforce_parameters)
     call_by_name_internal(scope, args_hash, enforce_parameters)
-   end
+  end
 
   def call_by_name(args_hash, enforce_parameters)
     call_by_name_internal(enclosing_scope, args_hash, enforce_parameters)

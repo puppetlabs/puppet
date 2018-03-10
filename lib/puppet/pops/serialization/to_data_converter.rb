@@ -188,15 +188,19 @@ module Serialization
     end
 
     def unknown_key_to_string_with_warning(value)
-      str = value.to_s
+      str = unknown_to_string(value)
       serialization_issue(Issues::SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path => path_to_s, :klass => value.class, :value => str)
       str
     end
 
     def unknown_to_string_with_warning(value)
-      str = value.to_s
+      str = unknown_to_string(value)
       serialization_issue(Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path => path_to_s, :klass => value.class, :value => str)
       str
+    end
+
+    def unknown_to_string(value)
+      value.is_a?(Regexp) ? Puppet::Pops::Types::PRegexpType.regexp_to_s_with_delimiters(value) : value.to_s
     end
 
     def non_string_keyed_hash_to_data(hash)

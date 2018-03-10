@@ -133,7 +133,10 @@ class Puppet::Parameter::ValueCollection
     call_opt = options[:call]
     unless call_opt.nil?
       devfail "Cannot use obsolete :call value '#{call_opt}' for property '#{self.class.name}'" unless call_opt == :none || call_opt == :instead
-      Puppet.deprecation_warning(_("Property option :call is deprecated and no longer used. Please remove it."))
+      #TRANSLATORS ':call' is a property and should not be translated
+      message = _("Property option :call is deprecated and no longer used.")
+      message += ' ' + _("Please remove it.")
+      Puppet.deprecation_warning(message)
       options = options.reject { |k,v| k == :call }
     end
 

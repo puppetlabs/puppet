@@ -12,7 +12,7 @@ Puppet::Type.newtype(:cron) do
     by Puppet with cron resources.
 
     If an existing crontab entry happens to match the scheduling and command of a
-    cron resource that has never been synched, Puppet will defer to the existing
+    cron resource that has never been synced, Puppet will defer to the existing
     crontab entry and will not create a new entry tagged with the `# Puppet Name: `
     comment.
 
@@ -278,9 +278,11 @@ Puppet::Type.newtype(:cron) do
       %w{sunday monday tuesday wednesday thursday friday saturday}
     end
     self.boundaries = [0, 7]
-    desc "The weekday on which to run the command.
-      Optional; if specified, must be between 0 and 7, inclusive, with
-      0 (or 7) being Sunday, or must be the name of the day (e.g., Tuesday)."
+    desc "The weekday on which to run the command. Optional; if specified,
+      must be either:
+
+      -   A number between 0 and 7, inclusive, with 0 or 7 being Sunday
+      -   The name of the day, such as 'Tuesday'."
   end
 
   newproperty(:month, :parent => CronParam) do
@@ -293,8 +295,11 @@ Puppet::Type.newtype(:cron) do
         august september october november december}
     end
     self.boundaries = [1, 12]
-    desc "The month of the year.  Optional; if specified
-      must be between 1 and 12 or the month name (e.g., December)."
+    desc "The month of the year. Optional; if specified,
+      must be either:
+
+      -   A number between 1 and 12, inclusive, with 1 being January
+      -   The name of the month, such as 'December'."
   end
 
   newproperty(:monthday, :parent => CronParam) do
@@ -317,7 +322,7 @@ Puppet::Type.newtype(:cron) do
       but will not associate them with a specific job.
 
       Settings should be specified exactly as they should appear in
-      the crontab, e.g., `PATH=/bin:/usr/bin:/usr/sbin`."
+      the crontab, like `PATH=/bin:/usr/bin:/usr/sbin`."
 
     validate do |value|
       unless value =~ /^\s*(\w+)\s*=\s*(.*)\s*$/ or value == :absent or value == "absent"

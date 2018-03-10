@@ -160,7 +160,7 @@ describe Puppet::Provider::NameService do
     it "should return a list of users if resource_type is user" do
       described_class.resource_type = Puppet::Type.type(:user)
       Puppet::Etc.expects(:setpwent)
-      Puppet::Etc.stubs(:getpwent).returns *users
+      Puppet::Etc.stubs(:getpwent).returns(*users)
       Puppet::Etc.expects(:endpwent)
       expect(described_class.listbyname).to eq(%w{root foo})
     end
@@ -172,7 +172,7 @@ describe Puppet::Provider::NameService do
       # the same name on disk, but each name is stored on disk in a different
       # encoding
       it "should return names with invalid byte sequences replaced with '?'" do
-        Etc.stubs(:getpwent).returns *utf_8_mixed_users
+        Etc.stubs(:getpwent).returns(*utf_8_mixed_users)
         expect(invalid_utf_8_jose).to_not be_valid_encoding
         result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::UTF_8) do
           described_class.listbyname
@@ -181,7 +181,7 @@ describe Puppet::Provider::NameService do
       end
 
       it "should return names in their original encoding/bytes if they would not be valid UTF-8" do
-        Etc.stubs(:getpwent).returns *latin_1_mixed_users
+        Etc.stubs(:getpwent).returns(*latin_1_mixed_users)
         result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ISO_8859_1) do
           described_class.listbyname
         end
@@ -192,7 +192,7 @@ describe Puppet::Provider::NameService do
     it "should return a list of groups if resource_type is group", :unless => Puppet.features.microsoft_windows? do
       described_class.resource_type = Puppet::Type.type(:group)
       Puppet::Etc.expects(:setgrent)
-      Puppet::Etc.stubs(:getgrent).returns *groups
+      Puppet::Etc.stubs(:getgrent).returns(*groups)
       Puppet::Etc.expects(:endgrent)
       expect(described_class.listbyname).to eq(%w{root bin})
     end
@@ -201,7 +201,7 @@ describe Puppet::Provider::NameService do
       yield_results = []
       described_class.resource_type = Puppet::Type.type(:user)
       Puppet::Etc.expects(:setpwent)
-      Puppet::Etc.stubs(:getpwent).returns *users
+      Puppet::Etc.stubs(:getpwent).returns(*users)
       Puppet::Etc.expects(:endpwent)
       described_class.listbyname {|x| yield_results << x }
       expect(yield_results).to eq(%w{root foo})
@@ -393,20 +393,20 @@ describe Puppet::Provider::NameService do
 
     it "should execute the modify command on valid values" do
       provider.expects(:modifycmd).with(:foo, 100).returns ['/bin/modify', '-f', '100' ]
-      provider.expects(:execute).with ['/bin/modify', '-f', '100']
+      provider.expects(:execute).with(['/bin/modify', '-f', '100'], has_entry(:custom_environment, {}))
       provider.set(:foo, 100)
     end
 
     it "should munge the value first" do
       described_class.options(:foo, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
-      provider.expects(:modifycmd).with(:foo, 200).returns ['/bin/modify', '-f', '200' ]
-      provider.expects(:execute).with ['/bin/modify', '-f', '200']
+      provider.expects(:modifycmd).with(:foo, 200).returns(['/bin/modify', '-f', '200' ])
+      provider.expects(:execute).with(['/bin/modify', '-f', '200'], has_entry(:custom_environment, {}))
       provider.set(:foo, 100)
     end
 
     it "should fail if the modify command fails" do
-      provider.expects(:modifycmd).with(:foo, 100).returns ['/bin/modify', '-f', '100' ]
-      provider.expects(:execute).with(['/bin/modify', '-f', '100']).raises(Puppet::ExecutionFailure, "Execution of '/bin/modify' returned 1: some_failure")
+      provider.expects(:modifycmd).with(:foo, 100).returns(['/bin/modify', '-f', '100' ])
+      provider.expects(:execute).with(['/bin/modify', '-f', '100'], kind_of(Hash)).raises(Puppet::ExecutionFailure, "Execution of '/bin/modify' returned 1: some_failure")
       expect { provider.set(:foo, 100) }.to raise_error Puppet::Error, /Could not set foo/
     end
   end

@@ -28,14 +28,14 @@ start)
     ;;
 stop)
     printf "Stopping Puppet client services:"
-    kill `cat $pidfile`
+    kill `cat "$pidfile"`
 
     printf " puppetd"
     echo ""
     ;;
 restart)
     printf "Restarting Puppet client services:"
-    kill -HUP `cat $pidfile`
+    kill -HUP `cat "$pidfile"`
 
     printf " puppetd"
     echo ""
@@ -43,14 +43,14 @@ restart)
 reload)
     printf "Reloading Puppet client services:"
 
-    kill -HUP `cat $pidfile`
+    kill -HUP `cat "$pidfile"`
 
     printf " puppetd"
     echo ""
     ;;
 status)
-    if [ -f $pidfile ]; then
-        pid=`cat $pidfile`
+    if [ -f "$pidfile" ]; then
+        pid=`cat "$pidfile"`
         curpid=`pgrep puppetd`
         if [ "$pid" -eq "$curpid" ]; then
             exit 0

@@ -259,6 +259,14 @@ describe Puppet::Indirector::Indirection do
           @indirection.find("/my/key", :ignore_cache => true)
         end
 
+        it "should not save to the cache if told to skip updating the cache" do
+          @terminus.expects(:find).returns @instance
+          @cache.expects(:find).returns nil
+          @cache.expects(:save).never
+
+          @indirection.find("/my/key", :ignore_cache_save => true)
+        end
+
         it "should only look in the cache if the request specifies not to use the terminus" do
           @terminus.expects(:find).never
           @cache.expects(:find)
@@ -459,7 +467,7 @@ describe Puppet::Indirector::Indirection do
         end
 
         it "should return the result of saving to the terminus" do
-          request = stub 'request', :instance => @instance, :node => nil
+          request = stub 'request', :instance => @instance, :node => nil, :ignore_cache_save? => false
 
           @indirection.expects(:request).returns request
 
@@ -469,7 +477,7 @@ describe Puppet::Indirector::Indirection do
         end
 
         it "should use a request to save the object to the cache" do
-          request = stub 'request', :instance => @instance, :node => nil
+          request = stub 'request', :instance => @instance, :node => nil, :ignore_cache_save? => false
 
           @indirection.expects(:request).returns request
 
@@ -486,6 +494,13 @@ describe Puppet::Indirector::Indirection do
           @cache.expects(:save).never
           @terminus.expects(:save).raises "eh"
           expect { @indirection.save(@instance) }.to raise_error(RuntimeError, /eh/)
+        end
+
+        it "should not save to the cache if told to ignore saving to the cache" do
+          @terminus.expects(:save)
+          @cache.expects(:save).never
+
+          @indirection.save(@instance, '/my/key', :ignore_cache_save => true)
         end
       end
     end
@@ -620,6 +635,13 @@ describe Puppet::Indirector::Indirection do
           @cache.expects(:save)
 
           @indirection.expire("/my/key")
+        end
+
+        it "does not expire an instance if told to skip cache saving" do
+          @indirection.cache.expects(:find).never
+          @indirection.cache.expects(:save).never
+
+          @indirection.expire("/my/key", :ignore_cache_save => true)
         end
 
         it "should use a request to save the expired resource to the cache" do
@@ -766,7 +788,7 @@ describe Puppet::Indirector::Indirection do
 
     it "should not create a terminus instance until one is actually needed" do
       Puppet::Indirector.expects(:terminus).never
-      indirection = Puppet::Indirector::Indirection.new(mock('model'), :lazytest)
+      Puppet::Indirector::Indirection.new(mock('model'), :lazytest)
     end
 
     after do

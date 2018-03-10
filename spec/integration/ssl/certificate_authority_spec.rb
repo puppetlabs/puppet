@@ -36,7 +36,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
 
   describe "when signing certificates" do
     it "should save the signed certificate" do
-      host = certificate_request_for("luke.madstop.com")
+      certificate_request_for("luke.madstop.com")
 
       ca.sign("luke.madstop.com")
 
@@ -44,8 +44,8 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     end
 
     it "should be able to sign multiple certificates" do
-      host = certificate_request_for("luke.madstop.com")
-      other = certificate_request_for("other.madstop.com")
+      certificate_request_for("luke.madstop.com")
+      certificate_request_for("other.madstop.com")
 
       ca.sign("luke.madstop.com")
       ca.sign("other.madstop.com")
@@ -55,7 +55,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     end
 
     it "should save the signed certificate to the :signeddir" do
-      host = certificate_request_for("luke.madstop.com")
+      certificate_request_for("luke.madstop.com")
 
       ca.sign("luke.madstop.com")
 
@@ -64,16 +64,16 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     end
 
     it "should save valid certificates" do
-      host = certificate_request_for("luke.madstop.com")
+      certificate_request_for("luke.madstop.com")
 
       ca.sign("luke.madstop.com")
 
-      unless ssl = Puppet::Util::which('openssl')
+      unless Puppet::Util::which('openssl')
         pending "No ssl available"
       else
         ca_cert = Puppet[:cacert]
         client_cert = File.join(Puppet[:signeddir], "luke.madstop.com.pem")
-        output = %x{openssl verify -CAfile #{ca_cert} #{client_cert}}
+        %x{openssl verify -CAfile #{ca_cert} #{client_cert}}
         expect($CHILD_STATUS).to eq(0)
       end
     end

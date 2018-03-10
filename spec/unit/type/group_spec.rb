@@ -10,6 +10,14 @@ describe Puppet::Type.type(:group) do
     expect(@class.provider_feature(:system_groups)).not_to be_nil
   end
 
+  it 'should default to `present`' do
+    expect(@class.new(:name => "foo")[:ensure]).to eq(:present)
+  end
+
+  it 'should set ensure to whatever is passed in' do
+    expect(@class.new(:name => "foo", :ensure => 'absent')[:ensure]).to eq(:absent)
+  end
+
   describe "when validating attributes" do
     [:name, :allowdupe].each do |param|
       it "should have a #{param} parameter" do

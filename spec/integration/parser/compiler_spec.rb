@@ -259,7 +259,7 @@ describe Puppet::Parser::Compiler do
     it "should not create duplicate resources when a class is referenced both directly and indirectly by the node classifier (4792)" do
       node = Puppet::Node.new("testnodex")
       node.classes = ['foo', 'bar']
-      catalog = compile_to_catalog(<<-PP, node)
+      compile_to_catalog(<<-PP, node)
         class foo
         {
           notify { foo_notify: }
@@ -401,7 +401,7 @@ describe Puppet::Parser::Compiler do
 
       it "should not favor local name scope" do
         expect {
-          catalog = compile_to_catalog(<<-PP)
+          compile_to_catalog(<<-PP)
             class experiment {
               class baz {
               }
@@ -683,7 +683,7 @@ describe Puppet::Parser::Compiler do
 
       it 'an initial underscore in not ok if elsewhere than last segment' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class a { $_a = 10}
             include a
             notify { 'test': message => $_a::_a }
@@ -769,7 +769,7 @@ describe Puppet::Parser::Compiler do
 
       it 'accepts anything when parameters are untyped' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
           define foo($a, $b, $c) { }
           foo { 'test': a => String, b=>10, c=>undef }
           MANIFEST
@@ -778,7 +778,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies non type compliant arguments' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Integer $x) { }
             foo { 'test': x =>'say friend' }
           MANIFEST
@@ -787,7 +787,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies undef for a non-optional type' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Integer $x) { }
             foo { 'test': x => undef }
           MANIFEST
@@ -796,7 +796,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies non type compliant default argument' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Integer $x = 'pow') { }
             foo { 'test':  }
           MANIFEST
@@ -805,7 +805,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies undef as the default for a non-optional type' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Integer $x = undef) { }
             foo { 'test':  }
           MANIFEST
@@ -826,7 +826,7 @@ describe Puppet::Parser::Compiler do
 
       it 'uses infer_set when reporting type mismatch' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Struct[{b => Integer, d=>String}] $a) { }
             foo{ bar: a => {b => 5, c => 'stuff'}}
           MANIFEST
@@ -855,7 +855,7 @@ describe Puppet::Parser::Compiler do
 
       it 'accepts anything when parameters are untyped' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo($a, $b, $c) { }
             class { 'foo': a => String, b=>10, c=>undef }
           MANIFEST
@@ -864,7 +864,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies non type compliant arguments' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo(Integer $x) { }
             class { 'foo': x =>'say friend' }
           MANIFEST
@@ -873,7 +873,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies undef for a non-optional type' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo(Integer $x) { }
             class { 'foo': x => undef }
           MANIFEST
@@ -882,7 +882,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies non type compliant default argument' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo(Integer $x = 'pow') { }
             class { 'foo':  }
           MANIFEST
@@ -891,11 +891,29 @@ describe Puppet::Parser::Compiler do
 
       it 'denies undef as the default for a non-optional type' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo(Integer $x = undef) { }
             class { 'foo':  }
           MANIFEST
         end.to raise_error(/Class\[Foo\]: parameter 'x' expects an Integer value, got Undef/)
+      end
+
+      it 'denies a regexp (rich data) argument given to class String parameter (even if later encoding of it is a string)' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            class foo(String $x) { }
+            class { 'foo':  x => /I am a regexp and I don't want to be a String/}
+          MANIFEST
+        end.to raise_error(/Class\[Foo\]: parameter 'x' expects a String value, got Regexp/)
+      end
+
+      it 'denies a regexp (rich data) argument given to define String parameter (even if later encoding of it is a string)' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            define foo(String $x) { }
+            foo { 'foo':  x => /I am a regexp and I don't want to be a String/}
+          MANIFEST
+        end.to raise_error(/Foo\[foo\]: parameter 'x' expects a String value, got Regexp/)
       end
 
       it 'accepts a Resource as a Type' do
@@ -1144,7 +1162,7 @@ describe Puppet::Parser::Compiler do
     it 'errors when an alias cannot be found when relationship is formed with -> operator' do
       node = Puppet::Node.new("testnodex")
       expect {
-        catalog = compile_to_catalog(<<-PP, node)
+        compile_to_catalog(<<-PP, node)
           notify { 'actual_2':  }
           notify { 'actual_1': alias => 'alias_1' }
           Notify[actual_2] -> Notify[alias_2]
@@ -1172,7 +1190,6 @@ describe Puppet::Parser::Compiler do
         include foo
         include bar
       MANIFEST
-      package = catalog.resource('Package', 'pip')
       expect(catalog.resource('Package', 'pip')[:require].to_s).to eql('Package[python]')
     end
 

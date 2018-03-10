@@ -82,5 +82,5 @@ module Puppet::Util::Backups
     sum = self.bucket.backup(f)
     self.info _("Filebucketed %{f} to %{filebucket} with sum %{sum}") % { f: f, filebucket: self.bucket.name, sum: sum }
     return sum
-    end
+  end
 end

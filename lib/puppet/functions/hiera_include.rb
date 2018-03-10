@@ -11,10 +11,10 @@ require 'hiera/puppet_function'
 #
 # @example Using `lookup` and `include` instead of of the deprecated `hiera_include`
 # 
-# ~~~puppet
+# ```puppet
 # # In site.pp, outside of any node definitions and below any top-scope variables:
 # lookup('classes', Array[String], 'unique').include
-# ~~~
+# ```
 #
 # The `hiera_include` function requires:
 #
@@ -43,7 +43,7 @@ require 'hiera/puppet_function'
 #
 # @example Using `hiera_include`
 #
-# ~~~ yaml
+# ```yaml
 # # Assuming hiera.yaml
 # # :hierarchy:
 # #   - web01.example.com
@@ -56,14 +56,14 @@ require 'hiera/puppet_function'
 # # Assuming common.yaml:
 # # classes:
 # #   - apache
-# ~~~
+# ```
 #
-# ~~~ puppet
+# ```puppet
 # # In site.pp, outside of any node definitions and below any top-scope variables:
 # hiera_include('classes', undef)
 #
 # # Puppet assigns the apache and apache::mod::php classes to the web01.example.com node.
-# ~~~
+# ```
 #
 # You can optionally generate the default value with a
 # [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that
@@ -71,7 +71,7 @@ require 'hiera/puppet_function'
 #
 # @example Using `hiera_include` with a lambda
 #
-# ~~~ puppet
+# ```puppet
 # # Assuming the same Hiera data as the previous example:
 #
 # # In site.pp, outside of any node definitions and below any top-scope variables:
@@ -80,7 +80,7 @@ require 'hiera/puppet_function'
 # # Puppet assigns the apache and apache::mod::php classes to the web01.example.com node.
 # # If hiera_include couldn't match its key, it would return the lambda result,
 # # "Key 'classes' not found".
-# ~~~
+# ```
 #
 # See
 # [the 'Using the lookup function' documentation](https://docs.puppet.com/puppet/latest/hiera_use_function.html) for how to perform lookup of data.

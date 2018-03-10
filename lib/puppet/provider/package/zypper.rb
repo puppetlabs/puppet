@@ -102,7 +102,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     options << '--name' unless major < 1 || @resource.allow_virtual? || should
     options << wanted
 
-    zypper *options
+    zypper(*options)
 
     unless self.query
       raise Puppet::ExecutionFailure.new(
@@ -138,7 +138,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
       options << @resource[:name]
 
-      zypper *options
+      zypper(*options)
     end
 
   end

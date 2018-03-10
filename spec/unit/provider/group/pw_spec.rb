@@ -54,7 +54,7 @@ describe provider_class do
     it "should run pw with no additional flags" do
       provider.expects(:exists?).returns true
       expect(provider.deletecmd).to eq([provider_class.command(:pw), "groupdel", "testgroup"])
-      provider.expects(:execute).with([provider_class.command(:pw), "groupdel", "testgroup"])
+      provider.expects(:execute).with([provider_class.command(:pw), "groupdel", "testgroup"], has_entry(:custom_environment, {}))
       provider.delete
     end
   end
@@ -62,19 +62,19 @@ describe provider_class do
   describe "when modifying groups" do
     it "should run pw with the correct arguments" do
       expect(provider.modifycmd("gid", 12345)).to eq([provider_class.command(:pw), "groupmod", "testgroup", "-g", 12345])
-      provider.expects(:execute).with([provider_class.command(:pw), "groupmod", "testgroup", "-g", 12345])
+      provider.expects(:execute).with([provider_class.command(:pw), "groupmod", "testgroup", "-g", 12345], has_entry(:custom_environment, {}))
       provider.gid = 12345
     end
 
     it "should use -M with the correct argument when the members property is changed" do
       resource[:members] = "user1"
-      provider.expects(:execute).with(all_of(includes("-M"), includes("user2")))
+      provider.expects(:execute).with(all_of(includes("-M"), includes("user2")), has_entry(:custom_environment, {}))
       provider.members = "user2"
     end
 
     it "should use -M with all the given users when the members property is changed with an array" do
       resource[:members] = ["user1", "user2"]
-      provider.expects(:execute).with(all_of(includes("-M"), includes("user3,user4")))
+      provider.expects(:execute).with(all_of(includes("-M"), includes("user3,user4")), has_entry(:custom_environment, {}))
       provider.members = ["user3", "user4"]
     end
   end

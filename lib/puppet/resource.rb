@@ -63,7 +63,7 @@ class Puppet::Resource
     end
 
     if tags = data['tags']
-      tags.each { |t| tag(t) }
+      tag(*tags)
     end
 
     ATTRIBUTES.each do |a|
@@ -251,8 +251,10 @@ class Puppet::Resource
       @sensitive_parameters.replace(type.sensitive_parameters)
     else
       if type.is_a?(Hash)
-        raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
-          "Did you mean (#{(type[:type] || type["type"]).inspect}, #{(type[:title] || type["title"]).inspect }) ?"
+        #TRANSLATORS 'Puppet::Resource.new' should not be translated
+        raise ArgumentError, _("Puppet::Resource.new does not take a hash as the first argument.") + ' ' +
+          _("Did you mean (%{type}, %{title}) ?") %
+              { type: (type[:type] || type["type"]).inspect, title: (type[:title] || type["title"]).inspect }
       end
 
       # In order to avoid an expensive search of 'known_resource_types" and
@@ -288,9 +290,9 @@ class Puppet::Resource
 
       if strict? && rt.nil?
         if self.class?
-          raise ArgumentError, "Could not find declared class #{title}"
+          raise ArgumentError, _("Could not find declared class %{title}") % { title: title }
         else
-          raise ArgumentError, "Invalid resource type #{type}"
+          raise ArgumentError, _("Invalid resource type %{type}") % { type: type }
         end
       end
 
@@ -587,7 +589,7 @@ class Puppet::Resource
     elsif argtitle.nil? && argtype =~ /^([^\[\]]+)\[(.+)\]$/m  then [ $1,                 $2            ]
     elsif argtitle                                             then [ argtype,            argtitle      ]
     elsif argtype.is_a?(Puppet::Type)                          then [ argtype.class.name, argtype.title ]
-    else  raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
+    else  raise ArgumentError, _("No title provided and %{type} is not a valid resource reference") % { type: argtype.inspect }
     end
   end
   private_class_method :extract_type_and_title

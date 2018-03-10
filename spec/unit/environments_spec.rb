@@ -421,6 +421,13 @@ config_version=$vardir/random/scripts
       expect(loader.get_conf(:doesnotexist)).to be_nil
     end
 
+    it "gets the conf environment_timeout if one is specified" do
+      Puppet[:environment_timeout] = 8675
+      conf = loader.get_conf(:static1)
+
+      expect(conf.environment_timeout).to eq(8675)
+    end
+
     context "that are private" do
       let(:private_env) { Puppet::Node::Environment.create(:private, []) }
       let(:loader) { Puppet::Environments::StaticPrivate.new(private_env) }

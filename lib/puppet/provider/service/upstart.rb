@@ -12,7 +12,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   confine :any => [
     Facter.value(:operatingsystem) == 'Ubuntu',
     (Facter.value(:osfamily) == 'RedHat' and Facter.value(:operatingsystemrelease) =~ /^6\./),
-    (Facter.value(:operatingsystem) == 'Amazon' and Facter.value(:operatingsystemrelease).to_f < 2017.12),
+    (Facter.value(:operatingsystem) == 'Amazon' and Facter.value(:operatingsystemmajrelease) =~ /\d{4}/),
     Facter.value(:operatingsystem) == 'LinuxMint',
   ]
 

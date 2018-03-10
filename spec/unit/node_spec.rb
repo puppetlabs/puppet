@@ -1,9 +1,11 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'matchers/json'
+require 'puppet_spec/files'
 
 describe Puppet::Node do
   include JSONMatchers
+  include PuppetSpec::Files
 
   let(:environment) { Puppet::Node::Environment.create(:bar, []) }
   let(:env_loader) { Puppet::Environments::Static.new(environment) }
@@ -56,7 +58,7 @@ describe Puppet::Node do
     end
 
     it "can round-trip through json" do
-      facts = Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
+      Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
       node = Puppet::Node.new("hello",
                               :environment => 'bar',
                               :classes => ['erth', 'aiu'],
@@ -70,7 +72,7 @@ describe Puppet::Node do
     end
 
     it "validates against the node json schema", :unless => Puppet.features.microsoft_windows? do
-      facts = Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
+      Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
       node = Puppet::Node.new("hello",
                               :environment => 'bar',
                               :classes => ['erth', 'aiu'],
@@ -80,7 +82,7 @@ describe Puppet::Node do
     end
 
     it "when missing optional parameters validates against the node json schema", :unless => Puppet.features.microsoft_windows? do
-      facts = Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
+      Puppet::Node::Facts.new("hello", "one" => "c", "two" => "b")
       node = Puppet::Node.new("hello",
                               :environment => 'bar'
                              )
@@ -115,8 +117,9 @@ describe Puppet::Node do
     end
 
     it "limits the serialization of environment to be just the name" do
-      # it is something like 138 when serializing everything in a default environment
-      expect(@node.to_yaml.size).to be < 70
+      yaml_file = file_containing("temp_yaml", @node.to_yaml)
+      node_yaml = Puppet::Util::Yaml.load_file(yaml_file, false, true)
+      expect(node_yaml['environment']).to eq('production')
     end
   end
 
@@ -155,6 +158,13 @@ describe Puppet::Node do
       expect(@node).to set_json_attribute('parameters').to({"a" => "b", "c" => "d"})
     end
 
+    it "does not include the environment parameter in the json" do
+      @node.parameters = {"a" => "b", "c" => "d"}
+      @node.environment = environment
+      expect(@node.parameters).to eq({"a"=>"b", "c"=>"d", "environment"=>"bar"})
+      expect(@node).to set_json_attribute('parameters').to({"a" => "b", "c" => "d"})
+    end
+
     it "does not include the parameters if there are none" do
       expect(@node).to_not set_json_attribute('parameters')
     end
@@ -186,12 +196,23 @@ describe Puppet::Node do
 
     it "includes parameters if set" do
       @node.parameters = {"a" => "b", "c" => "d"}
-      expect(Puppet::Node).to read_json_attribute('parameters').from(@node.to_json).as({"a" => "b", "c" => "d"})
+      expect(Puppet::Node).to read_json_attribute('parameters').from(@node.to_json).as({"a" => "b", "c" => "d", "environment" => "production"})
     end
 
     it "deserializes environment to environment_name as a symbol" do
-      @node.environment = environment
-      expect(Puppet::Node).to read_json_attribute('environment_name').from(@node.to_json).as(:bar)
+      Puppet.override(:environments => env_loader) do
+        @node.environment = environment
+        expect(Puppet::Node).to read_json_attribute('environment_name').from(@node.to_json).as(:bar)
+      end
+    end
+
+    it "does not immediately populate the environment instance" do
+      node = described_class.from_data_hash("name" => "foo", "environment" => "production")
+
+      expect(node.environment_name).to eq(:production)
+      expect(node).not_to be_has_environment_instance
+      node.environment
+      expect(node).to be_has_environment_instance
     end
   end
 end
@@ -291,7 +312,10 @@ describe Puppet::Node, "when merging facts" do
 
   context "with an env loader" do
     let(:environment) { Puppet::Node::Environment.create(:one, []) }
-    let(:env_loader) { Puppet::Environments::Static.new(environment) }
+    let(:environment_two) { Puppet::Node::Environment.create(:two, []) }
+    let(:environment_three) { Puppet::Node::Environment.create(:three, []) }
+    let(:environment_prod) { Puppet::Node::Environment.create(:production, []) }
+    let(:env_loader) { Puppet::Environments::Static.new(environment, environment_two, environment_three, environment_prod) }
 
     around do |example|
       Puppet.override(:environments => env_loader) do
@@ -299,18 +323,89 @@ describe Puppet::Node, "when merging facts" do
       end
     end
 
-    it "adds the environment to the list of parameters" do
-      Puppet[:environment] = "one"
-      @node = Puppet::Node.new("testnode", :environment => "one")
-      @node.merge "two" => "three"
-      expect(@node.parameters["environment"]).to eq("one")
+    context "when a node is initialized from a data hash" do
+      context "when a node is initialzed with an environment" do
+        it "uses 'environment' when provided" do
+          my_node = Puppet::Node.from_data_hash("environment" => "one", "name" => "my_node")
+          expect(my_node.environment.name).to eq(:one)
+        end
+
+        it "uses the environment parameter when provided" do
+          my_node = Puppet::Node.from_data_hash("parameters" => {"environment" => "one"}, "name" => "my_node")
+          expect(my_node.environment.name).to eq(:one)
+        end
+
+        it "uses the environment when also given an environment parameter" do
+          my_node = Puppet::Node.from_data_hash("parameters" => {"environment" => "one"}, "name" => "my_node", "environment" => "two")
+          expect(my_node.environment.name).to eq(:two)
+        end
+
+        it "uses 'environment' when an environment fact has been merged" do
+          my_node = Puppet::Node.from_data_hash("environment" => "one", "name" => "my_node")
+          my_node.fact_merge Puppet::Node::Facts.new "my_node", "environment" => "two"
+          expect(my_node.environment.name).to eq(:one)
+        end
+
+        it "uses an environment parameter when an environment fact has been merged" do
+          my_node = Puppet::Node.from_data_hash("parameters" => {"environment" => "one"}, "name" => "my_node")
+          my_node.fact_merge Puppet::Node::Facts.new "my_node", "environment" => "two"
+          expect(my_node.environment.name).to eq(:one)
+        end
+
+        it "uses an environment when an environment parameter has been given and an environment fact has been merged" do
+          my_node = Puppet::Node.from_data_hash("parameters" => {"environment" => "two"}, "name" => "my_node", "environment" => "one")
+          my_node.fact_merge Puppet::Node::Facts.new "my_node", "environment" => "three"
+          expect(my_node.environment.name).to eq(:one)
+        end
+      end
+
+      context "when a node is initialized without an environment" do
+        it "should use the server's default environment" do
+          my_node = Puppet::Node.from_data_hash("name" => "my_node")
+          expect(my_node.environment.name).to eq(:production)
+        end
+
+        it "should use the server's default when an environment fact has been merged" do
+          my_node = Puppet::Node.from_data_hash("name" => "my_node")
+          my_node.fact_merge Puppet::Node::Facts.new "my_node", "environment" => "two"
+          expect(my_node.environment.name).to eq(:production)
+        end
+      end
     end
 
-    it "nots set the environment if it is already set in the parameters" do
-      Puppet[:environment] = "one"
-      @node = Puppet::Node.new("testnode", :environment => "one")
-      @node.merge "environment" => "two"
-      expect(@node.parameters["environment"]).to eq("two")
+    context "when a node is initialized from new" do
+
+      context "when a node is initialzed with an environment" do
+
+        it "adds the environment to the list of parameters" do
+          Puppet[:environment] = "one"
+          @node = Puppet::Node.new("testnode", :environment => "one")
+          @node.merge "two" => "three"
+          expect(@node.parameters["environment"]).to eq("one")
+        end
+
+        it "when merging, syncs the environment parameter to a node's existing environment" do
+          @node = Puppet::Node.new("testnode", :environment => "one")
+          @node.merge "environment" => "two"
+          expect(@node.parameters["environment"]).to eq("one")
+        end
+
+        it "merging facts does not override that environment" do
+          @node = Puppet::Node.new("testnode", :environment => "one")
+          @node.fact_merge Puppet::Node::Facts.new "testnode", "environment" => "two"
+          expect(@node.environment.name.to_s).to eq("one")
+        end
+      end
+
+      context "when a node is initialized without an environment" do
+
+        it "it perfers an environment name to an environment fact" do
+          @node = Puppet::Node.new("testnode")
+          @node.environment_name = "one"
+          @node.fact_merge Puppet::Node::Facts.new "testnode", "environment" => "two"
+          expect(@node.environment.name.to_s).to eq("one")
+        end
+      end
     end
   end
 end

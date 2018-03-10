@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do
-        search_output = eix *(self.eix_search_arguments + ['--installed'])
+        search_output = eix(*(self.eix_search_arguments + ['--installed']))
       end
 
       packages = []
@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     cmd << '--update' if [:latest].include?(should)
     cmd += install_options if @resource[:install_options]
     cmd << name
-    emerge *cmd
+    emerge(*cmd)
   end
 
   def uninstall
@@ -89,10 +89,10 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     cmd << name
     if [:purged].include?(should)
       Puppet::Util.withenv :CONFIG_PROTECT => "-*" do
-        emerge *cmd
+        emerge(*cmd)
       end
     else
-      emerge *cmd
+      emerge(*cmd)
     end
   end
 
@@ -111,7 +111,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     @atom ||= begin
       package_info = {}
       # do the search
-      search_output = qatom_bin *([@resource[:name], '--format', output_format])
+      search_output = qatom_bin(*([@resource[:name], '--format', output_format]))
       # verify if the search found anything
       match = result_format.match(search_output)
       if match
@@ -146,7 +146,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
   def self.get_sets
     @sets ||= begin
-      @sets = emerge *(['--list-sets'])
+      @sets = emerge(*(['--list-sets']))
     end
   end
 
@@ -170,8 +170,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       end
 
       if @resource[:name].match(/^@/)
-         if package_sets.include?(@resource[:name][1..-1].to_s)
-           return({:name => "#{@resource[:name]}", :ensure => '9999', :version_available => nil, :installed_versions => nil, :installable_versions => "9999,"})
+        if package_sets.include?(@resource[:name][1..-1].to_s)
+          return({:name => "#{@resource[:name]}", :ensure => '9999', :version_available => nil, :installed_versions => nil, :installable_versions => "9999,"})
         end
       end
 
@@ -180,7 +180,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do
-        search_output = eix *(self.class.eix_search_arguments + ['--exact',search_field,search_value])
+        search_output = eix(*(self.class.eix_search_arguments + ['--exact',search_field,search_value]))
       end
 
       packages = []

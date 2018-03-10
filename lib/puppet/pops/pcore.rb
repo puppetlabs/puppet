@@ -31,14 +31,7 @@ module Pcore
     instance
   end
 
-  def self.init(loader, ir, for_agent)
-    add_alias('Pcore::URI_RX', TYPE_URI_RX, loader)
-    add_type(TYPE_URI_ALIAS, loader)
-    add_alias('Pcore::SimpleTypeName', TYPE_SIMPLE_TYPE_NAME, loader)
-    add_alias('Pcore::MemberName', TYPE_MEMBER_NAME, loader)
-    add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
-    add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
-
+  def self.init_env(loader)
     if Puppet[:tasks]
       add_object_type('Task', <<-PUPPET, loader)
         {
@@ -83,18 +76,25 @@ module Pcore
         }
       PUPPET
     end
+  end
+
+  def self.init(loader, ir)
+    add_alias('Pcore::URI_RX', TYPE_URI_RX, loader)
+    add_type(TYPE_URI_ALIAS, loader)
+    add_alias('Pcore::SimpleTypeName', TYPE_SIMPLE_TYPE_NAME, loader)
+    add_alias('Pcore::MemberName', TYPE_MEMBER_NAME, loader)
+    add_alias('Pcore::TypeName', TYPE_QUALIFIED_REFERENCE, loader)
+    add_alias('Pcore::QRef', TYPE_QUALIFIED_REFERENCE, loader)
     Types::TypedModelObject.register_ptypes(loader, ir)
 
     @type = create_object_type(loader, ir, Pcore, 'Pcore', nil)
 
-    ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore', loader)
-    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
-    ir.register_implementation('Puppet::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19', loader)
-    unless for_agent
-      Resource.register_ptypes(loader, ir)
-      Lookup::Context.register_ptype(loader, ir);
-      Lookup::DataProvider.register_types(loader)
-    end
+    ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore')
+    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model')
+    ir.register_implementation('Puppet::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19')
+    Resource.register_ptypes(loader, ir)
+    Lookup::Context.register_ptype(loader, ir);
+    Lookup::DataProvider.register_types(loader)
   end
 
   # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class
@@ -116,7 +116,7 @@ module Pcore
     init_hash[Types::KEY_ATTRIBUTES] = attributes_hash unless attributes_hash.empty?
     init_hash[Types::KEY_FUNCTIONS] = functions_hash unless functions_hash.empty?
     init_hash[Types::KEY_EQUALITY] = equality unless equality.nil?
-    ir.register_implementation(type_name, impl_class, loader)
+    ir.register_implementation(type_name, impl_class)
     add_type(Types::PObjectType.new(type_name, init_hash), loader)
   end
 

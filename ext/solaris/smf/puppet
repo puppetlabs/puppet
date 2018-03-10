@@ -2,16 +2,16 @@
 
 . /lib/svc/share/smf_include.sh
 
-[ -z "${SMF_FMRI}" ] && exit $SMF_EXIT_ERR
+[ -z "${SMF_FMRI}" ] && exit "$SMF_EXIT_ERR"
 
 CONF_FILE=/etc/puppetlabs/puppet/puppet.conf
-[ ! -f "${CONF_FILE}" ] && exit $SMF_EXIT_ERR_CONFIG
+[ ! -f "${CONF_FILE}" ] && exit "$SMF_EXIT_ERR_CONFIG"
 
 PUPPET=/opt/puppetlabs/bin/puppet
 
 case "$1" in
 start)
-  exec $PUPPET agent
+  exec "$PUPPET" agent
   ;;
 
 stop)
@@ -23,22 +23,22 @@ stop)
   # continues until all processes are killed.
   # svcs -p <fmri> lists all processes in the contract.
   # http://bnsmb.de/solaris/My_Little_SMF_FAQ.html
-  ctid=`svcprop -p restarter/contract $SMF_FMRI`
+  ctid=`svcprop -p restarter/contract "$SMF_FMRI"`
   if [ -n "$ctid" ]; then
-    smf_kill_contract $ctid TERM 1 30
+    smf_kill_contract "$ctid" TERM 1 30
     ret=$?
-    [ $ret -eq 1 ] && exit $SMF_EXIT_ERR_FATAL
+    [ "$ret" -eq 1 ] && exit "$SMF_EXIT_ERR_FATAL"
 
-    if [ $ret -eq 2 ] ; then
-      smf_kill_contract $ctid KILL 1
-      [ $? -ne 0 ] && exit $SMF_EXIT_ERR_FATAL
+    if [ "$ret" -eq 2 ] ; then
+      smf_kill_contract "$ctid" KILL 1
+      [ $? -ne 0 ] && exit "$SMF_EXIT_ERR_FATAL"
     fi
   fi
   ;;
 *)
   echo "Usage: $0 {start|stop}";
-  exit $SMF_EXIT_ERR_FATAL
+  exit "$SMF_EXIT_ERR_FATAL"
   ;;
 esac
-exit $SMF_EXIT_OK
+exit "$SMF_EXIT_OK"
 

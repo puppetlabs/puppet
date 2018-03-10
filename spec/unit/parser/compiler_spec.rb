@@ -235,7 +235,6 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should set the parent scope of the new scope to its topscope if the parent passed in is nil" do
-      scope = mock 'scope'
       newscope = @compiler.newscope(nil)
 
       expect(newscope.parent).to equal(@compiler.topscope)
@@ -277,6 +276,14 @@ describe Puppet::Parser::Compiler do
       @compiler.compile
       expect(@compiler.topscope['environment']).to eq("testing")
       expect(@compiler.topscope['wat']).to eq('this is how the sausage is made')
+    end
+
+    it "sets the environment based on node.environment instead of the parameters" do
+      compile_stub(:set_node_parameters)
+      @node.parameters['environment'] = "Not actually #{@node.environment.name}"
+
+      @compiler.compile
+      expect(@compiler.topscope['environment']).to eq('testing')
     end
 
     it "should set the client and server versions on the catalog" do
@@ -725,7 +732,7 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should ensure class is in catalog without params" do
-      @node.classes = klasses = {'foo'=>nil}
+      @node.classes = {'foo'=>nil}
       foo = Puppet::Resource::Type.new(:hostclass, 'foo')
       @compiler.environment.known_resource_types.add foo
       catalog = @compiler.compile

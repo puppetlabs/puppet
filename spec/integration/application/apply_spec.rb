@@ -470,13 +470,13 @@ class amod::bad_type {
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', catalog.to_json)
-        apply.expects(:apply_catalog).with do |catalog|
-          catalog.resource(:notify, 'rx')['message'].is_a?(String)
-          catalog.resource(:notify, 'bin')['message'].is_a?(String)
-          catalog.resource(:notify, 'ver')['message'].is_a?(String)
-          catalog.resource(:notify, 'vrange')['message'].is_a?(String)
-          catalog.resource(:notify, 'tspan')['message'].is_a?(String)
-          catalog.resource(:notify, 'tstamp')['message'].is_a?(String)
+        apply.expects(:apply_catalog).with do |cat|
+          cat.resource(:notify, 'rx')['message'].is_a?(String)
+          cat.resource(:notify, 'bin')['message'].is_a?(String)
+          cat.resource(:notify, 'ver')['message'].is_a?(String)
+          cat.resource(:notify, 'vrange')['message'].is_a?(String)
+          cat.resource(:notify, 'tspan')['message'].is_a?(String)
+          cat.resource(:notify, 'tstamp')['message'].is_a?(String)
         end
         apply.run
       end
@@ -493,7 +493,7 @@ class amod::bad_type {
 
       it 'will log a warning that a value of unknown type is converted into a string' do
         logs = []
-        json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           compile_to_catalog('include amod::bad_type', node).to_json
         end
         logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
@@ -509,13 +509,13 @@ class amod::bad_type {
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', catalog.to_json)
-        apply.expects(:apply_catalog).with do |catalog|
-          catalog.resource(:notify, 'rx')['message'].is_a?(Regexp)
-          catalog.resource(:notify, 'bin')['message'].is_a?(Puppet::Pops::Types::PBinaryType::Binary)
-          catalog.resource(:notify, 'ver')['message'].is_a?(SemanticPuppet::Version)
-          catalog.resource(:notify, 'vrange')['message'].is_a?(SemanticPuppet::VersionRange)
-          catalog.resource(:notify, 'tspan')['message'].is_a?(Puppet::Pops::Time::Timespan)
-          catalog.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
+        apply.expects(:apply_catalog).with do |cat|
+          cat.resource(:notify, 'rx')['message'].is_a?(Regexp)
+          cat.resource(:notify, 'bin')['message'].is_a?(Puppet::Pops::Types::PBinaryType::Binary)
+          cat.resource(:notify, 'ver')['message'].is_a?(SemanticPuppet::Version)
+          cat.resource(:notify, 'vrange')['message'].is_a?(SemanticPuppet::VersionRange)
+          cat.resource(:notify, 'tspan')['message'].is_a?(Puppet::Pops::Time::Timespan)
+          cat.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
         end
         apply.run
       end

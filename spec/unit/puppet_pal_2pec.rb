@@ -691,7 +691,7 @@ describe 'Puppet Pal' do
         end.to raise_error(/A block must be given to 'in_tmp_environment/)
       end
 
-      it 'errors if an env_name is given and is not a String[1]' do |ctx|
+      it 'errors if an env_name is given and is not a String[1]' do
         expect do
           Puppet::Pal.in_tmp_environment('', modulepath: modulepath, facts: node_facts) { |ctx| }
         end.to raise_error(/temporary environment name has wrong type/)
@@ -839,7 +839,7 @@ describe 'Puppet Pal' do
 
       it 'a given "modulepath" overrides the default' do
         expect do
-          result = Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: [], facts: node_facts) do |ctx|
+          Puppet::Pal.in_environment('pal_env', env_dir: testing_env_dir, modulepath: [], facts: node_facts) do |ctx|
             ctx.with_script_compiler {|c| c.evaluate_string('a::afunc()') }
           end
         end.to raise_error(/Unknown function: 'a::afunc'/)
@@ -874,7 +874,7 @@ describe 'Puppet Pal' do
         end.to raise_error(/The environment directory '.*' does not exist/)
       end
 
-      it 'errors if an env_name is given and is not a String[1]' do |ctx|
+      it 'errors if an env_name is given and is not a String[1]' do
         expect do
           Puppet::Pal.in_environment('', env_dir: testing_env_dir, facts: node_facts)  { |ctx| }
         end.to raise_error(/env_name has wrong type/)
@@ -917,7 +917,7 @@ describe 'Puppet Pal' do
       it 'a given "modulepath" overrides the default' do
         testing_env_dir # creates the structure
         expect do
-          result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, modulepath: [], facts: node_facts) do |ctx|
+          Puppet::Pal.in_environment('pal_env', envpath: environments_dir, modulepath: [], facts: node_facts) do |ctx|
             ctx.with_script_compiler { |c| c.evaluate_string('a::afunc()') }
           end
         end.to raise_error(/Unknown function: 'a::afunc'/)
@@ -940,7 +940,6 @@ describe 'Puppet Pal' do
 
       it 'the envpath can have multiple entries - that are searched for the given env' do
         testing_env_dir # creates the structure
-        several_dirs = "/tmp/nowhere/to/be/found:#{environments_dir}"
         result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
           ctx.with_script_compiler {|c| c.evaluate_string('a::afunc()') }
         end

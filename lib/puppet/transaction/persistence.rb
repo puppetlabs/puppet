@@ -40,6 +40,14 @@ class Puppet::Transaction::Persistence
     @new_data["resources"][resource_name]["parameters"][param_name]["system_value"] = value
   end
 
+  def copy_skipped(resource_name)
+    @old_data["resources"] ||= {}
+    old_value = @old_data["resources"][resource_name]
+    if !old_value.nil?
+      @new_data["resources"][resource_name] = old_value
+    end
+  end
+
   # Load data from the persistence store on disk.
   def load
     filename = Puppet[:transactionstorefile]
@@ -80,5 +88,12 @@ class Puppet::Transaction::Persistence
   # Save data from internal class to persistence store on disk.
   def save
     Puppet::Util::Yaml.dump(@new_data, Puppet[:transactionstorefile])
+  end
+
+  # Use the catalog and run_mode to determine if persistence should be enabled or not
+  # @param [Puppet::Resource::Catalog] catalog catalog being processed
+  # @return [boolean] true if persistence is enabled
+  def enabled?(catalog)
+    catalog.host_config? && Puppet.run_mode.name == :agent
   end
 end

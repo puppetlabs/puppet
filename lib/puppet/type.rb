@@ -391,7 +391,7 @@ class Type
     @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
   end
 
-  # Returns a mapping from the title string to setting of attribute value(s).
+  # Returns a mapping from the title string to setting of attribute values.
   # This default implementation provides a mapping of title to the one and only _namevar_ present
   # in the type's definition.
   # @note Advanced: some logic requires this mapping to be done differently, using a different
@@ -1415,7 +1415,7 @@ class Type
     munge do |aliases|
       aliases = [aliases] unless aliases.is_a?(Array)
 
-      raise(ArgumentError, "Cannot add aliases without a catalog") unless @resource.catalog
+      raise(ArgumentError, _("Cannot add aliases without a catalog")) unless @resource.catalog
 
       aliases.each do |other|
         if obj = @resource.catalog.resource(@resource.class.name, other)
@@ -1474,7 +1474,7 @@ class Type
       @subclasses << sub
     end
 
-    # @return [Array<Puppet::Resource>] turns attribute value(s) into list of resources
+    # @return [Array<Puppet::Resource>] turns attribute values into list of resources
     def munge(references)
       references = [references] unless references.is_a?(Array)
       references.collect do |ref|
@@ -1582,7 +1582,7 @@ class Type
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
-      * The required resource(s) will be applied **before** this resource.
+      * The required resources will be applied **before** this resource.
 
       This is one of the four relationship metaparameters, along with
       `before`, `notify`, and `subscribe`. For more context, including the
@@ -1596,7 +1596,7 @@ class Type
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
-      * The subscribed resource(s) will be applied _before_ this resource.
+      * The subscribed resources will be applied _before_ this resource.
       * If Puppet makes changes to any of the subscribed resources, it will cause
         this resource to _refresh._ (Refresh behavior varies by resource
         type: services will restart, mounts will unmount and re-mount, etc. Not
@@ -1614,7 +1614,7 @@ class Type
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
-      * This resource will be applied _before_ the dependent resource(s).
+      * This resource will be applied _before_ the dependent resources.
 
       This is one of the four relationship metaparameters, along with
       `require`, `notify`, and `subscribe`. For more context, including the
@@ -1628,7 +1628,7 @@ class Type
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
-      * This resource will be applied _before_ the notified resource(s).
+      * This resource will be applied _before_ the notified resources.
       * If Puppet makes changes to this resource, it will cause all of the
         notified resources to _refresh._ (Refresh behavior varies by resource
         type: services will restart, mounts will unmount and re-mount, etc. Not
@@ -1700,7 +1700,7 @@ The value of this parameter must be a reference to a capability resource,
 or an array of such references. Each capability resource referenced here
 must have been exported by another resource in the same environment.
 
-The referenced capability resource(s) will be looked up, added to the
+The referenced capability resources will be looked up, added to the
 current node catalog, and processed following the underlying consumes
 clause.
 
@@ -1767,9 +1767,8 @@ end
     defaults = defaults.find_all { |provider| provider.specificity == max }
 
     if defaults.length > 1
-      Puppet.warning(
-        "Found multiple default providers for #{self.name}: #{defaults.collect { |i| i.name.to_s }.join(", ")}; using #{defaults[0].name}"
-      )
+      Puppet.warning(_("Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}") %
+                         { name: self.name, provider_list:  defaults.collect { |i| i.name.to_s }.join(", "), selected_provider: defaults[0].name })
     end
 
     @defaultprovider = defaults.shift unless defaults.empty?
@@ -1929,7 +1928,7 @@ end
         provider_class = provider_class.class.name if provider_class.is_a?(Puppet::Provider)
 
         unless @resource.class.provider(provider_class)
-          raise ArgumentError, "Invalid #{@resource.class.name} provider '#{provider_class}'"
+          raise ArgumentError, _("Invalid %{resource} provider '%{provider_class}'") % { resource: @resource.class.name, provider_class: provider_class}
         end
       end
 
@@ -2012,7 +2011,7 @@ end
     elsif klass = self.class.provider(name)
       @provider = klass.new(self)
     else
-      raise ArgumentError, "Could not find #{name} provider of #{self.class.name}"
+      raise ArgumentError, _("Could not find %{name} provider of %{provider}") % { name: name, provider: self.class.name }
     end
   end
 
@@ -2233,8 +2232,6 @@ end
 
   # class methods dealing with Type management
 
-  public
-
   # The Type class attribute accessors
   class << self
     # @return [String] the name of the resource type; e.g., "File"
@@ -2344,8 +2341,6 @@ end
   # instance methods related to instance intrinsics
   # e.g., initialize and name
 
-  public
-
   # @return [Hash] hash of parameters originally defined
   # @api private
   attr_reader :original_parameters
@@ -2389,7 +2384,7 @@ end
       end
     end
 
-    @tags = resource.tags
+    merge_tags_from(resource)
 
     @original_parameters = resource.to_hash
 
@@ -2633,7 +2628,7 @@ end
   #
   def to_resource
     resource = self.retrieve_resource
-    resource.tag(*self.tags)
+    resource.merge_tags_from(self)
 
     @parameters.each do |name, param|
       # Avoid adding each instance name twice

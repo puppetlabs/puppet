@@ -12,29 +12,28 @@ module Puppet
           on(agent, 'locale -a') do |locale_result|
             if locale_result.stdout !~ /#{language}/
               on(agent, "locale-gen --lang #{language}")
-              return language_name(agent, language)
             end
           end
         elsif agent['platform'] =~ /debian/
           on(agent, 'locale -a') do |locale_result|
             if locale_result.stdout !~ /#{language}/
-              on(agent, "cp /etc/locale.gen /etc/locale.gen.orig ; sed -e 's/# ja_JP.UTF-8/ja_JP.UTF-8/' /etc/locale.gen.orig > /etc/locale.gen")
+              on(agent, "cp /etc/locale.gen /etc/locale.gen.orig ; sed -e 's/# #{language}/#{language}/' /etc/locale.gen.orig > /etc/locale.gen")
               on(agent, 'locale-gen')
-              return language_name(agent, language)
             end
           end
         end
-        language
+        return language_name(agent, language)
       end
 
       # figure out the preferred language string for the requested language if the language is configured on the system
       def language_name(agent, language)
-        on(agent, 'locale -a') do |locale_result|
-          ["#{language}.utf8", "#{language}.UTF-8", language].each do |lang|
-            return lang if locale_result.stdout =~ /#{lang}/
+        step "PLATFORM #{agent['platform']}"
+          on(agent, 'locale -a') do |locale_result|
+            ["#{language}.utf8", "#{language}.UTF-8", language].each do |lang|
+              return lang if locale_result.stdout =~ /#{lang}/
+            end
           end
-          return nil
-        end
+        return nil
       end
     end
   end

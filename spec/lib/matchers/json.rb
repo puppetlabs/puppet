@@ -28,6 +28,7 @@ module JSONMatchers
     end
 
     def matches?(instance)
+      @instance = instance
       result = attr_value(@attributes, instance)
       if @value
         result == @value
@@ -36,19 +37,19 @@ module JSONMatchers
       end
     end
 
-    def failure_message(instance)
+    def failure_message
       if @value
-        "expected #{instance.inspect} to set #{@attributes.inspect} to #{@value.inspect}; got #{attr_value(@attributes, instance).inspect}"
+        "expected #{@instance.inspect} to set #{@attributes.inspect} to #{@value.inspect}; got #{attr_value(@attributes, @instance).inspect}"
       else
-        "expected #{instance.inspect} to set #{@attributes.inspect} but was nil"
+        "expected #{@instance.inspect} to set #{@attributes.inspect} but was nil"
       end
     end
 
-    def failure_message_when_negated(instance)
+    def failure_message_when_negated
       if @value
-        "expected #{instance.inspect} not to set #{@attributes.inspect} to #{@value.inspect}"
+        "expected #{@instance.inspect} not to set #{@attributes.inspect} to #{@value.inspect}"
       else
-        "expected #{instance.inspect} not to set #{@attributes.inspect} to nil"
+        "expected #{@instance.inspect} not to set #{@attributes.inspect} to nil"
       end
     end
   end
@@ -74,7 +75,7 @@ module JSONMatchers
 
     def matches?(klass)
       raise "Must specify json with 'from'" unless @json
-
+      @klass = klass
       @instance = format.intern(klass, @json)
       if @value
         @instance.send(@attribute) == @value
@@ -83,19 +84,19 @@ module JSONMatchers
       end
     end
 
-    def failure_message(klass)
+    def failure_message
       if @value
-        "expected #{klass} to read #{@attribute} from #{@json} as #{@value.inspect}; got #{@instance.send(@attribute).inspect}"
+        "expected #{@klass} to read #{@attribute} from #{@json} as #{@value.inspect}; got #{@instance.send(@attribute).inspect}"
       else
-        "expected #{klass} to read #{@attribute} from #{@json} but was nil"
+        "expected #{@klass} to read #{@attribute} from #{@json} but was nil"
       end
     end
 
-    def failure_message_when_negated(klass)
+    def failure_message_when_negated
       if @value
-        "expected #{klass} not to set #{@attribute} to #{@value}"
+        "expected #{@klass} not to set #{@attribute} to #{@value}"
       else
-        "expected #{klass} not to set #{@attribute} to nil"
+        "expected #{@klass} not to set #{@attribute} to nil"
       end
     end
   end

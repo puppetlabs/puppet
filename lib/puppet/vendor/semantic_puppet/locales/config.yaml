@@ -6,7 +6,7 @@ gettext:
   # called <project_name>.pot?
   project_name: 'semantic_puppet'
   # This is used in comments in the .pot and .po files to indicate what
-  # project the files belong to and should bea little more desctiptive than
+  # project the files belong to and should be a little more descriptive than
   # <project_name>
   package_name: Semantic Puppet Gem
   # The locale that the default messages in the .pot file are in

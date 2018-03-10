@@ -36,6 +36,9 @@ module Puppet
       newvalue(:absent) do
         provider.delete
       end
+
+      defaultto :present
+
     end
 
     newproperty(:gid) do

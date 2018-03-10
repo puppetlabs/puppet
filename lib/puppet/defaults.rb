@@ -1,3 +1,5 @@
+require 'puppet/util/platform'
+
 module Puppet
 
   def self.default_diffargs
@@ -8,20 +10,26 @@ module Puppet
     end
   end
 
-  def self.default_digest_alg
-    if Facter.value(:fips_enabled) == true
-      "sha256"
-    else
-      "md5"
-    end
+  def self.default_digest_algorithm
+    Puppet::Util::Platform.fips_enabled? ? 'sha256' : 'md5'
   end
 
-  def self.default_checksum_types 
-    if Facter.value(:fips_enabled) == true
-      ['sha256', 'sha384', 'sha512', 'sha224']
-    else
-      ['md5', 'sha256', 'sha384', 'sha512', 'sha224']
-    end
+  def self.valid_digest_algorithms
+    Puppet::Util::Platform.fips_enabled? ?
+      %w[sha256 sha384 sha512 sha224] :
+      %w[md5 sha256 sha384 sha512 sha224]
+  end
+
+  def self.default_file_checksum_types
+    Puppet::Util::Platform.fips_enabled? ?
+      %w[sha256 sha384 sha512 sha224] :
+      %w[md5 sha256 sha384 sha512 sha224]
+  end
+
+  def self.valid_file_checksum_types
+    Puppet::Util::Platform.fips_enabled? ?
+      %w[sha256 sha256lite sha384 sha512 sha224 sha1 sha1lite mtime ctime] :
+      %w[md5 md5lite sha256 sha256lite sha384 sha512 sha224 sha1 sha1lite mtime ctime]
   end
 
   ############################################################################################
@@ -115,7 +123,8 @@ module Puppet
         valid   = %w[deprecations undefined_variables undefined_resources]
         invalid = values - (values & valid)
         if not invalid.empty?
-          raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
+          raise ArgumentError, _("Cannot disable unrecognized warning types %{invalid}.") % { invalid: invalid.inspect } +
+              ' ' + _("Valid values are %{values}.") % { values: valid.inspect}
         end
       end
     },
@@ -459,7 +468,11 @@ module Puppet
         if Puppet[:strict] != :off
           s_val = value.to_s # because sometimes the value is a symbol
           unless s_val == 'hiera' || s_val == 'none' || value == '' || value.nil?
-            Puppet.deprecation_warning "Setting 'data_binding_terminus' is deprecated. Convert custom terminus to hiera 5 API."
+            #TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
+            message = _("Setting 'data_binding_terminus' is deprecated.")
+            #TRANSLATORS 'hiera' should not be translated
+            message += ' ' + _("Convert custom terminus to hiera 5 API.")
+            Puppet.deprecation_warning(message)
           end
         end
       end
@@ -611,7 +624,8 @@ module Puppet
       custom data providers see the respective module documentation. This setting is deprecated.",
       :hook => proc { |value|
         unless value.nil? || Puppet[:strict] == :off
-          Puppet.deprecation_warning "Setting 'environment_data_provider' is deprecated."
+          #TRANSLATORS 'environment_data_provider' is a setting and should not be translated
+          Puppet.deprecation_warning(_("Setting 'environment_data_provider' is deprecated."))
         end
       }
     },
@@ -713,7 +727,7 @@ module Puppet
           for a normal node.
 
         Defaults to the node's fully qualified domain name.",
-      :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case") unless value == value.downcase }},
+      :hook => proc { |value| raise(ArgumentError, _("Certificate names must be lower case")) unless value == value.downcase }},
     :dns_alt_names => {
       :default => '',
       :desc    => <<EOT,
@@ -931,25 +945,28 @@ attempt to download the CRL.
 EOT
     },
     :digest_algorithm => {
-        :default  => lambda { default_digest_alg },
+        :default  => lambda { default_digest_algorithm },
         :type     => :enum,
-        :values => ["md5", "sha256", "sha384", "sha512", "sha224"],
-        :desc     => 'Which digest algorithm to use for file resources and the filebucket.
-                      Valid values are md5, sha256, sha384, sha512, sha224. Default is md5.',
+        :values   => valid_digest_algorithms,
+        :desc     => "Which digest algorithm to use for file resources and the filebucket.
+                      Valid values are #{valid_digest_algorithms.join(', ')}. Default is
+                      #{default_digest_algorithm}.",
     },
     :supported_checksum_types => {
-      :default => lambda { default_checksum_types },
+      :default => lambda { default_file_checksum_types },
       :type    => :array,
-      :desc    => 'Checksum types supported by this agent for use in file resources of a
-                   static catalog. Values must be comma-separated. Valid types are md5,
-                   md5lite, sha256, sha256lite, sha384, sha512, 
-		   sha1, sha1lite, sha224, mtime, ctime.',
+      :desc    => "Checksum types supported by this agent for use in file resources of a
+                   static catalog. Values must be comma-separated. Valid types are
+                   #{valid_file_checksum_types.join(', ')}. Default is
+                   #{default_file_checksum_types.join(', ')}.",
       :hook    => proc do |value|
         values = munge(value)
-        valid   = ['md5', 'md5lite', 'sha256', 'sha256lite', 'sha384', 'sha512', 'sha224', 'sha1', 'sha1lite', 'mtime', 'ctime']
-        invalid = values.reject {|alg| valid.include?(alg)}
+
+        invalid = values - Puppet.valid_file_checksum_types
         if not invalid.empty?
-          raise ArgumentError, "Unrecognized checksum types #{invalid} are not supported. Valid values are #{valid}."
+          raise ArgumentError, _("Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'") % {
+            value: invalid.first, name: @name, allowed_values: Puppet.valid_file_checksum_types.join("', '")
+          }
         end
       end
     }
@@ -1472,7 +1489,10 @@ EOT
       :call_hook => :on_initialize_and_write,
       :hook => proc { |value|
         if Puppet.settings.set_by_config?(:server) && Puppet.settings.set_by_config?(:server_list)
-          Puppet.deprecation_warning('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
+          #TRANSLATOR 'server' and 'server_list' are setting names and should not be translated
+          message = _('Attempted to set both server and server_list.')
+          message += ' ' + _('Server setting will not be used.')
+          Puppet.deprecation_warning(message, :SERVER_DUPLICATION)
         end
       }
     },
@@ -1484,7 +1504,10 @@ EOT
       :call_hook => :on_initialize_and_write,
       :hook => proc { |value|
         if Puppet.settings.set_by_config?(:server) && Puppet.settings.set_by_config?(:server_list)
-          Puppet.deprecation_warning('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
+          #TRANSLATOR 'server' and 'server_list' are setting names and should not be translated
+          message = _('Attempted to set both server and server_list.')
+          message += ' ' + _('Server setting will not be used.')
+          Puppet.deprecation_warning(message, :SERVER_DUPLICATION)
         end
       }
     },
@@ -1792,11 +1815,12 @@ EOT
       :desc       => "Whether plugins should be synced with the central server. This setting is
         deprecated.",
       :hook => proc { |value|
-        Puppet.deprecation_warning "Setting 'pluginsync' is deprecated."
+        #TRANSLATORS 'pluginsync' is a setting and should not be translated
+        Puppet.deprecation_warning(_("Setting 'pluginsync' is deprecated."))
       }
     },
     :pluginsignore => {
-        :default  => ".svn CVS .git .hg *.pot",
+        :default  => ".svn CVS .git .hg",
         :desc     => "What files to ignore when pulling down plugins.",
     }
   )

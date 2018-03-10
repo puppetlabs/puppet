@@ -34,8 +34,6 @@ shared_examples_for "Puppet::Indirector::FileServerTerminus" do
     @modules.stubs(:find).returns(nil)
     @terminus.indirection.stubs(:terminus).with(:modules).returns(@modules)
 
-    path = File.join(@path, "myfile")
-
     expect(@terminus.find(@request)).to be_instance_of(@test_class)
   end
 end

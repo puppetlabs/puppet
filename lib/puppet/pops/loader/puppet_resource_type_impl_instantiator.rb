@@ -8,7 +8,7 @@ class PuppetResourceTypeImplInstantiator
   # given puppet source does not produce such an instance when evaluated.
   #
   # @param loader [Loader] The loader the function is associated with
-  # @param typed_name [TypedName] the type / name of the resoure type impl to load
+  # @param typed_name [TypedName] the type / name of the resource type impl to load
   # @param source_ref [URI, String] a reference to the source / origin of the puppet code to evaluate
   # @param pp_code_string [String] puppet code in a string
   #

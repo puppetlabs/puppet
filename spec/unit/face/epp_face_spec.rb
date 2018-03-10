@@ -174,6 +174,59 @@ describe Puppet::Face[:epp, :current] do
       expect(@logs[0].message).to match(/Syntax error at 'b'/)
       expect(@logs[0].level).to eq(:err)
     end
+
+    context "using 'pn' format" do
+      it "prints the AST of the given expression in PN format" do
+        expect(eppface.dump({ :format => 'pn', :e => 'hello world' })).to eq(
+          '(lambda {:body [(epp (render-s "hello world"))]})')
+      end
+
+      it "pretty prints the AST of the given expression in PN format when --pretty is given" do
+        expect(eppface.dump({ :pretty => true, :format => 'pn', :e => 'hello world' })).to eq(<<-RESULT.unindent[0..-2])
+        (lambda
+          {
+            :body [
+              (epp
+                (render-s
+                  "hello world"))]})
+        RESULT
+      end
+    end
+
+    context "using 'json' format" do
+      it "prints the AST of the given expression in JSON based on the PN format" do
+        expect(eppface.dump({ :format => 'json', :e => 'hello world' })).to eq(
+          '{"^":["lambda",{"#":["body",[{"^":["epp",{"^":["render-s","hello world"]}]}]]}]}')
+      end
+
+      it "pretty prints the AST of the given expression in JSON based on the PN format when --pretty is given" do
+        expect(eppface.dump({ :pretty => true, :format => 'json', :e => 'hello world' })).to eq(<<-RESULT.unindent[0..-2])
+        {
+          "^": [
+            "lambda",
+            {
+              "#": [
+                "body",
+                [
+                  {
+                    "^": [
+                      "epp",
+                      {
+                        "^": [
+                          "render-s",
+                          "hello world"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+        RESULT
+      end
+    end
   end
 
   context "render" do
@@ -307,7 +360,6 @@ describe Puppet::Face[:epp, :current] do
       end
 
       it "renders multiple files separated by headers by default" do
-        modules_dir = File.join(dir, 'environments', 'production', 'modules')
         # chomp the last newline, it is put there by heredoc
         expect(eppface.render('m1/greetings.epp', 'm2/goodbye.epp')).to eq(<<-EOT.chomp)
 --- m1/greetings.epp
@@ -318,7 +370,6 @@ goodbye world
       end
 
       it "outputs multiple files verbatim when --no-headers is given" do
-        modules_dir = File.join(dir, 'environments', 'production', 'modules')
         expect(eppface.render('m1/greetings.epp', 'm2/goodbye.epp', :header => false)).to eq("hello worldgoodbye world")
       end
     end

@@ -145,13 +145,13 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   describe "listing files in local filebucket" do
     with_digest_algorithms do
       it "should list all files present" do
+        if Puppet::Util::Platform.windows? && digest_algorithm == "sha512"
+          skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+        end
         Puppet[:bucketdir] =  "/my/bucket"
         file_bucket = tmpdir("bucket")
 
         @dipper = Puppet::FileBucket::Dipper.new(:Path => file_bucket)
-
-        onehour=60*60
-        twohours=onehour*2
 
         #First File
         file1 = make_tmp_file(plaintext)
@@ -179,7 +179,6 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         checksum = digest(plaintext)
         expect(digest(plaintext)).to eq(checksum)
         expect(@dipper.backup(file3)).to eq(checksum)
-        date = Time.now
         expected_list3 = /#{checksum} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} #{real_path}\n/
 
         result = @dipper.list(nil, nil)
@@ -190,6 +189,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
       end
 
       it "should filter with the provided dates" do
+        if Puppet::Util::Platform.windows? && digest_algorithm == "sha512"
+          skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+        end
         Puppet[:bucketdir] =  "/my/bucket"
         file_bucket = tmpdir("bucket")
 
@@ -294,6 +296,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   describe "backing up and retrieving local files" do
     with_digest_algorithms do
       it "should backup files to a local bucket" do
+        if Puppet::Util::Platform.windows? && digest_algorithm == "sha512"
+          skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+        end
         Puppet[:bucketdir] = "/non/existent/directory"
         file_bucket = tmpdir("bucket")
 

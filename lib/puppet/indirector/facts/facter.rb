@@ -38,8 +38,6 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     result
   end
 
-  private
-
   def self.setup_search_paths(request)
     # Add any per-module fact directories to facter's search path
     dirs = request.environment.modulepath.collect do |dir|
@@ -64,7 +62,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       true
     end
 
-    Facter.search *dirs
+    Facter.search(*dirs)
   end
 
   def self.setup_external_search_paths(request)

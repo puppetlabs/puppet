@@ -182,7 +182,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     # remove certificate expiration warnings from the output, but report them
     cert_warnings = lines.select { |line| line =~ /^Certificate/ }
     unless cert_warnings.empty?
-      Puppet.warning("pkg warning: #{cert_warnings.join(', ')}")
+      Puppet.warning(_("pkg warning: %{warnings}") % { warnings: cert_warnings.join(', ') })
     end
 
     lst = lines.select { |line| line !~ /^Certificate/ }.map { |line| self.class.parse_line(line) }

@@ -1,4 +1,7 @@
 <%# encoding: UTF-8%>
+<% if action.deprecated? -%>
+  <%= "Warning: 'puppet #{action.face.name} #{action.name}' is deprecated and will be removed in a future release." %>
+<% end %>
 <% if action.synopsis -%>
 USAGE: <%= action.synopsis %>
 
@@ -83,4 +86,4 @@ undocumented option
 TERMINI: <%= face.class.terminus_classes(face.indirection.name).join(", ") %>
 
 <% end -%>
-See 'puppet man <%= face.name %>' or 'man puppet-<%= face.name %>' for full help.
+See 'puppet help <%= face.name %>' or 'man puppet-<%= face.name %>' for full help.

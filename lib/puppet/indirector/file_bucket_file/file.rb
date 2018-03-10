@@ -161,7 +161,11 @@ module Puppet::FileBucketFile
             if verify_identical_file(contents_file, bucket_file)
               #TRANSLATORS "FileBucket" should not be translated
               Puppet.info _("FileBucket got a duplicate file %{file_checksum}") % { file_checksum: bucket_file.checksum }
-              Puppet::FileSystem.touch(contents_file)
+              # Don't touch the contents file on Windows, since we can't update the
+              # mtime of read-only files there.
+              if !Puppet::Util::Platform.windows?
+                Puppet::FileSystem.touch(contents_file)
+              end
             elsif contents_file_matches_checksum?(contents_file, bucket_file.checksum_data, bucket_file.checksum_type)
               # If the contents or sizes don't match, but the checksum does,
               # then we've found a conflict (potential hash collision).
@@ -246,7 +250,7 @@ module Puppet::FileBucketFile
     # @return [void]
     # @api private
     def copy_bucket_file_to_contents_file(contents_file, bucket_file)
-      Puppet::FileSystem.open(contents_file, 0440, 'wb') do |of|
+      Puppet::Util.replace_file(contents_file, 0440) do |of|
         # PUP-1044 writes all of the contents
         bucket_file.stream() do |src|
           FileUtils.copy_stream(src, of)

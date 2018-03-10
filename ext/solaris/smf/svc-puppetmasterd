@@ -24,14 +24,14 @@ start)
     ;;
 stop)
     printf "Stopping Puppet server services:"
-    kill `cat $pidfile`
+    kill `cat "$pidfile"`
 
     printf " puppetmasterd"
     echo ""
     ;;
 restart)
     printf "Restarting Puppet server services:"
-    kill -HUP `cat $pidfile`
+    kill -HUP `cat "$pidfile"`
 
     printf " puppetmasterd"
     echo ""
@@ -39,14 +39,14 @@ restart)
 reload)
     printf "Reloading Puppet server services:"
 
-    kill -HUP `cat $pidfile`
+    kill -HUP `cat "$pidfile"`
 
     printf " puppetmasterd"
     echo ""
     ;;
 status)
-    if [ -f $pidfile ]; then
-        pid=`cat $pidfile`
+    if [ -f "$pidfile" ]; then
+        pid=`cat "$pidfile"`
         curpid=`pgrep puppetmasterd`
         if [ "$pid" -eq "$curpid" ]; then
             exit 0

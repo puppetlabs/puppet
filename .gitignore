@@ -23,6 +23,7 @@ puppet-acceptance/
 acceptance/junit
 acceptance/log
 acceptance/.bundle
+acceptance/.beaker
 # emacs backup files
 *~
 /*.samples

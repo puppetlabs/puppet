@@ -15,7 +15,6 @@ class Loaders
   attr_reader :puppet_system_loader
   attr_reader :public_environment_loader
   attr_reader :private_environment_loader
-  attr_reader :implementation_registry
   attr_reader :environment
 
   def self.new(environment, for_agent = false)
@@ -55,12 +54,9 @@ class Loaders
       create_environment_loader(environment)
     end
 
-    # 3. The implementation registry maintains mappings between Puppet types and Runtime types for
-    #    the current environment
-    @implementation_registry = Types::ImplementationRegistry.new(@private_environment_loader)
-    Pcore.init(@puppet_system_loader, @implementation_registry, for_agent)
+    Pcore.init_env(@private_environment_loader)
 
-    # 4. module loaders are set up from the create_environment_loader, they register themselves
+    # 3. module loaders are set up from the create_environment_loader, they register themselves
   end
 
   # Called after loader has been added to Puppet Context as :loaders so that dynamic types can
@@ -91,11 +87,21 @@ class Loaders
     loaders.find_loader(module_name)
   end
 
+  def self.static_implementation_registry
+    if !class_variable_defined?(:@@static_implementation_registry) || @@static_implementation_registry.nil?
+      ir = Types::ImplementationRegistry.new
+      Types::TypeParser.type_map.values.each { |t| ir.register_implementation(t.simple_name, t.class.name) }
+      @@static_implementation_registry = ir
+    end
+    @@static_implementation_registry
+  end
+
   def self.static_loader
     # The static loader can only be changed after a reboot
     if !class_variable_defined?(:@@static_loader) || @@static_loader.nil?
       @@static_loader = Loader::StaticLoader.new()
       @@static_loader.register_aliases
+      Pcore.init(@@static_loader, static_implementation_registry)
     end
     @@static_loader
   end
@@ -204,6 +210,11 @@ class Loaders
       end
       loader
     end
+  end
+
+  def implementation_registry
+    # Environment specific implementation registry
+    @implementation_registry ||= Types::ImplementationRegistry.new(self.class.static_implementation_registry)
   end
 
   def static_loader
@@ -337,7 +348,7 @@ class Loaders
     tf = Types::TypeParser.singleton
     lhs = tf.interpret(type_mapping.type_expr, loader)
     rhs = tf.interpret_any(type_mapping.mapping_expr, loader)
-    implementation_registry.register_type_mapping(lhs, rhs, loader)
+    implementation_registry.register_type_mapping(lhs, rhs)
     nil
   end
 
@@ -453,6 +464,18 @@ class Loaders
     def resolved?
       !@private_loader.nil?
     end
+
+    def restrict_to_dependencies?
+      @puppet_module.has_metadata?
+    end
+
+    def unmet_dependencies?
+      @puppet_module.unmet_dependencies.any?
+    end
+
+    def dependency_names
+      @puppet_module.dependencies_as_modules.collect(&:name)
+    end
   end
 
   # Resolves module loaders - resolution of model dependencies is done by Puppet::Module
@@ -481,14 +504,41 @@ class Loaders
       if module_data.resolved?
         nil
       else
-        module_data.private_loader = create_loader_with_all_modules_visible(module_data)
+        module_data.private_loader =
+          if module_data.restrict_to_dependencies? && !Puppet[:tasks]
+            create_loader_with_only_dependencies_visible(module_data)
+          else
+            create_loader_with_all_modules_visible(module_data)
+          end
       end
     end
 
     private
 
     def create_loader_with_all_modules_visible(from_module_data)
+      Puppet.debug{"ModuleLoader: module '#{from_module_data.name}' has unknown dependencies - it will have all other modules visible"}
+
       @loaders.add_loader_by_name(Loader::DependencyLoader.new(from_module_data.public_loader, "#{from_module_data.name} private", all_module_loaders()))
+    end
+
+    def create_loader_with_only_dependencies_visible(from_module_data)
+      if from_module_data.unmet_dependencies?
+        if Puppet[:strict] != :off
+          msg = "ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies" \
+              " - it will only see those that are resolved." \
+              " Use 'puppet module list --tree' to see information about modules"
+          case Puppet[:strict]
+          when :error
+              raise LoaderError.new(msg)
+          when :warning
+            Puppet.warn_once(:unresolved_module_dependencies,
+                             "unresolved_dependencies_for_module_#{from_module_data.name}",
+                             msg)
+          end
+        end
+      end
+      dependency_loaders = from_module_data.dependency_names.collect { |name| @index[name].public_loader }
+      @loaders.add_loader_by_name(Loader::DependencyLoader.new(from_module_data.public_loader, "#{from_module_data.name} private", dependency_loaders))
     end
   end
 end

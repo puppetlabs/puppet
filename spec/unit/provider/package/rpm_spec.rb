@@ -4,7 +4,6 @@ require 'spec_helper'
 provider_class = Puppet::Type.type(:package).provider(:rpm)
 
 describe provider_class do
-
   let (:packages) do
     <<-RPM_OUTPUT
     'cracklib-dicts 0 2.8.9 3.3 x86_64
@@ -58,7 +57,7 @@ describe provider_class do
       it "includes all the modern flags" do
         Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}'").yields(packages)
 
-        installed_packages = provider_class.instances
+        provider_class.instances
       end
     end
 
@@ -67,7 +66,7 @@ describe provider_class do
       it "excludes the --nosignature flag" do
         Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa  --nodigest --qf '#{nevra_format}'").yields(packages)
 
-        installed_packages = provider_class.instances
+        provider_class.instances
       end
     end
 
@@ -76,7 +75,7 @@ describe provider_class do
       it "excludes the --nodigest flag" do
         Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa   --qf '#{nevra_format}'").yields(packages)
 
-        installed_packages = provider_class.instances
+        provider_class.instances
       end
     end
 

@@ -212,7 +212,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     if self.class.yaourt?
       Puppet::Util::Execution.execute([command(:yaourt)] + cmd, :uid => user, :failonfail => true, :combine => true)
     else
-      pacman *cmd
+      pacman(*cmd)
     end
   end
 
@@ -269,7 +269,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     if self.class.yaourt?
       Puppet::Util::Execution.execute([command(:yaourt)] + cmd, :uid => user, :failonfail => true, :combine => true)
     else
-      pacman *cmd
+      pacman(*cmd)
     end
   end
 

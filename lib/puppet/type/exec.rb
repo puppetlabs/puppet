@@ -257,7 +257,7 @@ module Puppet
 
     newparam(:environment) do
       desc "An array of any additional environment variables you want to set for a
-        command. e.g.: `[ 'HOME=/root', 'MAIL=root@example.com']`
+        command, such as `[ 'HOME=/root', 'MAIL=root@example.com']`.
         Note that if you use this to set PATH, it will override the `path`
         attribute. Multiple environment variables should be specified as an
         array."

@@ -86,6 +86,22 @@ class IssueReporter
     [prefix, message].join(' ')
   end
 
+  def self.warning(semantic, issue, args)
+    Puppet::Util::Log.create({
+      :level => :warning,
+      :message => issue.format(args),
+      :arguments => args,
+      :issue_code => issue.issue_code,
+      :file => semantic.file,
+      :line => semantic.line,
+      :pos => semantic.pos,
+    })
+  end
+
+  def self.error(exception_class, semantic, issue, args)
+    raise exception_class.new(issue.format(args), semantic.file, semantic.line, semantic.pos, nil, issue.issue_code, args)
+  end
+
   def self.create_exception(exception_class, emit_message, formatter, diagnostic)
     file = diagnostic.file
     file = (file.is_a?(String) && file.empty?) ? nil : file
@@ -94,7 +110,7 @@ class IssueReporter
       line = diagnostic.source_pos.line
       pos = diagnostic.source_pos.pos
     end
-    exception_class.new(format_with_prefix(emit_message, formatter.format_message(diagnostic)), file, line, pos, nil, diagnostic.issue.issue_code)
+    exception_class.new(format_with_prefix(emit_message, formatter.format_message(diagnostic)), file, line, pos, nil, diagnostic.issue.issue_code, diagnostic.arguments)
   end
   private_class_method :create_exception
 
@@ -109,6 +125,7 @@ class IssueReporter
     Puppet::Util::Log.create({
         :level => severity,
         :message => formatter.format_message(diagnostic),
+        :arguments => diagnostic.arguments,
         :issue_code => diagnostic.issue.issue_code,
         :file => file,
         :line => line,

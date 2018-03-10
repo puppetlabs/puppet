@@ -117,7 +117,7 @@ Puppet::Type.type(:package).provide :pip,
         args << @resource[:name]
       end
     end
-    lazy_pip *args
+    lazy_pip(*args)
   end
 
   # Uninstall a package.  Uninstall won't work reliably on Debian/Ubuntu
@@ -135,7 +135,7 @@ Puppet::Type.type(:package).provide :pip,
   # try to teach it and if even that fails, raise the error.
   private
   def lazy_pip(*args)
-    pip *args
+    pip(*args)
   rescue NoMethodError => e
     # Ensure pip can upgrade pip, which usually puts pip into a new path /usr/local/bin/pip (compared to /usr/bin/pip)
     # The path to pip needs to be looked up again in the subsequent request. Using the preferred approach as noted
@@ -145,7 +145,7 @@ Puppet::Type.type(:package).provide :pip,
     # to search for them using the PATH variable.
     if pathname = self.class.cmd.map { |c| which(c) }.find { |c| c != nil }
       self.class.commands :pip => File.basename(pathname)
-      pip *args
+      pip(*args)
     else
       raise e, "Could not locate command #{self.class.cmd.join(' and ')}.", e.backtrace
     end

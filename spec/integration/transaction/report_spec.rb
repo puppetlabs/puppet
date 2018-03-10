@@ -3,6 +3,11 @@ require 'spec_helper'
 require 'puppet_spec/files'
 
 describe Puppet::Transaction::Report do
+  before :each do
+    # Enable persistence during tests
+    Puppet::Transaction::Persistence.any_instance.stubs(:enabled?).returns(true)
+  end
+
   describe "when using the indirector" do
     after do
       Puppet.settings.stubs(:use)
@@ -82,7 +87,7 @@ describe Puppet::Transaction::Report do
     end
 
     def get_cc_count(report)
-      cc = report.metrics["resources"].values.each do |v|
+      report.metrics["resources"].values.each do |v|
         if v[0] == "corrective_change"
           return v[2]
         end
@@ -293,8 +298,8 @@ describe Puppet::Transaction::Report do
                                                            :content => "mystuff1"),
                               Puppet::Type.type(:file).new(:title => file,
                                                            :content => "mystuff2")) do
-          File.open(file, 'w') do |file|
-            file.write "some content"
+          File.open(file, 'w') do |f|
+            f.write "some content"
           end
         end
 

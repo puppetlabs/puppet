@@ -10,8 +10,10 @@ Puppet::Face.define(:man, '0.0.1') do
   summary _("Display Puppet manual pages.")
 
   description <<-EOT
-    This subcommand displays manual pages for all Puppet subcommands. If the
-    `ronn` gem (<https://github.com/rtomayko/ronn/>) is installed on your
+    Please use the command 'puppet help <subcommand>' or the system manpage system
+    'man puppet-<subcommand>' to display information about Puppet subcommands. The
+    deprecated man subcommand displays manual pages for all Puppet subcommands. If
+    the `ronn` gem (<https://github.com/rtomayko/ronn/>) is installed on your
     system, puppet man will display fully-formatted man pages. If `ronn` is not
     available, puppet man will display the raw (but human-readable) source text
     in a pager.
@@ -33,18 +35,40 @@ Puppet::Face.define(:man, '0.0.1') do
       text (e.g. for use in a pipeline), call this action with '--render-as s'.
     EOT
     examples <<-'EOT'
-      View the manual page for a subcommand:
+      View the installed manual page for the subcommand 'config':
 
-      $ puppet man facts
+      $ man puppet-config
+
+      (Deprecated) View the manual page for the subcommand 'config':
+
+      $ puppet man config
     EOT
 
     default
-    when_invoked do |name, options|
-      if legacy_applications.include? name then
-        return Puppet::Application[name].help
+    when_invoked do |*args|
+      # 'args' is an array of the subcommand and arguments from the command line and an options hash
+      # [<arg1>, ..., {options}]
+      _options = args.pop
+
+      unless valid_command_line?(args)
+        print_man_help
+        #TRANSLATORS 'puppet man' is a specific command line and should not be translated
+        raise ArgumentError, _("The 'puppet man' command takes a single subcommand to review the subcommand's manpage")
       end
 
-      face = Puppet::Face[name.to_sym, :current]
+      manpage = args.first
+      if default_case?(manpage)
+        print_man_help
+        return nil
+      end
+
+      if legacy_applications.include?(manpage)
+        return Puppet::Application[manpage].help
+      end
+
+      # set 'face' as it's used in the erb processing.
+      face = Puppet::Face[manpage.to_sym, :current]
+      _face = face # suppress the unused variable warning
 
       file = (Pathname(__FILE__).dirname + "help" + 'man.erb')
       erb = ERB.new(file.read, nil, '-')
@@ -54,7 +78,6 @@ Puppet::Face.define(:man, '0.0.1') do
       # variables we established just above. --daniel 2011-04-11
       return erb.result(binding)
     end
-
 
     when_rendering :console do |text|
       # OK, if we have Ronn on the path we can delegate to it and override the
@@ -72,16 +95,16 @@ Puppet::Face.define(:man, '0.0.1') do
       pager = [ENV['MANPAGER'], ENV['PAGER'], 'less', 'most', 'more'].
         detect {|x| x and x.length > 0 and Puppet::Util.which(x) }
 
-      if ronn then
+      if ronn
         # ronn is a stupid about pager selection, we can be smarter. :)
-        if pager then ENV['PAGER'] = pager end
+        ENV['PAGER'] = pager if pager
 
         args  = "--man --manual='Puppet Manual' --organization='Puppet Inc., LLC'"
         # manual pages could contain UTF-8 text
         IO.popen("#{ronn} #{args}", 'w:UTF-8') do |fh| fh.write text end
 
         ''                      # suppress local output, neh?
-      elsif pager then
+      elsif pager
         # manual pages could contain UTF-8 text
         IO.popen(pager, 'w:UTF-8') do |fh| fh.write text end
         ''
@@ -89,6 +112,24 @@ Puppet::Face.define(:man, '0.0.1') do
         text
       end
     end
+  end
+
+  def valid_command_line?(args)
+    # not too many arguments
+    # This allows the command line case of "puppet man man man" to not throw an error because face_based eats
+    # one of the "man"'s, which means this command line ends up looking like this in the code: 'manface.man("man")'
+    # However when we generate manpages, we do the same call. So we have to allow it and generate the real manpage.
+    args.length <= 1
+  end
+
+  # by default, if you ask for the man manpage "puppet man man" face_base removes the "man" from the args that we
+  # are passed, so we get nil instead
+  def default_case?(manpage)
+    manpage.nil?
+  end
+
+  def print_man_help
+    puts Puppet::Face[:help, :current].help(:man)
   end
 
   def legacy_applications
@@ -99,4 +140,6 @@ Puppet::Face.define(:man, '0.0.1') do
         %w{face_base indirection_base}.include? appname
     end
   end
+
+  deprecate
 end

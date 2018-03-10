@@ -638,11 +638,9 @@ class Puppet::Parser::Scope
     unless Puppet[:strict_variables]
       # Do not issue warning if strict variables are on, as an error will be raised by variable_not_found
       location = if position[:lineproc]
-                   " at #{position[:lineproc].call}"
-                 elsif position[:file] && position[:line]
-                   " at #{position[:file]}:#{position[:line]}"
+                   Puppet::Util::Errors.error_location_with_space(nil, position[:lineproc].call)
                  else
-                   ""
+                   Puppet::Util::Errors.error_location_with_space(position[:file], position[:line])
                  end
       variable_not_found("#{class_name}::#{variable_name}", "#{reason}#{location}")
       return nil
@@ -1068,7 +1066,10 @@ class Puppet::Parser::Scope
   def transform_and_assert_classnames(names)
     names.map do |name|
       case name
+      when NilClass
+        raise ArgumentError, _("Cannot use undef as a class name")
       when String
+        raise ArgumentError, _("Cannot use empty string as a class name") if name.empty?
         name.sub(/^([^:]{1,2})/, '::\1')
 
       when Puppet::Resource

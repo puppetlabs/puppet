@@ -182,7 +182,6 @@ describe 'when calling' do
     result = nil
     Puppet[:code] = 'undef'
     Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-      compiler.topscope['environment'] = 'test'
       compiler.compile do |catalog|
         result = yield(compiler.topscope)
         catalog

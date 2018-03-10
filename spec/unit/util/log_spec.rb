@@ -1,4 +1,5 @@
 #! /usr/bin/env ruby
+# coding: utf-8
 require 'spec_helper'
 
 require 'puppet/util/log'
@@ -498,11 +499,11 @@ describe Puppet::Util::Log do
         source.tags = ["tag", "tag2"]
 
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
-        log.expects(:tag).with("file")
-        log.expects(:tag).with("tag")
-        log.expects(:tag).with("tag2")
-
         log.source = source
+
+        expect(log).to be_tagged('file')
+        expect(log).to be_tagged('tag')
+        expect(log).to be_tagged('tag2')
 
         expect(log.source).to eq("/File[#{path}]")
       end
@@ -532,7 +533,7 @@ describe Puppet::Util::Log do
       it "should not try to copy over file, version, line, or tag information" do
         source = mock
         source.expects(:file).never
-        log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
+        Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
       end
     end
   end

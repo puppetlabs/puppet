@@ -83,7 +83,6 @@ describe "puppet module list" do
   it "prefers a given modulepath over the modulepath from the given environment" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath2)
-    env = Puppet::Node::Environment.create(:myenv, ['/tmp/notused'])
 
     modules = Puppet::Face[:module, :current].list(:environment => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")[:modules_by_path]
 

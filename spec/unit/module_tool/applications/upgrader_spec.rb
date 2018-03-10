@@ -327,5 +327,11 @@ describe Puppet::ModuleTool::Applications::Upgrader do
         end
       end
     end
+    context 'when in FIPS mode...' do
+      it 'module unpgrader refuses to run' do
+        Facter.stubs(:value).with(:fips_enabled).returns(true)
+        expect { application.run }.to raise_error(/Module upgrade is prohibited in FIPS mode/)
+      end 
+    end
   end
 end

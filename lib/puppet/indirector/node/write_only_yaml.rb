@@ -12,7 +12,9 @@ require 'puppet/indirector/yaml'
 #
 class Puppet::Node::WriteOnlyYaml < Puppet::Indirector::Yaml
   def initialize
-    Puppet.warn_once('deprecations', 'Puppet::Node::WriteOnlyYaml', _('Puppet::Node::WriteOnlyYaml is deprecated and will be removed in a future release of Puppet.'))
+    #TRANSLATORS 'Puppet::Node::WriteOnlyYaml' is a class and should not be translated
+    message = _('Puppet::Node::WriteOnlyYaml is deprecated and will be removed in a future release of Puppet.')
+    Puppet.warn_once('deprecations', 'Puppet::Node::WriteOnlyYaml', message)
     super
   end
 

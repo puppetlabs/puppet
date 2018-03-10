@@ -154,25 +154,25 @@ describe Puppet::Util::Logging do
     end
 
     it "warns with file and line" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*afile:5/m))
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*\(file: afile, line: 5\)/m))
       @logger.puppet_deprecation_warning("deprecated foo", :file => 'afile', :line => 5)
     end
 
     it "warns keyed from file and line" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*afile:5/m)).once
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*\(file: afile, line: 5\)/m)).once
       5.times do
         @logger.puppet_deprecation_warning("deprecated foo", :file => 'afile', :line => 5)
       end
     end
 
     it "warns with separate key only once regardless of file and line" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*afile:5/m)).once
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*\(file: afile, line: 5\)/m)).once
       @logger.puppet_deprecation_warning("deprecated foo", :key => 'some_key', :file => 'afile', :line => 5)
       @logger.puppet_deprecation_warning("deprecated foo", :key => 'some_key', :file => 'bfile', :line => 3)
     end
 
     it "warns with key but no file and line" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*unknown:unknown/m))
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*\(file: unknown, line: unknown\)/m))
       @logger.puppet_deprecation_warning("deprecated foo", :key => 'some_key')
     end
   end
@@ -188,17 +188,17 @@ describe Puppet::Util::Logging do
     }
 
     it "warns with file when only file is given" do
-      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(in aFile\)/m))
+      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(file: aFile\)/m))
       @logger.warn_once('kind', 'wp', "wet paint", 'aFile')
     end
 
     it "warns with unknown file and line when only line is given" do
-      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(in unknown file, line 5\)/m))
+      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(line: 5\)/m))
       @logger.warn_once('kind', 'wp', "wet paint", nil, 5)
     end
 
     it "warns with file and line when both are given" do
-      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(at aFile:5\)/m))
+      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(file: aFile, line: 5\)/m))
       @logger.warn_once('kind', 'wp', "wet paint",'aFile', 5)
     end
 

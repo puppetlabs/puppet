@@ -20,7 +20,7 @@ describe "Two step scoping for variables" do
   describe "using unsupported operators" do
     it "issues an error for +=" do
       expect do
-        catalog = compile_to_catalog(<<-MANIFEST)
+        compile_to_catalog(<<-MANIFEST)
               $var = ["top_msg"]
               node default {
                 $var += ["override"]
@@ -31,7 +31,7 @@ describe "Two step scoping for variables" do
 
     it "issues an error for -=" do
       expect do
-        catalog = compile_to_catalog(<<-MANIFEST)
+        compile_to_catalog(<<-MANIFEST)
               $var = ["top_msg"]
               node default {
                 $var -= ["top_msg"]

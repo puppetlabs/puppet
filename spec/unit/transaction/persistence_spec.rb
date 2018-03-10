@@ -175,4 +175,46 @@ describe Puppet::Transaction::Persistence do
       expect(persistence.get_system_value(resource, property)).to eq(value)
     end
   end
+
+  describe "when checking if persistence is enabled" do
+    let(:mock_catalog) do
+      mock
+    end
+
+    let (:persistence) do
+      Puppet::Transaction::Persistence.new
+    end
+
+    before :all do
+      @preferred_run_mode = Puppet.settings.preferred_run_mode
+    end
+
+    after :all do
+      Puppet.settings.preferred_run_mode = @preferred_run_mode
+    end
+
+    it "should not be enabled when not running in agent mode" do
+      Puppet.settings.preferred_run_mode = :user
+      mock_catalog.stubs(:host_config?).returns(true)
+      expect(persistence.enabled?(mock_catalog)).to be false
+    end
+
+    it "should not be enabled when the catalog is not the host catalog" do
+      Puppet.settings.preferred_run_mode = :agent
+      mock_catalog.stubs(:host_config?).returns(false)
+      expect(persistence.enabled?(mock_catalog)).to be false
+    end
+
+    it "should not be enabled outside of agent mode and the catalog is not the host catalog" do
+      Puppet.settings.preferred_run_mode = :user
+      mock_catalog.stubs(:host_config?).returns(false)
+      expect(persistence.enabled?(mock_catalog)).to be false
+    end
+
+    it "should be enabled in agent mode and when the catalog is the host catalog" do
+      Puppet.settings.preferred_run_mode = :agent
+      mock_catalog.stubs(:host_config?).returns(true)
+      expect(persistence.enabled?(mock_catalog)).to be true
+    end
+  end
 end

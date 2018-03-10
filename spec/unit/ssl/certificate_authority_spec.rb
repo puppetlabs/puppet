@@ -46,7 +46,6 @@ describe Puppet::SSL::CertificateAuthority do
         Puppet[:ca] = false
         Puppet.run_mode.stubs(:master?).returns true
 
-        ca = mock('ca')
         Puppet::SSL::CertificateAuthority.expects(:new).never
         expect(Puppet::SSL::CertificateAuthority.instance).to be_nil
       end
@@ -57,7 +56,6 @@ describe Puppet::SSL::CertificateAuthority do
         Puppet[:ca] = true
         Puppet.run_mode.stubs(:master?).returns false
 
-        ca = mock('ca')
         Puppet::SSL::CertificateAuthority.expects(:new).never
         expect(Puppet::SSL::CertificateAuthority.instance).to be_nil
       end
@@ -392,7 +390,7 @@ describe Puppet::SSL::CertificateAuthority do
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[2] == @cacert.content
         end.returns @cert.content
-        signed = @ca.sign(@name)
+        @ca.sign(@name)
       end
 
       it "should pass the next serial as the serial number" do
@@ -986,8 +984,6 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should get the serial number from inventory if no local certificate exists" do
-        real_cert = stub 'real_cert', :serial => 15
-        cert = stub 'cert', :content => real_cert
         Puppet::SSL::Certificate.indirection.expects(:find).with("host").returns nil
 
         @ca.inventory.expects(:serials).with("host").returns [16]
@@ -997,8 +993,6 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should revoke all serials matching a name" do
-        real_cert = stub 'real_cert', :serial => 15
-        cert = stub 'cert', :content => real_cert
         Puppet::SSL::Certificate.indirection.expects(:find).with("host").returns nil
 
         @ca.inventory.expects(:serials).with("host").returns [16, 20, 25]
@@ -1010,8 +1004,6 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should raise an error if no certificate match" do
-        real_cert = stub 'real_cert', :serial => 15
-        cert = stub 'cert', :content => real_cert
         Puppet::SSL::Certificate.indirection.expects(:find).with("host").returns nil
 
         @ca.inventory.expects(:serials).with("host").returns []

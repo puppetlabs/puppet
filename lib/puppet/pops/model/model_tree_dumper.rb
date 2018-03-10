@@ -28,6 +28,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     o.value.to_s
   end
 
+  def dump_QualifiedReference o
+    o.cased_value.to_s
+  end
+
   def dump_Factory o
     o['locator'] ||= Puppet::Pops::Parser::Locator.locator("<not from source>", nil)
     do_dump(o.model)

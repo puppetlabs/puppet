@@ -22,7 +22,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
       'ps auxwww'
     else
       'ps -ef'
-     end
+    end
   end
   private :getps
 

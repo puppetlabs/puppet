@@ -1,5 +1,5 @@
 module Puppet::Pops
-  module Functions
+module Functions
 # Defines a connection between a implementation method and the signature that
 # the method will handle.
 #
@@ -80,7 +80,7 @@ class Dispatch < Evaluator::CallableSignature
             when :pal_script_compiler
               Puppet.lookup(:pal_script_compiler)
             else
-              raise ArgumentError, "Unknown injection #{injection_name}"
+              raise ArgumentError, _("Unknown injection %{injection_name}") % { injection_name: injection_name }
             end
         else
           # Careful so no new nil arguments are added since they would override default

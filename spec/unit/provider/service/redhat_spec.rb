@@ -23,9 +23,9 @@ describe provider_class, :if => Puppet.features.posix? do
     Facter.stubs(:value).with(:osfamily).returns 'RedHat'
   end
 
-  osfamily = [ 'RedHat' ]
+  osfamilies = [ 'RedHat' ]
 
-  osfamily.each do |osfamily|
+  osfamilies.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
       expect(provider_class.default?).to be_truthy
@@ -85,6 +85,11 @@ describe provider_class, :if => Puppet.features.posix? do
 
     it "should check for on" do
       provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  on"
+      expect(@provider.enabled?).to eq(:true)
+    end
+
+    it "should check for B" do
+      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  B"
       expect(@provider.enabled?).to eq(:true)
     end
 

@@ -1,5 +1,6 @@
 require 'uri'
 require 'openssl'
+require 'puppet/network/http'
 
 module Puppet::Util::HttpProxy
   def self.proxy(uri)
@@ -156,8 +157,10 @@ module Puppet::Util::HttpProxy
     proxy
   end
 
-  # Retrieve a document through HTTP(s), following redirects if necessary.
-  # 
+  # Retrieve a document through HTTP(s), following redirects if necessary. The
+  # returned response body may be compressed, and it is the caller's
+  # responsibility to decompress it based on the 'content-encoding' header.
+  #
   # Based on the the client implementation in the HTTP pool.
   #
   # @see Puppet::Network::HTTP::Connection#request_with_redirects
@@ -172,7 +175,13 @@ module Puppet::Util::HttpProxy
 
     0.upto(redirect_limit) do |redirection|
       proxy = get_http_object(current_uri)
-      response = proxy.send(:head, current_uri.path)
+
+      headers = { 'Accept' => '*/*', 'User-Agent' => Puppet[:http_user_agent] }
+      if Puppet.features.zlib?
+        headers.merge!({"Accept-Encoding" => Puppet::Network::HTTP::Compression::ACCEPT_ENCODING})
+      end
+
+      response = proxy.send(:head, current_uri.path, headers)
 
       if [301, 302, 307].include?(response.code.to_i)
         # handle the redirection
@@ -180,11 +189,12 @@ module Puppet::Util::HttpProxy
         next
       end
 
-      if block_given?
-        headers = {'Accept' => 'binary', 'accept-encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3'}
-        response = proxy.send("request_#{method}".to_sym, current_uri.path, headers, &block)
-      else
-        response = proxy.send(method, current_uri.path)
+      if method != :head
+        if block_given?
+          response = proxy.send("request_#{method}".to_sym, current_uri.path, headers, &block)
+        else
+          response = proxy.send(method, current_uri.path, headers)
+        end
       end
 
       Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")

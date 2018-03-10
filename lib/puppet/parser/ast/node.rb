@@ -2,7 +2,7 @@ class Puppet::Parser::AST::Node < Puppet::Parser::AST::TopLevelConstruct
   attr_accessor :names, :context
 
   def initialize(names, context = {})
-    raise ArgumentError, "names should be an array" unless names.is_a? Array
+    raise ArgumentError, _("names should be an array") unless names.is_a? Array
     if context[:parent]
       raise Puppet::DevError, _("Node inheritance is removed in Puppet 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation")
     end

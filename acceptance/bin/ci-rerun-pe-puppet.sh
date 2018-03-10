@@ -23,7 +23,7 @@ echo "Must provide the hostname: got '$1'"
 exit 1
 fi
 
-domain=${domain:-delivery.puppetlabs.net}
+domain="${domain:-delivery.puppetlabs.net}"
 
 if [ -z "$2" ]; then
 
@@ -113,8 +113,8 @@ bundle exec beaker           \
   --repo-proxy               \
   --config hosts-immediate.cfg         \
   --pre-suite setup/common/pre-suite/110_SetPEPuppetService.rb \
-  --tests=${tests}           \
-  --keyfile ${HOME}/.ssh/id_rsa-acceptance \
+  --tests="${tests}"         \
+  --keyfile "${HOME}/.ssh/id_rsa-acceptance" \
   --root-keys \
   --helper lib/helper.rb \
   --preserve-hosts onfail \
@@ -123,4 +123,4 @@ bundle exec beaker           \
 
 RESULT=$?
 
-exit $RESULT
+exit "$RESULT"

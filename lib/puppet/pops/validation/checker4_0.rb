@@ -292,8 +292,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_CapabilityMapping(o)
     ok =
     case o.component
-    when Model::QualifiedName
-      name = o.component.value
+    when Model::QualifiedReference
+      name = o.component.cased_value
       acceptor.accept(Issues::ILLEGAL_CLASSREF, o.component, {:name=>name}) unless name =~ Patterns::CLASSREF_EXT
       true
     when Model::AccessExpression
@@ -906,6 +906,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def idem_BinaryExpression(o)
     true
+  end
+
+  def idem_MatchExpression(o)
+    false # can have side effect of setting $n match variables
   end
 
   def idem_RelationshipExpression(o)

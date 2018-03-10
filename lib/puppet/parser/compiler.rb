@@ -26,8 +26,8 @@ class Puppet::Parser::Compiler
     if !errors.empty?
       errors.each { |e| Puppet.err(e) } if errors.size > 1
       errmsg = [
-        "Compilation has been halted because: #{errors.first}",
-        "For more information, see https://docs.puppet.com/puppet/latest/reference/environments.html",
+        _("Compilation has been halted because: %{error}") % { error: errors.first },
+        _("For more information, see https://docs.puppet.com/puppet/latest/reference/environments.html"),
       ]
       raise(Puppet::Error, errmsg.join(' '))
     end
@@ -41,7 +41,7 @@ class Puppet::Parser::Compiler
     message = _("%{message} on node %{node}") % { message: detail, node: node.name }
     Puppet.log_exception(detail, message)
     raise Puppet::Error, message, detail.backtrace
- end
+  end
 
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
   attr_reader :qualified_variables
@@ -460,10 +460,10 @@ class Puppet::Parser::Compiler
       component_ref = args['component']
       kind = args['kind']
 
-      # That component_ref is either a QNAME or a Class['literal'|QREF] is asserted during validation so no
+      # That component_ref is either a QREF or a Class['literal'|QREF] is asserted during validation so no
       # need to check that here
-      if component_ref.is_a?(Puppet::Pops::Model::QualifiedName)
-        component_name = component_ref.value
+      if component_ref.is_a?(Puppet::Pops::Model::QualifiedReference)
+        component_name = component_ref.cased_value
         component_type = 'type'
         component = krt.find_definition(component_name)
       else
@@ -664,7 +664,7 @@ class Puppet::Parser::Compiler
         data[target] = source_data.merge(metaparams_as_data(target, names))
       end
 
-      target.tag(*(source.tags))
+      target.merge_tags_from(source)
     end
   end
 
@@ -747,9 +747,16 @@ class Puppet::Parser::Compiler
   # Set the node's parameters into the top-scope as variables.
   def set_node_parameters
     node.parameters.each do |param, value|
+      # We don't want to set @topscope['environment'] from the parameters,
+      # instead we want to get that from the node's environment itself in
+      # case a custom node terminus has done any mucking about with
+      # node.parameters.
+      next if param.to_s == 'environment'
       # Ensure node does not leak Symbol instances in general
       @topscope[param.to_s] = value.is_a?(Symbol) ? value.to_s : value
     end
+    @topscope['environment'] = node.environment.name.to_s
+
     # These might be nil.
     catalog.client_version = node.parameters["clientversion"]
     catalog.server_version = node.parameters["serverversion"]

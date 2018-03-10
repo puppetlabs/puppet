@@ -1,3 +1,4 @@
+require 'digest/md5'
 require 'digest/sha2'
 
 Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalue, :doc =>
@@ -17,9 +18,19 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :arity => -2, :type => :rvalu
   `fqdn_rand(30, 'expensive job 2')` will produce totally different numbers.)") do |args|
     max = args.shift.to_i
  
-    # We are consciously not using different hash algs based on fips mode here
-    # since the randomness is not guaranteed to be predictable for a given node
-    # It just needs to be unique for a given node
-    seed = Digest::SHA256.hexdigest([self['::fqdn'],max,args].join(':')).hex
+    # Puppet 5.4's fqdn_rand function produces a different value than earlier versions
+    # for the same set of inputs.
+    # This causes problems because the values are often written into service configuration files.
+    # When they change, services get notified and restart.
+
+    # Restoring previous fqdn_rand behavior of calculating its seed value using MD5
+    # when running on a non-FIPS enabled platform and only using SHA256 on FIPS enabled
+    # platforms.
+    if Puppet::Util::Platform.fips_enabled?
+      seed = Digest::SHA256.hexdigest([self['::fqdn'],max,args].join(':')).hex
+    else
+      seed = Digest::MD5.hexdigest([self['::fqdn'],max,args].join(':')).hex
+    end
+
     Puppet::Util.deterministic_rand_int(seed,max)
 end

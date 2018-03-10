@@ -93,10 +93,10 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
       describe "when supplying a path" do
         with_digest_algorithms do
             it "should store the path if not already stored" do
-              if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-                skip 'Skipping file bucket test on windows for sha512 due to long path names'
+              if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+                skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
               else
-                checksum = save_bucket_file(plaintext, "/foo/bar")
+                save_bucket_file(plaintext, "/foo/bar")
   
                 dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
                 contents_file = "#{dir_path}/contents"
@@ -107,8 +107,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             end
   
             it "should leave the paths file alone if the path is already stored" do
-              if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-                skip 'Skipping file bucket test on windows for sha512 due to long path names'
+              if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+                skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
               else
                 checksum = save_bucket_file(plaintext, "/foo/bar")
                 checksum = save_bucket_file(plaintext, "/foo/bar")
@@ -119,8 +119,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             end
   
             it "should store an additional path if the new path differs from those already stored" do
-              if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-                skip 'Skipping file bucket test on windows for sha512 due to long path names'
+              if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+                skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
               else
                 checksum = save_bucket_file(plaintext, "/foo/bar")
                 checksum = save_bucket_file(plaintext, "/foo/baz")
@@ -136,10 +136,10 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
       describe "when not supplying a path" do
         with_digest_algorithms do
           it "should save the file and create an empty paths file" do
-            if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-              skip 'Skipping file bucket test on windows for sha512 due to long path names'
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
             else
-              checksum = save_bucket_file(plaintext, "")
+              save_bucket_file(plaintext, "")
   
               dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
               expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
@@ -172,8 +172,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           end
 
           it "should return the list of bucketed files in a human readable way" do
-            if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-              skip 'Skipping file bucket test on windows for sha512 due to long path names'
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
             else
               checksum1 = save_bucket_file("I'm the contents of a file", '/foo/bar1')
               checksum2 = save_bucket_file("I'm the contents of another file", '/foo/bar2')
@@ -189,8 +189,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           end
 
           it "should fail in an informative way when provided dates are not in the right format" do
-            if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-              skip 'Skipping file bucket test on windows for sha512 due to long path names'
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
             else
               contents = "I'm the contents of a file"
               save_bucket_file(contents, '/foo/bar1')
@@ -221,8 +221,9 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           end
 
           it "should return false/nil if the file is bucketed but with a different path" do
-            if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-              skip 'Skipping file bucket test on windows for sha512 due to long path names'
+
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
             else
               checksum = save_bucket_file("I'm the contents of a file", '/foo/bar')
   
@@ -232,8 +233,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           end
 
           it "should return true/file if the file is already bucketed with the given path" do
-            if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-              skip 'Skipping file bucket test on windows for sha512 due to long path names'
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
             else
               contents = "I'm the contents of a file"
   
@@ -258,10 +259,11 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
               end
 
               it "should return true/file if the file is already bucketed" do
+    
                 # this one replaces most of the lets in the "when
                 # digest_digest_algorithm is set..." shared context, but it still needs digest_algorithm
-                if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-                  skip 'Skipping file bucket test on windows for sha512 due to long path names'
+                if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+                  skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
                 else
                   contents = "I'm the contents of a file"
   
@@ -285,8 +287,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }
 
         it "should generate an empty string if there is no diff" do
-          if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-            skip 'Skipping file bucket test on windows for sha512 due to long path names'
+          if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+            skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
           else
             checksum = save_bucket_file("I'm the contents of a file")
             expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => checksum)).to eq('')
@@ -294,8 +296,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         end
 
         it "should generate a proper diff if there is a diff" do
-          if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-            skip 'Skipping file bucket test on windows for sha512 due to long path names'
+          if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+            skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
           else
             checksum1 = save_bucket_file("foo\nbar\nbaz")
             checksum2 = save_bucket_file("foo\nbiz\nbaz")
@@ -306,8 +308,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         end
 
         it "should raise an exception if the hash to diff against isn't found" do
-          if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-            skip 'Skipping file bucket test on windows for sha512 due to long path names'
+          if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+            skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
           else
             checksum = save_bucket_file("whatever")
   
@@ -318,8 +320,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         end
 
         it "should return nil if the hash to diff from isn't found" do
-          if Puppet::Util::Platform.windows? && ("#{digest_algorithm}" == "sha512")
-            skip 'Skipping file bucket test on windows for sha512 due to long path names'
+          if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+            skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
           else
             checksum = save_bucket_file("whatever")
   
@@ -394,6 +396,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
 
             describe "when saving files" do
               it "should save the contents to the calculated path" do
+                skip("Windows Long File Name support is incomplete PUP-8257, this doesn't fail reliably so it should be skipped.") if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
                 options = {}
                 if override_bucket_path
                   options[:bucket_path] = @bucket_top_dir

@@ -43,11 +43,7 @@ class Locator
   def char_offset(byte_offset)
   end
 
-  # Returns the length measured in number of characters from the given start and end reported offset
-  def char_length(offset, end_offset)
-  end
-
-  # Returns the length measured in number of characters from the given start and end byte offseta
+  # Returns the length measured in number of characters from the given start and end byte offset
   def char_length(offset, end_offset)
   end
 
@@ -158,8 +154,6 @@ class Locator
       offset_on_line(offset) +1
     end
   end
-
-  private
 
   class AbstractLocator < Locator
     attr_accessor :line_index
@@ -326,7 +320,7 @@ class Locator
       string.byteslice(0, byte_offset).length
     end
 
-    # Returns the length measured in number of characters from the given start and end byte offseta
+    # Returns the length measured in number of characters from the given start and end byte offset
     def char_length(offset, end_offset)
       string.byteslice(offset, end_offset - offset).length
     end

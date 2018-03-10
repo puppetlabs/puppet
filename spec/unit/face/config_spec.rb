@@ -2,25 +2,48 @@
 require 'spec_helper'
 require 'puppet/face'
 
-module PuppetFaceSpecs 
+module PuppetFaceSpecs
 describe Puppet::Face[:config, '0.0.1'] do
+
+  let(:config) { described_class }
+
+  def render(action, result)
+    config.get_action(action).when_rendering(:console).call(result)
+  end
 
   FS = Puppet::FileSystem
 
   it "prints a single setting without the name" do
     Puppet[:trace] = true
 
-    expect { subject.print("trace") }.to have_printed('true')
+    result = subject.print("trace")
+    expect(render(:print, result)).to eq("true\n")
   end
 
   it "prints multiple settings with the names" do
     Puppet[:trace] = true
     Puppet[:syslogfacility] = "file"
 
-    expect { subject.print("trace", "syslogfacility") }.to have_printed(<<-OUTPUT)
+    result = subject.print("trace", "syslogfacility")
+    expect(render(:print, result)).to eq(<<-OUTPUT)
 syslogfacility = file
 trace = true
     OUTPUT
+  end
+
+  it "prints environment_timeout=unlimited correctly" do
+    Puppet[:environment_timeout] = "unlimited"
+
+    result = subject.print("environment_timeout")
+    expect(render(:print, result)).to eq("unlimited\n")
+  end
+
+  it "prints arrays correctly" do
+    pending "Still doesn't print arrays like they would appear in config"
+    Puppet[:server_list] = %w{server1 server2}
+
+    result = subject.print("server_list")
+    expect(render(:print, result)).to eq("server1, server2\n")
   end
 
   it "prints the setting from the selected section" do
@@ -29,19 +52,39 @@ trace = true
     syslogfacility = file
     CONF
 
-    expect { subject.print("syslogfacility", :section => "user") }.to have_printed('file')
+    result = subject.print("syslogfacility", :section => "user")
+    expect(render(:print, result)).to eq("file\n")
   end
 
   it "defaults to all when no arguments are given" do
-    subject.expects(:puts).times(Puppet.settings.to_a.length)
-
-    subject.print
+    result = subject.print
+    expect(render(:print, result).lines.to_a.length).to eq(Puppet.settings.to_a.length)
   end
 
   it "prints out all of the settings when asked for 'all'" do
-    subject.expects(:puts).times(Puppet.settings.to_a.length)
+    result = subject.print('all')
+    expect(render(:print, result).lines.to_a.length).to eq(Puppet.settings.to_a.length)
+  end
 
-    subject.print('all')
+  it "stringifies all keys for network format handlers to consume" do
+    Puppet[:syslogfacility] = "file"
+
+    result = subject.print
+    expect(result["syslogfacility"]).to eq("file")
+    expect(result.keys).to all(be_a(String))
+  end
+
+  it "stringifies multiple keys for network format handlers to consume" do
+    Puppet[:trace] = true
+    Puppet[:syslogfacility] = "file"
+
+    expect(subject.print("trace", "syslogfacility")).to eq({"syslogfacility" => "file", "trace" => true})
+  end
+
+  it "stringifies single key for network format handlers to consume" do
+    Puppet[:trace] = true
+
+    expect(subject.print("trace")).to eq({"trace" => true})
   end
 
   context "when setting config values" do
@@ -82,12 +125,57 @@ trace = true
 
       manipulator.expects(:set).with("baz", "foo", "bar")
       subject.set('foo', 'bar', {:section => "baz"})
-
     end
 
     it "opens the file with UTF-8 encoding" do
       Puppet::FileSystem.expects(:open).with(path, nil, 'r+:UTF-8')
       subject.set('foo', 'bar')
+    end
+  end
+
+  context 'when the puppet.conf file does not exist' do
+    let(:config_file) { '/foo/puppet.conf' }
+    let(:path) { Pathname.new(config_file).expand_path }
+    before(:each) do
+      Puppet[:config] = config_file
+      Puppet::FileSystem.stubs(:pathname).with(path.to_s).returns(path)
+    end
+
+    it 'prints a message when the puppet.conf file does not exist' do
+      Puppet::FileSystem.stubs(:exist?).with(path).returns(false)
+      Puppet.expects(:warning).with("The puppet.conf file does not exist #{path.to_s}")
+      subject.delete('setting', {:section => 'main'})
+    end
+  end
+
+  context 'when deleting config values' do
+    let(:config_file) { '/foo/puppet.conf' }
+    let(:path) { Pathname.new(config_file).expand_path }
+    before(:each) do
+      Puppet[:config] = config_file
+      Puppet::FileSystem.stubs(:pathname).with(path.to_s).returns(path)
+      Puppet::FileSystem.stubs(:exist?).with(path).returns(true)
+    end
+
+    it 'prints a message about what was deleted' do
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
+      manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
+      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+
+      manipulator.expects(:delete).with('main', 'setting').returns('    setting=value')
+      expect { subject.delete('setting', {:section => 'main'}) }.to have_printed("Deleted setting from 'main': 'setting=value'")
+    end
+
+    it 'prints a warning when a setting is not found to delete' do
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
+      manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
+      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+
+      manipulator.expects(:delete).with('main', 'setting').returns(nil)
+      Puppet.expects(:warning).with("No setting found in configuration file for section 'main' setting name 'setting'")
+      subject.delete('setting', {:section => 'main'})
     end
   end
 
@@ -107,7 +195,9 @@ trace = true
         ])
       ) do
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
-        expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
+
+        result = subject.print(*add_section_option(args, section))
+        expect(render(:print, result)).to eq(<<-OUTPUT)
 basemodulepath = #{File.expand_path("/some/base")}
 environment = production
 environmentpath = #{File.expand_path("/dev/null/environments")}
@@ -128,7 +218,9 @@ modulepath = #{File.expand_path("/dev/null/environments/production/modules")}#{F
         ])
       ) do
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
-        expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
+
+        result = subject.print(*add_section_option(args, section))
+        expect(render(:print, result)).to eq(<<-OUTPUT)
 basemodulepath = #{File.expand_path("/some/base")}
 environment = production
 environmentpath = #{File.expand_path("/dev/null/environments")}
@@ -147,7 +239,9 @@ modulepath = #{File.expand_path("/custom/modules")}#{File::PATH_SEPARATOR}#{File
         ])
       ) do
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
-        expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
+
+        result = subject.print(*add_section_option(args, section))
+        expect(render(:print, result)).to eq(<<-OUTPUT)
 basemodulepath = #{File.expand_path("/some/base")}
 environment = doesnotexist
 environmentpath = #{File.expand_path("/dev/null/environments")}

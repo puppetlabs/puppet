@@ -165,11 +165,11 @@ class Parser
         when 'IO'; :io
         when 'Date'; :date
         else
-          raise ArgumentError, "unsupported argument type '#{opts[:type].class.name}'"
+          raise ArgumentError, _("unsupported argument type '%{type}'") % { type: opts[:type].class.name }
         end
       when nil; nil
       else
-        raise ArgumentError, "unsupported argument type '#{opts[:type]}'" unless TYPES.include?(opts[:type])
+        raise ArgumentError, _("unsupported argument type '%{type}'") % { type: opts[:type] } unless TYPES.include?(opts[:type])
         opts[:type]
       end
 
@@ -223,7 +223,7 @@ class Parser
       when /^[^-]/
         opts[:long]
       else
-        raise ArgumentError, "invalid long option name #{opts[:long].inspect}"
+        raise ArgumentError, _("invalid long option name %{name}") % { name: opts[:long].inspect }
       end
     raise ArgumentError, _("long option name %{value0} is already taken; please specify a (different) :long") % { value0: opts[:long].inspect } if @long[opts[:long]]
 
@@ -232,7 +232,7 @@ class Parser
     opts[:short] = case opts[:short]
       when /^-(.)$/; $1
       when nil, :none, /^.$/; opts[:short]
-      else raise ArgumentError, "invalid short option name '#{opts[:short].inspect}'"
+      else raise ArgumentError, _("invalid short option name '%{name}'") % { name: opts[:short].inspect }
     end
 
     if opts[:short]
@@ -812,7 +812,8 @@ def die arg, msg=nil
   if @last_parser
     @last_parser.die arg, msg
   else
-    raise ArgumentError, "Trollop::die can only be called after Trollop::options"
+    #TRANSLATORS 'Trollop' is the name of a module and 'die' and 'options' are methods in it and should not be translated.
+    raise ArgumentError, _("Trollop::die can only be called after Trollop::options")
   end
 end
 

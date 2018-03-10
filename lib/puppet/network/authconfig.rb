@@ -38,7 +38,7 @@ module Puppet
       { :acl => "#{ca_url_prefix}/v1/certificate/", :method => :find, :authenticated => :any },
       { :acl => "#{ca_url_prefix}/v1/certificate_request", :method => [:find, :save], :authenticated => :any },
       ]
-      end
+    end
 
     # Just proxy the setting methods to our rights stuff
     [:allow, :deny].each do |method|

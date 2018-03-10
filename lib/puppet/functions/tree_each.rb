@@ -42,12 +42,12 @@
 #
 # @example depth- or breadth-first order
 #
-# ~~~ puppet
+# ```puppet
 # [1, [2, 3], 4]
-# ~~~
-# 
+# ```
+#
 # Results in:
-# 
+#
 # If containers are skipped:
 #
 # * `depth_first` order `1`, `2`, `3`, `4` 
@@ -67,33 +67,33 @@
 #
 # @example A flattened iteration over a tree excluding Collections
 #
-# ~~~ puppet
+# ```puppet
 # $data = [1, 2, [3, [4, 5]]]
 # $data.tree_each({include_containers => false}) |$v| { notice "$v" }
-# ~~~
+# ```
 #
 # This would call the lambda 5 times with with the following values in sequence: `1`, `2`, `3`, `4`, `5`
 #
 # @example A flattened iteration over a tree (including containers by default)
 #
-# ~~~ puppet
+# ```puppet
 # $data = [1, 2, [3, [4, 5]]]
 # $data.tree_each |$v| { notice "$v" }
-# ~~~
+# ```
 #
 # This would call the lambda 7 times with the following values in sequence:
 # `1`, `2`, `[3, [4, 5]]`, `3`, `[4, 5]`, `4`, `5`
 #
 # @example A flattened iteration over a tree (including only non root containers)
 #
-# ~~~ puppet
+# ```puppet
 # $data = [1, 2, [3, [4, 5]]]
 # $data.tree_each({include_values => false, include_root => false}) |$v| { notice "$v" }
-# ~~~
+# ```
 #
 # This would call the lambda 2 times with the following values in sequence:
 # `[3, [4, 5]]`, `[4, 5]`
-
+#
 # Any Puppet Type system data type can be used to filter what is
 # considered to be a container, but it must be a narrower type than one of
 # the default Array, Hash, Object types - for example it is not possible to make a
@@ -101,16 +101,16 @@
 #
 # @example Only `Array` as container type
 #
-# ~~~ puppet
+# ```puppet
 # $data = [1, {a => 'hello', b => [100, 200]}, [3, [4, 5]]]
 # $data.tree_each({container_type => Array, include_containers => false} |$v| { notice "$v" }
-# ~~~
-# 
+# ```
+#
 # Would call the lambda 5 times with `1`, `{a => 'hello', b => [100, 200]}`, `3`, `4`, `5`
 #
 # **Chaining** When calling `tree_each` without a lambda the function produces an `Iterator`
 # that can be chained into another iteration. Thus it is easy to use one of:
-# 
+#
 # * `reverse_each` - get "leaves before root" 
 # * `filter` - prune the tree
 # * `map` - transform each element
@@ -118,9 +118,9 @@
 #
 # Note than when chaining, the value passed on is a `Tuple` with `[path, value]`.
 #
-# @example pruning a tree
-# 
-# ~~~ puppet
+# @example Pruning a tree
+#
+# ```puppet
 # # A tree of some complexity (here very simple for readability)
 # $tree = [
 #  { name => 'user1', status => 'inactive', id => '10'},
@@ -130,7 +130,7 @@
 #  $value = $v[1]
 #  $value =~ Hash and $value[status] == active
 # }
-# ~~~
+# ```
 #
 # Would notice `[[[1], {name => user2, status => active, id => 20}]]`, which can then be processed
 # further as each filtered result appears as a `Tuple` with `[path, value]`.

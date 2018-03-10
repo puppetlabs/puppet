@@ -14,9 +14,7 @@ module Loader
 # modules" to determine which module loader to use for each individual module. (There could be differences in
 # internal layout etc.)
 #
-# A module loader is also not aware of the mapping of name to relative paths - this is performed by the
-# included module PathBasedInstantatorConfig which knows about the map from type/name to
-# relative path, and the logic that can instantiate what is expected to be found in the content of that path.
+# A module loader is also not aware of the mapping of name to relative paths.
 #
 # @api private
 #
@@ -118,7 +116,8 @@ module ModuleLoaders
       @loaders = loaders
       @loadables = loadables
       unless (loadables - LOADABLE_KINDS).empty?
-        raise ArgumentError, 'given loadables are not of supported loadable kind'
+        #TRANSLATORS 'loadables' is a variable containing loadable modules and should not be translated
+        raise ArgumentError, _('given loadables are not of supported loadable kind')
       end
       loaders.add_loader_by_name(self)
     end
@@ -143,8 +142,8 @@ module ModuleLoaders
                 err = Puppet::DataTypes::Error.new(
                   Issues::LOADER_FAILURE.format(:type => type),
                   'PUPPET_LOADER_FAILURE',
-                  Issues::LOADER_FAILURE.issue_code, nil,
-                  { 'original_error' => e.message })
+                  { 'original_error' => e.message },
+                  Issues::LOADER_FAILURE.issue_code)
                 error_collector << err unless error_collector.include?(err)
               end
             end
@@ -220,7 +219,9 @@ module ModuleLoaders
               return set_entry(typed_name, value, origin)
             end
 
-            raise ArgumentError,"The code loaded from #{origin} does not define the TypeSet '#{module_name.capitalize}'"
+            #TRANSLATORS 'TypeSet' should not be translated
+            raise ArgumentError, _("The code loaded from %{origin} does not define the TypeSet '%{module_name}'") %
+                { origin: origin, module_name: module_name.capitalize }
           end
         else
           # anything else cannot possibly be in this module
@@ -424,8 +425,13 @@ module ModuleLoaders
     end
 
     def existing_paths(effective_path)
-      # Select all paths starting with effective_path but reject any path that continues into a subdirectory
-      @path_index.select { |path| path.start_with?(effective_path) }.reject { |path| path[effective_path.size..-1].include?('/')}
+      dirname = File.dirname(effective_path)
+      basename = File.basename(effective_path)
+      # Select all paths matching `effective_path` up until an optional file extension
+      @path_index.select do |path|
+        File.basename(path, '.*') == basename &&
+          File.dirname(path) == dirname
+      end
     end
 
     def meaningful_to_search?(smart_path)

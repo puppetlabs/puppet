@@ -27,7 +27,7 @@ describe Puppet::ModuleTool::Applications::Builder do
       builder.run
     end
 
-      def create_regular_files
+    def create_regular_files
       Puppet::FileSystem.touch(File.join(path, '.dotfile'))
       Puppet::FileSystem.touch(File.join(path, 'file.foo'))
       Puppet::FileSystem.touch(File.join(path, 'REVISION'))
@@ -428,5 +428,12 @@ symlinkfile
     end
 
     it_behaves_like "a packagable module"
+  end
+
+  context 'when in FIPS mode...' do
+    it 'module builder refuses to run' do
+      Facter.stubs(:value).with(:fips_enabled).returns(true)
+      expect { builder.run }.to raise_error(/Module building is prohibited in FIPS mode/)
+    end 
   end
 end

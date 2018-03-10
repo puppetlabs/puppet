@@ -51,12 +51,12 @@ if Puppet.features.telnet?
 
       it "should find the debug mode from the options" do
         Puppet::Util::NetworkDevice::Transport::Telnet.expects(:new).with(true).returns(@transport)
-        cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23", :debug => true)
+        Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23", :debug => true)
       end
 
       it "should set the debug mode to nil by default" do
         Puppet::Util::NetworkDevice::Transport::Telnet.expects(:new).with(nil).returns(@transport)
-        cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23")
+        Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23")
       end
     end
 
@@ -184,7 +184,7 @@ eos
       "VLAN99" => "VLAN99"
     }.each do |input,expected|
       it "should canonicalize #{input} to #{expected}" do
-        expect(@cisco.canonalize_ifname(input)).to eq(expected)
+        expect(@cisco.canonicalize_ifname(input)).to eq(expected)
       end
     end
 

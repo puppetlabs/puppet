@@ -353,7 +353,7 @@ describe Puppet::Node::Environment do
           end
 
           it "does not find modules with same name by the wrong author" do
-            mod = PuppetSpec::Modules.create(
+            PuppetSpec::Modules.create(
               'baz',
               first_modulepath,
               :metadata => {:author => 'sneakylabs'},

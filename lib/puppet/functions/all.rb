@@ -18,11 +18,11 @@
 #
 # @example Using the `all` function with an Array and a one-parameter lambda
 #
-# ~~~ puppet
+# ```puppet
 # # For the array $data, run a lambda that checks that all values are multiples of 10
 # $data = [10, 20, 30]
 # notice $data.all |$item| { $item % 10 == 0 }
-# ~~~
+# ```
 #
 # Would notice `true`.
 #
@@ -31,11 +31,11 @@
 #
 # @example Using the `all` function with a `Hash` and a one-parameter lambda
 #
-# ~~~ puppet
+# ```puppet
 # # For the hash $data, run a lambda using each item as a key-value array
 # $data = { 'a_0'=> 10, 'b_1' => 20 }
 # notice $data.all |$item| { $item[1] % 10 == 0  }
-# ~~~
+# ```
 #
 # Would notice `true` if all values in the hash are multiples of 10.
 #
@@ -45,11 +45,11 @@
 #
 # @example Using the `all` function with a hash and a two-parameter lambda
 #
-# ~~~ puppet
+# ```puppet
 # # Check that all values are a multiple of 10 and keys start with 'abc'
 # $data = {abc_123 => 10, abc_42 => 20, abc_blue => 30}
 # notice $data.all |$key, $value| { $value % 10 == 0  and $key =~ /^abc/ }
-# ~~~
+# ```
 #
 # Would notice true.
 #

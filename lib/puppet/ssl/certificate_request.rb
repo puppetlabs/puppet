@@ -109,7 +109,7 @@ DOC
 
   def ext_value_to_ruby_value(asn1_arr)
     # A list of ASN1 types than can't be directly converted to a Ruby type
-    @non_convertable ||= [OpenSSL::ASN1::EndOfContent,
+    @non_convertible ||= [OpenSSL::ASN1::EndOfContent,
                           OpenSSL::ASN1::BitString,
                           OpenSSL::ASN1::Null,
                           OpenSSL::ASN1::Enumerated,
@@ -130,7 +130,7 @@ DOC
     # type, use the original ASN1 value. This is needed to work around a bug
     # in Ruby's OpenSSL library which doesn't convert the value of unknown
     # extension OIDs properly. See PUP-3560
-    if @non_convertable.include?(asn1_val.class) then
+    if @non_convertible.include?(asn1_val.class) then
       # Allows OpenSSL to take the ASN1 value and turn it into something Ruby understands
       OpenSSL::X509::Extension.new(asn1_arr.first.value, asn1_val.to_der).value
     else
@@ -237,8 +237,6 @@ DOC
       end
     end
   end
-
-  private
 
   PRIVATE_EXTENSIONS = [
     'subjectAltName', '2.5.29.17',

@@ -104,7 +104,6 @@ describe Puppet::Settings do
     end
 
     it "should fail if the app defaults hash is missing any required values" do
-      incomplete_default_values = default_values.reject { |key, _| key == :confdir }
       expect {
         @settings.initialize_app_defaults(default_values.reject { |key, _| key == :confdir })
       }.to raise_error(Puppet::Settings::SettingsError)
@@ -556,7 +555,8 @@ describe Puppet::Settings do
           :two    => { :default => "$one TWO", :desc => "b"},
           :three  => { :default => "$one $two THREE", :desc => "c"},
           :four   => { :default => "$two $three FOUR", :desc => "d"},
-          :five   => { :default => nil, :desc => "e" }
+          :five   => { :default => nil, :desc => "e" },
+          :code   => { :default => "", :desc => "my code"}
       Puppet::FileSystem.stubs(:exist?).returns true
     end
 
@@ -612,6 +612,13 @@ describe Puppet::Settings do
       expect(@settings[:two]).to eq("one TWO")
     end
 
+    it "should not interpolate the value of the :code setting" do
+      @code = @settings.setting(:code)
+      @code.expects(:munge).never
+
+      expect(@settings[:code]).to eq("")
+    end
+
     it "should have a run_mode that defaults to user" do
       expect(@settings.preferred_run_mode).to eq(:user)
     end
@@ -658,7 +665,6 @@ describe Puppet::Settings do
 
     it "should not return values outside of its search path" do
       text = "[other]\none = oval\n"
-      file = "/some/file"
       @settings.stubs(:read_file).returns(text)
       @settings.send(:parse_config_files)
       expect(@settings[:one]).to eq("ONE")
@@ -938,7 +944,6 @@ describe Puppet::Settings do
     end
 
     it "does not require the value for a setting without a hook to resolve during global setup" do
-      hook_invoked = false
       @settings.define_settings :section, :can_cause_problems  => {:desc => '' }
 
       @settings.define_settings(:main,

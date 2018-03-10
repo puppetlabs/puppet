@@ -96,7 +96,6 @@ describe "The lookup function" do
     Puppet[:code] = code
     Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
       scope = compiler.topscope
-      scope['environment'] = env_name
       scope['domain'] = 'example.com'
       scope_additions.each_pair { |k, v| scope[k] = v }
       if explain
@@ -183,7 +182,7 @@ describe "The lookup function" do
 
         it 'fails and reports error' do
           expect { lookup('a') }.to raise_error(
-            "Backend 'yaml' is defined more than once. First defined at line 3 (file: #{code_dir}/hiera.yaml, line: 5)")
+            "Backend 'yaml' is defined more than once. First defined at (line: 3) (file: #{code_dir}/hiera.yaml, line: 5)")
         end
       end
 
@@ -213,7 +212,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
-              "Hierarchy name 'Common' defined more than once. First defined at line 3 (file: #{code_dir}/hiera.yaml, line: 7)")
+              "Hierarchy name 'Common' defined more than once. First defined at (line: 3) (file: #{code_dir}/hiera.yaml, line: 7)")
           end
         end
 
@@ -365,7 +364,7 @@ describe "The lookup function" do
 
           it 'fails and reports error' do
             expect { lookup('a') }.to raise_error(
-              "Hierarchy name 'Common' defined more than once. First defined at line 3 (file: #{env_dir}/spec/hiera.yaml, line: 9)")
+              "Hierarchy name 'Common' defined more than once. First defined at (line: 3) (file: #{env_dir}/spec/hiera.yaml, line: 9)")
           end
         end
       end

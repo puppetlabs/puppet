@@ -14,7 +14,8 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     value.is_a? Integer
   end
 
-  optional_commands :localadd => "lgroupadd"
+  optional_commands :localadd => "lgroupadd", :localdelete => "lgroupdel", :localmodify => "lgroupmod"
+
   has_feature :libuser if Puppet.features.libuser?
 
   def exists?
@@ -81,5 +82,30 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     cmd << "-r" if @resource.system? and self.class.system_groups?
     cmd << @resource[:name]
     cmd
+  end
+
+  def modifycmd(param, value)
+    if @resource.forcelocal?
+      cmd = [command(:localmodify)]
+      @custom_environment = Puppet::Util::Libuser.getenv
+    else
+      cmd = [command(:modify)]
+    end
+    cmd << flag(param) << value
+    # TODO the group type only really manages gid, so there are currently no
+    # tests for this behavior
+    cmd += check_allow_dup if param == :gid
+    cmd << @resource[:name]
+
+    cmd
+  end
+
+  def deletecmd
+    if @resource.forcelocal?
+      @custom_environment = Puppet::Util::Libuser.getenv
+      [command(:localdelete), @resource[:name]]
+    else
+      [command(:delete), @resource[:name]]
+    end
   end
 end

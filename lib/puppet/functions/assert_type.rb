@@ -10,7 +10,7 @@
 #
 # @example Using `assert_type`
 #
-# ~~~ puppet
+# ```puppet
 # $raw_username = 'Amy Berry'
 #
 # # Assert that $raw_username is a non-empty string and assign it to $valid_username.
@@ -19,7 +19,7 @@
 # # $valid_username contains "Amy Berry".
 # # If $raw_username was an empty string or a different data type, the Puppet run would
 # # fail with an "Expected type does not match actual" error.
-# ~~~
+# ```
 #
 # You can use an optional lambda to provide enhanced feedback. The lambda takes two
 # mandatory parameters, in this order:
@@ -29,7 +29,7 @@
 #
 # @example Using `assert_type` with a warning and default value
 #
-# ~~~ puppet
+# ```puppet
 # $raw_username = 'Amy Berry'
 #
 # # Assert that $raw_username is a non-empty string and assign it to $valid_username.
@@ -43,7 +43,7 @@
 # # If $raw_username was an empty string, the Puppet run would set $valid_username to
 # # "anonymous" and output a warning: "The username should be 'String[1, default]', not
 # # 'String[0, 0]'. Using 'anonymous'."
-# ~~~
+# ```
 #
 # For more information about data types, see the
 # [documentation](https://docs.puppetlabs.com/puppet/latest/reference/lang_data.html).

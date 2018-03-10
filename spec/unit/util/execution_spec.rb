@@ -711,7 +711,6 @@ describe Puppet::Util::Execution do
         it "should not raise an error if the file is open" do
           stdout = Puppet::FileSystem::Uniquefile.new('test')
           Puppet::FileSystem::Uniquefile.stubs(:new).returns(stdout)
-          file = File.new(stdout.path, 'r')
 
           Puppet::Util::Execution.execute('test command')
         end

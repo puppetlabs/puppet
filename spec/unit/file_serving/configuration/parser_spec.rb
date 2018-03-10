@@ -78,7 +78,7 @@ describe Puppet::FileServing::Configuration::Parser do
     it "should return comprehensible error message, if invalid line detected" do
       write_config_file "[one]\n\n\x01path /etc/puppetlabs/puppet/files\n\x01allow *\n"
 
-      expect { @parser.parse }.to raise_error(ArgumentError, /Invalid line.*in.*, line 3/)
+      expect { @parser.parse }.to raise_error(ArgumentError, /Invalid entry at \(file: .*, line: 3\): .*/)
     end
   end
 
@@ -130,7 +130,7 @@ describe Puppet::FileServing::Configuration::Parser do
     it "should return comprehensible error message, if failed on invalid attribute" do
       write_config_file "[one]\ndo something\n"
 
-      expect { @parser.parse }.to raise_error(ArgumentError, /Invalid argument 'do' in .*, line 2/)
+      expect { @parser.parse }.to raise_error(ArgumentError, /Invalid argument 'do' at \(file: .*, line: 2\)/)
     end
   end
 

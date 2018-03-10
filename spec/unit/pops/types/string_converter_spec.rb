@@ -83,19 +83,19 @@ describe 'The string converter' do
 
     it "Is an error to specify different delimiters at the same time" do
       expect do
-        fmt = format.new("%[{d")
+        format.new("%[{d")
       end.to raise_error(/Only one of the delimiters/)
     end
 
     it "Is an error to have trailing characters after the format" do
       expect do
-        fmt = format.new("%dv")
+        format.new("%dv")
       end.to raise_error(/The format '%dv' is not a valid format/)
     end
 
     it "Is an error to specify the same flag more than once" do
       expect do
-        fmt = format.new("%[[d")
+        format.new("%[[d")
       end.to raise_error(/The same flag can only be used once/)
     end
   end

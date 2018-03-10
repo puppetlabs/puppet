@@ -100,7 +100,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     resources.each do |resource|
       other_title_key = title_key_for_ref(other.ref)
       idx = @resources.index(other_title_key)
-      raise ArgumentError, "Cannot add resource #{resource.ref} before #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      if idx.nil?
+        raise ArgumentError, _("Cannot add resource %{resource_1} before %{resource_2} because %{resource_2} is not yet in the catalog") %
+            { resource_1: resource.ref, resource_2: other.ref }
+      end
       add_one_resource(resource, idx)
     end
   end
@@ -112,7 +115,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     resources.each do |resource|
       other_title_key = title_key_for_ref(other.ref)
       idx = @resources.index(other_title_key)
-      raise ArgumentError, "Cannot add resource #{resource.ref} after #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      if idx.nil?
+        raise ArgumentError, _("Cannot add resource %{resource_1} after %{resource_2} because %{resource_2} is not yet in the catalog") %
+            { resource_1: resource.ref, resource_2: other.ref }
+      end
       add_one_resource(resource, idx+1)
     end
   end
@@ -193,10 +199,17 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # isn't sufficient.
     if existing = @resource_table[newref]
       return if existing == resource
-      resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
-      existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
-      #TRANSLATORS "resource" here is a Puppet type and should not be translated
-      msg = _("Cannot alias %{ref} to %{key}%{resource_declaration}; resource %{newref} already declared%{existing_declaration}") % { ref: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect, existing_declaration: existing_declaration }
+      resource_declaration = Puppet::Util::Errors.error_location(resource.file, resource.line)
+      msg = if resource_declaration.empty?
+              #TRANSLATORS 'alias' should not be translated
+              _("Cannot alias %{resource} to %{key}; resource %{newref} already declared") %
+                  { resource: ref, key: key.inspect, newref: newref.inspect }
+            else
+              #TRANSLATORS 'alias' should not be translated
+              _("Cannot alias %{resource} to %{key} at %{resource_declaration}; resource %{newref} already declared") %
+                  { resource: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect }
+            end
+      msg += Puppet::Util::Errors.error_location_with_space(existing.file, existing.line)
       raise ArgumentError, msg
     end
     @resource_table[newref] = resource
@@ -271,7 +284,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Create a new resource and register it in the catalog.
   def create_resource(type, options)
     unless klass = Puppet::Type.type(type)
-      raise ArgumentError, "Unknown resource type #{type}"
+      raise ArgumentError, _("Unknown resource type %{type}") % { type: type }
     end
     return unless resource = klass.new(options)
 
@@ -433,12 +446,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       edges.each do |edge_hash|
         edge = Puppet::Relationship.from_data_hash(edge_hash)
         unless source = result.resource(edge.source)
-          raise ArgumentError, "Could not intern from data: Could not find relationship source #{edge.source.inspect} for #{edge.target.to_s}"
+          raise ArgumentError, _("Could not intern from data: Could not find relationship source %{source} for %{target}") %
+              { source: edge.source.inspect, target: edge.target.to_s }
         end
         edge.source = source
 
         unless target = result.resource(edge.target)
-          raise ArgumentError, "Could not intern from data: Could not find relationship target #{edge.target.inspect} for #{edge.source.to_s}"
+          raise ArgumentError, _("Could not intern from data: Could not find relationship target %{target} for %{source}") %
+              { target: edge.target.inspect, source: edge.source.to_s }
         end
         edge.target = target
 
@@ -580,7 +595,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     transaction = Puppet::Transaction.new(self, options[:report], prioritizer)
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
-    transaction.for_network_device = options[:network_device]
+    transaction.for_network_device = Puppet.lookup(:network_device) { nil } || options[:network_device]
 
     transaction
   end
@@ -656,7 +671,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     map.clear
 
     result.add_class(*self.classes)
-    result.tag(*self.tags)
+    result.merge_tags_from(self)
 
     result
   end

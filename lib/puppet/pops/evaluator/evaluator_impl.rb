@@ -342,7 +342,7 @@ class EvaluatorImpl
       candidate
     when Hash
       candidate.to_a
-    when Puppet::Pops::Types::Iterator
+    when Puppet::Pops::Types::Iterable
       candidate.to_a
     else
       # turns anything else into an array (so result can be unfolded)
@@ -703,7 +703,7 @@ class EvaluatorImpl
   end
 
   # Evaluates a CollectExpression by creating a collector transformer. The transformer
-  # will evaulate the collection, create the appropriate collector, and hand it off
+  # will evaluate the collection, create the appropriate collector, and hand it off
   # to the compiler to collect the resources specified by the query.
   #
   def eval_CollectExpression o, scope
@@ -1194,7 +1194,7 @@ class EvaluatorImpl
         # Hash[a,1,b,2] => {a => 1, b => 2}
         # Hash[[a,1], [b,2]] => {[a,1] => [b,2]}
         # Hash[[[a,1], [b,2]]] => {a => 1, b => 2}
-        # Use type calcultor to determine if array is Array[Array[?]], and if so use second form
+        # Use type calculator to determine if array is Array[Array[?]], and if so use second form
         # of call
         t = @@type_calculator.infer(y)
         if t.element_type.is_a? Types::PArrayType

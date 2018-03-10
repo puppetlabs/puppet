@@ -24,13 +24,16 @@ class Puppet::Application::Device < Puppet::Application
     end
 
     {
+      :apply => nil,
       :waitforcert => nil,
       :detailed_exitcodes => false,
       :verbose => false,
       :debug => false,
       :centrallogs => false,
       :setdest => false,
+      :resource => false,
       :target => nil,
+      :to_yaml => false,
     }.each do |opt,val|
       options[opt] = val
     end
@@ -40,10 +43,16 @@ class Puppet::Application::Device < Puppet::Application
 
   option("--centrallogging")
   option("--debug","-d")
+  option("--resource","-r")
+  option("--to_yaml","-y")
   option("--verbose","-v")
 
   option("--detailed-exitcodes") do |arg|
     options[:detailed_exitcodes] = true
+  end
+
+  option("--apply MANIFEST") do |arg|
+    options[:apply] = arg.to_s
   end
 
   option("--logdest DEST", "-l DEST") do |arg|
@@ -85,6 +94,7 @@ USAGE
   puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
                 [-h|--help] [-l|--logdest syslog|<file>|console]
                 [-v|--verbose] [-w|--waitforcert <seconds>]
+                [-a|--apply <file>] [-r|--resource <type> [name]]
                 [-t|--target <device>] [--user=<user>] [-V|--version]
 
 
@@ -150,9 +160,20 @@ you can specify '--server <servername>' as an argument.
   appending nature of logging. It must be appended manually to make the content
   valid JSON.
 
+* --apply:
+  Apply a manifest against a remote target. Target must be specified.
+
+* --resource:
+  Displays a resource state as Puppet code, roughly equivalent to
+  `puppet resource`.  Can be filterd by title. Requires --target be specified.
+
 * --target:
   Target a specific device/certificate in the device.conf. Doing so will perform a
   device run against only that device/certificate.
+
+* --to_yaml:
+  Output found resources in yaml format, suitable to use with Hiera and
+  create_resources.
 
 * --user:
   The user to run as.
@@ -170,7 +191,7 @@ you can specify '--server <servername>' as an argument.
 
 EXAMPLE
 -------
-      $ puppet device --server puppet.domain.com
+      $ puppet device --target remotehost --verbose
 
 AUTHOR
 ------
@@ -182,10 +203,24 @@ COPYRIGHT
 Copyright (c) 2011 Puppet Inc., LLC
 Licensed under the Apache 2.0 License
       HELP
-    end
+  end
 
 
   def main
+    if options[:resource] and !options[:target]
+      Puppet.err _("resource command requires target")
+      exit(1)
+    end
+    unless options[:apply].nil?
+      if options[:target].nil?
+        Puppet.err _("missing argument: --target is required when using --apply")
+        exit(1)
+      end
+      unless File.file?(options[:apply])
+        Puppet.err _("%{file} does not exist, cannot apply") % { file: options[:apply] }
+        exit(1)
+      end
+    end
     vardir = Puppet[:vardir]
     confdir = Puppet[:confdir]
     certname = Puppet[:certname]
@@ -212,27 +247,61 @@ Licensed under the Apache 2.0 License
           # Handle nil scheme & port
           scheme = "#{device_url.scheme}://" if device_url.scheme
           port = ":#{device_url.port}" if device_url.port
-          Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
 
           # override local $vardir and $certname
           Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:certname] = device.name
 
-          # this will reload and recompute default settings and create the devices sub vardir, or we hope so :-)
-          Puppet.settings.use :main, :agent, :ssl
-
           # this init the device singleton, so that the facts terminus
           # and the various network_device provider can use it
           Puppet::Util::NetworkDevice.init(device)
 
-          # ask for a ssl cert if needed, but at least
-          # setup the ssl system for this device.
-          setup_host
+          if options[:resource]
+            type, name = parse_args(command_line.args)
+            Puppet.info _("retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
 
-          require 'puppet/configurer'
-          configurer = Puppet::Configurer.new
-          configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
+            resources = find_resources(type, name)
+
+            if options[:to_yaml]
+              text = resources.map do |resource|
+                resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml.force_encoding(Encoding.default_external)
+              end.join("\n")
+              text.prepend("#{type.downcase}:\n")
+            else
+              text = resources.map do |resource|
+                resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest.force_encoding(Encoding.default_external)
+              end.join("\n")
+            end
+            (puts text)
+          elsif options[:apply]
+            # avoid reporting to server
+            Puppet::Transaction::Report.indirection.terminus_class = :yaml
+            Puppet::Resource::Catalog.indirection.cache_class = nil
+
+            require 'puppet/application/apply'
+            begin
+
+              Puppet[:node_terminus] = :plain
+              Puppet[:catalog_terminus] = :compiler
+              Puppet[:catalog_cache_terminus] = nil
+              Puppet[:facts_terminus] = :network_device
+              Puppet.override(:network_device => true) do
+                Puppet::Application::Apply.new(Puppet::Util::CommandLine.new('puppet', ["apply", options[:apply]])).run_command
+              end
+            end
+          else
+            Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
+            # this will reload and recompute default settings and create the devices sub vardir
+            Puppet.settings.use :main, :agent, :ssl
+            # ask for a ssl cert if needed, but at least
+            # setup the ssl system for this device.
+            setup_host
+
+            require 'puppet/configurer'
+            configurer = Puppet::Configurer.new
+            configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
+          end
         rescue => detail
           Puppet.log_exception(detail)
           # If we rescued an error, then we return 1 as the exit code
@@ -255,6 +324,24 @@ Licensed under the Apache 2.0 License
       exit(1)
     else
       exit(0)
+    end
+  end
+
+  def parse_args(args)
+    type = args.shift or raise _("You must specify the type to display")
+    Puppet::Type.type(type) or raise _("Could not find type %{type}") % { type: type }
+    name = args.shift
+
+    [type, name]
+  end
+
+  def find_resources(type, name)
+    key = [type, name].join('/')
+
+    if name
+      [ Puppet::Resource.indirection.find( key ) ]
+    else
+      Puppet::Resource.indirection.search( key, {} )
     end
   end
 

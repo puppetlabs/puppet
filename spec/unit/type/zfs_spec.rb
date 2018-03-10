@@ -35,7 +35,7 @@ describe zfs do
     foo_bar_baz_zfs = Puppet::Type.type(:zfs).new(:name => "foo/bar/baz")
     foo_bar_baz_buz_zfs = Puppet::Type.type(:zfs).new(:name => "foo/bar/baz/buz")
 
-    config = Puppet::Resource::Catalog.new :testing do |conf|
+    Puppet::Resource::Catalog.new :testing do |conf|
       [foo_pool, foo_bar_zfs, foo_bar_baz_zfs, foo_bar_baz_buz_zfs].each { |resource| conf.add_resource resource }
     end
 

@@ -32,7 +32,7 @@ describe Puppet::Resource::Status do
       expect(status.send(attr)).to eq("foo")
     end
 
-    it "should have a boolean method for determining whehter it was #{attr}" do
+    it "should have a boolean method for determining whether it was #{attr}" do
       status.send(attr.to_s + "=", "foo")
       expect(status).to send("be_#{attr}")
     end
@@ -59,7 +59,7 @@ describe Puppet::Resource::Status do
   end
 
   it "should copy the resource's tags" do
-    resource.expects(:tags).returns %w{foo bar}
+    resource.tag('foo', 'bar')
     status = Puppet::Resource::Status.new(resource)
     expect(status).to be_tagged("foo")
     expect(status).to be_tagged("bar")
@@ -68,6 +68,15 @@ describe Puppet::Resource::Status do
   it "should always convert the resource to a string" do
     resource.expects(:to_s).returns "foo"
     expect(Puppet::Resource::Status.new(resource).resource).to eq("foo")
+  end
+
+  it 'should set the provider_used correctly' do
+    expected_name = if Puppet::Util::Platform.windows?
+                      'windows'
+                    else
+                      'posix'
+                    end
+    expect(status.provider_used).to eq(expected_name)
   end
 
   it "should support tags" do
@@ -146,7 +155,7 @@ describe Puppet::Resource::Status do
   context 'when serializing' do
     let(:status) do
       s = Puppet::Resource::Status.new(resource)
-      s.file = "/foo.rb"
+      s.file = '/foo.rb'
       s.line = 27
       s.evaluation_time = 2.7
       s.tags = %w{one two}
@@ -155,10 +164,11 @@ describe Puppet::Resource::Status do
       s.changed = true
       s.out_of_sync = true
       s.skipped = false
+      s.provider_used = 'provider_used_class_name'
       s
     end
 
-    it "should round trip through json" do
+    it 'should round trip through json' do
       expect(status.containment_path).to eq(containment_path)
 
       tripped = Puppet::Resource::Status.from_data_hash(JSON.parse(status.to_json))
@@ -169,6 +179,7 @@ describe Puppet::Resource::Status do
       expect(tripped.line).to eq(status.line)
       expect(tripped.resource).to eq(status.resource)
       expect(tripped.resource_type).to eq(status.resource_type)
+      expect(tripped.provider_used).to eq(status.provider_used)
       expect(tripped.evaluation_time).to eq(status.evaluation_time)
       expect(tripped.tags).to eq(status.tags)
       expect(tripped.time).to eq(status.time)

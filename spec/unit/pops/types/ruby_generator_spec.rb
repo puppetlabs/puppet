@@ -291,8 +291,6 @@ describe 'Puppet Ruby Generator' do
         end)
       end
 
-      after(:each) { typeset = nil }
-
       context 'the generated class' do
         it 'inherits the PuppetObject module' do
           expect(first < PuppetObject).to be_truthy
@@ -432,10 +430,9 @@ describe 'Puppet Ruby Generator' do
             first_type = parser.parse('MyModule::FirstGenerated')
             second_type = parser.parse('MyModule::SecondGenerated')
 
-            loader = Loaders.find_loader(nil)
             Loaders.implementation_registry.register_type_mapping(
               PRuntimeType.new(:ruby, [/^PuppetSpec::RubyGenerator::(\w+)$/, 'MyModule::\1']),
-              [/^MyModule::(\w+)$/, 'PuppetSpec::RubyGenerator::\1'], loader)
+              [/^MyModule::(\w+)$/, 'PuppetSpec::RubyGenerator::\1'])
 
             module_def = generator.module_definition([first_type, second_type], 'Generated stuff')
           end
@@ -740,19 +737,17 @@ describe 'Puppet Ruby Generator' do
         # Ideally, this would be in a before(:all) but that is impossible since lots of Puppet
         # environment specific settings are configured by the spec_helper in before(:each)
         if module_def.nil?
-          typeset = nil
           eval_and_collect_notices(source) do
             typeset1 = parser.parse('MyModule')
             typeset2 = parser.parse('OtherModule')
 
-            loader = Loaders.find_loader(nil)
             Loaders.implementation_registry.register_type_mapping(
               PRuntimeType.new(:ruby, [/^PuppetSpec::RubyGenerator::My::(\w+)$/, 'MyModule::\1']),
-              [/^MyModule::(\w+)$/, 'PuppetSpec::RubyGenerator::My::\1'], loader)
+              [/^MyModule::(\w+)$/, 'PuppetSpec::RubyGenerator::My::\1'])
 
             Loaders.implementation_registry.register_type_mapping(
               PRuntimeType.new(:ruby, [/^PuppetSpec::RubyGenerator::Other::(\w+)$/, 'OtherModule::\1']),
-              [/^OtherModule::(\w+)$/, 'PuppetSpec::RubyGenerator::Other::\1'], loader)
+              [/^OtherModule::(\w+)$/, 'PuppetSpec::RubyGenerator::Other::\1'])
 
             module_def = generator.module_definition_from_typeset(typeset1)
             module_def2 = generator.module_definition_from_typeset(typeset2)

@@ -218,7 +218,7 @@ class Puppet::Transaction::Report
     @external_times ||= {}
     @host = Puppet[:node_name_value]
     @time = Time.now
-    @report_format = 7
+    @report_format = 9
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
@@ -243,6 +243,7 @@ class Puppet::Transaction::Report
     @transaction_uuid = data['transaction_uuid']
     @environment = data['environment']
     @status = data['status']
+    @transaction_completed = data['transaction_completed']
     @noop = data['noop']
     @noop_pending = data['noop_pending']
     @host = data['host']
@@ -304,6 +305,7 @@ class Puppet::Transaction::Report
       'report_format' => @report_format,
       'puppet_version' => @puppet_version,
       'status' => @status,
+      'transaction_completed' => @transaction_completed,
       'noop' => @noop,
       'noop_pending' => @noop_pending,
       'environment' => @environment,

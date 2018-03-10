@@ -143,7 +143,9 @@ class Runtime3Converter
           [type_name.nil? ? nil : type_name.sub(/^::/, '').downcase, title.nil? ? '' : title]
         end
       else
-        raise ArgumentError, "Cannot split the type #{catalog_type.class}, it represents neither a PClassType, nor a PResourceType."
+        #TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
+        raise ArgumentError, _("Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType.") %
+            { class_name: catalog_type.class }
     end
   end
 
@@ -164,7 +166,7 @@ end
 class Runtime3FunctionArgumentConverter < Runtime3Converter
 
   def convert_Regexp(o, scope, undef_value)
-    # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
+    # Puppet 3x cannot handle parameter values that are regular expressions. Turn into regexp string in
     # source form
     o.inspect
   end

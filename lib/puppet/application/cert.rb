@@ -268,7 +268,12 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       hosts = command_line.args.collect { |h| h.downcase }
     end
     begin
-      apply(@ca, :revoke, options.merge(:to => hosts)) if subcommand == :destroy
+      if subcommand == :destroy
+        raise _("Refusing to destroy all certs, provide an explicit list of certs to destroy") if hosts == :all
+
+        signed_hosts = hosts - @ca.waiting?
+        apply(@ca, :revoke, options.merge(:to => signed_hosts)) unless signed_hosts.empty?
+      end
       apply(@ca, subcommand, options.merge(:to => hosts, :digest => @digest))
     rescue => detail
       Puppet.log_exception(detail)

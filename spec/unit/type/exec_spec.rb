@@ -12,7 +12,7 @@ describe Puppet::Type.type(:exec) do
     output = Puppet::Util::Execution::ProcessOutput.new(output, exitstatus)
     tries  = rest[:tries] || 1
 
-    args = {
+    type_args = {
       :name      => command,
       :path      => @example_path,
       :logoutput => false,
@@ -20,15 +20,13 @@ describe Puppet::Type.type(:exec) do
       :returns   => 0
     }.merge(rest)
 
-    exec = Puppet::Type.type(:exec).new(args)
+    exec = Puppet::Type.type(:exec).new(type_args)
 
-    status = stub "process", :exitstatus => exitstatus
-    Puppet::Util::Execution.expects(:execute).times(tries).
-      with() { |*args|
-        args[0] == command &&
-        args[1][:override_locale] == false &&
-        args[1].has_key?(:custom_environment)
-      }.returns(output)
+    Puppet::Util::Execution.expects(:execute).times(tries).with() do |*args|
+      args[0] == command &&
+      args[1][:override_locale] == false &&
+      args[1].has_key?(:custom_environment)
+    end.returns(output)
 
     return exec
   end

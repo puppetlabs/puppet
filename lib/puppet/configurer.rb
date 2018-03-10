@@ -424,8 +424,13 @@ class Puppet::Configurer
   def retrieve_catalog_from_cache(query_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value],
-        query_options.merge(:ignore_terminus => true, :environment => Puppet::Node::Environment.remote(@environment)))
+      result = Puppet::Resource::Catalog.indirection.find(
+        Puppet[:node_name_value],
+        query_options.merge(
+          :ignore_terminus => true,
+          :environment     => Puppet::Node::Environment.remote(@environment)
+        )
+      )
     end
     result
   rescue => detail
@@ -436,8 +441,16 @@ class Puppet::Configurer
   def retrieve_new_catalog(query_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value],
-        query_options.merge(:ignore_cache => true, :environment => Puppet::Node::Environment.remote(@environment), :fail_on_404 => true))
+      result = Puppet::Resource::Catalog.indirection.find(
+        Puppet[:node_name_value],
+        query_options.merge(
+          :ignore_cache      => true,
+          # We never want to update the cached Catalog if we're running in noop mode.
+          :ignore_cache_save => Puppet[:noop],
+          :environment       => Puppet::Node::Environment.remote(@environment),
+          :fail_on_404       => true
+        )
+      )
     end
     result
   rescue StandardError => detail

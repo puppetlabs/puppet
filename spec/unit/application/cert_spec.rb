@@ -139,7 +139,7 @@ describe Puppet::Application::Cert => true do
   describe "when running" do
     before :each do
       @cert_app.all = false
-      @ca = stub_everything 'ca'
+      @ca = stub_everything( 'ca', :waiting? => ['unsigned-node'] )
       @cert_app.ca = @ca
       @cert_app.command_line.stubs(:args).returns([])
       @iface = stub_everything 'iface'
@@ -185,6 +185,45 @@ describe Puppet::Application::Cert => true do
       Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| cert_mode == :destroy }
 
       @cert_app.main
+    end
+
+    it "should not revoke cert if node does not have a signed certificate" do
+      @cert_app.subcommand = :destroy
+      @cert_app.command_line.stubs(:args).returns(["unsigned-node"])
+
+      Puppet::SSL::CertificateAuthority::Interface.unstub(:new)
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:revoke, anything).never
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:destroy, {:to => ['unsigned-node'], :digest => nil}).returns(@iface)
+
+      @cert_app.main
+    end
+
+    it "should only revoke signed certificate and destroy certificate signing requests" do
+      @cert_app.subcommand = :destroy
+      @cert_app.command_line.stubs(:args).returns(["host","unsigned-node"])
+
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with do |cert_mode,to|
+        cert_mode == :revoke &&
+        to[:to] == ["host"]
+      end
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with do |cert_mode,to|
+        cert_mode == :destroy &&
+        to[:to] == ["host","unsigned-node"]
+      end
+
+      @cert_app.main
+    end
+
+    it "should refuse to destroy all certificates" do
+      @cert_app.subcommand = :destroy
+      @cert_app.all = true
+
+      Puppet::SSL::CertificateAuthority::Interface.unstub(:new)
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).never
+
+      Puppet.expects(:log_exception).with {|e| e.message == "Refusing to destroy all certs, provide an explicit list of certs to destroy"}
+
+      expect { @cert_app.main }.to exit_with(24)
     end
   end
 

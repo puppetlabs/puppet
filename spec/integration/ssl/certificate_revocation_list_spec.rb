@@ -24,7 +24,7 @@ describe Puppet::SSL::CertificateRevocationList do
   }
 
   it "should be able to read in written out CRLs with no revoked certificates" do
-    ca = Puppet::SSL::CertificateAuthority.new
+    Puppet::SSL::CertificateAuthority.new
 
     raise "CRL not created" unless Puppet::FileSystem.exist?(Puppet[:hostcrl])
 

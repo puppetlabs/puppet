@@ -761,7 +761,7 @@ describe 'The Object Type' do
 
   context 'when using the initialization hash' do
     it 'produced hash that contains features using short form (type instead of detailed hash when only type is declared)' do
-      obj = t = parse_object('MyObject', <<-OBJECT)
+      obj = parse_object('MyObject', <<-OBJECT)
         attributes => {
           a => { type => Integer }
         }
@@ -770,7 +770,7 @@ describe 'The Object Type' do
     end
 
     it 'produced hash that does not include default for equality_include_type' do
-      obj = t = parse_object('MyObject', <<-OBJECT)
+      obj = parse_object('MyObject', <<-OBJECT)
         attributes => { a => Integer },
         equality_include_type => true
       OBJECT
@@ -778,7 +778,7 @@ describe 'The Object Type' do
     end
 
     it 'constants are presented in a separate hash if they use a generic type' do
-      obj = t = parse_object('MyObject', <<-OBJECT)
+      obj = parse_object('MyObject', <<-OBJECT)
         attributes => {
           a => { type => Integer, value => 23, kind => constant },
         },
@@ -787,7 +787,7 @@ describe 'The Object Type' do
     end
 
     it 'constants are not presented in a separate hash unless they use a generic type' do
-      obj = t = parse_object('MyObject', <<-OBJECT)
+      obj = parse_object('MyObject', <<-OBJECT)
         attributes => {
           a => { type => Integer[0, 30], value => 23, kind => constant },
         },
@@ -796,7 +796,7 @@ describe 'The Object Type' do
     end
 
     it 'can create an equal copy from produced hash' do
-      obj = t = parse_object('MyObject', <<-OBJECT)
+      obj = parse_object('MyObject', <<-OBJECT)
         attributes => {
           a => { type => Struct[{x => Integer, y => Integer}], value => {x => 4, y => 9}, kind => constant },
           b => Integer

@@ -22,17 +22,17 @@ class Puppet::FileServing::Base
   # Return the full path to our file.  Fails if there's no path set.
   def full_path
     if relative_path.nil? or relative_path == "" or relative_path == "."
-       full_path = path
-     else
-       full_path = File.join(path, relative_path)
-     end
+      full_path = path
+    else
+      full_path = File.join(path, relative_path)
+    end
 
-     if Puppet.features.microsoft_windows?
-       # Replace multiple slashes as long as they aren't at the beginning of a filename
-       full_path.gsub(%r{(./)/+}, '\1')
-     else
-       full_path.gsub(%r{//+}, '/')
-     end
+    if Puppet.features.microsoft_windows?
+      # Replace multiple slashes as long as they aren't at the beginning of a filename
+      full_path.gsub(%r{(./)/+}, '\1')
+    else
+      full_path.gsub(%r{//+}, '/')
+    end
   end
 
   def initialize(path, options = {})
@@ -46,7 +46,8 @@ class Puppet::FileServing::Base
   def links=(value)
     value = value.to_sym
     value = :manage if value == :ignore
-    raise(ArgumentError, ":links can only be set to :manage or :follow") unless [:manage, :follow].include?(value)
+    #TRANSLATORS ':link', ':manage', ':follow' should not be translated
+    raise(ArgumentError, _(":links can only be set to :manage or :follow")) unless [:manage, :follow].include?(value)
     @links = value
   end
 

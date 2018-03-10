@@ -22,9 +22,9 @@ dedent() {
 # invoke openssl
 openssl() {
     echo "----"
-    echo "running" ${OPENSSL} ${@}
+    echo "running" "${OPENSSL}" "$@"
     echo "  in $PWD"
-    ${OPENSSL} "${@}"
+    "${OPENSSL}" "$@"
 }
 
 show_cert() {
@@ -36,7 +36,7 @@ show_cert() {
 hash_cert() {
     local cert="$1"
     local certdir="${B}/certdir"
-    local h=$(${OPENSSL} x509 -hash -noout -in ${cert})
+    local h=$("${OPENSSL}" x509 -hash -noout -in "${cert}")
     mkdir -p "${certdir}"
     ln -s "$cert" "${certdir}/${h}.0"
 }
@@ -49,7 +49,7 @@ show_crl() {
 hash_crl() {
     local crl="$1"
     local certdir="${B}/certdir"
-    local h=$(${OPENSSL} crl -hash -noout -in ${crl})
+    local h=$("${OPENSSL}" crl -hash -noout -in "${crl}")
     mkdir -p "${certdir}"
     ln -s "$crl" "${certdir}/${h}.r0"
 }
@@ -261,7 +261,7 @@ revoke_ca_cert() {
     openssl ca -config "${dir}/openssl.conf" -revoke "${B}/${master}/ca-${master}.crt"
     openssl ca -config "${dir}/openssl.conf" -gencrl -out "${dir}/ca-root.crl"
     show_crl "${dir}/ca-root.crl"
-    kill -HUP $(< "${B}/apache/httpd.pid")
+    kill -HUP "$(< "${B}/apache/httpd.pid")"
 }
 
 # create a "leaf" certificate for the given fqdn, signed by the given ca name.
@@ -281,7 +281,7 @@ create_leaf_cert() {
         openssl req -subj "/CN=${fqdn}" -new -key "${fname}.key" -out "${fname}.csr"
         CN="${fqdn}" SAN="DNS:${fqdn}, DNS:${fqdn%%.*}, DNS:puppet, DNS:puppetmaster" \
           openssl ca -config "${B}/${ca}/openssl.conf" -in "${fname}.csr" -notext \
-          -out "${fname}.crt" -batch $exts
+          -out "${fname}.crt" -batch "$exts"
     )
     show_cert "${dir}/${fname}.crt"
 }
@@ -318,7 +318,7 @@ create_leaf_email_cert() {
         openssl req -subj "/CN=${fqdn}/emailAddress=test@example.com" -new -key "${fname}.key" -out "${fname}.csr"
 
         openssl ca -config "${B}/${ca}/openssl.conf" -name master_ca_email_config \
-          -in "${fname}.csr" -notext -out "${fname}.crt" -batch $exts_arg
+          -in "${fname}.csr" -notext -out "${fname}.crt" -batch "$exts_arg"
     )
     show_cert "${dir}/${fname}.crt"
 }
@@ -496,14 +496,14 @@ run_agent() {
     if puppet agent --test --debug \
             --confdir=/tmp/certchain/agent/conf/ --vardir=/tmp/certchain/agent/var/ \
             --fqdn "${fqdn}"; then
-        if ${expfail}; then
+        if "${expfail}"; then
             false
         fi
         # This appears not to work in 3.1.x
         #test -f "${B}/i_was_here"
     else
         echo "expected failure"
-        if ! ${expfail}; then
+        if ! "${expfail}"; then
             false
         fi
         # This appears not to work in 3.1.x
@@ -512,8 +512,8 @@ run_agent() {
 }
 
 call() {
-    echo "==== $1 ===="
-    "${@}"
+    echo "==== ${1} ===="
+    "$@"
 }
 
 main() {

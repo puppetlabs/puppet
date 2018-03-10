@@ -28,7 +28,7 @@ module Runtime3ResourceSupport
     # from the raised exception. (It may be good enough).
     unless resolved_type
       # TODO: do this the right way
-      raise ArgumentError, "Unknown resource type: '#{type_name}'"
+      raise ArgumentError, _("Unknown resource type: '%{type}'") % { type: type_name }
     end
 
     # Build a resource for each title - use the resolved *type* as opposed to a reference
@@ -89,8 +89,6 @@ module Runtime3ResourceSupport
     scope.environment.known_resource_types.find_hostclass(class_name)
   end
 
-  private
-
   def self.find_builtin_resource_type(scope, type_name)
     if type_name.include?(':')
       # Skip the search for built in types as they are always in global namespace
@@ -106,11 +104,13 @@ module Runtime3ResourceSupport
     # horrible - should be loaded by a "last loader" in 4.x loaders instead.
     Puppet::Type.type(type_name)
   end
+  private_class_method :find_builtin_resource_type
 
   def self.find_defined_resource_type(scope, type_name)
     krt = scope.environment.known_resource_types
     krt.find_definition(type_name) || krt.application(type_name)
   end
+  private_class_method :find_defined_resource_type
 
 end
 end

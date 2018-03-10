@@ -100,7 +100,9 @@ module TypeFactory
       size_type_or_value.nil? ? PStringType::DEFAULT : PStringType.new(size_type_or_value)
     else
       if Puppet[:strict] != :off
-        Puppet.warn_once('deprecations', "TypeFactory#string_multi_args", "Passing more than one argument to TypeFactory#string is deprecated")
+        #TRANSLATORS 'TypeFactory#string' is a class and method name and should not be translated
+        message = _("Passing more than one argument to TypeFactory#string is deprecated")
+        Puppet.warn_once('deprecations', "TypeFactory#string_multi_args", message)
       end
       deprecated_second_argument.size == 1 ? PStringType.new(deprecated_second_argument[0]) : PEnumType.new(*deprecated_second_argument)
     end
@@ -208,8 +210,6 @@ module TypeFactory
     case args.size
     when 0
       PTimestampType::DEFAULT
-    when 1
-      PTimestampType.new(args[0], args[0])
     else
       PTimestampType.new(*args)
     end
@@ -219,8 +219,6 @@ module TypeFactory
     case args.size
     when 0
       PTimespanType::DEFAULT
-    when 1
-      PTimespanType.new(args[0], args[0])
     else
       PTimespanType.new(*args)
     end

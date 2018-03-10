@@ -5,6 +5,7 @@ require 'puppet/application/device'
 require 'puppet/util/network_device/config'
 require 'ostruct'
 require 'puppet/configurer'
+require 'puppet/application/apply'
 
 describe Puppet::Application::Device do
   include PuppetSpec::Files
@@ -125,6 +126,18 @@ describe Puppet::Application::Device do
     it "should set args[:Port] with --port" do
       @device.handle_port("42")
       expect(@device.args[:Port]).to eq("42")
+    end
+
+    it "should store the target options with --target" do
+      @device.options.expects(:[]=).with(:target,'test123')
+
+      @device.handle_target('test123')
+    end
+
+    it "should store the resource options with --resource" do
+      @device.options.expects(:[]=).with(:resource,true)
+
+      @device.handle_resource(true)
     end
 
   end
@@ -277,13 +290,23 @@ describe Puppet::Application::Device do
       Puppet.stubs(:notice)
       @device.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
       @device.options.stubs(:[]).with(:target).returns(nil)
+      @device.options.stubs(:[]).with(:apply).returns(nil)
+      @device.options.stubs(:[]).with(:resource).returns(false)
+      @device.options.stubs(:[]).with(:to_yaml).returns(false)
       @device.options.stubs(:[]).with(:client)
+      @device.command_line.stubs(:args).returns([])
       Puppet::Util::NetworkDevice::Config.stubs(:devices).returns({})
     end
 
     it "should dispatch to main" do
       @device.stubs(:main)
       @device.run_command
+    end
+
+    it "should exit if resource is requested without target" do
+      @device.options.stubs(:[]).with(:resource).returns(true)
+      Puppet.expects(:err).with "resource command requires target"
+      expect { @device.main }.to exit_with 1
     end
 
     it "should get the device list" do
@@ -301,8 +324,8 @@ describe Puppet::Application::Device do
       }
 
       Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
-      Puppet.expects(:info).with("starting applying configuration to device1 at ssh://testhost")
-      Puppet.expects(:info).with("starting applying configuration to device2 at https://testhost:443/some/path").never
+      URI.expects(:parse).with("ssh://user:pass@testhost")
+      URI.expects(:parse).with("https://user:pass@testhost/some/path").never
       expect { @device.main }.to exit_with 1
     end
 
@@ -315,6 +338,32 @@ describe Puppet::Application::Device do
       Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
       Puppet.expects(:info).with(regexp_matches(/starting applying configuration to/)).never
       Puppet.expects(:err).with(regexp_matches(/Target device \/ certificate 'bla' not found in .*\.conf/))
+      expect { @device.main }.to exit_with 1
+    end
+
+    it "should error if target is passed and the apply path is incorrect" do
+      @device.options.stubs(:[]).with(:apply).returns('file.pp')
+      @device.options.stubs(:[]).with(:target).returns('device1')
+
+      File.expects(:file?).returns(false)
+      Puppet.expects(:err).with(regexp_matches(/does not exist, cannot apply/))
+      expect { @device.main }.to exit_with 1
+    end
+
+    it "should run an apply" do
+      @device.options.stubs(:[]).with(:apply).returns('file.pp')
+      @device.options.stubs(:[]).with(:target).returns('device1')
+      device_hash = {
+        "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
+      }
+      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
+      Puppet::Util::NetworkDevice.stubs(:init)
+      File.expects(:file?).returns(true)
+
+      Puppet::Util::CommandLine.expects(:new).once
+      Puppet::Application::Apply.expects(:new).once
+
+      Puppet::Configurer.expects(:new).never
       expect { @device.main }.to exit_with 1
     end
 
@@ -353,6 +402,51 @@ describe Puppet::Application::Device do
       it "should set certname to the device certname" do
         Puppet.expects(:[]=).with(:certname, "device1")
         Puppet.expects(:[]=).with(:certname, "device2")
+        expect { @device.main }.to exit_with 1
+      end
+
+      it "should raise an error if no type is given" do
+        @device.options.stubs(:[]).with(:resource).returns(true)
+        @device.options.stubs(:[]).with(:target).returns('device1')
+        @device.command_line.stubs(:args).returns([])
+        Puppet.expects(:log_exception).with {|e| e.message == "You must specify the type to display"}
+        expect { @device.main }.to exit_with 1
+      end
+
+      it "should raise an error if the type is not found" do
+        @device.options.stubs(:[]).with(:resource).returns(true)
+        @device.options.stubs(:[]).with(:target).returns('device1')
+        @device.command_line.stubs(:args).returns(['nope'])
+        Puppet.expects(:log_exception).with {|e| e.message == "Could not find type nope"}
+        expect { @device.main }.to exit_with 1
+      end
+
+      it "should retrieve all resources of a type" do
+        @device.options.stubs(:[]).with(:resource).returns(true)
+        @device.options.stubs(:[]).with(:target).returns('device1')
+        @device.command_line.stubs(:args).returns(['user'])
+        Puppet::Resource.indirection.expects(:search).with('user/', {}).returns([])
+        expect { @device.main }.to exit_with 1
+      end
+
+      it "should retrieve named resources of a type" do
+        @device.options.stubs(:[]).with(:resource).returns(true)
+        @device.options.stubs(:[]).with(:target).returns('device1')
+        @device.command_line.stubs(:args).returns(['user', 'title'])
+        Puppet::Resource.indirection.expects(:find).with('user/title')
+        expect { @device.main }.to exit_with 1
+      end
+
+      it "should output resources as YAML" do
+        resources = [
+          Puppet::Type.type(:user).new(:name => "title").to_resource,
+        ]
+        @device.options.stubs(:[]).with(:resource).returns(true)
+        @device.options.stubs(:[]).with(:target).returns('device1')
+        @device.options.stubs(:[]).with(:to_yaml).returns(true)
+        @device.command_line.stubs(:args).returns(['user'])
+        Puppet::Resource.indirection.expects(:search).with('user/', {}).returns(resources)
+        @device.expects(:puts).with("user:\n  title:\n")
         expect { @device.main }.to exit_with 1
       end
 

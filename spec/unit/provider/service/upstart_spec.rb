@@ -14,8 +14,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
   end
 
   def given_contents_of(file, content)
-    File.open(file, 'w') do |file|
-      file.write(content)
+    File.open(file, 'w') do |f|
+      f.write(content)
     end
   end
 
@@ -234,20 +234,20 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
   describe "inheritance" do
     let :resource do
-      resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
+      Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
     end
 
     let :provider do
-      provider = provider_class.new(resource)
+      provider_class.new(resource)
     end
 
     describe "when upstart job" do
       before(:each) do
         provider.stubs(:is_upstart?).returns(true)
       end
-      ["start", "stop"].each do |command|
-        it "should return the #{command}cmd of its parent provider" do
-          expect(provider.send("#{command}cmd".to_sym)).to eq([provider.command(command.to_sym), resource.name])
+      ["start", "stop"].each do |action|
+        it "should return the #{action}cmd of its parent provider" do
+          expect(provider.send("#{action}cmd".to_sym)).to eq([provider.command(action.to_sym), resource.name])
         end
       end
       it "should return nil for the statuscmd" do

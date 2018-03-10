@@ -29,12 +29,11 @@ class Puppet::Pops::Loader::RubyDataTypeInstantiator
     created
   end
 
-  private
-
   # Produces a binding where the given loader is bound as a local variable (loader_injected_arg). This variable can be used in loaded
   # ruby code - e.g. to call Puppet::Function.create_loaded_function(:name, loader,...)
   #
   def self.get_binding(loader_injected_arg)
     binding
   end
+  private_class_method :get_binding
 end

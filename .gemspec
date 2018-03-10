@@ -13,7 +13,7 @@
 
 Gem::Specification.new do |s|
   s.name = "puppet"
-  version = "5.3.3"
+  version = "6.0.0"
   mdata = version.match(/(\d+\.\d+\.\d+)/)
   s.version = mdata ? mdata[1] : version
 
@@ -36,7 +36,7 @@ Gem::Specification.new do |s|
   # PUP-7115 - return to a gem dependency in Puppet 5
   # s.add_runtime_dependency(%q<semantic_puppet>, ['>= 0.1.3', '< 2'])
   # i18n support (gettext-setup and dependencies)
-  s.add_runtime_dependency(%q<gettext-setup>, [">= 0.10", "< 1"])
+  s.add_runtime_dependency(%q<fast_gettext>, "~> 1.1.2")
   s.add_runtime_dependency(%q<locale>, "~> 2.1")
   # hocon is an optional hiera backend shipped in puppet-agent packages
   s.add_runtime_dependency(%q<hocon>, "~> 1.0")

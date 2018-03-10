@@ -251,8 +251,8 @@ module LoaderPaths
       n = ''
       n << module_name unless module_name.nil?
 
-      # Remove extension regardless of what it is. A task name cannot contain dots
-      relative_path = relative_path.sub(/\.[^\/]*\z/, '')
+      # Remove the file extension, defined as everything after the *last* dot.
+      relative_path = relative_path.sub(%r{\.[^/.]*\z}, '')
 
       if relative_path == 'init' && !(module_name.nil? || module_name.empty?)
         TypedName.new(type, module_name, name_authority)
@@ -305,7 +305,7 @@ module LoaderPaths
     #
     def effective_path(typed_name, start_index_in_name)
       # Resource type to name does not skip the name-space
-      # i.e. <module>/mymodule/resource_types/foo.pp is the reource type foo
+      # i.e. <module>/mymodule/resource_types/foo.pp is the resource type foo
       "#{File.join(generic_path, typed_name.name_parts)}.pp"
     end
   end

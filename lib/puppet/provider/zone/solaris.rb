@@ -81,7 +81,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
       elsif interface
         "remove net physical=#{interface}"
       else
-        raise ArgumentError, "can not remove network based on default router"
+        raise ArgumentError, _("can not remove network based on default router")
       end
     else self.fail action
     end
@@ -155,7 +155,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     command = "#{command(:cfg)} -z #{@resource[:name]} -f -"
     r = exec_cmd(:cmd => command, :input => str)
     if r[:exit] != 0 or r[:out] =~ /not allowed/
-      raise ArgumentError, "Failed to apply configuration"
+      raise ArgumentError, _("Failed to apply configuration")
     end
   end
 

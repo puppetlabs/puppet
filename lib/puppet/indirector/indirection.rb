@@ -97,7 +97,7 @@ class Puppet::Indirector::Indirection
     @cache_class = nil
     @terminus_class = nil
 
-    raise(ArgumentError, "Indirection #{@name} is already defined") if @@indirections.find { |i| i.name == @name }
+    raise(ArgumentError, _("Indirection %{name} is already defined") % { name: @name }) if @@indirections.find { |i| i.name == @name }
     @@indirections << self
 
     @indirected_class = options.delete(:indirected_class)
@@ -150,9 +150,12 @@ class Puppet::Indirector::Indirection
 
   # This is used by terminus_class= and cache=.
   def validate_terminus_class(terminus_class)
-    raise ArgumentError, "Invalid terminus name #{terminus_class.inspect}" unless terminus_class and terminus_class.to_s != ""
+    unless terminus_class and terminus_class.to_s != ""
+      raise ArgumentError, _("Invalid terminus name %{terminus_class}") % { terminus_class: terminus_class.inspect }
+    end
     unless Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
-      raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{self.name}"
+      raise ArgumentError, _("Could not find terminus %{terminus_class} for indirection %{name}") %
+          { terminus_class: terminus_class, name: self.name }
     end
   end
 
@@ -160,7 +163,9 @@ class Puppet::Indirector::Indirection
   # remove it, we expire it and write it back out to disk.  This way people
   # can still use the expired object if they want.
   def expire(key, options={})
-    return nil unless cache?
+    request = request(:expire, key, nil, options)
+
+    return nil unless cache? && !request.ignore_cache_save?
 
     return nil unless instance = cache.find(request(:find, key, nil, options))
 
@@ -193,7 +198,7 @@ class Puppet::Indirector::Indirection
       result = terminus.find(request)
       if not result.nil?
         result.expiration ||= self.expiration if result.respond_to?(:expiration)
-        if cache?
+        if cache? && !request.ignore_cache_save?
           Puppet.info _("Caching %{indirection} for %{request}") % { indirection: self.name, request: request.key }
           begin
             cache.save request(:save, key, result, options)
@@ -284,7 +289,7 @@ class Puppet::Indirector::Indirection
     result = terminus.save(request)
 
     # If caching is enabled, save our document there
-    cache.save(request) if cache?
+    cache.save(request) if cache? && !request.ignore_cache_save?
 
     result
   end
@@ -302,8 +307,13 @@ class Puppet::Indirector::Indirection
     return unless terminus.respond_to?(:authorized?)
 
     unless terminus.authorized?(request)
-      msg = "Not authorized to call #{request.method} on #{request.description}"
-      msg += " with #{request.options.inspect}" unless request.options.empty?
+      msg = if request.options.empty?
+              _("Not authorized to call %{method} on %{description}") %
+                  { method: request.method, description: request.description }
+            else
+              _("Not authorized to call %{method} on %{description} with %{option}") %
+                  { method: request.method, description: request.description, option: request.options.inspect }
+            end
       raise ArgumentError, msg
     end
   end

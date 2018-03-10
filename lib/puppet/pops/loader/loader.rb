@@ -90,7 +90,7 @@ class Loader
   # of the given type/name.
   #
   # @param typed_name [TypedName] - the type, name combination to lookup
-  # @param check_dependencies [Boolean] - if dependencies should be checked in additiona to here and parent
+  # @param check_dependencies [Boolean] - if dependencies should be checked in addition to here and parent
   # @return [NamedEntry, nil] the entry containing the loaded value, or nil if not found
   # @api public
   #

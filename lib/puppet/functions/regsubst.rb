@@ -1,4 +1,4 @@
-# Perform regexp replacement on a string or array of strings.
+# Performs regexp replacement on a string or array of strings.
 #
 # @param target [String, Array[String]]
 #      The string or array of strings to operate on.  If an array, the replacement will be
@@ -27,10 +27,16 @@
 # @return [Array[String], String] The result of the substitution. Result type is the same as for the target parameter.
 #
 # @example Get the third octet from the node's IP address:
-#     $i3 = regsubst($ipaddress,'^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$','\\3')
+#
+# ```puppet
+# $i3 = regsubst($ipaddress,'^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$','\\3')
+# ```
 #
 # @example Put angle brackets around each octet in the node's IP address:
-#     $x = regsubst($ipaddress, /([0-9]+)/, '<\\1>', 'G')
+#
+# ```puppet
+# $x = regsubst($ipaddress, /([0-9]+)/, '<\\1>', 'G')
+# ```
 #
 Puppet::Functions.create_function(:regsubst) do
   dispatch :regsubst_string do

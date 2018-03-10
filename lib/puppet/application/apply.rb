@@ -245,7 +245,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
             $stderr.puts _("%{file} is not readable") % { file: file }
             exit(63)
           end
-          node.classes = Puppet::FileSystem.read(file, :encoding => 'utf-8').split(/[\s\n]+/)
+          node.classes = Puppet::FileSystem.read(file, :encoding => 'utf-8').split(/[\s]+/)
         end
       end
 
@@ -322,9 +322,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     Puppet.settings.use :main, :agent, :ssl
 
 
-    if Puppet[:noop]
-      Puppet::Resource::Catalog.indirection.cache_class = nil
-    elsif Puppet[:catalog_cache_terminus]
+    if Puppet[:catalog_cache_terminus]
       Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
     end
 

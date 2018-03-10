@@ -4,6 +4,7 @@ Puppet::Face.define(:module, '1.0.0') do
     description <<-EOT
       Uninstalls a puppet module from the modulepath (or a specific
       target directory).
+      Note: Module uninstall uses MD5 checksums, which are prohibited on FIPS enabled systems.
     EOT
 
     returns _("Hash of module objects representing uninstalled modules and related errors.")

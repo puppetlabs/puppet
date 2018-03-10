@@ -49,7 +49,6 @@ module Issues
         # Evaluate the message block in the msg data's binding
         msgdata.format(hash, &message_block)
       rescue StandardError => e
-        MessageData
         raise RuntimeError, _("Error while reporting issue: %{code}. %{message}") % { code: issue_code, message: e.message }, caller
       end
     end
@@ -71,7 +70,7 @@ module Issues
 
     def format(hash, &block)
       @data = hash
-      instance_eval &block
+      instance_eval(&block)
     end
 
     # Obtains the label provider given as a key `:label` in the hash passed to #format. The label provider is
@@ -119,7 +118,7 @@ module Issues
   # @see MessageData
   # @api public
   #
-  def self.issue (issue_code, *args, &block)
+  def self.issue(issue_code, *args, &block)
     Issue.new(issue_code, *args, &block)
   end
 
@@ -617,7 +616,7 @@ module Issues
     _("Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation")
   end
 
-  ILLEGAL_OVERRIDEN_TYPE = issue :ILLEGAL_OVERRIDEN_TYPE, :actual do
+  ILLEGAL_OVERRIDDEN_TYPE = issue :ILLEGAL_OVERRIDDEN_TYPE, :actual do
     _("Resource Override can only operate on resources, got: %{actual}") % { actual: label.label(actual) }
   end
 
@@ -741,6 +740,10 @@ module Issues
     _('Heredoc without any following lines of text')
   end
 
+  HEREDOC_EMPTY_ENDTAG = hard_issue :HEREDOC_EMPTY_ENDTAG do
+    _('Heredoc with an empty endtag')
+  end
+
   HEREDOC_MULTIPLE_AT_ESCAPES = hard_issue :HEREDOC_MULTIPLE_AT_ESCAPES, :escapes do
     _("An escape char for @() may only appear once. Got '%{escapes}'") % { escapes: escapes.join(', ') }
   end
@@ -782,9 +785,12 @@ module Issues
   end
 
   HIERA_BACKEND_MULTIPLY_DEFINED = hard_issue :HIERA_BACKEND_MULTIPLY_DEFINED, :name, :first_line do
-    msg = _("Backend '%{name}' is defined more than once") % { name: name }
+    msg = _("Backend '%{name}' is defined more than once.") % { name: name }
     fl = first_line
-    fl ? _("%{msg}. First defined at line %{line}") % { msg: msg, line: fl } : msg
+    if fl
+      msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location(nil, fl) }
+    end
+    msg
   end
 
   HIERA_NO_PROVIDER_FOR_BACKEND = hard_issue :HIERA_NO_PROVIDER_FOR_BACKEND, :name do
@@ -792,9 +798,12 @@ module Issues
   end
 
   HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED = hard_issue :HIERA_HIERARCHY_NAME_MULTIPLY_DEFINED, :name, :first_line do
-    msg = _("Hierarchy name '%{name}' defined more than once") % { name: name }
+    msg = _("Hierarchy name '%{name}' defined more than once.") % { name: name }
     fl = first_line
-    fl ? _("%{msg}. First defined at line %{line}") % { msg: msg, line: fl } : msg
+    if fl
+      msg += ' ' + _("First defined at %{error_location}") % { error_location: Puppet::Util::Errors.error_location(nil, fl) }
+    end
+    msg
   end
 
   HIERA_V3_BACKEND_NOT_GLOBAL = hard_issue :HIERA_V3_BACKEND_NOT_GLOBAL do

@@ -23,7 +23,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
   defaultfor :osfamily => :suse
   defaultfor :osfamily => :coreos
-  defaultfor :operatingsystem => :amazon, :operatingsystemrelease => ["2017.12"]
+  defaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2"]
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["8", "stretch/sid", "9", "buster/sid"]
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["15.04","15.10","16.04","16.10"]
   defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3"]
@@ -179,7 +179,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def prepare_error_message(name, action, exception)
     error_return = "Systemd #{action} for #{name} failed!\n"
     journalctl_command = "journalctl -n 50 --since '5 minutes ago' -u #{name} --no-pager"
-    Puppet.debug("Runing journalctl command to get logs for systemd #{action} failure: #{journalctl_command}")
+    Puppet.debug("Running journalctl command to get logs for systemd #{action} failure: #{journalctl_command}")
     journalctl_output = execute(journalctl_command)
     error_return << "journalctl log for #{name}:\n#{journalctl_output}"
   end

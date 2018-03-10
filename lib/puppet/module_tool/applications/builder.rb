@@ -2,6 +2,7 @@ require 'fileutils'
 require 'json'
 require 'puppet/file_system'
 require 'pathspec'
+require 'facter'
 
 module Puppet::ModuleTool
   module Applications
@@ -14,6 +15,9 @@ module Puppet::ModuleTool
       end
 
       def run
+        # Disallow anything that invokes md5 to avoid un-friendly termination due to FIPS
+        raise _("Module building is prohibited in FIPS mode.") if Facter.value(:fips_enabled)
+
         load_metadata!
         create_directory
         copy_contents

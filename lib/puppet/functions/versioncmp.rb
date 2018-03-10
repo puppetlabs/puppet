@@ -14,7 +14,7 @@ require 'puppet/util/package'
 # * `0` if the versions are equal
 # * `-1` if version a is less than version b
 #
-# @example
+# @example Using versioncmp
 #
 #     if versioncmp('2.6-1', '2.4.5') > 0 {
 #         notice('2.6-1 is > than 2.4.5')

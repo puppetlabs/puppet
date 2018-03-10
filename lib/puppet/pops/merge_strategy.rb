@@ -24,7 +24,8 @@ module Puppet::Pops
       if merge.is_a?(Hash)
         merge_strategy = merge['strategy']
         if merge_strategy.nil?
-          raise ArgumentError, "The hash given as 'merge' must contain the name of a strategy in string form for the key 'strategy'"
+          #TRANSLATORS 'merge' is a variable name and 'strategy' is a key and should not be translated
+          raise ArgumentError, _("The hash given as 'merge' must contain the name of a strategy in string form for the key 'strategy'")
         end
         merge_options  = merge.size == 1 ? EMPTY_HASH : merge
       else
@@ -33,7 +34,7 @@ module Puppet::Pops
       end
       merge_strategy = merge_strategy.to_sym if merge_strategy.is_a?(String)
       strategy_class = strategies[merge_strategy]
-      raise ArgumentError, "Unknown merge strategy: '#{merge_strategy}'" if strategy_class.nil?
+      raise ArgumentError, _("Unknown merge strategy: '%{strategy}'") % { strategy: merge_strategy } if strategy_class.nil?
       merge_options == EMPTY_HASH ? strategy_class::INSTANCE : strategy_class.new(merge_options)
     end
 
@@ -51,7 +52,9 @@ module Puppet::Pops
     #
     def self.add_strategy(strategy_class)
       unless MergeStrategy > strategy_class
-        raise ArgumentError, "MergeStrategies.add_strategy 'strategy_class' must be a 'MergeStrategy' class. Got #{strategy_class}"
+        #TRANSLATORS 'MergeStrategies.add_strategy' is a method, 'stratgey_class' is a variable and 'MergeStrategy' is a class name and should not be translated
+        raise ArgumentError, _("MergeStrategies.add_strategy 'strategy_class' must be a 'MergeStrategy' class. Got %{strategy_class}") %
+            { strategy_class: strategy_class }
       end
       strategies[strategy_class.key] = strategy_class
       nil

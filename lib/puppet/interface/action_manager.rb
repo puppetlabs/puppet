@@ -17,7 +17,7 @@ module Puppet::Interface::ActionManager
   # @dsl Faces
   def action(name, &block)
     @actions ||= {}
-    Puppet.warning "Redefining action #{name} for #{self}" if action?(name)
+    Puppet.warning _("Redefining action %{name} for %{self}") % { name: name, self: self } if action?(name)
 
     action = Puppet::Interface::ActionBuilder.build(self, name, &block)
 

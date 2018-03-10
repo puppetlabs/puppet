@@ -138,7 +138,7 @@ describe "egrammar parsing function calls" do
     end
 
     it 'notice Hash.assert_type(a => 42)' do
-      expect(dump(parse('notice Hash.assert_type(a => 42)'))).to eq('(invoke notice (call-method (. hash assert_type) ({} (a 42))))')
+      expect(dump(parse('notice Hash.assert_type(a => 42)'))).to eq('(invoke notice (call-method (. Hash assert_type) ({} (a 42))))')
     end
 
     it "notice 42.type(detailed)" do

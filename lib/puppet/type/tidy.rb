@@ -105,7 +105,7 @@ Puppet::Type.newtype(:tidy) do
     desc "Tidy files whose age is equal to or greater than
       the specified time.  You can choose seconds, minutes,
       hours, days, or weeks by specifying the first letter of any
-      of those words (e.g., '1w').
+      of those words (for example, '1w' represents one week).
 
       Specifying 0 will remove all files."
 
@@ -224,7 +224,14 @@ Puppet::Type.newtype(:tidy) do
   # Make a file resource to remove a given file.
   def mkfile(path)
     # Force deletion, so directories actually get deleted.
-    Puppet::Type.type(:file).new :path => path, :backup => self[:backup], :ensure => :absent, :force => true
+    parameters = {
+      :path => path, :backup => self[:backup],
+      :ensure => :absent, :force => true
+    }
+
+    parameters[:noop] = self[:noop] unless self[:noop].nil?
+
+    Puppet::Type.type(:file).new(parameters)
   end
 
   def retrieve

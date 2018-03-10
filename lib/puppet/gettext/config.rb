@@ -89,7 +89,7 @@ module Puppet::GettextConfig
                                 report_warning: false)
     FastGettext.default_text_domain = DEFAULT_TEXT_DOMAIN
 
-    load_translations('puppet', puppet_locale_path, translation_mode(puppet_locale_path))
+    load_translations('puppet', puppet_locale_path, translation_mode(puppet_locale_path), DEFAULT_TEXT_DOMAIN)
   end
 
   # @api private
@@ -108,6 +108,7 @@ module Puppet::GettextConfig
   def self.delete_all_text_domains
     FastGettext.translation_repositories.clear
     FastGettext.default_text_domain = nil
+    FastGettext.text_domain = nil
   end
 
   # @api private
@@ -117,6 +118,9 @@ module Puppet::GettextConfig
     return if @gettext_disabled || !gettext_loaded?
 
     FastGettext.translation_repositories.delete(domain_name)
+    if FastGettext.text_domain == domain_name
+      FastGettext.text_domain = nil
+    end
   end
 
   # @api private
@@ -130,6 +134,7 @@ module Puppet::GettextConfig
 
       FastGettext.translation_repositories.delete(key)
     end
+    FastGettext.text_domain = nil
   end
 
   # @api private
@@ -186,12 +191,12 @@ module Puppet::GettextConfig
   end
 
   # @api private
-  # Attempt to load tranlstions for the given project.
+  # Attempt to load translations for the given project.
   # @param [String] project_name the project whose translations we want to load
   # @param [String] locale_dir the path to the directory containing translations
   # @param [Symbol] file_format translation file format to use, either :po or :mo
   # @return true if initialization succeeded, false otherwise
-  def self.load_translations(project_name, locale_dir, file_format)
+  def self.load_translations(project_name, locale_dir, file_format, text_domain = FastGettext.text_domain)
     if project_name.nil? || project_name.empty?
       raise Puppet::Error, "A project name must be specified in order to initialize translations."
     end
@@ -204,7 +209,7 @@ module Puppet::GettextConfig
       raise Puppet::Error, "Unsupported translation file format #{file_format}; please use :po or :mo"
     end
 
-    add_repository_to_domain(project_name, locale_dir, file_format)
+    add_repository_to_domain(project_name, locale_dir, file_format, text_domain)
     return true
   end
 
@@ -213,11 +218,11 @@ module Puppet::GettextConfig
   # chain for the currently selected text domain, if needed.
   # @param [String] project_name the name of the project for which to load translations
   # @param [String] locale_dir the path to the directory containing translations
-  # @param [Symbol] file_format the fomat of the translations files, :po or :mo
-  def self.add_repository_to_domain(project_name, locale_dir, file_format)
+  # @param [Symbol] file_format the format of the translations files, :po or :mo
+  def self.add_repository_to_domain(project_name, locale_dir, file_format, text_domain = FastGettext.text_domain)
     return if @gettext_disabled || !gettext_loaded?
 
-    current_chain = FastGettext.translation_repositories[FastGettext.text_domain].chain
+    current_chain = FastGettext.translation_repositories[text_domain].chain
 
     repository = FastGettext::TranslationRepository.build(project_name,
                                                           path: locale_dir,

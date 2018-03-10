@@ -1,0 +1,10 @@
+Benchmark scenario: call of local and global functions in modules appointed by dependencies
+Benchmark target: module loaders
+
+A large number of modules are generated. Each module contains a global and a local function.
+A subset of the modules declares a dependency to another module in their metadata.json and
+has an init.pp which contains calls to the global and local function that resides in the
+module appointed by the dependency.
+
+The objective is to measure the difference between having loaders traversing dependencies
+first or disregard the dependencies altogether (traverse all).

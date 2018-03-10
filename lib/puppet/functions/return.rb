@@ -1,4 +1,4 @@
-# Make iteration continue with the next value optionally given a value for this iteration.
+# Makes iteration continue with the next value, optionally with a given value for this iteration.
 # If a value is not given it defaults to `undef`
 #
 # @since 4.7.0
