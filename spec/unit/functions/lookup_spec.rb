@@ -2921,11 +2921,11 @@ describe "The lookup function" do
           end
 
           it 'errors if a convert_to lookup_option cannot be performed because value does not match type' do
-            expect{lookup('mod_a::to_int')}.to raise_error(/The string 'bananas' cannot be converted to Integer/)
+            expect{lookup('mod_a::to_int')}.to raise_error(/The convert_to lookup_option for key 'mod_a::to_int' raised error.*The string 'bananas' cannot be converted to Integer/)
           end
 
           it 'errors if a convert_to lookup_option cannot be performed because type does not exist' do
-            expect{lookup('mod_a::to_bad_type')}.to raise_error(/Creation of new instance of type 'TypeReference\['ComicSans'\]' is not supported/)
+            expect{lookup('mod_a::to_bad_type')}.to raise_error(/The convert_to lookup_option for key 'mod_a::to_bad_type' raised error.*Creation of new instance of type 'TypeReference\['ComicSans'\]' is not supported/)
           end
         end
 

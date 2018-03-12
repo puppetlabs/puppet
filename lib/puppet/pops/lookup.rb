@@ -65,10 +65,23 @@ module Lookup
       if !ct.nil?
         ct = ct.is_a?(Array) ? ct : [ct]
         if ct[0].is_a?(String)
-          ct[0] = Puppet::Pops::Types::TypeParser.singleton.parse(ct[0])
+          begin
+            ct[0] = Puppet::Pops::Types::TypeParser.singleton.parse(ct[0])
+          rescue StandardError => e
+            raise Puppet::DataBinding::LookupError
+              _("Invalid data type in lookup_options for key '%{key}' could not parse '%{source}', error: '%{msg}") %
+                { key: result_with_name[0], source: ct[0], msg: e.message}
+          end
         end
         # TODO: if this fails the error needs to reference the lookup_option file/line
-        answer = lookup_invocation.scope.call_function(NEW, [ct[0], answer, *(ct[1..-1])])
+        new_args = [ct[0], answer, *(ct[1..-1])]
+        begin
+          answer = lookup_invocation.scope.call_function(NEW, new_args)
+        rescue StandardError => e
+          raise Puppet::DataBinding::LookupError,
+            _("The convert_to lookup_option for key '%{key}' raised error: %{msg}") %
+              { key: result_with_name[0], msg: e.message}
+        end
       end
     end
     lookup_invocation.emit_debug_info(debug_preamble(names)) if Puppet[:debug]
