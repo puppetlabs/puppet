@@ -68,7 +68,7 @@ module Lookup
           begin
             ct[0] = Puppet::Pops::Types::TypeParser.singleton.parse(ct[0])
           rescue StandardError => e
-            raise Puppet::DataBinding::LookupError
+            raise Puppet::DataBinding::LookupError,
               _("Invalid data type in lookup_options for key '%{key}' could not parse '%{source}', error: '%{msg}") %
                 { key: result_with_name[0], source: ct[0], msg: e.message}
           end
