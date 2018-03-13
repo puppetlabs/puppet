@@ -2927,6 +2927,16 @@ describe "The lookup function" do
           it 'errors if a convert_to lookup_option cannot be performed because type does not exist' do
             expect{lookup('mod_a::to_bad_type')}.to raise_error(/The convert_to lookup_option for key 'mod_a::to_bad_type' raised error.*Creation of new instance of type 'TypeReference\['ComicSans'\]' is not supported/)
           end
+
+          it 'adds explanation that conversion took place with a type' do
+            explanation = explain('mod_a::to_array1')
+            expect(explanation).to include('Applying convert_to lookup_option with arguments [Array]')
+          end
+
+          it 'adds explanation that conversion took place with a type and arguments' do
+            explanation = explain('mod_a::to_array2')
+            expect(explanation).to include('Applying convert_to lookup_option with arguments [Array, true]')
+          end
         end
 
         it 'the default hierarchy lookup is included in the explain output' do
