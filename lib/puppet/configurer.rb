@@ -183,7 +183,10 @@ class Puppet::Configurer
       report.configuration_version = catalog.version
 
       benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
-        catalog.apply(options)
+        apply_catalog_time = thinmark do
+          catalog.apply(options)
+        end
+        options[:report].add_times(:catalog_application, apply_catalog_time)
       end
     ensure
       report.finalize_report
