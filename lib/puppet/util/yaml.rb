@@ -9,10 +9,6 @@ module Puppet::Util::Yaml
 
   class YamlLoadError < Puppet::Error; end
 
-  def self.disallowed_class(cls)
-    raise YamlLoadError, "Tried to load unspecified class: #{cls}"
-  end
-
   if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('2.1.0')
     def self.safe_load(yaml, allowed_classes = [], filename = nil)
       YAML.safe_load(yaml, allowed_classes, [], false, filename)
