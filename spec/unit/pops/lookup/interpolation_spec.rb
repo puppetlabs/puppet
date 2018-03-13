@@ -25,6 +25,11 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
       found = sub_lookup(name, lookup_invocation, segments, found) unless segments.empty?
       @interpolator.interpolate(found, lookup_invocation, true)
     end
+
+    # ignore requests for lookup options when testing interpolation
+    def lookup_lookup_options(_, _)
+      nil
+    end
   end
 
   let(:interpolator) { Class.new { include Lookup::Interpolation }.new }
