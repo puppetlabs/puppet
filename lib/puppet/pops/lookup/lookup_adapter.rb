@@ -90,7 +90,7 @@ class LookupAdapter < DataAdapter
   def convert_result(key, lookup_options, lookup_invocation, the_lookup)
     result = the_lookup.call
     convert_to = lookup_options[CONVERT_TO]
-    return result if convert_to.nil? || result.nil?
+    return result if convert_to.nil?
 
     convert_to = convert_to.is_a?(Array) ? convert_to : [convert_to]
     if convert_to[0].is_a?(String)

@@ -2925,8 +2925,8 @@ describe "The lookup function" do
             expect(lookup('mod_a::to_array2')).to eql(['hello'])
           end
 
-          it 'does not convert an undef/nil value that has convert_to option' do
-            expect(lookup('mod_a::undef_value')).to eql(nil)
+          it 'converts an undef/nil value that has convert_to option' do
+            expect(lookup('mod_a::undef_value')).to eql([nil])
           end
 
           it 'errors if a convert_to lookup_option cannot be performed because value does not match type' do
