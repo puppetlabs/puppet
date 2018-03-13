@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-1328-g4957abd\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-1334-g7e210c3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-03-10 07:48+0000\n"
-"PO-Revision-Date: 2018-03-10 07:48+0000\n"
+"POT-Creation-Date: 2018-03-13 07:03+0000\n"
+"PO-Revision-Date: 2018-03-13 07:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -681,7 +681,7 @@ msgstr ""
 msgid "exceed depth limit"
 msgstr ""
 
-#: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:6 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
+#: ../lib/puppet/face/ca.rb:5 ../lib/puppet/face/certificate.rb:6 ../lib/puppet/face/config.rb:7 ../lib/puppet/face/epp.rb:8 ../lib/puppet/face/facts.rb:6 ../lib/puppet/face/generate.rb:7 ../lib/puppet/face/help.rb:9 ../lib/puppet/face/key.rb:5 ../lib/puppet/face/man.rb:8 ../lib/puppet/face/module.rb:9 ../lib/puppet/face/node.rb:4 ../lib/puppet/face/parser.rb:6 ../lib/puppet/face/plugin.rb:6 ../lib/puppet/face/report.rb:5 ../lib/puppet/face/resource.rb:5 ../lib/puppet/face/status.rb:5
 msgid "Apache 2 license; see COPYING"
 msgstr ""
 
@@ -870,39 +870,61 @@ msgstr ""
 msgid "Manage the list of revoked certificates."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:8
+#: ../lib/puppet/face/config.rb:9
 msgid "Interact with Puppet's settings."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:14
+#: ../lib/puppet/face/config.rb:17
 msgid "SECTION_NAME"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:16
+#: ../lib/puppet/face/config.rb:19
 msgid "The section of the configuration file to interact with."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:34
+#: ../lib/puppet/face/config.rb:37
 msgid "Examine Puppet's current settings."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:35
+#: ../lib/puppet/face/config.rb:38
 msgid "(all | <setting> [<setting> ...]"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:73
+#: ../lib/puppet/face/config.rb:83
 msgid "New environment loaders generated from the requested section."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:121
+#: ../lib/puppet/face/config.rb:135
+msgid "No section specified; defaulting to '%{section_name}'."
+msgstr ""
+
+#. TRANSLATORS '--section' is a command line option and should not be translated
+#: ../lib/puppet/face/config.rb:138
+msgid "Set the config section by using the `--section` flag."
+msgstr ""
+
+#. TRANSLATORS `puppet config --section user print foo` is a command line example and should not be translated
+#: ../lib/puppet/face/config.rb:140
+msgid "For example, `puppet config --section user print foo`."
+msgstr ""
+
+#: ../lib/puppet/face/config.rb:141
+msgid "For more information, see https://puppet.com/docs/puppet/latest/configuration.html"
+msgstr ""
+
+#: ../lib/puppet/face/config.rb:148
+msgid "Resolving settings from section '%{section_name}' in environment '%{environment_name}'"
+msgstr ""
+
+#: ../lib/puppet/face/config.rb:153
 msgid "Set Puppet's settings."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:122
+#: ../lib/puppet/face/config.rb:154
 msgid "[setting_name] [setting_value]"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:143
+#: ../lib/puppet/face/config.rb:182
 msgid ""
 "The environment should be set in either the `[user]`, `[agent]`, or `[master]`\n"
 "section. Variables set in the `[agent]` section are used when running\n"
@@ -914,24 +936,25 @@ msgid ""
 "https://puppet.com/docs/puppet/latest/configuration.html#environment\n"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:167
+#: ../lib/puppet/face/config.rb:208
 msgid "Delete a Puppet setting."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:168
+#: ../lib/puppet/face/config.rb:209
 msgid "(<setting>"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:195
+#. TRANSLATORS 'main' is a specific section name and should not be translated
+#: ../lib/puppet/face/config.rb:244
 msgid "Deleted setting from '%{section_name}': '%{setting_string}'"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:198
+#: ../lib/puppet/face/config.rb:247
 msgid "No setting found in configuration file for section '%{section_name}' setting name '%{name}'"
 msgstr ""
 
 #. TRANSLATORS the 'puppet.conf' is a specific file and should not be translated
-#: ../lib/puppet/face/config.rb:205
+#: ../lib/puppet/face/config.rb:254
 msgid "The puppet.conf file does not exist %{puppet_conf}"
 msgstr ""
 
