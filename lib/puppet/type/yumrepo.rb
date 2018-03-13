@@ -39,7 +39,7 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newparam(:target) do
-    desc "The filename to write the yum repository to."
+    desc "The target parameter will be enabled in a future release and should not be used."
 
     defaultto :absent
   end
