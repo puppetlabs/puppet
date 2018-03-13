@@ -2810,6 +2810,7 @@ describe "The lookup function" do
           mod_a::to_array2: 'hello'
           mod_a::to_int: 'bananas'
           mod_a::to_bad_type: 'pyjamas'
+          mod_a::undef_value: null
           lookup_options:
             mod_a::e:
               merge: deep
@@ -2824,6 +2825,10 @@ describe "The lookup function" do
               convert_to: "Integer"
             mod_a::to_bad_type:
               convert_to: "ComicSans"
+            mod_a::undef_value:
+              convert_to:
+                - "Array"
+                - true
           YAML
 
 
@@ -2918,6 +2923,10 @@ describe "The lookup function" do
 
           it 'converts with an array of arguments to the convert_to call' do
             expect(lookup('mod_a::to_array2')).to eql(['hello'])
+          end
+
+          it 'does not convert an undef/nil value that has convert_to option' do
+            expect(lookup('mod_a::undef_value')).to eql(nil)
           end
 
           it 'errors if a convert_to lookup_option cannot be performed because value does not match type' do
