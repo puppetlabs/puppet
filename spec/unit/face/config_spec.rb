@@ -13,6 +13,11 @@ describe Puppet::Face[:config, '0.0.1'] do
 
   FS = Puppet::FileSystem
 
+  before :each do
+    subject.stubs(:warn_default_section)
+    subject.stubs(:report_section_and_environment)
+  end
+
   it "prints a single setting without the name" do
     Puppet[:trace] = true
 
@@ -56,6 +61,29 @@ trace = true
     expect(render(:print, result)).to eq("file\n")
   end
 
+  it "prints the section and environment, and not a warning,  when a section is given" do
+    Puppet.settings.parse_config(<<-CONF)
+    [user]
+    syslogfacility = file
+    CONF
+
+    subject.expects(:warn_default_section).never
+    subject.expects(:report_section_and_environment).once
+
+    result = subject.print("syslogfacility", :section => "user")
+    expect(render(:print, result)).to eq("file\n")
+  end
+
+  it "prints a warning and the section and environment when no section is given" do
+    Puppet[:trace] = true
+
+    subject.expects(:warn_default_section).once
+    subject.expects(:report_section_and_environment).once
+
+    result = subject.print("trace")
+    expect(render(:print, result)).to eq("true\n")
+  end
+
   it "defaults to all when no arguments are given" do
     result = subject.print
     expect(render(:print, result).lines.to_a.length).to eq(Puppet.settings.to_a.length)
@@ -96,6 +124,18 @@ trace = true
       Puppet::FileSystem.stubs(:touch)
     end
 
+    it "prints the section and environment when no section is given" do
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      subject.expects(:report_section_and_environment).once
+      subject.set('foo', 'bar')
+    end
+
+    it "prints the section and environment when a section is given" do
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      subject.expects(:report_section_and_environment).once
+      subject.set('foo', 'bar', {:section => "baz"})
+    end
+
     it "writes to the correct puppet config file" do
       Puppet::FileSystem.expects(:open).with(path, anything, anything)
       subject.set('foo', 'bar')
@@ -125,6 +165,21 @@ trace = true
 
       manipulator.expects(:set).with("baz", "foo", "bar")
       subject.set('foo', 'bar', {:section => "baz"})
+    end
+
+    it "does not duplicate an existing default section when a section is not specified" do
+      contents = <<-CONF
+      [main]
+      myport = 4444
+      CONF
+
+      myfile = StringIO.new(contents)
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(myfile)
+
+      subject.set('foo', 'bar')
+
+      expect(myfile.string).to match(/foo = bar/)
+      expect(myfile.string).not_to match(/main.*main/)
     end
 
     it "opens the file with UTF-8 encoding" do
