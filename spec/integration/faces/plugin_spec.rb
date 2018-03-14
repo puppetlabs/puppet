@@ -3,6 +3,8 @@ require 'puppet/face'
 require 'puppet/file_serving/metadata'
 require 'puppet/file_serving/content'
 require 'puppet/indirector/memory'
+require 'puppet/indirector/file_metadata'
+require 'puppet/indirector/file_content'
 
 module PuppetFaceIntegrationSpecs
 describe "Puppet plugin face" do
