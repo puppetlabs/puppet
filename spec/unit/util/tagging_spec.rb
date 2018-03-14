@@ -91,7 +91,7 @@ describe Puppet::Util::Tagging do
     "\"",
     "'",
   ].each do |char|
-    it "should not allow UTF-8 punctuation characters" do
+    it "should not allow UTF-8 punctuation characters, e.g. #{char}" do
       expect { tagger.tag(char) }.to raise_error(Puppet::ParseError)
     end
   end
