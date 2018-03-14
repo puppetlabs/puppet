@@ -1,7 +1,7 @@
 require 'puppet/util/tag_set'
 
 module Puppet::Util::Tagging
-  ValidTagRegex = /\A[[:alnum:]_][[:alnum:]_:.-]*\Z/
+  ValidTagRegex = /\A[[:alnum:]_][[:alnum:]_:.-]*\Z/u
 
   # Add a tag to the current tag set.
   # When a tag set is used for a scope, these tags will be added to all of
@@ -17,7 +17,7 @@ module Puppet::Util::Tagging
       # up since we get a lot of duplicates and rarely fail on bad tags
       if @tags.add?(name)
         # not seen before, so now we test if it is valid
-        if name =~ ValidTagRegex
+        if valid_tag?(name)
           if split_qualified_tags?
           # avoid adding twice by first testing if the string contains '::'
             @tags.merge(name.split('::')) if name.include?('::')
@@ -40,7 +40,7 @@ module Puppet::Util::Tagging
   # since that results in testing the same string twice
   #
   def tag_if_valid(name)
-    if name.is_a?(String) && name =~ ValidTagRegex
+    if name.is_a?(String) && valid_tag?(name)
       name = name.downcase
       @tags ||= new_tags
       if @tags.add?(name) && name.include?('::')
@@ -104,6 +104,14 @@ module Puppet::Util::Tagging
 
     tags = tags.strip.split(/\s*,\s*/) if tags.is_a?(String)
     tag(*tags)
+  end
+
+  def valid_tag?(maybe_tag)
+    begin
+      maybe_tag.encode(Encoding::UTF_8) =~ ValidTagRegex
+    rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
+      false
+    end
   end
 
   private
