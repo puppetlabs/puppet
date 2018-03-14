@@ -179,6 +179,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
 
     target_mode = 0644
     inifile.each_file do |file|
+      next unless Puppet::FileSystem.exist?(file)
       current_mode = Puppet::FileSystem.stat(file).mode & 0777
       unless current_mode == target_mode
         resource.info _("changing mode of %{file} from %{current_mode} to %{target_mode}") %
