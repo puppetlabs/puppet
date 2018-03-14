@@ -520,6 +520,15 @@ describe Puppet::Parser::Compiler do
           PP
         }.to raise_error(/Could not find resource 'Notify\[tooth_fairy\]' in parameter 'require'/)
       end
+
+      it 'faulty references are reported with source location' do
+        expect { 
+          compile_to_catalog(<<-PP)
+            notify{ x : 
+              require => tooth_fairy }
+          PP
+        }.to raise_error(/"tooth_fairy" is not a valid resource reference.*\(line: 2\)/)
+      end
     end
 
     describe "relationships can be formed" do

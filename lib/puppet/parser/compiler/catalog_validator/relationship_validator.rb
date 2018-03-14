@@ -32,8 +32,15 @@ class Puppet::Parser::Compiler
         refs = param.value.is_a?(Array) ? param.value.flatten : [param.value]
         refs.each do |r|
           next if r.nil? || r == :undef
-          unless catalog.resource(r.to_s)
-            msg = _("Could not find resource '%{res}' in parameter '%{param}'") % { res: r.to_s, param: param.name.to_s }
+          res = r.to_s
+          begin
+            found = catalog.resource(res)
+          rescue ArgumentError => e
+            # Raise again but with file and line information
+            raise CatalogValidationError.new(e.message, param.file, param.line)
+          end
+          unless found
+            msg = _("Could not find resource '%{res}' in parameter '%{param}'") % { res: res, param: param.name.to_s }
             raise CatalogValidationError.new(msg, param.file, param.line)
           end
         end
