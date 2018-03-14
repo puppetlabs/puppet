@@ -5,7 +5,7 @@ require 'net/http'
 require 'tempfile'
 require 'uri'
 require 'pathname'
-require 'json'
+require 'puppet/util/json'
 require 'semantic_puppet'
 
 class Puppet::Forge < SemanticPuppet::Dependency::Source
@@ -64,7 +64,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       response = make_http_request(uri)
 
       if response.code == '200'
-        result = JSON.parse(response.body)
+        result = Puppet::Util::Json.load(response.body)
         uri = decode_uri(result['pagination']['next'])
         matches.concat result['results']
       else
@@ -101,7 +101,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       response = make_http_request(uri)
 
       if response.code == '200'
-        response = JSON.parse(response.body)
+        response = Puppet::Util::Json.load(response.body)
       else
         raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
       end

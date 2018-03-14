@@ -1,4 +1,4 @@
-require 'json'
+require 'puppet/util/json'
 
 module Puppet::Pops
 module Serialization
@@ -146,12 +146,12 @@ module JSON
     end
 
     def to_a
-      ::JSON.parse(io_string)
+      ::Puppet::Util::Json.load(io_string)
     end
 
     def to_json
       if @indent > 0
-        ::JSON.pretty_unparse(to_a, { :indent => ' ' * @indent })
+        ::Puppet::Util::Json.dump(to_a, { :pretty => true, :indent => ' ' * @indent })
       else
         io_string
       end
@@ -159,7 +159,7 @@ module JSON
 
     # Write a payload object. Not subject to extensions
     def write_pl(obj)
-      @io << obj.to_json << ','
+      @io << Puppet::Util::Json.dump(obj) << ','
     end
 
     def io_string
@@ -198,7 +198,7 @@ module JSON
       if ext.nil?
         case obj
         when Numeric, String, true, false, nil
-          @io << obj.to_json
+          @io << Puppet::Util::Json.dump(obj)
           write_delim
         else
           raise SerializationError, _("Unable to serialize a %{obj}") % { obj: obj.class.name }
@@ -284,9 +284,9 @@ module JSON
     def parse_io(io)
       case io
       when IO, StringIO
-        ::JSON.parse(io.read)
+        ::Puppet::Util::Json.load(io.read)
       when String
-        ::JSON.parse(io)
+        ::Puppet::Util::Json.load(io)
       else
         io
       end
