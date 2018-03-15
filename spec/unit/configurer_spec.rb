@@ -352,6 +352,13 @@ describe Puppet::Configurer do
       expect(@agent.run).to be_nil
     end
 
+    it "should record the time it took to apply the catalog" do
+      report = Puppet::Transaction::Report.new
+      @catalog.stubs(:apply).with(:report => report)
+      report.expects(:add_times).with(:catalog_application, kind_of(Numeric))
+      @agent.apply_catalog(@catalog, {:report => report})
+    end
+
     it "should refetch the catalog if the server specifies a new environment in the catalog" do
       catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
       @agent.expects(:retrieve_catalog).returns(catalog).twice
@@ -929,6 +936,13 @@ describe Puppet::Configurer do
       ral_catalog.expects(:write_resource_file)
 
       @agent.convert_catalog(catalog, 10)
+    end
+
+    it "should set catalog conversion time on the report" do
+      report = Puppet::Transaction::Report.new
+
+      report.expects(:add_times).with(:convert_catalog, kind_of(Numeric))
+      @agent.convert_catalog(catalog, 10, {:report => report})
     end
   end
 

@@ -357,6 +357,36 @@ describe Puppet::Transaction::Report do
         expect(metric(:time, "tidy")).to eq(9)
       end
 
+      it "should provide the total time for all time metrics collected" do
+        add_statuses(3, :file) do |status|
+          status.evaluation_time = 1
+        end
+        add_statuses(3, :exec) do |status|
+          status.evaluation_time = 2
+        end
+        add_statuses(3, :tidy) do |status|
+          status.evaluation_time = 3
+        end
+
+        @report.finalize_report
+
+        expect(metric(:time, "total")).to eq(18)
+      end
+
+      it "should accrue times when called for one resource more than once" do
+        @report.add_times :foobar, 50
+        @report.add_times :foobar, 30
+        @report.finalize_report
+        expect(metric(:time, "foobar")).to eq(80)
+      end
+
+      it "should not accrue times when called for one resource more than once when set" do
+        @report.add_times :foobar, 50, false
+        @report.add_times :foobar, 30, false
+        @report.finalize_report
+        expect(metric(:time, "foobar")).to eq(30)
+      end
+
       it "should add any provided times from external sources" do
         @report.add_times :foobar, 50
         @report.finalize_report
@@ -450,6 +480,7 @@ describe Puppet::Transaction::Report do
 
   describe "when producing a summary" do
     before do
+      Benchmark.stubs(:realtime).returns(5.05683418)
       resource = Puppet::Type.type(:notify).new(:name => "testing")
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource resource
@@ -497,6 +528,15 @@ describe Puppet::Transaction::Report do
       it "should include information on #{main} in the textual summary" do
         expect(@report.summary).to be_include(main)
       end
+    end
+
+    it 'should sort total at the very end of the time metrics' do
+      expect(@report.summary).to match(/
+         Last run: \d+
+   Transaction evaluation: \d+.\d{2}
+            Total: \d+.\d{2}
+Version:
+/)
     end
   end
 

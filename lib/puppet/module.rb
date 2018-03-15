@@ -1,6 +1,6 @@
 require 'puppet/util/logging'
 require 'puppet/module/task'
-require 'json'
+require 'puppet/util/json'
 require 'semantic_puppet/gem_version'
 
 # Support for modules
@@ -202,10 +202,10 @@ class Puppet::Module
 
   def read_metadata
     md_file = metadata_file
-    md_file.nil? ? {} : JSON.parse(File.read(md_file, :encoding => 'utf-8'))
+    md_file.nil? ? {} : Puppet::Util::Json.load(File.read(md_file, :encoding => 'utf-8'))
   rescue Errno::ENOENT
     {}
-  rescue JSON::JSONError => e
+  rescue Puppet::Util::Json::ParseError => e
     #TRANSLATORS 'metadata.json' is a specific file name and should not be translated.
     msg = _("%{name} has an invalid and unparsable metadata.json file. The parse error: %{error}") % { name: name, error: e.message }
     case Puppet[:strict]

@@ -109,7 +109,7 @@ Puppet::Util::Log.newdesttype :file do
   def handle(msg)
     if @json > 0
       @json > 1 ? @file.puts(',') : @json = 2
-      JSON.dump(msg.to_structured_hash, @file)
+      Puppet::Util::Json.dump(msg.to_structured_hash, @file)
     else
       @file.puts("#{msg.time} #{msg.source} (#{msg.level}): #{msg}")
     end
@@ -135,7 +135,7 @@ Puppet::Util::Log.newdesttype :logstash_event do
 
   def handle(msg)
     message = format(msg)
-    $stdout.puts message.to_json
+    $stdout.puts Puppet::Util::Json.dump(message)
   end
 end
 

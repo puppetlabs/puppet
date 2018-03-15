@@ -7,7 +7,7 @@ require 'puppet/network/http/rack/rest'
 require 'puppet/indirector_proxy'
 require 'puppet_spec/files'
 require 'puppet_spec/network'
-require 'json'
+require 'puppet/util/json'
 
 describe Puppet::Network::HTTP::API::IndirectedRoutes do
   include PuppetSpec::Files
@@ -33,7 +33,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
                                          {:accept_header => 'unknown, text/pson'},
                                          {:environment => 'production', :checksum_type => checksum_type})
           handler.call(request, response)
-          resp = JSON.parse(response.body)
+          resp = Puppet::Util::Json.load(response.body)
 
           expect(resp['checksum']['type']).to eq(checksum_type)
           expect(checksum_valid(checksum_type, checksum, resp['checksum']['value'])).to be_truthy
@@ -44,7 +44,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
                                             {:accept_header => 'unknown, text/pson'},
                                             {:environment => 'production', :checksum_type => checksum_type, :recurse => 'yes'})
           handler.call(request, response)
-          resp = JSON.parse(response.body)
+          resp = Puppet::Util::Json.load(response.body)
 
           expect(resp.length).to eq(2)
           file = resp.find {|x| x['relative_path'] == 'file.rb'}
@@ -67,7 +67,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
           handler.process(request, response)
 
           expect(response.header["Content-Type"]).to match(/json/)
-          resp = JSON.parse(response.body.first)
+          resp = Puppet::Util::Json.load(response.body.first)
           expect(resp["message"]).to match(/The indirection name must be purely alphanumeric/)
           expect(resp["issue_kind"]).to be_a_kind_of(String)
         end
@@ -79,7 +79,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
           handler.process(request, response)
 
           expect(response.header["Content-Type"]).to match(/json/)
-          resp = JSON.parse(response.body.first)
+          resp = Puppet::Util::Json.load(response.body.first)
           expect(resp["message"]).to match(/Could not find indirection/)
           expect(resp["issue_kind"]).to be_a_kind_of(String)
         end

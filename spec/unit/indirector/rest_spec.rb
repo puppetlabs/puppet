@@ -1,6 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'json'
+require 'puppet/util/json'
 require 'puppet/indirector'
 require 'puppet/indirector/errors'
 require 'puppet/indirector/rest'
@@ -52,7 +52,7 @@ shared_examples_for "a REST terminus method" do |terminus_method|
     describe "when the response code is #{code}" do
       let(:message) { 'error messaged!!!' }
       let(:body) do
-        JSON.generate({
+        Puppet::Util::Json.dump({
           :issue_kind => 'server-error',
           :message    => message
         })

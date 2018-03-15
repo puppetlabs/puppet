@@ -50,7 +50,9 @@ Puppet::Functions.create_function(:eyaml_lookup_key) do
         if data.is_a?(Hash)
           Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data)
         else
-          Puppet.warning(_("%{path}: file does not contain a valid yaml hash") % { path: path })
+          msg = _("%{path}: file does not contain a valid yaml hash") % { path: path }
+          raise Puppet::DataBinding::LookupError, msg if Puppet[:strict] == :error && data != false
+          Puppet.warning(msg)
           {}
         end
       rescue YAML::SyntaxError => ex

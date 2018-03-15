@@ -89,7 +89,6 @@ describe Puppet::Application::Lookup do
     end
   end
 
-
   context 'when given a valid configuration' do
     let (:lookup) { Puppet::Application[:lookup] }
 

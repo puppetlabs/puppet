@@ -119,6 +119,62 @@ describe 'The lookup API' do
     end
   end
 
+  context 'when hiera YAML data is corrupt' do
+    let(:mod_content) do
+      {
+        'hiera.yaml' => 'version: 5',
+        'data' => {
+          'common.yaml' => <<-YAML.unindent
+            ---
+            #mod::classes:
+              - cls1
+              - cls2
+              
+            mod::somevar: 1
+            YAML
+        },
+      }
+    end
+    let(:msg) { /file does not contain a valid yaml hash/ }
+
+    %w(off warning).each do |strict|
+      it "logs a warning when --strict is '#{strict}'" do
+        Puppet[:strict] = strict
+        logs = []
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect(Lookup.lookup('mod::somevar', nil, nil, true, nil, invocation)).to be_nil
+        end
+        expect(logs.map(&:message)).to contain_exactly(msg)
+      end
+    end
+
+    it 'fails when --strict is "error"' do
+      Puppet[:strict] = 'error'
+      expect { Lookup.lookup('mod::somevar', nil, nil, true, nil, invocation) }.to raise_error(msg)
+    end
+  end
+
+  context 'when hiera YAML data is empty' do
+    let(:mod_content) do
+      {
+        'hiera.yaml' => 'version: 5',
+        'data' => { 'common.yaml' => '' },
+      }
+    end
+    let(:msg) { /file does not contain a valid yaml hash/ }
+
+    %w(off warning error).each do |strict|
+      it "logs a warning when --strict is '#{strict}'" do
+        Puppet[:strict] = strict
+        logs = []
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect(Lookup.lookup('mod::somevar', nil, nil, true, nil, invocation)).to be_nil
+        end
+        expect(logs.map(&:message)).to contain_exactly(msg)
+      end
+    end
+  end
+
   context 'when doing lookup' do
     it 'finds data in global layer' do
       expect(Lookup.lookup('a', nil, nil, false, nil, invocation)).to eql('a (from global)')

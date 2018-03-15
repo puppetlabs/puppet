@@ -343,7 +343,7 @@ describe Puppet::Application::FaceBase do
 
       it "should render a non-trivially-keyed Hash with using pretty printed JSON" do
         hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
-        expect(app.render(hash, {})).to eq(JSON.pretty_generate(hash).chomp)
+        expect(app.render(hash, {})).to eq(Puppet::Util::Json.dump(hash, :pretty => true).chomp)
       end
 
       it "should render a {String,Numeric}-keyed Hash into a table" do
@@ -356,7 +356,7 @@ describe Puppet::Application::FaceBase do
         expect(app.render(hash, {})).to eq <<EOT
 5      5
 6.0    6
-four   #{object.to_json.chomp}
+four   #{Puppet::Util::Json.dump(object).chomp}
 one    1
 three  {}
 two    []

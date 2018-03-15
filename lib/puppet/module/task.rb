@@ -1,4 +1,3 @@
-require 'json'
 require 'puppet/util/logging'
 
 class Puppet::Module
