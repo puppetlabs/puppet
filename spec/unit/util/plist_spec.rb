@@ -92,7 +92,7 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(invalid_xml_plist)
       Puppet.expects(:debug).with(regexp_matches(/^Failed with CFFormatError/))
       Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '/dev/stdout', plist_path],
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
                                                      {:failonfail => true, :combine => true}).returns(valid_xml_plist)
       expect(subject.read_plist_file(plist_path)).to eq(valid_xml_plist_hash)
     end
@@ -101,7 +101,7 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(non_plist_data)
       Puppet.expects(:debug).with(regexp_matches(/^Failed with (CFFormatError|NoMethodError)/))
       Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '/dev/stdout', plist_path],
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
                                                      {:failonfail => true, :combine => true}).raises(Puppet::ExecutionFailure, 'boom')
       expect(subject.read_plist_file(plist_path)).to eq(nil)
     end
@@ -110,7 +110,7 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(binary_data)
       Puppet.expects(:debug).with(regexp_matches(/^Failed with (CFFormatError|ArgumentError)/))
       Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '/dev/stdout', plist_path],
+      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
                                                      {:failonfail => true, :combine => true}).raises(Puppet::ExecutionFailure, 'boom')
       expect(subject.read_plist_file(plist_path)).to eq(nil)
     end
