@@ -26,7 +26,7 @@ class Puppet::Util::Metric
     {
       'name' => @name,
       'label' => @label,
-      'values' => @values
+      'values' => @values.map { |v| [v[0], v[1], v[2].round(3)] }
     }
   end
 

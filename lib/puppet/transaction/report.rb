@@ -469,6 +469,12 @@ class Puppet::Transaction::Report
 
     metrics[TOTAL] = metrics.values.inject(0) { |a,b| a+b }
 
+    # If we report any time metrics that have such a minuscule value that json
+    # can't parse it, we get failures when we try to submit these metrics to
+    # puppetdb. This ensures that we don't have any values in scientific
+    # notation.
+    metrics.values.map! { |val| "%0.5f" % val if val.is_a?(Float) }
+
     metrics
   end
 end
