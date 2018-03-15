@@ -235,10 +235,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     begin
       transaction.report.as_logging_destination do
-        transaction_evaluate_time = Puppet::Util.thinmark do
-          transaction.evaluate
-        end
-        transaction.report.add_times(:transaction_evaluation, transaction_evaluate_time)
+        transaction.evaluate
       end
     ensure
       # Don't try to store state unless we're a host config

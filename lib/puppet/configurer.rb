@@ -102,31 +102,22 @@ class Puppet::Configurer
   end
 
   # Convert a plain resource catalog into our full host catalog.
-  def convert_catalog(result, duration, options = {})
-    catalog = nil
-
-    catalog_conversion_time = thinmark do
-      catalog = result.to_ral
-      catalog.finalize
-      catalog.retrieval_duration = duration
-      catalog.write_class_file
-      catalog.write_resource_file
-    end
-    options[:report].add_times(:convert_catalog, catalog_conversion_time) if options[:report]
-
+  def convert_catalog(result, duration)
+    catalog = result.to_ral
+    catalog.finalize
+    catalog.retrieval_duration = duration
+    catalog.write_class_file
+    catalog.write_resource_file
     catalog
   end
 
   def get_facts(options)
     if options[:pluginsync]
-      plugin_sync_time = thinmark do
-        remote_environment_for_plugins = Puppet::Node::Environment.remote(@environment)
-        download_plugins(remote_environment_for_plugins)
+      remote_environment_for_plugins = Puppet::Node::Environment.remote(@environment)
+      download_plugins(remote_environment_for_plugins)
 
-        Puppet::GettextConfig.reset_text_domain('agent')
-        Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
-      end
-      options[:report].add_times(:plugin_sync, plugin_sync_time) if options[:report]
+      Puppet::GettextConfig.reset_text_domain('agent')
+      Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
     end
 
     facts_hash = {}
@@ -136,10 +127,7 @@ class Puppet::Configurer
       # get a hash with both of these pieces of information.
       #
       # facts_for_uploading may set Puppet[:node_name_value] as a side effect
-      facter_time = thinmark do
-        facts_hash = facts_for_uploading
-      end
-      options[:report].add_times(:fact_generation, facter_time) if options[:report]
+      facts_hash = facts_for_uploading
     end
     facts_hash
   end
@@ -161,17 +149,17 @@ class Puppet::Configurer
 
     # retrieve_catalog returns json catalog
     catalog = retrieve_catalog(query_options)
-    return convert_catalog(catalog, @duration, options) if catalog
+    return convert_catalog(catalog, @duration) if catalog
 
     Puppet.err _("Could not retrieve catalog; skipping run")
     nil
   end
 
-  def prepare_and_retrieve_catalog_from_cache(options = {})
+  def prepare_and_retrieve_catalog_from_cache
     result = retrieve_catalog_from_cache({:transaction_uuid => @transaction_uuid, :static_catalog => @static_catalog})
     if result
       Puppet.info _("Using cached catalog from environment '%{catalog_env}'") % { catalog_env: result.environment }
-      return convert_catalog(result, @duration, options)
+      return convert_catalog(result, @duration)
     end
     nil
   end
@@ -183,10 +171,7 @@ class Puppet::Configurer
       report.configuration_version = catalog.version
 
       benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
-        apply_catalog_time = thinmark do
-          catalog.apply(options)
-        end
-        options[:report].add_times(:catalog_application, apply_catalog_time)
+        catalog.apply(options)
       end
     ensure
       report.finalize_report
@@ -253,7 +238,7 @@ class Puppet::Configurer
       Puppet::GettextConfig.reset_text_domain('agent')
       Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
 
-      if catalog = prepare_and_retrieve_catalog_from_cache(options)
+      if catalog = prepare_and_retrieve_catalog_from_cache
         options[:catalog] = catalog
         @cached_catalog_status = 'explicitly_requested'
 
@@ -282,18 +267,13 @@ class Puppet::Configurer
       # We only need to find out the environment to run in if we don't already have a catalog
       unless (options[:catalog] || Puppet[:strict_environment_mode])
         begin
-          node = nil
-          node_retr_time = thinmark do
-            node = options[:node] || Puppet::Node.indirection.find(Puppet[:node_name_value],
+          if node = options[:node] || Puppet::Node.indirection.find(Puppet[:node_name_value],
               :environment => Puppet::Node::Environment.remote(@environment),
               :configured_environment => configured_environment,
               :ignore_cache => true,
               :transaction_uuid => @transaction_uuid,
               :fail_on_404 => true)
-          end
-          options[:report].add_times(:node_retrieval, node_retr_time)
 
-          if node
             # If we have deserialized a node from a rest call, we want to set
             # an environment instance as a simple 'remote' environment reference.
             if !node.has_environment_instance? && node.environment_name
