@@ -164,15 +164,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     result = self.virtual_inifile[name]
     # Create a new section if not found.
     unless result
-      dirs = reposdir()
-      if dirs.empty?
-        # If no repo directories are present, default to using yum.conf.
-        path = '/etc/yum.conf'
-      else
-        # The ordering of reposdir is [defaults, custom], and we want to use
-        # the custom directory if present.
-        path = File.join(dirs.last, "#{name}.repo")
-      end
+      path = getRepoPath(name)
       result = self.virtual_inifile.add_section(name, path)
     end
     result
@@ -196,6 +188,19 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     end
   end
 
+  def self.getRepoPath(name)
+    dirs = reposdir()
+    if dirs.empty?
+      # If no repo directories are present, default to using yum.conf.
+      path = '/etc/yum.conf'
+    else
+      # The ordering of reposdir is [defaults, custom], and we want to use
+      # the custom directory if present.
+      path = File.join(dirs.last, "#{name}.repo")
+    end
+    path
+  end
+
   # Create a new section for the given repository and set all the specified
   # properties in the section.
   #
@@ -203,6 +208,12 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @return [void]
   def create
     @property_hash[:ensure] = :present
+
+    # Check to see if the file that would be created in the
+    # default location for the yumrepo already exists on disk.
+    # If it does, read it in to the virtual inifile
+    path = self.class.getRepoPath(name)
+    self.class.virtual_inifile.read(path) if Puppet::FileSystem.file?(path)
 
     # We fetch a list of properties from the type, then iterate
     # over them, avoiding ensure.  We're relying on .should to

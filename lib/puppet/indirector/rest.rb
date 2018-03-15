@@ -1,6 +1,6 @@
 require 'net/http'
 require 'uri'
-require 'json'
+require 'puppet/util/json'
 require 'semantic_puppet'
 
 require 'puppet/network/http'
@@ -301,7 +301,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     elsif response['content-type'].is_a?(String)
       content_type, body = parse_response(response)
       if content_type =~ /[pj]son/
-        returned_message = JSON.parse(body)["message"]
+        returned_message = Puppet::Util::Json.load(body)["message"]
       else
         returned_message = uncompress_body(response)
       end

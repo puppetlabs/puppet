@@ -1,6 +1,9 @@
 require 'spec_helper'
+require 'puppet_spec/files'
 
 describe Puppet::Type.type(:yumrepo).provider(:inifile) do
+
+  include PuppetSpec::Files
 
   after(:each) do
     described_class.clear
@@ -321,6 +324,79 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
         sect.expects(:[]).with('reposdir').returns '/etc/alternate.repos.d'
         expect(described_class.find_conf_value('reposdir')).to eq '/etc/alternate.repos.d'
       end
+    end
+  end
+
+  describe "resource application after prefetch" do
+    let(:type_instance) do
+      Puppet::Type.type(:yumrepo).new(
+          :name     => 'puppetlabs-products',
+          :ensure   => :present,
+          :baseurl  => 'http://yum.puppetlabs.com/el/6/products/$basearch',
+          :descr    => 'Puppet Labs Products El 6 - $basearch',
+          :enabled  => '1',
+          :gpgcheck => '1',
+          :gpgkey   => 'file:///etc/pki/rpm-gpg/RPM-GPG-KEY-puppetlabs'
+      )
+    end
+
+    let(:provider) do
+      described_class.new(type_instance)
+    end
+
+    before :each do
+      @yumrepo_dir = tmpdir('yumrepo_integration_specs')
+      @yumrepo_conf_file = tmpfile('yumrepo_conf_file', @yumrepo_dir)
+      described_class.stubs(:reposdir).returns [@yumrepo_dir]
+      described_class.stubs(:repofiles).returns [@yumrepo_conf_file]
+      type_instance.provider = provider
+    end
+
+    it "preserves repo file contents that were created after prefetch" do
+      provider.class.prefetch({})
+      # we specifically want to create a file after prefetch has happened so that
+      # none of the sections in the file exist in the prefetch cache
+      repo_file = File.join(@yumrepo_dir, 'puppetlabs-products.repo')
+      contents = <<-HEREDOC
+[puppetlabs-products]
+name=created_by_package_after_prefetch
+enabled=1
+failovermethod=priority
+gpgcheck=0
+
+[additional_section]
+name=Extra Packages for Enterprise Linux 6 - $basearch - Debug
+#baseurl=http://download.fedoraproject.org/pub/epel/6/$basearch/debug
+mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-debug-6&arch=$basearch
+failovermethod=priority
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+gpgcheck=1
+      HEREDOC
+      File.open(repo_file, 'wb') { |f| f.write(contents)}
+
+      provider.create
+      provider.flush
+
+      expected_contents = <<-HEREDOC
+[puppetlabs-products]
+name=Puppet Labs Products El 6 - $basearch
+enabled=1
+failovermethod=priority
+gpgcheck=1
+
+baseurl=http://yum.puppetlabs.com/el/6/products/$basearch
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-puppetlabs
+[additional_section]
+name=Extra Packages for Enterprise Linux 6 - $basearch - Debug
+#baseurl=http://download.fedoraproject.org/pub/epel/6/$basearch/debug
+mirrorlist=https://mirrors.fedoraproject.org/metalink?repo=epel-debug-6&arch=$basearch
+failovermethod=priority
+enabled=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
+gpgcheck=1
+      HEREDOC
+      expect(File.read(repo_file)).to eq(expected_contents)
     end
   end
 end

@@ -1,0 +1,3 @@
+[submodule "benchmarks/full_catalog/puppetlabs-puppetserver_perf_control"]
+	path = benchmarks/full_catalog/puppetlabs-puppetserver_perf_control
+	url = https://github.com/puppetlabs/puppetlabs-puppetserver_perf_control

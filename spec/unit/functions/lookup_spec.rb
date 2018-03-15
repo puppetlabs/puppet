@@ -2806,9 +2806,29 @@ describe "The lookup function" do
           mod_a::f:
             a:
               a: value mod_a::f.a.a (from module)
+          mod_a::to_array1: 'hello'
+          mod_a::to_array2: 'hello'
+          mod_a::to_int: 'bananas'
+          mod_a::to_bad_type: 'pyjamas'
+          mod_a::undef_value: null
           lookup_options:
             mod_a::e:
               merge: deep
+            mod_a::to_array1:
+              merge: deep
+              convert_to: "Array"
+            mod_a::to_array2:
+              convert_to:
+                - "Array"
+                - true
+            mod_a::to_int:
+              convert_to: "Integer"
+            mod_a::to_bad_type:
+              convert_to: "ComicSans"
+            mod_a::undef_value:
+              convert_to:
+                - "Array"
+                - true
           YAML
 
 
@@ -2894,6 +2914,38 @@ describe "The lookup function" do
 
         it 'lookup_options from default hierarchy does not effect values found in the regular hierarchy' do
           expect(lookup('mod_a::d')).to eql('a' => 'value mod_a::d.a (from module)')
+        end
+
+        context "and conversion via convert_to" do
+          it 'converts with a single data type value' do
+            expect(lookup('mod_a::to_array1')).to eql(['h', 'e', 'l', 'l', 'o'])
+          end
+
+          it 'converts with an array of arguments to the convert_to call' do
+            expect(lookup('mod_a::to_array2')).to eql(['hello'])
+          end
+
+          it 'converts an undef/nil value that has convert_to option' do
+            expect(lookup('mod_a::undef_value')).to eql([nil])
+          end
+
+          it 'errors if a convert_to lookup_option cannot be performed because value does not match type' do
+            expect{lookup('mod_a::to_int')}.to raise_error(/The convert_to lookup_option for key 'mod_a::to_int' raised error.*The string 'bananas' cannot be converted to Integer/)
+          end
+
+          it 'errors if a convert_to lookup_option cannot be performed because type does not exist' do
+            expect{lookup('mod_a::to_bad_type')}.to raise_error(/The convert_to lookup_option for key 'mod_a::to_bad_type' raised error.*Creation of new instance of type 'TypeReference\['ComicSans'\]' is not supported/)
+          end
+
+          it 'adds explanation that conversion took place with a type' do
+            explanation = explain('mod_a::to_array1')
+            expect(explanation).to include('Applying convert_to lookup_option with arguments [Array]')
+          end
+
+          it 'adds explanation that conversion took place with a type and arguments' do
+            explanation = explain('mod_a::to_array2')
+            expect(explanation).to include('Applying convert_to lookup_option with arguments [Array, true]')
+          end
         end
 
         it 'the default hierarchy lookup is included in the explain output' do
