@@ -229,6 +229,7 @@ module EppSupport
 
         when "#"
           # template comment
+
           # drop the scanned <%, and skip past -%>, or %>, but also skip %%>
           s.slice!(-2..-1)
 
@@ -240,8 +241,11 @@ module EppSupport
             @mode = :error
             return s
           end
-          # Always trim leading whitespace on the same line when there is a comment
-          s.sub!(/[ \t]*\z/, '')
+          # Trim leading whitespace on the same line when start was <%#-
+          if part[1] == '-'
+            s.sub!(/[ \t]*\z/, '')
+          end
+
           @skip_leading = true if part.end_with?("-%>")
           # Continue scanning for more text
 

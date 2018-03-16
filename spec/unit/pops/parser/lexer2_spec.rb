@@ -685,66 +685,107 @@ describe 'Lexer2' do
       )
     end
 
-    it 'epp can skip leading space in tail text' do
-      code = <<-CODE
-      This is <% $x=10 -%>
+    it 'epp can skip trailing space and newline in tail text' do
+      # note that trailing whitespace is significant on one of the lines
+      code = <<-CODE.unindent
+      This is <% $x=10 -%>   
       just text
       CODE
       expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
-      [:RENDER_STRING, "      This is "],
+      [:RENDER_STRING, "This is "],
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "      just text\n"]
+      [:RENDER_STRING, "just text\n"]
       )
     end
 
     it 'epp can skip comments' do
-      code = <<-CODE
+      code = <<-CODE.unindent
       This is <% $x=10 -%>
       <%# This is an epp comment -%>
       just text
       CODE
       expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
-      [:RENDER_STRING, "      This is "],
+      [:RENDER_STRING, "This is "],
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "      just text\n"]
+      [:RENDER_STRING, "just text\n"]
       )
     end
 
-    it 'epp comments strips left whitespace when preceding is right trim' do
-      code = <<-CODE
+    it 'epp comments does not strip left whitespace when preceding is right trim' do
+      code = <<-CODE.unindent
       This is <% $x=10 -%>
-      space-before-me-but-not-after   <%# This is an epp comment %>
+         <%# This is an epp comment %>
       just text
       CODE
       expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
-      [:RENDER_STRING, "      This is "],
+      [:RENDER_STRING, "This is "],
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "      space-before-me-but-not-after\n      just text\n"]
+      [:RENDER_STRING, "   \njust text\n"]
       )
     end
 
-    it 'epp comments strips left whitespace on same line when preceding is not right trim' do
-      code = <<-CODE
+    it 'epp comments does not strip left whitespace when preceding is not right trim' do
+      code = <<-CODE.unindent
       This is <% $x=10 %>
-      <%# This is an epp comment -%>
+          <%# This is an epp comment -%>
       just text
       CODE
       expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
-      [:RENDER_STRING, "      This is "],
+      [:RENDER_STRING, "This is "],
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "\n      just text\n"]
+      [:RENDER_STRING, "\n    just text\n"]
+      )
+    end
+
+    it 'epp comments can trim left with <%#-' do
+      # test has 4 space before comment and 3 after it
+      # check that there is 3 spaces before the 'and'
+      #
+      code = <<-CODE.unindent
+      This is <% $x=10 -%>
+      no-space-after-me:    <%#- This is an epp comment %>   and
+      some text
+      CODE
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
+      :EPP_START,
+      [:RENDER_STRING, "This is "],
+      [:VARIABLE, "x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, "no-space-after-me:   and\nsome text\n"]
+      )
+    end
+
+    it 'puppet comment in left trimming epp tag works when containing a new line' do
+      # test has 4 space before comment and 3 after it
+      # check that there is 3 spaces before the 'and'
+      #
+      code = <<-CODE.unindent
+      This is <% $x=10 -%>
+      no-space-after-me:    <%-# This is an puppet comment
+        %>   and
+      some text
+      CODE
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
+      :EPP_START,
+      [:RENDER_STRING, "This is "],
+      [:VARIABLE, "x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, "no-space-after-me:"],
+      [:RENDER_STRING, "   and\nsome text\n"]
       )
     end
 
