@@ -265,6 +265,46 @@ config_version=relative/script
         end
       end
 
+      it "interprets glob modulepaths from the environment's directory" do
+        Dir.stubs(:glob).with(File.join(envdir, 'env1', 'other', '*', 'modules')).returns([
+          File.join(envdir, 'env1', 'other', 'foo', 'modules'),
+          File.join(envdir, 'env1', 'other', 'bar', 'modules')
+        ])
+        content = <<-EOF
+manifest=relative/manifest
+modulepath=relative/modules#{File::PATH_SEPARATOR}other/*/modules
+config_version=relative/script
+        EOF
+
+        envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+          FS::MemoryFile.a_directory("env1", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", content),
+            FS::MemoryFile.a_missing_file("modules"),
+            FS::MemoryFile.a_directory('relative', [
+              FS::MemoryFile.a_directory('modules'),
+            ]),
+            FS::MemoryFile.a_directory('other', [
+              FS::MemoryFile.a_directory('foo', [
+                FS::MemoryFile.a_directory('modules'),
+              ]),
+              FS::MemoryFile.a_directory('bar', [
+                FS::MemoryFile.a_directory('modules'),
+              ]),
+            ]),
+          ]),
+        ])
+
+        loader_from(:filesystem => [envdir],
+                    :directory => envdir) do |loader|
+          expect(loader.get("env1")).to environment(:env1).
+            with_manifest(File.join(envdir, 'env1', 'relative', 'manifest')).
+            with_modulepath([File.join(envdir, 'env1', 'relative', 'modules'),
+                             File.join(envdir, 'env1', 'other', 'foo', 'modules'),
+                             File.join(envdir, 'env1', 'other', 'bar', 'modules')]).
+            with_config_version(File.join(envdir, 'env1', 'relative', 'script'))
+        end
+      end
+
       it "interpolates other setting values correctly" do
         modulepath = [
           File.expand_path('/some/absolute'),

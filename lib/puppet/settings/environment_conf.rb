@@ -101,7 +101,7 @@ class Puppet::Settings::EnvironmentConf
       path = modulepath.kind_of?(String) ?
         modulepath.split(File::PATH_SEPARATOR) :
         modulepath
-      path.map { |p| absolute(p) }.join(File::PATH_SEPARATOR)
+      path.map { |p| expand_glob(absolute(p)) }.flatten.join(File::PATH_SEPARATOR)
     end
   end
 
@@ -164,6 +164,15 @@ class Puppet::Settings::EnvironmentConf
     value = raw_setting(setting_name)
     value = default if value.nil?
     yield value
+  end
+
+  def expand_glob(path)
+    return nil if path.nil?
+    if path =~ /[*?\[\{]/
+      Dir.glob(path)
+    else
+      path
+    end
   end
 
   def absolute(path)
