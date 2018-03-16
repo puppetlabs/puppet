@@ -55,7 +55,6 @@ class StaticLoader < Loader
       Whit
       Yumrepo
       Zfs
-      Zone
       Zpool
     }.freeze
 
