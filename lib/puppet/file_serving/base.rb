@@ -32,16 +32,13 @@ class Puppet::FileServing::Base
     end
   end
 
-  def initialize(path, options = {})
+  def initialize(path, links: nil, relative_path: nil, source: nil)
     self.path = path
     @links = :manage
 
-    self.links = options.delete(:links) if options[:links]
-    self.relative_path = options.delete(:relative_path) if options[:relative_path]
-    self.source = options.delete(:source) if options[:source]
-
-    options.delete_if { |k, v| v.nil? }
-    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
+    self.links = links if links
+    self.relative_path = relative_path if relative_path
+    self.source = source if source
   end
 
   # Determine how we deal with links.

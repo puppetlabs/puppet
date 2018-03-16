@@ -22,29 +22,40 @@ class Puppet::Transaction::Event
     obj
   end
 
-  def initialize(options = {})
-    @audited = false
-    @redacted = false
-    @corrective_change = false
+  def initialize(audited: false,
+                 corrective_change: false,
+                 desired_value: nil,
+                 file: nil,
+                 historical_value: nil,
+                 invalidate_refreshes: nil,
+                 line: nil,
+                 message: nil,
+                 name: nil,
+                 previous_value: nil,
+                 property: nil,
+                 redacted: false,
+                 resource: nil,
+                 source_description: nil,
+                 status: nil,
+                 tags: nil)
 
-    self.resource = options.delete(:resource) if options.include?(:resource)
-    self.file = options.delete(:file) if options.include?(:file)
-    self.line = options.delete(:line) if options.include?(:line)
-    self.tags = options.delete(:tags) if options.include?(:tags)
-    self.name = options.delete(:name) if options.include?(:name)
-    self.desired_value = options.delete(:desired_value) if options.include?(:desired_value)
-    self.property = options.delete(:property) if options.include?(:property)
-    self.source_description = options.delete(:source_description) if options.include?(:source_description)
-    self.previous_value = options.delete(:previous_value) if options.include?(:previous_value)
-    self.historical_value = options.delete(:historical_value) if options.include?(:historical_value)
-    self.redacted = options.delete(:redacted) if options.include?(:redacted)
-    self.status = options.delete(:status) if options.include?(:status)
-    self.message = options.delete(:message) if options.include?(:message)
-    self.invalidate_refreshes = options.delete(:invalidate_refreshes) if options.include?(:invalidate_refreshes)
-    self.audited = options.delete(:audited) if options.include?(:audited)
-    self.corrective_change = options.delete(:corrective_change) if options.include?(:corrective_change)
+    @audited = audited
+    @corrective_change = corrective_change
+    @desired_value = desired_value
+    @file = file
+    @historical_value = historical_value
+    @invalidate_refreshes = invalidate_refreshes
+    @line = line
+    @message = message
+    @name = name
+    @previous_value = previous_value
+    @redacted = redacted
+    @source_description = source_description
+    @tags = tags
 
-    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
+    self.property = property if property
+    self.resource = resource if resource
+    self.status = status if status
 
     @time = Time.now
   end

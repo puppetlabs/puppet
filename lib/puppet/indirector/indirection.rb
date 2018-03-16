@@ -87,27 +87,23 @@ class Puppet::Indirector::Indirection
     text
   end
 
-  def initialize(model, name, options = {})
+  def initialize(model, name, doc: nil, indirected_class: nil, cache_class: nil, terminus_class: nil, terminus_setting: nil, extend: nil)
     @model = model
     @name = name
     @termini = {}
 
-    @cache_class = options.delete(:cache_class)
-    @terminus_class = options.delete(:terminus_class)
-    @terminus_setting = options.delete(:terminus_setting)
-
-    @doc = options.delete(:doc)
+    @doc = doc
 
     raise(ArgumentError, _("Indirection %{name} is already defined") % { name: @name }) if @@indirections.find { |i| i.name == @name }
     @@indirections << self
 
-    @indirected_class = options.delete(:indirected_class)
-    if mod = options[:extend]
-      extend(mod)
-      options.delete(:extend)
-    end
+    @indirected_class = indirected_class
+    self.extend(extend) if extend
 
-    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
+    # These setters depend on the indirection already being installed so they have to be at the end
+    self.cache_class = cache_class if cache_class
+    self.terminus_class = terminus_class if terminus_class
+    self.terminus_setting = terminus_setting if terminus_setting
   end
 
   # Set up our request object.

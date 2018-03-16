@@ -12,8 +12,8 @@ class Puppet::Parser::AST::Branch < Puppet::Parser::AST
     @children.each { |child| yield child }
   end
 
-  def initialize(arghash)
-    @children = arghash.delete(:children) || []
-    super
+  def initialize(children: [], **args)
+    @children = children
+    super(**args)
   end
 end

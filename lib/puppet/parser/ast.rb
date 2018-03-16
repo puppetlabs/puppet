@@ -43,16 +43,10 @@ class Puppet::Parser::AST
     end
   end
 
-  # Initialize the object.  Requires a hash as the argument, and
-  # takes each of the parameters of the hash and calls the setter
-  # method for them.  This is probably pretty inefficient and should
-  # likely be changed at some point.
-  def initialize(args)
-    @file = args.delete(:file)
-    @line = args.delete(:line)
-    @pos = args.delete(:pos)
-
-    raise ArgumentError, "Unknown hash arguments #{args}" unless args.empty?
+  def initialize(file: nil, line: nil, pos: nil)
+    @file = file
+    @line = line
+    @pos = pos
   end
 end
 

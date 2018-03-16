@@ -5,20 +5,18 @@ class Puppet::Parser::Resource::Param
 
   attr_accessor :name, :value, :source, :add, :file, :line
 
-  def initialize(hash)
-    @value = hash.delete(:value)
-    @source = hash.delete(:source)
-    @line = hash.delete(:line)
-    @file = hash.delete(:file)
-    @add = hash.delete(:add)
+  def initialize(name: nil, value: nil, source: nil, line: nil, file: nil, add: nil)
+    @value = value
+    @source = source
+    @line = line
+    @file = file
+    @add = add
 
-    unless hash[:name]
+    unless name
       # This must happen after file and line are set to have them reported in the error
       self.fail(Puppet::ResourceError, "'name' is a required option for #{self.class}")
     end
-    @name = hash.delete(:name).intern
-
-    raise ArgumentError, "Unknown hash arguments #{hash}" unless hash.empty?
+    @name = name.intern
   end
 
   def line_to_i

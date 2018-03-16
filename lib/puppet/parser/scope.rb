@@ -371,17 +371,15 @@ class Puppet::Parser::Scope
   end
 
   # Initialize our new scope.  Defaults to having no parent.
-  def initialize(compiler, options = {})
+  def initialize(compiler, source: nil, resource: nil)
     if compiler.is_a? Puppet::Parser::AbstractCompiler
       @compiler = compiler
     else
       raise Puppet::DevError, _("you must pass a compiler instance to a new scope object")
     end
 
-    @source = options.delete(:source)
-    @resource = options.delete(:resource)
-
-    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
+    @source = source
+    @resource = resource
 
     extend_with_functions_module
 

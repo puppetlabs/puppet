@@ -30,12 +30,10 @@ module Puppet::Util::ProviderFeatures
       end
     end
 
-    def initialize(name, docs, hash)
+    def initialize(name, docs, methods: nil)
       self.name = name.intern
       self.docs = docs
-      @methods = hash.delete(:methods)
-
-      raise ArgumentError, "Unknown hash arguments #{hash}" unless hash.empty?
+      @methods = methods
     end
 
     private

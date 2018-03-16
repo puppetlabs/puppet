@@ -76,14 +76,12 @@ class Puppet::Util::Reference
     self.dynamic
   end
 
-  def initialize(name, options = {}, &block)
+  def initialize(name, title: nil, depth: nil, dynamic: nil, doc: nil, &block)
     @name = name
-    @title = options.delete(:title)
-    @depth = options.delete(:depth)
-    @dynamic = options.delete(:dynamic)
-    @doc = options.delete(:doc)
-
-    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
+    @title = title
+    @depth = depth
+    @dynamic = dynamic
+    @doc = doc
 
     meta_def(:generate, &block)
 

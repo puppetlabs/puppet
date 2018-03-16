@@ -45,26 +45,36 @@ module Puppet::Util::FileParsing
       end
     end
 
-    def initialize(type, options = {}, &block)
+    def initialize(type,
+                   absent: nil,
+                   block_eval: nil,
+                   fields: nil,
+                   joiner: nil,
+                   match: nil,
+                   optional: nil,
+                   post_parse: nil,
+                   pre_gen: nil,
+                   rollup: nil,
+                   rts: nil,
+                   separator: nil,
+                   to_line: nil,
+                   &block)
       @type = type.intern
       raise ArgumentError, _("Invalid record type %{record_type}") % { record_type: @type } unless [:record, :text].include?(@type)
 
-      self.absent = options.delete(:absent) if options[:absent]
-      self.block_eval = options.delete(:block_eval) if options[:block_eval]
-      self.fields = options.delete(:fields) if options[:fields]
-      self.joiner = options.delete(:joiner) if options[:joiner]
-      self.match = options.delete(:match)
-      self.optional = options.delete(:optional) if options[:optional]
-      self.post_parse = options.delete(:post_parse) if options[:post_parse]
-      self.pre_gen = options.delete(:pre_gen) if options[:pre_gen]
-      self.rollup = options.delete(:rollup) if options[:rollup]
-      self.rts = options.delete(:rts)
-      self.separator = options.delete(:separator) if options[:separator]
-      self.to_line = options.delete(:to_line) if options[:to_line]
+      @absent = absent
+      @block_eval = block_eval
+      @joiner = joiner
+      @match = match
+      @rollup = rollup if rollup
+      @rts = rts
+      @separator = separator
 
-      unless options.empty?
-        raise ArgumentError, "Unknown hash arguments #{options}"
-      end
+      self.fields = fields if fields
+      self.optional = optional if optional
+      self.post_parse = post_parse if post_parse
+      self.pre_gen = pre_gen if pre_gen
+      self.to_line = to_line if to_line
 
       if self.type == :record
         # Now set defaults.

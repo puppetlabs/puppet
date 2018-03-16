@@ -31,17 +31,15 @@ class Puppet::Util::Ldap::Connection
     connection.unbind if connection.bound?
   end
 
-  def initialize(host, port, options = {})
+  def initialize(host, port, user: nil, password: nil, reset: nil, ssl: nil)
     raise Puppet::Error, _("Could not set up LDAP Connection: Missing ruby/ldap libraries") unless Puppet.features.ldap?
 
-    @host, @port = host, port
-
-    @user = options.delete(:user)
-    @password = options.delete(:password)
-    @reset = options.delete(:reset)
-    @ssl = options.delete(:ssl)
-
-    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
+    @host = host
+    @port = port
+    @user = user
+    @password = password
+    @reset = reset
+    @ssl = ssl
   end
 
   # Create a per-connection unique name.

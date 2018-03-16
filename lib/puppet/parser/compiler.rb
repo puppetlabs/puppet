@@ -396,7 +396,7 @@ class Puppet::Parser::Compiler
   # Return a resource by either its ref or its type and title.
   def_delegator :@catalog, :resource, :findresource
 
-  def initialize(node, options = {})
+  def initialize(node, code_id: nil)
     @node = sanitize_node(node)
     # Array of resources representing all application instances we've found
     @applications = []
@@ -408,13 +408,11 @@ class Puppet::Parser::Compiler
     # in the middle of executing evaluate_applications
     @current_app = nil
     @current_components = nil
-    @code_id = options.delete(:code_id)
+    @code_id = code_id
     initvars
     add_catalog_validators
     # Resolutions of fully qualified variable names
     @qualified_variables = {}
-
-    raise ArgumentError, "Unknown hash arguments #{options}" unless options.empty?
   end
 
   # Create a new scope, with either a specified parent scope or

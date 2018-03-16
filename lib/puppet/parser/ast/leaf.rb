@@ -17,9 +17,9 @@ class Puppet::Parser::AST::Leaf < Puppet::Parser::AST
     @value.to_s unless @value.nil?
   end
 
-  def initialize(options)
-    @value = options.delete(:value)
-    super
+  def initialize(value: nil, **options)
+    @value = value
+    super(**options)
   end
 end
 
