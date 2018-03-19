@@ -826,6 +826,7 @@ class Type
   #
   def set_default(attr)
     return unless klass = self.class.attrclass(attr)
+    # TODO this is not a necessary check, as we define a class level attr_reader
     return unless klass.method_defined?(:default)
     return if @parameters.include?(klass.name)
 
