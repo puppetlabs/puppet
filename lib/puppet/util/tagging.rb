@@ -108,7 +108,12 @@ module Puppet::Util::Tagging
 
   def valid_tag?(maybe_tag)
     begin
-      maybe_tag.encode(Encoding::UTF_8) =~ ValidTagRegex
+      tag_enc = maybe_tag.encoding
+      if tag_enc == Encoding::UTF_8 || tag_enc == Encoding::ASCII
+        maybe_tag =~ ValidTagRegex
+      else
+        maybe_tag.encode(Encoding::UTF_8) =~ ValidTagRegex
+      end
     rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
       false
     end
