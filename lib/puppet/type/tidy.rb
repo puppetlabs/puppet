@@ -310,6 +310,10 @@ Puppet::Type.newtype(:tidy) do
 
   # Should we remove the specified file?
   def tidy?(path)
+    # ignore files that are already managed, since we can't tidy
+    # those files anyway
+    return false if catalog.resource(:file, path)
+
     return false unless stat = self.stat(path)
 
     return false if stat.ftype == "directory" and ! rmdirs?

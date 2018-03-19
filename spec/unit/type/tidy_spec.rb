@@ -316,6 +316,8 @@ describe tidy do
     describe "and determining whether a file should be tidied" do
       before do
         @tidy = Puppet::Type.type(:tidy).new :path => @basepath
+        @catalog = Puppet::Resource::Catalog.new
+        @tidy.catalog = @catalog
         @stat = stub 'stat', :ftype => "file"
         lstat_is(@basepath, @stat)
       end
