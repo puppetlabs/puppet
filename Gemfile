@@ -66,9 +66,6 @@ group(:development, :test) do
   # ronn is used for generating manpages.
   gem 'ronn', '~> 0.7.3', :platforms => [:ruby]
 
-  # webmock requires addressable as as of 2.5.0 addressable started
-  # requiring the public_suffix gem which requires Ruby 2
-  gem 'addressable', '< 2.5.0'
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
   gem "hiera-eyaml", :require => false

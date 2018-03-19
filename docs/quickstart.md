@@ -16,13 +16,10 @@ this.
 
 ## Ruby versions
 
-Puppet needs to work across a variety of ruby versions, including ruby
-1.9.3 and up. Ruby 1.8.7 is no longer supported.
-
-Popular ways of making sure you have access to the various versions of ruby are
-to use either [rbenv](https://github.com/sstephenson/rbenv) or
-[rvm](https://rvm.io/). You can read up on the linked sites for how to get them
-installed on your system.
+Puppet needs to work across a variety of ruby versions. Popular ways of making
+sure you have access to the various versions of ruby are to use either
+[rbenv](https://github.com/sstephenson/rbenv) or [rvm](https://rvm.io/). You can
+read up on the linked sites for how to get them installed on your system.
 
 ## Dependencies
 
