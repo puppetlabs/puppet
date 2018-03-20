@@ -326,6 +326,8 @@ Puppet::Type.newtype(:yumrepo) do
     desc "Password for this proxy. #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
+
+    sensitive true
   end
 
   newproperty(:s3_enabled) do
