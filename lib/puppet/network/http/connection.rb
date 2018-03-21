@@ -5,6 +5,7 @@ require 'puppet/ssl/validator'
 require 'puppet/network/http'
 require 'uri'
 require 'date'
+require 'time'
 
 module Puppet::Network::HTTP
 
@@ -297,7 +298,14 @@ module Puppet::Network::HTTP
     end
 
     def execute_request(connection, request)
+      start = Time.now
       connection.request(request)
+    rescue EOFError => e
+      elapsed = (Time.now - start).to_f.round(3)
+      uri = @site.addr + request.path.split('?')[0]
+      eof = EOFError.new(_('request %{uri} interrupted after %{elapsed} seconds') % {uri: uri, elapsed: elapsed})
+      eof.set_backtrace(e.backtrace) unless e.backtrace.empty?
+      raise eof
     end
 
     def with_connection(site, &block)
