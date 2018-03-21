@@ -259,8 +259,9 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newproperty(:priority) do
-    desc "Priority of this repository. Requires that
-      the `priorities` plugin is installed and enabled.
+    desc "Priority of this repository. Can be any integer value
+      (including negative). Requires that the `priorities` plugin
+      is installed and enabled.
       #{ABSENT_DOC}"
 
     newvalues(/^-?\d+$/, :absent)
