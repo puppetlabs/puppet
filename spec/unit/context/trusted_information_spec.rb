@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'puppet/context/trusted_information'
 
-describe Puppet::Context::TrustedInformation do
+describe Puppet::Context::TrustedInformation  do
   let(:key) do
     key = Puppet::SSL::Key.new("myname")
     key.generate
