@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-1336-g4dd20f6\n"
+"Project-Id-Version: Puppet automation framework 5.5.0-20-ge094b6a\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-03-13 16:16+0000\n"
-"PO-Revision-Date: 2018-03-13 16:16+0000\n"
+"POT-Creation-Date: 2018-03-21 11:16+0000\n"
+"PO-Revision-Date: 2018-03-21 11:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -493,71 +493,71 @@ msgstr ""
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:96 ../lib/puppet/configurer.rb:161
+#: ../lib/puppet/configurer.rb:96 ../lib/puppet/configurer.rb:173
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:154
+#: ../lib/puppet/configurer.rb:166
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:173
+#: ../lib/puppet/configurer.rb:185
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:212
+#: ../lib/puppet/configurer.rb:227
 msgid "Could not select a functional puppet master"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:246
+#: ../lib/puppet/configurer.rb:261
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:286
+#: ../lib/puppet/configurer.rb:306
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:291
+#: ../lib/puppet/configurer.rb:311
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:295
+#: ../lib/puppet/configurer.rb:315
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:319
+#: ../lib/puppet/configurer.rb:339
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:330
+#: ../lib/puppet/configurer.rb:350
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:332
+#: ../lib/puppet/configurer.rb:352
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:351
+#: ../lib/puppet/configurer.rb:371
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:398 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:418 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:407
+#: ../lib/puppet/configurer.rb:427
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:419
+#: ../lib/puppet/configurer.rb:439
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:437
+#: ../lib/puppet/configurer.rb:457
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:457
+#: ../lib/puppet/configurer.rb:477
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -3300,11 +3300,11 @@ msgid ""
 "        A namespaced module name (ex. author-modulename) matching the expression /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/\n"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:47
+#: ../lib/puppet/module/task.rb:46
 msgid "Task names must start with a lowercase letter and be composed of only lowercase letters, numbers, and underscores"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:53
+#: ../lib/puppet/module/task.rb:52
 msgid "The file '%{path}' is not located in the %{module_name} module's tasks directory"
 msgstr ""
 
@@ -4001,37 +4001,41 @@ msgstr ""
 msgid "Unknown content encoding - %{encoding}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:55
+#: ../lib/puppet/network/http/connection.rb:56
 msgid "Unrecognized option(s): %{opts}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:203
+#: ../lib/puppet/network/http/connection.rb:204
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr ""
 
 #. TRANSLATORS: Used in the phrase:
 #. "Received a response from the remote server."
-#: ../lib/puppet/network/http/connection.rb:234
+#: ../lib/puppet/network/http/connection.rb:235
 msgid "the remote server"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:238
+#: ../lib/puppet/network/http/connection.rb:239
 msgid "Received a %{status_code} response from %{server_hostname}, but the Retry-After header value of \"%{retry_after}\" could not be converted to an integer or RFC 2822 date."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:249
+#: ../lib/puppet/network/http/connection.rb:250
 msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:320
+#: ../lib/puppet/network/http/connection.rb:306
+msgid "request %{uri} interrupted after %{elapsed} seconds"
+msgstr ""
+
+#: ../lib/puppet/network/http/connection.rb:328
 msgid "expected one of %{certnames}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:322
+#: ../lib/puppet/network/http/connection.rb:330
 msgid "expected %{certname}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:325
+#: ../lib/puppet/network/http/connection.rb:333
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
@@ -7241,7 +7245,7 @@ msgstr ""
 msgid "ruby-shadow doesn't support %{method}"
 msgstr ""
 
-#: ../lib/puppet/provider/yumrepo/inifile.rb:192
+#: ../lib/puppet/provider/yumrepo/inifile.rb:185
 msgid "changing mode of %{file} from %{current_mode} to %{target_mode}"
 msgstr ""
 
@@ -7419,39 +7423,39 @@ msgstr ""
 msgid "Cannot alias %{resource} to %{key} at %{resource_declaration}; resource %{newref} already declared"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:287
+#: ../lib/puppet/resource/catalog.rb:290
 msgid "Unknown resource type %{type}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:449
+#: ../lib/puppet/resource/catalog.rb:452
 msgid "Could not intern from data: Could not find relationship source %{source} for %{target}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:455
+#: ../lib/puppet/resource/catalog.rb:458
 msgid "Could not intern from data: Could not find relationship target %{target} for %{source}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:548
+#: ../lib/puppet/resource/catalog.rb:551
 msgid "Could not create class file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:568
+#: ../lib/puppet/resource/catalog.rb:571
 msgid "Could not create resource file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:590
+#: ../lib/puppet/resource/catalog.rb:593
 msgid "Unknown ordering type %{ordering}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:611
+#: ../lib/puppet/resource/catalog.rb:614
 msgid "Duplicate declaration: %{resource} is already declared; cannot redeclare"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:613
+#: ../lib/puppet/resource/catalog.rb:616
 msgid "Duplicate declaration: %{resource} is already declared at %{error_location}; cannot redeclare"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:661 ../lib/puppet/resource/catalog.rb:665
+#: ../lib/puppet/resource/catalog.rb:664 ../lib/puppet/resource/catalog.rb:668
 msgid "Could not find resource %{resource} when converting %{message} resources"
 msgstr ""
 
@@ -8511,7 +8515,7 @@ msgid "Copying owner/mode/group from the source file on Windows is not supported
 msgstr ""
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:836 ../lib/puppet/type/k5login.rb:97 ../lib/puppet/type/tidy.rb:341
+#: ../lib/puppet/type/file.rb:836 ../lib/puppet/type/k5login.rb:97 ../lib/puppet/type/tidy.rb:345
 msgid "Could not stat; permission denied"
 msgstr ""
 
@@ -8784,7 +8788,7 @@ msgstr ""
 msgid "Tidying %{count} files"
 msgstr ""
 
-#: ../lib/puppet/type/tidy.rb:337
+#: ../lib/puppet/type/tidy.rb:341
 msgid "File does not exist"
 msgstr ""
 
