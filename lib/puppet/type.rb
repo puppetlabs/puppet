@@ -826,6 +826,7 @@ class Type
   #
   def set_default(attr)
     return unless klass = self.class.attrclass(attr)
+    # TODO this is not a necessary check, as we define a class level attr_reader
     return unless klass.method_defined?(:default)
     return if @parameters.include?(klass.name)
 
@@ -2441,6 +2442,13 @@ end
         warning(_("Unable to mark '%{name}' as sensitive: the property itself was not assigned a value.") % { name: name })
       else
         err(_("Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}.") % { name: name, type: type })
+      end
+    end
+
+    parameters.each do |name, param|
+      next if param.sensitive
+      if param.is_a?(Puppet::Parameter)
+        param.sensitive = param.is_sensitive if param.respond_to?(:is_sensitive)
       end
     end
   end

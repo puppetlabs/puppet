@@ -736,6 +736,46 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+  describe "#set_sensitive_parameters" do
+    let(:sensitive_type) do
+      Puppet::Type.newtype(:sensitive_test) do
+        newparam(:name) { isnamevar }
+        newproperty(:secret) do
+          newvalues(/.*/)
+          sensitive true
+        end
+        newproperty(:transparency) do
+          newvalues(/.*/)
+          sensitive false
+        end
+        newproperty(:things) { newvalues(/.*/) }
+      end
+    end
+
+    it "should mark properties as sensitive" do
+      resource = sensitive_type.new(:name => 'foo', :secret => 'uber classified')
+      expect(resource.parameters[:secret].sensitive).to be true
+    end
+
+    it "should not have a sensitive flag when not set" do
+      resource = sensitive_type.new(:name => 'foo', :things => '1337')
+      expect(resource.parameters[:things].sensitive).to be_nil
+    end
+
+    it "should define things as not sensitive" do
+      resource = sensitive_type.new(:name => 'foo', :transparency => 'public knowledge')
+      expect(resource.parameters[:transparency].sensitive).to be false
+    end
+
+    it "should honor when sensitivity is set in a manifest" do
+      resource = sensitive_type.new(:name => 'foo',
+                                    :transparency => Puppet::Pops::Types::PSensitiveType::Sensitive.new('top secret'),
+                                    :sensitive_parameters => [:transparency]
+                                    )
+      expect(resource.parameters[:transparency].sensitive).to be true
+    end
+  end
+
   describe "when #finish is called on a type" do
     let(:post_hook_type) do
       Puppet::Type.newtype(:finish_test) do
