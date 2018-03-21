@@ -261,17 +261,12 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newproperty(:priority) do
-    desc "Priority of this repository from 1-99. Requires that
-      the `priorities` plugin is installed and enabled.
+    desc "Priority of this repository. Can be any integer value
+      (including negative). Requires that the `priorities` plugin
+      is installed and enabled.
       #{ABSENT_DOC}"
 
-    newvalues(/.*/, :absent)
-    validate do |value|
-      next if value.to_s == 'absent'
-      unless (1..99).include?(value.to_i)
-        fail(_("Must be within range 1-99"))
-      end
-    end
+    newvalues(/^-?\d+$/, :absent)
   end
 
   newproperty(:throttle) do
