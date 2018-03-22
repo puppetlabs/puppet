@@ -23,7 +23,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         expect(result.contents).to be_empty
       end
 
-      it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? do
+      it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
         bucket_file = Puppet::FileBucket::File.new("contents")
 
         children = []
