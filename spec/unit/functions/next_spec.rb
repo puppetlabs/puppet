@@ -82,12 +82,17 @@ describe 'the next function' do
   end
 
   it 'can not be called from top scope' do
+    expected_error = if RUBY_PLATFORM == 'java'
+                       /next\(\) from context where this is illegal \(line: 3, column: 9\) on node.*/
+                     else
+                       /next\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/
+                     end
     expect do
       compile_to_catalog(<<-CODE)
         # line 1
         # line 2
         next()
       CODE
-    end.to raise_error(/next\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
+    end.to raise_error(expected_error)
   end
 end

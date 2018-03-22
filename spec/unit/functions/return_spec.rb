@@ -83,6 +83,11 @@ describe 'the return function' do
   end
 
   it 'can not be called nested from top scope' do
+    expected_error = if RUBY_PLATFORM == 'java'
+                       /return\(\) from context where this is illegal \(line: 3, column: 19\) on node.*/
+                     else
+                       /return\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/
+                     end
     expect do
       compile_to_catalog(<<-CODE)
         # line 1
@@ -90,16 +95,21 @@ describe 'the return function' do
         $result = with(1) |$x| { with($x) |$x| {return(100) }}
         notice $result
       CODE
-    end.to raise_error(/return\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
+    end.to raise_error(expected_error)
   end
 
   it 'can not be called from top scope' do
+    expected_error = if RUBY_PLATFORM == 'java'
+                       /return\(\) from context where this is illegal \(line: 3, column: 9\) on node.*/
+                     else
+                       /return\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/
+                     end
     expect do
       compile_to_catalog(<<-CODE)
         # line 1
         # line 2
         return()
       CODE
-    end.to raise_error(/return\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
+    end.to raise_error(expected_error)
   end
 end

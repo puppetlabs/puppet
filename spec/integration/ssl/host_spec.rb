@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/host'
 
-describe Puppet::SSL::Host do
+describe Puppet::SSL::Host, :unless => RUBY_PLATFORM == 'java' do
   include PuppetSpec::Files
 
   before do
