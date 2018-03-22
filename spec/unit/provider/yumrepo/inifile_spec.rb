@@ -348,7 +348,6 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
       @yumrepo_dir = tmpdir('yumrepo_integration_specs')
       @yumrepo_conf_file = tmpfile('yumrepo_conf_file', @yumrepo_dir)
       described_class.stubs(:reposdir).returns [@yumrepo_dir]
-      described_class.stubs(:repofiles).returns [@yumrepo_conf_file]
       type_instance.provider = provider
     end
 
@@ -397,6 +396,23 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-6
 gpgcheck=1
       HEREDOC
       expect(File.read(repo_file)).to eq(expected_contents)
+    end
+
+    it "does not error becuase of repo files that have been removed from disk" do
+      repo_file = File.join(@yumrepo_dir, 'epel.repo')
+      contents = <<-HEREDOC
+[epel]
+name=created_by_package_after_prefetch
+enabled=1
+failovermethod=priority
+gpgcheck=0
+      HEREDOC
+      File.open(repo_file, 'wb') { |f| f.write(contents)}
+      provider.class.prefetch({})
+      File.delete(repo_file)
+
+      provider.create
+      provider.flush
     end
   end
 end
