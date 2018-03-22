@@ -376,7 +376,7 @@ describe Puppet::Util::Execution do
       end
     end
 
-    describe "#execute (posix locale)", :unless => Puppet.features.microsoft_windows?  do
+    describe "#execute (posix locale)", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
 
       before :each do
         # there is a danger here that ENV will be modified by exec_posix.  Normally it would only affect the ENV

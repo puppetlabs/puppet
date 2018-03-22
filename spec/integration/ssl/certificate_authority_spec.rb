@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
 
-describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
   include PuppetSpec::Files
 
   let(:ca) { @ca }
