@@ -1,16 +1,18 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:package).provider(:pkg) do
+describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platform.jruby? do
   let (:resource) { Puppet::Resource.new(:package, 'dummy', :parameters => {:name => 'dummy', :ensure => :latest}) }
   let (:provider) { described_class.new(resource) }
 
-  if Puppet.features.microsoft_windows?
-    # Get a pid for $CHILD_STATUS to latch on to
-    command = "cmd.exe /c \"exit 0\""
-    Puppet::Util::Execution.execute(command, {:failonfail => false})
-  else
-    Puppet::Util::Execution.execute('exit 0', {:failonfail => false})
+  before(:all) do
+    if Puppet.features.microsoft_windows?
+      # Get a pid for $CHILD_STATUS to latch on to
+      command = "cmd.exe /c \"exit 0\""
+      Puppet::Util::Execution.execute(command, {:failonfail => false})
+    else
+      Puppet::Util::Execution.execute('exit 0', {:failonfail => false})
+    end
   end
 
   before :each do

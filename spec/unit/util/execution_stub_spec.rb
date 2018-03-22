@@ -16,7 +16,7 @@ describe Puppet::Util::ExecutionStub do
     expect(Puppet::Util::ExecutionStub.current_value).to eq(nil)
   end
 
-  it "should restore normal execution after 'reset' is called" do
+  it "should restore normal execution after 'reset' is called", unless: Puppet::Util::Platform.jruby? do
     # Note: "true" exists at different paths in different OSes
     if Puppet.features.microsoft_windows?
       true_command = [Puppet::Util.which('cmd.exe').tr('/', '\\'), '/c', 'exit 0']

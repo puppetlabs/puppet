@@ -12,7 +12,7 @@ def base_json_comparison(result, json_hash)
   expect(result["state"]).to       eq(json_hash["desired_state"])
 end
 
-describe Puppet::SSL::Host do
+describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
   include JSONMatchers
   include PuppetSpec::Files
 

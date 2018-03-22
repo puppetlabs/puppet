@@ -5,7 +5,7 @@ require 'puppet_spec/files'
 
 provider_class = Puppet::Type.type(:ssh_authorized_key).provider(:parsed)
 
-describe provider_class, :unless => Puppet.features.microsoft_windows? do
+describe provider_class, unless: Puppet.features.microsoft_windows? || Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   before :each do
@@ -154,7 +154,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
 
 end
 
-describe provider_class, :unless => Puppet.features.microsoft_windows? do
+describe provider_class, unless: Puppet.features.microsoft_windows? || Puppet::Util::Platform.jruby? do
   before :each do
     @resource = Puppet::Type.type(:ssh_authorized_key).new(:name => "foo", :user => "random_bob")
 

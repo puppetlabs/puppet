@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/file_system/uniquefile'
 require 'puppet_spec/character_encoding'
 
-describe Puppet::Util::Execution do
+describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
   include Puppet::Util::Execution
   # utility methods to help us test some private methods without being quite so verbose
   def call_exec_posix(command, arguments, stdin, stdout, stderr)
@@ -376,7 +376,7 @@ describe Puppet::Util::Execution do
       end
     end
 
-    describe "#execute (posix locale)", :unless => Puppet.features.microsoft_windows?  do
+    describe "#execute (posix locale)", :unless => Puppet.features.microsoft_windows? do
 
       before :each do
         # there is a danger here that ENV will be modified by exec_posix.  Normally it would only affect the ENV
@@ -469,7 +469,7 @@ describe Puppet::Util::Execution do
       end
     end
 
-    describe "#execute (posix user env vars)", :unless => Puppet.features.microsoft_windows?  do
+    describe "#execute (posix user env vars)", :unless => Puppet.features.microsoft_windows? do
       # build up a printf-style string that contains a command to get the value of an environment variable
       # from the operating system.  We can substitute into this with the names of the desired environment variables later.
       get_env_var_cmd = 'echo $%s'

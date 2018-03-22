@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
 
-describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
   include PuppetSpec::Files
 
   let(:ca) { @ca }
@@ -124,7 +124,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
 
   end
 
-  it "allows autosigning certificates concurrently", :unless => Puppet::Util::Platform.windows? do
+  it "allows autosigning certificates concurrently", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
     Puppet[:autosign] = true
     hosts = (0..4).collect { |i| certificate_request_for("host#{i}") }
 

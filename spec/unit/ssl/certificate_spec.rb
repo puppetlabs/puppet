@@ -110,7 +110,7 @@ describe Puppet::SSL::Certificate do
       expect(@certificate).to respond_to(:content)
     end
 
-    describe "#subject_alt_names" do
+    describe "#subject_alt_names", :unless => RUBY_PLATFORM == 'java' do
       it "should list all alternate names when the extension is present" do
         certificate = build_cert(:dns_alt_names => 'foo, bar,baz')
         expect(certificate.subject_alt_names).
@@ -123,7 +123,7 @@ describe Puppet::SSL::Certificate do
       end
     end
 
-    describe "custom extensions" do
+    describe "custom extensions", :unless => RUBY_PLATFORM == 'java' do
       it "returns extensions under the ppRegCertExt" do
         exts = {'pp_uuid' => 'abcdfd'}
         cert = build_cert(:extension_requests => exts)

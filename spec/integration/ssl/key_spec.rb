@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/key'
 
-describe Puppet::SSL::Key do
+describe Puppet::SSL::Key, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   # different UTF-8 widths

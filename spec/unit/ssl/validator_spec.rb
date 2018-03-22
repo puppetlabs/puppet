@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'puppet/ssl'
 require 'puppet_spec/ssl'
 
-describe Puppet::SSL::Validator::DefaultValidator do
+describe Puppet::SSL::Validator::DefaultValidator, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
   let(:ssl_context) do
     mock('OpenSSL::X509::StoreContext')

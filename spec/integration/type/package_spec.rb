@@ -105,7 +105,7 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
     end
   end
 
-  describe "from multiple providers" do
+  describe "from multiple providers", unless: Puppet::Util::Platform.jruby? do
     provider_class = Puppet::Type.type(:package).provider(:gem)
 
     before :each do

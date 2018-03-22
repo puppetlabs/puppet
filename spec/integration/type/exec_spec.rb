@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet_spec/files'
 
-describe Puppet::Type.type(:exec) do
+describe Puppet::Type.type(:exec), unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   let(:catalog) { Puppet::Resource::Catalog.new }

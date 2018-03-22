@@ -4,7 +4,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
 
-describe Puppet::SSL::CertificateAuthority do
+describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby? do
   after do
     Puppet::SSL::CertificateAuthority.instance_variable_set(:@singleton_instance, nil)
   end
@@ -1048,7 +1048,7 @@ end
 require 'puppet/indirector/memory'
 
 module CertificateAuthorityGenerateSpecs
-describe "CertificateAuthority.generate" do
+describe "CertificateAuthority.generate", unless: Puppet::Util::Platform.jruby? do
 
   def expect_to_increment_serial_file
     Puppet.settings.setting(:serial).expects(:exclusive_open)
