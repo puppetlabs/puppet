@@ -114,9 +114,10 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
       @catalog.add_resource(@alt_package)
     end
 
-    describe "when it should be present" do
+    context "when it should be present" do
       [:present, :latest, "1.0"].each do |state|
         it "should do nothing if it is #{state.to_s}" do
+          pending("usage of fork(1) no supported on this platform") if RUBY_PLATFORM == 'java'
           @provider.expects(:properties).returns(:ensure => state).at_least_once
           @alt_provider.expects(:properties).returns(:ensure => state).at_least_once
           @catalog.apply
@@ -124,7 +125,8 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
       end
 
       [:purged, :absent].each do |state|
-        it "should install if it is #{state.to_s}" do
+        it "should install if it is #{state.to_s}"do
+          pending("usage of fork(1) no supported on this platform") if RUBY_PLATFORM == 'java'
           @provider.stubs(:properties).returns(:ensure => state)
           @provider.expects(:install)
           @alt_provider.stubs(:properties).returns(:ensure => state)

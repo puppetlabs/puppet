@@ -625,7 +625,7 @@ describe Puppet::Transaction do
           expect(transaction.prefetched_providers[:sshkey][:parsed]).to be_truthy
         end
 
-        it "should mark resources as failed" do
+        it "should mark resources as failed", :unless => RUBY_PLATFORM == 'java' do
           transaction.evaluate
 
           expect(transaction.resource_status(resource).failed?).to be_truthy
@@ -657,7 +657,7 @@ describe Puppet::Transaction do
             transaction.evaluate
           end
 
-          it "should not fail other resources added after the failing resource" do
+          it "should not fail other resources added after the failing resource", :unless => RUBY_PLATFORM == 'java' do
             new_resource = Puppet::Type.type(:notify).new :name => "baz"
             catalog.add_resource(new_resource)
 

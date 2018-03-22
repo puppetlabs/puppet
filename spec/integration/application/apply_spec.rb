@@ -255,7 +255,7 @@ end
     expect(@logs.map(&:to_s)).to include(/{environment =>.*/)
   end
 
-  it "applies a given file even when an ENC is configured", :if => !Puppet.features.microsoft_windows? do
+  it "applies a given file even when an ENC is configured", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
     manifest = file_containing("manifest.pp", "notice('specific manifest applied')")
     enc = script_containing('enc_script',
       :windows => '@echo classes: []' + "\n" + '@echo environment: special',
@@ -376,7 +376,7 @@ end
     # External node script execution will fail, likely due to the tampering
     # with the basic file descriptors.
     # Workaround: Define a log destination and merely inspect logs.
-    context "with an ENC" do
+    context "with an ENC", :unless => RUBY_PLATFORM == 'java' do
       let(:logdest) { tmpfile('logdest') }
       let(:args) { ['-e', execute, '--logdest', logdest ] }
       let(:enc) do

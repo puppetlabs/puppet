@@ -168,7 +168,7 @@ describe Puppet::Transaction do
   end
 
   # Make sure that multiple subscriptions get triggered.
-  it "should propagate events to all dependent resources" do
+  it "should propagate events to all dependent resources", :unless => RUBY_PLATFORM == 'java' do
     path = tmpfile("path")
     file1 = tmpfile("file1")
     file2 = tmpfile("file2")
@@ -234,7 +234,7 @@ describe Puppet::Transaction do
     expect(Puppet::FileSystem.exist?(path)).not_to be_truthy
   end
 
-  it "one failed refresh should propagate its failure to dependent refreshes" do
+  it "one failed refresh should propagate its failure to dependent refreshes", :unless => RUBY_PLATFORM == 'java' do
     path = tmpfile("path")
     newfile = tmpfile("file")
       file = Puppet::Type.type(:file).new(
@@ -269,7 +269,7 @@ describe Puppet::Transaction do
 
   # Ensure when resources have been generated with eval_generate that event
   # propagation still works when filtering with tags
-  context "when filtering with tags" do
+  context "when filtering with tags", :unless => RUBY_PLATFORM == 'java' do
     context "when resources are dependent on dynamically generated resources" do
       it "should trigger (only) appropriately tagged dependent resources" do
         source = dir_containing('sourcedir', {'foo' => 'bar'})
@@ -391,7 +391,7 @@ describe Puppet::Transaction do
       )
     end
 
-    it "does not trigger unscheduled resources" do
+    it "does not trigger unscheduled resources", :unless => RUBY_PLATFORM == 'java' do
       catalog = mk_catalog
       catalog.add_resource(*Puppet::Type.type(:schedule).mkdefaultschedules)
 
@@ -447,7 +447,7 @@ describe Puppet::Transaction do
     end
   end
 
-  it "should not attempt to evaluate resources with failed dependencies" do
+  it "should not attempt to evaluate resources with failed dependencies", :unless => RUBY_PLATFORM == 'java' do
 
     exec = Puppet::Type.type(:exec).new(
       :command => "#{File.expand_path('/bin/mkdir')} /this/path/cannot/possibly/exist",
@@ -481,7 +481,7 @@ describe Puppet::Transaction do
     expect(transaction.resource_status(file2).failed_dependencies).to eq([exec])
   end
 
-  it "on failure, skips dynamically-generated dependents" do
+  it "on failure, skips dynamically-generated dependents", :unless => RUBY_PLATFORM == 'java' do
     exec = Puppet::Type.type(:exec).new(
       :command => "#{File.expand_path('/bin/mkdir')} /this/path/cannot/possibly/exist",
       :title => "mkdir"
@@ -514,7 +514,7 @@ describe Puppet::Transaction do
     expect(Puppet::FileSystem.exist?(File.join(tmp, "foo"))).to be_truthy
   end
 
-  it "should not trigger subscribing resources on failure" do
+  it "should not trigger subscribing resources on failure", :unless => RUBY_PLATFORM == 'java' do
     file1 = tmpfile("file1")
     file2 = tmpfile("file2")
 
