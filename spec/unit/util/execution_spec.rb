@@ -469,7 +469,7 @@ describe Puppet::Util::Execution do
       end
     end
 
-    describe "#execute (posix user env vars)", :unless => Puppet.features.microsoft_windows?  do
+    describe "#execute (posix user env vars)", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       # build up a printf-style string that contains a command to get the value of an environment variable
       # from the operating system.  We can substitute into this with the names of the desired environment variables later.
       get_env_var_cmd = 'echo $%s'
