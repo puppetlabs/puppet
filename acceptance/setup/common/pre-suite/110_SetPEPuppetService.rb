@@ -1,1 +1,0 @@
-master['puppetservice'] = 'pe-puppetserver'
