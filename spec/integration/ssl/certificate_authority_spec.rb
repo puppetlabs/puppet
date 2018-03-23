@@ -17,7 +17,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     Puppet::SSL::Host.ca_location = :local
 
     # this has the side-effect of creating the various directories that we need
-    @ca = Puppet::SSL::CertificateAuthority.new
+    @ca = Puppet::SSL::CertificateAuthority.new unless RUBY_PLATFORM == 'java'
   end
 
   it "should be able to generate a new host certificate" do
@@ -124,7 +124,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
 
   end
 
-  it "allows autosigning certificates concurrently", :unless => Puppet::Util::Platform.windows? do
+  it "allows autosigning certificates concurrently", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
     Puppet[:autosign] = true
     hosts = (0..4).collect { |i| certificate_request_for("host#{i}") }
 
