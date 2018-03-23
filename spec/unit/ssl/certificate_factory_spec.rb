@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_factory'
 
-describe Puppet::SSL::CertificateFactory do
+describe Puppet::SSL::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
   let :serial    do OpenSSL::BN.new('12') end
   let :name      do "example.local" end
   let :x509_name do OpenSSL::X509::Name.new([['CN', name]]) end

@@ -4,7 +4,7 @@ require 'puppet/face'
 
 require 'puppet/ssl/host'
 
-describe Puppet::Face[:certificate, '0.0.1'] do
+describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java' do
   include PuppetSpec::Files
 
   let(:ca) { Puppet::SSL::CertificateAuthority.instance }
@@ -23,9 +23,11 @@ describe Puppet::Face[:certificate, '0.0.1'] do
     Puppet::SSL::Host.ca_location = :local
 
     # We can't cache the CA between tests, because each one has its own SSL dir.
-    ca = Puppet::SSL::CertificateAuthority.new
-    Puppet::SSL::CertificateAuthority.stubs(:new).returns ca
-    Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+    unless RUBY_PLATFORM == 'java'
+      ca = Puppet::SSL::CertificateAuthority.new
+      Puppet::SSL::CertificateAuthority.stubs(:new).returns ca
+      Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+    end
   end
 
   it "should have a ca-location option" do
@@ -160,7 +162,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
     let(:host) { Puppet::SSL::Host.new(hostname) }
     let(:hostname) { "foobar" }
 
-    it "should sign the certificate request if one is waiting", :unless => Puppet.features.microsoft_windows? do
+    it "should sign the certificate request if one is waiting", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       subject.generate(hostname, options)
 
       subject.sign(hostname, options)
@@ -176,7 +178,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
       end.to raise_error(ArgumentError, /Could not find certificate request for #{hostname}/)
     end
 
-    describe "when ca_location is local", :unless => Puppet.features.microsoft_windows? do
+    describe "when ca_location is local", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       describe "when the request has dns alt names" do
         before :each do
           subject.generate(hostname, options.merge(:dns_alt_names => 'some,alt,names'))

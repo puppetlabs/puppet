@@ -20,7 +20,7 @@ describe Symbol do
   end
 
   it "should have an == that is not true for a string with same letters" do
-    pending "JRuby is incompatible with MRI - Cannot test this on JRuby" if RUBY_PLATFORM == 'java'
+    skip "JRuby is incompatible with MRI - Cannot test this on JRuby" if RUBY_PLATFORM == 'java'
     symbol = :undef
     expect(symbol == 'undef').to_not be(true)
   end

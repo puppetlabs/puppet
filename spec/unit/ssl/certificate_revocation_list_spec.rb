@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_revocation_list'
 
-describe Puppet::SSL::CertificateRevocationList do
+describe Puppet::SSL::CertificateRevocationList, :unless => RUBY_PLATFORM == 'java' do
   before do
     ca = Puppet::SSL::CertificateAuthority.new
     ca.generate_ca_certificate

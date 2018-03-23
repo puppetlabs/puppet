@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe "autosigning" do
+describe "autosigning", :unless => RUBY_PLATFORM == 'java' do
   include PuppetSpec::Files
 
   let(:puppet_dir) { tmpdir("ca_autosigning") }

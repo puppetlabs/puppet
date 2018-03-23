@@ -337,7 +337,7 @@ describe Puppet::SSL::CertificateAuthority do
         expect { @ca.sign(@name) }.to raise_error(ArgumentError)
       end
 
-      it "should fail if an unknown request extension is present" do
+      it "should fail if an unknown request extension is present", :unless => RUBY_PLATFORM == 'java' do
         @request.stubs :request_extensions => [{ "oid"   => "bananas",
                                                  "value" => "delicious" }]
         expect {
@@ -437,7 +437,7 @@ describe Puppet::SSL::CertificateAuthority do
         @cert.stubs :save
       end
 
-      it "should reject CSRs whose CN doesn't match the name for which we're signing them" do
+      it "should reject CSRs whose CN doesn't match the name for which we're signing them", :unless => RUBY_PLATFORM == 'java' do
         # Shorten this so the test doesn't take too long
         Puppet[:keylength] = 1024
         key = Puppet::SSL::Key.new('the_certname')
@@ -471,7 +471,7 @@ describe Puppet::SSL::CertificateAuthority do
          'waltz, nymph, for quick jigs vex bud.',
          '{552c04ca-bb1b-11e1-874b-60334b04494e}'
         ].each do |name|
-          it "should accept #{name.inspect}" do
+          it "should accept #{name.inspect}", :unless => RUBY_PLATFORM == 'java' do
             csr = Puppet::SSL::CertificateRequest.new(name)
             csr.generate(@signing_key)
 
@@ -486,7 +486,7 @@ describe Puppet::SSL::CertificateAuthority do
          "hidden\b\b\b\b\b\bmessage",
          "\xE2\x98\x83 :("
         ].each do |name|
-          it "should reject #{name.inspect}" do
+          it "should reject #{name.inspect}", :unless => RUBY_PLATFORM == 'java' do
             # We aren't even allowed to make objects with these names, so let's
             # stub that to simulate an invalid one coming from outside Puppet
             Puppet::SSL::CertificateRequest.stubs(:validate_certname)
@@ -537,7 +537,7 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
 
-      it "should reject a critical extension that isn't on the whitelist" do
+      it "should reject a critical extension that isn't on the whitelist", :unless => RUBY_PLATFORM == 'java' do
         @request.stubs(:request_extensions).returns [{ "oid" => "banana",
                                                        "value" => "yumm",
                                                        "critical" => true }]
@@ -547,7 +547,7 @@ describe Puppet::SSL::CertificateAuthority do
         )
       end
 
-      it "should reject a non-critical extension that isn't on the whitelist" do
+      it "should reject a non-critical extension that isn't on the whitelist", :unless => RUBY_PLATFORM == 'java' do
         @request.stubs(:request_extensions).returns [{ "oid" => "peach",
                                                        "value" => "meh",
                                                        "critical" => false }]
@@ -557,7 +557,7 @@ describe Puppet::SSL::CertificateAuthority do
         )
       end
 
-      it "should reject non-whitelist extensions even if a valid extension is present" do
+      it "should reject non-whitelist extensions even if a valid extension is present", :unless => RUBY_PLATFORM == 'java' do
         @request.stubs(:request_extensions).returns [{ "oid" => "peach",
                                                        "value" => "meh",
                                                        "critical" => false },
@@ -1099,7 +1099,7 @@ describe "CertificateAuthority.generate" do
     end
   end
 
-  describe "when generating certificates" do
+  describe "when generating certificates", :unless => RUBY_PLATFORM == 'java' do
     let(:ca) { Puppet::SSL::CertificateAuthority.new }
 
     before do
