@@ -882,7 +882,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
 
       it 'should generate rich value hash for parameter values that are not Data' do
         s = catalog_w_regexp.to_json
-        expect(s).to include('"parameters":{"message":{"__pcore_type__":"Regexp","__pcore_value__":"[a-z]+"}}')
+        expect(s).to include('"parameters":{"message":{"__ptype":"Regexp","__pvalue":"[a-z]+"}}')
       end
 
       it 'should read and convert rich value hash containing Regexp from json' do
@@ -951,7 +951,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
       let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
 
       it 'should not generate rich value hash for parameter values that are not Data' do
-        expect(catalog_w_regexp.to_json).not_to include('"__pcore_type__"')
+        expect(catalog_w_regexp.to_json).not_to include('"__ptype"')
       end
 
       it 'should convert parameter containing Regexp into strings' do
