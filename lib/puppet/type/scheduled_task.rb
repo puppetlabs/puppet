@@ -39,6 +39,10 @@ Puppet::Type.newtype(:scheduled_task) do
       # we are slash-insensitive. See #13009
       File.expand_path(value).gsub(/\//, '\\')
     end
+
+    def insync?(current)
+      provider.command_insync?(current, @should)
+    end
   end
 
   newproperty(:working_dir) do

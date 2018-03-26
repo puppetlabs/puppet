@@ -112,6 +112,10 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     @triggers
   end
 
+  def command_insync?(current, should)
+    canonical_command(current).casecmp(canonical_command(should[0])) == 0
+  end
+
   def user_insync?(current, should)
     return false unless current
 
@@ -400,6 +404,10 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
   end
 
   private
+
+  def canonical_command(command)
+    File.expand_path(command).gsub(/\//, '\\')
+  end
 
   def bitfield_from_months(months)
     bitfield = 0
