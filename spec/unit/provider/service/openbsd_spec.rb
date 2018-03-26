@@ -194,7 +194,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   end
 
   describe "#flags=" do
-    it "should run rcctl to set flags", :unless => RUBY_PLATFORM == 'java' do
+    it "should run rcctl to set flags", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:set, 'sshd', :flags, '-4').returns('')
       provider.expects(:rcctl).with(:set, 'sshd', :flags, '-4')
