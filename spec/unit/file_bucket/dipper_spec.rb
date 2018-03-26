@@ -73,7 +73,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   end
 
   describe "when diffing on a local filebucket" do
-    describe "in non-windows environments", :unless => Puppet.features.microsoft_windows? do
+    describe "in non-windows environments or JRuby", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       with_digest_algorithms do
 
         it "should fail in an informative way when one or more checksum doesn't exists" do
@@ -90,7 +90,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
           expect { @dipper.diff(checksum, wrong_checksum, nil, nil) }.to raise_error(RuntimeError, "could not find diff_with #{wrong_checksum}")
         end
 
-        it "should properly diff files on the filebucket", :unless => RUBY_PLATFORM == 'java' do
+        it "should properly diff files on the filebucket" do
           file1 = make_tmp_file("OriginalContent\n")
           file2 = make_tmp_file("ModifiedContent\n")
           @dipper = Puppet::FileBucket::Dipper.new(:Path => tmpdir("bucket"))
