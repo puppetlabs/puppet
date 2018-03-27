@@ -37,7 +37,7 @@ module Puppet::Util
           # strings by the built-in JSON gem and therefore can cause schema errors,
           # for example, when we are rendering reports to JSON using `to_pson` in
           # PuppetDB.
-          if MultiJson.adapter.name == "MultiJson::Adapter::JrJackson"
+          if MultiJson.adapter.name == "MultiJson::Adapters::JrJackson"
             options[:use_bigdecimal] = false
           end
 
