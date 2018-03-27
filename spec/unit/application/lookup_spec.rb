@@ -74,7 +74,7 @@ describe Puppet::Application::Lookup do
         lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
         lookup.stubs(:generate_scope).yields('scope')
         Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
-        expect(run_lookup(lookup)).to eql("--- rand\n...")
+        expect(run_lookup(lookup)).to eql(string_to_yaml("rand"))
       end
     end
 
@@ -85,7 +85,7 @@ describe Puppet::Application::Lookup do
 
       Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
 
-      expect(run_lookup(lookup)).to eql("--- rand\n...")
+      expect(run_lookup(lookup)).to eql(string_to_yaml("rand"))
     end
   end
 
@@ -502,14 +502,14 @@ Searching for "a"
       it "is unaffected by global variables unless '--compile' is used" do
         lookup.options[:node] = node
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is\n...")
+        expect(run_lookup(lookup)).to eql(string_to_yaml("This is"))
       end
 
       it "is affected by global variables when '--compile' is used" do
         lookup.options[:node] = node
         lookup.options[:compile] = true
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from site.pp\n...")
+        expect(run_lookup(lookup)).to eql(string_to_yaml("This is C from site.pp"))
       end
 
       it 'receives extra facts in top scope' do
@@ -523,7 +523,7 @@ Searching for "a"
         lookup.options[:node] = node
         lookup.options[:fact_file] = filename
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from facts\n...")
+        expect(run_lookup(lookup)).to eql(string_to_yaml("This is C from facts"))
       end
 
       it 'receives extra facts in the facts hash' do
@@ -537,7 +537,7 @@ Searching for "a"
         lookup.options[:node] = node
         lookup.options[:fact_file] = filename
         lookup.command_line.stubs(:args).returns(['g'])
-        expect(run_lookup(lookup)).to eql("--- This is G from facts in facts hash\n...")
+        expect(run_lookup(lookup)).to eql(string_to_yaml("This is G from facts in facts hash"))
       end
     end
 
@@ -547,15 +547,23 @@ Searching for "a"
       it "works OK in the absense of '--compile'" do
         lookup.options[:node] = node
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from data.pp\n...")
+        expect(run_lookup(lookup)).to eql(string_to_yaml("This is C from data.pp"))
       end
 
       it "global scope is affected by global variables when '--compile' is used" do
         lookup.options[:node] = node
         lookup.options[:compile] = true
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from site.pp\n...")
+        expect(run_lookup(lookup)).to eql(string_to_yaml("This is C from site.pp"))
       end
+    end
+  end
+
+  def string_to_yaml(string)
+    if RUBY_PLATFORM == 'java'
+      "--- #{string}"
+    else
+      "--- #{string}\n..."
     end
   end
 end
