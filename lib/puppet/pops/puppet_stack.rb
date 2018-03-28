@@ -18,7 +18,7 @@ module Puppet::Pops
 #
 module PuppetStack
   # Pattern matching an entry in the ruby stack that is a puppet entry
-  PP_ENTRY_PATTERN = /^(.*\.pp)?:([0-9]+):in (`stack'|`block in call_function')/
+  PP_ENTRY_PATTERN = /^(.*\.pp)?:([0-9]+):in (`stack'|`block in call_function'|`<eval>')/
 
   # Sends a message to an obj such that it appears to come from
   # file, line when calling stacktrace.
