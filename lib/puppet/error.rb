@@ -72,13 +72,8 @@ module Puppet
     end
 
     def self.from_issue_and_stack(issue, args = {})
-      stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-      if stacktrace.size > 0
-        filename, line = stacktrace[0]
-      else
-        filename = nil
-        line = nil
-      end
+      filename, line = Puppet::Pops::PuppetStack.top_of_stack
+
       self.new(
             issue.format(args),
             filename,

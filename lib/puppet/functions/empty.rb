@@ -71,8 +71,7 @@ Puppet::Functions.create_function(:empty) do
   end
 
   def deprecation_warning_for(arg_type)
-    stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-    file, line = stacktrace[0] # defaults to nil
+    file, line = Puppet::Pops::PuppetStack.top_of_stack
     msg = _("Calling function empty() with %{arg_type} value is deprecated.") % { arg_type: arg_type }
     Puppet.warn_once('deprecations', "empty-from-#{file}-#{line}", msg, file, line)
   end

@@ -9,14 +9,7 @@ Puppet::Functions.create_function(:return, Puppet::Functions::InternalFunction) 
   end
 
   def return_impl(value = nil)
-    stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-    if stacktrace.size > 0
-      file, line = stacktrace[0]
-    else
-      file = nil
-      line = nil
-    end
-
+    file, line = Puppet::Pops::PuppetStack.top_of_stack
     raise Puppet::Pops::Evaluator::Return.new(value, file, line)
   end
 end

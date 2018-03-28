@@ -67,13 +67,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
   # If relayed via other puppet functions in ruby that do not nest their calls, the source position
   # will be in the original puppet source.
   #
-  stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-  if stacktrace.size > 0
-    file, line = stacktrace[0]
-  else
-    file = nil
-    line = nil
-  end
+  file, line = Puppet::Pops::PuppetStack.top_of_stack
 
   if type.start_with? '@@'
     exported = true
