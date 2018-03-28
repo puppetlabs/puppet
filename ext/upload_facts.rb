@@ -102,7 +102,7 @@ HELP
     files.each do |file|
       facts = YAML.load_file(file)
 
-      request = Puppet::Indirector::Request.new(:facts, :save, facts)
+      request = Puppet::Indirector::Request.new(:facts, :save, facts, nil)
 
       # The terminus warns for us if we fail.
       if terminus.save(request)

@@ -21,7 +21,7 @@ class Puppet::Application::Resource < Puppet::Application
       types << t.name.to_s
     end
     puts types.sort
-    exit
+    exit(0)
   end
 
   option("--param PARAM", "-p") do |arg|
