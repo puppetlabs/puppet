@@ -84,11 +84,4 @@ describe Puppet do
       expect(SemanticPuppet::Version).to be_valid(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
     end
   end
-
-  context "newtype" do
-    it "should issue a deprecation warning" do
-      subject.expects(:deprecation_warning).with("Creating sometype via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
-      subject.newtype("sometype")
-    end
-  end
 end
