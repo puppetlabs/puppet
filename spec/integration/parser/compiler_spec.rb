@@ -483,13 +483,6 @@ describe Puppet::Parser::Compiler do
     end
 
     describe "relationships to non existing resources (even with strict==off)" do
-      # At some point in the future, this test can be modified to simply ignore the strict flag,
-      # but since the current version is a change from being under control of strict, this is now
-      # explicit - the standard setting is strict == warning, here setting it to off
-      #
-      before(:each) do
-        Puppet[:strict] = :off
-      end
 
       [ 'before',
         'subscribe',
