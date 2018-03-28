@@ -170,14 +170,6 @@ module Puppet
     end
   end
 
-  # Create a new type.  Just proxy to the Type class.  The mirroring query
-  # code was deprecated in 2008, but this is still in heavy use.  I suppose
-  # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
-  def self.newtype(name, options = {}, &block)
-    Puppet.deprecation_warning(_("Creating %{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.") % { name: name })
-    Puppet::Type.newtype(name, options, &block)
-  end
-
   # Load vendored (setup paths, and load what is needed upfront).
   # See the Vendor class for how to add additional vendored gems/code
   require "puppet/vendor"
