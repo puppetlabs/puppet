@@ -57,9 +57,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     if setting && setting != :server && Puppet.settings.set_by_config?(setting)
       Puppet.settings[setting]
     else
-      begin
-        Puppet.lookup(:server)
-      rescue
+      server = Puppet.lookup(:server) do
         if primary_server = Puppet.settings[:server_list][0]
           Puppet.debug "Dynamically-bound server lookup failed; using first entry"
           primary_server[0]
@@ -69,6 +67,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
           Puppet.settings[setting]
         end
       end
+      server
     end
   end
 
@@ -84,22 +83,21 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
        (srv_setting && srv_setting != :server && Puppet.settings.set_by_config?(srv_setting))
       Puppet.settings[setting].to_i
     else
-      begin
-        Puppet.lookup(:serverport).to_i
-      rescue
+      port = Puppet.lookup(:serverport) do
         if primary_server = Puppet.settings[:server_list][0]
           Puppet.debug "Dynamically-bound port lookup failed; using first entry"
 
           # Port might not be set, so we want to fallback in that
           # case. We know we don't need to use `setting` here, since
           # the default value of every port setting is `masterport`
-          (primary_server[1] || Puppet.settings[:masterport]).to_i
+          (primary_server[1] || Puppet.settings[:masterport])
         else
           setting ||= :masterport
           Puppet.debug "Dynamically-bound port lookup failed; falling back to #{setting} setting"
-          Puppet.settings[setting].to_i
+          Puppet.settings[setting]
         end
       end
+      port.to_i
     end
   end
 
