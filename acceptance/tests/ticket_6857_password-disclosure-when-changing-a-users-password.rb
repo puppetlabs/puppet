@@ -8,7 +8,7 @@ require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CommandUtils
 
 hosts_to_test = agents.reject do |agent|
-  if agent['platform'].match /(?:ubuntu|centos|debian|el-|fedora)/
+  if agent['platform'].match(/(?:ubuntu|centos|debian|el-|fedora)/)
     result = on(agent, "#{ruby_command(agent)} -e \"require 'shadow' or raise\"", :acceptable_exit_codes => [0,1])
     result.exit_code != 0
   else
@@ -47,6 +47,6 @@ MANIFEST
 hosts_to_test.each do |host|
   apply_manifest_on(host, adduser_manifest )
   apply_manifest_on(host, changepass_manifest ) do |result|
-    assert_match( /current_value \[old password hash redacted\], should be \[new password hash redacted\]/ , "#{result.host}: #{result.stdout}" ) unless host['locale'] == 'ja'
+    assert_match( /current_value \[redacted\], should be \[redacted\]/ , "#{result.host}: #{result.stdout}" ) unless host['locale'] == 'ja'
   end
 end
