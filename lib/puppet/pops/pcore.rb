@@ -35,20 +35,20 @@ module Pcore
     if Puppet[:tasks]
       add_object_type('Task', <<-PUPPET, loader)
         {
-          attributes => {   
+          attributes => {
             # Fully qualified name of the task
             name => { type => Pattern[/\\A[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*\\z/] },
 
-            # Full path to executable
-            executable => { type => String },
+            # List of implementations with requirements
+            implementations => { type => Array[Struct[name => String, path => String, Optional[requirements] => Array[String]], 1] },
 
             # Task description
             description => { type => Optional[String], value => undef },
 
             # Puppet Task version
             puppet_task_version => { type => Integer, value => 1 },
-  
-            # Type, description, and sensitive property of each parameter 
+
+            # Type, description, and sensitive property of each parameter
             parameters => {
               type => Optional[Hash[
                 Pattern[/\\A[a-z][a-z0-9_]*\\z/],
@@ -59,7 +59,7 @@ module Pcore
               value => undef
             },
 
-             # Type, description, and sensitive property of each output 
+             # Type, description, and sensitive property of each output
             output => {
               type => Optional[Hash[
                 Pattern[/\\A[a-z][a-z0-9_]*\\z/],
@@ -69,7 +69,7 @@ module Pcore
                   type => Type]]],
               value => undef
             },
- 
+
             supports_noop => { type => Boolean, value => false },
             input_method => { type => String, value => 'both' },
           }
