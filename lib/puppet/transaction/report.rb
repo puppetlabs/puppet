@@ -467,8 +467,6 @@ class Puppet::Transaction::Report
       metrics[name.to_s.downcase] = value
     end
 
-    metrics[TOTAL] = metrics.values.inject(0) { |a,b| a+b }
-
     metrics
   end
 end
