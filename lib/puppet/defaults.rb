@@ -1667,19 +1667,6 @@ EOT
       :mode     => "0750",
       :desc     => "Where FileBucket files are stored locally."
     },
-    :configtimeout => {
-      :default  => "2m",
-      :type     => :duration,
-      :desc     => "How long the client should wait for the configuration to be retrieved
-        before considering it a failure. This setting is deprecated and has been replaced
-        by http_connect_timeout and http_read_timeout.
-        #{AS_DURATION}",
-      :deprecated => :completely,
-      :hook       => proc do |value|
-        Puppet[:http_connect_timeout] = value
-        Puppet[:http_read_timeout]    = value
-      end
-    },
     :report_server => {
       :default  => "$server",
       :desc     => "The server to send transaction reports to.",
