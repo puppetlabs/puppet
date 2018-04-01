@@ -13,6 +13,7 @@ describe Puppet::Provider do
   end
 
   after :each do
+    Puppet::Type.type(:test).provider_hash.clear
     Puppet::Type.rmtype(:test)
   end
 
@@ -390,26 +391,173 @@ describe Puppet::Provider do
       expect(subject).not_to be_default
     end
 
-    it "should consider two defaults to be higher specificity than one default" do
-      Facter.expects(:value).with(:osfamily).at_least_once.returns "solaris"
-      Facter.expects(:value).with(:operatingsystemrelease).at_least_once.returns "5.10"
+    it "should not be default if the notdefaultfor does match" do
+      Facter.expects(:value).with(:operatingsystem).at_least_once.returns "fedora"
+      Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "24"
 
       one = type.provide(:one) do
-        defaultfor :osfamily => "solaris"
+        defaultfor :operatingsystem => "fedora"
+        notdefaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => 24
       end
 
-      two = type.provide(:two) do
-        defaultfor :osfamily => "solaris", :operatingsystemrelease => "5.10"
-      end
-
-      expect(two.specificity).to be > one.specificity
+      expect(one).not_to be_default
     end
 
-    it "should consider a subclass more specific than its parent class" do
-      parent = type.provide(:parent)
-      child  = type.provide(:child, :parent => parent)
+    it "should be default if the notdefaultfor doesn't match" do
+      Facter.expects(:value).with(:operatingsystem).at_least_once.returns "fedora"
+      Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "24"
 
-      expect(child.specificity).to be > parent.specificity
+      one = type.provide(:one) do
+        defaultfor :operatingsystem => "fedora"
+        notdefaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => 42
+      end
+
+      expect(one).to be_default
+    end
+
+    # Key: spec has 4 required and 1 optional part:
+    # one-defaultfor, one-notdefaultfor, two-defaultfor, two-notdefaultfor
+    # d = defaultfor, n = notdefaultfor,
+    # d2 - two clauses in defaultfor constraint,
+    # ! = constraint exists but doesn't match
+    # none = no constraint
+    # d+/!d+/none+ - provider class has deeper inheritence
+
+    context "defaultfor/notdefaultfor configurable tests" do
+      [
+        # Two default? group - ties go to first to register
+        %w{d    none d     none pickone},
+        # Two default? group - second is selected for specificity
+        %w{d    !n   d2     !n         },
+        %w{d    !n   d2     none       },
+        # Two default? group - second is selected for inheritence
+        %w{d    !n   d+     !n         },
+        %w{d    !n   d+     none       },
+        # One default? group - second (only default?) always is selected
+        %w{!d   !n   d     none        },
+        %w{!d   !n   d     !n          },
+        %w{!d   n    d     none        },
+        %w{!d   n    d     !n          },
+        %w{d    n    d     none        },
+        %w{d    n    d     !n          },
+        # No default? group:
+        %w{d    !n   d     !n   pickone},
+        %w{d    !n   d     none pickone},
+        %w{!d   !n   !d    !n   pickone},
+        %w{!d   !n   !d    none pickone},
+        %w{!d   none !d    none pickone},
+        %w{none !n   none  !n   pickone},
+        %w{none none none  none pickone},
+        # No default? but deeper class inheritence group:
+        %w{!d   !n   !d+   !n          },
+        %w{!d   !n   !d+   none        },
+        %w{!d   none !d+   none        },
+        %w{none !n   none+ !n          },
+        %w{none none none+ none        },
+      ].each do |thisspec|
+
+        defaultforspec = {
+          :one => {},
+          :two => {},
+          :expect_one => false #Default expectation is to expect provider two for these tests
+        }
+
+        fail "Inheritence not supported on first provider" if thisspec[0].end_with?('+')
+
+        case thisspec[0] # First provider defaultfor spec
+        when 'd'
+          defaultforspec[:one][:defaultfor] = true
+        when '!d'
+          defaultforspec[:one][:defaultfor] = false
+        when 'none'
+          # Do not include a defaultfor constraint
+        else
+          fail "Did not understand first spec: %{spec}" % { spec: thisspec[0] }
+        end
+
+        case thisspec[1] # First provider notdefaultfor spec
+        when 'n'
+          defaultforspec[:one][:notdefaultfor] = true
+        when '!n'
+          defaultforspec[:one][:notdefaultfor] = false
+        when 'none'
+          # Do not include a notdefaultfor constraint
+        else
+          fail "Did not understand second spec: %{spec}" % { spec: thisspec[1] }
+        end
+
+        if thisspec[2].end_with?('+') then # d+ !d+ none+
+          defaultforspec[:two][:derived] = true
+          thisspec[2] = thisspec[2][0 .. -2]
+        end
+
+        case thisspec[2]
+        when 'd'
+          defaultforspec[:two][:defaultfor] = true
+        when 'd2'
+          defaultforspec[:two][:extradefaultfor] = true
+        when '!d'
+          defaultforspec[:two][:defaultfor] = false
+        when 'none'
+          # Do not include a defaultfor constraint
+        else
+          fail "Did not understand third spec: %{spec}" % { spec: thisspec[2] }
+        end
+
+        case thisspec[3] # Second provider notdefaultfor spec
+        when 'n'
+          defaultforspec[:two][:notdefaultfor] = true
+        when '!n'
+          defaultforspec[:two][:notdefaultfor] = false
+        when 'none'
+          # Do not include a notdefaultfor constraint
+        else
+          fail "Did not understand fourth spec: %{spec}" % { spec: thisspec[3] }
+        end
+
+        if thisspec.length == 5 && thisspec[4] == "pickone" then
+          defaultforspec[:expect_one] = true
+        end
+
+        it "with the specification: %{spec}" % { spec: thisspec.join(', ') } do
+          Facter.stubs(:value).with(:osfamily).returns "redhat"
+          Facter.stubs(:value).with(:operatingsystem).returns "centos"
+          Facter.stubs(:value).with(:operatingsystemrelease).returns "27"
+
+          one = type.provide(:one) do
+            if defaultforspec[:one].key?(:defaultfor)
+              defaultfor    :osfamily               => "redhat" if  defaultforspec[:one][:defaultfor]
+              defaultfor    :osfamily               => "ubuntu" if !defaultforspec[:one][:defaultfor]
+            end
+            if defaultforspec[:one].key?(:notdefaultfor)
+              notdefaultfor :operatingsystem        => "centos" if  defaultforspec[:one][:notdefaultfor]
+              notdefaultfor :operatingsystem        => "ubuntu" if !defaultforspec[:one][:notdefaultfor]
+            end
+          end
+
+          provider_options = {}
+          provider_options[:parent] = one if defaultforspec[:two][:derived] # :two inherits from one, if spec'd
+          two = type.provide(:two, provider_options) do
+            if defaultforspec[:two].key?(:defaultfor) || defaultforspec[:two].key?(:extradefaultfor)
+              defaultfor    :osfamily               => "redhat" if  defaultforspec[:two][:defaultfor]
+              defaultfor    :osfamily               => "redhat",#   defaultforspec[:two][:extradefaultfor] has two parts
+                            :operatingsystem        => "centos" if  defaultforspec[:two][:extradefaultfor]
+              defaultfor    :osfamily               => "ubuntu" if !defaultforspec[:two][:defaultfor]
+            end
+            if defaultforspec[:two].key?(:notdefaultfor)
+              notdefaultfor :operatingsystemrelease => "27" if  defaultforspec[:two][:notdefaultfor]
+              notdefaultfor :operatingsystemrelease => "99" if !defaultforspec[:two][:notdefaultfor]
+            end
+          end
+
+          if defaultforspec[:expect_one] then
+            Puppet.expects(:warning).with(regexp_matches(/Found multiple default providers/))
+            expect(type.defaultprovider).to eq(one)
+          else
+            expect(type.defaultprovider).to eq(two)
+          end
+        end
+      end
     end
 
     describe "using a :feature key" do
