@@ -278,7 +278,12 @@ class Puppet::Provider
   # @see Provider.defaultfor
   # @api private
   def self.default_match
-    @defaults.find do |default|
+    return nil if some_default_match(@notdefaults) # Blacklist means this provider cannot be a default
+    some_default_match(@defaults)
+  end
+
+  def self.some_default_match(defaultlist)
+    defaultlist.find do |default|
       default.all? do |key, values|
         case key
           when :feature
@@ -329,6 +334,10 @@ class Puppet::Provider
     @defaults << hash
   end
 
+  def self.notdefaultfor(hash)
+    @notdefaults << hash
+  end
+
   # @return [Integer] Returns a numeric specificity for this provider based on how many requirements it has
   #  and number of _ancestors_. The higher the number the more specific the provider.
   # The number of requirements is based on the hash size of the matching {Provider.defaultfor}.
@@ -346,6 +355,9 @@ class Puppet::Provider
     # complexity of a provider).
     match = default_match
     length = match ? match.length : 0
+
+    #TODO: should notdefaultfor affect specificity?
+
     (length * 100) + ancestors.select { |a| a.is_a? Class }.length
   end
 
@@ -353,6 +365,7 @@ class Puppet::Provider
   # @return [void]
   def self.initvars
     @defaults = []
+    @notdefaults = []
     @commands = {}
   end
 

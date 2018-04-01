@@ -390,6 +390,30 @@ describe Puppet::Provider do
       expect(subject).not_to be_default
     end
 
+    it "should not be default if the notdefaultfor does match" do
+      Facter.expects(:value).with(:operatingsystem).at_least_once.returns "fedora"
+      Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "24"
+
+      one = type.provide(:one) do
+        defaultfor :operatingsystem => "fedora"
+        notdefaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => 24
+      end
+
+      expect(one).not_to be_default
+    end
+
+    it "should be default if the notdefaultfor doesn't match" do
+      Facter.expects(:value).with(:operatingsystem).at_least_once.returns "fedora"
+      Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "24"
+
+      one = type.provide(:one) do
+        defaultfor :operatingsystem => "fedora"
+        notdefaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => 42
+      end
+
+      expect(one).to be_default
+    end
+
     it "should consider two defaults to be higher specificity than one default" do
       Facter.expects(:value).with(:osfamily).at_least_once.returns "solaris"
       Facter.expects(:value).with(:operatingsystemrelease).at_least_once.returns "5.10"
