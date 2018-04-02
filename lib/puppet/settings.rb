@@ -1176,11 +1176,15 @@ Generated on #{Time.now}.
     if configured_environment == "production" && envdir && Puppet::FileSystem.exist?(envdir)
       configured_environment_path = File.join(envdir, configured_environment)
       if !Puppet::FileSystem.symlink?(configured_environment_path)
-        catalog.add_resource(
-          Puppet::Resource.new(:file,
-                               configured_environment_path,
-                               :parameters => { :ensure => 'directory' })
-        )
+        parameters = { :ensure => 'directory' }
+        unless Puppet::FileSystem.exist?(configured_environment_path)
+          parameters.merge!(:mode => '0750')
+          if Puppet.features.root?
+            parameters.merge!(:owner => Puppet[:user]) if service_user_available?
+            parameters.merge!(:group => Puppet[:group]) if service_group_available?
+          end
+        end
+        catalog.add_resource(Puppet::Resource.new(:file, configured_environment_path, :parameters => parameters))
       end
     end
   end
