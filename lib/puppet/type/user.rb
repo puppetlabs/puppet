@@ -212,13 +212,44 @@ module Puppet
         * OS X 10.8 and higher use salted SHA512 PBKDF2 hashes. When managing passwords
           on these systems, the `salt` and `iterations` attributes need to be specified as
           well as the password.
-        * Windows passwords can only be managed in cleartext, as there is no Windows API
-          for setting the password hash.
+        * Windows passwords can be managed only in cleartext, because there is no Windows
+          API for setting the password hash.
 
         [stdlib]: https://github.com/puppetlabs/puppetlabs-stdlib/
 
         Enclose any value that includes a dollar sign ($) in single quotes (') to avoid
-        accidental variable interpolation.}
+        accidental variable interpolation.
+
+        To redact passwords from reports to PuppetDB, use the `Sensitive` data type. For
+        example, this resource protects the password:
+
+        ```puppet
+        user { 'foo':
+          ensure   => present,
+          password => Sensitive("my secret password")
+        }
+        ```
+
+        This results in the password being redacted from the report, as in the
+        `previous_value`, `desired_value`, and `message` fields below.
+
+        ```yaml
+            events:
+            - !ruby/object:Puppet::Transaction::Event
+              audited: false
+              property: password
+              previous_value: "[redacted]"
+              desired_value: "[redacted]"
+              historical_value:
+              message: changed [redacted] to [redacted]
+              name: :password_changed
+              status: success
+              time: 2017-05-17 16:06:02.934398293 -07:00
+              redacted: true
+              corrective_change: false
+            corrective_change: false
+        ```
+        }
 
       validate do |value|
         raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) and value.include?(":")
