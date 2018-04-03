@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.5-397-gdf6fb5c\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-413-g6525ac3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-03-20 18:16+0000\n"
-"PO-Revision-Date: 2018-03-20 18:16+0000\n"
+"POT-Creation-Date: 2018-04-03 18:07+0000\n"
+"PO-Revision-Date: 2018-04-03 18:07+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -571,7 +571,7 @@ msgid "Attempted to pop, but already at root of the context stack."
 msgstr ""
 
 #: ../lib/puppet/context.rb:55
-msgid "no '%{name}' in %{table} at top of %{stack}"
+msgid "Unable to lookup '%{name}'"
 msgstr ""
 
 #: ../lib/puppet/context.rb:80
@@ -2765,7 +2765,7 @@ msgstr ""
 msgid "Error connecting to %{srv_server}:%{srv_port}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:249
+#: ../lib/puppet/indirector/request.rb:245
 msgid "Could not understand URL %{key}: %{detail}"
 msgstr ""
 
@@ -2777,15 +2777,15 @@ msgstr ""
 msgid "Resource instance does not match request key"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:187
+#: ../lib/puppet/indirector/rest.rb:185
 msgid "Find %{uri} resulted in 404 with the message: %{body}"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:220
+#: ../lib/puppet/indirector/rest.rb:218
 msgid "DELETE does not accept options"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:235
+#: ../lib/puppet/indirector/rest.rb:233
 msgid "PUT does not accept options"
 msgstr ""
 
