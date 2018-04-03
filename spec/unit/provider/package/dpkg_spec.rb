@@ -217,11 +217,12 @@ describe provider_class do
   end
 
   describe "when holding or unholding" do
-    let(:tempfile) { stub 'tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file" }
+    let(:tempfile) { stub 'tempfile', :path => "/other/file" }
 
     before do
       tempfile.stubs(:write)
-      Tempfile.stubs(:new).returns tempfile
+      tempfile.stubs(:flush)
+      Tempfile.stubs(:open).yields tempfile
     end
 
     it "installs first if holding" do
