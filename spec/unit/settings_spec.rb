@@ -1359,6 +1359,49 @@ describe Puppet::Settings do
         expect(catalog.resource_keys).to include(["File", "#{envdir}/production"])
       end
 
+      it 'adds the creation of the production directory when not run as root' do
+        envdir = "#{tmpenv}/custom_envpath"
+        envpath = "#{envdir}#{File::PATH_SEPARATOR}/some/other/envdir"
+        @settings[:environmentpath] = envpath
+        Dir.mkdir(envdir)
+        Puppet.features.stubs(:root?).returns false
+        catalog = @settings.to_catalog
+        resource = catalog.resource('File', File.join(envdir, 'production'))
+        expect(resource[:mode]).to eq('0750')
+        expect(resource[:owner]).to be_nil
+        expect(resource[:group]).to be_nil
+      end
+
+      it 'adds the creation of the production directory with service owner and group information when available' do
+        envdir = "#{tmpenv}/custom_envpath"
+        envpath = "#{envdir}#{File::PATH_SEPARATOR}/some/other/envdir"
+        @settings[:environmentpath] = envpath
+        Dir.mkdir(envdir)
+        Puppet.features.stubs(:root?).returns true
+        @settings.stubs(:service_user_available?).returns true
+        @settings.stubs(:service_group_available?).returns true
+        catalog = @settings.to_catalog
+        resource = catalog.resource('File', File.join(envdir, 'production'))
+        expect(resource[:mode]).to eq('0750')
+        expect(resource[:owner]).to eq('puppet')
+        expect(resource[:group]).to eq('puppet')
+      end
+
+      it 'adds the creation of the production directory without service owner and group when not available' do
+        envdir = "#{tmpenv}/custom_envpath"
+        envpath = "#{envdir}#{File::PATH_SEPARATOR}/some/other/envdir"
+        @settings[:environmentpath] = envpath
+        Dir.mkdir(envdir)
+        Puppet.features.stubs(:root?).returns true
+        @settings.stubs(:service_user_available?).returns false
+        @settings.stubs(:service_group_available?).returns false
+        catalog = @settings.to_catalog
+        resource = catalog.resource('File', File.join(envdir, 'production'))
+        expect(resource[:mode]).to eq('0750')
+        expect(resource[:owner]).to be_nil
+        expect(resource[:group]).to be_nil
+      end
+
       it "handles a non-existent environmentpath" do
         catalog = @settings.to_catalog
         expect(catalog.resource_keys).to be_empty
