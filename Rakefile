@@ -65,7 +65,12 @@ task :default do
 end
 
 task :spec do
-  sh %{rspec #{ENV['TEST'] || ENV['TESTS'] || 'spec'}}
+  tests = ENV['TEST'] || ENV['TESTS']
+  unless tests
+    modules_tests = Dir.glob("lib/puppet/vendor/modules/*/spec").join(' ')
+    tests = "spec #{modules_tests}"
+  end
+  sh %{rspec #{tests}}
 end
 
 desc 'run static analysis with rubocop'

@@ -18,7 +18,13 @@ module Parallel
 
       def initialize(group_size)
         config = ::RSpec::Core::Configuration.new
-        options = ::RSpec::Core::ConfigurationOptions.new((ENV['TEST'] || ENV['TESTS'] || 'spec').split(';'))
+        tests = ENV['TEST'] || ENV['TESTS']
+        if tests
+          specs = tests.split(';')
+        else
+          specs = ['spec'] + Dir.glob("lib/puppet/vendor/modules/*/spec")
+        end
+        options = ::RSpec::Core::ConfigurationOptions.new(specs)
         options.configure config
 
         # This will scan and load all spec examples
