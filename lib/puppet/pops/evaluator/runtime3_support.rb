@@ -55,13 +55,8 @@ module Runtime3Support
   #
   def runtime_issue(issue, options={})
     # Get position from puppet runtime stack
-    stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-    if stacktrace.size > 0
-      file, line = stacktrace[0]
-    else
-      file = nil
-      line = nil
-    end
+    file, line = Puppet::Pops::PuppetStack.top_of_stack
+
     # Use a SemanticError as the sourcepos
     semantic = Puppet::Pops::SemanticError.new(issue, nil, options.merge({:file => file, :line => line}))
     optionally_fail(issue,  semantic)
