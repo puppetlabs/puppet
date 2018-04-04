@@ -66,7 +66,11 @@ describe Puppet::SSL::Oids do
     end
 
     it "returns false when an invalid OID shortname is passed" do
-      expect(described_class.subtree_of?('IANA', 'bananas')).to be_falsey
+      if RUBY_PLATFORM == 'java'
+        expect{described_class.subtree_of?('IANA', 'bananas')}.to raise_error(TypeError, /string bananas not an OID/)
+      else
+        expect(described_class.subtree_of?('IANA', 'bananas')).to be_falsey
+      end
     end
   end
 end
