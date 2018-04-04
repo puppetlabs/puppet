@@ -66,7 +66,6 @@ Puppet::Functions.create_function(:empty) do
   # (Yes, it is strange, but undef was passed as empty string in 3.x API)
   #
   def undef_empty(x)
-    deprecation_warning_for('Undef')
     true
   end
 
