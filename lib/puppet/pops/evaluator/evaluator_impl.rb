@@ -404,7 +404,7 @@ class EvaluatorImpl
     end
 
     left_o = bin_expr.left_expr
-    if left.is_a?(URI) && operator == '+'
+    if (left.is_a?(URI) || left.is_a?(Types::PBinaryType::Binary)) && operator == '+'
       concatenate(left, right)
     elsif (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
       # Handle operation on collections
@@ -1209,6 +1209,9 @@ class EvaluatorImpl
     when URI
       raise ArgumentError.new(_('An URI can only be merged with an URI or String')) unless y.is_a?(String) || y.is_a?(URI)
       x + y
+    when Types::PBinaryType::Binary
+      raise ArgumentError.new(_('Can only append Binary to a Binary')) unless y.is_a?(Types::PBinaryType::Binary)
+      Types::PBinaryType::Binary.from_binary_string(x.binary_buffer + y.binary_buffer)
     else
       concatenate([x], y)
     end

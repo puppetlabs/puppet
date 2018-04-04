@@ -128,6 +128,16 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
     end
 
+    context 'on binary values' do
+      include PuppetSpec::Compiler
+      require 'base64'
+      encoded = Base64.encode64('Hello world').chomp
+      it 'Binary + Binary' do
+        code = 'notice(assert_type(Binary, Binary([72,101,108,108,111,32]) + Binary([119,111,114,108,100])))'
+        expect(eval_and_collect_notices(code)).to eql([encoded])
+      end
+    end
+
     context 'on timespans' do
       include PuppetSpec::Compiler
 
