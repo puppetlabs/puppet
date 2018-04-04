@@ -13,11 +13,6 @@ describe Puppet::Face[:config, '0.0.1'] do
 
   FS = Puppet::FileSystem
 
-  before :each do
-    subject.stubs(:warn_default_section)
-    subject.stubs(:report_section_and_environment)
-  end
-
   it "prints a single setting without the name" do
     Puppet[:trace] = true
 
@@ -61,27 +56,44 @@ trace = true
     expect(render(:print, result)).to eq("file\n")
   end
 
-  it "prints the section and environment, and not a warning,  when a section is given" do
+  it "prints the section and environment, and not a warning, when a section is given and verbose is set" do
     Puppet.settings.parse_config(<<-CONF)
     [user]
     syslogfacility = file
     CONF
 
-    subject.expects(:warn_default_section).never
-    subject.expects(:report_section_and_environment).once
+    #This has to be after the settings above, which resets the value
+    Puppet[:log_level] = 'info'
 
-    result = subject.print("syslogfacility", :section => "user")
-    expect(render(:print, result)).to eq("file\n")
+    Puppet.expects(:warning).never
+    expect {
+      result = subject.print("syslogfacility", :section => "user")
+      expect(render(:print, result)).to eq("file\n")
+    }.to output("\e[1;33mResolving settings from section 'user' in environment 'production'\e[0m\n").to_stderr
   end
 
-  it "prints a warning and the section and environment when no section is given" do
+  it "prints a warning and the section and environment when no section is given and verbose is set" do
+    Puppet[:log_level] = 'info'
     Puppet[:trace] = true
 
-    subject.expects(:warn_default_section).once
-    subject.expects(:report_section_and_environment).once
+    Puppet.expects(:warning).with("No section specified; defaulting to 'main'.\nSet the config section " +
+      "by using the `--section` flag.\nFor example, `puppet config --section user print foo`.\nFor more " +
+      "information, see https://puppet.com/docs/puppet/latest/configuration.html")
+    expect {
+      result = subject.print("trace")
+      expect(render(:print, result)).to eq("true\n")
+    }.to output("\e[1;33mResolving settings from section 'main' in environment 'production'\e[0m\n").to_stderr
+  end
 
-    result = subject.print("trace")
-    expect(render(:print, result)).to eq("true\n")
+  it "does not print a warning or the section and environment when no section is given and verbose is not set" do
+    Puppet[:log_level] = 'notice'
+    Puppet[:trace] = true
+
+    Puppet.expects(:warning).never
+    expect {
+      result = subject.print("trace")
+      expect(render(:print, result)).to eq("true\n")
+    }.to_not output.to_stderr
   end
 
   it "defaults to all when no arguments are given" do
@@ -124,16 +136,20 @@ trace = true
       Puppet::FileSystem.stubs(:touch)
     end
 
-    it "prints the section and environment when no section is given" do
+    it "prints the section and environment when no section is given and verbose is set" do
+      Puppet[:log_level] = 'info'
       Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
-      subject.expects(:report_section_and_environment).once
-      subject.set('foo', 'bar')
+      expect {
+        subject.set('foo', 'bar')
+      }.to output("\e[1;33mResolving settings from section 'main' in environment 'production'\e[0m\n").to_stderr
     end
 
-    it "prints the section and environment when a section is given" do
+    it "prints the section and environment when a section is given and verbose is set" do
+      Puppet[:log_level] = 'info'
       Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
-      subject.expects(:report_section_and_environment).once
-      subject.set('foo', 'bar', {:section => "baz"})
+      expect {
+        subject.set('foo', 'bar', {:section => "baz"})
+      }.to output("\e[1;33mResolving settings from section 'baz' in environment 'production'\e[0m\n").to_stderr
     end
 
     it "writes to the correct puppet config file" do
