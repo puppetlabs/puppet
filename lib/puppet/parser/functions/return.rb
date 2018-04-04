@@ -4,7 +4,8 @@ Puppet::Parser::Functions::newfunction(
   :doc => <<-DOC
 Immediately returns the given optional value from a function, class body or user defined type body.
 If a value is not given, an `undef` value is returned. This function does not return to the immediate caller.
-If called from within a lambda the return will return from the function evaluating the lambda.
+If this function is called from within a lambda, the return action is from the scope of the
+function containing the lambda (top scope), not the function accepting the lambda (local scope).
 
 The signal produced to return a value bubbles up through
 the call stack until reaching a function, class definition or
@@ -62,6 +63,26 @@ class { example: x => [some_value] }
 The code would notice `'bar'` but not `'foo'`
 
 Note that the returned value is ignored if used in a class or user defined type.
+
+**Example:** Using `return` in a lambda
+
+```puppet
+# Concatenate three strings into a single string formatted as a list.
+function getFruit() {
+  with("apples", "oranges", "bananas") |$x, $y, $z| {
+    return("${x}, ${y}, and ${z}")
+  }
+  notice "not reached"
+}
+$fruit = getFruit()
+notice $fruit
+
+# The output contains "apples, oranges, and bananas".
+# "not reached" is not output because the function returns its value within the
+# calling function's scope, which stops processing the calling function before
+# the `notice "not reached"` statement.
+# Using `return()` outside of a calling function results in an error.
+```
 
 * Also see functions `return` and `break`
 * Since 4.8.0
