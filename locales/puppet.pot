@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.0-24-gc33cd64\n"
+"Project-Id-Version: Puppet automation framework 5.5.0-58-g68ecc59\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-03-21 18:31+0000\n"
-"PO-Revision-Date: 2018-03-21 18:31+0000\n"
+"POT-Creation-Date: 2018-04-04 16:16+0000\n"
+"PO-Revision-Date: 2018-04-04 16:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -26,6 +26,14 @@ msgstr ""
 
 #: ../lib/hiera/puppet_function.rb:65
 msgid "See https://docs.puppet.com/puppet/%{minor_version}/reference/deprecated_language.html"
+msgstr ""
+
+#: ../lib/hiera/scope.rb:43 ../lib/puppet/parser/scope.rb:537
+msgid "Variable: %{name}"
+msgstr ""
+
+#: ../lib/hiera/scope.rb:44 ../lib/hiera/scope.rb:46 ../lib/puppet/parser/scope.rb:538 ../lib/puppet/parser/scope.rb:540
+msgid "Undefined variable '%{name}'; %{reason}"
 msgstr ""
 
 #: ../lib/hiera_puppet.rb:14
@@ -578,7 +586,7 @@ msgid "Attempted to pop, but already at root of the context stack."
 msgstr ""
 
 #: ../lib/puppet/context.rb:55
-msgid "no '%{name}' in %{table} at top of %{stack}"
+msgid "Unable to lookup '%{name}'"
 msgstr ""
 
 #: ../lib/puppet/context.rb:80
@@ -2604,7 +2612,7 @@ msgstr ""
 msgid "You cannot save facts to the code store; it is only used for getting facts from a remote device"
 msgstr ""
 
-#: ../lib/puppet/indirector/facts/rest.rb:8 ../lib/puppet/indirector/rest.rb:235
+#: ../lib/puppet/indirector/facts/rest.rb:8 ../lib/puppet/indirector/rest.rb:233
 msgid "PUT does not accept options"
 msgstr ""
 
@@ -2889,7 +2897,7 @@ msgstr ""
 msgid "Error connecting to %{srv_server}:%{srv_port}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/indirector/request.rb:249
+#: ../lib/puppet/indirector/request.rb:245
 msgid "Could not understand URL %{key}: %{detail}"
 msgstr ""
 
@@ -2901,11 +2909,11 @@ msgstr ""
 msgid "Resource instance does not match request key"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:187
+#: ../lib/puppet/indirector/rest.rb:185
 msgid "Find %{uri} resulted in 404 with the message: %{body}"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:220
+#: ../lib/puppet/indirector/rest.rb:218
 msgid "DELETE does not accept options"
 msgstr ""
 
@@ -4684,14 +4692,6 @@ msgstr ""
 
 #: ../lib/puppet/parser/scope.rb:496
 msgid "Scope variable name %{name} is a %{klass}, not a string"
-msgstr ""
-
-#: ../lib/puppet/parser/scope.rb:537
-msgid "Variable: %{name}"
-msgstr ""
-
-#: ../lib/puppet/parser/scope.rb:538 ../lib/puppet/parser/scope.rb:540
-msgid "Undefined variable '%{name}'; %{reason}"
 msgstr ""
 
 #: ../lib/puppet/parser/scope.rb:657
@@ -7612,24 +7612,24 @@ msgstr ""
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1329
+#: ../lib/puppet/settings.rb:1333
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1353
+#: ../lib/puppet/settings.rb:1357
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1363
+#: ../lib/puppet/settings.rb:1367
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1364
+#: ../lib/puppet/settings.rb:1368
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1395
+#: ../lib/puppet/settings.rb:1399
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
