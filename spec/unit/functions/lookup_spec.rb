@@ -1641,6 +1641,7 @@ describe "The lookup function" do
         end
 
         it 'uses the explicitly given merge to override lookup options and to merge all layers' do
+          skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
           expect(lookup('hash_c', 'merge' => 'deep')).to eql(
             {
               'hash_ca' =>
@@ -1658,6 +1659,7 @@ describe "The lookup function" do
         end
 
         it 'backend data sources are propagated to custom backend' do
+          skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
           expect(lookup('datasources')).to eql(['common', 'example.com'])
         end
 
@@ -2035,6 +2037,7 @@ describe "The lookup function" do
         end
 
         it 'uses the explicitly given merge to override lookup options and to merge all layers' do
+          skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
           expect(lookup('hash_c', 'merge' => 'deep')).to eql(
             {
               'hash_ca' =>
@@ -2048,18 +2051,22 @@ describe "The lookup function" do
         end
 
         it 'backend data sources are propagated to custom backend' do
+          skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
           expect(lookup('datasources')).to eql(['common', 'example.com'])
         end
 
         it 'backend specific options are propagated to custom backend' do
+          skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
           expect(lookup('other_option')).to eql('value of other_option')
         end
 
         it 'dotted keys are passed down to custom backend' do
+          skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
           expect(lookup('dotted.key')).to eql('custom backend received request for dotted.key value')
         end
 
         it 'multiple hiera3_backend declarations can be used and are merged into the generated config' do
+          skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
           expect(lookup(['datasources', 'other_option'])).to eql([['common', 'example.com'], 'value of other_option'])
           expect(Hiera::Config.instance_variable_get(:@config)).to eql(
             {
@@ -2146,6 +2153,7 @@ describe "The lookup function" do
         end
 
         it 'calls the backend' do
+          skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
           expect(lookup('hash_c')).to eql(
             { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }})
         end
