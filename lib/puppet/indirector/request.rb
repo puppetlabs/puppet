@@ -197,23 +197,19 @@ class Puppet::Indirector::Request
     end
 
     # ... Fall back onto the default server.
-    begin
-      bound_server = Puppet.lookup(:server)
-    rescue
+     bound_server = Puppet.lookup(:server) do
       if primary_server = Puppet.settings[:server_list][0]
-        bound_server = primary_server[0]
+        primary_server[0]
       else
-        bound_server = Puppet.settings[:server]
+        Puppet.settings[:server]
       end
     end
 
-    begin
-      bound_port = Puppet.lookup(:serverport)
-    rescue
+    bound_port = Puppet.lookup(:serverport) do
       if primary_server = Puppet.settings[:server_list][0]
-        bound_port = primary_server[1]
+        primary_server[1]
       else
-        bound_port = Puppet.settings[:masterport]
+        Puppet.settings[:masterport]
       end
     end
     self.server = default_server || bound_server

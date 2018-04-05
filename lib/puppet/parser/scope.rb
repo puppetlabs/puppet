@@ -875,8 +875,8 @@ class Puppet::Parser::Scope
     return "Scope(#{@resource})" unless @resource.nil?
 
     # For logging of function-scope - it is now showing the file and line.
-    detail = Puppet::Pops::PuppetStack.stacktrace[0]
-    return "Scope()" unless detail.is_a?(Array)
+    detail = Puppet::Pops::PuppetStack.top_of_stack
+    return "Scope()" if detail.empty?
 
     # shorten the path if possible
     path = detail[0]

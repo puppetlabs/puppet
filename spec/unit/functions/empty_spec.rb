@@ -67,11 +67,11 @@ describe 'the empty function' do
   end
 
   context 'for undef it' do
-    it 'returns true and issues deprecation warning' do
+    it 'returns true without deprecation warning' do
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         expect(compile_to_catalog("notify { String(empty(undef)): }")).to have_resource('Notify[true]')
       end
-      expect(warnings).to include(/Calling function empty\(\) with Undef value is deprecated/)
+      expect(warnings).to_not include(/Calling function empty\(\) with Undef value is deprecated/)
     end
   end
 end

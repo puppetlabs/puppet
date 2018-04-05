@@ -290,12 +290,12 @@ module Serialization
     def serialization_issue(issue, options = EMPTY_HASH)
       semantic = @semantic
       if semantic.nil?
-        stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-        if stacktrace.size > 0
-          file, line = stacktrace[0]
-          semantic = Puppet::Pops::SemanticError.new(issue, nil, {:file => file, :line => line})
-        else
+        tos = Puppet::Pops::PuppetStack.top_of_stack
+        if tos.empty?
           semantic = Puppet::Pops::SemanticError.new(issue, nil, EMPTY_HASH)
+        else
+          file, line = stacktrace
+          semantic = Puppet::Pops::SemanticError.new(issue, nil, {:file => file, :line => line})
         end
       end
       optionally_fail(issue,  semantic, options)

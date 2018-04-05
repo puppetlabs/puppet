@@ -9,14 +9,7 @@ Puppet::Functions.create_function(:next) do
   end
 
   def next_impl(value = nil)
-    stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-    if stacktrace.size > 0
-      file, line = stacktrace[0]
-    else
-      file = nil
-      line = nil
-    end
-
+    file, line = Puppet::Pops::PuppetStack.top_of_stack
     exc = Puppet::Pops::Evaluator::Next.new(value, file, line)
     raise exc
   end
