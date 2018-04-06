@@ -526,6 +526,10 @@ module TypeFactory
     @task_t ||= TypeParser.singleton.parse('Task')
   end
 
+  def self.deferred
+    @deferred_t ||= TypeParser.singleton.parse('Deferred')
+  end
+
   # Produces a type for URI[String or Hash]
   # @api public
   #
