@@ -122,6 +122,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           if delim == "'" || delim == "\""
             sc.getch
             argline << sc.scan(/([^\\#{delim}]|(\\.))*/)
+            # Unescape the delimiter so it's actually possible to have a
+            # literal delim inside the string. We only unescape the
+            # delimeter and not every backslash-escaped character so that
+            # things like escaped spaces '\ ' get passed through because
+            # Augeas needs to see them. If we unescaped them, too, users
+            # would be forced to double-escape them
+            argline.last.gsub!(/\\(#{delim})/, '\1')
             sc.getch
           else
             argline << sc.scan(/[^\s]+/)
