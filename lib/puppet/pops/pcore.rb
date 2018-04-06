@@ -35,7 +35,7 @@ module Pcore
     if Puppet[:tasks]
       add_object_type('Task', <<-PUPPET, loader)
         {
-          attributes => {   
+          attributes => {
             # Fully qualified name of the task
             name => { type => Pattern[/\\A[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*\\z/] },
 
@@ -47,7 +47,7 @@ module Pcore
 
             # Puppet Task version
             puppet_task_version => { type => Integer, value => 1 },
-  
+
             # Type, description, and sensitive property of each parameter 
             parameters => {
               type => Optional[Hash[
@@ -69,7 +69,7 @@ module Pcore
                   type => Type]]],
               value => undef
             },
- 
+
             supports_noop => { type => Boolean, value => false },
             input_method => { type => String, value => 'both' },
           }
