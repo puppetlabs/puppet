@@ -117,6 +117,9 @@ describe "the epp function" do
     end
   end
 
+  it "preserves CRLF when reading the template" do
+    expect(eval_template("some text that\r\nis static with CRLF")).to eq("some text that\r\nis static with CRLF")
+  end
 
   # although never a problem with epp
   it "is not interfered with by having a variable named 'string' (#14093)" do
@@ -148,7 +151,7 @@ describe "the epp function" do
   def eval_template_with_args(content, args_hash)
     file_path = tmpdir('epp_spec_content')
     filename = File.join(file_path, "template.epp")
-    File.open(filename, "w+") { |f| f.write(content) }
+    File.open(filename, "wb+") { |f| f.write(content) }
 
     Puppet::Parser::Files.stubs(:find_template).returns(filename)
     epp_function.call(scope, 'template', args_hash)
@@ -157,7 +160,7 @@ describe "the epp function" do
   def eval_template(content)
     file_path = tmpdir('epp_spec_content')
     filename = File.join(file_path, "template.epp")
-    File.open(filename, "w+") { |f| f.write(content) }
+    File.open(filename, "wb+") { |f| f.write(content) }
 
     Puppet::Parser::Files.stubs(:find_template).returns(filename)
     epp_function.call(scope, 'template')
