@@ -28,7 +28,11 @@ module Puppet::Configurer::FactHandler
   end
 
   def facts_for_uploading
-    facts = find_facts
+    encode_facts(find_facts)
+  end
+
+  def encode_facts(facts)
+    #facts = find_facts
 
     # NOTE: :facts specified as parameters are URI encoded here,
     # then  encoded for a second time depending on their length:
