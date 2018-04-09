@@ -136,7 +136,13 @@ describe provider_class do
     it "should handle escaped doublequotes in doublequoted string" do
       @resource[:context] = "/foo/"
       tokens = @provider.parse_commands("set /foo \"''\\\"''\"")
-      expect(tokens).to eq([[ "set", "/foo", "''\\\"''" ]])
+      expect(tokens).to eq([[ "set", "/foo", "''\"''" ]])
+    end
+
+    it "should preserve escaped single quotes in double quoted strings" do
+      @resource[:context] = "/foo/"
+      tokens = @provider.parse_commands("set /foo \"\\'\"")
+      expect(tokens).to eq([[ "set", "/foo", "\\'" ]])
     end
 
     it "should allow escaped spaces and brackets in paths" do
