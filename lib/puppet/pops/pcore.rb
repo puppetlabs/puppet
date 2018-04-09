@@ -101,7 +101,7 @@ module Pcore
         attributes => {
           # Fully qualified name of the function
           name  => { type => Pattern[/\\A[$]?[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*\\z/] },
-          arguments => { type => Array[Any], value => []},
+          arguments => { type => Optional[Array[Any]], value => undef},
         }
       }
     PUPPET
