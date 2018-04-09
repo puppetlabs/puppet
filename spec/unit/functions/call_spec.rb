@@ -73,5 +73,22 @@ describe 'the call method' do
         notify { $a: }
       CODE
     end
+
+    it 'call a deferred value' do
+      expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[a]')
+          $d = Deferred('split', ['a-b-c', '-'])
+          $a = $d.call()
+          notify { $a[0]: }
+        CODE
+    end
+
+    it 'call dig into a variable' do
+      expect(compile_to_catalog(<<-CODE)).to have_resource('Notify[value 3]')
+          $x = { 'a' => [1,2,3] }
+          $d = Deferred('$x', ['a', 2])
+          $a = $d.call()
+          notify { "value $a": }
+        CODE
+    end
   end
 end
