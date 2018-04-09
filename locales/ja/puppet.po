@@ -6,12 +6,12 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.3.3-362-gf61e966\n"
+"Project-Id-Version: Puppet automation framework 5.3.5-413-g6525ac3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-01-26 22:31+0000\n"
-"PO-Revision-Date: 2018-01-26 22:31+0000\n"
-"Last-Translator: Erwin Hom <erwin.hom@puppet.com>, 2018\n"
+"POT-Creation-Date: 2018-04-03 18:07+0000\n"
+"PO-Revision-Date: 2018-04-03 18:07+0000\n"
+"Last-Translator: James Shen <James.Shen@puppet.com>, 2018\n"
 "Language-Team: Japanese (Japan) (https://www.transifex.com/puppet/teams/29089/ja_JP/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -35,7 +35,7 @@ msgstr ""
 msgid ""
 "Could not find data item %{key} in any Hiera data file and no default "
 "supplied"
-msgstr "Hieraデータファイルにデータ項目%{key} が見つかりませんでした。また、デフォルト値も指定されていません。"
+msgstr "Hieraデータファイルにデータ項目%{key}が見つかりませんでした。また、デフォルト値も指定されていません。"
 
 #: ../lib/hiera_puppet.rb:41
 msgid "Please supply a parameter to perform a Hiera lookup"
@@ -122,7 +122,7 @@ msgstr "ロックの取得に失敗しました。"
 #: ../lib/puppet/agent/locker.rb:33
 msgid ""
 "Puppet::Agent::Locker.running? is deprecated as it is inherently unsafe."
-msgstr "Puppet::Agent::Locker.running?は安全ではないため廃止されました。"
+msgstr "Puppet::Agent::Locker.running?は本質的に安全ではないため廃止予定です。"
 
 #. TRANSLATORS 'LockError' should not be translated
 #: ../lib/puppet/agent/locker.rb:35
@@ -130,7 +130,7 @@ msgid ""
 "The only safe way to know if the lock is locked is to try lock and perform "
 "some action and then handle the LockError that may result."
 msgstr ""
-"ロックがロックされていることを安全に確認する唯一の手段とは、ロックとアクションの実行を試し、その結果として生成されるLockErrorに対処することです。"
+"ロックされているかどうかを確認する唯一の安全な方法は、ロックを試みて何らかのアクションを実行し、その結果生じるLockErrorに対処することです。"
 
 #: ../lib/puppet/application.rb:231
 msgid "Unable to find application '%{application_name}'. %{error}"
@@ -249,7 +249,7 @@ msgstr "%{file}を読み込めません。"
 msgid "Exiting"
 msgstr "終了しています。"
 
-#: ../lib/puppet/application/apply.rb:348
+#: ../lib/puppet/application/apply.rb:346
 msgid "Could not deserialize catalog from %{format}: %{detail}"
 msgstr "%{format}からカタログをデシリアライズできませんでした: %{detail}"
 
@@ -257,7 +257,12 @@ msgstr "%{format}からカタログをデシリアライズできませんでし
 msgid "Manage certificates and requests"
 msgstr "証明書とリクエストを管理"
 
-#: ../lib/puppet/application/cert.rb:329
+#: ../lib/puppet/application/cert.rb:272
+msgid ""
+"Refusing to destroy all certs, provide an explicit list of certs to destroy"
+msgstr "すべての証明書の破棄を拒否しています。破棄に対する証明書の明示的リストを提示してください。"
+
+#: ../lib/puppet/application/cert.rb:334
 msgid ""
 "You must specify the hosts to apply to; valid values are an array or the "
 "symbol :all"
@@ -267,23 +272,51 @@ msgstr "適用するホストを指定する必要があります; 有効な値�
 msgid "Display help about resource types"
 msgstr "リソース型に関するヘルプを表示"
 
-#: ../lib/puppet/application/device.rb:66
+#: ../lib/puppet/application/device.rb:75
 msgid "Manage remote network devices"
 msgstr "リモートネットワークデバイスを管理"
 
-#: ../lib/puppet/application/device.rb:203
+#: ../lib/puppet/application/device.rb:211
+msgid "resource command requires target"
+msgstr "リソースコマンドにはターゲットが必要です。"
+
+#: ../lib/puppet/application/device.rb:216
+msgid "missing argument: --target is required when using --apply"
+msgstr "引数がありません: --applyの使用時には--targetが必要です"
+
+#: ../lib/puppet/application/device.rb:220
+msgid "%{file} does not exist, cannot apply"
+msgstr "%{file}が存在せず、適用できません"
+
+#: ../lib/puppet/application/device.rb:238
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr "ターゲットのデバイス/証明書'%{target}'が%{config}で見つかりません。"
 
-#: ../lib/puppet/application/device.rb:205
+#: ../lib/puppet/application/device.rb:240
 msgid "No device found in %{config}"
 msgstr "デバイスが%{config}で見つかりません。"
 
-#: ../lib/puppet/application/device.rb:215
+#: ../lib/puppet/application/device.rb:262
+msgid ""
+"retrieving resource: %{resource} from %{target} at "
+"%{scheme}%{url_host}%{port}%{url_path}"
+msgstr "取得リソース: %{scheme}%{url_host}%{port}%{url_path}で%{target}から%{resource}"
+
+#: ../lib/puppet/application/device.rb:294
 msgid ""
 "starting applying configuration to %{target} at "
 "%{scheme}%{url_host}%{port}%{url_path}"
 msgstr "%{scheme}%{url_host}%{port}%{url_path}で%{target}への設定の適用を開始しています。"
+
+#: ../lib/puppet/application/device.rb:331
+#: ../lib/puppet/application/resource.rb:196
+msgid "You must specify the type to display"
+msgstr "表示するタイプを指定する必要があります。"
+
+#: ../lib/puppet/application/device.rb:332
+#: ../lib/puppet/application/resource.rb:197
+msgid "Could not find type %{type}"
+msgstr "ファイルタイプ%{type}が見つかりませんでした。"
 
 #: ../lib/puppet/application/doc.rb:28
 msgid "Invalid output format %{arg}"
@@ -416,7 +449,7 @@ msgstr "参照するキーが指定されていません。"
 msgid "Unknown rendering format '%{format}'"
 msgstr "未知のレンダリングフォーマット'%{format}'"
 
-#: ../lib/puppet/application/lookup.rb:350 ../lib/puppet/face/epp.rb:493
+#: ../lib/puppet/application/lookup.rb:360 ../lib/puppet/face/epp.rb:493
 msgid "Incorrect formatted data in %{fact_file} given via the --facts flag"
 msgstr "--factsフラグにより%{fact_file}で不適切なフォーマットのデータが指定されています。"
 
@@ -452,7 +485,7 @@ msgid ""
 "release. Please use Puppet Server instead. See http://links.puppet.com"
 "/deprecate-rack-webrick-servers for more information."
 msgstr ""
-"Rack Puppet masterサーバは廃止予定であり、今後のリリースで廃止されます。代わりにPuppet "
+"Rack Puppet master serverは廃止予定であり、今後のリリースで廃止されます。代わりにPuppet "
 "Serverを使用してください。詳細については、http://links.puppet.com/deprecate-rack-webrick-"
 "serversを参照してください。"
 
@@ -462,7 +495,7 @@ msgid ""
 "future release. Please use Puppet Server instead. See "
 "http://links.puppet.com/deprecate-rack-webrick-servers for more information."
 msgstr ""
-"WEBrick Puppet masterサーバは廃止予定であり、今後のリリースで廃止されます。代わりにPuppet "
+"WEBrick Puppet master serverは廃止予定であり、今後のリリースで廃止されます。代わりにPuppet "
 "Serverを使用してください。詳細については、http://links.puppet.com/deprecate-rack-webrick-"
 "serversを参照してください。"
 
@@ -481,14 +514,6 @@ msgstr "resource abstraction layerシェル"
 #: ../lib/puppet/application/resource.rb:140
 msgid "Editing with Yaml output is not supported"
 msgstr "Yamlアウトプットによる編集はサポートされていません。"
-
-#: ../lib/puppet/application/resource.rb:196
-msgid "You must specify the type to display"
-msgstr "表示するタイプを指定する必要があります。"
-
-#: ../lib/puppet/application/resource.rb:197
-msgid "Could not find type %{type}"
-msgstr "ファイルタイプ%{type}が見つかりませんでした。"
 
 #: ../lib/puppet/application/resource.rb:204
 msgid "Invalid parameter setting %{setting}"
@@ -567,7 +592,7 @@ msgid ""
 "environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 "ローカル環境: "
-"'%{local_env}'がサーバ指定のノード環境'%{node_env}'と一致せず、agentを'%{node_env}'に切り替えています。"
+"'%{local_env}'がserver指定のノード環境'%{node_env}'と一致せず、agentを'%{node_env}'に切り替えています。"
 
 #: ../lib/puppet/configurer.rb:292
 msgid "Using configured environment '%{env}'"
@@ -596,7 +621,7 @@ msgid ""
 " '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 "ローカル環境: "
-"'%{local_env}'がサーバ指定の環境'%{catalog_env}'と一致しないため、環境'%{catalog_env}'でagent実行を再開しています。"
+"'%{local_env}'がserver指定の環境'%{catalog_env}'と一致しないため、環境'%{catalog_env}'でagent実行を再開しています。"
 
 #: ../lib/puppet/configurer.rb:352
 msgid "Failed to apply catalog: %{detail}"
@@ -614,13 +639,13 @@ msgstr "最後の実行のローカルレポートを保存できませんでし
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr "%{setting}からコマンドを実行できませんでした: %{detail}"
 
-#: ../lib/puppet/configurer.rb:433
+#: ../lib/puppet/configurer.rb:438
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr "キャッシュからカタログを取得できませんでした: %{detail}"
 
-#: ../lib/puppet/configurer.rb:445
+#: ../lib/puppet/configurer.rb:458
 msgid "Could not retrieve catalog from remote server: %{detail}"
-msgstr "リモートサーバからカタログを取得できませんでした: %{detail}"
+msgstr "リモートserverからカタログを取得できませんでした: %{detail}"
 
 #: ../lib/puppet/configurer/downloader.rb:9
 msgid "Retrieving %{name}"
@@ -639,8 +664,8 @@ msgid "Attempted to pop, but already at root of the context stack."
 msgstr "popを試行していますが、すでにコンテキストスタックのルートです。"
 
 #: ../lib/puppet/context.rb:55
-msgid "no '%{name}' in %{table} at top of %{stack}"
-msgstr "%{stack}の最上位の%{table}に'%{name}'がありません。"
+msgid "Unable to lookup '%{name}'"
+msgstr "'%{name}'を検索できません"
 
 #: ../lib/puppet/context.rb:80
 msgid "no '%{name}' in ignores %{ignores} at top of %{stack}"
@@ -664,7 +689,7 @@ msgstr "ARGV引数が設定されていない限り、再実行できません�
 
 #: ../lib/puppet/daemon.rb:143
 msgid "Daemons must have an agent, server, or both"
-msgstr "デーモンには、引数、サーバ、またはその両方が必要です。"
+msgstr "デーモンには、引数、server、またはその両方が必要です。"
 
 #: ../lib/puppet/defaults.rb:102
 msgid "Cannot disable unrecognized warning types %{invalid}."
@@ -701,11 +726,11 @@ msgstr "認識されていないチェックサムタイプ%{invalid}はサポ�
 
 #: ../lib/puppet/defaults.rb:1464 ../lib/puppet/defaults.rb:1479
 msgid "Attempted to set both server and server_list."
-msgstr "サーバとserver_listの両方を設定しようとしました。"
+msgstr "serverとserver_listの両方を設定しようとしました。"
 
 #: ../lib/puppet/defaults.rb:1465 ../lib/puppet/defaults.rb:1480
 msgid "Server setting will not be used."
-msgstr "サーバの設定は使用されません。"
+msgstr "serverの設定は使用されません。"
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
 #: ../lib/puppet/defaults.rb:1790
@@ -1808,11 +1833,11 @@ msgstr "引数として渡される同じリソースオブジェクト"
 
 #: ../lib/puppet/face/status.rb:7
 msgid "View puppet server status."
-msgstr "Puppetサーバのステータスを閲覧。"
+msgstr "Puppet serverのステータスを閲覧。"
 
 #: ../lib/puppet/face/status.rb:15
 msgid "Check status of puppet master server."
-msgstr "puppet masterサーバのステータスを確認。"
+msgstr "puppet master serverのステータスを確認。"
 
 #. TRANSLATORS the string 'Puppet::Status' is a Puppet language object and
 #. should not be translated
@@ -1910,19 +1935,19 @@ msgstr "ファイルが見つかりません: 無効な相対パス'%{path}'"
 #: ../lib/puppet/file_serving/configuration.rb:108
 msgid ""
 "Error parsing fileserver configuration: %{detail}; using old configuration"
-msgstr "ファイルサーバ設定の解析でエラーが生じました: %{detail}; 古い設定を使用"
+msgstr "ファイルserver設定の解析でエラーが生じました: %{detail}; 古い設定を使用"
 
 #: ../lib/puppet/file_serving/configuration/parser.rb:10
 msgid "File server configuration %{config_file} does not exist"
-msgstr "ファイルサーバ設定%{config_file}が存在しません。"
+msgstr "ファイルserver設定%{config_file}が存在しません。"
 
 #: ../lib/puppet/file_serving/configuration/parser.rb:11
 msgid "Cannot read file server configuration %{config_file}"
-msgstr "ファイルサーバ設定%{config_file}を読み込めません。"
+msgstr "ファイルserver設定%{config_file}を読み込めません。"
 
 #: ../lib/puppet/file_serving/configuration/parser.rb:31
 msgid "Fileserver configuration file does not use '=' as a separator"
-msgstr "ファイルサーバ設定ファイルでセパレータとして'='が使われていません。"
+msgstr "ファイルserver設定ファイルでセパレータとして'='が使われていません。"
 
 #: ../lib/puppet/file_serving/configuration/parser.rb:41
 #: ../lib/puppet/network/auth_config_parser.rb:72
@@ -2151,7 +2176,7 @@ msgstr "OpenSSLに含まれるCAバンドルは有効でないか、最新の状
 
 #: ../lib/puppet/forge/errors.rb:54
 msgid "Unable to connect to the server at %{uri}. Detail: %{detail}."
-msgstr "%{uri}のサーバに接続できません。詳細: %{detail}"
+msgstr "%{uri}のserverに接続できません。詳細: %{detail}"
 
 #: ../lib/puppet/forge/errors.rb:63
 msgid "Could not connect to %{uri}"
@@ -2180,7 +2205,7 @@ msgstr "詳細: %{detail}。"
 
 #: ../lib/puppet/forge/errors.rb:107
 msgid "  The server being queried was %{uri}"
-msgstr "  クエリ対象のサーバは%{uri}です。"
+msgstr "  クエリ対象のserverは%{uri}です。"
 
 #: ../lib/puppet/forge/errors.rb:108
 msgid "  The HTTP response we received was '%{response}'"
@@ -2456,7 +2481,7 @@ msgstr "%{request}のカタログが、不適切なノードのfact定義とと�
 
 #: ../lib/puppet/indirector/catalog/compiler.rb:70
 msgid "Setup server facts for compiling"
-msgstr "コンパイルのためのサーバfactsをセットアップ。"
+msgstr "コンパイルのためのserver factsをセットアップ。"
 
 #: ../lib/puppet/indirector/catalog/compiler.rb:94
 msgid "Unsupported facts format"
@@ -2509,7 +2534,7 @@ msgstr "Environment%{environment}の%{node}の静的カタログを%%{seconds}�
 
 #: ../lib/puppet/indirector/catalog/compiler.rb:285
 msgid "Compiled static catalog for %{node} in environment %{environment}"
-msgstr "Environment%{environment}で%{node}の静的なカタログをコンパイルしました。"
+msgstr "Environment%{environment}で%{node}の静的カタログをコンパイルしました。"
 
 #: ../lib/puppet/indirector/catalog/compiler.rb:287
 msgid "Compiled static catalog for %{node} in %%{seconds} seconds"
@@ -2517,7 +2542,7 @@ msgstr "%{node}の静的カタログを%%{seconds}秒でコンパイルしまし
 
 #: ../lib/puppet/indirector/catalog/compiler.rb:288
 msgid "Compiled static catalog for %{node}"
-msgstr "ノード%{node}の静的なカタログをコンパイルしました。"
+msgstr "ノード%{node}の静的カタログをコンパイルしました。"
 
 #: ../lib/puppet/indirector/catalog/compiler.rb:293
 msgid ""
@@ -2550,7 +2575,7 @@ msgstr ""
 msgid ""
 "Inlined resource metadata into static catalog for %{node} in environment "
 "%{environment}"
-msgstr "Environment%{environment}で%{node}の静的なカタログにリソースメタデータを追加しました。"
+msgstr "Environment%{environment}で%{node}の静的カタログにリソースメタデータをインライン展開しました。"
 
 #. TRANSLATORS Inlined refers to adding additional metadata
 #: ../lib/puppet/indirector/catalog/compiler.rb:324
@@ -2814,7 +2839,7 @@ msgid ""
 "supported. Remove these directives and use the 'auth.conf' file instead for "
 "access control."
 msgstr ""
-"ファイルサーバマウント'%{mount_name}'に関する%{desc}の%{method}リクエストを拒否しています。'fileserver.conf'マウントポイントでのauthディレクティブの使用は、現在ではサポートされていません。ディレクティブを削除し、代わりに'auth.conf'ファイルをアクセス管理に使用してください。"
+"ファイルserverマウント'%{mount_name}'に関する%{desc}の%{method}リクエストを拒否しています。'fileserver.conf'マウントポイントでのauthディレクティブの使用は、現在ではサポートされていません。ディレクティブを削除し、代わりに'auth.conf'ファイルをアクセス管理に使用してください。"
 
 #: ../lib/puppet/indirector/file_server.rb:47
 msgid ""
@@ -2861,7 +2886,7 @@ msgstr "無効なターミナス名%{terminus_class}"
 
 #: ../lib/puppet/indirector/indirection.rb:157
 msgid "Could not find terminus %{terminus_class} for indirection %{name}"
-msgstr "間接参照%{name}のターミナス%{terminus_class} が見つかりませんでした。"
+msgstr "間接参照%{name}のターミナス%{terminus_class}が見つかりませんでした。"
 
 #: ../lib/puppet/indirector/indirection.rb:172
 msgid "Expiring the %{cache} cache of %{instance}"
@@ -3051,17 +3076,17 @@ msgid ""
 "Server version %{version} does not accept reports in '%{format}', use "
 "`preferred_serialization_format=pson`"
 msgstr ""
-"サーババージョン%{version}は'%{format}'のレポートを受け付けません。`preferred_serialization_format=pson`を使用してください。"
+"serverバージョン%{version}は'%{format}'のレポートを受け付けません。`preferred_serialization_format=pson`を使用してください。"
 
-#: ../lib/puppet/indirector/request.rb:96
+#: ../lib/puppet/indirector/request.rb:100
 msgid "Could not find indirection '%{indirection}'"
 msgstr "間接参照'%{indirection}'が見つかりませんでした。"
 
-#: ../lib/puppet/indirector/request.rb:135
+#: ../lib/puppet/indirector/request.rb:139
 msgid "HTTP REST queries cannot handle values of type '%{klass}'"
 msgstr "HTTP RESTクエリでは、タイプ'%{klass}'の値は処理できません。"
 
-#: ../lib/puppet/indirector/request.rb:190
+#: ../lib/puppet/indirector/request.rb:194
 msgid "Error connecting to %{srv_server}:%{srv_port}: %{message}"
 msgstr "%{srv_server}への接続でエラーが生じました:%{srv_port}: %{message}"
 
@@ -3077,15 +3102,15 @@ msgstr "タイプ%{request_type}が見つかりませんでした。"
 msgid "Resource instance does not match request key"
 msgstr "リソースインスタンスがリクエストキーと一致しません。"
 
-#: ../lib/puppet/indirector/rest.rb:187
+#: ../lib/puppet/indirector/rest.rb:185
 msgid "Find %{uri} resulted in 404 with the message: %{body}"
 msgstr "検索%{uri}が404エラーになりました。メッセージ: %{body}"
 
-#: ../lib/puppet/indirector/rest.rb:220
+#: ../lib/puppet/indirector/rest.rb:218
 msgid "DELETE does not accept options"
 msgstr "DELETEではオプションは認められていません。"
 
-#: ../lib/puppet/indirector/rest.rb:235
+#: ../lib/puppet/indirector/rest.rb:233
 msgid "PUT does not accept options"
 msgstr "PUTではオプションは認められていません。"
 
@@ -3272,7 +3297,7 @@ msgstr "未知のオプションが渡されました: %{unknown_list}"
 
 #: ../lib/puppet/interface/action.rb:375
 msgid "The following options are required: %{missing_list}"
-msgstr "以下のオプションが必要です: %{missing_list}"
+msgstr "次のオプションが必要です: %{missing_list}"
 
 #. TRANSLATORS 'when_rendering' is a method name and should not be translated
 #: ../lib/puppet/interface/action_builder.rb:53
@@ -3297,7 +3322,7 @@ msgstr "%{value}は有効なレンダリング形式ではありません: %{for
 #. and 'block' is a Ruby code block
 #: ../lib/puppet/interface/action_builder.rb:155
 msgid "actions need to know what to do when_invoked; please add the block"
-msgstr "when_invokedのときに実行するアクションを把握しておく必要があります。ブロックを追加してください。"
+msgstr "when_invokedに実行するアクションを把握しておく必要があります。ブロックを追加してください。"
 
 #: ../lib/puppet/interface/action_manager.rb:20
 msgid "Redefining action %{name} for %{self}"
@@ -3375,7 +3400,7 @@ msgstr "%{option}: ロングオプションには2つのダッシュ(--)が必�
 
 #: ../lib/puppet/interface/option.rb:36
 msgid "%{option}: already defined in puppet"
-msgstr "%{option}: はすでにpuppetで定義されています。"
+msgstr "%{option}: すでにpuppetで定義されています。"
 
 #: ../lib/puppet/interface/option.rb:39
 msgid "%{option}: duplicates existing alias %{duplicate} in %{parent}"
@@ -3470,7 +3495,7 @@ msgstr "%{option}には、すでにデフォルト値があります。"
 #. TRANSLATORS 'default_to' is a method name and should not be translated
 #: ../lib/puppet/interface/option_builder.rb:101
 msgid "%{option} default_to block should not take any arguments"
-msgstr "%{option} default_to blockは引数を取ってはなりません。"
+msgstr "%{option} default_to blockは引数を取るべきではありません。"
 
 #: ../lib/puppet/interface/option_manager.rb:64
 msgid ""
@@ -3660,7 +3685,7 @@ msgstr "モジュール'%{module_name}' (%{version})をインストールでき�
 
 #: ../lib/puppet/module_tool/errors/installer.rb:17
 msgid "  Module '%{module_name}' (%{installed_version}) is already installed"
-msgstr "  モジュール'%{module_name}' (%{installed_version})はすでにインストールされています。"
+msgstr "モジュール'%{module_name}' (%{installed_version})はすでにインストールされています。"
 
 #: ../lib/puppet/module_tool/errors/installer.rb:18
 msgid "    Installed module has had changes made locally"
@@ -3704,7 +3729,7 @@ msgstr "'%{module_name}' (%{version})がリクエストされました; パス%{
 
 #: ../lib/puppet/module_tool/errors/installer.rb:55
 msgid "  Path '%{directory}' exists but is not a directory."
-msgstr "  パス'%{directory}'は存在しますが、ディレクトリではありません。"
+msgstr "パス'%{directory}'は存在しますが、ディレクトリではありません。"
 
 #. TRANSLATORS "mkdir -p '%{directory}'" is a command line example and should
 #. not be translated
@@ -4333,21 +4358,21 @@ msgstr "アプリケーション%{app}が複数のノードをコンポーネン
 msgid "Unknown content encoding - %{encoding}"
 msgstr "不明なコンテンツエンコーディング - %{encoding}"
 
-#: ../lib/puppet/network/http/connection.rb:55
+#: ../lib/puppet/network/http/connection.rb:56
 msgid "Unrecognized option(s): %{opts}"
 msgstr "認識されていないオプション: %{opts}"
 
-#: ../lib/puppet/network/http/connection.rb:203
+#: ../lib/puppet/network/http/connection.rb:204
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr "%{host}のHTTPリダイレクションが多すぎます:%{port}"
 
 #. TRANSLATORS: Used in the phrase:
 #. "Received a response from the remote server."
-#: ../lib/puppet/network/http/connection.rb:234
+#: ../lib/puppet/network/http/connection.rb:235
 msgid "the remote server"
-msgstr "リモートサーバー"
+msgstr "リモートserver"
 
-#: ../lib/puppet/network/http/connection.rb:238
+#: ../lib/puppet/network/http/connection.rb:239
 msgid ""
 "Received a %{status_code} response from %{server_hostname}, but the Retry-"
 "After header value of \"%{retry_after}\" could not be converted to an "
@@ -4356,26 +4381,30 @@ msgstr ""
 "%{server_hostname}から%{status_code}応答を受信しましたが、\"%{retry_after}\"のRetry-"
 "Afterヘッダ値を整数またはRFC 2822日付に変換できませんでした。"
 
-#: ../lib/puppet/network/http/connection.rb:249
+#: ../lib/puppet/network/http/connection.rb:250
 msgid ""
 "Received a %{status_code} response from %{server_hostname}. Sleeping for "
 "%{retry_sleep} seconds before retrying the request."
 msgstr ""
 "%{server_hostname}から%{status_code}応答を受信しました。リクエストを再試行する前に%{retry_sleep}秒間スリープ中です。"
 
-#: ../lib/puppet/network/http/connection.rb:320
+#: ../lib/puppet/network/http/connection.rb:306
+msgid "request %{uri} interrupted after %{elapsed} seconds"
+msgstr "%{elapsed}秒後に中断されたリクエスト%{uri}"
+
+#: ../lib/puppet/network/http/connection.rb:328
 msgid "expected one of %{certnames}"
 msgstr "想定される%{certnames}の1つ"
 
-#: ../lib/puppet/network/http/connection.rb:322
+#: ../lib/puppet/network/http/connection.rb:330
 msgid "expected %{certname}"
 msgstr "想定される%{certname}"
 
-#: ../lib/puppet/network/http/connection.rb:325
+#: ../lib/puppet/network/http/connection.rb:333
 msgid ""
 "Server hostname '%{host}' did not match server certificate; "
 "%{expected_certnames}"
-msgstr "サーバーホスト名'%{host}'がサーバー証明書; %{expected_certnames}と一致しませんでした"
+msgstr "serverホスト名'%{host}'がserver証明書; %{expected_certnames}と一致しませんでした"
 
 #: ../lib/puppet/network/http/error.rb:23
 msgid "Not Acceptable: %{message}"
@@ -4403,7 +4432,7 @@ msgstr "サポートされていないメディアタイプ: %{message}"
 
 #: ../lib/puppet/network/http/error.rb:66
 msgid "Server Error: %{message}"
-msgstr "サーバエラー: %{message}"
+msgstr "serverエラー: %{message}"
 
 #: ../lib/puppet/network/http/handler.rb:23
 msgid "Given multiple routes with identical path regexes: %{regexes}"
@@ -4427,13 +4456,13 @@ msgstr "%{site}の接続終了に失敗しました: %{detail}"
 
 #: ../lib/puppet/network/http/rack.rb:26
 msgid "Internal Server Error: \"%{message}\""
-msgstr "内部サーバエラー: \"%{message}\""
+msgstr "内部serverエラー: \"%{message}\""
 
 #: ../lib/puppet/network/http/rack.rb:28
 msgid ""
 "Puppet Server (Rack): Internal Server Error: Unhandled Exception: "
 "\"%{message}\""
-msgstr "Puppetサーバ(ラック): 内部サーバエラー: 未処理の例外: \"%{message}\""
+msgstr "Puppet server (ラック): 内部serverエラー: 未処理の例外: \"%{message}\""
 
 #: ../lib/puppet/network/http/request.rb:14
 msgid "Unknown arguments: %{args}"
@@ -4451,7 +4480,7 @@ msgstr "要求されたAcceptヘッダが見つかりません。"
 
 #: ../lib/puppet/network/http/webrick.rb:22
 msgid "WEBrick server is already listening"
-msgstr "WEBrickサーバはすでにリッスンしています。"
+msgstr "WEBrick serverはすでにリッスンしています。"
 
 #: ../lib/puppet/network/http/webrick.rb:28
 msgid "Client did not send data within %{timeout} seconds of connecting"
@@ -4459,7 +4488,7 @@ msgstr "クライアントが接続後%{timeout}秒以内にデータを送信�
 
 #: ../lib/puppet/network/http/webrick.rb:38
 msgid "WEBrick server is not listening"
-msgstr "WEBrickサーバはリッスンしていません。"
+msgstr "WEBrick serverはリッスンしていません。"
 
 #: ../lib/puppet/network/http/webrick.rb:98
 msgid ""
@@ -4473,7 +4502,7 @@ msgstr "CA証明書が見つかりませんでした。"
 
 #: ../lib/puppet/network/http/webrick/rest.rb:16
 msgid "server is required"
-msgstr "サーバーが必要です。"
+msgstr "serverが必要です。"
 
 #: ../lib/puppet/network/rights.rb:58
 msgid "Forbidden request: %{msg}"
@@ -4511,26 +4540,26 @@ msgstr "アンリッスンできません -- 現在リッスンしていませ�
 msgid "No name provided in serialized data"
 msgstr "シリアライズされたデータで名前が提供されていません。"
 
-#: ../lib/puppet/node.rb:100
+#: ../lib/puppet/node.rb:101
 msgid "Node names cannot be nil"
 msgstr "ノード名は空にできません。"
 
-#: ../lib/puppet/node.rb:136
+#: ../lib/puppet/node.rb:137
 msgid "Could not retrieve facts for %{name}: %{detail}"
 msgstr "%{name}のfactsを取得できませんでした: %{detail}"
 
-#: ../lib/puppet/node.rb:154
+#: ../lib/puppet/node.rb:155
 msgid ""
 "The node parameter '%{param_name}' for node '%{node_name}' was already set "
 "to '%{value}'. It could not be set to '%{desired_value}'"
 msgstr ""
 "ノード'%{node_name}'のノードパラメータ'%{param_name}'は、すでに'%{value}'に設定されています。'%{desired_value}'に設定できませんでした。"
 
-#: ../lib/puppet/node.rb:193
+#: ../lib/puppet/node.rb:194
 msgid "Host is missing hostname and/or domain: %{name}"
 msgstr "ホストがホスト名またはドメインを見つけられません: %{name}"
 
-#: ../lib/puppet/node.rb:225
+#: ../lib/puppet/node.rb:226
 msgid "Trusted node data modified for node %{name}"
 msgstr "ノード%{name}の信頼できるノードデータが修正されました。"
 
@@ -5146,15 +5175,14 @@ msgid ""
 "Scope#find_resource_type() is no longer supported, use "
 "Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
-"Scope#find_resource_type()のサポートは終了しました。代わりにPuppet::Pops::Evaluator::Runtime3ResourceSupporを使用してください。"
+"Scope#find_resource_type()のサポートは終了しました。代わりにPuppet::Pops::Evaluator::Runtime3ResourceSupportを使用してください。"
 
 #: ../lib/puppet/parser/scope.rb:1003
 msgid ""
 "Scope#find_builtin_resource_type() is no longer supported, use "
 "Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
 msgstr ""
-"Scope#find_builtin_resource_type()のサポートは終了しました。代わりにPuppet::Pops::Evaluator::Runtime3ResourceSupport"
-" insteadを使用してください。"
+"Scope#find_builtin_resource_type()のサポートは終了しました。代わりにPuppet::Pops::Evaluator::Runtime3ResourceSupportを使用してください。"
 
 #: ../lib/puppet/parser/scope.rb:1008
 msgid ""
@@ -5225,7 +5253,7 @@ msgstr "%{expected}が要求されている場合は、%{key}を使用できま�
 #. translated
 #: ../lib/puppet/pops/evaluator/collector_transformer.rb:14
 msgid "Expected CollectExpression"
-msgstr "CollectExpressionを想定しています"
+msgstr "CollectExpressionを想定しています。"
 
 #: ../lib/puppet/pops/evaluator/collector_transformer.rb:105
 msgid "Cannot transform a number to a tag"
@@ -5358,7 +5386,7 @@ msgstr "配列またはハッシュからのみ削除できます。"
 msgid ""
 "Internal Error: Configuration of runtime error handling wrong: should have "
 "raised exception"
-msgstr "内部エラー: ランタイムエラー処理の構成が誤っています:例外を発生させる必要があります。"
+msgstr "内部エラー: ランタイムエラー処理の構成が誤っています。例外を発生させる必要があります。"
 
 #: ../lib/puppet/pops/evaluator/runtime3_converter.rb:102
 msgid "Use of an Iterator is not supported here"
@@ -6560,7 +6588,7 @@ msgid ""
 "class. Got %{strategy_class}"
 msgstr ""
 "MergeStrategies.add_strategy "
-"'strategy_class'は'MergeStrategy'でなくてはなりません。%{strategy_class}を取得しました。"
+"'strategy_class'は'MergeStrategy'クラスでなくてはなりません。%{strategy_class}を取得しました。"
 
 #: ../lib/puppet/pops/migration/migration_checker.rb:21
 #: ../lib/puppet/pops/migration/migration_checker.rb:26
@@ -6795,7 +6823,7 @@ msgstr "%{member}が最後の%{label}をオーバーライドしようとしま�
 #: ../lib/puppet/pops/types/p_object_type.rb:160
 msgid ""
 "%{member} attempts to override %{label} without having override => true"
-msgstr "%{member}がoverride -> trueの設定なしで%{label}をオーバーライドしようとしました。"
+msgstr "%{member}がoverride => trueの設定なしで%{label}をオーバーライドしようとしました。"
 
 #: ../lib/puppet/pops/types/p_object_type.rb:163
 msgid ""
@@ -6980,7 +7008,7 @@ msgid ""
 " compare values %{should} and %{is}"
 msgstr ""
 "タイプ: %{type} / プロパティ: "
-"%{name}でinsync_values?を使用して値%{should}および%{is}を比較するときに、不明の不具合が生じました。  "
+"%{name}でinsync_values?を使用して値%{should}および%{is}を比較するときに、不明の不具合が生じました。"
 
 #: ../lib/puppet/property.rb:495
 msgid "Could not set '%{value}' on %{class_name}: %{detail}"
@@ -7894,7 +7922,7 @@ msgstr ""
 
 #: ../lib/puppet/provider/parsedfile.rb:280
 msgid "Prefetching %{target} for provider %{name} returned nil"
-msgstr "プロバイダ%{name}の%{target}プリフェッチがnullを返しました。"
+msgstr "プロバイダ%{name}のprefetch %{target}がnilを返しました。"
 
 #: ../lib/puppet/provider/parsedfile.rb:353
 msgid "Parsed Providers must define a default target"
@@ -7902,7 +7930,7 @@ msgstr "Parsed Providersはデフォルトターゲットを定義する必要�
 
 #: ../lib/puppet/provider/parsedfile.rb:442
 msgid "Somehow got told to prefetch with no resource set"
-msgstr "リソースセットなしでプリフェッチするよう指示されました。"
+msgstr "リソースセットなしでprefetchするよう指示されました。"
 
 #: ../lib/puppet/provider/selmodule/semodule.rb:136
 msgid ""
@@ -8125,7 +8153,7 @@ msgid ""
 "Invalid JSON from PuppetDB when looking up %{capability}\n"
 "%{detail}"
 msgstr ""
-"%{capability}の検索中、PuppetDBから無効なJSONが返されました\n"
+"%{capability}の検索中にPuppetDBから無効なJSONが返されました\n"
 "%{detail}"
 
 #: ../lib/puppet/resource/catalog.rb:104
@@ -8355,7 +8383,7 @@ msgstr "前回コンパイル時にこのオブジェクトが見つからなか
 
 #: ../lib/puppet/settings.rb:259
 msgid "Attempting to initialize global default settings more than once!"
-msgstr "グローバルデフォルト設定を1回以上初期化しようとしています。"
+msgstr "グローバルデフォルト設定を複数回初期化しようとしています。"
 
 #: ../lib/puppet/settings.rb:689
 msgid "Invalid setting type '%{type}'"
@@ -8600,7 +8628,7 @@ msgstr "%{class_name}は'generate'をオーバーライドしていません。"
 
 #: ../lib/puppet/ssl/base.rb:68
 msgid "Object must be an instance of %{class_name}, %{actual_class} given"
-msgstr "オブジェクトは%{class_name}のインスタンスでなくてはなりませんが、%{actual_class}が与えられました。"
+msgstr "オブジェクトは%{class_name}のインスタンスでなくてはなりません。%{actual_class}が与えられました。"
 
 #: ../lib/puppet/ssl/base.rb:72
 msgid "Name must be supplied if it cannot be determined from the instance"
@@ -8797,7 +8825,7 @@ msgstr "%{name}の新規SSL証明書リクエストを作成しています。"
 msgid ""
 "CSR sign verification failed; you need to clean the certificate request for "
 "%{name} on the server"
-msgstr "CSR署名確認に失敗しました; サーバ上の%{name}の証明書リクエストを削除する必要があります。"
+msgstr "CSR署名確認に失敗しました; server上の%{name}の証明書リクエストを削除する必要があります。"
 
 #: ../lib/puppet/ssl/certificate_request.rb:106
 msgid "Certificate Request fingerprint (%{digest}): %{hex_digest}"
@@ -9029,7 +9057,7 @@ msgstr "Base64構文チェッカー: 無効なBase64文字列は解析できま�
 msgid ""
 "Base64 syntax checker: Cannot parse invalid Base64 string - contains letters"
 " outside strict base 64 range (or whitespace)"
-msgstr "Base64構文チェッカー: 無効なBase64文字列は解析できます。厳密なbase 64範囲(または空白)外の文字が含まれています。"
+msgstr "Base64構文チェッカー: 無効なBase64文字列は解析できません。厳密なbase 64範囲(または空白)外の文字が含まれています。"
 
 #: ../lib/puppet/syntax_checkers/json.rb:17
 msgid "Json syntax checker: the text to check must be a String."
@@ -9135,7 +9163,7 @@ msgstr "%{target}の%{callback}のスケジュールを設定しています。"
 #: ../lib/puppet/transaction/event_manager.rb:150
 msgid "Triggered '%{callback}' from %{count} event"
 msgid_plural "Triggered '%{callback}' from %{count} events"
-msgstr[0] "%{count}イベントから'%{callback}'を開始しました。"
+msgstr[0] "%{count}イベントから '%{callback}'を開始しました。"
 
 #: ../lib/puppet/transaction/event_manager.rb:154
 msgid "Failed to call %{callback}: %{detail}"
@@ -9444,7 +9472,7 @@ msgstr ""
 "ignoreを使用してください。"
 
 #. TRANSLATORS "stat" is a program name and should not be translated
-#: ../lib/puppet/type/file.rb:837 ../lib/puppet/type/tidy.rb:332
+#: ../lib/puppet/type/file.rb:837 ../lib/puppet/type/tidy.rb:339
 msgid "Could not stat; permission denied"
 msgstr "statできませんでした; 許可が拒否されました。"
 
@@ -9729,11 +9757,11 @@ msgid "Invalid tidy size %{age}"
 msgstr "無効なtidyサイズ%{age}"
 
 #. TRANSLATORS "Tidy" is a program name and should not be translated
-#: ../lib/puppet/type/tidy.rb:264
+#: ../lib/puppet/type/tidy.rb:271
 msgid "Tidying %{count} files"
 msgstr "%{count}ファイルをTidyしています。"
 
-#: ../lib/puppet/type/tidy.rb:328
+#: ../lib/puppet/type/tidy.rb:335
 msgid "File does not exist"
 msgstr "ファイルが存在しません。"
 
@@ -9966,7 +9994,7 @@ msgstr "~文字を含むPATHを展開できませんでした; PATH要素'%{dir}
 
 #: ../lib/puppet/util.rb:310
 msgid "unknown platform %{platform} in absolute_path"
-msgstr "absolute_pathのプラットフォーム%{platform} が不明です。"
+msgstr "absolute_pathのプラットフォーム%{platform}が不明です。"
 
 #: ../lib/puppet/util.rb:344
 msgid "Failed to convert '%{path}' to URI: %{detail}"
@@ -10394,7 +10422,7 @@ msgstr "%{path}のcrontabを削除できませんでした: %{detail}"
 msgid "Could not write crontab for %{path}: %{detail}"
 msgstr "%{path}のcrontabを書き込めませんでした: %{detail}"
 
-#: ../lib/puppet/util/http_proxy.rb:203
+#: ../lib/puppet/util/http_proxy.rb:205
 msgid "Too many HTTP redirections for %{uri}"
 msgstr "%{uri}のHTTPリダイレクションが多すぎます。"
 
@@ -10537,7 +10565,7 @@ msgstr "(ファイルと行を使用できません)"
 
 #: ../lib/puppet/util/logging.rb:281
 msgid "(location: %{location})"
-msgstr "(場所: %{location})"
+msgstr "(ロケーション: %{location})"
 
 #: ../lib/puppet/util/methodhelper.rb:16
 msgid "Invalid parameter %{parameter} to object class %{class_name}"
@@ -10673,41 +10701,36 @@ msgstr "フィーチャー%{name}を作成できませんでした: %{detail}"
 msgid "RDOC SUPPORT FOR MANIFEST HAS BEEN REMOVED - See PUP-3638"
 msgstr "マニフェストのRDOCサポートは削除されました - PUP-3638を参照してください。"
 
-#: ../lib/puppet/util/reference.rb:16
-msgid "*This page autogenerated on %{current_time}*\n"
-msgstr "*このページは%{current_time}で自動作成されました。*\n"
-
-#: ../lib/puppet/util/reference.rb:34
+#: ../lib/puppet/util/reference.rb:30
 msgid "Could not find section %{name}"
 msgstr "セクション%{name}が見つかりませんでした。"
 
-#: ../lib/puppet/util/reference.rb:40
+#: ../lib/puppet/util/reference.rb:36
 msgid "creating pdf"
 msgstr "PDFを作成しています。"
 
-#: ../lib/puppet/util/reference.rb:42
+#: ../lib/puppet/util/reference.rb:38
 msgid "Could not find rst2latex"
 msgstr "rst2latexが見つかりませんでした。"
 
-#: ../lib/puppet/util/reference.rb:52
+#: ../lib/puppet/util/reference.rb:48
 msgid "rst2latex failed"
 msgstr "rst2latexに失敗しました。"
 
-#: ../lib/puppet/util/reference.rb:92
+#: ../lib/puppet/util/reference.rb:88
 msgid "%{name} Reference"
 msgstr "%{name}リファレンス"
 
-#. TRANSLATORS message accompanied by date of generation
-#: ../lib/puppet/util/reference.rb:115
+#: ../lib/puppet/util/reference.rb:110
 msgid ""
 "\n"
 "\n"
-"**This page is autogenerated; any changes will get overwritten** *(last generated on %{current_time})*\n"
+"**This page is autogenerated; any changes will get overwritten**\n"
 "\n"
 msgstr ""
 "\n"
 "\n"
-"**このページは自動作成されています。変更を加えると上書きされます。** *(最終作成時%{current_time})*\n"
+"**このページは自動作成されています; 変更を加えると上書きされます**\n"
 "\n"
 
 #: ../lib/puppet/util/resource_template.rb:47
@@ -10851,41 +10874,41 @@ msgstr "有効なSID::Principalを使用する必要があります。"
 msgid "Value must be in DOMAIN\\user style syntax"
 msgstr "値はDOMAIN\\user形式の構文にする必要があります。"
 
-#: ../lib/puppet/util/windows/adsi.rb:156
+#: ../lib/puppet/util/windows/adsi.rb:158
 msgid "Could not resolve name: %{name}"
 msgstr "名前: %{name}を解決できませんでした。"
 
-#: ../lib/puppet/util/windows/adsi.rb:214
+#: ../lib/puppet/util/windows/adsi.rb:216
 msgid ""
 "Puppet is not able to create/delete domain users with the user resource."
 msgstr "Puppetはユーザリソースを持つドメインユーザを作成/削除できません。 "
 
-#: ../lib/puppet/util/windows/adsi.rb:219
+#: ../lib/puppet/util/windows/adsi.rb:221
 msgid "User update failed: %{e}"
 msgstr "ユーザ更新に失敗しました: %{e}"
 
-#: ../lib/puppet/util/windows/adsi.rb:314
+#: ../lib/puppet/util/windows/adsi.rb:316
 msgid "Cannot create user if group '%{name}' exists."
 msgstr "グループ'%{name}'が存在する場合はユーザを作成できません。"
 
-#: ../lib/puppet/util/windows/adsi.rb:328
+#: ../lib/puppet/util/windows/adsi.rb:330
 msgid "Failed to get user name"
 msgstr "ユーザ名の取得に失敗しました。"
 
-#: ../lib/puppet/util/windows/adsi.rb:406
+#: ../lib/puppet/util/windows/adsi.rb:408
 msgid "Cannot delete user profile for '%{sid}' prior to Vista SP1"
 msgstr "Vista SP1以前の'%{sid}'のユーザプロファイルは削除できません。"
 
-#: ../lib/puppet/util/windows/adsi.rb:444
+#: ../lib/puppet/util/windows/adsi.rb:446
 msgid ""
 "Puppet is not able to create/delete domain groups with the group resource."
 msgstr "Puppetはグループリソースを持つドメイングループを作成/削除できません。 "
 
-#: ../lib/puppet/util/windows/adsi.rb:449
+#: ../lib/puppet/util/windows/adsi.rb:451
 msgid "Group update failed: %{error}"
 msgstr "グループ更新に失敗しました: %{error}"
 
-#: ../lib/puppet/util/windows/adsi.rb:505
+#: ../lib/puppet/util/windows/adsi.rb:502
 msgid "Cannot create group if user '%{name}' exists."
 msgstr "ユーザ'%{name}'が存在する場合はグループを作成できません。"
 
@@ -10950,23 +10973,23 @@ msgstr "out_bufferが必要です。"
 msgid "Failed to call GetLongPathName"
 msgstr "GetLongPathNameのコールに失敗しました。"
 
-#: ../lib/puppet/util/windows/principal.rb:67
-#: ../lib/puppet/util/windows/principal.rb:74
-msgid "Failed to call LookupAccountNameW"
-msgstr "LookupAccountNameWのコールに失敗しました。"
+#: ../lib/puppet/util/windows/principal.rb:68
+#: ../lib/puppet/util/windows/principal.rb:75
+msgid "Failed to call LookupAccountNameW with account: %{account_name}"
+msgstr "アカウントが%{account_name}であるLookupAccountNameWのコールに失敗しました。"
 
 #. TRANSLATORS `lookup_account_sid` is a variable name and should not be
 #. translated
-#: ../lib/puppet/util/windows/principal.rb:97
+#: ../lib/puppet/util/windows/principal.rb:98
 msgid ""
 "Byte array for lookup_account_sid must not be nil and must be at least 1 "
 "byte long"
 msgstr "lookup_account_sidのバイト配列は空にする必要があり、1バイト以上の長さでなければなりません。 "
 
-#: ../lib/puppet/util/windows/principal.rb:119
-#: ../lib/puppet/util/windows/principal.rb:126
-msgid "Failed to call LookupAccountSidW"
-msgstr "LookupAccountSidWのコールに失敗しました。"
+#: ../lib/puppet/util/windows/principal.rb:120
+#: ../lib/puppet/util/windows/principal.rb:127
+msgid "Failed to call LookupAccountSidW with bytes: %{sid_bytes}"
+msgstr "バイトが%{sid_bytes}であるLookupAccountSidWのコールに失敗しました。"
 
 #: ../lib/puppet/util/windows/process.rb:24
 msgid "Failed to get child process exit code"
@@ -11047,7 +11070,7 @@ msgstr "ボリューム情報の取得に失敗しました。"
 
 #: ../lib/puppet/util/windows/security.rb:383
 #: ../lib/puppet/util/windows/security.rb:400
-#: ../lib/puppet/util/windows/sid.rb:127 ../lib/puppet/util/windows/sid.rb:189
+#: ../lib/puppet/util/windows/sid.rb:156 ../lib/puppet/util/windows/sid.rb:218
 #: ../lib/puppet/util/windows/user.rb:45
 msgid "Invalid SID"
 msgstr "無効なSID"
@@ -11090,19 +11113,19 @@ msgstr "ACLの初期化に失敗しました。"
 msgid "Failed to set security information"
 msgstr "セキュリティ情報の設定に失敗しました。"
 
-#: ../lib/puppet/util/windows/sid.rb:93
+#: ../lib/puppet/util/windows/sid.rb:94
 msgid "Octet string must be an array of bytes"
 msgstr "オクテット文字列はバイトの配列でなければなりません。"
 
-#: ../lib/puppet/util/windows/sid.rb:133
+#: ../lib/puppet/util/windows/sid.rb:162
 msgid "Failed to convert binary SID"
 msgstr "バイナリSIDの変換に失敗しました。"
 
-#: ../lib/puppet/util/windows/sid.rb:138
+#: ../lib/puppet/util/windows/sid.rb:167
 msgid "ConvertSidToStringSidW failed to allocate buffer for sid"
 msgstr "ConvertSidToStringSidWがSIDのバッファ割り当てに失敗しました。"
 
-#: ../lib/puppet/util/windows/sid.rb:158
+#: ../lib/puppet/util/windows/sid.rb:187
 msgid "Failed to convert string SID: %{string_sid}"
 msgstr "文字列SID: %{string_sid}の変換に失敗しました。"
 
