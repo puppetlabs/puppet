@@ -69,7 +69,17 @@ class DeferredResolver
     catalog.resources.each do |r|
       overrides = {}
       r.parameters.each_pair do |k, v|
-        overrides[ k ] = resolve(v)
+        resolved = resolve(v)
+        # If the value is instance of Sensitive - assign the unwrapped value
+        # and mark it as sensitive if not already marked
+        #
+        if resolved.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+          resolved = resolved.unwrap
+          unless r.sensitive_parameters.include?(k.to_sym)
+            r.sensitive_parameters = (r.sensitive_parameters + [k.to_sym]).freeze
+          end
+        end
+        overrides[ k ] = resolved
       end
       r.parameters.merge!(overrides) unless overrides.empty?
     end
