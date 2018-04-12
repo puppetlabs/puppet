@@ -20,12 +20,6 @@ describe Puppet::SSL::CertificateFactory do
   end
 
   describe "when generating the certificate" do
-    it "should return a new X509 certificate" do
-      expect(subject.build(:server, csr, issuer, serial)).not_to eq(
-        subject.build(:server, csr, issuer, serial)
-      )
-    end
-
     it "should set the certificate's version to 2" do
       expect(subject.build(:server, csr, issuer, serial).version).to eq(2)
     end
