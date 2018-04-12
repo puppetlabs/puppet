@@ -511,22 +511,21 @@ describe Puppet::SSL::Host do
     end
 
     it "should find the CA certificate if it does not have a certificate" do
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).returns mock("cacert")
-      Puppet::SSL::Certificate.indirection.stubs(:find).with("myname").returns @cert
+      @host.expects(:get_cert).with('ca').returns mock('cacert')
+      @host.expects(:get_cert).with('myname').returns @cert
       @host.certificate
     end
 
     it "should not find the CA certificate if it is the CA host" do
       @host.expects(:ca?).returns true
-      Puppet::SSL::Certificate.indirection.stubs(:find)
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).never
+      @host.stubs(:get_cert).returns(@cert)
+      @host.expects(:get_cert).with('ca').never
 
       @host.certificate
     end
 
     it "should return nil if it cannot find a CA certificate" do
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).returns nil
-      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").never
+      @host.expects(:get_cert).with("ca").returns(nil)
 
       expect(@host.certificate).to be_nil
     end
@@ -544,15 +543,9 @@ describe Puppet::SSL::Host do
       @host.certificate
     end
 
-    it "should find the certificate in the Certificate class and return the Puppet certificate instance" do
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).returns mock("cacert")
-      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").returns @cert
-      expect(@host.certificate).to equal(@cert)
-    end
-
     it "should return any previously found certificate" do
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).returns mock("cacert")
-      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").returns(@cert).once
+      @host.expects(:get_cert).with('ca').returns mock('cacert')
+      @host.expects(:get_cert).with('myname').returns @cert
 
       expect(@host.certificate).to equal(@cert)
       expect(@host.certificate).to equal(@cert)

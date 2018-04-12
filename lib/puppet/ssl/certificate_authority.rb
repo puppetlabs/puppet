@@ -323,6 +323,9 @@ class Puppet::SSL::CertificateAuthority
     # Save the now-signed cert.  This should get routed correctly depending
     # on the certificate type.
     Puppet::SSL::Certificate.indirection.save(cert)
+    # Because we no longer use the indirector for retrieval, we need to make sure
+    # that the certificate gets stored by the host directly when not writing
+    # out to disk
 
     # And remove the CSR if this wasn't self signed.
     Puppet::SSL::CertificateRequest.indirection.destroy(csr.name) unless self_signing_csr

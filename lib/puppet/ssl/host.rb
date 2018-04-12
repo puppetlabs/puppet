@@ -5,6 +5,9 @@ require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/ssl/certificate_request_attributes'
+require 'puppet/rest_client/routes'
+require 'puppet/rest_client/client'
+require 'puppet/rest_client/response_handler'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
@@ -192,14 +195,73 @@ DOC
     true
   end
 
+  def get_cert(cert_name)
+    # The memory terminus is used for testing
+    if Puppet::SSL::Certificate.indirection.terminus_class == :memory
+      return Puppet::SSL::Certificate.indirection.find(cert_name)
+    end
+
+    if Puppet::SSL::Host.ca_location == :only
+      if cert_name == 'ca'
+        file_path = Puppet.settings[:cacert]
+      else
+        file_path = File.join(Puppet.settings[:signeddir], "#{name}.pem")
+      end
+    else
+      if cert_name == 'ca'
+        file_path = Puppet.settings[:localcacert]
+      else
+        file_path = File.join(Puppet.settings[:certdir], "#{name}.pem")
+      end
+    end
+
+    if Puppet::FileSystem.exist?(file_path)
+      return Puppet::SSL::Certificate.from_s(Puppet::FileSystem.read(file_path))
+    end
+
+    if Puppet::SSL::Host.ca_location == :remote
+      # Cert not found on disk, and we have a remote ca,
+      # so attempt to download it
+      download_cert(cert_name, file_path)
+    end
+
+    # Couldn't find or fetch a cert
+    return nil
+  end
+
+  def download_cert(cert_name, file_path)
+    response = Puppet::Rest::Client.instance.get(Puppet::Routes.certificate(cert_name),
+                                                 { environment: Puppet.lookup(:current_environment).name },
+                                                 { Accept: 'text/plain',
+                                                   'accept-encoding' => Puppet::Rest::ResponseHandler::ACCEPT_ENCODING })
+    if response.ok?
+      _, body = Puppet::Rest::ResponseHandler.parse_response(response)
+      # Convert to cert object to ensure valid response
+      cert = Puppet::SSL::Certificate.from_s(body)
+      # this should be an atomic write
+      Puppet::FileSystem.open(file_path, nil, 'w:UTF-8') do |f|
+        f.puts(body)
+      end
+      return cert
+    else
+      # Couldn't find an existing host cert, so don't continue
+      return nil
+    end
+  end
+
   def certificate
     unless @certificate
       generate_key unless key
 
       # get the CA cert first, since it's required for the normal cert
       # to be of any use.
-      return nil unless Certificate.indirection.find("ca", :fail_on_404 => true) unless ca?
-      return nil unless @certificate = Certificate.indirection.find(name)
+      if !ca?
+        return nil unless get_cert('ca')
+      end
+
+      @certificate = get_cert(name)
+      # if no existing certificate, don't continue
+      return nil unless @certificate
 
       validate_certificate_with_key
     end
@@ -281,7 +343,7 @@ ERROR_STRING
   end
 
   def to_data_hash
-    my_cert = Puppet::SSL::Certificate.indirection.find(name)
+    my_cert = @certificate || get_cert(name)
     result = { 'name'  => name }
 
     my_state = state

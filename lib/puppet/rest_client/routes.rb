@@ -1,21 +1,25 @@
 require 'puppet'
+require 'puppet/rest_client/server_resolution'
 
 module Puppet
   module Routes
-    cert = {
-      :server => Puppet.settings[:ca_server],
-      :port => Puppet.settings[:ca_port],
-      :srv_service => :ca,
-      :get => "/puppet-ca/v1/certificate/ca"
-    }
-
-    def certificate(name)
-      # but this doesn't have the server fallback logic...
-      "#{cert[:server]}/#{cert[:port]}/puppet-ca/v1/certificate/#{name}"
+    def self.ca
+     {
+       :server => Puppet.settings[:ca_server],
+       :port => Puppet.settings[:ca_port],
+       :srv_service => :ca,
+       :base_url => "/puppet-ca/v1"
+     }
     end
 
-    # I want to be to able to do something like
-    # http.get(Puppet::Routes.certificate(name), environment, 
+    def self.certificate(name)
+      server, port = Puppet::Rest::Resolution.select_server_and_port(
+        srv_service: ca[:srv_service],
+        default_server: ca[:server],
+        default_port: ca[:port])
+
+      "https://#{server}:#{port}#{ca[:base_url]}/certificate/#{name}"
+    end
   end
 end
 
