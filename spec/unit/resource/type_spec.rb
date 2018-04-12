@@ -799,12 +799,28 @@ describe Puppet::Resource::Type do
       expect { code.hostclass("b").merge(code.hostclass("d")) }.to raise_error(Puppet::Error)
     end
 
-    it "should fail if it's named 'main' and 'freeze_main' is enabled" do
-      Puppet.settings[:freeze_main] = true
-      code = Puppet::Resource::TypeCollection.new("env")
-      code.add Puppet::Resource::Type.new(:hostclass, "")
-      other = Puppet::Resource::Type.new(:hostclass, "")
-      expect { code.hostclass("").merge(other) }.to raise_error(Puppet::Error)
+    context 'when "freeze_main" is enabled and a merge is done into the main class' do
+      it "an error is raised if there is something other than definitions in the merged class" do
+        Puppet.settings[:freeze_main] = true
+        code = Puppet::Resource::TypeCollection.new("env")
+        code.add Puppet::Resource::Type.new(:hostclass, "")
+        other = Puppet::Resource::Type.new(:hostclass, "")
+        mock = stub
+        mock.expects(:is_definitions_only?).returns(false)
+        other.expects(:code).returns(mock)
+        expect { code.hostclass("").merge(other) }.to raise_error(Puppet::Error)
+      end
+
+      it "an error is not raised if the merged class contains nothing but definitions" do
+        Puppet.settings[:freeze_main] = true
+        code = Puppet::Resource::TypeCollection.new("env")
+        code.add Puppet::Resource::Type.new(:hostclass, "")
+        other = Puppet::Resource::Type.new(:hostclass, "")
+        mock = stub
+        mock.expects(:is_definitions_only?).returns(true)
+        other.expects(:code).at_least_once.returns(mock)
+        expect { code.hostclass("").merge(other) }.not_to raise_error
+      end
     end
 
     it "should copy the other class's parent if it has not parent" do
