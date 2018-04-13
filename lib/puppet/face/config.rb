@@ -85,8 +85,10 @@ Puppet::Face.define(:config, '0.0.1') do
         # the requested section
         values = Puppet.settings.values(Puppet[:environment].to_sym, options[:section].to_sym)
 
-        warn_default_section(options[:section]) if @default_section
-        report_section_and_environment(options[:section], Puppet.settings[:environment])
+        if Puppet::Util::Log.sendlevel?(:info)
+          warn_default_section(options[:section]) if @default_section
+          report_section_and_environment(options[:section], Puppet.settings[:environment])
+        end
 
         to_be_rendered = {}
         args.sort.each do |setting_name|
@@ -191,7 +193,9 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
         EOM
       end
 
-      report_section_and_environment(options[:section], Puppet.settings[:environment])
+      if Puppet::Util::Log.sendlevel?(:info)
+        report_section_and_environment(options[:section], Puppet.settings[:environment])
+      end
 
       path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
       Puppet::FileSystem.touch(path)
@@ -239,7 +243,9 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
             setting_string = config.delete(options[:section], name)
             if setting_string
 
-              report_section_and_environment(options[:section], Puppet.settings[:environment])
+              if Puppet::Util::Log.sendlevel?(:info)
+                report_section_and_environment(options[:section], Puppet.settings[:environment])
+              end
 
               puts(_("Deleted setting from '%{section_name}': '%{setting_string}'") %
                        { section_name: options[:section], name: name, setting_string: setting_string.strip })

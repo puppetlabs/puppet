@@ -121,7 +121,7 @@ task(:warnings) do
   commit_range = ENV['TRAVIS_COMMIT_RANGE'].nil? ? 'master...HEAD' : ENV['TRAVIS_COMMIT_RANGE']
   ruby_files_ok = true
   puts "Checking modified files #{commit_range}"
-  %x{git diff --name-only #{commit_range}}.each_line do |modified_file|
+  %x{git diff --diff-filter=ACM --name-only #{commit_range}}.each_line do |modified_file|
     modified_file.chomp!
     next unless File.extname(modified_file) == '.rb'
     puts modified_file
