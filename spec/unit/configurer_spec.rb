@@ -362,8 +362,16 @@ describe Puppet::Configurer do
     it "should record a total run time" do
       report = Puppet::Transaction::Report.new
       @catalog.stubs(:apply).with(:report => report)
-      report.expects(:add_times).with(:total, anything())
+      report.expects(:add_times).with {|m,v| m == :total && !v.nil?}
       @agent.run({:report => report})
+    end
+
+    it "should record a total run time with failed catalog retrieval" do
+      report = Puppet::Transaction::Report.new
+      @catalog.stubs(:apply).with(:report => report)
+      report.expects(:add_times).with {|m,v| m == :total && !v.nil?}
+      @agent.stubs(:prepare_and_retrieve_catalog_from_cache).raises
+      @agent.run(:report => report)
     end
 
     it "should refetch the catalog if the server specifies a new environment in the catalog" do
