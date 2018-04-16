@@ -1,13 +1,12 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http'
 require 'puppet/network/http/api/indirected_routes'
-require 'rack/mock' if Puppet.features.rack?
-require 'puppet/network/http/rack/rest'
 require 'puppet/indirector_proxy'
 require 'puppet_spec/files'
 require 'puppet_spec/network'
 require 'puppet/util/json'
+require 'puppet/file_serving/content'
+require 'puppet/file_serving/metadata'
 
 describe Puppet::Network::HTTP::API::IndirectedRoutes do
   include PuppetSpec::Files
@@ -16,7 +15,10 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
   describe "when running the master application" do
     before :each do
-      Puppet::Application[:master].setup_terminuses
+      Puppet::FileServing::Content.indirection.terminus_class = :file_server
+      Puppet::FileServing::Metadata.indirection.terminus_class = :file_server
+
+      Puppet::FileBucket::File.indirection.terminus_class = :file
     end
 
     describe "using Puppet API to request file metadata" do
@@ -51,37 +53,6 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
           expect(file['checksum']['type']).to eq(checksum_type)
           expect(checksum_valid(checksum_type, checksum, file['checksum']['value'])).to be_truthy
-        end
-      end
-    end
-
-    describe "an error from IndirectedRoutes", :if => Puppet.features.rack? do
-      let(:handler) { Puppet::Network::HTTP::RackREST.new }
-
-      describe "returns json" do
-        it "when a standard error" do
-          response = Rack::Response.new
-          request = Rack::Request.new(
-            Rack::MockRequest.env_for("/puppet/v3/invalid-indirector"))
-
-          handler.process(request, response)
-
-          expect(response.header["Content-Type"]).to match(/json/)
-          resp = Puppet::Util::Json.load(response.body.first)
-          expect(resp["message"]).to match(/The indirection name must be purely alphanumeric/)
-          expect(resp["issue_kind"]).to be_a_kind_of(String)
-        end
-        it "when a server error" do
-          response = Rack::Response.new
-          request = Rack::Request.new(
-            Rack::MockRequest.env_for("/puppet/v3/unknown_indirector"))
-
-          handler.process(request, response)
-
-          expect(response.header["Content-Type"]).to match(/json/)
-          resp = Puppet::Util::Json.load(response.body.first)
-          expect(resp["message"]).to match(/Could not find indirection/)
-          expect(resp["issue_kind"]).to be_a_kind_of(String)
         end
       end
     end

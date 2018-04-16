@@ -3,7 +3,6 @@ require 'spec_helper'
 
 require 'puppet/agent'
 require 'puppet/application/agent'
-require 'puppet/network/server'
 require 'puppet/daemon'
 
 describe Puppet::Application::Agent do

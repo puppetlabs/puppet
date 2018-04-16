@@ -12,25 +12,6 @@ shared_examples_for "a file_serving model" do
       described_class.indirection.terminus(:rest).class.any_instance.stubs(:find)
     end
 
-    describe "when running the master application" do
-      before :each do
-        Puppet::Application[:master].setup_terminuses
-      end
-
-      {
-       localpath     => :file_server,
-       localurl => :file_server,
-       "puppet:///modules/foo/bar"       => :file_server,
-       "puppet://server/modules/foo/bar" => :file_server,
-      }.each do |key, terminus|
-        it "should use the #{terminus} terminus when requesting #{key.inspect}" do
-          described_class.indirection.terminus(terminus).class.any_instance.expects(:find)
-
-          described_class.indirection.find(key)
-        end
-      end
-    end
-
     describe "when running the apply application" do
       before :each do
         Puppet[:default_file_terminus] = 'file_server'

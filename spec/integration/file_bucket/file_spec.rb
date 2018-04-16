@@ -11,23 +11,6 @@ describe Puppet::FileBucket::File do
       described_class.indirection.terminus(:rest).class.any_instance.stubs(:find)
     end
 
-    describe "when running the master application" do
-      before :each do
-        Puppet::Application[:master].setup_terminuses
-      end
-
-      {
-        "md5/d41d8cd98f00b204e9800998ecf8427e" => :file,
-        "filebucket://puppetmaster:8140/md5/d41d8cd98f00b204e9800998ecf8427e" => :file,
-      }.each do |key, terminus|
-        it "should use the #{terminus} terminus when requesting #{key.inspect}" do
-          described_class.indirection.terminus(terminus).class.any_instance.expects(:find)
-
-          described_class.indirection.find(key)
-        end
-      end
-    end
-
     describe "when running another application" do
       {
         "md5/d41d8cd98f00b204e9800998ecf8427e" => :file,
