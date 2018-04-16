@@ -179,18 +179,15 @@ class Puppet::Configurer
   # Apply supplied catalog and return associated application report
   def apply_catalog(catalog, options)
     report = options[:report]
-    begin
-      report.configuration_version = catalog.version
+    report.configuration_version = catalog.version
 
-      benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
-        apply_catalog_time = thinmark do
-          catalog.apply(options)
-        end
-        options[:report].add_times(:catalog_application, apply_catalog_time)
+    benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
+      apply_catalog_time = thinmark do
+        catalog.apply(options)
       end
-    ensure
-      report.finalize_report
+      options[:report].add_times(:catalog_application, apply_catalog_time)
     end
+
     report
   end
 
@@ -209,6 +206,7 @@ class Puppet::Configurer
 
     Puppet::Util::Log.newdestination(report)
 
+    completed = nil
     begin
       Puppet.override(:http_pool => pool) do
 
@@ -233,18 +231,21 @@ class Puppet::Configurer
               report.master_used = "#{server[0]}:#{server[1]}"
             end
 
-            run_internal(options.merge(:node => found[:node]))
+            completed = run_internal(options.merge(:node => found[:node]))
           end
         else
-          run_internal(options)
+          completed = run_internal(options)
         end
       end
     ensure
       pool.close
     end
+
+    completed ? report.exit_status : nil
   end
 
   def run_internal(options)
+    start = Time.now
     report = options[:report]
 
     # If a cached catalog is explicitly requested, attempt to retrieve it. Skip the node request,
@@ -366,7 +367,7 @@ class Puppet::Configurer
       options[:report].catalog_uuid = catalog.catalog_uuid
       options[:report].cached_catalog_status = @cached_catalog_status
       apply_catalog(catalog, options)
-      report.exit_status
+      true
     rescue => detail
       Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
       return nil
@@ -375,6 +376,8 @@ class Puppet::Configurer
     end
   ensure
     report.cached_catalog_status ||= @cached_catalog_status
+    report.add_times(:total, Time.now - start)
+    report.finalize_report
     Puppet::Util::Log.close(report)
     send_report(report)
     Puppet.pop_context
