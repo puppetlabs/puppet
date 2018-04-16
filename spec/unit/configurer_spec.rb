@@ -378,6 +378,15 @@ describe Puppet::Configurer do
       expect(report.metrics['time']['total']).to be_a_kind_of(Numeric)
     end
 
+    it 'includes total time metrics in the report even if catalog retrieval fails' do
+      report = Puppet::Transaction::Report.new
+      @agent.stubs(:prepare_and_retrieve_catalog_from_cache).raises
+      @agent.run(:report => report)
+
+      expect(report.metrics['time']).to be
+      expect(report.metrics['time']['total']).to be_a_kind_of(Numeric)
+    end
+
     it "should refetch the catalog if the server specifies a new environment in the catalog" do
       catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
       @agent.expects(:retrieve_catalog).returns(catalog).twice
