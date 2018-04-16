@@ -357,6 +357,22 @@ describe Puppet::Transaction::Report do
         expect(metric(:time, "tidy")).to eq(9)
       end
 
+      it "should provide the total time for all time metrics collected" do
+        add_statuses(3, :file) do |status|
+          status.evaluation_time = 1
+        end
+        add_statuses(3, :exec) do |status|
+          status.evaluation_time = 2
+        end
+        add_statuses(3, :tidy) do |status|
+          status.evaluation_time = 3
+        end
+
+        @report.finalize_report
+
+        expect(metric(:time, "total")).to eq(18)
+      end
+
       it "should accrue times when called for one resource more than once" do
         @report.add_times :foobar, 50
         @report.add_times :foobar, 30
@@ -375,6 +391,15 @@ describe Puppet::Transaction::Report do
         @report.add_times :foobar, 50
         @report.finalize_report
         expect(metric(:time, "foobar")).to eq(50)
+      end
+
+      it "should have a total time" do
+        add_statuses(3, :file) do |status|
+          status.evaluation_time = 1.25
+        end
+        @report.add_times :config_retrieval, 0.5
+        @report.finalize_report
+        expect(metric(:time, "total")).to eq(4.25)
       end
     end
 
@@ -463,7 +488,6 @@ describe Puppet::Transaction::Report do
       trans = catalog.apply
 
       @report = trans.report
-      @report.add_times(:total, "8675") #Report total is now measured, not calculated.
       @report.finalize_report
     end
 

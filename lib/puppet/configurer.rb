@@ -179,13 +179,17 @@ class Puppet::Configurer
   # Apply supplied catalog and return associated application report
   def apply_catalog(catalog, options)
     report = options[:report]
-    report.configuration_version = catalog.version
+    begin
+      report.configuration_version = catalog.version
 
-    benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
-      apply_catalog_time = thinmark do
-        catalog.apply(options)
+      benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
+        apply_catalog_time = thinmark do
+          catalog.apply(options)
+        end
+        options[:report].add_times(:catalog_application, apply_catalog_time)
       end
-      options[:report].add_times(:catalog_application, apply_catalog_time)
+    ensure
+      report.finalize_report
     end
     report
   end
@@ -243,144 +247,132 @@ class Puppet::Configurer
   def run_internal(options)
     report = options[:report]
 
-    prerun_command_successful = false
-    begin
-      run_internal_time = thinmark do
-        # If a cached catalog is explicitly requested, attempt to retrieve it. Skip the node request,
-        # don't pluginsync and switch to the catalog's environment if we successfully retrieve it.
-        if Puppet[:use_cached_catalog]
-          Puppet::GettextConfig.reset_text_domain('agent')
-          Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
+    # If a cached catalog is explicitly requested, attempt to retrieve it. Skip the node request,
+    # don't pluginsync and switch to the catalog's environment if we successfully retrieve it.
+    if Puppet[:use_cached_catalog]
+      Puppet::GettextConfig.reset_text_domain('agent')
+      Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
 
-          if catalog = prepare_and_retrieve_catalog_from_cache(options)
-            options[:catalog] = catalog
-            @cached_catalog_status = 'explicitly_requested'
+      if catalog = prepare_and_retrieve_catalog_from_cache(options)
+        options[:catalog] = catalog
+        @cached_catalog_status = 'explicitly_requested'
 
-            if @environment != catalog.environment && !Puppet[:strict_environment_mode]
-              Puppet.notice _("Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'.") % { local_env: @environment, catalog_env: catalog.environment }
-              @environment = catalog.environment
-            end
-
-            report.environment = @environment
-          else
-            # Don't try to retrieve a catalog from the cache again after we've already
-            # failed to do so the first time.
-            Puppet[:use_cached_catalog] = false
-            Puppet[:usecacheonfailure] = false
-            options[:pluginsync] = Puppet::Configurer.should_pluginsync?
-          end
+        if @environment != catalog.environment && !Puppet[:strict_environment_mode]
+          Puppet.notice _("Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'.") % { local_env: @environment, catalog_env: catalog.environment }
+          @environment = catalog.environment
         end
 
-        begin
-          unless Puppet[:node_name_fact].empty?
-            query_options = get_facts(options)
-          end
-
-          configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
-
-          # We only need to find out the environment to run in if we don't already have a catalog
-          unless (options[:catalog] || Puppet[:strict_environment_mode])
-            begin
-              node = nil
-              node_retr_time = thinmark do
-                node = options[:node] || Puppet::Node.indirection.find(Puppet[:node_name_value],
-                  :environment => Puppet::Node::Environment.remote(@environment),
-                  :configured_environment => configured_environment,
-                  :ignore_cache => true,
-                  :transaction_uuid => @transaction_uuid,
-                  :fail_on_404 => true)
-              end
-              options[:report].add_times(:node_retrieval, node_retr_time)
-
-              if node
-                # If we have deserialized a node from a rest call, we want to set
-                # an environment instance as a simple 'remote' environment reference.
-                if !node.has_environment_instance? && node.environment_name
-                  node.environment = Puppet::Node::Environment.remote(node.environment_name)
-                end
-
-                @node_environment = node.environment.to_s
-
-                if node.environment.to_s != @environment
-                  Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'.") % { local_env: @environment, node_env: node.environment }
-                  @environment = node.environment.to_s
-                  report.environment = @environment
-                  query_options = nil
-                else
-                  Puppet.info _("Using configured environment '%{env}'") % { env: @environment }
-                end
-              end
-            rescue StandardError => detail
-              Puppet.warning(_("Unable to fetch my node definition, but the agent run will continue:"))
-              Puppet.warning(detail)
-            end
-          end
-
-          current_environment = Puppet.lookup(:current_environment)
-          if current_environment.name == @environment.intern
-            local_node_environment = current_environment
-          else
-            local_node_environment = Puppet::Node::Environment.create(@environment,
-                                            current_environment.modulepath,
-                                            current_environment.manifest,
-                                            current_environment.config_version)
-          end
-          Puppet.push_context({:current_environment => local_node_environment}, "Local node environment for configurer transaction")
-
-          query_options = get_facts(options) unless query_options
-          query_options[:configured_environment] = configured_environment
-
-          unless catalog = prepare_and_retrieve_catalog(options, query_options)
-            return nil
-          end
-
-          if Puppet[:strict_environment_mode] && catalog.environment != @environment
-            Puppet.err _("Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set") % { catalog_env: catalog.environment, local_env: @environment }
-            return nil
-          end
-
-          # Here we set the local environment based on what we get from the
-          # catalog. Since a change in environment means a change in facts, and
-          # facts may be used to determine which catalog we get, we need to
-          # rerun the process if the environment is changed.
-          tries = 0
-          while catalog.environment and not catalog.environment.empty? and catalog.environment != @environment
-            if tries > 3
-              raise Puppet::Error, _("Catalog environment didn't stabilize after %{tries} fetches, aborting run") % { tries: tries }
-            end
-            Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'") % { local_env: @environment, catalog_env: catalog.environment }
-            @environment = catalog.environment
-            report.environment = @environment
-
-            query_options = get_facts(options)
-            query_options[:configured_environment] = configured_environment
-
-            return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
-            tries += 1
-          end
-
-          if execute_prerun_command
-            prerun_command_successful = true
-            options[:report].code_id = catalog.code_id
-            options[:report].catalog_uuid = catalog.catalog_uuid
-            options[:report].cached_catalog_status = @cached_catalog_status
-            apply_catalog(catalog, options)
-          end
-        rescue => detail
-          Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
-          return nil
-        end
-      end #thinmark
-    ensure
-      report.add_times(:total, run_internal_time)
-      report.finalize_report
-
-      exit_status = report.exit_status if prerun_command_successful
-      exit_status = nil unless execute_postrun_command
-
-      return exit_status
+        report.environment = @environment
+      else
+        # Don't try to retrieve a catalog from the cache again after we've already
+        # failed to do so the first time.
+        Puppet[:use_cached_catalog] = false
+        Puppet[:usecacheonfailure] = false
+        options[:pluginsync] = Puppet::Configurer.should_pluginsync?
+      end
     end
 
+    begin
+      unless Puppet[:node_name_fact].empty?
+        query_options = get_facts(options)
+      end
+
+      configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
+
+      # We only need to find out the environment to run in if we don't already have a catalog
+      unless (options[:catalog] || Puppet[:strict_environment_mode])
+        begin
+          node = nil
+          node_retr_time = thinmark do
+            node = options[:node] || Puppet::Node.indirection.find(Puppet[:node_name_value],
+              :environment => Puppet::Node::Environment.remote(@environment),
+              :configured_environment => configured_environment,
+              :ignore_cache => true,
+              :transaction_uuid => @transaction_uuid,
+              :fail_on_404 => true)
+          end
+          options[:report].add_times(:node_retrieval, node_retr_time)
+
+          if node
+            # If we have deserialized a node from a rest call, we want to set
+            # an environment instance as a simple 'remote' environment reference.
+            if !node.has_environment_instance? && node.environment_name
+              node.environment = Puppet::Node::Environment.remote(node.environment_name)
+            end
+
+            @node_environment = node.environment.to_s
+
+            if node.environment.to_s != @environment
+              Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'.") % { local_env: @environment, node_env: node.environment }
+              @environment = node.environment.to_s
+              report.environment = @environment
+              query_options = nil
+            else
+              Puppet.info _("Using configured environment '%{env}'") % { env: @environment }
+            end
+          end
+        rescue StandardError => detail
+          Puppet.warning(_("Unable to fetch my node definition, but the agent run will continue:"))
+          Puppet.warning(detail)
+        end
+      end
+
+      current_environment = Puppet.lookup(:current_environment)
+      if current_environment.name == @environment.intern
+        local_node_environment = current_environment
+      else
+        local_node_environment = Puppet::Node::Environment.create(@environment,
+                                         current_environment.modulepath,
+                                         current_environment.manifest,
+                                         current_environment.config_version)
+      end
+      Puppet.push_context({:current_environment => local_node_environment}, "Local node environment for configurer transaction")
+
+      query_options = get_facts(options) unless query_options
+      query_options[:configured_environment] = configured_environment
+
+      unless catalog = prepare_and_retrieve_catalog(options, query_options)
+        return nil
+      end
+
+      if Puppet[:strict_environment_mode] && catalog.environment != @environment
+        Puppet.err _("Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set") % { catalog_env: catalog.environment, local_env: @environment }
+        return nil
+      end
+
+      # Here we set the local environment based on what we get from the
+      # catalog. Since a change in environment means a change in facts, and
+      # facts may be used to determine which catalog we get, we need to
+      # rerun the process if the environment is changed.
+      tries = 0
+      while catalog.environment and not catalog.environment.empty? and catalog.environment != @environment
+        if tries > 3
+          raise Puppet::Error, _("Catalog environment didn't stabilize after %{tries} fetches, aborting run") % { tries: tries }
+        end
+        Puppet.notice _("Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'") % { local_env: @environment, catalog_env: catalog.environment }
+        @environment = catalog.environment
+        report.environment = @environment
+
+        query_options = get_facts(options)
+        query_options[:configured_environment] = configured_environment
+
+        return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
+        tries += 1
+      end
+
+      execute_prerun_command or return nil
+
+      options[:report].code_id = catalog.code_id
+      options[:report].catalog_uuid = catalog.catalog_uuid
+      options[:report].cached_catalog_status = @cached_catalog_status
+      apply_catalog(catalog, options)
+      report.exit_status
+    rescue => detail
+      Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
+      return nil
+    ensure
+      execute_postrun_command or return nil
+    end
   ensure
     report.cached_catalog_status ||= @cached_catalog_status
     Puppet::Util::Log.close(report)

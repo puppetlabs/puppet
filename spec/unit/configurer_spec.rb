@@ -359,13 +359,6 @@ describe Puppet::Configurer do
       @agent.apply_catalog(@catalog, {:report => report})
     end
 
-    it "should record a total run time" do
-      report = Puppet::Transaction::Report.new
-      @catalog.stubs(:apply).with(:report => report)
-      report.expects(:add_times).with(:total, anything())
-      @agent.run({:report => report})
-    end
-
     it "should refetch the catalog if the server specifies a new environment in the catalog" do
       catalog = Puppet::Resource::Catalog.new("tester", Puppet::Node::Environment.remote('second_env'))
       @agent.expects(:retrieve_catalog).returns(catalog).twice
