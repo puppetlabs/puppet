@@ -71,7 +71,7 @@ describe Puppet::SSL::CertificateRequest do
       expect(request.to_s).to eq("")
     end
 
-    it "should convert the request to pem format when converted to a string" do
+    it "should convert the request to pem format when converted to a string", :unless => RUBY_PLATFORM == 'java' do
       request.generate(key)
       expect(request.to_s).to eq(request.content.to_pem)
     end
@@ -84,7 +84,7 @@ describe Puppet::SSL::CertificateRequest do
     end
   end
 
-  describe "when generating" do
+  describe "when generating", :unless => RUBY_PLATFORM == 'java' do
     it "should use the content of the provided key if the key is a Puppet::SSL::Key instance" do
       request.generate(key)
       expect(request.content.verify(key.content.public_key)).to be_truthy

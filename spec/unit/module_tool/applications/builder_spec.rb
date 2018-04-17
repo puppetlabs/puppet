@@ -401,7 +401,7 @@ symlinkfile
       }.to raise_error Puppet::ModuleTool::Errors::ModuleToolError, /symlinks/i
     end
 
-    it "writes UTF-8 metdata correctly" do
+    it "writes UTF-8 metdata correctly", :unless => RUBY_PLATFORM == 'java' do
       # file is written initially in before block, then by builders write_json method
       builder.run
       metadata_path = File.join(path, 'metadata.json')

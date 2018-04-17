@@ -27,10 +27,11 @@ module PuppetSpec::Files
   def tmpfile(name, dir = nil) PuppetSpec::Files.tmpfile(name, dir) end
   def self.tmpfile(name, dir = nil)
     # Generate a temporary file, just for the name...
-    source = dir ? Tempfile.new(name, dir) : Tempfile.new(name)
-    path = Puppet::FileSystem.expand_path(source.path.encode(Encoding::UTF_8))
-    source.close!
-
+    # source = dir ? Tempfile.new(name, dir) : Tempfile.new(name)
+    # path = Puppet::FileSystem.expand_path(source.path.encode(Encoding::UTF_8))
+    # source.close!
+    dir ||= Dir.tmpdir
+    path = Puppet::FileSystem.expand_path(Dir::Tmpname.make_tmpname(name, nil).encode(Encoding::UTF_8), dir)
     record_tmp(File.expand_path(path))
 
     path

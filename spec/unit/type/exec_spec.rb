@@ -437,7 +437,7 @@ describe Puppet::Type.type(:exec) do
           Puppet::Type.type(:exec).new(:name => "#{ruby_path} -e 'sleep 1'", :timeout => '0.1')
         end
 
-        context 'on POSIX', :unless => Puppet.features.microsoft_windows? do
+        context 'on POSIX', :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
           it 'sends a SIGTERM and raises a Puppet::Error' do
             Process.expects(:kill).at_least_once
             expect { subject.refresh }.to raise_error Puppet::Error, "Command exceeded timeout"

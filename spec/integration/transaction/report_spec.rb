@@ -440,7 +440,7 @@ describe Puppet::Transaction::Report do
         expect(get_cc_count(report)).to eq(0)
       end
 
-      it "exec with idempotence issue", :unless => Puppet.features.microsoft_windows? do
+      it "exec with idempotence issue", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
         report = run_catalogs(Puppet::Type.type(:exec).new(:title => "exec1",
                                                            :command => "/bin/echo foo"),
                               Puppet::Type.type(:exec).new(:title => "exec1",
@@ -458,7 +458,7 @@ describe Puppet::Transaction::Report do
         expect(get_cc_count(report)).to eq(1)
       end
 
-      it "exec with no idempotence issue", :unless => Puppet.features.microsoft_windows? do
+      it "exec with no idempotence issue", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
         report = run_catalogs(Puppet::Type.type(:exec).new(:title => "exec1",
                                                            :command => "echo foo",
                                                            :path => "/bin",

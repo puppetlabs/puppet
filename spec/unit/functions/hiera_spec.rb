@@ -225,6 +225,7 @@ describe 'when calling' do
     end
 
     it 'backend data sources, including optional overrides, are propagated to custom backend' do
+      skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
       expect(func('datasources', nil, 'the_override')).to eql(['the_override', 'first', 'second'])
     end
 
@@ -481,6 +482,7 @@ describe 'when calling' do
         end
 
         it "merge behavior is propagated to a custom backend as 'hash'" do
+          skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
           expect(func('resolution_type')).to eql({ 'resolution_type' => 'hash' })
         end
 
@@ -510,6 +512,7 @@ describe 'when calling' do
       end
 
       it "merge behavior is propagated to a custom backend as 'array'" do
+        skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
         expect(func('resolution_type')).to eql(['resolution_type', 'array'])
       end
     end
@@ -522,6 +525,7 @@ describe 'when calling' do
       end
 
       it "no merge behavior is propagated to a custom backend" do
+        skip("test fails due to SERVER-64 on JRuby") if RUBY_PLATFORM == 'java'
         expect(func('resolution_type')).to eql('resolution_type=')
       end
     end

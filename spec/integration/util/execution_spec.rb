@@ -25,7 +25,7 @@ describe Puppet::Util::Execution do
     end
   end
 
-  describe "#execute (non-Windows)", :if => !Puppet.features.microsoft_windows? do
+  describe "#execute (non-Windows)", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
     it "should execute basic shell command" do
       result = Puppet::Util::Execution.execute("ls /tmp", :failonfail => true)
       expect(result.exitstatus).to eq(0)

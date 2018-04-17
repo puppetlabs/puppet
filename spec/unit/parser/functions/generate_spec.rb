@@ -34,7 +34,7 @@ describe "the generate function" do
     expect { scope.function_generate([File.expand_path('/com mand')]) }.to raise_error(Puppet::ParseError)
   end
 
-  it "should not accept a command containing '..'" do
+  it "should not accept a command containing '..'", :unless => RUBY_PLATFORM == 'java' do
     command = File.expand_path("/command/../")
     expect { scope.function_generate([command]) }.to raise_error(Puppet::ParseError)
   end
@@ -91,37 +91,39 @@ describe "the generate function" do
     end
   end
 
-  let :command do
-    script_containing('function_generate',
-      :windows => '@echo off' + "\n" + 'echo a-%1 b-%2',
-      :posix   => '#!/bin/sh' + "\n" + 'echo a-$1 b-$2')
-  end
+  describe "function_generate", :unless => RUBY_PLATFORM == 'java' do
+    let :command do
+      script_containing('function_generate',
+        :windows => '@echo off' + "\n" + 'echo a-%1 b-%2',
+        :posix   => '#!/bin/sh' + "\n" + 'echo a-$1 b-$2')
+    end
 
-  after :each do
-    File.delete(command) if Puppet::FileSystem.exist?(command)
-  end
+    after :each do
+      File.delete(command) if Puppet::FileSystem.exist?(command)
+    end
 
-  it "returns the output as a String" do
-    expect(scope.function_generate([command]).class).to eq(String)
-  end
+    it "returns the output as a String" do
+      expect(scope.function_generate([command]).class).to eq(String)
+    end
 
-  it "should call generator with no arguments" do
-    expect(scope.function_generate([command])).to eq("a- b-\n")
-  end
+    it "should call generator with no arguments" do
+      expect(scope.function_generate([command])).to eq("a- b-\n")
+    end
 
-  it "should call generator with one argument" do
-    expect(scope.function_generate([command, 'one'])).to eq("a-one b-\n")
-  end
+    it "should call generator with one argument" do
+      expect(scope.function_generate([command, 'one'])).to eq("a-one b-\n")
+    end
 
-  it "should call generator with wo arguments" do
-    expect(scope.function_generate([command, 'one', 'two'])).to eq("a-one b-two\n")
-  end
+    it "should call generator with wo arguments" do
+      expect(scope.function_generate([command, 'one', 'two'])).to eq("a-one b-two\n")
+    end
 
-  it "should fail if generator is not absolute" do
-    expect { scope.function_generate(['boo']) }.to raise_error(Puppet::ParseError)
-  end
+    it "should fail if generator is not absolute" do
+      expect { scope.function_generate(['boo']) }.to raise_error(Puppet::ParseError)
+    end
 
-  it "should fail if generator fails" do
-    expect { scope.function_generate(['/boo']) }.to raise_error(Puppet::ParseError)
+    it "should fail if generator fails" do
+      expect { scope.function_generate(['/boo']) }.to raise_error(Puppet::ParseError)
+    end
   end
 end

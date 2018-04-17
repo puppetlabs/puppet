@@ -9,7 +9,8 @@ describe "http compression" do
     str = StringIO.new
     writer = Zlib::GzipWriter.new(str)
     writer.write(data)
-    writer.close.string
+    writer.close
+    str.string
   end
 
   def stubs_response_with(response, content_encoding, body)
@@ -110,9 +111,11 @@ describe "http compression" do
           # \u{2070E} - 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
 
           pson = "foo\u06ff\u16A0\u{2070E}".to_pson # unicode expression eqivalent of "foo\xDB\xBF\xE1\x9A\xA0\xF0\xA0\x9C\x8E\" per above
-          writer = Zlib::GzipWriter.new(StringIO.new)
+          compressed_body_io = StringIO.new
+          writer = Zlib::GzipWriter.new(compressed_body_io)
           writer.write(pson)
-          compressed_body = writer.close.string
+          writer.close
+          compressed_body = compressed_body_io.string
 
           begin
             default_external = Encoding.default_external
