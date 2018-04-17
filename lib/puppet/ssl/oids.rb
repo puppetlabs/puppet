@@ -187,7 +187,7 @@ module Puppet::SSL::Oids
     else
       second_oid.index(first_oid) == 0
     end
-  rescue OpenSSL::ASN1::ASN1Error
+  rescue OpenSSL::ASN1::ASN1Error, TypeError
     false
   end
 end
