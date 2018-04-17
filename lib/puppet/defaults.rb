@@ -32,6 +32,20 @@ module Puppet
       %w[md5 md5lite sha256 sha256lite sha384 sha512 sha224 sha1 sha1lite mtime ctime]
   end
 
+  def self.default_basemodulepath
+    if Puppet::Util::Platform.windows?
+      path = ['$codedir/modules']
+      installdir = Facter.value(:env_windows_installdir)
+      if installdir
+        path << "#{installdir}/puppet/modules"
+        path << "#{installdir}/puppet/vendor_modules"
+      end
+      path.join(File::PATH_SEPARATOR)
+    else
+      '$codedir/modules:/opt/puppetlabs/puppet/modules:/opt/puppetlabs/puppet/vendor_modules'
+    end
+  end
+
   ############################################################################################
   # NOTE: For information about the available values for the ":type" property of settings,
   #   see the docs for Settings.define_settings
@@ -1286,7 +1300,7 @@ EOT
       :desc       => "File that provides mapping between custom SSL oids and user-friendly names"
     },
     :basemodulepath => {
-      :default => "$codedir/modules#{File::PATH_SEPARATOR}/opt/puppetlabs/puppet/modules",
+      :default => lambda { default_basemodulepath },
       :type => :path,
       :desc => "The search path for **global** modules. Should be specified as a
         list of directories separated by the system path separator character. (The

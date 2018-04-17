@@ -123,4 +123,32 @@ describe "Defaults" do
       Puppet.settings.handlearg("--server", "test_server")
     end
   end
+
+  describe 'basemodulepath' do
+    it 'includes the user, system and vendor modules', :unless => Puppet::Util::Platform.windows? do
+      expect(
+        Puppet[:basemodulepath]
+      ).to match(%r{.*/code/modules:/opt/puppetlabs/puppet/modules:/opt/puppetlabs/puppet/vendor_modules$})
+    end
+
+    describe 'on windows', :if => Puppet::Util::Platform.windows? do
+      let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
+
+      it 'includes user, system and vendor modules' do
+        Facter.stubs(:value).with(:env_windows_installdir).returns(installdir)
+
+        expect(
+          Puppet.default_basemodulepath
+        ).to eq('$codedir/modules;C:\Program Files\Puppet Labs\Puppet/puppet/modules;C:\Program Files\Puppet Labs\Puppet/puppet/vendor_modules')
+      end
+
+      it 'includes user modules if installdir fact is missing' do
+        Facter.stubs(:value).with(:env_windows_installdir).returns(nil)
+
+        expect(
+          Puppet.default_basemodulepath
+        ).to eq('$codedir/modules')
+      end
+    end
+  end
 end
