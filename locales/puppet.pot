@@ -53,7 +53,7 @@ msgid "Puppet %{version} requires ruby 2.3.0 or greater."
 msgstr ""
 
 #: ../lib/puppet.rb:130
-msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#prerequisites for a list of supported ruby versions."
+msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html#prerequisites for a list of supported ruby versions."
 msgstr ""
 
 #: ../lib/puppet.rb:188
