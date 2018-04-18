@@ -51,7 +51,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should fail if the indirection does not have the correct version" do
-      expect(lambda { handler.uri2indirection("GET", "#{Puppet::Network::HTTP::CA_URL_PREFIX}/v3/certificate/foo", params) }).to raise_error(bad_request_error)
+      expect(lambda { handler.uri2indirection("GET", "#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v1/node/bar", params) }).to raise_error(bad_request_error)
     end
 
     it "should not pass a buck_path parameter through (See Bugs #13553, #13518, #13511)" do
