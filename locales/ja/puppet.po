@@ -53,10 +53,10 @@ msgstr "Puppet %{version}ではruby 1.9.3以上が必要です。"
 msgid ""
 "Support for ruby version %{version} is deprecated and will be removed in a "
 "future release. See "
-"https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a "
+"https://puppet.com/docs/puppet/latest/system_requirements.html#prerequisites for a "
 "list of supported ruby versions."
 msgstr ""
-"rubyバージョン%{version}のサポートは廃止予定であり、今後のリリースで廃止されます。サポートされているrubyのバージョンについては、https://docs.puppet.com/puppet/latest/system_requirements.html#rubyを参照してください。"
+"rubyバージョン%{version}のサポートは廃止予定であり、今後のリリースで廃止されます。サポートされているrubyのバージョンについては、https://puppet.com/docs/puppet/latest/system_requirements.html#prerequisitesを参照してください。"
 
 #: ../lib/puppet.rb:177
 msgid ""
