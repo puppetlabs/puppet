@@ -73,6 +73,18 @@ module Puppet::GettextConfig
   end
 
   # @api private
+  # Resets the thread's configured text_domain to the default text domain.
+  # In Puppet Server, thread A may process a compile request that configures
+  # a domain, while thread B may invalidate that environment and delete the
+  # domain. That leaves thread A with an invalid text_domain selected.
+  # To avoid that, clear_text_domain after any processing that needs the
+  # non-default text domain.
+  def self.clear_text_domain
+    return if @gettext_disabled || !gettext_loaded?
+    FastGettext.text_domain = nil
+  end
+
+  # @api private
   # Creates a default text domain containing the translations for
   # Puppet as the start of chain. When semantic_puppet gets initialized,
   # its translations are added to this chain. This is used as a cache

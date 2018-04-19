@@ -58,6 +58,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       # a config or raise an exception.
       return nil
     end
+  ensure
+    Puppet::GettextConfig.clear_text_domain
   end
 
   # filter-out a catalog to remove exported resources

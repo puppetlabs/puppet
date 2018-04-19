@@ -100,6 +100,20 @@ describe Puppet::GettextConfig do
     end
   end
 
+  describe "clearing the configured text domain" do
+    it 'succeeds' do
+      Puppet::GettextConfig.clear_text_domain
+      expect(FastGettext.text_domain).to be_nil
+    end
+
+    it 'falls back to default' do
+      Puppet::GettextConfig.reset_text_domain(:test)
+      expect(FastGettext.text_domain).to eq(:test)
+      Puppet::GettextConfig.clear_text_domain
+      expect(FastGettext.text_domain).to eq(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN)
+    end
+  end
+
   describe "deleting text domains" do
     it 'can delete a text domain by name' do
       Puppet::GettextConfig.reset_text_domain('test')
