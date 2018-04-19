@@ -15,6 +15,7 @@ class Puppet::SSL::Host
   Certificate = Puppet::SSL::Certificate
   CertificateRequest = Puppet::SSL::CertificateRequest
   CertificateRevocationList = Puppet::SSL::CertificateRevocationList
+  CRL_DELIMITER = "-----END X509 CRL-----\n"
 
   extend Puppet::Indirector
   indirects :certificate_status, :terminus_class => :file, :doc => <<DOC
@@ -381,14 +382,19 @@ ERROR_STRING
 
     # If we're doing revocation and there's a CRL, add it to our store.
     if Puppet.lookup(:certificate_revocation)
-      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
+      if Puppet::FileSystem.exist?(Puppet.settings[:hostcrl])
         flags = OpenSSL::X509::V_FLAG_CRL_CHECK
         if Puppet.lookup(:certificate_revocation) == :chain
           flags |= OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
         end
 
         store.flags = flags
-        store.add_crl(crl.content)
+        crls = Puppet::FileSystem.read(Puppet.settings[:hostcrl])
+        crls.split(CRL_DELIMITER).each do |crl|
+          crl += CRL_DELIMITER
+          crl = OpenSSL::X509::CRL.new(crl)
+          store.add_crl(crl)
+        end
       else
         Puppet.debug _("Certificate revocation checking is enabled but a CRL cannot be found; CRL checking will not be performed.")
       end
