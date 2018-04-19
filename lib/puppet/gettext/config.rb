@@ -63,6 +63,7 @@ module Puppet::GettextConfig
   def self.reset_text_domain(domain_name)
     return if @gettext_disabled || !gettext_loaded?
 
+    Puppet.debug "Reset text domain to #{domain_name.inspect}"
     FastGettext.add_text_domain(domain_name,
                                 type: :chain,
                                 chain: [],
@@ -99,7 +100,10 @@ module Puppet::GettextConfig
     return if @gettext_disabled || !gettext_loaded?
 
     if FastGettext.translation_repositories.include?(domain_name)
+      Puppet.debug "Use text domain #{domain_name.inspect}"
       FastGettext.text_domain = domain_name
+    else
+      Puppet.debug "Requested unknown text domain #{domain_name.inspect}"
     end
   end
 
@@ -117,9 +121,12 @@ module Puppet::GettextConfig
   def self.delete_text_domain(domain_name)
     return if @gettext_disabled || !gettext_loaded?
 
-    FastGettext.translation_repositories.delete(domain_name)
+    deleted = FastGettext.translation_repositories.delete(domain_name)
     if FastGettext.text_domain == domain_name
+      Puppet.debug "Deleted current text domain #{domain_name.inspect}: #{!deleted.nil?}"
       FastGettext.text_domain = nil
+    else
+      Puppet.debug "Deleted text domain #{domain_name.inspect}: #{!deleted.nil?}"
     end
   end
 
