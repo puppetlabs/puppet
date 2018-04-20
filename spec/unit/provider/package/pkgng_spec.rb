@@ -56,7 +56,7 @@ describe provider_class do
 
     it "should return all packages when invoked" do
       expect(provider_class.instances.map(&:name).sort).to eq(
-        %w{ca_root_nss curl nmap pkg gnupg mcollective zsh tac_plus}.sort)
+        %w{ca_root_nss curl nmap pkg gnupg zsh tac_plus}.sort)
     end
 
     it "should set latest to current version when no upgrade available" do

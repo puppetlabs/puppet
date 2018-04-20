@@ -1,19 +1,15 @@
-test_name "Puppet and Mcollective services should be manageable with Puppet"
-
-confine :except, :platform => 'windows' # See MCO-727
-confine :except, :platform => /centos-4|el-4/ # PUP-5257
+test_name "The Puppet service should be manageable with Puppet"
 
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_name`
     'audit:acceptance' # uses services from a running puppet-agent install
-
 #
-# This test is intended to ensure that the Puppet and Mcollective services can
+# This test is intended to ensure that the Puppet service can
 # be directly managed by Puppet. See PUP-5053, PUP-5257, and RE-5574 for
 # more context around circumstances that this can fail.
 #
 
-skip_test 'requires puppet and mcollective service scripts from AIO agent package' if @options[:type] != 'aio'
+skip_test 'requires puppet service scripts from AIO agent package' if @options[:type] != 'aio'
 
 require 'puppet/acceptance/service_utils'
 extend Puppet::Acceptance::ServiceUtils
@@ -24,12 +20,12 @@ def set_service_initial_status(host, service, status)
   ensure_service_on_host(host, service, {'ensure' => status})
 end
 
-# We want to test Puppet and Mcollective in the following conditions:
+# We want to test Puppet in the following conditions:
 # 1) Starting, stopping and refreshing while the service is initially stopped
 # 2) Starting, stopping and refreshing while the service is initially running
 agents.each do |agent|
 
-  ['puppet', 'mcollective'].each do |service|
+  ['puppet'].each do |service|
     # --- service management using `puppet apply` --- #
     step "#{service} service management using `puppet apply`"
     set_service_initial_status(agent, service, 'stopped')
