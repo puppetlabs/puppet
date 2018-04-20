@@ -49,17 +49,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node = node_from_request(facts, request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
-    node.environment.use_text_domain if node.environment
-
-    if catalog = compile(node, request.options)
-      return catalog
+    if node.environment
+      node.environment.with_text_domain do
+        compile(node, request.options)
+      end
     else
-      # This shouldn't actually happen; we should either return
-      # a config or raise an exception.
-      return nil
+      compile(node, request.options)
     end
-  ensure
-    Puppet::GettextConfig.clear_text_domain
   end
 
   # filter-out a catalog to remove exported resources
