@@ -10,14 +10,11 @@ tag 'audit:medium',
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
-  tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type)
-  fq_tmp_environmentpath2  = "#{environmentpath}/#{tmp_environment2}"
 
   hiera_conf_backup = master.tmpfile('C99629-hiera-yaml')
 
   step "create hiera v3 global config and data" do
-    confdir = master.puppet('master')['confdir']
-    codedir = master.puppet('master')['codedir']
+    confdir = puppet_master_config(master, 'confdir')
 
     step "backup global hiera.yaml" do
       on(master, "cp -a #{confdir}/hiera.yaml #{hiera_conf_backup}", :acceptable_exit_codes => [0,1])

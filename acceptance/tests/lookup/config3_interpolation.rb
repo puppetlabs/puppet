@@ -12,7 +12,7 @@ tag 'audit:medium',
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
-  master_confdir = master.puppet('master')['confdir']
+  master_confdir = puppet_master_config(master, 'confdir')
 
   hiera_conf_backup = master.tmpfile('C99578-hiera-yaml')
 
@@ -25,8 +25,6 @@ tag 'audit:medium',
   end
 
   step "create hiera configs in #{tmp_environment} and global" do
-    codedir = master.puppet('master')['codedir']
-
     step "create global hiera.yaml and module data" do
       create_remote_file(master, "#{master_confdir}/hiera.yaml", <<-HIERA)
 ---

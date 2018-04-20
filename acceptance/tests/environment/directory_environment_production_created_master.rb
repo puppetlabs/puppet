@@ -7,10 +7,10 @@ tag 'audit:medium',
 testdir = create_tmpdir_for_user master, 'prod-env-created'
 
 step 'make environmentpath'
-master_user = on(master, puppet("master --configprint user")).stdout.strip
-cert_path   = on(master, puppet('config', 'print', 'hostcert')).stdout.strip
-key_path    = on(master, puppet('config', 'print', 'hostprivkey')).stdout.strip
-cacert_path = on(master, puppet('config', 'print', 'localcacert')).stdout.strip
+master_user = puppet_master_config(master, 'user')
+cert_path = puppet_master_config(master, 'hostcert')
+key_path = puppet_master_config(master, 'hostprivkey')
+cacert_path = puppet_master_config(master, 'localcacert')
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,

@@ -9,10 +9,9 @@ tag 'audit:low',       # Install via pmt is not the primary support workflow
     'audit:refactor'   # Master is not required for this test. Replace with agents.each
                        # Wrap steps in blocks in accordance with Beaker style guide
 
-codedir = master.puppet('master')['codedir']
+codedir = puppet_master_config(master, 'codedir')
 module_author = "pmtacceptance"
 module_name   = "nginx"
-module_dependencies = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do

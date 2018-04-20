@@ -14,7 +14,7 @@ tag 'audit:medium',
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
   puppetserver_config = "#{master['puppetserver-confdir']}/puppetserver.conf"
   existing_loadpath = read_tk_config_string(on(master, "cat #{puppetserver_config}").stdout.strip)['jruby-puppet']['ruby-load-path'].first
-  confdir = master.puppet('master')['confdir']
+  confdir = puppet_master_config(master, 'confdir')
 
   hiera_conf_backup = master.tmpfile('C99629-hiera-yaml')
 
