@@ -208,6 +208,11 @@ module Puppet
         Puppet::Network::HTTP::NoCachePool.new
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
+      # The indirector needs to disable certificate_revocation checking for the
+      # initial download of the CRL. Retrieving the setting from the context
+      # allows the indirector to call its `find` method within Context#override.
+      # If the indirector is no longer used for downloading the CRL then this
+      # may be removed (see PUP-8654).
       :certificate_revocation => proc { Puppet[:certificate_revocation] },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins }
     }
