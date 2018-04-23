@@ -421,7 +421,7 @@ ERROR_STRING
 
     # Use the file path here, because we don't want to cause
     # a lookup in the middle of setting our ssl connection.
-    store.add_file(Puppet[:localcacert])
+    store.add_file(Puppet.settings[:localcacert])
 
     if crl_usage
       crls = load_crls(crl_path)
