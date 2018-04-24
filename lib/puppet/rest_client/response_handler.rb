@@ -3,8 +3,6 @@ require 'stringio'
 
 module Puppet::Rest
   module ResponseHandler
-    ACCEPT_ENCODING = "gzip;q=1.0,deflate;q=0.6,identity;q=0.3"
-
     # Returns the content_type, stripping any appended charset, and the
     # body, decompressed if necessary (content-encoding is checked inside
     # uncompress_body)

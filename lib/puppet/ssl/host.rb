@@ -195,12 +195,44 @@ DOC
     true
   end
 
+  # Loads the certificate for this host. If configured to use an
+  # in-memory indirector terminus, it attempts to retrieve the cert with
+  # `indirection.find`. For all other cases, it first attempts to load
+  # the cert from disk, then to download it from the CA if this fails.
+  #
+  # The indirectory memory terminus is only used for testing the Ruby CA,
+  # so when that gets removed, this logic can go with it.
+  #
+  # @param [String] cert_name the name of the cert to load
+  # @return Puppet::SSL::Certificate if found, nil otherwise
   def get_cert(cert_name)
     # The memory terminus is used for testing
     if Puppet::SSL::Certificate.indirection.terminus_class == :memory
       return Puppet::SSL::Certificate.indirection.find(cert_name)
     end
 
+    file_path = cert_location(cert_name)
+    if Puppet::FileSystem.exist?(file_path)
+      return Puppet::SSL::Certificate.from_s(Puppet::FileSystem.read(file_path))
+    end
+
+    if Puppet::SSL::Host.ca_location == :remote
+      # Cert not found on disk, and we have a remote ca,
+      # so attempt to download it and save it to file_path
+      download_and_save_cert(cert_name, file_path)
+    end
+
+    # Couldn't find or fetch a cert
+    return nil
+  end
+
+  # Logic for detecting the cert's location on disk, based on `ca_location`
+  # and whether or not we are looking for the CA cert.
+  #
+  # @param [String] cert_name the name of the cert to find
+  # @return [String] filesystem location of the requested cert. Used both
+  # for loading and for saving.
+  def cert_location(cert_name)
     if Puppet::SSL::Host.ca_location == :only
       if cert_name == 'ca'
         file_path = Puppet.settings[:cacert]
@@ -214,26 +246,29 @@ DOC
         file_path = File.join(Puppet.settings[:certdir], "#{name}.pem")
       end
     end
-
-    if Puppet::FileSystem.exist?(file_path)
-      return Puppet::SSL::Certificate.from_s(Puppet::FileSystem.read(file_path))
-    end
-
-    if Puppet::SSL::Host.ca_location == :remote
-      # Cert not found on disk, and we have a remote ca,
-      # so attempt to download it
-      download_cert(cert_name, file_path)
-    end
-
-    # Couldn't find or fetch a cert
-    return nil
+    return file_path
   end
+  private :cert_location
 
-  def download_cert(cert_name, file_path)
-    response = Puppet::Rest::Client.instance.get(Puppet::Routes.certificate(cert_name),
-                                                 { environment: Puppet.lookup(:current_environment).name },
-                                                 { Accept: 'text/plain',
-                                                   'accept-encoding' => Puppet::Rest::ResponseHandler::ACCEPT_ENCODING })
+  # Downloads the cert from the CA and saves it at the specified
+  # location on disk if the download was successful.
+  #
+  # @param [String] cert_name name of the cert to download
+  # @param [String] file_path location to save the cert
+  # return Puppet::SSL::Certificate if saved successfully, nil otherwise
+  def download_and_save_cert(cert_name, file_path)
+    response = Puppet::Rest::Routes.get_certificate(cert_name)
+    return save_cert(response, file_path)
+  end
+  private :download_and_save_cert
+
+  # Saves the body of `response` to disk at `file_path`,
+  # if the response contains one or more valid certs.
+  #
+  # @param [String] cert_name name of the cert to download
+  # @param [String] file_path location to save the cert
+  # @return Puppet::SSL::Certificate if successful, nil otherwise
+  def save_cert(response, file_path)
     if response.ok?
       _, body = Puppet::Rest::ResponseHandler.parse_response(response)
       # Convert to cert object to ensure valid response
@@ -244,10 +279,10 @@ DOC
       end
       return cert
     else
-      # Couldn't find an existing host cert, so don't continue
       return nil
     end
   end
+  private :save_cert
 
   def certificate
     unless @certificate
