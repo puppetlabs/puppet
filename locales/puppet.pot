@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.0-58-g68ecc59\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-12-gd048d9b\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-04-04 16:16+0000\n"
-"PO-Revision-Date: 2018-04-04 16:16+0000\n"
+"POT-Creation-Date: 2018-04-24 21:45+0000\n"
+"PO-Revision-Date: 2018-04-24 21:45+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -509,63 +509,63 @@ msgstr ""
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:185
+#: ../lib/puppet/configurer.rb:184
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:227
+#: ../lib/puppet/configurer.rb:225
 msgid "Could not select a functional puppet master"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:261
+#: ../lib/puppet/configurer.rb:262
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:306
+#: ../lib/puppet/configurer.rb:307
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:311
+#: ../lib/puppet/configurer.rb:312
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:315
+#: ../lib/puppet/configurer.rb:316
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:339
+#: ../lib/puppet/configurer.rb:340
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:350
+#: ../lib/puppet/configurer.rb:351
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:352
+#: ../lib/puppet/configurer.rb:353
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:371
+#: ../lib/puppet/configurer.rb:372
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:418 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:421 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:427
+#: ../lib/puppet/configurer.rb:430
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:439
+#: ../lib/puppet/configurer.rb:442
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:457
+#: ../lib/puppet/configurer.rb:460
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:477
+#: ../lib/puppet/configurer.rb:480
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -902,37 +902,37 @@ msgstr ""
 msgid "New environment loaders generated from the requested section."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:135
+#: ../lib/puppet/face/config.rb:137
 msgid "No section specified; defaulting to '%{section_name}'."
 msgstr ""
 
 #. TRANSLATORS '--section' is a command line option and should not be translated
-#: ../lib/puppet/face/config.rb:138
+#: ../lib/puppet/face/config.rb:140
 msgid "Set the config section by using the `--section` flag."
 msgstr ""
 
 #. TRANSLATORS `puppet config --section user print foo` is a command line example and should not be translated
-#: ../lib/puppet/face/config.rb:140
+#: ../lib/puppet/face/config.rb:142
 msgid "For example, `puppet config --section user print foo`."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:141
+#: ../lib/puppet/face/config.rb:143
 msgid "For more information, see https://puppet.com/docs/puppet/latest/configuration.html"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:148
+#: ../lib/puppet/face/config.rb:150
 msgid "Resolving settings from section '%{section_name}' in environment '%{environment_name}'"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:153
+#: ../lib/puppet/face/config.rb:155
 msgid "Set Puppet's settings."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:154
+#: ../lib/puppet/face/config.rb:156
 msgid "[setting_name] [setting_value]"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:182
+#: ../lib/puppet/face/config.rb:184
 msgid ""
 "The environment should be set in either the `[user]`, `[agent]`, or `[master]`\n"
 "section. Variables set in the `[agent]` section are used when running\n"
@@ -944,25 +944,25 @@ msgid ""
 "https://puppet.com/docs/puppet/latest/configuration.html#environment\n"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:208
+#: ../lib/puppet/face/config.rb:212
 msgid "Delete a Puppet setting."
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:209
+#: ../lib/puppet/face/config.rb:213
 msgid "(<setting>"
 msgstr ""
 
 #. TRANSLATORS 'main' is a specific section name and should not be translated
-#: ../lib/puppet/face/config.rb:244
+#: ../lib/puppet/face/config.rb:250
 msgid "Deleted setting from '%{section_name}': '%{setting_string}'"
 msgstr ""
 
-#: ../lib/puppet/face/config.rb:247
+#: ../lib/puppet/face/config.rb:253
 msgid "No setting found in configuration file for section '%{section_name}' setting name '%{name}'"
 msgstr ""
 
 #. TRANSLATORS the 'puppet.conf' is a specific file and should not be translated
-#: ../lib/puppet/face/config.rb:254
+#: ../lib/puppet/face/config.rb:260
 msgid "The puppet.conf file does not exist %{puppet_conf}"
 msgstr ""
 
@@ -2212,7 +2212,7 @@ msgstr ""
 msgid "The given data does not contain a Collection at %{walked_path}, got '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/functions/empty.rb:76
+#: ../lib/puppet/functions/empty.rb:74
 msgid "Calling function empty() with %{arg_type} value is deprecated."
 msgstr ""
 
@@ -2257,7 +2257,7 @@ msgstr ""
 msgid "slice(): block must define one parameter, or the same number of parameters as the given size of the slice (%{slice_size}). Block has %{serving_size}; %{parameter_names}"
 msgstr ""
 
-#: ../lib/puppet/functions/strftime.rb:213
+#: ../lib/puppet/functions/strftime.rb:207
 msgid "The argument signature (String format, [String timezone]) is deprecated for #strftime. See #strftime documentation and Timespan type for more info"
 msgstr ""
 
@@ -4264,7 +4264,7 @@ msgstr ""
 msgid "Node inheritance is removed in Puppet 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
 msgstr ""
 
-#: ../lib/puppet/parser/ast/pops_bridge.rb:176
+#: ../lib/puppet/parser/ast/pops_bridge.rb:194
 msgid "Instantiating Resource with type checked parameters - scope is missing, skipping type checking."
 msgstr ""
 
@@ -4436,7 +4436,7 @@ msgstr ""
 msgid "'%{param}' is not a valid relationship to a capability"
 msgstr ""
 
-#: ../lib/puppet/parser/compiler/catalog_validator/relationship_validator.rb:36
+#: ../lib/puppet/parser/compiler/catalog_validator/relationship_validator.rb:43
 msgid "Could not find resource '%{res}' in parameter '%{param}'"
 msgstr ""
 
@@ -4920,7 +4920,7 @@ msgstr ""
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:22 ../lib/puppet/pops/evaluator/runtime3_support.rb:23 ../lib/puppet/pops/evaluator/runtime3_support.rb:531
+#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:22 ../lib/puppet/pops/evaluator/runtime3_support.rb:23 ../lib/puppet/pops/evaluator/runtime3_support.rb:526
 msgid "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
 msgstr ""
 
@@ -4937,11 +4937,11 @@ msgstr ""
 msgid "Unknown resource type: '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/runtime3_support.rb:153
+#: ../lib/puppet/pops/evaluator/runtime3_support.rb:148
 msgid "Internal error - attempt to create a local scope without a hash"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/runtime3_support.rb:291
+#: ../lib/puppet/pops/evaluator/runtime3_support.rb:286
 msgid "Unknown function '%{name}'"
 msgstr ""
 
@@ -6498,67 +6498,67 @@ msgstr ""
 msgid "missing path argument %{narg} for %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:129
+#: ../lib/puppet/provider/augeas/augeas.rb:136
 msgid "missing string argument %{narg} for %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:134
+#: ../lib/puppet/provider/augeas/augeas.rb:141
 msgid "invalid comparator for command %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:221 ../lib/puppet/provider/augeas/augeas.rb:252 ../lib/puppet/provider/augeas/augeas.rb:300 ../lib/puppet/provider/augeas/augeas.rb:315
+#: ../lib/puppet/provider/augeas/augeas.rb:228 ../lib/puppet/provider/augeas/augeas.rb:259 ../lib/puppet/provider/augeas/augeas.rb:307 ../lib/puppet/provider/augeas/augeas.rb:322
 msgid "Invalid command: %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:262
+#: ../lib/puppet/provider/augeas/augeas.rb:269
 msgid "Error trying to get path '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:280 ../lib/puppet/provider/augeas/augeas.rb:288 ../lib/puppet/provider/augeas/augeas.rb:336 ../lib/puppet/provider/augeas/augeas.rb:344
+#: ../lib/puppet/provider/augeas/augeas.rb:287 ../lib/puppet/provider/augeas/augeas.rb:295 ../lib/puppet/provider/augeas/augeas.rb:343 ../lib/puppet/provider/augeas/augeas.rb:351
 msgid "Invalid array in command: %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:310
+#: ../lib/puppet/provider/augeas/augeas.rb:317
 msgid "Error trying to match path '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:380
+#: ../lib/puppet/provider/augeas/augeas.rb:387
 msgid "Loading failed for one or more files, see debug for /augeas//error output"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:422
+#: ../lib/puppet/provider/augeas/augeas.rb:429
 msgid "Error sending command '%{command}' with params %{param}/%{message}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:437
+#: ../lib/puppet/provider/augeas/augeas.rb:444
 msgid "Saving failed, see debug"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:479
+#: ../lib/puppet/provider/augeas/augeas.rb:486
 msgid "Save failed, see debug"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:491
+#: ../lib/puppet/provider/augeas/augeas.rb:498
 msgid "invalid command %{cmd}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:499 ../lib/puppet/provider/augeas/augeas.rb:504 ../lib/puppet/provider/augeas/augeas.rb:511 ../lib/puppet/provider/augeas/augeas.rb:515 ../lib/puppet/provider/augeas/augeas.rb:521 ../lib/puppet/provider/augeas/augeas.rb:529 ../lib/puppet/provider/augeas/augeas.rb:542 ../lib/puppet/provider/augeas/augeas.rb:546 ../lib/puppet/provider/augeas/augeas.rb:550 ../lib/puppet/provider/augeas/augeas.rb:554 ../lib/puppet/provider/augeas/augeas.rb:558
+#: ../lib/puppet/provider/augeas/augeas.rb:506 ../lib/puppet/provider/augeas/augeas.rb:511 ../lib/puppet/provider/augeas/augeas.rb:518 ../lib/puppet/provider/augeas/augeas.rb:522 ../lib/puppet/provider/augeas/augeas.rb:528 ../lib/puppet/provider/augeas/augeas.rb:536 ../lib/puppet/provider/augeas/augeas.rb:549 ../lib/puppet/provider/augeas/augeas.rb:553 ../lib/puppet/provider/augeas/augeas.rb:557 ../lib/puppet/provider/augeas/augeas.rb:561 ../lib/puppet/provider/augeas/augeas.rb:565
 msgid "Error sending command '%{command}' with params %{params}"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:506 ../lib/puppet/provider/augeas/augeas.rb:523
+#: ../lib/puppet/provider/augeas/augeas.rb:513 ../lib/puppet/provider/augeas/augeas.rb:530
 msgid "command '%{command}' not supported in installed version of ruby-augeas"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:538
+#: ../lib/puppet/provider/augeas/augeas.rb:545
 msgid "Invalid value '%{where}' for where param"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:559
+#: ../lib/puppet/provider/augeas/augeas.rb:566
 msgid "Command '%{command}' is not supported"
 msgstr ""
 
-#: ../lib/puppet/provider/augeas/augeas.rb:562
+#: ../lib/puppet/provider/augeas/augeas.rb:569
 msgid "Error sending command '%{command}' with params %{params}/%{message}"
 msgstr ""
 
@@ -7487,43 +7487,43 @@ msgstr ""
 msgid "%{name} is not a class; cannot add code from it"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:192
+#: ../lib/puppet/resource/type.rb:195
 msgid "Cannot have code outside of a class/node/define because 'freeze_main' is enabled"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:195
+#: ../lib/puppet/resource/type.rb:199
 msgid "Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:226
+#: ../lib/puppet/resource/type.rb:230
 msgid "Cannot create resources for defined resource types"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:280
+#: ../lib/puppet/resource/type.rb:284
 msgid "The method Puppet::Resource::Type.assign_parameter_values is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:296
+#: ../lib/puppet/resource/type.rb:300
 msgid "Could not find parent resource type '%{parent}' of type %{parent_type} in %{env}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:423
+#: ../lib/puppet/resource/type.rb:427
 msgid "Parameter '%{name}' is given a type, but is not a valid parameter."
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:426
+#: ../lib/puppet/resource/type.rb:430
 msgid "Parameter '%{name}' is given a type that is not a Puppet Type, got %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:466
+#: ../lib/puppet/resource/type.rb:470
 msgid "Could not find scope for %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:487
+#: ../lib/puppet/resource/type.rb:491
 msgid "%{param} is a metaparam; this value will inherit to all contained resources in the %{name} definition"
 msgstr ""
 
-#: ../lib/puppet/resource/type.rb:489
+#: ../lib/puppet/resource/type.rb:493
 msgid "%{param} is a metaparameter; please choose another parameter name in the %{name} definition"
 msgstr ""
 
@@ -8536,6 +8536,30 @@ msgstr ""
 msgid "MD5 is not supported in FIPS mode"
 msgstr ""
 
+#. TRANSLATORS "content" is an attribute and should not be translated
+#: ../lib/puppet/type/file/content.rb:53
+msgid "Using a checksum in a file's \"content\" property is deprecated."
+msgstr ""
+
+#. TRANSLATORS "filebucket" is a resource type and should not be translated. The quoted occurrence of "content" is an attribute and should not be translated.
+#: ../lib/puppet/type/file/content.rb:55
+msgid "The ability to use a checksum to retrieve content from the filebucket using the \"content\" property will be removed in a future release."
+msgstr ""
+
+#. TRANSLATORS "content" is an attribute and should not be translated.
+#: ../lib/puppet/type/file/content.rb:57
+msgid "The literal value of the \"content\" property will be written to the file."
+msgstr ""
+
+#. TRANSLATORS "static catalogs" should not be translated.
+#: ../lib/puppet/type/file/content.rb:59
+msgid "The checksum retrieval functionality is being replaced by the use of static catalogs."
+msgstr ""
+
+#: ../lib/puppet/type/file/content.rb:60
+msgid "See https://puppet.com/docs/puppet/latest/static_catalogs.html for more information."
+msgstr ""
+
 #. TRANSLATORS 'Ensure' is an attribute and ':present' is a value and should not be translated
 #: ../lib/puppet/type/file/data_sync.rb:31
 msgid "Ensure set to :present but file type is %{file_type} so no content will be synced"
@@ -8565,7 +8589,7 @@ msgstr ""
 msgid "Invalid GID %{gid}"
 msgstr ""
 
-#: ../lib/puppet/type/group.rb:166 ../lib/puppet/type/user.rb:618
+#: ../lib/puppet/type/group.rb:166 ../lib/puppet/type/user.rb:649
 msgid "Attributes value pairs must be separated by an ="
 msgstr ""
 
@@ -8796,105 +8820,105 @@ msgstr ""
 msgid "Could not find group(s) %{groups}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:224
+#: ../lib/puppet/type/user.rb:255
 msgid "Passwords cannot include ':'"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:229
+#: ../lib/puppet/type/user.rb:260
 msgid "created password"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:231
+#: ../lib/puppet/type/user.rb:262
 msgid "changed password"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:236
+#: ../lib/puppet/type/user.rb:267
 msgid "[old password hash redacted]"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:239
+#: ../lib/puppet/type/user.rb:270
 msgid "[new password hash redacted]"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:258
+#: ../lib/puppet/type/user.rb:289
 msgid "Password minimum age must be provided as a number."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:277
+#: ../lib/puppet/type/user.rb:308
 msgid "Password maximum age must be provided as a number."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:308
+#: ../lib/puppet/type/user.rb:339
 msgid "Group names must be provided, not GID numbers."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:310
+#: ../lib/puppet/type/user.rb:341
 msgid "Group names must be provided as an array, not a comma-separated list."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:311
+#: ../lib/puppet/type/user.rb:342
 msgid "Group names must not be empty. If you want to specify \"no groups\" pass an empty array"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:403
+#: ../lib/puppet/type/user.rb:434
 msgid "User provider %{name} can not manage home directories"
 msgstr ""
 
 #. TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
 #. TRANSLATORS separated by dashes.
-#: ../lib/puppet/type/user.rb:420
+#: ../lib/puppet/type/user.rb:451
 msgid "Expiry dates must be YYYY-MM-DD or the string \"absent\""
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:497
+#: ../lib/puppet/type/user.rb:528
 msgid "Role names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:499
+#: ../lib/puppet/type/user.rb:530
 msgid "Role names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:534
+#: ../lib/puppet/type/user.rb:565
 msgid "Auth names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:536
+#: ../lib/puppet/type/user.rb:567
 msgid "Auth names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:560
+#: ../lib/puppet/type/user.rb:591
 msgid "Profile names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:562
+#: ../lib/puppet/type/user.rb:593
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:584
+#: ../lib/puppet/type/user.rb:615
 msgid "Key/value pairs must be separated by an ="
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:691
+#: ../lib/puppet/type/user.rb:722
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:694
+#: ../lib/puppet/type/user.rb:725
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:698
+#: ../lib/puppet/type/user.rb:729
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:710
+#: ../lib/puppet/type/user.rb:741
 msgid "purge_ssh_keys can only be true for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:717
+#: ../lib/puppet/type/user.rb:748
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:731
+#: ../lib/puppet/type/user.rb:762
 msgid "Class name must be provided."
 msgstr ""
 
