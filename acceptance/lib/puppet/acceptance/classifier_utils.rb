@@ -82,48 +82,6 @@ module Puppet
         return group_uuid
       end
 
-      # Locates and then updates the 'PE MCollective' group to disable it for
-      # all agent nodes. A teardown is registered to restore the 'PE
-      # MCollective' group at the end of the test.
-      def disable_pe_enterprise_mcollective_agent_classes
-        return if !master.is_pe?
-
-        step "Get classifier groups so we can locate the PE MCollective group"
-        response = classifier_handle.get("/v1/groups")
-        assert_equal(200, response.code, "Unable to get classifer groups: #{response.body}")
-
-        groups_json = response.body
-        groups = JSON.parse(groups_json)
-        pe_mcollective = groups.find { |g| g['name'] == 'PE MCollective' }
-        assert_not_nil pe_mcollective, "Unable to find the 'PE MCollective' group in: #{groups.pretty_inspect}"
-        select_properties_we_can_put = lambda do |group|
-          group.select { |k,v| ['id','name','environment','environment_trumps','rule','description','classes','variables','parent'].include?(k) }
-        end
-        pe_mcollective = select_properties_we_can_put.call(pe_mcollective)
-
-        teardown do
-          step "Restore original PE MCollective group" do
-            groups = JSON.parse(groups_json)
-            original_pe_mcollective = groups.find { |g| g['name'] == 'PE MCollective' }
-            original_pe_mcollective = select_properties_we_can_put.call(original_pe_mcollective)
-            response = classifier_handle.put("/v1/groups/#{original_pe_mcollective['id']}", :body => original_pe_mcollective.to_json)
-            assert_equal(201, response.code, "Unable to restore 'PE MCollective' group: #{response.code}:#{response.body}")
-          end if response.code == 201
-        end
-
-        hostnames = agents.map { |n| n.hostname }
-        step "Adjust PE MCollective not to match for #{hostnames.join(", ")}"
-        host_matching_rule = hostnames.inject(["or"]) do |r,name|
-          r << ["~", "name", name]
-          r
-        end
-        pe_mcollective['rule'] = ['and', pe_mcollective['rule'], ['not', host_matching_rule]]
-
-        response = classifier_handle.put("/v1/groups/#{pe_mcollective['id']}", :body => pe_mcollective.to_json)
-
-        assert_equal(201, response.code, "Unexpected response code: #{response.code}, #{response.body}")
-      end
-
       # Creates a group which allows the given nodes to specify their own environments.
       # Will be torn down at the end of the test.
       def classify_nodes_as_agent_specified(nodes)

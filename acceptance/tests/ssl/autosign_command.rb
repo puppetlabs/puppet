@@ -3,8 +3,6 @@ extend Puppet::Acceptance::CAUtils
 require 'puppet/acceptance/classifier_utils'
 extend Puppet::Acceptance::ClassifierUtils
 
-disable_pe_enterprise_mcollective_agent_classes
-
 test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
 
