@@ -36,7 +36,7 @@ def get_test_sample
             'tests/ssl/puppet_cert_generate_and_autosign.rb',
             'tests/resource/package/yum.rb',
             'tests/resource/service/ticket_5024_systemd_enabling_masked_service.rb',
-            'tests/resource/service/puppet_mcollective_service_management.rb'
+            'tests/resource/service/puppet_service_management.rb'
           ]
 
   # Add any tests modified within the last two weeks to the list, excluding
