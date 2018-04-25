@@ -12,7 +12,6 @@ module Puppet::ModuleTool
         @suggestions = []
         @environment = options[:environment_instance]
         @ignore_changes = options[:force] || options[:ignore_changes]
-        @strict_semver  = !!options[:strict_semver]
       end
 
       def run
@@ -61,7 +60,7 @@ module Puppet::ModuleTool
               :path    => mod.modulepath,
             }
             if @options[:version] && mod.version
-              next unless Puppet::Module.parse_range(@options[:version], @strict_semver).include?(SemanticPuppet::Version.parse(mod.version))
+              next unless Puppet::Module.parse_range(@options[:version]).include?(SemanticPuppet::Version.parse(mod.version))
             end
             @installed << mod
           elsif mod_name =~ /#{@name}/

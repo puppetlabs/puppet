@@ -187,7 +187,7 @@ describe "puppet module search" do
       searcher = mock("Searcher")
       options[:module_repository] = "http://forge.example.com"
 
-      Puppet::Forge.expects(:new).with("http://forge.example.com", false).returns(forge)
+      Puppet::Forge.expects(:new).with("http://forge.example.com").returns(forge)
       Puppet::ModuleTool::Applications::Searcher.expects(:new).with("puppetlabs-apache", forge, has_entries(options)).returns(searcher)
       searcher.expects(:run)
 

@@ -62,10 +62,6 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
-    option '--strict-semver' do
-      summary _('Whether version ranges should exclude pre-release versions')
-    end
-
     when_invoked do |name, options|
       name = name.gsub('/', '-')
       Puppet.notice _("Preparing to upgrade '%{name}' ...") % { name: name }

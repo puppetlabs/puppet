@@ -19,10 +19,9 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
   attr_reader :host, :repository
 
-  def initialize(host = Puppet[:module_repository], strict_semver = true)
+  def initialize(host = Puppet[:module_repository])
     @host = host
     @repository = Puppet::Forge::Repository.new(host, USER_AGENT)
-    @strict_semver = strict_semver
   end
 
   # Return a list of module metadata hashes that match the search query.
@@ -120,7 +119,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease
     attr_reader :install_dir, :metadata
 
-    def initialize(source, data, strict_semver = true)
+    def initialize(source, data)
       @data = data
       @metadata = meta = data['metadata']
 
@@ -132,7 +131,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
         dependencies = meta['dependencies'].collect do |dep|
           begin
             Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
-            Puppet::ModuleTool.parse_module_dependency(release, dep, strict_semver)[0..1]
+            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
           rescue ArgumentError => e
             raise ArgumentError, _("Malformed dependency: %{name}.") % { name: dep['name'] } +
                 ' ' + _("Exception was: %{detail}") % { detail: e }
@@ -224,7 +223,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     l = list.map do |release|
       metadata = release['metadata']
       begin
-        ModuleRelease.new(self, release, @strict_semver)
+        ModuleRelease.new(self, release)
       rescue ArgumentError => e
         Puppet.warning _("Cannot consider release %{name}-%{version}: %{error}") % { name: metadata['name'], version: metadata['version'], error: e }
         false

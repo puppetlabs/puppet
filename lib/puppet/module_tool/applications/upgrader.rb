@@ -20,7 +20,6 @@ module Puppet::ModuleTool
         @name                = name
         @ignore_changes      = forced? || options[:ignore_changes]
         @ignore_dependencies = forced? || options[:ignore_dependencies]
-        @strict_semver       = !!options[:strict_semver]
 
         SemanticPuppet::Dependency.add_source(installed_modules_source)
         SemanticPuppet::Dependency.add_source(module_repository)
@@ -94,7 +93,7 @@ module Puppet::ModuleTool
           if available_versions.empty?
             raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
           elsif results[:requested_version] != :latest
-            requested = Puppet::Module.parse_range(results[:requested_version], @strict_semver)
+            requested = Puppet::Module.parse_range(results[:requested_version])
             unless available_versions.any? {|m| requested.include? m.version}
               raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
             end
@@ -123,7 +122,7 @@ module Puppet::ModuleTool
               # module, locking it to upgrades within the same major version.
               installed_range = ">=#{version} #{version.major}.x"
               graph.add_constraint('installed', installed_module, installed_range) do |node|
-                Puppet::Module.parse_range(installed_range, @strict_semver).include? node.version
+                Puppet::Module.parse_range(installed_range).include? node.version
               end
 
               release.mod.dependencies.each do |dep|
@@ -131,7 +130,7 @@ module Puppet::ModuleTool
 
                 range = dep['version_requirement']
                 graph.add_constraint("#{installed_module} constraint", dep_name, range) do |node|
-                  Puppet::Module.parse_range(range, @strict_semver).include? node.version
+                  Puppet::Module.parse_range(range).include? node.version
                 end
               end
             end
@@ -219,7 +218,7 @@ module Puppet::ModuleTool
 
       private
       def module_repository
-        @repo ||= Puppet::Forge.new(Puppet[:module_repository], @strict_semver)
+        @repo ||= Puppet::Forge.new(Puppet[:module_repository])
       end
 
       def installed_modules_source
@@ -231,7 +230,7 @@ module Puppet::ModuleTool
       end
 
       def build_single_module_graph(name, version)
-        range = Puppet::Module.parse_range(version, @strict_semver)
+        range = Puppet::Module.parse_range(version)
         graph = SemanticPuppet::Dependency::Graph.new(name => range)
         releases = SemanticPuppet::Dependency.fetch_releases(name)
         releases.each { |release| release.dependencies.clear }
