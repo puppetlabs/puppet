@@ -70,13 +70,8 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     context "with certificate_revocation off" do
-      around do |example|
-        Puppet.push_context({certificate_revocation: false})
-        example.run
-        Puppet.pop_context
-      end
-
       it "should verify a revoked certificate if CRL use was turned off" do
+        Puppet.settings[:certificate_revocation] = false
         given_certificates_for('random-host')
         subject.revoke('random-host')
 
