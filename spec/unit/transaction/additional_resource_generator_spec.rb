@@ -16,8 +16,11 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
   let(:node) { Puppet::Node.new('test', :environment => env) }
   let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
-  around :each do |example|
+  before(:each) do
     Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+  end
+
+  around :each do |example|
     Puppet.override(:loaders => loaders, :current_environment => env) do
       Puppet::Type.newtype(:generator) do
         include PuppetSpec::Compiler

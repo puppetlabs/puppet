@@ -9,7 +9,6 @@ describe 'Capability types' do
   let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
   around :each do |example|
-    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
     Puppet.override(:loaders => loaders, :current_environment => env) do
       Puppet::Type.newtype :cap, :is_capability => true do
         newparam :name
@@ -18,6 +17,10 @@ describe 'Capability types' do
       example.run
       Puppet::Type.rmtype(:cap)
     end
+  end
+
+  before(:each) do
+    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
   end
 
   context 'annotations' do

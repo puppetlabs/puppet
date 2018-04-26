@@ -20,7 +20,6 @@ describe Puppet::Resource::CapabilityFinder do
         end
       end
       begin
-        Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
         Puppet.override(:loaders => loaders, :current_environment => env) do
           make_cap_type
           example.run
@@ -30,6 +29,10 @@ describe Puppet::Resource::CapabilityFinder do
         Puppet::Type.rmtype(:cap)
         Puppet::Pops::Loaders.clear
       end
+    end
+
+    before(:each) do
+      Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
     end
 
     let(:env) { Puppet::Node::Environment.create(:testing, []) }

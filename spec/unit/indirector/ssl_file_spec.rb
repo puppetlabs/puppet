@@ -6,21 +6,31 @@ require 'puppet/indirector/ssl_file'
 describe Puppet::Indirector::SslFile do
   include PuppetSpec::Files
 
-  before :all do
-    @indirection = stub 'indirection', :name => :testing, :model => @model
-    Puppet::Indirector::Indirection.expects(:instance).with(:testing).returns(@indirection)
-    module Testing; end
-    @file_class = class Testing::MyType < Puppet::Indirector::SslFile
-      self
+  before(:all) do
+    class Puppet::SslTestModel
+      extend Puppet::Indirector
+      indirects :ssl_test_model
     end
-  end
-  before :each do
-    @model = mock 'model'
 
+    class Puppet::SslTestModel::SslFile < Puppet::Indirector::SslFile
+    end
+
+    Puppet::SslTestModel.indirection.terminus_class = :ssl_file
+  end
+
+  after(:all) do
+    Puppet::SslTestModel.indirection.delete
+    Puppet.send(:remove_const, :SslTestModel)
+  end
+
+  let(:terminus_class) { Puppet::SslTestModel::SslFile }
+  let(:model) { Puppet::SslTestModel }
+
+  before :each do
     @setting = :certdir
-    @file_class.store_in @setting
-    @file_class.store_at nil
-    @file_class.store_ca_at nil
+    terminus_class.store_in @setting
+    terminus_class.store_at nil
+    terminus_class.store_ca_at nil
     @path = make_absolute("/thisdoesntexist/my_directory")
     Puppet[:noop] = false
     Puppet[@setting] = @path
@@ -28,39 +38,39 @@ describe Puppet::Indirector::SslFile do
   end
 
   after :each do
-    @file_class.store_in nil
-    @file_class.store_at nil
-    @file_class.store_ca_at nil
+    terminus_class.store_in nil
+    terminus_class.store_at nil
+    terminus_class.store_ca_at nil
   end
 
   it "should use :main and :ssl upon initialization" do
     Puppet.settings.expects(:use).with(:main, :ssl)
-    @file_class.new
+    terminus_class.new
   end
 
   it "should return a nil collection directory if no directory setting has been provided" do
-    @file_class.store_in nil
-    expect(@file_class.collection_directory).to be_nil
+    terminus_class.store_in nil
+    expect(terminus_class.collection_directory).to be_nil
   end
 
   it "should return a nil file location if no location has been provided" do
-    @file_class.store_at nil
-    expect(@file_class.file_location).to be_nil
+    terminus_class.store_at nil
+    expect(terminus_class.file_location).to be_nil
   end
 
   it "should fail if no store directory or file location has been set" do
     Puppet.settings.expects(:use).with(:main, :ssl)
-    @file_class.store_in nil
-    @file_class.store_at nil
+    terminus_class.store_in nil
+    terminus_class.store_at nil
     expect {
-      @file_class.new
+      terminus_class.new
     }.to raise_error(Puppet::DevError, /No file or directory setting provided/)
   end
 
   describe "when managing ssl files" do
     before do
       Puppet.settings.stubs(:use)
-      @searcher = @file_class.new
+      @searcher = terminus_class.new
 
       @cert = stub 'certificate', :name => "myname"
       @certpath = File.join(@path, "myname.pem")
@@ -75,9 +85,9 @@ describe Puppet::Indirector::SslFile do
 
     describe "when choosing the location for certificates" do
       it "should set them at the ca setting's path if a ca setting is available and the name resolves to the CA name" do
-        @file_class.store_in nil
-        @file_class.store_at :mysetting
-        @file_class.store_ca_at :cakey
+        terminus_class.store_in nil
+        terminus_class.store_at :mysetting
+        terminus_class.store_ca_at :cakey
 
         Puppet[:cakey] = File.expand_path("/ca/file")
 
@@ -86,8 +96,8 @@ describe Puppet::Indirector::SslFile do
       end
 
       it "should set them at the file location if a file setting is available" do
-        @file_class.store_in nil
-        @file_class.store_at :cacrl
+        terminus_class.store_in nil
+        terminus_class.store_at :cacrl
 
         Puppet[:cacrl] = File.expand_path("/some/file")
 
@@ -134,7 +144,7 @@ describe Puppet::Indirector::SslFile do
         let(:model) { mock 'model' }
 
         before(:each) do
-          @file_class.stubs(:model).returns model
+          terminus_class.stubs(:model).returns model
         end
 
         context "is readable" do
@@ -289,7 +299,7 @@ describe Puppet::Indirector::SslFile do
       let(:model) { mock 'model' }
 
       before :each do
-        @file_class.stubs(:model).returns model
+        terminus_class.stubs(:model).returns model
       end
 
       it "should return a certificate instance for all files that exist" do

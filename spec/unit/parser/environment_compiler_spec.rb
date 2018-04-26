@@ -24,9 +24,12 @@ describe "Application instantiation" do
     Puppet::Parser::EnvironmentCompiler.compile(env, code_id).filter { |r| r.virtual? }
   end
 
-  around :each do |example|
+  before(:each) do
     Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
     Puppet::Parser::EnvironmentCompiler.any_instance.stubs(:loaders).returns(loaders)
+  end
+
+  around :each do |example|
     Puppet.override(:loaders => loaders, :current_environment => env) do
       Puppet::Type.newtype :cap, :is_capability => true do
         newparam :name
