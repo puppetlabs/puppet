@@ -929,7 +929,7 @@ EOT
           checking should be performed.
 
           When certificate revocation is enabled Puppet expects the contents of its CRL
-          to one or more PEM encoded CRLs concatenated together. When using a cert
+          to be one or more PEM encoded CRLs concatenated together. When using a cert
           bundle CRLs for all CAs in the chain of trust must be included in the crl file
           with the first CRL listed being for the root of the chain, the last being for
           the leaf CA.

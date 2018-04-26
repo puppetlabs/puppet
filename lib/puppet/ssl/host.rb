@@ -23,9 +23,9 @@ class Puppet::SSL::Host
 DOC
 
   attr_reader :name, :crl_path
-  attr_accessor :ca, :crl_usage
+  attr_accessor :ca
 
-  attr_writer :key, :certificate, :certificate_request
+  attr_writer :key, :certificate, :certificate_request, :crl_usage
 
   # This accessor is used in instances for indirector requests to hold desired state
   attr_accessor :desired_state
@@ -273,6 +273,14 @@ ERROR_STRING
     key.content.public_key
   end
 
+  def use_crl?
+    !!@crl_usage
+  end
+
+  def use_crl_chain?
+    @crl_usage == true || @crl_usage == :chain
+  end
+
   # Create/return a store that uses our SSL info to validate
   # connections.
   def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
@@ -376,10 +384,13 @@ ERROR_STRING
 
   # Ensures that CRL is either on disk, or that CRL checking has been disabled
   def ensure_crl_if_needed
-    if crl_usage && !Puppet::FileSystem.exist?(crl_path)
+    if use_crl? && !Puppet::FileSystem.exist?(crl_path)
       # The CertificateRevocationList indirector will attempt to download the
-      # CRL from the CA if it does not exist on disk.
-      old_crl_usage = crl_usage
+      # CRL from the CA if it does not exist on disk. It will ask host for
+      # its ssl_store again, but expect crl checking to be disabled for that
+      # store. This is not thread safe, and should be replaced as soon as we
+      # no longer need to use the indirector to download the CRL (PUP-8654).
+      old_crl_usage = @crl_usage
       @crl_usage = false
       Puppet.debug _("Disabling certificate revocation checking when fetching the CRL and no CRL is present")
       if !CertificateRevocationList.indirection.find(CA_NAME)
@@ -395,11 +406,10 @@ ERROR_STRING
   # @raise [Errno::ENOENT] if file does not exist
   # @raise [Puppet::Error<OpenSSL::X509::CRLError>] if the CRL chain is malformed
   def load_crls(path)
-    ending = "-----END X509 CRL-----\n"
-    crls_pems = Puppet::FileSystem.read(path, encoding: Encoding::ASCII)
-    crls_pems.split(ending).map do |crl|
+    delimiters = /-----BEGIN X509 CRL-----.*?-----END X509 CRL-----/m
+    crls_pems = Puppet::FileSystem.read(path, encoding: Encoding::UTF_8)
+    crls_pems.scan(delimiters).map do |crl|
       begin
-        crl += ending
         OpenSSL::X509::CRL.new(crl)
       rescue OpenSSL::X509::CRLError => e
         raise Puppet::Error.new(
@@ -414,7 +424,7 @@ ERROR_STRING
   # @return [OpenSSL::X509::Store]
   # @raise [OpenSSL::X509::StoreError] if localcacert is malformed or non-existant
   # @raise [Puppet::Error] if the CRL chain is malformed
-  # @raise [Errno::ENOENT] if the CRL does not exist on disk but crl_usage is truthy
+  # @raise [Errno::ENOENT] if the CRL does not exist on disk but use_crl? is true
   def build_ssl_store(purpose)
     store = OpenSSL::X509::Store.new
     store.purpose = purpose
@@ -423,11 +433,11 @@ ERROR_STRING
     # a lookup in the middle of setting our ssl connection.
     store.add_file(Puppet.settings[:localcacert])
 
-    if crl_usage
+    if use_crl?
       crls = load_crls(crl_path)
 
       flags = OpenSSL::X509::V_FLAG_CRL_CHECK
-      if crl_usage == :chain || crl_usage == true
+      if use_crl_chain?
         flags |= OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
       end
 

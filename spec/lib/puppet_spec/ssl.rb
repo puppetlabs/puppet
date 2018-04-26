@@ -27,14 +27,14 @@ module PuppetSpec
       cert = OpenSSL::X509::Certificate.new
 
       cert.public_key = key.public_key
-      cert.subject    = OpenSSL::X509::Name.parse(name)
-      cert.issuer     = cert.subject
-      cert.version    = 2
-      cert.serial     = rand(2**128)
+      cert.subject = OpenSSL::X509::Name.parse(name)
+      cert.issuer = cert.subject
+      cert.version = 2
+      cert.serial = rand(2**128)
 
       not_before = just_now
       cert.not_before = not_before
-      cert.not_after  = not_before + FIVE_YEARS
+      cert.not_after = not_before + FIVE_YEARS
 
       ext_factory = extension_factory_for(cert, cert)
       CA_EXTENSIONS.each do |ext|
@@ -50,9 +50,9 @@ module PuppetSpec
     def self.create_csr(key, name)
       csr = OpenSSL::X509::Request.new
 
-      csr.public_key  = key.public_key
-      csr.subject     = OpenSSL::X509::Name.parse(name)
-      csr.version     = 2
+      csr.public_key = key.public_key
+      csr.subject = OpenSSL::X509::Name.parse(name)
+      csr.version = 2
       csr.sign(key, DEFAULT_SIGNING_DIGEST)
 
       csr
@@ -62,14 +62,14 @@ module PuppetSpec
       cert = OpenSSL::X509::Certificate.new
 
       cert.public_key = csr.public_key
-      cert.subject    = csr.subject
-      cert.issuer     = ca_cert.subject
-      cert.version    = 2
-      cert.serial     = rand(2**128)
+      cert.subject = csr.subject
+      cert.issuer = ca_cert.subject
+      cert.version = 2
+      cert.serial = rand(2**128)
 
       not_before = just_now
       cert.not_before = not_before
-      cert.not_after  = not_before + FIVE_YEARS
+      cert.not_after = not_before + FIVE_YEARS
 
       ext_factory = extension_factory_for(ca_cert, cert)
       extensions.each do |ext|

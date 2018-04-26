@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'spec_helper'
 
-require 'mocha/expectation_error'
 require 'puppet/ssl/host'
 require 'matchers/json'
 require 'puppet_spec/ssl'
@@ -705,9 +704,6 @@ describe Puppet::SSL::Host do
         Puppet::FileSystem.unlink(Puppet.settings[:hostcrl])
       end
 
-      # This is terrible and we're bad people for ever having written code
-      # that does this. But this is the actual expectation the indirector
-      # has on the Host class when bootstrapping the CRL...
       it "a second invocation of #ssl_store returns a store without CRL checking" do
         Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).with('ca') {|ca|
           # Mock out downloading a CRL
@@ -718,12 +714,7 @@ describe Puppet::SSL::Host do
           # If we were downloading the CRL we expect to be able to get a
           # different ssl_store for that connection, one that does not have
           # CRL checking enabled.
-          if @host.ssl_store.verify(@revoked_cert)
-            true
-          else
-            raise Mocha::ExpectationError,
-                  "Failed to create a store that did NOT use CRL checking"
-          end
+          expect(@host.ssl_store.verify(@revoked_cert)).to be true
         }.returns(true)
 
         @host.crl_usage = true
