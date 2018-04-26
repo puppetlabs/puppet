@@ -20,8 +20,7 @@ class Puppet::Network::HTTP::API
                                                                       "or point them to a server running Puppet 3.\n\n" +
                                                                       "Master Info:\n" +
                                                                       "  Puppet version: #{Puppet.version}\n" +
-                                                                      "  Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}\n" +
-                                                                      "  Supported /puppet-ca API versions: #{Puppet::Network::HTTP::CA_URL_VERSIONS}",
+                                                                      "  Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}\n",
                                                                   Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
       end)
   end
@@ -31,14 +30,6 @@ class Puppet::Network::HTTP::API
     Puppet::Network::HTTP::Route.path(master_prefix).
       any.
       chain(Puppet::Network::HTTP::API::Master::V3.routes,
-            Puppet::Network::HTTP::API.not_found)
-  end
-
-  def self.ca_routes
-    ca_prefix = Regexp.new("^#{Puppet::Network::HTTP::CA_URL_PREFIX}/")
-    Puppet::Network::HTTP::Route.path(ca_prefix).
-      any.
-      chain(Puppet::Network::HTTP::API::CA::V1.routes,
             Puppet::Network::HTTP::API.not_found)
   end
 end

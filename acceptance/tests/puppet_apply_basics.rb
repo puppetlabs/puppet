@@ -13,8 +13,3 @@ agents.each do |host|
     assert_match(/Hello World/, stdout, "#{host}: missing notice!")
   end
 end
-
-step "verify help displays something for puppet master"
-on master, puppet_master("--help") do
-  assert_match(/puppet master/, stdout, "improper help output")
-end

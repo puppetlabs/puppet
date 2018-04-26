@@ -13,8 +13,6 @@ module Puppet::Network::HTTP
   require 'puppet/network/http/error'
   require 'puppet/network/http/route'
   require 'puppet/network/http/api'
-  require 'puppet/network/http/api/ca'
-  require 'puppet/network/http/api/ca/v1'
   require 'puppet/network/http/api/master'
   require 'puppet/network/http/api/master/v3'
   require 'puppet/network/http/handler'

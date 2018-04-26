@@ -13,7 +13,7 @@ tag 'audit:medium',
   tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type + '2')
   fq_tmp_environmentpath2  = "#{environmentpath}/#{tmp_environment2}"
 
-  master_confdir = master.puppet('master')['confdir']
+  master_confdir = puppet_master_config(master, 'confdir')
   hiera_conf_backup = master.tmpfile(app_type)
 
   teardown do

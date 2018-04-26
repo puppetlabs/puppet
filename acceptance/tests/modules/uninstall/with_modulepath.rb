@@ -5,7 +5,7 @@ tag 'audit:low',       # Module management via pmt is not the primary support wo
     'audit:refactor'   # Master is not required for this test. Replace with agents.each
                        # Wrap steps in blocks in accordance with Beaker style guide
 
-codedir = master.puppet('master')['codedir']
+codedir = puppet_master_config(master, 'codedir')
 
 teardown do
   on master, "rm -rf #{codedir}/modules2"
