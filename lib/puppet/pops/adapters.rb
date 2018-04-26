@@ -2,6 +2,20 @@
 #
 module Puppet::Pops
 module Adapters
+
+  class ObjectIdCacheAdapter < Puppet::Pops::Adaptable::Adapter
+    attr_accessor :cache
+
+    def initialize
+      @cache = {}
+    end
+
+    # Retrieves a mutable hash with all stored values
+    def retrieve(o)
+      @cache[o.__id__] ||= {}
+    end
+  end
+
   # A documentation adapter adapts an object with a documentation string.
   # (The intended use is for a source text parser to extract documentation and store this
   # in DocumentationAdapter instances).
