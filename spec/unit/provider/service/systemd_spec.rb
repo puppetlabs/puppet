@@ -26,12 +26,15 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   osfamilies.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
       Facter.stubs(:value).with(:osfamily).returns(osfamily)
+      Facter.stubs(:value).with(:operatingsystem).returns(osfamily)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("1234")
       expect(described_class).to be_default
     end
   end
 
   it "should be the default provider on rhel7" do
     Facter.stubs(:value).with(:osfamily).returns(:redhat)
+    Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
     expect(described_class).to be_default
   end
@@ -81,12 +84,14 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
   it "should be the default provider on sles12" do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystem).returns(:suse)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("12")
     expect(described_class).to be_default
   end
 
   it "should be the default provider on opensuse13" do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystem).returns(:suse)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("13")
     expect(described_class).to be_default
   end
@@ -94,6 +99,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   # tumbleweed is a rolling release with date-based major version numbers
   it "should be the default provider on tumbleweed" do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystem).returns(:suse)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("20150829")
     expect(described_class).to be_default
   end
@@ -101,6 +107,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   # leap is the next generation suse release
   it "should be the default provider on leap" do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
+    Facter.stubs(:value).with(:operatingsystem).returns(:leap)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("42")
     expect(described_class).to be_default
   end
