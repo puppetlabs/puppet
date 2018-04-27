@@ -78,42 +78,42 @@ describe Puppet::Network::HTTP::Factory do
 
       expect(conn.proxy_port).to eq(proxy_port)
     end
+  end
 
-    context 'socket timeouts' do
-      it 'sets open timeout' do
-        Puppet[:http_connect_timeout] = "10s"
-        conn = create_connection(site)
+  context 'socket timeouts' do
+    it 'sets open timeout' do
+      Puppet[:http_connect_timeout] = "10s"
+      conn = create_connection(site)
 
-        expect(conn.open_timeout).to eq(10)
-      end
-
-      it 'sets read timeout' do
-        Puppet[:http_read_timeout] = "2m"
-        conn = create_connection(site)
-
-        expect(conn.read_timeout).to eq(120)
-      end
+      expect(conn.open_timeout).to eq(10)
     end
 
-    context 'source address' do
-      it 'defaults to system-defined' do
-        skip "Requires Ruby >= 2.0" unless RUBY_VERSION.to_i >= 2
+    it 'sets read timeout' do
+      Puppet[:http_read_timeout] = "2m"
+      conn = create_connection(site)
+
+      expect(conn.read_timeout).to eq(120)
+    end
+  end
+
+  context 'source address' do
+    it 'defaults to system-defined' do
+      skip "Requires Ruby >= 2.0" unless RUBY_VERSION.to_i >= 2
+      conn = create_connection(site)
+
+      expect(conn.local_host).to be(nil)
+    end
+
+    it 'sets the local_host address' do
+      Puppet[:sourceaddress] = "127.0.0.1"
+      if RUBY_VERSION.to_i >= 2
         conn = create_connection(site)
 
-        expect(conn.local_host).to be(nil)
-      end
-
-      it 'sets the local_host address' do
-        Puppet[:sourceaddress] = "127.0.0.1"
-        if RUBY_VERSION.to_i >= 2
-          conn = create_connection(site)
-
-          expect(conn.local_host).to eq('127.0.0.1')
-        else
-          expect {
-            create_connection(site)
-          }.to raise_error(ArgumentError, "Setting 'sourceaddress' is unsupported by this version of Net::HTTP.")
-        end
+        expect(conn.local_host).to eq('127.0.0.1')
+      else
+        expect {
+          create_connection(site)
+        }.to raise_error(ArgumentError, "Setting 'sourceaddress' is unsupported by this version of Net::HTTP.")
       end
     end
   end
