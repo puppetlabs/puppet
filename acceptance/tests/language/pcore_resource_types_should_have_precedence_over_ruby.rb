@@ -83,7 +83,7 @@ MANIFEST
     catalog_results[master.hostname] = { 'ruby_cat' => '', 'pcore_cat' => '' }
 
     step 'compile catalog using ruby resource' do
-      on master, puppet('master', '--compile', master.hostname) do |result|
+      on master, puppet('catalog', 'find', master.hostname) do |result|
         assert_match(/running ruby code/, result.stderr)
         catalog_results[master.hostname]['ruby_cat'] = JSON.parse(result.stdout.sub(/^[^{]+/,''))
       end
@@ -94,7 +94,7 @@ MANIFEST
     end
 
     step 'compile catalog and make sure that ruby code is NOT executed' do
-      on master, puppet('master', '--compile', master.hostname) do |result|
+      on master, puppet('catalog', 'find', master.hostname) do |result|
         assert_no_match(/running ruby code/, result.stderr)
         catalog_results[master.hostname]['pcore_cat'] = JSON.parse(result.stdout.sub(/^[^{]+/,''))
       end
