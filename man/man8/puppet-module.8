@@ -126,7 +126,7 @@ Array of Pathname objects representing paths of generated files\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet module install [\-\-force | \-f] [\-\-target\-dir DIR | \-i DIR] [\-\-ignore\-dependencies] [\-\-version VER | \-v VER] [\-\-strict\-semver] \fIname\fR
+puppet module install [\-\-force | \-f] [\-\-target\-dir DIR | \-i DIR] [\-\-ignore\-dependencies] [\-\-version VER | \-v VER] \fIname\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -142,9 +142,6 @@ The specified module will be installed into the directory specified with the \fB
 .
 .IP
 \fI\-\-ignore\-dependencies\fR \- Do not attempt to install dependencies\. Implied by \-\-force\.
-.
-.IP
-\fI\-\-strict\-semver\fR \- Whether version ranges should exclude pre\-release versions
 .
 .IP
 \fI\-\-target\-dir DIR\fR | \fI\-i DIR\fR \- The directory into which modules are installed; defaults to the first directory in the modulepath\.
@@ -166,7 +163,7 @@ Pathname object representing the path to the installed module\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet module list [\-\-tree] [\-\-strict\-semver]
+puppet module list [\-\-tree]
 .
 .IP
 \fBDESCRIPTION\fR
@@ -178,10 +175,7 @@ Lists the installed puppet modules\. By default, this action scans the modulepat
 The output of this action includes information from the module\'s metadata, including version numbers and unmet module dependencies\.
 .
 .IP
-\fBOPTIONS\fR \fI\-\-strict\-semver\fR \- Whether version ranges should exclude pre\-release versions
-.
-.IP
-\fI\-\-tree\fR \- Whether to show dependencies as a tree view
+\fBOPTIONS\fR \fI\-\-tree\fR \- Whether to show dependencies as a tree view
 .
 .IP
 \fBRETURNS\fR
@@ -213,7 +207,7 @@ Array of module metadata hashes
 \fBSYNOPSIS\fR
 .
 .IP
-puppet module uninstall [\-\-force | \-f] [\-\-ignore\-changes | \-c] [\-\-version=] [\-\-strict\-semver] \fIname\fR
+puppet module uninstall [\-\-force | \-f] [\-\-ignore\-changes | \-c] [\-\-version=] \fIname\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -226,9 +220,6 @@ Uninstalls a puppet module from the modulepath (or a specific target directory)\
 .
 .IP
 \fI\-\-ignore\-changes\fR | \fI\-c\fR \- Uninstall an installed module even if there are local changes to it\. (Implied by \-\-force\.)
-.
-.IP
-\fI\-\-strict\-semver\fR \- Whether version ranges should exclude pre\-release versions
 .
 .IP
 \fI\-\-version=\fR \- The version of the module to uninstall\. When using this option, a module matching the specified version must be installed or else an error is raised\.
@@ -244,7 +235,7 @@ Hash of module objects representing uninstalled modules and related errors\.
 \fBSYNOPSIS\fR
 .
 .IP
-puppet module upgrade [\-\-force | \-f] [\-\-ignore\-dependencies] [\-\-ignore\-changes | \-c] [\-\-version=] [\-\-strict\-semver] \fIname\fR
+puppet module upgrade [\-\-force | \-f] [\-\-ignore\-dependencies] [\-\-ignore\-changes | \-c] [\-\-version=] \fIname\fR
 .
 .IP
 \fBDESCRIPTION\fR
@@ -260,9 +251,6 @@ Upgrades a puppet module\. Note: Module upgrade uses MD5 checksums, which are pr
 .
 .IP
 \fI\-\-ignore\-dependencies\fR \- Do not attempt to install dependencies\. Implied by \-\-force\.
-.
-.IP
-\fI\-\-strict\-semver\fR \- Whether version ranges should exclude pre\-release versions
 .
 .IP
 \fI\-\-version=\fR \- The version of the module to upgrade to\.
