@@ -133,7 +133,7 @@ with_puppet_running_on master, master_opts do
   # only one agent is needed because we only care about the file written on the master
   run_agent_on(agents[0], "--no-daemonize --verbose --onetime --node_name_value #{node_name} --server #{master}")
 
-  yamldir = puppet_master_config(master, 'yamldir')
+  yamldir = puppet_config(master, 'yamldir', section: 'master')
   on master, puppet('node', 'search', '"*"', '--node_terminus', 'yaml', '--clientyamldir', yamldir, '--render-as', 'json') do
     assert_match(/"name":["\s]*#{node_name}/, stdout,
                  "Expect node name '#{node_name}' to be present in node yaml content written by the WriteOnlyYaml terminus")

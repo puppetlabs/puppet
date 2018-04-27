@@ -4,7 +4,7 @@ test_name "puppet module list (with modulepath)"
 tag 'audit:low',
     'audit:unit'
 
-codedir = puppet_master_config(master, 'codedir')
+codedir = puppet_config(master, 'codedir', section: 'master')
 
 step "Setup"
 apply_manifest_on master, <<-PP

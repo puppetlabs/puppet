@@ -31,7 +31,7 @@ def curl_master_from(agent, path, headers = '', &block)
   on agent, "#{curl_base} '#{url}'", &block
 end
 
-master_user = puppet_master_config(master, 'user')
+master_user = puppet_config(master, 'user', section: 'master')
 environments_dir = create_tmpdir_for_user master, "environments"
 apply_manifest_on(master, <<-MANIFEST)
 File {

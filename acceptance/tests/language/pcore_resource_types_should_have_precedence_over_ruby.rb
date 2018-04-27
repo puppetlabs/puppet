@@ -69,13 +69,13 @@ MANIFEST
       }
     }
 
-    backup_file = backup_the_file(master, puppet_master_config(master, 'confdir'), testdir, 'puppet.conf')
+    backup_file = backup_the_file(master, puppet_config(master, 'confdir', section: 'master'), testdir, 'puppet.conf')
     lay_down_new_puppet_conf master, conf_opts, testdir
 
     teardown do
       restore_puppet_conf_from_backup( master, backup_file )
       # See PUP-6995
-      on(master, "rm -f #{puppet_master_config(master, 'yamldir')}/node/*.yaml")
+      on(master, "rm -f #{puppet_config(master, 'yamldir', section: 'master')}/node/*.yaml")
     end
     #}}}
 
