@@ -172,7 +172,7 @@ describe TypeParser do
 
   context 'with scope context and loader' do
     let!(:scope) { {} }
-    let(:loader) { Object.new }
+    let(:loader) { mock }
 
     before :each do
       Adapters::LoaderAdapter.expects(:loader_for_model_object).returns loader

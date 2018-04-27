@@ -1723,10 +1723,10 @@ describe 'The type calculator' do
       end
 
       it 'a recursive alias can be assignable from a conformant type with any depth' do
-        scope = Object.new
+        scope = {}
 
         t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
-        loader = Object.new
+        loader = mock
         loader.expects(:load).with(:type, 'tree').returns t
 
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
@@ -1737,11 +1737,11 @@ describe 'The type calculator' do
 
 
       it 'similar recursive aliases are assignable' do
-        scope = Object.new
+        scope = {}
 
         t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree1]]')
         t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree2]]')
-        loader = Object.new
+        loader = mock
         loader.expects(:load).with(:type, 'tree1').returns t1
         loader.expects(:load).with(:type, 'tree2').returns t2
 
@@ -1755,7 +1755,7 @@ describe 'The type calculator' do
       it 'crossing recursive aliases are assignable' do
         t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree2]]')
         t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree1]]')
-        loader = Object.new
+        loader = mock
         loader.expects(:load).with(:type, 'tree1').returns t1
         loader.expects(:load).with(:type, 'tree2').returns t2
 
@@ -1767,10 +1767,10 @@ describe 'The type calculator' do
       end
 
       it 'Type[T] is assignable to Type[AT] when AT is an alias for T' do
-        scope = Object.new
+        scope = {}
 
         ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
-        loader = Object.new
+        loader = mock
         loader.expects(:load).with(:type, 'positiveinteger').returns ta
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
@@ -1780,10 +1780,10 @@ describe 'The type calculator' do
       end
 
       it 'Type[T] is assignable to AT when AT is an alias for Type[T]' do
-        scope = Object.new
+        scope = {}
 
         ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
-        loader = Object.new
+        loader = mock
         loader.expects(:load).with(:type, 'positiveintegertype').returns ta
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
@@ -1793,10 +1793,10 @@ describe 'The type calculator' do
       end
 
       it 'Type[Type[T]] is assignable to Type[Type[AT]] when AT is an alias for T' do
-        scope = Object.new
+        scope = {}
 
         ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
-        loader = Object.new
+        loader = mock
         loader.expects(:load).with(:type, 'positiveinteger').returns ta
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
@@ -1806,10 +1806,10 @@ describe 'The type calculator' do
       end
 
       it 'Type[Type[T]] is assignable to Type[AT] when AT is an alias for Type[T]' do
-        scope = Object.new
+        scope = {}
 
         ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
-        loader = Object.new
+        loader = mock
         loader.expects(:load).with(:type, 'positiveintegertype').returns ta
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
 
@@ -2122,7 +2122,7 @@ describe 'The type calculator' do
 
       it 'should consider x an instance of the aliased type that uses self recursion' do
         t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
-        loader = Object.new
+        loader = mock
         loader.expects(:load).with(:type, 'tree').returns t
 
         Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
@@ -2134,7 +2134,7 @@ describe 'The type calculator' do
       it 'should consider x an instance of the aliased type that uses contains an alias that causes self recursion' do
         t1 = type_alias_t('Tree', 'Hash[String,Variant[String,OtherTree]]')
         t2 = type_alias_t('OtherTree', 'Hash[String,Tree]')
-        loader = Object.new
+        loader = mock
         loader.expects(:load).with(:type, 'tree').returns t1
         loader.expects(:load).with(:type, 'othertree').returns t2
 

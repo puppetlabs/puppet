@@ -35,7 +35,8 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
   let(:daemon) { Puppet::Daemon.new(pidfile, scheduler) }
 
-  before do
+  before(:each) do
+    Signal.stubs(:trap)
     daemon.stubs(:close_streams).returns nil
   end
 

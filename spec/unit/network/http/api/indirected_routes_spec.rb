@@ -143,10 +143,10 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       _, _, _, _ = handler.uri2indirection("GET", uri_escaped, params)
     end
 
-    it "should not pass through an environment to check_authorization and fail if the environment is unknown" do
+    it "when the environment is unknown should remove :environment from params passed to check_authorization and therefore fail" do
       handler.expects(:check_authorization).with(anything,
                                                  anything,
-                                                 Not(has_entry(:environment)))
+                                                 Not(has_key(:environment)))
       expect(lambda { handler.uri2indirection("GET",
                                               "#{master_url_prefix}/node/bar",
                                               {:environment => 'bogus'}) }).to raise_error(not_found_error)

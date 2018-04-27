@@ -228,6 +228,9 @@ describe Puppet::Util::Logging do
       Puppet[:disable_warnings] = ['undefined_variables']
       example.run
       Puppet[:disable_warnings] = []
+    end
+
+    after(:each) do
       logger.unstub(:send_log)
     end
 
@@ -246,6 +249,9 @@ describe Puppet::Util::Logging do
       Puppet[:disable_warnings] = ['deprecations']
       example.run
       Puppet[:disable_warnings] = []
+    end
+
+    after(:each) do
       logger.unstub(:send_log)
     end
 

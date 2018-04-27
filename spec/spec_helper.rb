@@ -112,12 +112,6 @@ RSpec.configure do |config|
     # some platforms *cough* windows *cough* that are a little slower.
     GC.disable
 
-    # REVISIT: I think this conceals other bad tests, but I don't have time to
-    # fully diagnose those right now.  When you read this, please come tell me
-    # I suck for letting this float. --daniel 2011-04-21
-    Signal.stubs(:trap)
-
-
     # TODO: in a more sane world, we'd move this logging redirection into our TestHelper class.
     #  Without doing so, external projects will all have to roll their own solution for
     #  redirecting logging, and for validating expected log messages.  However, because the

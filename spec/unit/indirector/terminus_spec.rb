@@ -187,14 +187,14 @@ describe Puppet::Indirector::Terminus do
   end
 
   describe "when creating terminus class types" do
-    before :all do
+    before :each do
       Puppet::Indirector::Terminus.stubs(:register_terminus_class)
 
       class Puppet::Indirector::Terminus::TestTerminusType < Puppet::Indirector::Terminus
       end
     end
 
-    after :all do
+    after :each do
       Puppet::Indirector::Terminus.send(:remove_const, :TestTerminusType)
     end
 
