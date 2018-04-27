@@ -96,6 +96,13 @@ describe Puppet::Network::HTTP::Factory do
     end
   end
 
+  it "disables ruby's http_keepalive_timeout on Ruby 2" do
+    skip "Requires Ruby >= 2.0" unless RUBY_VERSION.to_i >= 2
+    conn = create_connection(site)
+
+    expect(conn.keep_alive_timeout).to eq(2147483647)
+  end
+
   context 'source address' do
     it 'defaults to system-defined' do
       skip "Requires Ruby >= 2.0" unless RUBY_VERSION.to_i >= 2
