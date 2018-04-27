@@ -76,10 +76,10 @@ module Puppet::ModuleTool::Shared
       }
 
       if forced?
-        range = Puppet::Module.parse_range(@version, @strict_semver) rescue Puppet::Module.parse_range('>= 0.0.0', @strict_semver)
+        range = Puppet::Module.parse_range(@version) rescue Puppet::Module.parse_range('>= 0.0.0')
       else
         range = (@conditions[mod]).map do |r|
-          Puppet::Module.parse_range(r[:dependency], @strict_semver) rescue Puppet::Module.parse_range('>= 0.0.0', @strict_semver)
+          Puppet::Module.parse_range(r[:dependency]) rescue Puppet::Module.parse_range('>= 0.0.0')
         end.inject(&:&)
       end
 

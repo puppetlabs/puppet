@@ -23,7 +23,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_invoked do |term, options|
       Puppet::ModuleTool.set_option_defaults options
-      Puppet::ModuleTool::Applications::Searcher.new(term, Puppet::Forge.new(options[:module_repository] || Puppet[:module_repository], options[:strict_semver]), options).run
+      Puppet::ModuleTool::Applications::Searcher.new(term, Puppet::Forge.new(options[:module_repository] || Puppet[:module_repository]), options).run
     end
 
     when_rendering :console do |results, term, options|
