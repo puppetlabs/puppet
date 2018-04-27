@@ -406,6 +406,7 @@ describe Puppet::Application::Agent do
     it "should daemonize if needed" do
       Puppet.features.stubs(:microsoft_windows?).returns false
       Puppet[:daemonize] = true
+      Signal.stubs(:trap)
 
       @daemon.expects(:daemonize)
 
