@@ -14,7 +14,7 @@ tag 'audit:medium',
   hiera_conf_backup = master.tmpfile('C99629-hiera-yaml')
 
   step "create hiera v3 global config and data" do
-    confdir = puppet_master_config(master, 'confdir')
+    confdir = puppet_config(master, 'confdir', section: 'master')
 
     step "backup global hiera.yaml" do
       on(master, "cp -a #{confdir}/hiera.yaml #{hiera_conf_backup}", :acceptable_exit_codes => [0,1])

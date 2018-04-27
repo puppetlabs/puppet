@@ -9,7 +9,7 @@ tag 'audit:medium',
 
   # The following two lines are required for the puppetserver service to
   # start correctly. These should be removed when PUP-7102 is resolved.
-  confdir = puppet_master_config(master, 'confdir')
+  confdir = puppet_config(master, 'confdir', section: 'master')
   on(master, "chown puppet:puppet #{confdir}/hiera.yaml")
 
   app_type        = File.basename(__FILE__, '.*')

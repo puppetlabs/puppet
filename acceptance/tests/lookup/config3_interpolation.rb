@@ -12,7 +12,7 @@ tag 'audit:medium',
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
-  master_confdir = puppet_master_config(master, 'confdir')
+  master_confdir = puppet_config(master, 'confdir', section: 'master')
 
   hiera_conf_backup = master.tmpfile('C99578-hiera-yaml')
 
