@@ -338,7 +338,7 @@ Puppet::Type.newtype(:tidy) do
     begin
       Puppet::FileSystem.lstat(path)
     rescue Errno::ENOENT
-      info _("File does not exist")
+      debug _("File does not exist")
       return nil
     rescue Errno::EACCES
       #TRANSLATORS "stat" is a program name and should not be translated
