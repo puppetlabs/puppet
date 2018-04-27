@@ -41,6 +41,11 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
   describe "when setting the desired content" do
     let(:content) { described_class.new(:resource => resource) }
 
+    before do
+      Puppet::Type.type(:file).any_instance.stubs(:file).returns('my/file.pp')
+      Puppet::Type.type(:file).any_instance.stubs(:line).returns 5
+    end
+
     it "should make the actual content available via an attribute" do
       content.should = "this is some content"
 
@@ -221,6 +226,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         describe "with #{compare} target #{time_stat} compared to source" do
           before do
             resource[:checksum] = time_stat
+            resource[:source] = make_absolute('/temp/foo')
             content.should = "{#{time_stat}}#{saved_time}"
           end
 
@@ -237,6 +243,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       describe "with #{time_stat}" do
         before do
           resource[:checksum] = time_stat
+          resource[:source] = make_absolute('/temp/foo')
         end
 
         it "should not be insync if trying to create it" do
@@ -371,6 +378,11 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     let(:content) { described_class.new(:resource => resource) }
 
     let(:fh) { File.open(filename, 'wb') }
+
+    before do
+      Puppet::Type.type(:file).any_instance.stubs(:file).returns('my/file.pp')
+      Puppet::Type.type(:file).any_instance.stubs(:line).returns 5
+    end
 
     it "should attempt to read from the filebucket if no actual content nor source exists" do
       content.should = "{md5}foo"

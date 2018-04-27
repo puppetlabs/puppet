@@ -80,6 +80,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   before do
     # stub this to not try to create state.yaml
     Puppet::Util::Storage.stubs(:store)
+
+    Puppet::Type.type(:file).any_instance.stubs(:file).returns('my/file.pp')
+    Puppet::Type.type(:file).any_instance.stubs(:line).returns 5
   end
 
   it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
@@ -414,6 +417,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               expect(get_mode(path) & 07777).to eq(0600)
             end
 
+            it "should not give a deprecation warning about using a checksum in content when using source to define content" do
+              FileUtils.touch(path)
+              Puppet.expects(:puppet_deprecation_warning).never
+              catalog.add_resource described_class.new(:path => path, :source => link, :links => :follow)
+              catalog.apply
+            end
+
             context "overwriting a file" do
               before :each do
                 FileUtils.touch(path)
@@ -592,9 +602,29 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       end
     end
 
+    it "should not give a deprecation warning when given actual content" do
+      Puppet.expects(:puppet_deprecation_warning).never
+      catalog.add_resource described_class.new(:path => path, :content => 'this is content')
+      catalog.apply
+    end
+
     with_digest_algorithms do
       it_should_behave_like "files are backed up", {} do
         let(:filebucket_digest) { method(:digest) }
+      end
+
+      it "should give a deprecation warning" do
+        Puppet.expects(:puppet_deprecation_warning).with('Using a checksum in a file\'s "content" property is deprecated. The ability to use a checksum to retrieve content from the filebucket using the "content" property will be removed in a future release. The literal value of the "content" property will be written to the file. The checksum retrieval functionality is being replaced by the use of static catalogs. See https://puppet.com/docs/puppet/latest/static_catalogs.html for more information.', {:file => 'my/file.pp', :line => 5})
+        d = digest("this is some content")
+        catalog.add_resource described_class.new(:path => path, :content => "{#{digest_algorithm}}#{d}")
+        catalog.apply
+      end
+
+      it "should not give a deprecation warning when no content is specified while checksum and checksum value are used" do
+        Puppet.expects(:puppet_deprecation_warning).never
+        d = digest("this is some content")
+        catalog.add_resource described_class.new(:path => path, :checksum => digest_algorithm, :checksum_value => d)
+        catalog.apply
       end
     end
 
