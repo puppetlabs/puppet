@@ -103,7 +103,7 @@ class Puppet::SSL::CertificateAuthority
     unless defined?(@crl)
       unless @crl = Puppet::SSL::CertificateRevocationList.indirection.find(Puppet::SSL::CA_NAME)
         @crl = Puppet::SSL::CertificateRevocationList.new(Puppet::SSL::CA_NAME)
-        @crl.generate(host.certificate.content, host.key.content)
+        @crl.generate(host.certificate, host.key.content)
         Puppet::SSL::CertificateRevocationList.indirection.save(@crl)
       end
     end
@@ -298,7 +298,7 @@ class Puppet::SSL::CertificateAuthority
       end
 
       cert_type = :server
-      issuer = host.certificate.content
+      issuer = host.certificate
 
       # Make sure that the CSR conforms to our internal signing policies.
       # This will raise if the CSR doesn't conform, but just in case...
