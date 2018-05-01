@@ -40,7 +40,7 @@ module Puppet::ModuleTool
         end
 
         if require_metadata && !Puppet::ModuleTool.is_module_root?(@path)
-          raise ArgumentError, _("Unable to find metadata.json in module root at %{path} See https://docs.puppet.com/puppet/latest/reference/modules_publishing.html for required file format.") % { path: @path }
+          raise ArgumentError, _("Unable to find metadata.json in module root at %{path} See https://puppet.com/docs/puppet/latest/modules_publishing.html for required file format.") % { path: @path }
         end
 
         metadata_path   = File.join(@path, 'metadata.json')

@@ -1252,7 +1252,7 @@ class Type
       event _would_ have been sent.
 
       **Important note:**
-      [The `noop` setting](https://docs.puppetlabs.com/puppet/latest/reference/configuration.html#noop)
+      [The `noop` setting](https://puppet.com/docs/puppet/latest/configuration.html#noop)
       allows you to globally enable or disable noop mode, but it will _not_ override
       the `noop` metaparameter on individual resources. That is, the value of the
       global `noop` setting will _only_ affect resources that do not have an explicit
@@ -1272,7 +1272,7 @@ class Type
       The value of this metaparameter must be the `name` of a `schedule`
       resource. This means you must declare a schedule resource, then
       refer to it by name; see
-      [the docs for the `schedule` type](https://docs.puppetlabs.com/puppet/latest/reference/type.html#schedule)
+      [the docs for the `schedule` type](https://puppet.com/docs/puppet/latest/type.html#schedule)
       for more info.
 
           schedule { 'everyday':
@@ -1447,7 +1447,7 @@ class Type
           }
 
       Tags are useful for things like applying a subset of a host's configuration
-      with [the `tags` setting](/puppet/latest/reference/configuration.html#tags)
+      with [the `tags` setting](/puppet/latest/configuration.html#tags)
       (e.g. `puppet agent --test --tags bootstrap`)."
 
     munge do |tags|
@@ -1578,7 +1578,7 @@ class Type
 
   newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
     desc "One or more resources that this resource depends on, expressed as
-      [resource references](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
+      [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
@@ -1587,12 +1587,12 @@ class Type
       This is one of the four relationship metaparameters, along with
       `before`, `notify`, and `subscribe`. For more context, including the
       alternate chaining arrow (`->` and `~>`) syntax, see
-      [the language page on relationships](https://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
+      [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
   newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
     desc "One or more resources that this resource depends on, expressed as
-      [resource references](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
+      [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
@@ -1605,12 +1605,12 @@ class Type
       This is one of the four relationship metaparameters, along with
       `before`, `require`, and `notify`. For more context, including the
       alternate chaining arrow (`->` and `~>`) syntax, see
-      [the language page on relationships](https://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
+      [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
   newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
     desc "One or more resources that depend on this resource, expressed as
-      [resource references](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
+      [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
@@ -1619,12 +1619,12 @@ class Type
       This is one of the four relationship metaparameters, along with
       `require`, `notify`, and `subscribe`. For more context, including the
       alternate chaining arrow (`->` and `~>`) syntax, see
-      [the language page on relationships](https://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
+      [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
   newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
     desc "One or more resources that depend on this resource, expressed as
-      [resource references](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
+      [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
@@ -1637,7 +1637,7 @@ class Type
       This is one of the four relationship metaparameters, along with
       `before`, `require`, and `subscribe`. For more context, including the
       alternate chaining arrow (`->` and `~>`) syntax, see
-      [the language page on relationships](https://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
+      [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
   newmetaparam(:stage) do
@@ -1650,7 +1650,7 @@ class Type
       By default, all classes are declared in the `main` stage. To assign a class
       to a different stage, you must:
 
-      * Declare the new stage as a [`stage` resource](https://docs.puppetlabs.com/puppet/latest/reference/type.html#stage).
+      * Declare the new stage as a [`stage` resource](https://puppet.com/docs/puppet/latest/type.html#stage).
       * Declare an order relationship between the new stage and the `main` stage.
       * Use the resource-like syntax to declare the class, and set the `stage`
         metaparameter to the name of the desired stage.

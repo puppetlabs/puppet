@@ -3,9 +3,9 @@ Puppet::Parser::Functions::newfunction(
   :type => :rvalue,
   :arity => -1,
   :doc => <<-DOC
-Call a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+Call a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 with the given arguments and return the result. Since a lambda's scope is
-[local](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html#lambda-scope)
+[local](https://puppet.com/docs/puppet/latest/lang_lambdas.html#lambda-scope)
 to the lambda, you can use the `with` function to create private blocks of code within a
 class using variables whose values cannot be accessed outside of the lambda.
 

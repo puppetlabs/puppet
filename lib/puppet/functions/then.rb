@@ -1,4 +1,4 @@
-# Calls a [lambda](https://docs.puppet.com/puppet/latest/reference/lang_lambdas.html)
+# Calls a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # with the given argument unless the argument is `undef`.
 # Returns `undef` if the argument is `undef`, and otherwise the result of giving the
 # argument to the lambda.

@@ -151,7 +151,7 @@ You can provide multiple lookup keys to this command, but it only returns a
 value for the first found key, omitting the rest.
 
 For more details about how Hiera works, see the Hiera documentation:
-https://docs.puppet.com/puppet/latest/hiera_intro.html
+https://puppet.com/docs/puppet/latest/hiera_intro.html
 
 OPTIONS
 -------

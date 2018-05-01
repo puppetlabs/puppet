@@ -3,7 +3,7 @@ Puppet::Parser::Functions::newfunction(
   :type => :rvalue,
   :arity => -2,
   :doc => <<-DOC
-Call a [lambda](https://docs.puppet.com/puppet/latest/reference/lang_lambdas.html)
+Call a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 with the given argument unless the argument is undef. Return `undef` if argument is
 `undef`, and otherwise the result of giving the argument to the lambda.
 
