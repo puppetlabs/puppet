@@ -6,7 +6,7 @@ tag 'audit:medium',
                        # Wrap steps in blocks in accordance with Beaker style guide
 
 # doc:
-# https://puppet.com/docs/puppet/5.5/hiera_automatic.html
+# https://puppet.com/docs/puppet/latest/hiera_automatic.html
 
 @module_name = "puppet_lookup_command_test"
 
