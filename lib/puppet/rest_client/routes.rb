@@ -1,5 +1,5 @@
 require 'puppet'
-require 'puppet/rest_client/server_resolution'
+require 'puppet/rest_client/client'
 
 module Puppet::Rest
   module Routes
@@ -15,20 +15,18 @@ module Puppet::Rest
      }
     end
 
-    def self.certificate(name)
-      server, port = Puppet::Rest::Resolution.select_server_and_port(
-        srv_service: ca[:srv_service],
-        default_server: ca[:server],
-        default_port: ca[:port])
+    def self.get_certificate(client, name)
+      # We are attempting to download certificates because we don't have them
+      # on disk yet, so we need to use an insecure connection
+      server, port = client.resolver.select_server_and_port(
+                              srv_service: ca[:srv_service],
+                              default_server: ca[:server],
+                              default_port: ca[:port])
 
-      "https://#{server}:#{port}#{ca[:base_url]}/certificate/#{name}"
-    end
-
-    def self.get_certificate(name)
-      Puppet::Rest::Client.instance.get(certificate(name),
-                                        { environment: Puppet.lookup(:current_environment).name },
-                                        { Accept: 'text/plain',
-                                          'accept-encoding' => ACCEPT_ENCODING })
+      client.get("https://#{server}:#{port}#{ca[:base_url]}/certificate/#{name}",
+                 { environment: Puppet.lookup(:current_environment).name },
+                 { Accept: 'text/plain',
+                   'accept-encoding' => ACCEPT_ENCODING })
     end
   end
 end

@@ -115,7 +115,7 @@ describe Puppet::SSL::CertificateAuthority do
       Puppet.settings.stubs(:use)
       Puppet[:cacrl] = "/my/crl"
 
-      cert = stub("certificate", :content => "real_cert")
+      cert = stub "certificate"
       key = stub("key", :content => "real_key")
       @host = stub 'host', :certificate => cert, :name => "hostname", :key => key
 
@@ -137,7 +137,7 @@ describe Puppet::SSL::CertificateAuthority do
 
       Puppet::SSL::CertificateRevocationList.expects(:new).returns crl
 
-      crl.expects(:generate).with(@ca.host.certificate.content, @ca.host.key.content)
+      crl.expects(:generate).with(@ca.host.certificate, @ca.host.key.content)
       Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(crl)
 
       expect(@ca.crl).to equal(crl)

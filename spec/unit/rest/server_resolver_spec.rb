@@ -1,15 +1,17 @@
 require 'spec_helper'
-require 'puppet/rest_client/server_resolution'
+require 'puppet/rest_client/server_resolver'
 
-describe Puppet::Rest::Resolution do
+describe Puppet::Rest::ServerResolver do
   context '#select_server_and_port' do
+    let(:resolver) { Puppet::Rest::ServerResolver.new }
+
     context 'when not using SRV records' do
       before :each do
         Puppet.settings[:use_srv_records] = false
       end
 
       it "yields the request with the default server and port when no server or port were specified on the original request" do
-        server, port = Puppet::Rest::Resolution.select_server_and_port(srv_service: :puppet, default_server: 'puppet.example.com', default_port: '90210')
+        server, port = resolver.select_server_and_port(srv_service: :puppet, default_server: 'puppet.example.com', default_port: '90210')
         expect(server).to eq('puppet.example.com')
         expect(port).to eq('90210')
       end
@@ -36,7 +38,7 @@ describe Puppet::Rest::Resolution do
         end
 
         it "yields a request using the server and port from the SRV record" do
-          server, port = Puppet::Rest::Resolution.select_server_and_port
+          server, port = resolver.select_server_and_port
           expect(server).to eq('_x-puppet._tcp.example.com')
           expect(port).to eq(7205)
         end

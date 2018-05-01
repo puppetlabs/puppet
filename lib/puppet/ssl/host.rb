@@ -200,30 +200,43 @@ DOC
   # `indirection.find`. For all other cases, it first attempts to load
   # the cert from disk, then to download it from the CA if this fails.
   #
-  # The indirectory memory terminus is only used for testing the Ruby CA,
+  # The indirector memory terminus is only used for testing the Ruby CA,
   # so when that gets removed, this logic can go with it.
   #
   # @param [String] cert_name the name of the cert to load
   # @return Puppet::SSL::Certificate if found, nil otherwise
-  def get_cert(cert_name)
+  def get_certificate(cert_name)
     # The memory terminus is used for testing
     if Puppet::SSL::Certificate.indirection.terminus_class == :memory
       return Puppet::SSL::Certificate.indirection.find(cert_name)
     end
 
-    file_path = cert_location(cert_name)
+    file_path = certificate_location(cert_name)
     if Puppet::FileSystem.exist?(file_path)
-      return Puppet::SSL::Certificate.from_s(Puppet::FileSystem.read(file_path))
-    end
-
-    if Puppet::SSL::Host.ca_location == :remote
-      # Cert not found on disk, and we have a remote ca,
+      # Check if we already have the cert on disk
+      if cert_name == 'ca'
+        return load_certs(Puppet::FileSystem.read(file_path))[0]
+      else
+        return OpenSSL::X509::Certificate.new(Puppet::FileSystem.read(file_path))
+      end
+    elsif Puppet::SSL::Host.ca_location == :remote
+      # Certificate not found on disk, and we have a remote ca,
       # so attempt to download it and save it to file_path
-      download_and_save_cert(cert_name, file_path)
+      if cert_name == 'ca'
+        # The CA cert may be a chain, if our CA is an intermediate CA
+        cert_bundle = download_ca_certificate_bundle
+        if cert_bundle
+          save_certificate_bundle(cert_bundle, file_path)
+          return cert_bundle[0]
+        end
+      else
+        cert = download_certificate(cert_name)
+        if cert
+          save_certificate(cert, file_path)
+          return cert
+        end
+      end
     end
-
-    # Couldn't find or fetch a cert
-    return nil
   end
 
   # Logic for detecting the cert's location on disk, based on `ca_location`
@@ -232,7 +245,7 @@ DOC
   # @param [String] cert_name the name of the cert to find
   # @return [String] filesystem location of the requested cert. Used both
   # for loading and for saving.
-  def cert_location(cert_name)
+  def certificate_location(cert_name)
     if Puppet::SSL::Host.ca_location == :only
       if cert_name == 'ca'
         file_path = Puppet.settings[:cacert]
@@ -248,54 +261,83 @@ DOC
     end
     return file_path
   end
-  private :cert_location
+  private :certificate_location
 
-  # Downloads the cert from the CA and saves it at the specified
-  # location on disk if the download was successful.
-  #
-  # @param [String] cert_name name of the cert to download
-  # @param [String] file_path location to save the cert
-  # return Puppet::SSL::Certificate if saved successfully, nil otherwise
-  def download_and_save_cert(cert_name, file_path)
-    response = Puppet::Rest::Routes.get_certificate(cert_name)
-    return save_cert(response, file_path)
+  def download_ca_certificate_bundle
+    response = Puppet::Rest::Routes.get_certificate(
+      Puppet::Rest::Client.new(OpenSSL::SSL::VERIFY_NONE),
+      'ca')
+    if response.ok?
+      _, body = Puppet::Rest::ResponseHandler.parse_response(response)
+      certs = load_certs(body)
+    else
+      Puppet.error _('Could not download CA certificate, aborting.')
+    end
   end
-  private :download_and_save_cert
+  private :download_ca_certificate_bundle
+
+  # return [OpenSSL::X509::Certificate] the downloaded client cert,
+  #        or nil if none were found
+  def download_client_cert
+    response = Puppet::Rest::Routes.get_certificate(
+      Puppet::Rest::Client.new(OpenSSL::SSL::VERIFY_NONE),
+      name)
+    if response.ok?
+      _, body = Puppet::Rest::ResponseHandler.parse_response(response)
+      cert = OpenSSL::X509::Certificate.new(body)
+    else
+      nil
+    end
+  end
+  private :download_client_cert
+
+  # Parse OpenSSL certificates from the given string
+  # @param [String] cert_bundle a string containing one or more certificates
+  #        in PEM format
+  # @return an array of OpenSSL::X509::Certificates
+  def load_certs(cert_bundle)
+    delimiters = /-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m
+    cert_bundle.scan(delimiters).map do |cert|
+      OpenSSL::X509::Certificate.new(cert)
+    end
+  end
+  private :load_certs
+
+  def save_certificate_bundle(cert_bundle, file_path)
+    bundle_string = ''
+    cert_bundle.each do |cert|
+      bundle_string += cert.to_s
+    end
+    Puppet::Util.replace_file(file_path, 'w:UTF-8') do |f|
+      f.write(bundle_string)
+    end
+  end
 
   # Saves the body of `response` to disk at `file_path`,
   # if the response contains one or more valid certs.
   #
-  # @param [String] cert_name name of the cert to download
+  # @param [Puppet::SSL::Certificate] cert the certficate object to save
   # @param [String] file_path location to save the cert
   # @return Puppet::SSL::Certificate if successful, nil otherwise
-  def save_cert(response, file_path)
-    if response.ok?
-      _, body = Puppet::Rest::ResponseHandler.parse_response(response)
-      # Convert to cert object to ensure valid response
-      cert = Puppet::SSL::Certificate.from_s(body)
-      # this should be an atomic write
-      Puppet::FileSystem.open(file_path, nil, 'w:UTF-8') do |f|
-        f.puts(body)
-      end
-      return cert
-    else
-      return nil
+  def save_certificate(cert, file_path)
+    Puppet::Util.replace_file(file_path, 'w:UTF-8') do |f|
+      f.write(cert.to_s)
     end
   end
-  private :save_cert
+  private :save_certificate
 
   def certificate
     unless @certificate
       generate_key unless key
 
       # get the CA cert first, since it's required for the normal cert
-      # to be of any use.
-      if !ca?
-        return nil unless get_cert('ca')
+      # to be of any use. If the CA cert cannot be found, return
+      if !ca? && !get_certificate('ca')
+        return nil
       end
 
-      @certificate = get_cert(name)
-      # if no existing certificate, don't continue
+      @certificate = get_certificate(name)
+      # if no existing certificate, don't proceed to validate
       return nil unless @certificate
 
       validate_certificate_with_key
@@ -306,7 +348,7 @@ DOC
   def validate_certificate_with_key
     raise Puppet::Error, _("No certificate to validate.") unless certificate
     raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: %{fingerprint}") % { fingerprint: certificate.fingerprint } unless key
-    unless certificate.content.check_private_key(key.content)
+    unless certificate.check_private_key(key.content)
       raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: certificate.fingerprint, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
 The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?
 Certificate fingerprint: %{fingerprint}
@@ -368,6 +410,13 @@ ERROR_STRING
     key.content.public_key
   end
 
+  # Extract the subject alternative names from this host's certificate
+  def subject_alt_names
+    alts = certificate.extensions.find{|ext| ext.oid == "subjectAltName"}
+    return [] unless alts
+    alts.value.split(/\s*,\s*/)
+  end
+
   # Create/return a store that uses our SSL info to validate
   # connections.
   def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
@@ -378,7 +427,7 @@ ERROR_STRING
   end
 
   def to_data_hash
-    my_cert = @certificate || get_cert(name)
+    my_cert = @certificate || Puppet::SSL::Certificate.indirection.find(name)
     result = { 'name'  => name }
 
     my_state = state

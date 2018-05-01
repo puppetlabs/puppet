@@ -97,8 +97,8 @@ describe Puppet::SSL::Host do
     localhost = Puppet::SSL::Host.localhost
     cert = localhost.certificate
 
-    expect(cert).to be_a(Puppet::SSL::Certificate)
-    expect(cert.subject_alt_names).to match_array(%W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz])
+    expect(cert).to be_a(OpenSSL::X509::Certificate)
+    expect(localhost.subject_alt_names).to match_array(%W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz])
   end
 
   context "with dns_alt_names" do
@@ -215,10 +215,9 @@ describe Puppet::SSL::Host do
   it "should consider the certificate invalid if the SSL certificate's key verification fails" do
     host = Puppet::SSL::Host.new("foo")
     key = mock 'key', :content => "private_key"
-    sslcert = mock 'sslcert'
-    certificate = mock 'cert', {:content => sslcert, :fingerprint => 'DEADBEEF'}
+    sslcert = mock('sslcert', { :fingerprint => "DEADBEEF" })
     host.stubs(:key).returns key
-    host.stubs(:certificate).returns certificate
+    host.stubs(:certificate).returns sslcert
     sslcert.expects(:check_private_key).with("private_key").returns false
     expect { host.validate_certificate_with_key }.to raise_error(Puppet::Error, /DEADBEEF/)
   end
@@ -227,9 +226,8 @@ describe Puppet::SSL::Host do
     host = Puppet::SSL::Host.new("foo")
     key = mock 'key', :content => "private_key"
     sslcert = mock 'sslcert'
-    certificate = mock 'cert', :content => sslcert
     host.stubs(:key).returns key
-    host.stubs(:certificate).returns certificate
+    host.stubs(:certificate).returns sslcert
     sslcert.expects(:check_private_key).with("private_key").returns true
     expect{ host.validate_certificate_with_key }.not_to raise_error
   end
@@ -511,21 +509,21 @@ describe Puppet::SSL::Host do
     end
 
     it "should find the CA certificate if it does not have a certificate" do
-      @host.expects(:get_cert).with('ca').returns mock('cacert')
-      @host.expects(:get_cert).with('myname').returns @cert
+      @host.expects(:get_certificate).with('ca').returns mock('cacert')
+      @host.expects(:get_certificate).with('myname').returns @cert
       @host.certificate
     end
 
     it "should not find the CA certificate if it is the CA host" do
       @host.expects(:ca?).returns true
-      @host.stubs(:get_cert).returns(@cert)
-      @host.expects(:get_cert).with('ca').never
+      @host.stubs(:get_certificate).returns(@cert)
+      @host.expects(:get_certificate).with('ca').never
 
       @host.certificate
     end
 
     it "should return nil if it cannot find a CA certificate" do
-      @host.expects(:get_cert).with("ca").returns(nil)
+      @host.expects(:get_certificate).with("ca").returns(nil)
 
       expect(@host.certificate).to be_nil
     end
@@ -544,8 +542,8 @@ describe Puppet::SSL::Host do
     end
 
     it "should return any previously found certificate" do
-      @host.expects(:get_cert).with('ca').returns mock('cacert')
-      @host.expects(:get_cert).with('myname').returns @cert
+      @host.expects(:get_certificate).with('ca').returns mock('cacert')
+      @host.expects(:get_certificate).with('myname').returns @cert
 
       expect(@host.certificate).to equal(@cert)
       expect(@host.certificate).to equal(@cert)
