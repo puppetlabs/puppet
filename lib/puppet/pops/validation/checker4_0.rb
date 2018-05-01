@@ -35,6 +35,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
     @check_visitor = self.class.check_visitor
     @acceptor = diagnostics_producer
+    @file_to_namespace = {}
 
     # Use null migration checker unless given in context
     @migration_checker = (Puppet.lookup(:migration_checker) { Migration::MigrationChecker.new() })
@@ -395,6 +396,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     if o.name !~ Patterns::CLASSREF_DECL
       acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
     end
+
+    internal_check_file_namespace(o, o.name, o.locator.file)
     internal_check_reserved_type_name(o, o.name)
     internal_check_future_reserved_word(o, o.name)
   end
@@ -530,6 +533,75 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     end
   end
 
+  def internal_check_file_namespace(o, name, file)
+    return if file.nil?
+
+    lc_file = file.downcase
+
+    file_namespace = @file_to_namespace[lc_file]
+    if file_namespace.nil?
+      return if @file_to_namespace.key?(lc_file)
+      file_namespace = @file_to_namespace[lc_file] = namespace_for_file(lc_file)
+      return if file_namespace.nil?
+    end
+
+    if !name.downcase.start_with?(file_namespace)
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, {:name => name, :file => file})
+    end
+  end
+
+  NEVER_MATCH = '\b'.freeze
+
+  def namespace_for_file(file)
+    path = Pathname.new(file)
+
+    return nil if path.extname != ".pp"
+
+    return nil if initial_manifest?(path)
+
+    path = path.each_filename.to_a
+
+    # Example definition dir: manifests in this path:
+    # <modules dir>/<module name>/manifests/<module subdir>/<classfile>.pp
+    definition_dir_index = find_module_definition_dir(path)
+
+    # How can we get this result?
+    # If it is not an initial manifest, it must come from a module,
+    # and from the manifests dir there.  This may never get used...
+    return NEVER_MATCH if definition_dir_index.nil? || definition_dir_index == 0
+
+    before_definition_dir = definition_dir_index - 1
+    after_definition_dir = definition_dir_index + 1
+    names = path[after_definition_dir .. -2] # Directories inside module
+    names.unshift(path[before_definition_dir]) # Name of the module itself
+    # Do not include name of module init file at top level of module
+    filename = path[-1]
+    if !(path.length == (after_definition_dir+1) && filename == 'init.pp')
+      names.push(filename[0 .. -4]) # Remove .pp from filename
+    end
+
+    names.join("::").freeze
+  end
+
+  def initial_manifest?(path)
+    manifest_setting = Puppet[:manifest]
+
+    # Does this ever happen outside of tests?
+    if manifest_setting.nil?
+      return path.basename.to_s == 'site.pp'
+    end
+
+    full_path = path.expand_path.to_s
+    full_path == manifest_setting || full_path.start_with?(manifest_setting)
+  end
+
+  # Returns module root directory index in path for files under 'manifests', 'functions' and 'types'
+  def find_module_definition_dir(path)
+    reverse_index = path.reverse_each.find_index do |dir|
+      dir == 'manifests' || dir == 'functions' || dir == 'types'
+    end
+    return reverse_index.nil? ? nil : (path.length - 1) - reverse_index
+  end
 
   RESERVED_PARAMETERS = {
     'name' => true,

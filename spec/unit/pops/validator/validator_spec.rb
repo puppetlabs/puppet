@@ -34,6 +34,47 @@ describe "validating 4x" do
     expect(validate(parse('function ::aaa() {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
   end
 
+  it 'should raise error for illegal class locations' do
+    expect(validate(parse('function aaa::ccc() {}', 'aaa/manifests/bbb.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    expect(validate(parse('class bbb() {}', 'aaa/manifests/init.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    expect(validate(parse('define aaa::bbb::ccc::eee() {}', 'aaa/manifests/bbb/ddd.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+  end
+
+  it 'should not raise error for legal definition locations' do
+    expect(validate(parse('function aaa::bbb() {}',      'aaa/manifests/bbb.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    expect(validate(parse('define bbb() {}',      'aaa/manifests/site.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    expect(validate(parse('class aaa() {}',      'aaa/manifests/init.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    expect(validate(parse('class aaa() {}',      'manifests/site.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    expect(validate(parse('function aaa::bbB::ccc() {}', 'aaa/manifests/bBb.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    expect(validate(parse('function aaa::bbb::ccc() {}', 'aaa/manifests/bbb/CCC.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+  end
+
+  it 'should not raise error for class locations when not parsing a file' do
+    #nil file means eval or some other way to get puppet language source code into the catalog
+    expect(validate(parse('function aaa::ccc() {}', nil))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+  end
+
+  it 'should not raise error for definitions inside initial --manifest' do
+    Puppet[:manifest] = 'a/manifest/file.pp'
+    expect(validate(parse('class aaa() {}', 'a/manifest/file.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+  end
+
+  it 'should not raise error for definitions inside initial --manifest' do
+    Puppet[:manifest] = 'a/manifest/dir'
+    expect(validate(parse('class aaa() {}', 'a/manifest/dir/file1.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    expect(validate(parse('class bbb::ccc::ddd() {}', 'a/manifest/dir/and/more/stuff.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+  end
+
+  it 'should raise error for definitions not inside initial --manifest' do
+    Puppet[:manifest] = 'a/manifest/somewhere/else'
+    expect(validate(parse('class aaa() {}', 'a/manifest/dir/file1.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+  end
+
+  it 'should raise error if the manifest file does not come from a well formed module path' do
+    skip("This test path won't work on windows.") if Puppet::Util::Platform.windows?
+    expect(validate(parse('class aaa() {}', '/manifest/dir/file1.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)    
+  end
+
   it 'should raise error for illegal type names' do
     expect(validate(parse('type ::Aaa = Any'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
   end
@@ -55,6 +96,13 @@ describe "validating 4x" do
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
+    end
+
+    it 'produces a warning for illegal function locations' do
+      acceptor = validate(parse('function aaa::ccc() {}', 'aaa/manifests/bbb.pp'))
+      expect(acceptor.warning_count).to eql(1)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
     end
   end
 
@@ -79,6 +127,13 @@ describe "validating 4x" do
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
+    end
+
+    it 'produces a warning for illegal function locations' do
+      acceptor = validate(parse('function aaa::ccc() {}', 'aaa/manifests/bbb.pp'))
+      expect(acceptor.warning_count).to eql(1)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
     end
   end
 
@@ -111,6 +166,13 @@ describe "validating 4x" do
       expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
+
+    it 'produces an error for illegal function locations' do
+      acceptor = validate(parse('function aaa::ccc() {}', 'aaa/manifests/bbb.pp'))
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(1)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    end
   end
 
   context 'with --strict set to off' do
@@ -120,6 +182,13 @@ describe "validating 4x" do
       expect(acceptor.warning_count).to eql(0)
       expect(acceptor.error_count).to eql(0)
       expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
+    end
+
+    it 'does not produce an error or warning for illegal function locations' do
+      acceptor = validate(parse('function aaa::ccc() {}', 'aaa/manifests/bbb.pp'))
+      expect(acceptor.warning_count).to eql(0)
+      expect(acceptor.error_count).to eql(0)
+      expect(acceptor).to_not have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
     end
   end
 
@@ -145,7 +214,7 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
-    it 'produces a  warning for exported class resource' do
+    it 'produces a warning for exported class resource' do
       acceptor = validate(parse('@@class { test: }'))
       expect(acceptor.warning_count).to eql(1)
       expect(acceptor.error_count).to eql(0)
@@ -662,7 +731,7 @@ describe "validating 4x" do
     end
   end
 
-  def parse(source)
-    Puppet::Pops::Parser::Parser.new.parse_string(source)
+  def parse(source, path=nil)
+    Puppet::Pops::Parser::Parser.new.parse_string(source, path)
   end
 end

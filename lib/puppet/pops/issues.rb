@@ -486,6 +486,10 @@ module Issues
     _("Unacceptable name. The name '%{name}' is unacceptable as the name of %{value}") % { name: name, value: label.a_an(semantic) }
   end
 
+  ILLEGAL_DEFINITION_LOCATION = issue :ILLEGAL_DEFINITION_LOCATION, :name, :file do
+    _("Unacceptable location. The name '%{name}' is unacceptable in file '%{file}'") % { name: name, file: file }
+  end
+
   CAPTURES_REST_NOT_LAST = hard_issue :CAPTURES_REST_NOT_LAST, :param_name do
     _("Parameter $%{param} is not last, and has 'captures rest'") % { param: param_name }
   end
