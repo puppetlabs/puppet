@@ -114,7 +114,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   # @api private
   #
   def setup_connection(connection)
-    if @ca_path
+    if ssl_certificates_are_present?
       connection.cert_store = @ssl_host.ssl_store
       connection.ca_file = @ca_path
       connection.cert = @ssl_host.certificate.content
@@ -179,5 +179,11 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
         peer_cert.verify(authz_cert.public_key)
       end
     end
+  end
+
+  # @api private
+  #
+  def ssl_certificates_are_present?
+    Puppet::FileSystem.exist?(Puppet[:hostcert]) && Puppet::FileSystem.exist?(@ca_path)
   end
 end

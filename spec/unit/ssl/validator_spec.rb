@@ -191,11 +191,9 @@ describe Puppet::SSL::Validator::DefaultValidator do
     end
 
     context 'when no file path is found' do
-      subject do
-        described_class.new(nil, ssl_host)
-      end
+
       it 'does not perform verification if certificate files are missing' do
-        # subject.stubs(:ssl_certificates_are_present?).returns(false)
+        subject.stubs(:ssl_certificates_are_present?).returns(false)
         connection = mock('Net::HTTP')
 
         connection.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
