@@ -7,13 +7,13 @@ Maintainer:
  Nigel Kersten <nigel@explanatorygap.net>,
  Stig Sandbeck Mathisen <ssm@debian.org>
 Source: git://github.com/puppetlabs/puppet.git,
- https://docs.puppetlabs.com/puppet/latest/reference/install_pre.html
+ https://puppet.com/docs/puppet/latest/install_pre.html
 
 Copyright: 2005-2015 Puppet Labs
 License: Apache 2.0
 
 Files: debian/*
-Copyright: 
+Copyright:
  Andrew Pollock <apollock@debian.org>,
  Jamie Wilkinson <jaq@debian.org>,
  Matthew Palmer <mpalmer@debian.org>,

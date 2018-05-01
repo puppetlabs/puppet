@@ -5,4 +5,4 @@ modules that are installed globally (normally in /etc/puppetlabs/code/modules) f
 puppet master.
 
 For more information see
-https://docs.puppet.com/puppet/latest/reference/environments.html
+https://puppet.com/docs/puppet/latest/environments.html
