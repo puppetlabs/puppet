@@ -6,10 +6,8 @@ describe Puppet::SSL::Validator::DefaultValidator do
     mock('OpenSSL::X509::StoreContext')
   end
 
-  let(:ssl_configuration) do
-    Puppet::SSL::Configuration.new(
-      Puppet[:localcacert],
-      :ca_auth_file  => Puppet[:ssl_client_ca_auth])
+  let(:ca_path) do
+    Puppet[:ssl_client_ca_auth] || Puppet[:localcacert]
   end
 
   let(:ssl_host) do
@@ -20,14 +18,12 @@ describe Puppet::SSL::Validator::DefaultValidator do
   end
 
   subject do
-    described_class.new(ssl_configuration,
-                        ssl_host)
+    described_class.new(ca_path, ssl_host)
   end
 
   before :each do
-    ssl_configuration.stubs(:read_file).
-      with(Puppet[:localcacert]).
-      returns(root_ca)
+    subject.stubs(:read_file).returns(root_ca)
+
   end
 
   describe '#call' do
@@ -145,9 +141,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
       context 'and the chain is invalid' do
         before :each do
-          ssl_configuration.stubs(:read_file).
-            with(Puppet[:localcacert]).
-            returns(agent_ca)
+          subject.stubs(:read_file).returns(agent_ca)
         end
 
         it 'is true for each CA certificate in the chain' do
@@ -187,7 +181,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
       connection = mock('Net::HTTP')
 
       connection.expects(:cert_store=).with(ssl_host.ssl_store)
-      connection.expects(:ca_file=).with(ssl_configuration.ca_auth_file)
+      connection.expects(:ca_file=).with(ca_path)
       connection.expects(:cert=).with(ssl_host.certificate.content)
       connection.expects(:key=).with(ssl_host.key.content)
       connection.expects(:verify_callback=).with(subject)
@@ -196,22 +190,24 @@ describe Puppet::SSL::Validator::DefaultValidator do
       subject.setup_connection(connection)
     end
 
-    it 'does not perform verification if certificate files are missing' do
-      subject.stubs(:ssl_certificates_are_present?).returns(false)
-      connection = mock('Net::HTTP')
+    context 'when no file path is found' do
+      subject do
+        described_class.new(nil, ssl_host)
+      end
+      it 'does not perform verification if certificate files are missing' do
+        # subject.stubs(:ssl_certificates_are_present?).returns(false)
+        connection = mock('Net::HTTP')
 
-      connection.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+        connection.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
-      subject.setup_connection(connection)
+        subject.setup_connection(connection)
+      end
     end
   end
 
   describe '#valid_peer?' do
     before :each do
-      peer_certs = cert_chain_in_callback_order.map do |c|
-        Puppet::SSL::Certificate.from_instance(c)
-      end
-      subject.instance_variable_set(:@peer_certs, peer_certs)
+      subject.instance_variable_set(:@peer_certs, cert_chain_in_callback_order)
     end
 
     context 'when the peer presents a valid chain' do
@@ -397,7 +393,7 @@ BAD_SSL_CERT
   end
 
   let :expected_authz_error_msg do
-    authz_ca_certs = ssl_configuration.ca_auth_certificates
+    authz_ca_certs = subject.decode_cert_bundle(subject.read_file)
     msg = authz_error_prefix
     msg << "Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject}.join(', ')}  "
     msg << "Peer Chain: #{cert_chain.collect {|c| c.subject}.join(' => ')}"
