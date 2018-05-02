@@ -1,6 +1,5 @@
 require 'net/https'
 require 'puppet/ssl/host'
-require 'puppet/ssl/configuration'
 require 'puppet/ssl/validator'
 require 'puppet/network/http'
 require 'uri'
