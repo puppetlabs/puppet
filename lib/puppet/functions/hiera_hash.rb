@@ -76,9 +76,9 @@ require 'hiera/puppet_function'
 # found in the data sources are strings or arrays, Puppet raises a type mismatch error.
 #
 # See
-# [the 'Using the lookup function' documentation](https://puppet.com/docs/puppet/latest/hiera_use_function.html) for how to perform lookup of data.
+# [the 'Using the lookup function' documentation](https://puppet.com/docs/puppet/latest/hiera_automatic.html) for how to perform lookup of data.
 # Also see
-# [the 'Using the deprecated hiera functions' documentation](https://puppet.com/docs/puppet/latest/hiera_use_hiera_functions.html)
+# [the 'Using the deprecated hiera functions' documentation](https://puppet.com/docs/puppet/latest/hiera_automatic.html)
 # for more information about the Hiera 3 functions.
 #
 # @since 4.0.0
