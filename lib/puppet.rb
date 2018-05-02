@@ -208,7 +208,6 @@ module Puppet
         Puppet::Network::HTTP::NoCachePool.new
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
-      :certificate_revocation => proc { Puppet[:certificate_revocation] },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins }
     }
   end

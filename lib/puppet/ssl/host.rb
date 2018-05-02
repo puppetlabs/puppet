@@ -22,10 +22,10 @@ class Puppet::SSL::Host
     The indirection key is the certificate CN (generally a hostname).
 DOC
 
-  attr_reader :name
+  attr_reader :name, :crl_path
   attr_accessor :ca
 
-  attr_writer :key, :certificate, :certificate_request
+  attr_writer :key, :certificate, :certificate_request, :crl_usage
 
   # This accessor is used in instances for indirector requests to hold desired state
   attr_accessor :desired_state
@@ -264,6 +264,8 @@ ERROR_STRING
     Puppet::SSL::Base.validate_certname(@name)
     @key = @certificate = @certificate_request = nil
     @ca = (name == self.class.ca_name)
+    @crl_usage = Puppet.settings[:certificate_revocation]
+    @crl_path = Puppet.settings[:hostcrl]
   end
 
   # Extract the public key from the private key.
@@ -271,10 +273,19 @@ ERROR_STRING
     key.content.public_key
   end
 
+  def use_crl?
+    !!@crl_usage
+  end
+
+  def use_crl_chain?
+    @crl_usage == true || @crl_usage == :chain
+  end
+
   # Create/return a store that uses our SSL info to validate
   # connections.
   def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
     if @ssl_store.nil?
+      ensure_crl_if_needed
       @ssl_store = build_ssl_store(purpose)
     end
     @ssl_store
@@ -371,27 +382,67 @@ ERROR_STRING
 
   private
 
+  # Ensures that CRL is either on disk, or that CRL checking has been disabled
+  def ensure_crl_if_needed
+    if use_crl? && !Puppet::FileSystem.exist?(crl_path)
+      # The CertificateRevocationList indirector will attempt to download the
+      # CRL from the CA if it does not exist on disk. It will ask host for
+      # its ssl_store again, but expect crl checking to be disabled for that
+      # store. This is not thread safe, and should be replaced as soon as we
+      # no longer need to use the indirector to download the CRL (PUP-8654).
+      old_crl_usage = @crl_usage
+      @crl_usage = false
+      Puppet.debug _("Disabling certificate revocation checking when fetching the CRL and no CRL is present")
+      if !CertificateRevocationList.indirection.find(CA_NAME)
+        raise Puppet::Error,
+              _("Certificate revocation checking is enabled but a CRL cannot be found; CRL checking will not be performed.")
+      end
+      @crl_usage = old_crl_usage
+    end
+  end
+
+  # @param path [String] Path to CRL Chain
+  # @return [Array<OpenSSL::X509::CRL>] CRLs from chain
+  # @raise [Errno::ENOENT] if file does not exist
+  # @raise [Puppet::Error<OpenSSL::X509::CRLError>] if the CRL chain is malformed
+  def load_crls(path)
+    delimiters = /-----BEGIN X509 CRL-----.*?-----END X509 CRL-----/m
+    crls_pems = Puppet::FileSystem.read(path, encoding: Encoding::UTF_8)
+    crls_pems.scan(delimiters).map do |crl|
+      begin
+        OpenSSL::X509::CRL.new(crl)
+      rescue OpenSSL::X509::CRLError => e
+        raise Puppet::Error.new(
+            _("Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n%{crl}" % {crl_path: crl_path, error: e.message, crl: crl}),
+          e)
+      end
+    end
+  end
+
+  # @param [OpenSSL::X509::PURPOSE_*] constant defining the kinds of certs
+  #   this store can verify
+  # @return [OpenSSL::X509::Store]
+  # @raise [OpenSSL::X509::StoreError] if localcacert is malformed or non-existant
+  # @raise [Puppet::Error] if the CRL chain is malformed
+  # @raise [Errno::ENOENT] if the CRL does not exist on disk but use_crl? is true
   def build_ssl_store(purpose)
     store = OpenSSL::X509::Store.new
     store.purpose = purpose
 
     # Use the file path here, because we don't want to cause
     # a lookup in the middle of setting our ssl connection.
-    store.add_file(Puppet[:localcacert])
+    store.add_file(Puppet.settings[:localcacert])
 
-    # If we're doing revocation and there's a CRL, add it to our store.
-    if Puppet.lookup(:certificate_revocation)
-      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
-        flags = OpenSSL::X509::V_FLAG_CRL_CHECK
-        if Puppet.lookup(:certificate_revocation) == :chain
-          flags |= OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
-        end
+    if use_crl?
+      crls = load_crls(crl_path)
 
-        store.flags = flags
-        store.add_crl(crl.content)
-      else
-        Puppet.debug _("Certificate revocation checking is enabled but a CRL cannot be found; CRL checking will not be performed.")
+      flags = OpenSSL::X509::V_FLAG_CRL_CHECK
+      if use_crl_chain?
+        flags |= OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
       end
+
+      store.flags = flags
+      crls.each {|crl| store.add_crl(crl) }
     end
     store
   end

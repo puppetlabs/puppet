@@ -1,8 +1,9 @@
-#! /usr/bin/env ruby
+#!/usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/host'
 require 'matchers/json'
+require 'puppet_spec/ssl'
 
 def base_json_comparison(result, json_hash)
   expect(result["fingerprint"]).to eq(json_hash["fingerprint"])
@@ -672,95 +673,142 @@ describe Puppet::SSL::Host do
     expect(Puppet::SSL::Host.new("me")).to respond_to(:ssl_store)
   end
 
-  it "should always return the same store" do
-    host = Puppet::SSL::Host.new("foo")
-    store = mock 'store'
-    store.stub_everything
-    OpenSSL::X509::Store.expects(:new).returns store
-    expect(host.ssl_store).to equal(host.ssl_store)
-  end
-
   describe "when creating an SSL store" do
     before do
-      @host = Puppet::SSL::Host.new("me")
-      @store = mock 'store'
-      @store.stub_everything
-      OpenSSL::X509::Store.stubs(:new).returns @store
-
       Puppet[:localcacert] = "ssl_host_testing"
-
-      Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns(nil)
     end
 
     it "should accept a purpose" do
-      @store.expects(:purpose=).with "my special purpose"
-      @host.ssl_store("my special purpose")
+      store = mock 'store'
+      store.stub_everything
+      OpenSSL::X509::Store.expects(:new).returns store
+      store.expects(:purpose=).with(OpenSSL::X509::PURPOSE_SSL_SERVER)
+      host = Puppet::SSL::Host.new("me")
+      host.crl_usage = false
+
+      host.ssl_store(OpenSSL::X509::PURPOSE_SSL_SERVER)
     end
 
-    it "should default to OpenSSL::X509::PURPOSE_ANY as the purpose" do
-      @store.expects(:purpose=).with OpenSSL::X509::PURPOSE_ANY
-      @host.ssl_store
-    end
+    context "and the CRL needs to be retrieved" do
+      before do
+        @pki = PuppetSpec::SSL.create_chained_pki
 
-    it "should add the local CA cert file" do
-      Puppet[:localcacert] = "/ca/cert/file"
-      @store.expects(:add_file).with Puppet[:localcacert]
-      @host.ssl_store
+        @revoked_cert = @pki[:revoked_root_node_cert]
+
+        localcacert = Puppet.settings[:localcacert]
+        Puppet::Util.replace_file(localcacert, 0644) {|f| f.write @pki[:ca_bundle] }
+      end
+
+      after do
+        Puppet::FileSystem.unlink(Puppet.settings[:localcacert])
+        Puppet::FileSystem.unlink(Puppet.settings[:hostcrl])
+      end
+
+      it "a second invocation of #ssl_store returns a store without CRL checking" do
+        Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).with('ca') {|ca|
+          # Mock out downloading a CRL
+          Puppet::Util.replace_file(Puppet.settings[:hostcrl], 0644) do |f|
+            f.write @pki[:crl_chain]
+          end
+
+          # If we were downloading the CRL we expect to be able to get a
+          # different ssl_store for that connection, one that does not have
+          # CRL checking enabled.
+          expect(@host.ssl_store.verify(@revoked_cert)).to be true
+        }.returns(true)
+
+        @host.crl_usage = true
+
+        # With the CRL chain "downloaded" the revoked cert should no
+        # longer be verified.
+        expect(@host.ssl_store.verify(@revoked_cert)).to be false
+      end
     end
 
     describe "and a CRL is available" do
       before do
-        @crl = stub 'crl', :content => "real_crl"
-        Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns @crl
+        pki = PuppetSpec::SSL.create_chained_pki
+
+        @revoked_cert_from_self_signed_root          = pki[:revoked_root_node_cert]
+        @revoked_cert_from_ca_with_untrusted_chain   = pki[:revoked_leaf_node_cert]
+        @unrevoked_cert_from_self_signed_root        = pki[:unrevoked_root_node_cert]
+        @unrevoked_cert_from_revoked_ca              = pki[:unrevoked_int_node_cert]
+        @unrevoked_cert_from_ca_with_untrusted_chain = pki[:unrevoked_leaf_node_cert]
+
+        localcacert = Puppet.settings[:localcacert]
+        hostcrl     = Puppet.settings[:hostcrl]
+
+        Puppet::Util.replace_file(localcacert, 0644) {|f| f.write pki[:ca_bundle] }
+        Puppet::Util.replace_file(hostcrl, 0644)     {|f| f.write pki[:crl_chain] }
+
+        Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns true
       end
 
-      [true, 'chain'].each do |crl_setting|
+      after do
+        Puppet::FileSystem.unlink(Puppet.settings[:localcacert])
+        Puppet::FileSystem.unlink(Puppet.settings[:hostcrl])
+      end
+
+      [true, :chain].each do |crl_setting|
         describe "and 'certificate_revocation' is #{crl_setting}" do
           before do
-            Puppet[:certificate_revocation] = crl_setting
+            @host = Puppet::SSL::Host.new(crl_setting.to_s)
+            @host.crl_usage = crl_setting
           end
 
-          it "should add the CRL" do
-            @store.expects(:add_crl).with "real_crl"
-            @host.ssl_store
+          it "should verify unrevoked certs" do
+            expect(
+              @host.ssl_store.verify(@unrevoked_cert_from_self_signed_root)
+            ).to be true
           end
 
-          it "should set the flags to OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK" do
-            @store.expects(:flags=).with(OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK)
-            @host.ssl_store
+          it "should not verify revoked certs" do
+            [@revoked_cert_from_self_signed_root,
+             @revoked_cert_from_ca_with_untrusted_chain,
+             @unrevoked_cert_from_revoked_ca,
+             @unrevoked_cert_from_ca_with_untrusted_chain].each do |cert|
+              expect(@host.ssl_store.verify(cert)).to be false
+            end
           end
         end
       end
 
       describe "and 'certificate_revocation' is leaf" do
         before do
-          Puppet[:certificate_revocation] = 'leaf'
+          @host = Puppet::SSL::Host.new("leaf")
+          @host.crl_usage = :leaf
         end
 
-        it "should add the CRL" do
-          @store.expects(:add_crl).with "real_crl"
-          @host.ssl_store
+        it "should verify unrevoked certs regardless of signing CA's revocation status" do
+          [@unrevoked_cert_from_self_signed_root,
+           @unrevoked_cert_from_revoked_ca,
+           @unrevoked_cert_from_ca_with_untrusted_chain].each do |cert|
+            expect(@host.ssl_store.verify(cert)).to be true
+          end
         end
 
-        it "should set the flags to OpenSSL::X509::V_FLAG_CRL_CHECK" do
-          @store.expects(:flags=).with(OpenSSL::X509::V_FLAG_CRL_CHECK)
-          @host.ssl_store
+        it "should not verify certs revoked by their signing CA" do
+          [@revoked_cert_from_self_signed_root,
+           @revoked_cert_from_ca_with_untrusted_chain].each do |cert|
+            expect(@host.ssl_store.verify(cert)).to be false
+          end
         end
       end
 
       describe "and 'certificate_revocation' is false" do
         before do
-          Puppet[:certificate_revocation] = false
+          @host = Puppet::SSL::Host.new("host")
+          @host.crl_usage = false
         end
 
-        it "should not add the CRL" do
-          @store.expects(:add_crl).never
-          @host.ssl_store
-        end
-
-        it "should not set the flags" do
-          @store.expects(:flags=).never
-          @host.ssl_store
+        it "should verify valid certs regardless of revocation status" do
+          [@revoked_cert_from_self_signed_root,
+           @revoked_cert_from_ca_with_untrusted_chain,
+           @unrevoked_cert_from_self_signed_root,
+           @unrevoked_cert_from_revoked_ca,
+           @unrevoked_cert_from_ca_with_untrusted_chain].each do |cert|
+            expect(@host.ssl_store.verify(cert)).to be true
+          end
         end
       end
     end

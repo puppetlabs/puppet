@@ -69,15 +69,16 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       })
     end
 
-    it "should verify a revoked certificate if CRL use was turned off" do
-      given_certificates_for('random-host')
-      subject.revoke('random-host')
+    context "with certificate_revocation off" do
+      it "should verify a revoked certificate if CRL use was turned off" do
+        Puppet.settings[:certificate_revocation] = false
+        given_certificates_for('random-host')
+        subject.revoke('random-host')
 
-      Puppet[:certificate_revocation] = false
-
-      expect(subject.verify('random-host')).to eq({
-        :host => 'random-host', :valid => true
-      })
+        expect(subject.verify('random-host')).to eq({
+          :host => 'random-host', :valid => true
+        })
+      end
     end
   end
 
