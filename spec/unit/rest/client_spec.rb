@@ -31,25 +31,31 @@ describe Puppet::Rest::Client do
   context "when making requests" do
     let(:http) { stub_everything('http', :request_filter => []) }
     let(:client) { Puppet::Rest::Client.new(client: http) }
+    let(:url) { "https://foo.com" }
 
-    it "should make a GET request given a URL" do
-      url = "https://foo.com"
+    it "makes a GET request given a URL" do
       http.expects(:get).with(url, query: nil, header: nil).returns("response")
       client.get(url)
     end
 
-    it "should accept a query hash" do
-      url = "https://foo.com"
+    it "accepts a query hash" do
       query = { 'environment' => 'production' }
       http.expects(:get).with(url, query: query, header: nil)
       client.get(url, query: query)
     end
 
-    it "should accept a header hash" do
-      url = "https://foo.com"
+    it "accepts a header hash" do
       header = { 'Accept' => 'text/plain' }
       http.expects(:get).with(url, query: nil, header: header)
       client.get(url, header: header)
+    end
+
+    it "returns a wrapped response object" do
+      fake_response = mock('resp', :status => HTTP::Status::OK)
+      http.expects(:get).with(url, query: nil, header: nil).returns(fake_response)
+      response = client.get(url)
+      expect(response).to be_a(Puppet::Rest::Response)
+      expect(response.status_code).to eq(200)
     end
   end
 end

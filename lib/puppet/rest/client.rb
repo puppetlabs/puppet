@@ -1,5 +1,7 @@
 require 'httpclient'
 
+require 'puppet/rest/response'
+
 module Puppet::Rest
   class Client
     def self.default_client
@@ -28,7 +30,8 @@ module Puppet::Rest
     private :configure_client
 
     def get(url, query: nil, header: nil)
-      @client.get(url, query: query, header: header)
+      response = @client.get(url, query: query, header: header)
+      Puppet::Rest::Response.new(response)
     end
 
     # Called by the HTTPClient library while processing a request.
