@@ -17,6 +17,14 @@ module PuppetSpec
     ]
     DEFAULT_SIGNING_DIGEST = OpenSSL::Digest::SHA256.new
     DEFAULT_REVOCATION_REASON = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE
+    ROOT_CA_NAME = "/CN=root-ca-\u{2070E}"
+    INT_CA_NAME = "/CN=revoked-int-ca-\u16A0"
+    LEAF_CA_NAME = "/CN=leaf-ca-\u06FF"
+    EXPLANATORY_TEXT = <<-EOT
+# Root Issuer: #{ROOT_CA_NAME}
+# Intermediate Issuer: #{INT_CA_NAME}
+# Leaf Issuer: #{LEAF_CA_NAME}
+EOT
 
 
     def self.create_private_key(length = PRIVATE_KEY_LENGTH)
@@ -131,7 +139,7 @@ module PuppetSpec
     # Returns the ca bundle, crl chain, and all the node certs
     def self.create_chained_pki
       root_key = create_private_key
-      root_cert = self_signed_ca(root_key, "/CN=root-ca")
+      root_cert = self_signed_ca(root_key, ROOT_CA_NAME)
       root_crl = create_crl_for(root_cert, root_key)
 
       unrevoked_root_node_key = create_private_key
@@ -145,7 +153,7 @@ module PuppetSpec
       revoke(revoked_root_node_cert.serial, root_crl, root_key)
 
       revoked_int_key = create_private_key
-      revoked_int_csr = create_csr(revoked_int_key, "/CN=revoked-int-ca")
+      revoked_int_csr = create_csr(revoked_int_key, INT_CA_NAME)
       revoked_int_cert = sign(root_key, root_cert, revoked_int_csr, CA_EXTENSIONS)
       revoked_int_crl = create_crl_for(revoked_int_cert, revoked_int_key)
 
@@ -154,7 +162,7 @@ module PuppetSpec
       unrevoked_int_node_cert = sign(revoked_int_key, revoked_int_cert, unrevoked_int_node_csr)
 
       leaf_key = create_private_key
-      leaf_csr = create_csr(leaf_key, "/CN=leaf-ca")
+      leaf_csr = create_csr(leaf_key, LEAF_CA_NAME)
       leaf_cert = sign(revoked_int_key, revoked_int_cert, leaf_csr, CA_EXTENSIONS)
       leaf_crl = create_crl_for(leaf_cert, leaf_key)
 
@@ -200,7 +208,7 @@ module PuppetSpec
     end
 
     def self.bundle(*items)
-      items.map(&:to_pem).join("\n")
+      items.map {|i| EXPLANATORY_TEXT + i.to_pem }.join("\n")
     end
   end
 end
