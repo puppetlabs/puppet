@@ -17,21 +17,40 @@ module Puppet::Rest
 
     attr_reader :base_url
 
+    # Create a new HTTP client for querying the given API.
+    # @param [Puppet::Rest::Route] route data about the API being queried,
+    #                              including the API name and server details.
+    # @param [OpenSSL::X509::Store] ssl_store the SSL configuration for this client
+    # @param [Integer] receive_timeout how long in seconds this client will wait
+    #                  for a response after making a request
+    # @param [HTTPClient] client the third-party HTTP client wrapped by this
+    #                     class. This param is only used for testing.
+    # @param [Puppet::Rest::ServerResolver] server_resolver the object responsible
+    #                                       for finding the best available server
+    #                                       given the data in `route`. This param
+    #                                       is only used for testing.
     def initialize(route,
-                   client: Puppet::Rest::Client.default_client,
                    ssl_store: OpenSSL::X509::Store.new,
-                   server_resolver: Puppet::Rest::ServerResolver.new,
-                   receive_timeout: 3600)
+                   receive_timeout: 3600,
+                   client: Puppet::Rest::Client.default_client,
+                   server_resolver: Puppet::Rest::ServerResolver.new)
       @client = client
 
       @server_resolver = server_resolver
       configure_client(ssl_store, route, receive_timeout)
     end
 
+    # Configures the underlying HTTPClient
+    # @param [OpentSSL::X509::Store] ssl_store the SSL configuration for this client
+    # @param [Puppet::Rest::Route] route data about the API being queried
+    # @param [Integer] timeout how long to wait for a response from the server once
+    #                  a request has been made
     def configure_client(ssl_store, route, timeout)
       @client.tcp_keepalive = true
       @client.connect_timeout = 10
       @client.receive_timeout = timeout
+      # `request_filter` is a list of objects implementing the `filter_request` and
+      # `filter_response` methods, which get called during request processing.
       @client.request_filter << self
 
       @client.cert_store = ssl_store
@@ -51,9 +70,15 @@ module Puppet::Rest
                                               default_server: route.default_server,
                                               default_port: route.default_port)
     end
+    private :server_and_port
 
-    def get(url, query: nil, header: nil)
-      response = @client.get(url, query: query, header: header)
+    # Make a GET request to the specified endpoint with the specified params.
+    # @param [String] endpoint the endpoint of the configured API to query
+    # @param [Hash] query any URL params to add to send to the endpoint
+    # @param [Hash] header any additional entries to add to the default header
+    # @return [Puppet::Rest::Response] the response from the server
+    def get(endpoint, query: nil, header: nil)
+      response = @client.get(endpoint, query: query, header: header)
       Puppet::Rest::Response.new(response)
     end
 
