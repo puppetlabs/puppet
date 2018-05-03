@@ -202,6 +202,42 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "true  == true " => true,
       "false == false" => true,
       "true == false"  => false,
+
+      "Timestamp(1) < Timestamp(2)"  => true,
+      "Timespan(1) < Timespan(2)"    => true,
+      "Timestamp(1) > Timestamp(2)"  => false,
+      "Timespan(1) > Timespan(2)"    => false,
+      "Timestamp(1) == Timestamp(1)" => true,
+      "Timespan(1) == Timespan(1)"   => true,
+
+      "1 < Timestamp(2)"  => true,
+      "1 < Timespan(2)"   => true,
+      "1 > Timestamp(2)"  => false,
+      "1 > Timespan(2)"   => false,
+      "1 == Timestamp(1)" => true,
+      "1 == Timespan(1)"  => true,
+
+      "1.0 < Timestamp(2)"  => true,
+      "1.0 < Timespan(2)"   => true,
+      "1.0 > Timestamp(2)"  => false,
+      "1.0 > Timespan(2)"   => false,
+      "1.0 == Timestamp(1)" => true,
+      "1.0 == Timespan(1)"  => true,
+
+      "Timestamp(1) < 2"  => true,
+      "Timespan(1) < 2"   => true,
+      "Timestamp(1) > 2"  => false,
+      "Timespan(1) > 2"   => false,
+      "Timestamp(1) == 1" => true,
+      "Timespan(1) == 1"  => true,
+
+      "Timestamp(1) < 2.0"  => true,
+      "Timespan(1) < 2.0"   => true,
+      "Timestamp(1) > 2.0"  => false,
+      "Timespan(1) > 2.0"   => false,
+      "Timestamp(1) == 1.0" => true,
+      "Timespan(1) == 1.0"  => true,
+
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
