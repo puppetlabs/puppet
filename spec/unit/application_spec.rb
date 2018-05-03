@@ -295,7 +295,7 @@ describe Puppet::Application do
       end
     end
 
-    describe 'on POSIX systems', :if => Puppet.features.posix? do
+    describe 'on POSIX systems', :if => (Puppet.features.posix? && RUBY_PLATFORM != 'java') do
       it 'should signal process with HUP after block if restart requested during block execution' do
         Timeout::timeout(3) do  # if the signal doesn't fire, this causes failure.
 
@@ -480,7 +480,7 @@ describe Puppet::Application do
         ROUTES
       end
 
-      expect { @app.configure_indirector_routes }.to raise_error(Psych::SyntaxError, /mapping values are not allowed in this context/)
+      expect { @app.configure_indirector_routes }.to raise_error(Psych::SyntaxError, /mapping values are not allowed/)
     end
   end
 
