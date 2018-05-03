@@ -11,23 +11,29 @@ describe Puppet::Rest::Client do
                                           default_port: 555) }
     let(:ssl_store) { mock 'store' }
     let(:http) { stub_everything('http', :request_filter => []) }
-    let(:server_resolver) { mock 'resolver', :select_server_and_port => [ route.default_server, route.default_port ] }
+
+    before(:each) do
+      route.stubs(:select_server_and_port).returns(["myserver.com", 555])
+    end
 
     it "configures a base URL based on the provided route" do
-      url = "https://myserver.com:555/fake_api/v1"
+      url = "https://myserver.com:555/fake_api/v1/"
       http.expects(:base_url=).with(url)
       client = Puppet::Rest::Client.new(route,
                                         client: http,
-                                        ssl_store: ssl_store,
-                                        server_resolver: server_resolver)
+                                        ssl_store: ssl_store)
+      http.expects(:base_url).returns(url)
       expect(client.base_url).to eq(url)
     end
 
     it "initializes itself with basic defaults" do
-      Puppet::Rest::Client.expects(:default_client).returns(http)
+      HTTPClient.expects(:new).returns(http)
       OpenSSL::X509::Store.expects(:new).returns(ssl_store)
-      Puppet::Rest::ServerResolver.expects(:new).returns(server_resolver)
-      http.expects(:receive_timeout=).with(3600)
+      Puppet.settings.expects(:[]).with(:http_user_agent)
+      Puppet.settings.expects(:[]).with(:http_read_timeout).returns(120)
+      Puppet.settings.expects(:[]).with(:http_connect_timeout).returns(10)
+      http.expects(:connect_timeout=).with(10)
+      http.expects(:receive_timeout=).with(120)
       http.expects(:cert_store=).with(ssl_store)
       Puppet::Rest::Client.new(route)
     end
@@ -52,21 +58,15 @@ describe Puppet::Rest::Client do
     let(:client) { Puppet::Rest::Client.new(route, client: http) }
     let(:endpoint) { "/data" }
 
-    it "makes a GET request given a URL" do
-      http.expects(:get).with(endpoint, query: nil, header: nil).returns("response")
-      client.get(endpoint)
+    before(:each) do
+      route.stubs(:select_server_and_port).returns("myserver.com", 555)
     end
 
-    it "accepts a query hash" do
+    it "makes a GET request given a URL, query hash, and header hash" do
       query = { 'environment' => 'production' }
-      http.expects(:get).with(endpoint, query: query, header: nil)
-      client.get(endpoint, query: query)
-    end
-
-    it "accepts a header hash" do
       header = { 'Accept' => 'text/plain' }
-      http.expects(:get).with(endpoint, query: nil, header: header)
-      client.get(endpoint, header: header)
+      http.expects(:get).with(endpoint, query: query, header: header).returns("response")
+      client.get(endpoint, query: query, header: header)
     end
 
     it "returns a wrapped response object" do

@@ -1,7 +1,7 @@
 module Puppet::Rest
   module ResponseHandler
 
-    # Processe and return the content type and body of the response
+    # Process and return the content type and body of the response
     # @param [Puppet::Rest::Response] response the HTTP response to process
     # @return [String, String] the content type (minus its encoding) and
     #         decompressed body of the response
