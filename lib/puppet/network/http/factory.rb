@@ -12,6 +12,8 @@ require 'puppet/util/http_proxy'
 class Puppet::Network::HTTP::Factory
   @@openssl_initialized = false
 
+  KEEP_ALIVE_TIMEOUT = 2**31 - 1
+
   def initialize
     # PUP-1411, make sure that openssl is initialized before we try to connect
     if ! @@openssl_initialized
@@ -37,6 +39,7 @@ class Puppet::Network::HTTP::Factory
     http.use_ssl = site.use_ssl?
     http.read_timeout = Puppet[:http_read_timeout]
     http.open_timeout = Puppet[:http_connect_timeout]
+    http.keep_alive_timeout = KEEP_ALIVE_TIMEOUT if http.respond_to?(:keep_alive_timeout=)
 
     if Puppet[:sourceaddress]
       if http.respond_to?(:local_host)
