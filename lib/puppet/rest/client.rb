@@ -35,9 +35,6 @@ module Puppet::Rest
       @client.tcp_keepalive = true
       @client.connect_timeout = Puppet.settings[:http_connect_timeout]
       @client.receive_timeout = timeout
-      # `request_filter` is a list of objects implementing the `filter_request` and
-      # `filter_response` methods, which get called during request processing.
-      @client.request_filter << self
 
       @client.cert_store = ssl_store
 
@@ -62,18 +59,6 @@ module Puppet::Rest
     def get(endpoint, query: nil, header: nil)
       response = @client.get(endpoint, query: query, header: header)
       Puppet::Rest::Response.new(response)
-    end
-
-    # Called by the HTTPClient library while processing a request.
-    # For debugging.
-    def filter_request(req)
-      Puppet.debug _("Connecting to %{uri} (%{method})") % {uri: req.header.request_uri, method: req.header.request_method }
-    end
-
-    # Called by the HTTPClient library upon receiving a response.
-    # For debugging.
-    def filter_response(_req, res)
-      Puppet.debug _("Done %{status} %{reason}\n\n") % { status: res.status, reason: res.reason }
     end
   end
 end

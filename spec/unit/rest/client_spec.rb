@@ -10,7 +10,7 @@ describe Puppet::Rest::Client do
                                           default_server: "myserver.com",
                                           default_port: 555) }
     let(:ssl_store) { mock 'store' }
-    let(:http) { stub_everything('http', :request_filter => []) }
+    let(:http) { stub_everything('http') }
 
     before(:each) do
       route.stubs(:select_server_and_port).returns(["myserver.com", 555])
@@ -32,9 +32,11 @@ describe Puppet::Rest::Client do
       Puppet.settings.expects(:[]).with(:http_user_agent)
       Puppet.settings.expects(:[]).with(:http_read_timeout).returns(120)
       Puppet.settings.expects(:[]).with(:http_connect_timeout).returns(10)
+      Puppet.settings.expects(:[]).with(:http_debug).returns(true)
       http.expects(:connect_timeout=).with(10)
       http.expects(:receive_timeout=).with(120)
       http.expects(:cert_store=).with(ssl_store)
+      http.expects(:debug_dev=).with($stderr)
       Puppet::Rest::Client.new(route)
     end
 
