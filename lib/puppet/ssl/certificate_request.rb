@@ -103,7 +103,11 @@ DOC
     raise Puppet::Error, _("CSR sign verification failed; you need to clean the certificate request for %{name} on the server") % { name: name } unless csr.verify(key.public_key)
 
     @content = csr
-    Puppet.info _("Certificate Request fingerprint (%{digest}): %{hex_digest}") % { digest: digest.name, hex_digest: digest.to_hex }
+
+    # we won't be able to get the digest on jruby
+    if @content.signature_algorithm
+      Puppet.info _("Certificate Request fingerprint (%{digest}): %{hex_digest}") % { digest: digest.name, hex_digest: digest.to_hex }
+    end
     @content
   end
 
