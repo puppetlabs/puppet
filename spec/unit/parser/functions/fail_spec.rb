@@ -2,10 +2,6 @@
 require 'spec_helper'
 
 describe "the 'fail' parser function" do
-  before :all do
-    Puppet::Parser::Functions.autoloader.loadall
-  end
-
   let :scope do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)

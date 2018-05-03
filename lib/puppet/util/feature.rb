@@ -49,14 +49,14 @@ class Puppet::Util::Feature
   end
 
   def load
-    @loader.loadall
+    @loader.loadall(Puppet.lookup(:current_environment))
   end
 
   def method_missing(method, *args)
     return super unless method.to_s =~ /\?$/
 
     feature = method.to_s.sub(/\?$/, '')
-    @loader.load(feature)
+    @loader.load(feature, Puppet.lookup(:current_environment))
 
     respond_to?(method) && self.send(method)
   end

@@ -209,7 +209,7 @@ class Application
     # @return [Array<String>] the names of available applications
     # @api public
     def available_application_names
-      @loader.files_to_load.map do |fn|
+      @loader.files_to_load(Puppet.lookup(:current_environment)).map do |fn|
         ::File.basename(fn, '.rb')
       end.uniq
     end

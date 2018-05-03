@@ -6,6 +6,8 @@ require 'puppet/util/autoload'
 describe Puppet::Util::Autoload do
   include PuppetSpec::Files
 
+  let(:env) { Puppet::Node::Environment.create(:foo, []) }
+
   before do
     @autoload = Puppet::Util::Autoload.new("foo", "tmp")
 
@@ -85,18 +87,18 @@ describe Puppet::Util::Autoload do
 
         Kernel.expects(:load).raises error
 
-        expect { @autoload.load("foo") }.to raise_error(Puppet::Error)
+        expect { @autoload.load("foo", env) }.to raise_error(Puppet::Error)
       end
     end
 
     it "should not raise an error if the file is missing" do
-      expect(@autoload.load("foo")).to eq(false)
+      expect(@autoload.load("foo", env)).to eq(false)
     end
 
     it "should register loaded files with the autoloader" do
       Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
-      @autoload.load("myfile")
+      @autoload.load("myfile", env)
 
       expect(@autoload.class.loaded?("tmp/myfile.rb")).to be
 
@@ -106,7 +108,7 @@ describe Puppet::Util::Autoload do
     it "should be seen by loaded? on the instance using the short name" do
       Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
-      @autoload.load("myfile")
+      @autoload.load("myfile", env)
 
       expect(@autoload.loaded?("myfile.rb")).to be
 
@@ -117,7 +119,7 @@ describe Puppet::Util::Autoload do
       Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
 
-      @autoload.load("myfile")
+      @autoload.load("myfile", env)
 
       expect($LOADED_FEATURES).to be_include("tmp/myfile.rb")
 
@@ -130,7 +132,7 @@ describe Puppet::Util::Autoload do
       Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.expects(:load).with(make_absolute("/a/tmp/myfile.rb"), optionally(anything))
 
-      @autoload.load("myfile")
+      @autoload.load("myfile", env)
 
       $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
@@ -138,7 +140,7 @@ describe Puppet::Util::Autoload do
     it "should treat equivalent paths to a loaded file as loaded" do
       Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
-      @autoload.load("myfile")
+      @autoload.load("myfile", env)
 
       expect(@autoload.class.loaded?("tmp/myfile")).to be
       expect(@autoload.class.loaded?("tmp/./myfile.rb")).to be
@@ -165,14 +167,14 @@ describe Puppet::Util::Autoload do
       it "should die an if a #{error.to_s} exception is thrown" do
         Kernel.expects(:load).raises error
 
-        expect { @autoload.loadall }.to raise_error(Puppet::Error)
+        expect { @autoload.loadall(env) }.to raise_error(Puppet::Error)
       end
     end
 
     it "should require the full path to the file" do
       Kernel.expects(:load).with(make_absolute("/a/foo/file.rb"), optionally(anything))
 
-      @autoload.loadall
+      @autoload.loadall(env)
     end
   end
 
@@ -190,19 +192,19 @@ describe Puppet::Util::Autoload do
     end
 
     it "#changed? should return true for a file that was not loaded" do
-      expect(@autoload.class.changed?(@file_a)).to be
+      expect(@autoload.class.changed?(@file_a, env)).to be
     end
 
     it "changes should be seen by changed? on the instance using the short name" do
       File.stubs(:mtime).returns(@first_time)
       Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
-      @autoload.load("myfile")
+      @autoload.load("myfile", env)
       expect(@autoload.loaded?("myfile")).to be
-      expect(@autoload.changed?("myfile")).not_to be
+      expect(@autoload.changed?("myfile", env)).not_to be
 
       File.stubs(:mtime).returns(@second_time)
-      expect(@autoload.changed?("myfile")).to be
+      expect(@autoload.changed?("myfile", env)).to be
 
       $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
@@ -218,14 +220,14 @@ describe Puppet::Util::Autoload do
         File.stubs(:mtime).with(@file_a).returns(@first_time + 60)
         Puppet::FileSystem.stubs(:exist?).with(@file_a).returns true
         Kernel.expects(:load).with(@file_a, optionally(anything))
-        @autoload.class.reload_changed
+        @autoload.class.reload_changed(env)
       end
 
       it "should do nothing if the file is deleted" do
         File.stubs(:mtime).with(@file_a).raises(Errno::ENOENT)
         Puppet::FileSystem.stubs(:exist?).with(@file_a).returns false
         Kernel.expects(:load).never
-        @autoload.class.reload_changed
+        @autoload.class.reload_changed(env)
       end
     end
 
@@ -242,7 +244,7 @@ describe Puppet::Util::Autoload do
         Puppet::FileSystem.stubs(:exist?).with(@file_b).returns true
         File.stubs(:mtime).with(@file_b).returns @first_time
         Kernel.expects(:load).with(@file_b, optionally(anything))
-        @autoload.class.reload_changed
+        @autoload.class.reload_changed(env)
         expect(@autoload.class.send(:loaded)["file"]).to eq([@file_b, @first_time])
       end
 
@@ -254,7 +256,7 @@ describe Puppet::Util::Autoload do
         File.stubs(:mtime).with(@file_a).returns @first_time
         Puppet::FileSystem.stubs(:exist?).with(@file_a).returns true
         Kernel.expects(:load).with(@file_a, optionally(anything))
-        @autoload.class.reload_changed
+        @autoload.class.reload_changed(env)
         expect(@autoload.class.send(:loaded)["file"]).to eq([@file_a, @first_time])
       end
     end

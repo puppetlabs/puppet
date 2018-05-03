@@ -24,6 +24,8 @@ require 'puppet_spec/files'
 describe Puppet::Util::Autoload do
   include PuppetSpec::Files
 
+  let(:env) { Puppet::Node::Environment.create(:foo, []) }
+
   def with_file(name, *path)
     path = File.join(*path)
     # Now create a file to load
@@ -49,13 +51,13 @@ describe Puppet::Util::Autoload do
   end
 
   it "should not fail when asked to load a missing file" do
-    expect(Puppet::Util::Autoload.new("foo", "bar").load(:eh)).to be_falsey
+    expect(Puppet::Util::Autoload.new("foo", "bar").load(:eh, env)).to be_falsey
   end
 
   it "should load and return true when it successfully loads a file" do
     with_loader("foo", "bar") { |dir,loader|
       with_file(:mything, dir, "mything.rb") {
-        expect(loader.load(:mything)).to be_truthy
+        expect(loader.load(:mything, env)).to be_truthy
         expect(loader.class).to be_loaded("bar/mything")
         expect(AutoloadIntegrator).to be_thing(:mything)
       }
@@ -65,7 +67,7 @@ describe Puppet::Util::Autoload do
   it "should consider a file loaded when asked for the name without an extension" do
     with_loader("foo", "bar") { |dir,loader|
       with_file(:noext, dir, "noext.rb") {
-        loader.load(:noext)
+        loader.load(:noext, env)
         expect(loader.class).to be_loaded("bar/noext")
       }
     }
@@ -74,7 +76,7 @@ describe Puppet::Util::Autoload do
   it "should consider a file loaded when asked for the name with an extension" do
     with_loader("foo", "bar") { |dir,loader|
       with_file(:noext, dir, "withext.rb") {
-        loader.load(:withext)
+        loader.load(:withext, env)
         expect(loader.class).to be_loaded("bar/withext.rb")
       }
     }
