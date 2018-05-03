@@ -211,7 +211,7 @@ module Puppet::Parser::Functions
   end
 
   def self.functiondocs(environment = Puppet.lookup(:current_environment))
-    autoloader.loadall
+    autoloader.loadall(environment)
 
     ret = ""
 

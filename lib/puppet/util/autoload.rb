@@ -42,12 +42,11 @@ class Puppet::Util::Autoload
       loaded[name] = [file, File.mtime(file)]
     end
 
-    def changed?(name)
+    def changed?(name, env = Puppet.lookup(:current_environment))
       name = cleanpath(name).chomp('.rb')
       return true unless loaded.include?(name)
       file, old_mtime = loaded[name]
-      environment = Puppet.lookup(:current_environment)
-      return true unless file == get_file(name, environment)
+      return true unless file == get_file(name, env)
       begin
         old_mtime.to_i != File.mtime(file).to_i
       rescue Errno::ENOENT
@@ -73,7 +72,7 @@ class Puppet::Util::Autoload
       end
     end
 
-    def loadall(path, env = nil)
+    def loadall(path, env = Puppet.lookup(:current_environment))
       # Load every instance of everything we can find.
       files_to_load(path, env).each do |file|
         name = file.chomp(".rb")
@@ -81,19 +80,23 @@ class Puppet::Util::Autoload
       end
     end
 
-    def reload_changed
-      loaded.keys.each { |file| load_file(file, nil) if changed?(file) }
+    def reload_changed(env = Puppet.lookup(:current_environment))
+      loaded.keys.each do |file|
+        if changed?(file, env)
+          load_file(file, env)
+        end
+      end
     end
 
     # Get the correct file to load for a given path
     # returns nil if no file is found
-    def get_file(name, env)
+    def get_file(name, env = Puppet.lookup(:current_environment))
       name = name + '.rb' unless name =~ /\.rb$/
       path = search_directories(env).find { |dir| Puppet::FileSystem.exist?(File.join(dir, name)) }
       path and File.join(path, name)
     end
 
-    def files_to_load(path, env = nil)
+    def files_to_load(path, env)
       search_directories(env).map {|dir| files_in_dir(dir, path) }.flatten.uniq
     end
 
@@ -145,7 +148,7 @@ class Puppet::Util::Autoload
       end
     end
 
-    def libdirs()
+    def libdirs
       # See the comments in #module_directories above.  Basically, we need to be careful not to try to access the
       # libdir before we know for sure that all of the settings have been initialized (e.g., during bootstrapping).
       if (Puppet.settings.app_defaults_initialized?)
@@ -160,7 +163,7 @@ class Puppet::Util::Autoload
     end
 
     def search_directories(env)
-      [gem_directories, module_directories(env), libdirs(), $LOAD_PATH].flatten
+      [gem_directories, module_directories(env), libdirs, $LOAD_PATH].flatten
     end
 
     # Normalize a path. This converts ALT_SEPARATOR to SEPARATOR on Windows
@@ -185,7 +188,7 @@ class Puppet::Util::Autoload
     @object = obj
   end
 
-  def load(name, env = nil)
+  def load(name, env = Puppet.lookup(:current_environment))
     self.class.load_file(expand(name), env)
   end
 
@@ -199,7 +202,7 @@ class Puppet::Util::Autoload
   #
   # This uses require, rather than load, so that already-loaded files don't get
   # reloaded unnecessarily.
-  def loadall(env = nil)
+  def loadall(env = Puppet.lookup(:current_environment))
     self.class.loadall(@path, env)
   end
 
@@ -207,12 +210,12 @@ class Puppet::Util::Autoload
     self.class.loaded?(expand(name))
   end
 
-  def changed?(name)
-    self.class.changed?(expand(name))
+  def changed?(name, env = Puppet.lookup(:current_environment))
+    self.class.changed?(expand(name), env)
   end
 
-  def files_to_load
-    self.class.files_to_load(@path)
+  def files_to_load(env = Puppet.lookup(:current_environment))
+    self.class.files_to_load(@path, env)
   end
 
   def expand(name)

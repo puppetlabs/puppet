@@ -207,7 +207,7 @@ module Puppet::DataTypes
     end
 
     def load_file(file_name)
-      Puppet::Util::Autoload.load_file(file_name, nil)
+      Puppet::Util::Autoload.load_file(file_name, Puppet.lookup(:current_environment))
     end
   end
 end

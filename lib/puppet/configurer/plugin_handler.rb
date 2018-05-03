@@ -41,8 +41,7 @@ class Puppet::Configurer::PluginHandler
       result += locales_downloader.evaluate
     end
 
-
-    Puppet::Util::Autoload.reload_changed
+    Puppet::Util::Autoload.reload_changed(Puppet.lookup(:current_environment))
 
     result
   end
