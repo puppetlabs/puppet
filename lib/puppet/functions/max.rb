@@ -1,7 +1,7 @@
 # Returns the highest value among a variable number of arguments.
 # Takes at least one argument.
 #
-# This function is compatible with the stdlib function
+# This function is (with one exception) compatible with the stdlib function
 # with the same name and performs deprecated type conversion before
 # comparison as follows:
 #
@@ -26,6 +26,10 @@
 # simply cannot compare `Boolean` with `Regexp` and with any arbitrary `Array`, `Hash` or
 # `Object` and getting a meaningful result.
 #
+# The one change in the function's behavior is when the function is given a single
+# array argument. The stdlib implementation would return that array as the result where
+# it now instead returns the max value from that array.
+#
 # @example 'max of values - stdlib compatible'
 #
 # ```puppet
@@ -38,18 +42,28 @@
 # notice(max(['a'], ['b'])) # would notice ['b'], since "['b']" is after "['a']"
 # ```
 #
-# @example find 'max' value in an array
+# @example find 'max' value in an array - stdlib compatible
 #
 # ```puppet
 # $x = [1,2,3,4]
 # notice(max(*$x)) # would notice 4
 # ```
 #
+# @example find 'max' value in an array directly - since Puppet 6.0.0
+#
+# ```puppet
+# $x = [1,2,3,4]
+# notice(max($x)) # would notice 4
+# notice($x.max) # would notice 4
+# ```
+# This example shows that a single array argument is used as the set of values
+# as opposed to being a single returned value.
+#
 # When calling with a lambda, it must accept two variables and it must return
 # one of -1, 0, or 1 depending on if first argument is before/lower than, equal to,
 # or higher/after the second argument.
 #
-# @example 'max of values using a lambda'
+# @example 'max of values using a lambda - since Puppet 6.0.0'
 #
 # ```puppet
 # notice(max("2", "10", "100") |$a, $b| { compare($a, $b) })
@@ -66,6 +80,21 @@ Puppet::Functions.create_function(:max) do
 
   dispatch :on_string do
     repeated_param 'String', :values
+  end
+
+  dispatch :on_single_numeric_array do
+    param 'Array[Numeric]', :values
+    optional_block_param 'Callable[2,2]', :block
+  end
+
+  dispatch :on_single_string_array do
+    param 'Array[String]', :values
+    optional_block_param 'Callable[2,2]', :block
+  end
+
+  dispatch :on_single_any_array do
+    param 'Array', :values
+    optional_block_param 'Callable[2,2]', :block
   end
 
   dispatch :on_any_with_block do
@@ -90,7 +119,7 @@ Puppet::Functions.create_function(:max) do
 
     args.max do|a,b|
       if a.to_s =~ %r{\A^-?\d+(.\d+)?\z} && b.to_s =~ %r{\A-?\d+(.\d+)?\z}
-        Puppet.warn_once('deprecations', 'min_function_numeric_coerce_string',
+        Puppet.warn_once('deprecations', 'max_function_numeric_coerce_string',
           _("The max() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
         a.to_f <=> b.to_f
       else
@@ -104,6 +133,30 @@ Puppet::Functions.create_function(:max) do
     args.max {|x,y| block.call(x,y) }
   end
 
+  def on_single_numeric_array(array, &block)
+    if block_given?
+      on_any_with_block(*array, &block)
+    else
+      on_numeric(*array)
+    end
+  end
+
+  def on_single_string_array(array, &block)
+    if block_given?
+      on_any_with_block(*array, &block)
+    else
+      on_string(*array)
+    end
+  end
+
+  def on_single_any_array(array, &block)
+    if block_given?
+      on_any_with_block(*array, &block)
+    else
+      on_any(*array)
+    end
+  end
+
   # Mix of data types - while only some compares are actually bad it will deprecate
   # the entire call
   #
@@ -111,11 +164,11 @@ Puppet::Functions.create_function(:max) do
     assert_arg_count(args)
     args.max do |a, b|
       if a.to_s =~ %r{\A^-?\d+(.\d+)?\z} && b.to_s =~ %r{\A-?\d+(.\d+)?\z}
-        Puppet.warn_once('deprecations', 'min_function_numeric_coerce_string',
+        Puppet.warn_once('deprecations', 'max_function_numeric_coerce_string',
           _("The max() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
         a.to_f <=> b.to_f
       else
-        Puppet.warn_once('deprecations', 'min_function_string_coerce_any',
+        Puppet.warn_once('deprecations', 'max_function_string_coerce_any',
           _("The max() function's auto conversion of Any to String is deprecated - change to convert input before calling, or use lambda"))
         a.to_s <=> b.to_s
       end
