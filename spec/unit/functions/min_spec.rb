@@ -78,4 +78,37 @@ describe 'the min function' do
     expect(compile_to_catalog(src)).to have_resource("Notify[true]")
   end
 
+  context 'compares entries in a single array argument as if they were splatted as individual args' do
+    {
+      [1,2,3] => 1,
+      ["1", "2","3"] => "'1'",
+      [1,"2",3] => 1,
+    }.each_pair do |value, expected|
+      it "called as max(#{value}) results in the value #{expected}" do
+        src = "notify { String( min(#{value}) == #{expected}): }"
+        expect(compile_to_catalog(src)).to have_resource("Notify[true]")
+      end
+    end
+
+    {
+      [1,2,3] => 1,
+      ["10","2","3"] => "'10'",
+      [1,"x",3] => "'x'",
+    }.each_pair do |value, expected|
+      it "called as max(#{value}) with a lambda using compare() results in the value #{expected}" do
+        src = <<-"SRC"
+        function n_after_s($a,$b) {
+          case [$a, $b] {
+            [String, Numeric]: { -1 }
+            [Numeric, String]: { 1 }
+            default: { compare($a, $b) }
+          }
+        }
+        notify { String( min(#{value}) |$a,$b| {n_after_s($a,$b) } == #{expected}): }
+        SRC
+        expect(compile_to_catalog(src)).to have_resource("Notify[true]")
+      end
+    end
+
+  end
 end

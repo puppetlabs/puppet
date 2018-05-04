@@ -1,7 +1,7 @@
 # Returns the lowest value among a variable number of arguments.
 # Takes at least one argument.
 #
-# This function is compatible with the stdlib function
+# This function is (with one exception) compatible with the stdlib function
 # with the same name and performs deprecated type conversion before
 # comparison as follows:
 #
@@ -26,6 +26,10 @@
 # simply cannot compare `Boolean` with `Regexp` and with any arbitrary `Array`, `Hash` or
 # `Object` and getting a meaningful result.
 #
+# The one change in the function's behavior is when the function is given a single
+# array argument. The stdlib implementation would return that array as the result where
+# it now instead returns the max value from that array.
+#
 # @example 'min of values - stdlib compatible'
 #
 # ```puppet
@@ -44,6 +48,16 @@
 # $x = [1,2,3,4]
 # notice(min(*$x)) # would notice 1
 # ```
+#
+# @example find 'min' value in an array directly - since Puppet 6.0.0
+#
+# ```puppet
+# $x = [1,2,3,4]
+# notice(min($x)) # would notice 1
+# notice($x.min) # would notice 1
+# ```
+# This example shows that a single array argument is used as the set of values
+# as opposed to being a single returned value.
 #
 # When calling with a lambda, it must accept two variables and it must return
 # one of -1, 0, or 1 depending on if first argument is before/lower than, equal to,
@@ -65,6 +79,21 @@ Puppet::Functions.create_function(:min) do
 
   dispatch :on_string do
     repeated_param 'String', :values
+  end
+
+  dispatch :on_single_numeric_array do
+    param 'Array[Numeric]', :values
+    optional_block_param 'Callable[2,2]', :block
+  end
+
+  dispatch :on_single_string_array do
+    param 'Array[String]', :values
+    optional_block_param 'Callable[2,2]', :block
+  end
+
+  dispatch :on_single_any_array do
+    param 'Array', :values
+    optional_block_param 'Callable[2,2]', :block
   end
 
   dispatch :on_any_with_block do
@@ -101,6 +130,30 @@ Puppet::Functions.create_function(:min) do
 
   def on_any_with_block(*args, &block)
     args.min {|x,y| block.call(x,y) }
+  end
+
+  def on_single_numeric_array(array, &block)
+    if block_given?
+      on_any_with_block(*array, &block)
+    else
+      on_numeric(*array)
+    end
+  end
+
+  def on_single_string_array(array, &block)
+    if block_given?
+      on_any_with_block(*array, &block)
+    else
+      on_string(*array)
+    end
+  end
+
+  def on_single_any_array(array, &block)
+    if block_given?
+      on_any_with_block(*array, &block)
+    else
+      on_any(*array)
+    end
   end
 
   # Mix of data types - while only some compares are actually bad it will deprecate
