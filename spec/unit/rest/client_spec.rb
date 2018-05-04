@@ -9,8 +9,9 @@ describe Puppet::Rest::Client do
                                           srv_service: :fakeservice,
                                           default_server: "myserver.com",
                                           default_port: 555) }
-    let(:ssl_store) { mock 'store' }
-    let(:http) { stub_everything('http') }
+    let(:ssl_store) { mock('store') }
+    let(:ssl_config) { stub_everything('ssl config') }
+    let(:http) { stub_everything('http', :ssl_config => ssl_config) }
 
     before(:each) do
       route.stubs(:select_server_and_port).returns(["myserver.com", 555])
@@ -29,19 +30,26 @@ describe Puppet::Rest::Client do
     it "initializes itself with basic defaults" do
       HTTPClient.expects(:new).returns(http)
       OpenSSL::X509::Store.expects(:new).returns(ssl_store)
-      Puppet.settings.expects(:[]).with(:http_user_agent)
-      Puppet.settings.expects(:[]).with(:http_read_timeout).returns(120)
-      Puppet.settings.expects(:[]).with(:http_connect_timeout).returns(10)
-      Puppet.settings.expects(:[]).with(:http_debug).returns(true)
+      # Configure connection with HTTP settings
+      Puppet.expects(:[]).with(:http_user_agent)
+      Puppet.expects(:[]).with(:http_read_timeout).returns(120)
+      Puppet.expects(:[]).with(:http_connect_timeout).returns(10)
+      Puppet.expects(:[]).with(:http_debug).returns(true)
       http.expects(:connect_timeout=).with(10)
       http.expects(:receive_timeout=).with(120)
-      http.expects(:cert_store=).with(ssl_store)
       http.expects(:debug_dev=).with($stderr)
+
+      # Configure verify mode with SSL settings
+      ssl_config.expects(:cert_store=).with(ssl_store)
+      Puppet.expects(:[]).with(:ssl_client_ca_auth).returns("/fake/path")
+      Puppet.expects(:[]).with(:hostcert).returns("/fake/path/mycert")
+      ssl_config.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+
       Puppet::Rest::Client.new(route)
     end
 
     it "uses a given client and SSL store when provided" do
-      http.expects(:cert_store=).with(ssl_store)
+      ssl_config.expects(:cert_store=).with(ssl_store)
       Puppet::Rest::Client.new(route, client: http, ssl_store: ssl_store)
     end
 
@@ -56,7 +64,8 @@ describe Puppet::Rest::Client do
                                           srv_service: :fakeservice,
                                           default_server: "myserver.com",
                                           default_port: 555) }
-    let(:http) { stub_everything('http', :request_filter => []) }
+    let(:ssl_config) { stub_everything('ssl config') }
+    let(:http) { stub_everything('http', :ssl_config => ssl_config) }
     let(:client) { Puppet::Rest::Client.new(route, client: http) }
     let(:endpoint) { "/data" }
 
