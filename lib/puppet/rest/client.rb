@@ -27,7 +27,7 @@ module Puppet::Rest
     end
 
     # Configures the underlying HTTPClient
-    # @param [OpentSSL::X509::Store] ssl_store the SSL configuration for this client
+    # @param [OpenSSL::X509::Store] ssl_store the SSL configuration for this client
     # @param [Puppet::Rest::Route] route data about the API being queried
     # @param [Integer] timeout how long to wait for a response from the server once
     #                  a request has been made
@@ -38,18 +38,13 @@ module Puppet::Rest
 
       @client.cert_store = ssl_store
 
-      server, port = route.select_server_and_port
-      @client.base_url = "https://#{server}:#{port}#{route.api}/"
+      @client.base_url = route.uri
 
       if Puppet.settings[:http_debug]
         @client.debug_dev = $stderr
       end
     end
     private :configure_client
-
-    def base_url
-      @client.base_url
-    end
 
     # Make a GET request to the specified endpoint with the specified params.
     # @param [String] endpoint the endpoint of the configured API to query

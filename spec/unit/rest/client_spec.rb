@@ -5,7 +5,7 @@ require 'puppet/rest/route'
 
 describe Puppet::Rest::Client do
   context "when creating a new client" do
-    let(:route) { Puppet::Rest::Route.new(api: "/fake_api/v1",
+    let(:route) { Puppet::Rest::Route.new(api: "/fake_api/v1/",
                                           srv_service: :fakeservice,
                                           default_server: "myserver.com",
                                           default_port: 555) }
@@ -18,12 +18,12 @@ describe Puppet::Rest::Client do
 
     it "configures a base URL based on the provided route" do
       url = "https://myserver.com:555/fake_api/v1/"
-      http.expects(:base_url=).with(url)
+      http.expects(:base_url=).with() do |arg|
+        arg.to_s == url
+      end
       client = Puppet::Rest::Client.new(route,
                                         client: http,
                                         ssl_store: ssl_store)
-      http.expects(:base_url).returns(url)
-      expect(client.base_url).to eq(url)
     end
 
     it "initializes itself with basic defaults" do
