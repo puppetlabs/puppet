@@ -23,7 +23,7 @@ class CompareOperator
     @@include_visitor ||= Visitor.new(self, "include", 2, 2)
   end
 
-  def equals (a, b)
+  def equals(a, b)
     @@equals_visitor.visit_this_1(self, a, b)
   end
 
