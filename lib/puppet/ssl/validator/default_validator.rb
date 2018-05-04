@@ -15,16 +15,13 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   # Creates a new DefaultValidator, optionally with an SSL Configuration and SSL Host.
   #
   # @param ca_path [String] Filepath for the cacert
-  # @param ssl_host [Puppet::SSL::Host] The SSL host to use
   #
   # @api private
   #
   def initialize(
-    ca_path = Puppet[:ssl_client_ca_auth] || Puppet[:localcacert],
-    ssl_host = Puppet.lookup(:ssl_host))
+    ca_path = Puppet[:ssl_client_ca_auth] || Puppet[:localcacert])
 
     reset!
-    @ssl_host = ssl_host
     @ca_path = ca_path
   end
 
@@ -109,16 +106,17 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   #
   # @param [Net::HTTP] connection The connection to validate
   #
+  # @param [Puppet::SSL::Host] host The host object containing SSL data
   # @return [void]
   #
   # @api private
   #
-  def setup_connection(connection)
+  def setup_connection(connection, ssl_host = Puppet.lookup(:ssl_host))
     if ssl_certificates_are_present?
-      connection.cert_store = @ssl_host.ssl_store
+      connection.cert_store = ssl_host.ssl_store
       connection.ca_file = @ca_path
-      connection.cert = @ssl_host.certificate.content
-      connection.key = @ssl_host.key.content
+      connection.cert = ssl_host.certificate.content
+      connection.key = ssl_host.key.content
       connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
       connection.verify_callback = self
     else

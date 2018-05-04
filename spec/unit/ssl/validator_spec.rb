@@ -18,12 +18,11 @@ describe Puppet::SSL::Validator::DefaultValidator do
   end
 
   subject do
-    described_class.new(ca_path, ssl_host)
+    described_class.new(ca_path)
   end
 
   before :each do
     subject.stubs(:read_file).returns(root_ca)
-
   end
 
   describe '#call' do
@@ -187,7 +186,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
       connection.expects(:verify_callback=).with(subject)
       connection.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
 
-      subject.setup_connection(connection)
+      subject.setup_connection(connection, ssl_host)
     end
 
     context 'when no file path is found' do
