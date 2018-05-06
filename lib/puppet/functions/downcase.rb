@@ -11,6 +11,7 @@
 # * When a `Hash` is converted, some keys could result in the same key - in those cases, the
 #   latest key-value wins. For example if keys "aBC", and "abC" where both present, after downcase there would only be one
 #   key "abc".
+# * If the value is `Numeric` it is simply returned (this is for backwards compatibility).
 # * An error is raised for all other data types.
 #
 # Please note: This function relies directly on Ruby's String implementation and as such may not be entirely UTF8 compatible.
@@ -44,7 +45,11 @@
 #
 Puppet::Functions.create_function(:downcase) do
   local_types do
-    type 'StringData = Variant[String, Array[StringData], Hash[StringData, StringData]]'
+    type 'StringData = Variant[String, Numeric, Array[StringData], Hash[StringData, StringData]]'
+  end
+
+  dispatch :on_numeric do
+    param 'Numeric', :arg
   end
 
   dispatch :on_string do
@@ -57,6 +62,11 @@ Puppet::Functions.create_function(:downcase) do
 
   dispatch :on_hash do
     param 'Hash[StringData, StringData]', :arg
+  end
+
+  # unit function - since the old implementation skipped Numeric values
+  def on_numeric(n)
+    n
   end
 
   def on_string(s)
