@@ -28,6 +28,9 @@ describe 'the abs function' do
   end
 
   context 'for a string' do
+    let(:logs) { [] }
+    let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+
     { "0" => 0,
       "1" => 1,
       "-1" => 1,
@@ -37,19 +40,22 @@ describe 'the abs function' do
       "0777" => 777,
       "-0777" => 777,
     }.each_pair do |x, expected|
-      it "called as abs('#{x}') results in #{expected}" do
-        expect(compile_to_catalog("notify { String( abs('#{x}') == #{expected}): }")).to have_resource("Notify[true]")
+      it "called as abs('#{x}') results in #{expected} and deprecation warning" do
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect(compile_to_catalog("notify { String( abs('#{x}') == #{expected}): }")).to have_resource("Notify[true]")
+        end
+        expect(warnings).to include(/auto conversion of .* is deprecated/)
       end
     end
 
     ['blue', '0xFF'].each do |x|
-      it "errors when the string is not a decimal integer '#{x}'" do
+      it "errors when the string is not a decimal integer '#{x}' (indirectly deprecated)" do
         expect{ compile_to_catalog("abs('#{x}')") }.to raise_error(/was given non decimal string/)
       end
     end
 
     ['0.2.3', '1E+10'].each do |x|
-      it "errors when the string is not a supported decimal float '#{x}'" do
+      it "errors when the string is not a supported decimal float '#{x}' (indirectly deprecated)" do
         expect{ compile_to_catalog("abs('#{x}')") }.to raise_error(/was given non decimal string/)
       end
     end
