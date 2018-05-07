@@ -55,6 +55,7 @@ if __FILE__ == $0
   if ARGV.length < 1
     print_usage
   else
+    $stderr.puts ARGV
     if ARGV.length == 1
       exit Parallel::RSpec::Runner.new(ARGV[0]).run
     else
