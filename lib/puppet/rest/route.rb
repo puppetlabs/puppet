@@ -2,7 +2,7 @@ require 'URI'
 
 module Puppet::Rest
   class Route
-    attr_reader :api, :srv_service, :default_server, :default_port
+    attr_reader :api, :default_server, :default_port
 
     attr_reader :server, :port
 
@@ -12,17 +12,16 @@ module Puppet::Rest
     # @param [String] api the path leading to the root of the API. Must
     #                 contain a trailing slash for proper endpoint path
     #                 construction
-    # @param [Symbol] srv_service the name of the SRV service to search
-    #                 for servers
     # @param [String] default_server the fqdn of the fallback server
     # @param [Integer] port the fallback port
-    def initialize(api:, srv_service:, default_server:, default_port:)
+    def initialize(api:, default_server:, default_port:)
       @api = api
-      @srv_service = srv_service
       @default_server= default_server
       @default_port = default_port
     end
 
+    # Returns a URI built from the information stored by this route,
+    # e.g. 'https://myserver.com:555/myapi/v1/'
     def uri
       server, port = select_server_and_port
       URI::HTTPS.build(host: server, port: port, path: api)
@@ -32,36 +31,30 @@ module Puppet::Rest
     # @return [String, Integer] the server and port to use for the request
     def select_server_and_port
       unless @server && @port
-        if Puppet.settings[:use_srv_records]
-          Puppet::Network::Resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
-            @server = srv_server
-            @port = srv_port
-          end
-        else
-          # Fall back to the default server, taking into account HA settings
-          bound_server = Puppet.lookup(:server) do
-            if primary_server = Puppet.settings[:server_list][0]
-              primary_server[0]
-            else
-              Puppet.settings[:server]
-            end
-          end
+        if default_server && default_port
+          @server = default_server
+          @port = default_port
+          return default_server, default_port
+        end
 
-          bound_port = Puppet.lookup(:serverport) do
-            if primary_server = Puppet.settings[:server_list][0]
-              primary_server[1]
-            else
-              Puppet.settings[:masterport]
-            end
-          end
-
-          @server = default_server || bound_server
-          @port = default_port || bound_port
-
-          if Puppet.settings[:use_srv_records]
-            Puppet.debug("No more servers left, falling back to #{server}:#{port}")
+        bound_server = Puppet.lookup(:server) do
+          if primary_server = Puppet.settings[:server_list][0]
+            primary_server[0]
+          else
+            Puppet.settings[:server]
           end
         end
+
+        bound_port = Puppet.lookup(:serverport) do
+          if primary_server = Puppet.settings[:server_list][0]
+            primary_server[1]
+          else
+            Puppet.settings[:masterport]
+          end
+        end
+
+        @server = default_server || bound_server
+        @port = default_port || bound_port
       end
       [@server, @port]
     end

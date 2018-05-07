@@ -6,7 +6,6 @@ require 'puppet/rest/route'
 describe Puppet::Rest::Client do
   context "when creating a new client" do
     let(:route) { Puppet::Rest::Route.new(api: "/fake_api/v1/",
-                                          srv_service: :fakeservice,
                                           default_server: "myserver.com",
                                           default_port: 555) }
     let(:ssl_store) { mock('store') }
@@ -61,7 +60,6 @@ describe Puppet::Rest::Client do
 
   context "when making requests" do
     let(:route) { Puppet::Rest::Route.new(api: "/fake_api/v1",
-                                          srv_service: :fakeservice,
                                           default_server: "myserver.com",
                                           default_port: 555) }
     let(:ssl_config) { stub_everything('ssl config') }
