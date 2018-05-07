@@ -1,4 +1,4 @@
-require 'URI'
+require 'uri'
 
 module Puppet::Rest
   class Route
@@ -16,7 +16,7 @@ module Puppet::Rest
     # @param [Integer] port the fallback port
     def initialize(api:, default_server:, default_port:)
       @api = api
-      @default_server= default_server
+      @default_server = default_server
       @default_port = default_port
     end
 
@@ -34,27 +34,26 @@ module Puppet::Rest
         if default_server && default_port
           @server = default_server
           @port = default_port
-          return default_server, default_port
-        end
-
-        bound_server = Puppet.lookup(:server) do
-          if primary_server = Puppet.settings[:server_list][0]
-            primary_server[0]
-          else
-            Puppet.settings[:server]
+        else
+          bound_server = Puppet.lookup(:server) do
+            if primary_server = Puppet.settings[:server_list][0]
+              primary_server[0]
+            else
+              Puppet.settings[:server]
+            end
           end
-        end
 
-        bound_port = Puppet.lookup(:serverport) do
-          if primary_server = Puppet.settings[:server_list][0]
-            primary_server[1]
-          else
-            Puppet.settings[:masterport]
+          bound_port = Puppet.lookup(:serverport) do
+            if primary_server = Puppet.settings[:server_list][0]
+              primary_server[1]
+            else
+              Puppet.settings[:masterport]
+            end
           end
-        end
 
-        @server = default_server || bound_server
-        @port = default_port || bound_port
+          @server = bound_server
+          @port = bound_port
+        end
       end
       [@server, @port]
     end

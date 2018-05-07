@@ -13,11 +13,11 @@ describe Puppet::Rest::Route do
       expect(route.port).to eq(90210)
     end
 
-    it "caches the result" do
+    it 'caches the result' do
       route = Puppet::Rest::Route.new(api: '/myapi/v1/',
                                       default_server: 'puppet.example.com',
                                       default_port: 90210)
-      route.expects(:default_server).twice
+      route.expects(:default_server)
       route.select_server_and_port
       # just return the values in @server and @port without looking
       # at @default_server

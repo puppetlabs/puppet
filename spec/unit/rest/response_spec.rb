@@ -1,11 +1,9 @@
 require 'spec_helper'
 require 'puppet_spec/character_encoding'
 
-require 'puppet/rest/response_handler'
+require 'puppet/rest/response'
 
-ResponseHandler = Puppet::Rest::ResponseHandler
-
-describe ResponseHandler do
+describe Puppet::Rest::Response do
 
   let(:data)            { "decompresseddata" }
   let(:compressed_zlib) { Zlib::Deflate.deflate(data) }
@@ -17,38 +15,39 @@ describe ResponseHandler do
   end
 
   def stub_response_with(content_encoding, body)
-    mock('response', :content_encoding => content_encoding, :body => body)
+     stub_everything('response', :headers => { 'Content-Encoding' => content_encoding },
+                                 :body => body)
   end
 
   describe "when decompressing response body" do
     context "without compression" do
       it "should return untransformed response body with no content-encoding" do
-        response = stub_response_with(nil, data)
+        response = Puppet::Rest::Response.new(stub_response_with(nil, data))
 
-        expect(ResponseHandler.decompress_body(response)).to eq(data)
+        expect(response.decompress_body).to eq(data)
       end
 
       it "should return untransformed response body with 'identity' content-encoding" do
-        response = stub_response_with('identity', data)
+        response = Puppet::Rest::Response.new(stub_response_with('identity', data))
 
-        expect(ResponseHandler.decompress_body(response)).to eq(data)
+        expect(response.decompress_body).to eq(data)
       end
     end
 
     context "with 'zlib' content-encoding" do
       it "should use a Zlib inflater" do
-        response = stub_response_with('deflate', compressed_zlib)
+        response = Puppet::Rest::Response.new(stub_response_with('deflate', compressed_zlib))
 
-        expect(ResponseHandler.decompress_body(response)).to eq(data)
+        expect(response.decompress_body).to eq(data)
       end
 
     end
 
     context "with 'gzip' content-encoding" do
       it "should use a GzipReader" do
-        response = stub_response_with('gzip', compressed_gzip)
+        response = Puppet::Rest::Response.new(stub_response_with('gzip', compressed_gzip))
 
-        expect(ResponseHandler.decompress_body(response)).to eq(data)
+        expect(response.decompress_body).to eq(data)
       end
 
       it "should correctly decompress PSON containing UTF-8 in Binary Encoding" do
@@ -65,9 +64,9 @@ describe ResponseHandler do
         compressed_body = writer.close.string
 
         PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ISO_8859_1) do
-          response = stub_response_with('gzip', compressed_body)
+          response = Puppet::Rest::Response.new(stub_response_with('gzip', compressed_body))
 
-          decompressed = ResponseHandler.decompress_body(response)
+          decompressed = response.decompress_body
           # By default Zlib::GzipReader decompresses into Encoding.default_external, and we want to ensure our result is BINARY too
           expect(decompressed.encoding).to eq(Encoding::BINARY)
           expect(decompressed).to eq("\"foo\xDB\xBF\xE1\x9A\xA0\xF0\xA0\x9C\x8E\"".force_encoding(Encoding::BINARY))

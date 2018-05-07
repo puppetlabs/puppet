@@ -22,19 +22,9 @@ module Puppet::Rest
                                             'X-PUPPET-VERSION' => Puppet::PUPPETVERSION
                                           }))
       @client = client
-
-      configure_client(ssl_store, route, receive_timeout)
-    end
-
-    # Configures the underlying HTTPClient
-    # @param [OpenSSL::X509::Store] ssl_store the SSL configuration for this client
-    # @param [Puppet::Rest::Route] route data about the API being queried
-    # @param [Integer] timeout how long to wait for a response from the server once
-    #                  a request has been made
-    def configure_client(ssl_store, route, timeout)
       @client.tcp_keepalive = true
       @client.connect_timeout = Puppet[:http_connect_timeout]
-      @client.receive_timeout = timeout
+      @client.receive_timeout = receive_timeout
       @client.base_url = route.uri
 
       if Puppet[:http_debug]
@@ -43,32 +33,8 @@ module Puppet::Rest
 
       @client.ssl_config.cert_store = ssl_store
 
-      configure_verify_mode
+      configure_verify_mode(@client.ssl_config)
     end
-    private :configure_client
-
-    # Checks for SSL certificates on disk and sets VERIFY_PEER
-    # if they are found. Otherwise, sets VERIFY_NONE.
-    def configure_verify_mode
-      # Either the path to an external CA or to our CA cert from the Puppet master
-      # TODO We may be able to consolidate this with the current intermediate CA work?
-      ca_path = Puppet[:ssl_client_ca_auth] || Puppet[:localcacert]
-
-      if ssl_certificates_are_present?(ca_path)
-        ssl_config = @client.ssl_config
-        ssl_config.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        ssl_config.add_trust_ca(ca_path)
-        ssl_config.set_client_cert_file(Puppet[:hostcert], Puppet[:hostprivkey])
-      else
-        @client.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      end
-    end
-    private :configure_verify_mode
-
-    def ssl_certificates_are_present?(ca_path)
-      Puppet::FileSystem.exist?(Puppet[:hostcert]) && Puppet::FileSystem.exist?(ca_path)
-    end
-    private :ssl_certificates_are_present?
 
     # Make a GET request to the specified endpoint with the specified params.
     # @param [String] endpoint the endpoint of the configured API to query
@@ -78,6 +44,28 @@ module Puppet::Rest
     def get(endpoint, query: nil, header: nil)
       response = @client.get(endpoint, query: query, header: header)
       Puppet::Rest::Response.new(response)
+    end
+
+    private
+
+    # Checks for SSL certificates on disk and sets VERIFY_PEER
+    # if they are found. Otherwise, sets VERIFY_NONE.
+    def configure_verify_mode(ssl_config)
+      # Either the path to an external CA or to our CA cert from the Puppet master
+      # TODO We may be able to consolidate this with the current intermediate CA work?
+      ca_path = Puppet[:ssl_client_ca_auth] || Puppet[:localcacert]
+
+      if ssl_certificates_are_present?(ca_path)
+        ssl_config.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        ssl_config.add_trust_ca(ca_path)
+        ssl_config.set_client_cert_file(Puppet[:hostcert], Puppet[:hostprivkey])
+      else
+        ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      end
+    end
+
+    def ssl_certificates_are_present?(ca_path)
+      Puppet::FileSystem.exist?(Puppet[:hostcert]) && Puppet::FileSystem.exist?(ca_path)
     end
   end
 end
