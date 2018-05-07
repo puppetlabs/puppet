@@ -1,14 +1,13 @@
 test_name "Report submission"
 
 tag 'audit:medium',
-    'audit:integration',
-    'server'             # Tests actual master-side report processing
+    'audit:integration'
 
 if master.is_pe?
   require "time"
 
   def puppetdb
-    puppetdb = hosts.detect { |h| h['roles'].include?('database') }
+    hosts.detect { |h| h['roles'].include?('database') }
   end
 
   def sleep_until_queue_empty(timeout=60)
@@ -25,7 +24,7 @@ if master.is_pe?
           sleep 1
         end
       end
-    rescue Timeout::Error => e
+    rescue Timeout::Error
       raise "Queue took longer than allowed #{timeout} seconds to empty"
     end
   end
