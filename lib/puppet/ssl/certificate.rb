@@ -21,10 +21,14 @@ DOC
     [:s]
   end
 
-  def subject_alt_names
-    alts = content.extensions.find{|ext| ext.oid == "subjectAltName"}
+  def self.subject_alt_names_for(cert)
+    alts = cert.extensions.find{|ext| ext.oid == "subjectAltName"}
     return [] unless alts
     alts.value.split(/\s*,\s*/)
+  end
+
+  def subject_alt_names
+    self.class.subject_alt_names_for(content)
   end
 
   def expiration
