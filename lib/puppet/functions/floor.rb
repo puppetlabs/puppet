@@ -23,6 +23,9 @@ Puppet::Functions.create_function(:floor) do
   end
 
   def on_string(x)
+    Puppet.warn_once('deprecations', 'floor_function_numeric_coerce_string',
+      _("The floor() function's auto conversion of String to Float is deprecated - change to convert input before calling"))
+
     begin
       Float(x).floor
     rescue TypeError, ArgumentError => _e
