@@ -34,7 +34,7 @@ describe 'the max function' do
     end
   end
 
-  context 'compares strings as numbers if possible (deprecated)' do
+  context 'compares strings as numbers if possible and issues deprecation warning' do
     {
       [20, "'100'"]     => "'100'",
       ["'20'", "'100'"] => "'100'",
@@ -43,16 +43,31 @@ describe 'the max function' do
       ["20", "'100x'"]  => "20",
       ["'20x'", 100]    => "'20x'",
     }.each_pair do |values, expected|
-      it "called as max(#{values[0]}, #{values[1]}) results in the value #{expected} and issues deprecation warning" do
+      it "called as max(#{values[0]}, #{values[1]}) results in the value #{expected}" do
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           expect(compile_to_catalog("notify { String( max(#{values[0]}, #{values[1]}) == #{expected}): }")).to have_resource("Notify[true]")
         end
         expect(warnings).to include(/auto conversion of .* is deprecated/)
       end
     end
+
+    {
+      [20, "'1e2'"] => "'1e2'",
+      [20, "'1E2'"] => "'1E2'",
+      [20, "'10_0'"] => "'10_0'",
+      [20, "'100.0'"] => "'100.0'",
+    }.each_pair do |values, expected|
+      it "called as max(#{values[0]}, #{values[1]}) results in the value #{expected}" do
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          expect(compile_to_catalog("notify { String( max(#{values[0]}, #{values[1]}) == #{expected}): }")).to have_resource("Notify[true]")
+        end
+        expect(warnings).to include(/auto conversion of .* is deprecated/)
+      end
+    end
+
   end
 
-  context 'compares all except numeric and string by conversion to string (deprecated)' do
+  context 'compares all except numeric and string by conversion to string and issues deprecation warning' do
     {
       [[20], "'a'"]                  => "'a'",            # after since '[' is before 'a'
       ["{'a' => 10}", "'a'"]         => "{'a' => 10}",    # after since '{' is after 'a'

@@ -117,7 +117,7 @@ Puppet::Functions.create_function(:min) do
     assert_arg_count(args)
 
     args.min do|a,b|
-      if a.to_s =~ %r{\A^-?\d+(.\d+)?\z} && b.to_s =~ %r{\A-?\d+(.\d+)?\z}
+      if a.to_s =~ %r{\A^-?\d+([._eE]\d+)?\z} && b.to_s =~ %r{\A-?\d+([._eE]\d+)?\z}
         Puppet.warn_once('deprecations', 'min_function_numeric_coerce_string',
           _("The min() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
         a.to_f <=> b.to_f
@@ -162,14 +162,16 @@ Puppet::Functions.create_function(:min) do
   def on_any(*args)
     assert_arg_count(args)
     args.min do |a, b|
-      if a.to_s =~ %r{\A^-?\d+(.\d+)?\z} && b.to_s =~ %r{\A-?\d+(.\d+)?\z}
+      as = a.to_s
+      bs = b.to_s
+      if as =~ %r{\A^-?\d+([._eE]\d+)?\z} && bs =~ %r{\A-?\d+([._eE]\d+)?\z}
         Puppet.warn_once('deprecations', 'min_function_numeric_coerce_string',
           _("The min() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"))
         a.to_f <=> b.to_f
       else
         Puppet.warn_once('deprecations', 'min_function_string_coerce_any',
           _("The min() function's auto conversion of Any to String is deprecated - change to convert input before calling, or use lambda"))
-        a.to_s <=> b.to_s
+        as <=> bs
       end
     end
   end
