@@ -39,6 +39,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency(%q<fast_gettext>, "~> 1.1.2")
   s.add_runtime_dependency(%q<locale>, "~> 2.1")
   s.add_runtime_dependency(%q<multi_json>, "~> 1.13")
+  s.add_runtime_dependency(%q<httpclient>, "~> 2.8")
   # hocon is an optional hiera backend shipped in puppet-agent packages
   s.add_runtime_dependency(%q<hocon>, "~> 1.0")
   # net-ssh is a runtime dependency of Puppet::Util::NetworkDevice::Transport::Ssh

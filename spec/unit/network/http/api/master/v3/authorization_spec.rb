@@ -3,17 +3,15 @@ require 'spec_helper'
 require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::API::Master::V3::Authorization do
-  HTTP = Puppet::Network::HTTP
-
-  let(:response) { HTTP::MemoryResponse.new }
-  let(:authz) { HTTP::API::Master::V3::Authorization.new }
+  let(:response) { Puppet::Network::HTTP::MemoryResponse.new }
+  let(:authz) { Puppet::Network::HTTP::API::Master::V3::Authorization.new }
   let(:noop_handler) {
     lambda do |request, response|
     end
   }
 
   it "accepts v3 api requests that match allowed authconfig entries" do
-    request = HTTP::Request.from_hash({
+    request = Puppet::Network::HTTP::Request.from_hash({
       :path => "/v3/environments",
       :method => "GET",
       :params => { :authenticated => true, :node => "testing", :ip => "127.0.0.1" }
@@ -35,7 +33,7 @@ allow *
   end
 
   it "rejects v3 api requests that are disallowed by authconfig entries" do
-    request = HTTP::Request.from_hash({
+    request = Puppet::Network::HTTP::Request.from_hash({
       :path => "/v3/environments",
       :method => "GET",
       :params => { :authenticated => true, :node => "testing", :ip => "127.0.0.1" }
@@ -54,6 +52,6 @@ deny testing
 
     expect do
       handler.call(request, response)
-    end.to raise_error(HTTP::Error::HTTPNotAuthorizedError, /Forbidden request/)
+    end.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAuthorizedError, /Forbidden request/)
   end
 end
