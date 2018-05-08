@@ -391,6 +391,7 @@ describe 'the new function' do
       "010" => "Notify[Integer, 8]",
       "0.10" => "Notify[Float, 0.1]",
       "0b10" => "Notify[Integer, 2]",
+      "0"    => "Notify[Integer, 0]",
       false => "Notify[Integer, 0]",
       true => "Notify[Integer, 1]",
     }.each do |input, result|
