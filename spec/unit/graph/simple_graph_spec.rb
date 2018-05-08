@@ -302,6 +302,13 @@ describe Puppet::Graph::SimpleGraph do
       end
     end
 
+    it "should report one-vertex loops" do
+      add_edges :a => :a
+      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[a\]\)/))
+      cycle = @graph.report_cycles_in_graph.first
+      expect_cycle_to_include(cycle, :a)
+    end
+
     it "should report two-vertex loops" do
       add_edges :a => :b, :b => :a
       Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/))
