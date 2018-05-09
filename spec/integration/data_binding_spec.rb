@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'puppet/indirector/hiera'
 
 require 'puppet_spec/compiler'
 
