@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-109-g3478379\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-152-g274a1e0\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-05-02 21:50+0000\n"
-"PO-Revision-Date: 2018-05-02 21:50+0000\n"
+"POT-Creation-Date: 2018-05-09 11:33+0000\n"
+"PO-Revision-Date: 2018-05-09 11:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2143,9 +2143,47 @@ msgid ""
 "Called from <%{ruby_file_location}>"
 msgstr ""
 
+#: ../lib/puppet/functions/abs.rb:48
+msgid "The abs() function's auto conversion of String to Numeric is deprecated - change to convert input before calling"
+msgstr ""
+
 #. TRANSLATORS the string "binary_file()" should not be translated
 #: ../lib/puppet/functions/binary_file.rb:28
 msgid "binary_file(): The given file '%{unresolved_path}' does not exist"
+msgstr ""
+
+#: ../lib/puppet/functions/ceiling.rb:27
+msgid "The ceiling() function's auto conversion of String to Float is deprecated - change to convert input before calling"
+msgstr ""
+
+#. TRANSLATORS: 'ceiling' is a name and should not be translated
+#: ../lib/puppet/functions/ceiling.rb:33
+msgid "ceiling(): cannot convert given value to a floating point value."
+msgstr ""
+
+#. TRANSLATORS 'compare' is a name
+#: ../lib/puppet/functions/compare.rb:93
+msgid "compare(): Non comparable type. Only values of the types Numeric, String, Semver, Timestamp and Timestamp can be compared. Got %{type_a} and %{type_b}"
+msgstr ""
+
+#. TRANSLATORS 'compare' is a name
+#: ../lib/puppet/functions/compare.rb:102
+msgid "compare(): The third argument (ignore case) can only be used when comparing strings"
+msgstr ""
+
+#. TRANSLATORS 'compare' is a name
+#: ../lib/puppet/functions/compare.rb:106
+msgid "compare(): Accepts at most 3 arguments, got %{actual_number}"
+msgstr ""
+
+#. TRANSLATORS 'compare' is a name
+#: ../lib/puppet/functions/compare.rb:110
+msgid "compare(): The third argument (ignore case) must be a Boolean. Got %{type}"
+msgstr ""
+
+#. TRANSLATORS 'compare' is a name
+#: ../lib/puppet/functions/compare.rb:116
+msgid "compare(): Can only compare values of the same type (or for Timestamp/Timespan also against Numeric). Got %{type_a} and %{type_b}"
 msgstr ""
 
 #: ../lib/puppet/functions/defined.rb:132
@@ -2177,6 +2215,15 @@ msgstr ""
 msgid "%{path}: file does not contain a valid yaml hash"
 msgstr ""
 
+#: ../lib/puppet/functions/floor.rb:27
+msgid "The floor() function's auto conversion of String to Float is deprecated - change to convert input before calling"
+msgstr ""
+
+#. TRANSLATORS: 'floor' is a name and should not be translated
+#: ../lib/puppet/functions/floor.rb:33
+msgid "floor(): cannot convert given value to a floating point value."
+msgstr ""
+
 #: ../lib/puppet/functions/hiera_include.rb:101
 msgid "Could not find data item %{key}"
 msgstr ""
@@ -2195,6 +2242,22 @@ msgstr ""
 
 #: ../lib/puppet/functions/match.rb:94
 msgid "Given Regexp Type has no regular expression"
+msgstr ""
+
+#: ../lib/puppet/functions/max.rb:123 ../lib/puppet/functions/max.rb:170
+msgid "The max() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"
+msgstr ""
+
+#: ../lib/puppet/functions/max.rb:174
+msgid "The max() function's auto conversion of Any to String is deprecated - change to convert input before calling, or use lambda"
+msgstr ""
+
+#: ../lib/puppet/functions/min.rb:122 ../lib/puppet/functions/min.rb:169
+msgid "The min() function's auto conversion of String to Numeric is deprecated - change to convert input before calling, or use lambda"
+msgstr ""
+
+#: ../lib/puppet/functions/min.rb:173
+msgid "The min() function's auto conversion of Any to String is deprecated - change to convert input before calling, or use lambda"
 msgstr ""
 
 #: ../lib/puppet/functions/require.rb:70
@@ -2878,7 +2941,7 @@ msgstr ""
 msgid "Error %{code} on SERVER: %{returned_message}"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:323
+#: ../lib/puppet/indirector/rest.rb:323 ../lib/puppet/rest/response.rb:31
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
@@ -3949,7 +4012,7 @@ msgstr ""
 msgid "Application %{app} assigns multiple nodes to component %{comp}"
 msgstr ""
 
-#: ../lib/puppet/network/http/compression.rb:30 ../lib/puppet/network/http/compression.rb:43
+#: ../lib/puppet/network/http/compression.rb:30 ../lib/puppet/network/http/compression.rb:43 ../lib/puppet/rest/response.rb:48
 msgid "Unknown content encoding - %{encoding}"
 msgstr ""
 
@@ -4736,27 +4799,27 @@ msgstr ""
 msgid "A String is not comparable to a non String"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/compare_operator.rb:63
+#: ../lib/puppet/pops/evaluator/compare_operator.rb:65
 msgid "A Numeric is not comparable to non Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/compare_operator.rb:91
+#: ../lib/puppet/pops/evaluator/compare_operator.rb:93
 msgid "Symbol not comparable to non Symbol"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/compare_operator.rb:96
+#: ../lib/puppet/pops/evaluator/compare_operator.rb:98
 msgid "Timespans are only comparable to Timespans, Integers, and Floats"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/compare_operator.rb:101
+#: ../lib/puppet/pops/evaluator/compare_operator.rb:103
 msgid "Timestamps are only comparable to Timestamps, Integers, and Floats"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/compare_operator.rb:106
+#: ../lib/puppet/pops/evaluator/compare_operator.rb:108
 msgid "Versions not comparable to non Versions"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/compare_operator.rb:111
+#: ../lib/puppet/pops/evaluator/compare_operator.rb:113
 msgid "Only Strings, Numbers, Timespans, Timestamps, and Versions are comparable"
 msgstr ""
 
