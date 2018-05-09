@@ -79,6 +79,10 @@ describe Puppet::Util::Autoload do
       File.stubs(:mtime).returns @time_a
     end
 
+    after(:each) do
+      $LOADED_FEATURES.delete("/a/tmp/myfile.rb")
+    end
+
     [RuntimeError, LoadError, SyntaxError].each do |error|
       it "should die with Puppet::Error if a #{error.to_s} exception is thrown" do
         Puppet::FileSystem.stubs(:exist?).returns true
@@ -99,8 +103,6 @@ describe Puppet::Util::Autoload do
       @autoload.load("myfile")
 
       expect(@autoload.class.loaded?("tmp/myfile.rb")).to be
-
-      $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
 
     it "should be seen by loaded? on the instance using the short name" do
@@ -109,8 +111,6 @@ describe Puppet::Util::Autoload do
       @autoload.load("myfile")
 
       expect(@autoload.loaded?("myfile.rb")).to be
-
-      $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
 
     it "should register loaded files with the main loaded file list so they are not reloaded by ruby" do
@@ -119,9 +119,7 @@ describe Puppet::Util::Autoload do
 
       @autoload.load("myfile")
 
-      expect($LOADED_FEATURES).to be_include("tmp/myfile.rb")
-
-      $LOADED_FEATURES.delete("tmp/myfile.rb")
+      expect($LOADED_FEATURES).to be_include(make_absolute("/a/tmp/myfile.rb"))
     end
 
     it "should load the first file in the searchpath" do
@@ -131,8 +129,6 @@ describe Puppet::Util::Autoload do
       Kernel.expects(:load).with(make_absolute("/a/tmp/myfile.rb"), optionally(anything))
 
       @autoload.load("myfile")
-
-      $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
 
     it "should treat equivalent paths to a loaded file as loaded" do
@@ -144,8 +140,6 @@ describe Puppet::Util::Autoload do
       expect(@autoload.class.loaded?("tmp/./myfile.rb")).to be
       expect(@autoload.class.loaded?("./tmp/myfile.rb")).to be
       expect(@autoload.class.loaded?("tmp/../tmp/myfile.rb")).to be
-
-      $LOADED_FEATURES.delete("tmp/myfile.rb")
     end
   end
 
