@@ -145,6 +145,24 @@ describe 'FileBased module loader' do
 
       expect(module_loader.load_typed(typed_name(:task, 'testmodule::foo'))).to be_nil
     end
+
+    it "lists tasks without executables, if they specify implementations" do
+      module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '',
+                                                            'bar.rb' => '',
+                                                            'baz.json' => {'implementations' => ['name' => 'foo.py']}.to_json,
+                                                            'qux.json' => '{}'})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+
+      tasks = module_loader.discover(:task)
+      expect(tasks.length).to eq(3)
+      expect(tasks.map(&:name).sort).to eq(['testmodule::bar', 'testmodule::baz', 'testmodule::foo'])
+
+      expect(module_loader.load_typed(typed_name(:task, 'testmodule::foo'))).not_to be_nil
+      expect(module_loader.load_typed(typed_name(:task, 'testmodule::bar'))).not_to be_nil
+      expect(module_loader.load_typed(typed_name(:task, 'testmodule::baz'))).not_to be_nil
+      expect { module_loader.load_typed(typed_name(:task, 'testmodule::qux')) }.to raise_error(/No source besides task metadata was found/)
+    end
   end
 
   def typed_name(type, name)

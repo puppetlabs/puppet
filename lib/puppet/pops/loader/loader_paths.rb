@@ -67,7 +67,7 @@ module LoaderPaths
       @generic_path = (the_root_path.nil? ? relative_path : File.join(the_root_path, relative_path))
     end
 
-    def match_many?
+    def fuzzy_matching?
       false
     end
 
@@ -239,7 +239,7 @@ module LoaderPaths
       EMPTY_STRING
     end
 
-    def match_many?
+    def fuzzy_matching?
       true
     end
 

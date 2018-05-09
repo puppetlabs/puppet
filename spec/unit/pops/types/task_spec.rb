@@ -257,6 +257,52 @@ describe 'The Task Type' do
           end
         end
 
+        context 'with multiple tasks sharing executables' do
+          let(:foo_metadata) { '{}' }
+          let(:bar_metadata) { '{}' }
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'foo.sh' => '',
+                'foo.ps1' => '',
+                'foo.json' => foo_metadata,
+                'bar.json' => bar_metadata,
+                'baz.json' => bar_metadata,
+              }
+            }
+          }
+
+          it 'loads a task that uses executables named after another task' do
+            metadata = {
+              implementations: [
+                {name: 'foo.sh', requirements: ['shell']},
+                {name: 'foo.ps1', requirements: ['powershell']},
+              ]
+            }
+            bar_metadata.replace(metadata.to_json)
+
+            compile do
+              task = module_loader.load(:task, 'testmodule::bar')
+              expect(task.implementations).to eql([
+                {'name' => 'foo.sh', 'path' => "#{modules_dir}/testmodule/tasks/foo.sh", 'requirements' => ['shell']},
+                {'name' => 'foo.ps1', 'path' => "#{modules_dir}/testmodule/tasks/foo.ps1", 'requirements' => ['powershell']},
+              ])
+            end
+          end
+
+          it 'fails to load the task if it has no implementations section and no associated executables' do
+            compile do
+              expect { module_loader.load(:task, 'testmodule::bar') }.to raise_error(ArgumentError, /No source besides task metadata was found/)
+            end
+          end
+
+          it 'fails to load the task if it has no files at all' do
+            compile do
+              expect(module_loader.load(:task, 'testmodule::qux')).to be_nil
+            end
+          end
+        end
+
         context 'with adjacent directory for init task' do
           let(:testmodule) {
             {

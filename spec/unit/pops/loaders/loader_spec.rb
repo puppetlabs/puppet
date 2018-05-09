@@ -89,15 +89,6 @@ describe 'The Loader' do
           }
         }
 
-        let(:tasks) {
-          {
-            'globtask' => '',
-            'environment' => {
-              'envtask' => ''
-            }
-          }
-        }
-
         let(:functions) {
           {
             'globfunc.pp' => 'function globfunc() {}',
@@ -151,18 +142,6 @@ describe 'The Loader' do
             tn(:function, 'environment::envrubyfunc'),
             tn(:function, 'globrubyfunc')
           )
-        end
-
-        context 'with tasks feature enabled' do
-          let(:tasks_feature) { true }
-
-          it 'finds global tasks in environment' do
-            expect(loader.discover(:task)).to include(tn(:task, 'globtask'))
-          end
-
-          it 'finds tasks prefixed with Environment in environment' do
-            expect(loader.discover(:task)).to include(tn(:task, 'environment::envtask'))
-          end
         end
 
         context 'with multiple modules' do
@@ -433,7 +412,7 @@ describe 'The Loader' do
               logs = []
               Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
                 expect(Loaders.find_loader('c').discover(:task)).to(
-                  contain_exactly(tn(:task, 'environment::envtask'), tn(:task, 'globtask'), tn(:task, 'c::foo')))
+                  contain_exactly(tn(:task, 'c::foo')))
               end
               expect(logs.select { |log| log.level == :warning }.map { |log| log.message }).to(
                 contain_exactly(/unexpected token/, /unrecognized key/, /No source besides task metadata was found/)
@@ -445,7 +424,7 @@ describe 'The Loader' do
               error_collector = []
               Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
                 expect(Loaders.find_loader('c').discover(:task, error_collector)).to(
-                  contain_exactly(tn(:task, 'environment::envtask'), tn(:task, 'globtask'), tn(:task, 'c::foo')))
+                  contain_exactly(tn(:task, 'c::foo')))
               end
               expect(logs.select { |log| log.level == :warning }.map { |log| log.message }).to be_empty
               expect(error_collector.size).to eql(3)
