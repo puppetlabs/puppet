@@ -2,6 +2,7 @@ require 'httpclient'
 
 require 'puppet'
 require 'puppet/rest/response'
+require 'puppet/rest/errors'
 
 module Puppet::Rest
   class Client
@@ -40,10 +41,14 @@ module Puppet::Rest
     # @param [String] endpoint the endpoint of the configured API to query
     # @param [Hash] query any URL params to add to send to the endpoint
     # @param [Hash] header any additional entries to add to the default header
+    # @raise [Puppet::Rest::ResponseError] if the response status is not OK
     # @return [Puppet::Rest::Response] the response from the server
-    def get(endpoint, query: nil, header: nil)
-      response = @client.get(endpoint, query: query, header: header)
-      Puppet::Rest::Response.new(response)
+    def get(endpoint, query: nil, header: nil, &block)
+      begin
+        @client.get_content(endpoint, { query: query, header: header }, &block)
+      rescue HTTPClient::BadResponseError => e
+        raise Puppet::Rest::ResponseError.new(e.message, Puppet::Rest::Response.new(e.res))
+      end
     end
 
     private

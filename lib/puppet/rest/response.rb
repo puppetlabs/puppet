@@ -38,19 +38,9 @@ module Puppet::Rest
 
     # Return the decompressed response body. Returns the body as-is
     # if not compressed.
-    # @param [Puppet::Rest::Response] response the HTTP response to process
-    # @return [String] decompressed response body
+    # @return [string] decompressed response body
     def decompress_body
-      case content_encoding
-      when 'gzip'
-        return Zlib::GzipReader.new(StringIO.new(body), :encoding => Encoding::BINARY).read
-      when 'deflate'
-        return Zlib::Inflate.new.inflate(body)
-      when nil, 'identity'
-        return body
-      else
-        Puppet.err _("Unknown content encoding - %{encoding}") % { encoding: content_encoding }
-      end
+      Puppet::Rest::Compression.decompress(content_encoding, body)
     end
   end
 end

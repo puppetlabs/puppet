@@ -6,6 +6,7 @@ require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/ssl/certificate_request_attributes'
 require 'puppet/rest/routes'
+require 'puppet/rest/errors'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
@@ -490,9 +491,8 @@ ERROR_STRING
   def download_ca_certificate_bundle
     return nil if Puppet::SSL::Host.ca_location != :remote
 
-    response = Puppet::Rest::Routes.get_certificate(http_client, CA_NAME)
-    if response.ok?
-      body = response.read_body
+    begin
+      cert_bundle = Puppet::Rest::Routes.get_certificate(http_client, CA_NAME)
       # This load ensures that the response body is a valid cert bundle.
       # If the text is malformed, load_certificate_bundle will raise.
       begin
@@ -500,8 +500,8 @@ ERROR_STRING
       rescue Puppet::Error => e
         raise Puppet::Error, _("Response from the CA did not contain a valid CA certificate: %{message}") % { message: e.message }
       end
-    else
-      nil
+    rescue Puppet::Rest::ResponseError => e
+      raise Puppet::Error, _('Could not download CA certificate: %{message}') % { message: e.message }
     end
   end
 
@@ -568,14 +568,14 @@ ERROR_STRING
   def download_certificate_from_ca(cert_name)
     return nil if Puppet::SSL::Host.ca_location != :remote
 
-    response = Puppet::Rest::Routes.get_certificate(http_client, cert_name)
-    if response.ok?
-      body = response.read_body
-      begin
-        Puppet::SSL::Certificate.from_s(body)
-      rescue OpenSSL::X509::CertificateError
-        raise Puppet::Error, _("Response from the CA did not contain a valid certificate for %{cert_name}.") % { cert_name: cert_name }
-      end
+    begin
+      cert = Puppet::Rest::Routes.get_certificate(http_client, cert_name)
+      Puppet::SSL::Certificate.from_s(cert)
+    rescue Puppet::Rest::ResponseError
+      Puppet.debug _("No certificate for %{cert_name} on CA") % { cert_name: cert_name }
+      nil
+    rescue OpenSSL::X509::CertificateError
+      raise Puppet::Error, _("Response from the CA did not contain a valid certificate for %{cert_name}.") % { cert_name: cert_name }
     end
   end
 
