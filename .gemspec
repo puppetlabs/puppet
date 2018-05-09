@@ -33,7 +33,6 @@ Gem::Specification.new do |s|
   s.specification_version = 3
   s.add_runtime_dependency(%q<facter>, [">= 2.0.1", "< 4"])
   s.add_runtime_dependency(%q<hiera>, [">= 3.2.1", "< 4"])
-  # PUP-7115 - return to a gem dependency in Puppet 5
   s.add_runtime_dependency(%q<semantic_puppet>, ["~> 1.0"])
   # i18n support (gettext-setup and dependencies)
   s.add_runtime_dependency(%q<fast_gettext>, "~> 1.1.2")
