@@ -104,6 +104,8 @@ class ModelLabelProvider
   def label_Sensitive o                   ; "Sensitive"                         end
   def label_Timestamp o                   ; "Timestamp"                         end
   def label_Timespan o                    ; "Timespan"                          end
+  def label_Version o                     ; "Semver"                            end
+  def label_VersionRange o                ; "SemverRange"                       end
 
   def label_PResourceType o
     if o.title

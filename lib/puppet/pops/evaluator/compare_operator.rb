@@ -23,7 +23,7 @@ class CompareOperator
     @@include_visitor ||= Visitor.new(self, "include", 2, 2)
   end
 
-  def equals (a, b)
+  def equals(a, b)
     @@equals_visitor.visit_this_1(self, a, b)
   end
 
@@ -59,6 +59,8 @@ class CompareOperator
   def cmp_Numeric(a, b)
     if b.is_a?(Numeric)
       a <=> b
+    elsif b.is_a?(Time::Timespan) || b.is_a?(Time::Timestamp)
+      -(b <=> a) # compare other way and invert result
     else
       raise ArgumentError.new(_("A Numeric is not comparable to non Numeric"))
     end
