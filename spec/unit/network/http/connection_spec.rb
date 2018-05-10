@@ -132,7 +132,7 @@ describe Puppet::Network::HTTP::Connection do
       :verify => ConstantErrorValidator.new(
         :fails_with => 'hostname was not match with server certificate',
         :peer_certs => [Puppet::SSL::CertificateAuthority.new.generate(
-          'not_my_server', :dns_alt_names => 'foo,bar,baz')]))
+          'not_my_server', :dns_alt_names => 'foo,bar,baz').content]))
 
       expect do
         connection.get('request')

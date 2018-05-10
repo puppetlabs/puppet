@@ -321,8 +321,9 @@ module Puppet::Network::HTTP
         msg = error.message
         msg << ": [" + @verify.verify_errors.join('; ') + "]"
         raise Puppet::Error, msg, error.backtrace
-      elsif peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert.content, site.host)
-        valid_certnames = [peer_cert.name, *peer_cert.subject_alt_names].uniq
+      elsif peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert, site.host)
+        valid_certnames = [peer_cert.subject.to_s.sub(/.*=/, ''),
+                           *Puppet::SSL::Certificate.subject_alt_names_for(peer_cert)].uniq
         if valid_certnames.size > 1
           expected_certnames = _("expected one of %{certnames}") % { certnames: valid_certnames.join(', ') }
         else
