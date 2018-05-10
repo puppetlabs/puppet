@@ -1,7 +1,6 @@
 require 'pathname'
 require 'puppet/util/rubygems'
 require 'puppet/util/warnings'
-require 'puppet/util/methodhelper'
 require 'puppet/pops/adaptable'
 
 # An adapter that ties the module_directories cache to the environment where the modules are parsed. This
@@ -14,8 +13,6 @@ end
 
 # Autoload paths, either based on names or all at once.
 class Puppet::Util::Autoload
-  include Puppet::Util::MethodHelper
-
   @loaded = {}
 
   class << self
@@ -182,12 +179,10 @@ class Puppet::Util::Autoload
 
   attr_accessor :object, :path
 
-  def initialize(obj, path, options = {})
+  def initialize(obj, path)
     @path = path.to_s
     raise ArgumentError, _("Autoload paths cannot be fully qualified") if Puppet::Util.absolute_path?(@path)
     @object = obj
-
-    set_options(options)
   end
 
   def load(name, env = nil)

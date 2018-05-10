@@ -1,5 +1,3 @@
-require 'puppet/util/methodhelper'
-
 module Puppet
   class ConstantAlreadyDefined < Error; end
   class SubclassAlreadyDefined < Error; end
@@ -9,7 +7,6 @@ end
 # @api public
 #
 module Puppet::Util::ClassGen
-  include Puppet::Util::MethodHelper
   include Puppet::Util
 
   # Create a new class.
@@ -66,7 +63,6 @@ module Puppet::Util::ClassGen
   # @return [Boolean] whether the class was removed or not
   #
   def rmclass(name, options)
-    options = symbolize_options(options)
     const = genconst_string(name, options)
     retval = false
     if is_constant_defined?(const)
@@ -100,8 +96,6 @@ module Puppet::Util::ClassGen
   # slightly abstract version of genclass.
   # @api private
   def genthing(name, type, options, block)
-    options = symbolize_options(options)
-
     name = name.to_s.downcase.intern
 
     if type == Module

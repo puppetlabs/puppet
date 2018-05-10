@@ -1,5 +1,4 @@
 # Provides feature definitions.
-require 'puppet/util/methodhelper'
 require 'puppet/util/docs'
 require 'puppet/util'
 # This module models provider features and handles checking whether the features
@@ -13,7 +12,6 @@ module Puppet::Util::ProviderFeatures
   # @todo Unclear what is api and what is private in this class
   class ProviderFeature
     include Puppet::Util
-    include Puppet::Util::MethodHelper
     include Puppet::Util::Docs
     attr_accessor :name, :docs, :methods
 
@@ -32,11 +30,10 @@ module Puppet::Util::ProviderFeatures
       end
     end
 
-    def initialize(name, docs, hash)
+    def initialize(name, docs, methods: nil)
       self.name = name.intern
       self.docs = docs
-      hash = symbolize_options(hash)
-      set_options(hash)
+      @methods = methods
     end
 
     private

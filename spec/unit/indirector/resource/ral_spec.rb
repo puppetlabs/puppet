@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/indirector/resource/ral'
 
 describe "Puppet::Resource::Ral" do
 

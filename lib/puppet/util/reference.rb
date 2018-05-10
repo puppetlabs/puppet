@@ -1,11 +1,9 @@
 require 'puppet/util/instance_loader'
-require 'puppet/util/methodhelper'
 require 'fileutils'
 
 # Manage Reference Documentation.
 class Puppet::Util::Reference
   include Puppet::Util
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Docs
 
   extend Puppet::Util::InstanceLoader
@@ -78,9 +76,12 @@ class Puppet::Util::Reference
     self.dynamic
   end
 
-  def initialize(name, options = {}, &block)
+  def initialize(name, title: nil, depth: nil, dynamic: nil, doc: nil, &block)
     @name = name
-    set_options(options)
+    @title = title
+    @depth = depth
+    @dynamic = dynamic
+    @doc = doc
 
     meta_def(:generate, &block)
 

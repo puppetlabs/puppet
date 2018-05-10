@@ -1,12 +1,9 @@
 require 'puppet/file_serving'
 require 'puppet/util'
-require 'puppet/util/methodhelper'
 
 # The base class for Content and Metadata; provides common
 # functionality like the behaviour around links.
 class Puppet::FileServing::Base
-  include Puppet::Util::MethodHelper
-
   # This is for external consumers to store the source that was used
   # to retrieve the metadata.
   attr_accessor :source
@@ -35,10 +32,13 @@ class Puppet::FileServing::Base
     end
   end
 
-  def initialize(path, options = {})
+  def initialize(path, links: nil, relative_path: nil, source: nil)
     self.path = path
     @links = :manage
-    set_options(options)
+
+    self.links = links if links
+    self.relative_path = relative_path if relative_path
+    self.source = source if source
   end
 
   # Determine how we deal with links.

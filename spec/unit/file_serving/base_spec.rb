@@ -41,11 +41,6 @@ describe Puppet::FileServing::Base do
     expect(Puppet::FileServing::Base.new(path).links).to eq(:manage)
   end
 
-  it "should allow specification of a path" do
-    Puppet::FileSystem.stubs(:exist?).returns(true)
-    expect(Puppet::FileServing::Base.new(path, :path => file).path).to eq(file)
-  end
-
   it "should allow specification of a relative path" do
     Puppet::FileSystem.stubs(:exist?).returns(true)
     expect(Puppet::FileServing::Base.new(path, :relative_path => "my/file").relative_path).to eq("my/file")

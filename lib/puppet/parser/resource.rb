@@ -8,7 +8,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   require 'puppet/util/tagging'
 
   include Puppet::Util
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Errors
   include Puppet::Util::Logging
 

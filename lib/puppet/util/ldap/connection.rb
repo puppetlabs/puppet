@@ -1,9 +1,6 @@
 require 'puppet/util/ldap'
-require 'puppet/util/methodhelper'
 
 class Puppet::Util::Ldap::Connection
-  include Puppet::Util::MethodHelper
-
   attr_accessor :host, :port, :user, :password, :reset, :ssl
 
   attr_reader :connection
@@ -34,12 +31,15 @@ class Puppet::Util::Ldap::Connection
     connection.unbind if connection.bound?
   end
 
-  def initialize(host, port, options = {})
+  def initialize(host, port, user: nil, password: nil, reset: nil, ssl: nil)
     raise Puppet::Error, _("Could not set up LDAP Connection: Missing ruby/ldap libraries") unless Puppet.features.ldap?
 
-    @host, @port = host, port
-
-    set_options(options)
+    @host = host
+    @port = port
+    @user = user
+    @password = password
+    @reset = reset
+    @ssl = ssl
   end
 
   # Create a per-connection unique name.

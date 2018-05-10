@@ -14,7 +14,7 @@ describe Puppet::Parser::Resource::Param do
     it "throws an error when instantiated without a name" do
       expect {
         Puppet::Parser::Resource::Param.new(:value => 'foo')
-      }.to raise_error(Puppet::Error, /name is a required option/)
+      }.to raise_error(Puppet::Error, /'name' is a required option/)
     end
 
     it "does not require a value" do

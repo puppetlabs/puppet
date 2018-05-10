@@ -16,6 +16,11 @@ class Puppet::Parser::AST::Leaf < Puppet::Parser::AST
   def to_s
     @value.to_s unless @value.nil?
   end
+
+  def initialize(value: nil, **options)
+    @value = value
+    super(**options)
+  end
 end
 
 # Host names, either fully qualified or just the short name, or even a regex

@@ -1,12 +1,10 @@
 require 'puppet/transaction'
 require 'puppet/util/tagging'
 require 'puppet/util/logging'
-require 'puppet/util/methodhelper'
 require 'puppet/network/format_support'
 
 # A simple struct for storing what happens on the system.
 class Puppet::Transaction::Event
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Tagging
   include Puppet::Util::Logging
   include Puppet::Network::FormatSupport
@@ -24,12 +22,41 @@ class Puppet::Transaction::Event
     obj
   end
 
-  def initialize(options = {})
-    @audited = false
-    @redacted = false
-    @corrective_change = false
+  def initialize(audited: false,
+                 corrective_change: false,
+                 desired_value: nil,
+                 file: nil,
+                 historical_value: nil,
+                 invalidate_refreshes: nil,
+                 line: nil,
+                 message: nil,
+                 name: nil,
+                 previous_value: nil,
+                 property: nil,
+                 redacted: false,
+                 resource: nil,
+                 source_description: nil,
+                 status: nil,
+                 tags: nil)
 
-    set_options(options)
+    @audited = audited
+    @corrective_change = corrective_change
+    @desired_value = desired_value
+    @file = file
+    @historical_value = historical_value
+    @invalidate_refreshes = invalidate_refreshes
+    @line = line
+    @message = message
+    @name = name
+    @previous_value = previous_value
+    @redacted = redacted
+    @source_description = source_description
+    @tags = tags
+
+    self.property = property if property
+    self.resource = resource if resource
+    self.status = status if status
+
     @time = Time.now
   end
 

@@ -1,4 +1,3 @@
-require 'puppet/util/methodhelper'
 require 'puppet/util/logging'
 require 'puppet/util/docs'
 
@@ -22,7 +21,6 @@ class Puppet::Parameter
   include Puppet::Util
   include Puppet::Util::Errors
   include Puppet::Util::Logging
-  include Puppet::Util::MethodHelper
 
   require 'puppet/parameter/value_collection'
 
@@ -340,16 +338,15 @@ class Puppet::Parameter
   # @api public
   # @note A parameter should be created via the DSL method {Puppet::Type::newparam}
   #
-  def initialize(options = {})
-    options = symbolize_options(options)
-    if resource = options[:resource]
+  def initialize(resource: nil, value: nil, should: nil)
+    if resource
       self.resource = resource
-      options.delete(:resource)
     else
       raise Puppet::DevError, _("No resource set for %{name}") % { name: self.class.name }
     end
 
-    set_options(options)
+    self.value = value if value
+    self.should = should if should
   end
 
   # Writes the given `msg` to the log with the loglevel indicated by the associated resource's

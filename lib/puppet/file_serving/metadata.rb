@@ -136,7 +136,8 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     @destination = data.delete('destination')
     @source      = data.delete('source')
     @content_uri = data.delete('content_uri')
-    super(path,data)
+
+    super(path, data.map { |k, v| [k.to_sym, v] }.to_h)
   end
 
   def to_data_hash

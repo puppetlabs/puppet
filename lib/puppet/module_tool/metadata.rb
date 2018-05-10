@@ -1,4 +1,3 @@
-require 'puppet/util/methodhelper'
 require 'puppet/module_tool'
 require 'puppet/network/format_support'
 require 'uri'
