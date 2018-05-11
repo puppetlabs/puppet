@@ -18,7 +18,8 @@ module PuppetSpec
     DEFAULT_SIGNING_DIGEST = OpenSSL::Digest::SHA256.new
     DEFAULT_REVOCATION_REASON = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE
     ROOT_CA_NAME = "/CN=root-ca-\u{2070E}"
-    INT_CA_NAME = "/CN=revoked-int-ca-\u16A0"
+    REVOKED_INT_CA_NAME = "/CN=revoked-int-ca-\u16A0"
+    INT_CA_NAME = "/CN=unrevoked-int-ca\u06FF\u16A0\u{2070E}"
     LEAF_CA_NAME = "/CN=leaf-ca-\u06FF"
     EXPLANATORY_TEXT = <<-EOT
 # Root Issuer: #{ROOT_CA_NAME}
@@ -134,9 +135,45 @@ EOT
 
     # Creates a self-signed root ca, then signs two node certs, revoking one of them.
     # Creates an intermediate CA and one node cert off of it.
+    # Creates a second intermediate CA and one node cert off if it.
     # Creates a leaf CA off of the intermediate CA, then signs two node certs revoking one of them.
-    # Revokes the intermediate CA.
+    # Revokes an intermediate CA.
     # Returns the ca bundle, crl chain, and all the node certs
+    #
+    #            -----
+    #           /     \
+    #          /       \
+    #          | root  +-------------------o------------------o
+    #          \  CA   /                   |                  |
+    #           \     /                    |                  |
+    #            --+--                     |                  |
+    #              |                       |                  |
+    #              |                       |                  |
+    #              |                       |                  |
+    #              |                     --+--              --+--
+    # +---------+  |   +---------+      /     \            /     \
+    # | revoked |  |   |         |     /revoked\          /       \
+    # |   node  +--o---+   node  |     |  int  |          | int   |
+    # |         |      |         |     \  CA   /          \  CA   /
+    # +---------+      +---------+      \     /            \     /
+    #                                    --+--              --+--
+    #                                      |                  |
+    #                                      |                  |
+    #                                      |                  |
+    #                                    --+--                |
+    #                                   /     \           +---+-----+
+    #                                  /       \          |         |
+    #                                  | leaf  |          |  node   |
+    #                                  \  CA   /          |         |
+    #                                   \     /           +---------+
+    #                                    --+--
+    #                                      |
+    #                                      |
+    #                         +---------+  |  +----------+
+    #                         | revoked |  |  |          |
+    #                         |   node  +--o--+  node    |
+    #                         |         |     |          |
+    #                         +---------+     +----------+
     def self.create_chained_pki
       root_key = create_private_key
       root_cert = self_signed_ca(root_key, ROOT_CA_NAME)
@@ -153,9 +190,17 @@ EOT
       revoke(revoked_root_node_cert.serial, root_crl, root_key)
 
       revoked_int_key = create_private_key
-      revoked_int_csr = create_csr(revoked_int_key, INT_CA_NAME)
+      revoked_int_csr = create_csr(revoked_int_key, REVOKED_INT_CA_NAME)
       revoked_int_cert = sign(root_key, root_cert, revoked_int_csr, CA_EXTENSIONS)
       revoked_int_crl = create_crl_for(revoked_int_cert, revoked_int_key)
+
+      int_key = create_private_key
+      int_csr = create_csr(int_key, INT_CA_NAME)
+      int_cert = sign(root_key, root_cert, int_csr, CA_EXTENSIONS)
+
+      int_node_key = create_private_key
+      int_node_csr = create_csr(int_node_key, "/CN=unrevoked-int-node")
+      int_node_cert = sign(int_key, int_cert, int_node_csr)
 
       unrevoked_int_node_key = create_private_key
       unrevoked_int_node_csr = create_csr(unrevoked_int_node_key, "/CN=unrevoked-int-node")
@@ -183,7 +228,12 @@ EOT
       crl_chain = bundle(root_crl, revoked_int_crl, leaf_crl)
 
       {
+        :root_cert => root_cert,
+        :int_cert => int_cert,
+        :int_node_cert => int_node_cert,
+        :leaf_cert => leaf_cert,
         :revoked_root_node_cert => revoked_root_node_cert,
+        :revoked_int_cert => revoked_int_cert,
         :revoked_leaf_node_cert => revoked_leaf_node_cert,
         :unrevoked_root_node_cert => unrevoked_root_node_cert,
         :unrevoked_int_node_cert  => unrevoked_int_node_cert,

@@ -1,9 +1,15 @@
 require 'spec_helper'
 require 'puppet/ssl'
+require 'puppet_spec/ssl'
 
 describe Puppet::SSL::Validator::DefaultValidator do
+  include PuppetSpec::Files
   let(:ssl_context) do
     mock('OpenSSL::X509::StoreContext')
+  end
+
+  before(:all) do
+    @pki = PuppetSpec::SSL.create_chained_pki
   end
 
   let(:ca_path) do
@@ -22,7 +28,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
   end
 
   before :each do
-    subject.stubs(:read_file).returns(root_ca)
+    subject.stubs(:read_file).returns(@pki[:root_cert].to_s)
   end
 
   describe '#call' do
@@ -33,7 +39,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
     context 'When pre-verification is not OK' do
       context 'and the ssl_context is in an error state' do
-        let(:root_subject) { OpenSSL::X509::Certificate.new(root_ca).subject.to_s }
+        let(:root_subject) { @pki[:root_cert].subject.to_s }
         let(:code) { OpenSSL::X509::V_ERR_INVALID_CA }
 
         it 'rejects the connection' do
@@ -140,7 +146,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
       context 'and the chain is invalid' do
         before :each do
-          subject.stubs(:read_file).returns(agent_ca)
+          subject.stubs(:read_file).returns(@pki[:unrevoked_leaf_node_cert])
         end
 
         it 'is true for each CA certificate in the chain' do
@@ -197,7 +203,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
         connection.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
-        subject.setup_connection(connection)
+        subject.setup_connection(connection, ssl_host)
       end
     end
   end
@@ -236,149 +242,31 @@ describe Puppet::SSL::Validator::DefaultValidator do
   describe '#has_authz_peer_cert' do
     context 'when the Root CA is listed as authorized' do
       it 'returns true when the SSL cert is issued by the Master CA' do
-        expect(subject.has_authz_peer_cert(cert_chain, [root_ca_cert])).to be_truthy
+        expect(subject.has_authz_peer_cert(cert_chain, [@pki[:root_cert]])).to be_truthy
       end
 
-      it 'returns true when the SSL cert is issued by the Agent CA' do
-        expect(subject.has_authz_peer_cert(cert_chain_agent_ca, [root_ca_cert])).to be_truthy
-      end
-    end
-
-    context 'when the Master CA is listed as authorized' do
-      it 'returns false when the SSL cert is issued by the Master CA' do
-        expect(subject.has_authz_peer_cert(cert_chain, [master_ca_cert])).to be_truthy
-      end
-
-      it 'returns true when the SSL cert is issued by the Agent CA' do
-        expect(subject.has_authz_peer_cert(cert_chain_agent_ca, [master_ca_cert])).to be_falsey
+      it 'returns true when the SSL cert is issued by the alternate CA' do
+        expect(subject.has_authz_peer_cert(cert_chain_alternate, [@pki[:root_cert]])).to be_truthy
       end
     end
 
-    context 'when the Agent CA is listed as authorized' do
-      it 'returns true when the SSL cert is issued by the Master CA' do
-        expect(subject.has_authz_peer_cert(cert_chain, [agent_ca_cert])).to be_falsey
+    context 'when one intermediate CA is listed as authorized' do
+      it 'returns true when the SSL cert is issued by the same intermediate CA' do
+        expect(subject.has_authz_peer_cert(cert_chain, [@pki[:int_cert]])).to be_truthy
       end
 
-      it 'returns true when the SSL cert is issued by the Agent CA' do
-        expect(subject.has_authz_peer_cert(cert_chain_agent_ca, [agent_ca_cert])).to be_truthy
+      it 'returns false when the SSL cert is issued by a different intermediate CA' do
+        expect(subject.has_authz_peer_cert(cert_chain_alternate, [@pki[:int_cert]])).to be_falsey
       end
     end
-  end
-
-  def root_ca
-    <<-ROOT_CA
------BEGIN CERTIFICATE-----
-MIICYDCCAcmgAwIBAgIJALf2Pk2HvtBzMA0GCSqGSIb3DQEBBQUAMEkxEDAOBgNV
-BAMMB1Jvb3QgQ0ExGjAYBgNVBAsMEVNlcnZlciBPcGVyYXRpb25zMRkwFwYDVQQK
-DBBFeGFtcGxlIE9yZywgTExDMB4XDTEzMDMzMDA1NTA0OFoXDTMzMDMyNTA1NTA0
-OFowSTEQMA4GA1UEAwwHUm9vdCBDQTEaMBgGA1UECwwRU2VydmVyIE9wZXJhdGlv
-bnMxGTAXBgNVBAoMEEV4YW1wbGUgT3JnLCBMTEMwgZ8wDQYJKoZIhvcNAQEBBQAD
-gY0AMIGJAoGBAMGSpafR4lboYOPfPJC1wVHHl0gD49ZVRjOlJ9jidEUjBdFXK6SA
-S1tecDv2G4tM1ANmfMKjZl0m+KaZ8O2oq0g6kxkq1Mg0eSNvlnEyehjmTLRzHC2i
-a0biH2wMtCLzfAoXDKy4GPlciBPE9mup5I8Kien5s91t92tc7K8AJ8oBAgMBAAGj
-UDBOMB0GA1UdDgQWBBQwTdZqjjXOIFK2hOM0bcOrnhQw2jAfBgNVHSMEGDAWgBQw
-TdZqjjXOIFK2hOM0bcOrnhQw2jAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBBQUA
-A4GBACs8EZRrzgzAlcKC1Tz8GYlNHQg0XhpbEDm+p2mOV//PuDD190O+UBpWxo9Q
-rrkkx8En0wXQZJf6iH3hwewwHLOq5yXZKbJN+SmvJvRNL95Yhyy08Y9N65tJveE7
-rPsNU/Tx19jHC87oXlmAePLI4IaUHXrWb7CRbY9TEcPdmj1R
------END CERTIFICATE-----
-    ROOT_CA
-  end
-
-  def master_ca
-    <<-MASTER_CA
------BEGIN CERTIFICATE-----
-MIICljCCAf+gAwIBAgIBAjANBgkqhkiG9w0BAQUFADBJMRAwDgYDVQQDDAdSb290
-IENBMRowGAYDVQQLDBFTZXJ2ZXIgT3BlcmF0aW9uczEZMBcGA1UECgwQRXhhbXBs
-ZSBPcmcsIExMQzAeFw0xMzAzMzAwNTUwNDhaFw0zMzAzMjUwNTUwNDhaMH4xJDAi
-BgNVBAMTG0ludGVybWVkaWF0ZSBDQSAobWFzdGVyLWNhKTEfMB0GCSqGSIb3DQEJ
-ARYQdGVzdEBleGFtcGxlLm9yZzEZMBcGA1UEChMQRXhhbXBsZSBPcmcsIExMQzEa
-MBgGA1UECxMRU2VydmVyIE9wZXJhdGlvbnMwXDANBgkqhkiG9w0BAQEFAANLADBI
-AkEAvo/az3oR69SP92jGnUHMJLEyyD1Ui1BZ/rUABJcQTRQqn3RqtlfYePWZnUaZ
-srKbXRS4q0w5Vqf1kx5w3q5tIwIDAQABo4GcMIGZMHkGA1UdIwRyMHCAFDBN1mqO
-Nc4gUraE4zRtw6ueFDDaoU2kSzBJMRAwDgYDVQQDDAdSb290IENBMRowGAYDVQQL
-DBFTZXJ2ZXIgT3BlcmF0aW9uczEZMBcGA1UECgwQRXhhbXBsZSBPcmcsIExMQ4IJ
-ALf2Pk2HvtBzMA8GA1UdEwEB/wQFMAMBAf8wCwYDVR0PBAQDAgEGMA0GCSqGSIb3
-DQEBBQUAA4GBACRfa1YPS7RQUuhYovGgV0VYqxuATC7WwdIRihVh5FceSXKgSIbz
-BKmOBAy/KixEhpnHTbkpaJ0d9ITkvjMTmj3M5YMahKaQA5niVPckQPecMMd6jg9U
-l1k75xLLIcrlsDYo3999KOSSchH2K7bLT7TuQ2okdP6FHWmeWmudewlu
------END CERTIFICATE-----
-    MASTER_CA
-  end
-
-  def agent_ca
-    <<-AGENT_CA
------BEGIN CERTIFICATE-----
-MIIClTCCAf6gAwIBAgIBATANBgkqhkiG9w0BAQUFADBJMRAwDgYDVQQDDAdSb290
-IENBMRowGAYDVQQLDBFTZXJ2ZXIgT3BlcmF0aW9uczEZMBcGA1UECgwQRXhhbXBs
-ZSBPcmcsIExMQzAeFw0xMzAzMzAwNTUwNDhaFw0zMzAzMjUwNTUwNDhaMH0xIzAh
-BgNVBAMTGkludGVybWVkaWF0ZSBDQSAoYWdlbnQtY2EpMR8wHQYJKoZIhvcNAQkB
-FhB0ZXN0QGV4YW1wbGUub3JnMRkwFwYDVQQKExBFeGFtcGxlIE9yZywgTExDMRow
-GAYDVQQLExFTZXJ2ZXIgT3BlcmF0aW9uczBcMA0GCSqGSIb3DQEBAQUAA0sAMEgC
-QQDkEj/Msmi4hJImxP5+ocixMTHuYC1M1E2p4QcuzOkZYrfHf+5hJMcahfYhLiXU
-jHBredOXhgSisHh6CLSb/rKzAgMBAAGjgZwwgZkweQYDVR0jBHIwcIAUME3Wao41
-ziBStoTjNG3Dq54UMNqhTaRLMEkxEDAOBgNVBAMMB1Jvb3QgQ0ExGjAYBgNVBAsM
-EVNlcnZlciBPcGVyYXRpb25zMRkwFwYDVQQKDBBFeGFtcGxlIE9yZywgTExDggkA
-t/Y+TYe+0HMwDwYDVR0TAQH/BAUwAwEB/zALBgNVHQ8EBAMCAQYwDQYJKoZIhvcN
-AQEFBQADgYEAujSj9rxIxJHEuuYXb15L30yxs9Tdvy4OCLiKdjvs9Z7gG8Pbutls
-ooCwyYAkmzKVs/8cYjZJnvJrPEW1gFwqX7Xknp85Cfrl+/pQEPYq5sZVa5BIm9tI
-0EvlDax/Hd28jI6Bgq5fsTECNl9GDGknCy7vwRZem0h+hI56lzR3pYE=
------END CERTIFICATE-----
-    AGENT_CA
-  end
-
-  # Signed by the master CA (Good)
-  def master_issued_by_master_ca
-<<-GOOD_SSL_CERT
------BEGIN CERTIFICATE-----
-MIICZzCCAhGgAwIBAgIBATANBgkqhkiG9w0BAQUFADB+MSQwIgYDVQQDExtJbnRl
-cm1lZGlhdGUgQ0EgKG1hc3Rlci1jYSkxHzAdBgkqhkiG9w0BCQEWEHRlc3RAZXhh
-bXBsZS5vcmcxGTAXBgNVBAoTEEV4YW1wbGUgT3JnLCBMTEMxGjAYBgNVBAsTEVNl
-cnZlciBPcGVyYXRpb25zMB4XDTEzMDMzMDA1NTA0OFoXDTMzMDMyNTA1NTA0OFow
-HjEcMBoGA1UEAwwTbWFzdGVyMS5leGFtcGxlLm9yZzBcMA0GCSqGSIb3DQEBAQUA
-A0sAMEgCQQDACW8fryVZH0dC7vYUASonVBKYcILnKN2O9QX7RenZGN1TWek9LQxr
-yQFDyp7WJ8jUw6nENGniLU8J+QSSxryjAgMBAAGjgdkwgdYwWwYDVR0jBFQwUqFN
-pEswSTEQMA4GA1UEAwwHUm9vdCBDQTEaMBgGA1UECwwRU2VydmVyIE9wZXJhdGlv
-bnMxGTAXBgNVBAoMEEV4YW1wbGUgT3JnLCBMTEOCAQIwDAYDVR0TAQH/BAIwADAL
-BgNVHQ8EBAMCBaAwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMD0GA1Ud
-EQQ2MDSCE21hc3RlcjEuZXhhbXBsZS5vcmeCB21hc3RlcjGCBnB1cHBldIIMcHVw
-cGV0bWFzdGVyMA0GCSqGSIb3DQEBBQUAA0EAo8PvgLrah6jQVs6YCBxOTn13PDip
-fVbcRsFd0dtIr00N61bCqr6Fa0aRwy424gh6bVJTNmk2zoaH7r025dZRhw==
------END CERTIFICATE-----
-GOOD_SSL_CERT
-  end
-
-  # Signed by the agent CA, not the master CA (Rogue)
-  def master_issued_by_agent_ca
-<<-BAD_SSL_CERT
------BEGIN CERTIFICATE-----
-MIICZjCCAhCgAwIBAgIBBDANBgkqhkiG9w0BAQUFADB9MSMwIQYDVQQDExpJbnRl
-cm1lZGlhdGUgQ0EgKGFnZW50LWNhKTEfMB0GCSqGSIb3DQEJARYQdGVzdEBleGFt
-cGxlLm9yZzEZMBcGA1UEChMQRXhhbXBsZSBPcmcsIExMQzEaMBgGA1UECxMRU2Vy
-dmVyIE9wZXJhdGlvbnMwHhcNMTMwMzMwMDU1MDQ4WhcNMzMwMzI1MDU1MDQ4WjAe
-MRwwGgYDVQQDDBNtYXN0ZXIxLmV4YW1wbGUub3JnMFwwDQYJKoZIhvcNAQEBBQAD
-SwAwSAJBAPnCDnryLLXWepGLqsdBWlytfeakE/yijM8GlE/yT0SbpJInIhJR1N1A
-0RskriHrxTU5qQEhd0RIja7K5o4NYksCAwEAAaOB2TCB1jBbBgNVHSMEVDBSoU2k
-SzBJMRAwDgYDVQQDDAdSb290IENBMRowGAYDVQQLDBFTZXJ2ZXIgT3BlcmF0aW9u
-czEZMBcGA1UECgwQRXhhbXBsZSBPcmcsIExMQ4IBATAMBgNVHRMBAf8EAjAAMAsG
-A1UdDwQEAwIFoDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwPQYDVR0R
-BDYwNIITbWFzdGVyMS5leGFtcGxlLm9yZ4IHbWFzdGVyMYIGcHVwcGV0ggxwdXBw
-ZXRtYXN0ZXIwDQYJKoZIhvcNAQEFBQADQQA841IzHLlnn4RIJ0/BOZ/16iWC1dNr
-jV9bELC5OxeMNSsVXbFNeTHwbHEYjDg5dQ6eUkxPdBSMWBeQwe2Mw+xG
------END CERTIFICATE-----
-BAD_SSL_CERT
   end
 
   def cert_chain
-    [ master_issued_by_master_ca, master_ca, root_ca ].map do |pem|
-      OpenSSL::X509::Certificate.new(pem)
-    end
+    [@pki[:int_node_cert], @pki[:int_cert], @pki[:root_cert]]
   end
 
-  def cert_chain_agent_ca
-    [ master_issued_by_agent_ca, agent_ca, root_ca ].map do |pem|
-      OpenSSL::X509::Certificate.new(pem)
-    end
+  def cert_chain_alternate
+    [@pki[:unrevoked_leaf_node_cert], @pki[:leaf_cert], @pki[:revoked_int_cert], @pki[:root_cert]]
   end
 
   def cert_chain_in_callback_order
@@ -395,17 +283,5 @@ BAD_SSL_CERT
     msg << "Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject}.join(', ')}  "
     msg << "Peer Chain: #{cert_chain.collect {|c| c.subject}.join(' => ')}"
     msg
-  end
-
-  let :root_ca_cert do
-    OpenSSL::X509::Certificate.new(root_ca)
-  end
-
-  let :master_ca_cert do
-    OpenSSL::X509::Certificate.new(master_ca)
-  end
-
-  let :agent_ca_cert do
-    OpenSSL::X509::Certificate.new(agent_ca)
   end
 end
