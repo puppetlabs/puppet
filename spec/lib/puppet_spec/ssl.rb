@@ -139,6 +139,41 @@ EOT
     # Creates a leaf CA off of the intermediate CA, then signs two node certs revoking one of them.
     # Revokes an intermediate CA.
     # Returns the ca bundle, crl chain, and all the node certs
+    #
+    #            -----
+    #           /     \
+    #          /       \
+    #          | root  +-------------------o------------------o
+    #          \  CA   /                   |                  |
+    #           \     /                    |                  |
+    #            --+--                     |                  |
+    #              |                       |                  |
+    #              |                       |                  |
+    #              |                       |                  |
+    #              |                     --+--              --+--
+    # +---------+  |   +---------+      /     \            /     \
+    # | revoked |  |   |         |     /revoked\          /       \
+    # |   node  +--o---+   node  |     |  int  |          | int   |
+    # |         |      |         |     \  CA   /          \  CA   /
+    # +---------+      +---------+      \     /            \     /
+    #                                    --+--              --+--
+    #                                      |                  |
+    #                                      |                  |
+    #                                      |                  |
+    #                                    --+--                |
+    #                                   /     \           +---+-----+
+    #                                  /       \          |         |
+    #                                  | leaf  |          |  node   |
+    #                                  \  CA   /          |         |
+    #                                   \     /           +---------+
+    #                                    --+--
+    #                                      |
+    #                                      |
+    #                         +---------+  |  +----------+
+    #                         | revoked |  |  |          |
+    #                         |   node  +--o--+  node    |
+    #                         |         |     |          |
+    #                         +---------+     +----------+
     def self.create_chained_pki
       root_key = create_private_key
       root_cert = self_signed_ca(root_key, ROOT_CA_NAME)
