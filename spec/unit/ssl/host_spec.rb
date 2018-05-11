@@ -591,6 +591,44 @@ describe Puppet::SSL::Host do
       expect(@host.certificate).to equal(cert)
       expect(@host.certificate).to equal(cert)
     end
+
+    context 'invalid certificates' do
+      it "should raise if the CA certificate downloaded from CA is invalid" do
+        garbage = mock('garbage response', :ok? => true, :read_body => 'garbage')
+        Puppet::Rest::Routes.expects(:get_certificate)
+                            .with(@http, Puppet::SSL::CA_NAME)
+                            .returns(garbage)
+        expect { @host.certificate }.to raise_error(Puppet::Error, /did not contain a valid CA certificate/)
+      end
+
+      it "should warn if the host certificate downloaded from CA is invalid" do
+        garbage = mock('garbage response', :ok? => true, :read_body => 'garbage')
+        Puppet::Rest::Routes.expects(:get_certificate)
+                            .with(@http, Puppet::SSL::CA_NAME)
+                            .returns(ca_cert_response)
+        Puppet::Rest::Routes.expects(:get_certificate)
+                            .with(@http, @host.name)
+                            .returns(garbage)
+        expect { @host.certificate }.to raise_error(Puppet::Error, /did not contain a valid certificate for #{@host.name}/)
+      end
+
+      it 'should warn if the CA certificate loaded from disk is invalid' do
+        Puppet::FileSystem.open(Puppet[:localcacert], nil, "w:ASCII") do |f|
+          f.puts 'garbage'
+        end
+        expect { @host.certificate }.to raise_error(Puppet::Error, /The CA certificate.*invalid/)
+      end
+
+      it 'should warn if the host certificate loaded from disk in invalid' do
+        Puppet::Rest::Routes.expects(:get_certificate)
+                            .with(@http, Puppet::SSL::CA_NAME)
+                            .returns(ca_cert_response)
+        Puppet::FileSystem.open(File.join(Puppet[:certdir], "#{@host.name}.pem"), nil, "w:ASCII") do |f|
+          f.puts 'garbage'
+        end
+        expect { @host.certificate }.to raise_error(Puppet::Error, /The certificate.*invalid/)
+      end
+    end
   end
 
   it "should have a method for listing certificate hosts" do

@@ -176,7 +176,7 @@ module Logging
                      else
                        error_location_str = Puppet::Util::Errors.error_location(file, line)
                        if error_location_str.empty?
-                         '\n   ' + _('(file & line not available)')
+                         "\n   " + _('(file & line not available)')
                        else
                          "\n   %{error_location}" % { error_location: error_location_str }
                        end

@@ -207,7 +207,6 @@ DOC
       # get the CA cert first, since it's required for the normal cert
       # to be of any use. If we can't get it, quit.
       if !ca? && !ensure_ca_certificate
-        Puppet.warning _('Could not download CA certificate, aborting')
         return nil
       end
 
@@ -436,14 +435,21 @@ ERROR_STRING
   # validating the host's cert.
   # It will first check if the cert is present in memory (used for testing),
   # then check on disk, and finally try to download it.
-  # @return true if the CA certificate was found, false otherwise
+  # @raise [Puppet::Error] if text form of found certificate bundle is invalid
+  #                        and cannot be loaded into cert objects
+  # @return [Boolean] true if the CA certificate was found, false otherwise
   def ensure_ca_certificate
     file_path = certificate_location(CA_NAME)
     if check_for_certificate_in_memory(CA_NAME)
       true
     elsif Puppet::FileSystem.exist?(file_path)
-      load_certificate_bundle(Puppet::FileSystem.read(file_path))
-      true
+      begin
+        # This load ensures that the response body is a valid cert bundle.
+        # If the text is malformed, load_certificate_bundle will raise.
+        load_certificate_bundle(Puppet::FileSystem.read(file_path))
+      rescue Puppet::Error => e
+        raise Puppet::Error, _("The CA certificate at %{file_path} is invalid: %{message}") % { file_path: file_path, message: e.message }
+      end
     else
       bundle = download_ca_certificate_bundle
       if bundle
@@ -458,15 +464,28 @@ ERROR_STRING
   # Creates an arry of SSL Certificate objects from a PEM-encoding string
   # of one or more certs.
   # @param [String] bundle_string PEM-encoded string of certs
-  # @return [[OpenSSL::X509::Certificate]] the certs loaded from the input string
+  # @return [[OpenSSL::X509::Certificate], nil] the certs loaded from the
+  #         input string, or nil if none could be loaded
   def load_certificate_bundle(bundle_string)
     delimiters = /-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m
-    bundle_string.scan(delimiters).map do |cert|
-      OpenSSL::X509::Certificate.new(cert)
+    certs = bundle_string.scan(delimiters)
+
+    if certs.empty?
+      raise Puppet::Error, _("No valid PEM-encoded certificates.")
+    end
+
+    certs.map do |cert|
+      begin
+        OpenSSL::X509::Certificate.new(cert)
+      rescue OpenSSL::X509::CertificateError => e
+        raise Puppet::Error, _("Could not parse certificate: %{message}") % { message: e.message }
+      end
     end
   end
 
   # Fetches the CA certificate bundle from the CA server
+  # @raise [Puppet::Error] if response from the server is not a valid certificate
+  #                        bundle
   # @return [[OpenSSL::X509::Certificate]] the certs loaded from the response
   def download_ca_certificate_bundle
     return nil if Puppet::SSL::Host.ca_location != :remote
@@ -475,8 +494,12 @@ ERROR_STRING
     if response.ok?
       body = response.read_body
       # This load ensures that the response body is a valid cert bundle.
-      # If the text is malformed, OpenSSL will error.
-      load_certificate_bundle(body)
+      # If the text is malformed, load_certificate_bundle will raise.
+      begin
+        load_certificate_bundle(body)
+      rescue Puppet::Error => e
+        raise Puppet::Error, _("Response from the CA did not contain a valid CA certificate: %{message}") % { message: e.message }
+      end
     else
       nil
     end
@@ -494,7 +517,7 @@ ERROR_STRING
 
   # Attempts to load or fetch this host's certificate. Returns nil if
   # no certificate could be found.
-  # @return Puppet::SSL::Certificate if found, nil otherwise
+  # @return [Puppet::SSL::Certificate, nil]
   def get_host_certificate
     if cert = check_for_certificate_in_memory(name)
       return cert
@@ -512,7 +535,7 @@ ERROR_STRING
   # Only relevant if the memory terminus is in use, and currently
   # only used in testing.
   # @param [String] name the name of the cert to look for
-  # @return Puppet::SSL::Certificate or nil if none is found
+  # @return [Puppet::SSL::Certificate, nil]
   def check_for_certificate_in_memory(cert_name)
     if Puppet::SSL::Certificate.indirection.terminus_class == :memory
       return Puppet::SSL::Certificate.indirection.find(cert_name)
@@ -522,25 +545,37 @@ ERROR_STRING
   # Checks for the requested certificate on disc, at a location
   # determined by this host's configuration.
   # @name [String] name the name of the cert to look for
-  # @return Puppet::SSL::Certificate or nil if none is found
+  # @raise [Puppet::Error] if contents of certificate file is invalid
+  #                        and could not be loaded
+  # @return [Puppet::SSL::Certificate, nil]
   def check_for_certificate_on_disk(cert_name)
     file_path = certificate_location(cert_name)
     if Puppet::FileSystem.exist?(file_path)
-      Puppet::SSL::Certificate.from_s(Puppet::FileSystem.read(file_path))
+      begin
+        Puppet::SSL::Certificate.from_s(Puppet::FileSystem.read(file_path))
+      rescue OpenSSL::X509::CertificateError
+        raise Puppet::Error, _("The certificate at %{file_path} is invalid. Could not load.") % { file_path: file_path }
+      end
     end
   end
 
   # Attempts to download this host's certificate from the CA server.
   # Returns nil if the CA does not yet have a signed cert for this host.
   # @param [String] name then name of the cert to fetch
-  # @return Puppet::SSL::Certificate or nil if none is found
+  # @raise [Puppet::Error] if response from the CA does not contain a valid
+  #                        certificate
+  # @return [Puppet::SSL::Certificate, nil]
   def download_certificate_from_ca(cert_name)
     return nil if Puppet::SSL::Host.ca_location != :remote
 
     response = Puppet::Rest::Routes.get_certificate(http_client, cert_name)
     if response.ok?
       body = response.read_body
-      Puppet::SSL::Certificate.from_s(body)
+      begin
+        Puppet::SSL::Certificate.from_s(body)
+      rescue OpenSSL::X509::CertificateError
+        raise Puppet::Error, _("Response from the CA did not contain a valid certificate for %{cert_name}.") % { cert_name: cert_name }
+      end
     end
   end
 
