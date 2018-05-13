@@ -88,4 +88,18 @@ describe "Defaults" do
       Puppet.settings.handlearg("--server", "test_server")
     end
   end
+
+  describe 'basemodulepath' do
+    it 'includes the global and system modules on non-windows', :unless => Puppet::Util::Platform.windows? do
+      expect(
+        Puppet[:basemodulepath]
+      ).to match(%r{.*/code/modules:/opt/puppetlabs/puppet/modules})
+    end
+
+    it 'includes global modules on windows', :if => Puppet::Util::Platform.windows? do
+      expect(
+        Puppet[:basemodulepath]
+      ).to match(%r{.*/code/modules})
+    end
+  end
 end
