@@ -5,6 +5,7 @@ require 'puppet/application/device'
 require 'puppet/util/network_device/config'
 require 'ostruct'
 require 'puppet/configurer'
+require 'puppet/application/apply'
 
 describe Puppet::Application::Device do
   include PuppetSpec::Files
@@ -289,6 +290,7 @@ describe Puppet::Application::Device do
       Puppet.stubs(:notice)
       @device.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
       @device.options.stubs(:[]).with(:target).returns(nil)
+      @device.options.stubs(:[]).with(:apply).returns(nil)
       @device.options.stubs(:[]).with(:resource).returns(false)
       @device.options.stubs(:[]).with(:to_yaml).returns(false)
       @device.options.stubs(:[]).with(:client)
@@ -336,6 +338,32 @@ describe Puppet::Application::Device do
       Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
       Puppet.expects(:info).with(regexp_matches(/starting applying configuration to/)).never
       Puppet.expects(:err).with(regexp_matches(/Target device \/ certificate 'bla' not found in .*\.conf/))
+      expect { @device.main }.to exit_with 1
+    end
+
+    it "should error if target is passed and the apply path is incorrect" do
+      @device.options.stubs(:[]).with(:apply).returns('file.pp')
+      @device.options.stubs(:[]).with(:target).returns('device1')
+
+      File.expects(:file?).returns(false)
+      Puppet.expects(:err).with(regexp_matches(/does not exist, cannot apply/))
+      expect { @device.main }.to exit_with 1
+    end
+
+    it "should run an apply" do
+      @device.options.stubs(:[]).with(:apply).returns('file.pp')
+      @device.options.stubs(:[]).with(:target).returns('device1')
+      device_hash = {
+        "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
+      }
+      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
+      Puppet::Util::NetworkDevice.stubs(:init)
+      File.expects(:file?).returns(true)
+
+      Puppet::Util::CommandLine.expects(:new).once
+      Puppet::Application::Apply.expects(:new).once
+
+      Puppet::Configurer.expects(:new).never
       expect { @device.main }.to exit_with 1
     end
 

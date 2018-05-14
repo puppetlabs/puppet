@@ -24,7 +24,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     else
       puts Puppet::Face[:help, :current].help(face.name)
     end
-    exit
+    exit(0)
   end
 
   attr_accessor :face, :action, :type, :arguments, :render_as

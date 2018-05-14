@@ -1,6 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'json'
+require 'puppet/util/json'
 require 'puppet/indirector'
 require 'puppet/indirector/errors'
 require 'puppet/indirector/rest'
@@ -52,7 +52,7 @@ shared_examples_for "a REST terminus method" do |terminus_method|
     describe "when the response code is #{code}" do
       let(:message) { 'error messaged!!!' }
       let(:body) do
-        JSON.generate({
+        Puppet::Util::Json.dump({
           :issue_kind => 'server-error',
           :message    => message
         })
@@ -720,6 +720,49 @@ describe Puppet::Indirector::REST do
       connection.expects(:put).with(anything, anything, has_entry('Content-Type' => "mime")).returns(response)
 
       terminus.save(request)
+    end
+  end
+
+  describe '#handle_response' do
+    # There are multiple request types to choose from, this may not be the one I want for this situation
+    let(:response) { mock_response(200, 'body') }
+    let(:connection) { stub('mock http connection', :put => response, :verify_callback= => nil) }
+    let(:instance) { model.new('the thing', 'some contents') }
+    let(:request) { save_request(instance.name, instance) }
+
+    before :each do
+      terminus.stubs(:network).returns(connection)
+    end
+
+    it 'adds server_agent_version to the context if not already set' do
+      Puppet.expects(:push_context).with(:server_agent_version => Puppet.version)
+      terminus.handle_response(request, response)
+    end
+
+    it 'does not add server_agent_version to the context if it is already set' do
+      Puppet.override(:server_agent_version => "5.3.4") do
+        Puppet.expects(:push_context).never
+        terminus.handle_response(request, response)
+      end
+    end
+
+    it 'downgrades to pson and emits a warning' do
+      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns('4.2.8')
+      Puppet[:preferred_serialization_format] = 'other'
+
+      Puppet.expects(:warning).with('Downgrading to PSON for future requests')
+
+      terminus.handle_response(request, response)
+
+      expect(Puppet[:preferred_serialization_format]).to eq('pson')
+    end
+
+    it 'preserves the set serialization format' do
+      Puppet[:preferred_serialization_format] = 'other'
+
+      expect(Puppet[:preferred_serialization_format]).to eq('other')
+
+      terminus.handle_response(request, response)
     end
   end
 

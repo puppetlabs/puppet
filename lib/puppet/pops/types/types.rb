@@ -906,11 +906,15 @@ class PNumericType < PScalarDataType
           0
         else
           begin
-            if from[0] == '0' && (from[1].downcase == 'b' || from[1].downcase == 'x')
-              Integer(from)
-            else
-              Puppet::Pops::Utils.to_n(from)
+            if from[0] == '0'
+              second_char = (from[1] || '').downcase
+              if second_char == 'b' || second_char == 'x'
+                # use built in conversion
+                return Integer(from)
+              end
             end
+
+            Puppet::Pops::Utils.to_n(from)
           rescue TypeError => e
             raise TypeConversionError.new(e.message)
           rescue ArgumentError => e

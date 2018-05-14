@@ -10,16 +10,20 @@ shared_examples_for "a yumrepo parameter that can be absent" do |param|
   end
 end
 
-shared_examples_for "a yumrepo parameter that expects a natural value" do |param|
+shared_examples_for "a yumrepo parameter that can be an integer" do |param|
   it "accepts a valid positive integer" do
     instance = described_class.new(:name => 'puppetlabs', param => '12')
     expect(instance[param]).to eq '12'
   end
-  it "rejects invalid negative integer" do
+  it "accepts zero" do
+    instance = described_class.new(:name => 'puppetlabs', param => '0')
+    expect(instance[param]).to eq '0'
+  end
+  it "rejects invalid positive float" do
     expect {
       described_class.new(
         :name => 'puppetlabs',
-        param => '-12'
+        param => '12.5'
       )
     }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
   end
@@ -36,6 +40,17 @@ shared_examples_for "a yumrepo parameter that expects a natural value" do |param
       described_class.new(
         :name => 'puppetlabs',
         param => 'I\'m a 6'
+      )
+    }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
+  end
+end
+
+shared_examples_for "a yumrepo parameter that can't be a negative integer" do |param|
+  it "rejects invalid negative integer" do
+    expect {
+      described_class.new(
+          :name => 'puppetlabs',
+          param => '-12'
       )
     }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
   end
@@ -264,12 +279,14 @@ describe Puppet::Type.type(:yumrepo) do
 
     describe "timeout" do
       it_behaves_like "a yumrepo parameter that can be absent", :timeout
-      it_behaves_like "a yumrepo parameter that expects a natural value", :timeout
+      it_behaves_like "a yumrepo parameter that can be an integer", :timeout
+      it_behaves_like "a yumrepo parameter that can't be a negative integer", :timeout
     end
 
     describe "metadata_expire" do
       it_behaves_like "a yumrepo parameter that can be absent", :metadata_expire
-      it_behaves_like "a yumrepo parameter that expects a natural value", :metadata_expire
+      it_behaves_like "a yumrepo parameter that can be an integer", :metadata_expire
+      it_behaves_like "a yumrepo parameter that can't be a negative integer", :metadata_expire
 
       it "accepts dhm units" do
         %W[d h m].each do |unit|
@@ -292,6 +309,7 @@ describe Puppet::Type.type(:yumrepo) do
 
     describe "priority" do
       it_behaves_like "a yumrepo parameter that can be absent", :priority
+      it_behaves_like "a yumrepo parameter that can be an integer", :priority
     end
 
     describe "proxy" do
@@ -353,12 +371,14 @@ describe Puppet::Type.type(:yumrepo) do
 
     describe "cost" do
       it_behaves_like "a yumrepo parameter that can be absent", :cost
-      it_behaves_like "a yumrepo parameter that expects a natural value", :cost
+      it_behaves_like "a yumrepo parameter that can be an integer", :cost
+      it_behaves_like "a yumrepo parameter that can't be a negative integer", :cost
     end
 
     describe "throttle" do
       it_behaves_like "a yumrepo parameter that can be absent", :throttle
-      it_behaves_like "a yumrepo parameter that expects a natural value", :throttle
+      it_behaves_like "a yumrepo parameter that can be an integer", :throttle
+      it_behaves_like "a yumrepo parameter that can't be a negative integer", :throttle
       it_behaves_like "a yumrepo parameter that accepts kMG units", :throttle
 
       it "accepts percentage as unit" do
@@ -371,7 +391,8 @@ describe Puppet::Type.type(:yumrepo) do
 
     describe "bandwidth" do
       it_behaves_like "a yumrepo parameter that can be absent", :bandwidth
-      it_behaves_like "a yumrepo parameter that expects a natural value", :bandwidth
+      it_behaves_like "a yumrepo parameter that can be an integer", :bandwidth
+      it_behaves_like "a yumrepo parameter that can't be a negative integer", :bandwidth
       it_behaves_like "a yumrepo parameter that accepts kMG units", :bandwidth
     end
 
@@ -382,22 +403,44 @@ describe Puppet::Type.type(:yumrepo) do
 
     describe "retries" do
       it_behaves_like "a yumrepo parameter that can be absent", :retries
-      it_behaves_like "a yumrepo parameter that expects a natural value", :retries
+      it_behaves_like "a yumrepo parameter that can be an integer", :retries
+      it_behaves_like "a yumrepo parameter that can't be a negative integer", :retries
     end
 
     describe "mirrorlist_expire" do
       it_behaves_like "a yumrepo parameter that can be absent", :mirrorlist_expire
-      it_behaves_like "a yumrepo parameter that expects a natural value", :mirrorlist_expire
+      it_behaves_like "a yumrepo parameter that can be an integer", :mirrorlist_expire
+      it_behaves_like "a yumrepo parameter that can't be a negative integer", :mirrorlist_expire
     end
 
     describe "deltarpm_percentage" do
       it_behaves_like "a yumrepo parameter that can be absent", :deltarpm_percentage
-      it_behaves_like "a yumrepo parameter that expects a natural value", :deltarpm_percentage
+      it_behaves_like "a yumrepo parameter that can be an integer", :deltarpm_percentage
+      it_behaves_like "a yumrepo parameter that can't be a negative integer", :deltarpm_percentage
     end
 
     describe "deltarpm_metadata_percentage" do
       it_behaves_like "a yumrepo parameter that can be absent", :deltarpm_metadata_percentage
-      it_behaves_like "a yumrepo parameter that expects a natural value", :deltarpm_metadata_percentage
+      it_behaves_like "a yumrepo parameter that can be an integer", :deltarpm_metadata_percentage
+      it_behaves_like "a yumrepo parameter that can't be a negative integer", :deltarpm_metadata_percentage
+    end
+
+    describe "username" do
+      it_behaves_like "a yumrepo parameter that can be absent", :username
+    end
+
+    describe "password" do
+      it_behaves_like "a yumrepo parameter that can be absent", :password
+
+      it "redacts password information from the logs" do
+        resource = described_class.new(:name => 'puppetlabs', :password => 'top secret')
+        harness = Puppet::Transaction::ResourceHarness.new(Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil))
+        harness.evaluate(resource)
+        resource[:password] = 'super classified'
+        status = harness.evaluate(resource)
+        sync_event = status.events[0]
+        expect(sync_event.message).to eq 'changed [redacted] to [redacted]'
+      end
     end
   end
 end

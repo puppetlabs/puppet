@@ -52,7 +52,7 @@ class Puppet::Context
     elsif block
       block.call
     else
-      raise UndefinedBindingError, _("no '%{name}' in %{table} at top of %{stack}") % { name: name, table: @table.inspect, stack: @stack.inspect }
+      raise UndefinedBindingError, _("Unable to lookup '%{name}'") % { name: name }
     end
   end
 

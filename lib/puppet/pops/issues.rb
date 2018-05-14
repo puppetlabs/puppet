@@ -118,7 +118,7 @@ module Issues
   # @see MessageData
   # @api public
   #
-  def self.issue (issue_code, *args, &block)
+  def self.issue(issue_code, *args, &block)
     Issue.new(issue_code, *args, &block)
   end
 
@@ -738,6 +738,10 @@ module Issues
 
   HEREDOC_WITHOUT_TEXT = hard_issue :HEREDOC_WITHOUT_TEXT do
     _('Heredoc without any following lines of text')
+  end
+
+  HEREDOC_EMPTY_ENDTAG = hard_issue :HEREDOC_EMPTY_ENDTAG do
+    _('Heredoc with an empty endtag')
   end
 
   HEREDOC_MULTIPLE_AT_ESCAPES = hard_issue :HEREDOC_MULTIPLE_AT_ESCAPES, :escapes do

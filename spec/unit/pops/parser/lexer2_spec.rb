@@ -540,6 +540,15 @@ describe 'Lexer2' do
         expect_issue(code, Puppet::Pops::Issues::HEREDOC_WITHOUT_TEXT)
       end
 
+      it 'detects and reports HEREDOC_EMPTY_ENDTAG' do
+        code = <<-CODE
+        @("")
+        Text
+        |-END
+        CODE
+        expect_issue(code, Puppet::Pops::Issues::HEREDOC_EMPTY_ENDTAG)
+      end
+
       it 'detects and reports HEREDOC_MULTIPLE_AT_ESCAPES' do
         code = <<-CODE
         @(END:syntax/tst)

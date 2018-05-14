@@ -264,6 +264,12 @@ describe Puppet::Configurer do
       expect(@agent.run).to eq(1234)
     end
 
+    it "should return nil if catalog application fails" do
+      @catalog.expects(:apply).raises(Puppet::Error, 'One or more resource dependency cycles detected in graph')
+      report = Puppet::Transaction::Report.new
+      expect(@agent.run(catalog: @catalog, report: report)).to be_nil
+    end
+
     it "should send the transaction report even if the pre-run command fails" do
       report = Puppet::Transaction::Report.new
       Puppet::Transaction::Report.expects(:new).returns(report)
@@ -350,6 +356,35 @@ describe Puppet::Configurer do
       @agent.expects(:send_report)
 
       expect(@agent.run).to be_nil
+    end
+
+    it 'includes total time metrics in the report after successfully applying the catalog' do
+      report = Puppet::Transaction::Report.new
+      @catalog.stubs(:apply).with(:report => report)
+      @agent.run(report: report)
+
+      expect(report.metrics['time']).to be
+      expect(report.metrics['time']['total']).to be_a_kind_of(Numeric)
+    end
+
+    it 'includes total time metrics in the report even if prerun fails' do
+      Puppet.settings[:prerun_command] = "/my/command"
+      Puppet::Util::Execution.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
+
+      report = Puppet::Transaction::Report.new
+      @agent.run(report: report)
+
+      expect(report.metrics['time']).to be
+      expect(report.metrics['time']['total']).to be_a_kind_of(Numeric)
+    end
+
+    it 'includes total time metrics in the report even if catalog retrieval fails' do
+      report = Puppet::Transaction::Report.new
+      @agent.stubs(:prepare_and_retrieve_catalog_from_cache).raises
+      @agent.run(:report => report)
+
+      expect(report.metrics['time']).to be
+      expect(report.metrics['time']['total']).to be_a_kind_of(Numeric)
     end
 
     it "should refetch the catalog if the server specifies a new environment in the catalog" do
@@ -929,6 +964,13 @@ describe Puppet::Configurer do
       ral_catalog.expects(:write_resource_file)
 
       @agent.convert_catalog(catalog, 10)
+    end
+
+    it "should set catalog conversion time on the report" do
+      report = Puppet::Transaction::Report.new
+
+      report.expects(:add_times).with(:convert_catalog, kind_of(Numeric))
+      @agent.convert_catalog(catalog, 10, {:report => report})
     end
   end
 

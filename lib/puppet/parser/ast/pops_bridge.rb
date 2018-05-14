@@ -132,7 +132,25 @@ class Puppet::Parser::AST::PopsBridge
       yield self
     end
 
+    # Returns true if this Program only contains definitions
+    def is_definitions_only?
+      is_definition?(program_model)
+    end
+
     private
+
+    def is_definition?(o)
+      case o
+      when Puppet::Pops::Model::Program
+        is_definition?(o.body)
+      when Puppet::Pops::Model::BlockExpression
+        o.statements.all {|s| is_definition?(s) }
+      when Puppet::Pops::Model::Definition
+        true
+      else
+        false
+      end
+    end
 
     def instantiate_Parameter(o)
       # 3x needs parameters as an array of `[name]` or `[name, value_expr]`

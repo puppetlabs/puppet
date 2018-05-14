@@ -629,6 +629,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.apply
     end
 
+    it "should add a transaction evalution time to the report" do
+      @transaction.report.expects(:add_times).with(:transaction_evaluation, kind_of(Numeric))
+      @catalog.apply
+    end
+
     it "should return the transaction" do
       expect(@catalog.apply).to equal(@transaction)
     end

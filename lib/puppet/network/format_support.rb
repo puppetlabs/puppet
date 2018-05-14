@@ -97,7 +97,7 @@ module Puppet::Network::FormatSupport
   end
 
   def to_json(*args)
-    to_data_hash.to_json(*args)
+    Puppet::Util::Json.dump(to_data_hash, *args)
   end
 
   def render(format = nil)

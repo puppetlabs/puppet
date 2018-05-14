@@ -64,6 +64,10 @@ rando_key=foobar
       config.get_action(action).when_rendering(:console).call(result)
     end
 
+    before :each do
+      subject.stubs(:report_section_and_environment)
+    end
+
     # key must be a defined setting
     ['rando_key', MIXED_UTF8].each do |key|
       it "can change '#{key}' keyed ASCII value to a UTF-8 value and read it back" do

@@ -1,5 +1,5 @@
 require 'puppet/network/format_handler'
-require 'json'
+require 'puppet/util/json'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20, :mime => "application/x-msgpack", :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
 
@@ -101,19 +101,17 @@ end
 
 Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'application/json', :charset => Encoding::UTF_8, :weight => 15, :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
   def intern(klass, text)
-    data_to_instance(klass, JSON.parse(text))
+    data_to_instance(klass, Puppet::Util::Json.load(text))
   end
 
   def intern_multiple(klass, text)
-    JSON.parse(text).collect do |data|
+    Puppet::Util::Json.load(text).collect do |data|
       data_to_instance(klass, data)
     end
   end
 
-  # JSON monkey-patches Array, so this works.
-  # https://github.com/ruby/ruby/blob/ruby_1_9_3/ext/json/generator/generator.c#L1416
   def render_multiple(instances)
-    instances.to_json
+    Puppet::Util::Json.dump(instances)
   end
 
   # Unlike PSON, we do not need to unwrap the data envelope, because legacy 3.x agents
@@ -162,7 +160,7 @@ Puppet::Network::FormatHandler.create(:console,
     end
 
     # ...or pretty-print the inspect outcome.
-    JSON.pretty_generate(datum, :quirks_mode => true)
+    Puppet::Util::Json.dump(datum, :pretty => true, :quirks_mode => true)
   end
 
   def render_multiple(data)

@@ -16,7 +16,7 @@ module Puppet::ModuleTool
       # TODO: add error checking, the next line raises ArgumentError when +full_module_name+ is invalid
       @username, @name = Puppet::ModuleTool.username_and_modname_from(full_module_name)
       @version_requirement = version_requirement
-      @repository = repository ? Puppet::Forge::Repository.new(repository) : nil
+      @repository = repository ? Puppet::Forge::Repository.new(repository, nil) : nil
     end
 
     # We override Object's ==, eql, and hash so we can more easily find identical

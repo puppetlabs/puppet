@@ -189,8 +189,12 @@ class Puppet::Resource::Type
   def merge(other)
     fail _("%{name} is not a class; cannot add code to it") % { name: name } unless type == :hostclass
     fail _("%{name} is not a class; cannot add code from it") % { name: other.name } unless other.type == :hostclass
-    fail _("Cannot have code outside of a class/node/define because 'freeze_main' is enabled") if name == "" and Puppet.settings[:freeze_main]
-
+    if name == "" && Puppet.settings[:freeze_main]
+      # It is ok to merge definitions into main even if freeze is on (definitions are nodes, classes, defines, functions, and types)
+      unless other.code.is_definitions_only?
+        fail _("Cannot have code outside of a class/node/define because 'freeze_main' is enabled")
+      end
+    end
     if parent and other.parent and parent != other.parent
       fail _("Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})") % { name: name, parent: parent, other_name: other.name, other_parent: other.parent }
     end
@@ -258,7 +262,7 @@ class Puppet::Resource::Type
     end
 
     if ['Class', 'Node'].include? resource.type
-      scope.catalog.tag(*resource.tags)
+      scope.catalog.merge_tags_from(resource)
     end
   end
 

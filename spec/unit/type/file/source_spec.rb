@@ -186,6 +186,12 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
   end
 
   describe "when copying the source values" do
+
+    before do
+      Puppet::Type.type(:file).any_instance.stubs(:file).returns('my/file.pp')
+      Puppet::Type.type(:file).any_instance.stubs(:line).returns 5
+    end
+
     before :each do
       @resource = Puppet::Type.type(:file).new :path => @foobar
 
@@ -200,7 +206,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       @metadata.stubs(:mode).returns 0173
       @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
-        expect { @source.copy_source_values }.to raise_error("Should not have tried to use source owner/mode/group on Windows")
+        expect { @source.copy_source_values }.to raise_error("Should not have tried to use source owner/mode/group on Windows (file: my/file.pp, line: 5)")
       else
         expect { @source.copy_source_values }.not_to raise_error
       end
@@ -210,7 +216,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       @metadata.stubs(:mode).returns "173"
       @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
-        expect { @source.copy_source_values }.to raise_error("Should not have tried to use source owner/mode/group on Windows")
+        expect { @source.copy_source_values }.to raise_error("Should not have tried to use source owner/mode/group on Windows (file: my/file.pp, line: 5)")
       else
         expect { @source.copy_source_values }.not_to raise_error
       end

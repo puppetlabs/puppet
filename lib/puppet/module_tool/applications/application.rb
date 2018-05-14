@@ -1,5 +1,5 @@
 require 'net/http'
-require 'json'
+require 'puppet/util/json'
 require 'puppet/util/colors'
 
 module Puppet::ModuleTool
@@ -26,7 +26,7 @@ module Puppet::ModuleTool
         when Net::HTTPOK, Net::HTTPCreated
           Puppet.notice success
         else
-          errors = JSON.parse(response.body)['error'] rescue "HTTP #{response.code}, #{response.body}"
+          errors = Puppet::Util::Json.load(response.body)['error'] rescue "HTTP #{response.code}, #{response.body}"
           Puppet.warning "#{failure} (#{errors})"
         end
       end
@@ -48,8 +48,8 @@ module Puppet::ModuleTool
         if File.file?(metadata_path)
           File.open(metadata_path) do |f|
             begin
-              @metadata.update(JSON.load(f))
-            rescue JSON::ParserError => ex
+              @metadata.update(Puppet::Util::Json.load(f))
+            rescue Puppet::Util::Json::ParserError => ex
               raise ArgumentError, _("Could not parse JSON %{metadata_path}") % { metadata_path: metadata_path }, ex.backtrace
             end
           end

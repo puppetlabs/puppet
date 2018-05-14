@@ -23,6 +23,12 @@ describe Puppet::Node::Facts::Yaml do
     expect(Puppet::Node::Facts::Yaml.name).to eq(:yaml)
   end
 
+  it "should allow network requests" do
+    # Doesn't allow yaml as a network format, but allows `puppet facts upload`
+    # to update the YAML cache on a master.
+    expect(Puppet::Node::Facts::Yaml.new.allow_remote_requests?).to be(true)
+  end
+
   describe "#search" do
     def assert_search_matches(matching, nonmatching, query)
       request = Puppet::Indirector::Request.new(:inventory, :search, nil, nil, query)

@@ -39,7 +39,7 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newparam(:target) do
-    desc "The filename to write the yum repository to."
+    desc "The target parameter will be enabled in a future release and should not be used."
 
     defaultto :absent
   end
@@ -261,17 +261,12 @@ Puppet::Type.newtype(:yumrepo) do
   end
 
   newproperty(:priority) do
-    desc "Priority of this repository from 1-99. Requires that
-      the `priorities` plugin is installed and enabled.
+    desc "Priority of this repository. Can be any integer value
+      (including negative). Requires that the `priorities` plugin
+      is installed and enabled.
       #{ABSENT_DOC}"
 
-    newvalues(/.*/, :absent)
-    validate do |value|
-      next if value.to_s == 'absent'
-      unless (1..99).include?(value.to_i)
-        fail(_("Must be within range 1-99"))
-      end
-    end
+    newvalues(/^-?\d+$/, :absent)
   end
 
   newproperty(:throttle) do
@@ -416,5 +411,24 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(/^\d+$/, :absent)
+  end
+
+  newproperty(:username) do
+    desc "Username to use for basic authentication to a repo or really any url.
+      #{ABSENT_DOC}"
+    newvalues(/.*/, :absent)
+  end
+
+  newproperty(:password) do
+    desc "Password to use with the username for basic authentication.
+      #{ABSENT_DOC}"
+    newvalues(/.*/, :absent)
+  end
+
+  private
+
+  def set_sensitive_parameters(sensitive_parameters)
+    parameter(:password).sensitive = true if parameter(:password)
+    super(sensitive_parameters)
   end
 end

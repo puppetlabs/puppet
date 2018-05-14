@@ -36,13 +36,9 @@ Puppet::Functions.create_function(:break) do
   end
 
   def break_impl()
-    stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-    if stacktrace.size > 0
-      file, line = stacktrace[0]
-    else
-      file = nil
-      line = nil
-    end
+    # get file, line if available, else they are set to nil
+    file, line = Puppet::Pops::PuppetStack.top_of_stack
+
     # PuppetStopIteration contains file and line and is a StopIteration exception
     # so it can break a Ruby Kernel#loop or enumeration
     #

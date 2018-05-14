@@ -56,6 +56,46 @@ trace = true
     expect(render(:print, result)).to eq("file\n")
   end
 
+  it "prints the section and environment, and not a warning, when a section is given and verbose is set" do
+    Puppet.settings.parse_config(<<-CONF)
+    [user]
+    syslogfacility = file
+    CONF
+
+    #This has to be after the settings above, which resets the value
+    Puppet[:log_level] = 'info'
+
+    Puppet.expects(:warning).never
+    expect {
+      result = subject.print("syslogfacility", :section => "user")
+      expect(render(:print, result)).to eq("file\n")
+    }.to output("\e[1;33mResolving settings from section 'user' in environment 'production'\e[0m\n").to_stderr
+  end
+
+  it "prints a warning and the section and environment when no section is given and verbose is set" do
+    Puppet[:log_level] = 'info'
+    Puppet[:trace] = true
+
+    Puppet.expects(:warning).with("No section specified; defaulting to 'main'.\nSet the config section " +
+      "by using the `--section` flag.\nFor example, `puppet config --section user print foo`.\nFor more " +
+      "information, see https://puppet.com/docs/puppet/latest/configuration.html")
+    expect {
+      result = subject.print("trace")
+      expect(render(:print, result)).to eq("true\n")
+    }.to output("\e[1;33mResolving settings from section 'main' in environment 'production'\e[0m\n").to_stderr
+  end
+
+  it "does not print a warning or the section and environment when no section is given and verbose is not set" do
+    Puppet[:log_level] = 'notice'
+    Puppet[:trace] = true
+
+    Puppet.expects(:warning).never
+    expect {
+      result = subject.print("trace")
+      expect(render(:print, result)).to eq("true\n")
+    }.to_not output.to_stderr
+  end
+
   it "defaults to all when no arguments are given" do
     result = subject.print
     expect(render(:print, result).lines.to_a.length).to eq(Puppet.settings.to_a.length)
@@ -96,6 +136,22 @@ trace = true
       Puppet::FileSystem.stubs(:touch)
     end
 
+    it "prints the section and environment when no section is given and verbose is set" do
+      Puppet[:log_level] = 'info'
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      expect {
+        subject.set('foo', 'bar')
+      }.to output("\e[1;33mResolving settings from section 'main' in environment 'production'\e[0m\n").to_stderr
+    end
+
+    it "prints the section and environment when a section is given and verbose is set" do
+      Puppet[:log_level] = 'info'
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      expect {
+        subject.set('foo', 'bar', {:section => "baz"})
+      }.to output("\e[1;33mResolving settings from section 'baz' in environment 'production'\e[0m\n").to_stderr
+    end
+
     it "writes to the correct puppet config file" do
       Puppet::FileSystem.expects(:open).with(path, anything, anything)
       subject.set('foo', 'bar')
@@ -125,6 +181,21 @@ trace = true
 
       manipulator.expects(:set).with("baz", "foo", "bar")
       subject.set('foo', 'bar', {:section => "baz"})
+    end
+
+    it "does not duplicate an existing default section when a section is not specified" do
+      contents = <<-CONF
+      [main]
+      myport = 4444
+      CONF
+
+      myfile = StringIO.new(contents)
+      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(myfile)
+
+      subject.set('foo', 'bar')
+
+      expect(myfile.string).to match(/foo = bar/)
+      expect(myfile.string).not_to match(/main.*main/)
     end
 
     it "opens the file with UTF-8 encoding" do

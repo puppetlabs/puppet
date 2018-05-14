@@ -1,4 +1,4 @@
-require 'json'
+require 'puppet/util/json'
 require 'puppet/parser/environment_compiler'
 
 class Puppet::Network::HTTP::API::Master::V3::Environment
@@ -15,7 +15,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
 
     env_graph = build_environment_graph(catalog)
 
-    response.respond_with(200, "application/json", JSON.dump(env_graph))
+    response.respond_with(200, "application/json", Puppet::Util::Json.dump(env_graph))
   end
 
   def build_environment_graph(catalog)

@@ -77,16 +77,37 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
           end
         end
 
-        context "with selinux" do
-          subject { resource(:content => "daniel@EXAMPLE.COM\n",).retrieve }
-          it "should return correct values based on SELinux state" do
-            Puppet::Type::K5login::ProviderK5login.any_instance.stubs(:selinux_support?).returns true
-            Puppet::Type::K5login::ProviderK5login.any_instance.stubs(:get_selinux_current_context).returns "user_u:role_r:type_t:s0"
+        [:seluser, :selrole, :seltype, :selrange].each do |param|
+          property = described_class.attrclass(param)
+          context param.to_s do
+            let(:sel_param) { property.new :resource => resource }
 
-            expect(subject[:seluser]).to eq("user_u")
-            expect(subject[:selrole]).to eq("role_r")
-            expect(subject[:seltype]).to eq("type_t")
-            expect(subject[:selrange]).to eq("s0")
+            context "with selinux" do
+              it "should return correct values based on SELinux state" do
+                sel_param.stubs(:debug)
+                expectedresult = case param
+                  when :seluser; "user_u"
+                  when :selrole; "object_r"
+                  when :seltype; "krb5_home_t"
+                  when :selrange; "s0"
+                end
+                expect(sel_param.default).to eq(expectedresult)
+              end
+            end
+
+            context 'without selinux' do
+              it 'should not try to determine the initial state' do
+                Puppet::Type::K5login::ProviderK5login.any_instance.stubs(:selinux_support?).returns false
+
+                expect(subject[:selrole]).to be_nil
+              end
+
+              it "should do nothing for safe_insync? if no SELinux support" do
+                sel_param.should = 'newcontext'
+                sel_param.expects(:selinux_support?).returns false
+                expect(sel_param.safe_insync?('oldcontext')).to eq(true)
+              end
+            end
           end
         end
 
@@ -129,6 +150,54 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
 
             expect((Puppet::FileSystem.stat(path).mode & 07777).to_s(8)).to eq(mode)
           end
+        end
+      end
+
+      context "#stat" do
+        let(:file) { described_class.new(:path => path) }
+
+        it "should return nil if the file does not exist" do
+          file[:path] = make_absolute('/foo/bar/baz/non-existent')
+
+          expect(file.stat).to be_nil
+        end
+
+        it "should return nil if the file cannot be stat'ed" do
+          dir = tmpfile('link_test_dir')
+          child = File.join(dir, 'some_file')
+
+          # Note: we aren't creating the file for this test. If the user is
+          # running these tests as root, they will be able to access the
+          # directory. In that case, this test will still succeed, not because
+          # we cannot stat the file, but because the file does not exist.
+          Dir.mkdir(dir)
+          begin
+            File.chmod(0, dir)
+
+            file[:path] = child
+
+            expect(file.stat).to be_nil
+          ensure
+            # chmod it back so we can clean it up
+            File.chmod(0777, dir)
+          end
+        end
+
+        it "should return nil if parts of path are not directories" do
+          regular_file = tmpfile('ENOTDIR_test')
+          FileUtils.touch(regular_file)
+          impossible_child = File.join(regular_file, 'some_file')
+
+          file[:path] = impossible_child
+          expect(file.stat).to be_nil
+        end
+
+        it "should return the stat instance" do
+          expect(file.stat).to be_a(File::Stat)
+        end
+
+        it "should cache the stat instance" do
+          expect(file.stat.object_id).to eql(file.stat.object_id)
         end
       end
     end

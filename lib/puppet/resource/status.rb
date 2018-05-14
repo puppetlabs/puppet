@@ -167,7 +167,7 @@ module Puppet
         @file = resource.file
         @line = resource.line
 
-        tag(*resource.tags)
+        merge_tags_from(resource)
         @time = Time.now
         @events = []
         @resource_type = resource.type.to_s.capitalize

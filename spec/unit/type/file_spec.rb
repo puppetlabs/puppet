@@ -1097,7 +1097,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should cache the stat instance" do
-      expect(file.stat).to equal(file.stat)
+      expect(file.stat.object_id).to eql(file.stat.object_id)
     end
   end
 
