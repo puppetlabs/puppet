@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-166-g40750dd\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-181-g9354688\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-05-10 22:33+0000\n"
-"PO-Revision-Date: 2018-05-10 22:33+0000\n"
+"POT-Creation-Date: 2018-05-15 15:48+0000\n"
+"PO-Revision-Date: 2018-05-15 15:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -5235,403 +5235,407 @@ msgid "Unacceptable name. The name '%{name}' is unacceptable as the name of %{va
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:490
-msgid "Parameter $%{param} is not last, and has 'captures rest'"
+msgid "Unacceptable location. The name '%{name}' is unacceptable in file '%{file}'"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:494
-msgid "Parameter $%{param} has 'captures rest' - not supported in %{container}"
+msgid "Parameter $%{param} is not last, and has 'captures rest'"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:498
-msgid "Parameter $%{param} is required but appears after optional parameters"
+msgid "Parameter $%{param} has 'captures rest' - not supported in %{container}"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:502
-msgid "Parameter $%{param} is required but no value was given"
+msgid "Parameter $%{param} is required but appears after optional parameters"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:506
-msgid "The value '%{value}' cannot be converted to Numeric."
+msgid "Parameter $%{param} is required but no value was given"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:510
-msgid "The string '%{before}' was automatically coerced to the numerical value %{after}"
+msgid "The value '%{value}' cannot be converted to Numeric."
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:514
-msgid "Unknown function: '%{name}'."
+msgid "The string '%{before}' was automatically coerced to the numerical value %{after}"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:518
-msgid "Unknown variable: '%{name}'."
+msgid "Unknown function: '%{name}'."
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:522
-msgid "Error while evaluating %{expression}, %{detail}"
+msgid "Unknown variable: '%{name}'."
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:526
-msgid "Resource type not found: %{res_type}"
+msgid "Error while evaluating %{expression}, %{detail}"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:530
-msgid "Illegal Resource Type expression, expected result to be a type name, or untitled Resource, got %{actual}"
+msgid "Resource type not found: %{res_type}"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:534
-msgid "The title '%{title}' has already been used in this resource expression"
+msgid "Illegal Resource Type expression, expected result to be a type name, or untitled Resource, got %{actual}"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:538
-msgid "The attribute '%{attribute}' has already been set"
+msgid "The title '%{title}' has already been used in this resource expression"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:542
-msgid "Missing title. The title expression resulted in undef"
+msgid "The attribute '%{attribute}' has already been set"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:546
-msgid "Missing title at index %{index}. The title expression resulted in an undef title"
+msgid "Missing title. The title expression resulted in undef"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:550
-msgid "Illegal title type at index %{index}. Expected String, got %{actual}"
+msgid "Missing title at index %{index}. The title expression resulted in an undef title"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:554
-msgid "Empty string title at %{index}. Title strings must have a length greater than zero."
+msgid "Illegal title type at index %{index}. Expected String, got %{actual}"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:558
-msgid "Resource not found: %{type_name}['%{title}']"
+msgid "Empty string title at %{index}. Title strings must have a length greater than zero."
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:562
-msgid "The resource %{type_name}['%{title}'] does not have a parameter called '%{param}'"
+msgid "Resource not found: %{type_name}['%{title}']"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:566
-msgid "Division by 0"
+msgid "The resource %{type_name}['%{title}'] does not have a parameter called '%{param}'"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:570
+msgid "Division by 0"
+msgstr ""
+
+#: ../lib/puppet/pops/issues.rb:574
 msgid "The result of the %{operator} expression is Infinity"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:575
+#: ../lib/puppet/pops/issues.rb:579
 msgid "Heredoc syntax specification has empty segment between '+' : '%{syntax}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:579
+#: ../lib/puppet/pops/issues.rb:583
 msgid "Ambiguous EPP parameter expression. Probably missing '<%-' before parameters to remove leading whitespace"
 msgstr ""
 
 #. TRANSLATORS "import" is a function name and should not be translated
-#: ../lib/puppet/pops/issues.rb:584
+#: ../lib/puppet/pops/issues.rb:588
 msgid "Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppet.com/puppet-import-deprecation"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:588
+#: ../lib/puppet/pops/issues.rb:592
 msgid "This %{expression} has no effect. A value was produced and then forgotten (one or more preceding expressions may have the wrong form)"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:592
+#: ../lib/puppet/pops/issues.rb:596
 msgid "This expression is invalid. Did you try declaring a '%{name}' resource without a title?"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:596
+#: ../lib/puppet/pops/issues.rb:600
 msgid "This %{expression} has no effect. %{container} can not end with a value-producing expression without other effect"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:600
+#: ../lib/puppet/pops/issues.rb:604
 msgid "Use of reserved word: %{word}, must be quoted if intended to be a String value"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:604
+#: ../lib/puppet/pops/issues.rb:608
 msgid "Use of future reserved word: '%{word}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:608
+#: ../lib/puppet/pops/issues.rb:612
 msgid "The name: '%{name}' is already defined by Puppet and can not be used as the name of %{expression}."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:612
+#: ../lib/puppet/pops/issues.rb:616
 msgid "No matching entry for selector parameter with value '%{param}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:616
+#: ../lib/puppet/pops/issues.rb:620
 msgid "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppet.com/puppet-node-inheritance-deprecation"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:620
+#: ../lib/puppet/pops/issues.rb:624
 msgid "Resource Override can only operate on resources, got: %{actual}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:624
+#: ../lib/puppet/pops/issues.rb:628
 msgid "The parameter '%{param}' is declared more than once in the parameter list"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:628
+#: ../lib/puppet/pops/issues.rb:632
 msgid "The key '%{key}' is declared more than once"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:632
+#: ../lib/puppet/pops/issues.rb:636
 msgid "This %{container} already has a 'default' entry - this is a duplicate"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:636
+#: ../lib/puppet/pops/issues.rb:640
 msgid "The parameter $%{param} redefines a built in parameter in %{container}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:640
+#: ../lib/puppet/pops/issues.rb:644
 msgid "Expected value of type %{expected}, got %{actual}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:644
+#: ../lib/puppet/pops/issues.rb:648
 msgid "Unfolding of attributes from Hash can only be used once per resource body"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:648
+#: ../lib/puppet/pops/issues.rb:652
 msgid "This %{expression} appears in a context where catalog related expressions are not allowed"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:652
+#: ../lib/puppet/pops/issues.rb:656
 msgid "Syntax error at %{location}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:656
+#: ../lib/puppet/pops/issues.rb:660
 msgid "Illegal class reference"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:660
+#: ../lib/puppet/pops/issues.rb:664
 msgid "Illegal fully qualified class reference"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:664
+#: ../lib/puppet/pops/issues.rb:668
 msgid "Illegal fully qualified name"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:668
+#: ../lib/puppet/pops/issues.rb:672
 msgid "Illegal name or bare word"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:672
+#: ../lib/puppet/pops/issues.rb:676
 msgid "Illegal number '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:676
+#: ../lib/puppet/pops/issues.rb:680
 msgid "Unicode escape '\\u' was not followed by 4 hex digits or 1-6 hex digits in {} or was > 10ffff"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:680
+#: ../lib/puppet/pops/issues.rb:684
 msgid "Not a valid hex number %{value}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:684
+#: ../lib/puppet/pops/issues.rb:688
 msgid "Not a valid octal number %{value}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:688
+#: ../lib/puppet/pops/issues.rb:692
 msgid "Not a valid decimal number %{value}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:692
+#: ../lib/puppet/pops/issues.rb:696
 msgid "Internal Error: No string or file given to lexer to process."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:696
+#: ../lib/puppet/pops/issues.rb:700
 msgid "Unrecognized escape sequence '\\%{ch}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:700
+#: ../lib/puppet/pops/issues.rb:704
 msgid "Unclosed quote after %{after} followed by '%{followed_by}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:704
+#: ../lib/puppet/pops/issues.rb:708
 msgid "Unclosed multiline comment"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:708
+#: ../lib/puppet/pops/issues.rb:712
 msgid "Internal error: %{error}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:712
+#: ../lib/puppet/pops/issues.rb:716
 msgid "Unbalanced epp tag, reached <eof> without closing tag."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:716
+#: ../lib/puppet/pops/issues.rb:720
 msgid "Reaching end after opening <%# without seeing %>"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:720
+#: ../lib/puppet/pops/issues.rb:724
 msgid "Unbalanced embedded expression - opening <% and reaching end of input"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:724
+#: ../lib/puppet/pops/issues.rb:728
 msgid "Unclosed parenthesis after '@(' followed by '%{followed_by}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:728
+#: ../lib/puppet/pops/issues.rb:732
 msgid "Heredoc without end-tagged line"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:732
+#: ../lib/puppet/pops/issues.rb:736
 msgid "Invalid heredoc escape char. Only t, r, n, s,  u, L, $ allowed. Got '%{actual}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:736
+#: ../lib/puppet/pops/issues.rb:740
 msgid "Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:740
+#: ../lib/puppet/pops/issues.rb:744
 msgid "Heredoc without any following lines of text"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:744
+#: ../lib/puppet/pops/issues.rb:748
 msgid "Heredoc with an empty endtag"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:748
+#: ../lib/puppet/pops/issues.rb:752
 msgid "An escape char for @() may only appear once. Got '%{escapes}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:752
+#: ../lib/puppet/pops/issues.rb:756
 msgid "Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:756
+#: ../lib/puppet/pops/issues.rb:760
 msgid "No such file or directory: %{file}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:760
+#: ../lib/puppet/pops/issues.rb:764
 msgid "%{file} is not a file"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:765
+#: ../lib/puppet/pops/issues.rb:769
 msgid "%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:767
+#: ../lib/puppet/pops/issues.rb:771
 msgid "%{expression} resulted in a value outside of Puppet Integer min range, got '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:772
+#: ../lib/puppet/pops/issues.rb:776
 msgid "This runtime does not support hiera.yaml version %{version}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:776
+#: ../lib/puppet/pops/issues.rb:780
 msgid "hiera.yaml version 3 cannot be used in %{location}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:780
+#: ../lib/puppet/pops/issues.rb:784
 msgid "hiera.yaml version 4 cannot be used in the global layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:784
+#: ../lib/puppet/pops/issues.rb:788
 msgid "Undefined variable '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:788
+#: ../lib/puppet/pops/issues.rb:792
 msgid "Backend '%{name}' is defined more than once."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:791 ../lib/puppet/pops/issues.rb:804
+#: ../lib/puppet/pops/issues.rb:795 ../lib/puppet/pops/issues.rb:808
 msgid "First defined at %{error_location}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:797
+#: ../lib/puppet/pops/issues.rb:801
 msgid "No data provider is registered for backend '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:801
+#: ../lib/puppet/pops/issues.rb:805
 msgid "Hierarchy name '%{name}' defined more than once."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:810
+#: ../lib/puppet/pops/issues.rb:814
 msgid "'hiera3_backend' is only allowed in the global layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:814
+#: ../lib/puppet/pops/issues.rb:818
 msgid "'default_hierarchy' is only allowed in the module layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:818
+#: ../lib/puppet/pops/issues.rb:822
 msgid "Use \"data_hash: %{function_name}_data\" instead of \"hiera3_backend: %{function_name}\""
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:822
+#: ../lib/puppet/pops/issues.rb:826
 msgid "One of %{keys} must be defined in hierarchy '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:826 ../lib/puppet/pops/issues.rb:834
+#: ../lib/puppet/pops/issues.rb:830 ../lib/puppet/pops/issues.rb:838
 msgid "Only one of %{keys} can be defined in hierarchy '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:830
+#: ../lib/puppet/pops/issues.rb:834
 msgid "Only one of %{keys} can be defined in defaults"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:838
+#: ../lib/puppet/pops/issues.rb:842
 msgid "Option key '%{key}' used in hierarchy '%{name}' is reserved by Puppet"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:842
+#: ../lib/puppet/pops/issues.rb:846
 msgid "Option key '%{key}' used in defaults is reserved by Puppet"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:846
+#: ../lib/puppet/pops/issues.rb:850
 msgid "Unable to find '%{function_type}' function named '%{function_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:850
+#: ../lib/puppet/pops/issues.rb:854
 msgid "'alias' interpolation is only permitted if the expression is equal to the entire string"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:854
+#: ../lib/puppet/pops/issues.rb:858
 msgid "Unknown interpolation method '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:858
+#: ../lib/puppet/pops/issues.rb:862
 msgid "Interpolation using method syntax is not allowed in this context"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:862
+#: ../lib/puppet/pops/issues.rb:866
 msgid "Endless recursion detected when attempting to serialize value of class %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:866
+#: ../lib/puppet/pops/issues.rb:870
 msgid "%{path} contains the special value default. It will be converted to the String 'default'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:870
+#: ../lib/puppet/pops/issues.rb:874
 msgid "%{path} contains %{klass} value. It will be converted to the String '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:874
+#: ../lib/puppet/pops/issues.rb:878
 msgid "%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:878
+#: ../lib/puppet/pops/issues.rb:882
 msgid "The feature '%{feature}' is only available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:882
+#: ../lib/puppet/pops/issues.rb:886
 msgid "The catalog operation '%{operation}' is only available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:886
+#: ../lib/puppet/pops/issues.rb:890
 msgid "The task operation '%{operation}' is not available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:890
+#: ../lib/puppet/pops/issues.rb:894
 msgid "The 'bolt' library is required to %{action}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:894
+#: ../lib/puppet/pops/issues.rb:898
 msgid "Task not found: %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:898
+#: ../lib/puppet/pops/issues.rb:902
 msgid "Failed to load: %{type_name}"
 msgstr ""
 
