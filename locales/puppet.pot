@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-181-g9354688\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-185-g4ee06b2\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-05-15 15:48+0000\n"
-"PO-Revision-Date: 2018-05-15 15:48+0000\n"
+"POT-Creation-Date: 2018-05-15 23:33+0000\n"
+"PO-Revision-Date: 2018-05-15 23:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2941,7 +2941,7 @@ msgstr ""
 msgid "Error %{code} on SERVER: %{returned_message}"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:323 ../lib/puppet/rest/response.rb:31
+#: ../lib/puppet/indirector/rest.rb:323 ../lib/puppet/rest/response.rb:35
 msgid "No content type in http response; cannot parse"
 msgstr ""
 
@@ -4012,7 +4012,7 @@ msgstr ""
 msgid "Application %{app} assigns multiple nodes to component %{comp}"
 msgstr ""
 
-#: ../lib/puppet/network/http/compression.rb:30 ../lib/puppet/network/http/compression.rb:43 ../lib/puppet/rest/response.rb:48
+#: ../lib/puppet/network/http/compression.rb:30 ../lib/puppet/network/http/compression.rb:43 ../lib/puppet/rest/response.rb:52
 msgid "Unknown content encoding - %{encoding}"
 msgstr ""
 
@@ -7980,19 +7980,19 @@ msgstr ""
 msgid "Revoked certificate with serial %{serial}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:107
+#: ../lib/puppet/ssl/host.rb:108
 msgid "CA Mode can only be one of: %{modes}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:210
+#: ../lib/puppet/ssl/host.rb:222
 msgid "No certificate to validate."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:211
+#: ../lib/puppet/ssl/host.rb:223
 msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:213
+#: ../lib/puppet/ssl/host.rb:225
 msgid ""
 "The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?\n"
 "Certificate fingerprint: %{fingerprint}\n"
@@ -8005,7 +8005,7 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:238
+#: ../lib/puppet/ssl/host.rb:250
 msgid ""
 "The CSR retrieved from the master does not match the agent's public key.\n"
 "CSR fingerprint: %{fingerprint}\n"
@@ -8020,34 +8020,58 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:344 ../lib/puppet/ssl/host.rb:365
+#: ../lib/puppet/ssl/host.rb:356 ../lib/puppet/ssl/host.rb:377
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:346
+#: ../lib/puppet/ssl/host.rb:358
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:355
+#: ../lib/puppet/ssl/host.rb:367
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:363
+#: ../lib/puppet/ssl/host.rb:375
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:395
+#: ../lib/puppet/ssl/host.rb:407
 msgid "Disabling certificate revocation checking when fetching the CRL and no CRL is present"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:398
+#: ../lib/puppet/ssl/host.rb:410
 msgid "Certificate revocation checking is enabled but a CRL cannot be found; CRL checking will not be performed."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:416
+#: ../lib/puppet/ssl/host.rb:428
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:451
+msgid "The CA certificate at %{file_path} is invalid: %{message}"
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:474
+msgid "No valid PEM-encoded certificates."
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:481
+msgid "Could not parse certificate: %{message}"
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:501
+msgid "Response from the CA did not contain a valid CA certificate: %{message}"
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:557
+msgid "The certificate at %{file_path} is invalid. Could not load."
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:577
+msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
 #: ../lib/puppet/ssl/inventory.rb:32
