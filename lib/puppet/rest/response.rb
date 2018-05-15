@@ -22,6 +22,10 @@ module Puppet::Rest
       @message.status
     end
 
+    def ok?
+      @message.ok?
+    end
+
     # Process and return the body of the response
     # @return [String] the decompressed body of the response
     def read_body

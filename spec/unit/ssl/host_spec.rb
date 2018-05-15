@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'puppet/ssl/host'
 require 'matchers/json'
 require 'puppet_spec/ssl'
+require 'puppet/rest/routes'
 
 def base_json_comparison(result, json_hash)
   expect(result["fingerprint"]).to eq(json_hash["fingerprint"])
@@ -504,59 +505,129 @@ describe Puppet::SSL::Host do
   end
 
   describe "when managing its certificate" do
-    before do
-      @realcert = mock 'certificate'
-      @cert = stub 'cert', :content => @realcert
-      @host.stubs(:key).returns mock("key")
-      @host.stubs(:validate_certificate_with_key)
+    before(:all) do
+      @pki = PuppetSpec::SSL.create_chained_pki
     end
 
+    before(:each) do
+      Puppet::SSL::Host.ca_location = :remote
+      Puppet[:certdir] = tmpdir('certs')
+      @host.stubs(:key).returns mock("key")
+      @host.stubs(:validate_certificate_with_key)
+      @http = mock 'http'
+      @host.stubs(:http_client).returns(@http)
+    end
+
+    let(:ca_cert_response) { stub_everything('response', :read_body => @pki[:ca_bundle],
+                                                         :ok? => true) }
+    let(:missing_cert_response) { stub_everything('missing', :ok? => false) }
+    let(:found_host_cert_response) { stub_everything('missing', :read_body => @pki[:unrevoked_leaf_node_cert],
+                                                                :ok? => true) }
+
     it "should find the CA certificate if it does not have a certificate" do
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).returns mock("cacert")
-      Puppet::SSL::Certificate.indirection.stubs(:find).with("myname").returns @cert
+      Puppet::Rest::Routes.expects(:get_certificate)
+                          .with(@http, Puppet::SSL::CA_NAME)
+                          .returns(ca_cert_response)
+      Puppet::Rest::Routes.expects(:get_certificate)
+                          .with(@http, @host.name)
+                          .returns(missing_cert_response)
       @host.certificate
+      actual_ca_bundle = Puppet::FileSystem.read(Puppet[:localcacert])
+      expect(actual_ca_bundle).to match(/BEGIN CERTIFICATE.*END CERTIFICATE.*BEGIN CERTIFICATE/m)
     end
 
     it "should not find the CA certificate if it is the CA host" do
+      Puppet::Rest::Routes.expects(:get_certificate)
+                          .with(@http, @host.name)
+                          .returns(missing_cert_response)
       @host.expects(:ca?).returns true
-      Puppet::SSL::Certificate.indirection.stubs(:find)
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).never
+      @host.expects(:ensure_ca_certificate).never
 
       @host.certificate
     end
 
     it "should return nil if it cannot find a CA certificate" do
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).returns nil
-      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").never
+      @host.expects(:ensure_ca_certificate).returns(false)
+      @host.expects(:get_host_certificate).never
 
       expect(@host.certificate).to be_nil
     end
 
     it "should find the key if it does not have one" do
-      Puppet::SSL::Certificate.indirection.stubs(:find)
+      @host.expects(:ensure_ca_certificate).returns(true)
+      @host.expects(:get_host_certificate).returns(nil)
       @host.expects(:key).returns mock("key")
       @host.certificate
     end
 
     it "should generate the key if one cannot be found" do
-      Puppet::SSL::Certificate.indirection.stubs(:find)
+      @host.expects(:ensure_ca_certificate).returns(true)
+      @host.expects(:get_host_certificate).returns(nil)
       @host.expects(:key).returns nil
       @host.expects(:generate_key)
       @host.certificate
     end
 
-    it "should find the certificate in the Certificate class and return the Puppet certificate instance" do
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).returns mock("cacert")
-      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").returns @cert
-      expect(@host.certificate).to equal(@cert)
+    it "should find the host certificate, write it to file, and return the Puppet certificate instance" do
+      Puppet::Rest::Routes.expects(:get_certificate)
+                          .with(@http, Puppet::SSL::CA_NAME)
+                          .returns(ca_cert_response)
+      Puppet::Rest::Routes.expects(:get_certificate)
+                          .with(@http, @host.name)
+                          .returns(found_host_cert_response)
+      expected_cert = Puppet::SSL::Certificate.from_s(@pki[:unrevoked_leaf_node_cert])
+      actual_cert = @host.certificate
+      expect(actual_cert).to be_a(Puppet::SSL::Certificate)
+      expect(actual_cert.to_s).to eq(expected_cert.to_s)
+      host_cert_from_file = Puppet::FileSystem.read(File.join(Puppet[:certdir], "#{@host.name}.pem"))
+      expect(host_cert_from_file).to eq(expected_cert.to_s)
     end
 
     it "should return any previously found certificate" do
-      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME, :fail_on_404 => true).returns mock("cacert")
-      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").returns(@cert).once
+      cert = mock 'cert'
+      @host.expects(:ensure_ca_certificate).returns(true).once
+      @host.expects(:get_host_certificate).returns(cert).once
 
-      expect(@host.certificate).to equal(@cert)
-      expect(@host.certificate).to equal(@cert)
+      expect(@host.certificate).to equal(cert)
+      expect(@host.certificate).to equal(cert)
+    end
+
+    context 'invalid certificates' do
+      it "should raise if the CA certificate downloaded from CA is invalid" do
+        garbage = mock('garbage response', :ok? => true, :read_body => 'garbage')
+        Puppet::Rest::Routes.expects(:get_certificate)
+                            .with(@http, Puppet::SSL::CA_NAME)
+                            .returns(garbage)
+        expect { @host.certificate }.to raise_error(Puppet::Error, /did not contain a valid CA certificate/)
+      end
+
+      it "should warn if the host certificate downloaded from CA is invalid" do
+        garbage = mock('garbage response', :ok? => true, :read_body => 'garbage')
+        Puppet::Rest::Routes.expects(:get_certificate)
+                            .with(@http, Puppet::SSL::CA_NAME)
+                            .returns(ca_cert_response)
+        Puppet::Rest::Routes.expects(:get_certificate)
+                            .with(@http, @host.name)
+                            .returns(garbage)
+        expect { @host.certificate }.to raise_error(Puppet::Error, /did not contain a valid certificate for #{@host.name}/)
+      end
+
+      it 'should warn if the CA certificate loaded from disk is invalid' do
+        Puppet::FileSystem.open(Puppet[:localcacert], nil, "w:ASCII") do |f|
+          f.puts 'garbage'
+        end
+        expect { @host.certificate }.to raise_error(Puppet::Error, /The CA certificate.*invalid/)
+      end
+
+      it 'should warn if the host certificate loaded from disk in invalid' do
+        Puppet::Rest::Routes.expects(:get_certificate)
+                            .with(@http, Puppet::SSL::CA_NAME)
+                            .returns(ca_cert_response)
+        Puppet::FileSystem.open(File.join(Puppet[:certdir], "#{@host.name}.pem"), nil, "w:ASCII") do |f|
+          f.puts 'garbage'
+        end
+        expect { @host.certificate }.to raise_error(Puppet::Error, /The certificate.*invalid/)
+      end
     end
   end
 
