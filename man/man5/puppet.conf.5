@@ -102,7 +102,7 @@ If a custom policy executable is configured, the CA puppet master will run it ev
 If a certificate request is not autosigned, it will persist for review\. An admin user can use the \fBpuppet cert sign\fR command to manually sign it, or can delete the request\.
 .
 .P
-For info on autosign configuration files, see the guide to Puppet\'s config files \fIhttps://docs\.puppetlabs\.com/puppet/latest/reference/config_about_settings\.html\fR\.
+For info on autosign configuration files, see the guide to Puppet\'s config files \fIhttps://puppet\.com/docs/puppet/latest/config_about_settings\.html\fR\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $confdir/autosign\.conf
@@ -113,7 +113,7 @@ For info on autosign configuration files, see the guide to Puppet\'s config file
 The search path for \fBglobal\fR modules\. Should be specified as a list of directories separated by the system path separator character\. (The POSIX path separator is \':\', and the Windows path separator is \';\'\.)
 .
 .P
-These are the modules that will be used by \fIall\fR environments\. Note that the \fBmodules\fR directory of the active environment will have priority over any global directories\. For more info, see \fIhttps://docs\.puppet\.com/puppet/latest/reference/environments\.html\fR
+These are the modules that will be used by \fIall\fR environments\. Note that the \fBmodules\fR directory of the active environment will have priority over any global directories\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .IP "\(bu" 4
 \fIDefault\fR: $codedir/modules:/opt/puppetlabs/puppet/modules
@@ -294,10 +294,10 @@ When certificate_revocation is set to \'false\', Puppet will disable all certifi
 The name to use when handling certificates\. When a node requests a certificate from the CA puppet master, it uses the value of the \fBcertname\fR setting as its requested Subject CN\.
 .
 .P
-This is the name used when managing a node\'s permissions in auth\.conf \fIhttps://docs\.puppetlabs\.com/puppet/latest/reference/config_file_auth\.html\fR\. In most cases, it is also used as the node\'s name when matching node definitions \fIhttps://docs\.puppetlabs\.com/puppet/latest/reference/lang_node_definitions\.html\fR and requesting data from an ENC\. (This can be changed with the \fBnode_name_value\fR and \fBnode_name_fact\fR settings, although you should only do so if you have a compelling reason\.)
+This is the name used when managing a node\'s permissions in auth\.conf \fIhttps://puppet\.com/docs/puppet/latest/config_file_auth\.html\fR\. In most cases, it is also used as the node\'s name when matching node definitions \fIhttps://puppet\.com/docs/puppet/latest/lang_node_definitions\.html\fR and requesting data from an ENC\. (This can be changed with the \fBnode_name_value\fR and \fBnode_name_fact\fR settings, although you should only do so if you have a compelling reason\.)
 .
 .P
-A node\'s certname is available in Puppet manifests as \fB$trusted[\'certname\']\fR\. (See Facts and Built\-In Variables \fIhttps://docs\.puppetlabs\.com/puppet/latest/reference/lang_facts_and_builtin_vars\.html\fR for more details\.)
+A node\'s certname is available in Puppet manifests as \fB$trusted[\'certname\']\fR\. (See Facts and Built\-In Variables \fIhttps://puppet\.com/docs/puppet/latest/lang_facts_and_builtin_vars\.html\fR for more details\.)
 .
 .IP "\(bu" 4
 For best compatibility, you should limit the value of \fBcertname\fR to only use lowercase letters, numbers, periods, underscores, and dashes\. (That is, it should match \fB/A[a\-z0\-9\._\-]+Z/\fR\.)
@@ -394,7 +394,7 @@ The name of the puppet config file\.
 How to determine the configuration version\. By default, it will be the time that the configuration is parsed, but you can provide a shell script to override how the version is determined\. The output of this script will be added to every log message in the reports, allowing you to correlate changes on your hosts to the source version on the server\.
 .
 .P
-Setting a global value for config_version in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please set a per\-environment value in environment\.conf instead\. For more info, see \fIhttps://docs\.puppet\.com/puppet/latest/reference/environments\.html\fR
+Setting a global value for config_version in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please set a per\-environment value in environment\.conf instead\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .SS "configprint"
 Print the value of a specific configuration setting\. If the name of a setting is provided for this, then the value is printed and puppet exits\. Comma\-separate multiple values\. For a list of all values, specify \'all\'\.
@@ -576,7 +576,7 @@ On the server: Stop Puppet Server\.
 On the CA server: Revoke and clean the server\'s old certificate\. (\fBpuppet cert clean <NAME>\fR)
 .
 .IP "\(bu" 4
-On the server: Delete the old certificate (and any old certificate signing requests) from the ssldir \fIhttps://docs\.puppetlabs\.com/puppet/latest/reference/dirs_ssldir\.html\fR\.
+On the server: Delete the old certificate (and any old certificate signing requests) from the ssldir \fIhttps://puppet\.com/docs/puppet/latest/dirs_ssldir\.html\fR\.
 .
 .IP "\(bu" 4
 On the server: Run \fBpuppet agent \-t \-\-ca_server <CA HOSTNAME>\fR to request a new certificate
@@ -656,7 +656,7 @@ We don\'t recommend using any value other than \fB0\fR or \fBunlimited\fR, since
 A search path for directory environments, as a list of directories separated by the system path separator character\. (The POSIX path separator is \':\', and the Windows path separator is \';\'\.)
 .
 .P
-This setting must have a value set to enable \fBdirectory environments\.\fR The recommended value is \fB$codedir/environments\fR\. For more details, see \fIhttps://docs\.puppet\.com/puppet/latest/reference/environments\.html\fR
+This setting must have a value set to enable \fBdirectory environments\.\fR The recommended value is \fB$codedir/environments\fR\. For more details, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .IP "\(bu" 4
 \fIDefault\fR: $codedir/environments
@@ -706,7 +706,7 @@ For unknown nodes, exit with a non\-zero exit code\.
 Generally, an ENC script makes requests to an external data source\.
 .
 .P
-For more info, see the ENC documentation \fIhttps://docs\.puppet\.com/puppet/latest/nodes_external\.html\fR\.
+For more info, see the ENC documentation \fIhttps://puppet\.com/docs/puppet/latest/nodes_external\.html\fR\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: none
@@ -1152,7 +1152,7 @@ Whether Puppet should manage the owner, group, and mode of files it uses interna
 The entry\-point manifest for puppet master\. This can be one file or a directory of manifests to be evaluated in alphabetical order\. Puppet manages this path as a directory if one exists or if the path ends with a / or \.
 .
 .P
-Setting a global value for \fBmanifest\fR in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please use directory environments instead\. If you need to use something other than the environment\'s \fBmanifests\fR directory as the main manifest, you can set \fBmanifest\fR in environment\.conf\. For more info, see \fIhttps://docs\.puppet\.com/puppet/latest/reference/environments\.html\fR
+Setting a global value for \fBmanifest\fR in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please use directory environments instead\. If you need to use something other than the environment\'s \fBmanifests\fR directory as the main manifest, you can set \fBmanifest\fR in environment\.conf\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .TP
 \fIDefault\fR:
@@ -1249,7 +1249,7 @@ The directory into which module tool data is stored
 The search path for modules, as a list of directories separated by the system path separator character\. (The POSIX path separator is \':\', and the Windows path separator is \';\'\.)
 .
 .P
-Setting a global value for \fBmodulepath\fR in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please use directory environments instead\. If you need to use something other than the default modulepath of \fB<ACTIVE ENVIRONMENT\'S MODULES DIR>:$basemodulepath\fR, you can set \fBmodulepath\fR in environment\.conf\. For more info, see \fIhttps://docs\.puppet\.com/puppet/latest/reference/environments\.html\fR
+Setting a global value for \fBmodulepath\fR in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please use directory environments instead\. If you need to use something other than the default modulepath of \fB<ACTIVE ENVIRONMENT\'S MODULES DIR>:$basemodulepath\fR, you can set \fBmodulepath\fR in environment\.conf\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .SS "name"
 The name of the application, if we are running as one\. The default is essentially $0 without the path or \fB\.rb\fR\.
@@ -1308,7 +1308,7 @@ The three main node data plugins are:
 \fBplain\fR \-\-\- Returns no data, so that the main manifest controls all node configuration\.
 .
 .IP "\(bu" 4
-\fBexec\fR \-\-\- Uses an external node classifier (ENC) \fIhttps://docs\.puppet\.com/puppet/latest/nodes_external\.html\fR, configured by the \fBexternal_nodes\fR setting\. This lets you pull a list of Puppet classes from any external system, using a small glue script to perform the request and format the result as YAML\.
+\fBexec\fR \-\-\- Uses an external node classifier (ENC) \fIhttps://puppet\.com/docs/puppet/latest/nodes_external\.html\fR, configured by the \fBexternal_nodes\fR setting\. This lets you pull a list of Puppet classes from any external system, using a small glue script to perform the request and format the result as YAML\.
 .
 .IP "\(bu" 4
 \fBclassifier\fR (formerly \fBconsole\fR) \-\-\- Specific to Puppet Enterprise\. Uses the PE console for node data\."
@@ -1325,7 +1325,7 @@ Whether to apply catalogs in noop mode, which allows Puppet to partially simulat
 When running in noop mode, Puppet will check whether each resource is in sync, like it does when running normally\. However, if a resource attribute is not in the desired state (as declared in the catalog), Puppet will take no action, and will instead report the changes it \fIwould\fR have made\. These simulated changes will appear in the report sent to the puppet master, or be shown on the console if running puppet agent or puppet apply in the foreground\. The simulated changes will not send refresh events to any subscribing or notified resources, although Puppet will log that a refresh event \fIwould\fR have been sent\.
 .
 .P
-\fBImportant note:\fR The \fBnoop\fR metaparameter \fIhttps://docs\.puppetlabs\.com/puppet/latest/reference/metaparameter\.html#noop\fR allows you to apply individual resources in noop mode, and will override the global value of the \fBnoop\fR setting\. This means a resource with \fBnoop => false\fR \fIwill\fR be changed if necessary, even when running puppet agent with \fBnoop = true\fR or \fB\-\-noop\fR\. (Conversely, a resource with \fBnoop => true\fR will only be simulated, even when noop mode is globally disabled\.)
+\fBImportant note:\fR The \fBnoop\fR metaparameter \fIhttps://puppet\.com/docs/puppet/latest/metaparameter\.html#noop\fR allows you to apply individual resources in noop mode, and will override the global value of the \fBnoop\fR setting\. This means a resource with \fBnoop => false\fR \fIwill\fR be changed if necessary, even when running puppet agent with \fBnoop = true\fR or \fB\-\-noop\fR\. (Conversely, a resource with \fBnoop => true\fR will only be simulated, even when noop mode is globally disabled\.)
 .
 .IP "\(bu" 4
 \fIDefault\fR: false
@@ -1505,7 +1505,7 @@ The fallback log file\. This is only used when the \fB\-\-logdest\fR option is n
 Despite the name, both puppet agent and puppet master will use this file as the fallback logging destination\.
 .
 .P
-For control over logging destinations, see the \fB\-\-logdest\fR command line option in the manual pages for puppet master, puppet agent, and puppet apply\. You can see man pages by running \fBpuppet <SUBCOMMAND> \-\-help\fR, or read them online at https://docs\.puppetlabs\.com/puppet/latest/reference/man/\.
+For control over logging destinations, see the \fB\-\-logdest\fR command line option in the manual pages for puppet master, puppet agent, and puppet apply\. You can see man pages by running \fBpuppet <SUBCOMMAND> \-\-help\fR, or read them online at https://puppet\.com/docs/puppet/latest/man/\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $logdir/puppetd\.log
@@ -1782,7 +1782,7 @@ Where puppet agent and puppet master store state associated with the running con
 .IP "" 0
 .
 .SS "static_catalogs"
-Whether to compile a static catalog \fIhttps://docs\.puppet\.com/puppet/latest/static_catalogs\.html#enabling\-or\-disabling\-static\-catalogs\fR, which occurs only on a Puppet Server master when the \fBcode\-id\-command\fR and \fBcode\-content\-command\fR settings are configured in its \fBpuppetserver\.conf\fR file\.
+Whether to compile a static catalog \fIhttps://puppet\.com/docs/puppet/latest/static_catalogs\.html#enabling\-or\-disabling\-static\-catalogs\fR, which occurs only on a Puppet Server master when the \fBcode\-id\-command\fR and \fBcode\-content\-command\fR settings are configured in its \fBpuppetserver\.conf\fR file\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: true
