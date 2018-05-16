@@ -1,5 +1,4 @@
 require 'puppet/rest/route'
-require 'puppet/rest/compression'
 
 module Puppet::Rest
   module Routes
@@ -18,8 +17,8 @@ module Puppet::Rest
     def self.get_certificate(client, name)
       header = { 'Accept' => 'text/plain', 'accept-encoding' => ACCEPT_ENCODING }
       body = ''
-      client.get("certificate/#{name}", header: header) do |response, chunk|
-        body << Puppet::Rest::Compression.decompress(response.headers['Content-Encoding'], chunk)
+      client.get("certificate/#{name}", header: header) do |chunk|
+        body << chunk
       end
       body
     end

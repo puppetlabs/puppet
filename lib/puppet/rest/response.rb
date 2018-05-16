@@ -25,22 +25,5 @@ module Puppet::Rest
     def ok?
       @message.ok?
     end
-
-    # Process and return the body of the response
-    # @return [String] the decompressed body of the response
-    def read_body
-      if content_type
-        decompress_body
-      else
-        Puppet.err _("No content type in http response; cannot parse")
-      end
-    end
-
-    # Return the decompressed response body. Returns the body as-is
-    # if not compressed.
-    # @return [string] decompressed response body
-    def decompress_body
-      Puppet::Rest::Compression.decompress(content_encoding, body)
-    end
   end
 end

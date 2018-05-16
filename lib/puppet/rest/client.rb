@@ -27,6 +27,7 @@ module Puppet::Rest
       @client.connect_timeout = Puppet[:http_connect_timeout]
       @client.receive_timeout = receive_timeout
       @client.base_url = route.uri
+      @client.transparent_gzip_decompression = true
 
       if Puppet[:http_debug]
         @client.debug_dev = $stderr
@@ -41,11 +42,13 @@ module Puppet::Rest
     # @param [String] endpoint the endpoint of the configured API to query
     # @param [Hash] query any URL params to add to send to the endpoint
     # @param [Hash] header any additional entries to add to the default header
+    # @yields [String] chunks of the response body
     # @raise [Puppet::Rest::ResponseError] if the response status is not OK
-    # @return [Puppet::Rest::Response] the response from the server
     def get(endpoint, query: nil, header: nil, &block)
       begin
-        @client.get_content(endpoint, { query: query, header: header }, &block)
+        @client.get_content(endpoint, { query: query, header: header }) do |chunk|
+          block.call(chunk)
+        end
       rescue HTTPClient::BadResponseError => e
         raise Puppet::Rest::ResponseError.new(e.message, Puppet::Rest::Response.new(e.res))
       end

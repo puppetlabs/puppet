@@ -527,7 +527,8 @@ describe Puppet::SSL::Host do
                           .returns(ca_cert_response)
       Puppet::Rest::Routes.expects(:get_certificate)
                           .with(@http, @host.name)
-                          .raises(Puppet::Rest::ResponseError.new('no client cert'))
+                          .raises(Puppet::Rest::ResponseError.new('no client cert',
+                                                                  mock('response', status_code: 404)))
       @host.certificate
       actual_ca_bundle = Puppet::FileSystem.read(Puppet[:localcacert])
       expect(actual_ca_bundle).to match(/BEGIN CERTIFICATE.*END CERTIFICATE.*BEGIN CERTIFICATE/m)
@@ -536,7 +537,8 @@ describe Puppet::SSL::Host do
     it "should not find the CA certificate if it is the CA host" do
       Puppet::Rest::Routes.expects(:get_certificate)
                           .with(@http, @host.name)
-                          .raises(Puppet::Rest::ResponseError.new('no client cert'))
+                          .raises(Puppet::Rest::ResponseError.new('no client cert',
+                                                                  mock('response', status_code: 404)))
       @host.expects(:ca?).returns true
       @host.expects(:ensure_ca_certificate).never
 
