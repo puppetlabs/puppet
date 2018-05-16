@@ -1,4 +1,4 @@
-# Calls a [lambda](https://docs.puppet.com/puppet/latest/reference/lang_lambdas.html)
+# Calls a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # without arguments if the value given to `lest` is `undef`.
 # Returns the result of calling the lambda if the argument is `undef`, otherwise the
 # given argument.

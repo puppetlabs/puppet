@@ -1,4 +1,4 @@
-# Runs a [lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# Runs a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # recursively and repeatedly using values from a data structure, then returns the unchanged data structure, or if
 # a lambda is not given, returns an `Iterator` for the tree.
 #
@@ -50,13 +50,13 @@
 #
 # If containers are skipped:
 #
-# * `depth_first` order `1`, `2`, `3`, `4` 
-# * `breadth_first` order `1`, `4`,`2`, `3` 
+# * `depth_first` order `1`, `2`, `3`, `4`
+# * `breadth_first` order `1`, `4`,`2`, `3`
 #
 # If containers and root, are included:
 #
-# * `depth_first` order `[1, [2, 3], 4]`, `1`, `[2, 3]`, `2`, `3`, `4` 
-# * `breadth_first` order `[1, [2, 3], 4]`, `1`, `[2, 3]`, `4`, `2`, `3` 
+# * `depth_first` order `[1, [2, 3], 4]`, `1`, `[2, 3]`, `2`, `3`, `4`
+# * `breadth_first` order `[1, [2, 3], 4]`, `1`, `[2, 3]`, `4`, `2`, `3`
 #
 # Typical use of the `tree_each` function include:
 # * a more efficient way to iterate over a tree than first using `flatten` on an array
@@ -111,7 +111,7 @@
 # **Chaining** When calling `tree_each` without a lambda the function produces an `Iterator`
 # that can be chained into another iteration. Thus it is easy to use one of:
 #
-# * `reverse_each` - get "leaves before root" 
+# * `reverse_each` - get "leaves before root"
 # * `filter` - prune the tree
 # * `map` - transform each element
 # * `reduce` - produce something else
@@ -137,7 +137,7 @@
 #
 #
 # For general examples that demonstrates iteration see the Puppet
-# [iteration](https://docs.puppetlabs.com/puppet/latest/reference/lang_iteration.html)
+# [iteration](https://puppet.com/docs/puppet/latest/lang_iteration.html)
 # documentation.
 #
 # @since 5.0.0

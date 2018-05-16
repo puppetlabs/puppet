@@ -201,7 +201,7 @@ module Puppet
     :static_catalogs => {
       :default    => true,
       :type       => :boolean,
-      :desc       => "Whether to compile a [static catalog](https://docs.puppet.com/puppet/latest/static_catalogs.html#enabling-or-disabling-static-catalogs),
+      :desc       => "Whether to compile a [static catalog](https://puppet.com/docs/puppet/latest/static_catalogs.html#enabling-or-disabling-static-catalogs),
         which occurs only on a Puppet Server master when the `code-id-command` and
         `code-content-command` settings are configured in its `puppetserver.conf` file.",
     },
@@ -352,7 +352,7 @@ module Puppet
 
         This setting must have a value set to enable **directory environments.** The
         recommended value is `$codedir/environments`. For more details, see
-        <https://docs.puppet.com/puppet/latest/reference/environments.html>",
+        <https://puppet.com/docs/puppet/latest/environments_about.html>",
       :type    => :path,
     },
     :always_retry_plugins => {
@@ -441,7 +441,7 @@ module Puppet
 
         * `plain` --- Returns no data, so that the main manifest controls all node configuration.
         * `exec` --- Uses an
-          [external node classifier (ENC)](https://docs.puppet.com/puppet/latest/nodes_external.html),
+          [external node classifier (ENC)](https://puppet.com/docs/puppet/latest/nodes_external.html),
           configured by the `external_nodes` setting. This lets you pull a list of Puppet classes
           from any external system, using a small glue script to perform the request and format the
           result as YAML.
@@ -709,15 +709,15 @@ module Puppet
         `certname` setting as its requested Subject CN.
 
         This is the name used when managing a node's permissions in
-        [auth.conf](https://docs.puppetlabs.com/puppet/latest/reference/config_file_auth.html).
+        [auth.conf](https://puppet.com/docs/puppet/latest/config_file_auth.html).
         In most cases, it is also used as the node's name when matching
-        [node definitions](https://docs.puppetlabs.com/puppet/latest/reference/lang_node_definitions.html)
+        [node definitions](https://puppet.com/docs/puppet/latest/lang_node_definitions.html)
         and requesting data from an ENC. (This can be changed with the `node_name_value`
         and `node_name_fact` settings, although you should only do so if you have
         a compelling reason.)
 
         A node's certname is available in Puppet manifests as `$trusted['certname']`. (See
-        [Facts and Built-In Variables](https://docs.puppetlabs.com/puppet/latest/reference/lang_facts_and_builtin_vars.html)
+        [Facts and Built-In Variables](https://puppet.com/docs/puppet/latest/lang_facts_and_builtin_vars.html)
         for more details.)
 
         * For best compatibility, you should limit the value of `certname` to
@@ -752,7 +752,7 @@ change this setting; you also need to:
 * On the server: Stop Puppet Server.
 * On the CA server: Revoke and clean the server's old certificate. (`puppet cert clean <NAME>`)
 * On the server: Delete the old certificate (and any old certificate signing requests)
-  from the [ssldir](https://docs.puppetlabs.com/puppet/latest/reference/dirs_ssldir.html).
+  from the [ssldir](https://puppet.com/docs/puppet/latest/dirs_ssldir.html).
 * On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to request a new certificate
 * On the CA server: Sign the certificate request, explicitly allowing alternate names
   (`puppet cert sign --allow-dns-alt-names <NAME>`).
@@ -1084,7 +1084,7 @@ EOT
         the request.
 
         For info on autosign configuration files, see
-        [the guide to Puppet's config files](https://docs.puppetlabs.com/puppet/latest/reference/config_about_settings.html).",
+        [the guide to Puppet's config files](https://puppet.com/docs/puppet/latest/config_about_settings.html).",
     },
     :allow_duplicate_certs => {
       :default    => false,
@@ -1157,7 +1157,7 @@ EOT
         directory environments instead. If you need to use something other than the
         environment's `manifests` directory as the main manifest, you can set
         `manifest` in environment.conf. For more info, see
-        <https://docs.puppet.com/puppet/latest/reference/environments.html>",
+        <https://puppet.com/docs/puppet/latest/environments_about.html>",
     },
     :modulepath => {
       :default => "",
@@ -1171,7 +1171,7 @@ EOT
         directory environments instead. If you need to use something other than the
         default modulepath of `<ACTIVE ENVIRONMENT'S MODULES DIR>:$basemodulepath`,
         you can set `modulepath` in environment.conf. For more info, see
-        <https://docs.puppet.com/puppet/latest/reference/environments.html>",
+        <https://puppet.com/docs/puppet/latest/environments_about.html>",
     },
     :config_version => {
       :default    => "",
@@ -1183,7 +1183,7 @@ EOT
       Setting a global value for config_version in puppet.conf is not allowed
       (but it can be overridden from the commandline). Please set a
       per-environment value in environment.conf instead. For more info, see
-      <https://docs.puppet.com/puppet/latest/reference/environments.html>",
+      <https://puppet.com/docs/puppet/latest/environments_about.html>",
     }
   )
 
@@ -1295,7 +1295,7 @@ EOT
         These are the modules that will be used by _all_ environments. Note that
         the `modules` directory of the active environment will have priority over
         any global directories. For more info, see
-        <https://docs.puppet.com/puppet/latest/reference/environments.html>",
+        <https://puppet.com/docs/puppet/latest/environments_about.html>",
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
@@ -1481,7 +1481,7 @@ EOT
         For control over logging destinations, see the `--logdest` command line
         option in the manual pages for puppet master, puppet agent, and puppet
         apply. You can see man pages by running `puppet <SUBCOMMAND> --help`,
-        or read them online at https://docs.puppetlabs.com/puppet/latest/reference/man/."
+        or read them online at https://puppet.com/docs/puppet/latest/man/."
     },
     :server => {
       :default => "puppet",
@@ -1550,7 +1550,7 @@ EOT
         event _would_ have been sent.
 
         **Important note:**
-        [The `noop` metaparameter](https://docs.puppetlabs.com/puppet/latest/reference/metaparameter.html#noop)
+        [The `noop` metaparameter](https://puppet.com/docs/puppet/latest/metaparameter.html#noop)
         allows you to apply individual resources in noop mode, and will override
         the global value of the `noop` setting. This means a resource with
         `noop => false` _will_ be changed if necessary, even when running puppet
@@ -1893,7 +1893,7 @@ EOT
 
           Generally, an ENC script makes requests to an external data source.
 
-          For more info, see [the ENC documentation](https://docs.puppet.com/puppet/latest/nodes_external.html).",
+          For more info, see [the ENC documentation](https://puppet.com/docs/puppet/latest/nodes_external.html).",
     }
     )
 

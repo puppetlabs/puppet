@@ -96,7 +96,7 @@ module Puppet::Resource::CapabilityFinder
       end
 
       # The format of the response body is documented at
-      #   https://docs.puppetlabs.com/puppetdb/3.0/api/query/v4/resources.html#response-format
+      #   https://puppet.com/docs/puppetdb/3.0/api/query/v4/resources.html#response-format
       unless result.is_a?(Array)
         #TRANSLATOR PuppetDB is a product name and should not be translated
         raise Puppet::DevError, _("Unexpected response from PuppetDB when looking up %{capability}: expected an Array but got %{result}") %

@@ -47,7 +47,7 @@ module Puppet
 
       However, we recommend using `link` and `target` explicitly, since this
       behavior can be harder to read and is
-      [deprecated](https://docs.puppetlabs.com/puppet/4.3/reference/deprecated_language.html)
+      [deprecated](https://docs.puppet.com/puppet/4.3/deprecated_language.html)
       as of Puppet 4.3.0.
     EOT
 
