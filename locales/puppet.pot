@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-12-gd048d9b\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-40-g64fcf54\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-04-24 21:45+0000\n"
-"PO-Revision-Date: 2018-04-24 21:45+0000\n"
+"POT-Creation-Date: 2018-05-16 15:00+0000\n"
+"PO-Revision-Date: 2018-05-16 15:00+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -25,7 +25,7 @@ msgid "The function '%{class_name}' is deprecated in favor of using 'lookup'."
 msgstr ""
 
 #: ../lib/hiera/puppet_function.rb:65
-msgid "See https://docs.puppet.com/puppet/%{minor_version}/reference/deprecated_language.html"
+msgid "See https://puppet.com/docs/puppet/%{minor_version}/deprecated_language.html"
 msgstr ""
 
 #: ../lib/hiera/scope.rb:43 ../lib/puppet/parser/scope.rb:537
@@ -53,7 +53,7 @@ msgid "Puppet %{version} requires ruby 1.9.3 or greater."
 msgstr ""
 
 #: ../lib/puppet.rb:130
-msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions."
+msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions."
 msgstr ""
 
 #: ../lib/puppet.rb:177
@@ -1288,11 +1288,11 @@ msgid "puppet module build only accepts 0 or 1 arguments"
 msgstr ""
 
 #: ../lib/puppet/face/module/build.rb:47
-msgid "Unable to find metadata.json in module root %{pwd} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
+msgid "Unable to find metadata.json in module root %{pwd} or parent directories. See <https://puppet.com/docs/puppet/latest/modules_publishing.html> for required file format."
 msgstr ""
 
 #: ../lib/puppet/face/module/build.rb:51
-msgid "Unable to find metadata.json in module root %{module_path} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
+msgid "Unable to find metadata.json in module root %{module_path} or parent directories. See <https://puppet.com/docs/puppet/latest/modules_publishing.html> for required file format."
 msgstr ""
 
 #: ../lib/puppet/face/module/build.rb:61
@@ -3325,7 +3325,7 @@ msgid "Could not determine module path"
 msgstr ""
 
 #: ../lib/puppet/module_tool/applications/application.rb:43
-msgid "Unable to find metadata.json in module root at %{path} See https://docs.puppet.com/puppet/latest/reference/modules_publishing.html for required file format."
+msgid "Unable to find metadata.json in module root at %{path} See https://puppet.com/docs/puppet/latest/modules_publishing.html for required file format."
 msgstr ""
 
 #: ../lib/puppet/module_tool/applications/application.rb:53
@@ -4285,7 +4285,7 @@ msgid "Compilation has been halted because: %{error}"
 msgstr ""
 
 #: ../lib/puppet/parser/compiler.rb:30
-msgid "For more information, see https://docs.puppet.com/puppet/latest/reference/environments.html"
+msgid "For more information, see https://puppet.com/docs/puppet/latest/environments_about.html"
 msgstr ""
 
 #. TRANSLATORS "stage" is a keyword in Puppet and should not be translated
@@ -6313,65 +6313,65 @@ msgstr ""
 msgid "Unknown type <%{type}>"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:924
+#: ../lib/puppet/pops/types/types.rb:928
 msgid "The string '%{str}' cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:927
+#: ../lib/puppet/pops/types/types.rb:931
 msgid "Value of type %{type} cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1165
+#: ../lib/puppet/pops/types/types.rb:1169
 msgid "The string '%{str}' cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1168
+#: ../lib/puppet/pops/types/types.rb:1172
 msgid "Value of type %{type} cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1176
+#: ../lib/puppet/pops/types/types.rb:1180
 msgid "Illegal radix: %{radix}, expected 2, 8, 10, 16, or default"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1289
+#: ../lib/puppet/pops/types/types.rb:1293
 msgid "The string '%{str}' cannot be converted to Float"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1292
+#: ../lib/puppet/pops/types/types.rb:1296
 msgid "Value of type %{type} cannot be converted to Float"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#initialize' is a class and method name and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1509
+#: ../lib/puppet/pops/types/types.rb:1513
 msgid "Passing more than one argument to PStringType#initialize is deprecated"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#values' and '#value' are classes and method names and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1563
+#: ../lib/puppet/pops/types/types.rb:1567
 msgid "Method PStringType#values is deprecated. Use #value instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1911
+#: ../lib/puppet/pops/types/types.rb:1915
 msgid "The string '%{str}' cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1914
+#: ../lib/puppet/pops/types/types.rb:1918
 msgid "Value of type %{type} cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2642
+#: ../lib/puppet/pops/types/types.rb:2646
 msgid "Value of type %{type} cannot be converted to Array"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2712
+#: ../lib/puppet/pops/types/types.rb:2716
 msgid "Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2849
+#: ../lib/puppet/pops/types/types.rb:2853
 msgid "odd number of arguments for Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2860
+#: ../lib/puppet/pops/types/types.rb:2864
 msgid "Value of type %{type} cannot be converted to Hash"
 msgstr ""
 
@@ -7703,7 +7703,7 @@ msgid "Please use the directory environments feature to specify environments."
 msgstr ""
 
 #: ../lib/puppet/settings/config_file.rb:93
-msgid "(See https://docs.puppet.com/puppet/latest/reference/environments.html)"
+msgid "(See https://puppet.com/docs/puppet/latest/environments_about.html)"
 msgstr ""
 
 #: ../lib/puppet/settings/config_file.rb:138
@@ -7804,7 +7804,7 @@ msgid "Could not write CA password: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/ssl/certificate_authority.rb:212
-msgid "Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"
+msgid "Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://puppet.com/docs/puppet/latest/http_api/http_certificate_status.html"
 msgstr ""
 
 #: ../lib/puppet/ssl/certificate_authority.rb:250
@@ -7864,7 +7864,7 @@ msgid "CSR '%{csr}' subjectAltName contains a wildcard, which is not allowed: %{
 msgstr ""
 
 #: ../lib/puppet/ssl/certificate_authority.rb:480
-msgid "Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"
+msgid "Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://puppet.com/docs/puppet/latest/http_api/http_certificate_status.html"
 msgstr ""
 
 #: ../lib/puppet/ssl/certificate_authority.rb:497
