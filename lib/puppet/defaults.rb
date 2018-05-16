@@ -697,10 +697,6 @@ module Puppet
         :default  => (Puppet.features.microsoft_windows? ? Dir.tmpdir() : '$vardir/puppet-module'),
         :desc     => "The directory into which module tool data is stored",
     },
-    :module_skeleton_dir => {
-        :default  => '$module_working_dir/skeleton',
-        :desc     => "The directory which the skeleton for module tool generate is stored.",
-    },
     :forge_authorization => {
         :default  => nil,
         :desc     => "The authorization key to connect to the Puppet Forge. Leave blank for unauthorized or license based connections",
