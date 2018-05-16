@@ -3,7 +3,7 @@ Puppet::Parser::Functions::newfunction(
   :type => :rvalue,
   :arity => -3,
   :doc => <<-DOC
-Applies a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 to every value in a data structure from the first argument, carrying over the returned
 value of each iteration, and returns the result of the lambda's final iteration. This
 lets you create a new value or data structure by combining values from the first

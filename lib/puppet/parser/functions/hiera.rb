@@ -16,7 +16,7 @@ The function takes up to three arguments, in this order:
     * If this argument isn't provided and this function results in a lookup failure, Puppet
     fails with a compilation error.
 3. The optional name of an arbitrary
-[hierarchy level](https://docs.puppetlabs.com/hiera/latest/hierarchy.html) to insert at the
+[hierarchy level](https://puppet.com/docs/hiera/latest/hierarchy.html) to insert at the
 top of the hierarchy. This lets you temporarily modify the hierarchy for a single lookup.
     * If Hiera doesn't find a matching key in the overriding hierarchy level, it continues
     searching the rest of the hierarchy.
@@ -58,7 +58,7 @@ $users = hiera('users', undef)
 ~~~
 
 You can optionally generate the default value with a
-[lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that
+[lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html) that
 takes one parameter.
 
 **Example**: Using `hiera` with a lambda
@@ -78,7 +78,7 @@ The returned value's data type depends on the types of the results. In the examp
 above, Hiera matches the 'users' key and returns it as a hash.
 
 The `hiera` function is deprecated in favor of using `lookup` and will be removed in 6.0.0.
-See  https://docs.puppet.com/puppet/#{Puppet.minor_version}/reference/deprecated_language.html.
+See https://puppet.com/docs/puppet/#{Puppet.minor_version}/deprecated_language.html.
 Replace the calls as follows:
 
 | from  | to |
@@ -92,7 +92,7 @@ result must be post processed to get exactly the same result, for example using 
 with calls to stdlib's `deep_merge` function depending on kind of hiera call and setting of merge in hiera.yaml.
 
 See
-[the documentation](https://docs.puppetlabs.com/hiera/latest/puppet.html#hiera-lookup-functions)
+[the documentation](https://puppet.com/docs/hiera/latest/puppet.html#hiera-lookup-functions)
 for more information about Hiera lookup functions.
 
 - Since 4.0.0

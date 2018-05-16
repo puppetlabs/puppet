@@ -32,7 +32,7 @@ the [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev
 * Submit a Jira ticket for your issue if one does not already exist.
   * Clearly describe the issue including steps to reproduce when it is a bug.
   * Make sure you fill in the earliest version that you know has the issue.
-  * A ticket is not necessary for [trivial changes](https://docs.puppet.com/community/trivial_patch_exemption.html)
+  * A ticket is not necessary for [trivial changes](https://puppet.com/community/trivial-patch-exemption-policy)
 * Fork the repository on GitHub.
 
 ## Making Changes
@@ -90,7 +90,7 @@ user-facing strings are marked in new PRs before merging.
 
 ## Making Trivial Changes
 
-For [changes of a trivial nature](https://docs.puppet.com/community/trivial_patch_exemption.html), it is not always necessary to create a new
+For [changes of a trivial nature](https://puppet.com/community/trivial-patch-exemption-policy), it is not always necessary to create a new
 ticket in Jira. In this case, it is appropriate to start the first line of a
 commit with one of  `(docs)`, `(maint)`, or `(packaging)` instead of a ticket
 number.
@@ -160,7 +160,7 @@ ensure the issue has been resolved.
 
 ## Additional Resources
 
-* [Puppet community guidelines](https://docs.puppet.com/community/community_guidelines.html)
+* [Puppet community guidelines](https://puppet.com/community/community-guidelines)
 * [Bug tracker (Jira)](https://tickets.puppetlabs.com)
 * [Contributor License Agreement](http://links.puppet.com/cla)
 * [General GitHub documentation](https://help.github.com/)

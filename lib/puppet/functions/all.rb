@@ -1,4 +1,4 @@
-# Runs a [lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# Runs a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # repeatedly using each value in a data structure until the lambda returns a non "truthy" value which
 # makes the function return `false`, or if the end of the iteration is reached, `true` is returned.
 #
@@ -54,7 +54,7 @@
 # Would notice true.
 #
 # For an general examples that demonstrates iteration, see the Puppet
-# [iteration](https://docs.puppetlabs.com/puppet/latest/reference/lang_iteration.html)
+# [iteration](https://puppet.com/docs/puppet/latest/lang_iteration.html)
 # documentation.
 #
 # @since 5.2.0
