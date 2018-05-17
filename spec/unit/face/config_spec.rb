@@ -257,9 +257,11 @@ trace = true
       args
     end
 
+    let(:basedir) { Puppet::Test::TestHelper.platform == :windows ? 'nul' : '/dev/null' }
+
     it "prints directory env settings for an env that exists" do
       FS.overlay(
-        FS::MemoryFile.a_directory(File.expand_path("/dev/null/environments"), [
+        FS::MemoryFile.a_directory(File.expand_path(File.join(basedir, 'environments')), [
           FS::MemoryFile.a_directory("production", [
             FS::MemoryFile.a_missing_file("environment.conf"),
           ]),
@@ -271,16 +273,16 @@ trace = true
         expect(render(:print, result)).to eq(<<-OUTPUT)
 basemodulepath = #{File.expand_path("/some/base")}
 environment = production
-environmentpath = #{File.expand_path("/dev/null/environments")}
-manifest = #{File.expand_path("/dev/null/environments/production/manifests")}
-modulepath = #{File.expand_path("/dev/null/environments/production/modules")}#{File::PATH_SEPARATOR}#{File.expand_path("/some/base")}
+environmentpath = #{File.expand_path(File.join(basedir, 'environments'))}
+manifest = #{File.expand_path(File.join(basedir, 'environments', 'production', 'manifests'))}
+modulepath = #{File.expand_path(File.join(basedir, 'environments', 'production', 'modules'))}#{File::PATH_SEPARATOR}#{File.expand_path("/some/base")}
         OUTPUT
       end
     end
 
     it "interpolates settings in environment.conf" do
       FS.overlay(
-        FS::MemoryFile.a_directory(File.expand_path("/dev/null/environments"), [
+        FS::MemoryFile.a_directory(File.expand_path(File.join(basedir, 'environments')), [
           FS::MemoryFile.a_directory("production", [
             FS::MemoryFile.a_regular_file_containing("environment.conf", <<-CONTENT),
             modulepath=/custom/modules#{File::PATH_SEPARATOR}$basemodulepath
@@ -294,8 +296,8 @@ modulepath = #{File.expand_path("/dev/null/environments/production/modules")}#{F
         expect(render(:print, result)).to eq(<<-OUTPUT)
 basemodulepath = #{File.expand_path("/some/base")}
 environment = production
-environmentpath = #{File.expand_path("/dev/null/environments")}
-manifest = #{File.expand_path("/dev/null/environments/production/manifests")}
+environmentpath = #{File.expand_path(File.join(basedir, 'environments'))}
+manifest = #{File.expand_path(File.join(basedir, 'environments', 'production', 'manifests'))}
 modulepath = #{File.expand_path("/custom/modules")}#{File::PATH_SEPARATOR}#{File.expand_path("/some/base")}
         OUTPUT
       end
@@ -305,7 +307,7 @@ modulepath = #{File.expand_path("/custom/modules")}#{File::PATH_SEPARATOR}#{File
       Puppet[:environment] = 'doesnotexist'
 
       FS.overlay(
-        FS::MemoryFile.a_directory(File.expand_path("/dev/null/environments"), [
+        FS::MemoryFile.a_directory(File.expand_path(File.join(basedir, 'environments')), [
           FS::MemoryFile.a_missing_file("doesnotexist")
         ])
       ) do
@@ -315,7 +317,7 @@ modulepath = #{File.expand_path("/custom/modules")}#{File::PATH_SEPARATOR}#{File
         expect(render(:print, result)).to eq(<<-OUTPUT)
 basemodulepath = #{File.expand_path("/some/base")}
 environment = doesnotexist
-environmentpath = #{File.expand_path("/dev/null/environments")}
+environmentpath = #{File.expand_path(File.join(basedir, 'environments'))}
 manifest = 
 modulepath = 
         OUTPUT
