@@ -22,6 +22,8 @@ describe Puppet::Network::Resolver do
     ]
   end
 
+  let(:resolver) { Puppet::Network::Resolver.new }
+
   describe 'when the domain is not known' do
     before :each do
       @dns_mock_object.stubs(:getresources).returns(@test_records)
@@ -29,7 +31,7 @@ describe Puppet::Network::Resolver do
 
     describe 'because domain is nil' do
       it 'does not yield' do
-        Puppet::Network::Resolver.each_srv_record(nil) do |_,_,_|
+        resolver.each_srv_record(nil) do |_,_,_|
           raise Exception.new("nil domain caused SRV lookup")
         end
       end
@@ -37,7 +39,7 @@ describe Puppet::Network::Resolver do
 
     describe 'because domain is an empty string' do
       it 'does not yield' do
-        Puppet::Network::Resolver.each_srv_record('') do |_,_,_|
+        resolver.each_srv_record('') do |_,_,_|
           raise Exception.new("nil domain caused SRV lookup")
         end
       end
@@ -45,6 +47,7 @@ describe Puppet::Network::Resolver do
   end
 
   describe "when resolving a host without SRV records" do
+
     it "should not yield anything" do
       # No records returned for a DNS entry without any SRV records
       @dns_mock_object.expects(:getresources).with(
@@ -52,7 +55,7 @@ describe Puppet::Network::Resolver do
         @rr_type
       ).returns([])
 
-      Puppet::Network::Resolver.each_srv_record(@test_a_hostname) do |hostname, port, remaining|
+      resolver.each_srv_record(@test_a_hostname) do |hostname, port, remaining|
         raise Exception.new("host with no records passed block")
       end
     end
@@ -73,7 +76,7 @@ describe Puppet::Network::Resolver do
         @rr_type
       ).returns(@test_records)
 
-      Puppet::Network::Resolver.each_srv_record(@test_srv_domain) do |hostname, port|
+      resolver.each_srv_record(@test_srv_domain) do |hostname, port|
         expected_priority = order.keys.min
 
         expect(order[expected_priority]).to include(hostname)
@@ -106,7 +109,7 @@ describe Puppet::Network::Resolver do
         @rr_type
       ).returns(@test_records)
 
-      Puppet::Network::Resolver.each_srv_record(@test_srv_domain, :report) do |hostname, port|
+      resolver.each_srv_record(@test_srv_domain, :report) do |hostname, port|
         expected_priority = order.keys.min
 
         expect(order[expected_priority]).to include(hostname)
@@ -147,7 +150,7 @@ describe Puppet::Network::Resolver do
         @rr_type
       ).returns(bad_records)
 
-      Puppet::Network::Resolver.each_srv_record(@test_srv_domain, :report) do |hostname, port|
+      resolver.each_srv_record(@test_srv_domain, :report) do |hostname, port|
         expected_priority = order.keys.min
 
         expect(order[expected_priority]).to include(hostname)
@@ -164,11 +167,11 @@ describe Puppet::Network::Resolver do
 
   describe "when finding weighted servers" do
     it "should return nil when no records were found" do
-      expect(Puppet::Network::Resolver.find_weighted_server([])).to eq(nil)
+      expect(resolver.find_weighted_server([])).to eq(nil)
     end
 
     it "should return the first record when one record is passed" do
-      result = Puppet::Network::Resolver.find_weighted_server([@test_records.first])
+      result = resolver.find_weighted_server([@test_records.first])
       expect(result).to eq(@test_records.first)
     end
 
@@ -188,18 +191,18 @@ describe Puppet::Network::Resolver do
 
         seen  = Hash.new(0)
         total_weight = records.inject(0) do |sum, record|
-          sum + Puppet::Network::Resolver.weight(record)
+          sum + resolver.weight(record)
         end
 
         total_weight.times do |n|
           Kernel.expects(:rand).once.with(total_weight).returns(n)
-          server = Puppet::Network::Resolver.find_weighted_server(records)
+          server = resolver.find_weighted_server(records)
           seen[server] += 1
         end
 
         expect(seen.length).to eq(records.length)
         records.each do |record|
-          expect(seen[record]).to eq(Puppet::Network::Resolver.weight(record))
+          expect(seen[record]).to eq(resolver.weight(record))
         end
       end
     end

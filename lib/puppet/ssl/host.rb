@@ -5,8 +5,8 @@ require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/ssl/certificate_request_attributes'
-require 'puppet/rest/routes'
 require 'puppet/rest/errors'
+require 'puppet/rest/routes'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
@@ -198,7 +198,7 @@ DOC
     # This can't be required top-level because Puppetserver uses the Host class too,
     # and we don't ship the gem in that context.
     require 'puppet/rest/client'
-    @http_client ||= Puppet::Rest::Client.new(Puppet::Rest::Routes.ca)
+    @http_client ||= Puppet::Rest::Client.new
   end
 
   def certificate

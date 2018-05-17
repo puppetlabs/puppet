@@ -185,7 +185,11 @@ class Puppet::Indirector::Request
     return yield(self) if !self.server.nil?
 
     if Puppet.settings[:use_srv_records]
-      Puppet::Network::Resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
+      # We may want to consider not creating a new resolver here
+      # every request eventually, to take advantage of the resolver's
+      # caching behavior.
+      resolver = Puppet::Network::Resolver.new
+      resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
         begin
           self.server = srv_server
           self.port   = srv_port

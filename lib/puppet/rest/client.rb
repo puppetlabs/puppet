@@ -6,16 +6,15 @@ require 'puppet/rest/errors'
 
 module Puppet::Rest
   class Client
+    attr_reader :dns_resolver
+
     # Create a new HTTP client for querying the given API.
-    # @param [Puppet::Rest::Route] route data about the API being queried,
-    #                              including the API name and server details.
     # @param [OpenSSL::X509::Store] ssl_store the SSL configuration for this client
     # @param [Integer] receive_timeout how long in seconds this client will wait
     #                  for a response after making a request
     # @param [HTTPClient] client the third-party HTTP client wrapped by this
     #                     class. This param is only used for testing.
-    def initialize(route,
-                   ssl_store: OpenSSL::X509::Store.new,
+    def initialize(ssl_store: OpenSSL::X509::Store.new,
                    receive_timeout: Puppet[:http_read_timeout],
                    client: HTTPClient.new(agent_name: nil,
                                           default_header: {
@@ -26,7 +25,6 @@ module Puppet::Rest
       @client.tcp_keepalive = true
       @client.connect_timeout = Puppet[:http_connect_timeout]
       @client.receive_timeout = receive_timeout
-      @client.base_url = route.uri
       @client.transparent_gzip_decompression = true
 
       if Puppet[:http_debug]
@@ -36,17 +34,19 @@ module Puppet::Rest
       @client.ssl_config.cert_store = ssl_store
 
       configure_verify_mode(@client.ssl_config)
+
+      @dns_resolver = Puppet::Network::Resolver.new
     end
 
-    # Make a GET request to the specified endpoint with the specified params.
-    # @param [String] endpoint the endpoint of the configured API to query
+    # Make a GET request to the specified URL with the specified params.
+    # @param [String] url the full path to query
     # @param [Hash] query any URL params to add to send to the endpoint
     # @param [Hash] header any additional entries to add to the default header
     # @yields [String] chunks of the response body
     # @raise [Puppet::Rest::ResponseError] if the response status is not OK
-    def get(endpoint, query: nil, header: nil, &block)
+    def get(url, query: nil, header: nil, &block)
       begin
-        @client.get_content(endpoint, { query: query, header: header }) do |chunk|
+        @client.get_content(url, { query: query, header: header }) do |chunk|
           block.call(chunk)
         end
       rescue HTTPClient::BadResponseError => e
