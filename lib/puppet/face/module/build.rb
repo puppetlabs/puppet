@@ -52,6 +52,9 @@ Puppet::Face.define(:module, '1.0.0') do
         end
       end
 
+      #TRANSLATORS 'puppet module build' is the name of the puppet command and 'Puppet Development Kit' is the name of the software package replacing this action and should not be translated.
+      Puppet.deprecation_warning _("`puppet module build` is deprecated and will be removed in a future release. This action has been replaced by Puppet Development Kit. For more information visit https://puppet.com/docs/pdk/latest/pdk.html.")
+
       Puppet::ModuleTool.set_option_defaults options
       Puppet::ModuleTool::Applications::Builder.run(module_path, options)
     end
@@ -60,5 +63,7 @@ Puppet::Face.define(:module, '1.0.0') do
       # Get the string representation of the Pathname object.
       _("Module built: %{path}") % { path: return_value.expand_path.to_s }
     end
+
+    deprecate
   end
 end

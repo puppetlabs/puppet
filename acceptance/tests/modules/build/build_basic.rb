@@ -1,7 +1,7 @@
 test_name 'CODEMGMT-69 - Build a Module Using "metadata.json" Only'
 
 tag 'audit:medium',
-    'audit:acceptance'
+    'audit:acceptance',
     'audit:refactor'   # Wrap steps in blocks in accordance with Beaker style guide
 
 
@@ -29,6 +29,7 @@ FILE
 #Verification
 build_message_1_regex = /Notice: Building #{temp_module_path} for release/
 build_message_2_regex = /Module built: #{temp_module_path}\/pkg\/puppetlabs-nginx-0.0.1.tar.gz/
+deprecation_warning_regex = /Warning: `puppet module build` is deprecated/
 
 verify_pkg_dir_command = "[ -d #{temp_module_path}/pkg/puppetlabs-nginx-0.0.1 ]"
 verify_tarball_command = "[ -f #{temp_module_path}/pkg/puppetlabs-nginx-0.0.1.tar.gz ]"
@@ -50,9 +51,10 @@ create_remote_file(master, metadata_json_file_path, metadata_json_file)
 step 'Build Module with Absolute Path'
 on(master, puppet("module build #{temp_module_path}")) do |result|
   assert_no_match(/Error:/, result.output, 'Unexpected error was detected!')
-  assert_no_match(/Warning:/, result.output, 'Unexpected warning was detected!')
+  assert_no_match(/Warning:(?! `puppet module build` is deprecated)/, result.output, 'Unexpected warning was detected!')
   assert_match(build_message_1_regex, result.stdout, 'Expected message not found!')
   assert_match(build_message_2_regex, result.stdout, 'Expected message not found!')
+  assert_match(deprecation_warning_regex, result.output, 'Expected deprecation message not found!')
 end
 
 step 'Verify Build Artifacts'
@@ -65,9 +67,10 @@ on(master, "rm -rf #{temp_module_path}/pkg")
 step "Build Module with Relative Path"
 on(master, ("cd #{temp_module_path} && puppet module build")) do |result|
   assert_no_match(/Error:/, result.output, 'Unexpected error was detected!')
-  assert_no_match(/Warning:/, result.output, 'Unexpected warning was detected!')
+  assert_no_match(/Warning:(?! `puppet module build` is deprecated)/, result.output, 'Unexpected warning was detected!')
   assert_match(build_message_1_regex, result.stdout, 'Expected message not found!')
   assert_match(build_message_2_regex, result.stdout, 'Expected message not found!')
+  assert_match(deprecation_warning_regex, result.output, 'Expected deprecation message not found!')
 end
 
 step 'Verify Build Artifacts'
