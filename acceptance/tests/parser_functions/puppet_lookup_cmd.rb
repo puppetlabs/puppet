@@ -2178,7 +2178,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "production environment_key not provided"
-  rep = on(master, puppet('lookup', 'enviroment_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', 'enviroment_key'), :acceptable_exit_codes => [1])
 
   step "environment_key from environment env1"
   re1 = on(master, puppet('lookup', '--environment env1', 'environment_key'))
@@ -2208,7 +2208,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "environment_key from environment env4"
-  re4 = on(master, puppet('lookup', '--environment env4', 'environment_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', '--environment env4', 'environment_key'), :acceptable_exit_codes => [1])
 
   step "production mod1 module_key"
   repm1 = on(master, puppet('lookup', 'mod1::module_key'))
@@ -2238,7 +2238,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "production mod4 module_key"
-  repm4 = on(master, puppet('lookup', 'mod4::module_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
   step "env1 mod1 module_key"
   re1m1 = on(master, puppet('lookup', '--environment env1', 'mod1::module_key'))
@@ -2268,7 +2268,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "env1 mod4 module_key"
-  re1m4 = on(master, puppet('lookup', '--environment env1', 'mod4::module_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', '--environment env1', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
   step "env2 mod1 module_key"
   re2m1 = on(master, puppet('lookup', '--environment env2', 'mod1::module_key'))
@@ -2298,7 +2298,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "env2 mod4 module_key"
-  re2m4 = on(master, puppet('lookup', '--environment env2', 'mod4::module_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', '--environment env2', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
   step "env3 mod1 module_key"
   re3m1 = on(master, puppet('lookup', '--environment env3', 'mod1::module_key'))
@@ -2359,7 +2359,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "env4 mod4 module_key"
-  re4m4 = on(master, puppet('lookup', '--environment env4', 'mod4::module_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', '--environment env4', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
   step "global key explained"
   rxg = on(master, puppet('lookup', '--explain', 'global_key'))
