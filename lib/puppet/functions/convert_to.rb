@@ -23,11 +23,12 @@ Puppet::Functions.create_function(:convert_to) do
   dispatch :convert_to do
     param 'Any', :value
     param 'Type', :type
+    optional_repeated_param 'Any', :args
     optional_block_param 'Callable[1,1]', :block
   end
 
-  def convert_to(value, type, &block)
-    result = call_function('new', type, value)
+  def convert_to(value, type, *args, &block)
+    result = call_function('new', type, value, *args)
     block_given? ? yield(result) : result
   end
 end
