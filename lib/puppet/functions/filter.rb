@@ -1,4 +1,4 @@
-# Applies a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # to every value in a data structure and returns an array or hash containing any elements
 # for which the lambda evaluates to `true`.
 #
@@ -59,7 +59,7 @@
 # @example Using the `filter` function with a hash and a two-parameter lambda
 #
 # ```puppet
-# # For the hash $data, return a hash of all keys that both end with "berry" and have 
+# # For the hash $data, return a hash of all keys that both end with "berry" and have
 # # values less than or equal to 1
 # $data = { "orange" => 0, "blueberry" => 1, "raspberry" => 2 }
 # $filtered_data = $data.filter |$keys, $values| { $keys =~ /berry$/ and $values <= 1 }

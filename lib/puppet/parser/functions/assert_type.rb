@@ -4,9 +4,9 @@ Puppet::Parser::Functions::newfunction(
   :arity => -3,
   :doc => <<DOC
 Returns the given value if it is of the given
-[data type](https://docs.puppetlabs.com/puppet/latest/reference/lang_data.html), or
+[data type](https://puppet.com/docs/puppet/latest/lang_data.html), or
 otherwise either raises an error or executes an optional two-parameter
-[lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html).
+[lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html).
 
 The function takes two mandatory arguments, in this order:
 
@@ -51,7 +51,7 @@ $valid_username = assert_type(String[1], $raw_username) |$expected, $actual| {
 ~~~
 
 For more information about data types, see the
-[documentation](https://docs.puppetlabs.com/puppet/latest/reference/lang_data.html).
+[documentation](https://puppet.com/docs/puppet/latest/lang_data.html).
 
 - Since 4.0.0
 DOC

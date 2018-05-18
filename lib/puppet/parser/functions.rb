@@ -82,7 +82,7 @@ module Puppet::Parser::Functions
   # extend the behavior and functionality of Puppet.
   #
   # See also [Docs: Custom
-  # Functions](https://docs.puppetlabs.com/guides/custom_functions.html)
+  # Functions](https://puppet.com/docs/puppet/5.5/lang_write_functions_in_puppet.html)
   #
   # @example Define a new Puppet DSL Function
   #     >> Puppet::Parser::Functions.newfunction(:double, :arity => 1,

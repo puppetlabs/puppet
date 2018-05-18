@@ -83,7 +83,7 @@ puppet-device(8) -- #{summary}
 
 SYNOPSIS
 --------
-Retrieves catalogs from the Puppet master and applies them to remote devices. 
+Retrieves catalogs from the Puppet master and applies them to remote devices.
 
 This subcommand can be run manually; or periodically using cron,
 a scheduled task, or a similar tool.
@@ -106,9 +106,9 @@ retrieve and apply catalogs, and store reports.
 
 USAGE NOTES
 -----------
-Devices managed by the puppet-device subcommand on a Puppet agent are 
-configured in device.conf, which is located at $confdir/device.conf by default, 
-and is configurable with the $deviceconfig setting. 
+Devices managed by the puppet-device subcommand on a Puppet agent are
+configured in device.conf, which is located at $confdir/device.conf by default,
+and is configurable with the $deviceconfig setting.
 
 The device.conf file is an INI-like file, with one section per device:
 
@@ -117,20 +117,20 @@ type <TYPE>
 url <URL>
 debug
 
-The section name specifies the certname of the device. 
+The section name specifies the certname of the device.
 
 The values for the type and url properties are specific to each type of device.
 
 The optional debug property specifies transport-level debugging,
 and is limited to telnet and ssh transports.
 
-See https://docs.puppet.com/puppet/latest/config_file_device.html for details.
+See https://puppet.com/docs/puppet/latest/config_file_device.html for details.
 
 
 OPTIONS
 -------
-Note that any setting that's valid in the configuration file is also a valid 
-long argument. For example, 'server' is a valid configuration parameter, so 
+Note that any setting that's valid in the configuration file is also a valid
+long argument. For example, 'server' is a valid configuration parameter, so
 you can specify '--server <servername>' as an argument.
 
 * --debug:

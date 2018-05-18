@@ -38,7 +38,7 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
     This action requires that the server's `auth.conf` file allow find
     access to the `status` REST terminus. Puppet agent does not use this
     facility, and it is turned off by default. See
-    <https://docs.puppetlabs.com/puppet/latest/reference/config_file_auth.html>
+    <https://puppet.com/docs/puppet/latest/config_file_auth.html>
     for more details.
   EOT
   find.examples <<-'EOT'
@@ -46,6 +46,6 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
 
     $ puppet status find --terminus rest
   EOT
-  
+
   deprecate
 end

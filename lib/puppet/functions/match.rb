@@ -90,6 +90,17 @@ Puppet::Functions.create_function(:match) do
     do_match(s, regexp)
   end
 
+  def match_PTypeAliasType(alias_t, s)
+    match(s, alias_t.resolved_type)
+  end
+
+  def match_PVariantType(var_t, s)
+    # Find first matching type (or error out if one of the variants is not acceptable)
+    result = nil
+    var_t.types.find {|t| result = match(s, t) }
+    result
+  end
+
   def match_PRegexpType(regexp_t, s)
     raise ArgumentError, _("Given Regexp Type has no regular expression") unless regexp_t.pattern
     do_match(s, regexp_t.regexp)

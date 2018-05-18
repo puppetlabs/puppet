@@ -9,10 +9,10 @@ require 'hiera/puppet_function'
 #
 # If any of the matched hashes share keys, the final hash uses the value from the
 # highest priority match. This is called a
-# [hash merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#hash-merge).
+# [hash merge lookup](https://puppet.com/docs/hiera/latest/lookup_types.html#hash-merge).
 #
 # The merge strategy is determined by Hiera's
-# [`:merge_behavior`](https://docs.puppetlabs.com/hiera/latest/configuring.html#mergebehavior)
+# [`:merge_behavior`](https://puppet.com/docs/hiera/latest/configuring.html#mergebehavior)
 # setting.
 #
 # The `hiera_hash` function takes up to three arguments, in this order:
@@ -22,7 +22,7 @@ require 'hiera/puppet_function'
 #     * If this argument isn't provided and this function results in a lookup failure, Puppet
 #     fails with a compilation error.
 # 3. The optional name of an arbitrary
-# [hierarchy level](https://docs.puppetlabs.com/hiera/latest/hierarchy.html) to insert at the
+# [hierarchy level](https://puppet.com/docs/hiera/latest/hierarchy.html) to insert at the
 # top of the hierarchy. This lets you temporarily modify the hierarchy for a single lookup.
 #     * If Hiera doesn't find a matching key in the overriding hierarchy level, it continues
 #     searching the rest of the hierarchy.
@@ -56,7 +56,7 @@ require 'hiera/puppet_function'
 # ```
 #
 # You can optionally generate the default value with a
-# [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that
+# [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html) that
 # takes one parameter.
 #
 # @example Using `hiera_hash` with a lambda
@@ -76,9 +76,9 @@ require 'hiera/puppet_function'
 # found in the data sources are strings or arrays, Puppet raises a type mismatch error.
 #
 # See
-# [the 'Using the lookup function' documentation](https://docs.puppet.com/puppet/latest/hiera_use_function.html) for how to perform lookup of data.
+# [the 'Using the lookup function' documentation](https://puppet.com/docs/puppet/latest/hiera_automatic.html) for how to perform lookup of data.
 # Also see
-# [the 'Using the deprecated hiera functions' documentation](https://docs.puppet.com/puppet/latest/hiera_use_hiera_functions.html)
+# [the 'Using the deprecated hiera functions' documentation](https://puppet.com/docs/puppet/latest/hiera_automatic.html)
 # for more information about the Hiera 3 functions.
 #
 # @since 4.0.0

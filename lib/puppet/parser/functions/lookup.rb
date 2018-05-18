@@ -31,7 +31,7 @@ The arguments accepted by `lookup` are as follows:
     first key, it will try again with the subsequent ones, only resorting to a
     default value if none of them succeed.
 2. `<VALUE TYPE>` (data type) --- A
-[data type](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_type.html)
+[data type](https://puppet.com/docs/puppet/latest/lang_data_type.html)
 that must match the retrieved value; if not, the lookup (and catalog
 compilation) will fail. Defaults to `Data` (accepts any normal value).
 3. `<MERGE BEHAVIOR>` (string or hash; see **"Merge Behaviors"** below) ---
