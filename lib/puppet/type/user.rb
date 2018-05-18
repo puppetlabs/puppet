@@ -733,7 +733,8 @@ module Puppet
           if entry =~ /^~|^%h/ and not home
             raise ArgumentError, _("purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory") % { value: value, home_placeholder: '%h' }
           end
-          entry.gsub!(/^~\//, "#{home}/")
+          # make sure frozen value is duplicated by using a gsub, second mutating gsub! is then ok
+          entry = entry.gsub(/^~\//, "#{home}/")
           entry.gsub!(/^%h\//, "#{home}/")
           entry
         end
