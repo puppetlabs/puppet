@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-185-g4ee06b2\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-207-g99b3381\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-05-15 23:33+0000\n"
-"PO-Revision-Date: 2018-05-15 23:33+0000\n"
+"POT-Creation-Date: 2018-05-18 22:48+0000\n"
+"PO-Revision-Date: 2018-05-18 22:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -25,7 +25,7 @@ msgid "The function '%{class_name}' is deprecated in favor of using 'lookup'."
 msgstr ""
 
 #: ../lib/hiera/puppet_function.rb:65
-msgid "See https://docs.puppet.com/puppet/%{minor_version}/reference/deprecated_language.html"
+msgid "See https://puppet.com/docs/puppet/%{minor_version}/deprecated_language.html"
 msgstr ""
 
 #: ../lib/hiera/scope.rb:43 ../lib/puppet/parser/scope.rb:535
@@ -53,7 +53,7 @@ msgid "Puppet %{version} requires ruby 2.3.0 or greater."
 msgstr ""
 
 #: ../lib/puppet.rb:130
-msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html#prerequisites for a list of supported ruby versions."
+msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions."
 msgstr ""
 
 #: ../lib/puppet.rb:188
@@ -1244,11 +1244,11 @@ msgid "puppet module build only accepts 0 or 1 arguments"
 msgstr ""
 
 #: ../lib/puppet/face/module/build.rb:47
-msgid "Unable to find metadata.json in module root %{pwd} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
+msgid "Unable to find metadata.json in module root %{pwd} or parent directories. See <https://puppet.com/docs/puppet/latest/modules_publishing.html> for required file format."
 msgstr ""
 
 #: ../lib/puppet/face/module/build.rb:51
-msgid "Unable to find metadata.json in module root %{module_path} or parent directories. See <https://docs.puppetlabs.com/puppet/latest/reference/modules_publishing.html> for required file format."
+msgid "Unable to find metadata.json in module root %{module_path} or parent directories. See <https://puppet.com/docs/puppet/latest/modules_publishing.html> for required file format."
 msgstr ""
 
 #: ../lib/puppet/face/module/build.rb:61
@@ -2240,7 +2240,7 @@ msgstr ""
 msgid "match() expects pattern of T, where T is String, Regexp, Regexp[r], Pattern[p], or Array[T]. Got %{klass}"
 msgstr ""
 
-#: ../lib/puppet/functions/match.rb:94
+#: ../lib/puppet/functions/match.rb:105
 msgid "Given Regexp Type has no regular expression"
 msgstr ""
 
@@ -3332,7 +3332,7 @@ msgid "Could not determine module path"
 msgstr ""
 
 #: ../lib/puppet/module_tool/applications/application.rb:43
-msgid "Unable to find metadata.json in module root at %{path} See https://docs.puppet.com/puppet/latest/reference/modules_publishing.html for required file format."
+msgid "Unable to find metadata.json in module root at %{path} See https://puppet.com/docs/puppet/latest/modules_publishing.html for required file format."
 msgstr ""
 
 #: ../lib/puppet/module_tool/applications/application.rb:53
@@ -4252,7 +4252,7 @@ msgid "Compilation has been halted because: %{error}"
 msgstr ""
 
 #: ../lib/puppet/parser/compiler.rb:29
-msgid "For more information, see https://docs.puppet.com/puppet/latest/reference/environments.html"
+msgid "For more information, see https://puppet.com/docs/puppet/latest/environments_about.html"
 msgstr ""
 
 #. TRANSLATORS "stage" is a keyword in Puppet and should not be translated
@@ -7674,7 +7674,7 @@ msgid "Please use the directory environments feature to specify environments."
 msgstr ""
 
 #: ../lib/puppet/settings/config_file.rb:93
-msgid "(See https://docs.puppet.com/puppet/latest/reference/environments.html)"
+msgid "(See https://puppet.com/docs/puppet/latest/environments_about.html)"
 msgstr ""
 
 #: ../lib/puppet/settings/config_file.rb:138
@@ -7775,7 +7775,7 @@ msgid "Could not write CA password: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/ssl/certificate_authority.rb:212
-msgid "Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"
+msgid "Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://puppet.com/docs/puppet/latest/http_api/http_certificate_status.html"
 msgstr ""
 
 #: ../lib/puppet/ssl/certificate_authority.rb:250
@@ -7835,7 +7835,7 @@ msgid "CSR '%{csr}' subjectAltName contains a wildcard, which is not allowed: %{
 msgstr ""
 
 #: ../lib/puppet/ssl/certificate_authority.rb:480
-msgid "Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"
+msgid "Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://puppet.com/docs/puppet/latest/http_api/http_certificate_status.html"
 msgstr ""
 
 #: ../lib/puppet/ssl/certificate_authority.rb:497
