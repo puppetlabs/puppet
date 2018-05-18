@@ -1,5 +1,5 @@
 # Reverses the order of the elements of something that is iterable and optionally runs a
-# [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) for each
+# [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html) for each
 # element.
 #
 # This function takes one to two arguments:

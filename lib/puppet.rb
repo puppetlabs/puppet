@@ -127,7 +127,7 @@ module Puppet
   # Now that settings are loaded we have the code loaded to be able to issue
   # deprecation warnings. Warn if we're on a deprecated ruby version.
   if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
-    Puppet.deprecation_warning(_("Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html#prerequisites for a list of supported ruby versions.") % { version: RUBY_VERSION })
+    Puppet.deprecation_warning(_("Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions.") % { version: RUBY_VERSION })
   end
 
   # Initialize puppet's settings. This is intended only for use by external tools that are not

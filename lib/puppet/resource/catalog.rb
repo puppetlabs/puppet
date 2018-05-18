@@ -542,7 +542,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Store the classes in the classfile.
   def write_class_file
     # classfile paths may contain UTF-8
-    # https://docs.puppet.com/puppet/latest/reference/configuration.html#classfile
+    # https://puppet.com/docs/puppet/latest/configuration.html#classfile
     classfile = Puppet.settings.setting(:classfile)
     Puppet::FileSystem.open(classfile.value, classfile.mode.to_i(8), "w:UTF-8") do |f|
       f.puts classes.join("\n")
@@ -554,7 +554,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Store the list of resources we manage
   def write_resource_file
     # resourcefile contains resources that may be UTF-8 names
-    # https://docs.puppet.com/puppet/latest/reference/configuration.html#resourcefile
+    # https://puppet.com/docs/puppet/latest/configuration.html#resourcefile
     resourcefile = Puppet.settings.setting(:resourcefile)
     Puppet::FileSystem.open(resourcefile.value, resourcefile.mode.to_i(8), "w:UTF-8") do |f|
       to_print = resources.map do |resource|

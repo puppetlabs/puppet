@@ -1,4 +1,4 @@
-# Runs a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# Runs a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # repeatedly using each value in a data structure, then returns the values unchanged.
 #
 # This function takes two mandatory arguments, in this order:
@@ -89,7 +89,7 @@
 #
 # For an example that demonstrates how to create multiple `file` resources using `each`,
 # see the Puppet
-# [iteration](https://docs.puppetlabs.com/puppet/latest/reference/lang_iteration.html)
+# [iteration](https://puppet.com/docs/puppet/latest/lang_iteration.html)
 # documentation.
 #
 # @since 4.0.0

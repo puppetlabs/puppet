@@ -209,7 +209,7 @@ class Puppet::SSL::CertificateAuthority
   #
   # @deprecated Use Puppet::SSL::CertificateAuthority#list or Puppet Server Certificate status API
   def list_certificates(name='*')
-    Puppet.deprecation_warning(_("Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"))
+    Puppet.deprecation_warning(_("Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://puppet.com/docs/puppet/latest/http_api/http_certificate_status.html"))
     Puppet::SSL::Certificate.indirection.search(name)
   end
 
@@ -477,7 +477,7 @@ class Puppet::SSL::CertificateAuthority
   #
   # @deprecated use Puppet::SSL::CertificateAuthority#verify or Puppet Server certificate status API
   def certificate_is_alive?(cert)
-    Puppet.deprecation_warning(_("Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://docs.puppet.com/puppet/latest/http_api/http_certificate_status.html"))
+    Puppet.deprecation_warning(_("Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://puppet.com/docs/puppet/latest/http_api/http_certificate_status.html"))
     x509_store(:cache => true).verify(cert.content)
   end
 

@@ -90,7 +90,7 @@ private
         message += ' ' + _("The only valid puppet.conf sections are: [%{allowed_sections_list}].") %
             { allowed_sections_list: allowed_section_names.join(", ") }
         message += ' ' + _("Please use the directory environments feature to specify environments.")
-        message += ' ' + _("(See https://docs.puppet.com/puppet/latest/reference/environments.html)")
+        message += ' ' + _("(See https://puppet.com/docs/puppet/latest/environments_about.html)")
         raise(Puppet::Error, message)
       end
       section.name

@@ -90,7 +90,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
     ret << markdown_header(type.name.to_s + "_", 2)
 
-    ret << "[#{type.name}](https://docs.puppetlabs.com/puppet/latest/reference/type.html##{type.name})\n\n"
+    ret << "[#{type.name}](https://puppet.com/docs/puppet/latest/type.html##{type.name})\n\n"
     ret << option("Default provider", default)
     ret << doctable(headers, table_data)
 

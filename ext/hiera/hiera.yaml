@@ -4,7 +4,7 @@ defaults:
   # The default value for "datadir" is "data" under the same directory as the hiera.yaml
   # file (this file)
   # When specifying a datadir, make sure the directory exists.
-  # See https://docs.puppet.com/puppet/latest/environments.html for further details on environments.
+  # See https://puppet.com/docs/puppet/latest/environments_about.html for further details on environments.
   # datadir: data
   # data_hash: yaml_data
 hierarchy:
