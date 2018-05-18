@@ -14,24 +14,24 @@ concatenated_file { "/etc/munin/munin.conf":
     header => "/etc/munin/munin.conf.header",
 }
 hosting_vserver_configuration {
-    "davids":
-        domain => "black.co.at",
+    "erics":
+        domain => "orange.co",
         type => "friend",
         context => 13,
-        ip => "83.64.231.75", prefix => 27,
-        admin_user => "david", admin_user_name => "David Schmitt",
-        admin_user_email => "david@black.co.at",
-        customer => "David Schmitt",
-        admin_password => file("/etc/puppet/secrets/hosting/davids_admin_password"),
+        ip => "255.255.255.254", prefix => 27,
+        admin_user => "erict", admin_user_name => "hello, its me",
+        admin_user_email => "erict@orange.co",
+        customer => "hello? is it me?",
+        admin_password => file("/etc/puppet/secrets/hosting/erict_passwd"),
 }
 class davids_black_co_at {
     ## Create users for my parents and my grandmother
     hosting::user {
-        rztt: realname => "Gerhard Schmitt",
+        rztt: realname => "some other rztt",
             uid => 2001, admin => true;
-        conny: realname => "Conny Schmitt",
+        same: realname => "could be same",
             uid => 2002;
-        oma: realname => "Oma Schmitt",
+        imapersontoodamnit: realname => "some one else",
             uid => 2003;
     }
 
@@ -44,14 +44,14 @@ class davids_black_co_at {
     hosting::database { "fogbugz": type => mysql }
     # Create another VirtualHost
     apache2::site { "local-fogbugz":
-        source => "puppet://$servername/files/hosting/davids/sites/local-fogbugz"
+        source => "puppet://$servername/files/hosting/erict/sites/local-fogbugz"
     }
 }
 node backuppc {
         # only use the smarthost
         $mta = ssmtp
         # this is a vserver on this host, so register correctly in nagios
-        $nagios_parent = "ic.black.co.at"
+        $nagios_parent = "orange.co"
         # I'm sharing an IP here, so those things have to have their own ports
         $apache2_port = 8080
         $munin_port = 5008
