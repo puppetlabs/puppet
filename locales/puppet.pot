@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-40-g64fcf54\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-46-g2800397\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-05-16 15:00+0000\n"
-"PO-Revision-Date: 2018-05-16 15:00+0000\n"
+"POT-Creation-Date: 2018-05-18 20:31+0000\n"
+"PO-Revision-Date: 2018-05-18 20:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -53,7 +53,7 @@ msgid "Puppet %{version} requires ruby 1.9.3 or greater."
 msgstr ""
 
 #: ../lib/puppet.rb:130
-msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions."
+msgid "Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions."
 msgstr ""
 
 #: ../lib/puppet.rb:177
@@ -2241,7 +2241,7 @@ msgstr ""
 msgid "match() expects pattern of T, where T is String, Regexp, Regexp[r], Pattern[p], or Array[T]. Got %{klass}"
 msgstr ""
 
-#: ../lib/puppet/functions/match.rb:94
+#: ../lib/puppet/functions/match.rb:105
 msgid "Given Regexp Type has no regular expression"
 msgstr ""
 
