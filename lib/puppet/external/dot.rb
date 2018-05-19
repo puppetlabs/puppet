@@ -208,10 +208,10 @@ module DOT
 
       label = @options['shape'] != 'record' && @ports.length == 0 ?
           @options['label'] ?
-            t + $tab + "label = \"#{@options['label']}\"\n" :
+            t + $tab + "label = #{stringify(@options['label'])}\n" :
             '' :
           t + $tab + 'label = "' + " \\\n" +
-          t + $tab2 + "#{@options['label']}| \\\n" +
+          t + $tab2 + "#{stringify(@options['label'])}| \\\n" +
           @ports.collect{ |i|
             t + $tab2 + i.to_s
           }.join( "| \\\n" ) + " \\\n" +
@@ -224,6 +224,12 @@ module DOT
         }.compact.join( ",\n" ) + ( label != '' ? ",\n" : "\n" ) +
         label +
         t + "]\n"
+    end
+
+    private
+
+    def stringify(s)
+      %("#{s.gsub('"', '\\"')}")
     end
 
   end
