@@ -81,6 +81,22 @@ describe Puppet::Graph::SimpleGraph do
     it "should do nothing when a non-vertex is asked to be removed" do
       expect { @graph.remove_vertex!(:one) }.to_not raise_error
     end
+
+    describe "when managing resources with quotes in their title" do
+      subject do
+        v = Puppet::Type.type(:notify).new(:name => 'GRANT ALL ON DATABASE "puppetdb" TO "puppetdb"')
+        @graph.add_vertex(v)
+        @graph.to_dot
+      end
+
+      it "should escape quotes in node name" do
+        expect(subject).to match(/^[[:space:]]{4}"Notify\[GRANT ALL ON DATABASE \\"puppetdb\\" TO \\"puppetdb\\"\]" \[$/)
+      end
+
+      it "should escape quotes in node label" do
+        expect(subject).to match(/^[[:space:]]{8}label = "Notify\[GRANT ALL ON DATABASE \\"puppetdb\\" TO \\"puppetdb\\"\]"$/)
+      end
+    end
   end
 
   describe "when managing edges" do
@@ -112,6 +128,23 @@ describe Puppet::Graph::SimpleGraph do
     it "should provide a method to add an edge by specifying the two vertices and a label" do
       @graph.add_edge(:one, :two, :callback => :awesome)
       expect(@graph.edge?(:one, :two)).to be_truthy
+    end
+
+    describe "when managing edges between nodes with quotes in their title" do
+      let(:vertex) do
+        Hash.new do |hash, key|
+          hash[key] = Puppet::Type.type(:notify).new(:name => key.to_s)
+        end
+      end
+
+      subject do
+        @graph.add_edge(vertex['Postgresql_psql[CREATE DATABASE "ejabberd"]'], vertex['Postgresql_psql[REVOKE CONNECT ON DATABASE "ejabberd" FROM public]'])
+        @graph.to_dot
+      end
+
+      it "should escape quotes in edge" do
+        expect(subject).to match(/^[[:space:]]{4}"Notify\[Postgresql_psql\[CREATE DATABASE \\"ejabberd\\"\]\]" -> "Notify\[Postgresql_psql\[REVOKE CONNECT ON DATABASE \\"ejabberd\\" FROM public\]\]" \[$/)
+      end
     end
 
     describe "when retrieving edges between two nodes" do

@@ -436,14 +436,14 @@ class Puppet::Graph::SimpleGraph
   # undirected Graph.  _params_ can contain any graph property specified in
   # rdot.rb. If an edge or vertex label is a kind of Hash then the keys
   # which match +dot+ properties will be used as well.
-  def to_dot_graph (params = {})
+  def to_dot_graph(params = {})
     params['name'] ||= self.class.name.gsub(/:/,'_')
     fontsize   = params['fontsize'] ? params['fontsize'] : '8'
     graph      = (directed? ? DOT::DOTDigraph : DOT::DOTSubgraph).new(params)
     edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge
     vertices.each do |v|
       name = v.ref
-      params = {'name'     => '"'+name+'"',
+      params = {'name'     => stringify(name),
         'fontsize' => fontsize,
         'label'    => name}
       v_label = v.ref
@@ -451,8 +451,8 @@ class Puppet::Graph::SimpleGraph
       graph << DOT::DOTNode.new(params)
     end
     edges.each do |e|
-      params = {'from'     => '"'+ e.source.ref + '"',
-        'to'       => '"'+ e.target.ref + '"',
+      params = {'from'     => stringify(e.source.ref),
+        'to'       => stringify(e.target.ref),
         'fontsize' => fontsize }
       e_label = e.ref
       params.merge!(e_label) if e_label and e_label.kind_of? Hash
@@ -461,8 +461,12 @@ class Puppet::Graph::SimpleGraph
     graph
   end
 
+  def stringify(s)
+    %("#{s.gsub('"', '\\"')}")
+  end
+
   # Output the dot format as a string
-  def to_dot (params={}) to_dot_graph(params).to_s; end
+  def to_dot(params={}) to_dot_graph(params).to_s; end
 
   # Produce the graph files if requested.
   def write_graph(name)
