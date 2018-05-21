@@ -82,4 +82,31 @@ module PuppetSpec::Compiler
       end
     end
   end
+
+  # Compiles a catalog, and if source is given evaluates it and returns its result.
+  # The catalog is returned if no source is given.
+  # Topscope variables are set before compilation
+  # Uses a created node 'testnode' if none is given.
+  # (Parameters given by name)
+  #
+  def evaluate(code: 'undef', source: nil, node: Puppet::Node.new('testnode'), variables: {})
+    source_location = caller[0]
+    Puppet[:code] = code
+    compiler = Puppet::Parser::Compiler.new(node)
+    unless variables.empty?
+      scope = compiler.topscope
+      variables.each {|k,v| scope.setvar(k, v) }
+    end
+
+    if source.nil?
+      compiler.compile
+      # see lib/puppet/indirector/catalog/compiler.rb#filter
+      return compiler.filter { |r| r.virtual? }
+    end
+
+    # evaluate given source is the context of the compiled state and return its result
+    compiler.compile do |catalog |
+      Puppet::Pops::Parser::EvaluatingParser.singleton.evaluate_string(compiler.topscope, source, source_location)
+    end
+  end
 end
