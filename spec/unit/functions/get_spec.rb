@@ -113,24 +113,38 @@ describe 'the get function' do
     ).to eql('ok')
   end
 
-  it 'when navigating with string key into an array an error is raised' do
-    expect{ evaluate( source: "get(['nope', ['ok']], '1.blue')")}.to raise_error(/no implicit conversion/)
+  it 'an error is raised when navigating with string key into an array' do
+    expect{ evaluate( source: "get(['nope', ['ok']], '1.blue')")}.to raise_error(/The given data requires an Integer index/)
   end
 
   it 'calls a given block with EXPECTED_INTEGER_INDEX if navigating into array with string' do
     expect( evaluate(
-        source: "get(['nope', ['ok']], '1.blue') |$msg| {
-                   if $msg =~ /^EXPECTED_INTEGER_INDEX$/ {'ok'} else { 'nope'}
+        source: "get(['nope', ['ok']], '1.blue') |$error| {
+                   if $error.issue_code =~ /^EXPECTED_INTEGER_INDEX$/ {'ok'} else { 'nope'}
                  }"
     )).to eql('ok')
   end
 
   it 'calls a given block with EXPECTED_COLLECTION if navigating into something not Undef or Collection' do
     expect( evaluate(
-                source: "get(['nope', /nah/], '1.blue') |$msg| {
-                           if $msg =~ /^EXPECTED_COLLECTION$/ {'ok'} else { 'nope'}
+                source: "get(['nope', /nah/], '1.blue') |$error| {
+                           if $error.issue_code =~ /^EXPECTED_COLLECTION$/ {'ok'} else { 'nope'}
                          }"
             )).to eql('ok')
+  end
+
+  context 'it does not pick the default value when undef is returned by error handling block' do
+    it 'for "expected integer" case' do
+      expect( evaluate(
+                  source: "get(['nope', ['ok']], '1.blue', 'nope') |$msg| { undef }"
+              )).to be_nil
+    end
+
+    it 'for "expected collection" case' do
+      expect( evaluate(
+                  source: "get(['nope', /nah/], '1.blue') |$msg| { undef }"
+              )).to be_nil
+    end
   end
 
   it 'does not call a given block if navigation string has syntax error' do
