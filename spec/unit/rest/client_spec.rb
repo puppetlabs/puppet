@@ -71,19 +71,25 @@ describe Puppet::Rest::Client do
       route.stubs(:select_server_and_port).returns('myserver.com', 555)
     end
 
-    it 'makes a GET request given a URL, query hash, and header hash' do
+    it 'makes a GET request given a URL, query hash, header hash, and streaming block' do
       query = { 'environment' => 'production' }
       header = { 'Accept' => 'text/plain' }
-      http.expects(:get).with(endpoint, query: query, header: header).returns('response')
-      client.get(endpoint, query: query, header: header)
+      response_string = ''
+      chunk_processing = lambda { |chunk| response_string = chunk }
+      http.expects(:get_content).with(endpoint, { query: query, header: header }).yields('response')
+      client.get(endpoint, query: query, header: header, &chunk_processing)
+      expect(response_string).to eq('response')
     end
 
-    it 'returns a wrapped response object' do
-      fake_response = mock('resp', :status => HTTP::Status::OK)
-      http.expects(:get).with(endpoint, query: nil, header: nil).returns(fake_response)
-      response = client.get(endpoint)
-      expect(response).to be_a(Puppet::Rest::Response)
-      expect(response.status_code).to eq(200)
+    it 'throws an exception when the request is not OK' do
+      fake_response = mock('resp', :status => HTTP::Status::BAD_REQUEST)
+      http.expects(:get_content).with(endpoint, query: nil, header: nil)
+          .raises(HTTPClient::BadResponseError.new('failed request', fake_response))
+      expect { client.get(endpoint) }.to raise_error do |error|
+        expect(error.message).to eq('failed request')
+        expect(error.response).to be_a(Puppet::Rest::Response)
+        expect(error.response.status_code).to eq(400)
+      end
     end
   end
 end
