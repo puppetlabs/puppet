@@ -447,13 +447,13 @@ describe Puppet::Indirector::Request do
 
           @port = 7205
           @target = 'example.com'
-          @srv_records = [Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @target)]
+          record = Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @target)
+          record.instance_variable_set(:@ttl, 10)
+          @srv_records = [record]
 
           @dns_mock.expects(:getresources).
             with("_x-puppet._tcp.#{Puppet.settings[:srv_domain]}", Resolv::DNS::Resource::IN::SRV).
             returns(@srv_records)
-
-          Puppet.push_context(:dns_resolver => Puppet::Network::Resolver.new)
         end
 
         it "yields a request using the server and port from the SRV record" do

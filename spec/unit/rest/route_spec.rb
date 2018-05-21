@@ -71,7 +71,9 @@ describe Puppet::Rest::Route do
 
           @port = 7502
           @target = 'example.com'
-          @srv_records = [Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @target)]
+          record = Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @target)
+          record.instance_variable_set(:@ttl, 10)
+          @srv_records = [record]
 
           @dns_mock.expects(:getresources).
             with("_x-puppet._tcp.test_service", Resolv::DNS::Resource::IN::SRV).

@@ -14,12 +14,17 @@ describe Puppet::Network::Resolver do
 
     # The records we should use.
     @test_records = [
-      #                                  priority,  weight, port, hostname
+      #                                  priority,  weight, port, target
       Resolv::DNS::Resource::IN::SRV.new(0,         20,     8140, "puppet1.domain.com"),
       Resolv::DNS::Resource::IN::SRV.new(0,         80,     8140, "puppet2.domain.com"),
       Resolv::DNS::Resource::IN::SRV.new(1,         1,      8140, "puppet3.domain.com"),
       Resolv::DNS::Resource::IN::SRV.new(4,         1,      8140, "puppet4.domain.com")
     ]
+
+    @test_records.each do |rec|
+      # Resources do not expose public API for setting the TTL
+      rec.instance_variable_set(:@ttl, 3600)
+    end
   end
 
   let(:resolver) { Puppet::Network::Resolver.new }
@@ -203,6 +208,73 @@ describe Puppet::Network::Resolver do
         expect(seen.length).to eq(records.length)
         records.each do |record|
           expect(seen[record]).to eq(resolver.weight(record))
+        end
+      end
+    end
+  end
+
+  describe "caching records" do
+    it "should query DNS when no cache entry exists, then retrieve the cached value" do
+      @dns_mock_object.expects(:getresources).with(
+        "_x-puppet._tcp.#{@test_srv_domain}",
+        @rr_type
+      ).returns(@test_records).once
+
+      fetched_servers = []
+      resolver.each_srv_record(@test_srv_domain) do |server, port|
+        fetched_servers << server
+      end
+
+      cached_servers = []
+      resolver.expects(:expired?).returns false
+      resolver.each_srv_record(@test_srv_domain) do |server, port|
+        cached_servers << server
+      end
+      expect(fetched_servers).to match_array(cached_servers)
+    end
+
+    context "TTLs" do
+      before(:each) do
+        # The TTL of an SRV record cannot be set via any public API
+        ttl_record1 = Resolv::DNS::Resource::IN::SRV.new(0, 20, 8140, "puppet1.domain.com")
+        ttl_record1.instance_variable_set(:@ttl, 10)
+        ttl_record2 = Resolv::DNS::Resource::IN::SRV.new(0, 20, 8140, "puppet2.domain.com")
+        ttl_record2.instance_variable_set(:@ttl, 20)
+        records = [ttl_record1, ttl_record2]
+
+        @dns_mock_object.expects(:getresources).with(
+          "_x-puppet._tcp.#{@test_srv_domain}",
+          @rr_type
+        ).returns(records)
+      end
+
+      it "should save the shortest TTL among records for a service" do
+        resolver.each_srv_record(@test_srv_domain) { |server, port| }
+        expect(resolver.ttl(:puppet)).to eq(10)
+      end
+
+      it "should fetch records again if the TTL has expired" do
+        # Fetch from DNS
+        resolver.each_srv_record(@test_srv_domain) do |server, port|
+          expect(server).to match(/puppet.*domain\.com/)
+        end
+
+        resolver.expects(:expired?).with(:puppet).returns false
+        # Load from cache
+        resolver.each_srv_record(@test_srv_domain) do |server, port|
+          expect(server).to match(/puppet.*domain\.com/)
+        end
+
+        new_record = Resolv::DNS::Resource::IN::SRV.new(0, 20, 8140, "new.domain.com")
+        new_record.instance_variable_set(:@ttl, 10)
+        @dns_mock_object.expects(:getresources).with(
+          "_x-puppet._tcp.#{@test_srv_domain}",
+          @rr_type
+        ).returns([new_record])
+        resolver.expects(:expired?).with(:puppet).returns true
+        # Refresh from DNS
+        resolver.each_srv_record(@test_srv_domain) do |server, port|
+          expect(server).to eq("new.domain.com")
         end
       end
     end
