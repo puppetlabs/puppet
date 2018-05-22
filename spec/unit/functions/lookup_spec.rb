@@ -4,6 +4,7 @@ require 'puppet_spec/compiler'
 require 'puppet_spec/files'
 require 'puppet/pops'
 require 'deep_merge/core'
+require 'hiera'
 
 describe "The lookup function" do
   include PuppetSpec::Compiler
@@ -37,8 +38,6 @@ describe "The lookup function" do
     }
   end
 
-  let(:ruby_dir_files) { {} }
-
   let(:logs) { [] }
   let(:scope_additions ) { {} }
   let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
@@ -55,11 +54,6 @@ describe "The lookup function" do
   let(:populated_code_dir) do
     dir_contained_in(code_dir, code_dir_files)
     code_dir
-  end
-
-  let(:populated_ruby_dir) do
-    dir_contained_in(ruby_dir, ruby_dir_files)
-    ruby_dir
   end
 
   let(:env_dir) do
@@ -1555,42 +1549,16 @@ describe "The lookup function" do
         }
       end
 
-      let(:ruby_dir_files) do
-        {
-          'hiera' => {
-            'backend' => {
-              'custom_backend.rb' => <<-RUBY.unindent,
-            class Hiera::Backend::Custom_backend
-              def lookup(key, scope, order_override, resolution_type, context)
-                case key
-                when 'hash_c'
-                  { 'hash_ca' => { 'cad' => 'value hash_c.hash_ca.cad (from global custom)' }}
-                when 'hash'
-                  { 'array' => [ 'x5,x6' ] }
-                when 'array'
-                  [ 'x5,x6' ]
-                when 'datasources'
-                  Hiera::Backend.datasources(scope, order_override) { |source| source }
-                when 'dotted.key'
-                  'custom backend received request for dotted.key value'
-                else
-                  throw :no_such_key
-                end
-              end
-            end
-            RUBY
-            'other_backend.rb' => <<-RUBY.unindent,
-            class Hiera::Backend::Other_backend
-              def lookup(key, scope, order_override, resolution_type, context)
-                value = Hiera::Config[:other][key.to_sym]
-                throw :no_such_key if value.nil?
-                value
-              end
-            end
-            RUBY
-            }
-          }
-        }
+      before(:all) do
+        $LOAD_PATH.unshift(my_fixture_dir)
+      end
+
+      after(:all) do
+        if Kernel.const_defined?(:Hiera) && Hiera.const_defined?(:Backend)
+          Hiera::Backend.send(:remove_const, :Custom_backend) if Hiera::Backend.const_defined?(:Custom_backend)
+          Hiera::Backend.send(:remove_const, :Other_backend) if Hiera::Backend.const_defined?(:Other_backend)
+        end
+        $LOAD_PATH.shift
       end
 
       before(:each) do
@@ -1600,19 +1568,8 @@ describe "The lookup function" do
       end
 
       around(:each) do |example|
-        # Faking the load path to enable 'require' to load from 'ruby_stuff'. It removes the need for a static fixture
-        # for the custom backend
-        $LOAD_PATH.unshift(populated_ruby_dir)
-        begin
-          Puppet.override(:environments => environments, :current_environment => env) do
-            example.run
-          end
-        ensure
-          if Kernel.const_defined?(:Hiera) && Hiera.const_defined?(:Backend)
-            Hiera::Backend.send(:remove_const, :Custom_backend) if Hiera::Backend.const_defined?(:Custom_backend)
-            Hiera::Backend.send(:remove_const, :Other_backend) if Hiera::Backend.const_defined?(:Other_backend)
-          end
-          $LOAD_PATH.shift
+        Puppet.override(:environments => environments, :current_environment => env) do
+          example.run
         end
       end
 
