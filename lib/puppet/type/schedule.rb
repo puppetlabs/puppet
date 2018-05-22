@@ -112,6 +112,11 @@ module Puppet
 
           self.fail _("Invalid range %{value}") % { value: value } if range.length != 2
 
+          # Fill out 0s for unspecified minutes and seconds
+          range.each do |time_array|
+            (3 - time_array.length).times { |_| time_array << 0 }
+          end
+
           # Make sure the hours are valid
           [range[0][0], range[1][0]].each do |n|
             raise ArgumentError, _("Invalid hour '%{n}'") % { n: n } if n < 0 or n > 23
@@ -127,100 +132,44 @@ module Puppet
         ret
       end
 
+      def weekday_match?(day)
+        if @resource[:weekday]
+          @resource[:weekday].has_key?(day)
+        else
+          true
+        end
+      end
+
       def match?(previous, now)
         # The lowest-level array is of the hour, minute, second triad
         # then it's an array of two of those, to present the limits
         # then it's an array of those ranges
         @value = [@value] unless @value[0][0].is_a?(Array)
+        @value.any? do |range|
+          limit_start = Time.local(now.year, now.month, now.day, *range[0])
+          limit_end = Time.local(now.year, now.month, now.day, *range[1])
 
-        @value.each do |value|
-          limits = value.collect do |range|
-            ary = [now.year, now.month, now.day, range[0]]
-            if range[1]
-              ary << range[1]
+          if limit_start < limit_end
+            # The whole range is in one day, simple case
+            now.between?(limit_start, limit_end) && weekday_match?(now.wday)
+          else
+            # The range spans days. We have to test against a range starting
+            # today, and a range that started yesterday.
+            today = Date.new(now.year, now.month, now.day)
+            tomorrow = today.next_day
+            yesterday = today.prev_day
+
+            # First check a range starting today
+            if now.between?(limit_start, Time.local(tomorrow.year, tomorrow.month, tomorrow.day, *range[1]))
+              weekday_match?(today.wday)
             else
-              ary << 0
+              # Then check a range starting yesterday
+              now.between?(Time.local(yesterday.year, yesterday.month, yesterday.day, *range[0]),
+                           limit_end) &&
+                weekday_match?(yesterday.wday)
             end
-
-            if range[2]
-              ary << range[2]
-            else
-              ary << 0
-            end
-
-            time = Time.local(*ary)
-
-            unless time.hour == range[0]
-              self.devfail(
-                _("Incorrectly converted time: %{time}: %{hour} vs %{value}") % { time: time, hour: time.hour, value: range[0] }
-              )
-            end
-
-            time
           end
-
-          unless limits[0] < limits[1]
-            self.info(
-            _("Assuming upper limit should be that time the next day")
-            )
-
-            # Find midnight between the two days. Adding one second
-            # to the end of the day is easier than dealing with dates.
-            ary = limits[0].to_a
-            ary[0] = 59
-            ary[1] = 59
-            ary[2] = 23
-            midnight = Time.local(*ary)+1
-
-            # If it is currently between the range start and midnight
-            # we consider that a successful match.
-            if now.between?(limits[0], midnight)
-              # We have to check the weekday match here as it is special-cased
-              # to support day-spanning ranges.
-              if @resource[:weekday]
-                return false unless @resource[:weekday].has_key?(now.wday)
-              end
-              return true
-            end
-
-            # If we didn't match between the starting time and midnight
-            # we must now move our midnight back 24 hours and try
-            # between the new midnight (24 hours prior) and the
-            # ending time.
-            midnight -= 86400
-
-            # Now we compare the current time between midnight and the
-            # end time.
-            if now.between?(midnight, limits[1])
-              # This case is the reason weekday matching is special cased
-              # in the range parameter. If we match a range that has spanned
-              # past midnight we want to match against the weekday when the range
-              # started, not when it currently is.
-              if @resource[:weekday]
-                return false unless @resource[:weekday].has_key?((now - 86400).wday)
-              end
-              return true
-            end
-
-            # If neither of the above matched then we don't match the
-            # range schedule.
-            return false
-          end
-
-          # Check to see if a weekday parameter was specified and, if so,
-          # do we match it or not. If we fail we can stop here.
-          # This is required because spanning ranges forces us to check
-          # weekday within the range parameter.
-          if @resource[:weekday]
-            return false unless @resource[:weekday].has_key?(now.wday)
-          end
-
-          return true if now.between?(*limits)
         end
-
-        # Else, return false, since our current time isn't between
-        # any valid times
-        false
       end
     end
 
