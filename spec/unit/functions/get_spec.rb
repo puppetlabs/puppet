@@ -8,14 +8,6 @@ describe 'the get function' do
   include Matchers::Resource
 
   context 'returns undef value' do
-    it 'when result is undef due to missing variable' do
-      expect( evaluate(source: "get('$x')")).to be_nil
-    end
-
-    it 'when result is undef due to resolved undef variable value' do
-      expect( evaluate(source: "$x = undef; get('$x')")).to be_nil
-    end
-
     it 'when result is undef due to given undef' do
       expect( evaluate(source: "get(undef, '')")).to be_nil
     end
@@ -42,14 +34,6 @@ describe 'the get function' do
   end
 
   context 'returns default value' do
-    it 'when result is undef due to missing variable' do
-      expect( evaluate(source: "get('$x', 'ok')")).to eql('ok')
-    end
-
-    it 'when result is undef due to resolved undef variable value' do
-      expect( evaluate(source: "$x = undef; get('$x', 'ok')")).to eql('ok')
-    end
-
     it 'when result is undef due to given undef' do
       expect( evaluate(source: "get(undef, '', 'ok')")).to eql('ok')
     end
@@ -75,17 +59,8 @@ describe 'the get function' do
     end
   end
 
-  it 'returns value of $variable if given single string' do
-    expect(evaluate(source: "$x = 'testing'; get('$x')")).to eql('testing')
-  end
-
-  it 'navigates into $variable if given dot syntax after variable name' do
-    expect(
-      evaluate(
-        variables: {'x'=> ['nope', ['ok']]},
-        source: "get('$x.1.0')"
-      )
-    ).to eql('ok')
+  it 'returns value if given empty navigation' do
+    expect(evaluate(source: "get('ok', '')")).to eql('ok')
   end
 
   it 'navigates into array as given by navigation string' do
@@ -106,53 +81,55 @@ describe 'the get function' do
 
   it 'can navigate a key with . when it is quoted' do
     expect(
-        evaluate(
-            variables: {'x'=> {'a.b' => ['nope', ['ok']]}},
-            source: "get('$x.\"a.b\".1.0')"
-        )
+      evaluate(
+        variables: {'x' => {'a.b' => ['nope', ['ok']]}},
+        source: "get($x, '\"a.b\".1.0')"
+      )
     ).to eql('ok')
   end
 
   it 'an error is raised when navigating with string key into an array' do
-    expect{ evaluate( source: "get(['nope', ['ok']], '1.blue')")}.to raise_error(/The given data requires an Integer index/)
+    expect {
+      evaluate(source: "get(['nope', ['ok']], '1.blue')")
+    }.to raise_error(/The given data requires an Integer index/)
   end
 
   it 'calls a given block with EXPECTED_INTEGER_INDEX if navigating into array with string' do
-    expect( evaluate(
-        source: "get(['nope', ['ok']], '1.blue') |$error| {
+    expect(evaluate(
+             source:
+               "get(['nope', ['ok']], '1.blue') |$error| {
                    if $error.issue_code =~ /^EXPECTED_INTEGER_INDEX$/ {'ok'} else { 'nope'}
-                 }"
-    )).to eql('ok')
+                }"
+           )).to eql('ok')
   end
 
   it 'calls a given block with EXPECTED_COLLECTION if navigating into something not Undef or Collection' do
-    expect( evaluate(
-                source: "get(['nope', /nah/], '1.blue') |$error| {
-                           if $error.issue_code =~ /^EXPECTED_COLLECTION$/ {'ok'} else { 'nope'}
-                         }"
-            )).to eql('ok')
+    expect(evaluate(
+             source:
+               "get(['nope', /nah/], '1.blue') |$error| {
+                  if $error.issue_code =~ /^EXPECTED_COLLECTION$/ {'ok'} else { 'nope'}
+               }"
+           )).to eql('ok')
   end
 
   context 'it does not pick the default value when undef is returned by error handling block' do
     it 'for "expected integer" case' do
-      expect( evaluate(
-                  source: "get(['nope', ['ok']], '1.blue', 'nope') |$msg| { undef }"
-              )).to be_nil
+      expect(evaluate(
+               source: "get(['nope', ['ok']], '1.blue', 'nope') |$msg| { undef }"
+             )).to be_nil
     end
 
     it 'for "expected collection" case' do
-      expect( evaluate(
-                  source: "get(['nope', /nah/], '1.blue') |$msg| { undef }"
-              )).to be_nil
+      expect(evaluate(
+               source: "get(['nope', /nah/], '1.blue') |$msg| { undef }"
+             )).to be_nil
     end
   end
 
   it 'does not call a given block if navigation string has syntax error' do
-    expect{ evaluate(
-                source: "get(['nope', /nah/], '1....') |$msg| {
-                           fail('so sad')
-                         }"
-            )}.to raise_error(/Syntax error/)
+    expect {
+      evaluate(source: "get(['nope', /nah/], '1....') |$msg| { fail('so sad') }")
+    }.to raise_error(/Syntax error/)
   end
 
 end

@@ -1,15 +1,4 @@
-# Digs into a variable or value with dot notation to get a value from a structure.
-#
-# **To get the value from a variable** (that may or may not exist), call the function with
-# one or two arguments:
-#
-# * The **first** argument must be a string, and must start with `$` followed by the name
-#   of the variable - for example `get('$facts')`. The variable name can be followed
-#   by a _dot notation navigation string_ to dig out a value in the array or hash value
-#   of the variable.
-# * The **optional second** argument can be any type of value and it is used as the
-#   _default value_ if the function would otherwise return `undef`.
-# * An **optional lambda** for error handling taking one `Error` argument.
+# Digs into a value with dot notation to get a value from within a structure.
 #
 # **To dig into a given value**, call the function with (at least) two arguments:
 #
@@ -29,28 +18,25 @@
 # a decimal number it is converted to an Integer index. This conversion
 # can be prevented by quoting the value.
 #
-# @example Getting the value of a variable
+# @example Navigating into a value
 # ```puppet
-# get('$facts') # results in the value of $facts
+# #get($facts, 'os.family')
+# $facts.get('os.family')
 # ```
-#
-# @example Navigating into a variable
-# ```puppet
-# get('$facts.os.family') # results in the value of $facts['os']['family']
-# ```
+# Would both result in the value of $facts['os']['family']
 #
 # @example Getting the value from an expression
 # ```puppet
-# get($facts, 'os.family') # results in the value of $facts['os']['family']
-# $facts.get('os.family')  # the same as above
-# get([1,2,[{'name' =>'waldo'}]], '2.0.name') # results in 'waldo'
+# get([1,2,[{'name' =>'waldo'}]], '2.0.name')
 # ```
+# Would result in 'waldo'
 #
 # @example Using a default value
 # ```puppet
 # get([1,2,[{'name' =>'waldo'}]], '2.1.name', 'not waldo')
-# # results in 'not waldo'
+#
 # ```
+# Would result in 'not waldo'
 #
 # @example Quoting a key with period
 # ```puppet
@@ -118,50 +104,20 @@
 # ```
 # Would notice `Walked path is [2, color]`
 #
-# Also see the `dig()` function which is similar but uses an
-# array of navigation values instead of a dot notation string.
+# Also see:
+# * `getvar()` that takes the first segment to be the name of a variable
+#   and then delegates to this function.
+# * `dig()` function which is similar but uses an
+#   array of navigation values instead of a dot notation string.
 #
 # @since 6.0.0
 #
 Puppet::Functions.create_function(:get, Puppet::Functions::InternalFunction) do
-  dispatch :get_from_navigation do
-    scope_param
-    param 'Pattern[/\A\$[a-z]/]', :get_string
-    optional_param 'Any', :default_value
-    optional_block_param 'Callable[1,1]', :block
-  end
-
   dispatch :get_from_value do
     param 'Any', :value
     param 'String', :dotted_string
     optional_param 'Any', :default_value
     optional_block_param 'Callable[1,1]', :block
-  end
-
-  # Gets a result from a navigation string starting with $var
-  #
-  def get_from_navigation(scope, navigation, default_value = nil)
-    # asserted to start with a valid variable name - dig out the variable
-    matches = navigation.match(/^(\$(::)?(\w+::)*\w+)(.*)\z/)
-    navigation = matches[4]
-    if navigation[0] == '.'
-      navigation = navigation[1..-1]
-    else
-      unless navigation.empty?
-        raise ArgumentError, _("First character after $var name in get string must be a '.' - got %{char}") % {char: navigation[0]}
-      end
-    end
-    get_from_var_name(scope, matches[1], navigation, default_value)
-  end
-
-  # Gets a result from a $var name and a navigation string
-  #
-  def get_from_var_name(scope, var_string, navigation, default_value = nil, &block)
-    catch(:undefined_variable) do
-      # skip the leading $ in var_string when looking up the var
-      return get_from_value(scope.lookupvar(var_string[1..-1]), navigation, default_value, &block)
-    end
-    default_value
   end
 
   # Gets a result from given value and a navigation string
@@ -178,18 +134,10 @@ Puppet::Functions.create_function(:get, Puppet::Functions::InternalFunction) do
       return result.nil? ? default_value : result
     rescue Puppet::ErrorWithData => e
       if block_given?
-        # TRANSLATORS, do not translate this string - it is an issue code
         yield(e.error_data)
       else
         raise e
       end
-    # rescue ArgumentError => e
-    #   if block_given?
-    #     # TRANSLATORS, do not translate this string - it is an issue code
-    #     yield('EXPECTED_COLLECTION')
-    #   else
-    #     raise e
-    #   end
     end
   end
   # reuse the split_key parser used also by lookup
