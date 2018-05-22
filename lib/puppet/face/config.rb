@@ -39,7 +39,7 @@ Puppet::Face.define(:config, '0.0.1') do
     description <<-'EOT'
       Prints the value of a single setting or a list of settings.
 
-      This action is an alternate interface to the information available with
+      This action is a replacement interface to the information available with
       `puppet <subcommand> --configprint`.
     EOT
     notes <<-'EOT'

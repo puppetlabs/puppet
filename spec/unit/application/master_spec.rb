@@ -124,20 +124,21 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
           @master.options.stubs(:[]).with(:setdest).returns false
         end
 
-        it "logs to the console when --compile is given" do
+        it "should log to the console when --compile is given" do
           @master.options.stubs(:[]).with(:node).returns "default"
           Puppet::Util::Log.expects(:newdestination).with(:console)
           @master.setup
         end
 
-        it "logs to the console when the master is not daemonized or run with rack" do
+        it "should log to the console when the master is not daemonized or run with rack" do
           Puppet::Util::Log.expects(:newdestination).with(:console)
           Puppet[:daemonize] = false
           @master.options.stubs(:[]).with(:rack).returns(false)
           @master.setup
         end
 
-        it "logs to syslog when the master is daemonized" do
+        it "should log to syslog when the master is daemonized" do
+
           Puppet::Util::Log.expects(:newdestination).with(:console).never
           Puppet::Util::Log.expects(:newdestination).with(:syslog)
           Puppet[:daemonize] = true
@@ -145,7 +146,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
           @master.setup
         end
 
-        it "logs to syslog when the master is run with rack" do
+        it "should log to syslog when the master is run with rack" do
           Puppet::Util::Log.expects(:newdestination).with(:console).never
           Puppet::Util::Log.expects(:newdestination).with(:syslog)
           Puppet[:daemonize] = false

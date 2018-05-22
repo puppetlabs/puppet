@@ -258,10 +258,10 @@ module Puppet
     },
     :configprint => {
         :default  => "",
-        :desc     => "Print the value of a specific configuration setting.  If the name of a
+        :desc     => "Prints the value of a specific configuration setting.  If the name of a
           setting is provided for this, then the value is printed and puppet
           exits.  Comma-separate multiple values.  For a list of all values,
-          specify 'all'.",
+          specify 'all'. This setting is deprecated, the 'puppet config' command replaces this functionality.",
     },
     :color => {
       :default => "ansi",
