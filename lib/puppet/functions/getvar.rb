@@ -45,9 +45,19 @@
 Puppet::Functions.create_function(:getvar, Puppet::Functions::InternalFunction) do
   dispatch :get_from_navigation do
     scope_param
-    param 'Pattern[/\A[a-z]/]', :get_string
+     param 'Pattern[/\A(?:::)?(?:[a-z]\w*::)*[a-z_]\w*(?:\.|\Z)/]', :get_string
     optional_param 'Any', :default_value
     optional_block_param 'Callable[1,1]', :block
+  end
+
+  argument_mismatch :invalid_variable_error do
+    param 'String', :get_string
+    optional_param 'Any', :default_value
+    optional_block_param 'Callable', :block
+  end
+
+  def invalid_variable_error(navigation, default_value=nil, &block)
+    _("The given string does not start with a valid variable name")
   end
 
   # Gets a result from a navigation string starting with $var
