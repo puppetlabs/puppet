@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-219-g288b038\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-229-g7a5db8d\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-05-21 21:18+0000\n"
-"PO-Revision-Date: 2018-05-21 21:18+0000\n"
+"POT-Creation-Date: 2018-05-23 20:38+0000\n"
+"PO-Revision-Date: 2018-05-23 20:38+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2198,8 +2198,12 @@ msgstr ""
 msgid "Invalid argument of type '%{value_class}' to 'defined'"
 msgstr ""
 
-#: ../lib/puppet/functions/dig.rb:41
-msgid "The given data does not contain a Collection at %{walked_path}, got '%{klass}'"
+#: ../lib/puppet/functions/dig.rb:42
+msgid "The given data does not contain a Collection at %{walked_path}, got '%{type}'"
+msgstr ""
+
+#: ../lib/puppet/functions/dig.rb:55
+msgid "The given data requires an Integer index at %{walked_path}, got '%{type}'"
 msgstr ""
 
 #: ../lib/puppet/functions/empty.rb:74
@@ -2222,6 +2226,18 @@ msgstr ""
 #. TRANSLATORS: 'floor' is a name and should not be translated
 #: ../lib/puppet/functions/floor.rb:33
 msgid "floor(): cannot convert given value to a floating point value."
+msgstr ""
+
+#: ../lib/puppet/functions/get.rb:134
+msgid "Syntax error in dotted-navigation string"
+msgstr ""
+
+#: ../lib/puppet/functions/getvar.rb:60
+msgid "The given string does not start with a valid variable name"
+msgstr ""
+
+#: ../lib/puppet/functions/getvar.rb:73
+msgid "First character after var name in get string must be a '.' - got %{char}"
 msgstr ""
 
 #: ../lib/puppet/functions/hiera_include.rb:101
