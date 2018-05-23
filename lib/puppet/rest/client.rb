@@ -38,8 +38,8 @@ module Puppet::Rest
       @dns_resolver = Puppet::Network::Resolver.new
     end
 
-    # Make a GET request to the specified URL with the specified params.
-    # @param [String] url the full path to query
+    # Make a GET request to the specified endpoint with the specified params.
+    # @param [String] endpoint the endpoint of the configured API to query
     # @param [Hash] query any URL params to add to send to the endpoint
     # @param [Hash] header any additional entries to add to the default header
     # @yields [String] chunks of the response body
@@ -66,6 +66,7 @@ module Puppet::Rest
       if ssl_certificates_are_present?(ca_path)
         ssl_config.verify_mode = OpenSSL::SSL::VERIFY_PEER
         ssl_config.add_trust_ca(ca_path)
+        ssl_config.verify_callback = Puppet::SSL::Validator::DefaultValidator.new(ca_path)
         ssl_config.set_client_cert_file(Puppet[:hostcert], Puppet[:hostprivkey])
       else
         ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE

@@ -765,6 +765,9 @@ describe Puppet::SSL::Host do
 
         localcacert = Puppet.settings[:localcacert]
         Puppet::Util.replace_file(localcacert, 0644) {|f| f.write @pki[:ca_bundle] }
+        Puppet::Util.replace_file(Puppet.settings[:hostcrl], 0644) do |f|
+          f.write @pki[:crl_chain]
+        end
       end
 
       after do
@@ -772,23 +775,7 @@ describe Puppet::SSL::Host do
         Puppet::FileSystem.unlink(Puppet.settings[:hostcrl])
       end
 
-      it "a second invocation of #ssl_store returns a store without CRL checking" do
-        Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).with('ca') {|ca|
-          # Mock out downloading a CRL
-          Puppet::Util.replace_file(Puppet.settings[:hostcrl], 0644) do |f|
-            f.write @pki[:crl_chain]
-          end
-
-          # If we were downloading the CRL we expect to be able to get a
-          # different ssl_store for that connection, one that does not have
-          # CRL checking enabled.
-          expect(@host.ssl_store.verify(@revoked_cert)).to be true
-        }.returns(true)
-
-        @host.crl_usage = true
-
-        # With the CRL chain "downloaded" the revoked cert should no
-        # longer be verified.
+      it "retrieves it from disk" do
         expect(@host.ssl_store.verify(@revoked_cert)).to be false
       end
     end

@@ -27,5 +27,15 @@ module Puppet::Rest
         body
       end
     end
+
+    def self.get_crls(client, name)
+      header = { 'Accept' => 'text/plain', 'accept-encoding' => ACCEPT_ENCODING }
+      body = ''
+      client.get("certificate_revocation_list/#{name}", header: header) do |chunk|
+        body << chunk
+      end
+      body
+    end
+
   end
 end
