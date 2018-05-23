@@ -125,10 +125,15 @@ Puppet::Functions.create_function(:get, Puppet::Functions::InternalFunction) do
   def get_from_value(value, navigation, default_value = nil, &block)
     return default_value if value.nil?
     return value if navigation.empty?
-    # split_key expects an initial key - which is not used in this context
-    # add a fake (x)  first and then throw it away
+
+    # Note: split_key always processes the initial segment as a string even if it could be an integer.
+    # This since it is designed for lookup keys. For a numeric first segment
+    # like '0.1' the wanted result is [0,1], not ["0", 1]. The workaround here is to
+    # prefix the navigation with "x." thus giving split_key a first segment that is a string.
+    # The fake segment is then dropped.
     segments = split_key("x." + navigation) {|err| _("Syntax error in dotted-navigation string")}
     segments.shift
+
     begin
       result = call_function('dig', value, *segments)
       return result.nil? ? default_value : result
