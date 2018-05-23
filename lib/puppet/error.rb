@@ -102,4 +102,16 @@ module Puppet
   class LockError < Puppet::Error
   end
 
+  # An Error suitable for raising an error with details in a Puppet::Datatypes::Error
+  # that can be used as a value in the Puppet Language
+  #
+  class ErrorWithData < Puppet::Error
+    include ExternalFileError
+    attr_reader :error_data
+
+    def initialize(error_data, message, file: nil, line: nil, pos: nil, original:nil)
+      super(message, file, line, pos, original)
+      @error_data = error_data
+    end
+  end
 end

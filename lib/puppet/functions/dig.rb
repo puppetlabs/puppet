@@ -38,9 +38,29 @@ Puppet::Functions.create_function(:dig) do
     args.reduce(data) do | d, k |
       return nil if d.nil? || k.nil?
       if !(d.is_a?(Array) || d.is_a?(Hash))
-        raise ArgumentError, _("The given data does not contain a Collection at %{walked_path}, got '%{klass}'") % { walked_path: walked_path, klass: d.class }
+        t = Puppet::Pops::Types::TypeCalculator.infer(d)
+        msg = _("The given data does not contain a Collection at %{walked_path}, got '%{type}'") % { walked_path: walked_path, type: t }
+        error_data = Puppet::DataTypes::Error.new(
+            msg,
+            'SLICE_ERROR',
+            {'walked_path' => walked_path, 'value_type' => t},
+            'EXPECTED_COLLECTION'
+        )
+        raise Puppet::ErrorWithData.new(error_data, msg)
       end
+
       walked_path << k
+      if d.is_a?(Array) && !k.is_a?(Integer)
+        t = Puppet::Pops::Types::TypeCalculator.infer(k)
+        msg = _("The given data requires an Integer index at %{walked_path}, got '%{type}'") % { walked_path: walked_path, type: t }
+        error_data = Puppet::DataTypes::Error.new(
+            msg,
+            'SLICE_ERROR',
+            {'walked_path' => walked_path, 'index_type' => t},
+            'EXPECTED_INTEGER_INDEX'
+        )
+        raise Puppet::ErrorWithData.new(error_data, msg)
+      end
       d[k]
     end
   end
