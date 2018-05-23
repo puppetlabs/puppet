@@ -72,10 +72,12 @@ describe 'the getvar function' do
     }.to raise_error(/The given data requires an Integer index/)
   end
 
-  it 'an error pointing out that varible is malformed is raised if not a valid variable first in the string' do
-    expect {
-      evaluate(source: "$x =['nope', ['ok']]; getvar('X.1.blue')")
-    }.to raise_error(/The given string does not start with a valid variable name/)
+  ['X', ':::x', 'x:::x', 'x-x', '_x::x', 'x::', '1'].each do |var_string|
+    it "an error pointing out that varible is invalid is raised for variable '#{var_string}'" do
+      expect {
+        evaluate(source: "getvar(\"#{var_string}.1.blue\")")
+      }.to raise_error(/The given string does not start with a valid variable name/)
+    end
   end
 
   it 'calls a given block with EXPECTED_INTEGER_INDEX if navigating into array with string' do
