@@ -192,7 +192,7 @@ describe 'The Task Type' do
 
           it "fails if metadata doesn't specify implementations" do
             compile do
-              expect { module_loader.load(:task, 'testmodule') }.to raise_error(ArgumentError, /Multiple executables were found .* without differentiating metadata/)
+              expect { module_loader.load(:task, 'testmodule') }.to raise_error(ArgumentError, /Multiple executables were found .*/)
             end
           end
 

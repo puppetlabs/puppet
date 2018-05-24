@@ -45,8 +45,7 @@ class TaskInstantiator
         raise ArgumentError, _('No source besides task metadata was found in directory %{directory} for task %{name}') %
           { name: name, directory: directory }
       elsif implementations.length > 1
-        # XXX This message sucks
-        raise ArgumentError, _("Multiple executables were found in directory %{directory} for task %{name}, without differentiating metadata") %
+        raise ArgumentError, _("Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them") %
           { name: name, directory: implementations[0] }
       end
 
