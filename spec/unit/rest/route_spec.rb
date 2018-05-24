@@ -3,46 +3,112 @@ require 'spec_helper'
 require 'puppet/rest/route'
 
 describe Puppet::Rest::Route do
-  context '#select_server_and_port' do
-    it 'returns the default server and port when provided' do
-      route = Puppet::Rest::Route.new(api: '/myapi/v1/',
-                                      default_server: 'puppet.example.com',
-                                      default_port: 90210)
-      route.select_server_and_port
-      expect(route.server).to eq('puppet.example.com')
-      expect(route.port).to eq(90210)
+  describe '#with_base_url'do
+    let(:route) { Puppet::Rest::Route.new(api: '/fakeapi/v1/',
+                                                default_server: 'testserver',
+                                                default_port: 555,
+                                                srv_service: :test_service) }
+    let(:dns_resolver) { stub_everything('dns resolver') }
+
+    context 'when not using SRV records' do
+      before :each do
+        Puppet.settings[:use_srv_records] = false
+      end
+
+      it "yields a base URL with the default server and port when they are specified" do
+        count = 0
+        rval = route.with_base_url(dns_resolver) do |url|
+          count += 1
+          expect(url.to_s).to eq('https://testserver:555/fakeapi/v1/')
+          'Block return value'
+        end
+        expect(count).to eq(1)
+        expect(rval).to eq('Block return value')
+      end
+
+      it "yields a base URL with Puppet's configured server and port when no defaults are specified" do
+        Puppet[:server] = 'configured.net'
+        Puppet[:masterport] = 8140
+        fallback_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/',
+                                                 default_server: nil,
+                                                 default_port: nil,
+                                                 srv_service: nil)
+        count = 0
+        rval = fallback_route.with_base_url(dns_resolver) do |url|
+          count += 1
+          expect(url.to_s).to eq('https://configured.net:8140/fakeapi/v1/')
+          'Block return value'
+        end
+        expect(count).to eq(1)
+        expect(rval).to eq('Block return value')
+      end
+
+      it 'yields the first entry in the server list when server_list is in use' do
+        Puppet[:server_list] = [['one.net', 111], ['two.net', 222]]
+        fallback_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/',
+                                                 default_server: nil,
+                                                 default_port: nil,
+                                                 srv_service: nil)
+        count = 0
+        rval = fallback_route.with_base_url(dns_resolver) do |url|
+          count += 1
+          expect(url.to_s).to eq('https://one.net:111/fakeapi/v1/')
+          'Block return value'
+        end
+        expect(count).to eq(1)
+        expect(rval).to eq('Block return value')
+      end
     end
 
-    it 'caches the result' do
-      route = Puppet::Rest::Route.new(api: '/myapi/v1/',
-                                      default_server: 'puppet.example.com',
-                                      default_port: 90210)
-      route.expects(:default_server)
-      route.select_server_and_port
-      # just return the values in @server and @port without looking
-      # at @default_server
-      route.expects(:default_server).never
-      route.select_server_and_port
-    end
+    context 'when using SRV records' do
+      context "when SRV returns servers" do
+        before :each do
+          Puppet.settings[:use_srv_records] = true
+          Puppet.settings[:srv_domain]      = 'example.com'
 
-    it 'looks up the server and port when defaults are nil' do
-      route = Puppet::Rest::Route.new(api: '/myapi/v1/',
-                                      default_server: nil,
-                                      default_port: nil)
-      Puppet.push_context({ :server => 'puppet.example.com' })
-      Puppet.push_context({ :serverport => 90210 })
-      server, port = route.select_server_and_port
-      expect(server).to eq('puppet.example.com')
-      expect(port).to eq(90210)
-    end
-  end
+          @dns_mock = mock('dns')
+          Resolv::DNS.expects(:new).returns(@dns_mock)
 
-  context '#uri' do
-    it 'returns a URI object based on the provided data' do
-      route = Puppet::Rest::Route.new(api: '/myapi/v1/',
-                                      default_server: 'puppet.example.com',
-                                      default_port: 90210)
-      expect(route.uri.to_s).to eq('https://puppet.example.com:90210/myapi/v1/')
+          @port = 7502
+          @target = 'example.com'
+          record = Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @target)
+          record.instance_variable_set(:@ttl, 10)
+          @srv_records = [record]
+
+          @dns_mock.expects(:getresources).
+            with("_x-puppet._tcp.test_service", Resolv::DNS::Resource::IN::SRV).
+            returns(@srv_records)
+        end
+
+        it "yields a URL using the server and port from the SRV record" do
+          count = 0
+          rval = route.with_base_url(Puppet::Network::Resolver.new) do |url|
+            count += 1
+            expect(url.to_s).to eq('https://example.com:7502/fakeapi/v1/')
+            'Block return value'
+          end
+          expect(count).to eq(1)
+
+          expect(rval).to eq('Block return value')
+        end
+
+        it "should fall back to the default server when the block raises a SystemCallError" do
+          count = 0
+          rval = route.with_base_url(Puppet::Network::Resolver.new) do |url|
+            count += 1
+            if url.to_s =~ /example.com/ then
+              raise SystemCallError, "example failure"
+            else
+              expect(url.to_s).to eq('https://testserver:555/fakeapi/v1/')
+            end
+
+            'Block return value'
+          end
+
+          expect(count).to eq(2)
+          expect(rval).to eq('Block return value')
+        end
+      end
     end
   end
 end

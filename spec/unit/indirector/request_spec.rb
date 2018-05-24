@@ -446,8 +446,10 @@ describe Puppet::Indirector::Request do
           Resolv::DNS.expects(:new).returns(@dns_mock)
 
           @port = 7205
-          @host = '_x-puppet._tcp.example.com'
-          @srv_records = [Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @host)]
+          @target = 'example.com'
+          record = Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @target)
+          record.instance_variable_set(:@ttl, 10)
+          @srv_records = [record]
 
           @dns_mock.expects(:getresources).
             with("_x-puppet._tcp.#{Puppet.settings[:srv_domain]}", Resolv::DNS::Resource::IN::SRV).
@@ -458,7 +460,7 @@ describe Puppet::Indirector::Request do
           count = 0
           rval = @request.do_request do |got|
             count += 1
-            expect(got.server).to eq('_x-puppet._tcp.example.com')
+            expect(got.server).to eq('example.com')
             expect(got.port).to eq(7205)
 
             @block_return
@@ -475,7 +477,7 @@ describe Puppet::Indirector::Request do
           rval = @request.do_request(:puppet, 'puppet', 8140) do |got|
             count += 1
 
-            if got.server == '_x-puppet._tcp.example.com' then
+            if got.server == 'example.com' then
               raise SystemCallError, "example failure"
             else
               second_pass = got

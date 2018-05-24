@@ -1,30 +1,12 @@
 require 'spec_helper'
 
 require 'puppet/rest/client'
-require 'puppet/rest/route'
 
 describe Puppet::Rest::Client do
   context 'when creating a new client' do
-    let(:route) { Puppet::Rest::Route.new(api: '/fake_api/v1/',
-                                          default_server: 'myserver.com',
-                                          default_port: 555) }
     let(:ssl_store) { mock('store') }
     let(:ssl_config) { stub_everything('ssl config') }
     let(:http) { stub_everything('http', :ssl_config => ssl_config) }
-
-    before(:each) do
-      route.stubs(:select_server_and_port).returns(['myserver.com', 555])
-    end
-
-    it 'configures a base URL based on the provided route' do
-      url = 'https://myserver.com:555/fake_api/v1/'
-      http.expects(:base_url=).with() do |arg|
-        arg.to_s == url
-      end
-      Puppet::Rest::Client.new(route,
-                               client: http,
-                               ssl_store: ssl_store)
-    end
 
     it 'initializes itself with basic defaults' do
       HTTPClient.expects(:new).returns(http)
@@ -44,48 +26,41 @@ describe Puppet::Rest::Client do
       Puppet[:hostcert] = '/fake/cert/path'
       ssl_config.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
-      Puppet::Rest::Client.new(route)
+      Puppet::Rest::Client.new
     end
 
     it 'uses a given client and SSL store when provided' do
       ssl_config.expects(:cert_store=).with(ssl_store)
-      Puppet::Rest::Client.new(route, client: http, ssl_store: ssl_store)
+      Puppet::Rest::Client.new(client: http, ssl_store: ssl_store)
     end
 
     it 'configures a receive timeout when provided' do
       http.expects(:receive_timeout=).with(10)
-      Puppet::Rest::Client.new(route, client: http, receive_timeout: 10)
+      Puppet::Rest::Client.new(client: http, receive_timeout: 10)
     end
   end
 
   context 'when making requests' do
-    let(:route) { Puppet::Rest::Route.new(api: '/fake_api/v1',
-                                          default_server: 'myserver.com',
-                                          default_port: 555) }
     let(:ssl_config) { stub_everything('ssl config') }
     let(:http) { stub_everything('http', :ssl_config => ssl_config) }
-    let(:client) { Puppet::Rest::Client.new(route, client: http) }
-    let(:endpoint) { '/data' }
-
-    before(:each) do
-      route.stubs(:select_server_and_port).returns('myserver.com', 555)
-    end
+    let(:client) { Puppet::Rest::Client.new(client: http) }
+    let(:url) { 'https://myserver.com:555/data' }
 
     it 'makes a GET request given a URL, query hash, header hash, and streaming block' do
       query = { 'environment' => 'production' }
       header = { 'Accept' => 'text/plain' }
       response_string = ''
       chunk_processing = lambda { |chunk| response_string = chunk }
-      http.expects(:get_content).with(endpoint, { query: query, header: header }).yields('response')
-      client.get(endpoint, query: query, header: header, &chunk_processing)
+      http.expects(:get_content).with(url, { query: query, header: header }).yields('response')
+      client.get(url, query: query, header: header, &chunk_processing)
       expect(response_string).to eq('response')
     end
 
     it 'throws an exception when the request is not OK' do
       fake_response = mock('resp', :status => HTTP::Status::BAD_REQUEST)
-      http.expects(:get_content).with(endpoint, query: nil, header: nil)
+      http.expects(:get_content).with(url, query: nil, header: nil)
           .raises(HTTPClient::BadResponseError.new('failed request', fake_response))
-      expect { client.get(endpoint) }.to raise_error do |error|
+      expect { client.get(url) }.to raise_error do |error|
         expect(error.message).to eq('failed request')
         expect(error.response).to be_a(Puppet::Rest::Response)
         expect(error.response.status_code).to eq(400)
