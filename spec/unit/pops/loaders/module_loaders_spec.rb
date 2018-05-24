@@ -104,7 +104,19 @@ describe 'FileBased module loader' do
 
       task = module_loader.load_typed(typed_name(:task, 'testmodule::foo')).value
       expect(task.name).to eq('testmodule::foo')
-      expect(File.basename(task.executable)).to eq('foo.py')
+      expect(task.implementations.length).to eq(1)
+      expect(task.implementations[0]['name']).to eq('foo.py')
+    end
+
+    it 'can load tasks with multiple implementations' do
+      metadata = { 'implementations' => [{'name' => 'foo.py'}, {'name' => 'foo.ps1'}] }
+      module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '', 'foo.ps1' => '', 'foo.json' => metadata.to_json})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+
+      task = module_loader.load_typed(typed_name(:task, 'testmodule::foo')).value
+      expect(task.name).to eq('testmodule::foo')
+      expect(task.implementations.map {|impl| impl['name']}).to eq(['foo.py', 'foo.ps1'])
     end
 
     it 'can load multiple tasks with multiple files' do
@@ -116,9 +128,11 @@ describe 'FileBased module loader' do
       foobar_task = module_loader.load_typed(typed_name(:task, 'testmodule::foobar')).value
 
       expect(foo_task.name).to eq('testmodule::foo')
-      expect(File.basename(foo_task.executable)).to eq('foo.py')
+      expect(foo_task.implementations.length).to eq(1)
+      expect(foo_task.implementations[0]['name']).to eq('foo.py')
       expect(foobar_task.name).to eq('testmodule::foobar')
-      expect(File.basename(foobar_task.executable)).to eq('foobar.py')
+      expect(foobar_task.implementations.length).to eq(1)
+      expect(foobar_task.implementations[0]['name']).to eq('foobar.py')
     end
 
     it "won't load tasks with invalid names" do
@@ -130,6 +144,24 @@ describe 'FileBased module loader' do
       expect(tasks).to be_empty
 
       expect(module_loader.load_typed(typed_name(:task, 'testmodule::foo'))).to be_nil
+    end
+
+    it "lists tasks without executables, if they specify implementations" do
+      module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '',
+                                                            'bar.rb' => '',
+                                                            'baz.json' => {'implementations' => ['name' => 'foo.py']}.to_json,
+                                                            'qux.json' => '{}'})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+
+      tasks = module_loader.discover(:task)
+      expect(tasks.length).to eq(3)
+      expect(tasks.map(&:name).sort).to eq(['testmodule::bar', 'testmodule::baz', 'testmodule::foo'])
+
+      expect(module_loader.load_typed(typed_name(:task, 'testmodule::foo'))).not_to be_nil
+      expect(module_loader.load_typed(typed_name(:task, 'testmodule::bar'))).not_to be_nil
+      expect(module_loader.load_typed(typed_name(:task, 'testmodule::baz'))).not_to be_nil
+      expect { module_loader.load_typed(typed_name(:task, 'testmodule::qux')) }.to raise_error(/No source besides task metadata was found/)
     end
   end
 

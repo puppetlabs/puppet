@@ -291,13 +291,12 @@ module ModuleLoaders
       raise NotImplementedError.new
     end
 
-    # Abstract method that subclasses override to return an array of paths that match the resolved path regardless of
-    # path extension.
+    # Abstract method that subclasses override to return an array of paths that may be associated with the resolved path.
     #
     # @param resolved_path [String] a path, without extension, resolved by a smart path against the loader's root (if it has one)
     # @return [Array<String>]
     #
-    def existing_paths(resolved_path)
+    def candidate_paths(resolved_path)
       raise NotImplementedError.new
     end
 
@@ -386,9 +385,9 @@ module ModuleLoaders
         next unless sp.valid_name?(typed_name)
         origin = sp.effective_path(typed_name, is_global ? 0 : 1)
         unless origin.nil?
-          if sp.match_many?
-            # Find all paths that starts with origin
-            origins = existing_paths(origin)
+          if sp.fuzzy_matching?
+            # Find all paths that might be related to origin
+            origins = candidate_paths(origin)
             return [origins, sp] unless origins.empty?
           else
             existing = existing_path(origin)
@@ -424,13 +423,19 @@ module ModuleLoaders
       @path_index.include?(effective_path) ? effective_path : nil
     end
 
-    def existing_paths(effective_path)
+    def candidate_paths(effective_path)
+      basename = File.basename(effective_path, '.*')
       dirname = File.dirname(effective_path)
-      basename = File.basename(effective_path)
-      # Select all paths matching `effective_path` up until an optional file extension
-      @path_index.select do |path|
-        File.basename(path, '.*') == basename &&
-          File.dirname(path) == dirname
+
+      files = @path_index.select do |path|
+        File.dirname(path) == dirname
+      end
+
+      # At least one file has to match what we're loading, or it certainly doesn't exist
+      if files.any? { |file| File.basename(file, '.*') == basename }
+        files
+      else
+        []
       end
     end
 

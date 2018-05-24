@@ -45,6 +45,8 @@ describe 'The Task Type' do
         { 'testmodule' => testmodule }
       end
 
+      let(:module_loader) { Puppet.lookup(:loaders).find_loader('testmodule') }
+
       def compile(code = nil)
         Puppet[:code] = code
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
@@ -71,7 +73,6 @@ describe 'The Task Type' do
 
         it 'loads task without metadata as a generic Task' do
           compile do
-            module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
             task = module_loader.load(:task, 'testmodule::hello')
             expect(task_t.instance?(task)).to be_truthy
             expect(task.name).to eq('testmodule::hello')
@@ -84,7 +85,6 @@ describe 'The Task Type' do
 
           it 'evaluator does not recognize generic tasks' do
             compile do
-              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               expect(module_loader.load(:task, 'testmodule::hello')).to be_nil
             end
           end
@@ -139,14 +139,13 @@ describe 'The Task Type' do
 
         it 'loads a task with parameters' do
           compile do
-            module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
             task = module_loader.load(:task, 'testmodule::hello')
             expect(task_t.instance?(task)).to be_truthy
             expect(task.name).to eq('testmodule::hello')
             expect(task._pcore_type).to eq(task_t)
             expect(task.supports_noop).to eql(true)
             expect(task.puppet_task_version).to eql(1)
-            expect(task.executable).to eql("#{modules_dir}/testmodule/tasks/hello.rb")
+            expect(task.implementations).to eql([{"name" => "hello.rb", "path" => "#{modules_dir}/testmodule/tasks/hello.rb", "requirements" => []}])
 
             tp = task.parameters
             expect(tp['message']['description']).to eql('the message')
@@ -156,11 +155,151 @@ describe 'The Task Type' do
 
         it 'loads a task with non-Data parameter' do
           compile do
-            module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
             task = module_loader.load(:task, 'testmodule::non_data')
             expect(task_t.instance?(task)).to be_truthy
             tp = task.parameters
             expect(tp['arg']['type']).to be_a(Puppet::Pops::Types::PHashType)
+          end
+        end
+
+        context 'without an implementation file' do
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'init.json' => '{}'
+              }
+            }
+          }
+
+          it 'fails to load the task' do
+            compile do
+              expect { module_loader.load(:task, 'testmodule') }.to raise_error(ArgumentError, /No source besides task metadata was found/)
+            end
+          end
+        end
+
+        context 'with multiple implementation files' do
+          let(:metadata) { '{}' }
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'init.sh' => '',
+                'init.ps1' => '',
+                'init.json' => metadata,
+              }
+            }
+          }
+
+          it "fails if metadata doesn't specify implementations" do
+            compile do
+              expect { module_loader.load(:task, 'testmodule') }.to raise_error(ArgumentError, /Multiple executables were found .*/)
+            end
+          end
+
+          it "returns the implementations if metadata lists them all" do
+            impls = [{'name' => 'init.sh', 'requirements' => ['shell']},
+                     {'name' => 'init.ps1', 'requirements' => ['powershell']}]
+            metadata.replace({'implementations' => impls}.to_json)
+
+            compile do
+              task = module_loader.load(:task, 'testmodule')
+              expect(task_t.instance?(task)).to be_truthy
+              expect(task.implementations).to eql([
+                {"name" => "init.sh", "path" => "#{modules_dir}/testmodule/tasks/init.sh", "requirements" => ['shell']},
+                {"name" => "init.ps1", "path" => "#{modules_dir}/testmodule/tasks/init.ps1", "requirements" => ['powershell']}
+              ])
+            end
+          end
+
+          it "returns a single implementation if metadata only specifies one implementation" do
+            impls = [{'name' => 'init.ps1', 'requirements' => ['powershell']}]
+            metadata.replace({'implementations' => impls}.to_json)
+
+            compile do
+              task = module_loader.load(:task, 'testmodule')
+              expect(task_t.instance?(task)).to be_truthy
+              expect(task.implementations).to eql([
+                {"name" => "init.ps1", "path" => "#{modules_dir}/testmodule/tasks/init.ps1", "requirements" => ['powershell']}
+              ])
+            end
+          end
+
+          it "adds an empty requirements list if one is not specified" do
+            impls = [{'name' => 'init.ps1'}]
+            metadata.replace({'implementations' => impls}.to_json)
+
+            compile do
+              task = module_loader.load(:task, 'testmodule')
+              expect(task_t.instance?(task)).to be_truthy
+              expect(task.implementations).to eql([
+                {"name" => "init.ps1", "path" => "#{modules_dir}/testmodule/tasks/init.ps1", "requirements" => []}
+              ])
+            end
+          end
+
+          it "fails if a specified implementation doesn't exist" do
+            impls = [{'name' => 'init.sh', 'requirements' => ['shell']},
+                     {'name' => 'init.ps1', 'requirements' => ['powershell']},
+                     {'name' => 'init.rb', 'requirements' => ['puppet-agent']}]
+            metadata.replace({'implementations' => impls}.to_json)
+
+            compile do
+              expect { module_loader.load(:task, 'testmodule') }.to raise_error(ArgumentError, /Task metadata for task testmodule specifies missing implementation init\.rb/)
+            end
+          end
+
+          it "fails if the implementations key isn't an array" do
+            metadata.replace({'implementations' => {'init.rb' => []}}.to_json)
+
+            compile do
+              expect { module_loader.load(:task, 'testmodule') }.to raise_error(Puppet::ParseError, /Task initializer has wrong type/)
+            end
+          end
+        end
+
+        context 'with multiple tasks sharing executables' do
+          let(:foo_metadata) { '{}' }
+          let(:bar_metadata) { '{}' }
+          let(:testmodule) {
+            {
+              'tasks' => {
+                'foo.sh' => '',
+                'foo.ps1' => '',
+                'foo.json' => foo_metadata,
+                'bar.json' => bar_metadata,
+                'baz.json' => bar_metadata,
+              }
+            }
+          }
+
+          it 'loads a task that uses executables named after another task' do
+            metadata = {
+              implementations: [
+                {name: 'foo.sh', requirements: ['shell']},
+                {name: 'foo.ps1', requirements: ['powershell']},
+              ]
+            }
+            bar_metadata.replace(metadata.to_json)
+
+            compile do
+              task = module_loader.load(:task, 'testmodule::bar')
+              expect(task.implementations).to eql([
+                {'name' => 'foo.sh', 'path' => "#{modules_dir}/testmodule/tasks/foo.sh", 'requirements' => ['shell']},
+                {'name' => 'foo.ps1', 'path' => "#{modules_dir}/testmodule/tasks/foo.ps1", 'requirements' => ['powershell']},
+              ])
+            end
+          end
+
+          it 'fails to load the task if it has no implementations section and no associated executables' do
+            compile do
+              expect { module_loader.load(:task, 'testmodule::bar') }.to raise_error(ArgumentError, /No source besides task metadata was found/)
+            end
+          end
+
+          it 'fails to load the task if it has no files at all' do
+            compile do
+              expect(module_loader.load(:task, 'testmodule::qux')).to be_nil
+            end
           end
         end
 
@@ -184,12 +323,11 @@ describe 'The Task Type' do
             }
           }
 
-          it 'loads the init task with parameters and executable' do
+          it 'loads the init task with parameters and implementations' do
             compile do
-              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               task = module_loader.load(:task, 'testmodule')
               expect(task_t.instance?(task)).to be_truthy
-              expect(task.executable).to eql("#{modules_dir}/testmodule/tasks/init.sh")
+              expect(task.implementations).to eql([{"name" => "init.sh", "path" => "#{modules_dir}/testmodule/tasks/init.sh", "requirements" => []}])
               expect(task.parameters).to be_a(Hash)
               expect(task.parameters['message']['type']).to be_a(Puppet::Pops::Types::PStringType)
             end
@@ -216,12 +354,11 @@ describe 'The Task Type' do
             }
           }
 
-          it 'loads a named task with parameters and executable' do
+          it 'loads a named task with parameters and implementations' do
             compile do
-              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               task = module_loader.load(:task, 'testmodule::hello')
               expect(task_t.instance?(task)).to be_truthy
-              expect(task.executable).to eql("#{modules_dir}/testmodule/tasks/hello.sh")
+              expect(task.implementations).to eql([{"name" => "hello.sh", "path" => "#{modules_dir}/testmodule/tasks/hello.sh", "requirements" => []}])
               expect(task.parameters).to be_a(Hash)
               expect(task.parameters['message']['type']).to be_a(Puppet::Pops::Types::PStringType)
             end
@@ -241,7 +378,6 @@ describe 'The Task Type' do
 
           it 'task is not found' do
             compile do
-              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               expect(module_loader.load(:task, 'testmodule::hello::foo')).to be_nil
             end
           end
@@ -266,7 +402,6 @@ describe 'The Task Type' do
 
           it 'fails with unrecognized key error' do
             compile do
-              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               expect{module_loader.load(:task, 'testmodule::hello')}.to raise_error(
                 /Failed to load metadata for task testmodule::hello:.*unrecognized key 'supports_nop'/)
             end
@@ -284,7 +419,6 @@ describe 'The Task Type' do
 
           it 'loads the task with parameters set to undef' do
             compile do
-              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               task = module_loader.load(:task, 'testmodule::hello')
               expect(task_t.instance?(task)).to be_truthy
               expect(task.parameters).to be_nil
@@ -311,7 +445,6 @@ describe 'The Task Type' do
 
           it 'fails with pattern mismatch error' do
             compile do
-              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               expect{module_loader.load(:task, 'testmodule::hello')}.to raise_error(
                 /entry 'parameters' key of entry 'Message' expects a match for Pattern\[\/\\A\[a-z\]\[a-z0-9_\]\*\\z\/\], got 'Message'/)
             end
@@ -338,7 +471,6 @@ describe 'The Task Type' do
 
           it 'fails with type mismatch error' do
             compile do
-              module_loader = Puppet.lookup(:loaders).find_loader('testmodule')
               expect{module_loader.load(:task, 'testmodule::hello')}.to raise_error(
                 /entry 'puppet_task_version' expects an Integer value, got String/)
             end
