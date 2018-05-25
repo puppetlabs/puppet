@@ -41,8 +41,12 @@ describe provider_class do
     Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
     provider_class.stubs(:which).with("rpm").returns("/bin/rpm")
     provider_class.instance_variable_set("@current_version", nil)
-    Puppet::Type::Package::ProviderRpm.expects(:execute).with(["/bin/rpm", "--version"]).returns(rpm_version).at_most_once
-    Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], execute_options).returns(rpm_version).at_most_once
+    Puppet::Type::Package::ProviderRpm.expects(:execute)
+      .with(["/bin/rpm", "--version"])
+      .returns(rpm_version).at_most_once
+    Puppet::Util::Execution.expects(:execute)
+      .with(["/bin/rpm", "--version"], execute_options)
+      .returns(Puppet::Util::Execution::ProcessOutput.new(rpm_version, 0)).at_most_once
   end
 
   describe 'provider features' do
@@ -203,7 +207,9 @@ describe provider_class do
   describe "#latest" do
     it "retrieves version string after querying rpm for version from source file" do
       resource.expects(:[]).with(:source).returns('source-string')
-      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "--qf", "'#{nevra_format}'", "-p", "source-string"]).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+      Puppet::Util::Execution.expects(:execute)
+        .with(["/bin/rpm", "-q", "--qf", "'#{nevra_format}'", "-p", "source-string"])
+        .returns(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
       expect(provider.latest).to eq("1.2.3.4-5.el4")
     end
 
@@ -227,33 +233,43 @@ describe provider_class do
 
     describe "on a modern RPM" do
       before(:each) do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "myresource", '--nosignature', '--nodigest', "--qf", "'#{nevra_format}'"], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+        Puppet::Util::Execution.expects(:execute)
+          .with(["/bin/rpm", "-q", "myresource", '--nosignature', '--nodigest', "--qf", "'#{nevra_format}'"], execute_options)
+          .returns(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
       end
 
       let(:rpm_version) { "RPM version 4.10.0\n" }
 
       it "includes the architecture in the package name" do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", ["-e"], 'myresource-1.2.3.4-5.el4.noarch'], execute_options).returns('').at_most_once
+        Puppet::Util::Execution.expects(:execute)
+          .with(["/bin/rpm", ["-e"], 'myresource-1.2.3.4-5.el4.noarch'], execute_options)
+          .returns(Puppet::Util::Execution::ProcessOutput.new('', 0)).at_most_once
         provider.uninstall
       end
     end
 
     describe "on an ancient RPM" do
       before(:each) do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "myresource", '', '', '--qf', "'#{nevra_format}'"], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+        Puppet::Util::Execution.expects(:execute)
+          .with(["/bin/rpm", "-q", "myresource", '', '', '--qf', "'#{nevra_format}'"], execute_options)
+          .returns(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
       end
 
       let(:rpm_version) { "RPM version 3.0.6\n" }
 
       it "excludes the architecture from the package name" do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", ["-e"], 'myresource-1.2.3.4-5.el4'], execute_options).returns('').at_most_once
+        Puppet::Util::Execution.expects(:execute)
+          .with(["/bin/rpm", ["-e"], 'myresource-1.2.3.4-5.el4'], execute_options)
+          .returns(Puppet::Util::Execution::ProcessOutput.new('', 0)).at_most_once
         provider.uninstall
       end
     end
 
     describe "when uninstalled with options" do
       before(:each) do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "myresource", '--nosignature', '--nodigest', "--qf", "'#{nevra_format}'"], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+        Puppet::Util::Execution.expects(:execute)
+          .with(["/bin/rpm", "-q", "myresource", '--nosignature', '--nodigest', "--qf", "'#{nevra_format}'"], execute_options)
+          .returns(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
       end
 
       let(:resource) do
@@ -275,7 +291,9 @@ describe provider_class do
   describe "parsing" do
     def parser_test(rpm_output_string, gold_hash, number_of_debug_logs = 0)
       Puppet.expects(:debug).times(number_of_debug_logs)
-      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", "'#{nevra_format}'"], execute_options).returns(rpm_output_string)
+      Puppet::Util::Execution.expects(:execute)
+        .with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", "'#{nevra_format}'"], execute_options)
+        .returns(Puppet::Util::Execution::ProcessOutput.new(rpm_output_string, 0))
       expect(provider.query).to eq(gold_hash)
     end
 
@@ -336,7 +354,9 @@ describe provider_class do
       provider.resource[:allow_virtual] = true
       expected_args = ["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", "'#{nevra_format}'"]
       Puppet::Util::Execution.expects(:execute).with(expected_args, execute_options).raises Puppet::ExecutionFailure.new("package #{resource_name} is not installed")
-      Puppet::Util::Execution.expects(:execute).with(expected_args + ["--whatprovides"], execute_options).returns "myresource 0 1.2.3.4 5.el4 noarch\n"
+      Puppet::Util::Execution.expects(:execute)
+        .with(expected_args + ["--whatprovides"], execute_options)
+        .returns(Puppet::Util::Execution::ProcessOutput.new("myresource 0 1.2.3.4 5.el4 noarch\n", 0))
       expect(provider.query).to eq({
         :name     => "myresource",
         :epoch    => "0",

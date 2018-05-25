@@ -4,12 +4,16 @@ require 'puppet/util/diff'
 require 'puppet/util/execution'
 
 describe Puppet::Util::Diff do
+  let(:baz_output) { Puppet::Util::Execution::ProcessOutput.new('baz', 0) }
+
   describe ".diff" do
     it "should execute the diff command with arguments" do
       Puppet[:diff] = 'foo'
       Puppet[:diff_args] = 'bar'
 
-      Puppet::Util::Execution.expects(:execute).with(['foo', 'bar', 'a', 'b'], {:failonfail => false, :combine => false}).returns('baz')
+      Puppet::Util::Execution.expects(:execute)
+        .with(['foo', 'bar', 'a', 'b'], {:failonfail => false, :combine => false})
+        .returns(baz_output)
       expect(subject.diff('a', 'b')).to eq('baz')
     end
 
@@ -17,7 +21,9 @@ describe Puppet::Util::Diff do
       Puppet[:diff] = 'foo'
       Puppet[:diff_args] = 'bar qux'
 
-      Puppet::Util::Execution.expects(:execute).with(['foo', 'bar', 'qux', 'a', 'b'], anything).returns('baz')
+      Puppet::Util::Execution.expects(:execute)
+        .with(['foo', 'bar', 'qux', 'a', 'b'], anything)
+        .returns(baz_output)
       expect(subject.diff('a', 'b')).to eq('baz')
     end
 
@@ -25,7 +31,9 @@ describe Puppet::Util::Diff do
       Puppet[:diff] = 'foo'
       Puppet[:diff_args] = ''
 
-      Puppet::Util::Execution.expects(:execute).with(['foo', 'a', 'b'], {:failonfail => false, :combine => false}).returns('baz')
+      Puppet::Util::Execution.expects(:execute)
+        .with(['foo', 'a', 'b'], {:failonfail => false, :combine => false})
+        .returns(baz_output)
       expect(subject.diff('a', 'b')).to eq('baz')
     end
 
