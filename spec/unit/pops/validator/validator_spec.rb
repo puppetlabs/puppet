@@ -34,7 +34,7 @@ describe "validating 4x" do
     expect(validate(parse('function ::aaa() {}'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
   end
 
-  it 'should raise error for illegal class locations' do
+  it 'should raise error for illegal definition locations' do
     expect(validate(parse('function aaa::ccc() {}', 'aaa/manifests/bbb.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
     expect(validate(parse('class bbb() {}', 'aaa/manifests/init.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
     expect(validate(parse('define aaa::bbb::ccc::eee() {}', 'aaa/manifests/bbb/ddd.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
@@ -224,6 +224,18 @@ describe "validating 4x" do
 
   context 'with --tasks set' do
     before(:each) { Puppet[:tasks] = true }
+
+    it 'raises an error for illegal plan names' do
+      expect(validate(parse('plan aaa::ccc::eee() {}', 'aaa/plans/bbb/ccc/eee.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+      expect(validate(parse('plan aaa() {}', 'aaa/plans/aaa.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+      expect(validate(parse('plan aaa::bbb() {}', 'aaa/plans/bbb/bbb.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    end
+
+    it 'accepts legal plan names' do
+      expect(validate(parse('plan aaa::ccc::eee() {}', 'aaa/plans/ccc/eee.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+      expect(validate(parse('plan aaa() {}', 'aaa/plans/init.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+      expect(validate(parse('plan aaa::bbb() {}', 'aaa/plans/bbb.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    end
 
     it 'produces an error for application' do
       acceptor = validate(parse('application test {}'))

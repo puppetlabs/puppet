@@ -595,10 +595,11 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     full_path == manifest_setting || full_path.start_with?(manifest_setting)
   end
 
-  # Returns module root directory index in path for files under 'manifests', 'functions' and 'types'
+  # Returns module root directory index in path for files under 'manifests',
+  # 'functions', 'types' and 'plans'
   def find_module_definition_dir(path)
     reverse_index = path.reverse_each.find_index do |dir|
-      dir == 'manifests' || dir == 'functions' || dir == 'types'
+      dir == 'manifests' || dir == 'functions' || dir == 'types' || dir == 'plans'
     end
     return reverse_index.nil? ? nil : (path.length - 1) - reverse_index
   end
