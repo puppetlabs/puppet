@@ -30,11 +30,43 @@ module Puppet::Parser::Functions
     end
   end
 
+  class AutoloaderDelegate
+    attr_reader :delegatee
+
+    def initialize
+      @delegatee = Puppet::Util::Autoload.new(self, "puppet/parser/functions")
+    end
+
+    def loadall(env = Puppet.lookup(:current_environment))
+      if Puppet[:strict] != :off
+        Puppet.warn_once('deprecations', 'Puppet::Parser::Functions', _("The method 'Puppet::Parser::Functions.autoloader#loadall' is deprecated in favor of using 'Scope#call_function'."))
+      end
+
+      @delegatee.loadall(env)
+    end
+
+    def load(name, env = Puppet.lookup(:current_environment))
+      if Puppet[:strict] != :off
+        Puppet.warn_once('deprecations', 'Puppet::Parser::Functions', _("The method 'Puppet::Parser::Functions.autoloader#load(\"%{name}\")' is deprecated in favor of using 'Scope#call_function'.") % {name: name})
+      end
+
+      @delegatee.load(name, env)
+    end
+
+    def loaded?(name)
+      if Puppet[:strict] != :off
+        Puppet.warn_once('deprecations', 'Puppet::Parser::Functions', _("The method 'Puppet::Parser::Functions.autoloader#loaded?(\"%{name}\")' is deprecated in favor of using 'Scope#call_function'.") % {name: name})
+      end
+
+      @delegatee.loaded?(name)
+    end
+  end
+
   # Accessor for singleton autoloader
   #
   # @api private
   def self.autoloader
-    @autoloader ||= Puppet::Util::Autoload.new(self, "puppet/parser/functions")
+    @autoloader ||= AutoloaderDelegate.new
   end
 
   # An adapter that ties the anonymous module that acts as the container for all 3x functions to the environment
@@ -199,7 +231,7 @@ module Puppet::Parser::Functions
     name = name.intern
 
     unless func = get_function(name, environment)
-      autoloader.load(name, environment)
+      autoloader.delegatee.load(name, environment)
       func = get_function(name, environment)
     end
 
@@ -211,7 +243,7 @@ module Puppet::Parser::Functions
   end
 
   def self.functiondocs(environment = Puppet.lookup(:current_environment))
-    autoloader.loadall(environment)
+    autoloader.delegatee.loadall(environment)
 
     ret = ""
 
