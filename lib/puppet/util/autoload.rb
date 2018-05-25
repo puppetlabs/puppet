@@ -38,6 +38,7 @@ class Puppet::Util::Autoload
     # Save the fact that a given path has been loaded.  This is so
     # we can load downloaded plugins if they've already been loaded
     # into memory.
+    # @api private
     def mark_loaded(name, file)
       name = cleanpath(name).chomp('.rb')
       ruby_file = name + ".rb"
@@ -45,7 +46,8 @@ class Puppet::Util::Autoload
       loaded[name] = [file, File.mtime(file)]
     end
 
-    def changed?(name, env = Puppet.lookup(:current_environment))
+    # @api private
+    def changed?(name, env)
       name = cleanpath(name).chomp('.rb')
       return true unless loaded.include?(name)
       file, old_mtime = loaded[name]
@@ -75,7 +77,7 @@ class Puppet::Util::Autoload
       end
     end
 
-    def loadall(path, env = Puppet.lookup(:current_environment))
+    def loadall(path, env)
       # Load every instance of everything we can find.
       files_to_load(path, env).each do |file|
         name = file.chomp(".rb")
@@ -83,7 +85,7 @@ class Puppet::Util::Autoload
       end
     end
 
-    def reload_changed(env = Puppet.lookup(:current_environment))
+    def reload_changed(env)
       loaded.keys.each do |file|
         if changed?(file, env)
           load_file(file, env)
@@ -93,7 +95,8 @@ class Puppet::Util::Autoload
 
     # Get the correct file to load for a given path
     # returns nil if no file is found
-    def get_file(name, env = Puppet.lookup(:current_environment))
+    # @api private
+    def get_file(name, env)
       name = name + '.rb' unless name =~ /\.rb$/
       path = search_directories(env).find { |dir| Puppet::FileSystem.exist?(File.join(dir, name)) }
       path and File.join(path, name)
@@ -103,6 +106,7 @@ class Puppet::Util::Autoload
       search_directories(env).map {|dir| files_in_dir(dir, path) }.flatten.uniq
     end
 
+    # @api private
     def files_in_dir(dir, path)
       dir = Pathname.new(File.expand_path(dir))
       Dir.glob(File.join(dir, path, "*.rb")).collect do |file|
@@ -110,7 +114,10 @@ class Puppet::Util::Autoload
       end
     end
 
+    # @api private
     def module_directories(env)
+      raise ArgumentError, "Autoloader requires an environment" unless env
+
       # This is a little bit of a hack.  Basically, the autoloader is being
       # called indirectly during application bootstrapping when we do things
       # such as check "features".  However, during bootstrapping, we haven't
@@ -131,26 +138,21 @@ class Puppet::Util::Autoload
       # "app_defaults_initialized?" method on the main puppet Settings object.
       # --cprice 2012-03-16
       if Puppet.settings.app_defaults_initialized?
-        env ||= Puppet.lookup(:current_environment)
-
-        if env
-          # if the app defaults have been initialized then it should be safe to access the module path setting.
-          Puppet::Util::ModuleDirectoriesAdapter.adapt(env) do |a|
-            a.directories ||= env.modulepath.collect do |dir|
-              Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
-            end.flatten.find_all do |d|
-              FileTest.directory?(d)
-            end
-          end.directories
-        else
-          []
-        end
+        # if the app defaults have been initialized then it should be safe to access the module path setting.
+        Puppet::Util::ModuleDirectoriesAdapter.adapt(env) do |a|
+          a.directories ||= env.modulepath.collect do |dir|
+            Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
+          end.flatten.find_all do |d|
+            FileTest.directory?(d)
+          end
+        end.directories
       else
         # if we get here, the app defaults have not been initialized, so we basically use an empty module path.
         []
       end
     end
 
+    # @api private
     def libdirs
       # See the comments in #module_directories above.  Basically, we need to be careful not to try to access the
       # libdir before we know for sure that all of the settings have been initialized (e.g., during bootstrapping).
@@ -161,10 +163,12 @@ class Puppet::Util::Autoload
       end
     end
 
+    # @api private
     def gem_directories
       gem_source.directories
     end
 
+    # @api private
     def search_directories(env)
       [gem_directories, module_directories(env), libdirs, $LOAD_PATH].flatten
     end
@@ -193,7 +197,7 @@ class Puppet::Util::Autoload
     set_options(options)
   end
 
-  def load(name, env = Puppet.lookup(:current_environment))
+  def load(name, env)
     self.class.load_file(expand(name), env)
   end
 
@@ -207,7 +211,7 @@ class Puppet::Util::Autoload
   #
   # This uses require, rather than load, so that already-loaded files don't get
   # reloaded unnecessarily.
-  def loadall(env = Puppet.lookup(:current_environment))
+  def loadall(env)
     self.class.loadall(@path, env)
   end
 
@@ -215,11 +219,12 @@ class Puppet::Util::Autoload
     self.class.loaded?(expand(name))
   end
 
-  def changed?(name, env = Puppet.lookup(:current_environment))
+  # @api private
+  def changed?(name, env)
     self.class.changed?(expand(name), env)
   end
 
-  def files_to_load(env = Puppet.lookup(:current_environment))
+  def files_to_load(env)
     self.class.files_to_load(@path, env)
   end
 

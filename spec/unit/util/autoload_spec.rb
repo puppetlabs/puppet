@@ -18,7 +18,7 @@ describe Puppet::Util::Autoload do
   describe "when building the search path" do
     before :each do
       ## modulepath/libdir can't be used until after app settings are initialized, so we need to simulate that:
-      Puppet.settings.expects(:app_defaults_initialized?).returns(true).at_least_once
+      Puppet.settings.stubs(:app_defaults_initialized?).returns(true)
     end
 
     it "should collect all of the lib directories that exist in the current environment's module path" do
@@ -46,16 +46,19 @@ describe Puppet::Util::Autoload do
     it "ignores the configured environment when it doesn't exist" do
       Puppet[:environment] = 'nonexistent'
 
-      Puppet.override({ :environments => Puppet::Environments::Static.new() }) do
-        expect(@autoload.class.module_directories(nil)).to be_empty
+      env = Puppet::Node::Environment.create(:dev, [])
+      Puppet.override(environments: Puppet::Environments::Static.new(env)) do
+        expect(@autoload.class.module_directories(Puppet.lookup(:current_environment))).to be_empty
       end
     end
 
-    it "uses the configured environment when no environment is given" do
+    it "raises when no environment is given" do
       Puppet[:environment] = 'nonexistent'
 
-      Puppet.override({ :environments => Puppet::Environments::Static.new() }) do
-        expect(@autoload.class.module_directories(nil)).to be_empty
+      Puppet.override(environments: Puppet::Environments::Static.new) do
+        expect {
+          @autoload.class.module_directories(nil)
+        }.to raise_error(ArgumentError, /Autoloader requires an environment/)
       end
     end
 
