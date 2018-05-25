@@ -208,7 +208,7 @@ class Puppet::Resource::TypeCollection
       if environment.config_version.nil? || environment.config_version == ""
         @version = Time.now.to_i
       else
-        @version = Puppet::Util::Execution.execute([environment.config_version]).strip
+        @version = Puppet::Util::Execution.execute([environment.config_version]).to_s.strip
       end
     end
 
