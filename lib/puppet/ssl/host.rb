@@ -194,11 +194,11 @@ DOC
     true
   end
 
-  def http_client
+  def http_client(*args)
     # This can't be required top-level because Puppetserver uses the Host class too,
     # and we don't ship the gem in that context.
     require 'puppet/rest/client'
-    @http_client ||= Puppet::Rest::Client.new
+    @http_client ||= Puppet::Rest::Client.new(*args)
   end
 
   def certificate
@@ -399,8 +399,8 @@ ERROR_STRING
   # Does nothing if use_crl? is set not truthy
   def ensure_crl_if_needed
     if use_crl? && !Puppet::FileSystem.exist?(crl_path)
-      crl_bundle = download_crl_bundle
-      save_bundle(crl_bundle, crl_path)
+      download_and_save_crl_bundle
+      load_crls(crl_path)
     end
   end
 
@@ -484,15 +484,17 @@ ERROR_STRING
   # attached to it, but still utilizes the localcacert.
   # @raise [Puppet::Error] if response from the server is not a valid certificate
   #                        bundle
-  # @return [[OpenSSL::X509::CRL]] the certs loaded from the response
-  def download_crl_bundle
+  # @return nil
+  def download_and_save_crl_bundle
     certificate_store = OpenSSL::X509::Store.new()
     certificate_store.purpose = OpenSSL::X509::PURPOSE_ANY
     certificate_store.add_file(Puppet.settings[:localcacert])
 
-    client = Puppet::Rest::Client.new(Puppet::Rest::Routes.ca, ssl_store: certificate_store)
-    crl_string = Puppet::Rest::Routes.get_crls(client, CA_NAME)
-    process_crl_string(crl_string)
+    Puppet::Util.replace_file(crl_path, 0644) do |file|
+      Puppet::Rest::Routes.get_crls(http_client(ssl_store: certificate_store), CA_NAME) do |chunk|
+        file.write(chunk)
+      end
+    end
     rescue Puppet::Error => e
       raise Puppet::Error, _("Response from the CA did not contain a valid CRLs: %{message}") % { message: e.message }
     rescue Puppet::Rest::ResponseError => e
