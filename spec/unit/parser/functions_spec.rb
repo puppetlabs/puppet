@@ -48,8 +48,14 @@ describe Puppet::Parser::Functions do
   end
 
   describe "when calling function to test function existence" do
+    it "should loadall 3x functions" do
+      Puppet::Parser::Functions.autoloader.delegatee.stubs(:loadall)
+
+      Puppet::Parser::Functions.autoloader.loadall
+    end
+
     it "should return false if the function doesn't exist" do
-      Puppet::Parser::Functions.autoloader.stubs(:load)
+      Puppet::Parser::Functions.autoloader.delegatee.stubs(:load)
 
       expect(Puppet::Parser::Functions.function("name")).to be_falsey
     end
@@ -61,7 +67,7 @@ describe Puppet::Parser::Functions do
     end
 
     it "should try to autoload the function if it doesn't exist yet" do
-      Puppet::Parser::Functions.autoloader.expects(:load)
+      Puppet::Parser::Functions.autoloader.delegatee.expects(:load)
 
       Puppet::Parser::Functions.function("name")
     end
