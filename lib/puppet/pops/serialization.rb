@@ -8,13 +8,11 @@ module Serialization
   end
 
   PCORE_TYPE_KEY = '__ptype'.freeze
-  PCORE_TYPE_KEY_OLD = '__pcore_type__'.freeze
 
   # Key used when the value can be represented as, and recreated from, a single string that can
   # be passed to a `from_string` method or an array of values that can be passed to the default
   # initializer method.
   PCORE_VALUE_KEY = '__pvalue'.freeze
-  PCORE_VALUE_KEY_OLD = '__pcore_value__'.freeze
 
   # Type key used for hashes that contain keys that are not of type String
   PCORE_TYPE_HASH = 'Hash'.freeze

@@ -35,7 +35,6 @@ class Puppet::Resource
   TYPE_SITE  = 'Site'.freeze
 
   PCORE_TYPE_KEY = '__ptype'.freeze
-  PCORE_TYPE_KEY_OLD = '__pcore_type__'.freeze
   VALUE_KEY = 'value'.freeze
 
   def self.from_data_hash(data)
