@@ -64,7 +64,7 @@ module Serialization
     # @option options [Loaders::Loader] :loader the loader to use. Can be `nil` in which case the default is
     #    determined by the {Types::TypeParser}.
     # @option options [Boolean] :allow_unresolved `true` to allow that rich_data hashes are kept "as is" if the
-    #    designated '__pcore_type__' cannot be resolved. Defaults to `false`.
+    #    designated '__ptype' cannot be resolved. Defaults to `false`.
     # @return [RichData] the processed result.
     #
     # @api public
@@ -78,7 +78,7 @@ module Serialization
     # @option options [Loaders::Loader] :loader the loader to use. Can be `nil` in which case the default is
     #    determined by the {Types::TypeParser}.
     # @option options [Boolean] :allow_unresolved `true` to allow that rich_data hashes are kept "as is" if the
-    #    designated '__pcore_type__' cannot be resolved. Defaults to `false`.
+    #    designated '__ptype' cannot be resolved. Defaults to `false`.
     #
     # @api public
     def initialize(options = EMPTY_HASH)

@@ -2049,7 +2049,7 @@ EOT
       end,
       :desc     => <<-'EOT'
         Enables having extended data in the catalog by storing them as a hash with the special key
-        `__pcore_type__`. When enabled, resource containing values of the data types `Binary`, `Regexp`,
+        `__ptype`. When enabled, resource containing values of the data types `Binary`, `Regexp`,
         `SemVer`, `SemVerRange`, `Timespan` and `Timestamp`, as well as instances of types derived
         from `Object` retain their data type.
       EOT

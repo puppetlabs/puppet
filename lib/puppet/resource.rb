@@ -34,7 +34,7 @@ class Puppet::Resource
   TYPE_NODE  = 'Node'.freeze
   TYPE_SITE  = 'Site'.freeze
 
-  PCORE_TYPE_KEY = '__pcore_type__'.freeze
+  PCORE_TYPE_KEY = '__ptype'.freeze
   VALUE_KEY = 'value'.freeze
 
   def self.from_data_hash(data)

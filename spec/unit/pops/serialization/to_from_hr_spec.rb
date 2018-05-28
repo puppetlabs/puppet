@@ -447,11 +447,11 @@ module Serialization
         expect{ read }.to raise_error(Puppet::Error, 'No implementation mapping found for Puppet Type MyType')
       end
 
-      context "succeds but produces an rich_type hash when deserializer has 'allow_unresolved' set to true" do
+      context "succeeds but produces an rich_type hash when deserializer has 'allow_unresolved' set to true" do
         let(:from_converter) { FromDataConverter.new(:allow_unresolved => true) }
         it do
           write(type.create(32))
-          expect(read).to eql({'__pcore_type__'=>'MyType', 'x'=>32})
+          expect(read).to eql({'__ptype'=>'MyType', 'x'=>32})
         end
       end
     end
@@ -589,7 +589,7 @@ module Serialization
   context 'will fail when' do
     it 'the value of a type description is something other than a String or a Hash' do
       expect do
-        from_converter.convert({ '__pcore_type__' => { '__pcore_type__' => 'Pcore::TimestampType', '__pcore_value__' => 12345 }})
+        from_converter.convert({ '__ptype' => { '__ptype' => 'Pcore::TimestampType', '__pvalue' => 12345 }})
       end.to raise_error(/Cannot create a Pcore::TimestampType from a (Fixnum|Integer)/)
     end
   end
