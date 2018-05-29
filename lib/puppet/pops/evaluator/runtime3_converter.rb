@@ -77,6 +77,13 @@ class Runtime3Converter
     raise Puppet::Error, "Use of a Ruby BigDecimal value outside Puppet Float range, got '#{o}'"
   end
 
+  def convert_String(o, scope, undef_value)
+    # Although wasteful, a dup is needed because user code may mutate these strings when applying
+    # Resources. This does not happen when in master mode since it only uses Resources that are
+    # in puppet core and those are all safe.
+    o.frozen? && !Puppet.run_mode.master? ? o.dup : o
+  end
+
   def convert_Object(o, scope, undef_value)
     o
   end
