@@ -799,6 +799,26 @@ describe 'Puppet Pal' do
           expect(result).to be(nil)
         end
 
+        it 'default task input_method is nil' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler do |c|
+              signature = c.task_signature('a::atask')
+              signature.task_hash
+            end
+          end
+          expect(result['input_method']).to be_nil
+        end
+
+        it 'task input_method is parsed from task metadata' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
+            ctx.with_script_compiler do |c|
+              signature = c.task_signature('b::atask')
+              signature.task_hash
+            end
+          end
+          expect(result['input_method']).to eq('stdin')
+        end
+
         it '"list_tasks" returns an array with all tasks that can be loaded' do
           testing_env_dir # creates the structure
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |ctx|
