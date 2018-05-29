@@ -1,6 +1,0 @@
-# fixture for the spec test for PUP-1041
-
-define host {
-  parents
-  use       linux-server
-}

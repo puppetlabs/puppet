@@ -61,16 +61,6 @@ Files: lib/puppet/external/event-loop/*
 Copyright: Daniel Brockman
 License: GPL-2+
 
-Files: lib/puppet/external/nagios/parser.rb
-Copyright: Minero Aoki
-License: other
- This program is free software.
- You can distribute/modify this program under the same terms of ruby.
- .
- As a special exception, when this code is copied by Racc
- into a Racc output file, you may use that output file
- without restriction.
-
 Files: lib/puppet/network/http_server/mongrel.rb
 Copyright: Manuel Holtgrewe, Luke Kanies
 License: MIT

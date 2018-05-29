@@ -104,10 +104,6 @@ The server can also function as a certificate authority and file server.
 
 
 %build
-for f in external/nagios.rb relationship.rb; do
-  sed -i -e '1d' lib/puppet/$f
-done
-
 find examples/ -type f | xargs --no-run-if-empty chmod a-x
 
 %install

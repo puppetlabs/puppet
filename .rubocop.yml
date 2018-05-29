@@ -15,7 +15,6 @@ AllCops:
     - 'lib/puppet/vendor/**/*'
     - 'lib/puppet/parser/parser.rb'
     - 'lib/puppet/pops/parser/eparser.rb'
-    - 'lib/puppet/external/nagios/parser.rb'
     - 'lib/puppet/module_tool/skeleton/**/*'
     - 'lib/semantic_puppet/dependency/module_release.rb'
 
