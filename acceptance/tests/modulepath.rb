@@ -1,9 +1,9 @@
-# REMIND: windows
 test_name 'Supports vendored modules' do
   tag 'risk:medium'
 
   # beacon custom type emits a message so we can tell where the
-  # type was loaded from, e.g. vendored, and from which host
+  # type was loaded from, e.g. vendored, global, and whether the
+  # type was loaded locally or pluginsynced from the master.
   def beacon_type(message)
     return <<END
     Puppet::Type.newtype(:beacon) do
@@ -28,7 +28,8 @@ END
 
   def vendor_modules(host)
     if host.platform =~ /windows/
-      '/cygdrive/c/Program Files/Puppet Labs/Puppet/puppet/vendor_modules'
+      # escape spaces
+      "/cygdrive/c/Program\\ Files/Puppet\\ Labs/Puppet/puppet/vendor_modules"
     else
       '/opt/puppetlabs/puppet/vendor_modules'
     end
@@ -36,22 +37,30 @@ END
 
   teardown do
     hosts.each do |host|
-      on(host, "rm -rf #{vendor_modules(host)}/*")
-      on(host, "rm -rf #{global_modules(host)}/*")
-    end
+      on(host, "rm -rf #{vendor_modules(host)}/beacon")
+      on(host, "rm -rf #{global_modules(host)}/beacon")
 
-    agents.each do |agent|
-      on(agent, "rm -rf /opt/puppetlabs/puppet/cache/lib")
+      libdir = host.puppet['vardir']
+      on(host, "rm -rf #{libdir}")
     end
 
     on(master, "rm -rf /etc/puppetlabs/code/environments/production/modules/beacon")
     on(master, "rm -f /etc/puppetlabs/code/environments/production/manifests/site.pp")
   end
 
+  step 'delete libdir' do
+    hosts.each do |host|
+      on(host, "rm -rf #{host.puppet['libdir']}")
+    end
+  end
+
   step 'create vendored module with a custom type' do
     hosts.each do |host|
       vendor_dir = vendor_modules(host)
       on(host, "mkdir -p #{vendor_dir}/beacon/lib/puppet/type")
+
+      # unescape, because net-scp escapes
+      vendor_dir.gsub!(/\\/, '')
       create_remote_file(host, "#{vendor_dir}/beacon/lib/puppet/type/beacon.rb", beacon_type("vendored module from #{host}"))
     end
   end
@@ -80,6 +89,8 @@ END
 
       global_dir = global_modules(agent)
       on(agent, "mkdir -p #{global_dir}/beacon/lib/puppet/type")
+
+      # global_dir doesn't have spaces, so don't need to escape
       create_remote_file(agent, "#{global_dir}/beacon/lib/puppet/type/beacon.rb", beacon_type("global module from #{agent}"))
 
       on(agent, puppet("apply -e \"beacon { 'ping': }\"")) do |result|
