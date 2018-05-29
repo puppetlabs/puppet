@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-255-g5b9f49b\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-264-g8562b27\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-05-24 23:18+0000\n"
-"PO-Revision-Date: 2018-05-24 23:18+0000\n"
+"POT-Creation-Date: 2018-05-29 23:34+0000\n"
+"PO-Revision-Date: 2018-05-29 23:34+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6728,14 +6728,6 @@ msgstr ""
 msgid "Could not understand line %{line} from mount output"
 msgstr ""
 
-#: ../lib/puppet/provider/naginator.rb:13
-msgid "Could not find nagios type '%{name}'"
-msgstr ""
-
-#: ../lib/puppet/provider/naginator.rb:26
-msgid "Could not parse configuration for %{resource}: %{detail}"
-msgstr ""
-
 #: ../lib/puppet/provider/nameservice.rb:45
 msgid "%{name} is not a valid attribute for %{resource_type}"
 msgstr ""
@@ -9589,10 +9581,6 @@ msgstr ""
 
 #: ../lib/puppet/util/logging.rb:281
 msgid "(location: %{location})"
-msgstr ""
-
-#: ../lib/puppet/util/nagios_maker.rb:12
-msgid "No nagios type for %{name}"
 msgstr ""
 
 #: ../lib/puppet/util/network_device.rb:10
