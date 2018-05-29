@@ -22,20 +22,6 @@ class StaticLoader < Loader
       Maillist
       Mcx
       Mount
-      Nagios_command
-      Nagios_contact
-      Nagios_contactgroup
-      Nagios_host
-      Nagios_hostdependency
-      Nagios_hostescalation
-      Nagios_hostgroup
-      Nagios_hostextinfo
-      Nagios_service
-      Nagios_servicedependency
-      Nagios_serviceescalation
-      Nagios_serviceextinfo
-      Nagios_servicegroup
-      Nagios_timeperiod
       Node
       Notify
       Package
