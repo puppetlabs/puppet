@@ -305,8 +305,7 @@ describe Puppet::Application::Device do
 
     it "should exit if resource is requested without target" do
       @device.options.stubs(:[]).with(:resource).returns(true)
-      Puppet.expects(:err).with "resource command requires target"
-      expect { @device.main }.to exit_with 1
+      expect { @device.main }.to raise_error(RuntimeError, "resource command requires target")
     end
 
     it "should get the device list" do
@@ -337,8 +336,7 @@ describe Puppet::Application::Device do
 
       Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
       Puppet.expects(:info).with(regexp_matches(/starting applying configuration to/)).never
-      Puppet.expects(:err).with(regexp_matches(/Target device \/ certificate 'bla' not found in .*\.conf/))
-      expect { @device.main }.to exit_with 1
+      expect { @device.main }.to raise_error(RuntimeError, /Target device \/ certificate 'bla' not found in .*\.conf/)
     end
 
     it "should error if target is passed and the apply path is incorrect" do
@@ -346,8 +344,7 @@ describe Puppet::Application::Device do
       @device.options.stubs(:[]).with(:target).returns('device1')
 
       File.expects(:file?).returns(false)
-      Puppet.expects(:err).with(regexp_matches(/does not exist, cannot apply/))
-      expect { @device.main }.to exit_with 1
+      expect { @device.main }.to raise_error(RuntimeError, /does not exist, cannot apply/)
     end
 
     it "should run an apply" do
@@ -426,15 +423,17 @@ describe Puppet::Application::Device do
         @device.options.stubs(:[]).with(:target).returns('device1')
         @device.command_line.stubs(:args).returns(['user'])
         Puppet::Resource.indirection.expects(:search).with('user/', {}).returns([])
-        expect { @device.main }.to exit_with 1
+        expect { @device.main }.to exit_with 0
       end
 
       it "should retrieve named resources of a type" do
+        resource = Puppet::Type.type(:user).new(:name => "jim").to_resource
         @device.options.stubs(:[]).with(:resource).returns(true)
         @device.options.stubs(:[]).with(:target).returns('device1')
-        @device.command_line.stubs(:args).returns(['user', 'title'])
-        Puppet::Resource.indirection.expects(:find).with('user/title')
-        expect { @device.main }.to exit_with 1
+        @device.command_line.stubs(:args).returns(['user', 'jim'])
+        Puppet::Resource.indirection.expects(:find).with('user/jim').returns(resource)
+        @device.expects(:puts).with("user { 'jim':\n}")
+        expect { @device.main }.to exit_with 0
       end
 
       it "should output resources as YAML" do
@@ -447,7 +446,7 @@ describe Puppet::Application::Device do
         @device.command_line.stubs(:args).returns(['user'])
         Puppet::Resource.indirection.expects(:search).with('user/', {}).returns(resources)
         @device.expects(:puts).with("user:\n  title:\n")
-        expect { @device.main }.to exit_with 1
+        expect { @device.main }.to exit_with 0
       end
 
       it "should make sure all the required folders and files are created" do
