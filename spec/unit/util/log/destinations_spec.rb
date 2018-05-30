@@ -47,24 +47,40 @@ describe Puppet::Util::Log.desttypes[:file] do
     end
 
     describe "on POSIX systems", :if => Puppet.features.posix? do
-      let (:abspath) { '/tmp/log' }
-      let (:relpath) { 'log' }
+      describe "with a normal file" do
+        let (:abspath) { '/tmp/log' }
+        let (:relpath) { 'log' }
 
-      it_behaves_like "file destination"
+        it_behaves_like "file destination"
 
-      it "logs an error if it can't chown the file owner & group" do
-        FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).raises(Errno::EPERM)
-        Puppet.features.expects(:root?).returns(true)
-        Puppet.expects(:err).with("Unable to set ownership to #{Puppet[:user]}:#{Puppet[:group]} for log file: #{abspath}")
+        it "logs an error if it can't chown the file owner & group" do
+          FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).raises(Errno::EPERM)
+          Puppet.features.expects(:root?).returns(true)
+          Puppet.expects(:err).with("Unable to set ownership to #{Puppet[:user]}:#{Puppet[:group]} for log file: #{abspath}")
 
-        @class.new(abspath)
+          @class.new(abspath)
+        end
+
+        it "doesn't attempt to chown when running as non-root" do
+          FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).never
+          Puppet.features.expects(:root?).returns(false)
+
+          @class.new(abspath)
+        end
       end
 
-      it "doesn't attempt to chown when running as non-root" do
-        FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).never
-        Puppet.features.expects(:root?).returns(false)
+      describe "with a JSON file" do
+        let (:abspath) { '/tmp/log.json' }
+        let (:relpath) { 'log.json' }
 
-        @class.new(abspath)
+        it_behaves_like "file destination"
+
+        it "should log messages as JSON" do
+          msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic")
+          dest = @class.new(abspath)
+          dest.handle(msg)
+          expect(JSON.parse(File.read(abspath) + ']')).to include(a_hash_including({"message" => "don't panic"}))
+        end
       end
     end
 
