@@ -71,7 +71,7 @@ module Pcore
             },
 
             supports_noop => { type => Boolean, value => false },
-            input_method => { type => String, value => 'both' },
+            input_method => { type => Optional[String] },
           }
         }
       PUPPET
