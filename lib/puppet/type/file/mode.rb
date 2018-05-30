@@ -40,7 +40,7 @@ module Puppet
       Symbolic modes should be represented as a string of comma-separated
       permission clauses, in the form `<WHO><OP><PERM>`:
 
-      * "Who" should be u (user), g (group), o (other), and/or a (all)
+      * "Who" should be any combination of u (user), g (group), and o (other), or a (all)
       * "Op" should be = (set exact permissions), + (add select permissions),
         or - (remove select permissions)
       * "Perm" should be one or more of:
