@@ -141,22 +141,21 @@ end
     Puppet::Util::RDoc.rdoc(doc_dir, [modules_dir, manifests_dir])
   end
 
-  module RdocTesters
-    def has_plugin_rdoc(module_name, type, name)
-      file_exists_and_matches_content(plugin_path(module_name, type, name), /The .*?#{name}.*?\s*#{type} comment/m, /Type.*?#{type}/m)
+  describe "rdoc2 support" do
+    def module_path(module_name)
+      "#{doc_dir}/#{module_name}.html"
     end
-  end
 
-  shared_examples_for :an_rdoc_site do
-    # PUP-3274 / PUP-3638 not sure if this should be kept or not - it is now broken
-#    it "documents the __site__ module" do
-#      has_module_rdoc("__site__")
-#    end
+    def plugin_path(module_name, type, name)
+      "#{doc_dir}/#{module_name}/__#{type}s__.html"
+    end
 
-    # PUP-3274 / PUP-3638 not sure if this should be kept or not - it is now broken
-#    it "documents the a_module module" do
-#      has_module_rdoc("a_module", /The .*?a_module.*? .*?README.*?docs/m)
-#    end
+    def has_plugin_rdoc(module_name, type, name)
+      file_exists_and_matches_content(
+        plugin_path(module_name, type, name),
+        /The .*?#{name}.*?\s*#{type} comment/m, /Type.*?#{type}/m
+      )
+    end
 
     it "documents the a_module::a_plugin type" do
       has_plugin_rdoc("a_module", :type, 'a_plugin')
@@ -169,14 +168,5 @@ end
     it "documents the a_module::a_fact fact" do
       has_plugin_rdoc("a_module", :fact, 'a_fact')
     end
-  end
-
-  describe "rdoc2 support" do
-    def module_path(module_name); "#{doc_dir}/#{module_name}.html" end
-    def plugin_path(module_name, type, name); "#{doc_dir}/#{module_name}/__#{type}s__.html" end
-
-    include RdocTesters
-
-    it_behaves_like :an_rdoc_site
   end
 end
