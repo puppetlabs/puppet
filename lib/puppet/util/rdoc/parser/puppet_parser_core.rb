@@ -127,7 +127,7 @@ module RDoc::PuppetParserCore
     container, name  = get_class_or_module(container,name)
     mod = container.add_module(RDoc::PuppetModule, name)
     mod.record_location(@top_level)
-    mod.add_comment(comment, @input_file_name)
+    mod.add_comment(comment, @top_level)
 
     if @input_file_name =~ /\.rb$/
       parse_plugins(mod)
