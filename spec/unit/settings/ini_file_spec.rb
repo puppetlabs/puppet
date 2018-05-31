@@ -154,7 +154,7 @@ name = value
     # this is the preceding comment
      [section]
     ascii = foo
-    #{mixed_utf8} = bar
+    A\u06FF\u16A0\u{2070E} = bar
     # this is the trailing comment
     CONFIG
 
