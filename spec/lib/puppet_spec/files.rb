@@ -17,15 +17,15 @@ module PuppetSpec::Files
     end
   end
 
-  def make_absolute(path) PuppetSpec::Files.make_absolute(path) end
-  def self.make_absolute(path)
+  module_function
+
+  def make_absolute(path)
     path = File.expand_path(path)
     path[0] = 'c' if Puppet.features.microsoft_windows?
     path
   end
 
-  def tmpfile(name, dir = nil) PuppetSpec::Files.tmpfile(name, dir) end
-  def self.tmpfile(name, dir = nil)
+  def tmpfile(name, dir = nil)
     dir ||= Dir.tmpdir
     path = Puppet::FileSystem.expand_path(Dir::Tmpname.make_tmpname(name, nil).encode(Encoding::UTF_8), dir)
     record_tmp(File.expand_path(path))
@@ -33,15 +33,13 @@ module PuppetSpec::Files
     path
   end
 
-  def file_containing(name, contents) PuppetSpec::Files.file_containing(name, contents) end
-  def self.file_containing(name, contents)
+  def file_containing(name, contents)
     file = tmpfile(name)
     File.open(file, 'wb') { |f| f.write(contents) }
     file
   end
 
-  def script_containing(name, contents) PuppetSpec::Files.script_containing(name, contents) end
-  def self.script_containing(name, contents)
+  def script_containing(name, contents)
     file = tmpfile(name)
     if Puppet.features.microsoft_windows?
       file += '.bat'
@@ -54,8 +52,7 @@ module PuppetSpec::Files
     file
   end
 
-  def tmpdir(name) PuppetSpec::Files.tmpdir(name) end
-  def self.tmpdir(name)
+  def tmpdir(name)
     dir = Puppet::FileSystem.expand_path(Dir.mktmpdir(name).encode!(Encoding::UTF_8))
 
     record_tmp(dir)
@@ -63,13 +60,11 @@ module PuppetSpec::Files
     dir
   end
 
-  def dir_containing(name, contents_hash) PuppetSpec::Files.dir_containing(name, contents_hash) end
-  def self.dir_containing(name, contents_hash)
+  def dir_containing(name, contents_hash)
     dir_contained_in(tmpdir(name), contents_hash)
   end
 
-  def dir_contained_in(dir, contents_hash) PuppetSpec::Files.dir_contained_in(dir, contents_hash) end
-  def self.dir_contained_in(dir, contents_hash)
+  def dir_contained_in(dir, contents_hash)
     contents_hash.each do |k,v|
       if v.is_a?(Hash)
         Dir.mkdir(tmp = File.join(dir,k))
@@ -82,7 +77,7 @@ module PuppetSpec::Files
     dir
   end
 
-  def self.record_tmp(tmp)
+  def record_tmp(tmp)
     # ...record it for cleanup,
     $global_tempfiles ||= []
     $global_tempfiles << tmp
