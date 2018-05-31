@@ -18,7 +18,6 @@ class StaticLoader < Loader
       Interface
       K5login
       Macauthorization
-      Mailalias
       Maillist
       Mcx
       Mount

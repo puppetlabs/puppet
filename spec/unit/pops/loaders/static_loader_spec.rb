@@ -39,7 +39,6 @@ describe 'the static loader' do
       Interface
       K5login
       Macauthorization
-      Mailalias
       Maillist
       Mcx
       Mount
