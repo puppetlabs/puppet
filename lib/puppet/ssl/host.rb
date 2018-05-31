@@ -489,15 +489,17 @@ ERROR_STRING
     certificate_store.purpose = OpenSSL::X509::PURPOSE_ANY
     certificate_store.add_file(Puppet.settings[:localcacert])
 
-    Puppet::Util.replace_file(crl_path, 0644) do |file|
-      Puppet::Rest::Routes.get_crls(http_client(ssl_store: certificate_store), CA_NAME) do |chunk|
-        file.write(chunk)
+    begin
+      Puppet::Util.replace_file(crl_path, 0644) do |file|
+        Puppet::Rest::Routes.get_crls(http_client(ssl_store: certificate_store), CA_NAME) do |chunk|
+          file.write(chunk)
+        end
       end
+      rescue Puppet::Error => e
+        raise Puppet::Error, _("Response from the CA did not contain a valid CRLs: %{message}") % { message: e.message }
+      rescue Puppet::Rest::ResponseError => e
+        raise Puppet::Error, _('Could not download CRLs: %{message}') % { message: e.message }
     end
-    rescue Puppet::Error => e
-      raise Puppet::Error, _("Response from the CA did not contain a valid CRLs: %{message}") % { message: e.message }
-    rescue Puppet::Rest::ResponseError => e
-      raise Puppet::Error, _('Could not download CRLs: %{message}') % { message: e.message }
   end
 
   # Fetches the CA certificate bundle from the CA server
