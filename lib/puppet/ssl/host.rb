@@ -400,7 +400,6 @@ ERROR_STRING
   def ensure_crl_if_needed
     if use_crl? && !Puppet::FileSystem.exist?(crl_path)
       download_and_save_crl_bundle
-      load_crls(crl_path)
     end
   end
 
