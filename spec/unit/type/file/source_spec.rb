@@ -44,7 +44,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
     it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
       resource[:source] = "/foo/bar\\//"
-      expect(resource[:source]).to eq(%w{file:/foo/bar\\})
+      expect(resource[:source].first).to match(%r{/foo/bar\\$})
     end
 
     it "should strip trailing forward and backslashes", :if => Puppet.features.microsoft_windows? do
