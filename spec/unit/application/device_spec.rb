@@ -347,7 +347,7 @@ describe Puppet::Application::Device do
       expect { @device.main }.to raise_error(RuntimeError, /does not exist, cannot apply/)
     end
 
-    it "should run an apply" do
+    it "should run an apply, and not create the state folder" do
       @device.options.stubs(:[]).with(:apply).returns('file.pp')
       @device.options.stubs(:[]).with(:target).returns('device1')
       device_hash = {
@@ -356,6 +356,30 @@ describe Puppet::Application::Device do
       Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
       Puppet::Util::NetworkDevice.stubs(:init)
       File.expects(:file?).returns(true)
+
+      ::File.stubs(:directory?).returns false
+      state_path = tmpfile('state')
+      Puppet[:statedir] = state_path
+      File.expects(:directory?).with(state_path).returns true
+      FileUtils.expects(:mkdir_p).with(state_path).never
+
+      Puppet::Util::CommandLine.expects(:new).once
+      Puppet::Application::Apply.expects(:new).once
+
+      Puppet::Configurer.expects(:new).never
+      expect { @device.main }.to exit_with 1
+    end
+
+    it "should run an apply, and create the state folder" do
+      @device.options.stubs(:[]).with(:apply).returns('file.pp')
+      @device.options.stubs(:[]).with(:target).returns('device1')
+      device_hash = {
+        "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
+      }
+      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
+      Puppet::Util::NetworkDevice.stubs(:init)
+      File.expects(:file?).returns(true)
+      FileUtils.expects(:mkdir_p).once
 
       Puppet::Util::CommandLine.expects(:new).once
       Puppet::Application::Apply.expects(:new).once
