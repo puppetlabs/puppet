@@ -5,6 +5,9 @@ require 'puppet'
 module Puppet::Provider::Mount
   # This only works when the mount point is synced to the fstab.
   def mount
+    # Create the mountpoint directory if it does not exist and manage_mountpoint is true
+    Dir.mkdir(resource[:name]) if resource[:manage_mountpoint] && !File.exist?(resource[:name])
+
     args = []
 
     # In general we do not have to pass mountoptions because we always
@@ -61,6 +64,9 @@ module Puppet::Provider::Mount
   # This only works when the mount point is synced to the fstab.
   def unmount
     umount(resource[:name])
+
+    # Remove the mountpoint directory if it exists and manage_mountpoint is true
+    Dir.rmdir(resource[:name]) if resource[:manage_mountpoint] && File.exist?(resource[:name])
 
     # Update property hash for future queries (e.g. refresh is called)
     case get(:ensure)

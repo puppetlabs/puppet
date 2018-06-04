@@ -279,6 +279,23 @@ module Puppet
       end
     end
 
+    newparam(:manage_mountpoint) do
+      desc "Whether to create the directory mountpoint prior to mounting the
+        directory and remove the directory mountpoint after unmounting the
+        directory. Does nothing during a remount.
+
+        This is useful if you have a `file` resource establishing
+        permissions of a mounted directory and also need the mountpoint
+        directory created prior to mounting, or if you want to cleanly change
+        the `file` `ensure` attribute after unmounting (both avoiding a
+        multiple declaration).
+
+        Valid values are `true` or `false`. Default is `false`."
+
+      newvalues(:true, :false)
+      defaultto false
+    end
+
     def refresh
       # Only remount if we're supposed to be mounted.
       provider.remount if self.should(:fstype) != "swap" and provider.mounted?

@@ -50,7 +50,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   describe "when validating attributes" do
-    [:name, :remounts, :provider].each do |param|
+    [:name, :remounts, :provider, :manage_mountpoint].each do |param|
       it "should have a #{param} parameter" do
         expect(described_class.attrtype(param)).to eq(:param)
       end
@@ -297,6 +297,21 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
         resource = described_class.new(:name => "/foo", :ensure => :present, :atboot => false)
 
         expect(resource[:atboot]).to eq(:no)
+      end
+    end
+
+    describe "for manage_mountpoint" do
+      it "does not allow non-boolean values" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :manage_mountpoint => 'unknown') }.to raise_error Puppet::Error, /Invalid value/
+      end
+
+      it "should support boolean values" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :manage_mountpoint => :true) }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :ensure => :present, :manage_mountpoint => :false) }.to_not raise_error
+      end
+
+      it "should default to false" do
+        expect(described_class.new(:name => "yay", :ensure => :present).should(:manage_mountpoint)).to eq(false)
       end
     end
   end
