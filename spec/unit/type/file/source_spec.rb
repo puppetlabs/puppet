@@ -43,13 +43,29 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
     end
 
     it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
+      # if the ruby version is less than 2.5.0 the uri that path_to_uri returns will not
+      # include two slashes (normally included in URIs). In 2.5.0 URI::Generic fixed the
+      # two preceeding slashes issue, so expect newer rubies to include those.
+      if Gem::Version.new(RbConfig::CONFIG['RUBY_PROGRAM_VERSION']) < Gem::Version.new('2.5.0')
+        uri_prefix = 'file:'
+      else
+        uri_prefix = 'file://'
+      end
       resource[:source] = "/foo/bar\\//"
-      expect(resource[:source]).to eq(%w{file:/foo/bar\\})
+      expect(resource[:source]).to eq(["#{uri_prefix}/foo/bar\\"])
     end
 
     it "should strip trailing forward and backslashes", :if => Puppet.features.microsoft_windows? do
+      # if the ruby version is less than 2.5.0 the uri that path_to_uri returns will not
+      # include two slashes (normally included in URIs). In 2.5.0 URI::Generic fixed the
+      # two preceeding slashes issue, so expect newer rubies to include those.
+      if Gem::Version.new(RbConfig::CONFIG['RUBY_PROGRAM_VERSION']) < Gem::Version.new('2.5.0')
+        uri_prefix = 'file:'
+      else
+        uri_prefix = 'file://'
+      end
       resource[:source] = "X:/foo/bar\\//"
-      expect(resource[:source]).to eq(%w{file:/X:/foo/bar})
+      expect(resource[:source]).to eq(["#{uri_prefix}/X:/foo/bar"])
     end
 
     it "should accept an array of sources" do

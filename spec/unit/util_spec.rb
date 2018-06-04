@@ -334,6 +334,14 @@ describe Puppet::Util do
     # "/?:@-._~!$&'()*+,;=" are allowed unescaped anywhere within a fragment part.
     it "should properly URI encode + and space in path and query" do
       path = "/foo+foo bar?foo+foo bar"
+      # if the ruby version is less than 2.5.0 the uri that path_to_uri returns will not
+      # include two slashes (normally included in URIs). In 2.5.0 URI::Generic fixed the
+      # two preceeding slashes issue, so expect newer rubies to include those.
+      if Gem::Version.new(RbConfig::CONFIG['RUBY_PROGRAM_VERSION']) < Gem::Version.new('2.5.0')
+        uri_prefix = 'file:'
+      else
+        uri_prefix = 'file://'
+      end
       uri = Puppet::Util.path_to_uri(path)
 
       # Ruby 1.9.3 URI#to_s has a bug that returns ASCII always
@@ -346,7 +354,7 @@ describe Puppet::Util do
       # + is usually used for backward compatibility, but %20 is preferred for compat with Uri.unescape
       expect(uri.query).to eq("foo%2Bfoo%20bar")
       # complete roundtrip
-      expect(URI.unescape(uri.to_s)).to eq("file:#{path}")
+      expect(URI.unescape(uri.to_s)).to eq("#{uri_prefix}#{path}")
       expect(URI.unescape(uri.to_s).encoding).to eq(expected_encoding)
     end
 
@@ -895,7 +903,7 @@ describe Puppet::Util do
       subject.replace_file(temp_path, 0440) do |fh|
         fh.puts('some text in there')
       end
-      
+
       expect(File.read(temp_path)).to eq("some text in there\n")
       expect(get_mode(temp_path)).to eq(0440)
     end
