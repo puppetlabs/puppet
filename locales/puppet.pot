@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-264-g8562b27\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-280-g70d518f\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-05-29 23:34+0000\n"
-"PO-Revision-Date: 2018-05-29 23:34+0000\n"
+"POT-Creation-Date: 2018-06-04 21:33+0000\n"
+"PO-Revision-Date: 2018-06-04 21:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -585,47 +585,47 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:126
+#: ../lib/puppet/defaults.rb:140
 msgid "Cannot disable unrecognized warning types %{invalid}."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:127
+#: ../lib/puppet/defaults.rb:141
 msgid "Valid values are %{values}."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:472
+#: ../lib/puppet/defaults.rb:486
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:474
+#: ../lib/puppet/defaults.rb:488
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:628
+#: ../lib/puppet/defaults.rb:642
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:730
+#: ../lib/puppet/defaults.rb:744
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:968 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:982 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1494 ../lib/puppet/defaults.rb:1509
+#: ../lib/puppet/defaults.rb:1508 ../lib/puppet/defaults.rb:1523
 msgid "Attempted to set both server and server_list."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1495 ../lib/puppet/defaults.rb:1510
+#: ../lib/puppet/defaults.rb:1509 ../lib/puppet/defaults.rb:1524
 msgid "Server setting will not be used."
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1807
+#: ../lib/puppet/defaults.rb:1821
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -6677,14 +6677,6 @@ msgstr ""
 msgid "auth_type required for new resources."
 msgstr ""
 
-#: ../lib/puppet/provider/maillist/mailman.rb:55
-msgid "Mailman lists require an administrator email address"
-msgstr ""
-
-#: ../lib/puppet/provider/maillist/mailman.rb:60
-msgid "Mailman lists require an administrator password"
-msgstr ""
-
 #: ../lib/puppet/provider/mcx/mcxcontent.rb:137 ../lib/puppet/provider/mcx/mcxcontent.rb:143
 msgid "Could not parse ds_type from resource name '%{name}'.  Specify with ds_type parameter."
 msgstr ""
@@ -8660,18 +8652,6 @@ msgstr ""
 
 #: ../lib/puppet/type/macauthorization.rb:34
 msgid "munge_integer only takes integers"
-msgstr ""
-
-#: ../lib/puppet/type/mailalias.rb:23
-msgid "File paths must be fully qualified, not '%{value}'"
-msgstr ""
-
-#: ../lib/puppet/type/mailalias.rb:42
-msgid "You cannot specify both a recipient and a file"
-msgstr ""
-
-#: ../lib/puppet/type/maillist.rb:14
-msgid "Purged %{resource}"
 msgstr ""
 
 #: ../lib/puppet/type/mount.rb:68
