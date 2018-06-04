@@ -40,7 +40,8 @@ class Puppet::Application::Doc < Puppet::Application
 
   option("--list", "-l") do |arg|
     require 'puppet/util/reference'
-    puts Puppet::Util::Reference.references.collect { |r| Puppet::Util::Reference.reference(r).doc }.join("\n")
+    refs = Puppet::Util::Reference.references(Puppet.lookup(:current_environment))
+    puts refs.collect { |r| Puppet::Util::Reference.reference(r).doc }.join("\n")
     exit(0)
   end
 
@@ -198,7 +199,8 @@ HELP
     if options[:all]
       # Don't add dynamic references to the "all" list.
       require 'puppet/util/reference'
-      options[:references] = Puppet::Util::Reference.references.reject do |ref|
+      refs = Puppet::Util::Reference.references(Puppet.lookup(:current_environment))
+      options[:references] = refs.reject do |ref|
         Puppet::Util::Reference.reference(ref).dynamic?
       end
     end

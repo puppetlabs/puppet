@@ -108,7 +108,7 @@ describe Puppet::Indirector::Terminus do
       # Set up instance loading; it would normally happen automatically
       Puppet::Indirector::Terminus.instance_load :test1, "puppet/indirector/test1"
 
-      Puppet::Indirector::Terminus.instance_loader(:test1).expects(:load).with(:yay)
+      Puppet::Indirector::Terminus.instance_loader(:test1).expects(:load).with(:yay, anything)
       Puppet::Indirector::Terminus.terminus_class(:test1, :yay)
     end
 

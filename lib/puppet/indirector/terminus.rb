@@ -112,7 +112,7 @@ class Puppet::Indirector::Terminus
     # Return all terminus classes for a given indirection.
     def terminus_classes(indirection_name)
       setup_instance_loading indirection_name
-      instance_loader(indirection_name).files_to_load.map do |file|
+      instance_loader(indirection_name).files_to_load(Puppet.lookup(:current_environment)).map do |file|
         File.basename(file).chomp(".rb").intern
       end
     end

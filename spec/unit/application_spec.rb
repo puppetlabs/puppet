@@ -76,15 +76,39 @@ describe Puppet::Application do
     end
 
     it 'should find applications from multiple paths' do
-      Puppet::Util::Autoload.expects(:files_to_load).with('puppet/application').returns(%w{ /a/foo.rb /b/bar.rb })
+      Puppet::Util::Autoload.expects(:files_to_load).with(
+        'puppet/application',
+        is_a(Puppet::Node::Environment)
+      ).returns(%w{ /a/foo.rb /b/bar.rb })
 
       expect(Puppet::Application.available_application_names).to match_array(%w{ foo bar })
     end
 
     it 'should return unique application names' do
-      Puppet::Util::Autoload.expects(:files_to_load).with('puppet/application').returns(%w{ /a/foo.rb /b/foo.rb })
+      Puppet::Util::Autoload.expects(:files_to_load).with(
+        'puppet/application',
+        is_a(Puppet::Node::Environment)
+      ).returns(%w{ /a/foo.rb /b/foo.rb })
 
       expect(Puppet::Application.available_application_names).to eq(%w{ foo })
+    end
+
+    it 'finds the application using the configured environment' do
+      Puppet[:environment] = 'production'
+      Puppet::Util::Autoload.expects(:files_to_load).with do |_, env|
+        expect(env.name).to eq(:production)
+      end.returns(%w{ /a/foo.rb })
+
+      expect(Puppet::Application.available_application_names).to eq(%w{ foo })
+    end
+
+    it "falls back to the current environment if the configured environment doesn't exist" do
+      Puppet[:environment] = 'doesnotexist'
+      Puppet::Util::Autoload.expects(:files_to_load).with do |_, env|
+        expect(env.name).to eq(:'*root*')
+      end.returns(%w[a/foo.rb])
+
+      expect(Puppet::Application.available_application_names).to eq(%w[foo])
     end
   end
 

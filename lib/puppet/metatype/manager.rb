@@ -50,7 +50,7 @@ module Manager
   # @return [void]
   #
   def loadall
-    typeloader.loadall
+    typeloader.loadall(Puppet.lookup(:current_environment))
   end
 
   # Defines a new type or redefines an existing type with the given name.
@@ -124,7 +124,7 @@ module Manager
     klass.providerloader = Puppet::Util::Autoload.new(klass, "puppet/provider/#{klass.name.to_s}")
 
     # We have to load everything so that we can figure out the default provider.
-    klass.providerloader.loadall Puppet.lookup(:current_environment)
+    klass.providerloader.loadall(Puppet.lookup(:current_environment))
     klass.providify unless klass.providers.empty?
 
     loc = block_given? ? block.source_location : nil
