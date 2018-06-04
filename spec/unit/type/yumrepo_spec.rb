@@ -398,7 +398,6 @@ describe Puppet::Type.type(:yumrepo) do
       it_behaves_like "a yumrepo parameter that can be absent", :assumeyes
     end
 
-
     describe "cost" do
       it_behaves_like "a yumrepo parameter that can be absent", :cost
       it_behaves_like "a yumrepo parameter that can be an integer", :cost
@@ -471,6 +470,16 @@ describe Puppet::Type.type(:yumrepo) do
         sync_event = status.events[0]
         expect(sync_event.message).to eq 'changed [redacted] to [redacted]'
       end
+    end
+
+    describe "report_instanceid" do
+      it_behaves_like "a yumrepo parameter that expects a boolean parameter", :report_instanceid
+      it_behaves_like "a yumrepo parameter that can be absent", :report_instanceid
+    end
+
+    describe "fastestmirror_enabled" do
+      it_behaves_like "a yumrepo parameter that expects a boolean parameter", :fastestmirror_enabled
+      it_behaves_like "a yumrepo parameter that can be absent", :fastestmirror_enabled
     end
   end
 end

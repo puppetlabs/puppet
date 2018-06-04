@@ -427,4 +427,22 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
     sensitive true
   end
+
+  newproperty(:report_instanceid) do
+    desc "Determines if yum reports an AWS instanceid and region as a URL parameter when downloading packages.
+      #{YUM_BOOLEAN_DOC}
+      #{ABSENT_DOC}"
+
+    newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
+  end
+
+  newproperty(:fastestmirror_enabled) do
+    desc "Determines if the fastestmirror plugin is enabled for this repository.
+      #{YUM_BOOLEAN_DOC}
+      #{ABSENT_DOC}"
+
+    newvalues(YUM_BOOLEAN, :absent)
+    munge(&munge_yum_bool)
+  end
 end
