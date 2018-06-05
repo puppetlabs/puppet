@@ -48,10 +48,29 @@ describe Puppet::Parser::Functions do
   end
 
   describe "when calling function to test function existence" do
-    it "should loadall 3x functions" do
-      Puppet::Parser::Functions.autoloader.delegatee.stubs(:loadall)
+    before :each do
+      Puppet[:strict] = :error
+    end
 
+    it "emits a deprecation warning when loading all 3.x functions" do
+      Puppet::Parser::Functions.autoloader.delegatee.stubs(:loadall)
       Puppet::Parser::Functions.autoloader.loadall
+
+      expect(@logs.map(&:to_s)).to include(/The method 'Puppet::Parser::Functions.autoloader#loadall' is deprecated in favor of using 'Scope#call_function/)
+    end
+
+    it "emits a deprecation warning when loading a single 3.x function" do
+      Puppet::Parser::Functions.autoloader.delegatee.stubs(:load)
+      Puppet::Parser::Functions.autoloader.load('beatles')
+
+      expect(@logs.map(&:to_s)).to include(/The method 'Puppet::Parser::Functions.autoloader#load\("beatles"\)' is deprecated in favor of using 'Scope#call_function'/)
+    end
+
+    it "emits a deprecation warning when checking if a 3x function is loaded" do
+      Puppet::Parser::Functions.autoloader.delegatee.stubs(:loaded?).returns(false)
+      Puppet::Parser::Functions.autoloader.loaded?('beatles')
+
+      expect(@logs.map(&:to_s)).to include(/The method 'Puppet::Parser::Functions.autoloader#loaded\?\(\"beatles\"\)' is deprecated in favor of using 'Scope#call_function'/)
     end
 
     it "should return false if the function doesn't exist" do
