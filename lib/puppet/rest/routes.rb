@@ -21,7 +21,7 @@ module Puppet::Rest
       ca.with_base_url(client.dns_resolver) do |base_url|
         header = { 'Accept' => 'text/plain', 'Accept-Encoding' => ACCEPT_ENCODING }
         body = ''
-        client.get(base_url + "certificate/#{name}", header: header) do |chunk|
+        client.get("#{base_url}certificate/#{name}", header: header) do |chunk|
           body << chunk
         end
         body
