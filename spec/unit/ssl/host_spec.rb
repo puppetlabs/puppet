@@ -110,9 +110,8 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       Puppet::SSL::Key.stubs(:new).returns key
       Puppet::SSL::Key.indirection.stubs(:save).with(key)
 
-      @cr = stub('certificate request')
+      @cr = stub('certificate request', :render => "csr pem")
       Puppet::SSL::CertificateRequest.stubs(:new).returns @cr
-      Puppet::SSL::CertificateRequest.indirection.stubs(:save).with(@cr)
     end
 
     describe "explicitly specified" do
@@ -436,67 +435,59 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
   end
 
   describe "when managing its certificate request" do
-    before do
-      @realrequest = "real request"
-      @request = Puppet::SSL::CertificateRequest.new("myname")
-      @request.content = @realrequest
+    before(:all) do
+      @pki = PuppetSpec::SSL.create_chained_pki
     end
 
-    it "should return nil if the key is not set and cannot be found" do
-      Puppet::SSL::CertificateRequest.indirection.expects(:find).with("myname").returns(nil)
-      expect(@host.certificate_request).to be_nil
+    before(:each) do
+      Puppet[:requestdir] = tmpdir('requests')
     end
 
-    it "should find the request in the Key class and return it and return the Puppet SSL request" do
-      Puppet::SSL::CertificateRequest.indirection.expects(:find).with("myname").returns @request
-
-      expect(@host.certificate_request).to equal(@request)
-    end
+    let(:key) { Puppet::SSL::Key.from_s(@pki[:leaf_key].to_s, @host.name) }
 
     it "should generate a new key when generating the cert request if no key exists" do
-      Puppet::SSL::CertificateRequest.expects(:new).with("myname").returns @request
-
-      key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
-
       @host.expects(:key).times(2).returns(nil).then.returns(key)
       @host.expects(:generate_key).returns(key)
 
-      @request.stubs(:generate)
-      Puppet::SSL::CertificateRequest.indirection.stubs(:save)
-
       @host.generate_certificate_request
+      expect(Puppet::FileSystem.exist?(File.join(Puppet[:requestdir], "#{@host.name}.pem"))).to be true
     end
 
     it "should be able to generate and save a new request using the private key" do
-      Puppet::SSL::CertificateRequest.expects(:new).with("myname").returns @request
-
-      key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
-      @request.expects(:generate).with("mycontent", {})
-      Puppet::SSL::CertificateRequest.indirection.expects(:save).with(@request)
 
       expect(@host.generate_certificate_request).to be_truthy
-      expect(@host.certificate_request).to equal(@request)
+      expect(Puppet::FileSystem.exist?(File.join(Puppet[:requestdir], "#{@host.name}.pem"))).to be true
+    end
+
+    it "should send a new request to the CA for signing" do
+      Puppet::SSL::Host.ca_location = :remote
+      @http = mock("http")
+      @host.stubs(:http_client).returns(@http)
+      @host.stubs(:key).returns(key)
+      request = mock("request")
+      request.stubs(:generate)
+      request.expects(:render).returns("my request").twice
+      Puppet::SSL::CertificateRequest.expects(:new).returns(request)
+
+      Puppet::Rest::Routes.expects(:put_certificate_request)
+        .with(@host.http_client, "my request", @host.name)
+        .returns(nil)
+
+      expect(@host.generate_certificate_request).to be true
     end
 
     it "should return any previously found request without requerying" do
-      Puppet::SSL::CertificateRequest.indirection.expects(:find).with("myname").returns(@request).once
+      request = mock("request")
+      @host.expects(:load_certificate_request_from_file).returns(request).once
 
-      expect(@host.certificate_request).to equal(@request)
-      expect(@host.certificate_request).to equal(@request)
+      expect(@host.certificate_request).to equal(request)
+      expect(@host.certificate_request).to equal(request)
     end
 
     it "should not keep its certificate request in memory if the request cannot be saved" do
-      Puppet::SSL::CertificateRequest.expects(:new).with("myname").returns @request
-
-      key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
-      @request.stubs(:generate)
-      @request.stubs(:name).returns("myname")
-      terminus = stub 'terminus'
-      terminus.stubs(:validate)
-      Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
-      terminus.expects(:save).with { |req| req.instance == @request && req.key == "myname" }.raises "eh"
+      Puppet::Util.expects(:replace_file).raises(RuntimeError)
 
       expect { @host.generate_certificate_request }.to raise_error(RuntimeError)
 

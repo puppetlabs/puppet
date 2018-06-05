@@ -46,24 +46,36 @@ describe Puppet::Rest::Client do
     let(:client) { Puppet::Rest::Client.new(client: http) }
     let(:url) { 'https://myserver.com:555/data' }
 
-    it 'makes a GET request given a URL, query hash, header hash, and streaming block' do
-      query = { 'environment' => 'production' }
-      header = { 'Accept' => 'text/plain' }
-      response_string = ''
-      chunk_processing = lambda { |chunk| response_string = chunk }
-      http.expects(:get_content).with(url, { query: query, header: header }).yields('response')
-      client.get(url, query: query, header: header, &chunk_processing)
-      expect(response_string).to eq('response')
+    describe "#get" do
+      it 'makes a GET request given a URL, query hash, header hash, and streaming block' do
+        query = { 'environment' => 'production' }
+        header = { 'Accept' => 'text/plain' }
+        response_string = ''
+        chunk_processing = lambda { |chunk| response_string = chunk }
+        http.expects(:get_content).with(url, { query: query, header: header }).yields('response')
+        client.get(url, query: query, header: header, &chunk_processing)
+        expect(response_string).to eq('response')
+      end
+
+      it 'throws an exception when the response to the GET is not OK' do
+        fake_response = mock('resp', :status => HTTP::Status::BAD_REQUEST)
+        http.expects(:get_content).with(url, query: nil, header: nil)
+            .raises(HTTPClient::BadResponseError.new('failed request', fake_response))
+        expect { client.get(url) }.to raise_error do |error|
+          expect(error.message).to eq('failed request')
+          expect(error.response).to be_a(Puppet::Rest::Response)
+          expect(error.response.status_code).to eq(400)
+        end
+      end
     end
 
-    it 'throws an exception when the request is not OK' do
-      fake_response = mock('resp', :status => HTTP::Status::BAD_REQUEST)
-      http.expects(:get_content).with(url, query: nil, header: nil)
-          .raises(HTTPClient::BadResponseError.new('failed request', fake_response))
-      expect { client.get(url) }.to raise_error do |error|
-        expect(error.message).to eq('failed request')
-        expect(error.response).to be_a(Puppet::Rest::Response)
-        expect(error.response.status_code).to eq(400)
+    describe "#put" do
+      it 'makes a PUT request given a URL, string body, query hash, and header hash' do
+        body = 'send to server'
+        query = { 'environment' => 'production' }
+        header = { 'Accept' => 'text/plain' }
+        http.expects(:put).with(url, { body: body, query: query, header: header })
+        client.put(url, body: body, query: query, header: header)
       end
     end
   end

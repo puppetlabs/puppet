@@ -10,6 +10,7 @@ describe Puppet::SSL::CertificateRevocationList, :unless => Puppet::Util::Platfo
     @cert = ca.host.certificate.content
     @key = ca.host.key.content
     @class = Puppet::SSL::CertificateRevocationList
+    Puppet::SSL::Host.ca_location = :local
   end
 
   def expects_time_close_to_now(time)

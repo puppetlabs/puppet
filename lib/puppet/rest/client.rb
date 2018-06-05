@@ -54,6 +54,17 @@ module Puppet::Rest
       end
     end
 
+    # Make a PUT request to the specified URL with the specified params.
+    # @param [String] url the full path to query
+    # @param [String/Hash] body the contents of the PUT request
+    # @param [Hash] query any URL params to add to send to the endpoint
+    # @param [Hash] header any additional entries to add to the default header
+    # @return [Puppet::Rest::Response]
+    def put(url, body:, query: nil, header: nil)
+      response = @client.put(url, body: body, query: query, header: header)
+      Puppet::Rest::Response.new(response)
+    end
+
     private
 
     # Checks for SSL certificates on disk and sets VERIFY_PEER
