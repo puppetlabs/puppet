@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-280-g70d518f\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-295-g76043d8\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-06-04 21:33+0000\n"
-"PO-Revision-Date: 2018-06-04 21:33+0000\n"
+"POT-Creation-Date: 2018-06-05 22:21+0000\n"
+"PO-Revision-Date: 2018-06-05 22:21+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -8028,69 +8028,65 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:357 ../lib/puppet/ssl/host.rb:378
+#: ../lib/puppet/ssl/host.rb:356 ../lib/puppet/ssl/host.rb:377
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:359
+#: ../lib/puppet/ssl/host.rb:358
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:368
+#: ../lib/puppet/ssl/host.rb:367
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:376
+#: ../lib/puppet/ssl/host.rb:375
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:408
-msgid "Disabling certificate revocation checking when fetching the CRL and no CRL is present"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:411
-msgid "Certificate revocation checking is enabled but a CRL cannot be found; CRL checking will not be performed."
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:429
+#: ../lib/puppet/ssl/host.rb:407
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:452
+#: ../lib/puppet/ssl/host.rb:438
 msgid "The CA certificate at %{file_path} is invalid: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:475
+#: ../lib/puppet/ssl/host.rb:461
 msgid "No valid PEM-encoded certificates."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:482
+#: ../lib/puppet/ssl/host.rb:468
 msgid "Could not parse certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:501
+#: ../lib/puppet/ssl/host.rb:491
+msgid "Could not download CRLs: %{message}"
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:509
 msgid "Response from the CA did not contain a valid CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:504
+#: ../lib/puppet/ssl/host.rb:512
 msgid "Could not download CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:557
+#: ../lib/puppet/ssl/host.rb:565
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:576
+#: ../lib/puppet/ssl/host.rb:584
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:580
+#: ../lib/puppet/ssl/host.rb:588
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:583
+#: ../lib/puppet/ssl/host.rb:591
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
