@@ -74,7 +74,7 @@ describe Puppet::Type.type(:service).provider(:openrc) do
         Puppet::Util::Execution.expects(:execute).with(
           includes('/bin/rc-status'),
           has_entry(:custom_environment, {:RC_SVCNAME => nil})
-        ).returns ''
+        ).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
         subject.enabled?
       end
     end

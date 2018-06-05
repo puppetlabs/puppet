@@ -7,7 +7,9 @@ describe Puppet::Type.type(:package).provider(:urpmi) do
     %w[rpm urpmi urpme urpmq].each do |executable|
       Puppet::Util.stubs(:which).with(executable).returns(executable)
     end
-    Puppet::Util::Execution.stubs(:execute).with(['rpm', '--version'], anything).returns 'RPM version 4.9.1.3'
+    Puppet::Util::Execution.stubs(:execute)
+      .with(['rpm', '--version'], anything)
+      .returns(Puppet::Util::Execution::ProcessOutput.new('RPM version 4.9.1.3', 0))
   end
 
   let(:resource) do
@@ -53,13 +55,17 @@ describe Puppet::Type.type(:package).provider(:urpmi) do
     let(:urpmq_output) { 'foopkg : Lorem ipsum dolor sit amet, consectetur adipisicing elit ( 7.8.9-1.mga2 )' }
 
     it "uses urpmq to determine the latest package" do
-      Puppet::Util::Execution.expects(:execute).with(['urpmq', '-S', 'foopkg'], anything).returns urpmq_output
+      Puppet::Util::Execution.expects(:execute)
+        .with(['urpmq', '-S', 'foopkg'], anything)
+        .returns(Puppet::Util::Execution::ProcessOutput.new(urpmq_output, 0))
       expect(subject.latest).to eq('7.8.9-1.mga2')
     end
 
     it "falls back to the current version" do
       resource[:ensure] = '5.4.3'
-      Puppet::Util::Execution.expects(:execute).with(['urpmq', '-S', 'foopkg'], anything).returns ''
+      Puppet::Util::Execution.expects(:execute)
+        .with(['urpmq', '-S', 'foopkg'], anything)
+        .returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
       expect(subject.latest).to eq('5.4.3')
     end
   end
