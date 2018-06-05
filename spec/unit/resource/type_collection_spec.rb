@@ -320,7 +320,10 @@ describe Puppet::Resource::TypeCollection do
       let(:environment) { Puppet::Node::Environment.create(:testing, [], '', '/my/foo') }
 
       it "should use the output of the environment's config_version setting if one is provided" do
-        Puppet::Util::Execution.expects(:execute).with(["/my/foo"]).returns "output\n"
+        Puppet::Util::Execution.expects(:execute)
+          .with(["/my/foo"])
+          .returns Puppet::Util::Execution::ProcessOutput.new("output\n", 0)
+        expect(@code.version).to be_instance_of(String)
         expect(@code.version).to eq("output")
       end
 

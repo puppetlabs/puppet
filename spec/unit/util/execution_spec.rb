@@ -821,7 +821,8 @@ describe Puppet::Util::Execution do
 
   describe "execfail" do
     it "returns the executed command output" do
-      Puppet::Util::Execution.stubs(:execute).returns("process output")
+      Puppet::Util::Execution.stubs(:execute)
+        .returns(Puppet::Util::Execution::ProcessOutput.new("process output", 0))
       expect(Puppet::Util::Execution.execfail('echo hello', Puppet::Error)).to eq('process output')
     end
 

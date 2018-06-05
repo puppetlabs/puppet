@@ -1695,7 +1695,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
     it "should succeed the file resource if command succeeds" do
       catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env true"))
-      Puppet::Util::Execution.expects(:execute).with("/usr/bin/env true", {:combine => true, :failonfail => true}).returns ''
+      Puppet::Util::Execution.expects(:execute)
+        .with("/usr/bin/env true", {:combine => true, :failonfail => true})
+        .returns Puppet::Util::Execution::ProcessOutput.new('', 0)
       report = catalog.apply.report
       expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
       expect(Puppet::FileSystem.exist?(path)).to be_truthy

@@ -27,7 +27,7 @@ describe provider_class do
   end
 
   let(:bff_showres_output) {
-    <<END
+    Puppet::Util::Execution::ProcessOutput.new(<<END, 0)
 mypackage.foo                                                           ALL  @@I:mypackage.foo _all_filesets
  @ 1.2.3.1  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.1
  + 1.2.3.4  MyPackage Runtime Environment                       @@I:mypackage.foo 1.2.3.4
@@ -37,7 +37,7 @@ END
   }
 
   let(:rpm_showres_output) {
-    <<END
+    Puppet::Util::Execution::ProcessOutput.new(<<END, 0)
 mypackage.foo                                                                ALL  @@R:mypackage.foo _all_filesets
  @@R:mypackage.foo-1.2.3-1 1.2.3-1
  @@R:mypackage.foo-1.2.3-4 1.2.3-4
@@ -168,9 +168,6 @@ OUTPUT
 
       expect { @provider.install }.to raise_error(Puppet::Error, "NIM package provider is unable to downgrade packages")
     end
-
-
-
   end
 
   context "when uninstalling" do
@@ -187,9 +184,7 @@ OUTPUT
       @provider.class.expects(:pkglist).with(:pkgname => 'mypackage.foo').returns(nil)
       @provider.uninstall
     end
-
   end
-
 
   context "when parsing nimclient showres output" do
     describe "#parse_showres_output" do
@@ -231,7 +226,6 @@ END
           expect(subject.send(:determine_latest_version, nimclient_showres_output, 'mypackage.foo')).to eq([:rpm, nil])
         end
       end
-
     end
 
     describe "#determine_package_type" do
@@ -244,7 +238,4 @@ END
       end
     end
   end
-
-
-
 end

@@ -92,8 +92,10 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(invalid_xml_plist)
       Puppet.expects(:debug).with(regexp_matches(/^Failed with CFFormatError/))
       Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
-                                                     {:failonfail => true, :combine => true}).returns(valid_xml_plist)
+      Puppet::Util::Execution.expects(:execute)
+        .with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
+              {:failonfail => true, :combine => true})
+        .returns(Puppet::Util::Execution::ProcessOutput.new(valid_xml_plist, 0))
       expect(subject.read_plist_file(plist_path)).to eq(valid_xml_plist_hash)
     end
     it "returns nil when direct parsing and plutil conversion both fail" do
@@ -101,8 +103,10 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(non_plist_data)
       Puppet.expects(:debug).with(regexp_matches(/^Failed with (CFFormatError|NoMethodError)/))
       Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
-                                                     {:failonfail => true, :combine => true}).raises(Puppet::ExecutionFailure, 'boom')
+      Puppet::Util::Execution.expects(:execute)
+        .with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
+              {:failonfail => true, :combine => true})
+        .raises(Puppet::ExecutionFailure, 'boom')
       expect(subject.read_plist_file(plist_path)).to eq(nil)
     end
     it "returns nil when file is a non-plist binary blob" do
@@ -110,8 +114,10 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(binary_data)
       Puppet.expects(:debug).with(regexp_matches(/^Failed with (CFFormatError|ArgumentError)/))
       Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
-      Puppet::Util::Execution.expects(:execute).with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
-                                                     {:failonfail => true, :combine => true}).raises(Puppet::ExecutionFailure, 'boom')
+      Puppet::Util::Execution.expects(:execute)
+        .with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
+              {:failonfail => true, :combine => true})
+        .raises(Puppet::ExecutionFailure, 'boom')
       expect(subject.read_plist_file(plist_path)).to eq(nil)
     end
   end

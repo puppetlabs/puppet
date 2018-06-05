@@ -68,7 +68,7 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
       before(:each) do
         Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
         provider.stubs(:which).with("rpm").returns("/bin/rpm")
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).returns("4.10.1\n").at_most_once
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).returns(Puppet::Util::Execution::ProcessOutput.new("4.10.1\n", 0)).at_most_once
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns('6')
       end
       it "should call #{provider_name} install for :installed" do
@@ -84,7 +84,7 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
           end
           it "should catch #{provider_name} install failures when status code is wrong" do
             resource.stubs(:should).with(:ensure).returns :installed
-            Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-e', error_level, '-y', :install, name]).returns("No package #{name} available.")
+            Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-e', error_level, '-y', :install, name]).returns(Puppet::Util::Execution::ProcessOutput.new("No package #{name} available.", 0))
             expect {
               provider.install
             }.to raise_error(Puppet::Error, "Could not find package #{name}")

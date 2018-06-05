@@ -68,7 +68,7 @@ describe provider_class do
     end
 
     def dpkg_query_execution_returns(output)
-      Puppet::Util::Execution.expects(:execute).with(query_args, execute_options).returns(output)
+      Puppet::Util::Execution.expects(:execute).with(query_args, execute_options).returns(Puppet::Util::Execution::ProcessOutput.new(output, 0))
     end
 
     before do

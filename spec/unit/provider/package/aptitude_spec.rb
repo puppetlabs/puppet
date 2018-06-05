@@ -23,7 +23,7 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
         Puppet::Util::Execution.expects(:execute).with(
           [dpkgquery_path, '-W', '--showformat', "'${Status} ${Package} ${Version}\\n'", 'faff'],
           {:failonfail => true, :combine => true, :custom_environment => {}}
-        ).returns(output)
+        ).returns(Puppet::Util::Execution::ProcessOutput.new(output, 0))
 
         expect(pkg.property(:ensure).retrieve).to eq(expect)
       end
