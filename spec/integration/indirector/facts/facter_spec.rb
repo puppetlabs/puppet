@@ -1,8 +1,8 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet_spec/files'
 require 'puppet_spec/compiler'
+require 'puppet/indirector/facts/facter'
 
 describe Puppet::Node::Facts::Facter do
   include PuppetSpec::Files
