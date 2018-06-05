@@ -150,44 +150,7 @@ describe Puppet::Util do
     # Ruby retrieves / stores ENV names in the current codepage
     # when these tests no longer pass, Ruby has fixed its bugs and workarounds can be removed
 
-
-    # interestingly we would expect some of these tests to fail when codepage is 65001
-    # but instead the env values are in Encoding::ASCII_8BIT!
-    it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby <= 2.1) ",
-      :if => ((RUBY_VERSION =~ /^(1\.|2\.0\.|2\.1\.)/) && Puppet.features.microsoft_windows?) do
-
-      withenv_utf8 do |utf_8_key, utf_8_value, codepage_key|
-        # both a string in UTF-8 and current codepage are deemed valid keys to the hash
-        # which is because Ruby compares the BINARY versions of the string, but ignores encoding
-        expect(ENV.key?(codepage_key)).to eq(true)
-        expect(ENV.key?(utf_8_key)).to eq(true)
-
-        # Ruby's ENV.keys has slightly different behavior than ENV.key?(key)
-        # the keys collection in 2.1 has a string with the correct bytes
-        # (codepage_key / utf_8_key have same bytes for the sake of searching)
-        found = ENV.keys.find { |k| k.bytes == codepage_key.bytes }
-        # but the string is actually a binary string
-        expect(found.encoding).to eq(Encoding::BINARY)
-        # meaning we can't use include? to find it in either UTF-8 or codepage encoding
-        expect(ENV.keys.include?(codepage_key)).to eq(false)
-        expect(ENV.keys.include?(utf_8_key)).to eq(false)
-
-        # and can only search with a BINARY encoded string
-        expect(ENV.keys.include?(utf_8_key.dup.force_encoding(Encoding::BINARY))).to eq(true)
-
-        # similarly the value stored at the real key is in current codepage
-        # but won't match real UTF-8 value
-        env_value = ENV[utf_8_key]
-        expect(env_value).to_not eq(utf_8_value)
-        expect(env_value.encoding).to_not eq(Encoding::UTF_8)
-
-        # but it can be forced back to UTF-8 to make it match.. ugh
-        converted_value = ENV[utf_8_key].dup.force_encoding(Encoding::UTF_8)
-        expect(converted_value).to eq(utf_8_value)
-      end
-    end
-
-    # but in 2.3, the behavior is mostly correct when external codepage is 65001 / UTF-8
+    # In 2.3, the behavior is mostly correct when external codepage is 65001 / UTF-8
     it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby >= 2.3.x) ",
       :if => ((match = RUBY_VERSION.match(/^2\.(\d+)\./)) && match.captures[0].to_i >= 3 && Puppet.features.microsoft_windows?) do
 
@@ -336,10 +299,7 @@ describe Puppet::Util do
       path = "/foo+foo bar?foo+foo bar"
       uri = Puppet::Util.path_to_uri(path)
 
-      # Ruby 1.9.3 URI#to_s has a bug that returns ASCII always
-      # despite parts being UTF-8 strings
-      expected_encoding = RUBY_VERSION == '1.9.3' ? Encoding::ASCII : Encoding::UTF_8
-
+      expected_encoding = Encoding::UTF_8
       expect(uri.to_s.encoding).to eq(expected_encoding)
       expect(uri.path).to eq("/foo+foo%20bar")
       # either + or %20 is correct for an encoded space in query
@@ -980,19 +940,10 @@ describe Puppet::Util do
       expect(rand()).not_to eql(rand_one)
     end
 
-    if defined?(Random) == 'constant' && Random.class == Class
-      it "should not fiddle with the global seed" do
-        srand(1234)
-        Puppet::Util.deterministic_rand(123,20)
-        expect(srand()).to eql(1234)
-      end
-    # ruby below 1.9.2 variant
-    else
-      it "should set a new global seed" do
-        srand(1234)
-        Puppet::Util.deterministic_rand(123,20)
-        expect(srand()).not_to eql(1234)
-      end
+    it "should not fiddle with the global seed" do
+      srand(1234)
+      Puppet::Util.deterministic_rand(123,20)
+      expect(srand()).to eql(1234)
     end
   end
 end

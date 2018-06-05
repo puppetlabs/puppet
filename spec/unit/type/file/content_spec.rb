@@ -77,7 +77,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       end
     end
 
-    it "should convert the value to ASCII-8BIT", :if => "".respond_to?(:encode) do
+    it "should convert the value to ASCII-8BIT" do
       content.should= "Let's make a \u{2603}"
 
       expect(content.actual_content).to eq("Let's make a \xE2\x98\x83".force_encoding(Encoding::ASCII_8BIT))

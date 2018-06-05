@@ -577,7 +577,6 @@ describe 'Lexer2' do
       code = <<-CODE
       "x\\u2713y"
       CODE
-      # >= Ruby 1.9.3 reports \u
       expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u2713y"])
     end
 
@@ -585,7 +584,6 @@ describe 'Lexer2' do
       code = <<-CODE
       "x\\u2713\\u2713y"
       CODE
-      # >= Ruby 1.9.3 reports \u
       expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u2713\u2713y"])
     end
 

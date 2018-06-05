@@ -184,7 +184,7 @@ module Puppet
       # encoding to support concatenation for display.
       # overrides Puppet::Property#change_to_s
       def change_to_s(currentvalue, newvalue)
-        if newvalue.respond_to?(:force_encoding) && !Encoding.compatible?(currentvalue, newvalue)
+        if newvalue.is_a?(String) && !Encoding.compatible?(currentvalue, newvalue)
           return super(currentvalue, newvalue.dup.force_encoding(currentvalue.encoding))
         end
         super(currentvalue, newvalue)

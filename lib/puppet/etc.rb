@@ -143,10 +143,12 @@ module Puppet::Etc
       struct.each_pair do |member, value|
         if value.is_a?(String)
           new_struct["canonical_#{member}".to_sym] = value.dup
-          new_struct[member] = Puppet::Util::CharacterEncoding.scrub(Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(value))
+          new_struct[member] = Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(value).scrub
         elsif value.is_a?(Array)
           new_struct["canonical_#{member}".to_sym] = value.inject([]) { |acc, elem| acc << elem.dup }
-          new_struct[member] = value.inject([]) { |acc, elem| acc << Puppet::Util::CharacterEncoding.scrub(Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(elem)) }
+          new_struct[member] = value.inject([]) do |acc, elem|
+            acc << Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(elem).scrub
+          end
         else
           new_struct["canonical_#{member}".to_sym] = value
           new_struct[member] = value
@@ -156,6 +158,3 @@ module Puppet::Etc
     end
   end
 end
-
-
-

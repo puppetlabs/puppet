@@ -38,9 +38,6 @@ agents.each do |agent|
 
   step "verify that schtasks reports the same output"
   on agent, "schtasks.exe /query /tn #{name} /xml" do
-    # Ruby 1.9.3 has an ecoding bug in REXML.  Instead we modify the XML Encoding header returned by schtasks.exe to be UTF-8 not UTF-16
-    stdout.gsub!('UTF-16','UTF-8') if RUBY_VERSION =~ /^1\.9/
-
     xml = REXML::Document.new(stdout)
 
     command =  xml.root.elements['//Actions/Exec/Command/text()'].value

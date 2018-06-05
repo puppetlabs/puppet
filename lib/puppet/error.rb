@@ -3,7 +3,7 @@ module Puppet
   class Error < RuntimeError
     attr_accessor :original
     def initialize(message, original=nil)
-      super(Puppet::Util::CharacterEncoding.scrub(message))
+      super(message.scrub)
       @original = original
     end
   end
