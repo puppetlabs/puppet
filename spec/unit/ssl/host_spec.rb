@@ -757,29 +757,6 @@ describe Puppet::SSL::Host do
       host.ssl_store(OpenSSL::X509::PURPOSE_SSL_SERVER)
     end
 
-    context "and the CRL is on disk" do
-      before do
-        @pki = PuppetSpec::SSL.create_chained_pki
-
-        @revoked_cert = @pki[:revoked_root_node_cert]
-
-        localcacert = Puppet.settings[:localcacert]
-        Puppet::Util.replace_file(localcacert, 0644) {|f| f.write @pki[:ca_bundle] }
-        Puppet::Util.replace_file(Puppet.settings[:hostcrl], 0644) do |f|
-          f.write @pki[:crl_chain]
-        end
-      end
-
-      after do
-        Puppet::FileSystem.unlink(Puppet.settings[:localcacert])
-        Puppet::FileSystem.unlink(Puppet.settings[:hostcrl])
-      end
-
-      it "retrieves it and can correctly identify revoked certs" do
-        expect(@host.ssl_store.verify(@revoked_cert)).to be false
-      end
-    end
-
     context "and the CRL is not on disk" do
       before do
         @pki = PuppetSpec::SSL.create_chained_pki
