@@ -37,8 +37,8 @@ class Puppet::Util::Autoload
     # into memory.
     def mark_loaded(name, file)
       name = cleanpath(name).chomp('.rb')
-      ruby_file = name + ".rb"
-      $LOADED_FEATURES << ruby_file unless $LOADED_FEATURES.include?(ruby_file)
+      file = File.expand_path(file)
+      $LOADED_FEATURES << file unless $LOADED_FEATURES.include?(file)
       loaded[name] = [file, File.mtime(file)]
     end
 
