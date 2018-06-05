@@ -19,13 +19,29 @@ module Puppet::Rest
     # @return [String] the PEM-encoded certificate or certificate bundle
     def self.get_certificate(client, name)
       ca.with_base_url(client.dns_resolver) do |base_url|
-        header = { 'Accept' => 'text/plain', 'accept-encoding' => ACCEPT_ENCODING }
+        header = { 'Accept' => 'text/plain', 'Accept-Encoding' => ACCEPT_ENCODING }
         body = ''
-        client.get(base_url + "certificate/#{name}", header: header) do |chunk|
+        client.get("#{base_url}certificate/#{name}", header: header) do |chunk|
           body << chunk
         end
         body
       end
     end
+
+    # Make an HTTP request to fetch the named crl, using the given
+    # HTTP client. Accepts a block to stream responses to disk.
+    # @param [Puppet::Rest::Client] client the HTTP client to use to make the request
+    # @param [String] name the crl to fetch
+    # @raise [Puppet::Rest::ResponseError] if the response status is not OK
+    # @return nil
+   def self.get_crls(client, name, &block)
+     ca.with_base_url(client.dns_resolver) do |base_url|
+       header = { 'Accept' => 'text/plain', 'Accept-Encoding' => ACCEPT_ENCODING }
+       client.get("#{base_url}certificate_revocation_list/#{name}", header: header) do |chunk|
+         block.call(chunk)
+       end
+     end
+   end
+
   end
 end

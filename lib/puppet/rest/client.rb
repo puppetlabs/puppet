@@ -66,6 +66,7 @@ module Puppet::Rest
       if ssl_certificates_are_present?(ca_path)
         ssl_config.verify_mode = OpenSSL::SSL::VERIFY_PEER
         ssl_config.add_trust_ca(ca_path)
+        ssl_config.verify_callback = Puppet::SSL::Validator::DefaultValidator.new(ca_path)
         ssl_config.set_client_cert_file(Puppet[:hostcert], Puppet[:hostprivkey])
       else
         ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE

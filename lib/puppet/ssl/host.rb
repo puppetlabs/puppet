@@ -194,11 +194,11 @@ DOC
     true
   end
 
-  def http_client
+  def http_client(*args)
     # This can't be required top-level because Puppetserver uses the Host class too,
     # and we don't ship the gem in that context.
     require 'puppet/rest/client'
-    @http_client ||= Puppet::Rest::Client.new
+    @http_client ||= Puppet::Rest::Client.new(*args)
   end
 
   def certificate
@@ -298,7 +298,6 @@ ERROR_STRING
   # connections.
   def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
     if @ssl_store.nil?
-      ensure_crl_if_needed
       @ssl_store = build_ssl_store(purpose)
     end
     @ssl_store
@@ -395,41 +394,28 @@ ERROR_STRING
 
   private
 
-  # Ensures that CRL is either on disk, or that CRL checking has been disabled
-  def ensure_crl_if_needed
-    if use_crl? && !Puppet::FileSystem.exist?(crl_path)
-      # The CertificateRevocationList indirector will attempt to download the
-      # CRL from the CA if it does not exist on disk. It will ask host for
-      # its ssl_store again, but expect crl checking to be disabled for that
-      # store. This is not thread safe, and should be replaced as soon as we
-      # no longer need to use the indirector to download the CRL (PUP-8654).
-      old_crl_usage = @crl_usage
-      @crl_usage = false
-      Puppet.debug _("Disabling certificate revocation checking when fetching the CRL and no CRL is present")
-      if !CertificateRevocationList.indirection.find(CA_NAME)
-        raise Puppet::Error,
-              _("Certificate revocation checking is enabled but a CRL cannot be found; CRL checking will not be performed.")
+  # @param crl_string [String] CRLs read from disk or obtained from server
+  # @return [Array<OpenSSL::X509::CRL>] CRLs from chain
+  # @raise [Puppet::Error<OpenSSL::X509::CRLError>] if the CRL chain is malformed
+  def process_crl_string(crl_string)
+    delimiters = /-----BEGIN X509 CRL-----.*?-----END X509 CRL-----/m
+    crl_string.scan(delimiters).map do |crl|
+      begin
+        OpenSSL::X509::CRL.new(crl)
+      rescue OpenSSL::X509::CRLError => e
+        raise Puppet::Error.new(
+          _("Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n%{crl}" % {crl_path: crl_path, error: e.message, crl: crl}),
+          e)
       end
-      @crl_usage = old_crl_usage
     end
   end
 
   # @param path [String] Path to CRL Chain
   # @return [Array<OpenSSL::X509::CRL>] CRLs from chain
-  # @raise [Errno::ENOENT] if file does not exist
   # @raise [Puppet::Error<OpenSSL::X509::CRLError>] if the CRL chain is malformed
   def load_crls(path)
-    delimiters = /-----BEGIN X509 CRL-----.*?-----END X509 CRL-----/m
     crls_pems = Puppet::FileSystem.read(path, encoding: Encoding::UTF_8)
-    crls_pems.scan(delimiters).map do |crl|
-      begin
-        OpenSSL::X509::CRL.new(crl)
-      rescue OpenSSL::X509::CRLError => e
-        raise Puppet::Error.new(
-            _("Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n%{crl}" % {crl_path: crl_path, error: e.message, crl: crl}),
-          e)
-      end
-    end
+    process_crl_string(crls_pems)
   end
 
   # Ensures that the CA certificate is available for either generating or
@@ -454,7 +440,7 @@ ERROR_STRING
     else
       bundle = download_ca_certificate_bundle
       if bundle
-        save_certificate_bundle(bundle)
+        save_bundle(bundle, certificate_location(CA_NAME))
         true
       else
         false
@@ -484,6 +470,28 @@ ERROR_STRING
     end
   end
 
+  # Fetches and saves the crl bundle from the CA server without validating
+  # its contents. Takes an optional store to use with the http_client,
+  # necessary for initial download of the CRL because `build_ssl_store`
+  # calls this `download_and_save_crl_bundle`. If there is an error during
+  # this downloading process, the file should not be replaced at all. This
+  # streams the file directly to disk to avoid loading the entire CRL in memory.
+  # @param [OpenSSL::X509::Store] store optional ssl_store to use with http_client
+  # @raise [Puppet::Error<Puppet::Rest::ResponseError>] if bad response from server
+  # @return nil
+  def download_and_save_crl_bundle(store=nil)
+    begin
+      client = store ? http_client(ssl_store: store) : http_client
+      Puppet::Util.replace_file(crl_path, 0644) do |file|
+        Puppet::Rest::Routes.get_crls(client, CA_NAME) do |chunk|
+          file.write(chunk)
+        end
+      end
+    rescue Puppet::Rest::ResponseError => e
+      raise Puppet::Error, _('Could not download CRLs: %{message}') % { message: e.message }
+    end
+  end
+
   # Fetches the CA certificate bundle from the CA server
   # @raise [Puppet::Error] if response from the server is not a valid certificate
   #                        bundle
@@ -505,11 +513,11 @@ ERROR_STRING
     end
   end
 
-  # Saves the given certs to disc, to a location determined based
-  # on this host's configuration.
-  # @param [[OpenSSL::X509::Certificate]] the certs to save
-  def save_certificate_bundle(cert_bundle)
-    Puppet::Util.replace_file(certificate_location(CA_NAME), 0644) do |f|
+  # Saves the given bundle to disk to a specified file path.
+  # @param bundle [[OpenSSL::X509::Certificate/CRL]] the certs to save
+  # @param location [String] place on disk to save bundle
+  def save_bundle(cert_bundle, location)
+    Puppet::Util.replace_file(location, 0644) do |f|
       bundle_string = cert_bundle.map(&:to_pem).join("\n")
       f.write(bundle_string)
     end
@@ -613,7 +621,7 @@ ERROR_STRING
   # @raise [OpenSSL::X509::StoreError] if localcacert is malformed or non-existant
   # @raise [Puppet::Error] if the CRL chain is malformed
   # @raise [Errno::ENOENT] if the CRL does not exist on disk but use_crl? is true
-  def build_ssl_store(purpose)
+  def build_ssl_store(purpose=OpenSSL::X509::PURPOSE_ANY)
     store = OpenSSL::X509::Store.new
     store.purpose = purpose
 
@@ -622,6 +630,10 @@ ERROR_STRING
     store.add_file(Puppet.settings[:localcacert])
 
     if use_crl?
+      if !Puppet::FileSystem.exist?(crl_path)
+        download_and_save_crl_bundle(store)
+      end
+
       crls = load_crls(crl_path)
 
       flags = OpenSSL::X509::V_FLAG_CRL_CHECK
