@@ -242,6 +242,11 @@ class Factory
     @init_hash['else_expr'] = els
   end
 
+  def build_ApplyExpression(o, t, b)
+    @init_hash['targets'] = t
+    @init_hash['body'] = b
+  end
+
   def build_MatchExpression(o, op, a, b)
     @init_hash[KEY_OPERATOR] = op
     build_BinaryExpression(o, a, b)
@@ -935,6 +940,10 @@ class Factory
 
   def self.PLAN(name, parameters, body)
     new(PlanDefinition, name, parameters, body, nil)
+  end
+
+  def self.APPLY(targets, body)
+    new(ApplyExpression, targets, body)
   end
 
   def self.FUNCTION(name, parameters, body, return_type)

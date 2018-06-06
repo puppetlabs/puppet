@@ -873,6 +873,10 @@ class EvaluatorImpl
     evaluated_resources
   end
 
+  def eval_ApplyExpression(o, scope)
+    Puppet.lookup(:apply_executor).apply(evaluate(o.targets, scope), o.body, scope)
+  end
+
   # Produces 3x parameter
   def eval_AttributeOperation(o, scope)
     create_resource_parameter(o, scope, o.attribute_name, evaluate(o.value_expr, scope), o.operator)

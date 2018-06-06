@@ -1036,6 +1036,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     true
   end
 
+  def idem_ApplyExpression(o)
+    [o.targets, o.body].all? {|e| idem(e) }
+  end
+
   def idem_IfExpression(o)
     [o.test, o.then_expr, o.else_expr].all? {|e| idem(e) }
   end

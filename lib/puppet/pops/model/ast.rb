@@ -2909,6 +2909,87 @@ class LambdaExpression < Expression
   alias == eql?
 end
 
+class ApplyExpression < Expression
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ApplyExpression', {
+      'parent' => Expression._pcore_type,
+      'attributes' => {
+        'targets' => Expression._pcore_type,
+        'body' => {
+          'type' => Types::POptionalType.new(Expression._pcore_type),
+          'value' => nil
+        }
+      }
+    })
+  end
+
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ApplyExpression initializer', _pcore_type.init_hash_type, init_hash))
+  end
+
+  def self.from_asserted_hash(init_hash)
+    new(
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash['targets'],
+      init_hash['body'])
+  end
+
+  def self.create(locator, offset, length, targets, body = nil)
+    ta = Types::TypeAsserter
+    attrs = _pcore_type.attributes(true)
+    ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
+    ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
+    ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
+    ta.assert_instance_of('Puppet::AST::ApplyExpression[targets]', attrs['targets'].type, targets)
+    ta.assert_instance_of('Puppet::AST::ApplyExpression[body]', attrs['body'].type, body)
+    new(locator, offset, length, targets, body)
+  end
+
+  attr_reader :targets
+  attr_reader :body
+
+  def initialize(locator, offset, length, targets, body = nil)
+    super(locator, offset, length)
+    @hash = @hash ^ targets.hash ^ body.hash
+    @targets = targets
+    @body = body
+  end
+
+  def _pcore_init_hash
+    result = super
+    result['targets'] = @targets
+    result['body'] = @body unless @body == nil
+    result
+  end
+
+  def _pcore_contents
+    yield(@targets) unless @targets.nil?
+    yield(@body) unless @body.nil?
+  end
+
+  def _pcore_all_contents(path, &block)
+    path << self
+    unless @targets.nil?
+      block.call(@targets, path)
+      @targets._pcore_all_contents(path, &block)
+    end
+    unless @body.nil?
+      block.call(@body, path)
+      @body._pcore_all_contents(path, &block)
+    end
+    path.pop
+  end
+
+  def eql?(o)
+    super &&
+    @targets.eql?(o.targets) &&
+    @body.eql?(o.body)
+  end
+  alias == eql?
+end
+
 class IfExpression < Expression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::IfExpression', {
@@ -4814,6 +4895,7 @@ def self.register_pcore_types
   Model::HostClassDefinition,
   Model::PlanDefinition,
   Model::LambdaExpression,
+  Model::ApplyExpression,
   Model::IfExpression,
   Model::UnlessExpression,
   Model::CallExpression,
