@@ -11,10 +11,13 @@ rvm:
   - jruby-9.2.0.0
 
 env:
-  - "CHECK=parallel:spec\\[2\\]"
-  - "CHECK=rubocop"
-  - "CHECK=commits"
-  - "CHECK=warnings"
+  global:
+    - _JAVA_OPTIONS="-Xmx1024m -Xms512m"
+  matrix:
+    - "CHECK=parallel:spec\\[2\\]"
+    - "CHECK=rubocop"
+    - "CHECK=commits"
+    - "CHECK=warnings"
 
 matrix:
   exclude:
