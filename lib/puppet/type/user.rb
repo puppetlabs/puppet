@@ -675,13 +675,23 @@ module Puppet
     end
 
     def generate
-      return [] if self[:purge_ssh_keys].empty?
-      find_unmanaged_keys
+      if !self[:purge_ssh_keys].empty?
+        if Puppet::Type.type(:ssh_authorized_key).nil?
+          warning _("Ssh_authorized_key type is not available. Cannot purge SSH keys.")
+        else
+          return find_unmanaged_keys
+        end
+      end
+
+      []
     end
 
     newparam(:purge_ssh_keys) do
       desc "Whether to purge authorized SSH keys for this user if they are not managed
-        with the `ssh_authorized_key` resource type. Allowed values are:
+        with the `ssh_authorized_key` resource type. This parameter is a noop if the
+        ssh_authorized_key type is not available.
+        
+        Allowed values are:
 
         * `false` (default) --- don't purge SSH keys for this user.
         * `true` --- look for keys in the `.ssh/authorized_keys` file in the user's
@@ -780,6 +790,10 @@ module Puppet
     # @return [Array<Puppet::Type::Ssh_authorized_key] a list of resources
     #   representing the found keys
     def unknown_keys_in_file(keyfile)
+      # The ssh_authorized_key type is distributed as a module on the Forge,
+      # so we shouldn't rely on it being available.
+      return [] unless Puppet::Type.type(:ssh_authorized_key)
+
       names = []
       name_index = 0
       # RFC 4716 specifies UTF-8 allowed in public key files per https://www.ietf.org/rfc/rfc4716.txt

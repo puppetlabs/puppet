@@ -457,7 +457,7 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  describe "when purging ssh keys" do
+  describe "when purging ssh keys", :if => Puppet::Type.type(:ssh_authorized_key) do
     it "should not accept a keyfile with a relative path" do
       expect {
         described_class.new(:name => "a", :purge_ssh_keys => "keys")

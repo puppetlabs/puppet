@@ -549,10 +549,11 @@ describe Puppet::Transaction do
   describe "when prefetching" do
     let(:catalog) { Puppet::Resource::Catalog.new }
     let(:transaction) { Puppet::Transaction.new(catalog, nil, nil) }
-    let(:resource) { Puppet::Type.type(:sshkey).new :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed }
-    let(:resource2) { Puppet::Type.type(:package).new :title => "blah", :provider => "apt" }
+    let(:resource) { Puppet::Type.type(:package).new :title => "foo", :name => "bar", :provider => :pkgng }
+    let(:resource2) { Puppet::Type.type(:package).new :title => "blah", :provider => :apt }
 
     before :each do
+      resource.stubs(:suitable?).returns(true)
       catalog.add_resource resource
       catalog.add_resource resource2
     end
@@ -564,7 +565,7 @@ describe Puppet::Transaction do
     end
 
     it "should not prefetch a provider which has already been prefetched" do
-      transaction.prefetched_providers[:sshkey][:parsed] = true
+      transaction.prefetched_providers[:package][:pkgng] = true
 
       resource.provider.class.expects(:prefetch).never
 
@@ -576,23 +577,23 @@ describe Puppet::Transaction do
 
       transaction.prefetch_if_necessary(resource)
 
-      expect(transaction.prefetched_providers[:sshkey][:parsed]).to be_truthy
+      expect(transaction.prefetched_providers[:package][:pkgng]).to be_truthy
     end
 
     it "should prefetch resources without a provider if prefetching the default provider" do
-      other = Puppet::Type.type(:sshkey).new :name => "other"
-
+      other = Puppet::Type.type(:package).new :name => "other"
       other.instance_variable_set(:@provider, nil)
 
       catalog.add_resource other
 
+      resource.class.stubs(:defaultprovider).returns(resource.provider.class)
       resource.provider.class.expects(:prefetch).with('bar' => resource, 'other' => other)
 
       transaction.prefetch_if_necessary(resource)
     end
 
     it "should not prefetch a provider which has failed" do
-      transaction.prefetch_failed_providers[:sshkey][:parsed] = true
+      transaction.prefetch_failed_providers[:package][:pkgng] = true
 
       resource.provider.class.expects(:prefetch).never
 
@@ -622,7 +623,7 @@ describe Puppet::Transaction do
         it "should rescue prefetch executions" do
           transaction.prefetch_if_necessary(resource)
 
-          expect(transaction.prefetched_providers[:sshkey][:parsed]).to be_truthy
+          expect(transaction.prefetched_providers[:package][:pkgng]).to be_truthy
         end
 
         it "should mark resources as failed", :unless => RUBY_PLATFORM == 'java' do
@@ -634,13 +635,13 @@ describe Puppet::Transaction do
         it "should mark a provider that has failed prefetch" do
           transaction.prefetch_if_necessary(resource)
 
-          expect(transaction.prefetch_failed_providers[:sshkey][:parsed]).to be_truthy
+          expect(transaction.prefetch_failed_providers[:package][:pkgng]).to be_truthy
         end
 
         describe "and new resources are generated" do
           let(:generator) { Puppet::Type.type(:notify).new :title => "generator" }
           let(:generated) do
-            %w[a b c].map { |name| Puppet::Type.type(:sshkey).new :title => "foo", :name => name, :type => :dsa, :key => "eh", :provider => :parsed }
+            %w[a b c].map { |name| Puppet::Type.type(:package).new :title => "foo", :name => name, :provider => :apt }
           end
 
           before :each do

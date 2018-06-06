@@ -15,7 +15,7 @@ describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.m
   include PuppetSpec::Files
   include PuppetSpec::Compiler
 
-  context "when set to purge ssh keys from a file" do
+  context "when set to purge ssh keys from a file", :if => Puppet::Type.type(:ssh_authorized_key) do
     # different UTF-8 widths
     # 1-byte A
     # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
