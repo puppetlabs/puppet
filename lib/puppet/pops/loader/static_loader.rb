@@ -38,7 +38,6 @@ class StaticLoader < Loader
       Vlan
       Whit
       Yumrepo
-      Zfs
       Zone
       Zpool
     }.freeze

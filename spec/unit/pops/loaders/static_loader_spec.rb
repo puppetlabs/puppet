@@ -58,7 +58,6 @@ describe 'the static loader' do
       Vlan
       Whit
       Yumrepo
-      Zfs
       Zone
       Zpool
     }.each do |name |
