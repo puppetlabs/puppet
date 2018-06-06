@@ -38,10 +38,7 @@ group(:development, :test) do
   gem "rspec", "~> 3.1", :require => false
   gem "rspec-its", "~> 1.1", :require => false
   gem "rspec-collection_matchers", "~> 1.1", :require => false
-  gem "rspec-legacy_formatters", "~> 1.0", :require => false
   gem "mocha", '~> 1.5.0', :require => false
-
-  gem "yarjuf", "~> 2.0"
 
   # json-schema does not support windows, so omit it from the platforms list
   gem "json-schema", "~> 2.0", :require => false, :platforms => [:ruby, :jruby]
