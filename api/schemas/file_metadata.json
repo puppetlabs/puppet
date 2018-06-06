@@ -14,10 +14,10 @@
             "enum": ["manage", "follow"]
         },
         "owner": {
-            "type": "integer"
+            "oneOf": [{"type": "string"}, {"type": "integer"}]
         },
         "group": {
-            "type": "integer"
+            "oneOf": [{"type": "string"}, {"type": "integer"}]
         },
         "mode": {
             "type": "integer"

@@ -39,13 +39,10 @@ group(:development, :test) do
   gem "rspec-its", "~> 1.1", :require => false
   gem "rspec-collection_matchers", "~> 1.1", :require => false
   gem "mocha", '~> 1.5.0', :require => false
-
-  # json-schema does not support windows, so omit it from the platforms list
-  gem "json-schema", "~> 2.0", :require => false, :platforms => [:ruby, :jruby]
+  gem "json-schema", "~> 2.0", :require => false
 
   gem 'rubocop', '~> 0.49', :platforms => [:ruby]
   gem 'rubocop-i18n', '~> 1.2.0', :platforms => [:ruby]
-
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
   gem 'yard'

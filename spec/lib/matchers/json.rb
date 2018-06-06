@@ -101,31 +101,25 @@ module JSONMatchers
     end
   end
 
-  if !Puppet.features.microsoft_windows?
-    require 'puppet/util/json'
-    require 'json-schema'
+  require 'puppet/util/json'
+  require 'json-schema'
 
-    class SchemaMatcher
-      JSON_META_SCHEMA = Puppet::Util::Json.load(File.read('api/schemas/json-meta-schema.json'))
+  class SchemaMatcher
+    JSON_META_SCHEMA = Puppet::Util::Json.load(File.read('api/schemas/json-meta-schema.json'))
 
-      def initialize(schema)
-        @schema = schema
-      end
+    def initialize(schema)
+      @schema = schema
+    end
 
-      def matches?(json)
-        JSON::Validator.validate!(JSON_META_SCHEMA, @schema)
-        JSON::Validator.validate!(@schema, json)
-      end
+    def matches?(json)
+      JSON::Validator.validate!(JSON_META_SCHEMA, @schema)
+      JSON::Validator.validate!(@schema, json)
     end
   end
 
   def validate_against(schema_file)
-    if Puppet.features.microsoft_windows?
-      pending("Schema checks cannot be done on windows because of json-schema problems")
-    else
-      schema = Puppet::Util::Json.load(File.read(schema_file))
-      SchemaMatcher.new(schema)
-    end
+    schema = Puppet::Util::Json.load(File.read(schema_file))
+    SchemaMatcher.new(schema)
   end
 
   def set_json_attribute(*attributes)
