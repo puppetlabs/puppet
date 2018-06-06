@@ -452,6 +452,12 @@ class Puppet::Settings
   # Prints the contents of a config file with the available config settings, or it
   # prints a single value of a config setting.
   def print_config_options
+    if Puppet::Util::Log.sendlevel?(:info)
+      Puppet::Util::Log.newdestination(:console)
+      message = (_("Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."))
+      Puppet.deprecation_warning(message)
+    end
+
     env = value(:environment)
     val = value(:configprint)
     if val == "all"
