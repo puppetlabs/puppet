@@ -193,6 +193,7 @@ module Puppet
         @changed = data['changed']
         @skipped = data['skipped']
         @failed = data['failed']
+        @failed_to_restart = data['failed_to_restart']
         @corrective_change = data['corrective_change']
         @events = data['events'].map do |event|
           # Older versions contain tags that causes Psych to create instances directly
@@ -213,6 +214,7 @@ module Puppet
           'tags' => @tags.to_a,
           'time' => @time.iso8601(9),
           'failed' => @failed,
+          'failed_to_restart' => self.failed_to_restart?,
           'changed' => @changed,
           'out_of_sync' => @out_of_sync,
           'skipped' => @skipped,
