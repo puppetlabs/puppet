@@ -400,7 +400,7 @@ How to determine the configuration version\. By default, it will be the time tha
 Setting a global value for config_version in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please set a per\-environment value in environment\.conf instead\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .SS "configprint"
-Print the value of a specific configuration setting\. If the name of a setting is provided for this, then the value is printed and puppet exits\. Comma\-separate multiple values\. For a list of all values, specify \'all\'\.
+Prints the value of a specific configuration setting\. If the name of a setting is provided for this, then the value is printed and puppet exits\. Comma\-separate multiple values\. For a list of all values, specify \'all\'\. This setting is deprecated, the \'puppet config\' command replaces this functionality\.
 .
 .SS "configtimeout"
 How long the client should wait for the configuration to be retrieved before considering it a failure\. This setting is deprecated and has been replaced by http_connect_timeout and http_read_timeout\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
