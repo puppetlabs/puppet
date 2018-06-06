@@ -39,7 +39,6 @@ class StaticLoader < Loader
       Whit
       Yumrepo
       Zone
-      Zpool
     }.freeze
 
   BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze

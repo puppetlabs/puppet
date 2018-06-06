@@ -59,7 +59,6 @@ describe 'the static loader' do
       Whit
       Yumrepo
       Zone
-      Zpool
     }.each do |name |
       it "such that #{name} is available" do
         expect(loader.load(:type, name.downcase)).to be_the_type(resource_type(name))
