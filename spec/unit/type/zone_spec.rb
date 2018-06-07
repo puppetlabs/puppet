@@ -98,25 +98,6 @@ describe Puppet::Type.type(:zone) do
     described_class.new(:name => "dummy", :path => "/dummy", :ip => "if", :iptype => :exclusive, :provider => :solaris)
   end
 
-  it "should auto-require :dataset entries" do
-    fs = 'random-pool/some-zfs'
-
-    catalog = Puppet::Resource::Catalog.new
-    relationship_graph = Puppet::Graph::RelationshipGraph.new(Puppet::Graph::RandomPrioritizer.new)
-    zfs = Puppet::Type.type(:zfs).new(:name => fs)
-    catalog.add_resource zfs
-
-    zone = described_class.new(:name    => "dummy",
-                               :path    => "/foo",
-                               :ip      => 'en1:1.0.0.0',
-                               :dataset => fs,
-                               :provider => :solaris)
-    catalog.add_resource zone
-
-
-    relationship_graph.populate_from(catalog)
-    expect(relationship_graph.dependencies(zone)).to eq([zfs])
-  end
   describe Puppet::Zone::StateMachine do
     let (:sm) { Puppet::Zone::StateMachine.new }
     before :each do
