@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-295-g76043d8\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-304-g880e636\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-06-05 22:21+0000\n"
-"PO-Revision-Date: 2018-06-05 22:21+0000\n"
+"POT-Creation-Date: 2018-06-07 23:03+0000\n"
+"PO-Revision-Date: 2018-06-07 23:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -8949,18 +8949,6 @@ msgstr ""
 
 #: ../lib/puppet/type/zone.rb:338
 msgid "ip must contain interface name and ip address separated by a \":\""
-msgstr ""
-
-#: ../lib/puppet/type/zpool.rb:52
-msgid "mirror names must be provided as string separated, not a comma-separated list"
-msgstr ""
-
-#: ../lib/puppet/type/zpool.rb:65
-msgid "raid names must be provided as string separated, not a comma-separated list"
-msgstr ""
-
-#: ../lib/puppet/type/zpool.rb:88
-msgid "You cannot specify %{multiple_props} on this type (only one)"
 msgstr ""
 
 #: ../lib/puppet/util.rb:65
