@@ -65,6 +65,7 @@ task :default do
 end
 
 task :spec do
+  ENV["LOG_SPEC_ORDER"] = "true"
   sh %{rspec #{ENV['TEST'] || ENV['TESTS'] || 'spec'}}
 end
 

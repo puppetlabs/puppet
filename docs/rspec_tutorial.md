@@ -285,7 +285,7 @@ a full spec run, you can often narrow down the culprit by a two-step process.
 First, run:
 
 ```
-bundle exec rake ci:spec
+bundle exec rake spec
 ```
 
 which should generate a spec_order.txt file.

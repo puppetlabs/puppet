@@ -38,26 +38,11 @@ group(:development, :test) do
   gem "rspec", "~> 3.1", :require => false
   gem "rspec-its", "~> 1.1", :require => false
   gem "rspec-collection_matchers", "~> 1.1", :require => false
-  gem "rspec-legacy_formatters", "~> 1.0", :require => false
-
-  # Mocha is not compatible across minor version changes; because of this only
-  # versions matching ~> 0.10.5 are supported. All other versions are unsupported
-  # and can be expected to fail.
   gem "mocha", '~> 1.5.0', :require => false
+  gem "json-schema", "~> 2.0", :require => false
 
-  gem "yarjuf", "~> 2.0"
-
-  # json-schema does not support windows, so omit it from the platforms list
-  gem "json-schema", "~> 2.0", :require => false, :platforms => [:ruby, :jruby]
-
-  if RUBY_VERSION >= '2.0'
-    # pin rubocop as 0.50 requires a higher version of the rainbow gem (see below)
-    gem 'rubocop', '~> 0.49.1', :platforms => [:ruby]
-    gem 'rubocop-i18n', '~> 1.2.0', :platforms => [:ruby]
-  end
-
-  # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
-  gem "rainbow", "< 2.2.1", :platforms => [:ruby]
+  gem 'rubocop', '~> 0.49', :platforms => [:ruby]
+  gem 'rubocop-i18n', '~> 1.2.0', :platforms => [:ruby]
 
   gem 'rdoc', "~> 4.1", :platforms => [:ruby]
   gem 'yard'
@@ -68,6 +53,7 @@ group(:development, :test) do
   gem 'webmock', '~> 1.24'
   gem 'vcr', '~> 2.9'
   gem "hiera-eyaml", :require => false
+  gem "hocon", '~> 1.0', :require => false
 
   gem 'memory_profiler', :platforms => [:mri_21, :mri_22, :mri_23, :mri_24, :mri_25]
 end
@@ -81,7 +67,6 @@ group(:development) do
 end
 
 group(:extra) do
-  gem "rack", "~> 1.4", :require => false
   gem "puppetlabs_spec_helper", :require => false
   gem "msgpack", :require => false
 end
