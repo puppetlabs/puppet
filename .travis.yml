@@ -8,18 +8,28 @@ notifications:
 rvm:
   - 2.4.0
   - 2.3.6
+  - jruby-9.2.0.0
 
 env:
-  - "CHECK=parallel:spec\\[2\\]"
-  - "CHECK=rubocop"
-  - "CHECK=commits"
-  - "CHECK=warnings"
+  global:
+    - _JAVA_OPTIONS="-Xmx1024m -Xms512m"
+  matrix:
+    - "CHECK=parallel:spec\\[2\\]"
+    - "CHECK=rubocop"
+    - "CHECK=commits"
+    - "CHECK=warnings"
 
 matrix:
   exclude:
     - rvm: 2.3.6
       env: "CHECK=rubocop"
+    - rvm: jruby-9.2.0.0
+      env: "CHECK=rubocop"
     - rvm: 2.3.6
       env: "CHECK=commits"
+    - rvm: jruby-9.2.0.0
+      env: "CHECK=commits"
     - rvm: 2.3.6
+      env: "CHECK=warnings"
+    - rvm: jruby-9.2.0.0
       env: "CHECK=warnings"

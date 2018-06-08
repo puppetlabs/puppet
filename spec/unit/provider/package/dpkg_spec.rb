@@ -221,7 +221,7 @@ describe provider_class do
 
     before do
       tempfile.stubs(:write)
-      Tempfile.stubs(:new).returns tempfile
+      Tempfile.stubs(:open).yields tempfile
     end
 
     it "installs first if holding" do

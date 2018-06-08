@@ -184,7 +184,7 @@ describe Puppet::Agent do
       expect(@agent.run).to eq(:result)
     end
 
-    describe "when should_fork is true", :if => Puppet.features.posix? do
+    describe "when should_fork is true", :if => Puppet.features.posix? && RUBY_PLATFORM != 'java' do
       before do
         @agent = Puppet::Agent.new(AgentTestClient, true)
 

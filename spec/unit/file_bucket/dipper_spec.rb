@@ -73,7 +73,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   end
 
   describe "when diffing on a local filebucket" do
-    describe "in non-windows environments", :unless => Puppet.features.microsoft_windows? do
+    describe "in non-windows environments or JRuby", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       with_digest_algorithms do
 
         it "should fail in an informative way when one or more checksum doesn't exists" do

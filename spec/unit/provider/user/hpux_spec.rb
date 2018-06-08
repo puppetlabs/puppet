@@ -16,6 +16,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
 
   it "should add -F when modifying a user" do
     resource.stubs(:allowdupe?).returns true
+    provider.stubs(:trusted).returns true
     provider.expects(:execute).with { |args| args.include?("-F") }
     provider.uid = 1000
   end

@@ -56,7 +56,7 @@ describe "Puppet::Indirector::CertificateStatus::File" do
     expect(@terminus).to be_instance_of(Puppet::Indirector::CertificateStatus::File)
   end
 
-  it "should create a CA instance if none is present" do
+  it "should create a CA instance if none is present", :unless => RUBY_PLATFORM == 'java' do
     expect(@terminus.ca).to be_instance_of(Puppet::SSL::CertificateAuthority)
   end
 
@@ -77,7 +77,7 @@ describe "Puppet::Indirector::CertificateStatus::File" do
       Puppet.settings.use(:main)
     end
 
-    it "should return the Puppet::SSL::Host when a CSR exists for the host" do
+    it "should return the Puppet::SSL::Host when a CSR exists for the host", :unless => RUBY_PLATFORM == 'java' do
       generate_csr(@host)
       request = Puppet::Indirector::Request.new(:certificate_status, :find, "foo", @host)
 
@@ -87,7 +87,7 @@ describe "Puppet::Indirector::CertificateStatus::File" do
       expect(retrieved_host.certificate_request.content.to_s.chomp).to eq(@host.certificate_request.content.to_s.chomp)
     end
 
-    it "should return the Puppet::SSL::Host when a public key exists for the host" do
+    it "should return the Puppet::SSL::Host when a public key exists for the host", :unless => RUBY_PLATFORM == 'java' do
       generate_signed_cert(@host)
       request = Puppet::Indirector::Request.new(:certificate_status, :find, "foo", @host)
 
@@ -119,7 +119,7 @@ describe "Puppet::Indirector::CertificateStatus::File" do
         expect { @terminus.save(@request) }.to raise_error(Puppet::Error, /certificate request/)
       end
 
-      it "should sign the on-disk CSR when it is present" do
+      it "should sign the on-disk CSR when it is present", :unless => RUBY_PLATFORM == 'java' do
         signed_host = generate_signed_cert(@host)
 
         expect(signed_host.state).to eq("signed")
@@ -137,7 +137,7 @@ describe "Puppet::Indirector::CertificateStatus::File" do
         expect { @terminus.save(@request) }.to raise_error(Puppet::Error, /Cannot revoke/)
       end
 
-      it "should revoke the certificate when it is present" do
+      it "should revoke the certificate when it is present", :unless => RUBY_PLATFORM == 'java' do
         generate_revoked_cert(@host)
 
         expect(@host.state).to eq('revoked')
@@ -156,7 +156,7 @@ describe "Puppet::Indirector::CertificateStatus::File" do
       expect(@terminus.destroy(request)).to eq("Nothing was deleted")
     end
 
-    it "should clean certs, cert requests, keys" do
+    it "should clean certs, cert requests, keys", :unless => RUBY_PLATFORM == 'java' do
       signed_host = Puppet::SSL::Host.new("clean_signed_cert")
       generate_signed_cert(signed_host)
       signed_request = Puppet::Indirector::Request.new(:certificate_status, :delete, "clean_signed_cert", signed_host)
@@ -169,7 +169,7 @@ describe "Puppet::Indirector::CertificateStatus::File" do
     end
   end
 
-  describe "when searching" do
+  describe "when searching", :unless => RUBY_PLATFORM == 'java' do
     it "should return a list of all hosts with certificate requests, signed certs, or revoked certs" do
       Puppet.settings.use(:main)
 

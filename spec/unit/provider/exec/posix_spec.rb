@@ -123,7 +123,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       provider.run(provider.resource[:command])
     end
 
-    describe "posix locale settings" do
+    describe "posix locale settings", :unless => RUBY_PLATFORM == 'java' do
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
       # system.
       lang_sentinel_value = "en_US.UTF-8"
@@ -162,7 +162,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       end
     end
 
-    describe "posix user-related environment vars" do
+    describe "posix user-related environment vars", :unless => RUBY_PLATFORM == 'java' do
       # a temporary hash that contains sentinel values for each of the user-related environment variables that we
       # are expected to unset during an "exec"
       user_sentinel_env = {}

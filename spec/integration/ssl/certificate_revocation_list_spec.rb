@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_revocation_list'
 
-describe Puppet::SSL::CertificateRevocationList do
+describe Puppet::SSL::CertificateRevocationList, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   before do

@@ -5,7 +5,7 @@ require 'puppet_spec/module_tool/stub_source'
 
 require 'tmpdir'
 
-describe Puppet::ModuleTool::Applications::Installer do
+describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM == 'java' do
   include PuppetSpec::ModuleTool::SharedFunctions
   include PuppetSpec::Files
   include PuppetSpec::Fixtures

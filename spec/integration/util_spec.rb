@@ -5,7 +5,7 @@ require 'spec_helper'
 describe Puppet::Util do
   include PuppetSpec::Files
 
-  describe "#execute" do
+  describe "#execute", unless: Puppet::Util::Platform.jruby? do
     it "should properly allow stdout and stderr to share a file" do
       command = "ruby -e '(1..10).each {|i| (i%2==0) ? $stdout.puts(i) : $stderr.puts(i)}'"
 

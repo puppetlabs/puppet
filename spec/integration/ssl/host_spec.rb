@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/host'
 
-describe Puppet::SSL::Host do
+describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   before do

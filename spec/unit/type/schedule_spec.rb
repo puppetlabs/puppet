@@ -107,7 +107,7 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should match the upper array of ranges" do
-      @schedule[:range] = ["4-6", "11-12"]
+      @schedule[:range] = ["11:30 - 6", "11-12"]
       expect(@schedule).to be_match
     end
   end

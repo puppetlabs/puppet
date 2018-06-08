@@ -346,7 +346,7 @@ describe Puppet::Util do
       # + is usually used for backward compatibility, but %20 is preferred for compat with Uri.unescape
       expect(uri.query).to eq("foo%2Bfoo%20bar")
       # complete roundtrip
-      expect(URI.unescape(uri.to_s)).to eq("file:#{path}")
+      expect(URI.unescape(uri.to_s).sub(%r{^file:(//)?}, '')).to eq(path)
       expect(URI.unescape(uri.to_s).encoding).to eq(expected_encoding)
     end
 

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Puppet::Util::Execution do
+describe Puppet::Util::Execution, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   describe "#execpipe" do

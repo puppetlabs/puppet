@@ -4,7 +4,8 @@ require 'spec_helper'
 require 'puppet/ssl/host'
 require 'puppet/indirector/certificate_request/ca'
 
-describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::SSL::CertificateRequest::Ca,
+         unless: (Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby?) do
   include PuppetSpec::Files
 
   before :each do

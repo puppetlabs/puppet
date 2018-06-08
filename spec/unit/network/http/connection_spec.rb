@@ -124,7 +124,7 @@ describe Puppet::Network::HTTP::Connection do
       end.to raise_error(Puppet::Error, "certificate verify failed: [shady looking signature]")
     end
 
-    it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
+    it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       Puppet[:confdir] = tmpdir('conf')
 
       connection = Puppet::Network::HTTP::Connection.new(
@@ -152,7 +152,7 @@ describe Puppet::Network::HTTP::Connection do
       end.to raise_error(/some other message/)
     end
 
-    it "should check all peer certificates for upcoming expiration", :unless => Puppet.features.microsoft_windows? do
+    it "should check all peer certificates for upcoming expiration", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       Puppet[:confdir] = tmpdir('conf')
       cert = Puppet::SSL::CertificateAuthority.new.generate(
         'server', :dns_alt_names => 'foo,bar,baz')
@@ -169,12 +169,12 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
-  context "when using single use HTTPS connections" do
+  context "when using single use HTTPS connections", :unless => RUBY_PLATFORM == 'java' do
     it_behaves_like 'ssl verifier' do
     end
   end
 
-  context "when using persistent HTTPS connections" do
+  context "when using persistent HTTPS connections", :unless => RUBY_PLATFORM == 'java' do
     around :each do |example|
       pool = Puppet::Network::HTTP::Pool.new
       Puppet.override(:http_pool => pool) do

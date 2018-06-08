@@ -401,7 +401,8 @@ symlinkfile
       }.to raise_error Puppet::ModuleTool::Errors::ModuleToolError, /symlinks/i
     end
 
-    it "writes UTF-8 metdata correctly" do
+    # Running the builder invokes a command which doesn't work in jruby
+    it "writes UTF-8 metdata correctly", unless: Puppet::Util::Platform.jruby? do
       # file is written initially in before block, then by builders write_json method
       builder.run
       metadata_path = File.join(path, 'metadata.json')

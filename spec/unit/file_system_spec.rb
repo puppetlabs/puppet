@@ -167,7 +167,8 @@ describe "Puppet::FileSystem" do
       end
     end
 
-    it "excludes other processes from updating at the same time", :unless => Puppet::Util::Platform.windows? do
+    it "excludes other processes from updating at the same time",
+       unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
       file = file_containing("file_to_update", "0")
 
       increment_counter_in_multiple_processes(file, 5, 'r+')
@@ -175,7 +176,8 @@ describe "Puppet::FileSystem" do
       expect(Puppet::FileSystem.read(file)).to eq("5")
     end
 
-    it "excludes other processes from updating at the same time even when creating the file", :unless => Puppet::Util::Platform.windows? do
+    it "excludes other processes from updating at the same time even when creating the file",
+       unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
       file = tmpfile("file_to_update")
 
       increment_counter_in_multiple_processes(file, 5, 'a+')
@@ -183,7 +185,8 @@ describe "Puppet::FileSystem" do
       expect(Puppet::FileSystem.read(file)).to eq("5")
     end
 
-    it "times out if the lock cannot be acquired in a specified amount of time", :unless => Puppet::Util::Platform.windows? do
+    it "times out if the lock cannot be acquired in a specified amount of time",
+       unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
       file = tmpfile("file_to_update")
 
       child = spawn_process_that_locks(file)

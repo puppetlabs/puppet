@@ -631,6 +631,11 @@ module Util
         Puppet::Util::Windows::File.replace_file(FileSystem.path_string(file), tempfile.path)
 
       else
+        # MRI Ruby checks for this and raises an error, while JRuby removes the directory
+        # and replaces it with a file. This makes the our version of replace_file() consistent
+        if Puppet::FileSystem.exist?(file) && Puppet::FileSystem.directory?(file)
+          raise Errno::EISDIR, _("Is a directory: %{directory}") % { directory: file }
+        end
         File.rename(tempfile.path, Puppet::FileSystem.path_string(file))
       end
     ensure

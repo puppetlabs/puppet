@@ -56,7 +56,7 @@ describe Puppet::Util::Lockfile do
     end
 
     # We test simultaneous locks using fork which isn't supported on Windows.
-    it "should not be acquired by another process", :unless => Puppet.features.microsoft_windows? do
+    it "should not be acquired by another process", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       30.times do
         forks = 3
         results = LockfileSpecHelper.run_in_forks(forks) do

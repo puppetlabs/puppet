@@ -71,21 +71,23 @@ describe Puppet::Application::Lookup do
       it "accepts --merge #{opt}" do
         lookup.options[:node] = 'dantooine.local'
         lookup.options[:merge] = opt
+        lookup.options[:render_as] = :s
         lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
         lookup.stubs(:generate_scope).yields('scope')
         Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
-        expect(run_lookup(lookup)).to eql("--- rand\n...")
+        expect(run_lookup(lookup)).to eql("rand")
       end
     end
 
     it "prints the value found by lookup" do
       lookup.options[:node] = 'dantooine.local'
+      lookup.options[:render_as] = :s
       lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
       lookup.stubs(:generate_scope).yields('scope')
 
       Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
 
-      expect(run_lookup(lookup)).to eql("--- rand\n...")
+      expect(run_lookup(lookup)).to eql("rand")
     end
   end
 
@@ -501,15 +503,17 @@ Searching for "a"
 
       it "is unaffected by global variables unless '--compile' is used" do
         lookup.options[:node] = node
+        lookup.options[:render_as] = :s
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is\n...")
+        expect(run_lookup(lookup)).to eql("This is")
       end
 
       it "is affected by global variables when '--compile' is used" do
         lookup.options[:node] = node
         lookup.options[:compile] = true
+        lookup.options[:render_as] = :s
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from site.pp\n...")
+        expect(run_lookup(lookup)).to eql("This is C from site.pp")
       end
 
       it 'receives extra facts in top scope' do
@@ -522,8 +526,9 @@ Searching for "a"
 
         lookup.options[:node] = node
         lookup.options[:fact_file] = filename
+        lookup.options[:render_as] = :s
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from facts\n...")
+        expect(run_lookup(lookup)).to eql("This is C from facts")
       end
 
       it 'receives extra facts in the facts hash' do
@@ -536,8 +541,9 @@ Searching for "a"
 
         lookup.options[:node] = node
         lookup.options[:fact_file] = filename
+        lookup.options[:render_as] = :s
         lookup.command_line.stubs(:args).returns(['g'])
-        expect(run_lookup(lookup)).to eql("--- This is G from facts in facts hash\n...")
+        expect(run_lookup(lookup)).to eql("This is G from facts in facts hash")
       end
     end
 
@@ -547,14 +553,16 @@ Searching for "a"
       it "works OK in the absense of '--compile'" do
         lookup.options[:node] = node
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from data.pp\n...")
+        lookup.options[:render_as] = :s
+        expect(run_lookup(lookup)).to eql("This is C from data.pp")
       end
 
       it "global scope is affected by global variables when '--compile' is used" do
         lookup.options[:node] = node
         lookup.options[:compile] = true
+        lookup.options[:render_as] = :s
         lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from site.pp\n...")
+        expect(run_lookup(lookup)).to eql("This is C from site.pp")
       end
     end
   end

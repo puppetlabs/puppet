@@ -23,7 +23,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         expect(result.contents).to be_empty
       end
 
-      it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? do
+      it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
         bucket_file = Puppet::FileBucket::File.new("contents")
 
         children = []
@@ -287,6 +287,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }
 
         it "should generate an empty string if there is no diff" do
+          skip("usage of fork(1) no supported on this platform") if RUBY_PLATFORM == 'java'
           if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
             skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
           else
@@ -296,6 +297,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         end
 
         it "should generate a proper diff if there is a diff" do
+          skip("usage of fork(1) no supported on this platform") if RUBY_PLATFORM == 'java'
           if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
             skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
           else

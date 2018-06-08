@@ -44,7 +44,7 @@ group(:development, :test) do
   gem 'rubocop', '~> 0.49', :platforms => [:ruby]
   gem 'rubocop-i18n', '~> 1.2.0', :platforms => [:ruby]
 
-  gem 'rdoc', "~> 4.1", :platforms => [:ruby]
+  gem 'rdoc', "~> 6.0", :platforms => [:ruby]
   gem 'yard'
 
   # ronn is used for generating manpages.

@@ -30,6 +30,9 @@ module Puppet
       end
       module_function :fips_enabled?
 
+      def self.jruby?
+        RUBY_PLATFORM == 'java'
+      end
     end
   end
 end
