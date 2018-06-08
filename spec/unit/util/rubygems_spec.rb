@@ -14,14 +14,7 @@ describe Puppet::Util::RubyGems::Source do
 
     it "returns Gems18Source if Gem::Specification responds to latest_specs" do
       described_class.expects(:has_rubygems?).returns(true)
-      Gem::Specification.expects(:respond_to?).with(:latest_specs).returns(true)
       expect(described_class.new).to be_kind_of(Puppet::Util::RubyGems::Gems18Source)
-    end
-
-    it "returns Gems18Source if Gem::Specification does not respond to latest_specs" do
-      described_class.expects(:has_rubygems?).returns(true)
-      Gem::Specification.expects(:respond_to?).with(:latest_specs).returns(false)
-      expect(described_class.new).to be_kind_of(Puppet::Util::RubyGems::OldGemsSource)
     end
   end
 
@@ -44,33 +37,6 @@ describe Puppet::Util::RubyGems::Source do
       Gem::Specification.expects(:latest_specs).with(true).returns([fake_gem])
 
       expect(described_class.new.directories).to eq([gem_lib])
-    end
-
-    it "#clear_paths calls Gem.clear_paths" do
-      Gem.expects(:clear_paths)
-      described_class.new.clear_paths
-    end
-  end
-
-  describe '::OldGemsSource' do
-    before(:each) { described_class.stubs(:source).returns(Puppet::Util::RubyGems::OldGemsSource) }
-
-    it "#directories returns the contents of Gem.latest_load_paths" do
-      Gem.expects(:latest_load_paths).returns([gem_lib])
-
-      expect(described_class.new.directories).to eq([gem_lib])
-    end
-
-    # Older rubygems seem to have a problem with rescanning the gem paths in which they
-    # look for a file in the wrong place and expect it to be there. By caching the first
-    # set of results we don't trigger this bug. This behavior was seen on ruby 1.8.7-p334
-    # using rubygems v1.6.2
-    it "caches the gem paths (works around a bug in older rubygems)" do
-      Gem.expects(:latest_load_paths).returns([gem_lib]).once
-
-      source = described_class.new
-
-      expect(source.directories).to eq([gem_lib])
     end
 
     it "#clear_paths calls Gem.clear_paths" do

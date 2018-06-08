@@ -146,7 +146,7 @@ describe Puppet::Util::Windows::Registry do
 
       # proof that local encodings (such as IBM437 are no longer relevant)
       it "will return a UTF-8 string from a REG_SZ registry value (written as UTF-16LE)",
-        :if => Puppet::Util::Platform.windows? && RUBY_VERSION >= '2.1' do
+        :if => Puppet::Util::Platform.windows? do
 
         # create a UTF-16LE byte array representing "–™"
         utf_16_bytes = ENDASH_UTF_16 + TM_UTF_16

@@ -91,8 +91,7 @@ class PBinaryType < PAnyType
     # @api private
     #
     def initialize(bin)
-      # TODO: When Ruby 1.9.3 support is dropped change this to `bin.b` for binary encoding instead of force_encoding
-      @binary_buffer = (bin.encoding.name == "ASCII-8BIT" ? bin : bin.dup.force_encoding("ASCII-8BIT")).freeze
+      @binary_buffer = (bin.encoding.name == "ASCII-8BIT" ? bin : bin.b).freeze
     end
 
     # Presents the binary content as a string base64 encoded string (without line breaks).

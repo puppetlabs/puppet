@@ -79,8 +79,8 @@ describe Puppet::Util::Feature do
     @features.add(:myfeature, :libs => %w{foo bar})
     @features.expects(:require).twice().with("foo").raises(LoadError).then.returns(nil)
     @features.stubs(:require).with("bar")
-    Puppet::Util::RubyGems::Source.stubs(:source).returns(Puppet::Util::RubyGems::OldGemsSource)
-    Puppet::Util::RubyGems::OldGemsSource.any_instance.expects(:clear_paths).times(3)
+    Puppet::Util::RubyGems::Source.stubs(:source).returns(Puppet::Util::RubyGems::Gems18Source)
+    Puppet::Util::RubyGems::Gems18Source.any_instance.expects(:clear_paths).times(3)
 
     Puppet.expects(:debug)
 

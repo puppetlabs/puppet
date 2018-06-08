@@ -46,7 +46,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     # If that fails, force to UTF-8 and then scrub as most uses are scanning
     # for ACII-compatible program names.
     table.force_encoding(Encoding::UTF_8) unless table.encoding == Encoding::UTF_8
-    table = Puppet::Util::CharacterEncoding.scrub(table) unless table.valid_encoding?
+    table = table.scrub unless table.valid_encoding?
 
     table.each_line { |line|
       if regex.match(line)

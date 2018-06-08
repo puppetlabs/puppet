@@ -1703,30 +1703,7 @@ class PRegexpType < PScalarType
   # @param regexp [Regexp] the regular expression
   # @return [String] the Regexp as a string without escaped slash
   def self.regexp_to_s(regexp)
-    # Rubies < 2.0.0 retains escaped delimiters in the source string.
-    @source_retains_escaped_slash ||= Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
-    source = regexp.source
-    if @source_retains_escaped_slash && source.include?('\\')
-      # Restore corrupt string in rubies <2.0.0, i.e. turn '\/' into '/' but
-      # don't touch valid escapes such as '\s', '\{' etc.
-      escaped = false
-      bld = ''
-      source.each_codepoint do |codepoint|
-        if escaped
-          bld << 0x5c unless codepoint == 0x2f # '/'
-          bld << codepoint
-          escaped = false
-        elsif codepoint == 0x5c # '\'
-          escaped = true
-        elsif codepoint <= 0x7f
-          bld << codepoint
-        else
-          bld << [codepoint].pack('U')
-        end
-      end
-      source = bld
-    end
-    append_flags_group(source, regexp.options)
+    append_flags_group(regexp.source, regexp.options)
   end
 
   def self.append_flags_group(rx_string, options)

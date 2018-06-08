@@ -275,8 +275,7 @@ class Puppet::Node
         trusted_param || Puppet::Context::TrustedInformation.local(self)
       end
 
-      # Ruby 1.9.3 can't apply to_h to a hash, so check first
-      self.trusted_data = (trusted.is_a?(Hash) ? trusted : trusted.to_h)
+      self.trusted_data = trusted.to_h
     end
   end
 end

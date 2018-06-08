@@ -1,13 +1,9 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/files'
+require 'puppet_pal'
 
 describe 'Puppet Pal' do
-#  before { skip("Puppet::Pal is not available on Ruby 1.9.3") if RUBY_VERSION == '1.9.3' }
-
-  # Require here since it will not work on RUBY < 2.0.0
-  require 'puppet_pal'
-
   include PuppetSpec::Files
 
   let(:testing_env) do

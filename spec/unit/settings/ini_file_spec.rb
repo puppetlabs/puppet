@@ -544,9 +544,7 @@ new = new value
     end
   end
 
-
   def a_config_file_containing(text)
-    # set_encoding required for Ruby 1.9.3 as ASCII is the default
-    StringIO.new(text).set_encoding(Encoding::UTF_8)
+    StringIO.new(text.encode(Encoding::UTF_8))
   end
 end

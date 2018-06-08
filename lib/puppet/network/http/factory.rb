@@ -42,12 +42,8 @@ class Puppet::Network::HTTP::Factory
     http.keep_alive_timeout = KEEP_ALIVE_TIMEOUT if http.respond_to?(:keep_alive_timeout=)
 
     if Puppet[:sourceaddress]
-      if http.respond_to?(:local_host)
-        Puppet.debug("Using source IP #{Puppet[:sourceaddress]}")
-        http.local_host = Puppet[:sourceaddress]
-      else
-        raise ArgumentError, "Setting 'sourceaddress' is unsupported by this version of Net::HTTP."
-      end
+      Puppet.debug("Using source IP #{Puppet[:sourceaddress]}")
+      http.local_host = Puppet[:sourceaddress]
     end
 
     if Puppet[:http_debug]

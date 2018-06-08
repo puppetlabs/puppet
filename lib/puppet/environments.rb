@@ -313,14 +313,9 @@ module Puppet::Environments
       @cache_expiration_service || DefaultCacheExpirationService.new
     end
 
-    # Returns the end of time (the next Mesoamerican Long Count cycle-end after 2012 (5125+2012) = 7137,
-    # or for a 32 bit machine using Ruby < 1.9.3, the year 2038.
+    # Returns the end of time (the next Mesoamerican Long Count cycle-end after 2012 (5125+2012) = 7137
     def self.end_of_time
-      begin
-        Time.gm(7137)
-      rescue ArgumentError
-        Time.gm(2038)
-      end
+      Time.gm(7137)
     end
 
     END_OF_TIME = end_of_time

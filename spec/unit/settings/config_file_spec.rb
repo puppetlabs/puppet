@@ -145,5 +145,14 @@ badline
                             with_section(Section.new(:main).
                                          with_setting(:mode, "value", NO_META)))
   end
+
+  it "accepts non-UTF8 encoded text" do
+    result = the_parse_of("var = value".encode("UTF-16LE"))
+
+    expect(result).to eq(Conf.new.
+                           with_section(Section.new(:main).
+                                          with_setting(:var, "value", NO_META)))
+
+    end
 end
 

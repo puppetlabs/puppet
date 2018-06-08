@@ -412,7 +412,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           winsec.set_mode(WindowsSecurityTester::S_IRWXU | WindowsSecurityTester::S_IRWXG, path)
           set_group_depending_on_current_user(path)
           winsec.set_owner(sids[:guest], path)
-          expected_error = RUBY_VERSION =~ /^2\./ && is_dir ? Errno::EISDIR : Errno::EACCES
+          expected_error = is_dir ? Errno::EISDIR : Errno::EACCES
           expect { File.open(path, 'r') }.to raise_error(expected_error)
         end
 

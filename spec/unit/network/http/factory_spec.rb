@@ -96,8 +96,7 @@ describe Puppet::Network::HTTP::Factory do
     end
   end
 
-  it "disables ruby's http_keepalive_timeout on Ruby 2" do
-    skip "Requires Ruby >= 2.0" unless RUBY_VERSION.to_i >= 2
+  it "disables ruby's http_keepalive_timeout" do
     conn = create_connection(site)
 
     expect(conn.keep_alive_timeout).to eq(2147483647)
@@ -105,7 +104,6 @@ describe Puppet::Network::HTTP::Factory do
 
   context 'source address' do
     it 'defaults to system-defined' do
-      skip "Requires Ruby >= 2.0" unless RUBY_VERSION.to_i >= 2
       conn = create_connection(site)
 
       expect(conn.local_host).to be(nil)
@@ -113,15 +111,9 @@ describe Puppet::Network::HTTP::Factory do
 
     it 'sets the local_host address' do
       Puppet[:sourceaddress] = "127.0.0.1"
-      if RUBY_VERSION.to_i >= 2
-        conn = create_connection(site)
+      conn = create_connection(site)
 
-        expect(conn.local_host).to eq('127.0.0.1')
-      else
-        expect {
-          create_connection(site)
-        }.to raise_error(ArgumentError, "Setting 'sourceaddress' is unsupported by this version of Net::HTTP.")
-      end
+      expect(conn.local_host).to eq('127.0.0.1')
     end
   end
 end
