@@ -143,6 +143,9 @@ module Puppet::Test
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
 
+      Puppet::SSL::Host.reset
+      Puppet::SSL::Host.ca_location = :none
+
       Puppet.clear_deprecation_warnings
     end
 
