@@ -1,4 +1,5 @@
 require 'puppet/rest/route'
+require 'time'
 
 module Puppet::Rest
   module Routes
@@ -35,11 +36,13 @@ module Puppet::Rest
     # HTTP client. Accepts a block to stream responses to disk.
     # @param [Puppet::Rest::Client] client the HTTP client to use to make the request
     # @param [String] name the crl to fetch
+    # @param [Time] last_modified the modification time of the agent crl file.
     # @raise [Puppet::Rest::ResponseError] if the response status is not OK
     # @return nil
-    def self.get_crls(client, name, &block)
+    def self.get_crls(client, name, last_modified, &block)
       ca.with_base_url(client.dns_resolver) do |url|
         header = { 'Accept' => 'text/plain', 'Accept-Encoding' => ACCEPT_ENCODING }
+        header['If-Modified-Since'] = last_modified.httpdate if last_modified
         url.path += "certificate_revocation_list/#{name}"
         client.get(url, header: header) do |chunk|
           block.call(chunk)

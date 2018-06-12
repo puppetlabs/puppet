@@ -559,13 +559,17 @@ ERROR_STRING
       # If no SSL store was suppoed, use this host's SSL store
       store ||= ssl_store
       client = http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, store))
+      crl_last_modified = Puppet::FileSystem.exist?(crl_path) ? File.mtime(crl_path) : nil
       Puppet::Util.replace_file(crl_path, 0644) do |file|
-        Puppet::Rest::Routes.get_crls(client, CA_NAME) do |chunk|
+        Puppet::Rest::Routes.get_crls(client, CA_NAME, crl_last_modified) do |chunk|
           file.write(chunk)
         end
       end
     rescue Puppet::Rest::ResponseError => e
-      raise Puppet::Error, _('Could not download CRLs: %{message}') % { message: e.message }
+      # if the ca_crl on master is not newer than the agent's, 304 will be returned and that's completely valid.
+      unless e.response.status_code == 304
+        raise Puppet::Error, _('Could not download CRLs: %{message}') % { message: e.message }
+      end
     end
   end
 
@@ -708,37 +712,55 @@ ERROR_STRING
     end
   end
 
+  # Builds and returns an ssl store.  Checks each time if there are any newer
+  # crls available from master to add to the store.
   # @param [OpenSSL::X509::PURPOSE_*] constant defining the kinds of certs
   #   this store can verify
   # @return [OpenSSL::X509::Store]
   # @raise [OpenSSL::X509::StoreError] if localcacert is malformed or non-existant
   # @raise [Puppet::Error] if the CRL chain is malformed
-  # @raise [Errno::ENOENT] if the CRL does not exist on disk but use_crl? is true
   def build_ssl_store(purpose=OpenSSL::X509::PURPOSE_ANY)
+    store = new_store(purpose)
+
+    if use_crl?
+      if Puppet::FileSystem.exist?(crl_path)
+        store_with_current_crls = store_with_crls(new_store(purpose), crl_path)
+      end
+      # If we already have a file with crls, use the store containing those
+      # crls, else use a fresh store:
+      client_store = store_with_current_crls || store
+
+      # Get the newest crls available from CA server, replacing our old crl file
+      # if necessary:
+      download_and_save_crl_bundle(client_store)
+
+      # From our newest crl file, add those crls to our fresh store:
+      store = store_with_crls(store, crl_path)
+    end
+    store
+  end
+
+  # Returns a new store with purpose and localcacert file
+  def new_store(purpose)
     store = OpenSSL::X509::Store.new
     store.purpose = purpose
 
     # Use the file path here, because we don't want to cause
     # a lookup in the middle of setting our ssl connection.
     store.add_file(Puppet.settings[:localcacert])
+    store
+  end
 
-    if use_crl?
-      if !Puppet::FileSystem.exist?(crl_path)
-        download_and_save_crl_bundle(store)
-      end
-
-      crls = load_crls(crl_path)
-
-      flags = OpenSSL::X509::V_FLAG_CRL_CHECK
-      if use_crl_chain?
-        flags |= OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
-      end
-
-      store.flags = flags
-      crls.each {|crl| store.add_crl(crl) }
+  # Returns a store with added crls and flags
+  def store_with_crls(store, crl_path)
+    crls = load_crls(crl_path)
+    flags = OpenSSL::X509::V_FLAG_CRL_CHECK
+    if use_crl_chain?
+      flags |= OpenSSL::X509::V_FLAG_CRL_CHECK_ALL
     end
+
+    store.flags = flags
+    crls.each {|crl| store.add_crl(crl) }
     store
   end
 end
-
-require 'puppet/ssl/certificate_authority'

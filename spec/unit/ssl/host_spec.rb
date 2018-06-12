@@ -753,9 +753,33 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     context "and the CRL is not on disk" do
       before do
         @pki = PuppetSpec::SSL.create_chained_pki
-        @revoked_cert = @pki[:revoked_root_node_cert]
         localcacert = Puppet.settings[:localcacert]
         Puppet::Util.replace_file(localcacert, 0644) {|f| f.write @pki[:ca_bundle] }
+        @http = mock 'http'
+        @host.stubs(:http_client).returns(@http)
+      end
+
+      after do
+        Puppet::FileSystem.unlink(Puppet.settings[:localcacert])
+      end
+
+      it "retrieves it from the server" do
+        Puppet::Rest::Routes.expects(:get_crls)
+          .with(@http, Puppet::SSL::CA_NAME, nil)
+          .yields(@pki[:crl_chain])
+
+        @host.ssl_store
+        expect(Puppet::FileSystem.read(Puppet.settings[:hostcrl], :encoding => Encoding::UTF_8)).to eq(@pki[:crl_chain])
+      end
+    end
+
+    context "and the CRL is on disk" do
+      before do
+        @pki = PuppetSpec::SSL.create_chained_pki
+        localcacert = Puppet.settings[:localcacert]
+        hostcrl     = Puppet.settings[:hostcrl]
+        Puppet::Util.replace_file(localcacert, 0644) {|f| f.write @pki[:ca_bundle] }
+        Puppet::Util.replace_file(hostcrl, 0644)     {|f| f.write @pki[:crl_chain] }
         @http = mock 'http'
         @host.stubs(:http_client).returns(@http)
       end
@@ -765,13 +789,33 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
         Puppet::FileSystem.unlink(Puppet.settings[:hostcrl])
       end
 
-      it "retrieves it from the server" do
-        Puppet::Rest::Routes.expects(:get_crls)
-          .with(@http, Puppet::SSL::CA_NAME)
-          .yields(@pki[:crl_chain])
+      context "and there is a newer crl available from the master" do
+        it "retrieves the new crl from the server and replaces the crl on disk" do
+          new_crl_chain = "fake_crl_chain"
+          crl_last_modified = File.mtime(Puppet.settings[:hostcrl])
+          Puppet::Rest::Routes.expects(:get_crls)
+            .with(@http, Puppet::SSL::CA_NAME, crl_last_modified)
+            .yields(new_crl_chain)
 
-        @host.ssl_store
-        expect(Puppet::FileSystem.read(Puppet.settings[:hostcrl], :encoding => Encoding::UTF_8)).to eq(@pki[:crl_chain])
+          @host.ssl_store
+          expect(Puppet::FileSystem.read(Puppet.settings[:hostcrl], :encoding => Encoding::UTF_8)).to eq(new_crl_chain)
+        end
+      end
+
+      context "and there is NO newer crl available on the master" do
+        before (:each) do
+          crl_last_modified = File.mtime(Puppet.settings[:hostcrl])
+          Puppet::Rest::Routes.expects(:get_crls)
+            .with(@http, Puppet::SSL::CA_NAME, crl_last_modified)
+            .raises(Puppet::Rest::ResponseError.new('no crl returned',
+                                                    mock('response', status_code: 304)))
+        end
+        
+        it 'does not raise an error and does not replace the crl on disk' do
+          expect { @host.ssl_store }.not_to raise_error
+          expect(Puppet::FileSystem.read(Puppet.settings[:hostcrl], :encoding =>
+            Encoding::UTF_8)).to eq(@pki[:crl_chain])
+        end
       end
     end
 
@@ -804,6 +848,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
           before do
             @host = Puppet::SSL::Host.new(crl_setting.to_s)
             @host.crl_usage = crl_setting
+            @host.stubs(:download_and_save_crl_bundle)
           end
 
           it "should verify unrevoked certs" do
@@ -827,6 +872,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
         before do
           @host = Puppet::SSL::Host.new("leaf")
           @host.crl_usage = :leaf
+          @host.stubs(:download_and_save_crl_bundle)
         end
 
         it "should verify unrevoked certs regardless of signing CA's revocation status" do
