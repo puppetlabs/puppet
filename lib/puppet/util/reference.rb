@@ -56,8 +56,8 @@ class Puppet::Util::Reference
 
   end
 
-  def self.references
-    instance_loader(:reference).loadall
+  def self.references(environment)
+    instance_loader(:reference).loadall(environment)
     loaded_instances(:reference).sort { |a,b| a.to_s <=> b.to_s }
   end
 

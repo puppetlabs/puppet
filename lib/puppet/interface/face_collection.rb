@@ -6,7 +6,9 @@ module Puppet::Interface::FaceCollection
   def self.faces
     unless @loaded
       @loaded = true
-      names = @loader.files_to_load.map {|fn| ::File.basename(fn, '.rb')}.uniq
+      names = @loader.files_to_load(Puppet.lookup(:current_environment)).map do |fn|
+        ::File.basename(fn, '.rb')
+      end.uniq
       names.each {|name| self[name, :current]}
     end
     @faces.keys.select {|name| @faces[name].length > 0 }

@@ -170,7 +170,7 @@ class Puppet::Interface
   # @return [void]
   # @api private
   def load_actions
-    loader.loadall
+    loader.loadall(Puppet.lookup(:current_environment))
   end
 
   # Returns a string representation with the face's name and version

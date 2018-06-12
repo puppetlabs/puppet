@@ -1,11 +1,7 @@
-#!/usr/bin/env rspec
+#!/usr/bin/env ruby
 require 'spec_helper'
 
 describe "the digest function", :uses_checksums => true do
-  before :all do
-    Puppet::Parser::Functions.autoloader.loadall
-  end
-
   before :each do
     n = Puppet::Node.new('unnamed')
     c = Puppet::Parser::Compiler.new(n)

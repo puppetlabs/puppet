@@ -209,7 +209,14 @@ class Application
     # @return [Array<String>] the names of available applications
     # @api public
     def available_application_names
-      @loader.files_to_load.map do |fn|
+      # Use our configured environment to load the application, as it may
+      # be in a module we installed locally, otherwise fallback to our
+      # current environment (*root*). Once we load the application the
+      # current environment will change from *root* to the application
+      # specific environment.
+      environment = Puppet.lookup(:environments).get(Puppet[:environment]) ||
+                    Puppet.lookup(:current_environment)
+      @loader.files_to_load(environment).map do |fn|
         ::File.basename(fn, '.rb')
       end.uniq
     end

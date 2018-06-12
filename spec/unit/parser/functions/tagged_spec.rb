@@ -2,10 +2,6 @@
 require 'spec_helper'
 
 describe "the 'tagged' function" do
-  before :all do
-    Puppet::Parser::Functions.autoloader.loadall
-  end
-
   before :each do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
