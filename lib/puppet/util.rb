@@ -290,27 +290,28 @@ module Util
   # defaults to the local platform if none is specified.
   #
   # Escape once for the string literal, and once for the regex.
-  slash = '[\\\\/]'
-  label = '[^\\\\/]+'
-  AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
-  AbsolutePathPosix   = %r!^/!
+  # slash = '[\\\\/]'
+  # label = '[^\\\\/]+'
+  # AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
+  # AbsolutePathPosix   = %r!^/!
   def absolute_path?(path, platform=nil)
     # Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard
     # library uses that to test what platform it's on.  Normally in Puppet we
     # would use Puppet.features.microsoft_windows?, but this method needs to
     # be called during the initialization of features so it can't depend on
     # that.
-    platform ||= Puppet::Util::Platform.windows? ? :windows : :posix
-    regex = case platform
-            when :windows
-              AbsolutePathWindows
-            when :posix
-              AbsolutePathPosix
-            else
-              raise Puppet::DevError, _("unknown platform %{platform} in absolute_path") % { platform: platform }
-            end
+    # platform ||= Puppet::Util::Platform.windows? ? :windows : :posix
+    # regex = case platform
+    #         when :windows
+    #           AbsolutePathWindows
+    #         when :posix
+    #           AbsolutePathPosix
+    #         else
+    #           raise Puppet::DevError, _("unknown platform %{platform} in absolute_path") % { platform: platform }
+    #         end
 
-    !! (path =~ regex)
+    # !! (path =~ regex)
+    File.absolute_path(path)
   end
   module_function :absolute_path?
 
