@@ -25,5 +25,10 @@ module Puppet::Rest
     def ok?
       @message.ok?
     end
+
+    def to_exception
+      message = _("Error %{code} on SERVER: %{returned_message}") % { code: status_code, returned_message: body }
+      Puppet::Rest::ResponseError.new(message, self)
+    end
   end
 end

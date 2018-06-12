@@ -37,6 +37,7 @@ describe "autosigning", :unless => RUBY_PLATFORM == 'java' do
 
     # This is necessary so the terminus instances don't lie around.
     Puppet::SSL::Key.indirection.termini.clear
+    Puppet::SSL::Host.ca_location = :none
   end
 
   def write_csr_attributes(yaml)

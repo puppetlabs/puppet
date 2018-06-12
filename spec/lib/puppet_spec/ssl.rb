@@ -232,6 +232,7 @@ EOT
         :int_cert => int_cert,
         :int_node_cert => int_node_cert,
         :leaf_cert => leaf_cert,
+        :leaf_key => leaf_key,
         :revoked_root_node_cert => revoked_root_node_cert,
         :revoked_int_cert => revoked_int_cert,
         :revoked_leaf_node_cert => revoked_leaf_node_cert,
