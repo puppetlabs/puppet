@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-330-gff7c4de\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-337-g8bfb99f\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-06-08 00:33+0000\n"
-"PO-Revision-Date: 2018-06-08 00:33+0000\n"
+"POT-Creation-Date: 2018-06-12 04:48+0000\n"
+"PO-Revision-Date: 2018-06-12 04:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2953,7 +2953,7 @@ msgstr ""
 msgid "Downgrading to PSON for future requests"
 msgstr ""
 
-#: ../lib/puppet/indirector/rest.rb:312
+#: ../lib/puppet/indirector/rest.rb:312 ../lib/puppet/rest/response.rb:30
 msgid "Error %{code} on SERVER: %{returned_message}"
 msgstr ""
 
@@ -4042,31 +4042,31 @@ msgstr ""
 
 #. TRANSLATORS: Used in the phrase:
 #. "Received a response from the remote server."
-#: ../lib/puppet/network/http/connection.rb:234
+#: ../lib/puppet/network/http/connection.rb:233
 msgid "the remote server"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:238
+#: ../lib/puppet/network/http/connection.rb:237
 msgid "Received a %{status_code} response from %{server_hostname}, but the Retry-After header value of \"%{retry_after}\" could not be converted to an integer or RFC 2822 date."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:249
+#: ../lib/puppet/network/http/connection.rb:248
 msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:305
+#: ../lib/puppet/network/http/connection.rb:304
 msgid "request %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:328
+#: ../lib/puppet/network/http/connection.rb:327
 msgid "expected one of %{certnames}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:330
+#: ../lib/puppet/network/http/connection.rb:329
 msgid "expected %{certname}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:333
+#: ../lib/puppet/network/http/connection.rb:332
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
@@ -6342,27 +6342,27 @@ msgstr ""
 msgid "Method PStringType#values is deprecated. Use #value instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1915
+#: ../lib/puppet/pops/types/types.rb:1892
 msgid "The string '%{str}' cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1918
+#: ../lib/puppet/pops/types/types.rb:1895
 msgid "Value of type %{type} cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2646
+#: ../lib/puppet/pops/types/types.rb:2623
 msgid "Value of type %{type} cannot be converted to Array"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2716
+#: ../lib/puppet/pops/types/types.rb:2693
 msgid "Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2853
+#: ../lib/puppet/pops/types/types.rb:2830
 msgid "odd number of arguments for Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2864
+#: ../lib/puppet/pops/types/types.rb:2841
 msgid "Value of type %{type} cannot be converted to Hash"
 msgstr ""
 
@@ -7664,36 +7664,36 @@ msgstr ""
 msgid "Invalid certificate revocation value %{value}: must be one of 'true', 'chain', 'leaf', or 'false'"
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:38
+#: ../lib/puppet/settings/config_file.rb:37
 msgid "Could not match line %{text}"
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:87
+#: ../lib/puppet/settings/config_file.rb:86
 msgid "Illegal section '%{name}' in config file at %{error_location}."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is the name of the puppet configuration file and should not be translated.
-#: ../lib/puppet/settings/config_file.rb:90
+#: ../lib/puppet/settings/config_file.rb:89
 msgid "The only valid puppet.conf sections are: [%{allowed_sections_list}]."
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:92
+#: ../lib/puppet/settings/config_file.rb:91
 msgid "Please use the directory environments feature to specify environments."
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:93
+#: ../lib/puppet/settings/config_file.rb:92
 msgid "(See https://puppet.com/docs/puppet/latest/environments_about.html)"
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:138
+#: ../lib/puppet/settings/config_file.rb:137
 msgid "Invalid file option '%{parameter}'"
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:142
+#: ../lib/puppet/settings/config_file.rb:141
 msgid "File modes must be numbers"
 msgstr ""
 
-#: ../lib/puppet/settings/config_file.rb:145
+#: ../lib/puppet/settings/config_file.rb:144
 msgid "Could not parse '%{string}'"
 msgstr ""
 
@@ -7992,15 +7992,15 @@ msgstr ""
 msgid "CA Mode can only be one of: %{modes}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:223
+#: ../lib/puppet/ssl/host.rb:219
 msgid "No certificate to validate."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:224
+#: ../lib/puppet/ssl/host.rb:220
 msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:226
+#: ../lib/puppet/ssl/host.rb:222
 msgid ""
 "The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?\n"
 "Certificate fingerprint: %{fingerprint}\n"
@@ -8013,7 +8013,7 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:251
+#: ../lib/puppet/ssl/host.rb:263
 msgid ""
 "The CSR retrieved from the master does not match the agent's public key.\n"
 "CSR fingerprint: %{fingerprint}\n"
@@ -8028,65 +8028,73 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:356 ../lib/puppet/ssl/host.rb:377
+#: ../lib/puppet/ssl/host.rb:368 ../lib/puppet/ssl/host.rb:389
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:358
+#: ../lib/puppet/ssl/host.rb:370
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:367
+#: ../lib/puppet/ssl/host.rb:379
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:375
+#: ../lib/puppet/ssl/host.rb:387
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:407
+#: ../lib/puppet/ssl/host.rb:433
+msgid "Response from the CA did not contain a valid certificate request: %{message}"
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:439
+msgid "Could not download certificate request: %{message}"
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:473
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:438
+#: ../lib/puppet/ssl/host.rb:504
 msgid "The CA certificate at %{file_path} is invalid: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:461
+#: ../lib/puppet/ssl/host.rb:527
 msgid "No valid PEM-encoded certificates."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:468
+#: ../lib/puppet/ssl/host.rb:534
 msgid "Could not parse certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:491
+#: ../lib/puppet/ssl/host.rb:557
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:509
+#: ../lib/puppet/ssl/host.rb:575
 msgid "Response from the CA did not contain a valid CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:512
+#: ../lib/puppet/ssl/host.rb:578
 msgid "Could not download CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:565
+#: ../lib/puppet/ssl/host.rb:631
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:584
+#: ../lib/puppet/ssl/host.rb:650
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:588
+#: ../lib/puppet/ssl/host.rb:654
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:591
+#: ../lib/puppet/ssl/host.rb:657
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
