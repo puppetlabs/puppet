@@ -25,6 +25,7 @@ module Puppet::Rest
         client.get("#{base_url}certificate/#{name}", header: header) do |chunk|
           body << chunk
         end
+        Puppet.info _("Downloaded certificate for %{name} from %{server}") % { name: name, server: ca.server }
         body
       end
     end
@@ -41,6 +42,7 @@ module Puppet::Rest
         client.get("#{base_url}certificate_revocation_list/#{name}", header: header) do |chunk|
           block.call(chunk)
         end
+        Puppet.debug _("Downloaded certificate revocation list for %{name} from %{server}") % { name: name, server: ca.server }
       end
     end
 
@@ -77,6 +79,7 @@ module Puppet::Rest
         client.get("#{base_url}certificate_request/#{name}", header: header) do |chunk|
           body << chunk
         end
+        Puppet.debug _("Downloaded existing certificate request for %{name} from %{server}") % { name: name, server: ca.server }
         body
       end
     end
