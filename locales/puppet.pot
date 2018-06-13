@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-346-g74088ba\n"
+"Project-Id-Version: Puppet automation framework 5.5.1-351-g1400000\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-06-12 16:18+0000\n"
-"PO-Revision-Date: 2018-06-12 16:18+0000\n"
+"POT-Creation-Date: 2018-06-13 23:18+0000\n"
+"PO-Revision-Date: 2018-06-13 23:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6449,15 +6449,15 @@ msgstr ""
 msgid "No command %{command} defined for provider %{provider}"
 msgstr ""
 
-#: ../lib/puppet/provider.rb:387
+#: ../lib/puppet/provider.rb:398
 msgid "Provider %{provider} has not defined the 'instances' class method"
 msgstr ""
 
-#: ../lib/puppet/provider.rb:459
+#: ../lib/puppet/provider.rb:470
 msgid "'%{parameter_name}' is not a valid parameter for %{resource_type}"
 msgstr ""
 
-#: ../lib/puppet/provider.rb:543
+#: ../lib/puppet/provider.rb:554
 msgid "No resource and no name in property hash in %{class_name} instance"
 msgstr ""
 
@@ -7566,8 +7566,20 @@ msgstr ""
 msgid "Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation"
 msgstr ""
 
-#: ../lib/puppet/rest/route.rb:41
+#: ../lib/puppet/rest/route.rb:43
 msgid "Connection to cached server and port %{server}:%{port} failed: %{message}"
+msgstr ""
+
+#: ../lib/puppet/rest/routes.rb:28
+msgid "Downloaded certificate for %{name} from %{server}"
+msgstr ""
+
+#: ../lib/puppet/rest/routes.rb:45
+msgid "Downloaded certificate revocation list for %{name} from %{server}"
+msgstr ""
+
+#: ../lib/puppet/rest/routes.rb:82
+msgid "Downloaded existing certificate request for %{name} from %{server}"
 msgstr ""
 
 #: ../lib/puppet/settings.rb:259
