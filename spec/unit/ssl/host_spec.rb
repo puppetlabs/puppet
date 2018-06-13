@@ -465,13 +465,14 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       @http = mock("http")
       @host.stubs(:http_client).returns(@http)
       @host.stubs(:key).returns(key)
+      @host.expects(:ssl_store).returns(mock("fake store"))
       request = mock("request")
       request.stubs(:generate)
       request.expects(:render).returns("my request").twice
       Puppet::SSL::CertificateRequest.expects(:new).returns(request)
 
       Puppet::Rest::Routes.expects(:put_certificate_request)
-        .with(@host.http_client, "my request", @host.name)
+        .with(@http, "my request", @host.name)
         .returns(nil)
 
       expect(@host.generate_certificate_request).to be true
@@ -505,6 +506,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       Puppet[:certdir] = tmpdir('certs')
       @host.stubs(:key).returns mock("key")
       @host.stubs(:validate_certificate_with_key)
+      @host.stubs(:ssl_store).returns(mock("fake store"))
       @http = mock 'http'
       @host.stubs(:http_client).returns(@http)
     end

@@ -4,13 +4,11 @@ require 'puppet/rest/client'
 
 describe Puppet::Rest::Client do
   context 'when creating a new client' do
-    let(:ssl_store) { mock('store') }
     let(:ssl_config) { stub_everything('ssl config') }
     let(:http) { stub_everything('http', :ssl_config => ssl_config) }
 
     it 'initializes itself with basic defaults' do
       HTTPClient.expects(:new).returns(http)
-      OpenSSL::X509::Store.expects(:new).returns(ssl_store)
       # Configure connection with HTTP settings
       Puppet[:http_read_timeout] = 120
       Puppet[:http_connect_timeout] = 10
@@ -21,17 +19,10 @@ describe Puppet::Rest::Client do
       http.expects(:debug_dev=).with($stderr)
 
       # Configure verify mode with SSL settings
-      ssl_config.expects(:cert_store=).with(ssl_store)
       Puppet[:ssl_client_ca_auth] = '/fake/path'
       Puppet[:hostcert] = '/fake/cert/path'
-      ssl_config.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
       Puppet::Rest::Client.new
-    end
-
-    it 'uses a given client and SSL store when provided' do
-      ssl_config.expects(:cert_store=).with(ssl_store)
-      Puppet::Rest::Client.new(client: http, ssl_store: ssl_store)
     end
 
     it 'configures a receive timeout when provided' do
@@ -66,6 +57,12 @@ describe Puppet::Rest::Client do
           expect(error.response).to be_a(Puppet::Rest::Response)
           expect(error.response.status_code).to eq(400)
         end
+      end
+
+      it 'resets all connections after making an insecure request' do
+        client.expects(:insecure?).returns(true)
+        http.expects(:reset_all)
+        client.get(url) { |chunk| chunk }
       end
     end
 
