@@ -360,6 +360,16 @@ describe Puppet::Type.type(:package) do
     end
   end
 
+  it "should select dnf over yum for dnf supported fedora versions" do
+    dnf = Puppet::Type.type(:package).provider(:dnf)
+    yum = Puppet::Type.type(:package).provider(:yum)
+    Facter.stubs(:value).with(:osfamily).returns(:redhat)
+    Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("22")
+
+    expect(dnf.specificity).to be > yum.specificity
+  end
+
   describe "allow_virtual" do
     it "defaults to true on platforms that support virtual packages" do
       pkg = Puppet::Type.type(:package).new(:name => 'yay', :provider => :yum)

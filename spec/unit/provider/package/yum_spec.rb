@@ -7,6 +7,13 @@ describe provider_class do
   include PuppetSpec::Fixtures
   it_behaves_like 'RHEL package provider', provider_class, 'yum'
 
+  it "should have lower specificity" do
+    Facter.stubs(:value).with(:osfamily).returns(:redhat)
+    Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("22")
+    expect(provider_class.specificity).to be < 200
+  end
+
   describe "when supplied the source param" do
     let(:name) { 'baz' }
 

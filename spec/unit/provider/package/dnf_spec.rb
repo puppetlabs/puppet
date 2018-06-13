@@ -23,6 +23,13 @@ context 'default' do
       expect(provider_class).to be_default
     end
   end
+
+  it "should be the default provider on some random future fedora" do
+    Facter.stubs(:value).with(:osfamily).returns(:redhat)
+    Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
+    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("8675")
+    expect(provider_class).to be_default
+  end
 end
 
 describe provider_class do
