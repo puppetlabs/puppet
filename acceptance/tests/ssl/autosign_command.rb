@@ -69,7 +69,7 @@ EOF
                   "--certname #{certname}"), :acceptable_exit_codes => [0,2])
         unless agent['locale'] == 'ja'
           assert_key_generated(agent)
-          assert_match(/Caching certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
+          assert_match(/Downloaded certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
         end
       end
     end

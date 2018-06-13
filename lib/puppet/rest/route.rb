@@ -2,6 +2,8 @@ require 'uri'
 
 module Puppet::Rest
   class Route
+    attr_reader :server
+
     # Create a Route containing information for querying the given API,
     # hosted at a server determined either by SRV service or by the
     # fallback server on the fallback port.
