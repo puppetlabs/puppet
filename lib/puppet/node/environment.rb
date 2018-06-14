@@ -435,7 +435,7 @@ class Puppet::Node::Environment
 
   # Loads module translations for the current environment once for
   # the lifetime of the environment.
-  def use_text_domain
+  def with_text_domain
     return if Puppet[:disable_i18n]
 
     if @text_domain.nil?
@@ -445,6 +445,10 @@ class Puppet::Node::Environment
     else
       Puppet::GettextConfig.use_text_domain(@text_domain)
     end
+
+    yield
+  ensure
+    Puppet::GettextConfig.clear_text_domain
   end
 
   # Checks if a reparse is required (cache of files is stale).
