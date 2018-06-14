@@ -464,6 +464,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       Puppet::SSL::Host.ca_location = :remote
       @http = mock("http")
       @host.stubs(:http_client).returns(@http)
+      @host.stubs(:ssl_store).returns(mock("ssl store"))
       @host.stubs(:key).returns(key)
       request = mock("request")
       request.stubs(:generate)
@@ -471,7 +472,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       Puppet::SSL::CertificateRequest.expects(:new).returns(request)
 
       Puppet::Rest::Routes.expects(:put_certificate_request)
-        .with(@host.http_client, "my request", @host.name)
+        .with(@http, "my request", @host.name)
         .returns(nil)
 
       expect(@host.generate_certificate_request).to be true
@@ -507,6 +508,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       @host.stubs(:validate_certificate_with_key)
       @http = mock 'http'
       @host.stubs(:http_client).returns(@http)
+      @host.stubs(:ssl_store).returns(mock("ssl store"))
     end
 
     let(:ca_cert_response) { @pki[:ca_bundle] }
