@@ -293,6 +293,15 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
           Puppet::Util::Execution.execute('test command')
         end
 
+        it "should set stdin to a pipe if stdin_yield is specified" do
+          expect(Puppet::Util::Execution).to receive(executor) do |_,_,stdin,_,_|
+            expect(stdin.class).to eq(IO)
+            rval
+          end
+
+          Puppet::Util::Execution.execute('test command', :stdin_yield => true) { |_,_,_| }
+        end
+
         describe "when squelch is set" do
           it "should set stdout and stderr to the null file" do
             expect(Puppet::Util::Execution).to receive(executor) do |_,_,_,stdout,stderr|

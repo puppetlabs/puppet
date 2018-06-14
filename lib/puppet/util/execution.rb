@@ -126,6 +126,7 @@ module Puppet::Util::Execution
   # @option options [Boolean] :combine sets whether or not to combine stdout/stderr in the output, if false stderr output is discarded
   # @option options [String] :stdin (nil) a filename or IO object that will be streamed into stdin.
   # @option options [String] :stdinfile (nil) alias for `stdin`.
+  # @option options [Boolean] :stdin_yield (false) yield an IO object attached to stdin.
   # @option options [Boolean] :squelch (false) if true, ignore stdout / stderr completely.
   # @option options [Boolean] :override_locale (true) by default (and if this option is set to true), we will temporarily override
   #   the user/system locale to "C" (via environment variables LANG and LC_*) while we are executing the command.
@@ -133,6 +134,14 @@ module Puppet::Util::Execution
   #   Passing in a value of false for this option will allow the command to be executed using the user/system locale.
   # @option options [Hash<{String => String}>] :custom_environment ({}) a hash of key/value pairs to set as environment variables for the duration
   #   of the command.
+  # @yield [stdin, stdout, stderr] an optional block that can interact with the command's input
+  #   and/or output.
+  # @yieldparam stdin [nil] an IO object attached to stdin if `stdin_yield` is `true`, otherwise `nil`.
+  # @yieldparam stdout [IO] an IO object attached to stdout if `squelch` is `false`, otherwise `nil`.
+  #   If `combine` is `true`, then the IO object will be attached to both stdout and stderr.
+  # @yieldparam stderr an IO object attached to stderr if `squelch` and `combine` are `false`,
+  #   otherwise `nil`.
+  # @yieldreturn [String] the output to return from the `execute` call.
   # @return [Puppet::Util::Execution::ProcessOutput] output as specified by options.
   # @raise [Puppet::ExecutionFailure] if the executed child process did not exit with status == 0 and `failonfail` is
   #   `true`.
@@ -154,6 +163,7 @@ module Puppet::Util::Execution
         :combine => NoOptionsSpecified.equal?(options),
         :stdin => nil,
         :stdinfile => nil,
+        :stdin_yield => false,
         :squelch => false,
         :override_locale => true,
         :custom_environment => {},
@@ -163,10 +173,19 @@ module Puppet::Util::Execution
 
     options = default_options.merge(options)
 
-    if !options[:stdin].nil? and !options[:stdinfile].nil?
-      raise ArgumentError, _("Only one of the 'stdin' or 'stdinfile' options may be provided to Puppet::Util::Execution.execute")
+    if [!options[:stdin].nil?, !options[:stdinfile].nil?, options[:stdin_yield]].count { |i| i } > 1
+      raise ArgumentError, _("Only one of the 'stdin', 'stdinfile', or 'stdin_yield' options may be provided to Puppet::Util::Execution.execute")
     elsif !options[:stdinfile].nil?
       options[:stdin] = options[:stdinfile]
+    end
+    if block_given?
+      if options[:squelch] and !options[:stdin_yield]
+        raise ArgumentError, _("Providing a block to Puppet::Util::Execution.execute doesn't make sense when 'squelch' is true and 'stdin_yield' is false")
+      end
+    else
+      if options[:stdin_yield]
+        raise ArgumentError, _("Enabling 'stdin_yield' makes sense only when a block is provided to Puppet::Util::Execution.execute")
+      end
     end
 
     if command.is_a?(Array)
@@ -204,7 +223,9 @@ module Puppet::Util::Execution
     end
 
     begin
-      if options[:stdin].is_a?(StringIO)
+      if options[:stdin_yield]
+        stdin, stdin_writer = IO.pipe
+      elsif options[:stdin].is_a?(StringIO)
         # Unlike other IO objects, StringIO does not represent an OS file handle, and therefore it
         # cannot be attached to a process.  Instead, we create a pipe, attach the pipe to a process,
         # then copy the StringIO object's contents into the pipe.
@@ -216,7 +237,7 @@ module Puppet::Util::Execution
       end
       if options[:squelch]
         stdout = Puppet::FileSystem.open(null_file, nil, 'w')
-      elsif Puppet.features.posix?
+      elsif Puppet.features.posix? or block_given?
         stdout_reader, stdout = IO.pipe
       else
         # On Windows, continue to use the file-based approach to avoid breaking people's existing
@@ -225,7 +246,13 @@ module Puppet::Util::Execution
         # read available.
         stdout = Puppet::FileSystem::Uniquefile.new('puppet')
       end
-      stderr = options[:combine] ? stdout : Puppet::FileSystem.open(null_file, nil, 'w')
+      if options[:combine]
+        stderr = stdout
+      elsif block_given?
+        stderr_reader, stderr = IO.pipe
+      else
+        stderr = Puppet::FileSystem.open(null_file, nil, 'w')
+      end
 
       exec_args = [command, options, stdin, stdout, stderr]
       output = ''
@@ -253,7 +280,13 @@ module Puppet::Util::Execution
             stdin_writer.close
             stdin_writer = nil
           end
-          if options[:squelch]
+          if options[:squelch] or block_given?
+            if block_given?
+              output = yield(stdin_writer, stdout_reader, stderr_reader)
+              stdin_writer.close if stdin_writer
+              stdout_reader.close if stdout_reader
+              stderr_reader.close if stderr_reader
+            end
             exit_status = Process.waitpid2(child_pid).last.exitstatus
           else
             # Use non-blocking read to check for data. After each attempt,
@@ -318,10 +351,17 @@ module Puppet::Util::Execution
             stdin_writer = nil
           end
 
+          if block_given?
+            output = yield(stdin_writer, stdout_reader, stderr_reader)
+            stdin_writer.close if stdin_writer
+            stdout_reader.close if stdout_reader
+            stderr_reader.close if stderr_reader
+          end
+
           exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
 
           # read output in if required
-          unless options[:squelch]
+          unless options[:squelch] or block_given?
             output = wait_for_output(stdout)
             Puppet.warning _("Could not get output") unless output
           end
@@ -339,6 +379,7 @@ module Puppet::Util::Execution
       [stdin, stdout, stderr].each {|io| io.close rescue nil}
       stdin_writer.close if stdin_writer
       stdout_reader.close if stdout_reader
+      stderr_reader.close if stderr_reader
       stdout.close! if stdout.is_a?(Puppet::FileSystem::Uniquefile)
     end
 

@@ -87,4 +87,16 @@ describe Puppet::Util::Execution, unless: Puppet::Util::Platform.jruby? do
       expect(output).to eq(input)
     end
   end
+
+  describe "#execute (stdin_yield)" do
+    it "should connect stdin and stdout to the process" do
+      input = 'test string'
+      output = Puppet::Util::Execution.execute('cat', :stdin_yield => true, :combine => true) do |i,o,e|
+        i.write(input)
+        i.close
+        o.read
+      end
+      expect(output).to eq(input)
+    end
+  end
 end
