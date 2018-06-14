@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'puppet_spec/files'
 
 require 'puppet/face'
+require 'puppet/application/parser'
 
 describe Puppet::Face[:parser, :current] do
   include PuppetSpec::Files
@@ -9,6 +10,12 @@ describe Puppet::Face[:parser, :current] do
   let(:parser) { Puppet::Face[:parser, :current] }
 
   context "validate" do
+    let(:validate_app) do
+      Puppet::Application::Parser.new.tap do |app|
+        allow(app).to receive(:action).and_return(parser.get_action(:validate))
+      end
+    end
+
     context "from an interactive terminal" do
       before :each do
         from_an_interactive_terminal
@@ -25,14 +32,17 @@ describe Puppet::Face[:parser, :current] do
 
         configured_environment = Puppet::Node::Environment.create(:default, [], manifest)
         Puppet.override(:current_environment => configured_environment) do
-          expect { parser.validate() }.to exit_with(1)
+          parse_errors = parser.validate()
+
+          expect(parse_errors[manifest]).to be_a_kind_of(Puppet::ParseErrorWithIssue)
         end
       end
 
       it "validates the given file" do
         manifest = file_containing('site.pp', "{ invalid =>")
+        parse_errors = parser.validate(manifest)
 
-        expect { parser.validate(manifest) }.to exit_with(1)
+        expect(parse_errors[manifest]).to be_a_kind_of(Puppet::ParseErrorWithIssue)
       end
 
       it "validates static heredoc with specified syntax" do
@@ -40,36 +50,40 @@ describe Puppet::Face[:parser, :current] do
           { invalid =>
           EOT
         ")
-        expect { parser.validate(manifest) }.to exit_with(1)
+        parse_errors = parser.validate(manifest)
+
+        expect(parse_errors[manifest]).to be_a_kind_of(Puppet::ParseErrorWithIssue)
       end
 
       it "does not validates dynamic heredoc with specified syntax" do
         manifest = file_containing('site.pp', "@(\"EOT\":pp)
         {invalid => ${1+1}
         EOT")
-        expect { parser.validate(manifest) }.to_not exit_with(1)
+        parse_errors = parser.validate(manifest)
+
+        expect(parse_errors).to be_empty
       end
 
       it "runs error free when there are no validation errors" do
-        expect {
-            manifest = file_containing('site.pp', "notify { valid: }")
-            parser.validate(manifest)
-        }.to_not raise_error
+        manifest = file_containing('site.pp', "notify { valid: }")
+        parse_errors = parser.validate(manifest)
+
+        expect(parse_errors).to be_empty
       end
 
       it "runs error free when there is a puppet function in manifest being validated" do
-        expect {
-          manifest = file_containing('site.pp', "function valid() { 'valid' } notify{ valid(): }")
-          parser.validate(manifest)
-        }.to_not raise_error
+        manifest = file_containing('site.pp', "function valid() { 'valid' } notify{ valid(): }")
+        parse_errors = parser.validate(manifest)
+
+        expect(parse_errors).to be_empty
       end
 
       it "runs error free when there is a type alias in a manifest that requires type resolution" do
-        expect {
-          manifest = file_containing('site.pp',
-            "type A = String; type B = Array[A]; function valid(B $x) { $x } notify{ valid([valid]): }")
-          parser.validate(manifest)
-        }.to_not raise_error
+        manifest = file_containing('site.pp',
+                                   "type A = String; type B = Array[A]; function valid(B $x) { $x } notify{ valid([valid]): }")
+        parse_errors = parser.validate(manifest)
+
+        expect(parse_errors).to be_empty
       end
 
       it "reports missing files" do
@@ -84,19 +98,52 @@ describe Puppet::Face[:parser, :current] do
         env = Puppet::Node::Environment.create(:special, [])
         env_loader = Puppet::Environments::Static.new(env)
         Puppet.override({:environments => env_loader, :current_environment => env}) do
-          expect { parser.validate(manifest) }.to exit_with(1)
+          parse_errors = parser.validate(manifest)
+
+          expect(parse_errors[manifest]).to be_a_kind_of(Puppet::ParseErrorWithIssue)
         end
-
-        expect(@logs.join).to match(/environment special.*Syntax error at end of input/)
       end
-
     end
 
     it "validates the contents of STDIN when no files given and STDIN is not a tty" do
       from_a_piped_input_of("{ invalid =>")
 
       Puppet.override(:current_environment => Puppet::Node::Environment.create(:special, [])) do
-        expect { parser.validate() }.to exit_with(1)
+        parse_errors = parser.validate()
+
+        expect(parse_errors['STDIN']).to be_a_kind_of(Puppet::ParseErrorWithIssue)
+      end
+    end
+
+    context "when invoked with console output renderer" do
+      before(:each) do
+        validate_app.render_as = :console
+      end
+
+      it "logs errors using Puppet.log_exception" do
+        manifest = file_containing('test.pp', "{ invalid =>")
+        results = parser.validate(manifest)
+
+        results.each do |_, error|
+          expect(Puppet).to receive(:log_exception).with(error)
+        end
+
+        expect { validate_app.render(results, nil) }.to raise_error(SystemExit)
+      end
+    end
+
+    context "when invoked with --render-as=json" do
+      before(:each) do
+        validate_app.render_as = :json
+      end
+
+      it "outputs errors in a JSON document to stdout" do
+        manifest = file_containing('test.pp', "{ invalid =>")
+        results = parser.validate(manifest)
+
+        expected_json = /\A{.*#{Regexp.escape('"message":')}\s*#{Regexp.escape('"Syntax error at end of input"')}.*}\Z/m
+
+        expect { validate_app.render(results, nil) }.to output(expected_json).to_stdout.and raise_error(SystemExit)
       end
     end
   end
