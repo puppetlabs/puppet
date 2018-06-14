@@ -79,4 +79,12 @@ describe Puppet::Util::Execution, unless: Puppet::Util::Platform.jruby? do
       expect(result.exitstatus).to eq(100)
     end
   end
+
+  describe "#execute (StringIO stdin)" do
+    it "should write the contents of a StringIO stdin argument to stdin of the process" do
+      input = 'test string'
+      output = Puppet::Util::Execution.execute('cat', :stdin => StringIO.new(input), :combine => true)
+      expect(output).to eq(input)
+    end
+  end
 end
