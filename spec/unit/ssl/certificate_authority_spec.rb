@@ -190,7 +190,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
       request.expects(:generate).with(@ca.host.key)
       request.stubs(:request_extensions => [])
 
-      @ca.expects(:sign).with(@host.name, {allow_dns_alt_names: false,
+      @ca.expects(:sign).with(@host.name, {allow_subject_alt_names: false,
                                            self_signing_csr: request})
 
       @ca.stubs :generate_password
@@ -255,7 +255,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
       it "should not look up a certificate request for the host" do
         Puppet::SSL::CertificateRequest.indirection.expects(:find).never
 
-        @ca.sign(@name, {allow_dns_alt_names: true,
+        @ca.sign(@name, {allow_subject_alt_names: true,
                          self_signing_csr: @request})
       end
 
@@ -263,7 +263,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           expect(args[0]).to eq(:ca)
         end.returns @cert.content
-        @ca.sign(@name, {allow_dns_alt_names: true,
+        @ca.sign(@name, {allow_subject_alt_names: true,
                          self_signing_csr: @request})
       end
 
@@ -271,7 +271,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           expect(args[1]).to eq(@request)
         end.returns @cert.content
-        @ca.sign(@name, {allow_dns_alt_names: true,
+        @ca.sign(@name, {allow_subject_alt_names: true,
                          self_signing_csr: @request})
       end
 
@@ -279,7 +279,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           expect(args[2].subject.to_s).to eq("/CN=myhost")
         end.returns @cert.content
-        @ca.sign(@name, {allow_dns_alt_names: true,
+        @ca.sign(@name, {allow_subject_alt_names: true,
                          self_signing_csr: @request})
       end
 
@@ -287,7 +287,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           expect(args[3]).to eq(@serial)
         end.returns @cert.content
-        @ca.sign(@name, {allow_dns_alt_names: true,
+        @ca.sign(@name, {allow_subject_alt_names: true,
                          self_signing_csr: @request})
       end
 
@@ -295,7 +295,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
         @request.stubs(:subject_alt_names).returns %w[DNS:foo DNS:bar DNS:baz]
 
         expect do
-          @ca.sign(@name, {allow_dns_alt_names: false,
+          @ca.sign(@name, {allow_subject_alt_names: false,
                            self_signing_csr: @request})
         end.not_to raise_error
       end
@@ -303,7 +303,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
       it "should save the resulting certificate" do
         Puppet::SSL::Certificate.indirection.expects(:save).with(@cert)
 
-        @ca.sign(@name, {allow_dns_alt_names: true,
+        @ca.sign(@name, {allow_subject_alt_names: true,
                          self_signing_csr: @request})
       end
     end
@@ -369,13 +369,13 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
         @request.stubs(:subject_alt_names).returns %w[DNS:foo DNS:bar DNS:baz]
 
         expect do
-          @ca.sign(@name, {allow_dns_alt_names: false})
-        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{@name}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{@name}` to sign this request./)
+          @ca.sign(@name, {allow_subject_alt_names: false})
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{@name}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-subject-alt-names sign #{@name}` to sign this request./)
       end
 
       it "should not fail if the CSR does not contain alt names and they are expected" do
         @request.stubs(:subject_alt_names).returns []
-        expect { @ca.sign(@name, {allow_dns_alt_names: true}) }.to_not raise_error
+        expect { @ca.sign(@name, {allow_subject_alt_names: true}) }.to_not raise_error
       end
 
       it "should reject alt names by default" do
@@ -383,7 +383,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
 
         expect do
           @ca.sign(@name)
-        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{@name}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{@name}` to sign this request./)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{@name}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-subject-alt-names sign #{@name}` to sign this request./)
       end
 
       it "should use the CA certificate as the issuer" do
@@ -573,7 +573,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
       it "should reject a subjectAltName for a non-DNS value" do
         @request.stubs(:subject_alt_names).returns ['DNS:foo', 'email:bar@example.com']
         expect {
-          @ca.check_internal_signing_policies(@name, @request, {allow_dns_alt_names: true})
+          @ca.check_internal_signing_policies(@name, @request, {allow_subject_alt_names: true})
         }.to raise_error(
           Puppet::SSL::CertificateAuthority::CertificateSigningError,
           /subjectAltName outside the DNS label space/
@@ -585,7 +585,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
         Puppet[:certname] = @name
 
         expect {
-          @ca.check_internal_signing_policies(@name, @request, {allow_dns_alt_names: false})
+          @ca.check_internal_signing_policies(@name, @request, {allow_subject_alt_names: false})
         }.to_not raise_error
       end
 
@@ -602,7 +602,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
       it "should reject a wildcard subjectAltName" do
         @request.stubs(:subject_alt_names).returns ['DNS:foo', 'DNS:*.bar']
         expect {
-          @ca.check_internal_signing_policies(@name, @request, {allow_dns_alt_names: true})
+          @ca.check_internal_signing_policies(@name, @request, {allow_subject_alt_names: true})
         }.to raise_error(
           Puppet::SSL::CertificateAuthority::CertificateSigningError,
           /subjectAltName contains a wildcard/
@@ -1135,9 +1135,9 @@ describe "CertificateAuthority.generate", unless: Puppet::Util::Platform.jruby? 
         expect( cert.subject_alt_names ).to be_empty
       end
 
-      it "should have subject_alt_names if passed dns_alt_names" do
-        cert = ca.generate(cn, :dns_alt_names => 'foo,bar')
-        expect( cert.subject_alt_names ).to match_array(["DNS:#{cn}",'DNS:foo','DNS:bar'])
+      it "should have subject_alt_names if passed subject_alt_names" do
+        cert = ca.generate(cn, :subject_alt_names => 'foo,bar,baz')
+        expect( cert.subject_alt_names ).to match_array(["DNS:#{cn}",'DNS:foo','DNS:bar', 'DNS:baz'])
       end
 
       context "if autosign is false" do

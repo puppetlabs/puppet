@@ -61,7 +61,7 @@ module Puppet
           step "Master: Ensure the master is listening and autosigning"
           with_puppet_running_on(master,
                                   :master => {
-                                    :dns_alt_names => "puppet,#{hostname},#{fqdn}",
+                                    :subject_alt_names => "puppet,#{hostname},#{fqdn}",
                                     :autosign => true,
                                   }
                                 ) do

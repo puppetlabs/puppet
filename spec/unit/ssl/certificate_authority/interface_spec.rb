@@ -201,7 +201,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         let(:applier) { @class.new(:sign, @options.merge(:to => %w{host1 host2})) }
 
         it "should sign the specified waiting certificate requests" do
-          @options = {:allow_dns_alt_names => false}
+          @options = {:allow_subject_alt_names => false}
           applier.stubs(:format_host).returns("")
           applier.stubs(:puts)
           @ca.stubs(:check_internal_signing_policies).returns(true)
@@ -213,7 +213,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         end
 
         it "should sign the certificate requests with alt names if specified" do
-          @options = {:allow_dns_alt_names => true}
+          @options = {:allow_subject_alt_names => true}
           applier.stubs(:format_host).returns("")
           applier.stubs(:puts)
           @ca.stubs(:check_internal_signing_policies).returns(true)

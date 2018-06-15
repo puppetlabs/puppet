@@ -70,8 +70,8 @@ test_name "Puppet cert generate behavior (#6112)" do
     assert_match(/Error: The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root\?/, stderr, "Should not be able to generate a certificate on an agent that is not also the CA, with autosign #{autosign}.")
   end
 
-  def generate_and_clean_cert_with_dns_alt_names(host, cn, autosign)
-    on(host, puppet('cert', 'generate', cn, '--autosign', autosign, '--dns_alt_names', 'foo,bar'))
+  def generate_and_clean_cert_with_subject_alt_names(host, cn, autosign)
+    on(host, puppet('cert', 'generate', cn, '--autosign', autosign, '--subject_alt_names', 'foo,bar'))
     on(master, puppet('cert', 'list', '--all'))
     assert_match(/cert.test.*DNS:foo/, stdout, "Should find a dns entry for 'foo' in the cert.test listing.")
     assert_match(/cert.test.*DNS:bar/, stdout, "Should find a dns entry for 'bar' in the cert.test listing.")
@@ -86,7 +86,7 @@ test_name "Puppet cert generate behavior (#6112)" do
   ################
   # Cases 1 and 2:
 
-  step "Case 1 and 2: Tests behavior of `puppet cert generate` on a master node, and on an agent node that has already authenticated to the master.  Tests with combinations of autosign and dns_alt_names."
+  step "Case 1 and 2: Tests behavior of `puppet cert generate` on a master node, and on an agent node that has already authenticated to the master.  Tests with combinations of autosign and subject_alt_names."
 
   reset_agent_ssl
 
@@ -125,24 +125,24 @@ test_name "Puppet cert generate behavior (#6112)" do
 
   # These steps are documenting the current behavior with regard to --dns_alt_names
   # flags submitted on the command line with a puppet cert generate.
-  step "puppet cert generate with autosign false and dns_alt_names"
+  step "puppet cert generate with autosign false and subject_alt_names"
 
   hosts.each do |host|
     if host_is_master?(host)
-      generate_and_clean_cert_with_dns_alt_names(host, test_cn, false)
+      generate_and_clean_cert_with_subject_alt_names(host, test_cn, false)
     else
       fail_to_generate_cert_on_agent_that_is_not_ca(host, test_cn, false)
     end
   end
 
-  step "puppet cert generate with autosign true and dns_alt_names"
+  step "puppet cert generate with autosign true and subject_alt_names"
   hosts.each do |host|
     if host_is_master?(host)
-      on(host, puppet('cert', 'generate', test_cn, '--autosign', 'true', '--dns_alt_names', 'foo,bar'), :acceptable_exit_codes => [24])
-      assert_match(/Error: CSR '#{test_cn}' contains subject alternative names.*Use.*--allow-dns-alt-names/, stderr, "Should not be able to generate a certificate, with autosign true and dns_alt_names without specifying allow_dns_alt_names flag.")
-      # And now sign with allow_dns_alt_names set
-      on(host, puppet('cert', '--allow-dns-alt-names', 'sign', test_cn))
-      assert_match(/Signed certificate request for #{test_cn}/, stdout, "Signed certificate once --allow-dns-alt-names specified")
+      on(host, puppet('cert', 'generate', test_cn, '--autosign', 'true', '--subject_alt_names', 'foo,bar'), :acceptable_exit_codes => [24])
+      assert_match(/Error: CSR '#{test_cn}' contains subject alternative names.*Use.*--allow-subject-alt-names/, stderr, "Should not be able to generate a certificate, with autosign true and subject_alt_names without specifying allow_subject_alt_names flag.")
+      # And now sign with allow_subject_alt_names set
+      on(host, puppet('cert', '--allow-subject-alt-names', 'sign', test_cn))
+      assert_match(/Signed certificate request for #{test_cn}/, stdout, "Signed certificate once --allow-subject-alt-names specified")
       clean_cert(host, test_cn)
     else
       fail_to_generate_cert_on_agent_that_is_not_ca(host, test_cn, true)

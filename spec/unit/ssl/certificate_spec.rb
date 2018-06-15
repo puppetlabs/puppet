@@ -112,7 +112,7 @@ describe Puppet::SSL::Certificate do
 
     describe "#subject_alt_names", :unless => RUBY_PLATFORM == 'java' do
       it "should list all alternate names when the extension is present" do
-        certificate = build_cert(:dns_alt_names => 'foo, bar,baz')
+        certificate = build_cert(:subject_alt_names => 'foo, bar,baz')
         expect(certificate.subject_alt_names).
           to match_array(['DNS:foo', 'DNS:bar', 'DNS:baz', 'DNS:quux'])
       end
@@ -139,7 +139,7 @@ describe Puppet::SSL::Certificate do
       end
 
       it "doesn't return standard extensions" do
-        cert = build_cert(:dns_alt_names => 'foo')
+        cert = build_cert(:subject_alt_names => 'foo')
         expect(cert.custom_extensions).to be_empty
       end
 

@@ -99,7 +99,7 @@ incomplete.
         "SHA256":"A6:44:08:A6:38:62:88:5B:32:97:20:49:8A:4A:4A:AD:65:C3:3E:A2:4C:30:72:73:02:C5:F3:D4:0E:B7:FC:2F",
         "SHA512":"CA:A0:8C:B9:FE:9D:C2:72:18:57:08:E9:4B:11:B7:BC:4E:F7:52:C8:9C:76:03:45:B4:B6:C5:D2:DC:E8:79:43:D7:71:1F:5C:97:FA:B2:F3:ED:AE:19:BD:A9:3B:DB:9F:A5:B4:8D:57:3F:40:34:29:50:AA:AA:0A:93:D8:D7:54"
       },
-      "dns_alt_names":["DNS:puppet","DNS:mycertname"]
+      "subject_alt_names":["DNS:puppet","DNS:mycertname"]
     }
 
 

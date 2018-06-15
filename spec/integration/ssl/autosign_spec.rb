@@ -97,7 +97,7 @@ describe "autosigning", :unless => RUBY_PLATFORM == 'java' do
       end
 
       it "properly merges subjectAltName when in settings" do
-        Puppet.settings[:dns_alt_names] = 'althostname.nowhere'
+        Puppet.settings[:subject_alt_names] = 'althostname.nowhere'
         write_csr_attributes(csr_attributes_content)
         host.generate_certificate_request
         csr = Puppet::SSL::CertificateRequest.indirection.find(host.name)

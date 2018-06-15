@@ -78,8 +78,8 @@ describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java'
         expect(csr.name).to eq(Puppet[:certname])
       end
 
-      it "should add dns_alt_names from the global config if not otherwise specified" do
-        Puppet[:dns_alt_names] = 'from,the,config'
+      it "should add subject_alt_names from the global config if not otherwise specified" do
+        Puppet[:subject_alt_names] = 'from,the,config'
 
         subject.generate(hostname, options)
 
@@ -88,10 +88,10 @@ describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java'
         expect(csr.subject_alt_names).to match_array(expected)
       end
 
-      it "should add the provided dns_alt_names if they are specified" do
-        Puppet[:dns_alt_names] = 'from,the,config'
+      it "should add the provided subject_alt_names if they are specified" do
+        Puppet[:subject_alt_names] = 'from,the,config'
 
-        subject.generate(hostname, options.merge(:dns_alt_names => "explicit,alt,#{mixed_utf8}"))
+        subject.generate(hostname, options.merge(:subject_alt_names => "explicit,alt,#{mixed_utf8}"))
 
         # CSRs will return subject_alt_names as BINARY strings
         expected = %W[DNS:explicit DNS:alt DNS:#{mixed_utf8.force_encoding(Encoding::BINARY)} DNS:#{hostname}]
@@ -118,18 +118,18 @@ describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java'
         end.to raise_error(RuntimeError, /#{hostname} already has a requested certificate; ignoring certificate request/)
       end
 
-      it "should add not dns_alt_names from the config file" do
-        Puppet[:dns_alt_names] = 'from,the,config'
+      it "should add not subject_alt_names from the config file" do
+        Puppet[:subject_alt_names] = 'from,the,config'
 
         subject.generate(hostname, options)
 
         expect(csr.subject_alt_names).to be_empty
       end
 
-      it "should add the provided dns_alt_names if they are specified" do
-        Puppet[:dns_alt_names] = 'from,the,config'
+      it "should add the provided subject_alt_names if they are specified" do
+        Puppet[:subject_alt_names] = 'from,the,config'
 
-        subject.generate(hostname, options.merge(:dns_alt_names => 'explicit,alt,names'))
+        subject.generate(hostname, options.merge(:subject_alt_names => 'explicit,alt,names'))
 
         expected = %W[DNS:explicit DNS:alt DNS:names DNS:#{hostname}]
 
@@ -137,7 +137,7 @@ describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java'
       end
       
       it "should use the global setting if set by CLI" do
-        Puppet.settings.patch_value(:dns_alt_names, 'from,the,cli', :cli)
+        Puppet.settings.patch_value(:subject_alt_names, 'from,the,cli', :cli)
         
         subject.generate(hostname, options)
         
@@ -147,9 +147,9 @@ describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java'
       end
       
       it "should generate an error if both set on CLI" do
-        Puppet.settings.patch_value(:dns_alt_names, 'from,the,cli', :cli)
+        Puppet.settings.patch_value(:subject_alt_names, 'from,the,cli', :cli)
         expect do
-          subject.generate(hostname, options.merge(:dns_alt_names => 'explicit,alt,names'))
+          subject.generate(hostname, options.merge(:subject_alt_names => 'explicit,alt,names'))
         end.to raise_error ArgumentError, /Can't specify both/ 
       end
     end
@@ -177,41 +177,41 @@ describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java'
     end
 
     describe "when ca_location is local", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
-      describe "when the request has dns alt names" do
+      describe "when the request has subject alt names" do
         before :each do
-          subject.generate(hostname, options.merge(:dns_alt_names => 'some,alt,names'))
+          subject.generate(hostname, options.merge(:subject_alt_names => 'some,alt,names'))
         end
 
-        it "should refuse to sign the request if allow_dns_alt_names is not set" do
+        it "should refuse to sign the request if allow_subject_alt_names is not set" do
           expect do
             subject.sign(hostname, options)
           end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError,
-                             /CSR '#{hostname}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{hostname}` to sign this request./i)
+                             /CSR '#{hostname}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-subject-alt-names sign #{hostname}` to sign this request./i)
 
           expect(host.state).to eq('requested')
         end
 
-        it "should sign the request if allow_dns_alt_names is set" do
+        it "should sign the request if allow_subject_alt_names is set" do
           expect do
-            subject.sign(hostname, options.merge(:allow_dns_alt_names => true))
+            subject.sign(hostname, options.merge(:allow_subject_alt_names => true))
           end.not_to raise_error
 
           expect(host.state).to eq('signed')
         end
       end
 
-      describe "when the request has no dns alt names" do
+      describe "when the request has no subject alt names" do
         before :each do
           subject.generate(hostname, options)
         end
 
-        it "should sign the request if allow_dns_alt_names is set" do
-          expect { subject.sign(hostname, options.merge(:allow_dns_alt_names => true)) }.not_to raise_error
+        it "should sign the request if allow_subject_alt_names is set" do
+          expect { subject.sign(hostname, options.merge(:allow_subject_alt_names => true)) }.not_to raise_error
 
           expect(host.state).to eq('signed')
         end
 
-        it "should sign the request if allow_dns_alt_names is not set" do
+        it "should sign the request if allow_subject_alt_names is not set" do
           expect { subject.sign(hostname, options) }.not_to raise_error
 
           expect(host.state).to eq('signed')
@@ -221,9 +221,9 @@ describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java'
 
     describe "when ca_location is remote" do
       let(:options) { {:ca_location => :remote} }
-      it "should fail if allow-dns-alt-names is specified" do
+      it "should fail if allow-subject-alt-names is specified" do
         expect do
-          subject.sign(hostname, options.merge(:allow_dns_alt_names => true))
+          subject.sign(hostname, options.merge(:allow_subject_alt_names => true))
         end
       end
     end

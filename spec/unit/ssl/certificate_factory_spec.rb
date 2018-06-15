@@ -109,7 +109,7 @@ describe Puppet::SSL::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
     # subjectAltName is set if the CSR has it, but *not* if it is set when the
     # certificate is built!
     it "should not add subjectAltNames from dns_alt_names" do
-      Puppet[:dns_alt_names] = 'one, two'
+      Puppet[:subject_alt_names] = 'one, two'
       # Verify the CSR still has no extReq, just in case...
       expect(csr.request_extensions).to eq([])
       cert = subject.build(:server, csr, issuer, serial)
@@ -118,12 +118,12 @@ describe Puppet::SSL::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
     end
 
     it "should add subjectAltName when the CSR requests them" do
-      Puppet[:dns_alt_names] = ''
+      Puppet[:subject_alt_names] = ''
 
       expect = %w{one two} + [name]
 
       csr = Puppet::SSL::CertificateRequest.new(name)
-      csr.generate(key, :dns_alt_names => expect.join(', '))
+      csr.generate(key, :subject_alt_names => expect.join(', '))
 
       expect(csr.request_extensions).not_to be_nil
       expect(csr.subject_alt_names).to match_array(expect.map{|x| "DNS:#{x}"})

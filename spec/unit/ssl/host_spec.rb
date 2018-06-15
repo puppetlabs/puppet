@@ -89,10 +89,10 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     expect(Puppet::SSL::Host.localhost).to equal(host)
   end
 
-  it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using DNS alt names", :unless => Puppet.features.microsoft_windows? do
+  it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using subject alt names", :unless => Puppet.features.microsoft_windows? do
     Puppet[:autosign] = true
     Puppet[:confdir] = tmpdir('conf')
-    Puppet[:dns_alt_names] = "foo,bar,baz"
+    Puppet[:subject_alt_names] = "foo,bar,baz"
     ca = Puppet::SSL::CertificateAuthority.new
     Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
 
@@ -103,7 +103,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     expect(cert.subject_alt_names).to match_array(%W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz])
   end
 
-  context "with dns_alt_names" do
+  context "with subject_alt_names" do
     before :each do
       @key = stub('key content')
       key = stub('key', :generate => true, :content => @key)
@@ -116,7 +116,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
     describe "explicitly specified" do
       before :each do
-        Puppet[:dns_alt_names] = 'one, two'
+        Puppet[:subject_alt_names] = 'one, two'
       end
 
       it "should not include subjectAltName if not the local node" do
@@ -127,7 +127,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
       it "should include subjectAltName if I am a CA" do
         @cr.expects(:generate).
-          with(@key, { :dns_alt_names => Puppet[:dns_alt_names] })
+          with(@key, { :subject_alt_names => Puppet[:subject_alt_names] })
 
         Puppet::SSL::Host.localhost
       end
@@ -137,7 +137,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       let(:ca) { stub('ca', :sign => nil) }
 
       before :each do
-        Puppet[:dns_alt_names] = ''
+        Puppet[:subject_alt_names] = ''
 
         Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
       end
@@ -172,7 +172,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
         Facter.stubs(:value).with(:fqdn).returns 'web.foo.com'
         Facter.stubs(:value).with(:domain).returns 'foo.com'
 
-        @cr.expects(:generate).with(@key, {:dns_alt_names => "puppet, web.foo.com, puppet.foo.com"})
+        @cr.expects(:generate).with(@key, {:subject_alt_names => "puppet, web.foo.com, puppet.foo.com"})
 
         Puppet::SSL::Host.localhost
       end
@@ -709,7 +709,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       it "should use the CA to sign its certificate request if it does not have a certificate" do
         @host.expects(:certificate).returns nil
 
-        @ca.expects(:sign).with(@host.name, {allow_dns_alt_names: true})
+        @ca.expects(:sign).with(@host.name, {allow_subject_alt_names: true})
 
         @host.generate
       end
@@ -977,15 +977,15 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
         end
       end
 
-      describe "dns_alt_names" do
+      describe "subject_alt_names" do
         describe "when not specified" do
-          it "should include the dns_alt_names associated with the certificate" do
+          it "should include the subject_alt_names associated with the certificate" do
             host.generate_certificate_request
             json_hash["desired_alt_names"] = host.certificate_request.subject_alt_names
 
             result = JSON.parse(Puppet::SSL::Host.new(host.name).to_json)
             base_json_comparison result, json_hash
-            expect(result["dns_alt_names"]).to eq(json_hash["desired_alt_names"])
+            expect(result["subject_alt_names"]).to eq(json_hash["desired_alt_names"])
           end
         end
 
@@ -994,15 +994,15 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
         ].each do |alt_names|
           describe "when #{alt_names}" do
             before(:each) do
-              host.generate_certificate_request :dns_alt_names => alt_names
+              host.generate_certificate_request :subject_alt_names => alt_names
             end
 
-            it "should include the dns_alt_names associated with the certificate" do
+            it "should include the subject_alt_names associated with the certificate" do
               json_hash["desired_alt_names"] = host.certificate_request.subject_alt_names
 
               result = JSON.parse(Puppet::SSL::Host.new(host.name).to_json)
               base_json_comparison result, json_hash
-              expect(result["dns_alt_names"]).to eq(json_hash["desired_alt_names"])
+              expect(result["subject_alt_names"]).to eq(json_hash["desired_alt_names"])
             end
 
             it "should validate against the schema" do
