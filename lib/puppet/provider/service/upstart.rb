@@ -16,6 +16,8 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     Facter.value(:operatingsystem) == 'LinuxMint',
   ]
 
+  confine :exists => "/var/run/upstart-socket-bridge.pid"
+
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"]
 
   commands :start   => "/sbin/start",
