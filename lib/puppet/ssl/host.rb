@@ -428,7 +428,7 @@ ERROR_STRING
   def download_csr_from_ca
     begin
       body = Puppet::Rest::Routes.get_certificate_request(
-                    http_client(Puppet::Rest::SSLContext.verify_peer(ssl_store)),
+                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
                     name)
       begin
         Puppet::SSL::CertificateRequest.from_s(body)
@@ -456,7 +456,7 @@ ERROR_STRING
 
     if Puppet::SSL::Host.ca_location == :remote
       Puppet::Rest::Routes.put_certificate_request(
-                    http_client(Puppet::Rest::SSLContext.verify_peer(ssl_store)),
+                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
                     csr.render, name)
     end
 
@@ -552,9 +552,9 @@ ERROR_STRING
   # @return nil
   def download_and_save_crl_bundle(store=nil)
     begin
-      client = store ?
-        http_client(Puppet::Rest::SSLContext.verify_peer(store)) :
-        http_client(Puppet::Rest::SSLContext.verify_peer(ssl_store))
+      # If no SSL store was suppoed, use this host's SSL store
+      store ||= ssl_store
+      client = http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, store))
       Puppet::Util.replace_file(crl_path, 0644) do |file|
         Puppet::Rest::Routes.get_crls(client, CA_NAME) do |chunk|
           file.write(chunk)
@@ -574,7 +574,7 @@ ERROR_STRING
 
     begin
       cert_bundle = Puppet::Rest::Routes.get_certificate(
-                    http_client(Puppet::Rest::SSLContext.verify_none),
+                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE)),
                     CA_NAME)
       # This load ensures that the response body is a valid cert bundle.
       # If the text is malformed, load_certificate_bundle will raise.
@@ -653,7 +653,7 @@ ERROR_STRING
 
     begin
       cert = Puppet::Rest::Routes.get_certificate(
-                    http_client(Puppet::Rest::SSLContext.verify_peer(ssl_store)),
+                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
                     cert_name)
       begin
         Puppet::SSL::Certificate.from_s(cert)
