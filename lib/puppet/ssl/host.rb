@@ -7,6 +7,7 @@ require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/ssl/certificate_request_attributes'
 require 'puppet/rest/errors'
 require 'puppet/rest/routes'
+require 'puppet/rest/ssl_context'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
@@ -190,11 +191,11 @@ DOC
     true
   end
 
-  def http_client(*args)
+  def http_client(ssl_context)
     # This can't be required top-level because Puppetserver uses the Host class too,
     # and we don't ship the gem in that context.
     require 'puppet/rest/client'
-    @http_client ||= Puppet::Rest::Client.new(*args)
+    Puppet::Rest::Client.new(ssl_context: ssl_context)
   end
 
   def certificate
@@ -426,7 +427,9 @@ ERROR_STRING
   # @return [Puppet::SSL::CertificateRequest, nil]
   def download_csr_from_ca
     begin
-      body = Puppet::Rest::Routes.get_certificate_request(http_client, name)
+      body = Puppet::Rest::Routes.get_certificate_request(
+                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
+                    name)
       begin
         Puppet::SSL::CertificateRequest.from_s(body)
       rescue OpenSSL::X509::RequestError => e
@@ -452,7 +455,9 @@ ERROR_STRING
     end
 
     if Puppet::SSL::Host.ca_location == :remote
-      Puppet::Rest::Routes.put_certificate_request(http_client, csr.render, name)
+      Puppet::Rest::Routes.put_certificate_request(
+                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
+                    csr.render, name)
     end
 
     Puppet::Util.replace_file(certificate_request_location(name), 0644) do |file|
@@ -547,7 +552,9 @@ ERROR_STRING
   # @return nil
   def download_and_save_crl_bundle(store=nil)
     begin
-      client = store ? http_client(ssl_store: store) : http_client
+      # If no SSL store was suppoed, use this host's SSL store
+      store ||= ssl_store
+      client = http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, store))
       Puppet::Util.replace_file(crl_path, 0644) do |file|
         Puppet::Rest::Routes.get_crls(client, CA_NAME) do |chunk|
           file.write(chunk)
@@ -566,7 +573,9 @@ ERROR_STRING
     return nil if Puppet::SSL::Host.ca_location != :remote
 
     begin
-      cert_bundle = Puppet::Rest::Routes.get_certificate(http_client, CA_NAME)
+      cert_bundle = Puppet::Rest::Routes.get_certificate(
+                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE)),
+                    CA_NAME)
       # This load ensures that the response body is a valid cert bundle.
       # If the text is malformed, load_certificate_bundle will raise.
       begin
@@ -643,7 +652,9 @@ ERROR_STRING
     return nil if Puppet::SSL::Host.ca_location != :remote
 
     begin
-      cert = Puppet::Rest::Routes.get_certificate(http_client, cert_name)
+      cert = Puppet::Rest::Routes.get_certificate(
+                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
+                    cert_name)
       begin
         Puppet::SSL::Certificate.from_s(cert)
       rescue OpenSSL::X509::CertificateError
