@@ -7,11 +7,29 @@ module Puppet::Util::Windows::File
 
   FILE_ATTRIBUTE_READONLY      = 0x00000001
 
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379607(v=vs.85).aspx
+  # The right to use the object for synchronization. This enables a thread to
+  # wait until the object is in the signaled state. Some object types do not
+  # support this access right.
   SYNCHRONIZE                 = 0x100000
+  # The right to delete the object.
+  DELETE                      = 0x00010000
+  # The right to read the information in the object's security descriptor, not including the information in the system access control list (SACL).
+  # READ_CONTROL              = 0x00020000
+  # The right to modify the discretionary access control list (DACL) in the object's security descriptor.
+  WRITE_DAC                   = 0x00040000
+  # The right to change the owner in the object's security descriptor.
+  WRITE_OWNER                 = 0x00080000
+
+  # Combines DELETE, READ_CONTROL, WRITE_DAC, and WRITE_OWNER access.
   STANDARD_RIGHTS_REQUIRED    = 0xf0000
+  # Currently defined to equal READ_CONTROL.
   STANDARD_RIGHTS_READ        = 0x20000
+  # Currently defined to equal READ_CONTROL.
   STANDARD_RIGHTS_WRITE       = 0x20000
+  # Currently defined to equal READ_CONTROL.
   STANDARD_RIGHTS_EXECUTE     = 0x20000
+  # Combines DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, and SYNCHRONIZE access.
   STANDARD_RIGHTS_ALL         = 0x1F0000
   SPECIFIC_RIGHTS_ALL         = 0xFFFF
 

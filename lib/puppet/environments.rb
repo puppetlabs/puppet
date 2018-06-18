@@ -438,10 +438,9 @@ module Puppet::Environments
     # Also clears caches in Settings that may prevent the entry from being updated
     def evict_if_expired(name)
       if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name))
-      Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache.delete(name)
+        Puppet.debug {"Evicting cache entry for environment '#{name}'"}
         @cache_expiration_service.evicted(name)
-
+        clear(name)
         Puppet.settings.clear_environment_settings(name)
       end
     end

@@ -6,6 +6,7 @@ module Puppet::GettextConfig
   POSIX_PATH = File.absolute_path('../../../../../share/locale', File.dirname(__FILE__))
   WINDOWS_PATH = File.absolute_path('../../../../../../../puppet/share/locale', File.dirname(__FILE__))
 
+  # This is the only domain name that won't be a symbol, making it unique from environments.
   DEFAULT_TEXT_DOMAIN = 'default-text-domain'
 
   # Load gettext helpers and track whether they're available.
@@ -59,16 +60,30 @@ module Puppet::GettextConfig
   # Clears the translation repository for the given text domain,
   # creating it if it doesn't exist, then adds default translations
   # and switches to using this domain.
-  # @param [String] domain_name the name of the domain to create
+  # @param [String, Symbol] domain_name the name of the domain to create
   def self.reset_text_domain(domain_name)
     return if @gettext_disabled || !gettext_loaded?
+    domain_name = domain_name.to_sym
 
+    Puppet.debug "Reset text domain to #{domain_name.inspect}"
     FastGettext.add_text_domain(domain_name,
                                 type: :chain,
                                 chain: [],
                                 report_warning: false)
     copy_default_translations(domain_name)
     FastGettext.text_domain = domain_name
+  end
+
+  # @api private
+  # Resets the thread's configured text_domain to the default text domain.
+  # In Puppet Server, thread A may process a compile request that configures
+  # a domain, while thread B may invalidate that environment and delete the
+  # domain. That leaves thread A with an invalid text_domain selected.
+  # To avoid that, clear_text_domain after any processing that needs the
+  # non-default text domain.
+  def self.clear_text_domain
+    return if @gettext_disabled || !gettext_loaded?
+    FastGettext.text_domain = nil
   end
 
   # @api private
@@ -94,12 +109,16 @@ module Puppet::GettextConfig
 
   # @api private
   # Switches the active text domain, if the requested domain exists.
-  # @param [String] domain_name the name of the domain to switch to
+  # @param [String, Symbol] domain_name the name of the domain to switch to
   def self.use_text_domain(domain_name)
     return if @gettext_disabled || !gettext_loaded?
+    domain_name = domain_name.to_sym
 
     if FastGettext.translation_repositories.include?(domain_name)
+      Puppet.debug "Use text domain #{domain_name.inspect}"
       FastGettext.text_domain = domain_name
+    else
+      Puppet.debug "Requested unknown text domain #{domain_name.inspect}"
     end
   end
 
@@ -113,13 +132,17 @@ module Puppet::GettextConfig
 
   # @api private
   # Deletes the text domain with the given name
-  # @param [String] domain_name the name of the domain to delete
+  # @param [String, Symbol] domain_name the name of the domain to delete
   def self.delete_text_domain(domain_name)
     return if @gettext_disabled || !gettext_loaded?
+    domain_name = domain_name.to_sym
 
-    FastGettext.translation_repositories.delete(domain_name)
+    deleted = FastGettext.translation_repositories.delete(domain_name)
     if FastGettext.text_domain == domain_name
+      Puppet.debug "Deleted current text domain #{domain_name.inspect}: #{!deleted.nil?}"
       FastGettext.text_domain = nil
+    else
+      Puppet.debug "Deleted text domain #{domain_name.inspect}: #{!deleted.nil?}"
     end
   end
 
@@ -145,7 +168,7 @@ module Puppet::GettextConfig
   # Since we are currently (Nov 2017) vendoring semantic_puppet, in normal
   # flows these translations will be copied along with Puppet's.
   #
-  # @param [String] domain_name the name of the domain to add translations to
+  # @param [Symbol] domain_name the name of the domain to add translations to
   def self.copy_default_translations(domain_name)
     return if @gettext_disabled || !gettext_loaded?
 

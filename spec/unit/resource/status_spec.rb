@@ -165,6 +165,7 @@ describe Puppet::Resource::Status do
       s.out_of_sync = true
       s.skipped = false
       s.provider_used = 'provider_used_class_name'
+      s.failed_to_restart = false
       s
     end
 
@@ -187,6 +188,7 @@ describe Puppet::Resource::Status do
       expect(tripped.changed).to eq(status.changed)
       expect(tripped.out_of_sync).to eq(status.out_of_sync)
       expect(tripped.skipped).to eq(status.skipped)
+      expect(tripped.failed_to_restart).to eq(status.failed_to_restart)
 
       expect(tripped.change_count).to eq(status.change_count)
       expect(tripped.out_of_sync_count).to eq(status.out_of_sync_count)

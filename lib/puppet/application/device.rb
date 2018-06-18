@@ -208,18 +208,11 @@ Licensed under the Apache 2.0 License
 
   def main
     if options[:resource] and !options[:target]
-      Puppet.err _("resource command requires target")
-      exit(1)
+      raise _("resource command requires target")
     end
     unless options[:apply].nil?
-      if options[:target].nil?
-        Puppet.err _("missing argument: --target is required when using --apply")
-        exit(1)
-      end
-      unless File.file?(options[:apply])
-        Puppet.err _("%{file} does not exist, cannot apply") % { file: options[:apply] }
-        exit(1)
-      end
+      raise _("missing argument: --target is required when using --apply") if options[:target].nil?
+      raise _("%{file} does not exist, cannot apply") % { file: options[:apply] } unless File.file?(options[:apply])
     end
     vardir = Puppet[:vardir]
     confdir = Puppet[:confdir]
@@ -235,7 +228,7 @@ Licensed under the Apache 2.0 License
       end
       if devices.empty?
         if options[:target]
-          Puppet.err _("Target device / certificate '%{target}' not found in %{config}") % { target: options[:target], config: Puppet[:deviceconfig] }
+          raise _("Target device / certificate '%{target}' not found in %{config}") % { target: options[:target], config: Puppet[:deviceconfig] }
         else
           Puppet.err _("No device found in %{config}") % { config: Puppet[:deviceconfig] }
           exit(1)
@@ -260,9 +253,7 @@ Licensed under the Apache 2.0 License
           if options[:resource]
             type, name = parse_args(command_line.args)
             Puppet.info _("retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
-
             resources = find_resources(type, name)
-
             if options[:to_yaml]
               text = resources.map do |resource|
                 resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml.force_encoding(Encoding.default_external)
@@ -274,6 +265,7 @@ Licensed under the Apache 2.0 License
               end.join("\n")
             end
             (puts text)
+            0
           elsif options[:apply]
             # avoid reporting to server
             Puppet::Transaction::Report.indirection.terminus_class = :yaml
@@ -352,27 +344,31 @@ Licensed under the Apache 2.0 License
   end
 
   def setup
-    setup_logs
+    if options[:resource]
+      Puppet.settings.use :main, :agent, :ssl
+    else
+      setup_logs
 
-    args[:Server] = Puppet[:server]
-    if options[:centrallogs]
-      logdest = args[:Server]
+      args[:Server] = Puppet[:server]
+      if options[:centrallogs]
+        logdest = args[:Server]
 
-      logdest += ":" + args[:Port] if args.include?(:Port)
-      Puppet::Util::Log.newdestination(logdest)
-    end
+        logdest += ":" + args[:Port] if args.include?(:Port)
+        Puppet::Util::Log.newdestination(logdest)
+      end
 
-    Puppet.settings.use :main, :agent, :device, :ssl
+      Puppet.settings.use :main, :agent, :device, :ssl
 
-    # We need to specify a ca location for all of the SSL-related
-    # indirected classes to work; in fingerprint mode we just need
-    # access to the local files and we don't need a ca.
-    Puppet::SSL::Host.ca_location = :remote
+      # We need to specify a ca location for all of the SSL-related
+      # indirected classes to work; in fingerprint mode we just need
+      # access to the local files and we don't need a ca.
+      Puppet::SSL::Host.ca_location = :remote
 
-    Puppet::Transaction::Report.indirection.terminus_class = :rest
+      Puppet::Transaction::Report.indirection.terminus_class = :rest
 
-    if Puppet[:catalog_cache_terminus]
-      Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus].intern
+      if Puppet[:catalog_cache_terminus]
+        Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus].intern
+      end
     end
   end
 end

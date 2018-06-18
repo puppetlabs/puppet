@@ -127,7 +127,7 @@
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["9", 9]
+            "enum":        ["10", 10]
         },
 
         "puppet_version": {
@@ -536,6 +536,11 @@
 
                 "failed": {
                     "description": "True if Puppet experienced an error while evaluating this resource, otherwise false. **Deprecated**",
+                    "type":        "boolean"
+                },
+
+                "failed_to_restart": {
+                    "description": "True if Puppet experienced an error while trying to restart this resource (For example, when a Service resource has been notified from another resource), otherwise false.",
                     "type":        "boolean"
                 },
 
