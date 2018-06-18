@@ -10,6 +10,9 @@
 Each of these settings can be specified in \fBpuppet\.conf\fR or on the command line\.
 .
 .IP "\(bu" 4
+Puppet Enterprise (PE) and open source Puppet share the configuration settings that are documented here\. However, PE defaults for some settings differ from the open source Puppet defaults\. Some examples of settings that have different PE defaults include \fBdisable18n\fR, \fBenvironment_timeout\fR, \fBalways_retry_plugins\fR, and the Puppet Server JRuby \fBmax\-active\-instances\fR setting\. To verify PE configuration defaults, check the \fBpuppet\.conf\fR file after installation\.
+.
+.IP "\(bu" 4
 When using boolean settings on the command line, use \fB\-\-setting\fR and \fB\-\-no\-setting\fR instead of \fB\-\-setting (true|false)\fR\. (Using \fB\-\-setting false\fR results in "Error: Could not parse application options: needless argument"\.)
 .
 .IP "\(bu" 4
@@ -397,7 +400,7 @@ How to determine the configuration version\. By default, it will be the time tha
 Setting a global value for config_version in puppet\.conf is not allowed (but it can be overridden from the commandline)\. Please set a per\-environment value in environment\.conf instead\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .SS "configprint"
-Print the value of a specific configuration setting\. If the name of a setting is provided for this, then the value is printed and puppet exits\. Comma\-separate multiple values\. For a list of all values, specify \'all\'\.
+Prints the value of a specific configuration setting\. If the name of a setting is provided for this, then the value is printed and puppet exits\. Comma\-separate multiple values\. For a list of all values, specify \'all\'\. This setting is deprecated, the \'puppet config\' command replaces this functionality\.
 .
 .SS "csr_attributes"
 An optional file containing custom attributes to add to certificate signing requests (CSRs)\. You should ensure that this file does not exist on your CA puppet master; if it does, unwanted certificate extensions may leak into certificates created with the \fBpuppet cert generate\fR command\.
