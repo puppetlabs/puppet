@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.1-351-g1400000\n"
+"Project-Id-Version: Puppet automation framework 5.5.2-364-g7e12e67\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-06-13 23:18+0000\n"
-"PO-Revision-Date: 2018-06-13 23:18+0000\n"
+"POT-Creation-Date: 2018-06-18 19:20+0000\n"
+"PO-Revision-Date: 2018-06-18 19:20+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -249,35 +249,35 @@ msgstr ""
 msgid "resource command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:216
+#: ../lib/puppet/application/device.rb:214
 msgid "missing argument: --target is required when using --apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:220
+#: ../lib/puppet/application/device.rb:215
 msgid "%{file} does not exist, cannot apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:238
+#: ../lib/puppet/application/device.rb:231
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:240
+#: ../lib/puppet/application/device.rb:233
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:262
+#: ../lib/puppet/application/device.rb:255
 msgid "retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:294
+#: ../lib/puppet/application/device.rb:286
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:331 ../lib/puppet/application/resource.rb:196
+#: ../lib/puppet/application/device.rb:323 ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:332 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:324 ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -1251,7 +1251,12 @@ msgstr ""
 msgid "Unable to find metadata.json in module root %{module_path} or parent directories. See <https://puppet.com/docs/puppet/latest/modules_publishing.html> for required file format."
 msgstr ""
 
-#: ../lib/puppet/face/module/build.rb:61
+#. TRANSLATORS 'puppet module build' is the name of the puppet command and 'Puppet Development Kit' is the name of the software package replacing this action and should not be translated.
+#: ../lib/puppet/face/module/build.rb:56
+msgid "`puppet module build` is deprecated and will be removed in a future release. This action has been replaced by Puppet Development Kit. For more information visit https://puppet.com/docs/pdk/latest/pdk.html."
+msgstr ""
+
+#: ../lib/puppet/face/module/build.rb:64
 msgid "Module built: %{path}"
 msgstr ""
 
@@ -2386,116 +2391,116 @@ msgstr ""
 msgid "Catalog for %{request} was requested with fact definition for the wrong node (%{fact_name})."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:70
+#: ../lib/puppet/indirector/catalog/compiler.rb:68
 msgid "Setup server facts for compiling"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:94
+#: ../lib/puppet/indirector/catalog/compiler.rb:92
 msgid "Unsupported facts format"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:135
+#: ../lib/puppet/indirector/catalog/compiler.rb:133
 msgid "Not inlining absent resource"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:138
+#: ../lib/puppet/indirector/catalog/compiler.rb:136
 msgid "Not inlining resource without sources"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:141
+#: ../lib/puppet/indirector/catalog/compiler.rb:139
 msgid "Not inlining unsupported source scheme"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
-#: ../lib/puppet/indirector/catalog/compiler.rb:163
+#: ../lib/puppet/indirector/catalog/compiler.rb:161
 msgid "Not inlining file outside environment"
 msgstr ""
 
 #. TRANSLATORS Inlining refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:169
+#: ../lib/puppet/indirector/catalog/compiler.rb:167
 msgid "Inlining file metadata"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:255
+#: ../lib/puppet/indirector/catalog/compiler.rb:253
 msgid "Could not get metadata for %{resource}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:276
+#: ../lib/puppet/indirector/catalog/compiler.rb:274
 msgid "Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'."
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:283
+#: ../lib/puppet/indirector/catalog/compiler.rb:281
 msgid "Compiled static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:284
+#: ../lib/puppet/indirector/catalog/compiler.rb:282
 msgid "Compiled static catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:286
+#: ../lib/puppet/indirector/catalog/compiler.rb:284
 msgid "Compiled static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:287
+#: ../lib/puppet/indirector/catalog/compiler.rb:285
 msgid "Compiled static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:292
+#: ../lib/puppet/indirector/catalog/compiler.rb:290
 msgid "Compiled catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:293
+#: ../lib/puppet/indirector/catalog/compiler.rb:291
 msgid "Compiled catalog for %{node} in environment %{environment}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:295
+#: ../lib/puppet/indirector/catalog/compiler.rb:293
 msgid "Compiled catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:296
+#: ../lib/puppet/indirector/catalog/compiler.rb:294
 msgid "Compiled catalog for %{node}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:318
+#: ../lib/puppet/indirector/catalog/compiler.rb:316
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:320
+#: ../lib/puppet/indirector/catalog/compiler.rb:318
 msgid "Inlined resource metadata into static catalog for %{node} in environment %{environment}"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:323
+#: ../lib/puppet/indirector/catalog/compiler.rb:321
 msgid "Inlined resource metadata into static catalog for %{node} in %%{seconds} seconds"
 msgstr ""
 
 #. TRANSLATORS Inlined refers to adding additional metadata
-#: ../lib/puppet/indirector/catalog/compiler.rb:325
+#: ../lib/puppet/indirector/catalog/compiler.rb:323
 msgid "Inlined resource metadata into static catalog for %{node}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:342
+#: ../lib/puppet/indirector/catalog/compiler.rb:340
 msgid "Found node information"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:350
+#: ../lib/puppet/indirector/catalog/compiler.rb:348
 msgid "Failed when searching for node %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:369
+#: ../lib/puppet/indirector/catalog/compiler.rb:367
 msgid "Invalid option use_node for a remote request"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:387
+#: ../lib/puppet/indirector/catalog/compiler.rb:385
 msgid "Could not find node '%{name}'; cannot compile"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:405
+#: ../lib/puppet/indirector/catalog/compiler.rb:403
 msgid "Could not retrieve fact %{fact}"
 msgstr ""
 
@@ -4182,7 +4187,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:547 ../lib/puppet/pops/loaders.rb:298
+#: ../lib/puppet/node/environment.rb:551 ../lib/puppet/pops/loaders.rb:298
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -7586,53 +7591,57 @@ msgstr ""
 msgid "Attempting to initialize global default settings more than once!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:689
+#: ../lib/puppet/settings.rb:457
+msgid "Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."
+msgstr ""
+
+#: ../lib/puppet/settings.rb:695
 msgid "Invalid setting type '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:833
+#: ../lib/puppet/settings.rb:839
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:895
+#: ../lib/puppet/settings.rb:901
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:900
+#: ../lib/puppet/settings.rb:906
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:904
+#: ../lib/puppet/settings.rb:910
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1161
+#: ../lib/puppet/settings.rb:1167
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1166
+#: ../lib/puppet/settings.rb:1172
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1333
+#: ../lib/puppet/settings.rb:1339
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1357
+#: ../lib/puppet/settings.rb:1363
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1367
+#: ../lib/puppet/settings.rb:1373
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1368
+#: ../lib/puppet/settings.rb:1374
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1399
+#: ../lib/puppet/settings.rb:1405
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -8012,19 +8021,19 @@ msgstr ""
 msgid "Revoked certificate with serial %{serial}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:109
+#: ../lib/puppet/ssl/host.rb:110
 msgid "CA Mode can only be one of: %{modes}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:219
+#: ../lib/puppet/ssl/host.rb:220
 msgid "No certificate to validate."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:220
+#: ../lib/puppet/ssl/host.rb:221
 msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:222
+#: ../lib/puppet/ssl/host.rb:223
 msgid ""
 "The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?\n"
 "Certificate fingerprint: %{fingerprint}\n"
@@ -8037,7 +8046,7 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:263
+#: ../lib/puppet/ssl/host.rb:264
 msgid ""
 "The CSR retrieved from the master does not match the agent's public key.\n"
 "CSR fingerprint: %{fingerprint}\n"
@@ -8052,73 +8061,73 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:368 ../lib/puppet/ssl/host.rb:389
+#: ../lib/puppet/ssl/host.rb:369 ../lib/puppet/ssl/host.rb:390
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:370
+#: ../lib/puppet/ssl/host.rb:371
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:379
+#: ../lib/puppet/ssl/host.rb:380
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:387
+#: ../lib/puppet/ssl/host.rb:388
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:433
+#: ../lib/puppet/ssl/host.rb:436
 msgid "Response from the CA did not contain a valid certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:439
+#: ../lib/puppet/ssl/host.rb:442
 msgid "Could not download certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:473
+#: ../lib/puppet/ssl/host.rb:478
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:504
+#: ../lib/puppet/ssl/host.rb:509
 msgid "The CA certificate at %{file_path} is invalid: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:527
+#: ../lib/puppet/ssl/host.rb:532
 msgid "No valid PEM-encoded certificates."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:534
+#: ../lib/puppet/ssl/host.rb:539
 msgid "Could not parse certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:557
+#: ../lib/puppet/ssl/host.rb:564
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:575
+#: ../lib/puppet/ssl/host.rb:584
 msgid "Response from the CA did not contain a valid CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:578
+#: ../lib/puppet/ssl/host.rb:587
 msgid "Could not download CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:631
+#: ../lib/puppet/ssl/host.rb:640
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:650
+#: ../lib/puppet/ssl/host.rb:661
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:654
+#: ../lib/puppet/ssl/host.rb:665
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:657
+#: ../lib/puppet/ssl/host.rb:668
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
@@ -8286,7 +8295,7 @@ msgstr[1] ""
 msgid "Failed to call %{callback}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction/event_manager.rb:162
+#: ../lib/puppet/transaction/event_manager.rb:164
 msgid "Would have triggered '%{callback}' from %{count} event"
 msgid_plural "Would have triggered '%{callback}' from %{count} events"
 msgstr[0] ""
@@ -9134,15 +9143,15 @@ msgstr ""
 msgid "Could not initialize global default settings"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:167
+#: ../lib/puppet/util/command_line.rb:166
 msgid "Error: Could not parse application options: invalid option: %{opt}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:170
+#: ../lib/puppet/util/command_line.rb:169
 msgid "See 'puppet help' for help on available puppet subcommands"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:183
+#: ../lib/puppet/util/command_line.rb:182
 msgid "Error: Unknown Puppet subcommand '%{cmd}'"
 msgstr ""
 
@@ -9940,15 +9949,15 @@ msgstr ""
 msgid "(Win32 error: %{detail})"
 msgstr ""
 
-#: ../lib/puppet/util/windows/file.rb:162
+#: ../lib/puppet/util/windows/file.rb:180
 msgid "Failed to set file attributes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/file.rb:237
+#: ../lib/puppet/util/windows/file.rb:255
 msgid "out_buffer is required"
 msgstr ""
 
-#: ../lib/puppet/util/windows/file.rb:324
+#: ../lib/puppet/util/windows/file.rb:342
 msgid "Failed to call GetLongPathName"
 msgstr ""
 
@@ -10041,43 +10050,43 @@ msgstr ""
 msgid "Failed to get volume information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:383 ../lib/puppet/util/windows/security.rb:400 ../lib/puppet/util/windows/sid.rb:154 ../lib/puppet/util/windows/sid.rb:216 ../lib/puppet/util/windows/user.rb:45
+#: ../lib/puppet/util/windows/security.rb:395 ../lib/puppet/util/windows/security.rb:412 ../lib/puppet/util/windows/sid.rb:154 ../lib/puppet/util/windows/sid.rb:216 ../lib/puppet/util/windows/user.rb:45
 msgid "Invalid SID"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:387 ../lib/puppet/util/windows/security.rb:404
+#: ../lib/puppet/util/windows/security.rb:399 ../lib/puppet/util/windows/security.rb:416
 msgid "Failed to add access control entry"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:415 ../lib/puppet/util/windows/security.rb:597
+#: ../lib/puppet/util/windows/security.rb:427 ../lib/puppet/util/windows/security.rb:609
 msgid "Invalid DACL"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:438
+#: ../lib/puppet/util/windows/security.rb:450
 msgid "Unsupported access control entry type: 0x%{type}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:472
+#: ../lib/puppet/util/windows/security.rb:484
 msgid "Failed to open '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:519
+#: ../lib/puppet/util/windows/security.rb:531
 msgid "Failed to adjust process privileges"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:549
+#: ../lib/puppet/util/windows/security.rb:561
 msgid "Failed to get security information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:560
+#: ../lib/puppet/util/windows/security.rb:572
 msgid "Failed to get security descriptor control"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:593
+#: ../lib/puppet/util/windows/security.rb:605
 msgid "Failed to initialize ACL"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:632
+#: ../lib/puppet/util/windows/security.rb:644
 msgid "Failed to set security information"
 msgstr ""
 
