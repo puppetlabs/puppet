@@ -74,7 +74,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
         end
 
         it "should install from the path segment of the URL" do
-          Puppet::Util::Execution.expects(:execute).returns("")
+          Puppet::Util::Execution.expects(:execute).returns(Puppet::Util::Execution::ProcessOutput.new("", 0))
           provider.install
         end
       end
@@ -165,7 +165,7 @@ OPKG_OUTPUT
     end
 
     it "should return a nil if the package isn't found" do
-      Puppet::Util::Execution.expects(:execute).returns("")
+      Puppet::Util::Execution.expects(:execute).returns(Puppet::Util::Execution::ProcessOutput.new("", 0))
       expect(provider.query).to be_nil
     end
 

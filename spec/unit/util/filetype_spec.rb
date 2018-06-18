@@ -108,14 +108,18 @@ describe Puppet::Util::FileType do
 
     describe "#read" do
       it "should run crontab -l as the target user" do
-        Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], user_options).returns crontab
+        Puppet::Util::Execution.expects(:execute)
+          .with(['crontab', '-l'], user_options)
+          .returns(Puppet::Util::Execution::ProcessOutput.new(crontab, 0))
         expect(cron.read).to eq(crontab)
       end
 
       it "should not switch user if current user is the target user" do
         Puppet::Util.expects(:uid).with(uid).returns 9000
         Puppet::Util::SUIDManager.expects(:uid).returns 9000
-        Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], options).returns crontab
+        Puppet::Util::Execution
+          .expects(:execute).with(['crontab', '-l'], options)
+          .returns(Puppet::Util::Execution::ProcessOutput.new(crontab, 0))
         expect(cron.read).to eq(crontab)
       end
 

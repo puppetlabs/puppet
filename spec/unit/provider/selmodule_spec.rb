@@ -30,6 +30,12 @@ describe provider_class do
       expect(@provider.exists?).to be_nil
     end
 
+    it "should return nil if module with same suffix is loaded" do
+      @provider.expects(:command).with(:semodule).returns "/usr/sbin/semodule"
+      @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields StringIO.new("bar\t1.2.3\nmyfoo\t1.0.0\n")
+      expect(@provider.exists?).to be_nil
+    end
+
     it "should return nil if no modules are loaded" do
       @provider.expects(:command).with(:semodule).returns "/usr/sbin/semodule"
       @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields StringIO.new("")

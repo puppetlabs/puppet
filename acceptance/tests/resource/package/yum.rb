@@ -109,7 +109,7 @@ test_name "test the yum package provider" do
 
     step 'Installing a known package using source succeeds' do
       verify_absent agents, 'guid'
-      apply_manifest_on(agent, "package { 'guid': ensure => installed, install_options => '--nogpgcheck', source=>'/tmp/rpmrepo/RPMS/noarch/guid-1.0-1.noarch.rpm' }") do |result|
+      apply_manifest_on(agents, "package { 'guid': ensure => installed, install_options => '--nogpgcheck', source=>'/tmp/rpmrepo/RPMS/noarch/guid-1.0-1.noarch.rpm' }") do |result|
         assert_match('Package[guid]/ensure: created', "#{result.host}: #{result.stdout}")
       end
     end

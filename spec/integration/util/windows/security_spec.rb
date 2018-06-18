@@ -114,7 +114,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
         after :each do
           winsec.set_mode(WindowsSecurityTester::S_IRWXU, parent)
-          winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) if Puppet::FileSystem.exist?(path)
+          begin winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) rescue nil end
         end
 
         describe "#supports_acl?" do
@@ -166,6 +166,19 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           # then they can set the primary group to a group that the user does not belong to.
           it "should allow setting to a group the current owner is not a member of" do
             winsec.set_group(sids[:power_users], path)
+          end
+
+          it "should consider a mode of 7 for group to be FullControl (F)" do
+            winsec.set_group(sids[:power_users], path)
+            winsec.set_mode(0070, path)
+
+            group_ace = winsec.get_aces_for_path_by_sid(path, sids[:power_users])
+            # there should only be a single ace for the given group
+            expect(group_ace.count).to eq(1)
+            expect(group_ace[0].mask).to eq(klass::FILE_ALL_ACCESS)
+
+            # ensure that mode is still read as 070 (written as 70)
+            expect((winsec.get_mode(path) & 0777).to_s(8).rjust(3, '0')).to eq("070")
           end
         end
 

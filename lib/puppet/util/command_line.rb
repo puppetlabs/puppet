@@ -123,7 +123,6 @@ module Puppet
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
               end
 
-              Puppet::GettextConfig.reset_text_domain('cli')
               Puppet::ModuleTranslations.load_from_modulepath(configured_environment.modules)
               Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
 
