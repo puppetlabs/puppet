@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.2-364-g7e12e67\n"
+"Project-Id-Version: Puppet automation framework 5.5.2-369-g4fc6125\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-06-18 19:20+0000\n"
-"PO-Revision-Date: 2018-06-18 19:20+0000\n"
+"POT-Creation-Date: 2018-06-19 16:48+0000\n"
+"PO-Revision-Date: 2018-06-19 16:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -608,24 +608,24 @@ msgstr ""
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:744
+#: ../lib/puppet/defaults.rb:740
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:982 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:978 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1508 ../lib/puppet/defaults.rb:1523
+#: ../lib/puppet/defaults.rb:1504 ../lib/puppet/defaults.rb:1519
 msgid "Attempted to set both server and server_list."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1509 ../lib/puppet/defaults.rb:1524
+#: ../lib/puppet/defaults.rb:1505 ../lib/puppet/defaults.rb:1520
 msgid "Server setting will not be used."
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1821
+#: ../lib/puppet/defaults.rb:1817
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -1231,33 +1231,12 @@ msgstr ""
 msgid "Build a module release package."
 msgstr ""
 
-#: ../lib/puppet/face/module/build.rb:17
-msgid "Pathname object representing the path to the release archive."
-msgstr ""
-
-#: ../lib/puppet/face/module/build.rb:34
-msgid "[<path>]"
-msgstr ""
-
-#: ../lib/puppet/face/module/build.rb:39
-msgid "puppet module build only accepts 0 or 1 arguments"
-msgstr ""
-
-#: ../lib/puppet/face/module/build.rb:47
-msgid "Unable to find metadata.json in module root %{pwd} or parent directories. See <https://puppet.com/docs/puppet/latest/modules_publishing.html> for required file format."
-msgstr ""
-
-#: ../lib/puppet/face/module/build.rb:51
-msgid "Unable to find metadata.json in module root %{module_path} or parent directories. See <https://puppet.com/docs/puppet/latest/modules_publishing.html> for required file format."
-msgstr ""
-
-#. TRANSLATORS 'puppet module build' is the name of the puppet command and 'Puppet Development Kit' is the name of the software package replacing this action and should not be translated.
-#: ../lib/puppet/face/module/build.rb:56
-msgid "`puppet module build` is deprecated and will be removed in a future release. This action has been replaced by Puppet Development Kit. For more information visit https://puppet.com/docs/pdk/latest/pdk.html."
-msgstr ""
-
-#: ../lib/puppet/face/module/build.rb:64
-msgid "Module built: %{path}"
+#. TRANSLATORS 'Puppet Development Kit' is the name of the software package replacing this action and should not be translated.
+#. TRANSLATORS 'Puppet Development Kit' is the name of the software package replacing this action and should not be translated.
+#. TRANSLATORS 'Puppet Development Kit' is the name of the software package replacing this action and should not be translated.
+#. TRANSLATORS 'Puppet Development Kit' is the name of the software package replacing this action and should not be translated.
+#: ../lib/puppet/face/module/build.rb:5 ../lib/puppet/face/module/build.rb:9 ../lib/puppet/face/module/generate.rb:5 ../lib/puppet/face/module/generate.rb:9
+msgid "This action has been replaced by Puppet Development Kit. For more information visit https://puppet.com/docs/pdk/latest/pdk.html."
 msgstr ""
 
 #: ../lib/puppet/face/module/changes.rb:3
@@ -1288,104 +1267,16 @@ msgstr ""
 msgid "Generate boilerplate for a new module."
 msgstr ""
 
-#: ../lib/puppet/face/module/generate.rb:12
-msgid "Array of Pathname objects representing paths of generated files."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:80
-msgid "Bypass the interactive metadata interview"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:87 ../lib/puppet/face/module/install.rb:85 ../lib/puppet/face/module/uninstall.rb:34 ../lib/puppet/face/module/upgrade.rb:33
-msgid "<name>"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:101
-msgid "This format is not supported by this action."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:121
-msgid "Could not generate directory %{name}, you must specify a dash-separated username and module name."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:129
-msgid "Finished; module generated in %{path}."
-msgstr ""
-
-#. TRANSLATORS 'puppet module generate' is the name of the puppet command and 'Puppet Development Kit' is the name of the software package replacing this action and should not be translated.
-#: ../lib/puppet/face/module/generate.rb:142
-msgid "`puppet module generate` is deprecated and will be removed in a future release. This action has been replaced by Puppet Development Kit. For more information visit https://puppet.com/docs/pdk/latest/pdk.html."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:152
-msgid ""
-"We need to create a metadata.json file for this module.  Please answer the\n"
-"    following questions; if the question is not applicable to this module, feel free\n"
-"    to leave it blank."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:158
-msgid "Puppet uses Semantic Versioning (semver.org) to version modules."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:159
-msgid "What version is this module?  [%{version}]"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:162
-msgid "We're sorry, we could not parse that as a Semantic Version."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:167
-msgid "Who wrote this module?  [%{author}]"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:171
-msgid "What license does this module code fall under?  [%{license}]"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:175
-msgid "How would you describe this module in a single sentence?"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:179
-msgid "Where is this module's source code repository?"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:183
-msgid "Where can others go to learn more about this module?%{project_page}"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:187
-msgid "Where can others go to file issues about this module?%{issues}"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:195
-msgid "About to generate this metadata; continue? [n/Y]"
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:198
-msgid "Aborting..."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:213
-msgid "%{destination} already exists."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:221
-msgid "Generating module at %{dest}..."
-msgstr ""
-
-#: ../lib/puppet/face/module/generate.rb:229
-msgid "Populating templates..."
-msgstr ""
-
 #: ../lib/puppet/face/module/install.rb:8
 msgid "Install a module from the Puppet Forge or a release archive."
 msgstr ""
 
 #: ../lib/puppet/face/module/install.rb:18
 msgid "Pathname object representing the path to the installed module."
+msgstr ""
+
+#: ../lib/puppet/face/module/install.rb:85 ../lib/puppet/face/module/uninstall.rb:34 ../lib/puppet/face/module/upgrade.rb:33
+msgid "<name>"
 msgstr ""
 
 #: ../lib/puppet/face/module/install.rb:88
@@ -3370,26 +3261,6 @@ msgstr ""
 
 #: ../lib/puppet/module_tool/applications/application.rb:78
 msgid "Invalid version format: %{version} (Semantic Versions are acceptable: http://semver.org)"
-msgstr ""
-
-#: ../lib/puppet/module_tool/applications/builder.rb:19
-msgid "Module building is prohibited in FIPS mode."
-msgstr ""
-
-#: ../lib/puppet/module_tool/applications/builder.rb:25
-msgid "Building %{path} for release"
-msgstr ""
-
-#: ../lib/puppet/module_tool/applications/builder.rb:121
-msgid "Symlinks in modules are unsupported. Please investigate symlink %{from} -> %{to}."
-msgstr ""
-
-#: ../lib/puppet/module_tool/applications/builder.rb:124
-msgid "Found symlinks. Symlinks in modules are not allowed, please remove them."
-msgstr ""
-
-#: ../lib/puppet/module_tool/applications/builder.rb:132
-msgid "A 'checksums' field was found in metadata.json. This field will be ignored and can safely be removed."
 msgstr ""
 
 #: ../lib/puppet/module_tool/applications/checksummer.rb:47 ../lib/puppet/module_tool/applications/checksummer.rb:49
