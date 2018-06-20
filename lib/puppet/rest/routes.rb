@@ -19,10 +19,11 @@ module Puppet::Rest
     # @raise [Puppet::Rest::ResponseError] if the response status is not OK
     # @return [String] the PEM-encoded certificate or certificate bundle
     def self.get_certificate(client, name)
-      ca.with_base_url(client.dns_resolver) do |base_url|
+      ca.with_base_url(client.dns_resolver) do |url|
         header = { 'Accept' => 'text/plain', 'Accept-Encoding' => ACCEPT_ENCODING }
         body = ''
-        client.get("#{base_url}certificate/#{name}", header: header) do |chunk|
+        url.path += "certificate/#{name}"
+        client.get(url, header: header) do |chunk|
           body << chunk
         end
         Puppet.info _("Downloaded certificate for %{name} from %{server}") % { name: name, server: ca.server }
@@ -37,9 +38,10 @@ module Puppet::Rest
     # @raise [Puppet::Rest::ResponseError] if the response status is not OK
     # @return nil
     def self.get_crls(client, name, &block)
-      ca.with_base_url(client.dns_resolver) do |base_url|
+      ca.with_base_url(client.dns_resolver) do |url|
         header = { 'Accept' => 'text/plain', 'Accept-Encoding' => ACCEPT_ENCODING }
-        client.get("#{base_url}certificate_revocation_list/#{name}", header: header) do |chunk|
+        url.path += "certificate_revocation_list/#{name}"
+        client.get(url, header: header) do |chunk|
           block.call(chunk)
         end
         Puppet.debug _("Downloaded certificate revocation list for %{name} from %{server}") % { name: name, server: ca.server }
@@ -53,11 +55,12 @@ module Puppet::Rest
     # @param [String] name the name of the host whose CSR is being submitted
     # @rasies [Puppet::Rest::ResponseError] if the response status is not OK
     def self.put_certificate_request(client, csr_pem, name)
-      ca.with_base_url(client.dns_resolver) do |base_url|
+      ca.with_base_url(client.dns_resolver) do |url|
         header = { 'Accept' => 'text/plain',
                    'Accept-Encoding' => ACCEPT_ENCODING,
                    'Content-Type' => 'text/plain' }
-        response = client.put("#{base_url}certificate_request/#{name}", body: csr_pem, header: header)
+        url.path += "certificate_request/#{name}"
+        response = client.put(url, body: csr_pem, header: header)
         if response.ok?
           Puppet.debug "Submitted certificate request to server."
         else
@@ -73,10 +76,11 @@ module Puppet::Rest
     # @rasies [Puppet::Rest::ResponseError] if the response status is not OK
     # @return [String] the PEM encoded certificate request
     def self.get_certificate_request(client, name)
-      ca.with_base_url(client.dns_resolver) do |base_url|
+      ca.with_base_url(client.dns_resolver) do |url|
         header = { 'Accept' => 'text/plain', 'Accept-Encoding' => ACCEPT_ENCODING }
         body = ''
-        client.get("#{base_url}certificate_request/#{name}", header: header) do |chunk|
+        url.path += "certificate_request/#{name}"
+        client.get(url, header: header) do |chunk|
           body << chunk
         end
         Puppet.debug _("Downloaded existing certificate request for %{name} from %{server}") % { name: name, server: ca.server }

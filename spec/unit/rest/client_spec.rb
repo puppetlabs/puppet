@@ -2,8 +2,54 @@ require 'spec_helper'
 
 require 'puppet/rest/client'
 require 'puppet/rest/ssl_context'
+require 'puppet_spec/validators'
+require 'puppet_spec/ssl'
 
 describe Puppet::Rest::Client do
+  # Follows closely with spec/unit/network/http/connection_spec's
+  # 'ssl verifier' shared context
+  shared_examples 'connection error handling' do
+    let(:uri) { URI.parse('https://foo.com/blah') }
+
+    it 'provides a meaningful error message when cert validation fails' do
+      client.instance_variable_set(:@verifier,
+                                   ConstantErrorValidator.new(
+                                     error_string: 'foo'))
+
+      http.expects(:get_content).with(uri.to_s, query: nil, header: nil)
+        .raises(OpenSSL::OpenSSLError.new('certificate verify failed'))
+      expect{ client.get(uri) }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Error)
+        expect(error.message).to include('foo')
+      end
+    end
+
+    it 'provides valuable error message when cert names do not match' do
+      cert = PuppetSpec::SSL.self_signed_ca(PuppetSpec::SSL.create_private_key,
+                                              '/CN=bar.com')
+      client.instance_variable_set(:@verifier,
+                                   ConstantErrorValidator.new(
+                                     peer_certs: [cert]))
+      http.expects(:get_content).with(uri.to_s, query: nil, header: nil)
+        .raises(OpenSSL::OpenSSLError.new('hostname does not match with server certificate'))
+      expect { client.get(uri) }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Error)
+        expect(error.message).to include("Server hostname 'foo.com' did not match")
+        expect(error.message).to include('expected bar.com')
+      end
+    end
+
+    it 're-raises errors it does not understand' do
+      http.expects(:get_content).with(uri.to_s, query: nil, header: nil)
+        .raises(OpenSSL::OpenSSLError.new('other ssl error'))
+      expect{ client.get(uri) }.to raise_error do |error|
+        expect(error).to be_a(OpenSSL::OpenSSLError)
+        expect(error.message).to include('other ssl error')
+      end
+
+    end
+  end
+
   context 'when creating a new client' do
     let(:ssl_store) { mock('store') }
     let(:ssl_config) { stub_everything('ssl config') }
@@ -70,6 +116,8 @@ describe Puppet::Rest::Client do
           expect(error.response.status_code).to eq(400)
         end
       end
+
+      include_examples 'connection error handling'
     end
 
     describe "#put" do
@@ -80,6 +128,8 @@ describe Puppet::Rest::Client do
         http.expects(:put).with(url, { body: body, query: query, header: header })
         client.put(url, body: body, query: query, header: header)
       end
+
+      include_examples 'connection error handling'
     end
   end
 end

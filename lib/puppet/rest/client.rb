@@ -3,6 +3,7 @@ require 'httpclient'
 require 'puppet'
 require 'puppet/rest/response'
 require 'puppet/rest/errors'
+require 'puppet/util/ssl'
 
 module Puppet::Rest
   class Client
@@ -31,43 +32,50 @@ module Puppet::Rest
         @client.debug_dev = $stderr
       end
 
+      @ca_path = Puppet[:ssl_client_ca_auth] || Puppet[:localcacert]
+      @verifier = Puppet::SSL::Validator::DefaultValidator.new(@ca_path)
       configure_verify_mode(ssl_context)
 
       @dns_resolver = Puppet::Network::Resolver.new
     end
 
     # Make a GET request to the specified URL with the specified params.
-    # @param [String] url the full path to query
+    # @param [URI] url the full path to query
     # @param [Hash] query any URL params to add to send to the endpoint
     # @param [Hash] header any additional entries to add to the default header
     # @yields [String] chunks of the response body
     # @raise [Puppet::Rest::ResponseError] if the response status is not OK
     def get(url, query: nil, header: nil, &block)
       begin
-        @client.get_content(url, { query: query, header: header }) do |chunk|
+        @client.get_content(url.to_s, { query: query, header: header }) do |chunk|
           block.call(chunk)
         end
       rescue HTTPClient::BadResponseError => e
         raise Puppet::Rest::ResponseError.new(e.message, Puppet::Rest::Response.new(e.res))
+      rescue OpenSSL::OpenSSLError => e
+        Puppet::Util::SSL.handle_connection_error(e, @verifier, url.host)
       end
     end
 
     # Make a PUT request to the specified URL with the specified params.
-    # @param [String] url the full path to query
+    # @param [URI] url the full path to query
     # @param [String/Hash] body the contents of the PUT request
     # @param [Hash] query any URL params to add to send to the endpoint
     # @param [Hash] header any additional entries to add to the default header
     # @return [Puppet::Rest::Response]
     def put(url, body:, query: nil, header: nil)
-      response = @client.put(url, body: body, query: query, header: header)
-      Puppet::Rest::Response.new(response)
+      begin
+        response = @client.put(url.to_s, body: body, query: query, header: header)
+        Puppet::Rest::Response.new(response)
+      rescue OpenSSL::OpenSSLError => e
+        Puppet::Util::SSL.handle_connection_error(e, @verifier, url.host)
+      end
     end
 
     private
 
     def configure_verify_mode(ssl_context)
-      ca_path = Puppet[:ssl_client_ca_auth] || Puppet[:localcacert]
-      @client.ssl_config.verify_callback = Puppet::SSL::Validator::DefaultValidator.new(ca_path)
+      @client.ssl_config.verify_callback = @verifier
       @client.ssl_config.cert_store = ssl_context.cert_store
       @client.ssl_config.verify_mode = ssl_context.verify_mode
     end
