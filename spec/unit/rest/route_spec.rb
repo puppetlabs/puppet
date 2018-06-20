@@ -4,10 +4,6 @@ require 'puppet/rest/route'
 
 describe Puppet::Rest::Route do
   describe '#with_base_url'do
-    let(:route) { Puppet::Rest::Route.new(api: '/fakeapi/v1/',
-                                                default_server: 'testserver',
-                                                default_port: 555,
-                                                srv_service: :test_service) }
     let(:dns_resolver) { stub_everything('dns resolver') }
 
     context 'when not using SRV records' do
@@ -15,9 +11,15 @@ describe Puppet::Rest::Route do
         Puppet.settings[:use_srv_records] = false
       end
 
-      it "yields a base URL with the default server and port when they are specified" do
+      it "yields a base URL with the values from the specified settings" do
+        Puppet[:ca_server] = 'testserver'
+        Puppet[:ca_port] = 555
+        ca_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/',
+                                           server_setting: :ca_server,
+                                           port_setting: :ca_port,
+                                           srv_service: :test_service)
         count = 0
-        rval = route.with_base_url(dns_resolver) do |url|
+        rval = ca_route.with_base_url(dns_resolver) do |url|
           count += 1
           expect(url.to_s).to eq('https://testserver:555/fakeapi/v1/')
           'Block return value'
@@ -29,10 +31,7 @@ describe Puppet::Rest::Route do
       it "yields a base URL with Puppet's configured server and port when no defaults are specified" do
         Puppet[:server] = 'configured.net'
         Puppet[:masterport] = 8140
-        fallback_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/',
-                                                 default_server: nil,
-                                                 default_port: nil,
-                                                 srv_service: nil)
+        fallback_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/')
         count = 0
         rval = fallback_route.with_base_url(dns_resolver) do |url|
           count += 1
@@ -45,10 +44,7 @@ describe Puppet::Rest::Route do
 
       it 'yields the first entry in the server list when server_list is in use' do
         Puppet[:server_list] = [['one.net', 111], ['two.net', 222]]
-        fallback_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/',
-                                                 default_server: nil,
-                                                 default_port: nil,
-                                                 srv_service: nil)
+        fallback_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/')
         count = 0
         rval = fallback_route.with_base_url(dns_resolver) do |url|
           count += 1
@@ -62,6 +58,9 @@ describe Puppet::Rest::Route do
 
     context 'when using SRV records' do
       context "when SRV returns servers" do
+        let(:route) { Puppet::Rest::Route.new(api: '/fakeapi/v1/',
+                                              srv_service: :test_service) }
+
         before :each do
           Puppet.settings[:use_srv_records] = true
           Puppet.settings[:srv_domain]      = 'example.com'
@@ -93,6 +92,9 @@ describe Puppet::Rest::Route do
         end
 
         it "should fall back to the default server when the block raises a SystemCallError" do
+          Puppet[:server] = "testserver"
+          Puppet[:masterport] = 555
+
           count = 0
           rval = route.with_base_url(Puppet::Network::Resolver.new) do |url|
             count += 1

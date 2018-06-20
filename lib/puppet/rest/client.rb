@@ -40,7 +40,7 @@ module Puppet::Rest
     end
 
     # Make a GET request to the specified URL with the specified params.
-    # @param [URI] url the full path to query
+    # @param [URI::HTTPS] url the full path to query
     # @param [Hash] query any URL params to add to send to the endpoint
     # @param [Hash] header any additional entries to add to the default header
     # @yields [String] chunks of the response body
@@ -58,7 +58,7 @@ module Puppet::Rest
     end
 
     # Make a PUT request to the specified URL with the specified params.
-    # @param [URI] url the full path to query
+    # @param [URI::HTTPS] url the full path to query
     # @param [String/Hash] body the contents of the PUT request
     # @param [Hash] query any URL params to add to send to the endpoint
     # @param [Hash] header any additional entries to add to the default header

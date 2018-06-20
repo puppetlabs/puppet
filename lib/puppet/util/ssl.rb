@@ -54,7 +54,7 @@ module Puppet::Util::SSL
   end
 
   ##
-  # Extract and format meaningful error messages from OpenSSS::OpenSSLErrors
+  # Extract and format meaningful error messages from OpenSSL::OpenSSLErrors
   # and a Validator. Re-raises the error if unknown.
   #
   # @api private
