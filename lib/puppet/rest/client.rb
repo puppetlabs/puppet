@@ -3,7 +3,7 @@ require 'httpclient'
 require 'puppet'
 require 'puppet/rest/response'
 require 'puppet/rest/errors'
-require 'puppet/network/http/connection'
+require 'puppet/util/ssl'
 
 module Puppet::Rest
   class Client
@@ -53,7 +53,7 @@ module Puppet::Rest
       rescue HTTPClient::BadResponseError => e
         raise Puppet::Rest::ResponseError.new(e.message, Puppet::Rest::Response.new(e.res))
       rescue OpenSSL::OpenSSLError => e
-        Puppet::Network::HTTP::Connection.handle_connection_error(e, @verifier, url.host)
+        Puppet::Util::SSL.handle_connection_error(e, @verifier, url.host)
       end
     end
 
@@ -68,7 +68,7 @@ module Puppet::Rest
         response = @client.put(url.to_s, body: body, query: query, header: header)
         Puppet::Rest::Response.new(response)
       rescue OpenSSL::OpenSSLError => e
-        Puppet::Network::HTTP::Connection.handle_connection_error(e, @verifier, url.host)
+        Puppet::Util::SSL.handle_connection_error(e, @verifier, url.host)
       end
     end
 

@@ -313,31 +313,7 @@ module Puppet::Network::HTTP
       end
       response
     rescue OpenSSL::SSL::SSLError => error
-      self.class.handle_connection_error(error, @verify, site.host)
-    end
-
-    def self.handle_connection_error(error, verifier, host)
-      # can be nil
-      peer_cert = verifier.peer_certs.last
-
-      if error.message.include? "certificate verify failed"
-        msg = error.message
-        msg << ": [" + verifier.verify_errors.join('; ') + "]"
-        raise Puppet::Error, msg, error.backtrace
-      elsif peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert, host)
-        valid_certnames = [peer_cert.subject.to_s.sub(/.*=/, ''),
-                           *Puppet::SSL::Certificate.subject_alt_names_for(peer_cert)].uniq
-        if valid_certnames.size > 1
-          expected_certnames = _("expected one of %{certnames}") % { certnames: valid_certnames.join(', ') }
-        else
-          expected_certnames = _("expected %{certname}") % { certname: valid_certnames.first }
-        end
-
-        msg = _("Server hostname '%{host}' did not match server certificate; %{expected_certnames}") % { host: host, expected_certnames: expected_certnames }
-        raise Puppet::Error, msg, error.backtrace
-      else
-        raise
-      end
+      Puppet::Util::SSL.handle_connection_error(error, @verify, site.host)
     end
   end
 end
