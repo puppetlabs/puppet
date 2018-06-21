@@ -155,10 +155,24 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
         resource[:mode] = mode
       end
 
-      # REMIND fails on Windows because chown/chgrp functionality not supported yet
-      if Puppet.features.root? and !Puppet.features.microsoft_windows?
-        resource[:owner] = self.owner if self.owner
-        resource[:group] = self.group if self.group
+      if Puppet.features.root?
+        if Puppet.features.microsoft_windows?
+          # When running as an Administrator it is possible to create settings files and directories
+          # that are only owned by a single Administrator.  This may make sense for normal file
+          # resources, it doesn't really apply to Puppet settings files. Therefore if we are running
+          # with elevated rights (Puppet.features.root?) and on Windows (Puppet.features.microsoft_windows?)
+          # then all settings files and directories should be owned by the Administrators group, with the primary
+          # group of LOCAL SYSTEM.  This is the typical configuration for files created as service logged on as
+          # LOCAL SYSTEM. Note that the LOCAL SYSTEM user is always an implicit member of the Administrators group
+          # therefore they don't needed to be added to the resultant ACL.  Note we also use the SID representation
+          # to avoid localization issues or account renaming.
+          resource[:owner] = 'S-1-5-32-544'
+          resource[:group] = 'S-1-5-18'
+        else
+          # REMIND fails on Windows because chown/chgrp functionality not supported yet
+          resource[:owner] = self.owner if self.owner
+          resource[:group] = self.group if self.group
+        end
       end
     end
 

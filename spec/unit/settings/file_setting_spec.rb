@@ -201,55 +201,74 @@ describe Puppet::Settings::FileSetting do
       expect(@file.to_resource[:mode]).to eq(nil)
     end
 
-    it "should set the owner if running as root and the owner is provided" do
-      Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
+    context "as root on a non Windows system" do
+      before(:each) do
+        Puppet.features.expects(:root?).at_least_once.returns true
+        Puppet.features.stubs(:microsoft_windows?).returns false
+      end
 
-      @file.stubs(:owner).returns "foo"
-      expect(@file.to_resource[:owner]).to eq("foo")
+      it "should set the owner if running as root and the owner is provided" do
+        @file.stubs(:owner).returns "foo"
+        expect(@file.to_resource[:owner]).to eq("foo")
+      end
+
+      it "should not set the owner if manage_internal_file_permissions is disabled" do
+        Puppet[:manage_internal_file_permissions] = false
+        @file.stubs(:owner).returns "foo"
+
+        expect(@file.to_resource[:owner]).to eq(nil)
+      end
+
+      it "should set the group if running as root and the group is provided" do
+        @file.stubs(:group).returns "foo"
+        expect(@file.to_resource[:group]).to eq("foo")
+      end
+
+      it "should not set the group if manage_internal_file_permissions is disabled" do
+        Puppet[:manage_internal_file_permissions] = false
+        @file.stubs(:group).returns "foo"
+
+        expect(@file.to_resource[:group]).to eq(nil)
+      end
     end
 
-    it "should not set the owner if manage_internal_file_permissions is disabled" do
-      Puppet[:manage_internal_file_permissions] = false
-      Puppet.features.stubs(:root?).returns true
-      @file.stubs(:owner).returns "foo"
+    context "not as root on a non Windows system" do
+      before(:each) do
+        Puppet.features.expects(:root?).at_least_once.returns false
+        Puppet.features.stubs(:microsoft_windows?).returns false
+      end
 
-      expect(@file.to_resource[:owner]).to eq(nil)
+      it "should not set owner if not running as root" do
+        @file.stubs(:owner).returns "foo"
+        expect(@file.to_resource[:owner]).to be_nil
+      end
+
+      it "should not set group if not running as root" do
+        @file.stubs(:group).returns "foo"
+        expect(@file.to_resource[:group]).to be_nil
+      end
     end
 
-    it "should set the group if running as root and the group is provided" do
-      Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
-
-      @file.stubs(:group).returns "foo"
-      expect(@file.to_resource[:group]).to eq("foo")
-    end
-
-    it "should not set the group if manage_internal_file_permissions is disabled" do
-      Puppet[:manage_internal_file_permissions] = false
-      Puppet.features.stubs(:root?).returns true
-      @file.stubs(:group).returns "foo"
-
-      expect(@file.to_resource[:group]).to eq(nil)
-    end
-
-
-    it "should not set owner if not running as root" do
-      Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
-      @file.stubs(:owner).returns "foo"
-      expect(@file.to_resource[:owner]).to be_nil
-    end
-
-    it "should not set group if not running as root" do
-      Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
-      @file.stubs(:group).returns "foo"
-      expect(@file.to_resource[:group]).to be_nil
-    end
-
-    describe "on Microsoft Windows systems" do
+    describe "as an Administrator on Microsoft Windows systems" do
       before :each do
+        Puppet.features.expects(:root?).at_least_once.returns true
+        Puppet.features.stubs(:microsoft_windows?).returns true
+      end
+
+      it "should set the owner to well known Administrators SID" do
+        @file.stubs(:owner).returns "foo"
+        expect(@file.to_resource[:owner]).to eq('S-1-5-32-544')
+      end
+
+      it "should not set group" do
+        @file.stubs(:group).returns "foo"
+        expect(@file.to_resource[:group]).to be_nil
+      end
+    end
+
+    describe "not as an Administrator on Microsoft Windows systems" do
+      before :each do
+        Puppet.features.expects(:root?).at_least_once.returns false
         Puppet.features.stubs(:microsoft_windows?).returns true
       end
 
