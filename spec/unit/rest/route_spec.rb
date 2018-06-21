@@ -54,6 +54,22 @@ describe Puppet::Rest::Route do
         expect(count).to eq(1)
         expect(rval).to eq('Block return value')
       end
+
+      it 'falls back to :server and :masterport if nil is passed' do
+        Puppet[:server] = 'one.net'
+        Puppet[:masterport] = 111
+        nil_route = Puppet::Rest::Route.new(api: '/fakeapi/v1/',
+                                            server_setting: nil,
+                                            port_setting: nil)
+        count = 0
+        rval = nil_route.with_base_url(dns_resolver) do |url|
+          count += 1
+          expect(url.to_s).to eq('https://one.net:111/fakeapi/v1/')
+          'Block return value'
+        end
+        expect(count).to eq(1)
+        expect(rval).to eq('Block return value')
+      end
     end
 
     context 'when using SRV records' do

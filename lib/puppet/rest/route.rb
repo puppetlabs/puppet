@@ -1,4 +1,5 @@
 require 'uri'
+require 'puppet/util/connection'
 
 module Puppet::Rest
   class Route
@@ -18,8 +19,8 @@ module Puppet::Rest
     #                 records
     def initialize(api:, server_setting: :server, port_setting: :masterport, srv_service: :puppet)
       @api = api
-      @default_server = determine_server(server_setting)
-      @default_port = determine_port(port_setting, server_setting)
+      @default_server = Puppet::Util::Connection.determine_server(server_setting)
+      @default_port = Puppet::Util::Connection.determine_port(port_setting, server_setting)
       @srv_service = srv_service
     end
 
@@ -64,63 +65,15 @@ module Puppet::Rest
         end
       end
 
-      # If we have provided a specific server and port, use those.
-      if @default_server && @default_port
-        @server = @default_server
-        @port = @default_port
-      else
-        # Otherwise, get server and port from default settings, taking
-        # into account the server list for HA.
-        @server = determine_server(:server)
-        @port = determine_port(:masterport, :server)
-      end
+      # If not using SRV records, fall back to the defaults calculated above
+      @server = @default_server
+      @port = @default_port
 
       Puppet.debug "No more servers in SRV record, falling back to #{@server}:#{@port}" if Puppet[:use_srv_records]
       return yield(base_url)
     end
 
     private
-
-    def determine_server(setting)
-      if setting != :server && Puppet.settings.set_by_config?(setting)
-        Puppet[setting]
-      else
-        server = Puppet.lookup(:server) do
-          if primary_server = Puppet.settings[:server_list][0]
-            Puppet.debug "Dynamically-bound server lookup failed; using first entry"
-            primary_server[0]
-          else
-            Puppet.debug "Dynamically-bound server lookup failed, falling back to #{setting} setting"
-            Puppet.settings[setting]
-          end
-        end
-        server
-      end
-    end
-
-    def determine_port(port_setting, server_setting)
-      setting = port_setting
-      if setting != :masterport && Puppet.settings.set_by_config?(setting) ||
-         server_setting != :server && Puppet.settings.set_by_config?(server_setting)
-        Puppet.settings[setting].to_i
-      else
-        port = Puppet.lookup(:serverport) do
-          if primary_server = Puppet.settings[:server_list][0]
-            Puppet.debug "Dynamically-bound port lookup failed; using first entry"
-
-            # Port might not be set, so we want to fallback in that
-            # case. We know we don't need to use `setting` here, since
-            # the default value of every port setting is `masterport`
-            (primary_server[1] || Puppet.settings[:masterport])
-          else
-            setting ||= :masterport
-            Puppet.debug "Dynamically-bound port lookup failed; falling back to #{setting} setting"
-            Puppet.settings[setting]
-          end
-        end
-        port.to_i
-      end
-    end
 
     # Returns a URI built from the information stored by this route,
     # e.g. 'https://myserver.com:555/myapi/v1/'

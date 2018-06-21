@@ -1,6 +1,7 @@
 require 'net/http'
 require 'uri'
 require 'puppet/util/json'
+require 'puppet/util/connection'
 require 'semantic_puppet'
 
 require 'puppet/network/http'
@@ -39,66 +40,16 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     @srv_service || :puppet
   end
 
-  # The logic for server and port is kind of gross. In summary:
-  # IF an endpoint-specific setting is requested AND that setting has been set by the user
-  #    Use that setting.
-  #         The defaults for these settings are the "normal" server/masterport settings, so
-  #         when they are unset we instead want to "fall back" to the failover-selected
-  #         host/port pair.
-  # ELSE IF we have a failover-selected host/port
-  #    Use what the failover logic came up with
-  # ELSE IF the server_list setting is in use
-  #    Use the first entry - failover hasn't happened yet, but that
-  #    setting is still authoritative
-  # ELSE
-  #    Go for the legacy server/masterport settings, and hope for the best
+  # Select the server to use based on the settings configuration
+  # for this indirection, taking into account the HA server list.
   def self.server
-    setting = server_setting()
-    if setting && setting != :server && Puppet.settings.set_by_config?(setting)
-      Puppet.settings[setting]
-    else
-      server = Puppet.lookup(:server) do
-        if primary_server = Puppet.settings[:server_list][0]
-          Puppet.debug "Dynamically-bound server lookup failed; using first entry"
-          primary_server[0]
-        else
-          setting ||= :server
-          Puppet.debug "Dynamically-bound server lookup failed, falling back to #{setting} setting"
-          Puppet.settings[setting]
-        end
-      end
-      server
-    end
+    Puppet::Util::Connection.determine_server(server_setting)
   end
 
-  # For port there's a little bit of an extra snag: setting a specific
-  # server setting and relying on the default port for that server is
-  # common, so we also want to check if the assocaited SERVER setting
-  # has been set by the user. If either of those are set we ignore the
-  # failover-selected port.
+  # Select the port to use based on the settings configuration
+  # for this indirection, taking into account the HA server list.
   def self.port
-    setting = port_setting()
-    srv_setting = server_setting()
-    if (setting && setting != :masterport && Puppet.settings.set_by_config?(setting)) ||
-       (srv_setting && srv_setting != :server && Puppet.settings.set_by_config?(srv_setting))
-      Puppet.settings[setting].to_i
-    else
-      port = Puppet.lookup(:serverport) do
-        if primary_server = Puppet.settings[:server_list][0]
-          Puppet.debug "Dynamically-bound port lookup failed; using first entry"
-
-          # Port might not be set, so we want to fallback in that
-          # case. We know we don't need to use `setting` here, since
-          # the default value of every port setting is `masterport`
-          (primary_server[1] || Puppet.settings[:masterport])
-        else
-          setting ||= :masterport
-          Puppet.debug "Dynamically-bound port lookup failed; falling back to #{setting} setting"
-          Puppet.settings[setting]
-        end
-      end
-      port.to_i
-    end
+    Puppet::Util::Connection.determine_port(port_setting, server_setting)
   end
 
   # Provide appropriate headers.
