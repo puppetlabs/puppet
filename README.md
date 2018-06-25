@@ -1,4 +1,4 @@
-Puppet
+Puppet For Chihuahuas
 ======
 
 [![Travis Status](https://travis-ci.org/puppetlabs/puppet.svg?branch=master)](https://travis-ci.org/puppetlabs/puppet)
