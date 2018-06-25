@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.2-369-g4fc6125\n"
+"Project-Id-Version: Puppet automation framework 5.5.2-377-g1a2b782\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-06-19 16:48+0000\n"
-"PO-Revision-Date: 2018-06-19 16:48+0000\n"
+"POT-Creation-Date: 2018-06-25 17:03+0000\n"
+"PO-Revision-Date: 2018-06-25 17:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3934,18 +3934,6 @@ msgstr ""
 msgid "request %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:327
-msgid "expected one of %{certnames}"
-msgstr ""
-
-#: ../lib/puppet/network/http/connection.rb:329
-msgid "expected %{certname}"
-msgstr ""
-
-#: ../lib/puppet/network/http/connection.rb:332
-msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
-msgstr ""
-
 #: ../lib/puppet/network/http/error.rb:23
 msgid "Not Acceptable: %{message}"
 msgstr ""
@@ -7112,14 +7100,6 @@ msgstr ""
 msgid "changing mode of %{file} from %{current_mode} to %{target_mode}"
 msgstr ""
 
-#: ../lib/puppet/provider/zone/solaris.rb:84
-msgid "can not remove network based on default router"
-msgstr ""
-
-#: ../lib/puppet/provider/zone/solaris.rb:158
-msgid "Failed to apply configuration"
-msgstr ""
-
 #: ../lib/puppet/reference/indirection.rb:22
 msgid "Could not build docs for indirector %{name}, terminus %{terminus}: could not locate terminus."
 msgstr ""
@@ -7446,15 +7426,15 @@ msgstr ""
 msgid "Connection to cached server and port %{server}:%{port} failed: %{message}"
 msgstr ""
 
-#: ../lib/puppet/rest/routes.rb:28
+#: ../lib/puppet/rest/routes.rb:29
 msgid "Downloaded certificate for %{name} from %{server}"
 msgstr ""
 
-#: ../lib/puppet/rest/routes.rb:45
+#: ../lib/puppet/rest/routes.rb:47
 msgid "Downloaded certificate revocation list for %{name} from %{server}"
 msgstr ""
 
-#: ../lib/puppet/rest/routes.rb:82
+#: ../lib/puppet/rest/routes.rb:86
 msgid "Downloaded existing certificate request for %{name} from %{server}"
 msgstr ""
 
@@ -7892,19 +7872,19 @@ msgstr ""
 msgid "Revoked certificate with serial %{serial}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:110
+#: ../lib/puppet/ssl/host.rb:117
 msgid "CA Mode can only be one of: %{modes}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:220
+#: ../lib/puppet/ssl/host.rb:224
 msgid "No certificate to validate."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:221
+#: ../lib/puppet/ssl/host.rb:225
 msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:223
+#: ../lib/puppet/ssl/host.rb:227
 msgid ""
 "The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?\n"
 "Certificate fingerprint: %{fingerprint}\n"
@@ -7917,7 +7897,7 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:264
+#: ../lib/puppet/ssl/host.rb:268
 msgid ""
 "The CSR retrieved from the master does not match the agent's public key.\n"
 "CSR fingerprint: %{fingerprint}\n"
@@ -7932,73 +7912,73 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:369 ../lib/puppet/ssl/host.rb:390
+#: ../lib/puppet/ssl/host.rb:373 ../lib/puppet/ssl/host.rb:394
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:371
+#: ../lib/puppet/ssl/host.rb:375
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:380
+#: ../lib/puppet/ssl/host.rb:384
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:388
+#: ../lib/puppet/ssl/host.rb:392
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:436
+#: ../lib/puppet/ssl/host.rb:440
 msgid "Response from the CA did not contain a valid certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:442
+#: ../lib/puppet/ssl/host.rb:446
 msgid "Could not download certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:478
+#: ../lib/puppet/ssl/host.rb:482
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:509
+#: ../lib/puppet/ssl/host.rb:513
 msgid "The CA certificate at %{file_path} is invalid: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:532
+#: ../lib/puppet/ssl/host.rb:536
 msgid "No valid PEM-encoded certificates."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:539
+#: ../lib/puppet/ssl/host.rb:543
 msgid "Could not parse certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:564
+#: ../lib/puppet/ssl/host.rb:568
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:584
+#: ../lib/puppet/ssl/host.rb:588
 msgid "Response from the CA did not contain a valid CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:587
+#: ../lib/puppet/ssl/host.rb:591
 msgid "Could not download CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:640
+#: ../lib/puppet/ssl/host.rb:644
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:661
+#: ../lib/puppet/ssl/host.rb:665
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:665
+#: ../lib/puppet/ssl/host.rb:669
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:668
+#: ../lib/puppet/ssl/host.rb:672
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
@@ -8823,38 +8803,6 @@ msgstr ""
 msgid "Must be a valid URL"
 msgstr ""
 
-#: ../lib/puppet/type/zone.rb:102
-msgid "Waiting for zone to finish processing"
-msgstr ""
-
-#: ../lib/puppet/type/zone.rb:118
-msgid "Cannot move %{direction} from %{name}"
-msgstr ""
-
-#: ../lib/puppet/type/zone.rb:199
-msgid "The zone base must be fully qualified"
-msgstr ""
-
-#: ../lib/puppet/type/zone.rb:236
-msgid "Datasets must be the name of a zfs filesystem"
-msgstr ""
-
-#: ../lib/puppet/type/zone.rb:257
-msgid "Inherited filesystems must be fully qualified"
-msgstr ""
-
-#: ../lib/puppet/type/zone.rb:330
-msgid "'%{ip}' is an invalid %{name}"
-msgstr ""
-
-#: ../lib/puppet/type/zone.rb:335
-msgid "only interface may be specified when using exclusive IP stack: %{interface}:%{address}"
-msgstr ""
-
-#: ../lib/puppet/type/zone.rb:338
-msgid "ip must contain interface name and ip address separated by a \":\""
-msgstr ""
-
 #: ../lib/puppet/util.rb:65
 msgid "Unable to retrieve the environment for mode %{mode}"
 msgstr ""
@@ -9643,6 +9591,18 @@ msgstr ""
 
 #: ../lib/puppet/util/splayer.rb:14
 msgid "Sleeping for %{time} seconds (splay is enabled)"
+msgstr ""
+
+#: ../lib/puppet/util/ssl.rb:81
+msgid "expected one of %{certnames}"
+msgstr ""
+
+#: ../lib/puppet/util/ssl.rb:83
+msgid "expected %{certname}"
+msgstr ""
+
+#: ../lib/puppet/util/ssl.rb:86
+msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
 #: ../lib/puppet/util/storage.rb:53
