@@ -38,7 +38,6 @@ class StaticLoader < Loader
       Vlan
       Whit
       Yumrepo
-      Zone
     }.freeze
 
   BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze
