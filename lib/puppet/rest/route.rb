@@ -1,4 +1,5 @@
 require 'uri'
+require 'puppet/util/connection'
 
 module Puppet::Rest
   class Route
@@ -10,14 +11,16 @@ module Puppet::Rest
     # @param [String] api the path leading to the root of the API. Must
     #                 contain a trailing slash for proper endpoint path
     #                 construction
-    # @param [String] default_server the fqdn of the fallback server
-    # @param [Integer] port the fallback port
+    # @param [Symbol] server_setting the setting to check for special
+    #                 server configuration
+    # @param [Symbol] port_setting the setting to check for speical
+    #                  port configuration
     # @param [Symbol] srv_service the name of the service when using SRV
     #                 records
-    def initialize(api:, default_server:, default_port:, srv_service:)
+    def initialize(api:, server_setting: :server, port_setting: :masterport, srv_service: :puppet)
       @api = api
-      @default_server = default_server
-      @default_port = default_port
+      @default_server = Puppet::Util::Connection.determine_server(server_setting)
+      @default_port = Puppet::Util::Connection.determine_port(port_setting, server_setting)
       @srv_service = srv_service
     end
 
@@ -62,32 +65,9 @@ module Puppet::Rest
         end
       end
 
-      # If we have provided a specific server and port, use those.
-      if @default_server && @default_port
-        @server = @default_server
-        @port = @default_port
-      else
-        # Otherwise, get server and port from default settings, taking
-        # into account the server list for HA.
-        bound_server = Puppet.lookup(:server) do
-          if primary_server = Puppet.settings[:server_list][0]
-            primary_server[0]
-          else
-            Puppet.settings[:server]
-          end
-        end
-
-        bound_port = Puppet.lookup(:serverport) do
-          if primary_server = Puppet.settings[:server_list][0]
-            primary_server[1]
-          else
-            Puppet.settings[:masterport]
-          end
-        end
-
-        @server = bound_server
-        @port = bound_port
-      end
+      # If not using SRV records, fall back to the defaults calculated above
+      @server = @default_server
+      @port = @default_port
 
       Puppet.debug "No more servers in SRV record, falling back to #{@server}:#{@port}" if Puppet[:use_srv_records]
       return yield(base_url)

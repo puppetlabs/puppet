@@ -7,8 +7,8 @@ module Puppet::Rest
 
     def self.ca
       @ca ||= Route.new(api: '/puppet-ca/v1/',
-                        default_server: Puppet[:ca_server],
-                        default_port: Puppet[:ca_port],
+                        server_setting: :ca_server,
+                        port_setting: :ca_port,
                         srv_service: :ca)
     end
 
