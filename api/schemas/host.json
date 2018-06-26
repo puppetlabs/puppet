@@ -32,13 +32,13 @@
             },
             "additionalProperties": false
         },
-        "dns_alt_names": {
+        "subject_alt_names": {
             "type": "array",
             "items": {
                 "type": "string"
             }
         }
     },
-    "required": ["name", "state", "fingerprint", "fingerprints", "dns_alt_names"],
+    "required": ["name", "state", "fingerprint", "fingerprints", "subject_alt_names"],
     "additionalProperties": false
 }

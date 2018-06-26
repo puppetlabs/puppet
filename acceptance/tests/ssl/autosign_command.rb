@@ -54,7 +54,7 @@ EOF
     master_opts = {
       'master' => {
         'autosign' => autosign_true_script_path,
-        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
+        'subject_alt_names' => "puppet,#{hostname},#{fqdn}",
       }
     }
     with_puppet_running_on(master, master_opts) do
@@ -95,7 +95,7 @@ EOF
     master_opts = {
       'master' => {
         'autosign' => autosign_false_script_path,
-        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
+        'subject_alt_names' => "puppet,#{hostname},#{fqdn}",
       }
     }
     with_puppet_running_on(master, master_opts) do
@@ -163,7 +163,7 @@ custom_attributes:
     master_opts = {
       'master' => {
         'autosign' => autosign_inspect_csr_path,
-        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
+        'subject_alt_names' => "puppet,#{hostname},#{fqdn}",
       },
     }
     with_puppet_running_on(master, master_opts) do

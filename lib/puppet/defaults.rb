@@ -738,14 +738,15 @@ module Puppet
 
         Defaults to the node's fully qualified domain name.",
       :hook => proc { |value| raise(ArgumentError, _("Certificate names must be lower case")) unless value == value.downcase }},
-    :dns_alt_names => {
-      :default => '',
+    :subject_alt_names => {
+      :default => '$dns_alt_names',
       :desc    => <<EOT,
-A comma-separated list of alternate DNS names for Puppet Server. These are extra
+A comma-separated list of alternate names for Puppet Server. These are extra
 hostnames (in addition to its `certname`) that the server is allowed to use when
 serving agents. Puppet checks this setting when automatically requesting a
 certificate for Puppet agent or Puppet Server, and when manually generating a
-certificate with `puppet cert generate`.
+certificate with `puppet cert generate`. These can be either IP or DNS, and the type 
+should be specified and followed with a colon. Untyped inputs will default to DNS.
 
 In order to handle agent requests at a given hostname (like
 "puppet.example.com"), Puppet Server needs a certificate that proves it's
@@ -765,7 +766,7 @@ change this setting; you also need to:
   from the [ssldir](https://puppet.com/docs/puppet/latest/dirs_ssldir.html).
 * On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to request a new certificate
 * On the CA server: Sign the certificate request, explicitly allowing alternate names
-  (`puppet cert sign --allow-dns-alt-names <NAME>`).
+  (`puppet cert sign --allow-subject-alt-names <NAME>`).
 * On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to retrieve the cert.
 * On the server: Start Puppet Server again.
 
@@ -774,6 +775,14 @@ and run `puppet cert list -a`, then check the output for `(alt names: ...)`.
 Most agent nodes should NOT have alternate names; the only certs that should
 have them are Puppet Server nodes that you want other agents to trust.
 EOT
+    },
+    :dns_alt_names => {
+      :default => '',
+      :desc    => "A comma-separated list of alternate names for Puppet Server.
+                  This setting is deprecated and has been replaced by subject_alt_names.",
+      :hook    => proc { |value|
+          Puppet.deprecation_warning(_("--dns_alt_names is deprecated. It has been replaced by --subject_alt_names. If both are specified, --dns-alt-names will be ignored."))
+    }
     },
     :csr_attributes => {
       :default => "$confdir/csr_attributes.yaml",

@@ -112,9 +112,9 @@ describe Puppet::SSL::CertificateRequest do
       expect(request.content.public_key.to_s).to eq(key.content.public_key.to_s)
     end
 
-    context "without subjectAltName / dns_alt_names" do
+    context "without subjectAltName" do
       before :each do
-        Puppet[:dns_alt_names] = ""
+        Puppet[:subject_alt_names] = ""
       end
 
       ["extreq", "msExtReq"].each do |name|
@@ -132,9 +132,9 @@ describe Puppet::SSL::CertificateRequest do
       end
     end
 
-    context "with dns_alt_names" do
+    context "with subject_alt_names" do
       before :each do
-        Puppet[:dns_alt_names] = "one, two, three"
+        Puppet[:subject_alt_names] = "one, two, three"
       end
 
       ["extreq", "msExtReq"].each do |name|
@@ -154,11 +154,11 @@ describe Puppet::SSL::CertificateRequest do
 
     context "with subjectAltName to generate request" do
       before :each do
-        Puppet[:dns_alt_names] = ""
+        Puppet[:subject_alt_names] = ""
       end
 
       it "should add an extreq attribute" do
-        request.generate(key, :dns_alt_names => 'one, two')
+        request.generate(key, :subject_alt_names => 'one, two')
         extReq = request.content.attributes.find do |attr|
           attr.oid == 'extReq'
         end
@@ -172,8 +172,19 @@ describe Puppet::SSL::CertificateRequest do
       end
 
       it "should return the subjectAltName values" do
-        request.generate(key, :dns_alt_names => 'one,two')
+        request.generate(key, :subject_alt_names => 'one,two')
         expect(request.subject_alt_names).to match_array(["DNS:myname", "DNS:one", "DNS:two"])
+      end
+    end
+
+    context "with DNS and IP SAN specified" do
+      before :each do
+        Puppet[:subject_alt_names] = ""
+      end
+
+      it "should return the subjectAltName values" do
+        request.generate(key, :subject_alt_names => 'DNS:foo, bar, IP:172.16.254.1')
+        expect(request.subject_alt_names).to match_array(["DNS:bar", "DNS:foo", "DNS:myname", "IP Address:172.16.254.1"])
       end
     end
 
@@ -271,7 +282,7 @@ describe Puppet::SSL::CertificateRequest do
 
       it "merges the extReq attribute with the subjectAltNames extension" do
         request.generate(key,
-                         :dns_alt_names => 'first.tld, second.tld',
+                         :subject_alt_names => 'first.tld, second.tld',
                          :extension_requests => extension_data)
         exts = request.request_extensions
 

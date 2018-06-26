@@ -53,25 +53,38 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
     # Duplicate the option here explicitly to distinguish if it was passed arg
     # us vs. set in the config file.
+    option "--subject_alt_names "+ _("NAMES") do
+      summary _("Additional subject alt names to add to the certificate request")
+      description Puppet.settings.setting(:subject_alt_names).desc
+    end
+
     option "--dns-alt-names "+ _("NAMES") do
-      summary _("Additional DNS names to add to the certificate request")
-      description Puppet.settings.setting(:dns_alt_names).desc
+      summary _("Additional subject alt names to add to the certificate request")
+      description Puppet.settings.setting(:subject_alt_names).desc
     end
 
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
 
-      # We have a weird case where we have --dns_alt_names from Puppet, but
+      # We have a weird case where we have --dns_alt_names from Puppet settings, but
       # this option is --dns-alt-names. Until we can get rid of --dns-alt-names
       # or do a global tr('-', '_'), we have to support both.
       # In supporting both, we'll use Puppet[:dns_alt_names] if specified on
-      # command line. We'll use options[:dns_alt_names] if specified on
-      # command line. If both specified, we'll fail.
-      # jeffweiss 17 april 2012
+      # command line (--dns_alt_names) or we'll use options[:dns_alt_names] if specified on
+      # command line (--dns-alt-names). If both specified, we'll fail.
+      # Using --subject_alt_names will override all dns versions of this option.
 
       global_setting_from_cli = Puppet.settings.set_by_cli?(:dns_alt_names) == true
-      raise ArgumentError, _("Can't specify both --dns_alt_names and --dns-alt-names") if options[:dns_alt_names] and global_setting_from_cli
-      options[:dns_alt_names] = Puppet[:dns_alt_names] if global_setting_from_cli
+      if options[:dns_alt_names] and global_setting_from_cli
+        raise ArgumentError, _("Can't specify both --dns_alt_names and --dns-alt-names. Use --subject_alt_names instead.")
+      end
+
+      if global_setting_from_cli && options[:subject_alt_names].nil?
+        options[:subject_alt_names] = Puppet[:dns_alt_names]
+      elsif options[:subject_alt_names].nil? && options[:dns_alt_names]
+        options[:subject_alt_names] = options[:dns_alt_names]
+        Puppet.deprecation_warning(_("--dns-alt-names is deprecated and has been replaced by --subject_alt_names. If both are specified, --dns-alt-names will be ignored."))
+      end
 
       # If dns_alt_names are specified via the command line, we will always add
       # them. Otherwise, they will default to the config file setting iff this
@@ -81,7 +94,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
         Puppet.push_context({:ssl_host => host})
       end
 
-      host.generate_certificate_request(:dns_alt_names => options[:dns_alt_names])
+      host.generate_certificate_request(:subject_alt_names => options[:subject_alt_names])
     end
   end
 
@@ -113,28 +126,35 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
       $ puppet certificate sign somenode.puppetlabs.lan --ca-location remote
     EOT
 
-    option("--[no-]allow-dns-alt-names") do
-      summary _("Whether or not to accept DNS alt names in the certificate request")
+    option("--[no-]allow-subject-alt-names") do
+      summary _("Whether or not to accept subject alt names in the certificate request")
     end
 
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
       if Puppet::SSL::Host.ca_location == :remote
+        if options[:allow_subject_alt_names]
+          raise ArgumentError, _("--allow-subject-alt-names may not be specified with a remote CA")
+        end
         if options[:allow_dns_alt_names]
+          Puppet.deprecation_warning(_("--allow-dns-alt-names is deprecated and has been replaced by --allow-subject-alt-names."))
           raise ArgumentError, _("--allow-dns-alt-names may not be specified with a remote CA")
         end
 
         host.desired_state = 'signed'
         Puppet::SSL::Host.indirection.save(host)
       else
+        if options[:allow_dns_alt_names]
+          Puppet.deprecation_warning(_("--allow-dns-alt-names is deprecated and has been replaced by --allow-subject-alt-names."))
+          options[:allow_subject_alt_names] = options[:allow_dns_alt_names]
+        end
         # We have to do this case manually because we need to specify
-        # allow_dns_alt_names.
+        # allow_subject_alt_names.
         unless ca = Puppet::SSL::CertificateAuthority.instance
           raise ArgumentError, _("This process is not configured as a certificate authority")
         end
 
-        signing_options = {allow_dns_alt_names: options[:allow_dns_alt_names]}
-
+        signing_options = {allow_subject_alt_names: options[:allow_subject_alt_names]}
         ca.sign(name, signing_options)
       end
     end

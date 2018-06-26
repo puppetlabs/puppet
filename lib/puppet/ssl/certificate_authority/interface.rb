@@ -272,7 +272,7 @@ module Puppet
           raise InterfaceError, _("No waiting certificate requests to sign") if list.empty?
 
           signing_options = options.select { |k,_|
-            [:allow_authorization_extensions, :allow_dns_alt_names].include?(k)
+            [:allow_authorization_extensions, :allow_subject_alt_names].include?(k)
           }
 
           list.each do |host|

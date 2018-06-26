@@ -172,11 +172,11 @@ DOC
 
     # If this CSR is for the current machine...
     if name == Puppet[:certname].downcase
-      # ...add our configured dns_alt_names
-      if Puppet[:dns_alt_names] and Puppet[:dns_alt_names] != ''
-        options[:dns_alt_names] ||= Puppet[:dns_alt_names]
+      # ...add our configured subject_alt_names
+      if Puppet[:subject_alt_names] and Puppet[:subject_alt_names] != ''
+        options[:subject_alt_names] ||= Puppet[:subject_alt_names]
       elsif Puppet::SSL::CertificateAuthority.ca? and fqdn = Facter.value(:fqdn) and domain = Facter.value(:domain)
-        options[:dns_alt_names] = "puppet, #{fqdn}, puppet.#{domain}"
+        options[:subject_alt_names] = "puppet, #{fqdn}, puppet.#{domain}"
       end
     end
 
@@ -285,7 +285,7 @@ ERROR_STRING
     # should use it to sign our request; else, just try to read
     # the cert.
     if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, {allow_dns_alt_names: true})
+      ca.sign(self.name, {allow_subject_alt_names: true})
     end
   end
 
@@ -351,7 +351,7 @@ ERROR_STRING
     suitable_message_digest_algorithms.each do |md|
       result['fingerprints'][md.to_s] = thing_to_use.fingerprint md
     end
-    result['dns_alt_names'] = thing_to_use.subject_alt_names
+    result['subject_alt_names'] = thing_to_use.subject_alt_names
 
     result
   end

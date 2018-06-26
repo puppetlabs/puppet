@@ -136,9 +136,9 @@ Puppet::Face.define(:ca, '0.1.0') do
 
   action :generate do
     summary _("Generate a certificate for a named client.")
-    option "--dns-alt-names " + _("NAMES") do
+    option "--subject-alt-names " + _("NAMES") do
       summary _("Additional DNS names to add to the certificate request")
-      description Puppet.settings.setting(:dns_alt_names).desc
+      description Puppet.settings.setting(:subject_alt_names).desc
     end
 
     when_invoked do |host, options|
@@ -149,7 +149,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       Puppet::SSL::Host.ca_location = :local
 
       begin
-        ca.generate(host, :dns_alt_names => options[:dns_alt_names])
+        ca.generate(host, :subject_alt_names => options[:subject_alt_names])
       rescue RuntimeError => e
         if e.to_s =~ /already has a requested certificate/
           _("%{host} already has a certificate request; use sign instead") % { host: host }
@@ -168,8 +168,13 @@ Puppet::Face.define(:ca, '0.1.0') do
 
   action :sign do
     summary _("Sign an outstanding certificate request.")
+
     option("--[no-]allow-dns-alt-names") do
-      summary _("Whether or not to accept DNS alt names in the certificate request")
+      summary _("Whether or not to accept alt names in the certificate request")
+    end
+
+    option("--[no-]allow-subject-alt-names") do
+      summary _("Whether or not to accept alt names in the certificate request")
     end
 
     when_invoked do |host, options|
@@ -180,8 +185,12 @@ Puppet::Face.define(:ca, '0.1.0') do
       Puppet::SSL::Host.ca_location = :only
 
       begin
+        if options[:allow_dns_alt_names]
+          options[:allow_subject_alt_names] = options[:allow_dns_alt_names]
+          Puppet.deprecation_warning(_("--allow-dns-alt-names is deprecated and has been replaced by --allow-subject-alt-names"))
+        end
         signing_options = options.select { |k,_|
-          [:allow_dns_alt_names, :allow_authorization_extensions].include?(k)
+          [:allow_subject_alt_names, :allow_authorization_extensions].include?(k)
         }
         ca.sign(host, signing_options)
       rescue ArgumentError => e

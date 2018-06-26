@@ -154,24 +154,24 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       expect(list.first.name).to eq('random-host')
     end
 
-    describe "when the CSR specifies DNS alt names" do
+    describe "when the CSR specifies subject alt names" do
       let(:host) { Puppet::SSL::Host.new('someone') }
 
       before :each do
-        host.generate_certificate_request(:dns_alt_names => 'some,alt,names')
+        host.generate_certificate_request(:subject_alt_names => 'some,alt,names')
       end
 
-      it "should sign the CSR if DNS alt names are allowed" do
-        subject.sign('someone', :allow_dns_alt_names => true)
+      it "should sign the CSR if subject alt names are allowed" do
+        subject.sign('someone', :allow_subject_alt_names => true)
 
         expect(host.certificate).to be_a(Puppet::SSL::Certificate)
       end
 
-      it "should refuse to sign the CSR if DNS alt names are not allowed" do
+      it "should refuse to sign the CSR if subject alt names are not allowed" do
         certname = 'someone'
         expect do
           subject.sign(certname)
-        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{certname}' contains subject alternative names \(.*\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{certname}` to sign this request./i)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{certname}' contains subject alternative names \(.*\), which are disallowed. Use `puppet cert --allow-subject-alt-names sign #{certname}` to sign this request./i)
 
         expect(host.certificate).to be_nil
       end
@@ -201,8 +201,8 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       expect(subject.generate('random-host')).to match(/already has a certificate/)
     end
 
-    it "should include the specified DNS alt names" do
-      subject.generate('some-host', :dns_alt_names => 'some,alt,names')
+    it "should include the specified subject alt names" do
+      subject.generate('some-host', :subject_alt_names => 'some,alt,names')
 
       host = subject.list(:signed => true).first
 
