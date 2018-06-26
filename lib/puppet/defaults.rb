@@ -735,7 +735,8 @@ A comma-separated list of alternate DNS names for Puppet Server. These are extra
 hostnames (in addition to its `certname`) that the server is allowed to use when
 serving agents. Puppet checks this setting when automatically requesting a
 certificate for Puppet agent or Puppet Server, and when manually generating a
-certificate with `puppet cert generate`.
+certificate with `puppet cert generate`. These can be either IP or DNS, and the type
+should be specified and followed with a colon. Untyped inputs will default to DNS.
 
 In order to handle agent requests at a given hostname (like
 "puppet.example.com"), Puppet Server needs a certificate that proves it's
