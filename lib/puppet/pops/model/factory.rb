@@ -242,9 +242,9 @@ class Factory
     @init_hash['else_expr'] = els
   end
 
-  def build_ApplyExpression(o, t, b)
-    @init_hash['targets'] = t
-    @init_hash['body'] = b
+  def build_ApplyExpression(o, args, body)
+    @init_hash['arguments'] = args
+    @init_hash['body'] = body
   end
 
   def build_MatchExpression(o, op, a, b)
@@ -942,8 +942,8 @@ class Factory
     new(PlanDefinition, name, parameters, body, nil)
   end
 
-  def self.APPLY(targets, body)
-    new(ApplyExpression, targets, body)
+  def self.APPLY(arguments, body)
+    new(ApplyExpression, arguments, body)
   end
 
   def self.FUNCTION(name, parameters, body, return_type)

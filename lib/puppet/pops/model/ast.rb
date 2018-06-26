@@ -2914,7 +2914,10 @@ class ApplyExpression < Expression
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ApplyExpression', {
       'parent' => Expression._pcore_type,
       'attributes' => {
-        'targets' => Expression._pcore_type,
+        'arguments' => {
+          'type' => Types::PArrayType.new(Expression._pcore_type),
+          'value' => []
+        },
         'body' => {
           'type' => Types::POptionalType.new(Expression._pcore_type),
           'value' => nil
@@ -2932,48 +2935,48 @@ class ApplyExpression < Expression
       init_hash['locator'],
       init_hash['offset'],
       init_hash['length'],
-      init_hash['targets'],
+      init_hash.fetch('arguments') { _pcore_type['arguments'].value },
       init_hash['body'])
   end
 
-  def self.create(locator, offset, length, targets, body = nil)
+  def self.create(locator, offset, length, arguments = _pcore_type['arguments'].value, body = nil)
     ta = Types::TypeAsserter
     attrs = _pcore_type.attributes(true)
     ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
     ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
     ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
-    ta.assert_instance_of('Puppet::AST::ApplyExpression[targets]', attrs['targets'].type, targets)
+    ta.assert_instance_of('Puppet::AST::ApplyExpression[arguments]', attrs['arguments'].type, arguments)
     ta.assert_instance_of('Puppet::AST::ApplyExpression[body]', attrs['body'].type, body)
-    new(locator, offset, length, targets, body)
+    new(locator, offset, length, arguments, body)
   end
 
-  attr_reader :targets
+  attr_reader :arguments
   attr_reader :body
 
-  def initialize(locator, offset, length, targets, body = nil)
+  def initialize(locator, offset, length, arguments = _pcore_type['arguments'].value, body = nil)
     super(locator, offset, length)
-    @hash = @hash ^ targets.hash ^ body.hash
-    @targets = targets
+    @hash = @hash ^ arguments.hash ^ body.hash
+    @arguments = arguments
     @body = body
   end
 
   def _pcore_init_hash
     result = super
-    result['targets'] = @targets
+    result['arguments'] = @arguments unless _pcore_type['arguments'].default_value?(@arguments)
     result['body'] = @body unless @body == nil
     result
   end
 
   def _pcore_contents
-    yield(@targets) unless @targets.nil?
+    @arguments.each { |value| yield(value) }
     yield(@body) unless @body.nil?
   end
 
   def _pcore_all_contents(path, &block)
     path << self
-    unless @targets.nil?
-      block.call(@targets, path)
-      @targets._pcore_all_contents(path, &block)
+    @arguments.each do |value|
+      block.call(value, path)
+      value._pcore_all_contents(path, &block)
     end
     unless @body.nil?
       block.call(@body, path)
@@ -2984,7 +2987,7 @@ class ApplyExpression < Expression
 
   def eql?(o)
     super &&
-    @targets.eql?(o.targets) &&
+    @arguments.eql?(o.arguments) &&
     @body.eql?(o.body)
   end
   alias == eql?

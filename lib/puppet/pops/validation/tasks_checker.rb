@@ -72,8 +72,6 @@ class TasksChecker < Checker4_0
   def check_ApplyExpression(o)
     if in_ApplyExpression?
       acceptor.accept(Issues::TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, o, {:operation => o.class.to_s})
-    else
-      rvalue(o.targets)
     end
   end
 

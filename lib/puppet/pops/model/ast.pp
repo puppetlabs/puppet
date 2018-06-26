@@ -400,7 +400,10 @@ type Puppet::AST = TypeSet[{
     ApplyExpression => Object[{
       parent => Expression,
       attributes => {
-        'targets' => Expression,
+        'arguments' => {
+          type => Array[Expression],
+          value => []
+        },
         'body' => {
           type => Optional[Expression],
           value => undef

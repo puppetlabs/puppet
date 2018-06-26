@@ -874,7 +874,7 @@ class EvaluatorImpl
   end
 
   def eval_ApplyExpression(o, scope)
-    Puppet.lookup(:apply_executor).apply(evaluate(o.targets, scope), o.body, scope)
+    Puppet.lookup(:apply_executor).apply(unfold([], o.arguments, scope), o.body, scope)
   end
 
   # Produces 3x parameter

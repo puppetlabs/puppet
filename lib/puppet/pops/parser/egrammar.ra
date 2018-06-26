@@ -559,7 +559,7 @@ plan_expression
     }
 
 apply_expression
-  : APPLY LPAREN expression endcomma RPAREN LBRACE opt_statements RBRACE {
+  : APPLY LPAREN arguments endcomma RPAREN LBRACE opt_statements RBRACE {
       result = Factory.APPLY(val[2], Factory.block_or_expression(val[6]))
       loc result, val[0], val[7]
     }

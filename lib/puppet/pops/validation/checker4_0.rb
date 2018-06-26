@@ -1037,7 +1037,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def idem_ApplyExpression(o)
-    [o.targets, o.body].all? {|e| idem(e) }
+    return false if o.arguments.any? { |value| !idem(value) }
+    idem(o.body)
   end
 
   def idem_IfExpression(o)
