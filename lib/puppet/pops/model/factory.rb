@@ -705,6 +705,8 @@ class Factory
 
   def self.block(*args);                 new(BlockExpression, args.map { |arg| infer(arg) }); end
 
+  def self.apply_block(*args);           new(ApplyBlockExpression, args.map { |arg| infer(arg) }); end
+
   def self.string(*args);                new(ConcatenatedString, args.map { |arg| infer(arg) });           end
 
   def self.text(o);                      infer(o).text;                                  end

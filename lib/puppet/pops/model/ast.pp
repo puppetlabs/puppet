@@ -163,6 +163,9 @@ type Puppet::AST = TypeSet[{
         }
       }
     }],
+    ApplyBlockExpression => Object[{
+      parent => BlockExpression,
+    }],
     CaseOption => Object[{
       parent => Expression,
       attributes => {

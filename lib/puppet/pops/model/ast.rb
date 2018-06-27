@@ -1216,6 +1216,27 @@ class BlockExpression < Expression
   alias == eql?
 end
 
+class ApplyBlockExpression < BlockExpression
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ApplyBlockExpression', {
+      'parent' => CallExpression._pcore_type
+    })
+  end
+
+  def _pcore_contents
+    @statements.each { |value| yield(value) }
+  end
+
+  def _pcore_all_contents(path, &block)
+    path << self
+    @statements.each do |value|
+      block.call(value, path)
+      value._pcore_all_contents(path, &block)
+    end
+    path.pop
+  end
+end
+
 class CaseOption < Expression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CaseOption', {
@@ -4872,6 +4893,7 @@ def self.register_pcore_types
   Model::KeyedEntry,
   Model::LiteralHash,
   Model::BlockExpression,
+  Model::ApplyBlockExpression,
   Model::CaseOption,
   Model::CaseExpression,
   Model::QueryExpression,

@@ -874,7 +874,15 @@ class EvaluatorImpl
   end
 
   def eval_ApplyExpression(o, scope)
-    Puppet.lookup(:apply_executor).apply(unfold([], o.arguments, scope), o.body, scope)
+    # All expressions are wrapped in an ApplyBlockExpression so we can identify the contents of
+    # that block. However we don't want to serialize the block expression, so unwrap here.
+    body = if o.body.statements.count > 1
+      BlockExpression.from_asserted_hash(o.body._pcore_init_hash)
+    else
+      o.body.statements[0]
+    end
+
+    Puppet.lookup(:apply_executor).apply(unfold([], o.arguments, scope), body, scope)
   end
 
   # Produces 3x parameter

@@ -56,6 +56,7 @@ class ModelLabelProvider
   def label_UnaryMinusExpression o        ; "Unary Minus"                       end
   def label_UnfoldExpression o            ; "Unfold"                            end
   def label_BlockExpression o             ; "Block Expression"                  end
+  def label_ApplyBlockExpression o        ; "Apply Block Expression"            end
   def label_ConcatenatedString o          ; "Double Quoted String"              end
   def label_HeredocExpression o           ; "'@(#{o.syntax})' expression"       end
   def label_HostClassDefinition o         ; "Host Class Definition"             end

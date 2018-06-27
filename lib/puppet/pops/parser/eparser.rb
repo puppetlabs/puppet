@@ -2607,7 +2607,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 553)
 
 module_eval(<<'.,.,', 'egrammar.ra', 562)
   def _reduce_160(val, _values, result)
-          result = Factory.APPLY(val[2], Factory.block_or_expression(val[6]))
+          result = Factory.APPLY(val[2], Factory.apply_block(val[6]))
       loc result, val[0], val[7]
     
     result
