@@ -1,6 +1,7 @@
 test_name "(#656) leading and trailing whitespace in cron entries should should be stripped"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500
+confine :except, :platform => /^fedora-28/
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_name`
     'audit:unit'

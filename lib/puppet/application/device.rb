@@ -267,13 +267,14 @@ Licensed under the Apache 2.0 License
             (puts text)
             0
           elsif options[:apply]
+            # ensure we have a cache folder structure exists for the device
+            FileUtils.mkdir_p(Puppet[:statedir]) unless File.directory?(Puppet[:statedir])
             # avoid reporting to server
             Puppet::Transaction::Report.indirection.terminus_class = :yaml
             Puppet::Resource::Catalog.indirection.cache_class = nil
 
             require 'puppet/application/apply'
             begin
-
               Puppet[:node_terminus] = :plain
               Puppet[:catalog_terminus] = :compiler
               Puppet[:catalog_cache_terminus] = nil
@@ -344,11 +345,11 @@ Licensed under the Apache 2.0 License
   end
 
   def setup
-    if options[:resource]
+    setup_logs
+    if options[:resource] || options[:apply]
+      Puppet::Util::Log.newdestination(:console)
       Puppet.settings.use :main, :agent, :ssl
     else
-      setup_logs
-
       args[:Server] = Puppet[:server]
       if options[:centrallogs]
         logdest = args[:Server]
