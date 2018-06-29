@@ -166,6 +166,9 @@ class TypeFormatter
   def string_PBinaryType(_)  ; @bld << 'Binary' ; end
 
   # @api private
+  def string_PEncryptedType(_)  ; @bld << 'Encrypted' ; end
+
+  # @api private
   def string_PIntegerType(t)
     append_array('Integer', t.unbounded?) { append_elements(range_array_part(t)) }
   end

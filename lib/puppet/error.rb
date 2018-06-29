@@ -102,4 +102,7 @@ module Puppet
   class LockError < Puppet::Error
   end
 
+  # When a decryption fails
+  class DecryptionError < Puppet::Error
+  end
 end
