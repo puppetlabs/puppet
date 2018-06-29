@@ -563,6 +563,17 @@ module Serialization
         expect(warnings).to be_empty
       end
 
+      it 'A Hash with __ptype, __pvalue keys will not be taken as a pcore meta tag' do
+        val = { '__ptype' => 42, '__pvalue' => 43  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ '__ptype' => 42, '__pvalue' => 43 })
+        end
+        expect(warnings).to be_empty
+      end
+
       it 'A Hash with default values will not loose type information' do
         val = { 'key' => :default  }
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
