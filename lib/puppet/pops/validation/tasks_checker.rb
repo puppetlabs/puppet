@@ -77,12 +77,12 @@ class TasksChecker < Checker4_0
 
   def check_ApplyExpression(o)
     if in_ApplyExpression?
-      acceptor.accept(Issues::TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, o, {:operation => o.class.to_s})
+      acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, o, {:klass => o})
     end
   end
 
   def illegalTasksExpression(o)
-    acceptor.accept(Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, o, {:operation => o.class.to_s})
+    acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING, o, {:klass => o})
   end
 
   def resource_without_title?(o)
