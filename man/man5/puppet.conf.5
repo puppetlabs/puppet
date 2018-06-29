@@ -556,7 +556,7 @@ Valid values for this setting are:
 .IP "" 0
 .
 .SS "dns_alt_names"
-A comma\-separated list of alternate DNS names for Puppet Server\. These are extra hostnames (in addition to its \fBcertname\fR) that the server is allowed to use when serving agents\. Puppet checks this setting when automatically requesting a certificate for Puppet agent or Puppet Server, and when manually generating a certificate with \fBpuppet cert generate\fR\.
+A comma\-separated list of alternate DNS names for Puppet Server\. These are extra hostnames (in addition to its \fBcertname\fR) that the server is allowed to use when serving agents\. Puppet checks this setting when automatically requesting a certificate for Puppet agent or Puppet Server, and when manually generating a certificate with \fBpuppet cert generate\fR\. These can be either IP or DNS, and the type should be specified and followed with a colon\. Untyped inputs will default to DNS\.
 .
 .P
 In order to handle agent requests at a given hostname (like "puppet\.example\.com"), Puppet Server needs a certificate that proves it\'s allowed to use that name; if a server shows a certificate that doesn\'t include its hostname, Puppet agents will refuse to trust it\. If you use a single hostname for Puppet traffic but load\-balance it to multiple Puppet Servers, each of those servers needs to include the official hostname in its list of extra names\.
