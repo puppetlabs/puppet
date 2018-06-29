@@ -102,6 +102,7 @@ module Puppet
   class LockError < Puppet::Error
   end
 
+
   # An Error suitable for raising an error with details in a Puppet::Datatypes::Error
   # that can be used as a value in the Puppet Language
   #
@@ -113,5 +114,8 @@ module Puppet
       super(message, file, line, pos, original)
       @error_data = error_data
     end
+
+  # When a decryption fails
+  class DecryptionError < Puppet::Error
   end
 end

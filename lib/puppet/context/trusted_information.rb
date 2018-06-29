@@ -27,7 +27,13 @@ class Puppet::Context::TrustedInformation
   # @return [String]
   attr_reader :hostname
 
-  def initialize(authenticated, certname, extensions)
+  # The certificate for either the remote host, or localhost (for "local")
+  #
+  # @return [Puppet::SSL::Certificate]
+  attr_reader :certificate
+
+  def initialize(authenticated, certname, extensions, certificate = nil)
+    @certificate = certificate
     @authenticated = authenticated.freeze
     @certname = certname.freeze
     @extensions = extensions.freeze
@@ -51,7 +57,7 @@ class Puppet::Context::TrustedInformation
           [ext['oid'].freeze, ext['value'].freeze]
         end]
       end
-      new('remote', node_name, extensions)
+      new('remote', node_name, extensions, certificate)
     else
       new(false, nil, {})
     end
@@ -60,7 +66,6 @@ class Puppet::Context::TrustedInformation
   def self.local(node)
     # Always trust local data by picking up the available parameters.
     client_cert = node ? node.parameters['clientcert'] : nil
-
     new('local', client_cert, {})
   end
 

@@ -403,6 +403,12 @@ module TypeFactory
     PBinaryType::DEFAULT
   end
 
+  # Creates an instance of the Encrypted Type
+  # @api public
+  def self.encrypted
+    PEncryptedType::DEFAULT
+  end
+
   # Produces an instance of the abstract type PCatalogEntryType
   def self.catalog_entry
     PCatalogEntryType::DEFAULT

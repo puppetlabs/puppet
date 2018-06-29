@@ -172,6 +172,7 @@ class TypeParser
         'iterator'     => TypeFactory.iterator,
         'string'       => TypeFactory.string,
         'binary'       => TypeFactory.binary,
+        'encrypted'    => TypeFactory.encrypted,
         'sensitive'    => TypeFactory.sensitive,
         'enum'         => TypeFactory.enum,
         'boolean'      => TypeFactory.boolean,
@@ -225,6 +226,7 @@ class TypeParser
         'String[1]'    => TypeFactory.string(TypeFactory.range(1, :default)),
 
         'Binary'       => TypeFactory.binary,
+        'Encrypted'    => TypeFactory.encrypted,
 
         'Boolean'      => TypeFactory.boolean,
         'Boolean[true]'  => TypeFactory.boolean(true),

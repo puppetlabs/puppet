@@ -662,6 +662,11 @@ class TypeCalculator
   end
 
   # @api private
+  def infer_Encrypted(o)
+    PEncryptedType::DEFAULT
+  end
+
+  # @api private
   def infer_Version(o)
     PSemVerType::DEFAULT
   end

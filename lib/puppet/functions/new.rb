@@ -980,6 +980,77 @@
 #
 # @since 4.5.0
 #
+# Creating an instance of `Encrypted`
+# -----------------------------------
+#
+# The type `Encrypted` describes an encrypted value. The encryption is performed using the X509 certificate for
+# the intended receiver; by default the node for which a catalog is being compiled.
+#
+# The signature is:
+#
+# ```puppet
+# type EncryptionOptions = Struct[{
+#   # Cipher name, for example 'AES-256-CBC' (which is the default)
+#   Optional[cipher]      => String,
+#   # The name of the cert/node for which encryption should be performed - defaults to node for catalog compilation
+#   Optional[exclude_max] => Boolean
+# }]
+#
+# function Encrypted.new(RichData $data, EncryptionOptions $options = {}) >> Encrypted
+# ```
+#
+# * Any `RichData` value can be encrypted (and subsequently decrypted by the recipient).
+# * The cipher 'AES-256-CBC' is the default cipher. Available ciphers may differ depending on platform and Ruby version.
+# * By default the node for which catalog compilation takes place (agent/master mode), or the node itself (apply mode)
+#   is considered the recipient of the resulting Encryption. By giving a different node name for which there is a
+#   certificate it is possible to make the Encrypted only be readable by having the private certificate for that node.
+# * An `Encrypted` is decrypted by using the `decrypt()` function.
+# * An `Encrypted` value in string form will look like an array with the format in clear text, and all encrypted parts
+#   in Base64 string encoding. There is no harm in revealing this string.
+# * An `Encrypted` value in a catalog uses JSON serialization, and it is also safe to reveal.
+#
+# @example Encrypting a String
+#   $crypto = Encrypted("Area 51 - the aliens are alive")
+#
+# @example Encrypting a Hash
+#   Encrypted('pin_code' => 1234, 'account' => 'IBAN XEB 0123456789')
+#
+# @example Encrypting a Sensitive value
+#   Encrypted(Sensitive("my password is secret"))
+#
+# Encryption details (advanced)
+#
+# * Encryption uses public key encryption (using a node certificate's public key) of a generated random key. This random key
+#   is used to encrypt the rest of the elements.
+# * A random initialization vector (IV) is used per encrypted element. This is done for additional secrecy.
+# * The fingerprint of the intended recipient's certificate is also encrypted to enable verification
+#   that decryption is done with a matching private certificate. It is encrypted for additional secrecy.
+# * The resulting `Encrypted` also contains the used format - a combination of serialization format and cipher name.
+# * In this first version serialization format is always "json", but others may be added in the future.
+#
+# The functions `Encrypt.new()` and `decrypt()` can be used in both master and apply mode. When in master mode
+# encryption is by default for the node requesting a catalog and decryption is by default for the local host (the master).
+# Thus, `notice(decrypt(Encrypted("the moon is made of cheeze")).unwrap)` will work in apply mode, but will error on the master.
+#
+# Typically the result of encryption is for a node and the target resource where the encrypted value is used as the
+# value of an attribute is not prepared to handle the decryption. To be able to send the encrypted value and
+# to give the resource a Sensitive decrypted value a `Deferred` value is used.
+#
+# @example Using a Deferred value to decrypt on the agent node
+#   class mymodule::myclass(Sensitive $password) {
+#     mymodule::myresource { 'example':
+#       password => Deferred('decrypt', Encrypted($password))
+#     }
+#   }
+#
+# There is no need to wrap the `Encrypted` in a `Sensitive` since the decrypted result is always wrapped in a `Sensitive` if
+# not already being a sensitive value.
+#
+# See the `decrypt()` function for details about decryption.
+#
+
+# @since 5.5x TBD
+#
 Puppet::Functions.create_function(:new, Puppet::Functions::InternalFunction) do
 
   dispatch :new_instance do
