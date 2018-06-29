@@ -96,7 +96,7 @@ module Serialization
         end
       elsif value.instance_of?(Hash)
         process(value) do
-          if value.keys.all? { |key| key.is_a?(String) }
+          if value.keys.all? { |key| key.is_a?(String) && key != PCORE_TYPE_KEY }
             result = {}
             value.each_pair { |key, elem| with(key) { result[key] = to_data(elem) } }
             result
