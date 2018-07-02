@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# This is a change for a dummy PR
 require 'spec_helper'
 
 require 'puppet/ssl/host'
