@@ -235,6 +235,11 @@ describe provider_class do
       expect(@provider.process_values(command)).to eq(true)
     end
 
+    it "should return true for an array match with double quotes and spaces" do
+      command = ["values", "fake value", "==   [  \"set\"  ,  \"of\" , \"values\"  ]  "]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
     it "should return false for an array non match" do
       command = ["values", "fake value", "== ['this', 'should', 'not', 'match']"]
       expect(@provider.process_values(command)).to eq(false)
@@ -247,6 +252,11 @@ describe provider_class do
 
     it "should return true for an array non match with noteq" do
       command = ["values", "fake value", "!= ['this', 'should', 'not', 'match']"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an array non match with double quotes and spaces" do
+      command = ["values", "fake value", "!=   [  \"this\"  ,  \"should\" ,\"not\",  \"match\"  ]  "]
       expect(@provider.process_values(command)).to eq(true)
     end
   end
@@ -294,6 +304,11 @@ describe provider_class do
       expect(@provider.process_match(command)).to eq(true)
     end
 
+    it "should return true for an array match with double quotes and spaces" do
+      command = ["match", "fake value", "==   [  \"set\"  ,  \"of\" , \"values\"  ]  "]
+      expect(@provider.process_match(command)).to eq(true)
+    end
+
     it "should return false for an array non match" do
       command = ["match", "fake value", "== ['this', 'should', 'not', 'match']"]
       expect(@provider.process_match(command)).to eq(false)
@@ -306,6 +321,11 @@ describe provider_class do
 
     it "should return true for an array non match with noteq" do
       command = ["match", "fake value", "!= ['this', 'should', 'not', 'match']"]
+      expect(@provider.process_match(command)).to eq(true)
+    end
+
+    it "should return true for an array non match with double quotes and spaces" do
+      command = ["match", "fake value", "!=   [  \"this\"  ,  \"should\" ,\"not\",  \"match\"  ]  "]
       expect(@provider.process_match(command)).to eq(true)
     end
   end

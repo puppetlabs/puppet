@@ -281,7 +281,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     when "=="
       begin
         arg = clause_array.shift
-        new_array = eval arg
+        new_array = to_array(arg)
         return_value = (values == new_array)
       rescue
         fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
@@ -289,7 +289,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     when "!="
       begin
         arg = clause_array.shift
-        new_array = eval arg
+        new_array = to_array(arg)
         return_value = (values != new_array)
       rescue
         fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
@@ -337,7 +337,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     when "=="
       begin
         arg = clause_array.shift
-        new_array = eval arg
+        new_array = to_array(arg)
         return_value = (result == new_array)
       rescue
         fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
@@ -345,7 +345,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     when "!="
       begin
         arg = clause_array.shift
-        new_array = eval arg
+        new_array = to_array(arg)
         return_value = (result != new_array)
       rescue
         fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
@@ -570,4 +570,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       end
     end
   end
+
+  def to_array(string)
+    string.strip # strip leading and trailing space
+      .sub(/^\[\s*['"]/, '') # strip leading [, spaces and single/double quote
+      .sub(/['"]\s*\]$/, '') # strip trailing single/double quote, spaces, and ]
+      .split(/['"]\s*,\s*['"]/) # split around comma, consuming the quotes and spaces before and after
+  end
+
+  private :to_array
 end
