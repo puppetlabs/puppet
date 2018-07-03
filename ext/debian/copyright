@@ -84,10 +84,6 @@ License: MIT
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
 
-Files: lib/puppet/provider/augeas/augeas.rb, lib/puppet/type/augeas.rb
-Copyright: Red Hat Inc.
-License: GPL-2+
-
 Files: lib/puppet/provider/mcx/mcxcontent.rb
 Copyright: Jeff McCune <jeff@northstarlabs.net>
 License: GPL-2+

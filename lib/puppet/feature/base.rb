@@ -54,9 +54,6 @@ Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SU
 # We have lcs diff
 Puppet.features.add :diff, :libs => %w{diff/lcs diff/lcs/hunk}
 
-# We have augeas
-Puppet.features.add(:augeas, :libs => ["augeas"])
-
 # We have OpenSSL
 Puppet.features.add(:openssl, :libs => ["openssl"])
 
