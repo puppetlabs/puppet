@@ -7,7 +7,6 @@ class StaticLoader < Loader
 
   BUILTIN_TYPE_NAMES = %w{
       Component
-      Computer
       Cron
       Exec
       File
@@ -16,8 +15,6 @@ class StaticLoader < Loader
       Host
       Interface
       K5login
-      Macauthorization
-      Mcx
       Mount
       Node
       Notify
