@@ -851,10 +851,14 @@ Puppet::Type.newtype(:file) do
     remove_existing(:file)
 
     mode = self.should(:mode) # might be nil
+    owner = self.should(:owner)
+    group = self.should(:group)
     mode_int = mode ? symbolic_mode_to_int(mode, Puppet::Util::DEFAULT_POSIX_MODE) : nil
+    uid = owner ? self.provider.name2uid(owner) : nil
+    gid = group ? self.provider.name2gid(owner) : nil
 
     if write_temporary_file?
-      Puppet::Util.replace_file(self[:path], mode_int) do |file|
+      Puppet::Util.replace_file(self[:path], mode_int, uid, gid) do |file|
         file.binmode
         devfail 'a property should have been provided if write_temporary_file? returned true' if property.nil?
         content_checksum = property.write(file)

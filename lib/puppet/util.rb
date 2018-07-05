@@ -560,7 +560,7 @@ module Util
   DEFAULT_POSIX_MODE = 0644
   DEFAULT_WINDOWS_MODE = nil
 
-  def replace_file(file, default_mode, &block)
+  def replace_file(file, default_mode, default_uid=nil, default_gid=nil, &block)
     raise Puppet::DevError, _("replace_file requires a block") unless block_given?
 
     if default_mode
@@ -582,6 +582,7 @@ module Util
       # encoding for Uniquefile is not important here because the caller writes to it as it sees fit
       tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
 
+      tempfile.chown(default_uid, default_gid)
       effective_mode =
       if !Puppet.features.microsoft_windows?
         # Grab the current file mode, and fall back to the defaults.

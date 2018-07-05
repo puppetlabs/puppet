@@ -1141,13 +1141,13 @@ describe Puppet::Type.type(:file) do
 
         it "should convert symbolic mode to int" do
           file[:mode] = 'oga=r'
-          Puppet::Util.expects(:replace_file).with(file[:path], 0444)
+          Puppet::Util.expects(:replace_file).with(file[:path], 0444, nil, nil)
           file.write
         end
 
         it "should support int modes" do
           file[:mode] = '0444'
-          Puppet::Util.expects(:replace_file).with(file[:path], 0444)
+          Puppet::Util.expects(:replace_file).with(file[:path], 0444, nil, nil)
           file.write
         end
       end
