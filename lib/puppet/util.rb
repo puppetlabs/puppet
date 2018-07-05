@@ -587,9 +587,9 @@ module Util
         if Puppet::FileSystem.exist?(file)
           stat = Puppet::FileSystem.lstat(file)
           tempfile.chown(stat.uid, stat.gid)
-          stat.mode
+          tempfile.chmod(stat.mode)
         else
-          mode
+          tempfile.chmod(mode)
         end
       end
 
