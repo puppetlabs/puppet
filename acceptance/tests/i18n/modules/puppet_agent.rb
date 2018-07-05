@@ -64,7 +64,7 @@ test_name 'C100565: puppet agent with module should translate messages' do
         PP
         create_sitepp(master, tmp_environment_1, site_pp_content_1)
         on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
-          assert_match(/Error:.*\w+-i18ndemo fact: これは\w+-i18ndemoからのカスタムファクトからのレイズです/, result.stderr, 'missing translation for raise from ruby fact')
+          assert_match(/Warning:.*\w+-i18ndemo fact: これは\w+-i18ndemoからのカスタムファクトからのレイズです/, result.stderr, 'missing translation for raise from ruby fact')
         end
       end
 

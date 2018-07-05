@@ -130,8 +130,8 @@ public_binaries = {
 }
 
 def locations(platform, ruby_arch, type)
-  if type != 'aio'
-    return '/usr/bin'
+  if type == 'gem'
+    return '/usr/local/bin'
   end
 
   case platform
@@ -142,7 +142,7 @@ def locations(platform, ruby_arch, type)
     else
       ruby_arch = /-32/
     end
-    if platform =~ ruby_arch
+    if platform =~ /-32/
       return 'C:/Program Files/Puppet Labs/Puppet/bin'
     else
       return 'C:/Program Files (x86)/Puppet Labs/Puppet/bin'
@@ -157,7 +157,7 @@ agents.each do |agent|
   dir = locations(agent[:platform], agent[:ruby_arch], @options[:type])
   os = agent['platform'] =~ /windows/ ? :win : :posix
 
-  file_type =  (@options[:type] == 'git' || os == :win) ? :binary : :symlink
+  file_type = :binary
 
   public_binaries[os].each do |binary|
     path = File.join(dir, binary)

@@ -46,7 +46,7 @@ test_name 'C100567: puppet apply of module should translate messages' do
     step "Run puppet apply of a module with language #{agent_language} and verify the translations" do
       step 'verify custom fact translations' do
         on(agent, puppet("apply -e \"class { 'i18ndemo': filename => '#{type_path}' }\"", 'ENV' => shell_env_language)) do |apply_result|
-          assert_match(/Error:.*\w+-i18ndemo fact: これは\w+-i18ndemoからのカスタムファクトからのレイズです/, apply_result.stderr, 'missing translation for raise from ruby fact')
+          assert_match(/Warning:.*\w+-i18ndemo fact: これは\w+-i18ndemoからのカスタムファクトからのレイズです/, apply_result.stderr, 'missing translation for raise from ruby fact')
         end
       end
 
