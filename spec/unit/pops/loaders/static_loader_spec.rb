@@ -28,7 +28,6 @@ describe 'the static loader' do
   context 'provides access to resource types built into puppet' do
     %w{
       Component
-      Computer
       Cron
       Exec
       File
@@ -37,8 +36,6 @@ describe 'the static loader' do
       Host
       Interface
       K5login
-      Macauthorization
-      Mcx
       Mount
       Notify
       Package

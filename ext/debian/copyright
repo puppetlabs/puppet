@@ -84,14 +84,6 @@ License: MIT
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
 
-Files: lib/puppet/provider/mcx/mcxcontent.rb
-Copyright: Jeff McCune <jeff@northstarlabs.net>
-License: GPL-2+
-
-Files: lib/puppet/type/mcx.rb, spec/unit/type/mcx.rb
-Copyright: Jeffrey J McCune.
-License: GPL-2+
-
 Files: lib/puppet/provider/nameservice/directoryservice.rb
 Copyright: Jeff McCune
 License: GPL-2
