@@ -182,12 +182,14 @@ describe Puppet::Settings::FileSetting do
     end
 
     it "should set the mode on the file if a mode is provided as an octal number" do
+      Puppet[:manage_internal_file_permissions] = true
       @file.mode = 0755
 
       expect(@file.to_resource[:mode]).to eq('755')
     end
 
     it "should set the mode on the file if a mode is provided as a string" do
+      Puppet[:manage_internal_file_permissions] = true
       @file.mode = '0755'
 
       expect(@file.to_resource[:mode]).to eq('755')
@@ -202,6 +204,7 @@ describe Puppet::Settings::FileSetting do
     end
 
     it "should set the owner if running as root and the owner is provided" do
+      Puppet[:manage_internal_file_permissions] = true
       Puppet.features.expects(:root?).returns true
       Puppet.features.stubs(:microsoft_windows?).returns false
 
@@ -218,6 +221,7 @@ describe Puppet::Settings::FileSetting do
     end
 
     it "should set the group if running as root and the group is provided" do
+      Puppet[:manage_internal_file_permissions] = true
       Puppet.features.expects(:root?).returns true
       Puppet.features.stubs(:microsoft_windows?).returns false
 
@@ -235,6 +239,7 @@ describe Puppet::Settings::FileSetting do
 
 
     it "should not set owner if not running as root" do
+      Puppet[:manage_internal_file_permissions] = true
       Puppet.features.expects(:root?).returns false
       Puppet.features.stubs(:microsoft_windows?).returns false
       @file.stubs(:owner).returns "foo"
@@ -242,6 +247,7 @@ describe Puppet::Settings::FileSetting do
     end
 
     it "should not set group if not running as root" do
+      Puppet[:manage_internal_file_permissions] = true
       Puppet.features.expects(:root?).returns false
       Puppet.features.stubs(:microsoft_windows?).returns false
       @file.stubs(:group).returns "foo"
