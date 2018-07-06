@@ -32,6 +32,7 @@ class Puppet::Application::Device < Puppet::Application
       :centrallogs => false,
       :setdest => false,
       :resource => false,
+      :facts => false,
       :target => nil,
       :to_yaml => false,
     }.each do |opt,val|
@@ -44,6 +45,7 @@ class Puppet::Application::Device < Puppet::Application
   option("--centrallogging")
   option("--debug","-d")
   option("--resource","-r")
+  option("--facts","-f")
   option("--to_yaml","-y")
   option("--verbose","-v")
 
@@ -93,7 +95,7 @@ USAGE
 -----
   puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
                 [-h|--help] [-l|--logdest syslog|<file>|console]
-                [-v|--verbose] [-w|--waitforcert <seconds>]
+                [-v|--verbose] [-w|--waitforcert <seconds>] [-f|--facts]
                 [-a|--apply <file>] [-r|--resource <type> [name]]
                 [-t|--target <device>] [--user=<user>] [-V|--version]
 
@@ -163,6 +165,9 @@ you can specify '--server <servername>' as an argument.
 * --apply:
   Apply a manifest against a remote target. Target must be specified.
 
+* --facts:
+  Displays the facts of a remote target. Target must be specified.
+
 * --resource:
   Displays a resource state as Puppet code, roughly equivalent to
   `puppet resource`.  Can be filterd by title. Requires --target be specified.
@@ -209,6 +214,9 @@ Licensed under the Apache 2.0 License
   def main
     if options[:resource] and !options[:target]
       raise _("resource command requires target")
+    end
+    if options[:facts] and !options[:target]
+      raise _("facts command requires target")
     end
     unless options[:apply].nil?
       raise _("missing argument: --target is required when using --apply") if options[:target].nil?
@@ -265,6 +273,14 @@ Licensed under the Apache 2.0 License
               end.join("\n")
             end
             (puts text)
+            0
+          elsif options[:facts]
+            Puppet.info _("retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
+            remote_facts = Puppet::Node::Facts.indirection.find(name, :environment => env)
+            # Give a proper name to the facts
+            remote_facts.name = remote_facts.values['clientcert']
+            renderer = Puppet::Network::FormatHandler.format(:console)
+            puts renderer.render(remote_facts)
             0
           elsif options[:apply]
             # ensure we have a cache folder structure exists for the device
@@ -346,7 +362,7 @@ Licensed under the Apache 2.0 License
 
   def setup
     setup_logs
-    if options[:resource] || options[:apply]
+    if options[:apply] || options[:facts] || options[:resource]
       Puppet::Util::Log.newdestination(:console)
       Puppet.settings.use :main, :agent, :ssl
     else
