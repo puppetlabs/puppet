@@ -72,7 +72,7 @@ describe Puppet::Settings::AutosignSetting do
   end
 
   describe "converting the setting to a resource" do
-    it "converts the file path to a file resource" do
+    it "converts the file path to a file resource", :if => !Puppet::Util::Platform.windows? do
       path = File.expand_path('/path/to/autosign.conf')
       settings.stubs(:value).with('autosign', nil, false).returns(path)
       Puppet::FileSystem.stubs(:exist?).with(path).returns true
