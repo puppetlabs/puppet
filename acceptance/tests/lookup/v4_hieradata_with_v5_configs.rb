@@ -4,9 +4,10 @@ test_name 'C99572: v4 hieradata with v5 configs' do
 
 tag 'audit:medium',
     'audit:acceptance',
-    'audit:refactor',  # Master is not needed for this test. Refactor
+    'audit:refactor'   # Master is not needed for this test. Refactor
                        # to use puppet apply with a local module tree.
 
+  skip_test 'requires hocon which is included in AIO' if @options[:type] != 'aio'
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
