@@ -6,7 +6,6 @@ module Loader
 class StaticLoader < Loader
 
   BUILTIN_TYPE_NAMES = %w{
-      Augeas
       Component
       Computer
       Cron
