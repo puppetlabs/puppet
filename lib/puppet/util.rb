@@ -300,6 +300,8 @@ module Util
     # would use Puppet.features.microsoft_windows?, but this method needs to
     # be called during the initialization of features so it can't depend on
     # that.
+    #
+    # @deprecated Use ruby's built-in methods to determine if a path is absolute.
     platform ||= Puppet::Util::Platform.windows? ? :windows : :posix
     regex = case platform
             when :windows
