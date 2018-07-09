@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'fileutils'
 
 require 'puppet/util/autoload'
 
@@ -62,11 +63,16 @@ describe Puppet::Util::Autoload do
       end
     end
 
-    it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do
-      Puppet[:libdir] = '/libdir1'
+    it "should include the module directories, the Puppet libdir, Ruby load directories, and vendored modules" do
+      vendor_dir = tmpdir('vendor_modules')
+      module_libdir = File.join(vendor_dir, 'amodule_core', 'lib')
+      FileUtils.mkdir_p(module_libdir)
+
+      Puppet[:libdir] = File.expand_path('/libdir1')
+      Puppet[:vendormoduledir] = vendor_dir
       @autoload.class.expects(:gem_directories).returns %w{/one /two}
       @autoload.class.expects(:module_directories).returns %w{/three /four}
-      expect(@autoload.class.search_directories(nil)).to eq(%w{/one /two /three /four} + [Puppet[:libdir]] + $LOAD_PATH)
+      expect(@autoload.class.search_directories(nil)).to eq(%w{/one /two /three /four} + [File.expand_path('/libdir1')] + $LOAD_PATH + [module_libdir])
     end
 
     it "does not split the Puppet[:libdir]" do

@@ -38,11 +38,23 @@ module Puppet
       installdir = Facter.value(:env_windows_installdir)
       if installdir
         path << "#{installdir}/puppet/modules"
-        path << "#{installdir}/puppet/vendor_modules"
       end
       path.join(File::PATH_SEPARATOR)
     else
-      '$codedir/modules:/opt/puppetlabs/puppet/modules:/opt/puppetlabs/puppet/vendor_modules'
+      '$codedir/modules:/opt/puppetlabs/puppet/modules'
+    end
+  end
+
+  def self.default_vendormoduledir
+    if Puppet::Util::Platform.windows?
+      installdir = Facter.value(:env_windows_installdir)
+      if installdir
+        "#{installdir}\\puppet\\vendor_modules"
+      else
+        nil
+      end
+    else
+      '/opt/puppetlabs/puppet/vendor_modules'
     end
   end
 
@@ -1308,6 +1320,14 @@ EOT
         the `modules` directory of the active environment will have priority over
         any global directories. For more info, see
         <https://puppet.com/docs/puppet/latest/environments_about.html>",
+    },
+    :vendormoduledir => {
+      :default => lambda { default_vendormoduledir },
+      :type => :directory,
+      :desc => "The directory containing **vendored** modules. These modules will
+      be used by _all_ environments like those in the `basemodulepath`. The only
+      difference is that modules in the `basemodulepath` are pluginsynced, while
+      vendored modules are not",
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
