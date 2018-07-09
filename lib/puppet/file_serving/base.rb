@@ -81,6 +81,6 @@ class Puppet::FileServing::Base
   end
 
   def self.absolute?(path)
-    Puppet::Util.absolute_path?(path, :posix) or (Puppet.features.microsoft_windows? and Puppet::Util.absolute_path?(path, :windows))
+    Pathname.new(path.to_s).absolute?
   end
 end

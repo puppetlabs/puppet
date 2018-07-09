@@ -148,21 +148,14 @@ describe Puppet::FileServing::Base do
   end
 
   describe "#absolute?" do
-    it "should be accept POSIX paths" do
+    it "should accept POSIX paths" do
       expect(Puppet::FileServing::Base).to be_absolute('/')
     end
 
-    it "should accept Windows paths on Windows" do
-      Puppet.features.stubs(:microsoft_windows?).returns(true)
-      Puppet.features.stubs(:posix?).returns(false)
-
-      expect(Puppet::FileServing::Base).to be_absolute('c:/foo')
-    end
-
-    it "should reject Windows paths on POSIX" do
-      Puppet.features.stubs(:microsoft_windows?).returns(false)
-
-      expect(Puppet::FileServing::Base).not_to be_absolute('c:/foo')
+    describe "on windows", :if => Puppet.features.microsoft_windows? do
+      it "should accept windows paths as absolute" do
+        expect(Puppet::FileServing::Base).to be_absolute_path('C:/foo')
+      end
     end
   end
 end
