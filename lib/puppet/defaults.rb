@@ -1627,7 +1627,9 @@ EOT
       :type       => :boolean,
       :desc       => "Whether to only use the cached catalog rather than compiling a new catalog
         on every run.  Puppet can be run with this enabled by default and then selectively
-        disabled when a recompile is desired.",
+        disabled when a recompile is desired. Because a Puppet agent using cached catalogs
+        does not contact the master for a new catalog, it also does not upload facts at
+        the beginning of the Puppet run.",
     },
     :ignoremissingtypes => {
       :default    => false,
