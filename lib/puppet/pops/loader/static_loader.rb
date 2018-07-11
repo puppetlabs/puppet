@@ -33,7 +33,6 @@ class StaticLoader < Loader
       User
       Vlan
       Whit
-      Yumrepo
     }.freeze
 
   BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze
