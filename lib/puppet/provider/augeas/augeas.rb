@@ -606,18 +606,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   private :single_quote_unescaped_char
 
   def single_quote_escaped_char(scanner)
-    match = scanner.scan(/\\(['\\])/)
-    return nil if match.nil?
-
-    scanner[1]
+    scanner.scan(/\\(['\\])/) && scanner[1]
   end
   private :single_quote_escaped_char
 
   def single_quote_char(scanner)
-    match = single_quote_escaped_char(scanner)
-    return match unless match.nil?
-
-    single_quote_unescaped_char(scanner)
+    single_quote_escaped_char(scanner) || single_quote_unescaped_char(scanner)
   end
   private :single_quote_char
 
@@ -660,10 +654,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         return hex_character.to_i(16).chr
       end
     when 'u'
-      unicode = unicode_short_hex_character(scanner)
-      return unicode unless unicode.nil?
-
-      return unicode_long_hex_characters(scanner)
+      return unicode_short_hex_character(scanner) || unicode_long_hex_characters(scanner)
     else
       # Not a valid escape sequence as far as we're concerned.
       return nil
@@ -729,10 +720,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   private :single_quoted_string
 
   def double_quote_char(scanner)
-    match = double_quote_escaped_char(scanner)
-    return match unless match.nil?
-
-    double_quote_unescaped_char(scanner)
+    double_quote_escaped_char(scanner) || double_quote_unescaped_char(scanner)
   end
   private :double_quote_char
 
@@ -761,10 +749,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   private :double_quoted_string
 
   def quoted_string(scanner)
-    match = single_quoted_string(scanner)
-    return match unless match.nil?
-
-    double_quoted_string(scanner)
+    single_quoted_string(scanner) || double_quoted_string(scanner)
   end
   private :quoted_string
 
