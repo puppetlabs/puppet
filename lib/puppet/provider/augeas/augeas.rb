@@ -281,7 +281,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     when "=="
       begin
         arg = clause_array.shift
-        new_array = eval arg
+        new_array = to_array(arg)
         return_value = (values == new_array)
       rescue
         fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
@@ -289,7 +289,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     when "!="
       begin
         arg = clause_array.shift
-        new_array = eval arg
+        new_array = to_array(arg)
         return_value = (values != new_array)
       rescue
         fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
@@ -337,7 +337,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     when "=="
       begin
         arg = clause_array.shift
-        new_array = eval arg
+        new_array = to_array(arg)
         return_value = (result == new_array)
       rescue
         fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
@@ -345,7 +345,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     when "!="
       begin
         arg = clause_array.shift
-        new_array = eval arg
+        new_array = to_array(arg)
         return_value = (result != new_array)
       rescue
         fail(_("Invalid array in command: %{cmd}") % { cmd: cmd_array.join(" ") })
@@ -570,4 +570,217 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       end
     end
   end
+
+  def to_array(string)
+    s = StringScanner.new(string)
+    match = array_open(s)
+    raise "Unable to parse array. Unexpected character at: #{s.rest}" if match.nil?
+
+    array_content = array_values(s)
+
+    match = array_close(s)
+    raise "Unable to parse array. Unexpected character at: #{s.rest}" if match.nil?
+
+    array_content
+  end
+  private :to_array
+
+  def array_open(scanner)
+    scanner.scan(/\s*\[\s*/)
+  end
+  private :array_open
+
+  def array_close(scanner)
+    scanner.scan(/\s*\]\s*/)
+  end
+  private :array_close
+
+  def array_separator(scanner)
+    scanner.scan(/\s*,\s*/)
+  end
+  private :array_separator
+
+  def single_quote_unescaped_char(scanner)
+    scanner.scan(/[^'\\]/)
+  end
+  private :single_quote_unescaped_char
+
+  def single_quote_escaped_char(scanner)
+    match = scanner.scan(/\\(['\\])/)
+    return nil if match.nil?
+
+    scanner[1]
+  end
+  private :single_quote_escaped_char
+
+  def single_quote_char(scanner)
+    match = single_quote_escaped_char(scanner)
+    return match unless match.nil?
+
+    single_quote_unescaped_char(scanner)
+  end
+  private :single_quote_char
+
+  def double_quote_unescaped_char(scanner)
+    scanner.scan(/[^"\\]/)
+  end
+  private :double_quote_unescaped_char
+
+  # This handles the possible Ruby escape sequences in double-quoted strings,
+  # except for \M-x, \M-\C-x, \M-\cx, \c\M-x, \c?, and \C-?. The full list of
+  # escape sequences, and their meanings is taken from:
+  # https://github.com/ruby/ruby/blob/90fdfec11a4a42653722e2ce2a672d6e87a57b8e/doc/syntax/literals.rdoc#strings
+  def double_quote_escaped_char(scanner)
+    match = scanner.scan(/\\(["\\abtnvfres0-7xu])/)
+    return nil if match.nil?
+
+    case scanner[1]
+    when '\\' then return '\\'
+    when '"'  then return '"'
+    when 'a'  then return "\a"
+    when 'b'  then return "\b"
+    when 't'  then return "\t"
+    when 'n'  then return "\n"
+    when 'v'  then return "\v"
+    when 'f'  then return "\f"
+    when 'r'  then return "\r"
+    when 'e'  then return "\e"
+    when 's'  then return "\s"
+    when /[0-7]/
+      octal_character = scanner[1]
+      other_digits = scanner.scan(/[0-7]{1,2}/)
+      octal_character << other_digits unless other_digits.nil?
+
+      return octal_character.to_i(8).chr
+    when 'x'
+      hex_character = scanner.scan(/[0-9a-fA-F]{1,2}/)
+      if hex_character.nil?
+        return nil
+      else
+        return hex_character.to_i(16).chr
+      end
+    when 'u'
+      unicode = unicode_short_hex_character(scanner)
+      return unicode unless unicode.nil?
+
+      return unicode_long_hex_characters(scanner)
+    else
+      # Not a valid escape sequence as far as we're concerned.
+      return nil
+    end
+  end
+  private :double_quote_escaped_char
+
+  def unicode_short_hex_character(scanner)
+    unicode_character = scanner.scan(/[0-9a-fA-F]{4}/)
+    if unicode_character.nil?
+      return nil
+    else
+      return [unicode_character.hex].pack 'U'
+    end
+  end
+  private :unicode_short_hex_character
+
+  def unicode_long_hex_characters(scanner)
+    unicode_string = ''
+    return nil unless scanner.scan(/{/)
+
+    loop do
+      char = scanner.scan(/[0-9a-fA-F]{1,6}/)
+      break if char.nil?
+      unicode_string << [char.hex].pack('U')
+
+      separator = scanner.scan(/\s/)
+      break if separator.nil?
+    end
+
+    return nil unless scanner.scan(/}/)
+
+    if unicode_string.empty?
+      return nil
+    else
+      return unicode_string
+    end
+  end
+  private :unicode_long_hex_characters
+
+  def single_quoted_string(scanner)
+    quoted_string = ''
+    original_pos = scanner.pos
+
+    match = scanner.scan(/'/)
+    return nil if match.nil?
+
+    loop do
+      match = single_quote_char(scanner)
+      break if match.nil?
+
+      quoted_string << match
+    end
+
+    match = scanner.scan(/'/)
+    if match
+      return quoted_string
+    else
+      scanner.pos = original_pos
+      return nil
+    end
+  end
+  private :single_quoted_string
+
+  def double_quote_char(scanner)
+    match = double_quote_escaped_char(scanner)
+    return match unless match.nil?
+
+    double_quote_unescaped_char(scanner)
+  end
+  private :double_quote_char
+
+  def double_quoted_string(scanner)
+    quoted_string = ''
+    original_pos = scanner.pos
+
+    match = scanner.scan(/"/)
+    return nil if match.nil?
+
+    loop do
+      match = double_quote_char(scanner)
+      break if match.nil?
+
+      quoted_string << match
+    end
+
+    match = scanner.scan(/"/)
+    if match
+      return quoted_string
+    else
+      scanner.pos = original_pos
+      return nil
+    end
+  end
+  private :double_quoted_string
+
+  def quoted_string(scanner)
+    match = single_quoted_string(scanner)
+    return match unless match.nil?
+
+    double_quoted_string(scanner)
+  end
+  private :quoted_string
+
+  def array_values(scanner)
+    values = []
+
+    loop do
+      match = quoted_string(scanner)
+      break if match.nil?
+      values << match
+
+      match = array_separator(scanner)
+      break if match.nil?
+    end
+
+    values
+  end
+  private :array_values
 end

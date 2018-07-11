@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/package'
 
@@ -235,6 +234,50 @@ describe provider_class do
       expect(@provider.process_values(command)).to eq(true)
     end
 
+    it "should return true for an array match with double quotes and spaces" do
+      command = ["values", "fake value", "==   [  \"set\"  ,  \"of\" , \"values\"  ]  "]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an array match with internally escaped single quotes" do
+      @provider.aug.stubs(:match).returns(["set", "o'values", "here"])
+      @provider.aug.stubs(:get).returns('set').then.returns("o'values").then.returns('here')
+      command = ["values", "fake value", "== [ 'set', 'o\\'values', 'here']"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an array match with octal character sequences" do
+      command = ["values", "fake value", "== [\"\\x73et\", \"of\", \"values\"]"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an array match with hex character sequences" do
+      command = ["values", "fake value", "== [\"\\163et\", \"of\", \"values\"]"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an array match with short unicode escape sequences" do
+      command = ["values", "fake value", "== [\"\\u0073et\", \"of\", \"values\"]"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an array match with single character long unicode escape sequences" do
+      command = ["values", "fake value", "== [\"\\u{0073}et\", \"of\", \"values\"]"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an array match with multi-character long unicode escape sequences" do
+      command = ["values", "fake value", "== [\"\\u{0073 0065 0074}\", \"of\", \"values\"]"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an array match with literal backslashes" do
+      @provider.aug.stubs(:match).returns(["set", "o\\values", "here"])
+      @provider.aug.stubs(:get).returns('set').then.returns("o\\values").then.returns('here')
+      command = ["values", "fake value", "== [ 'set', 'o\\\\values', 'here']"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
     it "should return false for an array non match" do
       command = ["values", "fake value", "== ['this', 'should', 'not', 'match']"]
       expect(@provider.process_values(command)).to eq(false)
@@ -247,6 +290,18 @@ describe provider_class do
 
     it "should return true for an array non match with noteq" do
       command = ["values", "fake value", "!= ['this', 'should', 'not', 'match']"]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an array non match with double quotes and spaces" do
+      command = ["values", "fake value", "!=   [  \"this\"  ,  \"should\" ,\"not\",  \"match\"  ]  "]
+      expect(@provider.process_values(command)).to eq(true)
+    end
+
+    it "should return true for an empty array match" do
+      @provider.aug.stubs(:match).returns([])
+      @provider.aug.stubs(:get)
+      command = ["values", "fake value", "== []"]
       expect(@provider.process_values(command)).to eq(true)
     end
   end
@@ -294,6 +349,11 @@ describe provider_class do
       expect(@provider.process_match(command)).to eq(true)
     end
 
+    it "should return true for an array match with double quotes and spaces" do
+      command = ["match", "fake value", "==   [  \"set\"  ,  \"of\" , \"values\"  ]  "]
+      expect(@provider.process_match(command)).to eq(true)
+    end
+
     it "should return false for an array non match" do
       command = ["match", "fake value", "== ['this', 'should', 'not', 'match']"]
       expect(@provider.process_match(command)).to eq(false)
@@ -306,6 +366,11 @@ describe provider_class do
 
     it "should return true for an array non match with noteq" do
       command = ["match", "fake value", "!= ['this', 'should', 'not', 'match']"]
+      expect(@provider.process_match(command)).to eq(true)
+    end
+
+    it "should return true for an array non match with double quotes and spaces" do
+      command = ["match", "fake value", "!=   [  \"this\"  ,  \"should\" ,\"not\",  \"match\"  ]  "]
       expect(@provider.process_match(command)).to eq(true)
     end
   end
