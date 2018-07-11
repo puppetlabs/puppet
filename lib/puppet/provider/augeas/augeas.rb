@@ -697,7 +697,6 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   def single_quoted_string(scanner)
     quoted_string = ''
-    original_pos = scanner.pos
 
     match = scanner.scan(/'/)
     return nil if match.nil?
@@ -713,7 +712,6 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     if match
       return quoted_string
     else
-      scanner.pos = original_pos
       return nil
     end
   end
@@ -726,7 +724,6 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   def double_quoted_string(scanner)
     quoted_string = ''
-    original_pos = scanner.pos
 
     match = scanner.scan(/"/)
     return nil if match.nil?
@@ -742,7 +739,6 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     if match
       return quoted_string
     else
-      scanner.pos = original_pos
       return nil
     end
   end
