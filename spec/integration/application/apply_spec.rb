@@ -1,12 +1,14 @@
 require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet_spec/compiler'
+require 'puppet/configurer'
 
 describe "apply" do
   include PuppetSpec::Files
 
   before :each do
     Puppet[:reports] = "none"
+    Puppet::Configurer.any_instance.stubs(:request_newest_crl)
   end
 
   describe "when applying provided catalogs" do
@@ -163,7 +165,7 @@ end
                     'street' => String,
                     'zipcode' => String,
                     'city' => String,
-                  } 
+                  }
                 }]
               PUPPET
               'address.pp' => <<-PUPPET,
@@ -171,7 +173,7 @@ end
                   parent => Mod::StreetAddress,
                   attributes => {
                     'state' => String
-                  } 
+                  }
                 }]
               PUPPET
               'contact.pp' => <<-PUPPET,

@@ -64,6 +64,16 @@ authorization: {
             name: "puppetlabs report"
         },
         {
+            match-request: {
+                path: "/puppet-ca/v1/certificate_revocation_list/ca"
+                type: path
+                method: get
+            }
+            allow-unauthenticated: true
+            sort-order: 500
+            name: "puppetlabs crl"
+          },
+        {
           match-request: {
             path: "/"
             type: path

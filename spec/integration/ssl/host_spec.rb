@@ -75,7 +75,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     @host.generate
     @ca = Puppet::SSL::CertificateAuthority.new
     @ca.sign(@host.name)
-    @host.stubs(:download_and_save_crl_bundle)
 
     expect(@host.ssl_store.verify(@host.certificate.content)).to be_truthy
   end

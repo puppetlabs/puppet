@@ -36,7 +36,7 @@ test_name "The report specifies which master was contacted during failover" do
           remove_reports_on_master(master_reportdir, agent.node_name)
         end
 
-        step "master_field should not appear when no master could be conatacted" do
+        step "master_field should not appear when no master could be contacted" do
           on(agent, puppet("agent", "-t", "--config #{tmpconf}", "--server_list=badmaster:1","--http_connect_timeout=5s", "--report_server=#{master}"), :acceptable_exit_codes => [1])
           on(master, "cat #{master_reportdir}/#{agent.node_name}/*") do
             assert_no_match(/master_used:/, stdout, "did not expect master_used to be in the report")
