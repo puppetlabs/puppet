@@ -2,8 +2,16 @@
 require 'spec_helper'
 require 'puppet/property'
 
+Puppet::Type.newtype(:property_test) do
+  newparam(:name, isnamevar: true)
+end
+Puppet::Type.type(:property_test).provide(:property_test) do
+end
+
 describe Puppet::Property do
-  let :resource do Puppet::Type.type(:host).new :name => "foo" end
+  let :resource do
+    Puppet::Type.type(:property_test).new(:name => "foo")
+  end
 
   let :subclass do
     # We need a completely fresh subclass every time, because we modify both

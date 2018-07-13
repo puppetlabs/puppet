@@ -3,6 +3,13 @@ require 'spec_helper'
 
 require 'puppet/util/logging'
 
+Puppet::Type.newtype(:logging_test) do
+  newparam(:name, isnamevar: true)
+  newproperty(:path)
+end
+Puppet::Type.type(:logging_test).provide(:logging_test) do
+end
+
 class LoggingTester
   include Puppet::Util::Logging
 end
@@ -47,7 +54,7 @@ describe Puppet::Util::Logging do
     end
 
     it "should use the path of any provided resource type" do
-      resource = Puppet::Type.type(:host).new :name => "foo"
+      resource = Puppet::Type.type(:logging_test).new :name => "foo"
 
       resource.expects(:path).returns "/path/to/host".to_sym
 
@@ -57,7 +64,7 @@ describe Puppet::Util::Logging do
     end
 
     it "should use the path of any provided resource parameter" do
-      resource = Puppet::Type.type(:host).new :name => "foo"
+      resource = Puppet::Type.type(:logging_test).new :name => "foo"
 
       param = resource.parameter(:name)
 
