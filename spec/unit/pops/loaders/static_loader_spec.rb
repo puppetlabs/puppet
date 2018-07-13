@@ -33,7 +33,6 @@ describe 'the static loader' do
       File
       Filebucket
       Group
-      Host
       Interface
       K5login
       Mount

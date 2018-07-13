@@ -12,7 +12,6 @@ class StaticLoader < Loader
       File
       Filebucket
       Group
-      Host
       Interface
       K5login
       Mount
