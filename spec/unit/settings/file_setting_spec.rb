@@ -30,13 +30,16 @@ describe Puppet::Settings::FileSetting do
       settings
     end
 
+    # S-1-5-32-544 is the well-known SID for Administrators group
+    let(:platform_root) { Puppet.features.microsoft_windows? ? 'S-1-5-32-544' : 'root' }
+
     context "owner" do
       it "can always be root" do
         settings = settings(:user => "the_service", :mkusers => true)
 
         setting = FileSetting.new(:settings => settings, :owner => "root", :desc => "a setting")
 
-        expect(setting.owner).to eq("root")
+        expect(setting.owner).to eq(platform_root)
       end
 
       it "is the service user if we are making users" do
@@ -60,7 +63,7 @@ describe Puppet::Settings::FileSetting do
 
         setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
 
-        expect(setting.owner).to eq("root")
+        expect(setting.owner).to eq(platform_root)
       end
 
       it "is unspecified when no specific owner is wanted" do
@@ -85,7 +88,7 @@ describe Puppet::Settings::FileSetting do
 
         setting = FileSetting.new(:settings => settings, :group => "root", :desc => "a setting")
 
-        expect(setting.group).to eq("root")
+        expect(setting.group).to eq(platform_root)
       end
 
       it "is the service group if we are making users" do
@@ -201,67 +204,41 @@ describe Puppet::Settings::FileSetting do
       expect(@file.to_resource[:mode]).to eq(nil)
     end
 
+    # these tests are applicable to Windows and non-Windows
     it "should set the owner if running as root and the owner is provided" do
-      Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
-
       @file.stubs(:owner).returns "foo"
       expect(@file.to_resource[:owner]).to eq("foo")
     end
 
     it "should not set the owner if manage_internal_file_permissions is disabled" do
       Puppet[:manage_internal_file_permissions] = false
-      Puppet.features.stubs(:root?).returns true
       @file.stubs(:owner).returns "foo"
 
       expect(@file.to_resource[:owner]).to eq(nil)
     end
 
     it "should set the group if running as root and the group is provided" do
-      Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
-
       @file.stubs(:group).returns "foo"
       expect(@file.to_resource[:group]).to eq("foo")
     end
 
     it "should not set the group if manage_internal_file_permissions is disabled" do
       Puppet[:manage_internal_file_permissions] = false
-      Puppet.features.stubs(:root?).returns true
       @file.stubs(:group).returns "foo"
 
       expect(@file.to_resource[:group]).to eq(nil)
     end
 
-
     it "should not set owner if not running as root" do
       Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
       @file.stubs(:owner).returns "foo"
       expect(@file.to_resource[:owner]).to be_nil
     end
 
     it "should not set group if not running as root" do
       Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
       @file.stubs(:group).returns "foo"
       expect(@file.to_resource[:group]).to be_nil
-    end
-
-    describe "on Microsoft Windows systems" do
-      before :each do
-        Puppet.features.stubs(:microsoft_windows?).returns true
-      end
-
-      it "should not set owner" do
-        @file.stubs(:owner).returns "foo"
-        expect(@file.to_resource[:owner]).to be_nil
-      end
-
-      it "should not set group" do
-        @file.stubs(:group).returns "foo"
-        expect(@file.to_resource[:group]).to be_nil
-      end
     end
 
     it "should set :ensure to the file type" do
@@ -302,7 +279,7 @@ describe Puppet::Settings::FileSetting do
     end
   end
 
-  context "when opening", :unless => Puppet.features.microsoft_windows? do
+  context "when opening" do
     let(:path) do
       tmpfile('file_setting_spec')
     end
@@ -312,7 +289,7 @@ describe Puppet::Settings::FileSetting do
       FileSetting.new(:name => :mysetting, :desc => "creates a file", :settings => settings)
     end
 
-    it "creates a file with mode 0640" do
+    it "creates a file with mode 0640", :unless => Puppet.features.microsoft_windows? do
       setting.mode = '0640'
 
       expect(File).to_not be_exist(path)

@@ -16,7 +16,21 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   # @api private
   class Root
     def value
-      "root"
+      # When running as an Administrator it is possible to create settings files and directories
+      # that are only owned by a single Administrator.  This may make sense for normal file
+      # resources, it doesn't really apply to Puppet settings files. Therefore if we are running
+      # with elevated rights (Puppet.features.root?) and on Windows (Puppet.features.microsoft_windows?)
+      # then all settings files and directories should be owned by the Administrators group.
+      #
+      # Note that the LOCAL SYSTEM user is always an implicit member of the Administrators group
+      # therefore they don't needed to be added to the resultant ACL.  Note we also use the SID representation
+      # to avoid localization issues or account renaming.
+
+      # TODO: Group is also set as SYSTEM (S-1-5-18) when running as SYSTEM, but what about when
+      # using a domain account?
+      Puppet.features.microsoft_windows? ?
+        Puppet::Util::Windows::SID::BuiltinAdministrators :
+        "root"
     end
   end
 
@@ -88,7 +102,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
              when "root"
                Root.new
              when "service"
-               Service.new(:user, "root", @settings, :service_user_available?)
+               Service.new(:user, Root.new.value, @settings, :service_user_available?)
              else
                unknown_value(':owner', value)
              end
@@ -155,8 +169,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
         resource[:mode] = mode
       end
 
-      # REMIND fails on Windows because chown/chgrp functionality not supported yet
-      if Puppet.features.root? and !Puppet.features.microsoft_windows?
+      if Puppet.features.root?
         resource[:owner] = self.owner if self.owner
         resource[:group] = self.group if self.group
       end
