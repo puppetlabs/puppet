@@ -12,12 +12,10 @@ class StaticLoader < Loader
       File
       Filebucket
       Group
-      Interface
       Node
       Notify
       Package
       Resources
-      Router
       Schedule
       Scheduled_task
       Selboolean
@@ -26,7 +24,6 @@ class StaticLoader < Loader
       Stage
       Tidy
       User
-      Vlan
       Whit
     }.freeze
 
