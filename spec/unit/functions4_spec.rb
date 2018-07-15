@@ -863,27 +863,6 @@ describe 'the 4x function api' do
     end
   end
 
-# DEAD TODO REMOVE
-#  def create_function_with_param_injection_regular
-#    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
-#      attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
-#      attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
-#      attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
-#
-#      dispatch :test do
-#        injected_param Puppet::Pops::Types::TypeFactory.string, :x, 'a_string'
-#        injected_producer_param Puppet::Pops::Types::TypeFactory.integer, :y, 'an_int'
-#        param 'Scalar', :a
-#        param 'Scalar', :b
-#      end
-#
-#      def test(x,y,a,b)
-#        y_produced = y.produce(nil)
-#        "#{x}! #{a}, and #{b} < #{y_produced} = #{ !!(a < y_produced && b < y_produced)}"
-#      end
-#    end
-#  end
-
   def create_function_with_required_block_all_defaults
     Puppet::Functions.create_function('test') do
       dispatch :test do

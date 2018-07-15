@@ -37,7 +37,7 @@ class PBinaryType < PAnyType
     # Constructs an instance of Binary from a base64 strict encoded string (RFC 4648)
     # Where correct padding must be used and line breaks causes an error to be raised.
     #
-    # @param [String] A string with RFC 4648 compliant encoded binary
+    # @param str [String] A string with RFC 4648 compliant encoded binary
     #
     def self.from_base64_strict(str)
       new(Base64.strict_decode64(str))
@@ -51,11 +51,20 @@ class PBinaryType < PAnyType
     # The given string will be frozen as a side effect if it is in ASCII-8BIT encoding. If this is not
     # wanted, a copy should be given to this method.
     #
-    # @param [String] A string with binary data
+    # @param bin [String] A string with binary data
     # @api public
     #
     def self.from_binary_string(bin)
       new(bin)
+    end
+
+    # Ensures the given argument is either a Binary, or creates a new Binary from a binary string.
+    # @param bin [String, Binary] A string with binary data or a Binary
+    # @api public
+    #
+    def self.from_binary(bin)
+      return bin if bin.is_a?(Binary)
+      from_binary_string(bin)
     end
 
     # Creates a new Binary from a String containing text/binary in its given encoding. If the string's encoding
