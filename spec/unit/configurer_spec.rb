@@ -362,7 +362,7 @@ describe Puppet::Configurer do
 
     it 'includes total time metrics in the report after successfully applying the catalog' do
       report = Puppet::Transaction::Report.new
-      @catalog.stubs(:apply).with(:report => report)
+      @catalog.stubs(:apply).with() {|options| options[:report] == report }
       @agent.run(report: report)
 
       expect(report.metrics['time']).to be
