@@ -530,7 +530,7 @@ class Puppet::Node::Environment
       if file == NO_MANIFEST
         empty_parse_result
       elsif File.directory?(file)
-        parse_results = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**/*.pp')).glob.sort.map do | file_to_parse |
+        parse_results = Puppet::FileSystem::PathPattern.absolute(File.join(file, '**{,/*/**}/*.pp')).glob.sort.uniq.map do | file_to_parse |
           parser.file = file_to_parse
           parser.parse
           end
