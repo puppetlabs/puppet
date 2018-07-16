@@ -1,6 +1,14 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+# A type and provider that can be purged
+Puppet::Type.newtype(:purgeable_test) do
+  ensurable
+  newparam(:name) {}
+end
+Puppet::Type.type(:purgeable_test).provide(:purgeable_test) do
+end
+
 resources = Puppet::Type.type(:resources)
 
 # There are still plenty of tests to port over from test/.
@@ -242,13 +250,13 @@ describe resources do
 
   context "#generate" do
     before do
-      @host1 = Puppet::Type.type(:host).new(:name => 'localhost', :ip => '127.0.0.1')
+      @purgee = Puppet::Type.type(:purgeable_test).new(:name => 'localhost')
       @catalog = Puppet::Resource::Catalog.new
     end
 
       context "when dealing with non-purging resources" do
         before do
-          @resources = Puppet::Type.type(:resources).new(:name => 'host')
+          @resources = Puppet::Type.type(:resources).new(:name => 'purgeable_test')
         end
 
         it "should not generate any resource" do
@@ -258,15 +266,15 @@ describe resources do
 
       context "when the catalog contains a purging resource" do
         before do
-          @resources = Puppet::Type.type(:resources).new(:name => 'host', :purge => true)
-          @purgeable_resource = Puppet::Type.type(:host).new(:name => 'localhost', :ip => '127.0.0.1')
+          @resources = Puppet::Type.type(:resources).new(:name => 'purgeable_test', :purge => true)
+          @purgeable_resource = Puppet::Type.type(:purgeable_test).new(:name => 'localhost')
           @catalog.add_resource @resources
         end
 
         it "should not generate a duplicate of that resource" do
-          Puppet::Type.type(:host).stubs(:instances).returns [@host1]
-          @catalog.add_resource @host1
-          expect(@resources.generate.collect { |r| r.ref }).not_to include(@host1.ref)
+          Puppet::Type.type(:purgeable_test).stubs(:instances).returns [@purgee]
+          @catalog.add_resource @purgee
+          expect(@resources.generate.collect { |r| r.ref }).not_to include(@purgee.ref)
         end
 
         it "should not include the skipped system users" do
@@ -284,7 +292,7 @@ describe resources do
 
         context "when generating a purgeable resource" do
           it "should be included in the generated resources" do
-            Puppet::Type.type(:host).stubs(:instances).returns [@purgeable_resource]
+            Puppet::Type.type(:purgeable_test).stubs(:instances).returns [@purgeable_resource]
             expect(@resources.generate.collect { |r| r.ref }).to include(@purgeable_resource.ref)
           end
         end
@@ -292,7 +300,7 @@ describe resources do
         context "when the instance's do not have an ensure property" do
           it "should not be included in the generated resources" do
             @no_ensure_resource = Puppet::Type.type(:exec).new(:name => "#{File.expand_path('/usr/bin/env')} echo")
-            Puppet::Type.type(:host).stubs(:instances).returns [@no_ensure_resource]
+            Puppet::Type.type(:purgeable_test).stubs(:instances).returns [@no_ensure_resource]
             expect(@resources.generate.collect { |r| r.ref }).not_to include(@no_ensure_resource.ref)
           end
         end
@@ -300,15 +308,15 @@ describe resources do
         context "when the instance's ensure property does not accept absent" do
           it "should not be included in the generated resources" do
             @no_absent_resource = Puppet::Type.type(:service).new(:name => 'foobar')
-            Puppet::Type.type(:host).stubs(:instances).returns [@no_absent_resource]
+            Puppet::Type.type(:purgeable_test).stubs(:instances).returns [@no_absent_resource]
             expect(@resources.generate.collect { |r| r.ref }).not_to include(@no_absent_resource.ref)
           end
         end
 
         context "when checking the instance fails" do
           it "should not be included in the generated resources" do
-            @purgeable_resource = Puppet::Type.type(:host).new(:name => 'foobar')
-            Puppet::Type.type(:host).stubs(:instances).returns [@purgeable_resource]
+            @purgeable_resource = Puppet::Type.type(:purgeable_test).new(:name => 'foobar')
+            Puppet::Type.type(:purgeable_test).stubs(:instances).returns [@purgeable_resource]
             @resources.expects(:check).with(@purgeable_resource).returns(false)
             expect(@resources.generate.collect { |r| r.ref }).not_to include(@purgeable_resource.ref)
           end

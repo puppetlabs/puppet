@@ -2,6 +2,14 @@
 require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet_spec/compiler'
+require 'puppet/provider/parsedfile'
+
+# parsedfile provider implements prefetch
+Puppet::Type.newtype(:prefetchable_test) do
+  newparam(:name, isnamevar: true)
+end
+Puppet::Type.type(:prefetchable_test).provide(:parsed, parent: Puppet::Provider::ParsedFile, filetype: :flat) do
+end
 
 describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
@@ -38,7 +46,23 @@ describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.m
     end
 
     context "with other prefetching resources evaluated first" do
-      let(:manifest) { "host { 'test': before => User[root] } user { 'root': purge_ssh_keys => '#{tempfile}' }" }
+      let(:provider) { Puppet::Type.type(:prefetchable_test).provider(:parsed) }
+      let(:manifest) { <<~MANIFEST }
+        prefetchable_test { 'test':
+          before => User[root]
+        }
+        user { 'root':
+          purge_ssh_keys => '#{tempfile}'
+        }
+      MANIFEST
+
+      before (:each) do
+        provider.default_target = tmpfile('prefetchable')
+      end
+
+      after(:each) do
+        provider.clear
+      end
 
       it "should purge authorized ssh keys" do
         apply_compiled_manifest(manifest)
