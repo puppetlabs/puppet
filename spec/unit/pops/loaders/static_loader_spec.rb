@@ -34,7 +34,6 @@ describe 'the static loader' do
       Filebucket
       Group
       Interface
-      K5login
       Mount
       Notify
       Package

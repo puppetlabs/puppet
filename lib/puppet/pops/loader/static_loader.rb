@@ -13,7 +13,6 @@ class StaticLoader < Loader
       Filebucket
       Group
       Interface
-      K5login
       Mount
       Node
       Notify
