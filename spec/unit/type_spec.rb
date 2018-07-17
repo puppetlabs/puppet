@@ -1,12 +1,42 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
+require 'puppet/property/boolean'
+
+Puppet::Type.newtype(:type_test) do
+  ensurable
+  newparam(:name, isnamevar: true)
+  newproperty(:device)
+  newproperty(:blockdevice)
+  newproperty(:fstype)
+  newproperty(:options)
+  newproperty(:pass)
+  newproperty(:atboot, parent: Puppet::Property::Boolean) do
+    def munge(value)
+      munged = super
+      if munged
+        :yes
+      else
+        :no
+      end
+    end
+  end
+  newparam(:remounts) do
+    newvalues(:true, :false)
+    defaultto do
+      true
+    end
+  end
+end
+Puppet::Type.type(:type_test).provide(:type_test) do
+  mk_resource_methods
+end
 
 describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
 
-  let(:resource_type) { :mount }
+  let(:resource_type) { :type_test }
   let(:klass) { Puppet::Type.type(resource_type) }
   let(:ref_type) { klass.name.to_s.capitalize }
 
@@ -71,7 +101,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   it "can retrieve all set parameters" do
     resource = klass.new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present, :tag => 'foo')
     params = resource.parameters_with_value
-    [:name, :provider, :ensure, :fstype, :pass, :dump, :target, :loglevel, :tag].each do |name|
+    [:name, :provider, :ensure, :fstype, :pass, :loglevel, :tag].each do |name|
       expect(params).to be_include(resource.parameter(name))
     end
   end
@@ -934,7 +964,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       expect(resource).to be_a Puppet::Resource
       expect(resource[:fstype]).to   eq(15)
       expect(resource[:remounts]).to eq(:true)
-      expect(resource.tags).to eq(Puppet::Util::TagSet.new(%w{foo bar baz mount}))
+      expect(resource.tags).to eq(Puppet::Util::TagSet.new(%w{foo bar baz} + [resource_type.to_s]))
     end
   end
 
