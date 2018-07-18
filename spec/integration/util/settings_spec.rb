@@ -29,7 +29,7 @@ describe Puppet::Settings do
     expect(File.directory?(settings[:maindir])).to be_truthy
   end
 
-  it "should make its directories with the correct modes" do
+  it "should make its directories with the correct modes", :if => !Puppet::Util::Platform.windows? do
     define_settings(:main,
         :maindir => {
             :default => tmpfile("main"),
