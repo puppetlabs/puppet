@@ -34,7 +34,6 @@ class PEncryptedType < PAnyType
     # @api private
     #
     def initialize(format, encrypted_key, crypt, encrypted_fingerprint)
-      binary = Puppet::Pops::Types::PBinaryType::Binary
       @format = format
       @encrypted_key, @crypt, @encrypted_fingerprint = make_binary(encrypted_key, crypt, encrypted_fingerprint)
     end
@@ -161,7 +160,7 @@ class PEncryptedType < PAnyType
         raise Puppet::DecryptionError.new(_("Decryption failed (probably using wrong host), caused by: %{message}") % {message: e.message})
       end
 
-      serializer, cipher = @format.split(/,/)
+      _serializer, cipher = @format.split(/,/)
       # Decrypt using the given cipher, and the random key
       # Use the 16 first byte as IV (they are in clear text)
       # Decrypt the rest with the random key and the IV
