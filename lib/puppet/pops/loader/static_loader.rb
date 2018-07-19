@@ -13,7 +13,6 @@ class StaticLoader < Loader
       Filebucket
       Group
       Interface
-      Mount
       Node
       Notify
       Package
