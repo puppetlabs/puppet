@@ -44,8 +44,6 @@ describe 'the static loader' do
       Selboolean
       Selmodule
       Service
-      Ssh_authorized_key
-      Sshkey
       Stage
       Tidy
       User
