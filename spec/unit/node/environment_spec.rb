@@ -510,6 +510,20 @@ describe Puppet::Node::Environment do
       Puppet::GettextConfig.expects(:use_text_domain).with(env.name)
       env.with_text_domain do; end
     end
+
+    it "yields block results" do
+      ran = false
+      expect(env.with_text_domain { ran = true; :result }).to eq(:result)
+      expect(ran).to eq(true)
+    end
+
+    it "yields block results when i18n is disabled" do
+      Puppet[:disable_i18n] = true
+
+      ran = false
+      expect(env.with_text_domain { ran = true; :result }).to eq(:result)
+      expect(ran).to eq(true)
+    end
   end
 
 end
