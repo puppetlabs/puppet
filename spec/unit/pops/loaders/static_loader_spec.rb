@@ -40,7 +40,6 @@ describe 'the static loader' do
       Resources
       Router
       Schedule
-      Scheduled_task
       Selboolean
       Selmodule
       Service

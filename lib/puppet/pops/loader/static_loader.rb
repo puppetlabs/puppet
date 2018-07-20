@@ -20,7 +20,6 @@ class StaticLoader < Loader
       Resources
       Router
       Schedule
-      Scheduled_task
       Selboolean
       Selmodule
       Service
