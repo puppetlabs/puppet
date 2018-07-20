@@ -161,13 +161,26 @@ class Puppet::Util::Autoload
     end
 
     # @api private
+    def vendored_modules
+      dir = Puppet[:vendormoduledir]
+      if dir && File.directory?(dir)
+        Dir.entries(dir)
+          .reject { |f| f =~ /^\./ }
+          .collect { |f| File.join(dir, f, "lib") }
+          .find_all { |d| FileTest.directory?(d) }
+      else
+        []
+      end
+    end
+
+    # @api private
     def gem_directories
       gem_source.directories
     end
 
     # @api private
     def search_directories(env)
-      [gem_directories, module_directories(env), libdirs, $LOAD_PATH].flatten
+      [gem_directories, module_directories(env), libdirs, $LOAD_PATH, vendored_modules].flatten
     end
 
     # Normalize a path. This converts ALT_SEPARATOR to SEPARATOR on Windows
