@@ -99,6 +99,13 @@ class PEncryptedType < PAnyType
       format = 'json,' + cipher
       data = serialize(data)
 
+      available_ciphers = OpenSSL::Cipher.ciphers
+      unless available_ciphers.include?(cipher)
+        raise ArgumentError, _("Unsupported cipher algorithm \"%{cipher_name}\". Available ciphers: [%{available_ciphers}]") % {
+          available_ciphers: available_ciphers,
+          cipher_name: cipher
+        }
+      end
       aes_encrypt = OpenSSL::Cipher.new(cipher).encrypt
 
       # Use a random key
