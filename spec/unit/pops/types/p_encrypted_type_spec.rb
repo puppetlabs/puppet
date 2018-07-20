@@ -126,14 +126,14 @@ describe 'The Encrypted Type' do
         expect(eval_and_collect_notices(code, Puppet::Node.new('example.com'))).to eql(['secret'])
       end
 
-      it 'Encryption raises an error for unknown cipher' do
+      it 'Encryption raises an error for unknown cipher and displays list of available ciphers' do
         code = <<-CODE
           $x = Encrypted("secret", cipher => 'ROT13-HA-HA')
           notice($x.decrypt('example3.com').unwrap)
         CODE
         expect {
           compile_to_catalog(code, Puppet::Node.new('example.com'))
-        }.to raise_error(/unsupported cipher algorithm/)
+        }.to raise_error(/Unsupported cipher algorithm.*Available.*AES-256-CBC/) # AES-256-CBC is available
       end
 
       it 'Decryption for a given host fails if there is no private key' do
