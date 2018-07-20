@@ -1943,7 +1943,16 @@ EOT
         and configured before turning on StoreConfigs."
     }
   )
-
+  define_settings(:encryption,
+    :accepted_ciphers => {
+      :default => ['AES-256-CBC', 'aes-256-cbc', 'AES-128-CBC', 'aes-128-cbc'],
+      :desc => "A comma separated list of the acceptable cipher names (case sensitive) for use with the Encrypted data type.
+                By default AES-256-CBC, aes-256-cbc, AES-128-CBC, aes-128-cbc.",
+      :hook      => proc do |value|
+        values = munge(value)
+        end
+    }
+  )
   define_settings(:parser,
    :max_errors => {
      :default => 10,
