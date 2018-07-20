@@ -119,7 +119,7 @@ The search path for \fBglobal\fR modules\. Should be specified as a list of dire
 These are the modules that will be used by \fIall\fR environments\. Note that the \fBmodules\fR directory of the active environment will have priority over any global directories\. For more info, see \fIhttps://puppet\.com/docs/puppet/latest/environments_about\.html\fR
 .
 .IP "\(bu" 4
-\fIDefault\fR: $codedir/modules:/opt/puppetlabs/puppet/modules:/opt/puppetlabs/puppet/vendor_modules
+\fIDefault\fR: $codedir/modules:/opt/puppetlabs/puppet/modules
 .
 .IP "" 0
 .
@@ -1951,6 +1951,14 @@ Where Puppet stores dynamic and growing data\. The default for this setting is c
 .
 .IP "\(bu" 4
 \fIDefault\fR: Unix/Linux: /opt/puppetlabs/puppet/cache \-\- Windows: C:\eProgramData\ePuppetLabs\epuppet\ecache \-\- Non\-root user: ~/\.puppetlabs/opt/puppet/cache
+.
+.IP "" 0
+.
+.SS "vendormoduledir"
+The directory containing \fBvendored\fR modules\. These modules will be used by \fIall\fR environments like those in the \fBbasemodulepath\fR\. The only difference is that modules in the \fBbasemodulepath\fR are pluginsynced, while vendored modules are not
+.
+.IP "\(bu" 4
+\fIDefault\fR: /opt/puppetlabs/puppet/vendor_modules
 .
 .IP "" 0
 .
