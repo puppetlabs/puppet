@@ -146,6 +146,16 @@ describe 'The Encrypted Type' do
         }.to raise_error(/Unacceptable cipher algorithm.*Acceptable.*AES-256-CBC/) # AES-256-CBC is acceptable by default
       end
 
+      it 'Encryption uses all available ciphers if --accepted_ciphers is set to empty string' do
+        Puppet[:accepted_ciphers] = ''
+        # Note AES-192-CBC used in test is not among default accepted ciphers
+        code = <<-CODE
+          $x = Encrypted("secret", cipher => 'AES-192-CBC')
+          notice($x.decrypt('example.com').unwrap)
+        CODE
+        expect(eval_and_collect_notices(code, Puppet::Node.new('example.com'))).to eql(['secret'])
+      end
+
       it 'Decryption for a given host fails if there is no private key' do
         code = <<-CODE
           Encrypted("secret").decrypt('bad_example.com')

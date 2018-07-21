@@ -107,7 +107,7 @@ class PEncryptedType < PAnyType
         }
       end
 
-      unless Puppet[:accepted_ciphers].include?(cipher)
+      unless Puppet[:accepted_ciphers].include?(cipher) || Puppet[:accepted_ciphers].empty?
         # TRANSLATORS: 'accepted_ciphers' is a technical name, do not translate it
         raise ArgumentError, _("Unacceptable cipher algorithm \"%{cipher_name}\". Acceptable ciphers: %{accepted_ciphers}. See setting 'accepted_ciphers'.") % {
           accepted_ciphers: Puppet[:accepted_ciphers],
