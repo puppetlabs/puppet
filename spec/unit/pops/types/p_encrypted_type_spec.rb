@@ -133,7 +133,7 @@ describe 'The Encrypted Type' do
         CODE
         expect {
           compile_to_catalog(code, Puppet::Node.new('example.com'))
-        }.to raise_error(/Unsupported cipher algorithm.*Available.*AES-256-CBC/) # AES-256-CBC is available
+        }.to raise_error(/Unsupported cipher algorithm.*Supported.*AES-256-CBC/) # AES-256-CBC is available
       end
 
       it 'Encryption raises an error for unacceptable cipher and displays list of the acceptable' do
@@ -143,7 +143,7 @@ describe 'The Encrypted Type' do
         CODE
         expect {
           compile_to_catalog(code, Puppet::Node.new('example.com'))
-        }.to raise_error(/Unacceptable cipher algorithm.*Acceptable.*AES-256-CBC/) # AES-256-CBC is acceptable by default
+        }.to raise_error(/Unsupported cipher algorithm.*Supported.*AES-256-CBC/) # AES-256-CBC is acceptable by default
       end
 
       it 'Encryption uses all available ciphers if --accepted_ciphers is set to empty string' do
