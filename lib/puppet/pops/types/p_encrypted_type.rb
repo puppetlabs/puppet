@@ -99,18 +99,10 @@ class PEncryptedType < PAnyType
       format = 'json,' + cipher
       data = serialize(data)
 
-      available_ciphers = OpenSSL::Cipher.ciphers
+      available_ciphers = acceptable_and_available_ciphers
       unless available_ciphers.include?(cipher)
-        raise ArgumentError, _("Unsupported cipher algorithm \"%{cipher_name}\". Available ciphers: %{available_ciphers}") % {
+        raise ArgumentError, _("Unsupported cipher algorithm \"%{cipher_name}\". Supported ciphers: %{available_ciphers}") % {
           available_ciphers: available_ciphers,
-          cipher_name: cipher
-        }
-      end
-
-      unless Puppet[:accepted_ciphers].include?(cipher) || Puppet[:accepted_ciphers].empty?
-        # TRANSLATORS: 'accepted_ciphers' is a technical name, do not translate it
-        raise ArgumentError, _("Unacceptable cipher algorithm \"%{cipher_name}\". Acceptable ciphers: %{accepted_ciphers}. See setting 'accepted_ciphers'.") % {
-          accepted_ciphers: Puppet[:accepted_ciphers],
           cipher_name: cipher
         }
       end
@@ -156,6 +148,17 @@ class PEncryptedType < PAnyType
       io.string
     end
     private_class_method :serialize
+
+    # Returns the union of acceptable and available ciphers
+    def self.acceptable_and_available_ciphers
+      available = OpenSSL::Cipher.ciphers
+      acceptable = Puppet[:accepted_ciphers]
+      if acceptable.empty?
+        available
+      else
+        available & acceptable
+      end
+    end
 
     # Decrypts this `Encrypted` and returns a `Sensitive` instance with the decrypted value
     #
