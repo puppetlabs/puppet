@@ -147,13 +147,61 @@ describe 'The Encrypted Type' do
       end
 
       it 'Encryption uses all available ciphers if --accepted_ciphers is set to empty string' do
-        Puppet[:accepted_ciphers] = ''
+        Puppet[:accepted_ciphers] = []
         # Note AES-192-CBC used in test is not among default accepted ciphers
         code = <<-CODE
           $x = Encrypted("secret", cipher => 'AES-192-CBC')
           notice($x.decrypt('example.com').unwrap)
         CODE
         expect(eval_and_collect_notices(code, Puppet::Node.new('example.com'))).to eql(['secret'])
+      end
+
+      it 'Encryption selects preferred cipher if given an array of ciphers' do
+        Puppet[:rich_data] = true
+
+        code = <<-CODE
+          $x = Encrypted("secret", cipher => ['AES-192-CBC', 'AES-128-CBC', 'AES-256-CBC'])
+        notify {'example': message => $x}
+        CODE
+        catalog = compile_to_catalog(code, Puppet::Node.new('example.com'))
+        json_catalog = JSON::pretty_generate(catalog.to_resource)
+        catalog_hash = JSON::parse(json_catalog)
+        example_hash = catalog_hash['resources'].select {|x| x['title']=='example'}[0]
+        example_message = example_hash['parameters']['message']
+        # format is static so can be checked
+        expect(example_message['format']).to eql('json,AES-256-CBC')
+      end
+
+      it 'Encryption uses first defined cipher in accepted_ciphers' do
+        Puppet[:rich_data] = true
+        Puppet[:accepted_ciphers] = ['AES-192-CBC']
+        code = <<-CODE
+          $x = Encrypted("secret")
+        notify {'example': message => $x}
+        CODE
+        catalog = compile_to_catalog(code, Puppet::Node.new('example.com'))
+        json_catalog = JSON::pretty_generate(catalog.to_resource)
+        catalog_hash = JSON::parse(json_catalog)
+        example_hash = catalog_hash['resources'].select {|x| x['title']=='example'}[0]
+        example_message = example_hash['parameters']['message']
+        # format is static so can be checked
+        expect(example_message['format']).to eql('json,AES-192-CBC')
+      end
+
+      it 'Encryption uses AES-256-CBC if accepted_ciphers is empty' do
+        Puppet[:rich_data] = true
+        Puppet[:accepted_ciphers] = []
+        code = <<-CODE
+          $x = Encrypted("secret")
+        notify {'example': message => $x}
+        CODE
+        catalog = compile_to_catalog(code, Puppet::Node.new('example.com'))
+        json_catalog = JSON::pretty_generate(catalog.to_resource)
+        catalog_hash = JSON::parse(json_catalog)
+        example_hash = catalog_hash['resources'].select {|x| x['title']=='example'}[0]
+        example_message = example_hash['parameters']['message']
+        # format is static so can be checked
+        expect(example_message['format']).to eql('json,AES-256-CBC')
       end
 
       it 'Decryption for a given host fails if there is no private key' do
@@ -166,6 +214,16 @@ describe 'The Encrypted Type' do
           expect(error).to be_a(Puppet::PreformattedError)
           expect(error.cause).to be_a(Puppet::DecryptionError)
         }
+      end
+
+      it 'Encryption raises an error when given & accepted produces empty set - none match' do
+        Puppet[:accepted_ciphers] = ['AES-192-CBC']
+        code = <<-CODE
+          Encrypted("secret", cipher => ['AES-256-CBC', 'AES-128-CBC'])
+        CODE
+        expect {
+          compile_to_catalog(code, Puppet::Node.new('example.com'))
+        }.to raise_error(/None of the cipher names.*Supported.*AES-192-CBC/)
       end
     end
   end

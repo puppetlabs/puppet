@@ -1024,6 +1024,9 @@
 # * An `Encrypted` value in string form will look like an array with the format in clear text, and all encrypted parts
 #   in Base64 string encoding. There is no harm in revealing this string.
 # * An `Encrypted` value in a catalog uses JSON serialization, and it is also safe to reveal.
+# * An array of cipher names can be given instead of a single cipher name. If the setting `--accepted_ciphers` contains
+#   values, the cipher among the given with the lowest index in `accepted_ciphers` will be used. As a result,
+#   the most preferred cipher will be used. The intended use is to give an array of ciphers available on the agent.
 #
 # @example Encrypting a String
 #   $crypto = Encrypted("Area 51 - the aliens are alive")
