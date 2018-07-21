@@ -87,25 +87,37 @@ class PEncryptedType < PAnyType
     # Encrypts data using a certificate, a cipher name and Any data - returns an Encrypted.
     # This is the API for creating an `Encrypted` value.
     #
+    # Note that the `cipher` param accepts a single name, or an array of cipher names.
+    # The preferred cipher is returned from the array using the order in --accepted_ciphers if it is not empty.
+    # Otherwise, the single cipher, or the first given cipher in the given array is used.
+    #
     # @param certificate [Puppet::SLL::Certificate] The certificate to use (i.e. for the receiver's public key)
-    # @param cipher [String] The name of the cipher to use - for example 'AES-256-CBC'
+    # @param cipher [String, Array<String>] The name of the cipher to use - for example 'AES-256-CBC', or an array of names
     # @param data [Object] Any puppet rich data data type
     # @return [Puppet::Pops::Types::PEncryptedType::Encrypted] An Encrypted puppet data type value
     # @api public
     #
-    def self.encrypt(certificate, cipher, data)
+    def self.encrypt(certificate, ciphers, data)
+
+      cipher = best_matching_cipher(ciphers)
+      if cipher.nil?
+        if ciphers.is_a?(Array)
+          raise ArgumentError, _("None of the cipher names \"%{ciphers}\" are supported. Supported ciphers: %{available_ciphers}") % {
+            available_ciphers: acceptable_and_available_ciphers,
+            ciphers: ciphers
+          }
+        else
+          raise ArgumentError, _("Unsupported cipher algorithm \"%{cipher_name}\". Supported ciphers: %{available_ciphers}") % {
+            available_ciphers: acceptable_and_available_ciphers,
+            cipher_name: cipher
+          }
+        end
+      end
+
       key = certificate.content.public_key
       fingerprint = certificate.fingerprint
-      format = 'json,' + cipher
       data = serialize(data)
-
-      available_ciphers = acceptable_and_available_ciphers
-      unless available_ciphers.include?(cipher)
-        raise ArgumentError, _("Unsupported cipher algorithm \"%{cipher_name}\". Supported ciphers: %{available_ciphers}") % {
-          available_ciphers: available_ciphers,
-          cipher_name: cipher
-        }
-      end
+      format = 'json,' + cipher
 
       aes_encrypt = OpenSSL::Cipher.new(cipher).encrypt
 
@@ -151,12 +163,39 @@ class PEncryptedType < PAnyType
 
     # Returns the union of acceptable and available ciphers
     def self.acceptable_and_available_ciphers
+      # return from cache unless accepted_ciphers changed since last cached
+      return @supported_ciphers if !@supported_ciphers.nil? && @supported_ciphers_id == Puppet[:accepted_ciphers].__id__
       available = OpenSSL::Cipher.ciphers
       acceptable = Puppet[:accepted_ciphers]
-      if acceptable.empty?
-        available
+      @supported_ciphers_id = Puppet[:accepted_ciphers].__id__
+      @supported_ciphers = acceptable.empty? ? available : acceptable & available
+      @supported_ciphers
+    end
+
+    def self.best_matching_cipher(ciphers)
+      if ciphers.nil?
+        # use the default - first accepted, or AES-256-CBC if accepted is not defined
+        accepted = Puppet[:accepted_ciphers]
+        ciphers = [accepted.empty? ? 'AES-256-CBC' : accepted[0]]
       else
-        available & acceptable
+        ciphers = [ciphers] unless ciphers.is_a?(Array)
+      end
+
+      accepted_and_available = acceptable_and_available_ciphers
+      # prune ciphers such that pruned ciphers contains the preferred cipher first
+      pruned_ciphers = accepted_and_available & ciphers
+
+      # none acceptable
+      return nil if pruned_ciphers.empty?
+
+      if ciphers.length == 1 || Puppet[:accepted_ciphers].empty?
+        # Produce the first value in ciphers that is accepted - or nil if non were
+        # Since all ciphers are accepted there is no defined order, so  use first in list of ciphers
+        (ciphers & pruned_ciphers)[0]
+      else
+        # Since there is a preferred order, the pruned[0] contains the preferred cipher name
+        # (acceptable and available orders) are in order of preference when accepted_ciphers is defined
+        pruned_ciphers[0]
       end
     end
 
@@ -263,7 +302,7 @@ class PEncryptedType < PAnyType
   def self.new_function(type)
     @new_function ||= Puppet::Functions.create_loaded_function(:new_Encrypted, type.loader) do
       local_types do
-        type 'OptionsHash = Struct[{Optional["cipher"] => String, Optional["node_name"] => String}]'
+        type 'OptionsHash = Struct[{Optional["cipher"] => Variant[String,Array[String,1]], Optional["node_name"] => String}]'
       end
 
       # Creates an encrypted
@@ -273,8 +312,8 @@ class PEncryptedType < PAnyType
       end
 
       def from_any(data, options = {})
-        cipher = options['cipher'] || 'AES-256-CBC'
         node_name = options['node_name']
+        cipher = options['cipher']
 
         if node_name.nil?
           trusted = Puppet.lookup(:trusted_information) { nil }
