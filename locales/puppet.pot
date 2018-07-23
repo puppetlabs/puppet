@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.3-393-g399a315\n"
+"Project-Id-Version: Puppet automation framework 5.5.3-395-ge8af39e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-07-23 18:33+0000\n"
-"PO-Revision-Date: 2018-07-23 18:33+0000\n"
+"POT-Creation-Date: 2018-07-23 23:33+0000\n"
+"PO-Revision-Date: 2018-07-23 23:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6450,6 +6450,41 @@ msgstr ""
 msgid "Invalid LDAP Configuration defined for %{class_name}"
 msgstr ""
 
+#. TRANSLATORS refers to remounting a file system
+#: ../lib/puppet/provider/mount.rb:28
+msgid "Remounting"
+msgstr ""
+
+#. TRANSLATORS "prefetch" is a program name and should not be translated
+#: ../lib/puppet/provider/mount/parsed.rb:127
+msgid "Prefetch: Mount[%{name}]: Field 'device' is missing"
+msgstr ""
+
+#. TRANSLATORS "prefetch" is a program name and should not be translated
+#: ../lib/puppet/provider/mount/parsed.rb:132
+msgid "Prefetch: Mount[%{name}]: Field 'fstype' is missing"
+msgstr ""
+
+#: ../lib/puppet/provider/mount/parsed.rb:143
+msgid "Mount[%{name}]: Field 'device' must be in the format of <absolute path> or <host>:<absolute path>"
+msgstr ""
+
+#: ../lib/puppet/provider/mount/parsed.rb:151 ../lib/puppet/provider/mount/parsed.rb:158
+msgid "Mount[%{name}]: Field 'device' is required"
+msgstr ""
+
+#: ../lib/puppet/provider/mount/parsed.rb:189
+msgid "Mount[%{name}]: Field 'options' is required"
+msgstr ""
+
+#: ../lib/puppet/provider/mount/parsed.rb:193
+msgid "Mount[%{name}]: Field 'fstype' is required"
+msgstr ""
+
+#: ../lib/puppet/provider/mount/parsed.rb:271
+msgid "Could not understand line %{line} from mount output"
+msgstr ""
+
 #: ../lib/puppet/provider/nameservice.rb:45
 msgid "%{name} is not a valid attribute for %{resource_type}"
 msgstr ""
@@ -8350,6 +8385,42 @@ msgstr ""
 
 #: ../lib/puppet/type/interface.rb:97
 msgid "Invalid interface ip address"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:68
+msgid "Unexpected change from %{current} to unmounted"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:115
+msgid "Parent has property %{name} but it doesn't appear in the current values"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:134
+msgid "device must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:160
+msgid "blockdevice must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:169
+msgid "fstype must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:170
+msgid "fstype must not be an empty string"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:184
+msgid "options must not contain whitespace: %{value}"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:185
+msgid "options must not be an empty string"
+msgstr ""
+
+#: ../lib/puppet/type/mount.rb:250
+msgid "name must not contain whitespace: %{value}"
 msgstr ""
 
 #: ../lib/puppet/type/package.rb:114 ../lib/puppet/type/package.rb:128
