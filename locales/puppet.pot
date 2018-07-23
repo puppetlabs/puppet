@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.2-62-gde0743a\n"
+"Project-Id-Version: Puppet automation framework 5.5.3-16-g9514a39\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-07-03 21:45+0000\n"
-"PO-Revision-Date: 2018-07-03 21:45+0000\n"
+"POT-Creation-Date: 2018-07-23 22:00+0000\n"
+"PO-Revision-Date: 2018-07-23 22:00+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -677,7 +677,7 @@ msgid "Server setting will not be used."
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1826
+#: ../lib/puppet/defaults.rb:1828
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2795,32 +2795,37 @@ msgstr ""
 msgid "Could not write %{request}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:13
+#. TRANSLATORS 'Puppet::Indirector::Ldap' is a class and should not be translated
+#: ../lib/puppet/indirector/ldap.rb:7
+msgid "Puppet::Indirector::Ldap is deprecated and will be removed in a future release of Puppet."
+msgstr ""
+
+#: ../lib/puppet/indirector/ldap.rb:19
 msgid "The 'process' method has not been overridden for the LDAP terminus for %{name}"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:27
+#: ../lib/puppet/indirector/ldap.rb:33
 msgid "No search string set for LDAP terminus for %{name}"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:33
+#: ../lib/puppet/indirector/ldap.rb:39
 msgid "You must pass a block to ldapsearch"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:50
+#: ../lib/puppet/indirector/ldap.rb:56
 msgid "Retrying LDAP connection"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:53
+#: ../lib/puppet/indirector/ldap.rb:59
 msgid "LDAP Search failed"
 msgstr ""
 
 #. TRANSLATORS "ruby/ldap libraries" are code dependencies
-#: ../lib/puppet/indirector/ldap.rb:66 ../lib/puppet/util/ldap/connection.rb:38
+#: ../lib/puppet/indirector/ldap.rb:72 ../lib/puppet/util/ldap/connection.rb:38
 msgid "Could not set up LDAP Connection: Missing ruby/ldap libraries"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:72 ../lib/puppet/util/ldap/connection.rb:69
+#: ../lib/puppet/indirector/ldap.rb:78 ../lib/puppet/util/ldap/connection.rb:69
 msgid "Could not connect to LDAP: %{detail}"
 msgstr ""
 
@@ -4212,7 +4217,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:568 ../lib/puppet/pops/loaders.rb:298
+#: ../lib/puppet/node/environment.rb:570 ../lib/puppet/pops/loaders.rb:298
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -9034,23 +9039,23 @@ msgstr ""
 msgid "Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'."
 msgstr ""
 
-#: ../lib/puppet/util.rb:310
+#: ../lib/puppet/util.rb:312
 msgid "unknown platform %{platform} in absolute_path"
 msgstr ""
 
-#: ../lib/puppet/util.rb:344
+#: ../lib/puppet/util.rb:346
 msgid "Failed to convert '%{path}' to URI: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:444
+#: ../lib/puppet/util.rb:446
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:562
+#: ../lib/puppet/util.rb:564
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:566
+#: ../lib/puppet/util.rb:568
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
