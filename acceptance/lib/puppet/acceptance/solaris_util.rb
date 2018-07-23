@@ -57,8 +57,15 @@ module Puppet
     module SMFUtils
       def clean(agent, o={})
         o = {:service => 'tstapp'}.merge(o)
-        on agent, "svcadm disable %s ||:" % o[:service]
-        on agent, "svccfg delete %s ||:" % o[:service]
+        on(agent, "svcs -l %s" % o[:service], acceptable_exit_codes: [0, 1]) do |result|
+          next if result.stdout =~ /doesn't match/
+          lines = result.stdout.chomp.lines
+          instances = lines.select { |line| line =~ /^fmri/ }.map { |line| line.split(' ')[1].chomp }
+          instances.each do |instance|
+            on agent, "svcadm disable %s ||:" % instance
+            on agent, "svccfg delete %s ||:" % instance
+          end
+        end
         on agent, "rm -rf /var/svc/manifest/application/%s.xml ||:" % o[:service]
         on agent, "rm -f /opt/bin/%s ||:" % o[:service]
       end
@@ -103,7 +110,6 @@ trap '' HUP
 <service_bundle type='manifest' name='%s:default'>
   <service name='application/tstapp' type='service' version='1'>
   <create_default_instance enabled='false' />
-  <single_instance />
   <method_context> <method_credential user='root' group='root' /> </method_context>
   <exec_method type='method' name='start' exec='/lib/svc/method/%s start' timeout_seconds="60" />
   <exec_method type='method' name='stop' exec='/lib/svc/method/%s stop' timeout_seconds="60" />
