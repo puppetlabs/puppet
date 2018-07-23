@@ -1,0 +1,11 @@
+  node       mounted        mounted over    vfs       date        options
+-------- ---------------  ---------------  ------ ------------ ---------------
+         /dev/hd4         /                jfs2   Feb 05 10:27 rw,log=NULL
+         /dev/hd2         /usr             jfs2   Feb 05 10:28 rw,log=NULL
+         /dev/hd9var      /var             jfs2   Feb 05 10:28 rw,log=NULL
+         /dev/hd3         /tmp             jfs2   Feb 05 10:28 rw,log=NULL
+         /dev/hd1         /home            jfs2   Feb 05 10:28 rw,log=NULL
+         /dev/hd11admin   /admin           jfs2   Feb 05 10:28 rw,log=NULL
+         /proc            /proc            procfs Feb 05 10:28 rw
+         /dev/hd10opt     /opt             jfs2   Feb 05 10:28 rw,log=NULL
+mynode   /srv/aix         /srv/aix         nfs    Mar 19 14:33 vers=2,rw 

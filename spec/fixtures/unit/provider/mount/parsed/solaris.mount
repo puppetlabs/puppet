@@ -1,0 +1,6 @@
+/ on /dev/dsk/c0t0d0s0 read/write/setuid/intr/largefiles/xattr/onerror=panic/dev=2200000 on Mon Mar 18 08:48:45 2002
+/proc on /proc read/write/setuid/dev=4300000 on Mon Mar 18 08:48:44 2002
+/etc/mnttab on mnttab read/write/setuid/dev=43c0000 on Mon Mar 18 08:48:44 2002
+/tmp on swap read/write/setuid/xattr/dev=2 on Mon Mar 18 08:48:52 2002
+/export/home on /dev/dsk/c0t0d0s7 read/write/setuid/intr/largefiles/xattr/onerror=panic/dev=2200007 on Mon Mar 18
+/ghost on /dev/dsk/c0t1d0s7 read/write/setuid/intr/largefiles/xattr/onerror=panic/dev=2200007 on Mon Mar 18

@@ -1,0 +1,152 @@
+* IBM_PROLOG_BEGIN_TAG 
+* This is an automatically generated prolog. 
+*  
+* bos61B src/bos/etc/filesystems/filesystems 1.23 
+*  
+* Licensed Materials - Property of IBM 
+*  
+* COPYRIGHT International Business Machines Corp. 1985,1993 
+* All Rights Reserved 
+*  
+* US Government Users Restricted Rights - Use, duplication or 
+* disclosure restricted by GSA ADP Schedule Contract with IBM Corp. 
+*  
+* @(#)filesystems @(#)29        1.23  src/bos/etc/filesystems/filesystems, cmdfs, bos61B, b2007_38A8 8/16/07 17:18:35
+* IBM_PROLOG_END_TAG 
+*
+* COMPONENT_NAME: CMDFS
+* 
+* FUNCTIONS: none 
+*
+* ORIGINS: 27 
+*
+* (C) COPYRIGHT International Business Machines Corp. 1985, 1993
+* All Rights Reserved
+* Licensed Materials - Property of IBM
+*
+* US Government Users Restricted Rights - Use, duplication or
+* disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
+*
+*
+*
+* This version of /etc/filesystems assumes that only the root file system
+* is created and ready.  As new file systems are added, change the check,
+* mount, free, log, vol and vfs entries for the appropriate stanza.
+*
+
+/:
+	dev		= /dev/hd4
+	vfs		= jfs2
+	check		= false
+	free		= true
+	log		= NULL
+	mount		= automatic
+	quota		= no
+	type		= bootfs
+	vol		= root
+
+/home:
+	dev		= /dev/hd1
+	vfs		= jfs2
+	check		= true
+	free		= false
+	log		= NULL
+	mount		= true
+	quota		= no
+	vol		= /home
+
+/usr:
+	dev		= /dev/hd2
+	vfs		= jfs2
+	check		= false
+	free		= false
+	log		= NULL
+	mount		= automatic
+	quota		= no
+	type		= bootfs
+	vol		= /usr
+
+/var:
+	dev		= /dev/hd9var
+	vfs		= jfs2
+	check		= false
+	free		= false
+	log		= NULL
+	mount		= automatic
+	quota		= no
+	type		= bootfs
+	vol		= /var
+
+/tmp:
+	dev		= /dev/hd3
+	vfs		= jfs2
+	check		= false
+	free		= false
+	log		= NULL
+	mount		= automatic
+	quota		= no
+	vol		= /tmp
+
+/admin:
+	dev		= /dev/hd11admin
+	vfs		= jfs2
+	check		= false
+	free		= false
+	log		= NULL
+	mount		= true
+	quota		= no
+	vol		= /admin
+
+/proc:
+	dev		= /proc
+	vol		= "/proc"
+	mount		= true
+	check		= false
+	free		= false
+	vfs		= procfs
+
+/opt:
+	dev		= /dev/hd10opt
+	vfs		= jfs2
+	log		= /dev/hd8
+	mount		= true
+	check		= true
+	vol		= /opt
+	free		= false
+	quota		= no
+
+/var/adm/ras/livedump:
+	dev		= /dev/livedump
+	vfs		= jfs2
+	log		= /dev/hd8
+	mount		= true
+	account		= false
+	quota		= no
+
+
+/stage/middleware:
+	dev		= "/stage/middleware"
+	vfs		= nfs
+	nodename	= 192.168.1.11
+	mount		= true
+	type		= nfs
+	options		= ro,bg,hard,intr,sec=sys
+	account		= false
+
+/home/u0010689:
+	dev		= "/userdata/20010689"
+	vfs		= nfs
+	nodename	= 192.168.1.11
+	mount		= true
+	type		= nfs
+	options		= bg,hard,intr
+	account		= false
+
+/srv/aix:
+	dev		= /srv/aix
+	nodename	= mynode
+	vfs		= nfs
+	account		= false
+	log		= NULL
+	mount		= true
+	options		= vers=2
