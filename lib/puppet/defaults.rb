@@ -1323,7 +1323,7 @@ EOT
     },
     :vendormoduledir => {
       :default => lambda { default_vendormoduledir },
-      :type => :directory,
+      :type => :string,
       :desc => "The directory containing **vendored** modules. These modules will
       be used by _all_ environments like those in the `basemodulepath`. The only
       difference is that modules in the `basemodulepath` are pluginsynced, while
