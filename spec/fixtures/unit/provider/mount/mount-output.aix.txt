@@ -1,0 +1,7 @@
+node   mounted          mounted over  vfs    date              options   
+----   -------          ------------ ---  ------------   -------------------
+       /dev/hd0         /            jfs   Dec 17 08:04   rw, log  =/dev/hd8
+       /dev/hd3         /tmp         jfs   Dec 17 08:04   rw, log  =/dev/hd8
+       /dev/hd1         /home        jfs   Dec 17 08:06   rw, log  =/dev/hd8
+       /dev/hd2         /usr         jfs   Dec 17 08:06   rw, log  =/dev/hd8
+sue    /home/local/src  /usr/code    nfs   Dec 17 08:06   ro, log  =/dev/hd8

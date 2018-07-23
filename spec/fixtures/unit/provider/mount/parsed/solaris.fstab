@@ -1,0 +1,11 @@
+#device         device          mount           FS      fsck    mount   mount
+#to mount       to fsck         point           type    pass    at boot options
+#
+fd      -       /dev/fd fd      -       no      -
+/proc   -       /proc   proc    -       no      -
+/dev/dsk/c0d0s0 /dev/rdsk/c0d0s0        /       ufs     1       no      -
+/dev/dsk/c0d0p0:boot    -       /boot   pcfs    -       no      -
+/devices        -       /devices        devfs   -       no      -
+ctfs    -       /system/contract        ctfs    -       no      -
+objfs   -       /system/object  objfs   -       no      -
+#swap   -       /tmp    tmpfs   -       yes     -

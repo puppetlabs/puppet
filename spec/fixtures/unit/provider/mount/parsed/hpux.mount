@@ -1,0 +1,17 @@
+/ on rpool/ROOT/opensolaris read/write/setuid/devices/dev=2d90002 on Wed Dec 31 16:00:00 1969
+/devices on /devices read/write/setuid/devices/dev=4a00000 on Thu Feb 17 14:34:02 2011
+/dev on /dev read/write/setuid/devices/dev=4a40000 on Thu Feb 17 14:34:02 2011
+/system/contract on ctfs read/write/setuid/devices/dev=4ac0001 on Thu Feb 17 14:34:02 2011
+/proc on proc read/write/setuid/devices/dev=4b00000 on Thu Feb 17 14:34:02 2011
+/etc/mnttab on mnttab read/write/setuid/devices/dev=4b40001 on Thu Feb 17 14:34:02 2011
+/etc/svc/volatile on swap read/write/setuid/devices/xattr/dev=4b80001 on Thu Feb 17 14:34:02 2011
+/system/object on objfs read/write/setuid/devices/dev=4bc0001 on Thu Feb 17 14:34:02 2011
+/etc/dfs/sharetab on sharefs read/write/setuid/devices/dev=4c00001 on Thu Feb 17 14:34:02 2011
+/lib/libc.so.1 on /usr/lib/libc/libc_hwcap1.so.1 read/write/setuid/devices/dev=2d90002 on Thu Feb 17 14:34:14 2011
+/dev/fd on fd read/write/setuid/devices/dev=4d00001 on Thu Feb 17 14:34:18 2011
+/tmp on swap read/write/setuid/devices/xattr/dev=4b80002 on Thu Feb 17 14:34:19 2011
+/var/run on swap read/write/setuid/devices/xattr/dev=4b80003 on Thu Feb 17 14:34:19 2011
+/export on rpool/export read/write/setuid/devices/nonbmand/exec/xattr/atime/dev=2d90006 on Thu Feb 17 14:37:48 2011
+/export/home on rpool/export/home read/write/setuid/devices/nonbmand/exec/xattr/atime/dev=2d90007 on Thu Feb 17 14:37:48 2011
+/rpool on rpool read/write/setuid/devices/nonbmand/exec/xattr/atime/dev=2d90009 on Thu Feb 17 14:37:48 2011
+/ghost on /dev/fake read/write/setuid/devices/nonbmand/exec/xattr/atime/dev=2d90009 on Thu Feb 17 14:37:48 2011

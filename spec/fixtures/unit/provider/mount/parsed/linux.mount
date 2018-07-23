@@ -1,0 +1,5 @@
+/dev/root on / type jfs (rw,noatime)
+rc-svcdir on /lib64/rc/init.d type tmpfs (rw,nosuid,nodev,noexec,relatime,size=1024k,mode=755)
+sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)
+/dev/sda9 on /usr/portage type jfs (rw)
+/dev/fake on /ghost type jfs (rw)

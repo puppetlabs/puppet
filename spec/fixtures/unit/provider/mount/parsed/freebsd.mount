@@ -1,0 +1,3 @@
+/dev/ad0s1a on / (ufs, local, soft-updates)
+/dev/ad0s1d on /ghost (ufs, local, soft-updates)
+devfs on /dev (devfs, local, multilabel)

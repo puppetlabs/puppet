@@ -1,0 +1,11 @@
+# A sample fstab, typical for a Fedora system
+/dev/vg00/lv00          /                       ext3    defaults        1 1
+LABEL=/boot             /boot                   ext3    defaults        1 2
+devpts                  /dev/pts                devpts  gid=5,mode=620  0
+tmpfs                   /dev/shm                tmpfs   defaults        0
+LABEL=/home             /home                   ext3    defaults        1 2
+/home                   /homes                  auto    bind            0 2
+proc                    /proc                   proc    defaults        0 0
+/dev/vg00/lv01          /spare                  ext3    defaults        1 2
+sysfs                   /sys                    sysfs   defaults        0 0
+LABEL=SWAP-hda6         swap                    swap    defaults        0 0
