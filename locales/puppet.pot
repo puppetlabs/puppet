@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.3-384-gdaa6116\n"
+"Project-Id-Version: Puppet automation framework 5.5.3-393-g399a315\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-07-19 21:33+0000\n"
-"PO-Revision-Date: 2018-07-19 21:33+0000\n"
+"POT-Creation-Date: 2018-07-23 18:33+0000\n"
+"PO-Revision-Date: 2018-07-23 18:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -593,47 +593,47 @@ msgstr ""
 msgid "a data type can only have one implementation"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:140
+#: ../lib/puppet/defaults.rb:152
 msgid "Cannot disable unrecognized warning types %{invalid}."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:141
+#: ../lib/puppet/defaults.rb:153
 msgid "Valid values are %{values}."
 msgstr ""
 
 #. TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:486
+#: ../lib/puppet/defaults.rb:498
 msgid "Setting 'data_binding_terminus' is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'hiera' should not be translated
-#: ../lib/puppet/defaults.rb:488
+#: ../lib/puppet/defaults.rb:500
 msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:642
+#: ../lib/puppet/defaults.rb:654
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:740
+#: ../lib/puppet/defaults.rb:752
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:979 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:991 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1505 ../lib/puppet/defaults.rb:1520
+#: ../lib/puppet/defaults.rb:1525 ../lib/puppet/defaults.rb:1540
 msgid "Attempted to set both server and server_list."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1506 ../lib/puppet/defaults.rb:1521
+#: ../lib/puppet/defaults.rb:1526 ../lib/puppet/defaults.rb:1541
 msgid "Server setting will not be used."
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1820
+#: ../lib/puppet/defaults.rb:1840
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -2717,32 +2717,37 @@ msgstr ""
 msgid "Could not write %{request}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:13
+#. TRANSLATORS 'Puppet::Indirector::Ldap' is a class and should not be translated
+#: ../lib/puppet/indirector/ldap.rb:7
+msgid "Puppet::Indirector::Ldap is deprecated and will be removed in a future release of Puppet."
+msgstr ""
+
+#: ../lib/puppet/indirector/ldap.rb:19
 msgid "The 'process' method has not been overridden for the LDAP terminus for %{name}"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:27
+#: ../lib/puppet/indirector/ldap.rb:33
 msgid "No search string set for LDAP terminus for %{name}"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:33
+#: ../lib/puppet/indirector/ldap.rb:39
 msgid "You must pass a block to ldapsearch"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:50
+#: ../lib/puppet/indirector/ldap.rb:56
 msgid "Retrying LDAP connection"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:53
+#: ../lib/puppet/indirector/ldap.rb:59
 msgid "LDAP Search failed"
 msgstr ""
 
 #. TRANSLATORS "ruby/ldap libraries" are code dependencies
-#: ../lib/puppet/indirector/ldap.rb:66 ../lib/puppet/util/ldap/connection.rb:35
+#: ../lib/puppet/indirector/ldap.rb:72 ../lib/puppet/util/ldap/connection.rb:35
 msgid "Could not set up LDAP Connection: Missing ruby/ldap libraries"
 msgstr ""
 
-#: ../lib/puppet/indirector/ldap.rb:72 ../lib/puppet/util/ldap/connection.rb:69
+#: ../lib/puppet/indirector/ldap.rb:78 ../lib/puppet/util/ldap/connection.rb:69
 msgid "Could not connect to LDAP: %{detail}"
 msgstr ""
 
@@ -4054,7 +4059,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:551 ../lib/puppet/pops/loaders.rb:298
+#: ../lib/puppet/node/environment.rb:553 ../lib/puppet/pops/loaders.rb:298
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -8671,7 +8676,7 @@ msgstr ""
 msgid "Could not autoload %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/autoload.rb:191
+#: ../lib/puppet/util/autoload.rb:204
 msgid "Autoload paths cannot be fully qualified"
 msgstr ""
 
