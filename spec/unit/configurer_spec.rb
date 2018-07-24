@@ -7,6 +7,7 @@ describe Puppet::Configurer do
     Puppet.settings.stubs(:use).returns(true)
     @agent = Puppet::Configurer.new
     @agent.stubs(:init_storage)
+    @agent.stubs(:request_newest_crl)
     Puppet::Util::Storage.stubs(:store)
     Puppet[:server] = "puppetmaster"
     Puppet[:report] = true
@@ -202,6 +203,7 @@ describe Puppet::Configurer do
     it "should create report with passed transaction_uuid and job_id" do
       @agent = Puppet::Configurer.new("test_tuuid", "test_jid")
       @agent.stubs(:init_storage)
+      @agent.stubs(:request_newest_crl)
 
       report = Puppet::Transaction::Report.new(nil, "test", "aaaa")
       Puppet::Transaction::Report.expects(:new).with(anything, anything, 'test_tuuid', 'test_jid').returns(report)
@@ -442,6 +444,7 @@ describe Puppet::Configurer do
       # Regenerate the agent to pick up the new setting
       Puppet[:supported_checksum_types] = ['sha256']
       @agent = Puppet::Configurer.new
+      @agent.stubs(:request_newest_crl)
       @agent.stubs(:init_storage)
       @agent.stubs(:download_plugins)
       @agent.stubs(:send_report)
