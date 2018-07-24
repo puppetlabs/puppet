@@ -39,15 +39,37 @@ describe Puppet::Util::Autoload do
 
       environment = Puppet::Node::Environment.create(:foo, [dira, dirb, dirc])
 
-      expect(
-        @autoload.class.module_directories(environment)
-      ).to eq(["#{dira}/two/lib", "#{dirb}/two/lib", "#{dirc}/three/lib"])
+      expect(@autoload.class.module_directories(environment)).to eq(["#{dira}/two/lib", "#{dirc}/three/lib"])
     end
 
     it "ignores missing module directories" do
       environment = Puppet::Node::Environment.create(:foo, [File.expand_path('does/not/exist')])
 
       expect(@autoload.class.module_directories(environment)).to be_empty
+    end
+
+    it "ignores module directories with invalid metadata.json" do
+      dira = dir_containing('modules', {
+                              "one" => { "lib" => {},
+                                         "metadata.json" => '{ "unknown": "value" }'
+                                       },
+                              "two" => { "lib" => {} }
+                            })
+
+      environment = Puppet::Node::Environment.create(:foo, [dira])
+
+      expect(@autoload.class.module_directories(environment)).to eq(["#{dira}/two/lib"])
+    end
+
+    it "ignores module directories with invalid names" do
+      dira = dir_containing('modules', {
+                              "dashes-are-not-allowed" => { "lib" => {} },
+                              "valid" => { "lib" => {} }
+                            })
+
+      environment = Puppet::Node::Environment.create(:foo, [dira])
+
+      expect(@autoload.class.module_directories(environment)).to eq(["#{dira}/valid/lib"])
     end
 
     it "ignores the configured environment when it doesn't exist" do

@@ -137,11 +137,7 @@ class Puppet::Util::Autoload
       if Puppet.settings.app_defaults_initialized?
         # if the app defaults have been initialized then it should be safe to access the module path setting.
         Puppet::Util::ModuleDirectoriesAdapter.adapt(env) do |a|
-          a.directories ||= env.modulepath.collect do |dir|
-            Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
-          end.flatten.find_all do |d|
-            FileTest.directory?(d)
-          end
+          a.directories ||= env.enum_for(:each_plugin_directory).to_a
         end.directories
       else
         # if we get here, the app defaults have not been initialized, so we basically use an empty module path.
@@ -153,7 +149,7 @@ class Puppet::Util::Autoload
     def libdirs
       # See the comments in #module_directories above.  Basically, we need to be careful not to try to access the
       # libdir before we know for sure that all of the settings have been initialized (e.g., during bootstrapping).
-      if (Puppet.settings.app_defaults_initialized?)
+      if Puppet.settings.app_defaults_initialized?
         [Puppet[:libdir]]
       else
         []
