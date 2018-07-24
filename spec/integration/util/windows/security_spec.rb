@@ -211,7 +211,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             end
           end
 
-          it "should round-trip all 128 modes that do not require deny ACEs" do
+          it "should round-trip all 128 modes that do not require deny ACEs, where owner and group are different" do
             0.upto(1).each do |s|
               0.upto(7).each do |u|
                 0.upto(u).each do |g|
@@ -226,6 +226,25 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
                     winsec.set_mode(mode, path)
                     expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
                   end
+                end
+              end
+            end
+          end
+
+          it "should round-trip all 54 modes that do not require deny ACEs, where owner and group are same" do
+            winsec.set_group(winsec.get_owner(path), path)
+
+            0.upto(1).each do |s|
+              0.upto(7).each do |ug|
+                0.upto(ug).each do |o|
+                  # if user and group superset of other, then
+                  # no deny ace is required, and mode can be converted to win32
+                  # access mask, and back to mode without loss of information
+                  # (provided the owner and group are the same)
+                  next if ((ug & o) != o)
+                  mode = (s << 9 | ug << 6 | ug << 3 | o << 0)
+                  winsec.set_mode(mode, path)
+                  expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
                 end
               end
             end
@@ -551,6 +570,100 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           #   end
           #   winsec.get_mode(path).to_s(8).should == "777"
           # end
+        end
+
+        describe "#mode=" do
+          it "should round-trip all 128 modes that do not require deny ACEs, where owner and group are different" do
+            winsec.set_owner(sids[:current_user], path)
+            winsec.set_group(sids[:users], path)
+
+            0.upto(1).each do |s|
+              0.upto(7).each do |u|
+                0.upto(u).each do |g|
+                  0.upto(g).each do |o|
+                    # if user is superset of group, and group superset of other, then
+                    # no deny ace is required, and mode can be converted to win32
+                    # access mask, and back to mode without loss of information
+                    # (provided the owner and group are not the same)
+                    next if ((u & g) != g) or ((g & o) != o)
+
+                    mode = (s << 9 | u << 6 | g << 3 | o << 0)
+                    winsec.set_mode(mode, path)
+                    expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
+                  end
+                end
+              end
+            end
+          end
+
+          it "should round-trip all 54 modes that do not require deny ACEs, where owner and group are same" do
+            winsec.set_group(winsec.get_owner(path), path)
+
+            0.upto(1).each do |s|
+              0.upto(7).each do |ug|
+                0.upto(ug).each do |o|
+                  # if user and group superset of other, then
+                  # no deny ace is required, and mode can be converted to win32
+                  # access mask, and back to mode without loss of information
+                  # (provided the owner and group are the same)
+                  next if ((ug & o) != o)
+                  mode = (s << 9 | ug << 6 | ug << 3 | o << 0)
+                  winsec.set_mode(mode, path)
+                  expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
+                end
+              end
+            end
+          end
+
+          # The SYSTEM user is a special case therefore we need to test that we round trip correctly when set
+          it "should round-trip all 128 modes that do not require deny ACEs, when running as a service as SYSTEM" do
+            # The owner and group for files/dirs created, when running as a service under Local System are
+            # Owner = Administrators
+            # Group = SYSTEM
+            winsec.set_owner(sids[:administrators], path)
+            winsec.set_group(sids[:system], path)
+
+            0.upto(1).each do |s|
+              0.upto(7).each do |u|
+                0.upto(u).each do |g|
+                  0.upto(g).each do |o|
+                    # if user is superset of group, and group superset of other, then
+                    # no deny ace is required, and mode can be converted to win32
+                    # access mask, and back to mode without loss of information
+                    # (provided the owner and group are not the same)
+                    next if ((u & g) != g) or ((g & o) != o)
+
+                    mode = (s << 9 | u << 6 | g << 3 | o << 0)
+                    winsec.set_mode(mode, path)
+                    expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
+                  end
+                end
+              end
+            end
+          end
+
+          it "should round-trip all 54 modes that do not require deny ACEs, when running as scheduled task as SYSTEM" do
+            # The owner and group for files/dirs created, when running as a Scheduled Task as Local System are
+            # Owner = SYSTEM
+            # Group = SYSTEM
+            winsec.set_group(sids[:system], path)
+            winsec.set_owner(sids[:system], path)
+
+            0.upto(1).each do |s|
+              0.upto(7).each do |ug|
+                0.upto(ug).each do |o|
+                  # if user and group superset of other, then
+                  # no deny ace is required, and mode can be converted to win32
+                  # access mask, and back to mode without loss of information
+                  # (provided the owner and group are the same)
+                  next if ((ug & o) != o)
+                  mode = (s << 9 | ug << 6 | ug << 3 | o << 0)
+                  winsec.set_mode(mode, path)
+                  expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
+                end
+              end
+            end
+          end
         end
 
         describe "when the parent directory" do
