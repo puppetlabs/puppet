@@ -23,19 +23,25 @@ describe Puppet::Util::Autoload do
     end
 
     it "should collect all of the lib directories that exist in the current environment's module path" do
-      dira = dir_containing('dir_a', {
+      dira = dir_containing('modules', {
         "one" => {},
         "two" => { "lib" => {} }
       })
 
-      dirb = dir_containing('dir_a', {
+      dirb = dir_containing('modules', {
         "one" => {},
         "two" => { "lib" => {} }
       })
 
-      environment = Puppet::Node::Environment.create(:foo, [dira, dirb])
+      dirc = dir_containing('modules', {
+        "three" => { "lib" => {} }
+      })
 
-      expect(@autoload.class.module_directories(environment)).to eq(["#{dira}/two/lib", "#{dirb}/two/lib"])
+      environment = Puppet::Node::Environment.create(:foo, [dira, dirb, dirc])
+
+      expect(
+        @autoload.class.module_directories(environment)
+      ).to eq(["#{dira}/two/lib", "#{dirb}/two/lib", "#{dirc}/three/lib"])
     end
 
     it "ignores missing module directories" do
