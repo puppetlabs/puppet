@@ -276,7 +276,7 @@ module Puppet
         :desc     => "Whether to create the necessary user and group that puppet agent will run as.",
     },
     :manage_internal_file_permissions => {
-        :default  => true,
+        :default  => ! Puppet::Util::Platform.windows?,
         :type     => :boolean,
         :desc     => "Whether Puppet should manage the owner, group, and mode of files it uses internally",
     },

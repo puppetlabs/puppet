@@ -124,6 +124,19 @@ describe "Defaults" do
     end
   end
 
+  describe 'manage_internal_file_permissions' do
+    describe 'on windows', :if => Puppet::Util::Platform.windows? do
+      it 'should default to false' do
+        expect(Puppet.settings[:manage_internal_file_permissions]).to be false
+      end
+    end
+    describe 'on non-windows', :if => ! Puppet::Util::Platform.windows? do
+      it 'should default to true' do
+        expect(Puppet.settings[:manage_internal_file_permissions]).to be true
+      end
+    end
+  end
+
   describe 'basemodulepath' do
     it 'includes the global and system modules on non-windows', :unless => Puppet::Util::Platform.windows? do
       expect(
