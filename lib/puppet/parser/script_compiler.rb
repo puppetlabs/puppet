@@ -37,6 +37,7 @@ class Puppet::Parser::ScriptCompiler
   def compile
     Puppet[:strict_variables] = true
     Puppet[:strict] = :error
+    Puppet[:rich_data] = true
 
     # TRANSLATORS, "For running script" is not user facing
     Puppet.override( @context_overrides , "For running script") do

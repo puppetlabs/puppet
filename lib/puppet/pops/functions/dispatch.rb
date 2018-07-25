@@ -81,6 +81,10 @@ class Dispatch < Evaluator::CallableSignature
               Puppet.lookup(:pal_script_compiler)
             when :cache
               Puppet::Pops::Adapters::ObjectIdCacheAdapter.adapt(scope.compiler)
+            when :pal_catalog_compiler
+              Puppet.lookup(:pal_catalog_compiler)
+            when :pal_compiler
+              Puppet.lookup(:pal_compiler)
             else
               raise ArgumentError, _("Unknown injection %{injection_name}") % { injection_name: injection_name }
             end
