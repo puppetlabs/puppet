@@ -309,9 +309,16 @@ module Pal
     end
   end
 
+  # A CatalogCompiler is a compiler that builds a catalog of resources and dependencies as a side effect of
+  # evaluating puppet language code.
+  # When the compilation of the given input manifest(s)/code string/file is finished the catalog is complete
+  # for encoding and use. It is also possible to evaluate more strings within the same compilation context to
+  # add or remove things from the catalog.
+  #
   # @api public
   class CatalogCompiler < Compiler
 
+    # @api private
     def catalog
       internal_compiler.catalog
     end
@@ -319,46 +326,73 @@ module Pal
 
     # Returns true if this is a compiler that compiles a catalog.
     # This implementation returns `true`
-    # @return Boolan true
+    # @return [Boolean] true
+    # @api public
     def has_catalog?
       true
     end
 
+    # Calls a block of code and yields a configured `JsonCatalogEncoder` to the block.
+    # @example Get resulting catalog as pretty printed Json
+    #   Puppet::Pal.in_environment(...) do |pal|
+    #     pal.with_catalog_compiler(...) do |compiler|
+    #       compiler.with_json_encoding {| encoder | encoder.encode
+    #     end
+    #   end
+    #
+    # @api public
+    #
     def with_json_encoding(pretty: true, exclude_virtual: true)
       yield JsonCatalogEncoder.new(catalog, pretty: pretty, exclude_virtual: exclude_virtual)
     end
-
-    def to_json_catalog
-      #require 'byebug'; debugger
-      c = catalog
-      c = c.filter { |r| r.virtual? } if catalog.respond_to?(:filter)
-      c.to_json(:pretty => true)
-    end
   end
 
+  # The JsonCatalogEncoder is a wrapper around a catalog produced by the Pal::CatalogCompiler.with_json_encoding
+  # method.
+  # It allows encoding the entire catalog or an individual resource as Rich Data Json.
+  #
+  # @api public
+  #
   class JsonCatalogEncoder
+    # Is the resulting Json pretty printed or not.
     attr_reader :pretty
+
+    # Should unrealized virtual resources be included in the result or not.
     attr_reader :exclude_virtual
+
+    # The internal catalog being build - what this class wraps with a public API.
     attr_reader :catalog
     private :catalog
 
+    # Do not instantiate this class directly! Use the `Pal::CatalogCompiler#with_json_encoding` method
+    # instead.
+    #
+    # @param catalog [Puppet::Resource::Catalog] the internal catalog that this class wraps
+    # @param pretty [Boolean] (true), if the resulting JSON should be pretty printed or not
+    # @param exclude_virtual [Boolean] (true), if the resulting catalog should contain unrealzed virtual resources or not
+    #
+    # @api private
+    #
     def initialize(catalog, pretty: true, exclude_virtual: true)
       @catalog = catalog
       @pretty = pretty
       @exclude_virtual = exclude_virtual
     end
 
-    # Encodes the entire catalog as a rich-data json catalog.
+    # Encodes the entire catalog as a rich-data Json catalog.
     # @return String The catalog in Json format using rich data format
+    # @api public
+    #
     def encode
       possibly_filtered_catalog.to_json(:pretty => pretty)
     end
 
-    # Returns one particular resource as a json string, or returns nil if resource was not found.
+    # Returns one particular resource as a Json string, or returns nil if resource was not found.
     # @param type [String] the name of the puppet type (case independent)
     # @param title [String] the title of the wanted resource
-    #
+    # @return [String] the resulting Json text
     # @api public
+    #
     def encode_resource(type, title)
       # Ensure that both type and title are given since the underlying API will do mysterious things
       # if 'title' is nil. (Other assertions are made by the catalog when looking up the resource).
@@ -370,9 +404,15 @@ module Pal
       r.to_data_hash.to_json(:pretty => pretty)
     end
 
+    # Applies a filter for virtual resources and returns filtered catalog
+    # or the catalog itself if filtering was not needed.
+    # The result is cached.
+    # @api private
+    #
     def possibly_filtered_catalog
       @filtered ||= (exclude_virtual ? catalog.filter { |r| r.virtual? } : catalog)
     end
+    private :possibly_filtered_catalog
   end
 
   # A FunctionSignature is returned from `function_signature`. Its purpose is to answer questions about the function's parameters
