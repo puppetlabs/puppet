@@ -34,7 +34,6 @@ describe 'the static loader' do
       Filebucket
       Group
       Interface
-      Mount
       Notify
       Package
       Resources
