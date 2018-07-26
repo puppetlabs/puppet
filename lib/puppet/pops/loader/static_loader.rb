@@ -20,8 +20,6 @@ class StaticLoader < Loader
       Resources
       Router
       Schedule
-      Selboolean
-      Selmodule
       Service
       Stage
       Tidy

@@ -40,8 +40,6 @@ describe 'the static loader' do
       Resources
       Router
       Schedule
-      Selboolean
-      Selmodule
       Service
       Stage
       Tidy
