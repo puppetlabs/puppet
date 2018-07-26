@@ -24,8 +24,6 @@ class StaticLoader < Loader
       Selboolean
       Selmodule
       Service
-      Ssh_authorized_key
-      Sshkey
       Stage
       Tidy
       User
