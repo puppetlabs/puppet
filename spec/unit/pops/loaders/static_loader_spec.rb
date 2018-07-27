@@ -33,11 +33,9 @@ describe 'the static loader' do
       File
       Filebucket
       Group
-      Interface
       Notify
       Package
       Resources
-      Router
       Schedule
       Scheduled_task
       Selboolean
@@ -46,7 +44,6 @@ describe 'the static loader' do
       Stage
       Tidy
       User
-      Vlan
       Whit
     }.each do |name |
       it "such that #{name} is available" do
