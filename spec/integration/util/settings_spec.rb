@@ -30,6 +30,7 @@ describe Puppet::Settings do
   end
 
   it "should make its directories with the correct modes" do
+    Puppet[:manage_internal_file_permissions] = true
     define_settings(:main,
         :maindir => {
             :default => tmpfile("main"),
