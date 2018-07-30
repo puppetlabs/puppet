@@ -37,9 +37,6 @@ describe 'the static loader' do
       Package
       Resources
       Schedule
-      Scheduled_task
-      Selboolean
-      Selmodule
       Service
       Stage
       Tidy
