@@ -35,7 +35,7 @@ group(:development, :test) do
   # be removed here *yet* due to TravisCI / AppVeyor which call:
   # bundle install --without development
   # PUP-7433 describes work necessary to restructure this
-  gem "rake", "10.1.1", :require => false
+  gem "rake", :require => false
   gem "rspec", "~> 3.1", :require => false
   gem "rspec-its", "~> 1.1", :require => false
   gem "rspec-collection_matchers", "~> 1.1", :require => false
