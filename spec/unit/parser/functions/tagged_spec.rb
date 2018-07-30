@@ -22,4 +22,20 @@ describe "the 'tagged' function" do
       @scope.function_tagged(['one', 'two'])
     end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
   end
+
+  it 'should be case-insensitive' do
+    resource = Puppet::Parser::Resource.new(:file, "/file", :scope => @scope)
+    @scope.stubs(:resource).returns resource
+    @scope.function_tag ["one"]
+
+    expect(@scope.function_tagged(['One'])).to eq(true)
+  end
+
+  it 'should check if all specified tags are included' do
+    resource = Puppet::Parser::Resource.new(:file, "/file", :scope => @scope)
+    @scope.stubs(:resource).returns resource
+    @scope.function_tag ["one"]
+
+    expect(@scope.function_tagged(['one', 'two'])).to eq(false)
+  end
 end
