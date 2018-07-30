@@ -12,6 +12,10 @@ def location_for(place, fake_version = nil)
   end
 end
 
+group(:packaging) do
+  gem 'packaging', *location_for(ENV['PACKAGING_LOCATION'] || '~> 0.99')
+end
+
 # C Ruby (MRI) or Rubinius, but NOT Windows
 platforms :ruby do
   gem 'pry', :group => :development

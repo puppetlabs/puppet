@@ -46,7 +46,7 @@ test_script:
       $Env:PATH = "C:\${Env:PLATFORM}\bin;${Env:PATH}"
       $Env:LOG_SPEC_ORDER = 'true'
       Get-ChildItem Env: | % { Write-Output "$($_.Key): $($_.Value)"  }
-      bundle install --jobs 4 --retry 2 --without development extra
+      bundle install --jobs 4 --retry 2 --without development extra packaging
       Get-Content Gemfile.lock
       ruby -v
       gem --version
