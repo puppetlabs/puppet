@@ -8,8 +8,6 @@ require 'puppet/ssl/certificate_request_attributes'
 require 'puppet/rest/errors'
 require 'puppet/rest/routes'
 require 'puppet/rest/ssl_context'
-require 'puppet/ssl/certificate_authority'
-
 begin
   # This may fail when being loaded from Puppet Server. However loading the
   # client monkey patches the SSL Store and we need to have those monkey
@@ -411,16 +409,6 @@ ERROR_STRING
     end
   end
 
-  def request_newest_crl
-    if use_crl?
-      new_crl_downloaded = download_and_save_crl_bundle(ssl_store)
-      # If the crl was updated, we need to rebuild the ssl_store:
-      if new_crl_downloaded
-        @ssl_store = build_ssl_store
-      end
-    end
-  end
-
   private
 
   # Load a previously generated CSR either from memory or from disk
@@ -565,25 +553,19 @@ ERROR_STRING
   # streams the file directly to disk to avoid loading the entire CRL in memory.
   # @param [OpenSSL::X509::Store] store optional ssl_store to use with http_client
   # @raise [Puppet::Error<Puppet::Rest::ResponseError>] if bad response from server
-  # @return [Boolean] true if crl downloaded and saved, false if newer crl was not available
+  # @return nil
   def download_and_save_crl_bundle(store=nil)
     begin
       # If no SSL store was suppoed, use this host's SSL store
       store ||= ssl_store
       client = http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, store))
-      crl_last_modified = Puppet::FileSystem.exist?(crl_path) ? File.mtime(crl_path) : nil
       Puppet::Util.replace_file(crl_path, 0644) do |file|
-        Puppet::Rest::Routes.get_crls(client, CA_NAME, crl_last_modified) do |chunk|
+        Puppet::Rest::Routes.get_crls(client, CA_NAME) do |chunk|
           file.write(chunk)
         end
       end
-      true
     rescue Puppet::Rest::ResponseError => e
-      # if the ca_crl on master is not newer than the agent's, 304 will be returned and that's completely valid.
-      unless e.response.status_code == 304
-        raise Puppet::Error, _('Could not download CRLs: %{message}') % { message: e.message }
-      end
-      false
+      raise Puppet::Error, _('Could not download CRLs: %{message}') % { message: e.message }
     end
   end
 
@@ -758,3 +740,5 @@ ERROR_STRING
     store
   end
 end
+
+require 'puppet/ssl/certificate_authority'

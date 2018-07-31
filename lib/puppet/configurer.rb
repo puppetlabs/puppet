@@ -212,15 +212,14 @@ class Puppet::Configurer
 
         # Skip failover logic if the server_list setting is empty
         if Puppet.settings[:server_list].nil? || Puppet.settings[:server_list].empty?
-          do_failover = false
+          do_failover = false;
         else
           do_failover = true
         end
         # When we are passed a catalog, that means we're in apply
         # mode. We shouldn't try to do any failover in that case.
-        apply_mode = options[:catalog]
-        if !apply_mode && do_failover
-          found = find_functional_server
+        if options[:catalog].nil? && do_failover
+          found = find_functional_server()
           server = found[:server]
           if server.nil?
             Puppet.warning _("Could not select a functional puppet master")
@@ -231,16 +230,11 @@ class Puppet::Configurer
               Puppet.debug "Selected master: #{server[0]}:#{server[1]}"
               report.master_used = "#{server[0]}:#{server[1]}"
             end
+
             completed = run_internal(options.merge(:node => found[:node]))
-            if found[:server] && contact_master?(completed, apply_mode)
-              request_newest_crl
-            end
           end
         else
           completed = run_internal(options)
-          if contact_master?(completed, apply_mode)
-            request_newest_crl
-          end
         end
       end
     ensure
@@ -248,16 +242,6 @@ class Puppet::Configurer
     end
 
     completed ? report.exit_status : nil
-  end
-
-  # FIX ME: PUP-9011
-  def contact_master?(completed, apply_mode)
-    @cached_catalog_status == 'not_used' && !apply_mode && completed
-  end
-
-  # FIX ME: PUP-9011. Move me once we have a failover fix for server_list.
-  def request_newest_crl
-    Puppet::SSL::Host.localhost.request_newest_crl
   end
 
   def run_internal(options)
@@ -400,7 +384,7 @@ class Puppet::Configurer
   end
   private :run_internal
 
-  def find_functional_server
+  def find_functional_server()
     configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
 
     node = nil
