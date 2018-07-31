@@ -3,14 +3,19 @@ test_name "Crl retrieval and replacement from master" do
   tag 'risk:medium',
       'server'
 
+  ca_crl_path = puppet_config(master, 'cacrl', section: 'master')
+
+  teardown do
+    on(master, "touch #{ca_crl_path}") # return back to current time
+  end
+
   with_puppet_running_on(master, {}) do
     agents.each do |agent|
-      ca_crl_path = puppet_config(master, 'cacrl', section: 'master')
       crl_path = puppet_config(agent, 'hostcrl', section: 'agent')
 
       step "When a newer crl is available on master" do
-        one_hour_ahead = on(master, "TZ=ZZZ-1:00 date +%Y%m%d%H%M.%S").stdout.chomp
-        on(master, "touch -t #{one_hour_ahead} #{ca_crl_path}")
+        hours_ahead = on(master, "date -d '+2 hours' +%Y%m%d%H%M").stdout.chomp
+        on(master, "touch -t #{hours_ahead} #{ca_crl_path}")
 
         step "Should replace the current agent crl" do
           old_agent_crl_mtime = on(agent, "stat -c '%Y' #{crl_path}").stdout
@@ -22,8 +27,8 @@ test_name "Crl retrieval and replacement from master" do
       end
 
       step "When a newer crl is NOT available on master" do
-        one_hour_behind = on(master, "TZ=ZZZ+1:00 date +%Y%m%d%H%M.%S").stdout.chomp
-        on(master, "touch -t #{one_hour_behind} #{ca_crl_path}")
+        hours_behind = days_ahead = on(master, "date -d '-2 hours' +%Y%m%d%H%M").stdout.chomp
+        on(master, "touch -t #{hours_behind} #{ca_crl_path}")
 
         step "Should NOT replace the current agent crl" do
           old_agent_crl_mtime = on(agent, "stat -c '%Y' #{crl_path}").stdout
