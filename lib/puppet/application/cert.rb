@@ -100,7 +100,7 @@ class Puppet::Application::Cert < Puppet::Application
   end
 
   def summary
-    _("Manage certificates and requests")
+    _("Manage certificates and requests (Deprecated)")
   end
 
   def help
@@ -282,6 +282,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def setup
+    deprecate
+
     require 'puppet/ssl/certificate_authority'
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
