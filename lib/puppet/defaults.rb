@@ -39,6 +39,8 @@ module Puppet
 
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
 
+  CA_SETTING_DEPRECATION = _("The '%{setting_name}' setting is deprecated. Starting in Puppet 6, this setting will be ignored in favor of the analagous setting in Puppet Server's config.")
+
   define_settings(:main,
     :confdir  => {
         :default  => nil,
@@ -985,7 +987,10 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0755",
-      :desc => "The root directory for the certificate authority."
+      :desc => "The root directory for the certificate authority.",
+      :hook => proc { |value|
+        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cadir' })
+      }
     },
     :cacert => {
       :default => "$cadir/ca_crt.pem",
@@ -993,7 +998,10 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "The CA certificate."
+      :desc => "The CA certificate.",
+      :hook => proc { |value|
+        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cacert' })
+      }
     },
     :cakey => {
       :default => "$cadir/ca_key.pem",
@@ -1001,7 +1009,10 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0640",
-      :desc => "The CA private key."
+      :desc => "The CA private key.",
+      :hook => proc { |value|
+        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cakey' })
+      }
     },
     :capub => {
       :default => "$cadir/ca_pub.pem",
@@ -1009,7 +1020,10 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "The CA public key."
+      :desc => "The CA public key.",
+      :hook => proc { |value|
+        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'capub' })
+      }
     },
     :cacrl => {
       :default => "$cadir/ca_crl.pem",
@@ -1018,6 +1032,9 @@ EOT
       :group => "service",
       :mode => "0644",
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
+      :hook => proc { |value|
+        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cacrl' })
+      }
     },
     :caprivatedir => {
       :default => "$cadir/private",
@@ -1033,7 +1050,10 @@ EOT
       :owner => "service",
       :group => "service",
       :mode  => "0755",
-      :desc => "Where the CA stores certificate requests"
+      :desc => "Where the CA stores certificate requests",
+      :hook => proc { |value|
+        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'csrdir' })
+      }
     },
     :signeddir => {
       :default => "$cadir/signed",
@@ -1041,7 +1061,10 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0755",
-      :desc => "Where the CA stores signed certificates."
+      :desc => "Where the CA stores signed certificates.",
+      :hook => proc { |value|
+        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'signeddir' })
+      }
     },
     :capass => {
       :default => "$caprivatedir/ca.pass",
@@ -1057,7 +1080,10 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "Where the serial number for certificates is stored."
+      :desc => "Where the serial number for certificates is stored.",
+      :hook => proc { |value|
+        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'serial' })
+      }
     },
     :autosign => {
       :default => "$confdir/autosign.conf",
