@@ -334,7 +334,7 @@ class Puppet::Configurer
       end
       Puppet.push_context({
         :current_environment => local_node_environment, 
-        :loaders => Puppet::Pops::Loaders.new(local_node_environment)
+        :loaders => Puppet::Pops::Loaders.new(local_node_environment, true)
       }, "Local node environment for configurer transaction")
 
       query_options = get_facts(options) unless query_options
