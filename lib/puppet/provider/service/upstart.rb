@@ -16,8 +16,6 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
     Facter.value(:operatingsystem) == 'LinuxMint',
   ]
 
-  confine :exists => "/var/run/upstart-socket-bridge.pid"
-
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"]
 
   commands :start   => "/sbin/start",
@@ -25,6 +23,16 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
            :restart => "/sbin/restart",
            :status_exec  => "/sbin/status",
            :initctl => "/sbin/initctl"
+
+  # We only want to use upstart as our provider if the upstart daemon is running.
+  # This can be checked by running `initctl version --quiet` on a machine that has
+  # upstart installed.
+  confine :true => begin
+    initctl('version', '--quiet')
+    true
+  rescue
+    false
+  end
 
   # upstart developer haven't implemented initctl enable/disable yet:
   # http://www.linuxplanet.com/linuxplanet/tutorials/7033/2/
