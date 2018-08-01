@@ -4,6 +4,8 @@ require 'timeout'
 require 'puppet/network/http_pool'
 require 'puppet/util'
 require 'securerandom'
+#require 'puppet/parser/script_compiler'
+require 'puppet/pops/evaluator/deferred_resolver'
 
 class Puppet::Configurer
   require 'puppet/configurer/fact_handler'
@@ -106,6 +108,11 @@ class Puppet::Configurer
     catalog = nil
 
     catalog_conversion_time = thinmark do
+      # Will mutate the result and replace all Deferred values with resolved values
+      if options[:convert_for_node] && options[:convert_with_facts]
+        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(options[:convert_for_node], options[:convert_with_facts], result)
+      end
+
       catalog = result.to_ral
       catalog.finalize
       catalog.retrieval_duration = duration
@@ -137,7 +144,9 @@ class Puppet::Configurer
       #
       # facts_for_uploading may set Puppet[:node_name_value] as a side effect
       facter_time = thinmark do
-        facts_hash = facts_for_uploading
+        facts = find_facts
+        options[:convert_with_facts] =  facts
+        facts_hash = encode_facts(facts) # encode for uploading # was: facts_for_uploading
       end
       options[:report].add_times(:fact_generation, facter_time) if options[:report]
     end
@@ -327,10 +336,14 @@ class Puppet::Configurer
                                          current_environment.manifest,
                                          current_environment.config_version)
       end
-      Puppet.push_context({:current_environment => local_node_environment}, "Local node environment for configurer transaction")
+      Puppet.push_context({
+        :current_environment => local_node_environment, 
+        :loaders => Puppet::Pops::Loaders.new(local_node_environment)
+      }, "Local node environment for configurer transaction")
 
       query_options = get_facts(options) unless query_options
       query_options[:configured_environment] = configured_environment
+      options[:convert_for_node] = node
 
       unless catalog = prepare_and_retrieve_catalog(options, query_options)
         return nil
