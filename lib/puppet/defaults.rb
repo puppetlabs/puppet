@@ -987,7 +987,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0755",
-      :desc => "The root directory for the certificate authority.",
+      :desc => "The root directory for the certificate authority. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
       :hook => proc { |value|
         Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cadir' })
       }
@@ -998,7 +998,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "The CA certificate.",
+      :desc => "The CA certificate. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
       :hook => proc { |value|
         Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cacert' })
       }
@@ -1009,7 +1009,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0640",
-      :desc => "The CA private key.",
+      :desc => "The CA private key. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
       :hook => proc { |value|
         Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cakey' })
       }
@@ -1020,7 +1020,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "The CA public key.",
+      :desc => "The CA public key. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
       :hook => proc { |value|
         Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'capub' })
       }
@@ -1031,7 +1031,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
+      :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
       :hook => proc { |value|
         Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cacrl' })
       }
@@ -1050,7 +1050,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode  => "0755",
-      :desc => "Where the CA stores certificate requests",
+      :desc => "Where the CA stores certificate requests. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
       :hook => proc { |value|
         Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'csrdir' })
       }
@@ -1061,7 +1061,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0755",
-      :desc => "Where the CA stores signed certificates.",
+      :desc => "Where the CA stores signed certificates. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
       :hook => proc { |value|
         Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'signeddir' })
       }
@@ -1080,7 +1080,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "Where the serial number for certificates is stored.",
+      :desc => "Where the serial number for certificates is stored. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
       :hook => proc { |value|
         Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'serial' })
       }
