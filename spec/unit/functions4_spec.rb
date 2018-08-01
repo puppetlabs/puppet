@@ -425,7 +425,7 @@ describe 'the 4x function api' do
       end
     end
 
-    context 'supports calling ruby functions with lambda from puppet' do
+    context 'functions in a context with a compiler' do
       before(:all) do
         Puppet.push_context( {:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))})
       end
@@ -443,28 +443,37 @@ describe 'the 4x function api' do
       let(:scope) { s = create_test_scope_for_node(node); s }
       let(:loader) { Puppet::Pops::Loaders.find_loader(nil) }
 
-      it 'function with required block can be called' do
-        # construct ruby function to call
-        fc = Puppet::Functions.create_function('testing::test') do
-          dispatch :test do
-            param 'Integer', :x
-            # block called 'the_block', and using "all_callables"
-            required_block_param #(all_callables(), 'the_block')
+      context 'supports calling ruby functions with lambda from puppet' do
+        it 'function with required block can be called' do
+          # construct ruby function to call
+          fc = Puppet::Functions.create_function('testing::test') do
+            dispatch :test do
+              param 'Integer', :x
+              # block called 'the_block', and using "all_callables"
+              required_block_param #(all_callables(), 'the_block')
+            end
+            def test(x)
+              # call the block with x
+              yield(x)
+            end
           end
-          def test(x)
-            # call the block with x
-            yield(x)
-          end
+          # add the function to the loader (as if it had been loaded from somewhere)
+          the_loader = loader
+          f = fc.new({}, the_loader)
+          loader.set_entry(Puppet::Pops::Loader::TypedName.new(:function, 'testing::test'), f)
+          # evaluate a puppet call
+          source = "testing::test(10) |$x| { $x+1 }"
+          program = parser.parse_string(source, __FILE__)
+          Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns(the_loader)
+          expect(parser.evaluate(scope, program)).to eql(11)
         end
-        # add the function to the loader (as if it had been loaded from somewhere)
-        the_loader = loader
-        f = fc.new({}, the_loader)
-        loader.set_entry(Puppet::Pops::Loader::TypedName.new(:function, 'testing::test'), f)
-        # evaluate a puppet call
-        source = "testing::test(10) |$x| { $x+1 }"
-        program = parser.parse_string(source, __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns(the_loader)
-        expect(parser.evaluate(scope, program)).to eql(11)
+      end
+
+      it 'supports injection of a cache' do
+        the_function = create_function_with_cache_param.new(:closure_scope, :loader)
+        expect(the_function.call(scope, 'key', 10)).to eql(nil)
+        expect(the_function.call(scope, 'key', 20)).to eql(10)
+        expect(the_function.call(scope, 'key', 30)).to eql(20)
       end
     end
 
@@ -508,8 +517,8 @@ describe 'the 4x function api' do
           CODE
         end.to raise_error(/Parsing of type string '"Array\[1\+=1\]"' failed with message: <Syntax error at '\]' \(line: 1, column: [0-9]+\)>/m)
       end
-
     end
+
     context 'can use a loader when parsing types in function dispatch, and' do
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
 
@@ -854,26 +863,6 @@ describe 'the 4x function api' do
     end
   end
 
-  def create_function_with_param_injection_regular
-    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
-      attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
-      attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
-      attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
-
-      dispatch :test do
-        injected_param Puppet::Pops::Types::TypeFactory.string, :x, 'a_string'
-        injected_producer_param Puppet::Pops::Types::TypeFactory.integer, :y, 'an_int'
-        param 'Scalar', :a
-        param 'Scalar', :b
-      end
-
-      def test(x,y,a,b)
-        y_produced = y.produce(nil)
-        "#{x}! #{a}, and #{b} < #{y_produced} = #{ !!(a < y_produced && b < y_produced)}"
-      end
-    end
-  end
-
   def create_function_with_required_block_all_defaults
     Puppet::Functions.create_function('test') do
       dispatch :test do
@@ -997,6 +986,22 @@ describe 'the 4x function api' do
 
       def on_error(x)
         "It's not OK to pass a string"
+      end
+    end
+  end
+
+  def create_function_with_cache_param
+    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+      dispatch :test do
+        cache_param
+        param 'String', :key
+        param 'Any', :value
+      end
+      def test(cache, k, v)
+        h = cache.retrieve(self)
+        previous = h[k]
+        h[k] = v
+        previous
       end
     end
   end

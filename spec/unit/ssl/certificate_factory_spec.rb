@@ -21,9 +21,11 @@ describe Puppet::SSL::CertificateFactory do
 
   describe "when generating the certificate" do
     it "should return a new X509 certificate" do
-      expect(subject.build(:server, csr, issuer, serial)).not_to eq(
-        subject.build(:server, csr, issuer, serial)
-      )
+      a = subject.build(:server, csr, issuer, serial)
+      b = subject.build(:server, csr, issuer, serial)
+      # The two instances are equal in every aspect except that they are 
+      # different instances - they are `==`, but not hash `eql?`
+      expect(a).not_to eql(b)
     end
 
     it "should set the certificate's version to 2" do

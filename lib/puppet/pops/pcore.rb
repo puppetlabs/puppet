@@ -35,7 +35,7 @@ module Pcore
     if Puppet[:tasks]
       add_object_type('Task', <<-PUPPET, loader)
         {
-          attributes => {   
+          attributes => {
             # Fully qualified name of the task
             name => { type => Pattern[/\\A[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*\\z/] },
 
@@ -47,7 +47,7 @@ module Pcore
 
             # Puppet Task version
             puppet_task_version => { type => Integer, value => 1 },
-  
+
             # Type, description, and sensitive property of each parameter 
             parameters => {
               type => Optional[Hash[
@@ -69,7 +69,7 @@ module Pcore
                   type => Type]]],
               value => undef
             },
- 
+
             supports_noop => { type => Boolean, value => false },
             input_method => { type => String, value => 'both' },
           }
@@ -95,6 +95,17 @@ module Pcore
     Resource.register_ptypes(loader, ir)
     Lookup::Context.register_ptype(loader, ir);
     Lookup::DataProvider.register_types(loader)
+
+    add_object_type('Deferred', <<-PUPPET, loader)
+      {
+        attributes => {
+          # Fully qualified name of the function
+          name  => { type => Pattern[/\\A[$]?[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*\\z/] },
+          arguments => { type => Optional[Array[Any]], value => undef},
+        }
+      }
+    PUPPET
+
   end
 
   # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class

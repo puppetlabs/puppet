@@ -265,20 +265,31 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
           exit(1)
         end
 
-        # Translate it to a RAL catalog
-        catalog = catalog.to_ral
+        # Loaders are required when resolving deferred values and at the end
+        # when apply_catalog is called - it is therefore used around all of the
+        # required steps as it is expensive to set up loaders twice (once for
+        # resolution and once for the apply).
+        #
+        exit_status = Puppet.override(:loaders => Puppet::Pops::Loaders.new(apply_environment)) do
 
-        catalog.finalize
+          # Resolve all deferred values and replace them / mutate the catalog
+          Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node, node.facts, catalog)
 
-        catalog.retrieval_duration = Time.now - starttime
+          # Translate it to a RAL catalog
+          catalog = catalog.to_ral
 
-        if options[:write_catalog_summary]
-          catalog.write_class_file
-          catalog.write_resource_file
+          catalog.finalize
+
+          catalog.retrieval_duration = Time.now - starttime
+
+          if options[:write_catalog_summary]
+            catalog.write_class_file
+            catalog.write_resource_file
+          end
+
+          #exit_status = Puppet.override(:loaders => Puppet::Pops::Loaders.new(apply_environment)) { apply_catalog(catalog) }
+          apply_catalog(catalog)
         end
-
-        exit_status = Puppet.override(:loaders => Puppet::Pops::Loaders.new(apply_environment)) { apply_catalog(catalog) }
-
         if not exit_status
           exit(1)
         elsif options[:detailed_exitcodes] then
