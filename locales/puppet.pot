@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.3-444-g3cfecb2\n"
+"Project-Id-Version: Puppet automation framework 5.5.3-460-ge9fc495\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-07-30 17:48+0000\n"
-"PO-Revision-Date: 2018-07-30 17:48+0000\n"
+"POT-Creation-Date: 2018-08-01 21:03+0000\n"
+"PO-Revision-Date: 2018-08-01 21:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -217,11 +217,11 @@ msgstr ""
 msgid "%{file} is not readable"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:318 ../lib/puppet/application/script.rb:238
+#: ../lib/puppet/application/apply.rb:329 ../lib/puppet/application/script.rb:238
 msgid "Exiting"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:346
+#: ../lib/puppet/application/apply.rb:357
 msgid "Could not deserialize catalog from %{format}: %{detail}"
 msgstr ""
 
@@ -441,95 +441,95 @@ msgstr ""
 msgid "Only one file can be used per run. Skipping %{files}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:21
+#: ../lib/puppet/configurer.rb:23
 msgid "Puppet configuration client"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:49
+#: ../lib/puppet/configurer.rb:51
 msgid "Removing corrupt state file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:54
+#: ../lib/puppet/configurer.rb:56
 msgid "Cannot remove %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:76
+#: ../lib/puppet/configurer.rb:78
 msgid "Using cached catalog from environment '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:82
+#: ../lib/puppet/configurer.rb:84
 msgid "Not using cache on failed catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:91
+#: ../lib/puppet/configurer.rb:93
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:96 ../lib/puppet/configurer.rb:173
+#: ../lib/puppet/configurer.rb:98 ../lib/puppet/configurer.rb:182
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:166
+#: ../lib/puppet/configurer.rb:175
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:184
+#: ../lib/puppet/configurer.rb:193
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:226
+#: ../lib/puppet/configurer.rb:234
 msgid "Could not select a functional puppet master"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:278
+#: ../lib/puppet/configurer.rb:271
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:323
+#: ../lib/puppet/configurer.rb:316
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:328
+#: ../lib/puppet/configurer.rb:321
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:332
+#: ../lib/puppet/configurer.rb:325
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:356
+#: ../lib/puppet/configurer.rb:353
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:367
+#: ../lib/puppet/configurer.rb:364
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:369
+#: ../lib/puppet/configurer.rb:366
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:388
+#: ../lib/puppet/configurer.rb:385
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:437 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:434 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:446
+#: ../lib/puppet/configurer.rb:443
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:458
+#: ../lib/puppet/configurer.rb:455
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:476
+#: ../lib/puppet/configurer.rb:473
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:496
+#: ../lib/puppet/configurer.rb:493
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -4059,7 +4059,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:553 ../lib/puppet/pops/loaders.rb:298
+#: ../lib/puppet/node/environment.rb:553 ../lib/puppet/pops/loaders.rb:299
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -4788,7 +4788,11 @@ msgstr ""
 msgid "An URI can only be merged with an URI or String"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1243
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1213
+msgid "Can only append Binary to a Binary"
+msgstr ""
+
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1246
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
@@ -4817,7 +4821,7 @@ msgstr ""
 msgid "Unknown function '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/functions/dispatch.rb:83
+#: ../lib/puppet/pops/functions/dispatch.rb:85
 msgid "Unknown injection %{injection_name}"
 msgstr ""
 
@@ -5698,19 +5702,19 @@ msgstr ""
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:174
+#: ../lib/puppet/pops/loaders.rb:175
 msgid "Internal Error: Puppet Context ':loaders' missing"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:188
+#: ../lib/puppet/pops/loaders.rb:189
 msgid "Unable to find loader named '%{loader_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:209
+#: ../lib/puppet/pops/loaders.rb:210
 msgid "Internal Error: did not find public loader for module: '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:255
+#: ../lib/puppet/pops/loaders.rb:256
 msgid "Internal Error: Attempt to redefine loader named '%{name}'"
 msgstr ""
 
@@ -6160,7 +6164,7 @@ msgid "TypeCalculator.enumerable is deprecated. Use iterable"
 msgstr ""
 
 #. TRANSLATORS 'TypeFactory#string' is a class and method name and should not be translated
-#: ../lib/puppet/pops/types/type_factory.rb:104
+#: ../lib/puppet/pops/types/type_factory.rb:117
 msgid "Passing more than one argument to TypeFactory#string is deprecated"
 msgstr ""
 
@@ -7272,15 +7276,15 @@ msgstr ""
 msgid "Connection to cached server and port %{server}:%{port} failed: %{message}"
 msgstr ""
 
-#: ../lib/puppet/rest/routes.rb:30
+#: ../lib/puppet/rest/routes.rb:29
 msgid "Downloaded certificate for %{name} from %{server}"
 msgstr ""
 
-#: ../lib/puppet/rest/routes.rb:50
+#: ../lib/puppet/rest/routes.rb:47
 msgid "Downloaded certificate revocation list for %{name} from %{server}"
 msgstr ""
 
-#: ../lib/puppet/rest/routes.rb:89
+#: ../lib/puppet/rest/routes.rb:86
 msgid "Downloaded existing certificate request for %{name} from %{server}"
 msgstr ""
 
@@ -7718,19 +7722,19 @@ msgstr ""
 msgid "Revoked certificate with serial %{serial}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:119
+#: ../lib/puppet/ssl/host.rb:117
 msgid "CA Mode can only be one of: %{modes}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:226
+#: ../lib/puppet/ssl/host.rb:224
 msgid "No certificate to validate."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:227
+#: ../lib/puppet/ssl/host.rb:225
 msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:229
+#: ../lib/puppet/ssl/host.rb:227
 msgid ""
 "The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?\n"
 "Certificate fingerprint: %{fingerprint}\n"
@@ -7743,7 +7747,7 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:270
+#: ../lib/puppet/ssl/host.rb:268
 msgid ""
 "The CSR retrieved from the master does not match the agent's public key.\n"
 "CSR fingerprint: %{fingerprint}\n"
@@ -7758,73 +7762,73 @@ msgid ""
 "  2. puppet agent -t\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:375 ../lib/puppet/ssl/host.rb:396
+#: ../lib/puppet/ssl/host.rb:373 ../lib/puppet/ssl/host.rb:394
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:377
+#: ../lib/puppet/ssl/host.rb:375
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:386
+#: ../lib/puppet/ssl/host.rb:384
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:394
+#: ../lib/puppet/ssl/host.rb:392
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:452
+#: ../lib/puppet/ssl/host.rb:440
 msgid "Response from the CA did not contain a valid certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:458
+#: ../lib/puppet/ssl/host.rb:446
 msgid "Could not download certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:494
+#: ../lib/puppet/ssl/host.rb:482
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:525
+#: ../lib/puppet/ssl/host.rb:513
 msgid "The CA certificate at %{file_path} is invalid: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:548
+#: ../lib/puppet/ssl/host.rb:536
 msgid "No valid PEM-encoded certificates."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:555
+#: ../lib/puppet/ssl/host.rb:543
 msgid "Could not parse certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:584
+#: ../lib/puppet/ssl/host.rb:568
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:606
+#: ../lib/puppet/ssl/host.rb:588
 msgid "Response from the CA did not contain a valid CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:609
+#: ../lib/puppet/ssl/host.rb:591
 msgid "Could not download CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:662
+#: ../lib/puppet/ssl/host.rb:644
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:683
+#: ../lib/puppet/ssl/host.rb:665
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:687
+#: ../lib/puppet/ssl/host.rb:669
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:690
+#: ../lib/puppet/ssl/host.rb:672
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
