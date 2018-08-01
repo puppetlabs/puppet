@@ -2,11 +2,12 @@
 
 If you'd like to run Puppet from source on Windows platforms, follow the [Quickstart](./quickstart.md) to using bundler and installing the necessary gems on Windows.
 
-You will need to install Ruby on Windows from [rubyinstaller.org](http://rubyinstaller.org).
+You will need to install Ruby on Windows from [rubyinstaller.org](http://rubyinstaller.org)
+or from [Choclately](https://chocolatey.org/packages/ruby).
 
     C:\> cd C:\work\puppet
     C:\work\puppet> gem install bundler
-    C:\work\puppet> bundle install --path .bundle
+    C:\work\puppet> bundle install --path .bundle --without development extra
     C:\work\puppet> bundle exec puppet --version
     4.7.1
 
@@ -68,4 +69,3 @@ Then run the test as:
  * Don't assume 'C' drive.  Use environment variables to look these up:
 
     "#{ENV['windir']}/system32/netsh.exe"
-
