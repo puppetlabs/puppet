@@ -34,6 +34,43 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     expect(described_class.default?).to be_truthy
   end
 
+  context "upstart daemon existence confine" do
+    # We have a separate method here because our search for the upstart daemon
+    # confine expects it to be the last confine declared in the upstart provider.
+    # If in the future we add other confines below it or change its order, these
+    # unit tests will fail. Placing knowledge of where this confine is located
+    # in one place makes updating it less painful in case we ever need to do this.
+    def assert_upstart_daemon_existence_confine_is(expected_value)
+      upstart_daemon_existence_confine = provider_class.confine_collection.instance_variable_get(:@confines)[-1]
+      expect(upstart_daemon_existence_confine.valid?).to be(expected_value)
+    end
+
+    let(:initctl_version) { ['/sbin/initctl', 'version', '--quiet'] }
+    before(:each) do
+      # Stub out /sbin/initctl
+      Puppet::Util.stubs(:which).with('/sbin/initctl').returns('/sbin/initctl')
+
+      # Both of our tests are asserting the confine :true block that shells out to
+      # `initctl version --quiet`. Its expression is evaluated at provider load-time.
+      # Hence before each test, we want to reload the upstart provider so that the
+      # confine is re-evaluated.
+      Puppet::Type.type(:service).unprovide(:upstart)
+    end
+
+    it "should return true when the daemon is running" do
+      Puppet::Util::Execution.expects(:execute).with(initctl_version, instance_of(Hash))
+      assert_upstart_daemon_existence_confine_is(true)
+    end
+
+    it "should return false when the daemon is not running" do
+      Puppet::Util::Execution.expects(:execute)
+        .with(initctl_version, instance_of(Hash))
+        .raises(Puppet::ExecutionFailure, "initctl failed!")
+
+      assert_upstart_daemon_existence_confine_is(false)
+    end
+  end
+
   describe "excluding services" do
     it "ignores tty and serial on Redhat systems" do
       Facter.stubs(:value).with(:osfamily).returns('RedHat')
