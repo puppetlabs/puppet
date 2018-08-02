@@ -24,20 +24,6 @@ describe Puppet do
     expect(ENV["PATH"]).to eq(newpath)
   end
 
-  it "should change $LOAD_PATH when :libdir changes" do
-    one = tmpdir('load-path-one')
-    two = tmpdir('load-path-two')
-    expect(one).not_to eq(two)
-
-    Puppet[:libdir] = one
-    expect($LOAD_PATH).to include one
-    expect($LOAD_PATH).not_to include two
-
-    Puppet[:libdir] = two
-    expect($LOAD_PATH).not_to include one
-    expect($LOAD_PATH).to include two
-  end
-
   it 'should propagate --modulepath to base environment' do
     Puppet::Node::Environment.expects(:create).with(
       is_a(Symbol), ['/my/modules'], Puppet::Node::Environment::NO_MANIFEST)
