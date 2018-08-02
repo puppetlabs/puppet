@@ -24,6 +24,7 @@ describe Puppet::Util::Autoload do
 
     def with_libdir(libdir)
       begin
+        Puppet::Util::Autoload.instance_variable_set(:@initialized, false)
         old_loadpath = $LOAD_PATH.dup
         old_libdir = Puppet[:libdir]
         Puppet[:libdir] = libdir
