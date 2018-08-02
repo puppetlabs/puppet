@@ -22,6 +22,19 @@ describe Puppet::Util::Autoload do
       Puppet.settings.stubs(:app_defaults_initialized?).returns(true)
     end
 
+    def with_libdir(libdir)
+      begin
+        old_loadpath = $LOAD_PATH.dup
+        old_libdir = Puppet[:libdir]
+        Puppet[:libdir] = libdir
+        yield
+      ensure
+        Puppet[:libdir] = old_libdir
+        $LOAD_PATH.clear
+        $LOAD_PATH.concat(old_loadpath)
+      end
+    end
+
     it "should collect all of the lib directories that exist in the current environment's module path" do
       dira = dir_containing('dir_a', {
         "one" => {},
@@ -68,17 +81,26 @@ describe Puppet::Util::Autoload do
       module_libdir = File.join(vendor_dir, 'amodule_core', 'lib')
       FileUtils.mkdir_p(module_libdir)
 
-      Puppet[:libdir] = File.expand_path('/libdir1')
+      libdir = File.expand_path('/libdir1')
       Puppet[:vendormoduledir] = vendor_dir
-      @autoload.class.expects(:gem_directories).returns %w{/one /two}
-      @autoload.class.expects(:module_directories).returns %w{/three /four}
-      expect(@autoload.class.search_directories(nil)).to eq(%w{/one /two /three /four} + [File.expand_path('/libdir1')] + $LOAD_PATH + [module_libdir])
+
+      with_libdir(libdir) do
+        @autoload.class.expects(:gem_directories).returns %w{/one /two}
+        @autoload.class.expects(:module_directories).returns %w{/three /four}
+        dirs = @autoload.class.search_directories(nil)
+        expect(dirs[0..4]).to eq(%w{/one /two /three /four} + [libdir])
+        expect(dirs.last).to eq(module_libdir)
+      end
     end
 
     it "does not split the Puppet[:libdir]" do
-      Puppet[:libdir] = "/libdir1#{File::PATH_SEPARATOR}/libdir2"
-
-      expect(@autoload.class.libdirs).to eq([Puppet[:libdir]])
+      dir = File.expand_path("/libdir1#{File::PATH_SEPARATOR}/libdir2")
+      with_libdir(dir) do
+        @autoload.class.expects(:gem_directories).returns %w{/one /two}
+        @autoload.class.expects(:module_directories).returns %w{/three /four}
+        dirs = @autoload.class.search_directories(nil)
+        expect(dirs).to include(dir)
+      end
     end
   end
 
