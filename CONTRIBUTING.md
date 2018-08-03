@@ -65,10 +65,7 @@ the [puppet-dev mailing list](https://groups.google.com/forum/#!forum/puppet-dev
       why this is a problem, and how the patch fixes the problem when applied.
   ```
 * Make sure you have added the necessary tests for your changes.
-* Run _all_ the tests to assure nothing else was accidentally broken. First
-  install all the test dependencies with `bundle install --path .bundle`. Then
-  either run all the tests serially with `bundle exec rspec spec` or in parallel
-  with `bundle exec rake parallel:spec[process_count]`
+* For details on how to run tests, please see [the quickstart guide](https://github.com/puppetlabs/puppet/blob/master/docs/quickstart.md)
 
 ## Writing Translatable Code
 
