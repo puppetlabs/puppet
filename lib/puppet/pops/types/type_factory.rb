@@ -6,6 +6,19 @@ module Types
 module TypeFactory
   @type_calculator = TypeCalculator.singleton
 
+  # Clears caches - used when testing
+  def self.clear
+    # these types are cached and needs to be nulled as the representation may change if loaders are cleared
+    @data_t = nil
+    @rich_data_t = nil
+    @rich_data_key_t = nil
+    @array_of_data_t = nil
+    @hash_of_data_t = nil
+    @error_t = nil
+    @task_t = nil
+    @deferred_t = nil
+  end
+
   # Produces the Integer type
   # @api public
   #
@@ -524,6 +537,10 @@ module TypeFactory
 
   def self.task
     @task_t ||= TypeParser.singleton.parse('Task')
+  end
+
+  def self.deferred
+    @deferred_t ||= TypeParser.singleton.parse('Deferred')
   end
 
   # Produces a type for URI[String or Hash]
