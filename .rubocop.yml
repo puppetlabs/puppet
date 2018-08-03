@@ -6,6 +6,7 @@ AllCops:
     - 'lib/**/*.rb'
     - 'ext/**/*.rb'
   Exclude:
+    - '**/*.spec'
     - '**/*.erb'
     - 'acceptance/**/*'
     - 'autotest/**/*'
@@ -740,9 +741,8 @@ Performance/CompareWithBlock:
 Security/JSONLoad:
   Enabled: false
 
-# TODO PUP-8004
 Security/YAMLLoad:
-  Enabled: false
+  Enabled: true
 
 Style/EmptyCaseCondition:
   Enabled: false
