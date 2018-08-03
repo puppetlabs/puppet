@@ -559,9 +559,13 @@ plan_expression
     }
 
 apply_expression
-  : APPLY LPAREN arguments endcomma RPAREN LBRACE opt_statements RBRACE {
+  : APPLY LPAREN arguments endcomma RPAREN LBRACE statements RBRACE {
       result = Factory.APPLY(val[2], Factory.APPLY_BLOCK(val[6]))
       loc result, val[0], val[7]
+    }
+  | APPLY LPAREN arguments endcomma RPAREN LBRACE RBRACE {
+      result = Factory.APPLY(val[2], Factory.APPLY_BLOCK([]))
+      loc result, val[0], val[6]
     }
 
 #---HOSTCLASS
