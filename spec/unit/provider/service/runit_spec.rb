@@ -6,9 +6,8 @@
 #
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:runit)
-
-describe provider_class do
+describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:runit) }
 
   before(:each) do
     # Create a mock resource

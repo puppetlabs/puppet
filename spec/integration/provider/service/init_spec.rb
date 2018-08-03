@@ -1,9 +1,11 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-provider = Puppet::Type.type(:service).provider(:init)
+test_title = 'Integration Tests for Puppet::Type::Service::Provider::Init'
 
-describe provider do
+describe test_title, unless: Puppet::Util::Platform.jruby? do
+  let(:provider) { Puppet::Type.type(:service).provider(:init) }
+
   describe "when running on FreeBSD" do
     before :each do
       Facter.stubs(:value).with(:operatingsystem).returns 'FreeBSD'

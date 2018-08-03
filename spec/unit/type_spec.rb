@@ -724,6 +724,12 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     # This one is really hard to test :/
     it "should set each default immediately if no value is provided" do
+      # We have a :confine block that calls execute in our upstart provider, which fails
+      # on jruby. Thus, we stub it out here since we don't care to do any assertions on it.
+      # This is only an issue if you're running these unit tests on a platform where upstart
+      # is a default provider, like Ubuntu trusty.
+      Puppet::Util::Execution.stubs(:execute)
+
       defaults = []
       Puppet::Type.type(:service).any_instance.stubs(:set_default).with { |value| defaults << value; true }
 

@@ -5,7 +5,8 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:service).provider(:init) do
+describe 'Puppet::Type::Service::Provider::Init', unless: Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:init) }
 
   if Puppet.features.microsoft_windows?
     # Get a pid for $CHILD_STATUS to latch on to
@@ -14,7 +15,7 @@ describe Puppet::Type.type(:service).provider(:init) do
   end
 
   before do
-    Puppet::Type.type(:service).defaultprovider = described_class
+    Puppet::Type.type(:service).defaultprovider = provider_class
   end
 
   after do
@@ -44,7 +45,7 @@ describe Puppet::Type.type(:service).provider(:init) do
 
   describe "when getting all service instances" do
     before :each do
-      described_class.stubs(:defpath).returns('tmp')
+      provider_class.stubs(:defpath).returns('tmp')
 
       @services = ['one', 'two', 'three', 'four', 'umountfs']
       Dir.stubs(:entries).with('tmp').returns @services
@@ -53,35 +54,35 @@ describe Puppet::Type.type(:service).provider(:init) do
     end
 
     it "should return instances for all services" do
-      expect(described_class.instances.map(&:name)).to eq(@services)
+      expect(provider_class.instances.map(&:name)).to eq(@services)
     end
 
     it "should omit an array of services from exclude list" do
       exclude = ['two', 'four']
-      expect(described_class.get_services(described_class.defpath, exclude).map(&:name)).to eq(@services - exclude)
+      expect(provider_class.get_services(provider_class.defpath, exclude).map(&:name)).to eq(@services - exclude)
     end
 
     it "should omit a single service from the exclude list" do
       exclude = 'two'
-      expect(described_class.get_services(described_class.defpath, exclude).map(&:name)).to eq(@services - [exclude])
+      expect(provider_class.get_services(provider_class.defpath, exclude).map(&:name)).to eq(@services - [exclude])
     end
 
     it "should omit Yocto services on cisco-wrlinux" do
       Facter.stubs(:value).with(:osfamily).returns 'cisco-wrlinux'
       exclude = 'umountfs'
-      expect(described_class.get_services(described_class.defpath).map(&:name)).to eq(@services - [exclude])
+      expect(provider_class.get_services(provider_class.defpath).map(&:name)).to eq(@services - [exclude])
     end
 
     it "should not omit Yocto services on non cisco-wrlinux platforms" do
-      expect(described_class.get_services(described_class.defpath).map(&:name)).to eq(@services)
+      expect(provider_class.get_services(provider_class.defpath).map(&:name)).to eq(@services)
     end
 
     it "should use defpath" do
-      expect(described_class.instances).to be_all { |provider| provider.get(:path) == described_class.defpath }
+      expect(provider_class.instances).to be_all { |provider| provider.get(:path) == provider_class.defpath }
     end
 
     it "should set hasstatus to true for providers" do
-      expect(described_class.instances).to be_all { |provider| provider.get(:hasstatus) == true }
+      expect(provider_class.instances).to be_all { |provider| provider.get(:hasstatus) == true }
     end
 
     it "should discard upstart jobs", :if => Puppet.features.manages_symlinks? do
@@ -90,14 +91,14 @@ describe Puppet::Type.type(:service).provider(:init) do
       Puppet::FileSystem.expects(:symlink?).at_least_once.returns false
       Puppet::FileSystem.expects(:symlink?).with(Puppet::FileSystem.pathname(path)).returns(true)
       Puppet::FileSystem.expects(:readlink).with(Puppet::FileSystem.pathname(path)).returns("/lib/init/upstart-job")
-      expect(described_class.instances.map(&:name)).to eq(valid_services)
+      expect(provider_class.instances.map(&:name)).to eq(valid_services)
     end
 
     it "should discard non-initscript scripts" do
       valid_services = @services
       all_services = valid_services + excludes
       Dir.expects(:entries).with('tmp').returns all_services
-      expect(described_class.instances.map(&:name)).to match_array(valid_services)
+      expect(provider_class.instances.map(&:name)).to match_array(valid_services)
     end
   end
 

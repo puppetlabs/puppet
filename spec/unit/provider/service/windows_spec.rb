@@ -7,7 +7,9 @@ require 'spec_helper'
 
 require 'win32/service' if Puppet.features.microsoft_windows?
 
-describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.microsoft_windows? do
+describe 'Puppet::Type::Service::Provider::Windows',
+    :if => Puppet.features.microsoft_windows? && !Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:windows) }
   let(:name)     { 'nonexistentservice' }
   let(:resource) { Puppet::Type.type(:service).new(:name => name, :provider => :windows) }
   let(:provider) { resource.provider }
@@ -28,7 +30,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
       list_of_services = ['snmptrap', 'svchost', 'sshd'].map { |s| stub('service', :service_name => s) }
       Win32::Service.expects(:services).returns(list_of_services)
 
-      expect(described_class.instances.map(&:name)).to match_array(['snmptrap', 'svchost', 'sshd'])
+      expect(provider_class.instances.map(&:name)).to match_array(['snmptrap', 'svchost', 'sshd'])
     end
   end
 
