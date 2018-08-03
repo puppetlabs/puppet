@@ -705,8 +705,6 @@ class Factory
 
   def self.block(*args);                 new(BlockExpression, args.map { |arg| infer(arg) }); end
 
-  def self.apply_block(*args);           new(ApplyBlockExpression, args.map { |arg| infer(arg) }); end
-
   def self.string(*args);                new(ConcatenatedString, args.map { |arg| infer(arg) });           end
 
   def self.text(o);                      infer(o).text;                                  end
@@ -946,6 +944,10 @@ class Factory
 
   def self.APPLY(arguments, body)
     new(ApplyExpression, arguments, body)
+  end
+
+  def self.APPLY_BLOCK(statements)
+    new(ApplyBlockExpression, statements)
   end
 
   def self.FUNCTION(name, parameters, body, return_type)

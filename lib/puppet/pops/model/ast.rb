@@ -1219,7 +1219,7 @@ end
 class ApplyBlockExpression < BlockExpression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ApplyBlockExpression', {
-      'parent' => CallExpression._pcore_type
+      'parent' => BlockExpression._pcore_type,
     })
   end
 
