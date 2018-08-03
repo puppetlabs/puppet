@@ -47,6 +47,11 @@ describe provider_class do
     end
   end
 
+  it "should be the default provider on Devuan" do
+    Facter.expects(:value).with(:operatingsystem).at_least_once.returns('Devuan')
+    expect(provider_class.default?).to be_truthy
+  end
+
   it "should be the default provider on Debian" do
     Facter.expects(:value).with(:operatingsystem).at_least_once.returns('Debian')
     Facter.expects(:value).with(:operatingsystemmajrelease).returns('7')
