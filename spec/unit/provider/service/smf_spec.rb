@@ -6,9 +6,9 @@
 #
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:smf)
-
-describe provider_class, :if => Puppet.features.posix? do
+describe 'Puppet::Type::Service::Provider::Smf',
+    if: Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:smf) }
 
   before(:each) do
     # Create a mock resource

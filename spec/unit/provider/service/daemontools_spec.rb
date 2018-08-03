@@ -6,9 +6,8 @@
 #
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:daemontools)
-
-describe provider_class do
+describe 'Puppet::Type::Service::Provider::Daemontools', unless: Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:daemontools) }
 
   before(:each) do
     # Create a mock resource

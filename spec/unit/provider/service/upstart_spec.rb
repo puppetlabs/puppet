@@ -1,11 +1,10 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-
-describe Puppet::Type.type(:service).provider(:upstart) do
+describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platform.jruby? do
   let(:manual) { "\nmanual" }
   let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
-  let(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
+  let!(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
 
   if Puppet.features.microsoft_windows?
     # Get a pid for $CHILD_STATUS to latch on to
@@ -31,7 +30,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
   it "should be the default provider on Ubuntu" do
     Facter.expects(:value).with(:operatingsystem).returns("Ubuntu")
     Facter.expects(:value).with(:operatingsystemmajrelease).returns("12.04")
-    expect(described_class.default?).to be_truthy
+    expect(provider_class.default?).to be_truthy
   end
 
   context "upstart daemon existence confine" do
@@ -41,6 +40,9 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     # unit tests will fail. Placing knowledge of where this confine is located
     # in one place makes updating it less painful in case we ever need to do this.
     def assert_upstart_daemon_existence_confine_is(expected_value)
+      # Reload our provider to evaluate the :confine block
+      provider_class = Puppet::Type.type(:service).provider(:upstart)
+
       upstart_daemon_existence_confine = provider_class.confine_collection.instance_variable_get(:@confines)[-1]
       expect(upstart_daemon_existence_confine.valid?).to be(expected_value)
     end
@@ -74,8 +76,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
   describe "excluding services" do
     it "ignores tty and serial on Redhat systems" do
       Facter.stubs(:value).with(:osfamily).returns('RedHat')
-      expect(described_class.excludes).to include 'serial'
-      expect(described_class.excludes).to include 'tty'
+      expect(provider_class.excludes).to include 'serial'
+      expect(provider_class.excludes).to include 'tty'
     end
   end
 

@@ -1,9 +1,9 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:freebsd)
+describe 'Puppet::Type::Service::Provider::Freebsd', unless: Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:freebsd) }
 
-describe provider_class do
   before :each do
     @provider = provider_class.new
     @provider.stubs(:initscript)

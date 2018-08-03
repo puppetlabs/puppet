@@ -4,7 +4,9 @@
 #
 require 'spec_helper'
 
-describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.posix? do
+describe 'Puppet::Type::Service::Provider::Openwrt',
+    :if => Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:openwrt) }
 
   let(:resource) do
     resource = stub 'resource'
@@ -16,7 +18,7 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
   end
 
   let(:provider) do
-    provider = described_class.new
+    provider = provider_class.new
     provider.stubs(:get).with(:hasstatus).returns false
 
     provider
@@ -41,7 +43,7 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
   operatingsystem = 'openwrt'
   it "should be the default provider on #{operatingsystem}" do
     Facter.expects(:value).with(:operatingsystem).returns(operatingsystem)
-    expect(described_class.default?).to be_truthy
+    expect(provider_class.default?).to be_truthy
   end
 
   # test self.instances
@@ -56,10 +58,10 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
     end
     it "should return instances for all services" do
       services.each do |inst|
-        described_class.expects(:new).with{|hash| hash[:name] == inst && hash[:path] == '/etc/init.d'}.returns("#{inst}_instance")
+        provider_class.expects(:new).with{|hash| hash[:name] == inst && hash[:path] == '/etc/init.d'}.returns("#{inst}_instance")
       end
       results = services.collect {|x| "#{x}_instance"}
-      expect(described_class.instances).to eq(results)
+      expect(provider_class.instances).to eq(results)
     end
   end
 

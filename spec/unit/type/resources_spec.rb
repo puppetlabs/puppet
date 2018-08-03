@@ -307,6 +307,12 @@ describe resources do
 
         context "when the instance's ensure property does not accept absent" do
           it "should not be included in the generated resources" do
+            # We have a :confine block that calls execute in our upstart provider, which fails
+            # on jruby. Thus, we stub it out here since we don't care to do any assertions on it.
+            # This is only an issue if you're running these unit tests on a platform where upstart
+            # is a default provider, like Ubuntu trusty.
+            Puppet::Util::Execution.stubs(:execute)
+
             @no_absent_resource = Puppet::Type.type(:service).new(:name => 'foobar')
             Puppet::Type.type(:purgeable_test).stubs(:instances).returns [@no_absent_resource]
             expect(@resources.generate.collect { |r| r.ref }).not_to include(@no_absent_resource.ref)

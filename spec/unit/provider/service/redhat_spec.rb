@@ -4,9 +4,9 @@
 #
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:redhat)
-
-describe provider_class, :if => Puppet.features.posix? do
+describe 'Puppet::Type::Service::Provider::Redhat',
+    :if => Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:redhat) }
 
   before :each do
     @class = Puppet::Type.type(:service).provider(:redhat)
@@ -36,7 +36,7 @@ describe provider_class, :if => Puppet.features.posix? do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
     Facter.stubs(:value).with(:operatingsystem).returns(:suse)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("11")
-    expect(described_class.default?).to be_truthy
+    expect(provider_class.default?).to be_truthy
   end
 
   # test self.instances

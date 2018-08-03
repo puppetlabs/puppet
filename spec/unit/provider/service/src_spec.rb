@@ -5,9 +5,8 @@
 
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:src)
-
-describe provider_class do
+describe 'Puppet::Type::Service::Provider::Src', unless: Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:src) }
 
   if Puppet.features.microsoft_windows?
     # Get a pid for $CHILD_STATUS to latch on to
