@@ -22,7 +22,13 @@ class TasksChecker < Checker4_0
   end
 
   def check_CollectExpression(o)
-    illegalTasksExpression(o)
+    # Only virtual resource queries are allowed in apply blocks, not exported
+    # resource queries
+    if in_ApplyExpression? && o.query.is_a?(Puppet::Pops::Model::VirtualQuery)
+      super(o)
+    else
+      illegalTasksExpression(o)
+    end
   end
 
   def check_HostClassDefinition(o)
