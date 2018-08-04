@@ -53,7 +53,7 @@ describe Puppet::Configurer do
 
       summary = nil
       File.open(Puppet[:lastrunfile], "r") do |fd|
-        summary = YAML.load(fd.read)
+        summary = Puppet::Util::Yaml.safe_load(fd.read)
       end
 
       expect(summary).to be_a(Hash)

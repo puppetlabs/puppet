@@ -113,7 +113,7 @@ describe Puppet::Node do
     end
 
     it "a node can roundtrip" do
-      expect(YAML.load(@node.to_yaml).name).to eql("mynode")
+      expect(Puppet::Util::Yaml.safe_load(@node.to_yaml, [Puppet::Node]).name).to eql("mynode")
     end
 
     it "limits the serialization of environment to be just the name" do
@@ -126,7 +126,7 @@ describe Puppet::Node do
   describe "when serializing using yaml and values classes and parameters are missing in deserialized hash" do
     it "a node can roundtrip" do
       @node = Puppet::Node.from_data_hash({'name' => "mynode"})
-      expect(YAML.load(@node.to_yaml).name).to eql("mynode")
+      expect(Puppet::Util::Yaml.safe_load(@node.to_yaml, [Puppet::Node]).name).to eql("mynode")
     end
 
     it "errors if name is nil" do

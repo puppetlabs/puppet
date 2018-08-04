@@ -9,6 +9,17 @@ module Puppet::Util::Yaml
 
   class YamlLoadError < Puppet::Error; end
 
+  if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('2.1.0')
+    def self.safe_load(yaml, allowed_classes = [], filename = nil)
+      YAML.safe_load(yaml, allowed_classes, [], false, filename)
+    end
+  else
+    def self.safe_load(yaml, allowed_classes = [], filename = nil)
+      # Fall back to YAML.load for rubies < 2.1.0
+      YAML.load(yaml, filename)
+    end
+  end
+
   def self.load_file(filename, default_value = false, strip_classes = false)
     if(strip_classes) then
       data = YAML::parse_file(filename)

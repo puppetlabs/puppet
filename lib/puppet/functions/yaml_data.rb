@@ -21,7 +21,7 @@ Puppet::Functions.create_function(:yaml_data) do
     path = options['path']
     context.cached_file_data(path) do |content|
       begin
-        data = YAML.load(content, path)
+        data = Puppet::Util::Yaml.safe_load(content, [Symbol], path)
         if data.is_a?(Hash)
           Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data)
         else

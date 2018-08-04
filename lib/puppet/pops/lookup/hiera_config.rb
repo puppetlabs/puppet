@@ -132,7 +132,7 @@ class HieraConfig
       if config_path.exist?
         env_context = EnvironmentContext.adapt(lookup_invocation.scope.compiler.environment)
         loaded_config = env_context.cached_file_data(config_path) do |content|
-          parsed = YAML.load(content, config_path)
+          parsed = Puppet::Util::Yaml.safe_load(content, [Symbol], config_path)
 
           # For backward compatibility, we must treat an empty file, or a yaml that doesn't
           # produce a Hash as Hiera version 3 default.

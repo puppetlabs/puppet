@@ -511,7 +511,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       elsif fact_file.end_with?("json")
         given_facts = Puppet::Util::Json.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       else
-        given_facts = YAML.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+        given_facts = Puppet::Util::Yaml.safe_load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       end
 
       unless given_facts.instance_of?(Hash)

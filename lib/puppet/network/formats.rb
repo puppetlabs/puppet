@@ -23,13 +23,26 @@ Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20
 end
 
 Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
+  # Cannot be a constant since this handler is initialized before some of the classes exists
+  def allowed_yaml_classes
+    @allowed_yaml_classes ||= [
+      Puppet::Node::Facts,
+      Puppet::Node,
+      Puppet::Transaction::Report,
+      Puppet::Resource,
+      Puppet::Resource::Catalog,
+      Symbol,
+      Time,
+    ].freeze
+  end
+
   def intern(klass, text)
-    data = YAML.load(text)
+    data = Puppet::Util::Yaml.safe_load(text, allowed_yaml_classes)
     data_to_instance(klass, data)
   end
 
   def intern_multiple(klass, text)
-    data = YAML.load(text)
+    data = Puppet::Util::Yaml.safe_load(text, allowed_yaml_classes)
     unless data.respond_to?(:collect)
       raise Puppet::Network::FormatHandler::FormatError, _("Serialized YAML did not contain a collection of instances when calling intern_multiple")
     end

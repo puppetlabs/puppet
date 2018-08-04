@@ -20,7 +20,7 @@ describe Puppet::Util::TagSet do
     array = ['a', :b, 1, 5.4]
     set.merge(array)
 
-    expect(Set.new(YAML.load(set.to_yaml))).to eq(Set.new(array))
+    expect(Set.new(Puppet::Util::Yaml.safe_load(set.to_yaml, [Symbol, Puppet::Util::TagSet]))).to eq(Set.new(array))
   end
 
   it 'deserializes from a yaml array' do

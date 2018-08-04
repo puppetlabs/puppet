@@ -9,7 +9,7 @@ class Puppet::Resource::Catalog::Yaml < Puppet::Indirector::Yaml
   # Override these, because yaml doesn't want to convert our self-referential
   # objects.  This is hackish, but eh.
   def from_yaml(text)
-    if config = YAML.load(text)
+    if config = Puppet::Util::Yaml.safe_load(text)
       return config
     end
   end
