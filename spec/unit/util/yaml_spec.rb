@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'spec_helper'
 
 require 'puppet/util/yaml'
@@ -6,6 +7,87 @@ describe Puppet::Util::Yaml do
   include PuppetSpec::Files
 
   let(:filename) { tmpfile("yaml") }
+
+  context "when safely loading" do
+    it 'reads a YAML file from disk' do
+      write_file(filename, YAML.dump({ "my" => "data" }))
+
+      expect(Puppet::Util::Yaml.safe_load_file(filename)).to eq({ "my" => "data" })
+    end
+
+    it 'reads YAML as UTF-8' do
+      write_file(filename, YAML.dump({ "my" => "𠜎" }))
+
+      expect(Puppet::Util::Yaml.safe_load_file(filename)).to eq({ "my" => "𠜎" })
+    end
+    it "raises an error when the file does not exist" do
+      expect {
+        Puppet::Util::Yaml.safe_load_file('does/not/exist.yaml')
+      }.to raise_error(Errno::ENOENT)
+    end
+
+    it 'raises if YAML contains classes not in the list' do
+      expect {
+        Puppet::Util::Yaml.safe_load(<<FACTS)
+--- !ruby/object:Puppet::Node::Facts
+name: localhost
+FACTS
+      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, /Tried to load unspecified class/)
+    end
+
+    it 'allows classes to be loaded' do
+      facts = Puppet::Util::Yaml.safe_load(<<FACTS, [Puppet::Node::Facts])
+--- !ruby/object:Puppet::Node::Facts
+name: localhost
+values:
+  puppetversion: 6.0.0
+FACTS
+      expect(facts.name).to eq('localhost')
+    end
+
+    it 'returns false if the content is empty' do
+      expect(Puppet::Util::Yaml.safe_load('')).to eq(false)
+    end
+
+    it 'loads true' do
+      expect(Puppet::Util::Yaml.safe_load('true')).to eq(true)
+    end
+
+    it 'loads false' do
+      expect(Puppet::Util::Yaml.safe_load('false')).to eq(false)
+    end
+
+    it 'loads nil' do
+      expect(Puppet::Util::Yaml.safe_load(<<~YAML)).to eq('a' => nil)
+        ---
+        a: null
+      YAML
+    end
+
+    it 'loads a numeric' do
+      expect(Puppet::Util::Yaml.safe_load('42')).to eq(42)
+    end
+
+    it 'loads a string' do
+      expect(Puppet::Util::Yaml.safe_load('puppet')).to eq('puppet')
+    end
+
+    it 'loads an array' do
+      expect(Puppet::Util::Yaml.safe_load(<<~YAML)).to eq([1, 2])
+        ---
+        - 1
+        - 2
+      YAML
+    end
+
+    it 'loads a hash' do
+      expect(Puppet::Util::Yaml.safe_load(<<~YAML)).to eq('a' => 1, 'b' => 2)
+        ---
+        a: 1
+        b: 2
+      YAML
+    end
+  end
 
   it "reads a YAML file from disk" do
     write_file(filename, YAML.dump({ "my" => "data" }))
