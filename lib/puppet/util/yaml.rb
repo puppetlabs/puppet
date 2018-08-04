@@ -22,12 +22,13 @@ module Puppet::Util::Yaml
   #
   # Attempting to deserialize other classes will raise an YamlLoadError
   # exception unless they are specified in the array of *allowed_classes*.
-  # @param String yaml The yaml content to parse
-  # @param Array allowed_classes Additional list of classes that can be
-  # deserialized
-  # @param String filename The filename to load from, used if an exception
-  # is raised.
-  # @returns The parsed YAML, typically a Hash
+  # @param [String] yaml The yaml content to parse.
+  # @param [Array] allowed_classes Additional list of classes that can be
+  # deserialized.
+  # @param [String] filename The filename to load from, used if an exception
+  #   is raised.
+  # @raise [YamlLoadException] If deserialization fails.
+  # @returns The parsed YAML, which can be Hash, Array or scalar types.
   def self.safe_load(yaml, allowed_classes = [], filename = nil)
     data = YAML.safe_load(yaml, allowed_classes, [], false, filename)
     data = false if data.nil?
@@ -44,6 +45,7 @@ module Puppet::Util::Yaml
     safe_load(yaml, allowed_classes, filename)
   end
 
+  # @deprecated Use {#safe_load_file} instead.
   def self.load_file(filename, default_value = false, strip_classes = false)
     if(strip_classes) then
       data = YAML::parse_file(filename)
