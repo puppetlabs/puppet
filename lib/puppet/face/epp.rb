@@ -405,7 +405,7 @@ Puppet::Face.define(:epp, '0.0.1') do
     if values_file = options[:values_file]
       begin
         if values_file =~ /\.yaml$/
-          template_values = YAML.load_file(values_file)
+          template_values = Puppet::Util::Yaml.safe_load_file(values_file, [Symbol])
         elsif values_file =~ /\.pp$/
           evaluating_parser = Puppet::Pops::Parser::EvaluatingParser.new
           template_values = evaluating_parser.evaluate_file(compiler.topscope, values_file)

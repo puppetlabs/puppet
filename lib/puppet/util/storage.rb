@@ -55,7 +55,7 @@ class Puppet::Util::Storage
     end
     Puppet::Util.benchmark(:debug, "Loaded state in %{seconds} seconds") do
       begin
-        @@state = Puppet::Util::Yaml.load_file(filename)
+        @@state = Puppet::Util::Yaml.safe_load_file(filename, [Symbol, Time])
       rescue Puppet::Util::Yaml::YamlLoadError => detail
         Puppet.err _("Checksumfile %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail }
 

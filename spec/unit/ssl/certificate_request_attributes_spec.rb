@@ -10,6 +10,7 @@ describe Puppet::SSL::CertificateRequestAttributes do
       "custom_attributes" => {
         "1.3.6.1.4.1.34380.2.2"=>[3232235521, 3232235777], # system IPs in hex
         "1.3.6.1.4.1.34380.2.0"=>"hostname.domain.com",
+        "1.3.6.1.4.1.34380.1.1.3"=>:node_image_name,
         # different UTF-8 widths
         # 1-byte A
         # 2-byte ۿ - http://www.fileformat.info/info/unicode/char/06ff/index.htm - 0xDB 0xBF / 219 191
@@ -65,6 +66,14 @@ describe Puppet::SSL::CertificateRequestAttributes do
         expect {
           csr_attributes.load
         }.to raise_error(Puppet::Error, /unexpected attributes.*unintentional/)
+      end
+
+      it "raises a Puppet::Util::Yaml::YamlLoadError if an unexpected ruby object is present" do
+        csr_attributes_hash['custom_attributes']['whoops'] = Object.new
+        Puppet::Util::Yaml.dump(csr_attributes_hash, csr_attributes_path)
+        expect {
+          csr_attributes.load
+        }.to raise_error(Puppet::Util::Yaml::YamlLoadError, /Tried to load unspecified class: Object/)
       end
     end
   end

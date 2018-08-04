@@ -52,11 +52,10 @@ module Puppet
     def self.configure_indirector_routes(application_name)
       route_file = Puppet[:route_file]
       if Puppet::FileSystem.exist?(route_file)
-        routes = YAML.load_file(route_file)
+        routes = Puppet::Util::Yaml.safe_load_file(route_file, [Symbol])
         application_routes = routes[application_name]
         Puppet::Indirector.configure_routes(application_routes) if application_routes
       end
     end
-
   end
 end
