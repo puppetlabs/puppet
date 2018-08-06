@@ -308,6 +308,34 @@ describe "validating 4x" do
       expect(acceptor.error_count).to eql(1)
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
+
+    context 'validating apply() blocks' do
+      it 'allows empty apply() blocks' do
+        acceptor = validate(parse('apply("foo.example.com") { }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'allows apply() with a single expression' do
+        acceptor = validate(parse('apply("foo.example.com") { include foo }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'allows apply() with multiple expressions' do
+        acceptor = validate(parse('apply("foo.example.com") { notify { "hello!": } }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'produces an error for apply() inside apply()' do
+        acceptor = validate(parse('apply("foo.example.com") { apply("foo.example.com") { } }'))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING)
+      end
+
+      it 'allows multiple consecutive apply() blocks' do
+        acceptor = validate(parse('apply("foo.example.com") { } apply("foo.example.com") { }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+    end
   end
 
   context 'for non productive expressions' do
