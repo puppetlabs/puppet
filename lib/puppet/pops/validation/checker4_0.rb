@@ -1036,9 +1036,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     true
   end
 
+  # An apply expression exists purely for the side effect of applying a
+  # catalog somewhere, so it always has side effects
   def idem_ApplyExpression(o)
-    return false if o.arguments.any? { |value| !idem(value) }
-    idem(o.body)
+    false
   end
 
   def idem_IfExpression(o)

@@ -1222,19 +1222,6 @@ class ApplyBlockExpression < BlockExpression
       'parent' => BlockExpression._pcore_type,
     })
   end
-
-  def _pcore_contents
-    @statements.each { |value| yield(value) }
-  end
-
-  def _pcore_all_contents(path, &block)
-    path << self
-    @statements.each do |value|
-      block.call(value, path)
-      value._pcore_all_contents(path, &block)
-    end
-    path.pop
-  end
 end
 
 class CaseOption < Expression
