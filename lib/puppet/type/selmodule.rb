@@ -23,10 +23,9 @@ Puppet::Type.newtype(:selmodule) do
   newparam(:selmoduledir) do
 
     desc "The directory to look for the compiled pp module file in.
-      Currently defaults to `/usr/share/selinux/targeted`.  If the
-      `selmodulepath` attribute is not specified, Puppet will expect to find
-      the module in `<selmoduledir>/<name>.pp`, where `name` is the value of the
-      `name` parameter."
+      If the `selmodulepath` attribute is not specified, Puppet expects to
+      find the module in `<selmoduledir>/<name>.pp`, where `name` is the
+      value of the `name` parameter."
 
     defaultto "/usr/share/selinux/targeted"
   end

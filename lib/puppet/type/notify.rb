@@ -32,7 +32,7 @@ module Puppet
     end
 
     newparam(:withpath) do
-      desc "Whether to show the full object path. Defaults to false."
+      desc "Whether to show the full object path."
       defaultto :false
 
       newvalues(:true, :false)

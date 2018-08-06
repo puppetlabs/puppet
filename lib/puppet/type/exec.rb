@@ -78,8 +78,8 @@ module Puppet
 
       attr_reader :output
       desc "The expected exit code(s).  An error will be returned if the
-        executed command has some other exit code.  Defaults to 0. Can be
-        specified as an array of acceptable exit codes or a single value.
+        executed command has some other exit code. Can be specified as an array
+        of acceptable exit codes or a single value.
 
         On POSIX systems, exit codes are always integers between 0 and 255.
 
@@ -230,7 +230,7 @@ module Puppet
 
     newparam(:logoutput) do
       desc "Whether to log command output in addition to logging the
-        exit code.  Defaults to `on_failure`, which only logs the output
+        exit code. Defaults to `on_failure`, which only logs the output
         when the command has an exit code that does not match any value
         specified by the `returns` attribute. As with any resource type,
         the log level can be controlled with the `loglevel` metaparameter."
@@ -305,10 +305,9 @@ module Puppet
 
     newparam(:tries) do
       desc "The number of times execution of the command should be tried.
-        Defaults to '1'. This many attempts will be made to execute
-        the command until an acceptable return code is returned.
-        Note that the timeout parameter applies to each try rather than
-        to the complete set of tries."
+        This many attempts will be made to execute the command until an
+        acceptable return code is returned. Note that the timeout parameter
+        applies to each try rather than to the complete set of tries."
 
       munge do |value|
         if value.is_a?(String)

@@ -312,7 +312,7 @@ module Puppet
 
     newparam(:repeat) do
       desc "How often a given resource may be applied in this schedule's `period`.
-        Defaults to 1; must be an integer."
+        Must be an integer."
 
       defaultto 1
 
