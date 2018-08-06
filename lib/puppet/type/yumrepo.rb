@@ -273,7 +273,7 @@ Puppet::Type.newtype(:yumrepo) do
     desc "Enable bandwidth throttling for downloads. This option
       can be expressed as a absolute data rate in bytes/sec or a
       percentage `60%`. An SI prefix (k, M or G) may be appended
-      to the data rate values.\n#{ABSENT_DOC}"
+      to the data rate values.#{ABSENT_DOC}"
 
     newvalues(/^\d+[kMG%]?$/, :absent)
   end
@@ -283,7 +283,7 @@ Puppet::Type.newtype(:yumrepo) do
       in bytes/second. Used with the `throttle` option. If `throttle`
       is a percentage and `bandwidth` is `0` then bandwidth throttling
       will be disabled. If `throttle` is expressed as a data rate then
-      this option is ignored.\n#{ABSENT_DOC}"
+      this option is ignored.#{ABSENT_DOC}"
 
     newvalues(/^\d+[kMG]?$/, :absent)
   end
