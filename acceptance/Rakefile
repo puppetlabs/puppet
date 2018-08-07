@@ -29,7 +29,6 @@ def get_test_sample
             'tests/modules/install/basic_install.rb',
             'tests/face/loadable_from_modules.rb',
             'tests/language/functions_in_puppet_language.rb',
-            'tests/node/check_woy_cache_works.rb',
             'tests/parser_functions/calling_all_functions.rb',
             'tests/ticket_4622_filebucket_diff_test.rb',
             'tests/pluginsync/4420_pluginfacts_should_be_resolvable_on_agent.rb',
