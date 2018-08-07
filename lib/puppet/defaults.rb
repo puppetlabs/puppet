@@ -673,13 +673,6 @@ module Puppet
           essentially means that you can't have any code outside of a node,
           class, or definition other than in the site manifest.",
     },
-    :trusted_server_facts => {
-      :default => true,
-      :type    => :boolean,
-      :deprecated => :completely,
-      :desc    => "The 'trusted_server_facts' setting is deprecated and has no effect as the
-        feature this enabled is now always on. The setting will be removed in a future version of puppet.",
-    },
     :preview_outputdir => {
       :default => '$vardir/preview',
       :type     => :directory,
