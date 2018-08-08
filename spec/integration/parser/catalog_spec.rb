@@ -11,11 +11,12 @@ describe "A catalog" do
     let(:node) { Puppet::Node.new('test', :environment => env) }
     let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
-    around :each do |example|
-      Puppet.override(:loaders => loaders, :current_environment => env) do
-        example.run
-        Puppet::Pops::Loaders.clear
-      end
+    before(:each) do
+      Puppet.push_context({:loaders => loaders, :current_environment => env})
+    end
+
+    after(:each) do
+      Puppet.pop_context()
     end
 
     before(:each) do

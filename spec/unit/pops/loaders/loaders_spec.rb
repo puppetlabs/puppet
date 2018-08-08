@@ -51,7 +51,6 @@ describe 'loaders' do
   let(:empty_test_env) { environment_for() }
 
   # Loaders caches the puppet_system_loader, must reset between tests
-  before(:each) { Puppet::Pops::Loaders.clear() }
 
   context 'when loading pp resource types using auto loading' do
     let(:pp_resources) { config_dir('pp_resources') }
@@ -59,12 +58,14 @@ describe 'loaders' do
     let(:env) { Puppet::Node::Environment.create(:'pp_resources', [File.join(pp_resources, 'modules')]) }
     let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
     let(:loader) { Puppet::Pops::Loaders.loaders.find_loader(nil) }
-    around(:each) do |example|
-      Puppet.override(:environments => environments) do
-        Puppet.override(:loaders => compiler.loaders) do
-          example.run
-        end
-      end
+
+    before(:each) do
+      Puppet.push_context({ :environments => environments })
+      Puppet.push_context({ :loaders => compiler.loaders })
+    end
+
+    after(:each) do
+      Puppet.pop_context()
     end
 
     it 'finds a resource type that resides under <environment root>/.resource_types' do
@@ -378,10 +379,8 @@ describe 'loaders' do
     let(:scope) { compiler.topscope }
     let(:loader) { compiler.loaders.private_loader_for_module('user') }
 
-    around(:each) do |example|
-      Puppet.override(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders) do
-        example.run
-      end
+    before(:each) do
+      Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
     end
 
     it 'a 3x function in dependent module can be called from a 4x function' do

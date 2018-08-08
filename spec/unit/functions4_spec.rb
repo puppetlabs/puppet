@@ -392,11 +392,11 @@ describe 'the 4x function api' do
     end
 
     context 'supports calling other functions' do
-      before(:all) do
+      before(:each) do
         Puppet.push_context( {:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))})
       end
 
-      after(:all) do
+      after(:each) do
         Puppet.pop_context()
       end
 
@@ -426,11 +426,11 @@ describe 'the 4x function api' do
     end
 
     context 'functions in a context with a compiler' do
-      before(:all) do
+      before(:each) do
         Puppet.push_context( {:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))})
       end
 
-      after(:all) do
+      after(:each) do
         Puppet.pop_context()
       end
 

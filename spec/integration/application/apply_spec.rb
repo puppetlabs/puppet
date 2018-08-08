@@ -460,9 +460,13 @@ class amod::bad_type {
     let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'spec', 'modules')]) }
     let(:node) { Puppet::Node.new('test', :environment => env) }
 
-    around(:each) do |example|
+    before(:each) do
       Puppet[:rich_data] = rich_data
-      Puppet.override(:loaders => Puppet::Pops::Loaders.new(env)) { example.run }
+      Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(env))
+    end
+
+    after(:each) do
+      Puppet.pop_context()
     end
 
     context 'and rich_data is set to false during compile' do

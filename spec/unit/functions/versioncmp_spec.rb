@@ -4,13 +4,12 @@ require 'puppet/loaders'
 
 describe "the versioncmp function" do
 
-  before(:all) do
+  before(:each) do
     loaders = Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))
     Puppet.push_context({:loaders => loaders}, "test-examples")
   end
 
-  after(:all) do
-    Puppet::Pops::Loaders.clear
+  after(:each) do
     Puppet::pop_context()
   end
 

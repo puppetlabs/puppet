@@ -660,10 +660,13 @@ describe 'Puppet Type System' do
   end
 
   context 'instantiation via ruby create function' do
-    around(:each) do |example|
-      Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
-        example.run
+    before(:each) do
+      Puppet.push_context(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
       end
+    end
+
+    after(:each) do
+      Puppet.pop_context()
     end
 
     it 'is supported by Integer' do
@@ -689,10 +692,13 @@ describe 'Puppet Type System' do
   end
 
   context 'creation of parameterized type via ruby create function on class' do
-    around(:each) do |example|
-      Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
-        example.run
+    before(:each) do
+      Puppet.push_context(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
       end
+    end
+
+    after(:each) do
+      Puppet.pop_context()
     end
 
     it 'is supported by Integer' do

@@ -16,10 +16,12 @@ module Serialization
   let(:serializer) { Serializer.new(writer_class.new(io)) }
   let(:deserializer) { Deserializer.new(reader_class.new(io), loaders.find_loader(nil)) }
 
-  around :each do |example|
-     Puppet.override(:loaders => loaders, :current_environment => env) do
-      example.run
-    end
+  before(:each) do
+    Puppet.push_context(:loaders => loaders, :current_environment => env)
+  end
+
+  after(:each) do
+    Puppet.pop_context()
   end
 
   def write(*values)
