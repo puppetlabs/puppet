@@ -1,11 +1,7 @@
 require 'yaml'
 
 module Puppet::Util::Yaml
-  if defined?(::Psych::SyntaxError)
-    YamlLoadExceptions = [::StandardError, ::Psych::Exception]
-  else
-    YamlLoadExceptions = [::StandardError]
-  end
+  YamlLoadExceptions = [::StandardError, ::Psych::Exception]
 
   class YamlLoadError < Puppet::Error; end
 
