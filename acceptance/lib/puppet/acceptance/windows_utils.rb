@@ -9,7 +9,7 @@ module Puppet
 require 'win32/dir'
 puts Dir::PROFILE.match(/(.*)\\\\[^\\\\]*/)[1]
 END
-        on(agent, "#{ruby} -rubygems -e \"#{getbasedir}\"").stdout.chomp
+        on(agent, "#{ruby} -e \"#{getbasedir}\"").stdout.chomp
       end
     end
   end
