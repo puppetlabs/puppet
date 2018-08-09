@@ -6,25 +6,18 @@ require 'puppet/indirector/yaml'
 describe Puppet::Indirector::Yaml do
   include PuppetSpec::Files
 
-  class TestSubject
-    attr_accessor :name
-    def initialize(name)
-      @name = name
-    end
-  end
-
   before(:all) do
     class Puppet::YamlTestModel
       extend Puppet::Indirector
       indirects :yaml_test_model
-    end
+      attr_reader :name
 
-    class Puppet::YamlTestModel::Yaml < Puppet::Indirector::Yaml
-      attr_accessor :name
-      def initialize
-        @name = :my_yaml
+      def initialize(name)
+        @name = name
       end
     end
+
+    class Puppet::YamlTestModel::Yaml < Puppet::Indirector::Yaml; end
 
     Puppet::YamlTestModel.indirection.terminus_class = :yaml
   end
@@ -34,13 +27,13 @@ describe Puppet::Indirector::Yaml do
     Puppet.send(:remove_const, :YamlTestModel)
   end
 
-  let(:terminus) { Puppet::YamlTestModel.indirection.terminus(:yaml) }
-  let(:indirection) { Puppet::YamlTestModel.indirection }
   let(:model) { Puppet::YamlTestModel }
+  let(:subject) { model.new(:me) }
+  let(:indirection) { model.indirection }
+  let(:terminus) { indirection.terminus(:yaml) }
 
-  let(:subject) { TestSubject.new(:me) }
   let(:dir) { tmpdir("yaml_indirector") }
-  let(:request) { stub('request', key: :me, instance: subject) }
+  let(:indirection_dir) { File.join(dir, indirection.name.to_s) }
   let(:serverdir) { File.expand_path("/server/yaml/dir") }
   let(:clientdir) { File.expand_path("/client/yaml/dir") }
 
@@ -103,77 +96,93 @@ describe Puppet::Indirector::Yaml do
 
   describe "when storing objects as YAML" do
     it "should only store objects that respond to :name" do
-      request.stubs(:instance).returns Object.new
+      request = indirection.request(:save, "testing", Object.new)
       expect { terminus.save(request) }.to raise_error(ArgumentError)
     end
   end
 
   describe "when retrieving YAML" do
     it "should read YAML in from disk and convert it to Ruby objects" do
-      terminus.save(Puppet::Indirector::Request.new(:my_yaml, :save, "testing", subject))
-
-      expect(terminus.find(Puppet::Indirector::Request.new(:my_yaml, :find, "testing", nil)).name).to eq(:me)
+      terminus.save(indirection.request(:save, "testing", subject))
+      yaml = terminus.find(indirection.request(:find, "testing", nil))
+      expect(yaml.name).to eq(:me)
     end
 
     it "should fail coherently when the stored YAML is invalid" do
-      saved_structure = Struct.new(:name).new("testing")
-
-      terminus.save(Puppet::Indirector::Request.new(:my_yaml, :save, "testing", saved_structure))
-      File.open(terminus.path(saved_structure.name), "w") do |file|
+      terminus.save(indirection.request(:save, "testing", subject))
+      # overwrite file
+      File.open(terminus.path('testing'), "w") do |file|
         file.puts "{ invalid"
       end
 
       expect {
-        terminus.find(Puppet::Indirector::Request.new(:my_yaml, :find, "testing", nil))
+        terminus.find(indirection.request(:find, "testing", nil))
       }.to raise_error(Puppet::Error, /Could not parse YAML data/)
     end
   end
 
   describe "when searching" do
+    before :each do
+      Puppet[:clientyamldir] = dir
+    end
+
+    def dir_containing_instances(instances)
+      Dir.mkdir(indirection_dir)
+      instances.each do |hash|
+        File.open(File.join(indirection_dir, "#{hash['name']}.yaml"), 'wb') do |f|
+          f.write(YAML.dump(hash))
+        end
+      end
+    end
+
     it "should return an array of fact instances with one instance for each file when globbing *" do
-      request = stub 'request', :key => "*", :instance => subject
-      @one = mock 'one'
-      @two = mock 'two'
-      terminus.expects(:path).with(request.key,'').returns :glob
-      Dir.expects(:glob).with(:glob).returns(%w{one.yaml two.yaml})
-      YAML.expects(:load_file).with("one.yaml").returns @one;
-      YAML.expects(:load_file).with("two.yaml").returns @two;
-      expect(terminus.search(request)).to eq([@one, @two])
+      one = { 'name' => 'one', 'values' => { 'foo' => 'bar' } }
+      two = { 'name' => 'two', 'values' => { 'foo' => 'baz' } }
+      dir_containing_instances([one, two])
+
+      request = indirection.request(:search, "*", nil)
+      expect(terminus.search(request)).to eq([one, two])
     end
 
     it "should return an array containing a single instance of fact when globbing 'one*'" do
-      request = stub 'request', :key => "one*", :instance => subject
-      @one = mock 'one'
-      terminus.expects(:path).with(request.key,'').returns :glob
-      Dir.expects(:glob).with(:glob).returns(%w{one.yaml})
-      YAML.expects(:load_file).with("one.yaml").returns @one;
-      expect(terminus.search(request)).to eq([@one])
+      one = { 'name' => 'one', 'values' => { 'foo' => 'bar' } }
+      two = { 'name' => 'two', 'values' => { 'foo' => 'baz' } }
+      dir_containing_instances([one, two])
+
+      request = indirection.request(:search, "one*", nil)
+      expect(terminus.search(request)).to eq([one])
     end
 
     it "should return an empty array when the glob doesn't match anything" do
-      request = stub 'request', :key => "f*ilglobcanfail*", :instance => subject
-      terminus.expects(:path).with(request.key,'').returns :glob
-      Dir.expects(:glob).with(:glob).returns []
+      one = { 'name' => 'one', 'values' => { 'foo' => 'bar' } }
+      dir_containing_instances([one])
+
+      request = indirection.request(:search, "f*ilglobcanfail*", nil)
       expect(terminus.search(request)).to eq([])
     end
 
     describe "when destroying" do
-      let(:path) do
-        File.join(dir, terminus.class.indirection_name.to_s, request.key.to_s + ".yaml")
+      let(:path) { File.join(indirection_dir, "one.yaml") }
+
+      before :each do
+        Puppet[:clientyamldir] = dir
+
+        one = { 'name' => 'one', 'values' => { 'foo' => 'bar' } }
+        dir_containing_instances([one])
       end
 
       it "should unlink the right yaml file if it exists" do
-        Puppet::FileSystem.expects(:exist?).with(path).returns true
-        Puppet::FileSystem.expects(:unlink).with(path)
-
+        request = indirection.request(:destroy, "one", nil)
         terminus.destroy(request)
+
+        expect(Puppet::FileSystem).to_not exist(path)
       end
 
       it "should not unlink the yaml file if it does not exists" do
-        Puppet::FileSystem.expects(:exist?).with(path).returns false
-        Puppet::FileSystem.expects(:unlink).with(path).never
-
+        request = indirection.request(:destroy, "doesntexist", nil)
         terminus.destroy(request)
+
+        expect(Puppet::FileSystem).to exist(path)
       end
     end
   end
