@@ -150,6 +150,32 @@ describe "Puppet Network Format" do
         yaml.intern_multiple(Puppet::Node, YAML.dump(["hello"]))
       end.to raise_error(Puppet::Network::FormatHandler::FormatError, /did not contain a valid instance/)
     end
+
+    it 'accepts indirected classes' do
+      [
+        Puppet::Node::Facts.new('foo', {}),
+        Puppet::Node.new('foo'),
+        Puppet::Resource.new('File', '/foo'),
+        Puppet::Transaction::Report.new('foo'),
+        Puppet::Resource::Catalog.new
+      ].each { |obj| yaml.intern(obj.class, YAML.dump(obj.to_data_hash)) }
+    end
+
+    it 'raises when interning an instance of an unacceptable indirected type' do
+      obj = Puppet::SSL::Key.new('foo')
+
+      expect {
+        yaml.intern(obj.class, YAML.dump(obj))
+      }.to raise_error(Puppet::Network::FormatHandler::FormatError, /Tried to load unspecified class: Puppet::SSL::Key/)
+    end
+
+    it 'raises when interning multple instances of an unacceptable indirected type' do
+      obj = Puppet::SSL::Key.new('foo')
+
+      expect {
+        yaml.intern_multiple(obj.class, YAML.dump([obj]))
+      }.to raise_error(Puppet::Network::FormatHandler::FormatError, /Tried to load unspecified class: Puppet::SSL::Key/)
+    end
   end
 
   describe "plaintext" do

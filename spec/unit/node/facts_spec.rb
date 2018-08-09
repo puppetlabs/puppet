@@ -129,8 +129,9 @@ describe Puppet::Node::Facts, "when indirecting" do
       end
 
       def deserialize_yaml_facts(facts)
+        facts.sanitize
         format = Puppet::Network::FormatHandler.format('yaml')
-        format.intern(Puppet::Node::Facts, facts.to_yaml)
+        format.intern(Puppet::Node::Facts, YAML.dump(facts.to_data_hash))
       end
 
       it 'preserves `_timestamp` value' do
