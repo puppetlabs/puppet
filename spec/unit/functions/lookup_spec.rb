@@ -1792,6 +1792,7 @@ describe "The lookup function" do
                 a_ref: "A reference to %{hiera('a')}"
                 b_ref: "A reference to %{hiera('b')}"
                 c_ref: "%{alias('c')}"
+                :symbol: "A symbol"
                 YAML
             }
           end
