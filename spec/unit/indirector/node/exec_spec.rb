@@ -63,7 +63,20 @@ describe Puppet::Node::Exec do
       @result[:parameters] = {"a" => "b", "c" => "d"}
       node = searcher.find(request)
       expect(node.parameters).to eq({"a" => "b", "c" => "d", "environment" => "*root*"})
+    end
 
+    it "accepts symbolic parameter names" do
+      @result[:parameters] = {:name => "value"}
+      node = searcher.find(request)
+      expect(node.parameters).to include({:name => "value"})
+    end
+
+    it "raises when deserializing unacceptable objects" do
+      @result[:parameters] = {'name' => Object.new }
+
+      expect {
+        searcher.find(request)
+      }.to raise_error(Puppet::Error, /Could not load external node results for yay: Tried to load unspecified class: Object/)
     end
 
     it "should set the resulting classes as the node classes" do
