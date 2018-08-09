@@ -21,7 +21,7 @@ Puppet::Functions.create_function(:yaml_data) do
     path = options['path']
     context.cached_file_data(path) do |content|
       begin
-        data = YAML.load(content, path)
+        data = Puppet::Util::Yaml.safe_load(content, [Symbol], path)
         if data.is_a?(Hash)
           Puppet::Pops::Lookup::HieraConfig.symkeys_to_string(data)
         else
@@ -30,10 +30,8 @@ Puppet::Functions.create_function(:yaml_data) do
           Puppet.warning(msg)
           {}
         end
-      rescue YAML::SyntaxError => ex
-        # Psych errors includes the absolute path to the file, so no need to add that
-        # to the message
-        raise Puppet::DataBinding::LookupError, "Unable to parse #{ex.message}"
+      rescue Puppet::Util::Yaml::YamlLoadError => ex
+        raise Puppet::DataBinding::LookupError, "Unable to parse (%{path}): %{message}" % { path: path, message: ex.message }
       end
     end
   end
