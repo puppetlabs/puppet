@@ -920,11 +920,12 @@ The user name for an authenticated HTTP proxy\. Requires the \fBhttp_proxy_host\
 .IP "" 0
 .
 .SS "http_read_timeout"
-The time to wait for one block to be read from an HTTP connection\. If nothing is read after the elapsed interval then the connection will be closed\. The default value is unlimited\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
+The time to wait for data to be read from an HTTP connection\. If nothing is read after the elapsed interval then the connection will be closed\. The default value is 10 minutes\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
-.TP
-\fIDefault\fR:
-
+.IP "\(bu" 4
+\fIDefault\fR: 10m
+.
+.IP "" 0
 .
 .SS "http_user_agent"
 The HTTP User\-Agent string to send when making network requests\.
@@ -1610,10 +1611,10 @@ How often puppet agent applies the catalog\. Note that a runinterval of 0 means 
 .IP "" 0
 .
 .SS "runtimeout"
-The maximum amount of time an agent run is allowed to take\. A Puppet agent run that exceeds this timeout will be aborted\. Defaults to 0, which is unlimited\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
+The maximum amount of time an agent run is allowed to take\. A Puppet agent run that exceeds this timeout will be aborted\. A value of 0 disables the timeout\. Defaults to 1 hour\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: 0
+\fIDefault\fR: 1h
 .
 .IP "" 0
 .
@@ -1903,14 +1904,6 @@ File that provides mapping between custom SSL oids and user\-friendly names
 .
 .IP "\(bu" 4
 \fIDefault\fR: $confdir/custom_trusted_oid_mapping\.yaml
-.
-.IP "" 0
-.
-.SS "trusted_server_facts"
-The \'trusted_server_facts\' setting is deprecated and has no effect as the feature this enabled is now always on\. The setting will be removed in a future version of puppet\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: true
 .
 .IP "" 0
 .
