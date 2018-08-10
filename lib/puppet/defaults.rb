@@ -588,9 +588,10 @@ module Puppet
       #{AS_DURATION}",
     },
     :http_read_timeout => {
+      :default => "10m",
       :type    => :duration,
-      :desc    => "The time to wait for one block to be read from an HTTP connection. If nothing is
-      read after the elapsed interval then the connection will be closed. The default value is unlimited.
+      :desc    => "The time to wait for data to be read from an HTTP connection. If nothing is
+      read after the elapsed interval then the connection will be closed. The default value is 10 minutes.
       #{AS_DURATION}",
     },
     :http_user_agent => {
@@ -1585,11 +1586,11 @@ EOT
           it with the `--no-client` option. #{AS_DURATION}",
     },
     :runtimeout => {
-      :default  => 0,
+      :default  => "1h",
       :type     => :duration,
       :desc     => "The maximum amount of time an agent run is allowed to take.
-          A Puppet agent run that exceeds this timeout will be aborted.
-          Defaults to 0, which is unlimited. #{AS_DURATION}",
+          A Puppet agent run that exceeds this timeout will be aborted. A value
+          of 0 disables the timeout. Defaults to 1 hour. #{AS_DURATION}",
     },
     :ca_server => {
       :default    => "$server",
