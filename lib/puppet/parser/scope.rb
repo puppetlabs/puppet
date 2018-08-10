@@ -769,8 +769,8 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError, _("Attempt to assign to a reserved variable name: '%{name}'") % { name: name }
     end
 
-    # Check for server_facts reserved variable name if the trusted_sever_facts setting is true
-    if name == VARNAME_SERVER_FACTS && !options[:privileged] && Puppet[:trusted_server_facts]
+    # Check for server_facts reserved variable name
+    if name == VARNAME_SERVER_FACTS && !options[:privileged]
       raise Puppet::ParseError, _("Attempt to assign to a reserved variable name: '%{name}'") % { name: name }
     end
 
