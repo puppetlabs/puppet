@@ -30,7 +30,8 @@ Puppet::Parser::Functions::newfunction(
   :doc => "Perform printf-style formatting of text.
 
   The first parameter is format string describing how the rest of the parameters should be formatted.
-  See the documentation for the `Kernel::sprintf` function in Ruby for all the details."
+  See the documentation for the [`Kernel::sprintf` function](https://ruby-doc.org/core/Kernel.html)
+  in Ruby for details."
 ) do |args|
   fmt = args[0]
   args = args[1..-1]
