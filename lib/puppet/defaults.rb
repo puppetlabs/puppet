@@ -473,7 +473,7 @@ module Puppet
       :type       => :terminus,
       :default    => nil,
       :desc       => "How to store cached nodes.
-      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').",
+      Valid values are (none), 'json', 'msgpack', or 'yaml'.",
     },
     :data_binding_terminus => {
       :type    => :terminus,
