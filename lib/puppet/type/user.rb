@@ -610,10 +610,6 @@ module Puppet
       def membership
         :key_membership
       end
-
-      validate do |value|
-        raise ArgumentError, _("Key/value pairs must be separated by an =") unless value.include?("=")
-      end
     end
 
     newparam(:key_membership) do
@@ -637,16 +633,14 @@ module Puppet
     newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
       desc "Specify AIX attributes for the user in an array of attribute = value pairs."
 
+      self.log_only_changed_or_new_keys = true
+
       def membership
         :attribute_membership
       end
 
       def delimiter
         " "
-      end
-
-      validate do |value|
-        raise ArgumentError, _("Attributes value pairs must be separated by an =") unless value.include?("=")
       end
     end
 
