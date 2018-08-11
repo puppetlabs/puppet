@@ -23,11 +23,13 @@ require 'open3'
 
 Dir['tasks/**/*.rake'].each { |t| load t }
 
-begin
-  require 'packaging'
-  Pkg::Util::RakeUtils.load_packaging_tasks
-rescue LoadError => e
-  puts "Error loading packaging rake tasks: #{e}"
+if Rake.application.top_level_tasks.grep(/^(pl:|package:)/).any?
+  begin
+    require 'packaging'
+    Pkg::Util::RakeUtils.load_packaging_tasks
+  rescue LoadError => e
+    puts "Error loading packaging rake tasks: #{e}"
+  end
 end
 
 task :default do
