@@ -4,11 +4,11 @@ gemspec
 
 def location_for(place, fake_version = nil)
   if place =~ /^(git[:@][^#]*)#(.*)/
-    [fake_version, { :git => $1, :branch => $2, :require => false }].compact
+    [fake_version, { git: $1, branch: $2, require: false }].compact
   elsif place =~ /^file:\/\/(.*)/
-    ['>= 0', { :path => File.expand_path($1), :require => false }]
+    ['>= 0', { path: File.expand_path($1), require: false }]
   else
-    [place, { :require => false }]
+    [place, { require: false }]
   end
 end
 
@@ -18,34 +18,34 @@ gem "hiera", *location_for(ENV['HIERA_LOCATION']) if ENV.has_key?('HIERA_LOCATIO
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
 
 group(:features) do
-  gem "hiera-eyaml", :require => false
-  gem "hocon", '~> 1.0', :require => false
+  gem "hiera-eyaml", require: false
+  gem "hocon", '~> 1.0', require: false
+  gem "msgpack", require: false
   # requires native augeas headers/libs
-  # gem 'ruby-augeas', :require => false, platforms => [:ruby]
-  gem "msgpack", :require => false
+  # gem 'ruby-augeas', require: false, platforms: [:ruby]
 end
 
 group(:test) do
-  gem "json-schema", "~> 2.0", :require => false
-  gem "mocha", '~> 1.5.0', :require => false
-  gem "rake", '~> 12.2.1', :require => false
-  gem "rspec", "~> 3.1", :require => false
-  gem "rspec-its", "~> 1.1", :require => false
-  gem "rspec-collection_matchers", "~> 1.1", :require => false
-  gem 'vcr', '~> 2.9', :require => false
-  gem 'webmock', '~> 1.24', :require => false
+  gem "json-schema", "~> 2.0", require: false
+  gem "mocha", '~> 1.5.0', require: false
+  gem "rake", '~> 12.2.1', require: false
+  gem "rspec", "~> 3.1", require: false
+  gem "rspec-its", "~> 1.1", require: false
+  gem "rspec-collection_matchers", "~> 1.1", require: false
+  gem 'vcr', '~> 2.9', require: false
+  gem 'webmock', '~> 1.24', require: false
 
-  gem 'rubocop', '~> 0.49', :require => false, :platforms => [:ruby]
-  gem 'rubocop-i18n', '~> 1.2.0', :require => false, :platforms => [:ruby]
+  gem 'rubocop', '~> 0.49', require: false, platforms: [:ruby]
+  gem 'rubocop-i18n', '~> 1.2.0', require: false, platforms: [:ruby]
 end
 
 group(:development, optional: true) do
-  gem 'pry', :require => false, :platforms => [:ruby]
-  gem 'redcarpet', '~> 2.0', :require => false, :platforms => [:ruby]
-  gem "racc", "1.4.9", :require => false, :platforms => [:ruby]
-  gem 'memory_profiler', :require => false, :platforms => [:mri]
+  gem 'memory_profiler', require: false, platforms: [:mri]
+  gem 'pry', require: false, platforms: [:ruby]
+  gem 'redcarpet', '~> 2.0', require: false, platforms: [:ruby]
+  gem "racc", "1.4.9", require: false, platforms: [:ruby]
   if RUBY_PLATFORM != 'java'
-    gem 'ruby-prof', '>= 0.16.0', :require => false
+    gem 'ruby-prof', '>= 0.16.0', require: false
   end
 end
 
@@ -54,10 +54,10 @@ group(:packaging, optional: true) do
 end
 
 group(:documentation, optional: true) do
-  gem 'gettext-setup', '~> 0.28', :require => false, :platforms => [:ruby]
-  gem 'rdoc', "~> 6.0", :require => false, :platforms => [:ruby]
-  gem 'ronn', '~> 0.7.3', :require => false, :platforms => [:ruby]
-  gem 'yard', :require => false, :platforms => [:ruby]
+  gem 'gettext-setup', '~> 0.28', require: false, platforms: [:ruby]
+  gem 'rdoc', "~> 6.0", require: false, platforms: [:ruby]
+  gem 'ronn', '~> 0.7.3', require: false, platforms: [:ruby]
+  gem 'yard', require: false, platforms: [:ruby]
 end
 
 if File.exists? "#{__FILE__}.local"
