@@ -43,15 +43,10 @@ end
 
 desc 'run static analysis with rubocop'
 task(:rubocop) do
-  if RUBY_VERSION < '2.0'
-    puts 'rubocop tests require Ruby 2.0 or higher'
-    puts 'skipping rubocop'
-  else
-    require 'rubocop'
-    cli = RuboCop::CLI.new
-    exit_code = cli.run(%w(--display-cop-names --format simple))
-    raise "RuboCop detected offenses" if exit_code != 0
-  end
+  require 'rubocop'
+  cli = RuboCop::CLI.new
+  exit_code = cli.run(%w(--display-cop-names --format simple))
+  raise "RuboCop detected offenses" if exit_code != 0
 end
 
 desc "verify that commit messages match CONTRIBUTING.md requirements"
