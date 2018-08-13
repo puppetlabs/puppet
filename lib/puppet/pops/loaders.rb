@@ -72,6 +72,7 @@ class Loaders
   #
   def self.clear
     @@static_loader = nil
+    Puppet::Pops::Types::TypeFactory.clear
     Model.class_variable_set(:@@pcore_ast_initialized, false)
     Model.register_pcore_types
   end

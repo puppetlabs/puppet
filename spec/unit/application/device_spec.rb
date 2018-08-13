@@ -140,6 +140,11 @@ describe Puppet::Application::Device do
       @device.handle_resource(true)
     end
 
+    it "should store the facts options with --facts" do
+      @device.options.expects(:[]=).with(:facts,true)
+
+      @device.handle_facts(true)
+    end
   end
 
   describe "during setup" do
@@ -291,6 +296,7 @@ describe Puppet::Application::Device do
       @device.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
       @device.options.stubs(:[]).with(:target).returns(nil)
       @device.options.stubs(:[]).with(:apply).returns(nil)
+      @device.options.stubs(:[]).with(:facts).returns(false)
       @device.options.stubs(:[]).with(:resource).returns(false)
       @device.options.stubs(:[]).with(:to_yaml).returns(false)
       @device.options.stubs(:[]).with(:client)
@@ -306,6 +312,11 @@ describe Puppet::Application::Device do
     it "should exit if resource is requested without target" do
       @device.options.stubs(:[]).with(:resource).returns(true)
       expect { @device.main }.to raise_error(RuntimeError, "resource command requires target")
+    end
+
+    it "should exit if facts is requested without target" do
+      @device.options.stubs(:[]).with(:facts).returns(true)
+      expect { @device.main }.to raise_error(RuntimeError, "facts command requires target")
     end
 
     it "should get the device list" do
@@ -347,7 +358,7 @@ describe Puppet::Application::Device do
       expect { @device.main }.to raise_error(RuntimeError, /does not exist, cannot apply/)
     end
 
-    it "should run an apply" do
+    it "should run an apply, and not create the state folder" do
       @device.options.stubs(:[]).with(:apply).returns('file.pp')
       @device.options.stubs(:[]).with(:target).returns('device1')
       device_hash = {
@@ -356,6 +367,30 @@ describe Puppet::Application::Device do
       Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
       Puppet::Util::NetworkDevice.stubs(:init)
       File.expects(:file?).returns(true)
+
+      ::File.stubs(:directory?).returns false
+      state_path = tmpfile('state')
+      Puppet[:statedir] = state_path
+      File.expects(:directory?).with(state_path).returns true
+      FileUtils.expects(:mkdir_p).with(state_path).never
+
+      Puppet::Util::CommandLine.expects(:new).once
+      Puppet::Application::Apply.expects(:new).once
+
+      Puppet::Configurer.expects(:new).never
+      expect { @device.main }.to exit_with 1
+    end
+
+    it "should run an apply, and create the state folder" do
+      @device.options.stubs(:[]).with(:apply).returns('file.pp')
+      @device.options.stubs(:[]).with(:target).returns('device1')
+      device_hash = {
+        "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
+      }
+      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
+      Puppet::Util::NetworkDevice.stubs(:init)
+      File.expects(:file?).returns(true)
+      FileUtils.expects(:mkdir_p).once
 
       Puppet::Util::CommandLine.expects(:new).once
       Puppet::Application::Apply.expects(:new).once
@@ -446,6 +481,16 @@ describe Puppet::Application::Device do
         @device.command_line.stubs(:args).returns(['user'])
         Puppet::Resource.indirection.expects(:search).with('user/', {}).returns(resources)
         @device.expects(:puts).with("user:\n  title:\n")
+        expect { @device.main }.to exit_with 0
+      end
+
+      it "should retrieve facts" do
+        indirection_fact_values = {"operatingsystem"=>"cisco_ios","clientcert"=>"3750"}
+        indirection_facts = Puppet::Node::Facts.new("nil", indirection_fact_values)
+        @device.options.stubs(:[]).with(:facts).returns(true)
+        @device.options.stubs(:[]).with(:target).returns('device1')
+        Puppet::Node::Facts.indirection.expects(:find).with(nil, anything()).returns(indirection_facts)
+        @device.expects(:puts).with(regexp_matches(/name.*3750.*\n.*values.*\n.*operatingsystem.*cisco_ios/))
         expect { @device.main }.to exit_with 0
       end
 

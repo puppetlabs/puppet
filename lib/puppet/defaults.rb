@@ -38,11 +38,23 @@ module Puppet
       installdir = Facter.value(:env_windows_installdir)
       if installdir
         path << "#{installdir}/puppet/modules"
-        path << "#{installdir}/puppet/vendor_modules"
       end
       path.join(File::PATH_SEPARATOR)
     else
-      '$codedir/modules:/opt/puppetlabs/puppet/modules:/opt/puppetlabs/puppet/vendor_modules'
+      '$codedir/modules:/opt/puppetlabs/puppet/modules'
+    end
+  end
+
+  def self.default_vendormoduledir
+    if Puppet::Util::Platform.windows?
+      installdir = Facter.value(:env_windows_installdir)
+      if installdir
+        "#{installdir}\\puppet\\vendor_modules"
+      else
+        nil
+      end
+    else
+      '/opt/puppetlabs/puppet/vendor_modules'
     end
   end
 
@@ -290,7 +302,7 @@ module Puppet
         :desc     => "Whether to create the necessary user and group that puppet agent will run as.",
     },
     :manage_internal_file_permissions => {
-        :default  => true,
+        :default  => ! Puppet::Util::Platform.windows?,
         :type     => :boolean,
         :desc     => "Whether Puppet should manage the owner, group, and mode of files it uses internally",
     },
@@ -327,13 +339,7 @@ module Puppet
           for those files that Puppet will load on demand, and is only
           guaranteed to work for those cases.  In fact, the autoload
           mechanism is responsible for making sure this directory
-          is in Ruby's search path\n",
-      :call_hook => :on_initialize_and_write,
-      :hook             => proc do |value|
-        $LOAD_PATH.delete(@oldlibdir) if defined?(@oldlibdir) && $LOAD_PATH.include?(@oldlibdir)
-        @oldlibdir = value
-        $LOAD_PATH << value
-      end
+          is in Ruby's search path\n"
     },
     :environment => {
         :default  => "production",
@@ -467,7 +473,7 @@ module Puppet
       :type       => :terminus,
       :default    => nil,
       :desc       => "How to store cached nodes.
-      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').",
+      Valid values are (none), 'json', 'msgpack', or 'yaml'.",
     },
     :data_binding_terminus => {
       :type    => :terminus,
@@ -582,9 +588,10 @@ module Puppet
       #{AS_DURATION}",
     },
     :http_read_timeout => {
+      :default => "10m",
       :type    => :duration,
-      :desc    => "The time to wait for one block to be read from an HTTP connection. If nothing is
-      read after the elapsed interval then the connection will be closed. The default value is unlimited.
+      :desc    => "The time to wait for data to be read from an HTTP connection. If nothing is
+      read after the elapsed interval then the connection will be closed. The default value is 10 minutes.
       #{AS_DURATION}",
     },
     :http_user_agent => {
@@ -660,13 +667,6 @@ module Puppet
         :desc     => "Freezes the 'main' class, disallowing any code to be added to it.  This
           essentially means that you can't have any code outside of a node,
           class, or definition other than in the site manifest.",
-    },
-    :trusted_server_facts => {
-      :default => true,
-      :type    => :boolean,
-      :deprecated => :completely,
-      :desc    => "The 'trusted_server_facts' setting is deprecated and has no effect as the
-        feature this enabled is now always on. The setting will be removed in a future version of puppet.",
     },
     :preview_outputdir => {
       :default => '$vardir/preview',
@@ -745,7 +745,8 @@ A comma-separated list of alternate DNS names for Puppet Server. These are extra
 hostnames (in addition to its `certname`) that the server is allowed to use when
 serving agents. Puppet checks this setting when automatically requesting a
 certificate for Puppet agent or Puppet Server, and when manually generating a
-certificate with `puppet cert generate`.
+certificate with `puppet cert generate`. These can be either IP or DNS, and the type
+should be specified and followed with a colon. Untyped inputs will default to DNS.
 
 In order to handle agent requests at a given hostname (like
 "puppet.example.com"), Puppet Server needs a certificate that proves it's
@@ -1308,6 +1309,14 @@ EOT
         any global directories. For more info, see
         <https://puppet.com/docs/puppet/latest/environments_about.html>",
     },
+    :vendormoduledir => {
+      :default => lambda { default_vendormoduledir },
+      :type => :string,
+      :desc => "The directory containing **vendored** modules. These modules will
+      be used by _all_ environments like those in the `basemodulepath`. The only
+      difference is that modules in the `basemodulepath` are pluginsynced, while
+      vendored modules are not",
+    },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
       :desc       => "The header containing an authenticated client's SSL DN.
@@ -1577,11 +1586,11 @@ EOT
           it with the `--no-client` option. #{AS_DURATION}",
     },
     :runtimeout => {
-      :default  => 0,
+      :default  => "1h",
       :type     => :duration,
       :desc     => "The maximum amount of time an agent run is allowed to take.
-          A Puppet agent run that exceeds this timeout will be aborted.
-          Defaults to 0, which is unlimited. #{AS_DURATION}",
+          A Puppet agent run that exceeds this timeout will be aborted. A value
+          of 0 disables the timeout. Defaults to 1 hour. #{AS_DURATION}",
     },
     :ca_server => {
       :default    => "$server",
@@ -1626,7 +1635,9 @@ EOT
       :type       => :boolean,
       :desc       => "Whether to only use the cached catalog rather than compiling a new catalog
         on every run.  Puppet can be run with this enabled by default and then selectively
-        disabled when a recompile is desired.",
+        disabled when a recompile is desired. Because a Puppet agent using cached catalogs
+        does not contact the master for a new catalog, it also does not upload facts at
+        the beginning of the Puppet run.",
     },
     :ignoremissingtypes => {
       :default    => false,

@@ -78,3 +78,5 @@ be used to send logs to a file, and to adjust the log level:
 * `PUPPET_TEST_LOG_LEVEL`: change the log level to adjust how much detail
   is captured. It defaults to `notice`; useful values include `info` and
   `debug`.
+
+For details on running tests on windows, see [the windows docs](https://github.com/puppetlabs/puppet/blob/master/docs/windows.md).

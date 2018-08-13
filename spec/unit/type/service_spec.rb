@@ -1,7 +1,22 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:service) do
+def safely_load_service_type
+  before(:each) do
+    # We have a :confine block that calls execute in our upstart provider, which fails
+    # on jruby. Thus, we stub it out here since we don't care to do any assertions on it.
+    # This is only an issue if you're running these unit tests on a platform where upstart
+    # is a default provider, like Ubuntu trusty.
+    Puppet::Util::Execution.stubs(:execute)
+    Puppet::Type.type(:service)
+  end
+end
+
+test_title = 'Puppet::Type::Service'
+
+describe test_title do
+  safely_load_service_type
+
   it "should have an :enableable feature that requires the :enable, :disable, and :enabled? methods" do
     expect(Puppet::Type.type(:service).provider_feature(:enableable).methods).to eq([:disable, :enable, :enabled?])
   end
@@ -11,7 +26,9 @@ describe Puppet::Type.type(:service) do
   end
 end
 
-describe Puppet::Type.type(:service), "when validating attributes" do
+describe test_title, "when validating attributes" do
+  safely_load_service_type
+
   [:name, :binary, :hasstatus, :path, :pattern, :start, :restart, :stop, :status, :hasrestart, :control].each do |param|
     it "should have a #{param} parameter" do
       expect(Puppet::Type.type(:service).attrtype(param)).to eq(:param)
@@ -25,7 +42,9 @@ describe Puppet::Type.type(:service), "when validating attributes" do
   end
 end
 
-describe Puppet::Type.type(:service), "when validating attribute values" do
+describe test_title, "when validating attribute values" do
+  safely_load_service_type
+
   before do
     @provider = stub 'provider', :class => Puppet::Type.type(:service).defaultprovider, :clear => nil, :controllable? => false
     Puppet::Type.type(:service).defaultprovider.stubs(:new).returns(@provider)
@@ -139,7 +158,9 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
   end
 end
 
-describe Puppet::Type.type(:service), "when setting default attribute values" do
+describe test_title, "when setting default attribute values" do
+  safely_load_service_type
+
   it "should default to the provider's default path if one is available" do
     FileTest.stubs(:directory?).returns(true)
     Puppet::FileSystem.stubs(:exist?).returns(true)
@@ -168,7 +189,9 @@ describe Puppet::Type.type(:service), "when setting default attribute values" do
   end
 end
 
-describe Puppet::Type.type(:service), "when retrieving the host's current state" do
+describe test_title, "when retrieving the host's current state" do
+  safely_load_service_type
+
   before do
     @service = Puppet::Type.type(:service).new(:name => "yay")
   end
@@ -187,7 +210,9 @@ describe Puppet::Type.type(:service), "when retrieving the host's current state"
   end
 end
 
-describe Puppet::Type.type(:service), "when changing the host" do
+describe test_title, "when changing the host" do
+  safely_load_service_type
+
   before do
     @service = Puppet::Type.type(:service).new(:name => "yay")
   end
@@ -249,7 +274,9 @@ describe Puppet::Type.type(:service), "when changing the host" do
   end
 end
 
-describe Puppet::Type.type(:service), "when refreshing the service" do
+describe test_title, "when refreshing the service" do
+  safely_load_service_type
+
   before do
     @service = Puppet::Type.type(:service).new(:name => "yay")
   end

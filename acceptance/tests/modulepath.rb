@@ -75,7 +75,7 @@ END
 
   step 'vendored modules can be excluded' do
     hosts.each do |host|
-      on(host, puppet("describe --basemodulepath '$codedir/modules' beacon"), accept_all_exit_codes: true) do |result|
+      on(host, puppet("describe --vendormoduledir '' beacon"), accept_all_exit_codes: true) do |result|
         assert_match(/Unknown type beacon/, result.stdout)
       end
     end
@@ -84,7 +84,7 @@ END
   step 'global modules override vendored modules' do
     agents.each do |agent|
       # skip the agent on the master, as we don't want to install the
-      # global module on the master until later 
+      # global module on the master until later
       next if agent == master
 
       global_dir = global_modules(agent)
@@ -106,10 +106,10 @@ END
   end
 
   with_puppet_running_on(master, {}) do
-    step "agent downloads and uses server's vendored module" do
+    step "agent doesn't pluginsync the vendored module, instead using its local vendored module" do
       agents.each do |agent|
         on(agent, puppet("agent -t --server #{master}"), :acceptable_exit_codes => [0,2]) do |result|
-          assert_match(/defined 'message' as 'vendored module from #{master}'/, result.stdout)
+          assert_match(/defined 'message' as 'vendored module from #{agent}'/, result.stdout)
         end
       end
     end

@@ -1480,6 +1480,8 @@ describe Puppet::Settings do
 
       it "should not add users or groups to the catalog if :mkusers is a valid setting but is disabled" do
         @settings[:mkusers] = false
+        @settings.stubs(:service_user_available?).returns(false)
+        @settings.stubs(:service_group_available?).returns(false)
 
         catalog = @settings.to_catalog
         expect(catalog.resource(:user, "suser")).to be_nil

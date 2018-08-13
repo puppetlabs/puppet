@@ -286,7 +286,7 @@ module Issues
   end
 
   ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
-    _("Illegal name. The given name '%{name}' does not conform to the naming rule /^((::)?[a-z_]\w*)(::[a-z]\\w*)*$/") % { name: name }
+    _("Illegal name. The given name '%{name}' does not conform to the naming rule /^((::)?[a-z_]\\w*)(::[a-z]\\w*)*$/") % { name: name }
   end
 
   ILLEGAL_SINGLE_TYPE_MAPPING = hard_issue :ILLEGAL_TYPE_MAPPING, :expression do

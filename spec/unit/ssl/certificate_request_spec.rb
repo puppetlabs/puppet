@@ -177,6 +177,17 @@ describe Puppet::SSL::CertificateRequest do
       end
     end
 
+    context "with DNS and IP SAN specified" do
+      before :each do
+        Puppet[:dns_alt_names] = ""
+      end
+
+      it "should return the subjectAltName values" do
+        request.generate(key, :dns_alt_names => 'DNS:foo, bar, IP:172.16.254.1')
+        expect(request.subject_alt_names).to match_array(["DNS:bar", "DNS:foo", "DNS:myname", "IP Address:172.16.254.1"])
+      end
+    end
+
     context "with custom CSR attributes" do
 
       it "adds attributes with single values" do

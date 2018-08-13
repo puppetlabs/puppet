@@ -417,9 +417,10 @@ class Puppet::Node::Environment
   end
 
   # Loads module translations for the current environment once for
-  # the lifetime of the environment.
+  # the lifetime of the environment. Execute a block in the context
+  # of that translation domain.
   def with_text_domain
-    return if Puppet[:disable_i18n]
+    return yield if Puppet[:disable_i18n]
 
     if @text_domain.nil?
       @text_domain = @name
@@ -431,6 +432,7 @@ class Puppet::Node::Environment
 
     yield
   ensure
+    # Is a noop if disable_i18n is true
     Puppet::GettextConfig.clear_text_domain
   end
 

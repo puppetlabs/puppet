@@ -2,6 +2,12 @@ require 'puppet/indirector/terminus'
 require 'puppet/util/ldap/connection'
 
 class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
+  def initialize
+    #TRANSLATORS 'Puppet::Indirector::Ldap' is a class and should not be translated
+    Puppet.deprecation_warning(_("Puppet::Indirector::Ldap is deprecated and will be removed in a future release of Puppet."));
+    super
+  end
+
   # Perform our ldap search and process the result.
   def find(request)
     ldapsearch(search_filter(request.key)) { |entry| return process(entry) } || nil

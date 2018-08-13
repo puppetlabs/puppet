@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'fileutils'
 
 require 'puppet/util/autoload'
 
@@ -19,6 +20,20 @@ describe Puppet::Util::Autoload do
     before :each do
       ## modulepath/libdir can't be used until after app settings are initialized, so we need to simulate that:
       Puppet.settings.stubs(:app_defaults_initialized?).returns(true)
+    end
+
+    def with_libdir(libdir)
+      begin
+        Puppet::Util::Autoload.instance_variable_set(:@initialized, false)
+        old_loadpath = $LOAD_PATH.dup
+        old_libdir = Puppet[:libdir]
+        Puppet[:libdir] = libdir
+        yield
+      ensure
+        Puppet[:libdir] = old_libdir
+        $LOAD_PATH.clear
+        $LOAD_PATH.concat(old_loadpath)
+      end
     end
 
     it "should collect all of the lib directories that exist in the current environment's module path" do
@@ -62,17 +77,31 @@ describe Puppet::Util::Autoload do
       end
     end
 
-    it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do
-      Puppet[:libdir] = '/libdir1'
-      @autoload.class.expects(:gem_directories).returns %w{/one /two}
-      @autoload.class.expects(:module_directories).returns %w{/three /four}
-      expect(@autoload.class.search_directories(nil)).to eq(%w{/one /two /three /four} + [Puppet[:libdir]] + $LOAD_PATH)
+    it "should include the module directories, the Puppet libdir, Ruby load directories, and vendored modules" do
+      vendor_dir = tmpdir('vendor_modules')
+      module_libdir = File.join(vendor_dir, 'amodule_core', 'lib')
+      FileUtils.mkdir_p(module_libdir)
+
+      libdir = File.expand_path('/libdir1')
+      Puppet[:vendormoduledir] = vendor_dir
+
+      with_libdir(libdir) do
+        @autoload.class.expects(:gem_directories).returns %w{/one /two}
+        @autoload.class.expects(:module_directories).returns %w{/three /four}
+        dirs = @autoload.class.search_directories(nil)
+        expect(dirs[0..4]).to eq(%w{/one /two /three /four} + [libdir])
+        expect(dirs.last).to eq(module_libdir)
+      end
     end
 
     it "does not split the Puppet[:libdir]" do
-      Puppet[:libdir] = "/libdir1#{File::PATH_SEPARATOR}/libdir2"
-
-      expect(@autoload.class.libdirs).to eq([Puppet[:libdir]])
+      dir = File.expand_path("/libdir1#{File::PATH_SEPARATOR}/libdir2")
+      with_libdir(dir) do
+        @autoload.class.expects(:gem_directories).returns %w{/one /two}
+        @autoload.class.expects(:module_directories).returns %w{/three /four}
+        dirs = @autoload.class.search_directories(nil)
+        expect(dirs).to include(dir)
+      end
     end
   end
 

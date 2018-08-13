@@ -27,37 +27,21 @@ describe 'the static loader' do
 
   context 'provides access to resource types built into puppet' do
     %w{
-      Augeas
       Component
-      Computer
       Cron
       Exec
       File
       Filebucket
       Group
-      Host
-      Interface
-      K5login
-      Macauthorization
-      Mcx
-      Mount
       Notify
       Package
       Resources
-      Router
       Schedule
-      Scheduled_task
-      Selboolean
-      Selmodule
       Service
-      Ssh_authorized_key
-      Sshkey
       Stage
       Tidy
       User
-      Vlan
       Whit
-      Yumrepo
     }.each do |name |
       it "such that #{name} is available" do
         expect(loader.load(:type, name.downcase)).to be_the_type(resource_type(name))

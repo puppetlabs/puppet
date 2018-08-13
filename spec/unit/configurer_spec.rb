@@ -360,7 +360,7 @@ describe Puppet::Configurer do
 
     it 'includes total time metrics in the report after successfully applying the catalog' do
       report = Puppet::Transaction::Report.new
-      @catalog.stubs(:apply).with(:report => report)
+      @catalog.stubs(:apply).with() {|options| options[:report] == report }
       @agent.run(report: report)
 
       expect(report.metrics['time']).to be
@@ -466,7 +466,13 @@ describe Puppet::Configurer do
     describe "when using a REST terminus for catalogs" do
       it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
         Puppet::Resource::Catalog.indirection.terminus_class = :rest
-        @agent.expects(:facts_for_uploading).returns(:facts => "myfacts", :facts_format => :foo)
+        # the "facts_for_uploading" are prepeared by first finding facts, and then encoding them
+        # this mocks the "find" with a special value 12345, which is then expected back in the
+        # call to "encode" - the encode in turn returns mocked data that is asserted as being
+        # presented to the catalog terminus as options.
+        #
+        @agent.expects(:find_facts).returns(12345)
+        @agent.expects(:encode_facts).with(12345).returns(:facts => "myfacts", :facts_format => :foo)
         Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options|
           options[:facts] == "myfacts" and options[:facts_format] == :foo
         }.returns @catalog

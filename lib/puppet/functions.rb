@@ -714,6 +714,11 @@ module Puppet::Functions
       inject(:pal_script_compiler)
     end
 
+    # Inject a parameter getting a cached hash for this function
+    def cache_param
+      inject(:cache)
+    end
+
     private
 
     def inject(injection_name)

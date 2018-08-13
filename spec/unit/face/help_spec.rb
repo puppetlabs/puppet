@@ -127,7 +127,8 @@ describe Puppet::Face[:help, '0.0.1'] do
         expect(subject).to match(%r{ #{appname} })
 
         summary = Puppet::Face[:help, :current].horribly_extract_summary_from(appname)
-        summary and expect(subject).to match(%r{ #{summary}\b})
+        summary_regex = Regexp.escape(summary)
+        summary and expect(subject).to match(%r{ #{summary_regex}$})
       end
     end
   end

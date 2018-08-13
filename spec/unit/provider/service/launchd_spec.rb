@@ -3,7 +3,9 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:service).provider(:launchd) do
+describe 'Puppet::Type::Service::Provider::Launchd', unless: Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:launchd) }
+
   let (:plistlib) { Puppet::Util::Plist }
   let (:joblabel) { "com.foo.food" }
   let (:provider) { subject.class }

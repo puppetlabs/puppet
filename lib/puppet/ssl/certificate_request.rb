@@ -266,9 +266,17 @@ DOC
     end
 
     if options[:dns_alt_names]
-      names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
-      names = names.sort.uniq.map {|name| "DNS:#{name}" }.join(", ")
-      alt_names_ext = extension_factory.create_extension("subjectAltName", names, false)
+      raw_names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
+
+      parsed_names = raw_names.map do |name|
+        if !name.start_with?("IP:") && !name.start_with?("DNS:")
+          "DNS:#{name}"
+        else
+          name
+        end
+      end.sort.uniq.join(", ")
+
+      alt_names_ext = extension_factory.create_extension("subjectAltName", parsed_names, false)
 
       extensions << alt_names_ext
     end

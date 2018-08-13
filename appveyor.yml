@@ -49,7 +49,7 @@ test_script:
       # list current OpenSSL install
       gem list openssl
       ruby -ropenssl -e 'puts \"OpenSSL Version - #{OpenSSL::OPENSSL_VERSION}\"; puts \"OpenSSL Library Version - #{OpenSSL::OPENSSL_LIBRARY_VERSION}\"'
-      bundle install --jobs 4 --retry 2 --without development extra
+      bundle install --jobs 4 --retry 2 --without development extra packaging
       Get-Content Gemfile.lock
       ruby -v
       gem --version

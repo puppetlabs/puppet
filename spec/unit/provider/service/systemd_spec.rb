@@ -4,7 +4,8 @@
 #
 require 'spec_helper'
 
-describe Puppet::Type.type(:service).provider(:systemd) do
+describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:systemd) }
 
   if Puppet.features.microsoft_windows?
     # Get a pid for $CHILD_STATUS to latch on to
@@ -13,12 +14,12 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   end
 
   before :each do
-    Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
-    described_class.stubs(:which).with('systemctl').returns '/bin/systemctl'
+    Puppet::Type.type(:service).stubs(:defaultprovider).returns provider_class
+    provider_class.stubs(:which).with('systemctl').returns '/bin/systemctl'
   end
 
   let :provider do
-    described_class.new(:name => 'sshd.service')
+    provider_class.new(:name => 'sshd.service')
   end
 
   osfamilies = [ 'archlinux', 'coreos' ]
@@ -28,7 +29,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       Facter.stubs(:value).with(:osfamily).returns(osfamily)
       Facter.stubs(:value).with(:operatingsystem).returns(osfamily)
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns("1234")
-      expect(described_class).to be_default
+      expect(provider_class).to be_default
     end
   end
 
@@ -36,7 +37,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     Facter.stubs(:value).with(:osfamily).returns(:redhat)
     Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
-    expect(described_class).to be_default
+    expect(provider_class).to be_default
   end
 
   [ 4, 5, 6 ].each do |ver|
@@ -48,7 +49,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       Facter.stubs(:value).with(:osfamily).returns(:redhat)
       Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
-      expect(described_class).not_to be_default
+      expect(provider_class).not_to be_default
     end
   end
 
@@ -57,7 +58,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       Facter.stubs(:value).with(:osfamily).returns(:redhat)
       Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
-      expect(described_class).to be_default
+      expect(provider_class).to be_default
     end
   end
 
@@ -65,35 +66,35 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     Facter.stubs(:value).with(:osfamily).returns(:redhat)
     Facter.stubs(:value).with(:operatingsystem).returns(:amazon)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("2")
-    expect(described_class).to be_default
+    expect(provider_class).to be_default
   end
 
   it "should not be the default provider on Amazon Linux 2017.09" do
     Facter.stubs(:value).with(:osfamily).returns(:redhat)
     Facter.stubs(:value).with(:operatingsystem).returns(:amazon)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("2017")
-    expect(described_class).not_to be_default
+    expect(provider_class).not_to be_default
   end
 
   it "should be the default provider on cumulus3" do
     Facter.stubs(:value).with(:osfamily).returns(:debian)
     Facter.stubs(:value).with(:operatingsystem).returns('CumulusLinux')
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("3")
-    expect(described_class).to be_default
+    expect(provider_class).to be_default
   end
 
   it "should be the default provider on sles12" do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
     Facter.stubs(:value).with(:operatingsystem).returns(:suse)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("12")
-    expect(described_class).to be_default
+    expect(provider_class).to be_default
   end
 
   it "should be the default provider on opensuse13" do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
     Facter.stubs(:value).with(:operatingsystem).returns(:suse)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("13")
-    expect(described_class).to be_default
+    expect(provider_class).to be_default
   end
 
   # tumbleweed is a rolling release with date-based major version numbers
@@ -101,7 +102,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
     Facter.stubs(:value).with(:operatingsystem).returns(:suse)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("20150829")
-    expect(described_class).to be_default
+    expect(provider_class).to be_default
   end
 
   # leap is the next generation suse release
@@ -109,28 +110,28 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     Facter.stubs(:value).with(:osfamily).returns(:suse)
     Facter.stubs(:value).with(:operatingsystem).returns(:leap)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("42")
-    expect(described_class).to be_default
+    expect(provider_class).to be_default
   end
 
   it "should not be the default provider on debian7" do
     Facter.stubs(:value).with(:osfamily).returns(:debian)
     Facter.stubs(:value).with(:operatingsystem).returns(:debian)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
-    expect(described_class).not_to be_default
+    expect(provider_class).not_to be_default
   end
 
   it "should be the default provider on debian8" do
     Facter.stubs(:value).with(:osfamily).returns(:debian)
     Facter.stubs(:value).with(:operatingsystem).returns(:debian)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("8")
-    expect(described_class).to be_default
+    expect(provider_class).to be_default
   end
 
   it "should not be the default provider on ubuntu14.04" do
     Facter.stubs(:value).with(:osfamily).returns(:debian)
     Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("14.04")
-    expect(described_class).not_to be_default
+    expect(provider_class).not_to be_default
   end
 
   [ '15.04', '15.10', '16.04', '16.10', '17.04', '17.10', '18.04' ].each do |ver|
@@ -138,7 +139,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       Facter.stubs(:value).with(:osfamily).returns(:debian)
       Facter.stubs(:value).with(:operatingsystem).returns(:ubuntu)
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
-      expect(described_class).to be_default
+      expect(provider_class).to be_default
     end
   end
 
@@ -150,12 +151,12 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
   describe ".instances" do
     it "should have an instances method" do
-      expect(described_class).to respond_to :instances
+      expect(provider_class).to respond_to :instances
     end
 
     it "should return only services" do
-      described_class.expects(:systemctl).with('list-unit-files', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_unit_files_services'))
-      expect(described_class.instances.map(&:name)).to match_array(%w{
+      provider_class.expects(:systemctl).with('list-unit-files', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_unit_files_services'))
+      expect(provider_class.instances.map(&:name)).to match_array(%w{
         arp-ethers.service
         auditd.service
         autovt@.service
@@ -167,20 +168,20 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
   describe "#start" do
     it "should use the supplied start command if specified" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :start => '/bin/foo'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :start => '/bin/foo'))
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
 
     it "should start the service with systemctl start otherwise" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with(:unmask, 'sshd.service')
       provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
       provider.start
     end
 
     it "should show journald logs on failure" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with(:unmask, 'sshd.service')
       provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
         .raises(Puppet::ExecutionFailure, "Failed to start sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
@@ -197,19 +198,19 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
   describe "#stop" do
     it "should use the supplied stop command if specified" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :stop => '/bin/foo'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :stop => '/bin/foo'))
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
 
     it "should stop the service with systemctl stop otherwise" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
 
     it "should show journald logs on failure" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
         .raises(Puppet::ExecutionFailure, "Failed to stop sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
       journalctl_logs = <<-EOS
@@ -225,42 +226,42 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
   describe "#enabled?" do
     it "should return :true if the service is enabled" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "enabled\n"
       $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :true if the service is static" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "static\n"
       $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.enabled?).to eq(:true)
     end
 
     it "should return :false if the service is disabled" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "disabled\n"
       $CHILD_STATUS.stubs(:exitstatus).returns(1)
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :false if the service is indirect" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "indirect\n"
       $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :false if the service is masked and the resource is attempting to be disabled" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => false))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "masked\n"
       $CHILD_STATUS.stubs(:exitstatus).returns(1)
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return :mask if the service is masked and the resource is attempting to be masked" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => 'mask'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :enable => 'mask'))
       provider.expects(:execute).with(['/bin/systemctl','is-enabled','sshd.service'], :failonfail => false).returns "masked\n"
       $CHILD_STATUS.stubs(:exitstatus).returns(1)
       expect(provider.enabled?).to eq(:mask)
@@ -269,7 +270,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
   describe "#enable" do
     it "should run systemctl enable to enable a service" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with(:unmask, 'sshd.service')
       provider.expects(:systemctl).with(:enable, 'sshd.service')
       provider.enable
@@ -278,7 +279,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
   describe "#disable" do
     it "should run systemctl disable to disable a service" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:systemctl).with(:disable, 'sshd.service')
       provider.disable
     end
@@ -286,7 +287,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
   describe "#mask" do
     it "should run systemctl to disable and mask a service" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       # :disable is the only call in the provider that uses a symbol instead of
       # a string.
       # This should be made consistent in the future and all tests updated.
@@ -300,7 +301,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   # command. I just assume that it does not make sense for systemd.
   describe "#status" do
     it "should return running if if the command returns 0" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','is-active','sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).returns "active\n"
       $CHILD_STATUS.stubs(:exitstatus).returns(0)
       expect(provider.status).to eq(:running)
@@ -308,7 +309,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
     [-10,-1,3,10].each { |ec|
       it "should return stopped if the command returns something non-0" do
-        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
         provider.expects(:execute).with(['/bin/systemctl','is-active','sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).returns "inactive\n"
         $CHILD_STATUS.stubs(:exitstatus).returns(ec)
         expect(provider.status).to eq(:stopped)
@@ -316,7 +317,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     }
 
     it "should use the supplied status command if specified" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :status => '/bin/foo'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :status => '/bin/foo'))
       provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       provider.status
     end
@@ -326,20 +327,20 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   # does not make sense for systemd
   describe "#restart" do
     it "should use the supplied restart command if specified" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
       provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
     end
 
     it "should restart the service with systemctl restart" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
     end
 
     it "should show journald logs on failure" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
         .raises(Puppet::ExecutionFailure, "Failed to restart sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
       journalctl_logs = <<-EOS
@@ -356,7 +357,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   describe "#debian_enabled?" do
     [104, 106].each do |status|
       it "should return true when invoke-rc.d returns #{status}" do
-        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
         provider.stubs(:system)
         $CHILD_STATUS.expects(:exitstatus).returns(status)
         expect(provider.debian_enabled?).to eq(:true)
@@ -365,7 +366,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
     [101, 105].each do |status|
       it "should return true when status is #{status} and there are at least 4 start links" do
-        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
         provider.stubs(:system)
         provider.expects(:get_start_link_count).returns(4)
         $CHILD_STATUS.expects(:exitstatus).twice.returns(status)
@@ -373,7 +374,7 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
       end
 
       it "should return false when status is #{status} and there are less than 4 start links" do
-        provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+        provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
         provider.stubs(:system)
         provider.expects(:get_start_link_count).returns(1)
         $CHILD_STATUS.expects(:exitstatus).twice.returns(status)
@@ -384,19 +385,19 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
   describe "#get_start_link_count" do
     it "should strip the '.service' from the search if present in the resource name" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       Dir.expects(:glob).with("/etc/rc*.d/S??sshd").returns(['files'])
       provider.get_start_link_count
     end
 
     it "should use the full service name if it does not include '.service'" do
-      provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
+      provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       Dir.expects(:glob).with("/etc/rc*.d/S??sshd").returns(['files'])
       provider.get_start_link_count
     end
   end
 
   it "(#16451) has command systemctl without being fully qualified" do
-    expect(described_class.instance_variable_get(:@commands)).to include(:systemctl => 'systemctl')
+    expect(provider_class.instance_variable_get(:@commands)).to include(:systemctl => 'systemctl')
   end
 end

@@ -1,13 +1,15 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:service).provider(:windows), '(integration)',
-  :if => Puppet.features.microsoft_windows? do
+test_title = 'Integration Tests for Puppet::Type::Service::Provider::Windows'
+
+describe test_title, '(integration)', :if => Puppet.features.microsoft_windows? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:windows) }
 
   require 'puppet/util/windows'
 
   before :each do
-    Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
+    Puppet::Type.type(:service).stubs(:defaultprovider).returns provider_class
   end
 
   context 'should fail querying services that do not exist' do

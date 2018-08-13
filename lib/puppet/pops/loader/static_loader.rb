@@ -6,38 +6,22 @@ module Loader
 class StaticLoader < Loader
 
   BUILTIN_TYPE_NAMES = %w{
-      Augeas
       Component
-      Computer
       Cron
       Exec
       File
       Filebucket
       Group
-      Host
-      Interface
-      K5login
-      Macauthorization
-      Mcx
-      Mount
       Node
       Notify
       Package
       Resources
-      Router
       Schedule
-      Scheduled_task
-      Selboolean
-      Selmodule
       Service
-      Ssh_authorized_key
-      Sshkey
       Stage
       Tidy
       User
-      Vlan
       Whit
-      Yumrepo
     }.freeze
 
   BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze

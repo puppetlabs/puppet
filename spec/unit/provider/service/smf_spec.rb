@@ -6,9 +6,9 @@
 #
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:smf)
-
-describe provider_class, :if => Puppet.features.posix? do
+describe 'Puppet::Type::Service::Provider::Smf',
+    if: Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:smf) }
 
   before(:each) do
     # Create a mock resource
@@ -18,8 +18,6 @@ describe provider_class, :if => Puppet.features.posix? do
 
     FileTest.stubs(:file?).with('/usr/sbin/svcadm').returns true
     FileTest.stubs(:executable?).with('/usr/sbin/svcadm').returns true
-    FileTest.stubs(:file?).with('/usr/sbin/svccfg').returns true
-    FileTest.stubs(:executable?).with('/usr/sbin/svccfg').returns true
     FileTest.stubs(:file?).with('/usr/bin/svcs').returns true
     FileTest.stubs(:executable?).with('/usr/bin/svcs').returns true
     Facter.stubs(:value).with(:operatingsystem).returns('Solaris')
@@ -76,9 +74,9 @@ describe provider_class, :if => Puppet.features.posix? do
       @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.status
     end
-    it "should return absent if svcs can't find the service" do
+    it "should return stopped if svcs can't find the service" do
       @provider.stubs(:svcs).raises(Puppet::ExecutionFailure.new("no svc found"))
-      expect(@provider.status).to eq(:absent)
+      expect(@provider.status).to eq(:stopped)
     end
     it "should return running if online in svcs output" do
       @provider.stubs(:svcs).returns("online\t-")
@@ -168,14 +166,12 @@ describe provider_class, :if => Puppet.features.posix? do
 
   describe "when stopping" do
     it "should execute external command 'svcadm disable /system/myservice'" do
-      @provider.stubs(:status).returns :running
       @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, '-s', "/system/myservice"], true)
       @provider.expects(:wait).with('offline', 'disabled', 'uninitialized')
       @provider.stop
     end
 
     it "should error if timeout occurs while stopping the service" do
-      @provider.stubs(:status).returns :running
       @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, '-s', "/system/myservice"], true)
       Timeout.expects(:timeout).with(60).raises(Timeout::Error)
       expect { @provider.stop }.to raise_error Puppet::Error, ('Timed out waiting for /system/myservice to transition states')

@@ -115,6 +115,35 @@ class Puppet::Util::Autoload
     def module_directories(env)
       raise ArgumentError, "Autoloader requires an environment" unless env
 
+      Puppet::Util::ModuleDirectoriesAdapter.adapt(env) do |a|
+        a.directories ||= env.modulepath.collect do |dir|
+          Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
+        end.flatten.find_all do |d|
+          FileTest.directory?(d)
+        end
+      end.directories
+    end
+
+    # @api private
+    def vendored_modules
+      dir = Puppet[:vendormoduledir]
+      if dir && File.directory?(dir)
+        Dir.entries(dir)
+          .reject { |f| f =~ /^\./ }
+          .collect { |f| File.join(dir, f, "lib") }
+          .find_all { |d| FileTest.directory?(d) }
+      else
+        []
+      end
+    end
+
+    # @api private
+    def gem_directories
+      gem_source.directories
+    end
+
+    # @api private
+    def search_directories(env)
       # This is a little bit of a hack.  Basically, the autoloader is being
       # called indirectly during application bootstrapping when we do things
       # such as check "features".  However, during bootstrapping, we haven't
@@ -135,39 +164,15 @@ class Puppet::Util::Autoload
       # "app_defaults_initialized?" method on the main puppet Settings object.
       # --cprice 2012-03-16
       if Puppet.settings.app_defaults_initialized?
-        # if the app defaults have been initialized then it should be safe to access the module path setting.
-        Puppet::Util::ModuleDirectoriesAdapter.adapt(env) do |a|
-          a.directories ||= env.modulepath.collect do |dir|
-            Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
-          end.flatten.find_all do |d|
-            FileTest.directory?(d)
-          end
-        end.directories
+        unless @initialized
+          $LOAD_PATH.unshift(Puppet[:libdir])
+          $LOAD_PATH.concat(vendored_modules)
+          @initialized = true
+        end
+        gem_directories + module_directories(env) + $LOAD_PATH
       else
-        # if we get here, the app defaults have not been initialized, so we basically use an empty module path.
-        []
+        gem_directories + $LOAD_PATH
       end
-    end
-
-    # @api private
-    def libdirs
-      # See the comments in #module_directories above.  Basically, we need to be careful not to try to access the
-      # libdir before we know for sure that all of the settings have been initialized (e.g., during bootstrapping).
-      if (Puppet.settings.app_defaults_initialized?)
-        [Puppet[:libdir]]
-      else
-        []
-      end
-    end
-
-    # @api private
-    def gem_directories
-      gem_source.directories
-    end
-
-    # @api private
-    def search_directories(env)
-      [gem_directories, module_directories(env), libdirs, $LOAD_PATH].flatten
     end
 
     # Normalize a path. This converts ALT_SEPARATOR to SEPARATOR on Windows

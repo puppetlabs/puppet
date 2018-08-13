@@ -124,22 +124,35 @@ describe "Defaults" do
     end
   end
 
+  describe 'manage_internal_file_permissions' do
+    describe 'on windows', :if => Puppet::Util::Platform.windows? do
+      it 'should default to false' do
+        expect(Puppet.settings[:manage_internal_file_permissions]).to be false
+      end
+    end
+    describe 'on non-windows', :if => ! Puppet::Util::Platform.windows? do
+      it 'should default to true' do
+        expect(Puppet.settings[:manage_internal_file_permissions]).to be true
+      end
+    end
+  end
+
   describe 'basemodulepath' do
-    it 'includes the user, system and vendor modules', :unless => Puppet::Util::Platform.windows? do
+    it 'includes the user and system modules', :unless => Puppet::Util::Platform.windows? do
       expect(
         Puppet[:basemodulepath]
-      ).to match(%r{.*/code/modules:/opt/puppetlabs/puppet/modules:/opt/puppetlabs/puppet/vendor_modules$})
+      ).to match(%r{.*/code/modules:/opt/puppetlabs/puppet/modules$})
     end
 
     describe 'on windows', :if => Puppet::Util::Platform.windows? do
       let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
 
-      it 'includes user, system and vendor modules' do
+      it 'includes user and system modules' do
         Facter.stubs(:value).with(:env_windows_installdir).returns(installdir)
 
         expect(
           Puppet.default_basemodulepath
-        ).to eq('$codedir/modules;C:\Program Files\Puppet Labs\Puppet/puppet/modules;C:\Program Files\Puppet Labs\Puppet/puppet/vendor_modules')
+        ).to eq('$codedir/modules;C:\Program Files\Puppet Labs\Puppet/puppet/modules')
       end
 
       it 'includes user modules if installdir fact is missing' do
@@ -148,6 +161,32 @@ describe "Defaults" do
         expect(
           Puppet.default_basemodulepath
         ).to eq('$codedir/modules')
+      end
+    end
+  end
+
+  describe 'vendormoduledir' do
+    it 'includes the default vendormoduledir', :unless => Puppet::Util::Platform.windows? do
+      expect(
+        Puppet[:vendormoduledir]
+      ).to eq('/opt/puppetlabs/puppet/vendor_modules')
+    end
+
+    describe 'on windows', :if => Puppet::Util::Platform.windows? do
+      let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
+
+      it 'includes the default vendormoduledir' do
+        Facter.stubs(:value).with(:env_windows_installdir).returns(installdir)
+
+        expect(
+          Puppet.default_vendormoduledir
+        ).to eq('C:\Program Files\Puppet Labs\Puppet\puppet\vendor_modules')
+      end
+
+      it 'is nil if installdir fact is missing' do
+        Facter.stubs(:value).with(:env_windows_installdir).returns(nil)
+
+        expect(Puppet.default_vendormoduledir).to be_nil
       end
     end
   end
