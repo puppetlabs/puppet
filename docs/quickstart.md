@@ -30,7 +30,7 @@ simple as:
 
 Now you can get all of the dependencies using:
 
-    $ bundle install --path .bundle/gems/
+    $ bundle install --path .bundle
 
 Once this is done, you can interact with puppet through bundler using `bundle
 exec <command>` which will ensure that `<command>` is executed in the context

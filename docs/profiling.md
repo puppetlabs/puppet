@@ -40,8 +40,19 @@ To run a scenario you do:
 
     bundle exec rake benchmark:<scenario_name>
 
-If you have ruby-prof installed you can get a calltrace of the benchmark
-scenario by running:
+## Profiling Benchmarks
+
+You can also run `heap_dump`, `memory_profile` or `profile` tasks for each
+scenario. You'll first need to run `bundle install --with development` to
+install the prerequisite gems.
+
+The `heap_dump` task generates a heap dump with object allocation
+tracing enabled.
+
+The `memory_profile` task generates a memory profile listing retained memory
+by file and location.
+
+The `profile` task generates a calltrace of the benchmark scenario:
 
     bundle exec rake benchmark:<scenario_name>:profile
 
