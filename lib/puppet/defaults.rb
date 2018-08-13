@@ -39,8 +39,6 @@ module Puppet
 
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
 
-  CA_SETTING_DEPRECATION = _("The '%{setting_name}' setting is deprecated. Starting in Puppet 6, this setting will be ignored in favor of the analagous setting in Puppet Server's config.")
-
   define_settings(:main,
     :confdir  => {
         :default  => nil,
@@ -988,9 +986,7 @@ EOT
       :group => "service",
       :mode => "0755",
       :desc => "The root directory for the certificate authority. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :hook => proc { |value|
-        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cadir' })
-      }
+      :deprecated => :completely,
     },
     :cacert => {
       :default => "$cadir/ca_crt.pem",
@@ -999,9 +995,7 @@ EOT
       :group => "service",
       :mode => "0644",
       :desc => "The CA certificate. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :hook => proc { |value|
-        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cacert' })
-      }
+      :deprecated => :completely,
     },
     :cakey => {
       :default => "$cadir/ca_key.pem",
@@ -1010,9 +1004,7 @@ EOT
       :group => "service",
       :mode => "0640",
       :desc => "The CA private key. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :hook => proc { |value|
-        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cakey' })
-      }
+      :deprecated => :completely,
     },
     :capub => {
       :default => "$cadir/ca_pub.pem",
@@ -1021,9 +1013,7 @@ EOT
       :group => "service",
       :mode => "0644",
       :desc => "The CA public key. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :hook => proc { |value|
-        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'capub' })
-      }
+      :deprecated => :completely,
     },
     :cacrl => {
       :default => "$cadir/ca_crl.pem",
@@ -1032,9 +1022,7 @@ EOT
       :group => "service",
       :mode => "0644",
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :hook => proc { |value|
-        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'cacrl' })
-      }
+      :deprecated => :completely,
     },
     :caprivatedir => {
       :default => "$cadir/private",
@@ -1051,9 +1039,7 @@ EOT
       :group => "service",
       :mode  => "0755",
       :desc => "Where the CA stores certificate requests. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :hook => proc { |value|
-        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'csrdir' })
-      }
+      :deprecated => :completely,
     },
     :signeddir => {
       :default => "$cadir/signed",
@@ -1062,9 +1048,7 @@ EOT
       :group => "service",
       :mode => "0755",
       :desc => "Where the CA stores signed certificates. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :hook => proc { |value|
-        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'signeddir' })
-      }
+      :deprecated => :completely,
     },
     :capass => {
       :default => "$caprivatedir/ca.pass",
@@ -1081,9 +1065,7 @@ EOT
       :group => "service",
       :mode => "0644",
       :desc => "Where the serial number for certificates is stored. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :hook => proc { |value|
-        Puppet.deprecation_warning(CA_SETTING_DEPRECATION % { setting_name: 'serial' })
-      }
+      :deprecated => :completely,
     },
     :autosign => {
       :default => "$confdir/autosign.conf",
