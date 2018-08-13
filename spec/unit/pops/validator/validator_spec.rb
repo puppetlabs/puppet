@@ -321,7 +321,28 @@ describe "validating 4x" do
       end
 
       it 'allows apply() with multiple expressions' do
-        acceptor = validate(parse('apply("foo.example.com") { notify { "hello!": } }'))
+        acceptor = validate(parse('apply("foo.example.com") { $message = "hello!"; notify { $message: } }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'accepts multiple arguments' do
+        acceptor = validate(parse('apply(["foo.example.com"], { "other" => "args" }) { }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'allows virtual resource collectors' do
+        acceptor = validate(parse('apply("foo.example.com") { @user { "foo": }; User <| |> }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'rejects exported resource collectors' do
+        acceptor = validate(parse('apply("foo.example.com") { @@user { "foo": }; User <<| |>> }'))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING)
+      end
+
+      it 'can be assigned' do
+        acceptor = validate(parse('$result = apply("foo.example.com") { notify { "hello!": } }'))
         expect(acceptor.error_count).to eql(0)
       end
 
