@@ -110,5 +110,6 @@ if Rake.application.top_level_tasks.grep(/^gettext:/).any?
     load "#{spec.gem_dir}/lib/tasks/gettext.rake"
     GettextSetup.initialize(File.absolute_path('locales', File.dirname(__FILE__)))
   rescue LoadError
+    abort("Run `bundle install --with documentation` to install the `gettext-setup` gem.")
   end
 end
