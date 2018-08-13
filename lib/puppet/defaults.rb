@@ -752,11 +752,14 @@ change this setting; you also need to:
 
 * On the server: Stop Puppet Server.
 * On the CA server: Revoke and clean the server's old certificate. (`puppet cert clean <NAME>`)
+  (Note `puppet cert clean` is deprecated and will be replaced with `puppetserver ca clean`
+  in Puppet 6.)
 * On the server: Delete the old certificate (and any old certificate signing requests)
   from the [ssldir](https://puppet.com/docs/puppet/latest/dirs_ssldir.html).
 * On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to request a new certificate
 * On the CA server: Sign the certificate request, explicitly allowing alternate names
-  (`puppet cert sign --allow-dns-alt-names <NAME>`).
+  (`puppet cert sign --allow-dns-alt-names <NAME>`). (Note `puppet cert sign` is deprecated
+  and will be replaced with `puppetserver ca sign` in Puppet 6.)
 * On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to retrieve the cert.
 * On the server: Start Puppet Server again.
 
@@ -977,7 +980,8 @@ EOT
     :ca,
     :ca_name => {
       :default    => "Puppet CA: $certname",
-      :desc       => "The name to use the Certificate Authority certificate.",
+      :desc       => "The name to use the Certificate Authority certificate. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
+      :deprecated => :completely,
     },
     :cadir => {
       :default => "$ssldir/ca",
@@ -1030,7 +1034,8 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0750",
-      :desc => "Where the CA stores private certificate information."
+      :desc => "Where the CA stores private certificate information. This setting is deprecated and will be removed in Puppet 6.",
+      :deprecated => :completely,
     },
     :csrdir => {
       :default => "$cadir/requests",
@@ -1056,7 +1061,8 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0640",
-      :desc => "Where the CA stores the password for the private key."
+      :desc => "Where the CA stores the password for the private key. This setting is deprecated and will be removed in Puppet 6.",
+      :deprecated => :completely,
     },
     :serial => {
       :default => "$cadir/serial",
@@ -1072,6 +1078,8 @@ EOT
       :type => :autosign,
       :desc => "Whether (and how) to autosign certificate requests. This setting
         is only relevant on a puppet master acting as a certificate authority (CA).
+        This setting is also deprecated and will be replaced by one in Puppet Server's
+        configs in Puppet 6.
 
         Valid values are true (autosigns all certificate requests; not recommended),
         false (disables autosigning certificates), or the absolute path to a file.
@@ -1098,14 +1106,15 @@ EOT
     :allow_duplicate_certs => {
       :default    => false,
       :type       => :boolean,
-      :desc       => "Whether to allow a new certificate
-      request to overwrite an existing certificate.",
+      :desc       => "Whether to allow a new certificate request to overwrite an existing certificate. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
+      :deprecated => :completely,
     },
     :ca_ttl => {
       :default    => "5y",
       :type       => :duration,
       :desc       => "The default TTL for new certificates.
-      #{AS_DURATION}"
+      #{AS_DURATION} This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
+      :deprecated => :completely,
     },
     :keylength => {
       :default    => 4096,
@@ -1118,7 +1127,8 @@ EOT
       :owner => "service",
       :group => "service",
       :desc => "The inventory file. This is a text file to which the CA writes a
-        complete listing of all certificates."
+        complete listing of all certificates. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
+      :deprecated => :completely,
     }
   )
 
