@@ -25,7 +25,11 @@ module PuppetSpec::Modules
         FileUtils.mkdir_p(tasks_dir)
         tasks.each do |task_files|
           task_files.each do |task_file|
-            FileUtils.touch(File.join(tasks_dir, task_file))
+            if task_file.is_a?(String)
+              # default content to acceptable metadata
+              task_file = { :name => task_file, :content => "{}" }
+            end
+            File.write(File.join(tasks_dir, task_file[:name]), task_file[:content])
           end
         end
       end

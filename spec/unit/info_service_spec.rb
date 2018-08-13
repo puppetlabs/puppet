@@ -31,19 +31,24 @@ describe "Puppet::InfoService" do
     end
 
     context 'task_data method' do
-      before do
-        Puppet.override(:environments => env_loader) do
-          @mod = PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :tasks => [['thingtask', 'thingtask.json']]})
-          @result = Puppet::InfoService.task_data(env_name, mod_name, task_name)
+      context 'For a valid simple module' do
+        before do
+          Puppet.override(:environments => env_loader) do
+            @mod = PuppetSpec::Modules.create(mod_name, modpath,
+                                              {:environment => env,
+                                               :tasks => [['thingtask',
+                                                           {:name => 'thingtask.json',
+                                                            :content => '{}'}]]})
+            @result = Puppet::InfoService.task_data(env_name, mod_name, task_name)
+          end
         end
-      end
-      describe 'in the happy case' do
+
         it 'returns the right set of keys' do
-          expect(@result.keys.sort).to eq([:files, :metadata_file])
+          expect(@result.keys.sort).to eq([:files, :metadata])
         end
+
         it 'specifies the metadata_file correctly' do
-          task = @mod.tasks[0]
-          expect(@result[:metadata_file]).to eq(task.metadata_file)
+          expect(@result[:metadata]).to eq({})
         end
 
         it 'specifies the other files correctly' do
@@ -52,6 +57,63 @@ describe "Puppet::InfoService" do
         end
       end
 
+      context 'For a module with multiple implemenations' do
+        let(:metadata) {
+          { "implementations" => [
+            {"name" => "thingtask.rb", "requirements" => ["puppet_agent"] },
+            {"name" => "thingtask.sh", "requirements" => ["shell"] } ] } }
+
+        before do
+          Puppet.override(:environments => env_loader) do
+            @mod = PuppetSpec::Modules.create(mod_name, modpath,
+                                              {:environment => env,
+                                               :tasks => [['thingtask.rb',
+                                                           'thingtask.sh',
+                                                           {:name => 'thingtask.json',
+                                                            :content => metadata.to_json}]]})
+            @result = Puppet::InfoService.task_data(env_name, mod_name, task_name)
+          end
+        end
+
+        it 'returns the right set of keys' do
+          expect(@result.keys.sort).to eq([:files, :metadata])
+        end
+
+        it 'specifies the metadata_file correctly' do
+          expect(@result[:metadata]).to eq(metadata)
+        end
+
+        it 'specifies the other files correctly' do
+          task = @mod.tasks[0]
+          expect(@result[:files]).to eq(task.files)
+        end
+      end
+
+      context 'For a task with bad metadata' do
+        let(:metadata) {
+          { "implementations" => [
+            {"name" => "thingtask.rb", "requirements" => ["puppet_agent"] },
+            {"name" => "thingtask.sh", "requirements" => ["shell"] } ] } }
+
+        before do
+          Puppet.override(:environments => env_loader) do
+            @mod = PuppetSpec::Modules.create(mod_name, modpath,
+                                              {:environment => env,
+                                               :tasks => [['thingtask.sh',
+                                                           {:name => 'thingtask.json',
+                                                            :content => metadata.to_json}]]})
+            @result = Puppet::InfoService.task_data(env_name, mod_name, task_name)
+          end
+        end
+
+        it 'returns the right set of keys' do
+          expect(@result.keys.sort).to eq([:error, :files, :metadata])
+        end
+
+        it 'returns the expected error' do
+          expect(@result[:error][:kind]).to eq('puppet.tasks/missing-implementation')
+        end
+      end
       it "should raise EnvironmentNotFound if given a nonexistent environment" do
         expect{ Puppet::InfoService.task_data('utopia', mod_name, task_name) }.to raise_error(Puppet::Environments::EnvironmentNotFound)
       end
@@ -65,6 +127,7 @@ describe "Puppet::InfoService" do
 
       it "should raise TaskNotFound if the task does not exist" do
         Puppet.override(:environments => env_loader) do
+          PuppetSpec::Modules.create(mod_name, modpath)
           expect { Puppet::InfoService.task_data(env_name, mod_name, 'testing1::notatask') }
             .to raise_error(Puppet::Module::Task::TaskNotFound)
         end

@@ -23,10 +23,14 @@ class Puppet::InfoService::TaskInformationService
 
     task = pup_module.tasks.find { |t| t.name == task_name }
     if task.nil?
-      raise Puppet::Module::Task::TaskNotFound, _("Task %{task_name} not found in module %{module_name}.") %
-                                                 {task_name: task_name, module_name: module_name}
+      raise Puppet::Module::Task::TaskNotFound.new(task_name, module_name)
     end
 
-    {:metadata_file => task.metadata_file, :files => task.files}
+    begin
+      task.validate
+      {:metadata => task.metadata, :files => task.files}
+    rescue Puppet::Module::Task::Error => err
+      { :metadata => nil, :files => [], :error => err.to_h }
+    end
   end
 end
