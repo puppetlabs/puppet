@@ -299,8 +299,6 @@ PP
     'main' => {
       'environmentpath' => "#{testdir}/environments",
       'hiera_config' => "#{testdir}/hiera.yaml",
-      # required for site{}
-      'app_management' => true,
     },
   }
   with_puppet_running_on master, master_opts, testdir do

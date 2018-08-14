@@ -678,16 +678,6 @@ module Puppet
     }
   )
 
-  define_settings(:main,
-      # Whether the application management feature is on or off - now deprecated and always on.
-      :app_management => {
-          :default  => false,
-          :type     => :boolean,
-          :desc       => "This setting has no effect and will be removed in a future Puppet version.",
-          :deprecated => :completely,
-      }
-  )
-
   Puppet.define_settings(:module_tool,
     :module_repository  => {
       :default  => 'https://forgeapi.puppet.com',

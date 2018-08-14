@@ -9,7 +9,6 @@ describe Puppet::Network::HTTP::API::Master::V3::Environment do
   let(:loader) { Puppet::Environments::Static.new(environment) }
 
   around :each do |example|
-    Puppet[:app_management] = true
     Puppet.override(:environments => loader) do
       Puppet::Type.newtype :sql, :is_capability => true do
         newparam :name, :namevar => true
