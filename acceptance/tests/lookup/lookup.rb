@@ -82,7 +82,7 @@ PP
 
   def mod_manifest_metadata_json(module_name = nil, testdir)
     if module_name
-      metadata_manifest = <<PPmetadata
+      <<PPmetadata
       file { '#{testdir}/environments/production/modules/#{module_name}/metadata.json':
         ensure => file,
         content => '
