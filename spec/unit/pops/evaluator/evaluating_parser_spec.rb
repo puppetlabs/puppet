@@ -1528,6 +1528,35 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
   end
 
+  context 'with --tasks' do
+    before(:each) do
+      Puppet[:tasks] = true
+    end
+
+    context 'when evaluating apply' do
+      let(:applicator) { mock('apply_executor') }
+
+      it 'invokes an apply_executor' do
+        applicator.expects(:apply).with(['arg1', 'arg2'], nil, scope).returns(:result)
+        src = "apply('arg1', 'arg2') { }"
+        Puppet.override(apply_executor: applicator) do
+          expect(parser.evaluate_string(scope, src)).to eq(:result)
+        end
+      end
+
+      it 'passes the declared ast' do
+        applicator.expects(:apply).with(
+          [['arg1']],
+          instance_of(Puppet::Pops::Model::ResourceExpression),
+          scope).returns(:result)
+        src = "apply(['arg1']) { notify { 'hello': } }"
+        Puppet.override(apply_executor: applicator) do
+          expect(parser.evaluate_string(scope, src)).to eq(:result)
+        end
+      end
+    end
+  end
+
   matcher :have_relationship do |expected|
     match do |compiler|
       op_name = {'->' => :relationship, '~>' => :subscription}
