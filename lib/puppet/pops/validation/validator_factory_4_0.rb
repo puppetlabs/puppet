@@ -37,6 +37,7 @@ class ValidatorFactory_4_0 < Factory
     p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
     p[Issues::CLASS_NOT_VIRTUALIZABLE]       = Puppet[:strict] == :off ? :warning : Puppet[:strict]
     p[Issues::ILLEGAL_DEFINITION_LOCATION]   = :deprecation
+    p[Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION]   = :deprecation
     p
   end
 end

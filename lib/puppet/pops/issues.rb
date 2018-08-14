@@ -490,6 +490,14 @@ module Issues
     _("Unacceptable location. The name '%{name}' is unacceptable in file '%{file}'") % { name: name, file: file }
   end
 
+  ILLEGAL_TOP_CONSTRUCT_LOCATION = issue :ILLEGAL_TOP_CONSTRUCT_LOCATION do
+    if semantic.is_a?(Puppet::Pops::Model::NamedDefinition)
+      _("The %{value} '%{name}' is unacceptable as a top level construct in this location") % { name: semantic.name, value: label(semantic) }
+    else
+      _("This %{value} is unacceptable as a top level construct in this location") % { value: label(semantic) }
+    end
+  end
+
   CAPTURES_REST_NOT_LAST = hard_issue :CAPTURES_REST_NOT_LAST, :param_name do
     _("Parameter $%{param} is not last, and has 'captures rest'") % { param: param_name }
   end
