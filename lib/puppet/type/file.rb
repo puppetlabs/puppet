@@ -835,6 +835,9 @@ Puppet::Type.newtype(:file) do
     rescue Errno::EACCES
       warning _("Could not stat; permission denied")
       nil
+    rescue Errno::EINVAL
+      warning _("Could not stat; invalid pathname")
+      nil
     end
   end
 
