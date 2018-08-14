@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.3-497-g866df47\n"
+"Project-Id-Version: Puppet automation framework 5.5.3-511-ge399abc\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-08-10 20:48+0000\n"
-"PO-Revision-Date: 2018-08-10 20:48+0000\n"
+"POT-Creation-Date: 2018-08-14 17:34+0000\n"
+"PO-Revision-Date: 2018-08-14 17:34+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -612,28 +612,28 @@ msgid "Convert custom terminus to hiera 5 API."
 msgstr ""
 
 #. TRANSLATORS 'environment_data_provider' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:648
+#: ../lib/puppet/defaults.rb:649
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:746
+#: ../lib/puppet/defaults.rb:740
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:985 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:979 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1519 ../lib/puppet/defaults.rb:1534
+#: ../lib/puppet/defaults.rb:1513 ../lib/puppet/defaults.rb:1528
 msgid "Attempted to set both server and server_list."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1520 ../lib/puppet/defaults.rb:1535
+#: ../lib/puppet/defaults.rb:1514 ../lib/puppet/defaults.rb:1529
 msgid "Server setting will not be used."
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1834
+#: ../lib/puppet/defaults.rb:1828
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -8273,16 +8273,20 @@ msgstr ""
 msgid "Could not stat; permission denied"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:961
+#: ../lib/puppet/type/file.rb:839
+msgid "Could not stat; invalid pathname"
+msgstr ""
+
+#: ../lib/puppet/type/file.rb:964
 msgid "Not removing directory; use 'force' to override"
 msgstr ""
 
 #. TRANSLATORS refers to a file which could not be backed up
-#: ../lib/puppet/type/file.rb:986
+#: ../lib/puppet/type/file.rb:989
 msgid "Could not back up; will not remove"
 msgstr ""
 
-#: ../lib/puppet/type/file.rb:1000
+#: ../lib/puppet/type/file.rb:1003
 msgid "File written to disk did not match checksum; discarding changes (%{content_checksum} vs %{newsum})"
 msgstr ""
 
