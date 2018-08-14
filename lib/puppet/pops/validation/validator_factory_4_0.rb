@@ -27,15 +27,16 @@ class ValidatorFactory_4_0 < Factory
     # Configure each issue that should **not** be an error
     #
     # Validate as per the current runtime configuration
-    p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
-    p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
+    p[Issues::RT_NO_STORECONFIGS_EXPORT]     = Puppet[:storeconfigs] ? :ignore : :warning
+    p[Issues::RT_NO_STORECONFIGS]            = Puppet[:storeconfigs] ? :ignore : :warning
 
     p[Issues::FUTURE_RESERVED_WORD]          = :deprecation
 
     p[Issues::DUPLICATE_KEY]                 = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
     p[Issues::NAME_WITH_HYPHEN]              = :error
     p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
-    p[Issues::CLASS_NOT_VIRTUALIZABLE]      = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+    p[Issues::CLASS_NOT_VIRTUALIZABLE]       = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+    p[Issues::ILLEGAL_DEFINITION_LOCATION]   = :deprecation
     p
   end
 end

@@ -395,6 +395,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     if o.name !~ Patterns::CLASSREF_DECL
       acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
     end
+
+    internal_check_file_namespace(o, o.name, o.locator.file)
     internal_check_reserved_type_name(o, o.name)
     internal_check_future_reserved_word(o, o.name)
   end
@@ -530,6 +532,104 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     end
   end
 
+  NO_NAMESPACE = :no_namespace
+  NO_PATH = :no_path
+  BAD_MODULE_FILE = :bad_module_file
+  def internal_check_file_namespace(o, name, file)
+    return if file.nil? || file == '' #e.g. puppet apply -e '...'
+
+    file_namespace = namespace_for_file(file)
+    return if file_namespace == NO_NAMESPACE
+
+    # Downcasing here because check is case-insensitive
+    if file_namespace == BAD_MODULE_FILE || !name.downcase.start_with?(file_namespace)
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, {:name => name, :file => file})
+    end
+  end
+
+  # @api private
+  class Puppet::Util::FileNamespaceAdapter < Puppet::Pops::Adaptable::Adapter
+    attr_accessor :file_to_namespace
+  end
+
+  def namespace_for_file(file)
+    env = Puppet.lookup(:current_environment)
+    return NO_NAMESPACE if env.nil?
+
+    Puppet::Util::FileNamespaceAdapter.adapt(env) do |adapter|
+      adapter.file_to_namespace ||= {}
+
+      file_namespace = adapter.file_to_namespace[file]
+      return file_namespace unless file_namespace.nil? # No cache entry, so we do the calculation
+
+      path = Pathname.new(file)
+
+      return adapter.file_to_namespace[file] = NO_NAMESPACE if path.extname != ".pp"
+
+      path = path.expand_path
+
+      return adapter.file_to_namespace[file] = NO_NAMESPACE if initial_manifest?(path, env.manifest)
+
+      #All auto-loaded files from modules come from a module search path dir
+      relative_path = get_module_relative_path(path, env.full_modulepath)
+
+      return adapter.file_to_namespace[file] = NO_NAMESPACE if relative_path == NO_PATH
+
+      #If a file comes from a module, but isn't in the right place, always error
+      names = dir_to_names(relative_path)
+
+      return adapter.file_to_namespace[file] = (names == BAD_MODULE_FILE ? BAD_MODULE_FILE : names.join("::").freeze)
+    end
+  end
+
+  def initial_manifest?(path, manifest_setting)
+    return false if manifest_setting.nil? || manifest_setting == :no_manifest
+
+    string_path = path.to_s
+
+    string_path == manifest_setting || string_path.start_with?(manifest_setting)
+  end
+
+  def get_module_relative_path(file_path, modulepath_directories)
+    clean_file = file_path.cleanpath
+    parent_path = modulepath_directories.find { |path_dir| is_parent_dir_of(path_dir, clean_file) }
+    return NO_PATH if parent_path.nil?
+
+    file_path.relative_path_from(Pathname.new(parent_path))
+  end
+
+  def is_parent_dir_of(parent_dir, child_dir)
+    parent_dir_path = Pathname.new(parent_dir)
+    clean_parent = parent_dir_path.cleanpath
+
+    return child_dir.to_s.start_with?(clean_parent.to_s)
+  end
+
+  def dir_to_names(relative_path)
+    # Downcasing here because check is case-insensitive
+    path_components = relative_path.to_s.downcase.split(File::SEPARATOR)
+
+    # Example definition dir: manifests in this path:
+    # <module name>/manifests/<module subdir>/<classfile>.pp
+    dir = path_components[1]
+
+    # How can we get this result?
+    # If it is not an initial manifest, it must come from a module,
+    # and from the manifests dir there.  This may never get used...
+    return BAD_MODULE_FILE unless dir == 'manifests' || dir == 'functions' || dir == 'types' || dir == 'plans'
+
+    names = path_components[2 .. -2] # Directories inside module
+    names.unshift(path_components[0]) # Name of the module itself
+
+    # Do not include name of module init file at top level of module
+    # e.g. <module name>/manifests/init.pp
+    filename = path_components[-1]
+    if !(path_components.length == 3 && filename == 'init.pp')
+      names.push(filename[0 .. -4]) # Remove .pp from filename
+    end
+
+    names
+  end
 
   RESERVED_PARAMETERS = {
     'name' => true,
