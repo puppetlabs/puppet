@@ -68,7 +68,11 @@ class TasksChecker < Checker4_0
   end
 
   def check_ResourceOverrideExpression(o)
-    illegalTasksExpression(o)
+    if in_ApplyExpression?
+      super(o)
+    else
+      illegalTasksExpression(o)
+    end
   end
 
   def check_ResourceTypeDefinition(o)
