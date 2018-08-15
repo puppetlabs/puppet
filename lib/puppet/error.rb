@@ -49,46 +49,21 @@ module Puppet
     attr_reader :issue_code, :basic_message, :arguments
     attr_accessor :environment, :node
 
-    # From Ruby version 2.1.0 all raised Exceptions know their cause - the exception being processed when
-    # an exception was raised. This conditional initializer does the same for Ruby versions before 2.1.0
+    # @param message [String] The error message
+    # @param file [String] The path to the file where the error was found
+    # @param line [Integer] The line in the file
+    # @param pos [Integer] The position on the line
+    # @param original [Exception] Original exception
+    # @param issue_code [Symbol] The issue code
+    # @param arguments [Hash{Symbol=>Object}] Issue arguments
     #
-    if RUBY_VERSION < "2.1.0"
-      attr_reader :cause
-
-      # @param message [String] The error message
-      # @param file [String] The path to the file where the error was found
-      # @param line [Integer] The line in the file
-      # @param pos [Integer] The position on the line
-      # @param original [Exception] Original exception
-      # @param issue_code [Symbol] The issue code
-      # @param arguments [Hash{Symbol=>Object}] Issue arguments
-      # @param cause [Error] automatically set to exception being processed - only Ruby < 2.1.0
-      #
-      def initialize(message, file=nil, line=nil, pos=nil, original=nil, issue_code= nil, arguments = nil, cause = $!)
-        super(message, file, line, pos, original)
-        @issue_code = issue_code
-        @basic_message = message
-        @arguments = arguments
-        @cause = cause
-      end
-    else
-      # This is the version for Ruby 2.1.0 and later
-
-      # @param message [String] The error message
-      # @param file [String] The path to the file where the error was found
-      # @param line [Integer] The line in the file
-      # @param pos [Integer] The position on the line
-      # @param original [Exception] Original exception
-      # @param issue_code [Symbol] The issue code
-      # @param arguments [Hash{Symbol=>Object}] Issue arguments
-      #
-      def initialize(message, file=nil, line=nil, pos=nil, original=nil, issue_code= nil, arguments = nil)
-        super(message, file, line, pos, original)
-        @issue_code = issue_code
-        @basic_message = message
-        @arguments = arguments
-      end
+    def initialize(message, file=nil, line=nil, pos=nil, original=nil, issue_code= nil, arguments = nil)
+      super(message, file, line, pos, original)
+      @issue_code = issue_code
+      @basic_message = message
+      @arguments = arguments
     end
+
     def to_s
       msg = super
       msg = _("Could not parse for environment %{environment}: %{message}") % { environment: environment, message: msg } if environment
