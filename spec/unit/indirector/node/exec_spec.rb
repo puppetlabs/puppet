@@ -76,7 +76,8 @@ describe Puppet::Node::Exec do
 
       expect {
         searcher.find(request)
-      }.to raise_error(Puppet::Error, /Could not load external node results for yay: Tried to load unspecified class: Object/)
+      }.to raise_error(Puppet::Error,
+                       /Could not load external node results for yay: \(<unknown>\): Tried to load unspecified class: Object/)
     end
 
     it "should set the resulting classes as the node classes" do

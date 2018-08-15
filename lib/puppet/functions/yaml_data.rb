@@ -31,7 +31,8 @@ Puppet::Functions.create_function(:yaml_data) do
           {}
         end
       rescue Puppet::Util::Yaml::YamlLoadError => ex
-        raise Puppet::DataBinding::LookupError, "Unable to parse (%{path}): %{message}" % { path: path, message: ex.message }
+        # YamlLoadErrors include the absolute path to the file, so no need to add that
+        raise Puppet::DataBinding::LookupError, _("Unable to parse %{message}") % { message: ex.message }
       end
     end
   end

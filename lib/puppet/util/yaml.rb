@@ -29,6 +29,9 @@ module Puppet::Util::Yaml
     data = YAML.safe_load(yaml, allowed_classes, [], false, filename)
     data = false if data.nil?
     data
+  rescue ::Psych::DisallowedClass => detail
+    path = filename ? "(#{filename})" : "(<unknown>)"
+    raise YamlLoadError.new("#{path}: #{detail.message}", detail)
   rescue *YamlLoadExceptions => detail
     raise YamlLoadError.new(detail.message, detail)
   end

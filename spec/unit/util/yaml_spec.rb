@@ -26,24 +26,31 @@ describe Puppet::Util::Yaml do
 
       expect(load_method.call(filename)).to eq({ "my" => "𠜎" })
     end
-
-    it 'raises an error when the file is invalid YAML' do
-      write_file(filename, '{ invalid')
-
-      expect {
-        load_method.call(filename)
-      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, %r{\(#{filename}\): did not find .* line 1 column 1})
-    end
   end
 
   context "#safe_load" do
+    it 'raises an error if YAML is invalid' do
+      expect {
+        Puppet::Util::Yaml.safe_load('{ invalid')
+      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, %r[\(<unknown>\): .* at line \d+ column \d+])
+    end
+
     it 'raises if YAML contains classes not in the list' do
+      expect {
+        Puppet::Util::Yaml.safe_load(<<FACTS, [])
+--- !ruby/object:Puppet::Node::Facts
+name: localhost
+FACTS
+      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, "(<unknown>): Tried to load unspecified class: Puppet::Node::Facts")
+    end
+
+    it 'includes the filename if YAML contains classes not in the list' do
       expect {
         Puppet::Util::Yaml.safe_load(<<FACTS, [], 'foo.yaml')
 --- !ruby/object:Puppet::Node::Facts
 name: localhost
 FACTS
-      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, "Tried to load unspecified class: Puppet::Node::Facts")
+      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, "(foo.yaml): Tried to load unspecified class: Puppet::Node::Facts")
     end
 
     it 'allows classes to be loaded' do
@@ -103,6 +110,14 @@ FACTS
   context "#safe_load_file" do
     it_should_behave_like 'yaml file loader', Puppet::Util::Yaml.method(:safe_load_file)
 
+    it 'raises an error when the file is invalid YAML' do
+      write_file(filename, '{ invalid')
+
+      expect {
+        Puppet::Util::Yaml.safe_load_file(filename)
+      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, %r[\(#{filename}\): .* at line \d+ column \d+])
+    end
+
     it 'raises an error when the filename is illegal' do
       expect {
         Puppet::Util::Yaml.safe_load_file("not\0allowed")
@@ -118,6 +133,14 @@ FACTS
 
   context '#load_file' do
     it_should_behave_like 'yaml file loader', Puppet::Util::Yaml.method(:load_file)
+
+    it 'raises an error when the file is invalid YAML' do
+      write_file(filename, '{ invalid')
+
+      expect {
+        Puppet::Util::Yaml.load_file(filename)
+      }.to raise_error(Puppet::Util::Yaml::YamlLoadError, %r{\(#{filename}\): .* at line \d+ column \d+})
+    end
 
     it 'raises an error when the filename is illegal' do
       expect {
