@@ -58,8 +58,8 @@ echo "custom_time=$(get-date -format HHmmssffffff)"
 
   step "run agent in #{tmp_environment}, ensure it increments the customtime with each run" do
     with_puppet_running_on(master, {}) do
-      local_custom_time_pattern  = 'local_(\d+)_local'
-      module_custom_time_pattern = 'module_(\d+)_module'
+      local_custom_time_pattern  = 'local_([A-Z0-9]+)_local'
+      module_custom_time_pattern = 'module_([A-Z0-9]+)_module'
       agents.each do |agent|
         # ensure our custom facts have been synced
         on(agent,

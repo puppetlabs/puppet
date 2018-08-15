@@ -42,7 +42,7 @@ test_name 'C100564: puppet facts translates the fact error message' do
 
     step "Run puppet fact with a module and language #{agent_language} and verify the translations" do
       on(agent, puppet("facts", 'ENV' => shell_env_language)) do |result|
-        assert_match(/Error:.*\w+-i18ndemo fact: これは\w+-i18ndemoからのカスタムファクトからのレイズです/, result.stderr, 'missing translation for raise from ruby fact')
+        assert_match(/Warning:.*\w+-i18ndemo fact: これは\w+-i18ndemoからのカスタムファクトからのレイズです/, result.stderr, 'missing translation for raise from ruby fact')
       end
     end
   end
