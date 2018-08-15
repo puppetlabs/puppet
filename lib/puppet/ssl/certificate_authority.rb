@@ -193,26 +193,6 @@ class Puppet::SSL::CertificateAuthority
     Puppet::SSL::Certificate.indirection.search(name).collect { |c| c.name }
   end
 
-  # Return all the certificate objects as found by the indirector
-  # API for PE license checking.
-  #
-  # Created to prevent the case of reading all certs from disk, getting
-  # just their names and verifying the cert for each name, which then
-  # causes the cert to again be read from disk.
-  #
-  # @author Jeff Weiss <jeff.weiss@puppetlabs.com>
-  # @api Puppet Enterprise Licensing
-  #
-  # @param name [Array<string>] filter to cerificate names
-  #
-  # @return [Array<Puppet::SSL::Certificate>]
-  #
-  # @deprecated Use Puppet::SSL::CertificateAuthority#list or Puppet Server Certificate status API
-  def list_certificates(name='*')
-    Puppet.deprecation_warning(_("Puppet::SSL::CertificateAuthority#list_certificates is deprecated. Please use Puppet::SSL::CertificateAuthority#list or the certificate status API to query certificate information. See https://puppet.com/docs/puppet/latest/http_api/http_certificate_status.html"))
-    Puppet::SSL::Certificate.indirection.search(name)
-  end
-
   # Read the next serial from the serial file, and increment the
   # file so this one is considered used.
   def next_serial
@@ -406,37 +386,6 @@ class Puppet::SSL::CertificateAuthority
     return true                 # good enough for us!
   end
 
-  # Utility method for optionally caching the X509 Store for verifying a
-  # large number of certificates in a short amount of time--exactly the
-  # case we have during PE license checking.
-  #
-  # @example Use the cached X509 store
-  #   x509store(:cache => true)
-  #
-  # @example Use a freshly create X509 store
-  #   x509store
-  #   x509store(:cache => false)
-  #
-  # @param [Hash] options the options used for retrieving the X509 Store
-  # @option options [Boolean] :cache whether or not to use a cached version
-  #   of the X509 Store
-  #
-  # @return [OpenSSL::X509::Store]
-  #
-  # @deprecated Strictly speaking, #x509_store is marked API private, so we
-  #   don't need to publicly deprecate it. But it marked as deprecated here to
-  #   avoid the exceedingly small chance that someone comes in and uses it from
-  #   within this class before it is removed.
-  def x509_store(options = {})
-    if (options[:cache])
-      return @x509store unless @x509store.nil?
-      @x509store = create_x509_store
-    else
-      create_x509_store
-    end
-  end
-  private :x509_store
-
   # Creates a brand new OpenSSL::X509::Store with the appropriate
   # Certificate Revocation List and flags
   #
@@ -452,34 +401,6 @@ class Puppet::SSL::CertificateAuthority
     store
   end
   private :create_x509_store
-
-  # Utility method which is API for PE license checking.
-  # This is used rather than `verify` because
-  #  1) We have already read the certificate from disk into memory.
-  #     To read the certificate from disk again is just wasteful.
-  #  2) Because we're checking a large number of certificates against
-  #     a transient CertificateAuthority, we can relatively safely cache
-  #     the X509 Store that actually does the verification.
-  #
-  # Long running instances of CertificateAuthority will certainly
-  # want to use `verify` because it will recreate the X509 Store with
-  # the absolutely latest CRL.
-  #
-  # Additionally, this method explicitly returns a boolean whereas
-  # `verify` will raise an error if the certificate has been revoked.
-  #
-  # @author Jeff Weiss <jeff.weiss@puppetlabs.com>
-  # @api Puppet Enterprise Licensing
-  #
-  # @param cert [Puppet::SSL::Certificate] the certificate to check validity of
-  #
-  # @return [Boolean] true if signed, false if unsigned or revoked
-  #
-  # @deprecated use Puppet::SSL::CertificateAuthority#verify or Puppet Server certificate status API
-  def certificate_is_alive?(cert)
-    Puppet.deprecation_warning(_("Puppet::SSL::CertificateAuthority#certificate_is_alive? is deprecated. Please use Puppet::SSL::CertificateAuthority#verify or the certificate status API to query certificate information. See https://puppet.com/docs/puppet/latest/http_api/http_certificate_status.html"))
-    x509_store(:cache => true).verify(cert.content)
-  end
 
   # Verify a given host's certificate. The certname is passed in, and
   # the indirector will be used to locate the actual contents of the

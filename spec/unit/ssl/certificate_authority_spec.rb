@@ -786,19 +786,6 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
       expect(@ca.list).to eq(%w{cert1 cert2})
     end
 
-    it "should list the full certificates" do
-      cert1 = stub 'cert1', :name => "cert1"
-      cert2 = stub 'cert2', :name => "cert2"
-      Puppet::SSL::Certificate.indirection.expects(:search).with("*").returns [cert1, cert2]
-      expect(@ca.list_certificates).to eq([cert1, cert2])
-    end
-
-    it "should print a deprecation when using #list_certificates" do
-      Puppet::SSL::Certificate.indirection.stubs(:search).with("*").returns [:foo, :bar]
-      Puppet.expects(:deprecation_warning).with(regexp_matches(/list_certificates is deprecated/))
-      @ca.list_certificates
-    end
-
     describe "and printing certificates" do
       it "should return nil if the certificate cannot be found" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("myhost").returns nil
@@ -912,40 +899,6 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
         @store.expects(:error_string)
 
         expect { @ca.verify("me") }.to raise_error(Puppet::SSL::CertificateAuthority::CertificateVerificationError)
-      end
-
-      describe "certificate_is_alive?" do
-        it "should return false if verification fails" do
-          @cert.expects(:content).returns "mycert"
-
-          @store.expects(:verify).with("mycert").returns false
-
-          expect(@ca.certificate_is_alive?(@cert)).to be_falsey
-        end
-
-        it "should return true if verification passes" do
-          @cert.expects(:content).returns "mycert"
-
-          @store.expects(:verify).with("mycert").returns true
-
-          expect(@ca.certificate_is_alive?(@cert)).to be_truthy
-        end
-
-        it "should use a cached instance of the x509 store" do
-          OpenSSL::X509::Store.stubs(:new).returns(@store).once
-
-          @cert.expects(:content).returns "mycert"
-
-          @store.expects(:verify).with("mycert").returns true
-
-          @ca.certificate_is_alive?(@cert)
-          @ca.certificate_is_alive?(@cert)
-        end
-
-        it "should be deprecated" do
-          Puppet.expects(:deprecation_warning).with(regexp_matches(/certificate_is_alive\? is deprecated/))
-          @ca.certificate_is_alive?(@cert)
-        end
       end
     end
 
