@@ -19,7 +19,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   end
 
   defaultfor :osfamily => [:archlinux]
-  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
+  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => ["7", "8"]
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
   defaultfor :osfamily => :suse
   defaultfor :osfamily => :coreos
