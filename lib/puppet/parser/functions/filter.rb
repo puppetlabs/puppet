@@ -5,7 +5,7 @@ Puppet::Parser::Functions::newfunction(
   :doc => <<-DOC
 Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 to every value in a data structure and returns an array or hash containing any elements
-for which the lambda evaluates to `true`.
+for which the lambda evaluates to a truthy value (not `false` or `undef`).
 
 This function takes two mandatory arguments, in this order:
 

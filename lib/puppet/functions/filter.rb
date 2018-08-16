@@ -1,6 +1,6 @@
 # Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # to every value in a data structure and returns an array or hash containing any elements
-# for which the lambda evaluates to `true`.
+# for which the lambda evaluates to a truthy value (not `false` or `undef`).
 #
 # This function takes two mandatory arguments, in this order:
 #
@@ -67,6 +67,7 @@
 # ```
 #
 # @since 4.0.0
+# @since 6.0.0 does not filter if truthy value is returned from block
 #
 Puppet::Functions.create_function(:filter) do
   dispatch :filter_Hash_2 do
@@ -90,14 +91,14 @@ Puppet::Functions.create_function(:filter) do
   end
 
   def filter_Hash_1(hash)
-    result = hash.select {|x, y| yield([x, y]) == true }
+    result = hash.select {|x, y| yield([x, y]) }
     # Ruby 1.8.7 returns Array
     result = Hash[result] unless result.is_a? Hash
     result
   end
 
   def filter_Hash_2(hash)
-    result = hash.select {|x, y| yield(x, y) == true }
+    result = hash.select {|x, y| yield(x, y) }
     # Ruby 1.8.7 returns Array
     result = Hash[result] unless result.is_a? Hash
     result
@@ -109,7 +110,7 @@ Puppet::Functions.create_function(:filter) do
     begin
       loop do
         it = enum.next
-        if yield(it) == true
+        if yield(it)
           result << it
         end
       end
@@ -122,7 +123,7 @@ Puppet::Functions.create_function(:filter) do
     enum = Puppet::Pops::Types::Iterable.asserted_iterable(self, enumerable)
     if enum.hash_style?
       result = {}
-      enum.each { |k, v| result[k] = v if yield(k, v) == true }
+      enum.each { |k, v| result[k] = v if yield(k, v) }
       result
     else
       result = []
@@ -130,7 +131,7 @@ Puppet::Functions.create_function(:filter) do
         index = 0
         loop do
           it = enum.next
-          if yield(index, it) == true
+          if yield(index, it)
             result << it
           end
           index += 1
