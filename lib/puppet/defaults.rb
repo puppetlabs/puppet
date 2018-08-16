@@ -1077,6 +1077,7 @@ EOT
     :autosign => {
       :default => "$confdir/autosign.conf",
       :type => :autosign,
+      :deprecated => :completely,
       :desc => "Whether (and how) to autosign certificate requests. This setting
         is only relevant on a puppet master acting as a certificate authority (CA).
         This setting is also deprecated and will be replaced by one in Puppet Server's
