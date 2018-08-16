@@ -240,73 +240,173 @@ describe "validating 4x" do
     it 'produces an error for application' do
       acceptor = validate(parse('application test {}'))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for capability mapping' do
       acceptor = validate(parse('Foo produces Sql {}'))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for collect expressions with virtual query' do
       acceptor = validate(parse("User <| title == 'admin' |>"))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for collect expressions with exported query' do
       acceptor = validate(parse("User <<| title == 'admin' |>>"))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for class expressions' do
       acceptor = validate(parse('class test {}'))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for node expressions' do
       acceptor = validate(parse('node default {}'))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for relationship expressions' do
       acceptor = validate(parse('$x -> $y'))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for resource expressions' do
       acceptor = validate(parse('notify { nope: }'))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for resource default expressions' do
       acceptor = validate(parse("File { mode => '0644' }"))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for resource override expressions' do
       acceptor = validate(parse("File['/tmp/foo'] { mode => '0644' }"))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for resource definitions' do
       acceptor = validate(parse('define foo($a) {}'))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
     end
 
     it 'produces an error for site definitions' do
       acceptor = validate(parse('site {}'))
       expect(acceptor.error_count).to eql(1)
-      expect(acceptor).to have_issue(Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+    end
+
+    context 'validating apply() blocks' do
+      it 'allows empty apply() blocks' do
+        acceptor = validate(parse('apply("foo.example.com") { }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'allows apply() with a single expression' do
+        acceptor = validate(parse('apply("foo.example.com") { include foo }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'allows apply() with multiple expressions' do
+        acceptor = validate(parse('apply("foo.example.com") { $message = "hello!"; notify { $message: } }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'accepts multiple arguments' do
+        acceptor = validate(parse('apply(["foo.example.com"], { "other" => "args" }) { }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'allows virtual resource collectors' do
+        acceptor = validate(parse("apply('foo.example.com') { @user { 'foo': }; User <| title == 'foo' |> }"))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'rejects exported resource collectors' do
+        acceptor = validate(parse("apply('foo.example.com') { @@user { 'foo': }; User <<| title == 'foo' |>> }"))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING)
+      end
+
+      it 'allows relationship expressions' do
+        acceptor = validate(parse('apply("foo.example.com") { $x -> $y }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'allows resource default expressions' do
+        acceptor = validate(parse("apply('foo.example.com') { File { mode => '0644' } }"))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'allows resource override expressions' do
+        acceptor = validate(parse("apply('foo.example.com') { File['/tmp/foo'] { mode => '0644' } }"))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'can be assigned' do
+        acceptor = validate(parse('$result = apply("foo.example.com") { notify { "hello!": } }'))
+        expect(acceptor.error_count).to eql(0)
+      end
+
+      it 'produces an error for application' do
+        acceptor = validate(parse('apply("foo.example.com") { application test {} }'))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      end
+
+      it 'produces an error for capability mapping' do
+        acceptor = validate(parse('apply("foo.example.com") { Foo produces Sql {} }'))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      end
+
+      it 'produces an error for class expressions' do
+        acceptor = validate(parse('apply("foo.example.com") { class test {} }'))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      end
+
+      it 'produces an error for node expressions' do
+        acceptor = validate(parse('apply("foo.example.com") { node default {} }'))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      end
+
+      it 'produces an error for resource definitions' do
+        acceptor = validate(parse('apply("foo.example.com") { define foo($a) {} }'))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      end
+
+      it 'produces an error for site definitions' do
+        acceptor = validate(parse('apply("foo.example.com") { site {} }'))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING)
+      end
+
+      it 'produces an error for apply() inside apply()' do
+        acceptor = validate(parse('apply("foo.example.com") { apply("foo.example.com") { } }'))
+        expect(acceptor.error_count).to eql(1)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING)
+      end
+
+      it 'allows multiple consecutive apply() blocks' do
+        acceptor = validate(parse('apply("foo.example.com") { } apply("foo.example.com") { }'))
+        expect(acceptor.error_count).to eql(0)
+      end
     end
   end
 

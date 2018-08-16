@@ -1216,6 +1216,14 @@ class BlockExpression < Expression
   alias == eql?
 end
 
+class ApplyBlockExpression < BlockExpression
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ApplyBlockExpression', {
+      'parent' => BlockExpression._pcore_type,
+    })
+  end
+end
+
 class CaseOption < Expression
   def self._pcore_type
     @_pcore_type ||= Types::PObjectType.new('Puppet::AST::CaseOption', {
@@ -2905,6 +2913,90 @@ class LambdaExpression < Expression
     @parameters.eql?(o.parameters) &&
     @body.eql?(o.body) &&
     @return_type.eql?(o.return_type)
+  end
+  alias == eql?
+end
+
+class ApplyExpression < Expression
+  def self._pcore_type
+    @_pcore_type ||= Types::PObjectType.new('Puppet::AST::ApplyExpression', {
+      'parent' => Expression._pcore_type,
+      'attributes' => {
+        'arguments' => {
+          'type' => Types::PArrayType.new(Expression._pcore_type),
+          'value' => []
+        },
+        'body' => {
+          'type' => Types::POptionalType.new(Expression._pcore_type),
+          'value' => nil
+        }
+      }
+    })
+  end
+
+  def self.from_hash(init_hash)
+    from_asserted_hash(Types::TypeAsserter.assert_instance_of('Puppet::AST::ApplyExpression initializer', _pcore_type.init_hash_type, init_hash))
+  end
+
+  def self.from_asserted_hash(init_hash)
+    new(
+      init_hash['locator'],
+      init_hash['offset'],
+      init_hash['length'],
+      init_hash.fetch('arguments') { _pcore_type['arguments'].value },
+      init_hash['body'])
+  end
+
+  def self.create(locator, offset, length, arguments = _pcore_type['arguments'].value, body = nil)
+    ta = Types::TypeAsserter
+    attrs = _pcore_type.attributes(true)
+    ta.assert_instance_of('Puppet::AST::Positioned[locator]', attrs['locator'].type, locator)
+    ta.assert_instance_of('Puppet::AST::Positioned[offset]', attrs['offset'].type, offset)
+    ta.assert_instance_of('Puppet::AST::Positioned[length]', attrs['length'].type, length)
+    ta.assert_instance_of('Puppet::AST::ApplyExpression[arguments]', attrs['arguments'].type, arguments)
+    ta.assert_instance_of('Puppet::AST::ApplyExpression[body]', attrs['body'].type, body)
+    new(locator, offset, length, arguments, body)
+  end
+
+  attr_reader :arguments
+  attr_reader :body
+
+  def initialize(locator, offset, length, arguments = _pcore_type['arguments'].value, body = nil)
+    super(locator, offset, length)
+    @hash = @hash ^ arguments.hash ^ body.hash
+    @arguments = arguments
+    @body = body
+  end
+
+  def _pcore_init_hash
+    result = super
+    result['arguments'] = @arguments unless _pcore_type['arguments'].default_value?(@arguments)
+    result['body'] = @body unless @body == nil
+    result
+  end
+
+  def _pcore_contents
+    @arguments.each { |value| yield(value) }
+    yield(@body) unless @body.nil?
+  end
+
+  def _pcore_all_contents(path, &block)
+    path << self
+    @arguments.each do |value|
+      block.call(value, path)
+      value._pcore_all_contents(path, &block)
+    end
+    unless @body.nil?
+      block.call(@body, path)
+      @body._pcore_all_contents(path, &block)
+    end
+    path.pop
+  end
+
+  def eql?(o)
+    super &&
+    @arguments.eql?(o.arguments) &&
+    @body.eql?(o.body)
   end
   alias == eql?
 end
@@ -4788,6 +4880,7 @@ def self.register_pcore_types
   Model::KeyedEntry,
   Model::LiteralHash,
   Model::BlockExpression,
+  Model::ApplyBlockExpression,
   Model::CaseOption,
   Model::CaseExpression,
   Model::QueryExpression,
@@ -4814,6 +4907,7 @@ def self.register_pcore_types
   Model::HostClassDefinition,
   Model::PlanDefinition,
   Model::LambdaExpression,
+  Model::ApplyExpression,
   Model::IfExpression,
   Model::UnlessExpression,
   Model::CallExpression,

@@ -4,6 +4,15 @@ module Validation
 # Validator that limits the set of allowed expressions to not include catalog related operations
 # @api private
 class TasksChecker < Checker4_0
+  def in_ApplyExpression?
+    top = container(0)
+    step = -1
+    until container(step) == top do
+      return true if container(step).is_a? Puppet::Pops::Model::ApplyBlockExpression
+      step -= 1
+    end
+  end
+
   def check_Application(o)
     illegalTasksExpression(o)
   end
@@ -13,7 +22,17 @@ class TasksChecker < Checker4_0
   end
 
   def check_CollectExpression(o)
-    illegalTasksExpression(o)
+    # Only virtual resource queries are allowed in apply blocks, not exported
+    # resource queries
+    if in_ApplyExpression?
+      if o.query.is_a?(Puppet::Pops::Model::VirtualQuery)
+        super(o)
+      else
+        acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, o, {:klass => o})
+      end
+    else
+      illegalTasksExpression(o)
+    end
   end
 
   def check_HostClassDefinition(o)
@@ -25,19 +44,35 @@ class TasksChecker < Checker4_0
   end
 
   def check_RelationshipExpression(o)
-    illegalTasksExpression(o)
+    if in_ApplyExpression?
+      super(o)
+    else
+      illegalTasksExpression(o)
+    end
   end
 
   def check_ResourceDefaultsExpression(o)
-    illegalTasksExpression(o)
+    if in_ApplyExpression?
+      super(o)
+    else
+      illegalTasksExpression(o)
+    end
   end
 
   def check_ResourceExpression(o)
-    illegalTasksExpression(o)
+    if in_ApplyExpression?
+      super(o)
+    else
+      illegalTasksExpression(o)
+    end
   end
 
   def check_ResourceOverrideExpression(o)
-    illegalTasksExpression(o)
+    if in_ApplyExpression?
+      super(o)
+    else
+      illegalTasksExpression(o)
+    end
   end
 
   def check_ResourceTypeDefinition(o)
@@ -48,8 +83,14 @@ class TasksChecker < Checker4_0
     illegalTasksExpression(o)
   end
 
+  def check_ApplyExpression(o)
+    if in_ApplyExpression?
+      acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, o, {:klass => o})
+    end
+  end
+
   def illegalTasksExpression(o)
-    acceptor.accept(Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, o)
+    acceptor.accept(Issues::EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING, o, {:klass => o})
   end
 
   def resource_without_title?(o)

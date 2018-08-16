@@ -886,8 +886,16 @@ module Issues
     _("The catalog operation '%{operation}' is only available when compiling a catalog") % { operation: operation }
   end
 
+  EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING = issue :EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING, :klass do
+    _("%{expr} is only available when compiling a catalog") % { expr: label.a_an_uc(klass) }
+  end
+
   TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = issue :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, :operation do
     _("The task operation '%{operation}' is not available when compiling a catalog") % { operation: operation }
+  end
+
+  EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING = issue :EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, :klass do
+    _("%{expr} is not available when compiling a catalog") % { expr: label.a_an_uc(klass) }
   end
 
   TASK_MISSING_BOLT = issue :TASK_MISSING_BOLT, :action do

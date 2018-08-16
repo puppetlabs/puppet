@@ -63,9 +63,6 @@ class Loaders
   # be pre-loaded with a fully configured loader system
   def pre_load
     @puppet_system_loader.load(:type, 'error')
-
-    # Will move to Bolt
-    @puppet_system_loader.load(:type, 'executionresult')
   end
 
   # Clears the cached static and puppet_system loaders (to enable testing)

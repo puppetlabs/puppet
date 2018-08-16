@@ -1036,6 +1036,12 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     true
   end
 
+  # An apply expression exists purely for the side effect of applying a
+  # catalog somewhere, so it always has side effects
+  def idem_ApplyExpression(o)
+    false
+  end
+
   def idem_IfExpression(o)
     [o.test, o.then_expr, o.else_expr].all? {|e| idem(e) }
   end
