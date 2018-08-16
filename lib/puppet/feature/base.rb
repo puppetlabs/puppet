@@ -14,28 +14,7 @@ Puppet.features.add(:posix) do
 end
 
 # We can use Microsoft Windows functions
-Puppet.features.add(:microsoft_windows) do
-  begin
-    # ruby
-    require 'Win32API' # case matters in this require!
-
-    # Note: Setting codepage here globally ensures all strings returned via
-    # WIN32OLE (Ruby's late-bound COM support) are encoded in Encoding::UTF_8
-    #
-    # Also, this does not modify the value of WIN32OLE.locale - which defaults
-    # to 2048 (at least on US English Windows) and is not listed in the MS
-    # locales table, here: https://msdn.microsoft.com/en-us/library/ms912047(v=winembedded.10).aspx
-    require 'win32ole' ; WIN32OLE.codepage = WIN32OLE::CP_UTF8
-    # gems
-    require 'win32/process'
-    require 'win32/dir'
-    require 'win32/service'
-    true
-  rescue LoadError => err
-    #TRANSLATORS "win32-process", "win32-dir", and "win32-service" are program names and should not be translated
-    warn _("Cannot run on Microsoft Windows without the win32-process, win32-dir and win32-service gems: %{err}") % { err: err } unless Puppet.features.posix?
-  end
-end
+Puppet.features.add(:microsoft_windows) { Puppet::Util::Platform.windows? }
 
 raise Puppet::Error,_("Cannot determine basic system flavour") unless Puppet.features.posix? or Puppet.features.microsoft_windows?
 

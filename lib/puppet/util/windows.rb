@@ -14,6 +14,20 @@ module Puppet::Util::Windows
   class EventLog; end
 
   if Puppet::Util::Platform.windows?
+    require 'Win32API' # case matters in this require!
+
+    # Note: Setting codepage here globally ensures all strings returned via
+    # WIN32OLE (Ruby's late-bound COM support) are encoded in Encoding::UTF_8
+    #
+    # Also, this does not modify the value of WIN32OLE.locale - which defaults
+    # to 2048 (at least on US English Windows) and is not listed in the MS
+    # locales table, here: https://msdn.microsoft.com/en-us/library/ms912047(v=winembedded.10).aspx
+    require 'win32ole' ; WIN32OLE.codepage = WIN32OLE::CP_UTF8
+    # gems
+    require 'win32/process'
+    require 'win32/dir'
+    require 'win32/service'
+
     # these reference platform specific gems
     require 'puppet/util/windows/api_types'
     require 'puppet/util/windows/string'
