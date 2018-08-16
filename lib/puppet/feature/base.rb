@@ -28,7 +28,10 @@ Puppet.features.add(:usage, :libs => %w{rdoc/ri/ri_paths rdoc/usage})
 Puppet.features.add(:libshadow, :libs => ["shadow"])
 
 # We're running as root.
-Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SUIDManager.root? }
+Puppet.features.add(:root) do
+  require 'puppet/util/suidmanager'
+  Puppet::Util::SUIDManager.root?
+end
 
 # We have lcs diff
 Puppet.features.add :diff, :libs => %w{diff/lcs diff/lcs/hunk}
