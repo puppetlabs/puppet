@@ -1161,6 +1161,7 @@ EOT
       :bindaddress => {
         :default    => "*",
         :desc       => "The address a listening server should bind to.",
+        :deprecated  => :completely,
       }
   )
 
@@ -1210,11 +1211,15 @@ EOT
   define_settings(:master,
     :user => {
       :default    => "puppet",
-      :desc       => "The user puppet master should run as.",
+      :desc       => "The user Puppet Server will run as. Used to ensure
+      the agent side processes (agent, apply, etc) create files and
+      directories readable by Puppet Server when necessary.",
     },
     :group => {
       :default    => "puppet",
-      :desc       => "The group puppet master should run as.",
+      :desc       => "The group Puppet Server will run as. Used to ensure
+      the agent side processes (agent, apply, etc) create files and
+      directories readable by Puppet Server when necessary.",
     },
     :default_manifest => {
       :default    => "./manifests",
@@ -1260,6 +1265,7 @@ EOT
       :group => "service",
       :mode => "0660",
       :create => true,
+      :deprecated => :completely,
       :desc => "Where the puppet master web server saves its access log. This is
         only used when running a WEBrick puppet master. When puppet master is
         running under a Rack server like Passenger, that web server will have
@@ -1267,9 +1273,9 @@ EOT
     },
     :masterport => {
       :default    => 8140,
-      :desc       => "The port for puppet master traffic. For puppet master,
-      this is the port to listen on; for puppet agent, this is the port
-      to make requests on. Both applications use this setting to get the port.",
+      :desc       => "The default port puppet subcommands use to communicate
+      with Puppet Server. (eg `puppet facts upload`, `puppet agent`). May be
+      overridden by more specific settings (see `ca_port`, `report_port`).",
     },
     :node_name => {
       :default    => "cert",
@@ -1291,13 +1297,16 @@ EOT
     :rest_authconfig => {
       :default    => "$confdir/auth.conf",
       :type       => :file,
+      :deprecated  => :completely,
       :desc       => "The configuration file that defines the rights to the different
-      rest indirections.  This can be used as a fine-grained
-      authorization system for `puppet master`.",
+      rest indirections.  This can be used as a fine-grained authorization system for
+      `puppet master`.  The `puppet master` command is deprecated and Puppet Server
+      uses its own auth.conf that must be placed within its configuration directory.",
     },
     :ca => {
       :default    => true,
       :type       => :boolean,
+      :deprecated  => :completely,
       :desc       => "Whether the master should function as a certificate authority.",
     },
     :trusted_oid_mapping_file => {
