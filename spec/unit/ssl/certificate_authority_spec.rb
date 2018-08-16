@@ -871,7 +871,7 @@ describe Puppet::SSL::CertificateAuthority, unless: Puppet::Util::Platform.jruby
       end
 
       it "should set the store purpose to OpenSSL::X509::PURPOSE_SSL_CLIENT" do
-        @store.expects(:purpose=).with OpenSSL::X509::PURPOSE_SSL_CLIENT
+        @store.expects(:purpose=).with OpenSSL::X509::PURPOSE_ANY
 
         @ca.verify("me")
       end
