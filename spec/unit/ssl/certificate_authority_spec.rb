@@ -877,8 +877,7 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should set the store purpose to OpenSSL::X509::PURPOSE_SSL_CLIENT" do
-        Puppet[:cacert] = cacert
-        expect(@store).to receive(:add_file).with(cacert)
+        @store.expects(:purpose=).with OpenSSL::X509::PURPOSE_SSL_CLIENT
 
         @ca.verify("me")
       end
