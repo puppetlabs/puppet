@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'puppet/util/windows'
 
 describe Puppet::Util::Windows::ADSI::User,
-  :if => Puppet.features.microsoft_windows? do
+  :if => Puppet::Util::Platform.windows? do
 
   describe ".initialize" do
     it "cannot reference BUILTIN accounts like SYSTEM due to WinNT moniker limitations" do
@@ -59,7 +59,7 @@ describe Puppet::Util::Windows::ADSI::User,
 end
 
 describe Puppet::Util::Windows::ADSI::Group,
-  :if => Puppet.features.microsoft_windows? do
+  :if => Puppet::Util::Platform.windows? do
 
   let (:administrator_bytes) { [1, 2, 0, 0, 0, 0, 0, 5, 32, 0, 0, 0, 32, 2, 0, 0] }
   let (:administrators_principal) { Puppet::Util::Windows::SID::Principal.lookup_account_sid(administrator_bytes) }

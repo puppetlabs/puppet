@@ -11,7 +11,7 @@ describe Puppet::Util do
     @gte_ruby_2_4 ||= SemanticPuppet::Version.parse(RUBY_VERSION) >= SemanticPuppet::Version.parse('2.4.0')
   end
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     def set_mode(mode, file)
       Puppet::Util::Windows::Security.set_mode(mode, file)
     end
@@ -30,7 +30,7 @@ describe Puppet::Util do
   end
 
   describe "#withenv" do
-    let(:mode) { Puppet.features.microsoft_windows? ? :windows : :posix }
+    let(:mode) { Puppet::Util::Platform.windows? ? :windows : :posix }
 
     before :each do
       @original_path = ENV["PATH"]
@@ -75,7 +75,7 @@ describe Puppet::Util do
     end
   end
 
-  describe "#withenv on POSIX", :unless => Puppet.features.microsoft_windows? do
+  describe "#withenv on POSIX", :unless => Puppet::Util::Platform.windows? do
     it "should preserve case" do
       # start with lower case key,
       env_key = SecureRandom.uuid.downcase
@@ -98,7 +98,7 @@ describe Puppet::Util do
     end
   end
 
-  describe "#withenv on Windows", :if => Puppet.features.microsoft_windows? do
+  describe "#withenv on Windows", :if => Puppet::Util::Platform.windows? do
 
     let(:process) { Puppet::Util::Windows::Process }
 
@@ -152,7 +152,7 @@ describe Puppet::Util do
 
     # In 2.3, the behavior is mostly correct when external codepage is 65001 / UTF-8
     it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby >= 2.3.x) ",
-      :if => Puppet.features.microsoft_windows? do
+      :if => Puppet::Util::Platform.windows? do
 
       raise 'This test requires a non-UTF8 codepage' if Encoding.default_external == Encoding::UTF_8
 
@@ -229,7 +229,7 @@ describe Puppet::Util do
       end
     end
 
-    describe "on windows", :if => Puppet.features.microsoft_windows? do
+    describe "on windows", :if => Puppet::Util::Platform.windows? do
       it "should default to the platform of the local system" do
         expect(Puppet::Util).to be_absolute_path('C:/foo')
         expect(Puppet::Util).not_to be_absolute_path('/foo')
@@ -320,7 +320,7 @@ describe Puppet::Util do
     describe "when using platform :posix" do
       before :each do
         Puppet.features.stubs(:posix).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        Puppet::Util::Platform.stubs(:windows?).returns false
       end
 
       %w[/ /foo /foo/../bar].each do |path|
@@ -333,7 +333,7 @@ describe Puppet::Util do
     describe "when using platform :windows" do
       before :each do
         Puppet.features.stubs(:posix).returns false
-        Puppet.features.stubs(:microsoft_windows?).returns true
+        Puppet::Util::Platform.stubs(:windows?).returns true
       end
 
       it "should normalize backslashes" do
@@ -467,7 +467,7 @@ describe Puppet::Util do
     describe "when using platform :posix" do
       before :each do
         Puppet.features.stubs(:posix).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        Puppet::Util::Platform.stubs(:windows?).returns false
       end
 
       %w[/ /foo /foo/../bar].each do |path|
@@ -506,7 +506,7 @@ describe Puppet::Util do
     describe "when using platform :windows" do
       before :each do
         Puppet.features.stubs(:posix).returns false
-        Puppet.features.stubs(:microsoft_windows?).returns true
+        Puppet::Util::Platform.stubs(:windows?).returns true
       end
 
       it "should url encode \\ as %5C, but not replace : as %3F" do
@@ -574,7 +574,7 @@ describe Puppet::Util do
       end
     end
 
-    describe "when using platform :windows", :if => Puppet.features.microsoft_windows? do
+    describe "when using platform :windows", :if => Puppet::Util::Platform.windows? do
       it "should accept root" do
         expect(Puppet::Util.uri_to_path(URI.parse('file:/C:/'))).to eq('C:/')
       end
@@ -673,7 +673,7 @@ describe Puppet::Util do
       env_path = %w[~/bin /usr/bin /bin].join(File::PATH_SEPARATOR)
 
       env = {:HOME => nil, :PATH => env_path}
-      env.merge!({:HOMEDRIVE => nil, :USERPROFILE => nil}) if Puppet.features.microsoft_windows?
+      env.merge!({:HOMEDRIVE => nil, :USERPROFILE => nil}) if Puppet::Util::Platform.windows?
 
       Puppet::Util.withenv(env) do
         Puppet::Util::Warnings.expects(:warnonce).once
@@ -699,7 +699,7 @@ describe Puppet::Util do
     describe "on POSIX systems" do
       before :each do
         Puppet.features.stubs(:posix?).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        Puppet::Util::Platform.stubs(:windows?).returns false
       end
 
       it "should walk the search PATH returning the first executable" do
@@ -715,7 +715,7 @@ describe Puppet::Util do
 
       before :each do
         Puppet.features.stubs(:posix?).returns false
-        Puppet.features.stubs(:microsoft_windows?).returns true
+        Puppet::Util::Platform.stubs(:windows?).returns true
       end
 
       describe "when a file extension is specified" do
@@ -817,7 +817,7 @@ describe Puppet::Util do
     # Windows collapses the owner and group modes into a single ACE, resulting
     # in set(0600) => get(0660) and so forth. --daniel 2012-03-30
     modes = [0555, 0660, 0770]
-    modes += [0600, 0700] unless Puppet.features.microsoft_windows?
+    modes += [0600, 0700] unless Puppet::Util::Platform.windows?
     modes.each do |mode|
       it "should copy 0#{mode.to_s(8)} permissions from the target file by default" do
         set_mode(mode, target.path)
@@ -831,7 +831,7 @@ describe Puppet::Util do
       end
     end
 
-    it "should copy the permissions of the source file after yielding on Unix", :if => !Puppet.features.microsoft_windows? do
+    it "should copy the permissions of the source file after yielding on Unix", :if => !Puppet::Util::Platform.windows? do
       set_mode(0555, target.path)
       inode = Puppet::FileSystem.stat(target.path).ino
 

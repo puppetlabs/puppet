@@ -24,7 +24,7 @@ class Puppet::FileServing::Base
       full_path = File.join(path, relative_path)
     end
 
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       # Replace multiple slashes as long as they aren't at the beginning of a filename
       full_path.gsub(%r{(./)/+}, '\1')
     else
@@ -81,6 +81,6 @@ class Puppet::FileServing::Base
   end
 
   def self.absolute?(path)
-    Puppet::Util.absolute_path?(path, :posix) or (Puppet.features.microsoft_windows? and Puppet::Util.absolute_path?(path, :windows))
+    Puppet::Util.absolute_path?(path, :posix) || (Puppet::Util::Platform.windows? && Puppet::Util.absolute_path?(path, :windows))
   end
 end

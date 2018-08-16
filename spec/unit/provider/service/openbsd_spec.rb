@@ -5,7 +5,7 @@
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Openbsd',
-    unless: Puppet.features.microsoft_windows? || Puppet::Util::Platform.jruby? do
+    unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:openbsd) }
 
   before :each do
@@ -195,7 +195,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
   end
 
   describe "#flags=" do
-    it "should run rcctl to set flags", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
+    it "should run rcctl to set flags", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider_class.stubs(:rcctl).with(:set, 'sshd', :flags, '-4').returns('')
       provider.expects(:rcctl).with(:set, 'sshd', :flags, '-4')

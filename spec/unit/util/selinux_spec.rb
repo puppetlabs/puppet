@@ -77,7 +77,7 @@ describe Puppet::Util::SELinux do
       expect(selinux_label_support?('/mnt/nfs/testfile')).to be_falsey
     end
 
-    it "(#8714) don't follow symlinks when determining file systems", :unless => Puppet.features.microsoft_windows? do
+    it "(#8714) don't follow symlinks when determining file systems", :unless => Puppet::Util::Platform.windows? do
       scratch = Pathname(PuppetSpec::Files.tmpdir('selinux'))
 
       self.stubs(:read_mounts).returns({

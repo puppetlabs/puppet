@@ -14,17 +14,17 @@ or from [Choclately](https://chocolatey.org/packages/ruby).
 When writing a test that cannot possibly run on Windows, e.g. there is
 no mount type on windows, do the following:
 
-    describe Puppet::MyClass, :unless => Puppet.features.microsoft_windows? do
+    describe Puppet::MyClass, :unless => Puppet::Util::Platform.windows? do
       ..
     end
 
 If the test doesn't currently pass on Windows, e.g. due to on going porting, then use an rspec conditional pending block:
 
-    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+    pending("porting to Windows", :if => Puppet::Util::Platform.windows?) do
       <example1>
     end
 
-    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+    pending("porting to Windows", :if => Puppet::Util::Platform.windows?) do
       <example2>
     end
 

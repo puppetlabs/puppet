@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'puppet/util/windows'
 
-describe Puppet::Util::Windows::SID::Principal, :if => Puppet.features.microsoft_windows? do
+describe Puppet::Util::Windows::SID::Principal, :if => Puppet::Util::Platform.windows? do
 
   let (:current_user_sid) { Puppet::Util::Windows::ADSI::User.current_user_sid }
   let (:system_bytes) { [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] }

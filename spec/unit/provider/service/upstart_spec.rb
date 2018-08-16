@@ -6,7 +6,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
   let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
   let!(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     # Get a pid for $CHILD_STATUS to latch on to
     command = "cmd.exe /c \"exit 0\""
     Puppet::Util::Execution.execute(command, {:failonfail => false})

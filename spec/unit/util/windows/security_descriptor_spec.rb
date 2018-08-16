@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'puppet/util/windows'
 
-describe "Puppet::Util::Windows::SecurityDescriptor", :if => Puppet.features.microsoft_windows? do
+describe "Puppet::Util::Windows::SecurityDescriptor", :if => Puppet::Util::Platform.windows? do
   let(:system_sid) { Puppet::Util::Windows::SID::LocalSystem }
   let(:admins_sid) { Puppet::Util::Windows::SID::BuiltinAdministrators }
   let(:group_sid) { Puppet::Util::Windows::SID::Nobody }

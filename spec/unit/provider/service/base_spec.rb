@@ -15,7 +15,7 @@ describe "base service provider" do
 
   subject { provider }
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     # Get a pid for $CHILD_STATUS to latch on to
     cmd = "cmd.exe /c \"exit 0\""
     Puppet::Util::Execution.execute(cmd, {:failonfail => false})

@@ -54,7 +54,7 @@ class Puppet::Configurer::Downloader
       :backup => false,
       :noop => false
     }
-    if !Puppet.features.microsoft_windows?
+    if !Puppet::Util::Platform.windows?
       defargs.merge!(
         {
           :owner => Process.uid,

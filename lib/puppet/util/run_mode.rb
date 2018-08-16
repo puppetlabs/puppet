@@ -11,7 +11,7 @@ module Puppet
 
       def self.[](name)
         @run_modes ||= {}
-        if Puppet.features.microsoft_windows?
+        if Puppet::Util::Platform.windows?
           @run_modes[name] ||= WindowsRunMode.new(name)
         else
           @run_modes[name] ||= UnixRunMode.new(name)

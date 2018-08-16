@@ -22,13 +22,12 @@ module Util
   require 'puppet/util/posix'
   extend Puppet::Util::POSIX
 
-  # Can't use Puppet.features.microsoft_windows? as it may be mocked out in a test.  This can cause test recurring test failures
   require 'puppet/util/windows/process' if Puppet::Util::Platform.windows?
 
   extend Puppet::Util::SymbolicFileMode
 
   def default_env
-    Puppet.features.microsoft_windows? ?
+    Puppet::Util::Platform.windows? ?
       :windows :
       :posix
   end
@@ -272,7 +271,7 @@ module Util
             raise
           end
         else
-          if Puppet.features.microsoft_windows? && File.extname(dest).empty?
+          if Puppet::Util::Platform.windows? && File.extname(dest).empty?
             exts.each do |ext|
               destext = File.expand_path(dest + ext)
               return destext if FileTest.file? destext and FileTest.executable? destext
@@ -322,7 +321,7 @@ module Util
 
     params = { :scheme => 'file' }
 
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       path = path.gsub(/\\/, '/')
 
       if unc = /^\/\/([^\/]+)(\/.+)/.match(path)
@@ -356,7 +355,7 @@ module Util
     # URI.unescape does, but returns strings in their original encoding
     path = URI.unescape(uri.path.encode(Encoding::UTF_8))
 
-    if Puppet.features.microsoft_windows? and uri.scheme == 'file'
+    if Puppet::Util::Platform.windows? && uri.scheme == 'file'
       if uri.host
         path = "//#{uri.host}" + path # UNC
       else
@@ -570,7 +569,7 @@ module Util
 
       mode = symbolic_mode_to_int(normalize_symbolic_mode(default_mode))
     else
-      if Puppet.features.microsoft_windows?
+      if Puppet::Util::Platform.windows?
         mode = DEFAULT_WINDOWS_MODE
       else
         mode = DEFAULT_POSIX_MODE
@@ -583,9 +582,9 @@ module Util
       tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
 
       effective_mode =
-      if !Puppet.features.microsoft_windows?
+      if !Puppet::Util::Platform.windows?
         # Grab the current file mode, and fall back to the defaults.
-        
+
         if Puppet::FileSystem.exist?(file)
           stat = Puppet::FileSystem.lstat(file)
           tempfile.chown(stat.uid, stat.gid)
@@ -620,7 +619,7 @@ module Util
 
       tempfile.close
 
-      if Puppet.features.microsoft_windows?
+      if Puppet::Util::Platform.windows?
         # Windows ReplaceFile needs a file to exist, so touch handles this
         if !Puppet::FileSystem.exist?(file)
           Puppet::FileSystem.touch(file)

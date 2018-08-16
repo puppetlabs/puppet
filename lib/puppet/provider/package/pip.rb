@@ -53,7 +53,7 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       ["pip.exe"]
     else
       ["pip", "pip-python"]

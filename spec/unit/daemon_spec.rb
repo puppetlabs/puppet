@@ -16,7 +16,7 @@ class TestClient
   end
 end
 
-describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Daemon, :unless => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
 
   class RecordingScheduler

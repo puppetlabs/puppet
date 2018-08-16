@@ -1,5 +1,5 @@
 require 'puppet/util/feature'
 
-if Puppet.features.microsoft_windows?
+if Puppet::Util::Platform.windows?
   Puppet.features.add(:eventlog)
 end

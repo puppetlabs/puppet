@@ -14,7 +14,7 @@ Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue
       #TRANSLATORS "fully qualified" refers to a fully qualified file system path
       raise Puppet::ParseError, _("Generators must be fully qualified") unless Puppet::Util.absolute_path?(args[0])
 
-      if Puppet.features.microsoft_windows?
+      if Puppet::Util::Platform.windows?
         valid = args[0] =~ /^[a-z]:(?:[\/\\][-.~\w]+)+$/i
       else
         valid = args[0] =~ /^[-\/\w.+]+$/

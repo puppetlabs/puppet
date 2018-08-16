@@ -101,13 +101,15 @@ describe Puppet::FileServing::Base do
     let(:path) { '//server/share/filename' }
     let(:file) { Puppet::FileServing::Base.new(path) }
 
+    before :each do
+      Puppet::Util::Platform.stubs(:windows?).returns true
+    end
+
     it "should preserve double slashes at the beginning of the path" do
-      Puppet.features.stubs(:microsoft_windows?).returns(true)
       expect(file.full_path).to eq(path)
     end
 
     it "should strip double slashes not at the beginning of the path" do
-      Puppet.features.stubs(:microsoft_windows?).returns(true)
       file = Puppet::FileServing::Base.new('//server//share//filename')
       expect(file.full_path).to eq(path)
     end
@@ -148,14 +150,14 @@ describe Puppet::FileServing::Base do
     end
 
     it "should accept Windows paths on Windows" do
-      Puppet.features.stubs(:microsoft_windows?).returns(true)
+      Puppet::Util::Platform.stubs(:windows?).returns true
       Puppet.features.stubs(:posix?).returns(false)
 
       expect(Puppet::FileServing::Base).to be_absolute('c:/foo')
     end
 
     it "should reject Windows paths on POSIX" do
-      Puppet.features.stubs(:microsoft_windows?).returns(false)
+      Puppet::Util::Platform.stubs(:windows?).returns false
 
       expect(Puppet::FileServing::Base).not_to be_absolute('c:/foo')
     end

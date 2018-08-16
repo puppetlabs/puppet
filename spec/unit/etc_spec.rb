@@ -9,7 +9,7 @@ require 'puppet_spec/character_encoding'
 # - We correctly set external encoding values IF they're valid UTF-8 bytes
 # - We do not modify non-UTF-8 values if they're NOT valid UTF-8 bytes
 
-describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
+describe Puppet::Etc, :if => !Puppet::Util::Platform.windows? do
   # http://www.fileformat.info/info/unicode/char/5e0c/index.htm
   # 希 Han Character 'rare; hope, expect, strive for'
   # In EUC_KR: \xfd \xf1 - 253 241

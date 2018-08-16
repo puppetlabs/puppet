@@ -77,7 +77,7 @@ describe Puppet::Network::HTTP::Connection do
       WebMock.enable!
     end
 
-    it "should provide a useful error message when one is available and certificate validation fails", :unless => Puppet.features.microsoft_windows? do
+    it "should provide a useful error message when one is available and certificate validation fails", :unless => Puppet::Util::Platform.windows? do
       connection = Puppet::Network::HTTP::Connection.new(
         host, port,
         :verify => ConstantErrorValidator.new(:fails_with => 'certificate verify failed',
@@ -88,7 +88,7 @@ describe Puppet::Network::HTTP::Connection do
       end.to raise_error(Puppet::Error, "certificate verify failed: [shady looking signature]")
     end
 
-    it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
+    it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
       Puppet[:confdir] = tmpdir('conf')
 
       connection = Puppet::Network::HTTP::Connection.new(
@@ -116,7 +116,7 @@ describe Puppet::Network::HTTP::Connection do
       end.to raise_error(/some other message/)
     end
 
-    it "should check all peer certificates for upcoming expiration", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
+    it "should check all peer certificates for upcoming expiration", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
       Puppet[:confdir] = tmpdir('conf')
       cert = Puppet::SSL::CertificateAuthority.new.generate(
         'server', :dns_alt_names => 'foo,bar,baz')

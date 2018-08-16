@@ -4,7 +4,7 @@ require 'spec_helper'
 
 require 'puppet/util/windows'
 
-describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? do
+describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
   let(:connection) { stub 'connection' }
   let(:builtin_localized) { Puppet::Util::Windows::SID.sid_to_name('S-1-5-32') }
   # SYSTEM is special as English can retrieve it via Windows API

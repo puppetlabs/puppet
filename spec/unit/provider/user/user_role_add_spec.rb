@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'puppet_spec/files'
 require 'tempfile'
 
-describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
   let(:resource) { Puppet::Type.type(:user).new(:name => 'myuser', :managehome => false, :allowdupe => false) }
   let(:provider) { described_class.new(resource) }

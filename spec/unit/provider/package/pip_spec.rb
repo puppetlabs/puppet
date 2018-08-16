@@ -5,8 +5,7 @@ provider_class = Puppet::Type.type(:package).provider(:pip)
 osfamilies = { 'windows' => ['pip.exe'], 'other' => ['pip', 'pip-python'] }
 
 describe provider_class do
-
-  before do  
+  before do
     @resource = Puppet::Resource.new(:package, "fake_package")
     @provider = provider_class.new(@resource)
     @client = stub_everything('client')
@@ -15,7 +14,6 @@ describe provider_class do
   end
 
   describe "parse" do
-
     it "should return a hash on valid input" do
       expect(provider_class.parse("real_package==1.2.5")).to eq({
         :ensure   => "1.2.5",
@@ -27,35 +25,30 @@ describe provider_class do
     it "should return nil on invalid input" do
       expect(provider_class.parse("foo")).to eq(nil)
     end
-
   end
 
   describe "cmd" do
-
     it "should return 'pip.exe' by default on Windows systems" do
-      Puppet.features.stubs(:microsoft_windows?).returns true
+      Puppet::Util::Platform.stubs(:windows?).returns true
       expect(provider_class.cmd[0]).to eq('pip.exe')
     end
 
     it "could return pip-python on legacy redhat systems which rename pip" do
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      Puppet::Util::Platform.stubs(:windows?).returns false
       expect(provider_class.cmd[1]).to eq('pip-python')
     end
 
     it "should return pip by default on other systems" do
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      Puppet::Util::Platform.stubs(:windows?).returns false
       expect(provider_class.cmd[0]).to eq('pip')
     end
-
   end
 
   describe "instances" do
-
     osfamilies.each do |osfamily, pip_cmds|
-
       it "should return an array on #{osfamily} systems when #{pip_cmds.join(' or ')} is present" do
-        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
-        pip_cmds.each do |pip_cmd|  
+        Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
+        pip_cmds.each do |pip_cmd|
           pip_cmds.each do |cmd|
             unless cmd == pip_cmd
               provider_class.expects(:which).with(cmd).returns(nil)
@@ -74,7 +67,7 @@ describe provider_class do
         versions = ['8.1.0', '9.0.1']
         versions.each do |version|
           it "should use the --all option when version is '#{version}'" do
-            Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
+            Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
             provider_class.stubs(:pip_cmd).returns('/fake/bin/pip')
             provider_class.stubs(:pip_version).returns(version)
             p = stub("process")
@@ -86,19 +79,16 @@ describe provider_class do
       end
 
       it "should return an empty array on #{osfamily} systems when #{pip_cmds.join(' and ')} are missing" do
-        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
+        Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
         pip_cmds.each do |cmd|
           provider_class.expects(:which).with(cmd).returns nil
         end
         expect(provider_class.instances).to eq([])
       end
-
     end
-
   end
 
   describe "query" do
-
     before do
       @resource[:name] = "real_package"
     end
@@ -247,11 +237,9 @@ describe provider_class do
         expect(latest).to eq('15.0.2')
       end
     end
-
   end
 
   describe "install" do
-
     before do
       @resource[:name] = "fake_package"
       @url = "git+https://example.com/fake_package.git"
@@ -314,31 +302,25 @@ describe provider_class do
         with("install", "-q", "--timeout=10", "--no-index", "fake_package")
       @provider.install
     end
-
   end
 
   describe "uninstall" do
-
     it "should uninstall" do
       @resource[:name] = "fake_package"
       @provider.expects(:lazy_pip).
         with('uninstall', '-y', '-q', 'fake_package')
       @provider.uninstall
     end
-
   end
 
   describe "update" do
-
     it "should just call install" do
       @provider.expects(:install).returns(nil)
       @provider.update
     end
-
   end
 
   describe "pip_version" do
-
     it "should return nil on missing pip" do
       provider_class.stubs(:pip_cmd).returns(nil)
       expect(provider_class.pip_version).to eq(nil)
@@ -351,11 +333,9 @@ describe provider_class do
       provider_class.expects(:execpipe).with(['/fake/bin/pip', '--version']).yields(p)
       expect(provider_class.pip_version).to eq('8.0.2')
     end
-
   end
 
   describe "lazy_pip" do
-
     after(:each) do
       Puppet::Type::Package::ProviderPip.instance_variable_set(:@confine_collection, nil)
     end
@@ -366,10 +346,9 @@ describe provider_class do
     end
 
     osfamilies.each do |osfamily, pip_cmds|
-
       pip_cmds.each do |pip_cmd|
         it "should retry on #{osfamily} systems if #{pip_cmd} has not yet been found" do
-          Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
+          Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
           @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
           pip_cmds.each do |cmd|
             unless cmd == pip_cmd
@@ -382,7 +361,7 @@ describe provider_class do
       end
 
       it "should fail on #{osfamily} systems if #{pip_cmds.join(' and ')} are missing" do
-        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
+        Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
         @provider.expects(:pip).with('freeze').raises(NoMethodError)
         pip_cmds.each do |pip_cmd|
           @provider.expects(:which).with(pip_cmd).returns(nil)
@@ -391,7 +370,7 @@ describe provider_class do
       end
 
       it "should output a useful error message on #{osfamily} systems if #{pip_cmds.join(' and ')} are missing" do
-        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
+        Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
         @provider.expects(:pip).with('freeze').raises(NoMethodError)
         pip_cmds.each do |pip_cmd|
           @provider.expects(:which).with(pip_cmd).returns(nil)
@@ -399,9 +378,6 @@ describe provider_class do
         expect { @provider.method(:lazy_pip).call("freeze") }.
           to raise_error(NoMethodError, "Could not locate command #{pip_cmds.join(' and ')}.")
       end
-
     end
-
   end
-
 end

@@ -16,7 +16,7 @@ describe Puppet::Settings::PathSetting do
       expect(subject.munge(nil)).to be_nil
     end
 
-    context "on Windows", :if => Puppet.features.microsoft_windows? do
+    context "on Windows", :if => Puppet::Util::Platform.windows? do
       it "should convert \\ to /" do
         expect(subject.munge('C:\test\directory')).to eq('C:/test/directory')
       end

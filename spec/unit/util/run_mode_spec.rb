@@ -13,7 +13,7 @@ describe Puppet::Util::RunMode do
     @run_mode = Puppet::Util::RunMode.new('fake')
   end
 
-  describe Puppet::Util::UnixRunMode, :unless => Puppet.features.microsoft_windows? do
+  describe Puppet::Util::UnixRunMode, :unless => Puppet::Util::Platform.windows? do
     before do
       @run_mode = Puppet::Util::UnixRunMode.new('fake')
     end
@@ -36,7 +36,7 @@ describe Puppet::Util::RunMode do
         end
       end
 
-      it "fails when asking for the conf_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet.features.microsoft_windows? do
+      it "fails when asking for the conf_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
         as_non_root do
           without_home do
             expect { @run_mode.conf_dir }.to raise_error ArgumentError, /couldn't find HOME/
@@ -64,7 +64,7 @@ describe Puppet::Util::RunMode do
         end
       end
 
-      it "fails when asking for the code_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet.features.microsoft_windows? do
+      it "fails when asking for the code_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
         as_non_root do
           without_home do
             expect { @run_mode.code_dir }.to raise_error ArgumentError, /couldn't find HOME/
@@ -82,7 +82,7 @@ describe Puppet::Util::RunMode do
         as_non_root { expect(@run_mode.var_dir).to eq(File.expand_path('~/.puppetlabs/opt/puppet/cache')) }
       end
 
-      it "fails when asking for the var_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet.features.microsoft_windows? do
+      it "fails when asking for the var_dir as non-root and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
         as_non_root do
           without_home do
             expect { @run_mode.var_dir }.to raise_error ArgumentError, /couldn't find HOME/
@@ -103,7 +103,7 @@ describe Puppet::Util::RunMode do
           as_non_root { expect(@run_mode.log_dir).to eq(File.expand_path('~/.puppetlabs/var/log')) }
         end
 
-        it "fails when asking for the log_dir and there is no $HOME", :unless => gte_ruby_2_4 || Puppet.features.microsoft_windows? do
+        it "fails when asking for the log_dir and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
           as_non_root do
             without_home do
               expect { @run_mode.log_dir }.to raise_error ArgumentError, /couldn't find HOME/
@@ -125,7 +125,7 @@ describe Puppet::Util::RunMode do
           as_non_root { expect(@run_mode.run_dir).to eq(File.expand_path('~/.puppetlabs/var/run')) }
         end
 
-        it "fails when asking for the run_dir and there is no $HOME", :unless => gte_ruby_2_4 || Puppet.features.microsoft_windows? do
+        it "fails when asking for the run_dir and there is no $HOME", :unless => gte_ruby_2_4 || Puppet::Util::Platform.windows? do
           as_non_root do
             without_home do
               expect { @run_mode.run_dir }.to raise_error ArgumentError, /couldn't find HOME/
@@ -136,7 +136,7 @@ describe Puppet::Util::RunMode do
     end
   end
 
-  describe Puppet::Util::WindowsRunMode, :if => Puppet.features.microsoft_windows? do
+  describe Puppet::Util::WindowsRunMode, :if => Puppet::Util::Platform.windows? do
     before do
       if not Dir.const_defined? :COMMON_APPDATA
         Dir.const_set :COMMON_APPDATA, "/CommonFakeBase"

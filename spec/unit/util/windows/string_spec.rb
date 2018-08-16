@@ -4,7 +4,7 @@
 require 'spec_helper'
 require 'puppet/util/windows'
 
-describe "Puppet::Util::Windows::String", :if => Puppet.features.microsoft_windows? do
+describe "Puppet::Util::Windows::String", :if => Puppet::Util::Platform.windows? do
   UTF16_NULL = [0, 0]
 
   def wide_string(str)

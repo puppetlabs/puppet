@@ -211,7 +211,7 @@ describe Puppet::Parser::Compiler do
   describe "the compiler when using 4.x language constructs" do
     include PuppetSpec::Compiler
 
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       it "should be able to determine the configuration version from a local version control repository" do
         pending("Bug #14071 about semantics of Puppet::Util::Execute on Windows")
         # This should always work, because we should always be

@@ -88,14 +88,13 @@ describe test_title, "when validating attribute values" do
     end
 
     it "should support :manual as a value on Windows" do
-      Puppet.features.stubs(:microsoft_windows?).returns true
-
+      Puppet::Util::Platform.stubs(:windows?).returns true
       srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :manual)
       expect(srv.should(:enable)).to eq(:manual)
     end
 
     it "should not support :manual as a value when not on Windows" do
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      Puppet::Util::Platform.stubs(:windows?).returns false
 
       expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :manual) }.to raise_error(
         Puppet::Error,

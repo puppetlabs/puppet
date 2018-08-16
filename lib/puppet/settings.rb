@@ -1197,7 +1197,7 @@ Generated on #{Time.now}.
 
   def add_user_resources(catalog, sections)
     return unless Puppet.features.root?
-    return if Puppet.features.microsoft_windows?
+    return if Puppet::Util::Platform.windows?
     return unless self[:mkusers]
 
     @config.each do |name, setting|

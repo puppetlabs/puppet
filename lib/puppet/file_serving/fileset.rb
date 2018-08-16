@@ -25,7 +25,7 @@ class Puppet::FileServing::Fileset
   end
 
   def initialize(path, options = {})
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       # REMIND: UNC path
       path = path.chomp(File::SEPARATOR) unless path =~ /^[A-Za-z]:\/$/
     else

@@ -6,7 +6,7 @@ Puppet::Type.type(:package).provide :puppet_gem, :parent => :gem do
 
   has_feature :versionable, :install_options, :uninstall_options
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     # On windows, we put our ruby ahead of anything that already
     # existed on the system PATH. This means that we do not need to
     # sort out the absolute path.

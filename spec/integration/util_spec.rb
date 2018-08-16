@@ -29,7 +29,7 @@ describe Puppet::Util do
     end
   end
 
-  describe "#replace_file on Windows", :if => Puppet.features.microsoft_windows? do
+  describe "#replace_file on Windows", :if => Puppet::Util::Platform.windows? do
     it "replace_file should preserve original ACEs from existing replaced file on Windows" do
 
       file = tmpfile("somefile")
@@ -109,7 +109,7 @@ describe Puppet::Util do
     end
   end
 
-  describe "#which on Windows", :if => Puppet.features.microsoft_windows? do
+  describe "#which on Windows", :if => Puppet::Util::Platform.windows? do
     let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
     let (:filename) { 'foo.exe' }
     let (:filepath) { File.expand_path('C:\\' + rune_utf8 + '\\' + filename) }

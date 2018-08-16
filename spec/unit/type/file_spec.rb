@@ -51,7 +51,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
       it "should remove trailing slashes" do
         file[:path] = "X:/foo/bar/baz/"
         expect(file[:path]).to eq("X:/foo/bar/baz")
@@ -76,7 +76,7 @@ describe Puppet::Type.type(:file) do
         expect { file[:path] = "X:" }.to raise_error(/File paths must be fully qualified/)
       end
 
-      describe "when using UNC filenames", :if => Puppet.features.microsoft_windows? do
+      describe "when using UNC filenames", :if => Puppet::Util::Platform.windows? do
         it "should remove trailing slashes" do
           file[:path] = "//localhost/foo/bar/baz/"
           expect(file[:path]).to eq("//localhost/foo/bar/baz")
@@ -1335,7 +1335,7 @@ describe Puppet::Type.type(:file) do
         expect(file.autorequire).to be_empty
       end
 
-      describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+      describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
         describe "when using UNC filenames" do
           it "should autorequire its parent directory" do
             file[:path] = '//localhost/foo/bar/baz'
@@ -1410,7 +1410,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should manage the mode of the followed link" do
-      if Puppet.features.microsoft_windows?
+      if Puppet::Util::Platform.windows?
         skip "Windows cannot presently manage the mode when following symlinks"
       else
         @link_resource[:links] = :follow
@@ -1511,7 +1511,8 @@ describe Puppet::Type.type(:file) do
 
     describe "on Windows when source_permissions is `use`" do
       before :each do
-        Puppet.features.stubs(:microsoft_windows?).returns true
+        Puppet::Util::Platform.stubs(:windows?).returns true
+
         file[:source_permissions] = "use"
       end
       let(:err_message) { "Copying owner/mode/group from the" <<

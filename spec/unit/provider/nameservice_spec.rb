@@ -189,7 +189,7 @@ describe Puppet::Provider::NameService do
       end
     end
 
-    it "should return a list of groups if resource_type is group", :unless => Puppet.features.microsoft_windows? do
+    it "should return a list of groups if resource_type is group", :unless => Puppet::Util::Platform.windows? do
       described_class.resource_type = Puppet::Type.type(:group)
       Puppet::Etc.expects(:setgrent)
       Puppet::Etc.stubs(:getgrent).returns(*groups)

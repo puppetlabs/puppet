@@ -32,7 +32,7 @@ Puppet::Type.type(:type_test).provide(:type_test) do
   mk_resource_methods
 end
 
-describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type, :unless => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
 

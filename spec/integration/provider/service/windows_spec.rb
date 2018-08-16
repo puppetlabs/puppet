@@ -3,7 +3,7 @@ require 'spec_helper'
 
 test_title = 'Integration Tests for Puppet::Type::Service::Provider::Windows'
 
-describe test_title, '(integration)', :if => Puppet.features.microsoft_windows? do
+describe test_title, '(integration)', :if => Puppet::Util::Platform.windows? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:windows) }
 
   require 'puppet/util/windows'

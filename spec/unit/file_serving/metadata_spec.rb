@@ -241,7 +241,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
     end
   end
 
-  describe "WindowsStat", :if => Puppet.features.microsoft_windows? do
+  describe "WindowsStat", :if => Puppet::Util::Platform.windows? do
     include PuppetSpec::Files
 
     it "should return default owner, group and mode when the given path has an invalid DACL (such as a non-NTFS volume)" do
@@ -388,7 +388,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
     end
   end
 
-  describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+  describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
     let(:owner) {'S-1-1-50'}
     let(:group) {'S-1-1-51'}
 
@@ -499,7 +499,7 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
         Puppet::FileSystem.expects(:readlink).with(path).at_least_once.returns "/some/other/path"
         @file.stubs("#{digest_algorithm}_file".intern).returns(checksum) # Remove these when :managed links are no longer checksumed.
 
-        if Puppet.features.microsoft_windows?
+        if Puppet::Util::Platform.windows?
           win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
             :ftype => 'link', :mode => 0755)
           Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
@@ -530,7 +530,7 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
         Puppet::FileSystem.expects(:stat).with(path).at_least_once.returns stat
         Puppet::FileSystem.expects(:readlink).never
 
-        if Puppet.features.microsoft_windows?
+        if Puppet::Util::Platform.windows?
           win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
             :ftype => 'file', :mode => 0755)
           Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat

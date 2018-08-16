@@ -219,7 +219,7 @@ Puppet::Util::Log.newdesttype :eventlog do
   Puppet::Util::Log::DestEventlog::EVENTLOG_CHARACTER_LIMIT  = 31838
 
   def self.suitable?(obj)
-    Puppet.features.microsoft_windows?
+    Puppet::Util::Platform.windows?
   end
 
   def initialize

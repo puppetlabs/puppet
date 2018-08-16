@@ -40,7 +40,7 @@ describe Puppet::Util::SUIDManager do
 
   describe "#asuser" do
     it "should not get or set euid/egid when not root" do
-      Puppet.features.stubs(:microsoft_windows?).returns(false)
+      Puppet::Util::Platform.stubs(:windows?).returns false
       Process.stubs(:uid).returns(1)
 
       Process.stubs(:egid).returns(51)
@@ -54,7 +54,7 @@ describe Puppet::Util::SUIDManager do
     context "when root and not windows" do
       before :each do
         Process.stubs(:uid).returns(0)
-        Puppet.features.stubs(:microsoft_windows?).returns(false)
+        Puppet::Util::Platform.stubs(:windows?).returns false
       end
 
       it "should set euid/egid" do
@@ -122,7 +122,7 @@ describe Puppet::Util::SUIDManager do
     end
 
     it "should not get or set euid/egid on Windows" do
-      Puppet.features.stubs(:microsoft_windows?).returns true
+      Puppet::Util::Platform.stubs(:windows?).returns false
 
       Puppet::Util::SUIDManager.asuser(user[:uid], user[:gid]) {}
 
@@ -234,7 +234,7 @@ describe Puppet::Util::SUIDManager do
     describe "on POSIX systems" do
       before :each do
         Puppet.features.stubs(:posix?).returns(true)
-        Puppet.features.stubs(:microsoft_windows?).returns(false)
+        Puppet::Util::Platform.stubs(:windows?).returns false
       end
 
       it "should be root if uid is 0" do
@@ -250,7 +250,7 @@ describe Puppet::Util::SUIDManager do
       end
     end
 
-    describe "on Microsoft Windows", :if => Puppet.features.microsoft_windows? do
+    describe "on Microsoft Windows", :if => Puppet::Util::Platform.windows? do
       it "should be root if user is privileged" do
         Puppet::Util::Windows::User.stubs(:admin?).returns true
 
