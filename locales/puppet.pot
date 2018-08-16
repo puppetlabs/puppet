@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.3-518-g92a0446\n"
+"Project-Id-Version: Puppet automation framework 5.5.3-538-g04afefd\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-08-16 16:18+0000\n"
-"PO-Revision-Date: 2018-08-16 16:18+0000\n"
+"POT-Creation-Date: 2018-08-16 22:03+0000\n"
+"PO-Revision-Date: 2018-08-16 22:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -4054,7 +4054,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:553 ../lib/puppet/pops/loaders.rb:299
+#: ../lib/puppet/node/environment.rb:553 ../lib/puppet/pops/loaders.rb:296
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -4775,19 +4775,19 @@ msgstr ""
 msgid "break() from context where this is illegal"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1206
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1218
 msgid "Can only append Array or Hash to a Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1210
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1222
 msgid "An URI can only be merged with an URI or String"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1213
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1225
 msgid "Can only append Binary to a Binary"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1246
+#: ../lib/puppet/pops/evaluator/evaluator_impl.rb:1258
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
@@ -5528,18 +5528,26 @@ msgid "The catalog operation '%{operation}' is only available when compiling a c
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:890
-msgid "The task operation '%{operation}' is not available when compiling a catalog"
+msgid "%{expr} is only available when compiling a catalog"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:894
-msgid "The 'bolt' library is required to %{action}"
+msgid "The task operation '%{operation}' is not available when compiling a catalog"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:898
-msgid "Task not found: %{type_name}"
+msgid "%{expr} is not available when compiling a catalog"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:902
+msgid "The 'bolt' library is required to %{action}"
+msgstr ""
+
+#: ../lib/puppet/pops/issues.rb:906
+msgid "Task not found: %{type_name}"
+msgstr ""
+
+#: ../lib/puppet/pops/issues.rb:910
 msgid "Failed to load: %{type_name}"
 msgstr ""
 
@@ -5697,19 +5705,19 @@ msgstr ""
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:175
+#: ../lib/puppet/pops/loaders.rb:172
 msgid "Internal Error: Puppet Context ':loaders' missing"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:189
+#: ../lib/puppet/pops/loaders.rb:186
 msgid "Unable to find loader named '%{loader_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:210
+#: ../lib/puppet/pops/loaders.rb:207
 msgid "Internal Error: did not find public loader for module: '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:256
+#: ../lib/puppet/pops/loaders.rb:253
 msgid "Internal Error: Attempt to redefine loader named '%{name}'"
 msgstr ""
 
@@ -5864,11 +5872,11 @@ msgid "Unacceptable transform - found an Object without a rule: %{klass}"
 msgstr ""
 
 #. TRANSLATORS 'NUMBER' refers to a method name and the 'name_or_numeric' was the passed in value and should not be translated
-#: ../lib/puppet/pops/model/factory.rb:809
+#: ../lib/puppet/pops/model/factory.rb:814
 msgid "Internal Error, NUMBER token does not contain a valid number, %{name_or_numeric}"
 msgstr ""
 
-#: ../lib/puppet/pops/model/factory.rb:1117
+#: ../lib/puppet/pops/model/factory.rb:1130
 msgid "can only concatenate strings, got %{class_name}"
 msgstr ""
 
