@@ -49,7 +49,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
     it "should strip trailing forward and backslashes", :if => Puppet.features.microsoft_windows? do
       resource[:source] = "X:/foo/bar\\//"
-      expect(resource[:source]).to eq(%w{file:/X:/foo/bar})
+      expect(resource[:source].first).to match(/(file\:|file\:\/\/)\/X:\/foo\/bar$/)
     end
 
     it "should accept an array of sources" do
