@@ -7,6 +7,7 @@ require 'puppet/network/server'
 
 describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windows? do
   before :each do
+    Puppet[:bindaddress] = '127.0.0.1'
     @master = Puppet::Application[:master]
     @daemon = stub_everything 'daemon'
     Puppet::Daemon.stubs(:new).returns(@daemon)
@@ -357,6 +358,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
       it "should log a deprecation notice when running a WEBrick server" do
         Puppet.expects(:deprecation_warning).with("The WEBrick Puppet master server is deprecated and will be removed in a future release. Please use Puppet Server instead. See http://links.puppet.com/deprecate-rack-webrick-servers for more information.")
+        Puppet.expects(:deprecation_warning).with("Accessing 'bindaddress' as a setting is deprecated.")
 
         @master.main
       end
