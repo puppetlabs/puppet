@@ -430,7 +430,6 @@
         "puppetdb_host": "agent.demo.com",
         "puppetdb_port": 8081,
         "code_manager_auto_configure": false,
-        "app_management": true,
         "check_for_updates": true,
         "send_analytics_data": true,
         "replication_mode": "none",
@@ -2790,55 +2789,6 @@
         "store_usage": "1gb",
         "temp_usage": "1gb",
         "usage_ensure": "present"
-      }
-    },
-    {
-      "type": "Pe_ini_setting",
-      "title": "deprecated puppetserver puppetconf app_management",
-      "tags": [
-        "pe_ini_setting",
-        "class",
-        "puppet_enterprise::profile::master",
-        "puppet_enterprise",
-        "profile",
-        "master",
-        "node",
-        "default"
-      ],
-      "file": "\/opt\/puppetlabs\/puppet\/modules\/puppet_enterprise\/manifests\/profile\/master.pp",
-      "line": 120,
-      "exported": false,
-      "parameters": {
-        "setting": "app_management",
-        "ensure": "absent",
-        "section": "master",
-        "path": "\/etc\/puppetlabs\/puppet\/puppet.conf",
-        "notify": "Service[pe-puppetserver]"
-      }
-    },
-    {
-      "type": "Pe_ini_setting",
-      "title": "puppetserver puppetconf app_management",
-      "tags": [
-        "pe_ini_setting",
-        "class",
-        "puppet_enterprise::profile::master",
-        "puppet_enterprise",
-        "profile",
-        "master",
-        "node",
-        "default"
-      ],
-      "file": "\/opt\/puppetlabs\/puppet\/modules\/puppet_enterprise\/manifests\/profile\/master.pp",
-      "line": 126,
-      "exported": false,
-      "parameters": {
-        "setting": "app_management",
-        "value": true,
-        "section": "main",
-        "ensure": "present",
-        "path": "\/etc\/puppetlabs\/puppet\/puppet.conf",
-        "notify": "Service[pe-puppetserver]"
       }
     },
     {
@@ -33374,14 +33324,6 @@
     {
       "source": "Class[Puppet_enterprise::Profile::Amq::Broker]",
       "target": "Puppet_enterprise::Amq::Config::System_usage[agent.demo.com - systemusage]"
-    },
-    {
-      "source": "Class[Puppet_enterprise::Profile::Master]",
-      "target": "Pe_ini_setting[deprecated puppetserver puppetconf app_management]"
-    },
-    {
-      "source": "Class[Puppet_enterprise::Profile::Master]",
-      "target": "Pe_ini_setting[puppetserver puppetconf app_management]"
     },
     {
       "source": "Class[Puppet_enterprise::Profile::Master]",
