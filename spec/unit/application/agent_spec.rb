@@ -270,7 +270,7 @@ describe Puppet::Application::Agent do
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      Puppet[:configprint] = "pluginsync"
+      Puppet[:configprint] = "plugindest"
       Puppet.settings.expects(:print_configs).returns true
       expect { execute_agent }.to exit_with 0
     end

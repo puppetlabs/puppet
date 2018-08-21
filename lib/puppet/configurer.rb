@@ -24,14 +24,10 @@ class Puppet::Configurer
   end
 
   def self.should_pluginsync?
-    if Puppet.settings.set_by_cli?(:pluginsync) || Puppet.settings.set_by_config?(:pluginsync)
-      Puppet[:pluginsync]
+    if Puppet[:use_cached_catalog]
+      false
     else
-      if Puppet[:use_cached_catalog]
-        false
-      else
-        true
-      end
+      true
     end
   end
 

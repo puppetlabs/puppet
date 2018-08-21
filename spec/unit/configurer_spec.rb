@@ -981,20 +981,6 @@ describe Puppet::Configurer do
   end
 
   describe "when determining whether to pluginsync" do
-    it "should default to Puppet[:pluginsync] when explicitly set by the commandline" do
-      Puppet.settings[:pluginsync] = false
-      Puppet.settings.expects(:set_by_cli?).returns(true)
-
-      expect(described_class).not_to be_should_pluginsync
-    end
-
-    it "should default to Puppet[:pluginsync] when explicitly set by config" do
-      Puppet.settings[:pluginsync] = false
-      Puppet.settings.expects(:set_by_config?).returns(true)
-
-      expect(described_class).not_to be_should_pluginsync
-    end
-
     it "should be true if use_cached_catalog is false" do
       Puppet.settings[:use_cached_catalog] = false
 
