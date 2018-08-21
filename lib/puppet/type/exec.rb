@@ -197,14 +197,17 @@ module Puppet
     end
 
     newparam(:user) do
-      desc "The user to run the command as.  Note that if you
-        use this then any error output is not currently captured.  This
-        is because of a bug within Ruby.  If you are using Puppet to
-        create this user, the exec will automatically require the user,
-        as long as it is specified by name.
+      desc "The user to run the command as.
+      
+        > **Note:** Puppet cannot execute commands as other users on Windows.
 
-        Please note that the $HOME environment variable is not automatically set
-        when using this attribute."
+        Note that if you use this attribute, any error output is not captured
+        due to a bug within Ruby. If you use Puppet to create this user, the
+        exec automatically requires the user, as long as it is specified by
+        name.
+
+        The $HOME environment variable is not automatically set when using
+        this attribute."
 
       validate do |user|
         if Puppet.features.microsoft_windows?
