@@ -1646,12 +1646,6 @@ EOT
         prior compilation. The list of missing objects is maintained per-environment and
         persists until the environment is cleared or the master is restarted.",
     },
-    :ignorecache => {
-      :default    => false,
-      :type       => :boolean,
-      :desc       => "This setting has no effect and will be removed in a future Puppet version.",
-      :deprecated => :completely,
-    },
     :splaylimit => {
       :default    => "$runinterval",
       :type       => :duration,
