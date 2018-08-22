@@ -7,7 +7,7 @@ xml:                         true
 timesync:                    false
 repo_proxy:                  true
 add_el_extras:               false
-forge_host:                  forge-aio01-petest.puppetlabs.com
+forge_host:                  api-forge-aio02-petest.puppet.com
 'master-start-curl-retries': 30
 log_level:                   debug
 preserve_hosts:              onfail

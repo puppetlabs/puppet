@@ -71,7 +71,12 @@ end
         end
 
         step "run the agent" do
-          on(agent, puppet("agent --libdir='#{agent_lib_dir}' --test --server #{master} --environment '#{tmp_environment}'"))
+          on(agent, puppet("agent --libdir='#{agent_lib_dir}' --test --server #{master} --environment '#{tmp_environment}'")) do |result|
+            assert_no_match(
+              /The \`source_permissions\` parameter is deprecated/,
+              result.stderr,
+              "pluginsync should not get a deprecation warning for source_permissions")
+          end
         end
 
         step "verify that the module files were synced down to the agent" do
