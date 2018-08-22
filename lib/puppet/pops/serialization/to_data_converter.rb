@@ -11,10 +11,10 @@ module Serialization
     # @param value [Object] the value to convert
     # @param options {Symbol => <Boolean,String>} options hash
     # @option options [Boolean] :rich_data `true` if rich data is enabled
-    # @option options [Boolean] :local_references use local references instead of duplicating complex entries
+    # @option options [Boolean] :local_reference use local references instead of duplicating complex entries
     # @option options [Boolean] :type_by_reference `true` if Object types are converted to references rather than embedded.
     # @option options [Boolean] :symbol_as_string `true` if Symbols should be converted to strings (with type loss)
-    # @option options [String] :path_prefix String to prepend to path in warnings and errors
+    # @option options [String] :message_prefix String to prepend to in warnings and errors
     # @return [Data] the processed result. An object assignable to `Data`.
     #
     # @api public
