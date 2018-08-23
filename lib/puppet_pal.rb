@@ -3,6 +3,7 @@
 # Yes, this requires all of puppet for now because 'settings' and many other things...
 require 'puppet'
 require 'puppet/parser/script_compiler'
+require 'puppet/parser/catalog_compiler'
 
 # This is the main entry point for "Puppet As a Library" PAL.
 # This file should be required instead of "puppet"
@@ -175,7 +176,7 @@ module Pal
     #
     def parse_file(file)
       unless file.is_a?(String)
-        raise ArgumentError, _("The argument 'file' must be a String, got %{type}") % { type: puppet_code.class }
+        raise ArgumentError, _("The argument 'file' must be a String, got %{type}") % { type: file.class }
       end
       internal_evaluator.parse_file(file)
     end
@@ -215,6 +216,13 @@ module Pal
         raise ArgumentError, _("Given data_type value is not a data type, got '%{type}'") % {type: t.class}
       end
       call_function('new', t, *arguments)
+    end
+
+    # Returns true if this is a compiler that compiles a catalog.
+    # This implementation returns `false`
+    # @return Boolan false
+    def has_catalog?
+      false
     end
 
     protected
@@ -299,6 +307,112 @@ module Pal
     def list_tasks(filter_regex = nil, error_collector = nil)
       list_loadable_kind(:task, filter_regex, error_collector)
     end
+  end
+
+  # A CatalogCompiler is a compiler that builds a catalog of resources and dependencies as a side effect of
+  # evaluating puppet language code.
+  # When the compilation of the given input manifest(s)/code string/file is finished the catalog is complete
+  # for encoding and use. It is also possible to evaluate more strings within the same compilation context to
+  # add or remove things from the catalog.
+  #
+  # @api public
+  class CatalogCompiler < Compiler
+
+    # @api private
+    def catalog
+      internal_compiler.catalog
+    end
+    private :catalog
+
+    # Returns true if this is a compiler that compiles a catalog.
+    # This implementation returns `true`
+    # @return [Boolean] true
+    # @api public
+    def has_catalog?
+      true
+    end
+
+    # Calls a block of code and yields a configured `JsonCatalogEncoder` to the block.
+    # @example Get resulting catalog as pretty printed Json
+    #   Puppet::Pal.in_environment(...) do |pal|
+    #     pal.with_catalog_compiler(...) do |compiler|
+    #       compiler.with_json_encoding {| encoder | encoder.encode
+    #     end
+    #   end
+    #
+    # @api public
+    #
+    def with_json_encoding(pretty: true, exclude_virtual: true)
+      yield JsonCatalogEncoder.new(catalog, pretty: pretty, exclude_virtual: exclude_virtual)
+    end
+  end
+
+  # The JsonCatalogEncoder is a wrapper around a catalog produced by the Pal::CatalogCompiler.with_json_encoding
+  # method.
+  # It allows encoding the entire catalog or an individual resource as Rich Data Json.
+  #
+  # @api public
+  #
+  class JsonCatalogEncoder
+    # Is the resulting Json pretty printed or not.
+    attr_reader :pretty
+
+    # Should unrealized virtual resources be included in the result or not.
+    attr_reader :exclude_virtual
+
+    # The internal catalog being build - what this class wraps with a public API.
+    attr_reader :catalog
+    private :catalog
+
+    # Do not instantiate this class directly! Use the `Pal::CatalogCompiler#with_json_encoding` method
+    # instead.
+    #
+    # @param catalog [Puppet::Resource::Catalog] the internal catalog that this class wraps
+    # @param pretty [Boolean] (true), if the resulting JSON should be pretty printed or not
+    # @param exclude_virtual [Boolean] (true), if the resulting catalog should contain unrealzed virtual resources or not
+    #
+    # @api private
+    #
+    def initialize(catalog, pretty: true, exclude_virtual: true)
+      @catalog = catalog
+      @pretty = pretty
+      @exclude_virtual = exclude_virtual
+    end
+
+    # Encodes the entire catalog as a rich-data Json catalog.
+    # @return String The catalog in Json format using rich data format
+    # @api public
+    #
+    def encode
+      possibly_filtered_catalog.to_json(:pretty => pretty)
+    end
+
+    # Returns one particular resource as a Json string, or returns nil if resource was not found.
+    # @param type [String] the name of the puppet type (case independent)
+    # @param title [String] the title of the wanted resource
+    # @return [String] the resulting Json text
+    # @api public
+    #
+    def encode_resource(type, title)
+      # Ensure that both type and title are given since the underlying API will do mysterious things
+      # if 'title' is nil. (Other assertions are made by the catalog when looking up the resource).
+      #
+      # TRANSLATORS 'type' and 'title' are internal parameter names - do not translate
+      raise ArgumentError, _("Both type and title must be given") if type.nil? or title.nil?
+      r = possibly_filtered_catalog.resource(type, title)
+      return nil if r.nil?
+      r.to_data_hash.to_json(:pretty => pretty)
+    end
+
+    # Applies a filter for virtual resources and returns filtered catalog
+    # or the catalog itself if filtering was not needed.
+    # The result is cached.
+    # @api private
+    #
+    def possibly_filtered_catalog
+      @filtered ||= (exclude_virtual ? catalog.filter { |r| r.virtual? } : catalog)
+    end
+    private :possibly_filtered_catalog
   end
 
   # A FunctionSignature is returned from `function_signature`. Its purpose is to answer questions about the function's parameters
@@ -534,7 +648,7 @@ module Pal
 
     # If manifest_file is nil, the #main method will use the env configured manifest
     # to do things in the block while a Script Compiler is in effect
-    main(manifest_file, facts, variables, &block)
+    main(manifest_file, facts, variables, :script, &block)
   end
 
   # Evaluates a Puppet Language script string.
@@ -561,6 +675,74 @@ module Pal
     end
   end
 
+  # Defines a context in which multiple operations in an env with a catalog producing compiler can be performed
+  # in a given block.
+  # The calls that takes place to PAL inside of the given block are all with the same instance of the compiler.
+  # The parameter `configured_by_env` makes it possible to either use the configuration in the environment, or specify
+  # `manifest_file` or `code_string` manually. If neither is given, an empty `code_string` is used.
+  #
+  # @example define a catalog compiler without any initial logic
+  #   pal.with_catalog_compiler do | compiler |
+  #     # do things with compiler
+  #   end
+  #
+  # @example define a catalog compiler with a code_string containing initial logic
+  #   pal.with_catalog_compiler(code_string: '$myglobal_var = 42')  do | compiler |
+  #     # do things with compiler
+  #   end
+  #
+  # @param configured_by_env [Boolean] when true the environment's settings are used, otherwise the
+  #   given `manifest_file` or `code_string`
+  # @param manifest_file [String] a Puppet Language file to load and evaluate before calling the given block, mutually exclusive
+  #   with `code_string`
+  # @param code_string [String] a Puppet Language source string to load and evaluate before calling the given block, mutually
+  #   exclusive with `manifest_file`
+  # @param facts [Hash] optional map of fact name to fact value - if not given will initialize the facts (which is a slow operation)
+  #   If given at the environment level, the facts given here are merged with higher priority.
+  # @param variables [Hash] optional map of fully qualified variable name to value. If given at the environment level, the variables
+  #   given here are merged with higher priority.
+  # @param block [Proc] the block performing operations on compiler
+  # @return [Object] what the block returns
+  # @yieldparam [Puppet::Pal::CatalogCompiler] compiler, a CatalogCompiler to perform operations on.
+  #
+  def self.with_catalog_compiler(
+    configured_by_env: false,
+      manifest_file:     nil,
+      code_string:       nil,
+      facts:             nil,
+      variables:         nil,
+      &block
+  )
+    # TRANSLATORS: do not translate variable name strings in these assertions
+    assert_mutually_exclusive(manifest_file, code_string, 'manifest_file', 'code_string')
+    assert_non_empty_string(manifest_file, 'manifest_file', true)
+    assert_non_empty_string(code_string, 'code_string', true)
+    assert_type(T_BOOLEAN, configured_by_env, "configured_by_env", false)
+
+    if configured_by_env
+      unless manifest_file.nil? && code_string.nil?
+        # TRANSLATORS: do not translate the variable names in this error message
+        raise ArgumentError, _("manifest_file or code_string cannot be given when configured_by_env is true")
+      end
+      # Use the manifest setting
+      manifest_file = Puppet[:manifest]
+    else
+      # An "undef" code_string is the only way to override Puppet[:manifest] & Puppet[:code] settings since an
+      # empty string is taken as Puppet[:code] not being set.
+      #
+      if manifest_file.nil? && code_string.nil?
+        code_string = 'undef'
+      end
+    end
+
+    Puppet[:tasks] = false
+    # After the assertions, if code_string is non nil - it has the highest precedence
+    Puppet[:code] = code_string unless code_string.nil?
+
+    # If manifest_file is nil, the #main method will use the env configured manifest
+    # to do things in the block while a Script Compiler is in effect
+    main(manifest_file, facts, variables, :catalog, &block)
+  end
 
   # Defines the context in which to perform puppet operations (evaluation, etc)
   # The code to evaluate in this context is given in a block.
@@ -743,7 +925,7 @@ module Pal
   # Picks up information from the puppet context and configures a script compiler which is given to
   # the provided block
   #
-  def self.main(manifest, facts, variables)
+  def self.main(manifest, facts, variables, internal_compiler_class)
     # Configure the load path
     env = Puppet.lookup(:pal_env)
     env.each_plugin_directory do |dir|
@@ -796,34 +978,45 @@ module Pal
         # fixup trusted information
         node.sanitize()
 
-        compiler = Puppet::Parser::ScriptCompiler.new(node.environment, node.name)
+        compiler = create_internal_compiler(internal_compiler_class, node)
+        # compiler = Puppet::Parser::ScriptCompiler.new(node.environment, node.name)
         topscope = compiler.topscope
 
         # When scripting the trusted data are always local, but set them anyway
-        topscope.set_trusted(node.trusted_data)
+        # When compiling for a catalog, the catalog compiler does this
+        unless internal_compiler_class == :catalog
+          topscope.set_trusted(node.trusted_data)
 
-        # Server facts are always about the local node's version etc.
-        topscope.set_server_facts(node.server_facts)
+          # Server facts are always about the local node's version etc.
+          topscope.set_server_facts(node.server_facts)
 
-        # Set $facts for the node running the script
-        facts_hash = node.facts.nil? ? {} : node.facts.values
-        topscope.set_facts(facts_hash)
+          # Set $facts for the node running the script
+          facts_hash = node.facts.nil? ? {} : node.facts.values
+          topscope.set_facts(facts_hash)
 
-        # create the $settings:: variables
-        topscope.merge_settings(node.environment.name, false)
+          # create the $settings:: variables
+          topscope.merge_settings(node.environment.name, false)
+        end
 
         add_variables(topscope, pal_variables)
 
-        # compiler.compile(&block)
-        compiler.compile do | internal_compiler |
-          # wrap the internal compiler to prevent it from leaking in the PAL API
-          if block_given?
-            script_compiler = ScriptCompiler.new(internal_compiler)
+        case internal_compiler_class
+        when :script
+          pal_compiler = ScriptCompiler.new(compiler)
+          overrides[:pal_script_compiler] = overrides[:pal_compiler] = pal_compiler
+        when :catalog
+          pal_compiler = CatalogCompiler.new(compiler)
+          overrides[:pal_catalog_compiler] = overrides[:pal_compiler] = pal_compiler
+        end
 
-            # Make compiler available to Puppet#lookup
-            overrides[:pal_script_compiler] = script_compiler
-            Puppet.override(overrides, "PAL::with_script_compiler") do # TRANSLATORS: Do not translate, symbolic name
-              yield(script_compiler)
+        # Make compiler available to Puppet#lookup and injection in functions
+        # TODO: The compiler instances should be available under non PAL use as well!
+        # TRANSLATORS: Do not translate, symbolic name
+        Puppet.override(overrides, "PAL::with_#{internal_compiler_class}_compiler") do
+          compiler.compile do | compiler_yield |
+            # wrap the internal compiler to prevent it from leaking in the PAL API
+            if block_given?
+              yield(pal_compiler)
             end
           end
         end
@@ -839,6 +1032,17 @@ module Pal
     end
   end
   private_class_method :main
+
+  def self.create_internal_compiler(compiler_class_reference, node)
+    case compiler_class_reference
+    when :script
+      Puppet::Parser::ScriptCompiler.new(node.environment, node.name)
+    when :catalog
+      Puppet::Parser::CatalogCompiler.new(node)
+    else
+      raise ArgumentError, "Internal Error: Invalid compiler type requested."
+    end
+  end
 
   T_STRING = Puppet::Pops::Types::PStringType::NON_EMPTY
   T_STRING_ARRAY = Puppet::Pops::Types::TypeFactory.array_of(T_STRING)

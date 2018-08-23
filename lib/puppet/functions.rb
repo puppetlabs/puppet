@@ -719,6 +719,16 @@ module Puppet::Functions
       inject(:cache)
     end
 
+    # Inject parameter for `Puppet::Pal::CatalogCompiler`
+    def compiler_param
+      inject(:pal_catalog_compiler)
+    end
+
+    # Inject parameter for either `Puppet::Pal::CatalogCompiler` or `Puppet::Pal::ScriptCompiler`
+    def pal_compiler_param
+      inject(:pal_compiler)
+    end
+
     private
 
     def inject(injection_name)
