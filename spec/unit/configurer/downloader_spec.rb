@@ -160,6 +160,11 @@ describe Puppet::Configurer::Downloader do
       expect(@dler.catalog.host_config).to eq(false)
     end
 
+    it "should not issue a deprecation warning for source_permissions" do
+      Puppet.expects(:puppet_deprecation_warning).never
+      catalog = @dler.catalog
+      expect(catalog.resources.size).to eq(1) # Must consume catalog to fix warnings
+    end
   end
 
   describe "when downloading" do

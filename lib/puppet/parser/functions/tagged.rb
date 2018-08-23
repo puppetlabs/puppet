@@ -9,12 +9,9 @@ Puppet::Parser::Functions::newfunction(:tagged, :type => :rvalue, :arity => -2, 
         {:operation => 'tagged'})
     end
 
-    configtags = compiler.catalog.tags
-    resourcetags = resource.tags
-
     retval = true
     vals.each do |val|
-      unless configtags.include?(val) or resourcetags.include?(val)
+      unless compiler.catalog.tagged?(val) or resource.tagged?(val)
         retval = false
         break
       end

@@ -224,9 +224,6 @@ module Puppet::Test
       # Initialize "app defaults" settings to a good set of test values
       Puppet.settings.initialize_app_defaults(app_defaults_for_tests)
 
-      # Avoid opening ports to the outside world
-      Puppet.settings[:bindaddress] = "127.0.0.1"
-
       # We don't want to depend upon the reported domain name of the
       # machine running the tests, nor upon the DNS setup of that
       # domain.

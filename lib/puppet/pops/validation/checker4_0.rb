@@ -35,7 +35,6 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
     @check_visitor = self.class.check_visitor
     @acceptor = diagnostics_producer
-    @file_to_namespace = {}
 
     # Use null migration checker unless given in context
     @migration_checker = (Puppet.lookup(:migration_checker) { Migration::MigrationChecker.new() })
@@ -533,75 +532,103 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     end
   end
 
+  NO_NAMESPACE = :no_namespace
+  NO_PATH = :no_path
+  BAD_MODULE_FILE = :bad_module_file
   def internal_check_file_namespace(o, name, file)
-    return if file.nil?
+    return if file.nil? || file == '' #e.g. puppet apply -e '...'
 
-    lc_file = file.downcase
+    file_namespace = namespace_for_file(file)
+    return if file_namespace == NO_NAMESPACE
 
-    file_namespace = @file_to_namespace[lc_file]
-    if file_namespace.nil?
-      return if @file_to_namespace.key?(lc_file)
-      file_namespace = @file_to_namespace[lc_file] = namespace_for_file(lc_file)
-      return if file_namespace.nil?
-    end
-
-    if !name.downcase.start_with?(file_namespace)
+    # Downcasing here because check is case-insensitive
+    if file_namespace == BAD_MODULE_FILE || !name.downcase.start_with?(file_namespace)
       acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, {:name => name, :file => file})
     end
   end
 
-  NEVER_MATCH = '\b'.freeze
+  # @api private
+  class Puppet::Util::FileNamespaceAdapter < Puppet::Pops::Adaptable::Adapter
+    attr_accessor :file_to_namespace
+  end
 
   def namespace_for_file(file)
-    path = Pathname.new(file)
+    env = Puppet.lookup(:current_environment)
+    return NO_NAMESPACE if env.nil?
 
-    return nil if path.extname != ".pp"
+    Puppet::Util::FileNamespaceAdapter.adapt(env) do |adapter|
+      adapter.file_to_namespace ||= {}
 
-    return nil if initial_manifest?(path)
+      file_namespace = adapter.file_to_namespace[file]
+      return file_namespace unless file_namespace.nil? # No cache entry, so we do the calculation
 
-    path = path.each_filename.to_a
+      path = Pathname.new(file)
+
+      return adapter.file_to_namespace[file] = NO_NAMESPACE if path.extname != ".pp"
+
+      path = path.expand_path
+
+      return adapter.file_to_namespace[file] = NO_NAMESPACE if initial_manifest?(path, env.manifest)
+
+      #All auto-loaded files from modules come from a module search path dir
+      relative_path = get_module_relative_path(path, env.full_modulepath)
+
+      return adapter.file_to_namespace[file] = NO_NAMESPACE if relative_path == NO_PATH
+
+      #If a file comes from a module, but isn't in the right place, always error
+      names = dir_to_names(relative_path)
+
+      return adapter.file_to_namespace[file] = (names == BAD_MODULE_FILE ? BAD_MODULE_FILE : names.join("::").freeze)
+    end
+  end
+
+  def initial_manifest?(path, manifest_setting)
+    return false if manifest_setting.nil? || manifest_setting == :no_manifest
+
+    string_path = path.to_s
+
+    string_path == manifest_setting || string_path.start_with?(manifest_setting)
+  end
+
+  def get_module_relative_path(file_path, modulepath_directories)
+    clean_file = file_path.cleanpath
+    parent_path = modulepath_directories.find { |path_dir| is_parent_dir_of(path_dir, clean_file) }
+    return NO_PATH if parent_path.nil?
+
+    file_path.relative_path_from(Pathname.new(parent_path))
+  end
+
+  def is_parent_dir_of(parent_dir, child_dir)
+    parent_dir_path = Pathname.new(parent_dir)
+    clean_parent = parent_dir_path.cleanpath
+
+    return child_dir.to_s.start_with?(clean_parent.to_s)
+  end
+
+  def dir_to_names(relative_path)
+    # Downcasing here because check is case-insensitive
+    path_components = relative_path.to_s.downcase.split(File::SEPARATOR)
 
     # Example definition dir: manifests in this path:
-    # <modules dir>/<module name>/manifests/<module subdir>/<classfile>.pp
-    definition_dir_index = find_module_definition_dir(path)
+    # <module name>/manifests/<module subdir>/<classfile>.pp
+    dir = path_components[1]
 
     # How can we get this result?
     # If it is not an initial manifest, it must come from a module,
     # and from the manifests dir there.  This may never get used...
-    return NEVER_MATCH if definition_dir_index.nil? || definition_dir_index == 0
+    return BAD_MODULE_FILE unless dir == 'manifests' || dir == 'functions' || dir == 'types' || dir == 'plans'
 
-    before_definition_dir = definition_dir_index - 1
-    after_definition_dir = definition_dir_index + 1
-    names = path[after_definition_dir .. -2] # Directories inside module
-    names.unshift(path[before_definition_dir]) # Name of the module itself
+    names = path_components[2 .. -2] # Directories inside module
+    names.unshift(path_components[0]) # Name of the module itself
+
     # Do not include name of module init file at top level of module
-    filename = path[-1]
-    if !(path.length == (after_definition_dir+1) && filename == 'init.pp')
+    # e.g. <module name>/manifests/init.pp
+    filename = path_components[-1]
+    if !(path_components.length == 3 && filename == 'init.pp')
       names.push(filename[0 .. -4]) # Remove .pp from filename
     end
 
-    names.join("::").freeze
-  end
-
-  def initial_manifest?(path)
-    manifest_setting = Puppet[:manifest]
-
-    # Does this ever happen outside of tests?
-    if manifest_setting.nil?
-      return path.basename.to_s == 'site.pp'
-    end
-
-    full_path = path.expand_path.to_s
-    full_path == manifest_setting || full_path.start_with?(manifest_setting)
-  end
-
-  # Returns module root directory index in path for files under 'manifests',
-  # 'functions', 'types' and 'plans'
-  def find_module_definition_dir(path)
-    reverse_index = path.reverse_each.find_index do |dir|
-      dir == 'manifests' || dir == 'functions' || dir == 'types' || dir == 'plans'
-    end
-    return reverse_index.nil? ? nil : (path.length - 1) - reverse_index
+    names
   end
 
   RESERVED_PARAMETERS = {

@@ -31,7 +31,7 @@ module Puppet
       * Fully qualified paths to locally available files (including files on NFS
       shares or Windows mapped drives).
       * `file:` URIs, which behave the same as local file paths.
-      * `http:` URIs, which point to files served by common web servers
+      * `http:` URIs, which point to files served by common web servers.
 
       The normal form of a `puppet:` URI is:
 
@@ -47,10 +47,14 @@ module Puppet
       a source directory contains symlinks, use the `links` attribute to
       specify whether to recreate links or follow them.
 
-      *HTTP* URIs cannot be used to recursively synchronize whole directory
-      trees. It is also not possible to use `source_permissions` values other
-      than `ignore`. That's because HTTP servers do not transfer any metadata
-      that translates to ownership or permission details.
+      _HTTP_ URIs cannot be used to recursively synchronize whole directory
+      trees. You cannot use `source_permissions` values other than `ignore`
+      because HTTP servers do not transfer any metadata that translates to
+      ownership or permission details.
+
+      The `http` source uses the server `Content-MD5` header as a checksum to
+      determine if the remote file has changed. If the server response does not
+      include that header, Puppet defaults to using the `Last-Modified` header.
 
       Multiple `source` values can be specified as an array, and Puppet will
       use the first source that exists. This can be used to serve different
@@ -152,7 +156,7 @@ module Puppet
         next if metadata_method == :group and !Puppet.features.root?
 
         case resource[:source_permissions]
-        when :ignore
+        when :ignore, nil
           next
         when :use_when_creating
           next if Puppet::FileSystem.exist?(resource[:path])
@@ -352,5 +356,14 @@ module Puppet
 
     defaultto :ignore
     newvalues(:use, :use_when_creating, :ignore)
+     munge do |value|
+      value = value ? value.to_sym : :ignore
+      if @resource.file && @resource.line && value != :ignore
+        #TRANSLATORS "source_permissions" is a parameter name and should not be translated
+        Puppet.puppet_deprecation_warning(_("The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`."), file: @resource.file, line: @resource.line)
+      end
+
+      value
+     end
   end
 end
