@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.3-546-g40869c3\n"
+"Project-Id-Version: Puppet automation framework 5.5.3-552-g4d71626\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-08-23 16:19+0000\n"
-"PO-Revision-Date: 2018-08-23 16:19+0000\n"
+"POT-Creation-Date: 2018-08-23 16:48+0000\n"
+"PO-Revision-Date: 2018-08-23 16:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -4662,11 +4662,11 @@ msgid "Cannot use an unspecific Resource['class'] where a Resource['class', name
 msgstr ""
 
 #. TRANSLATORS "main" is a function name and should not be translated
-#: ../lib/puppet/parser/script_compiler.rb:45
+#: ../lib/puppet/parser/script_compiler.rb:46
 msgid "Script: Evaluated main"
 msgstr ""
 
-#: ../lib/puppet/parser/script_compiler.rb:107
+#: ../lib/puppet/parser/script_compiler.rb:108
 msgid "having multiple named scopes is not supported when scripting"
 msgstr ""
 
@@ -4832,7 +4832,7 @@ msgstr ""
 msgid "Unknown function '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/functions/dispatch.rb:85
+#: ../lib/puppet/pops/functions/dispatch.rb:89
 msgid "Unknown injection %{injection_name}"
 msgstr ""
 
@@ -9644,75 +9644,81 @@ msgstr ""
 msgid "Failed to unload user profile %{user}"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:111
+#: ../lib/puppet_pal.rb:112
 msgid "The argument 'puppet_code' must be a String, got %{type}"
 msgstr ""
 
 #. TRANSLATORS, the 'ast' is the name of a parameter, do not translate
-#: ../lib/puppet_pal.rb:153
+#: ../lib/puppet_pal.rb:154
 msgid "The given 'ast' does not represent a literal value"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:165
+#: ../lib/puppet_pal.rb:166
 msgid "The argument 'code_string' must be a String, got %{type}"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:178
+#: ../lib/puppet_pal.rb:179
 msgid "The argument 'file' must be a String, got %{type}"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:215
+#: ../lib/puppet_pal.rb:216
 msgid "Given data_type value is not a data type, got '%{type}'"
 msgstr ""
 
+#. TRANSLATORS 'type' and 'title' are internal parameter names - do not translate
+#: ../lib/puppet_pal.rb:401
+msgid "Both type and title must be given"
+msgstr ""
+
 #. TRANSLATORS: do not translate the variable names in this error message
-#: ../lib/puppet_pal.rb:518
+#. TRANSLATORS: do not translate the variable names in this error message
+#: ../lib/puppet_pal.rb:632 ../lib/puppet_pal.rb:725
 msgid "manifest_file or code_string cannot be given when configured_by_env is true"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:583
+#: ../lib/puppet_pal.rb:765
 msgid "temporary environment name"
 msgstr ""
 
 #. TRANSLATORS: do not translate variable name string in these assertions
-#: ../lib/puppet_pal.rb:588
+#: ../lib/puppet_pal.rb:770
 msgid "A block must be given to 'in_tmp_environment'"
 msgstr ""
 
 #. TRANSLATORS terms in the assertions below are names of terms in code
-#: ../lib/puppet_pal.rb:642
+#: ../lib/puppet_pal.rb:824
 msgid "A block must be given to 'in_environment'"
 msgstr ""
 
 #. TRANSLATORS 'in_environment' is a name, do not translate
-#: ../lib/puppet_pal.rb:647
+#: ../lib/puppet_pal.rb:829
 msgid "The environment directory '%{env_dir}' does not exist"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:670
+#: ../lib/puppet_pal.rb:852
 msgid "No directory found for the environment '%{env_name}' on the path '%{envpath}'"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:724
+#: ../lib/puppet_pal.rb:906
 msgid "Given variables must be a hash, got %{type}"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:730
+#: ../lib/puppet_pal.rb:912
 msgid "Given variable '%{varname}' has illegal name"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:734
+#: ../lib/puppet_pal.rb:916
 msgid "Given value for '%{varname}' has illegal type - got: %{type}"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:852
+#: ../lib/puppet_pal.rb:1056
 msgid "Puppet Pal: %{what}"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:866
+#: ../lib/puppet_pal.rb:1070
 msgid "Cannot use '%{a_term}' and '%{b_term}' at the same time"
 msgstr ""
 
-#: ../lib/puppet_pal.rb:873
+#: ../lib/puppet_pal.rb:1077
 msgid "A block must be given"
 msgstr ""
