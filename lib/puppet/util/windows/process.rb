@@ -8,8 +8,21 @@ module Puppet::Util::Windows::Process
 
   WAIT_TIMEOUT = 0x102
 
+  ERROR_DIRECTORY = 0x10B
   def execute(command, arguments, stdin, stdout, stderr)
-    Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr}, :close_handles => false )
+    args = {
+      :command_line => command,
+      :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr},
+      :close_handles => false
+    }
+    args[:cwd] = arguments[:cwd] if arguments[:cwd]
+
+    begin
+      Process.create(args)
+    rescue SystemCallError => e
+      raise e unless e.errno == ERROR_DIRECTORY && args[:cwd]
+      raise ArgumentError, _("Working directory %{cwd} does not exist!") % { cwd: args[:cwd] }
+    end
   end
   module_function :execute
 

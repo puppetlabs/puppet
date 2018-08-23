@@ -81,7 +81,7 @@ describe Puppet::Util::Execution do
 
       it "should fork a child process to execute the command" do
         Kernel.expects(:fork).returns(pid).yields
-        Kernel.expects(:exec).with('test command')
+        Kernel.expects(:exec).with('test command', instance_of(Hash))
 
         call_exec_posix('test command', {}, @stdin, @stdout, @stderr)
       end
@@ -100,7 +100,7 @@ describe Puppet::Util::Execution do
       end
 
       it "should exit failure if there is a problem execing the command" do
-        Kernel.expects(:exec).with('test command').raises("failed to execute!")
+        Kernel.expects(:exec).with('test command', instance_of(Hash)).raises("failed to execute!")
         Puppet::Util::Execution.stubs(:puts)
         Puppet::Util::Execution.expects(:exit!).with(1)
 
@@ -108,15 +108,37 @@ describe Puppet::Util::Execution do
       end
 
       it "should properly execute commands specified as arrays" do
-        Kernel.expects(:exec).with('test command', 'with', 'arguments')
+        Kernel.expects(:exec).with('test command', 'with', 'arguments', instance_of(Hash))
 
         call_exec_posix(['test command', 'with', 'arguments'], {:uid => 50, :gid => 55}, @stdin, @stdout, @stderr)
       end
 
       it "should properly execute string commands with embedded newlines" do
-        Kernel.expects(:exec).with("/bin/echo 'foo' ; \n /bin/echo 'bar' ;")
+        Kernel.expects(:exec).with("/bin/echo 'foo' ; \n /bin/echo 'bar' ;", instance_of(Hash))
 
         call_exec_posix("/bin/echo 'foo' ; \n /bin/echo 'bar' ;", {:uid => 50, :gid => 55}, @stdin, @stdout, @stderr)
+      end
+
+      context 'cwd option' do
+        let(:cwd) { 'cwd' }
+
+        it 'should raise an ArgumentError if the specified working directory does not exist' do
+          File.expects(:directory?).with(cwd).returns(false)
+
+          expect {
+            call_exec_posix('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
+          }.to raise_error do |error|
+            expect(error).to be_a(ArgumentError)
+            expect(error.message).to match(cwd)
+          end
+        end
+
+        it 'should run the command in the specified working directory' do
+          File.expects(:directory?).with(cwd).returns(true)
+          Kernel.expects(:exec).with('test command', has_entries(:chdir => cwd))
+
+          call_exec_posix('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
+        end
       end
 
       it "should return the pid of the child process" do
@@ -142,6 +164,51 @@ describe Puppet::Util::Execution do
         ).returns(proc_info_stub)
 
         call_exec_windows('test command', {}, @stdin, @stdout, @stderr)
+      end
+
+      context 'cwd option' do
+        let(:cwd) { 'cwd' }
+        it "should execute the command in the specified working directory" do
+          Process.expects(:create).with(
+            has_entries(
+              :command_line => "test command",
+              :cwd => cwd
+            )
+          )
+  
+          call_exec_windows('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
+        end
+  
+        it "should raise an ArgumentError if Process.create errors with ERROR_DIRECTORY" do
+          Process.expects(:create).with(has_entries(:cwd => cwd)).raises(
+            SystemCallError.new('', Puppet::Util::Windows::Process::ERROR_DIRECTORY)
+          )
+  
+          expect do
+            call_exec_windows('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
+          end.to raise_error do |error|
+            expect(error).to be_a(ArgumentError)
+  
+            expect(error.message).to match(cwd)
+          end
+        end
+
+        it "should raise a SystemCallError if Process.create errors with any other error code" do
+          # 0x5 == AccessDenied
+          errno = 0x5
+
+          Process.expects(:create).with(has_entries(:cwd => cwd)).raises(
+            SystemCallError.new('', errno)
+          )
+  
+          expect do
+            call_exec_windows('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
+          end.to raise_error do |error|
+            expect(error).to be_a(SystemCallError)
+  
+            expect(error.errno).to eql(errno)
+          end
+        end
       end
 
       it "should return the process info of the child process" do
@@ -216,6 +283,23 @@ describe Puppet::Util::Execution do
             end.returns(rval)
 
             Puppet::Util::Execution.execute('test command', :squelch => true)
+          end
+        end
+
+        describe "cwd option" do
+          def expect_cwd_to_be(cwd)
+            Puppet::Util::Execution.expects(executor).with(
+              anything,
+              has_entries(:cwd => cwd),
+              anything,
+              anything,
+              anything
+            ).returns(rval)
+          end
+
+          it "should set the cwd to the user-specified one" do
+            expect_cwd_to_be('cwd')
+            Puppet::Util::Execution.execute('test command', cwd: 'cwd')
           end
         end
 
