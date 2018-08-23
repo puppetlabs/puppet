@@ -87,7 +87,7 @@ In order to handle agent requests at a given hostname (like "puppet\.example\.co
 On the server: Stop Puppet Server\.
 .
 .IP "\(bu" 4
-On the CA server: Revoke and clean the server\'s old certificate\. (\fBpuppet cert clean <NAME>\fR)
+On the CA server: Revoke and clean the server\'s old certificate\. (\fBpuppet cert clean <NAME>\fR) (Note \fBpuppet cert clean\fR is deprecated and will be replaced with \fBpuppetserver ca clean\fR in Puppet 6\.)
 .
 .IP "\(bu" 4
 On the server: Delete the old certificate (and any old certificate signing requests) from the ssldir \fIhttps://puppet\.com/docs/puppet/latest/dirs_ssldir\.html\fR\.
@@ -96,7 +96,7 @@ On the server: Delete the old certificate (and any old certificate signing reque
 On the server: Run \fBpuppet agent \-t \-\-ca_server <CA HOSTNAME>\fR to request a new certificate
 .
 .IP "\(bu" 4
-On the CA server: Sign the certificate request, explicitly allowing alternate names (\fBpuppet cert sign \-\-allow\-dns\-alt\-names <NAME>\fR)\.
+On the CA server: Sign the certificate request, explicitly allowing alternate names (\fBpuppet cert sign \-\-allow\-dns\-alt\-names <NAME>\fR)\. (Note \fBpuppet cert sign\fR is deprecated and will be replaced with \fBpuppetserver ca sign\fR in Puppet 6\.)
 .
 .IP "\(bu" 4
 On the server: Run \fBpuppet agent \-t \-\-ca_server <CA HOSTNAME>\fR to retrieve the cert\.
