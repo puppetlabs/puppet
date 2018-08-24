@@ -132,8 +132,6 @@ class Puppet::SSL::CertificateAuthority
 
   # Generate our CA certificate.
   def generate_ca_certificate
-    generate_password unless password?
-
     host.generate_key unless host.key
 
     # Create a new cert request.  We do this specially, because we don't want
@@ -157,7 +155,7 @@ class Puppet::SSL::CertificateAuthority
 
     @name = Puppet[:certname]
 
-    @host = Puppet::SSL::Host.new(Puppet::SSL::Host.ca_name)
+    @host = Puppet::SSL::Host.new(Puppet::SSL::CA_NAME)
 
     setup
   end
@@ -165,23 +163,6 @@ class Puppet::SSL::CertificateAuthority
   # Retrieve (or create, if necessary) our inventory manager.
   def inventory
     @inventory ||= Puppet::SSL::Inventory.new
-  end
-
-  # Generate a new password for the CA.
-  def generate_password
-    pass = ""
-    20.times { pass += (rand(74) + 48).chr }
-
-    begin
-      # random password is limited to ASCII characters 48 ('0') through 122 ('z')
-      Puppet.settings.setting(:capass).open('w:ASCII') { |f| f.print pass }
-    rescue Errno::EACCES => detail
-      raise Puppet::Error, _("Could not write CA password: %{detail}") % { detail: detail }, detail.backtrace
-    end
-
-    @password = pass
-
-    pass
   end
 
   # Lists the names of all signed certificates.
@@ -392,7 +373,7 @@ class Puppet::SSL::CertificateAuthority
   # @return [OpenSSL::X509::Store]
   def create_x509_store(purpose)
     store = OpenSSL::X509::Store.new
-    store.add_file(Puppet[:cacert])
+    store.add_file(Puppet[:localcacert])
     store.add_crl(crl.content) if self.crl
     store.purpose = purpose
     if Puppet.settings[:certificate_revocation]

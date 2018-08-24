@@ -31,7 +31,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
   after do
     # Cleaned out any cached localhost instance.
     Puppet::SSL::Host.reset
-    Puppet::SSL::Host.ca_location = :none
   end
 
   it "should use any provided name as its name" do
@@ -48,59 +47,44 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     expect(@host.public_key).to equal(pubkey)
   end
 
-  it "should default to being a non-ca host" do
-    expect(@host.ca?).to be_falsey
-  end
+  describe 'localhost' do
+    before(:each) do
+      Puppet::SSL::Host.any_instance.stubs(:certificate).returns nil
+      Puppet::SSL::Host.any_instance.stubs(:generate)
+    end
 
-  it "should be a ca host if its name matches the CA_NAME" do
-    Puppet::SSL::Host.stubs(:ca_name).returns "yayca"
-    expect(Puppet::SSL::Host.new("yayca")).to be_ca
-  end
+    it "should have a method for producing an instance to manage the local host's keys" do
+      expect(Puppet::SSL::Host).to respond_to(:localhost)
+    end
 
-  it "should have a method for determining the CA location" do
-    expect(Puppet::SSL::Host).to respond_to(:ca_location)
-  end
+    it "should allow to reset localhost" do
+      previous_host = Puppet::SSL::Host.localhost
+      Puppet::SSL::Host.reset
+      expect(Puppet::SSL::Host.localhost).not_to eq(previous_host)
+    end
 
-  it "should have a method for specifying the CA location" do
-    expect(Puppet::SSL::Host).to respond_to(:ca_location=)
-  end
+    it "should generate the certificate for the localhost instance if no certificate is available" do
+      host = stub 'host', :key => nil
+      Puppet::SSL::Host.expects(:new).returns host
+      host.expects(:certificate).returns nil
+      host.expects(:generate)
+      expect(Puppet::SSL::Host.localhost).to equal(host)
+    end
 
-  it "should have a method for retrieving the default ssl host" do
-    expect(Puppet::SSL::Host).to respond_to(:ca_location=)
-  end
+    it "should always read the key for the localhost instance in from disk" do
+      host = stub 'host', :certificate => "eh"
+      Puppet::SSL::Host.expects(:new).returns host
 
-  it "should have a method for producing an instance to manage the local host's keys" do
-    expect(Puppet::SSL::Host).to respond_to(:localhost)
-  end
+      host.expects(:key)
 
-  it "should allow to reset localhost" do
-    previous_host = Puppet::SSL::Host.localhost
-    Puppet::SSL::Host.reset
-    expect(Puppet::SSL::Host.localhost).not_to eq(previous_host)
-  end
+      Puppet::SSL::Host.localhost
+    end
 
-  it "should generate the certificate for the localhost instance if no certificate is available" do
-    host = stub 'host', :key => nil
-    Puppet::SSL::Host.expects(:new).returns host
-
-    host.expects(:certificate).returns nil
-    host.expects(:generate)
-
-    expect(Puppet::SSL::Host.localhost).to equal(host)
-  end
-
-  it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using DNS alt names", :unless => Puppet.features.microsoft_windows? do
-    Puppet[:autosign] = true
-    Puppet[:confdir] = tmpdir('conf')
-    Puppet[:dns_alt_names] = "foo,bar,baz"
-    ca = Puppet::SSL::CertificateAuthority.new
-    Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
-
-    localhost = Puppet::SSL::Host.localhost
-    cert = localhost.certificate
-
-    expect(cert).to be_a(Puppet::SSL::Certificate)
-    expect(cert.subject_alt_names).to match_array(%W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz])
+    it "should cache the localhost instance" do
+      host = stub 'host', :certificate => "eh", :key => 'foo'
+      Puppet::SSL::Host.expects(:new).once.returns host
+      expect(Puppet::SSL::Host.localhost).to eq(Puppet::SSL::Host.localhost)
+    end
   end
 
   context "with dns_alt_names" do
@@ -112,6 +96,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
       @cr = stub('certificate request', :render => "csr pem")
       Puppet::SSL::CertificateRequest.stubs(:new).returns @cr
+      Puppet::SSL::Host.any_instance.stubs(:submit_certificate_request)
     end
 
     describe "explicitly specified" do
@@ -122,76 +107,15 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       it "should not include subjectAltName if not the local node" do
         @cr.expects(:generate).with(@key, {})
 
-        Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
+        Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate_certificate_request
       end
 
-      it "should include subjectAltName if I am a CA" do
-        @cr.expects(:generate).
-          with(@key, { :dns_alt_names => Puppet[:dns_alt_names] })
+      it "should include subjectAltName if the local node" do
+        @cr.expects(:generate).with(@key, { :dns_alt_names => 'one, two' })
 
-        Puppet::SSL::Host.localhost
-      end
-    end
-
-    describe "implicitly defaulted" do
-      let(:ca) { stub('ca', :sign => nil) }
-
-      before :each do
-        Puppet[:dns_alt_names] = ''
-
-        Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
-      end
-
-      it "should not include defaults if we're not the CA" do
-        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns false
-
-        @cr.expects(:generate).with(@key, {})
-
-        Puppet::SSL::Host.localhost
-      end
-
-      it "should not include defaults if not the local node" do
-        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
-
-        @cr.expects(:generate).with(@key, {})
-
-        Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
-      end
-
-      it "should not include defaults if we can't resolve our fqdn" do
-        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
-        Facter.stubs(:value).with(:fqdn).returns nil
-
-        @cr.expects(:generate).with(@key, {})
-
-        Puppet::SSL::Host.localhost
-      end
-
-      it "should provide defaults if we're bootstrapping the local master" do
-        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
-        Facter.stubs(:value).with(:fqdn).returns 'web.foo.com'
-        Facter.stubs(:value).with(:domain).returns 'foo.com'
-
-        @cr.expects(:generate).with(@key, {:dns_alt_names => "puppet, web.foo.com, puppet.foo.com"})
-
-        Puppet::SSL::Host.localhost
+        Puppet::SSL::Host.new(Puppet[:certname]).generate_certificate_request
       end
     end
-  end
-
-  it "should always read the key for the localhost instance in from disk" do
-    host = stub 'host', :certificate => "eh"
-    Puppet::SSL::Host.expects(:new).returns host
-
-    host.expects(:key)
-
-    Puppet::SSL::Host.localhost
-  end
-
-  it "should cache the localhost instance" do
-    host = stub 'host', :certificate => "eh", :key => 'foo'
-    Puppet::SSL::Host.expects(:new).once.returns host
-    expect(Puppet::SSL::Host.localhost).to eq(Puppet::SSL::Host.localhost)
   end
 
   it "should be able to verify its certificate matches its key" do
@@ -235,114 +159,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     expect{ host.validate_certificate_with_key }.not_to raise_error
   end
 
-  describe "when specifying the CA location" do
-    it "should support the location ':local'" do
-      expect { Puppet::SSL::Host.ca_location = :local }.not_to raise_error
-    end
-
-    it "should support the location ':remote'" do
-      expect { Puppet::SSL::Host.ca_location = :remote }.not_to raise_error
-    end
-
-    it "should support the location ':none'" do
-      expect { Puppet::SSL::Host.ca_location = :none }.not_to raise_error
-    end
-
-    it "should support the location ':only'" do
-      expect { Puppet::SSL::Host.ca_location = :only }.not_to raise_error
-    end
-
-    it "should not support other modes" do
-      expect { Puppet::SSL::Host.ca_location = :whatever }.to raise_error(ArgumentError)
-    end
-
-    describe "as 'local'" do
-      before do
-        Puppet::SSL::Host.ca_location = :local
-      end
-
-      it "should set the cache class for Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        expect(Puppet::SSL::Certificate.indirection.cache_class).to eq(:file)
-        expect(Puppet::SSL::CertificateRequest.indirection.cache_class).to eq(:file)
-        expect(Puppet::SSL::CertificateRevocationList.indirection.cache_class).to eq(:file)
-      end
-
-      it "should set the terminus class for Key and Host as :file" do
-        expect(Puppet::SSL::Key.indirection.terminus_class).to eq(:file)
-        expect(Puppet::SSL::Host.indirection.terminus_class).to eq(:file)
-      end
-
-      it "should set the terminus class for Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
-        expect(Puppet::SSL::Certificate.indirection.terminus_class).to eq(:ca)
-        expect(Puppet::SSL::CertificateRequest.indirection.terminus_class).to eq(:ca)
-        expect(Puppet::SSL::CertificateRevocationList.indirection.terminus_class).to eq(:ca)
-      end
-    end
-
-    describe "as 'remote'" do
-      before do
-        Puppet::SSL::Host.ca_location = :remote
-      end
-
-      it "should set the cache class for Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        expect(Puppet::SSL::Certificate.indirection.cache_class).to eq(:file)
-        expect(Puppet::SSL::CertificateRequest.indirection.cache_class).to eq(:file)
-        expect(Puppet::SSL::CertificateRevocationList.indirection.cache_class).to eq(:file)
-      end
-
-      it "should set the terminus class for Key as :file" do
-        expect(Puppet::SSL::Key.indirection.terminus_class).to eq(:file)
-      end
-
-      it "should set the terminus class for Host, Certificate, CertificateRevocationList, and CertificateRequest as :rest" do
-        expect(Puppet::SSL::Host.indirection.terminus_class).to eq(:rest)
-        expect(Puppet::SSL::Certificate.indirection.terminus_class).to eq(:rest)
-        expect(Puppet::SSL::CertificateRequest.indirection.terminus_class).to eq(:rest)
-        expect(Puppet::SSL::CertificateRevocationList.indirection.terminus_class).to eq(:rest)
-      end
-    end
-
-    describe "as 'only'" do
-      before do
-        Puppet::SSL::Host.ca_location = :only
-      end
-
-      it "should set the terminus class for Key, Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
-        expect(Puppet::SSL::Key.indirection.terminus_class).to eq(:ca)
-        expect(Puppet::SSL::Certificate.indirection.terminus_class).to eq(:ca)
-        expect(Puppet::SSL::CertificateRequest.indirection.terminus_class).to eq(:ca)
-        expect(Puppet::SSL::CertificateRevocationList.indirection.terminus_class).to eq(:ca)
-      end
-
-      it "should set the cache class for Certificate, CertificateRevocationList, and CertificateRequest to nil" do
-        expect(Puppet::SSL::Certificate.indirection.cache_class).to be_nil
-        expect(Puppet::SSL::CertificateRequest.indirection.cache_class).to be_nil
-        expect(Puppet::SSL::CertificateRevocationList.indirection.cache_class).to be_nil
-      end
-
-      it "should set the terminus class for Host to :file" do
-        expect(Puppet::SSL::Host.indirection.terminus_class).to eq(:file)
-      end
-    end
-
-    describe "as 'none'" do
-      before do
-        Puppet::SSL::Host.ca_location = :none
-      end
-
-      it "should set the terminus class for Key, Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        expect(Puppet::SSL::Key.indirection.terminus_class).to eq(:disabled_ca)
-        expect(Puppet::SSL::Certificate.indirection.terminus_class).to eq(:disabled_ca)
-        expect(Puppet::SSL::CertificateRequest.indirection.terminus_class).to eq(:disabled_ca)
-        expect(Puppet::SSL::CertificateRevocationList.indirection.terminus_class).to eq(:disabled_ca)
-      end
-
-      it "should set the terminus class for Host to 'none'" do
-        expect { Puppet::SSL::Host.indirection.terminus_class }.to raise_error(Puppet::DevError)
-      end
-    end
-  end
-
   it "should have a class method for destroying all files related to a given host" do
     expect(Puppet::SSL::Host).to respond_to(:destroy)
   end
@@ -382,11 +198,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
     it "should downcase a passed in name" do
       expect(Puppet::SSL::Host.new("Host.Domain.Com").name).to eq("host.domain.com")
-    end
-
-    it "should indicate that it is a CA host if its name matches the ca_name constant" do
-      Puppet::SSL::Host.stubs(:ca_name).returns "myca"
-      expect(Puppet::SSL::Host.new("myca")).to be_ca
     end
   end
 
@@ -449,19 +260,19 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       @host.expects(:key).times(2).returns(nil).then.returns(key)
       @host.expects(:generate_key).returns(key)
 
+      @host.stubs(:submit_certificate_request)
+
       @host.generate_certificate_request
-      expect(Puppet::FileSystem.exist?(File.join(Puppet[:requestdir], "#{@host.name}.pem"))).to be true
     end
 
     it "should be able to generate and save a new request using the private key" do
       @host.stubs(:key).returns(key)
+      @host.stubs(:submit_certificate_request)
 
       expect(@host.generate_certificate_request).to be_truthy
-      expect(Puppet::FileSystem.exist?(File.join(Puppet[:requestdir], "#{@host.name}.pem"))).to be true
     end
 
     it "should send a new request to the CA for signing" do
-      Puppet::SSL::Host.ca_location = :remote
       @http = mock("http")
       @host.stubs(:http_client).returns(@http)
       @host.stubs(:ssl_store).returns(mock("ssl store"))
@@ -488,7 +299,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
     it "should not keep its certificate request in memory if the request cannot be saved" do
       @host.stubs(:key).returns(key)
-      Puppet::Util.expects(:replace_file).raises(RuntimeError)
+      @host.expects(:submit_certificate_request).raises(RuntimeError)
 
       expect { @host.generate_certificate_request }.to raise_error(RuntimeError)
 
@@ -502,7 +313,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     end
 
     before(:each) do
-      Puppet::SSL::Host.ca_location = :remote
       Puppet[:certdir] = tmpdir('certs')
       @host.stubs(:key).returns mock("key")
       @host.stubs(:validate_certificate_with_key)
@@ -525,17 +335,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       @host.certificate
       actual_ca_bundle = Puppet::FileSystem.read(Puppet[:localcacert])
       expect(actual_ca_bundle).to match(/BEGIN CERTIFICATE.*END CERTIFICATE.*BEGIN CERTIFICATE/m)
-    end
-
-    it "should not find the CA certificate if it is the CA host" do
-      Puppet::Rest::Routes.expects(:get_certificate)
-                          .with(@http, @host.name)
-                          .raises(Puppet::Rest::ResponseError.new('no client cert',
-                                                                  mock('response', status_code: 404)))
-      @host.expects(:ca?).returns true
-      @host.expects(:ensure_ca_certificate).never
-
-      @host.certificate
     end
 
     it "should return nil if it cannot find a CA certificate" do
@@ -686,6 +485,8 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       @host = Puppet::SSL::Host.new("me")
       @host.stubs(:generate_key)
       @host.stubs(:generate_certificate_request)
+      @host.stubs(:certificate_request)
+      @host.stubs(:certificate)
     end
 
     it "should generate a key if one is not present" do
@@ -702,31 +503,10 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       @host.generate
     end
 
-    describe "and it can create a certificate authority" do
-      before do
-        @ca = mock 'ca'
-        Puppet::SSL::CertificateAuthority.stubs(:instance).returns @ca
-      end
+    it "should seek its certificate" do
+      @host.expects(:certificate)
 
-      it "should use the CA to sign its certificate request if it does not have a certificate" do
-        @host.expects(:certificate).returns nil
-
-        @ca.expects(:sign).with(@host.name, {allow_dns_alt_names: true})
-
-        @host.generate
-      end
-    end
-
-    describe "and it cannot create a certificate authority" do
-      before do
-        Puppet::SSL::CertificateAuthority.stubs(:instance).returns nil
-      end
-
-      it "should seek its certificate" do
-        @host.expects(:certificate)
-
-        @host.generate
-      end
+      @host.generate
     end
   end
 
@@ -929,17 +709,15 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     before do
       Puppet[:vardir] = tmpdir("ssl_test_vardir")
       Puppet[:ssldir] = tmpdir("ssl_test_ssldir")
-      # localcacert is where each client stores the CA certificate
-      # cacert is where the master stores the CA certificate
-      # Since we need to play the role of both for testing we need them to be the same and exist
-      Puppet[:cacert] = Puppet[:localcacert]
-
-      @ca=Puppet::SSL::CertificateAuthority.new
     end
 
     describe "when converting to JSON" do
       let(:host) do
         Puppet::SSL::Host.new("bazinga")
+      end
+
+      before do
+        host.stubs(:submit_certificate_request)
       end
 
       let(:json_hash) do
