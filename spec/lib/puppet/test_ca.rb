@@ -2,6 +2,7 @@ module Puppet
   class TestCa
 
     CERT_VALID_FROM = (Time.now - (60*60*24)).freeze
+    CERT_VALID_UNTIL = (Time.now + 600)
 
     CA_EXTENSIONS = [
       ["basicConstraints", "CA:TRUE", true],
@@ -14,7 +15,8 @@ module Puppet
     def initialize
       @digest = OpenSSL::Digest::SHA256.new
       @key = OpenSSL::PKey::RSA.new(1024)
-      @ca_cert = self_signed_ca(key)
+      @ca_cert = self_signed_ca
+      @ca_crl = create_crl
     end
 
     def sign(csr)
@@ -25,14 +27,20 @@ module Puppet
       cert.version = 2
       cert.serial = 1
       cert.not_before = CERT_VALID_FROM
-      cert.not_after = Time.now + 600
+      cert.not_after =  CERT_VALID_UNTIL
 
       cert.sign(@key, @digest)
-      cert
+      Puppet::SSL::Certificate.from_instance(cert)
     end
 
     def revoke(cert)
-
+      revoked = OpenSSL::X509::Revoked.new
+      revoked.serial = cert.serial
+      revoked.time = Time.now
+      enum = OpenSSL::ASN1::Enumerated(OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
+      ext = OpenSSL::X509::Extension.new("CRLReason", enum)
+      revoked.add_extensions(ext)
+      @crl.add_revoked(revoked)
     end
 
     private
@@ -47,7 +55,7 @@ module Puppet
       cert.serial = 1
 
       cert.not_before = CERT_VALID_FROM
-      cert.not_after  = valid_until
+      cert.not_after  = CERT_VALID_UNTIL
 
       ef = extension_factory_for(cert, cert)
       CA_EXTENSIONS.each do |ext|
@@ -65,17 +73,25 @@ module Puppet
       crl.version = 1
       crl.issuer = @ca_cert.subject
 
-      ef = extension_factory_for(ca_cert)
+      ef = extension_factory_for(@ca_cert)
       crl.add_extension(
         ef.create_extension(["authorityKeyIdentifier", "keyid:always", false]))
       crl.add_extension(
         OpenSSL::X509::Extension.new("crlNumber", OpenSSL::ASN1::Integer(0)))
 
       crl.last_update = CERT_VALID_FROM
-      crl.next_update = valid_until
-      crl.sign(ca_key, signing_digest)
+      crl.next_update = CERT_VALID_UNTIL
+      crl.sign(@key, @digest)
 
       crl
+    end
+
+    def extension_factory_for(ca, cert = nil)
+      ef = OpenSSL::X509::ExtensionFactory.new
+      ef.issuer_certificate  = ca
+      ef.subject_certificate = cert if cert
+
+      ef
     end
   end
 end

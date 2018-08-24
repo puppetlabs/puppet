@@ -364,6 +364,16 @@ ERROR_STRING
     end
   end
 
+  # Saves the given certificate to disc, at a location determined by this
+  # host's configuration.
+  # @param [Puppet::SSL::Certificate] cert the cert to save
+  def save_host_certificate(cert)
+    file_path = certificate_location(name)
+    Puppet::Util.replace_file(file_path, 0644) do |f|
+      f.write(cert.to_s)
+    end
+  end
+
   private
 
   # Load a previously generated CSR either from memory or from disk
@@ -596,16 +606,6 @@ ERROR_STRING
       else
         raise Puppet::Rest::ResponseError, _("Could not download host certificate: %{message}") % { message: e.message }
       end
-    end
-  end
-
-  # Saves the given certificate to disc, at a location determined by this
-  # host's configuration.
-  # @param [Puppet::SSL::Certificate] cert the cert to save
-  def save_host_certificate(cert)
-    file_path = certificate_location(name)
-    Puppet::Util.replace_file(file_path, 0644) do |f|
-      f.write(cert.to_s)
     end
   end
 

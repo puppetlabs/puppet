@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/test_ca'
 
 require 'puppet/ssl/host'
 require 'matchers/json'
@@ -794,7 +795,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
       it "should be able to identify a host with a signed certificate" do
         host.generate_certificate_request
-        @ca.sign(host.name)
+        Puppet::TestCA.new.sign(host.certificate_request)
         json_hash = {
           "fingerprint"          => Puppet::SSL::Certificate.indirection.find(host.name).fingerprint,
           "desired_state"        => 'signed',
@@ -807,9 +808,9 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
       it "should be able to identify a host with a revoked certificate" do
         host.generate_certificate_request
-        @ca.sign(host.name)
-        @ca.revoke(host.name)
-        json_hash["fingerprint"] = Puppet::SSL::Certificate.indirection.find(host.name).fingerprint
+        cert = Puppet::TestCa.new.sign(host.certificate_request.content)
+        host.save_host_certificate(cert)
+        json_hash["fingerprint"] = cert.fingerprint
         json_hash["desired_state"] = 'revoked'
 
         result = JSON.parse(Puppet::SSL::Host.new(host.name).to_json)
