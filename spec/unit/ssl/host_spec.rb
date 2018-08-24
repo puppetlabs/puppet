@@ -483,8 +483,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
         Puppet::Util.replace_file(localcacert, 0644) {|f| f.write pki[:ca_bundle] }
         Puppet::Util.replace_file(hostcrl, 0644)     {|f| f.write pki[:crl_chain] }
-
-        Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns true
       end
 
       after do

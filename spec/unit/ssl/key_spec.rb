@@ -20,22 +20,7 @@ describe Puppet::SSL::Key do
     expect(@class.supported_formats).to eq([:s])
   end
 
-  it "should have a method for determining whether it's a CA key" do
-    expect(@class.new("test")).to respond_to(:ca?)
-  end
-
-  it "should consider itself a ca key if its name matches the CA_NAME" do
-    expect(@class.new(Puppet::SSL::Host.ca_name)).to be_ca
-  end
-
   describe "when initializing" do
-    it "should set its password file to the :capass if it's a CA key" do
-      Puppet[:capass] = File.expand_path("/ca/pass")
-
-      key = Puppet::SSL::Key.new(Puppet::SSL::Host.ca_name)
-      expect(key.password_file).to eq(Puppet[:capass])
-    end
-
     it "should downcase its name" do
       expect(@class.new("MyName").name).to eq("myname")
     end

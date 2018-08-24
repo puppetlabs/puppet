@@ -2,7 +2,6 @@ require 'puppet/ssl'
 require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
-require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/ssl/certificate_request_attributes'
 require 'puppet/rest/errors'
 require 'puppet/rest/routes'
@@ -23,7 +22,6 @@ class Puppet::SSL::Host
   CA_NAME = Puppet::SSL::CA_NAME
   Certificate = Puppet::SSL::Certificate
   CertificateRequest = Puppet::SSL::CertificateRequest
-  CertificateRevocationList = Puppet::SSL::CertificateRevocationList
 
   attr_reader :name, :crl_path
   attr_accessor :ca
@@ -49,7 +47,6 @@ class Puppet::SSL::Host
   def self.configure_indirection(terminus, cache = nil)
     Certificate.indirection.terminus_class = terminus
     CertificateRequest.indirection.terminus_class = terminus
-    CertificateRevocationList.indirection.terminus_class = terminus
 
     if cache
       # This is weird; we don't actually cache our keys, we
@@ -63,7 +60,6 @@ class Puppet::SSL::Host
     if cache
       Certificate.indirection.cache_class = cache
       CertificateRequest.indirection.cache_class = cache
-      CertificateRevocationList.indirection.cache_class = cache
     else
       # Make sure we have no cache configured.  puppet master
       # switches the configurations around a bit, so it's important
@@ -71,7 +67,6 @@ class Puppet::SSL::Host
       # time.
       Certificate.indirection.cache_class = nil
       CertificateRequest.indirection.cache_class = nil
-      CertificateRevocationList.indirection.cache_class = nil
     end
   end
 
