@@ -124,7 +124,16 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def password=(value)
-    user.password = value
+    # Win32OLE's SetPassword method won't surface errors for these circumstances
+    if user.locked_out?
+      warning _("The account '%s' is locked out; refusing to reset the password." % @resource[:name])
+    elsif user.disabled?
+      warning _("The account '%s' is disabled; refusing to reset the password." % @resource[:name])
+    elsif user.expired?
+      warning _("The account '%s' is expired; refusing to reset the password." % @resource[:name])
+    else
+      user.password = value
+    end
   end
 
   def uid
