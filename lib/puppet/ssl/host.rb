@@ -1,4 +1,3 @@
-require 'puppet/indirector'
 require 'puppet/ssl'
 require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
@@ -26,12 +25,6 @@ class Puppet::SSL::Host
   CertificateRequest = Puppet::SSL::CertificateRequest
   CertificateRevocationList = Puppet::SSL::CertificateRevocationList
 
-  extend Puppet::Indirector
-  indirects :certificate_status, :terminus_class => :file, :doc => <<DOC
-    This indirection represents the host that ties a key, certificate, and certificate request together.
-    The indirection key is the certificate CN (generally a hostname).
-DOC
-
   attr_reader :name, :crl_path
   attr_accessor :ca
 
@@ -57,13 +50,6 @@ DOC
     Certificate.indirection.terminus_class = terminus
     CertificateRequest.indirection.terminus_class = terminus
     CertificateRevocationList.indirection.terminus_class = terminus
-
-    host_map = { :file => nil, :rest => :rest}
-    if term = host_map[terminus]
-      self.indirection.terminus_class = term
-    else
-      self.indirection.reset_terminus_class
-    end
 
     if cache
       # This is weird; we don't actually cache our keys, we
@@ -102,13 +88,6 @@ DOC
       instance.desired_state = data["desired_state"]
     end
     instance
-  end
-
-  # Puppet::SSL::Host is actually indirected now so the original implementation
-  # has been moved into the certificate_status indirector.  This method does not
-  # appear to be in use in `puppet cert -l`.
-  def self.search(options = {})
-    indirection.search("*", options)
   end
 
   def key
@@ -600,5 +579,3 @@ ERROR_STRING
     store
   end
 end
-
-require 'puppet/ssl/certificate_authority'

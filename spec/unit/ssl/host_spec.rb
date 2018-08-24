@@ -18,8 +18,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   before do
-    Puppet::SSL::Host.indirection.terminus_class = :file
-
     # Get a safe temporary file
     dir = tmpdir("ssl_host_testing")
     Puppet.settings[:confdir] = dir
@@ -158,36 +156,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     host.stubs(:certificate).returns certificate
     sslcert.expects(:check_private_key).with("private_key").returns true
     expect{ host.validate_certificate_with_key }.not_to raise_error
-  end
-
-  it "should have a class method for destroying all files related to a given host" do
-    expect(Puppet::SSL::Host).to respond_to(:destroy)
-  end
-
-  describe "when destroying a host's SSL files" do
-    before do
-      Puppet::SSL::Key.indirection.stubs(:destroy).returns false
-      Puppet::SSL::Certificate.indirection.stubs(:destroy).returns false
-      Puppet::SSL::CertificateRequest.indirection.stubs(:destroy).returns false
-    end
-
-    it "should destroy its certificate, certificate request, and key" do
-      Puppet::SSL::Key.indirection.expects(:destroy).with("myhost")
-      Puppet::SSL::Certificate.indirection.expects(:destroy).with("myhost")
-      Puppet::SSL::CertificateRequest.indirection.expects(:destroy).with("myhost")
-
-      Puppet::SSL::Host.destroy("myhost")
-    end
-
-    it "should return true if any of the classes returned true" do
-      Puppet::SSL::Certificate.indirection.expects(:destroy).with("myhost").returns true
-
-      expect(Puppet::SSL::Host.destroy("myhost")).to be_truthy
-    end
-
-    it "should report that nothing was deleted if none of the classes returned true" do
-      expect(Puppet::SSL::Host.destroy("myhost")).to eq("Nothing was deleted")
-    end
   end
 
   describe "when initializing" do
@@ -417,62 +385,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
           f.puts 'garbage'
         end
         expect { @host.certificate }.to raise_error(Puppet::Error, /The certificate.*invalid/)
-      end
-    end
-  end
-
-  it "should have a method for listing certificate hosts" do
-    expect(Puppet::SSL::Host).to respond_to(:search)
-  end
-
-  describe "when listing certificate hosts" do
-    it "should default to listing all clients with any file types" do
-      Puppet::SSL::Key.indirection.expects(:search).returns []
-      Puppet::SSL::Certificate.indirection.expects(:search).returns []
-      Puppet::SSL::CertificateRequest.indirection.expects(:search).returns []
-      Puppet::SSL::Host.search
-    end
-
-    it "should be able to list only clients with a key" do
-      Puppet::SSL::Key.indirection.expects(:search).returns []
-      Puppet::SSL::Certificate.indirection.expects(:search).never
-      Puppet::SSL::CertificateRequest.indirection.expects(:search).never
-      Puppet::SSL::Host.search :for => Puppet::SSL::Key
-    end
-
-    it "should be able to list only clients with a certificate" do
-      Puppet::SSL::Key.indirection.expects(:search).never
-      Puppet::SSL::Certificate.indirection.expects(:search).returns []
-      Puppet::SSL::CertificateRequest.indirection.expects(:search).never
-      Puppet::SSL::Host.search :for => Puppet::SSL::Certificate
-    end
-
-    it "should be able to list only clients with a certificate request" do
-      Puppet::SSL::Key.indirection.expects(:search).never
-      Puppet::SSL::Certificate.indirection.expects(:search).never
-      Puppet::SSL::CertificateRequest.indirection.expects(:search).returns []
-      Puppet::SSL::Host.search :for => Puppet::SSL::CertificateRequest
-    end
-
-    it "should return a Host instance created with the name of each found instance" do
-      key  = stub 'key',  :name => "key",  :to_ary => nil
-      cert = stub 'cert', :name => "cert", :to_ary => nil
-      csr  = stub 'csr',  :name => "csr",  :to_ary => nil
-
-      Puppet::SSL::Key.indirection.expects(:search).returns [key]
-      Puppet::SSL::Certificate.indirection.expects(:search).returns [cert]
-      Puppet::SSL::CertificateRequest.indirection.expects(:search).returns [csr]
-
-      returned = []
-      %w{key cert csr}.each do |name|
-        result = mock(name)
-        returned << result
-        Puppet::SSL::Host.expects(:new).with(name).returns result
-      end
-
-      result = Puppet::SSL::Host.search
-      returned.each do |r|
-        expect(result).to be_include(r)
       end
     end
   end

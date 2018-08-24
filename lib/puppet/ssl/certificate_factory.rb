@@ -47,7 +47,7 @@ module Puppet::SSL::CertificateFactory
     # clock fail, and better than having every cert we generate expire a day
     # before the user expected it to when they asked for "one year".
     cert.not_before = Time.now - (60*60*24)
-    cert.not_after  = Time.now + (ttl || Puppet[:ca_ttl])
+    cert.not_after  = Time.now + ttl
 
     add_extensions_to(cert, csr, issuer, send(build_extensions))
 
