@@ -305,7 +305,7 @@ module Runtime3Support
         return Kernel.eval('_func.call(scope, *args, &block)'.freeze, Kernel.binding, file || '', line)
       end
     end
-    # Call via 3x API if function exists there
+    # Call via 3x API if function exists there without having been autoloaded
     fail(Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
