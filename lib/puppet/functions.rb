@@ -787,9 +787,9 @@ module Puppet::Functions
         arity = -1
       end
       if arity < 0
-        from = -arity -1 # arity -1 is 0 min param, -2 is min 1 param
-        to = :default    # infinite range
-        count = -arity   # the number of named parameters
+        from = -arity - 1 # arity -1 is 0 min param, -2 is min 1 param
+        to = :default     # infinite range
+        count = -arity    # the number of named parameters
       else
         count = from = to = arity
       end
