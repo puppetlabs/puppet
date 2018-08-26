@@ -682,6 +682,16 @@ module Puppet::Functions
 
   class Function3x < InternalFunction
 
+    # Table of optimized parameter names - 0 to 5 parameters
+    PARAM_NAMES = [
+      [],
+      ['p0'.freeze].freeze,
+      ['p0'.freeze, 'p1'.freeze].freeze,
+      ['p0'.freeze, 'p1'.freeze, 'p2'.freeze].freeze,
+      ['p0'.freeze, 'p1'.freeze, 'p2'.freeze, 'p3'.freeze].freeze,
+      ['p0'.freeze, 'p1'.freeze, 'p2'.freeze, 'p3'.freeze, 'p4'.freeze].freeze,
+    ]
+
     # Creates an anonymous Function3x class that wraps a 3x function
     #
     # @api private
@@ -730,15 +740,16 @@ module Puppet::Functions
       #
       the_class.class_eval do
 
-        # Bybpasses making the  call via the dispatcher to make sure errors
-        # are reported exactly the same way. The dispatcher is still needed as it is
+        # Bypasses making the  call via the dispatcher to make sure errors
+        # are reported exactly the same way as in 3x. The dispatcher is still needed as it is
         # used to support other features than calling.
+        #
         def call(scope, *args, &block)
           begin
             result = catch(:return) do
               mapped_args = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.map_args(args, scope, '')
               # this is the scope.function_xxx(...) call
-              return convert_result(scope.send(self.class.method3x, mapped_args))
+              return scope.send(self.class.method3x, mapped_args)
             end
             return result.value
           rescue Puppet::Pops::Evaluator::Next => jumper
@@ -753,31 +764,6 @@ module Puppet::Functions
             rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
               raise Puppet::ParseError.new("return() from context where this is illegal", jumper.file, jumper.line)
             end
-          end
-        end
-      end
-
-      if func_info[:type] == :rvalue
-        the_class.class_eval do
-          def convert_result(val3x)
-            # Convert result back to 4.x by replacing :undef with nil in Array and Hash objects
-            if val3x == :undef
-              nil
-            elsif val3x.is_a?(Array)
-              val3x.map {|v| convert_result(v) }
-            elsif val3x.is_a?(Hash)
-              hsh = {}
-              val3x.each_pair {|k,v| hsh[convert_result(k)] = convert_result(v)}
-              hsh
-            else
-              val3x
-            end
-          end
-        end
-      else
-        the_class.class_eval do
-          def convert_result(val3x)
-            nil # prevent non rvalue functions from leaking garbage
           end
         end
       end
@@ -808,7 +794,9 @@ module Puppet::Functions
       else
         count = from = to = arity
       end
-      names = (0..count-1).map {|n| "p#{n}" }
+      # Names of parameters, up to 5 are optimized and use frozen version
+      # Note that (0..count-1) produces expected empty array for count == 0, 0-n for count >= 1
+      names = count <= 5 ? PARAM_NAMES[count] : (0..count-1).map {|n| "p#{n}" }
       [from, to, names]
     end
   end
