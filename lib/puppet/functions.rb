@@ -726,16 +726,37 @@ module Puppet::Functions
       # the 3.x function by calling it via the calling scope using the @method3x symbol
       # :"function_#{name}".
       #
-      # If function is not an rvalue function, make sure it produces nil
+      # When function is not an rvalue function, make sure it produces nil
       #
       the_class.class_eval do
-        def call_3x(scope, *args)
-          # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-          # NOTE: Passing an empty string last converts nil/:undef to empty string
-          mapped_args = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.map_args(args, scope, '')
-          convert_result(scope.send(self.class.method3x, mapped_args))
+
+        # Bybpasses making the  call via the dispatcher to make sure errors
+        # are reported exactly the same way. The dispatcher is still needed as it is
+        # used to support other features than calling.
+        def call(scope, *args, &block)
+          begin
+            result = catch(:return) do
+              mapped_args = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.map_args(args, scope, '')
+              # this is the scope.function_xxx(...) call
+              return convert_result(scope.send(self.class.method3x, mapped_args))
+            end
+            return result.value
+          rescue Puppet::Pops::Evaluator::Next => jumper
+            begin
+              throw :next, jumper.value
+            rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
+              raise Puppet::ParseError.new("next() from context where this is illegal", jumper.file, jumper.line)
+            end
+          rescue Puppet::Pops::Evaluator::Return => jumper
+            begin
+              throw :return, jumper
+            rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
+              raise Puppet::ParseError.new("return() from context where this is illegal", jumper.file, jumper.line)
+            end
+          end
         end
       end
+
       if func_info[:type] == :rvalue
         the_class.class_eval do
           def convert_result(val3x)
@@ -763,16 +784,10 @@ module Puppet::Functions
 
       # Create a dispatcher based on func_info
       type, names = Puppet::Functions.any_signature(*from_to_names(func_info))
-      last_captures_rest = (type.size_range[1] == Float::INFINITY) # func_info[:arity] < 0 || func_info[:arity].nil?
+      last_captures_rest = (type.size_range[1] == Float::INFINITY)
 
-      # configure injections and weaving such that the called method gets calling scope, and then each parameter
-      injections = [:scope]
-      weaving = [[0], *((0..names.size-1).to_a)] # weaving, first scope, then each param number
-      if last_captures_rest
-        weaving[-1] = -names.size
-      end
-      the_class.dispatcher.add(Puppet::Pops::Functions::Dispatch.new(type, 'call_3x', names, last_captures_rest, nil, injections, weaving))
-
+      # The method '3x_function' here is a dummy as the dispatcher is not used for calling, only for information.
+      the_class.dispatcher.add(Puppet::Pops::Functions::Dispatch.new(type, '3x_function', names, last_captures_rest))
       # The function class is returned as the result of the create function method
       the_class
     end
