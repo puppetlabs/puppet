@@ -163,11 +163,6 @@ describe "Puppet defaults" do
     end
   end
 
-  it "should have a :caname setting that defaults to the cert name" do
-    Puppet.settings[:certname] = "foo"
-    expect(Puppet.settings[:ca_name]).to eq("Puppet CA: foo")
-  end
-
   it "should have a 'prerun_command' that defaults to the empty string" do
     expect(Puppet.settings[:prerun_command]).to eq("")
   end
