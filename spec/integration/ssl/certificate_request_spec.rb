@@ -13,8 +13,6 @@ describe Puppet::SSL::CertificateRequest do
     Puppet.settings[:confdir] = dir
     Puppet.settings[:vardir] = dir
 
-    Puppet::SSL::Host.ca_location = :none
-
     @csr = Puppet::SSL::CertificateRequest.new("luke.madstop.com")
 
     @key = OpenSSL::PKey::RSA.new(512)
