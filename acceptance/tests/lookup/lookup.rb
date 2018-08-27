@@ -82,7 +82,7 @@ PP
 
   def mod_manifest_metadata_json(module_name = nil, testdir)
     if module_name
-      metadata_manifest = <<PPmetadata
+      <<PPmetadata
       file { '#{testdir}/environments/production/modules/#{module_name}/metadata.json':
         ensure => file,
         content => '
@@ -299,8 +299,6 @@ PP
     'main' => {
       'environmentpath' => "#{testdir}/environments",
       'hiera_config' => "#{testdir}/hiera.yaml",
-      # required for site{}
-      'app_management' => true,
     },
   }
   with_puppet_running_on master, master_opts, testdir do
