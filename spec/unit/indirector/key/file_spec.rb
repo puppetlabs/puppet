@@ -13,24 +13,7 @@ describe Puppet::SSL::Key::File do
     expect(Puppet::SSL::Key::File.collection_directory).to eq(Puppet[:privatekeydir])
   end
 
-  it "should store the ca key at the :cakey location" do
-    Puppet.settings.stubs(:use)
-    Puppet[:cakey] = File.expand_path("/ca/key")
-    file = Puppet::SSL::Key::File.new
-    file.stubs(:ca?).returns true
-    expect(file.path("whatever")).to eq(Puppet[:cakey])
-  end
-
   describe "when choosing the path for the public key" do
-    it "should use the :capub setting location if the key is for the certificate authority" do
-      Puppet[:capub] = File.expand_path("/ca/pubkey")
-      Puppet.settings.stubs(:use)
-
-      @searcher = Puppet::SSL::Key::File.new
-      @searcher.stubs(:ca?).returns true
-      expect(@searcher.public_key_path("whatever")).to eq(Puppet[:capub])
-    end
-
     it "should use the host name plus '.pem' in :publickeydir for normal hosts" do
       Puppet[:privatekeydir] = File.expand_path("/private/key/dir")
       Puppet[:publickeydir] = File.expand_path("/public/key/dir")

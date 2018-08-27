@@ -29,12 +29,6 @@ Puppet::Face.define(:node, '0.0.1') do
       # certificates correctly.
       Puppet.settings.preferred_run_mode = "master"
 
-      if Puppet::SSL::CertificateAuthority.ca?
-        Puppet::SSL::Host.ca_location = :local
-      else
-        Puppet::SSL::Host.ca_location = :none
-      end
-
       Puppet::Node::Facts.indirection.terminus_class = :yaml
       Puppet::Node::Facts.indirection.cache_class = :yaml
       Puppet::Node.indirection.terminus_class = :yaml
@@ -45,21 +39,9 @@ Puppet::Face.define(:node, '0.0.1') do
   end
 
   def cleanup(node)
-    clean_cert(node)
     clean_cached_facts(node)
     clean_cached_node(node)
     clean_reports(node)
-  end
-
-  # clean signed cert for +host+
-  def clean_cert(node)
-    if Puppet::SSL::CertificateAuthority.ca?
-      Puppet::Face[:ca, :current].revoke(node)
-      Puppet::Face[:ca, :current].destroy(node)
-      Puppet.info _("%{node} certificates removed from ca") % { node: node }
-    else
-      Puppet.info _("Not managing %{node} certs as this host is not a CA") % { node: node }
-    end
   end
 
   # clean facts for +host+

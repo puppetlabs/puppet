@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/test_ca'
 
 require 'puppet/ssl/certificate_factory'
 
@@ -13,11 +14,7 @@ describe Puppet::SSL::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
     csr.generate(key)
     csr
   end
-  let :issuer do
-    cert = Puppet::SSL::CertificateAuthority.new
-    cert.generate_ca_certificate
-    cert.host.certificate.content
-  end
+  let(:issuer) { Puppet::TestCa.new.ca_cert }
 
   describe "when generating the certificate" do
     it "should return a new X509 certificate" do
@@ -56,14 +53,6 @@ describe Puppet::SSL::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
     it "should have 24 hours grace on the start of the cert" do
       cert = subject.build(:server, csr, issuer, serial)
       expect(cert.not_before).to be_within(30).of(Time.now - 24*60*60)
-    end
-
-    it "should set the default TTL of the certificate to the `ca_ttl` setting" do
-      Puppet[:ca_ttl] = 12
-      now = Time.now.utc
-      Time.expects(:now).at_least_once.returns(now)
-      cert = subject.build(:server, csr, issuer, serial)
-      expect(cert.not_after.to_i).to eq(now.to_i + 12)
     end
 
     it "should not allow a non-integer TTL" do

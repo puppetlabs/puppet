@@ -58,7 +58,7 @@ describe Puppet::SSL::Key, unless: Puppet::Util::Platform.jruby? do
 
       # indirector loads existing .pem off disk instead of replacing it
       host = Puppet::SSL::Host.new(key_name)
-      host.generate
+      host.key
 
       # newly loaded host private key matches the manually created key
       # Private-Key: (512 bit) style data

@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'puppet/ssl/certificate_factory'
 
 require 'puppet/context/trusted_information'
 
