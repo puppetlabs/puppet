@@ -21,7 +21,7 @@ module Puppet
       @ca_crl = create_crl
     end
 
-    def sign(csr)
+    def sign(csr, opts)
       cert = OpenSSL::X509::Certificate.new
       cert.public_key = csr.public_key
       cert.subject = csr.subject
@@ -30,6 +30,12 @@ module Puppet
       cert.serial = 1
       cert.not_before = CERT_VALID_FROM
       cert.not_after =  CERT_VALID_UNTIL
+
+      ef = extension_factory_for(@ca_cert, cert)
+      if opts[:subject_alt_names]
+        ext = ef.create_extension(["subjectAltName", opts[:subject_alt_names], false])
+        cert.add_extension(ext)
+      end
 
       cert.sign(@key, @digest)
       Puppet::SSL::Certificate.from_instance(cert)
@@ -45,7 +51,23 @@ module Puppet
       @crl.add_revoked(revoked)
     end
 
+    def generate(name, opts)
+      host_key = OpenSSL::PKey::RSA.new(1024)
+      csr = create_csr(name, host_key)
+      sign(csr, opts)
+    end
+
     private
+
+    def create_csr(name, key)
+      csr = OpenSSL::X509::Request.new
+      csr.public_key = key.public_key
+      csr.subject = OpenSSL::X509::Name.new([["CN", name]])
+      csr.version = 2
+      csr.sign(key, @digest)
+
+      csr
+    end
 
     def self_signed_ca
       cert = OpenSSL::X509::Certificate.new

@@ -2,6 +2,7 @@
 require 'spec_helper'
 require 'puppet/network/http/connection'
 require 'puppet_spec/validators'
+require 'puppet/test_ca'
 
 describe Puppet::Network::HTTP::Connection do
 
@@ -95,8 +96,7 @@ describe Puppet::Network::HTTP::Connection do
       host, port,
       :verify => ConstantErrorValidator.new(
         :fails_with => 'hostname was not match with server certificate',
-        :peer_certs => [Puppet::SSL::CertificateAuthority.new.generate(
-          'not_my_server', :dns_alt_names => 'foo,bar,baz').content]))
+        :peer_certs => [Puppet::TestCa.new.generate('not_my_server', :subject_alt_names => 'DNS:foo,DNS:bar,DNS:baz,DNS:not_my_server').content]))
 
       expect do
         connection.get('request')
@@ -118,8 +118,7 @@ describe Puppet::Network::HTTP::Connection do
 
     it "should check all peer certificates for upcoming expiration", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
       Puppet[:confdir] = tmpdir('conf')
-      cert = Puppet::SSL::CertificateAuthority.new.generate(
-        'server', :dns_alt_names => 'foo,bar,baz')
+      cert = Puppet::TestCa.new.generate('server', :subject_alt_names => 'DNS:foo,DNS:bar,DNS:baz,DNS:server')
 
       connection = Puppet::Network::HTTP::Connection.new(
         host, port,
