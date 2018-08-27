@@ -12,6 +12,8 @@ module Puppet
       ["authorityKeyIdentifier", "keyid:always", false]
     ].freeze
 
+    attr_reader :ca_cert
+
     def initialize
       @digest = OpenSSL::Digest::SHA256.new
       @key = OpenSSL::PKey::RSA.new(1024)
