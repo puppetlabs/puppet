@@ -50,7 +50,7 @@ group(:development, optional: true) do
   end
 end
 
-group(:packaging, optional: true) do
+group(:packaging) do
   gem 'packaging', *location_for(ENV['PACKAGING_LOCATION'] || '~> 0.99')
 end
 

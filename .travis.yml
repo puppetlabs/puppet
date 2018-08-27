@@ -1,6 +1,6 @@
 language: ruby
 sudo: false
-bundler_args: --jobs 4 --retry 2
+bundler_args: --jobs 4 --retry 2 --without packaging
 script:
   - "bundle exec rake $CHECK"
 notifications:
