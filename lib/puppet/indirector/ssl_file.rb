@@ -145,9 +145,6 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     # -----BEGIN CERTIFICATE-----
     # Puppet::SSL::Key by Puppet::SSL::Key::Ca, Puppet::SSL::Key::File
     # -----BEGIN RSA PRIVATE KEY-----
-    # Serialization of:
-    # Puppet::SSL::CertificateRevocationList by Puppet::SSL::CertificateRevocationList::Ca, Puppet::SSL::CertificateRevocationList::File
-    # -----BEGIN X509 CRL-----
     if file_location
       Puppet.settings.setting(self.class.file_setting).open('w:ASCII') { |f| yield f }
     # Serialization of:
