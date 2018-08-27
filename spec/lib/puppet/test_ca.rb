@@ -21,7 +21,7 @@ module Puppet
       @ca_crl = create_crl
     end
 
-    def sign(csr, opts)
+    def sign(csr, opts = {})
       cert = OpenSSL::X509::Certificate.new
       cert.public_key = csr.public_key
       cert.subject = csr.subject
