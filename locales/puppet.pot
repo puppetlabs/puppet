@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-15-ga867165\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-21-g67495be\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-08-28 23:01+0000\n"
-"PO-Revision-Date: 2018-08-28 23:01+0000\n"
+"POT-Creation-Date: 2018-08-28 23:31+0000\n"
+"PO-Revision-Date: 2018-08-28 23:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6464,6 +6464,14 @@ msgstr ""
 msgid "No ability to determine if %{name} exists"
 msgstr ""
 
+#: ../lib/puppet/property/keyvalue.rb:131
+msgid "The %{name} property must be specified as a hash or an array of key/value pairs (strings)!"
+msgstr ""
+
+#: ../lib/puppet/property/keyvalue.rb:137
+msgid "Key/value pairs must be separated by '%{separator}'"
+msgstr ""
+
 #: ../lib/puppet/provider.rb:146
 msgid "No command %{command} defined for provider %{provider}"
 msgstr ""
@@ -6480,32 +6488,32 @@ msgstr ""
 msgid "No resource and no name in property hash in %{class_name} instance"
 msgstr ""
 
-#: ../lib/puppet/provider/aixobject.rb:169
-msgid "Empty key in string 'i'?"
+#: ../lib/puppet/provider/aix_object.rb:124
+msgid "Invalid value %{value}: %{property} must be an Integer!"
 msgstr ""
 
-#: ../lib/puppet/provider/aixobject.rb:312 ../lib/puppet/provider/nameservice.rb:169 ../lib/puppet/provider/nameservice/directoryservice.rb:376
-msgid "already exists"
+#: ../lib/puppet/provider/aix_object.rb:374
+msgid "Could not set %{property} on %{resource}[%{name}]: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/aixobject.rb:320 ../lib/puppet/provider/nameservice.rb:180 ../lib/puppet/provider/nameservice/directoryservice.rb:421
+#: ../lib/puppet/provider/aix_object.rb:400
+msgid "attributes is setting the %{properties} properties via. the %{attributes} attributes, respectively! Please specify these property values in the resource declaration instead."
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:402 ../lib/puppet/provider/aix_object.rb:411
+msgid "Could not set attributes on %{resource}[%{name}]: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:423
+msgid "aix.object_info(): Could not find %{resource}[%{name}]"
+msgstr ""
+
+#: ../lib/puppet/provider/aix_object.rb:469 ../lib/puppet/provider/nameservice.rb:180 ../lib/puppet/provider/nameservice/directoryservice.rb:421
 msgid "Could not create %{resource} %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/aixobject.rb:327 ../lib/puppet/provider/nameservice.rb:186
-msgid "already absent"
-msgstr ""
-
-#: ../lib/puppet/provider/aixobject.rb:335 ../lib/puppet/provider/nameservice.rb:194
+#: ../lib/puppet/provider/aix_object.rb:481 ../lib/puppet/provider/nameservice.rb:194
 msgid "Could not delete %{resource} %{name}: %{detail}"
-msgstr ""
-
-#: ../lib/puppet/provider/aixobject.rb:368
-msgid "Trying to update parameter '%{param}' to '%{value}' for a resource that does not exists %{resource} %{name}: %{detail}"
-msgstr ""
-
-#: ../lib/puppet/provider/aixobject.rb:379 ../lib/puppet/provider/group/aix.rb:132 ../lib/puppet/provider/nameservice.rb:306 ../lib/puppet/provider/nameservice/directoryservice.rb:337 ../lib/puppet/provider/nameservice/directoryservice.rb:366
-msgid "Could not set %{param} on %{resource}[%{name}]: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/provider/augeas/augeas.rb:87
@@ -6644,8 +6652,8 @@ msgstr ""
 msgid "Can only manage owner, group, and mode on filesystems that support Windows ACLs, such as NTFS"
 msgstr ""
 
-#: ../lib/puppet/provider/group/aix.rb:102
-msgid "Attributes must be a list of pairs key=value on %{resource}[%{name}]"
+#: ../lib/puppet/provider/group/aix.rb:47
+msgid "No AIX group exists with a group name or gid of %{group}!"
 msgstr ""
 
 #: ../lib/puppet/provider/group/groupadd.rb:13 ../lib/puppet/provider/group/pw.rb:14
@@ -6780,8 +6788,20 @@ msgstr ""
 msgid "autogen_id() does not support auto generation of id for resource type %{resource_type}"
 msgstr ""
 
+#: ../lib/puppet/provider/nameservice.rb:169 ../lib/puppet/provider/nameservice/directoryservice.rb:376
+msgid "already exists"
+msgstr ""
+
+#: ../lib/puppet/provider/nameservice.rb:186
+msgid "already absent"
+msgstr ""
+
 #: ../lib/puppet/provider/nameservice.rb:302
 msgid "Nameservice command must be an array"
+msgstr ""
+
+#: ../lib/puppet/provider/nameservice.rb:306 ../lib/puppet/provider/nameservice/directoryservice.rb:337 ../lib/puppet/provider/nameservice/directoryservice.rb:366
+msgid "Could not set %{param} on %{resource}[%{name}]: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/provider/nameservice/directoryservice.rb:101
@@ -7243,19 +7263,13 @@ msgstr ""
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
 msgstr ""
 
-#: ../lib/puppet/provider/user/aix.rb:144
-msgid "Attributes must be a list of pairs key=value on %{class_name}[%{resource_name}]"
-msgstr ""
-
-#. TRANSLATORS 'AIX' is the name of the operating system and should not be translated
-#. TRANSLATORS 'AIX' is the name of the operating system and should not be translated
-#: ../lib/puppet/provider/user/aix.rb:176 ../lib/puppet/provider/user/aix.rb:179
-msgid "AIX group must be a valid existing group"
-msgstr ""
-
 #. TRANSLATORS 'AIX' is the name of an operating system and should not be translated
-#: ../lib/puppet/provider/user/aix.rb:217
-msgid "Could not convert AIX expires date '%{value}' on %{class_name}[%{resource_name}]"
+#: ../lib/puppet/provider/user/aix.rb:67
+msgid "Could not convert AIX expires date '%{expires}' on %{class_name}[%{resource_name}]"
+msgstr ""
+
+#: ../lib/puppet/provider/user/aix.rb:81
+msgid "Invalid value %{groups}: Groups must be comma separated!"
 msgstr ""
 
 #. TRANSLATORS 'ruby-shadow' is a Ruby gem library
@@ -8616,10 +8630,6 @@ msgstr ""
 msgid "Invalid GID %{gid}"
 msgstr ""
 
-#: ../lib/puppet/type/group.rb:166 ../lib/puppet/type/user.rb:649
-msgid "Attributes value pairs must be separated by an ="
-msgstr ""
-
 #: ../lib/puppet/type/host.rb:32
 msgid "Invalid IP address %{value}"
 msgstr ""
@@ -8921,31 +8931,27 @@ msgstr ""
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:615
-msgid "Key/value pairs must be separated by an ="
-msgstr ""
-
-#: ../lib/puppet/type/user.rb:722
+#: ../lib/puppet/type/user.rb:716
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:725
+#: ../lib/puppet/type/user.rb:719
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:729
+#: ../lib/puppet/type/user.rb:723
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:741
+#: ../lib/puppet/type/user.rb:735
 msgid "purge_ssh_keys can only be true for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:748
+#: ../lib/puppet/type/user.rb:742
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:762
+#: ../lib/puppet/type/user.rb:756
 msgid "Class name must be provided."
 msgstr ""
 
