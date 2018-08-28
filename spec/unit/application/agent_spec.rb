@@ -290,7 +290,7 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
-    it "should install a none ca location in fingerprint mode" do
+    it "should setup an agent in fingerprint mode" do
       @puppetd.options[:fingerprint] = true
       @puppetd.expects(:setup_agent).never
 

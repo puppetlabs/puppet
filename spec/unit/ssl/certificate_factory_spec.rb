@@ -55,14 +55,6 @@ describe Puppet::SSL::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
       expect(cert.not_before).to be_within(30).of(Time.now - 24*60*60)
     end
 
-    it "should set the default TTL of the certificate to the `ca_ttl` setting" do
-      Puppet[:ca_ttl] = 12
-      now = Time.now.utc
-      Time.expects(:now).at_least_once.returns(now)
-      cert = subject.build(:server, csr, issuer, serial)
-      expect(cert.not_after.to_i).to eq(now.to_i + 12)
-    end
-
     it "should not allow a non-integer TTL" do
       [ 'foo', 1.2, Time.now, true ].each do |ttl|
         expect { subject.build(:server, csr, issuer, serial, ttl) }.to raise_error(ArgumentError)

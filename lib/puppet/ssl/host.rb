@@ -202,13 +202,6 @@ ERROR_STRING
     validate_csr_with_key(existing_request, key) if existing_request
 
     generate_certificate_request unless existing_request
-
-    # If we can get a CA instance, then we're a valid CA, and we
-    # should use it to sign our request; else, just try to read
-    # the cert.
-    if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, {allow_dns_alt_names: true})
-    end
   end
 
   # Generate a keypair, generate a CSR, and submit it. If a local key pair
@@ -306,49 +299,6 @@ ERROR_STRING
       @ssl_store = build_ssl_store(purpose)
     end
     @ssl_store
-  end
-
-  def to_data_hash
-    my_cert = Puppet::SSL::Certificate.indirection.find(name)
-    result = { 'name'  => name }
-
-    my_state = state
-
-    result['state'] = my_state
-    result['desired_state'] = desired_state if desired_state
-
-    thing_to_use = (my_state == 'requested') ? certificate_request : my_cert
-
-    # this is for backwards-compatibility
-    # we should deprecate it and transition people to using
-    # json[:fingerprints][:default]
-    # It appears that we have no internal consumers of this api
-    # --jeffweiss 30 aug 2012
-    result['fingerprint'] = thing_to_use.fingerprint
-
-    # The above fingerprint doesn't tell us what message digest algorithm was used
-    # No problem, except that the default is changing between 2.7 and 3.0. Also, as
-    # we move to FIPS 140-2 compliance, MD5 is no longer allowed (and, gasp, will
-    # segfault in rubies older than 1.9.3)
-    # So, when we add the newer fingerprints, we're explicit about the hashing
-    # algorithm used.
-    # --jeffweiss 31 july 2012
-    result['fingerprints'] = {}
-    result['fingerprints']['default'] = thing_to_use.fingerprint
-
-    suitable_message_digest_algorithms.each do |md|
-      result['fingerprints'][md.to_s] = thing_to_use.fingerprint md
-    end
-    result['dns_alt_names'] = thing_to_use.subject_alt_names
-
-    result
-  end
-
-  # eventually we'll probably want to move this somewhere else or make it
-  # configurable
-  # --jeffweiss 29 aug 2012
-  def suitable_message_digest_algorithms
-    [:SHA1, :SHA224, :SHA256, :SHA384, :SHA512]
   end
 
   # Attempt to retrieve a cert, if we don't already have one.

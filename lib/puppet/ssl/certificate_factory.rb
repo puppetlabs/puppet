@@ -19,12 +19,11 @@ module Puppet::SSL::CertificateFactory
   # @param serial [Integer] The serial number for the given certificate, which
   #   MUST be unique for the given CA.
   # @param ttl [String] The duration of the validity for the given certificate.
-  #   defaults to Puppet[:ca_ttl]
   #
   # @api public
   #
   # @return [OpenSSL::X509::Certificate]
-  def self.build(cert_type, csr, issuer, serial, ttl = nil)
+  def self.build(cert_type, csr, issuer, serial, ttl = 3600)
     # Work out if we can even build the requested type of certificate.
     build_extensions = "build_#{cert_type.to_s}_extensions"
     respond_to?(build_extensions) or
@@ -47,7 +46,7 @@ module Puppet::SSL::CertificateFactory
     # clock fail, and better than having every cert we generate expire a day
     # before the user expected it to when they asked for "one year".
     cert.not_before = Time.now - (60*60*24)
-    cert.not_after  = Time.now + (ttl || Puppet[:ca_ttl])
+    cert.not_after  = Time.now + ttl
 
     add_extensions_to(cert, csr, issuer, send(build_extensions))
 

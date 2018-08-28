@@ -17,10 +17,6 @@ describe Puppet::SSL::Certificate do
     @class = Puppet::SSL::Certificate
   end
 
-  after do
-    @class.instance_variable_set("@ca_location", nil)
-  end
-
   it "should be extended with the Indirector module" do
     expect(@class.singleton_class).to be_include(Puppet::Indirector)
   end

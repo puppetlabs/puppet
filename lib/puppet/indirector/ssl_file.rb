@@ -12,12 +12,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     @file_setting = setting
   end
 
-  def self.store_ca_at(setting)
-    @ca_setting = setting
-  end
-
   class << self
-    attr_reader :directory_setting, :file_setting, :ca_setting
+    attr_reader :directory_setting, :file_setting
   end
 
   # The full path to where we should store our files.
@@ -30,12 +26,6 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   def self.file_location
     return nil unless file_setting
     Puppet.settings[file_setting]
-  end
-
-  # The full path to a ca file we would be managing.
-  def self.ca_location
-    return nil unless ca_setting
-    Puppet.settings[ca_setting]
   end
 
   def initialize
@@ -150,16 +140,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     # * SSL::Key may be a .export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), pass) or .to_pem
     # * All other classes are translated to strings by calling .to_pem
 
-    # Serialization of:
     if file_location
       Puppet.settings.setting(self.class.file_setting).open('w:ASCII') { |f| yield f }
-    # Serialization of:
-    # Puppet::SSL::Certificate by Puppet::SSL::Certificate::Ca, Puppet::SSL::Certificate::File
-    # -----BEGIN CERTIFICATE-----
-    # Puppet::SSL::CertificateRequest by Puppet::SSL::CertificateRequest::Ca, Puppet::SSL::CertificateRequest::File
-    # -----BEGIN CERTIFICATE REQUEST-----
-    # Puppet::SSL::Key by Puppet::SSL::Key::Ca, Puppet::SSL::Key::File
-    # -----BEGIN RSA PRIVATE KEY-----
     elsif setting = self.class.directory_setting
       begin
         Puppet.settings.setting(setting).open_file(path, 'w:ASCII') { |f| yield f }

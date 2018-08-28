@@ -30,7 +30,6 @@ describe Puppet::Indirector::SslFile do
     @setting = :certdir
     terminus_class.store_in @setting
     terminus_class.store_at nil
-    terminus_class.store_ca_at nil
     @path = make_absolute("/thisdoesntexist/my_directory")
     Puppet[:noop] = false
     Puppet[@setting] = @path
@@ -40,7 +39,6 @@ describe Puppet::Indirector::SslFile do
   after :each do
     terminus_class.store_in nil
     terminus_class.store_at nil
-    terminus_class.store_ca_at nil
   end
 
   it "should use :main and :ssl upon initialization" do
