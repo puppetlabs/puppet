@@ -28,11 +28,7 @@ DOC
   def initialize(name)
     super
 
-    if ca?
-      @password_file = Puppet[:capass]
-    else
-      @password_file = Puppet[:passfile]
-    end
+    @password_file = Puppet[:passfile]
   end
 
   def password
