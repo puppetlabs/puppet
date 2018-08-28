@@ -46,6 +46,8 @@ module Puppet::Util::Yaml
 
   # @deprecated Use {#safe_load_file} instead.
   def self.load_file(filename, default_value = false, strip_classes = false)
+    Puppet.deprecation_warning(_("Puppet::Util::Yaml.load_file is deprecated. Use safe_load_file instead."))
+
     if(strip_classes) then
       data = YAML::parse_file(filename)
       data.root.each do |o|
