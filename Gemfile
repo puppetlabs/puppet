@@ -18,12 +18,19 @@ gem "hiera", *location_for(ENV['HIERA_LOCATION']) if ENV.has_key?('HIERA_LOCATIO
 gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
 
 group(:features) do
-  gem "hiera-eyaml", require: false
-  gem "hocon", '~> 1.0', require: false
-  gem "msgpack", require: false
-  gem 'rdoc', "~> 6.0", require: false, platforms: [:ruby]
+  gem 'diff-lcs', '~> 1.3', require: false
+  gem 'hiera-eyaml', require: false
+  gem 'hocon', '~> 1.0', require: false
+  # requires native libshadow headers/libs
+  # gem 'libshadow', '~> 1.0', require: false, platforms: [:ruby]
+  gem 'minitar', '~> 0.6', require: false
+  gem 'msgpack', '~> 1.2', require: false
+  gem 'net-ssh', '~> 5.0', require: false
+  gem 'net-telnet', '~> 0.2', require: false
+  gem 'rdoc', '~> 6.0', require: false, platforms: [:ruby]
   # requires native augeas headers/libs
   # gem 'ruby-augeas', require: false, platforms: [:ruby]
+  gem 'ruby-ldap', '~> 0.9', require: false, platforms: [:ruby]
 end
 
 group(:test) do
