@@ -30,19 +30,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
   extend Puppet::Indirector
 
-  # If auto-signing is on, sign any certificate requests as they are saved.
-  module AutoSigner
-    def save(instance, key = nil)
-      super
-
-      # Try to autosign the CSR.
-      if ca = Puppet::SSL::CertificateAuthority.instance
-        ca.autosign(instance)
-      end
-    end
-  end
-
-  indirects :certificate_request, :terminus_class => :file, :extend => AutoSigner, :doc => <<DOC
+  indirects :certificate_request, :terminus_class => :file, :doc => <<DOC
     This indirection wraps an `OpenSSL::X509::Request` object, representing a certificate signing request (CSR).
     The indirection key is the certificate CN (generally a hostname).
 DOC

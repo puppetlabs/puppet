@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/test_ca'
 
 require 'puppet/ssl/certificate_factory'
 
@@ -13,11 +14,7 @@ describe Puppet::SSL::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
     csr.generate(key)
     csr
   end
-  let :issuer do
-    cert = Puppet::SSL::CertificateAuthority.new
-    cert.generate_ca_certificate
-    cert.host.certificate.content
-  end
+  let(:issuer) { Puppet::TestCa.new.ca_cert }
 
   describe "when generating the certificate" do
     it "should return a new X509 certificate" do

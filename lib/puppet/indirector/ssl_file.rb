@@ -151,8 +151,6 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     # * All other classes are translated to strings by calling .to_pem
 
     # Serialization of:
-    # Puppet::SSL::CertificateRevocationList by Puppet::SSL::CertificateRevocationList::Ca, Puppet::SSL::CertificateRevocationList::File
-    # -----BEGIN X509 CRL-----
     if file_location
       Puppet.settings.setting(self.class.file_setting).open('w:ASCII') { |f| yield f }
     # Serialization of:

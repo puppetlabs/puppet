@@ -396,36 +396,12 @@ describe Puppet::SSL::CertificateRequest do
     end
   end
 
-  describe "when a CSR is saved" do
-    describe "and a CA is available" do
-      it "should save the CSR and trigger autosigning" do
-        ca = mock 'ca', :autosign
-        Puppet::SSL::CertificateAuthority.expects(:instance).returns ca
-
-        csr = Puppet::SSL::CertificateRequest.new("me")
-        terminus = mock 'terminus'
-        terminus.stubs(:validate)
-        Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
-        terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
-
-        Puppet::SSL::CertificateRequest.indirection.save(csr)
-      end
-    end
-
-    describe "and a CA is not available" do
-      it "should save the CSR" do
-        Puppet::SSL::CertificateAuthority.expects(:instance).returns nil
-
-        csr = Puppet::SSL::CertificateRequest.new("me")
-        terminus = mock 'terminus'
-        terminus.stubs(:validate)
-        Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
-        terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
-
-        Puppet::SSL::CertificateRequest.indirection.save(csr)
-      end
-    end
-
-
+  it "should save the CSR" do
+    csr = Puppet::SSL::CertificateRequest.new("me")
+    terminus = mock 'terminus'
+    terminus.stubs(:validate)
+    Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
+    terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
+    Puppet::SSL::CertificateRequest.indirection.save(csr)
   end
 end
