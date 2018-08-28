@@ -1,4 +1,4 @@
-Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
+Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   desc "Support for SuSE `zypper` package manager. Found in SLES10sp2+ and SLES11.
 
     This provider supports the `install_options` attribute, which allows command-line flags to be passed to zypper.
