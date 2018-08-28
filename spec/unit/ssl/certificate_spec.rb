@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'puppet/ssl/certificate'
+require 'puppet/ssl/certificate_factory'
 
 describe Puppet::SSL::Certificate do
   let :key do Puppet::SSL::Key.new("test.localdomain").generate end

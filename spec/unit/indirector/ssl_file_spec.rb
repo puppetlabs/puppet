@@ -78,30 +78,14 @@ describe Puppet::Indirector::SslFile do
       @request = stub 'request', :key => @cert.name, :instance => @cert
     end
 
-    it "should consider the file a ca file if the name is equal to what the SSL::Host class says is the CA name" do
-      Puppet::SSL::Host.expects(:ca_name).returns "amaca"
-      expect(@searcher).to be_ca("amaca")
-    end
-
     describe "when choosing the location for certificates" do
-      it "should set them at the ca setting's path if a ca setting is available and the name resolves to the CA name" do
-        terminus_class.store_in nil
-        terminus_class.store_at :mysetting
-        terminus_class.store_ca_at :cakey
-
-        Puppet[:cakey] = File.expand_path("/ca/file")
-
-        @searcher.expects(:ca?).with(@cert.name).returns true
-        expect(@searcher.path(@cert.name)).to eq(Puppet[:cakey])
-      end
-
       it "should set them at the file location if a file setting is available" do
         terminus_class.store_in nil
-        terminus_class.store_at :cacrl
+        terminus_class.store_at :hostcrl
 
-        Puppet[:cacrl] = File.expand_path("/some/file")
+        Puppet[:hostcrl] = File.expand_path("/some/file")
 
-        expect(@searcher.path(@cert.name)).to eq(Puppet[:cacrl])
+        expect(@searcher.path(@cert.name)).to eq(Puppet[:hostcrl])
       end
 
       it "should set them in the setting directory, with the certificate name plus '.pem', if a directory setting is available" do
@@ -244,20 +228,6 @@ describe Puppet::Indirector::SslFile do
           fh = mock 'filehandle'
           fh.stubs :print
           Puppet.settings.setting(@setting).expects(:open).with('w:ASCII').yields fh
-          @searcher.save(@request)
-        end
-      end
-
-      describe "and the name is the CA name and a ca setting is set" do
-        it "should use the filehandle provided by the Settings" do
-          @searcher.class.store_at @setting
-          @searcher.class.store_ca_at :cakey
-          Puppet[:cakey] = "castuff stub"
-
-          fh = mock 'filehandle'
-          fh.stubs :print
-          Puppet.settings.setting(:cakey).expects(:open).with('w:ASCII').yields fh
-          @searcher.stubs(:ca?).returns true
           @searcher.save(@request)
         end
       end

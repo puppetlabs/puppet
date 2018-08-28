@@ -290,15 +290,9 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
-    it "should install a remote ca location" do
-      Puppet::SSL::Host.expects(:ca_location=).with(:remote)
-
-      @puppetd.setup
-    end
-
     it "should install a none ca location in fingerprint mode" do
       @puppetd.options[:fingerprint] = true
-      Puppet::SSL::Host.expects(:ca_location=).with(:none)
+      @puppetd.expects(:setup_agent).never
 
       @puppetd.setup
     end

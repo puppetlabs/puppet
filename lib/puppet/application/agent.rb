@@ -426,12 +426,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       Puppet::Resource::Catalog.indirection.cache_class = Puppet[:catalog_cache_terminus]
     end
 
-    if options[:fingerprint]
-      # in fingerprint mode we just need
-      # access to the local files and we don't need a ca
-      Puppet::SSL::Host.ca_location = :none
-    else
-      Puppet::SSL::Host.ca_location = :remote
+    # In fingerprint mode we don't need to set up the whole agent
+    unless options[:fingerprint]
       setup_agent
     end
   end

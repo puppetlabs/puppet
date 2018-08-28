@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 require 'puppet/context/trusted_information'
+require 'puppet/ssl/certificate_factory'
 
 describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java' do
   let(:key) do
