@@ -273,7 +273,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         exit_status = Puppet.override(:loaders => Puppet::Pops::Loaders.new(apply_environment)) do
 
           # Resolve all deferred values and replace them / mutate the catalog
-          Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node, node.facts, catalog)
+          Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog)
 
           # Translate it to a RAL catalog
           catalog = catalog.to_ral
