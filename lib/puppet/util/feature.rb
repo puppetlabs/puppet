@@ -47,10 +47,10 @@ class Puppet::Util::Feature
       #    configured to always cache
       if !@results[name].nil?  ||
          (@results.has_key?(name) && (!Puppet[:always_retry_plugins]))
-        @results[name]
+        !!@results[name]
       else
         @results[name] = test(name, options, &block)
-        @results[name]
+        !!@results[name]
       end
     end
   end

@@ -9,7 +9,7 @@ describe Puppet::Util::Feature do
     @features.stubs(:warn)
   end
 
-  it "should not call associated code when loading a feature" do
+  it "should not call associated code when adding a feature" do
     $loaded_feature = false
     @features.add(:myfeature) { $loaded_feature = true}
     expect($loaded_feature).to eq(false)
@@ -17,22 +17,27 @@ describe Puppet::Util::Feature do
 
   it "should consider a feature absent when the feature load fails" do
     @features.add(:failer) { raise "foo" }
-    expect(@features).not_to be_failer
+    expect(@features.failer?).to eq(false)
   end
 
   it "should consider a feature to be absent when the feature load returns false" do
     @features.add(:failer) { false }
-    expect(@features).not_to be_failer
+    expect(@features.failer?).to eq(false)
   end
 
   it "should consider a feature to be absent when the feature load returns nil" do
     @features.add(:failer) { nil }
-    expect(@features).not_to be_failer
+    expect(@features.failer?).to eq(false)
   end
 
   it "should consider a feature to be present when the feature load returns true" do
     @features.add(:available) { true }
-    expect(@features).to be_available
+    expect(@features.available?).to eq(true)
+  end
+
+  it "should consider a feature to be present when the feature load returns truthy" do
+    @features.add(:available) { "yes" }
+    expect(@features.available?).to eq(true)
   end
 
   it "should cache the results of a feature load via code block when the block returns true" do
@@ -60,11 +65,8 @@ describe Puppet::Util::Feature do
   end
 
   it "should invalidate the cache for the feature when loading" do
-    # block defined features are evaluated at load time
     @features.add(:myfeature) { false }
     expect(@features).not_to be_myfeature
-    # features with no block have deferred evaluation so an existing cached
-    # value would take precedence
     @features.add(:myfeature)
     expect(@features).to be_myfeature
   end
