@@ -4,7 +4,7 @@ HOSTS:
     roles:
       - master
     platform: el-7-x86_64
-    hypervisor: vcloud
+    hypervisor: vmpooler
     template: redhat-7-x86_64
   pe-aix-71-acceptance:
     roles:
@@ -13,7 +13,4 @@ HOSTS:
     hypervisor: none
     vmhostname: pe-aix-71-acceptance.delivery.puppetlabs.net
 CONFIG:
-  datastore: instance0
-  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
-  folder: Delivery/Quality Assurance/FOSS/Dynamic
   pooling_api: http://vmpooler.delivery.puppetlabs.net/
