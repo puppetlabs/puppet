@@ -140,7 +140,7 @@ class Puppet::Module
     end
 
     def read_metadata(file)
-      File.open(file) { |fh| JSON.load(fh) } if file
+      Puppet::Util::Json.load(Puppet::FileSystem.read(file, :encoding => 'utf-8')) if file
     rescue SystemCallError, IOError => err
       msg = _("Error reading metadata: %{message}" % {message: err.message})
       raise InvalidMetadata.new(msg, 'puppet.tasks/unreadable-metadata')
