@@ -7,6 +7,8 @@ describe "apply" do
 
   before :each do
     Puppet[:reports] = "none"
+    # Let exceptions be raised instead of exiting
+    Puppet::Application.any_instance.stubs(:exit_on_fail).yields
   end
 
   describe "when applying provided catalogs" do
