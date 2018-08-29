@@ -42,11 +42,13 @@ class Puppet::Util::Feature
 
     meta_def(method) do
       # we return a cached result if:
-      #  * if we already have a positive result
-      #  * if we've tested this feature before and it failed, but we're
-      #    configured to always cache
-      if !@results[name].nil?  ||
-         (@results.has_key?(name) && (!Puppet[:always_retry_plugins]))
+      #  * if we've tested this feature before
+      #  AND
+      #    * the result was true/false
+      #    OR
+      #    * we're configured to never retry
+      if @results.has_key?(name) &&
+         (!@results[name].nil? || !Puppet[:always_retry_plugins])
         !!@results[name]
       else
         @results[name] = test(name, options, &block)
