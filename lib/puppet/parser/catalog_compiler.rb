@@ -14,9 +14,10 @@ class Puppet::Parser::CatalogCompiler < Puppet::Parser::Compiler
   def compile
     Puppet[:strict_variables] = true
     Puppet[:strict] = :error
-    Puppet[:rich_data] = true
 
-    super
+    Puppet.override(rich_data: true) do
+      super
+    end
 
   rescue Puppet::ParseErrorWithIssue => detail
     detail.node = node.name

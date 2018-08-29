@@ -45,11 +45,9 @@ module Puppet::Network::FormatSupport
       end.sort do |a, b|
         # It's an inverse sort -- higher weight formats go first.
         b.weight <=> a.weight
-      end.collect do |f|
-        f.name
       end
 
-      result = put_preferred_format_first(result)
+      result = put_preferred_format_first(result).map(&:name)
 
       Puppet.debug "#{friendly_name} supports formats: #{result.join(' ')}"
 
@@ -76,13 +74,20 @@ module Puppet::Network::FormatSupport
     end
 
     def put_preferred_format_first(list)
-      preferred_format = Puppet.settings[:preferred_serialization_format].to_sym
-      if list.include?(preferred_format)
-        list.delete(preferred_format)
-        list.unshift(preferred_format)
+      preferred_format = Puppet.settings[:preferred_serialization_format].to_s
+
+      preferred = list.select { |format|
+        format.mime.end_with?(preferred_format)
+      }
+
+      if preferred.empty?
+        Puppet.debug "Value of 'preferred_serialization_format' (#{preferred_format}) is invalid for #{friendly_name}, using default (#{list.first.name})"
       else
-        Puppet.debug "Value of 'preferred_serialization_format' (#{preferred_format}) is invalid for #{friendly_name}, using default (#{list.first})"
+        list = preferred + list.reject { |format|
+          format.mime.end_with?(preferred_format)
+        }
       end
+
       list
     end
   end

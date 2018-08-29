@@ -208,7 +208,8 @@ module Puppet
         Puppet::Network::HTTP::NoCachePool.new
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
-      :plugins => proc { Puppet::Plugins::Configuration.load_plugins }
+      :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
+      :rich_data => false
     }
   end
 
