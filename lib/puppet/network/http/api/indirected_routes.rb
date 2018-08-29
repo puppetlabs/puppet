@@ -191,7 +191,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       begin
         yield format
         true
-      rescue Puppet::Network::FormatHandler::FormatError
+      rescue Puppet::Network::FormatHandler::FormatError => err
+        Puppet.log_exception(err, err.message, level: :debug)
         false
       end
     end
