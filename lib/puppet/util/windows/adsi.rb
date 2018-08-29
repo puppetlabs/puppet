@@ -196,10 +196,19 @@ module Puppet::Util::Windows::ADSI
       Puppet::Util::Windows::User.password_is?(name, password)
     end
 
-    def [](attribute)
+    def get_attribute(attribute)
       # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
       # values are returned as UTF-8
-      native_user.Get(attribute)
+      begin
+        native_user.Get(attribute)
+      rescue WIN32OLERuntimeError => e
+        # This OLE error code indicates the property can't be found in the cache
+        raise e unless e.message =~ /8000500D/m
+      end
+    end
+
+    def [](attribute)
+      get_attribute(attribute)
     end
 
     def []=(attribute, value)
@@ -227,12 +236,62 @@ module Puppet::Util::Windows::ADSI
       self.class.logon(name, password)
     end
 
-    def add_flag(flag_name, value)
-      flag = native_user.Get(flag_name) rescue 0
+    ADSI_FLAGS = {
+        script: 0x0001,
+        accountdisable: 0x0002,
+        homedir_required: 0x0008,
+        lockout: 0x0010,
+        passwd_notreqd: 0x0020,
+        passwd_cant_change: 0x0040,
+        encrypted_text_pwd_allowed: 0x0080,
+        temp_duplicate_account: 0x0100,
+        normal_account: 0x0200,
+        interdomain_trust_account: 0x0800,
+        workstation_trust_account: 0x1000,
+        server_trust_account: 0x2000,
+        dont_expire_password: 0x10000,
+        mns_logon_account: 0x20000,
+        smartcard_required: 0x40000,
+        trusted_for_delegation: 0x80000,
+        not_delegated: 0x100000,
+        use_des_key_only: 0x200000,
+        dont_req_preauth: 0x400000,
+        password_expired: 0x800000,
+        trusted_to_auth_for_delegation: 0x1000000,
+        partial_secrets_account: 0x04000000,
+    }
 
-      native_user.Put(flag_name, flag | value)
+    def flags
+      get_attribute('UserFlags')
+    end
 
+    def add_flag(flag_name)
+      native_user.Put('UserFlags', flags | ADSI_FLAGS[flag_name])
       commit
+    end
+
+    def has_flag?(flag_name)
+      unless ADSI_FLAGS.keys.include?(flag_name)
+        raise Puppet::DevError.new( _("Unrecognized ADSI user flag: %{s}") %  flag_name)
+      end
+      !(flags & ADSI_FLAGS[flag_name]).zero?
+    end
+
+    def disabled?
+      has_flag?(:accountdisable)
+    end
+
+    def locked_out?
+      has_flag?(:lockout)
+    end
+
+    def expire_date
+      get_attribute('AccountExpirationDate')
+    end
+
+    def expired?
+      expires = expire_date
+      expires && expires < Time.now
     end
 
     def password=(password)
@@ -241,8 +300,7 @@ module Puppet::Util::Windows::ADSI
         commit
       end
 
-      fADS_UF_DONT_EXPIRE_PASSWD = 0x10000
-      add_flag("UserFlags", fADS_UF_DONT_EXPIRE_PASSWD)
+      add_flag(:dont_expire_password)
     end
 
     def groups
