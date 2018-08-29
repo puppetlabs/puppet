@@ -130,29 +130,27 @@ describe Puppet::Indirector::Ldap do
   end
 
   describe "when connecting to ldap", :if => Puppet.features.ldap? do
+    let(:searcher) { @ldap_class.new }
+
     it "should create and start a Util::Ldap::Connection instance" do
-      conn = double 'connection', :connection => "myconn", :start => nil
+      conn = mock 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn
 
-      expect(@searcher.connection).to eq("myconn")
+      expect(searcher.connection).to eq("myconn")
     end
 
     it "should only create the ldap connection when asked for it the first time" do
-      conn = double 'connection', :connection => "myconn", :start => nil
+      conn = mock 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn
 
-      @searcher.connection
+      searcher.connection
     end
 
     it "should cache the connection" do
-      conn = double 'connection', :connection => "myconn", :start => nil
+      conn = mock 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn
 
-      expect(@searcher.connection).to equal(@searcher.connection)
+      expect(searcher.connection).to equal(searcher.connection)
     end
-  end
-
-  describe "when reconnecting to ldap", :if => (Puppet.features.root? and Facter.value("hostname") == "culain") do
-    it "should reconnect to ldap when connections are lost"
   end
 end
