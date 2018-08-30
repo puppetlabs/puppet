@@ -35,7 +35,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
     ########################################################################
     # Simple input fixtures for testing.
-    samples = YAML.load(File.read(my_fixture('single_line.yaml')))
+    samples = Puppet::Util::Yaml.safe_load(File.read(my_fixture('single_line.yaml')), [Symbol])
 
     samples.each do |name, data|
       it "should parse crontab line #{name} correctly" do

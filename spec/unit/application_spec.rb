@@ -504,7 +504,7 @@ describe Puppet::Application do
         ROUTES
       end
 
-      expect { @app.configure_indirector_routes }.to raise_error(Psych::SyntaxError, /mapping values are not allowed/)
+      expect { @app.configure_indirector_routes }.to raise_error(Puppet::Error, /mapping values are not allowed/)
     end
   end
 

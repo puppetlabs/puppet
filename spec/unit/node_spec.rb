@@ -113,20 +113,23 @@ describe Puppet::Node do
     end
 
     it "a node can roundtrip" do
-      expect(YAML.load(@node.to_yaml).name).to eql("mynode")
+      expect(Puppet::Util::Yaml.safe_load(@node.to_yaml, [Puppet::Node]).name).to eql("mynode")
     end
 
     it "limits the serialization of environment to be just the name" do
       yaml_file = file_containing("temp_yaml", @node.to_yaml)
-      node_yaml = Puppet::Util::Yaml.load_file(yaml_file, false, true)
-      expect(node_yaml['environment']).to eq('production')
+      expect(File.read(yaml_file)).to eq(<<~NODE)
+        --- !ruby/object:Puppet::Node
+        name: mynode
+        environment: production
+      NODE
     end
   end
 
   describe "when serializing using yaml and values classes and parameters are missing in deserialized hash" do
     it "a node can roundtrip" do
       @node = Puppet::Node.from_data_hash({'name' => "mynode"})
-      expect(YAML.load(@node.to_yaml).name).to eql("mynode")
+      expect(Puppet::Util::Yaml.safe_load(@node.to_yaml, [Puppet::Node]).name).to eql("mynode")
     end
 
     it "errors if name is nil" do

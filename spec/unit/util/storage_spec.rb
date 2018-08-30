@@ -165,6 +165,18 @@ describe Puppet::Util::Storage do
 
         Puppet::Util::Storage.load
       end
+
+      it 'should load Time and Symbols' do
+        state = {
+          'File[/etc/puppetlabs/puppet]' =>
+          { :checked => Time.new('2018-08-08 15:28:25.546999000 -07:00') }
+        }
+        write_state_file(YAML.dump(state))
+
+        Puppet::Util::Storage.load
+
+        expect(Puppet::Util::Storage.state).to eq(state.dup)
+      end
     end
   end
 

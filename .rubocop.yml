@@ -736,14 +736,6 @@ Performance/Caller:
 Performance/CompareWithBlock:
   Enabled: false
 
-# TODO PUP-8004
-Security/JSONLoad:
-  Enabled: false
-
-# TODO PUP-8004
-Security/YAMLLoad:
-  Enabled: false
-
 Style/EmptyCaseCondition:
   Enabled: false
 

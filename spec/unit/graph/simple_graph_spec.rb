@@ -636,7 +636,7 @@ describe Puppet::Graph::SimpleGraph do
           # the serialized objects easily without invoking any
           # yaml_initialize hooks.
           yaml_form.gsub!('!ruby/object:Puppet::', '!hack/object:Puppet::')
-          serialized_object = YAML.load(yaml_form)
+          serialized_object = Puppet::Util::Yaml.safe_load(yaml_form, [Symbol,Puppet::Graph::SimpleGraph])
 
           # Check that the object contains instance variables @edges and
           # @vertices only.  @reversal is also permitted, but we don't
@@ -704,7 +704,7 @@ describe Puppet::Graph::SimpleGraph do
           reference_graph = Puppet::Graph::SimpleGraph.new
           send(graph_to_test, reference_graph)
           yaml_form = graph_to_yaml(reference_graph, which_format)
-          recovered_graph = YAML.load(yaml_form)
+          recovered_graph = Puppet::Util::Yaml.safe_load(yaml_form, [Symbol,Puppet::Graph::SimpleGraph])
 
           # Test that the recovered vertices match the vertices in the
           # reference graph.
@@ -748,7 +748,7 @@ describe Puppet::Graph::SimpleGraph do
       derived.add_edge('a', 'b')
       derived.foo = 1234
       yaml = YAML.dump(derived)
-      recovered_derived = YAML.load(yaml)
+      recovered_derived = Puppet::Util::Yaml.safe_load(yaml, [Puppet::TestDerivedClass])
       expect(recovered_derived.class).to equal(Puppet::TestDerivedClass)
       expect(recovered_derived.edges.length).to eq(1)
       expect(recovered_derived.edges[0].source).to eq('a')

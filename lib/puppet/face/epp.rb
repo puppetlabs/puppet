@@ -405,7 +405,7 @@ Puppet::Face.define(:epp, '0.0.1') do
     if values_file = options[:values_file]
       begin
         if values_file =~ /\.yaml$/
-          template_values = YAML.load_file(values_file)
+          template_values = Puppet::Util::Yaml.safe_load_file(values_file, [Symbol])
         elsif values_file =~ /\.pp$/
           evaluating_parser = Puppet::Pops::Parser::EvaluatingParser.new
           template_values = evaluating_parser.evaluate_file(compiler.topscope, values_file)
@@ -511,7 +511,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       elsif fact_file.end_with?("json")
         given_facts = Puppet::Util::Json.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       else
-        given_facts = YAML.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+        given_facts = Puppet::Util::Yaml.safe_load_file(fact_file)
       end
 
       unless given_facts.instance_of?(Hash)

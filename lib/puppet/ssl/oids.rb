@@ -104,7 +104,7 @@ module Puppet::SSL::Oids
     if File.exists?(custom_oid_file) && File.readable?(custom_oid_file)
       mapping = nil
       begin
-        mapping = YAML.load_file(custom_oid_file)
+        mapping = Puppet::Util::Yaml.safe_load_file(custom_oid_file, [Symbol])
       rescue => err
         raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': %{err}") % { custom_oid_file: custom_oid_file, err: err }, err.backtrace
       end

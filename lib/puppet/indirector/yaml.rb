@@ -9,7 +9,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     return nil unless Puppet::FileSystem.exist?(file)
 
     begin
-      return fix(Puppet::Util::Yaml.load_file(file))
+      return load_file(file)
     rescue Puppet::Util::Yaml::YamlLoadError => detail
       raise Puppet::Error, _("Could not parse YAML data for %{indirection} %{request}: %{detail}") % { indirection: indirection.name, request: request.key, detail: detail }, detail.backtrace
     end
@@ -51,13 +51,13 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
   def search(request)
     Dir.glob(path(request.key,'')).collect do |file|
-      fix(Puppet::Util::Yaml.load_file(file))
+      load_file(file)
     end
   end
 
   protected
 
-  def fix(object)
-    object
+  def load_file(file)
+    Puppet::Util::Yaml.safe_load_file(file, [model, Symbol])
   end
 end

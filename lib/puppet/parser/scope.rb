@@ -814,7 +814,7 @@ class Puppet::Parser::Scope
   end
 
   # Deeply freezes the given object. The object and its content must be of the types:
-  # Array, Hash, Numeric, Boolean, Symbol, Regexp, NilClass, or String. All other types raises an Error.
+  # Array, Hash, Numeric, Boolean, Regexp, NilClass, or String. All other types raises an Error.
   # (i.e. if they are assignable to Puppet::Pops::Types::Data type).
   #
   def deep_freeze(object)

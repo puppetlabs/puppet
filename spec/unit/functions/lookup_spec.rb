@@ -115,10 +115,11 @@ describe "The lookup function" do
     nil
   end
 
-  def lookup(key, options = {}, explain = false)
+  def lookup(key, options = {}, explain = false, type = nil)
+    value_type = type ? ", #{type}" : ''
     nc_opts = options.empty? ? '' : ", #{Puppet::Pops::Types::TypeFormatter.string(options)}"
     keys = key.is_a?(Array) ? key : [key]
-    collect_notices(keys.map { |k| "notice(String(lookup('#{k}'#{nc_opts}), '%p'))" }.join("\n"), explain)
+    collect_notices(keys.map { |k| "notice(String(lookup('#{k}'#{value_type}#{nc_opts}), '%p'))" }.join("\n"), explain)
     if explain
       explanation
     else
@@ -805,9 +806,24 @@ describe "The lookup function" do
           YAML
         end
 
-        it 'fails lookup and reports a type mismatch' do
+        it 'fails lookup and reports parsing failed' do
           expect { lookup('a') }.to raise_error do |e|
-            expect(e.message).to match(/key 'a'.*data_hash function 'yaml_data'.*using location.*wrong type, expects Puppet::LookupValue, got Runtime/)
+            expect(e.message).to match(/Unable to parse .*: Tried to load unspecified class: Puppet::Graph::Key/)
+          end
+        end
+      end
+
+      context 'that contains a legal yaml hash with unexpected types' do
+        let(:common_yaml) do
+          <<-YAML.unindent
+          ---
+          a: 123
+          YAML
+        end
+
+        it 'fails lookup and reports a type mismatch' do
+          expect { lookup('a', {}, false, String) }.to raise_error do |e|
+            expect(e.message).to match(/Found value has wrong type, expects a String value, got Integer \(line: 1, column: \d+\)/)
           end
         end
       end
@@ -1792,6 +1808,7 @@ describe "The lookup function" do
                 a_ref: "A reference to %{hiera('a')}"
                 b_ref: "A reference to %{hiera('b')}"
                 c_ref: "%{alias('c')}"
+                :symbol: "A symbol"
                 YAML
             }
           end

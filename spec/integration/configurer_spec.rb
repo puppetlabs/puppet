@@ -51,10 +51,7 @@ describe Puppet::Configurer do
 
       expect(Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode.to_s(8)).to eq(file_mode)
 
-      summary = nil
-      File.open(Puppet[:lastrunfile], "r") do |fd|
-        summary = YAML.load(fd.read)
-      end
+      summary = Puppet::Util::Yaml.safe_load_file(Puppet[:lastrunfile])
 
       expect(summary).to be_a(Hash)
       %w{time changes events resources}.each do |key|
