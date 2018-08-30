@@ -81,7 +81,7 @@ describe Puppet::Util::Execution do
 
       it "should fork a child process to execute the command" do
         Kernel.expects(:fork).returns(pid).yields
-        Kernel.expects(:exec).with('test command', instance_of(Hash))
+        Kernel.expects(:exec).with('test command')
 
         call_exec_posix('test command', {}, @stdin, @stdout, @stderr)
       end
@@ -100,7 +100,7 @@ describe Puppet::Util::Execution do
       end
 
       it "should exit failure if there is a problem execing the command" do
-        Kernel.expects(:exec).with('test command', instance_of(Hash)).raises("failed to execute!")
+        Kernel.expects(:exec).with('test command').raises("failed to execute!")
         Puppet::Util::Execution.stubs(:puts)
         Puppet::Util::Execution.expects(:exit!).with(1)
 
@@ -108,13 +108,13 @@ describe Puppet::Util::Execution do
       end
 
       it "should properly execute commands specified as arrays" do
-        Kernel.expects(:exec).with('test command', 'with', 'arguments', instance_of(Hash))
+        Kernel.expects(:exec).with('test command', 'with', 'arguments')
 
         call_exec_posix(['test command', 'with', 'arguments'], {:uid => 50, :gid => 55}, @stdin, @stdout, @stderr)
       end
 
       it "should properly execute string commands with embedded newlines" do
-        Kernel.expects(:exec).with("/bin/echo 'foo' ; \n /bin/echo 'bar' ;", instance_of(Hash))
+        Kernel.expects(:exec).with("/bin/echo 'foo' ; \n /bin/echo 'bar' ;")
 
         call_exec_posix("/bin/echo 'foo' ; \n /bin/echo 'bar' ;", {:uid => 50, :gid => 55}, @stdin, @stdout, @stderr)
       end
@@ -135,7 +135,8 @@ describe Puppet::Util::Execution do
 
         it 'should run the command in the specified working directory' do
           File.expects(:directory?).with(cwd).returns(true)
-          Kernel.expects(:exec).with('test command', has_entries(:chdir => cwd))
+          Dir.expects(:chdir).with(cwd)
+          Kernel.expects(:exec).with('test command')
 
           call_exec_posix('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
         end
