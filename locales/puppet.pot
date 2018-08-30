@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-500-gb9bfa45\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-519-g19575cf\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-08-23 17:19+0000\n"
-"PO-Revision-Date: 2018-08-23 17:19+0000\n"
+"POT-Creation-Date: 2018-08-30 20:19+0000\n"
+"PO-Revision-Date: 2018-08-30 20:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -445,91 +445,91 @@ msgstr ""
 msgid "Puppet configuration client"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:51
+#: ../lib/puppet/configurer.rb:47
 msgid "Removing corrupt state file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:56
+#: ../lib/puppet/configurer.rb:52
 msgid "Cannot remove %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:78
+#: ../lib/puppet/configurer.rb:74
 msgid "Using cached catalog from environment '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:84
+#: ../lib/puppet/configurer.rb:80
 msgid "Not using cache on failed catalog"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:93
+#: ../lib/puppet/configurer.rb:89
 msgid "Not using cached catalog because its environment '%{catalog_env}' does not match '%{local_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:98 ../lib/puppet/configurer.rb:182
+#: ../lib/puppet/configurer.rb:94 ../lib/puppet/configurer.rb:178
 msgid "Using cached catalog from environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:175
+#: ../lib/puppet/configurer.rb:171
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:193
+#: ../lib/puppet/configurer.rb:189
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:234
+#: ../lib/puppet/configurer.rb:230
 msgid "Could not select a functional puppet master"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:271
+#: ../lib/puppet/configurer.rb:267
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:316
+#: ../lib/puppet/configurer.rb:312
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:321
+#: ../lib/puppet/configurer.rb:317
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:325
+#: ../lib/puppet/configurer.rb:321
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:353
+#: ../lib/puppet/configurer.rb:349
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:364
+#: ../lib/puppet/configurer.rb:360
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:366
+#: ../lib/puppet/configurer.rb:362
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:385
+#: ../lib/puppet/configurer.rb:381
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:434 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:430 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:443
+#: ../lib/puppet/configurer.rb:439
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:455
+#: ../lib/puppet/configurer.rb:451
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:473
+#: ../lib/puppet/configurer.rb:469
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:493
+#: ../lib/puppet/configurer.rb:489
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -616,25 +616,20 @@ msgstr ""
 msgid "Setting 'environment_data_provider' is deprecated."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:741
+#: ../lib/puppet/defaults.rb:731
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:983 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:973 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1542 ../lib/puppet/defaults.rb:1557
+#: ../lib/puppet/defaults.rb:1532 ../lib/puppet/defaults.rb:1547
 msgid "Attempted to set both server and server_list."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1543 ../lib/puppet/defaults.rb:1558
+#: ../lib/puppet/defaults.rb:1533 ../lib/puppet/defaults.rb:1548
 msgid "Server setting will not be used."
-msgstr ""
-
-#. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1857
-msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
 #: ../lib/puppet/error.rb:69
@@ -7127,35 +7122,35 @@ msgstr ""
 msgid "Unknown resource type %{type}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:452
+#: ../lib/puppet/resource/catalog.rb:451
 msgid "Could not intern from data: Could not find relationship source %{source} for %{target}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:458
+#: ../lib/puppet/resource/catalog.rb:457
 msgid "Could not intern from data: Could not find relationship target %{target} for %{source}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:551
+#: ../lib/puppet/resource/catalog.rb:550
 msgid "Could not create class file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:571
+#: ../lib/puppet/resource/catalog.rb:570
 msgid "Could not create resource file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:593
+#: ../lib/puppet/resource/catalog.rb:592
 msgid "Unknown ordering type %{ordering}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:614
+#: ../lib/puppet/resource/catalog.rb:613
 msgid "Duplicate declaration: %{resource} is already declared; cannot redeclare"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:616
+#: ../lib/puppet/resource/catalog.rb:615
 msgid "Duplicate declaration: %{resource} is already declared at %{error_location}; cannot redeclare"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:664 ../lib/puppet/resource/catalog.rb:668
+#: ../lib/puppet/resource/catalog.rb:663 ../lib/puppet/resource/catalog.rb:667
 msgid "Could not find resource %{resource} when converting %{message} resources"
 msgstr ""
 
