@@ -29,7 +29,7 @@ Puppet::Type.newtype(:k5login) do
 
   # To manage the mode of the file
   newproperty(:mode) do
-    desc "The desired permissions mode of the `.k5login` file. Defaults to `644`."
+    desc "The desired permissions mode of the `.k5login` file."
     defaultto { "644" }
   end
 
@@ -104,7 +104,7 @@ Puppet::Type.newtype(:k5login) do
     super
   end
 
-  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   provide(:k5login) do
     desc "The k5login provider is the only provider for the k5login

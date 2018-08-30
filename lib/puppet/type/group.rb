@@ -141,7 +141,7 @@ module Puppet
     end
 
     newparam(:allowdupe, :boolean => true, :parent => Puppet::Parameter::Boolean) do
-      desc "Whether to allow duplicate GIDs. Defaults to `false`."
+      desc "Whether to allow duplicate GIDs."
 
       defaultto false
     end

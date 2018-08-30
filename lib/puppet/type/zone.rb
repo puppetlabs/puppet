@@ -262,7 +262,7 @@ end
   # Specify the sysidcfg file.  This is pretty hackish, because it's
   # only used to boot the zone the very first time.
   newparam(:sysidcfg) do
-    desc %{The text to go into the `sysidcfg` file when the zone is first
+    desc "The text to go into the `sysidcfg` file when the zone is first
       booted.  The best way is to use a template:
 
           # $confdir/modules/site/templates/sysidcfg.erb
@@ -290,7 +290,7 @@ end
           }
 
       The `sysidcfg` only matters on the first booting of the zone,
-      so Puppet only checks for it at that time.}
+      so Puppet only checks for it at that time."
   end
 
   newparam(:create_args) do

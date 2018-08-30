@@ -143,7 +143,7 @@ Puppet::Type.newtype(:augeas) do
   end
 
   newparam(:type_check) do
-    desc "Whether augeas should perform typechecking. Defaults to false."
+    desc "Whether augeas should perform typechecking."
     newvalues(:true, :false)
 
     defaultto :false
