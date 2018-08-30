@@ -95,6 +95,16 @@ describe 'loaders' do
     expect(loaders.puppet_system_loader()).to be_a(Puppet::Pops::Loader::ModuleLoaders::FileBased)
   end
 
+  it 'creates a cached_puppet loader when for_agent is set to true' do
+    loaders = Puppet::Pops::Loaders.new(empty_test_env, true)
+    expect(loaders.puppet_cache_loader()).to be_a(Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased)
+  end
+
+  it 'does not create a cached_puppet loader when for_agent is the default false value' do
+    loaders = Puppet::Pops::Loaders.new(empty_test_env)
+    expect(loaders.puppet_cache_loader()).to be(nil)
+  end
+
   it 'creates an environment loader' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env)
 
