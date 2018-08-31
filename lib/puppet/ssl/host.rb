@@ -522,6 +522,7 @@ ERROR_STRING
       end
     end
   end
+  public :ensure_ca_certificate
 
   # Creates an arry of SSL Certificate objects from a PEM-encoding string
   # of one or more certs.
