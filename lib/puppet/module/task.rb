@@ -144,7 +144,7 @@ class Puppet::Module
     rescue SystemCallError, IOError => err
       msg = _("Error reading metadata: %{message}" % {message: err.message})
       raise InvalidMetadata.new(msg, 'puppet.tasks/unreadable-metadata')
-    rescue JSON::ParserError => err
+    rescue Puppet::Util::Json::ParseError => err
       raise InvalidMetadata.new(err.message, 'puppet.tasks/unparseable-metadata')
     end
 
