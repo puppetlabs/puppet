@@ -61,7 +61,6 @@ describe Puppet::Module::Task do
                                           ["#{tasks_path}/task3.sh"]])
   end
 
-
   it "constructs a task as expected when a task has implementations" do
     task_files = %w{task1.elf task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
     Dir.expects(:glob).with(tasks_glob).returns(task_files)
@@ -121,6 +120,19 @@ describe Puppet::Module::Task do
 
       expect(tasks.count).to eq(1)
       expect(tasks[0].metadata).to be_nil
+    end
+
+    it 'raises InvalidMetadata if the json metadata is invalid' do
+      FileUtils.mkdir_p(tasks_path)
+      File.open(File.join(tasks_path, 'task.json'), 'w') { |f| f.write '{ "whoops"' }
+      FileUtils.touch(File.join(tasks_path, 'task'))
+
+      tasks = Puppet::Module::Task.tasks_in_module(mymod)
+      expect(tasks.count).to eq(1)
+
+      expect {
+        tasks[0].metadata
+      }.to raise_error(Puppet::Module::Task::InvalidMetadata, /whoops/)
     end
   end
 
