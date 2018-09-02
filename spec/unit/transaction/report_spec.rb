@@ -645,16 +645,21 @@ Version:
   end
 
   def generate_report
+    # An Event cannot contain rich data - thus its "to_data_hash" stringifies the result.
+    # (This means it cannot be deserialized with intact data types).
+    # Here it is simulated that the values are after stringification.
+    stringifier = Puppet::Pops::Serialization::ToStringifiedConverter
     event_hash = {
       :audited => false,
-      :property => 'message',
-      :previous_value => SemanticPuppet::VersionRange.parse('>=1.0.0'),
-      :desired_value => SemanticPuppet::VersionRange.parse('>=1.2.0'),
-      :historical_value => nil,
-      :message => "defined 'message' as 'a resource'",
-      :name => :message_changed,
-      :status => 'success',
+      :property => stringifier.convert('message'),
+      :previous_value => stringifier.convert(SemanticPuppet::VersionRange.parse('>=1.0.0')),
+      :desired_value => stringifier.convert(SemanticPuppet::VersionRange.parse('>=1.2.0')),
+      :historical_value => stringifier.convert(nil),
+      :message => stringifier.convert("defined 'message' as 'a resource'"),
+      :name => :message_changed, # the name 
+      :status => stringifier.convert('success'),
     }
+
     event = Puppet::Transaction::Event.new(event_hash)
 
     status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))

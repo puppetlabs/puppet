@@ -98,13 +98,9 @@ class Puppet::Transaction::Event
       'redacted' => @redacted,
       'corrective_change' => @corrective_change,
     }
-    Puppet::Pops::Serialization::ToDataConverter.convert(hash, {
-      :rich_data => true,
-      :symbol_as_string => true,
-      :local_reference => false,
-      :type_by_reference => true,
-      :message_prefix => 'Event'
-    })
+    # Use the stringifying converter since rich data is not possible downstream.
+    # (This will destroy some data type information, but this is expected).
+    Puppet::Pops::Serialization::ToStringifiedConverter.convert(hash, :message_prefix => 'Event')
   end
 
   def property=(prop)

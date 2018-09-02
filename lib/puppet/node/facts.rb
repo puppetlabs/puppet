@@ -131,7 +131,17 @@ class Puppet::Node::Facts
       or fact.is_a? String
       fact
     else
-      fact.to_s
+      result = fact.to_s
+      # The result may be ascii-8bit encoded without being a binary (low level object.inspect returns ascii-8bit string)
+      if result.encoding == Encoding::ASCII_8BIT
+        begin
+          result = result.encode(Encoding::UTF_8)
+        rescue
+          # return the ascii-8bit - it will be taken as a binary
+          result
+        end
+      end
+      result
     end
   end
 end
