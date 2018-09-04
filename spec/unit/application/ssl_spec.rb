@@ -143,6 +143,25 @@ PEM
       }.to output(/Failed to submit certificate request: Error 400 on SERVER: #{body}/).to_stdout
     end
 
+    it "resends a previously submitted CSR" do
+      body = "#{name} already has a requested certificate; ignoring certificate request"
+      stub_request(:put, %r{puppet-ca/v1/certificate_request})
+        .to_return(
+          {status: 200},
+          {status: 400, body: body}
+        )
+
+      expect {
+        ssl.run_command
+      }.to output(%r{Submitted certificate request for '#{name}' to https://.*}).to_stdout
+
+      expect {
+        expect {
+          ssl.run_command
+        }.to exit_with(1)
+      }.to output(/Failed to submit certificate request: Error 400 on SERVER: #{body}/).to_stdout
+    end
+
     it 'accepts dns alt names'
     it 'accepts csr attributes'
     it 'accepts extension requests'
