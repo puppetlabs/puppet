@@ -28,7 +28,8 @@ group(:features) do
   gem 'rdoc', '~> 6.0', require: false, platforms: [:ruby]
   # requires native augeas headers/libs
   # gem 'ruby-augeas', require: false, platforms: [:ruby]
-  gem 'ruby-ldap', '~> 0.9', require: false, platforms: [:ruby]
+  # requires native ldap headers/libs
+  # gem 'ruby-ldap', '~> 0.9', require: false, platforms: [:ruby]
 end
 
 group(:test) do
