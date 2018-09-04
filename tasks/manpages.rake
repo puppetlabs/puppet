@@ -24,8 +24,16 @@ task :gen_manpages do
   ronn_args = '--manual="Puppet manual" --organization="Puppet, Inc." -r'
 
   # Locate ronn
+  begin
+    require 'ronn'
+  rescue LoadError
+    abort("Run `bundle install --with documentation` to install the `ronn` gem.")
+  end
+
   ronn = %x{which ronn}.chomp
-  unless File.executable?(ronn) then fail("Ronn does not appear to be installed.") end
+  unless File.executable?(ronn)
+    abort("Ronn does not appear to be installed")
+  end
 
 #   def write_manpage(text, filename)
 #     IO.popen("#{ronn} #{ronn_args} -r > #{filename}") do |fh| fh.write text end

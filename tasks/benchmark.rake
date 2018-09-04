@@ -102,7 +102,11 @@ namespace :benchmark do
 
       desc "Print a memory profile of the #{name} scenario."
       task :memory_profile, [*run_args] => :generate do |_, args|
-        require 'memory_profiler'
+        begin
+          require 'memory_profiler'
+        rescue LoadError
+          abort("Run `bundle install --with development` to install the 'memory_profiler' gem.")
+        end
 
         report = MemoryProfiler.report do
           @benchmark.run(args)

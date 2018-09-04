@@ -7,7 +7,7 @@ or from [Choclately](https://chocolatey.org/packages/ruby).
 
     C:\> cd C:\work\puppet
     C:\work\puppet> gem install bundler
-    C:\work\puppet> bundle install --path .bundle --without development extra
+    C:\work\puppet> bundle install --path .bundle
     C:\work\puppet> bundle exec puppet --version
     4.7.1
 
@@ -30,7 +30,7 @@ If the test doesn't currently pass on Windows, e.g. due to on going porting, the
 
 Then run the test as:
 
-    C:\work\puppet> bundle exec rspec spec
+    C:\work\puppet> bundle exec rspec spec/path/to/test.rb
 
 ## Common Issues ##
 

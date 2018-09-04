@@ -3,22 +3,7 @@ require 'spec_helper'
 
 require 'puppet/util/ldap/manager'
 
-# If the ldap classes aren't available, go ahead and
-# create some, so our tests will pass.
-unless defined?(LDAP::Mod)
-  class LDAP
-    LDAP_MOD_ADD = :adding
-    LDAP_MOD_REPLACE = :replacing
-    LDAP_MOD_DELETE = :deleting
-    class ResultError < RuntimeError; end
-    class Mod
-      def initialize(*args)
-      end
-    end
-  end
-end
-
-describe Puppet::Util::Ldap::Manager do
+describe Puppet::Util::Ldap::Manager, :if => Puppet.features.ldap? do
   before do
     @manager = Puppet::Util::Ldap::Manager.new
   end

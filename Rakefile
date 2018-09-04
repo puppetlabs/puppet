@@ -23,11 +23,13 @@ require 'open3'
 
 Dir['tasks/**/*.rake'].each { |t| load t }
 
-begin
-  require 'packaging'
-  Pkg::Util::RakeUtils.load_packaging_tasks
-rescue LoadError => e
-  puts "Error loading packaging rake tasks: #{e}"
+if Rake.application.top_level_tasks.grep(/^(pl:|package:)/).any?
+  begin
+    require 'packaging'
+    Pkg::Util::RakeUtils.load_packaging_tasks
+  rescue LoadError => e
+    puts "Error loading packaging rake tasks: #{e}"
+  end
 end
 
 task :default do
@@ -41,15 +43,10 @@ end
 
 desc 'run static analysis with rubocop'
 task(:rubocop) do
-  if RUBY_VERSION < '2.0'
-    puts 'rubocop tests require Ruby 2.0 or higher'
-    puts 'skipping rubocop'
-  else
-    require 'rubocop'
-    cli = RuboCop::CLI.new
-    exit_code = cli.run(%w(--display-cop-names --format simple))
-    raise "RuboCop detected offenses" if exit_code != 0
-  end
+  require 'rubocop'
+  cli = RuboCop::CLI.new
+  exit_code = cli.run(%w(--display-cop-names --format simple))
+  raise "RuboCop detected offenses" if exit_code != 0
 end
 
 desc "verify that commit messages match CONTRIBUTING.md requirements"
@@ -113,5 +110,6 @@ if Rake.application.top_level_tasks.grep(/^gettext:/).any?
     load "#{spec.gem_dir}/lib/tasks/gettext.rake"
     GettextSetup.initialize(File.absolute_path('locales', File.dirname(__FILE__)))
   rescue LoadError
+    abort("Run `bundle install --with documentation` to install the `gettext-setup` gem.")
   end
 end
