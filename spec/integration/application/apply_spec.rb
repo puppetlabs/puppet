@@ -408,7 +408,7 @@ end
     end
   end
 
-  context 'when compiling a provided catalog with rich data and then applying from file' do
+  context 'when applying from file' do
     include PuppetSpec::Compiler
 
     let(:env_dir) { tmpdir('environments') }
@@ -471,18 +471,18 @@ class amod::bad_type {
       Puppet.pop_context()
     end
 
-    context 'and rich_data is set to false during compile' do
+    context 'and the file is not serialized with rich_data' do
       it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', catalog.to_json)
         apply.expects(:apply_catalog).with do |cat|
-          cat.resource(:notify, 'rx')['message'].is_a?(String)
-          cat.resource(:notify, 'bin')['message'].is_a?(String)
-          cat.resource(:notify, 'ver')['message'].is_a?(String)
-          cat.resource(:notify, 'vrange')['message'].is_a?(String)
-          cat.resource(:notify, 'tspan')['message'].is_a?(String)
-          cat.resource(:notify, 'tstamp')['message'].is_a?(String)
+          expect(cat.resource(:notify, 'rx')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'bin')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'ver')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'vrange')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'tspan')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'tstamp')['message']).to be_a(String)
         end
         apply.run
       end
@@ -492,7 +492,7 @@ class amod::bad_type {
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', json)
         apply.expects(:apply_catalog).with do |catalog|
-          catalog.resource(:notify, 'bogus')['message'].is_a?(String)
+          expect(catalog.resource(:notify, 'bogus')['message']).to be_a(String)
         end
         apply.run
       end
@@ -508,20 +508,21 @@ class amod::bad_type {
       end
     end
 
-    context 'and rich_data is set to true during compile' do
-      let(:rich_data) { true }
-
+    context 'and the file is serialized with rich_data' do
       it 'will notify a regexp using Regexp#to_s' do
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
+        serialized_catalog = Puppet.override(rich_data: true) do
+          catalog.to_json
+        end
+        apply.options[:catalog] = file_containing('manifest', serialized_catalog)
         apply.expects(:apply_catalog).with do |cat|
-          cat.resource(:notify, 'rx')['message'].is_a?(Regexp)
-          cat.resource(:notify, 'bin')['message'].is_a?(Puppet::Pops::Types::PBinaryType::Binary)
-          cat.resource(:notify, 'ver')['message'].is_a?(SemanticPuppet::Version)
-          cat.resource(:notify, 'vrange')['message'].is_a?(SemanticPuppet::VersionRange)
-          cat.resource(:notify, 'tspan')['message'].is_a?(Puppet::Pops::Time::Timespan)
-          cat.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
+          expect(cat.resource(:notify, 'rx')['message']).to be_a(Regexp)
+          expect(cat.resource(:notify, 'bin')['message']).to be_a(Puppet::Pops::Types::PBinaryType::Binary)
+          expect(cat.resource(:notify, 'ver')['message']).to be_a(SemanticPuppet::Version)
+          expect(cat.resource(:notify, 'vrange')['message']).to be_a(SemanticPuppet::VersionRange)
+          expect(cat.resource(:notify, 'tspan')['message']).to be_a(Puppet::Pops::Time::Timespan)
+          expect(cat.resource(:notify, 'tstamp')['message']).to be_a(Puppet::Pops::Time::Timestamp)
         end
         apply.run
       end
