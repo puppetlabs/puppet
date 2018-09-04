@@ -199,4 +199,49 @@ class Runtime3FunctionArgumentConverter < Runtime3Converter
   @instance = self.new
 end
 
+# A Ruby function written for the 3.x API can return Arrays or Hashes containing :undef
+# This changes that back to the specified undef_value
+#
+class Runtime3FunctionReturnConverter < Runtime3Converter
+
+  def convert_String(o, sceop, undef_value)
+    o
+  end
+
+  def convert_Symbol(o, scope, undef_value)
+    o == :undef ? undef_value : o
+  end
+
+  def convert_NilClass(o, scope, undef_value)
+    @inner ? :undef : undef_value
+  end
+
+  def convert_Integer(o, scope, undef_value)
+    return o unless o < MIN_INTEGER || o > MAX_INTEGER
+    range_end = o > MAX_INTEGER ? 'max' : 'min'
+    raise Puppet::Error, "Use of a Ruby Integer outside of Puppet Integer #{range_end} range, got '#{"0x%x" % o}'"
+  end
+
+  def convert_BigDecimal(o, scope, undef_value)
+    # transform to same value float value if possible without any rounding error
+    f = o.to_f
+    return f unless f != o
+    raise Puppet::Error, "Use of a Ruby BigDecimal value outside Puppet Float range, got '#{o}'"
+  end
+
+  def convert_Object(o, scope, undef_value)
+    o
+  end
+
+  def convert_PAnyType(o, scope, undef_value)
+    o
+  end
+
+  def convert_PCatalogEntryType(o, scope, undef_value)
+    o
+  end
+
+  @instance = self.new
+end
+
 end

@@ -78,6 +78,8 @@ module Serialization
           serialization_issue(Issues::SERIALIZATION_DEFAULT_CONVERTED_TO_STRING, :path => path_to_s)
           'default'
         end
+      elsif :undef == value
+        nil
       elsif value.is_a?(Symbol)
         if @symbol_as_string
           value.to_s

@@ -87,6 +87,14 @@ module Serialization
       expect(val2).to eql(val)
     end
 
+    it ':undef' do
+      val = :undef
+      write(val)
+      val2 = read
+      expect(val2).to be_a(NilClass)
+      expect(val2).to eql(nil) # note :undef is not symmetrical as it produces nil
+    end
+
     it 'Regexp' do
       val = /match me/
       write(val)
