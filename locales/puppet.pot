@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-21-g67495be\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-35-g30dd86e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-08-28 23:31+0000\n"
-"PO-Revision-Date: 2018-08-28 23:31+0000\n"
+"POT-Creation-Date: 2018-09-04 18:17+0000\n"
+"PO-Revision-Date: 2018-09-04 18:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -8465,23 +8465,23 @@ msgstr ""
 msgid "The timeout must be a number."
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:319
+#: ../lib/puppet/type/exec.rb:318
 msgid "Tries must be an integer"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:323
+#: ../lib/puppet/type/exec.rb:322
 msgid "Tries must be an integer >= 1"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:336
+#: ../lib/puppet/type/exec.rb:335
 msgid "try_sleep must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:340
+#: ../lib/puppet/type/exec.rb:339
 msgid "try_sleep cannot be a negative number"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:455 ../lib/puppet/type/exec.rb:507
+#: ../lib/puppet/type/exec.rb:454 ../lib/puppet/type/exec.rb:506
 msgid "Check %{value} exceeded timeout"
 msgstr ""
 
@@ -8897,61 +8897,61 @@ msgstr ""
 msgid "Group names must not be empty. If you want to specify \"no groups\" pass an empty array"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:434
+#: ../lib/puppet/type/user.rb:432
 msgid "User provider %{name} can not manage home directories"
 msgstr ""
 
 #. TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
 #. TRANSLATORS separated by dashes.
-#: ../lib/puppet/type/user.rb:451
+#: ../lib/puppet/type/user.rb:449
 msgid "Expiry dates must be YYYY-MM-DD or the string \"absent\""
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:528
+#: ../lib/puppet/type/user.rb:526
 msgid "Role names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:530
+#: ../lib/puppet/type/user.rb:528
 msgid "Role names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:565
+#: ../lib/puppet/type/user.rb:563
 msgid "Auth names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:567
+#: ../lib/puppet/type/user.rb:565
 msgid "Auth names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:591
+#: ../lib/puppet/type/user.rb:589
 msgid "Profile names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:593
+#: ../lib/puppet/type/user.rb:591
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:716
+#: ../lib/puppet/type/user.rb:714
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:719
+#: ../lib/puppet/type/user.rb:717
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:723
+#: ../lib/puppet/type/user.rb:721
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:735
+#: ../lib/puppet/type/user.rb:733
 msgid "purge_ssh_keys can only be true for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:742
+#: ../lib/puppet/type/user.rb:740
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:756
+#: ../lib/puppet/type/user.rb:754
 msgid "Class name must be provided."
 msgstr ""
 
@@ -9889,43 +9889,39 @@ msgstr ""
 msgid "Must use a valid SID::Principal"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:132
+#: ../lib/puppet/util/windows/adsi.rb:137
 msgid "Value must be in DOMAIN\\user style syntax"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:158
+#: ../lib/puppet/util/windows/adsi.rb:163
 msgid "Could not resolve name: %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:216
-msgid "Puppet is not able to create/delete domain users with the user resource."
+#: ../lib/puppet/util/windows/adsi.rb:200
+msgid "Subclass must implement class-level method 'list_all'!"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:221
-msgid "User update failed: %{e}"
+#: ../lib/puppet/util/windows/adsi.rb:254
+msgid "Puppet is not able to create/delete domain %{object_class}s with the %{object_class} resource."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:316
+#: ../lib/puppet/util/windows/adsi.rb:258
+msgid "%{object_class} update failed: %{error}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/adsi.rb:284
 msgid "Cannot create user if group '%{name}' exists."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:330
+#: ../lib/puppet/util/windows/adsi.rb:392
 msgid "Failed to get user name"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:408
+#: ../lib/puppet/util/windows/adsi.rb:429
 msgid "Cannot delete user profile for '%{sid}' prior to Vista SP1"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:446
-msgid "Puppet is not able to create/delete domain groups with the group resource."
-msgstr ""
-
-#: ../lib/puppet/util/windows/adsi.rb:451
-msgid "Group update failed: %{error}"
-msgstr ""
-
-#: ../lib/puppet/util/windows/adsi.rb:502
+#: ../lib/puppet/util/windows/adsi.rb:447
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
