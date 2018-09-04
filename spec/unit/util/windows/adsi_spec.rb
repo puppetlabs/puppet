@@ -102,7 +102,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       user = Puppet::Util::Windows::ADSI::User.create(username)
 
       expect(user).to be_a(Puppet::Util::Windows::ADSI::User)
-      expect(user.native_user).to eq(adsi_user)
+      expect(user.native_object).to eq(adsi_user)
     end
 
     it "should be able to check the existence of a user" do
@@ -152,10 +152,10 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       wmi_users = [stub('WMI', :name => name)]
       Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').returns(wmi_users)
 
-      native_user = stub('IADsUser')
+      native_object = stub('IADsUser')
       homedir = "C:\\Users\\#{name}"
-      native_user.expects(:Get).with('HomeDirectory').returns(homedir)
-      Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},user").returns(native_user)
+      native_object.expects(:Get).with('HomeDirectory').returns(homedir)
+      Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},user").returns(native_object)
 
       users = Puppet::Util::Windows::ADSI::User.to_a
       expect(users.length).to eq(1)
@@ -457,7 +457,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       group = Puppet::Util::Windows::ADSI::Group.create(groupname)
 
       expect(group).to be_a(Puppet::Util::Windows::ADSI::Group)
-      expect(group.native_group).to eq(adsi_group)
+      expect(group.native_object).to eq(adsi_group)
     end
 
     it "should be able to confirm the existence of a group" do
@@ -502,10 +502,10 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       wmi_groups = [stub('WMI', :name => name)]
       Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns(wmi_groups)
 
-      native_group = stub('IADsGroup')
+      native_object = stub('IADsGroup')
       Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([]).returns(stub(:domain_account => '.\Administrator'))
-      native_group.expects(:Members).returns([stub(:Name => 'Administrator', :objectSID => [], :ole_respond_to? => true)])
-      Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},group").returns(native_group)
+      native_object.expects(:Members).returns([stub(:Name => 'Administrator', :objectSID => [], :ole_respond_to? => true)])
+      Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},group").returns(native_object)
 
       groups = Puppet::Util::Windows::ADSI::Group.to_a
       expect(groups.length).to eq(1)
