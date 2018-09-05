@@ -105,6 +105,14 @@ FACTS
         b: 2
       YAML
     end
+
+    it 'loads an alias' do
+      expect(Puppet::Util::Yaml.safe_load(<<~YAML)).to eq('a' => [], 'b' => [])
+        ---
+        a: &1 []
+        b: *1
+      YAML
+    end
   end
 
   context "#safe_load_file" do
