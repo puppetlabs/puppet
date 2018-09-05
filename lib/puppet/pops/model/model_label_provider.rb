@@ -128,7 +128,10 @@ class ModelLabelProvider
       simple_name[1..-5] + "-Type"
     else
       n = o.name
-      n.nil? ? 'Anonymous Class' : n
+      if n.nil?
+        n = o.respond_to?(:_pcore_type) ? o._pcore_type.name : 'Anonymous Class'
+      end
+      n
     end
   end
 end

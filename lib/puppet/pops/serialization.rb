@@ -34,6 +34,7 @@ end
 require_relative 'serialization/json_path'
 require_relative 'serialization/from_data_converter'
 require_relative 'serialization/to_data_converter'
+require_relative 'serialization/to_stringified_converter'
 require_relative 'serialization/serializer'
 require_relative 'serialization/deserializer'
 require_relative 'serialization/json'
