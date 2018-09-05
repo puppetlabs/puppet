@@ -46,6 +46,7 @@ HELP
     case action
     when 'submit_request'
       submit_request(options[:certname])
+      exit(0)
     else
       puts "Unknown action '#{action}'"
       exit(1)
@@ -56,10 +57,10 @@ HELP
     Puppet::SSL::Host.ca_location = :remote
     ssl = Puppet::SSL::Host.new(certname)
     ssl.ensure_ca_certificate
-    ssl.generate_certificate_request(dns_alt_names: '')
+    ssl.generate
     puts "Submitted certificate request for '#{ssl.name}' to https://#{Puppet[:ca_server]}:#{Puppet[:ca_port]}"
   rescue => e
     puts "Failed to submit certificate request: #{e.message}"
-    exit 1
+    exit(1)
   end
 end
