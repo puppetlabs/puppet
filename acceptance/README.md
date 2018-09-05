@@ -5,7 +5,7 @@ Table of Contents
 -----------------
 
 * [General Notes](#general-notes)
-* [Running Tests on the vcloud](#running-tests-on-the-vcloud) (now vmpooler)
+* [Running Tests on the vcloud](#running-tests-on-the-vcloud)
 * [Running Tests on Vagrant Boxen](#running-tests-on-vagrant-boxen)
 
 General Notes
@@ -47,12 +47,11 @@ Beaker will install the following:
 
 This corresponds to installing facter and hiera stable from our internal mirror, while installing puppet SHA abcd from a git daemon on my local machine percival.  See below for details on setting up a local git daemon.
 
-Running Tests on the vcloud (now vmpooler)
+Running Tests on the vcloud
 ---------------------------
 
-Only applies to Pulletlabs employees. Community members should see the [guide to running the tests on vagrant boxen](#running-tests-on-vagrant-boxen).
-
-This hypervisor has been deprecated: we now use vmpooler. Hosts files have been upgraded as appropriate.
+In order to use the Puppet Labs vcloud, you'll need to be a Puppet Labs employee.
+Community members should see the [guide to running the tests on vagrant boxen](#running-tests-on-vagrant-boxen).
 
 ### Authentication
 
