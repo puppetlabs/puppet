@@ -1805,7 +1805,16 @@ EOT
       Regardless of this setting's value, Puppet will always obey explicit
       dependencies set with the before/require/notify/subscribe metaparameters
       and the `->`/`~>` chaining arrows; this setting only affects the relative
-      ordering of _unrelated_ resources."
+      ordering of _unrelated_ resources.
+
+      This setting is deprecated, and will always have a value of `manifest` in
+      6.0 and up.",
+      :call_hook => :on_initialize_and_write,
+      :hook => proc { |value|
+        if value != "manifest"
+          Puppet.deprecation_warning(_('Setting %{name} is deprecated.') % { name: 'ordering' }, 'setting-ordering')
+        end
+      }
     }
   )
 
