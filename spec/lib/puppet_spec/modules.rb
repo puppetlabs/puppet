@@ -34,6 +34,12 @@ module PuppetSpec::Modules
         end
       end
 
+      (options[:files] || {}).each do |fname, content|
+        path = File.join(module_dir, fname)
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, content)
+      end
+
       Puppet::Module.new(name, module_dir, environment)
     end
 

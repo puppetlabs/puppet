@@ -45,6 +45,7 @@ class Puppet::Module
     end
 
     FORBIDDEN_EXTENSIONS = %w{.conf .md}
+    MOUNTS = %w[lib files tasks]
 
     def self.is_task_name?(name)
       return true if name =~ /^[a-z][a-z0-9_]*$/
@@ -59,6 +60,63 @@ class Puppet::Module
         return false if path.end_with?(ext)
       end
       return true
+    end
+
+    def self.get_file_details(path, name_start)
+      unless File.absolute_path(path) == File.path(path)
+        msg = _("File pathnames cannot include relative paths")
+        raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
+      end
+
+      # This gets the path from the starting point onward
+      # For files this should be the file subpath from the metadata
+      # For directories it should be the directory subpath plus whatever we globbed
+      name = "#{name_start}#{path.partition(name_start).last}"
+
+      { "name" => name, "path" =>  path }
+    end
+
+    # Find task's required lib files and retrieve paths
+    # for both 'files' and 'implementation:files' metadata keys
+    def self.find_files(files, mod)
+      env = mod.environment.respond_to?(:name) ? mod.environment.name : 'production'
+
+      file_list = files.flat_map do |file|
+        module_name, mount, endpath = file.split("/", 3)
+
+        pup_module = Puppet::Module.find(module_name, env)
+        if pup_module.nil?
+          raise Puppet::Module::MissingModule, _("Module %{module_name} not found in environment %{environment_name}.") %
+            {module_name: pup_module.name, environment_name: env}
+        end
+
+        unless MOUNTS.include? mount
+          msg = _("Files must be saved in module directories that Puppet makes available via mount points: %{mounts}" % 
+                  {mounts: MOUNTS.join(', ')})
+          raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
+        end
+
+        path = File.join(pup_module.path, mount, endpath)
+        unless File.exist?(path)
+          msg = _("Could not find %{path} on disk" % { path: path })
+          raise InvalidFile.new(msg)
+        end
+
+        last_char = path[-1] == '/'
+        if File.directory?(path)
+          msg = _("Directories specified in task metadata must include a trailing slash: %{dir}" % { dir: path } )
+          raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata') unless last_char
+          dir_files = Dir.glob("#{path}/**/*").select { |f| File.file?(f) }
+          files = dir_files.map { |f| get_file_details(f, pup_module.path) }
+        else
+          msg = _("Files specified in task metadata cannot include a trailing slash: %{file}" % { file: path } )
+          raise InvalidMetadata.new(msg, 'puppet.task/invalid-metadata') if last_char
+          files = get_file_details(path, module_name)
+        end
+
+        files
+      end
+      return file_list
     end
 
     # Copied from TaskInstantiator so we can use the Error classes here
@@ -157,7 +215,22 @@ class Puppet::Module
     end
 
     def files
-      implementations.map {|imp| { 'name' => imp['name'], 'path' => imp['path'] } }
+      md = metadata
+      outer_files = []
+      impl_lib_files = []
+      lib_files = []
+
+      unless md.nil?
+        outer_files = md['files'] if md.key?('files')
+        # There's definitely a more elegant way to do this...
+        if md.key?('implementations')
+          md['implementations'].each { |impl| impl_lib_files << impl['files'] if impl.key?('files') }
+        end
+        lib_files = self.class.find_files((impl_lib_files.flatten.uniq + outer_files).uniq, @module)
+      end
+      task_file = implementations.map {|imp| { 'name' => imp['name'], 'path' => imp['path'] } }
+      # PXP agent relies on 'impls' (which is the task file) being first if there is no metadata
+      task_file + lib_files
     end
 
     def validate

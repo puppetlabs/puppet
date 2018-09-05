@@ -9,8 +9,11 @@ describe Puppet::Module::Task do
 
   let(:modpath) { tmpdir('task_modpath') }
   let(:mymodpath) { File.join(modpath, 'mymod') }
+  let(:othermodpath) { File.join(modpath, 'othermod') }
   let(:mymod) { Puppet::Module.new('mymod', mymodpath, nil) }
+  let(:othermod) { Puppet::Module.new('othermod', othermodpath, nil) }
   let(:tasks_path) { File.join(mymodpath, 'tasks') }
+  let(:other_tasks_path) { File.join(othermodpath, 'tasks') }
   let(:tasks_glob) { File.join(mymodpath, 'tasks', '*') }
 
   it "cannot construct tasks with illegal names" do
@@ -72,6 +75,56 @@ describe Puppet::Module::Task do
     expect(tasks.map{|t| t.name}).to eq(%w{mymod::task1})
     expect(tasks.map{|t| t.metadata_file}).to eq(["#{tasks_path}/task1.json"])
     expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"]])
+  end
+
+  it "constructs a task as expected when a task has files" do
+    og_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+    Dir.expects(:glob).with(tasks_glob).returns(og_files)
+
+    Puppet::Module.expects(:find).with(othermod.name, "production").returns(othermod).at_least(1)
+    short_files = %w{other_task.sh other_task.json task_2.sh}.map { |bn| "#{othermod.name}/tasks/#{bn}" }
+    long_files = %w{other_task.sh other_task.json task_2.sh}.map { |bn| "#{other_tasks_path}/#{bn}" }
+    tasks = Puppet::Module::Task.tasks_in_module(mymod)
+    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'files' => short_files})
+
+    expect(tasks.count).to eq(1)
+    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"] + long_files])
+  end
+
+  it "constructs a task as expected when a task has directory in files key" do
+    og_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+    long_files = %w{other_task.sh other_task.json helpers/helper.sh}.map { |bn| "#{other_tasks_path}/#{bn}" }
+
+    Dir.expects(:glob).with(tasks_glob).returns(og_files)
+    Dir.expects(:glob).with("#{other_tasks_path}//**/*").returns(long_files)
+    File.expects(:directory?).with("#{other_tasks_path}/").returns(true).at_least(1)
+    File.expects(:file?).with(any_parameters).returns(true).at_least(1)
+
+    Puppet::Module.expects(:find).with(othermod.name, "production").returns(othermod).at_least(1)
+    tasks = Puppet::Module::Task.tasks_in_module(mymod)
+    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'files' => ["#{othermod.name}/tasks/"]})
+
+    expect(tasks.count).to eq(1)
+    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"] + long_files])
+  end
+
+  it "finds all required files for a task" do
+    og_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+    Dir.expects(:glob).with(tasks_glob).returns(og_files)
+
+    Puppet::Module.expects(:find).with(mymod.name, "production").returns(mymod).at_least(1)
+    Puppet::Module.expects(:find).with(othermod.name, "production").returns(othermod).at_least(1)
+    short_files = %w{helper.rb lib.sh}.map { |bn| "#{othermod.name}/files/#{bn}" }
+    long_files = %w{helper.rb lib.sh}.map { |bn| "#{othermodpath}/files/#{bn}" }
+    tasks = Puppet::Module::Task.tasks_in_module(mymod)
+    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'files' => short_files,
+                                                                'implementations' => [{"name" => "task1.sh",
+                                                                                       "files" => ["#{mymod.name}/files/myhelper.rb",
+                                                                                                   "#{othermod.name}/files/helper.rb"]}]})
+    expect(tasks.count).to eq(1)
+    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"] + 
+                                                                ["#{mymodpath}/files/myhelper.rb"] +
+                                                                long_files])
   end
 
   it "finds files whose names (besides extensions) are valid task names" do
