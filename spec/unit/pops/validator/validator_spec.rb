@@ -136,12 +136,12 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
     end
 
-    it 'produces a deprecation for illegal function locations' do
+    it 'produces an error for illegal function locations' do
       with_environment(environment) do
         acceptor = validate(parse('function aaa::ccc() {}', 'path/aaa/manifests/bbb.pp'))
-        expect(deprecation_count(acceptor)).to eql(1)
-        expect(acceptor.warning_count).to eql(1)
-        expect(acceptor.error_count).to eql(0)
+        expect(deprecation_count(acceptor)).to eql(0)
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
       end
     end
@@ -170,12 +170,12 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
-    it 'produces a deprecation for illegal function locations' do
+    it 'produces an error for illegal function locations' do
       with_environment(environment) do
         acceptor = validate(parse('function aaa::ccc() {}', 'path/aaa/manifests/bbb.pp'))
-        expect(deprecation_count(acceptor)).to eql(1)
-        expect(acceptor.warning_count).to eql(1)
-        expect(acceptor.error_count).to eql(0)
+        expect(deprecation_count(acceptor)).to eql(0)
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
       end
     end
@@ -211,12 +211,12 @@ describe "validating 4x" do
       expect(acceptor).to have_issue(Puppet::Pops::Issues::CLASS_NOT_VIRTUALIZABLE)
     end
 
-    it 'produces a deprecation for illegal function locations' do
+    it 'produces an error for illegal function locations' do
       with_environment(environment) do
         acceptor = validate(parse('function aaa::ccc() {}', 'path/aaa/manifests/bbb.pp'))
-        expect(deprecation_count(acceptor)).to eql(1)
-        expect(acceptor.warning_count).to eql(1)
-        expect(acceptor.error_count).to eql(0)
+        expect(deprecation_count(acceptor)).to eql(0)
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
       end
     end
@@ -231,12 +231,12 @@ describe "validating 4x" do
       expect(acceptor).to_not have_issue(Puppet::Pops::Issues::DUPLICATE_KEY)
     end
 
-    it 'produces a deprecation for illegal function locations' do
+    it 'produces an error for illegal function locations' do
       with_environment(environment) do
         acceptor = validate(parse('function aaa::ccc() {}', 'path/aaa/manifests/bbb.pp'))
-        expect(deprecation_count(acceptor)).to eql(1)
-        expect(acceptor.warning_count).to eql(1)
-        expect(acceptor.error_count).to eql(0)
+        expect(deprecation_count(acceptor)).to eql(0)
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
       end
     end
