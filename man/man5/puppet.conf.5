@@ -1360,6 +1360,9 @@ How unrelated resources should be ordered when applying a catalog\. Allowed valu
 .P
 Regardless of this setting\'s value, Puppet will always obey explicit dependencies set with the before/require/notify/subscribe metaparameters and the \fB\->\fR/\fB~>\fR chaining arrows; this setting only affects the relative ordering of \fIunrelated\fR resources\.
 .
+.P
+This setting is deprecated, and will always have a value of \fBmanifest\fR in 6\.0 and up\.
+.
 .IP "\(bu" 4
 \fIDefault\fR: manifest
 .
