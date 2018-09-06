@@ -114,9 +114,6 @@ module Puppet::Util::Execution
   #   an Array the first element should be the executable and the rest of the
   #   elements should be the individual arguments to that executable.
   # @param options [Hash] a Hash of options
-  # @option options [String] :cwd the directory from which to run the command. Raises an error if the directory does not exist.
-  #   This option is only available on the agent. It cannot be used on the master, meaning it cannot be used in, for example,
-  #   regular functions, hiera backends, or report processors.
   # @option options [Boolean]  :failonfail if this value is set to true, then this method will raise an error if the
   #   command is not executed successfully.
   # @option options [Integer, String] :uid (nil) the user id of the user that the process should be run as. Will be ignored if the
@@ -322,18 +319,6 @@ module Puppet::Util::Execution
   # @api private
   #
   def self.execute_posix(command, options, stdin, stdout, stderr)
-    exec_options = {}
-    exec_options[:chdir] = options[:cwd] if options[:cwd]
-
-    # NOTE: The reason we do not put this check in 'execute' is because
-    # on Windows, cwd could be a UNC path. In this case, there's a
-    # chance that File.directory?(cwd) could return false when the UNC
-    # path exists, which is incorrect. See PUP-6919.
-    cwd = exec_options[:chdir]
-    if cwd && !File.directory?(cwd)
-      raise ArgumentError, _("Working directory %{cwd} does not exist!") % { cwd: cwd }
-    end
-
     child_pid = Puppet::Util.safe_posix_fork(stdin, stdout, stderr) do
 
       # We can't just call Array(command), and rely on it returning
@@ -366,7 +351,7 @@ module Puppet::Util::Execution
 
         options[:custom_environment] ||= {}
         Puppet::Util.withenv(options[:custom_environment]) do
-          Kernel.exec(*command, exec_options)
+          Kernel.exec(*command)
         end
       rescue => detail
         Puppet.log_exception(detail, _("Could not execute posix command: %{detail}") % { detail: detail })
