@@ -28,7 +28,6 @@ describe 'the static loader' do
   context 'provides access to resource types built into puppet' do
     %w{
       Component
-      Cron
       Exec
       File
       Filebucket
