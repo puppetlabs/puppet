@@ -70,7 +70,15 @@ module Serialization
 
     def to_data(value)
       if value.nil? || Types::PScalarDataType::DEFAULT.instance?(value)
-        value
+        if @rich_data && value.is_a?(String) && value.encoding == Encoding::ASCII_8BIT
+          # Transform the binary string to rich Binary
+          {
+            PCORE_TYPE_KEY => PCORE_TYPE_BINARY,
+            PCORE_VALUE_KEY => Puppet::Pops::Types::PBinaryType::Binary.from_binary_string(value).to_s
+          }
+        else
+          value
+        end
       elsif :default == value
         if @rich_data
           { PCORE_TYPE_KEY => PCORE_TYPE_DEFAULT }
