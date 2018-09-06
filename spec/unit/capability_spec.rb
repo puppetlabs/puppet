@@ -394,7 +394,7 @@ test { one: hostname => "ahost", export => Cap[two] }
   end
 
   context 'and aliased resources' do
-    let(:drive) { Puppet.features.microsoft_windows? ? 'C:' : '' }
+    let(:drive) { Puppet::Util::Platform.windows? ? 'C:' : '' }
     let(:code) { <<-PUPPET }
       $dir='#{drive}/tmp/test'
       $same_dir='#{drive}/tmp/test/'

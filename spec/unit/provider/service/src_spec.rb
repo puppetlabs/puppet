@@ -8,7 +8,7 @@ require 'spec_helper'
 describe 'Puppet::Type::Service::Provider::Src', unless: Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:src) }
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     # Get a pid for $CHILD_STATUS to latch on to
     command = "cmd.exe /c \"exit 0\""
     Puppet::Util::Execution.execute(command, {:failonfail => false})

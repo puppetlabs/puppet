@@ -328,7 +328,7 @@ describe Puppet::Util::Log do
     end
 
     it "should restrict its suitability to Windows" do
-      Puppet.features.expects(:microsoft_windows?).returns(false)
+      Puppet::Util::Platform.stubs(:windows?).returns false
 
       expect(Puppet::Util::Log::DestEventlog.suitable?('whatever')).to eq(false)
     end

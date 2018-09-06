@@ -200,7 +200,7 @@ describe Puppet::Util::Storage do
       Dir.mkdir(Puppet[:statefile])
       Puppet::Util::Storage.cache(:yayness)
 
-      if Puppet.features.microsoft_windows?
+      if Puppet::Util::Platform.windows?
         expect { Puppet::Util::Storage.store }.to raise_error do |error|
           expect(error).to be_a(Puppet::Util::Windows::Error)
           expect(error.code).to eq(5) # ERROR_ACCESS_DENIED

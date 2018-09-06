@@ -160,7 +160,7 @@ describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java'
     let(:host) { Puppet::SSL::Host.new(hostname) }
     let(:hostname) { "foobar" }
 
-    it "should sign the certificate request if one is waiting", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
+    it "should sign the certificate request if one is waiting", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
       subject.generate(hostname, options)
 
       subject.sign(hostname, options)
@@ -176,7 +176,7 @@ describe Puppet::Face[:certificate, '0.0.1'], :unless => RUBY_PLATFORM == 'java'
       end.to raise_error(ArgumentError, /Could not find certificate request for #{hostname}/)
     end
 
-    describe "when ca_location is local", :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
+    describe "when ca_location is local", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
       describe "when the request has dns alt names" do
         before :each do
           subject.generate(hostname, options.merge(:dns_alt_names => 'some,alt,names'))

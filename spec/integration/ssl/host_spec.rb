@@ -71,7 +71,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     end
   end
 
-  it "should pass the verification of its own SSL store", :unless => Puppet.features.microsoft_windows? do
+  it "should pass the verification of its own SSL store", :unless => Puppet::Util::Platform.windows? do
     @host.generate
     @ca = Puppet::SSL::CertificateAuthority.new
     @ca.sign(@host.name)

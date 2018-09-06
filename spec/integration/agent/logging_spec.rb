@@ -81,7 +81,7 @@ describe 'agent logging' do
       command_line.execute
     end
 
-    if Puppet.features.microsoft_windows? && argv.include?(DAEMONIZE)
+    if Puppet::Util::Platform.windows? && argv.include?(DAEMONIZE)
 
       it "should exit on a platform which cannot daemonize if the --daemonize flag is set" do
         expect { double_of_bin_puppet_agent_call(argv) }.to raise_error(SystemExit)
@@ -128,7 +128,7 @@ describe 'agent logging' do
     loggers << CONSOLE if verbose_or_debug_set_in_argv(argv)
     loggers << 'console' if log_dest_is_set_to(argv, LOGDEST_CONSOLE)
     loggers << '/dev/null/foo' if log_dest_is_set_to(argv, LOGDEST_FILE)
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       # an explicit call to --logdest syslog on windows is swallowed silently with no
       # logger created (see #suitable() of the syslog Puppet::Util::Log::Destination subclass)
       # however Puppet::Util::Log.newdestination('syslog') does get called...so we have

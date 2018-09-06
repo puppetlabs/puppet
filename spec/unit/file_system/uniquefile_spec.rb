@@ -149,7 +149,7 @@ describe Puppet::FileSystem::Uniquefile do
       expect(File.exist?(path)).to eq(false)
     end
 
-    context "on unix platforms", :unless => Puppet.features.microsoft_windows? do
+    context "on unix platforms", :unless => Puppet::Util::Platform.windows? do
       it "close doesn't unlink if already unlinked" do
         t = tempfile("foo")
         path = t.path
@@ -173,7 +173,7 @@ describe Puppet::FileSystem::Uniquefile do
       expect(File.exist?(path)).to eq(false)
     end
 
-    context "on unix platforms", :unless => Puppet.features.microsoft_windows? do
+    context "on unix platforms", :unless => Puppet::Util::Platform.windows? do
       it "close! doesn't unlink if already unlinked" do
         t = tempfile("foo")
         path = t.path

@@ -210,7 +210,7 @@ module Puppet
         this attribute."
 
       validate do |user|
-        if Puppet.features.microsoft_windows?
+        if Puppet::Util::Platform.windows?
           self.fail _("Unable to execute commands as other users on Windows")
         elsif !Puppet.features.root? && resource.current_username() != user
           self.fail _("Only root can execute commands as other users")
@@ -530,7 +530,7 @@ module Puppet
       # Stick the cwd in there if we have it
       reqs << self[:cwd] if self[:cwd]
 
-      file_regex = Puppet.features.microsoft_windows? ? %r{^([a-zA-Z]:[\\/]\S+)} : %r{^(/\S+)}
+      file_regex = Puppet::Util::Platform.windows? ? %r{^([a-zA-Z]:[\\/]\S+)} : %r{^(/\S+)}
 
       self[:command].scan(file_regex) { |str|
         reqs << str

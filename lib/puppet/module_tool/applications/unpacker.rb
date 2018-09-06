@@ -14,7 +14,7 @@ module Puppet::ModuleTool
       end
 
       def self.harmonize_ownership(source, target)
-        unless Puppet.features.microsoft_windows?
+        unless Puppet::Util::Platform.windows?
           source = Pathname.new(source) unless source.respond_to?(:stat)
           target = Pathname.new(target) unless target.respond_to?(:stat)
 

@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_windows? || RUBY_PLATFORM == 'java' do
+describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
   include PuppetSpec::Files
 
   before :each do

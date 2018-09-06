@@ -84,7 +84,7 @@ describe Puppet::Util::Log.desttypes[:file] do
       end
     end
 
-    describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
       let (:abspath) { 'C:\\temp\\log.txt' }
       let (:relpath) { 'log.txt' }
 

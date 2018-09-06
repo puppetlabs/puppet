@@ -25,7 +25,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
     it { is_expected.to be_versionable }
   end
 
-  describe 'on Windows', :if => Puppet.features.microsoft_windows? do
+  describe 'on Windows', :if => Puppet::Util::Platform.windows? do
     it 'should be the default provider' do
       expect(Puppet::Type.type(:package).defaultprovider).to eq(subject.class)
     end
@@ -126,7 +126,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
       provider.install
     end
 
-    it 'should fail otherwise', :if => Puppet.features.microsoft_windows? do
+    it 'should fail otherwise', :if => Puppet::Util::Platform.windows? do
       expect_execute(command, 5)
 
       expect do
@@ -181,7 +181,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
       provider.uninstall
     end
 
-    it 'should fail otherwise', :if => Puppet.features.microsoft_windows? do
+    it 'should fail otherwise', :if => Puppet::Util::Platform.windows? do
       expect_execute(command, 5)
 
       expect do

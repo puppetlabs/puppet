@@ -258,7 +258,7 @@ module Puppet
     def copy_source_value(metadata_method)
       param_name = (metadata_method == :checksum) ? :content : metadata_method
       if resource[param_name].nil? or resource[param_name] == :absent
-        if Puppet.features.microsoft_windows? && [:owner, :group, :mode].include?(metadata_method)
+        if Puppet::Util::Platform.windows? && [:owner, :group, :mode].include?(metadata_method)
           devfail "Should not have tried to use source owner/mode/group on Windows"
         end
 

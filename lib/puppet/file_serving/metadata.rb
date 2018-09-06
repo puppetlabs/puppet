@@ -65,7 +65,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   end
 
   class WindowsStat < MetaStat
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       require 'puppet/util/windows/security'
     end
 
@@ -88,7 +88,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   def collect_stat(path)
     stat = stat()
 
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       WindowsStat.new(stat, path, @source_permissions)
     else
       MetaStat.new(stat, @source_permissions)

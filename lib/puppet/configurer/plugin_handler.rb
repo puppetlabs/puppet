@@ -7,7 +7,7 @@ class Puppet::Configurer::PluginHandler
   SUPPORTED_LOCALES_MOUNT_AGENT_VERSION = Gem::Version.new("5.3.4")
 
   def download_plugins(environment)
-    source_permissions = Puppet.features.microsoft_windows? ? :ignore : :use
+    source_permissions = Puppet::Util::Platform.windows? ? :ignore : :use
 
     plugin_downloader = Puppet::Configurer::Downloader.new(
       "plugin",

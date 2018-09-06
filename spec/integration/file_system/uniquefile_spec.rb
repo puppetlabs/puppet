@@ -1,9 +1,7 @@
 require 'spec_helper'
 
 describe Puppet::FileSystem::Uniquefile do
-
-  describe "#open_tmp on Windows", :if => Puppet.features.microsoft_windows? do
-
+  describe "#open_tmp on Windows", :if => Puppet::Util::Platform.windows? do
     describe "with UTF8 characters" do
       include PuppetSpec::Files
 
@@ -25,5 +23,4 @@ describe Puppet::FileSystem::Uniquefile do
       end
     end
   end
-
 end

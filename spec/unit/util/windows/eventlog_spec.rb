@@ -4,7 +4,7 @@ require 'spec_helper'
 
 require 'puppet/util/windows'
 
-describe Puppet::Util::Windows::EventLog, :if => Puppet.features.microsoft_windows? do
+describe Puppet::Util::Windows::EventLog, :if => Puppet::Util::Platform.windows? do
 
   before(:each) { @event_log = Puppet::Util::Windows::EventLog.new }
   after(:each) { @event_log.close }

@@ -403,7 +403,7 @@ module Puppet
           files. The command to use can be chosen with the `diff` setting.",
     },
     :diff => {
-      :default => (Puppet.features.microsoft_windows? ? "" : "diff"),
+      :default => (Puppet::Util::Platform.windows? ? "" : "diff"),
       :desc    => "Which diff command to use when printing differences between files. This setting
           has no default value on Windows, as standard `diff` is not available, but Puppet can use many
           third-party diff tools.",
@@ -420,13 +420,13 @@ module Puppet
     },
     :daemonize => {
         :type     => :boolean,
-        :default  => (Puppet.features.microsoft_windows? ? false : true),
+        :default  => (Puppet::Util::Platform.windows? ? false : true),
         :desc     => "Whether to send the process into the background.  This defaults
           to true on POSIX systems, and to false on Windows (where Puppet
           currently cannot daemonize).",
         :short    => "D",
         :hook     => proc do |value|
-          if value and Puppet.features.microsoft_windows?
+          if value and Puppet::Util::Platform.windows?
             raise "Cannot daemonize on Windows"
           end
       end
@@ -685,7 +685,7 @@ module Puppet
       :desc     => "The module repository",
     },
     :module_working_dir => {
-        :default  => (Puppet.features.microsoft_windows? ? Dir.tmpdir() : '$vardir/puppet-module'),
+        :default  => (Puppet::Util::Platform.windows? ? Dir.tmpdir() : '$vardir/puppet-module'),
         :desc     => "The directory into which module tool data is stored",
     },
     :forge_authorization => {

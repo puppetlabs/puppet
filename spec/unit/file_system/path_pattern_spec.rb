@@ -91,7 +91,7 @@ describe Puppet::FileSystem::PathPattern do
       expect(Puppet::FileSystem::PathPattern.absolute("c:/absolute/windows/path").to_s).to eq("c:/absolute/windows/path")
     end
 
-    it "can be created with a '..' embedded in a filename on windows", :if => Puppet.features.microsoft_windows? do
+    it "can be created with a '..' embedded in a filename on windows", :if => Puppet::Util::Platform.windows? do
       expect(Puppet::FileSystem::PathPattern.absolute(%q{c:\..my\ot..her\one..}).to_s).to eq(%q{c:\..my\ot..her\one..})
     end
 

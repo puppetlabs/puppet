@@ -252,7 +252,7 @@ describe Puppet::Agent do
       end
     end
 
-    describe "on Windows", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows", :if => Puppet::Util::Platform.windows? do
       it "should never fork" do
         agent = Puppet::Agent.new(AgentTestClient, true)
         expect(agent.should_fork).to be_falsey

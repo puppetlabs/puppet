@@ -4,13 +4,13 @@ describe Puppet::Util::Execution, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   describe "#execpipe" do
-    it "should set LANG to C avoid localized output", :if => !Puppet.features.microsoft_windows? do
+    it "should set LANG to C avoid localized output", :if => !Puppet::Util::Platform.windows? do
       out = ""
       Puppet::Util::Execution.execpipe('echo $LANG'){ |line| out << line.read.chomp }
       expect(out).to eq("C")
     end
 
-    it "should set LC_ALL to C avoid localized output", :if => !Puppet.features.microsoft_windows? do
+    it "should set LC_ALL to C avoid localized output", :if => !Puppet::Util::Platform.windows? do
       out = ""
       Puppet::Util::Execution.execpipe('echo $LC_ALL'){ |line| out << line.read.chomp }
       expect(out).to eq("C")
@@ -25,7 +25,7 @@ describe Puppet::Util::Execution, unless: Puppet::Util::Platform.jruby? do
     end
   end
 
-  describe "#execute (non-Windows)", :if => !Puppet.features.microsoft_windows? do
+  describe "#execute (non-Windows)", :if => !Puppet::Util::Platform.windows? do
     it "should execute basic shell command" do
       result = Puppet::Util::Execution.execute("ls /tmp", :failonfail => true)
       expect(result.exitstatus).to eq(0)
@@ -33,7 +33,7 @@ describe Puppet::Util::Execution, unless: Puppet::Util::Platform.jruby? do
     end
   end
 
-  describe "#execute (Windows)", :if => Puppet.features.microsoft_windows? do
+  describe "#execute (Windows)", :if => Puppet::Util::Platform.windows? do
     let(:utf8text) do
       # Japanese Lorem Ipsum snippet
       "utf8testfile" + [227, 131, 171, 227, 131, 147, 227, 131, 179, 227, 131, 132, 227,

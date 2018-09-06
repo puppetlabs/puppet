@@ -922,7 +922,7 @@ describe Puppet::Pops::Parser::Lexer2 do
 
   context 'when lexing files from disk' do
     it 'should always read files as UTF-8' do
-      if Puppet.features.microsoft_windows? && Encoding.default_external == Encoding::UTF_8
+      if Puppet::Util::Platform.windows? && Encoding.default_external == Encoding::UTF_8
         raise 'This test must be run in a codepage other than 65001 to validate behavior'
       end
 

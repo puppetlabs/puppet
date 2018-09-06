@@ -42,12 +42,12 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       expect(lambda { resource[:source] = %w{ftp://foo/bar} }).to raise_error(Puppet::Error, /Cannot use URLs of type 'ftp' as source for fileserving/)
     end
 
-    it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
+    it "should strip trailing forward slashes", :unless => Puppet::Util::Platform.windows? do
       resource[:source] = "/foo/bar\\//"
       expect(resource[:source].first).to match(%r{/foo/bar\\$})
     end
 
-    it "should strip trailing forward and backslashes", :if => Puppet.features.microsoft_windows? do
+    it "should strip trailing forward and backslashes", :if => Puppet::Util::Platform.windows? do
       resource[:source] = "X:/foo/bar\\//"
       expect(resource[:source].first).to match(/(file\:|file\:\/\/)\/X:\/foo\/bar$/)
     end
@@ -246,7 +246,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
     describe "and the source is a file" do
       before do
         @metadata.stubs(:ftype).returns "file"
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        Puppet::Util::Platform.stubs(:windows?).returns false
       end
 
       context "when source_permissions is `use`" do
@@ -409,7 +409,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
     describe "and the source is a link" do
       before do
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        Puppet::Util::Platform.stubs(:windows?).returns false
       end
 
       it "should set the target to the link destination" do
@@ -456,7 +456,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
         end
       end
 
-      describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+      describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
         ['', "file:/", "file:///"].each do |prefix|
           it "should be local with prefix '#{prefix}'" do
             resource[:source] = "#{prefix}#{sourcepath}"

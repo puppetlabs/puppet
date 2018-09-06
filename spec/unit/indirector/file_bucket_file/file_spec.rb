@@ -110,8 +110,9 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
               if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
                 skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
               else
-                checksum = save_bucket_file(plaintext, "/foo/bar")
-                checksum = save_bucket_file(plaintext, "/foo/bar")
+                # save it twice
+                save_bucket_file(plaintext, "/foo/bar")
+                save_bucket_file(plaintext, "/foo/bar")
                 dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
                 expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
                 expect(File.read("#{dir_path}/paths")).to eq("foo/bar\n")
@@ -122,8 +123,8 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
               if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
                 skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
               else
-                checksum = save_bucket_file(plaintext, "/foo/bar")
-                checksum = save_bucket_file(plaintext, "/foo/baz")
+                save_bucket_file(plaintext, "/foo/bar")
+                save_bucket_file(plaintext, "/foo/baz")
                 dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
                 expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
                 expect(File.read("#{dir_path}/paths")).to eq("foo/bar\nfoo/baz\n")
@@ -281,7 +282,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
       end
     end
 
-    describe "when diffing files", :unless => Puppet.features.microsoft_windows? do
+    describe "when diffing files", :unless => Puppet::Util::Platform.windows? do
       with_digest_algorithms do
         let(:not_bucketed_plaintext) { "other stuff" }
         let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }

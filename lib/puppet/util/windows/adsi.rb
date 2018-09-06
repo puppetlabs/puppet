@@ -197,8 +197,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def [](attribute)
-      # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
-      # values are returned as UTF-8
+      # Setting WIN32OLE.codepage ensures values are returned as UTF-8
       native_user.Get(attribute)
     end
 
@@ -249,8 +248,7 @@ module Puppet::Util::Windows::ADSI
       # https://msdn.microsoft.com/en-us/library/aa746342.aspx
       # WIN32OLE objects aren't enumerable, so no map
       groups = []
-      # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
-      # values are returned as UTF-8
+      # Setting WIN32OLE.codepage ensures values are returned as UTF-8
       native_user.Groups.each {|g| groups << g.Name} rescue nil
       groups
     end
@@ -374,8 +372,7 @@ module Puppet::Util::Windows::ADSI
 
       users = []
       wql.each do |u|
-        # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
-        # values are returned as UTF-8
+        # Setting WIN32OLE.codepage ensures values are returned as UTF-8
         users << new(u.name)
       end
 
@@ -534,8 +531,7 @@ module Puppet::Util::Windows::ADSI
 
       groups = []
       wql.each do |g|
-        # Setting WIN32OLE.codepage in the microsoft_windows feature ensures
-        # values are returned as UTF-8
+        # Setting WIN32OLE.codepage ensures values are returned as UTF-8
         groups << new(g.name)
       end
 

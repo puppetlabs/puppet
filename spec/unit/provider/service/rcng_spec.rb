@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Rcng',
-    :unless => Puppet.features.microsoft_windows? || Puppet::Util::Platform.jruby? do
+    :unless => Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:rcng) }
 
   before :each do

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows? do
+describe "Puppet::Util::Windows::User", :if => Puppet::Util::Platform.windows? do
   describe "2003 without UAC" do
     before :each do
       Puppet::Util::Windows::Process.stubs(:windows_major_version).returns(5)

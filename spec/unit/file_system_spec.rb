@@ -302,7 +302,7 @@ describe "Puppet::FileSystem" do
 
   describe "symlink",
     :if => ! Puppet.features.manages_symlinks? &&
-    Puppet.features.microsoft_windows? do
+    Puppet::Util::Platform.windows? do
 
     let(:file)         { tmpfile("somefile") }
     let(:missing_file) { tmpfile("missingfile") }

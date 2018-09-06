@@ -169,7 +169,7 @@ describe Puppet::Settings::FileSetting do
       expect(resource.title).to eq(@basepath)
     end
 
-    it "should have a working directory with a root directory not called dev", :if => Puppet.features.microsoft_windows? do
+    it "should have a working directory with a root directory not called dev", :if => Puppet::Util::Platform.windows? do
       # Although C:\Dev\.... is a valid path on Windows, some other code may regard it as a path to be ignored.  e.g. /dev/null resolves to C:\dev\null on Windows.
       path = File.expand_path('somefile')
       expect(path).to_not match(/^[A-Z]:\/dev/i)
@@ -206,9 +206,9 @@ describe Puppet::Settings::FileSetting do
     it "should set the owner if running as root and the owner is provided" do
       Puppet[:manage_internal_file_permissions] = true
       Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
-
+      Puppet::Util::Platform.stubs(:windows?).returns false
       @file.stubs(:owner).returns "foo"
+
       expect(@file.to_resource[:owner]).to eq("foo")
     end
 
@@ -223,9 +223,9 @@ describe Puppet::Settings::FileSetting do
     it "should set the group if running as root and the group is provided" do
       Puppet[:manage_internal_file_permissions] = true
       Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
-
+      Puppet::Util::Platform.stubs(:windows?).returns false
       @file.stubs(:group).returns "foo"
+
       expect(@file.to_resource[:group]).to eq("foo")
     end
 
@@ -241,22 +241,24 @@ describe Puppet::Settings::FileSetting do
     it "should not set owner if not running as root" do
       Puppet[:manage_internal_file_permissions] = true
       Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      Puppet::Util::Platform.stubs(:windows?).returns false
       @file.stubs(:owner).returns "foo"
+
       expect(@file.to_resource[:owner]).to be_nil
     end
 
     it "should not set group if not running as root" do
       Puppet[:manage_internal_file_permissions] = true
       Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      Puppet::Util::Platform.stubs(:windows?).returns false
       @file.stubs(:group).returns "foo"
+
       expect(@file.to_resource[:group]).to be_nil
     end
 
     describe "on Microsoft Windows systems" do
       before :each do
-        Puppet.features.stubs(:microsoft_windows?).returns true
+        Puppet::Util::Platform.stubs(:windows?).returns true
       end
 
       it "should not set owner" do
@@ -308,7 +310,7 @@ describe Puppet::Settings::FileSetting do
     end
   end
 
-  context "when opening", :unless => Puppet.features.microsoft_windows? do
+  context "when opening", :unless => Puppet::Util::Platform.windows? do
     let(:path) do
       tmpfile('file_setting_spec')
     end

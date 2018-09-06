@@ -14,7 +14,7 @@ describe 'Puppet::Type::Service::Provider::Launchd', unless: Puppet::Util::Platf
   let (:launchd_overrides_10_) { '/var/db/com.apple.xpc.launchd/disabled.plist' }
   subject { resource.provider }
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     # Get a pid for $CHILD_STATUS to latch on to
     command = "cmd.exe /c \"exit 0\""
     Puppet::Util::Execution.execute(command, {:failonfail => false})

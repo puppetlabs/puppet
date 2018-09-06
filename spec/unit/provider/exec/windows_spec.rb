@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
 
   let(:resource) { Puppet::Type.type(:exec).new(:title => 'C:\foo', :provider => :windows) }
@@ -45,7 +45,7 @@ describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.mic
   end
 
   describe "#checkexe" do
-    describe "when the command is absolute", :if => Puppet.features.microsoft_windows? do
+    describe "when the command is absolute", :if => Puppet::Util::Platform.windows? do
       it "should return if the command exists and is a file" do
         command = tmpfile('command')
         FileUtils.touch(command)

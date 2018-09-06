@@ -1,14 +1,14 @@
 #!/usr/bin/env ruby
 require 'spec_helper'
 
-if Puppet.features.microsoft_windows?
+if Puppet::Util::Platform.windows?
   class WindowsSecurityTester
     require 'puppet/util/windows/security'
     include Puppet::Util::Windows::Security
   end
 end
 
-describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_windows? do
+describe "Puppet::Util::Windows::Security", :if => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
 
   before :all do
@@ -470,7 +470,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "for an administrator", :if => (Puppet.features.root? && Puppet.features.microsoft_windows?) do
+      describe "for an administrator", :if => (Puppet.features.root? && Puppet::Util::Platform.windows?) do
         before :each do
           is_dir = Puppet::FileSystem.directory?(path)
           winsec.set_mode(WindowsSecurityTester::S_IRWXU | WindowsSecurityTester::S_IRWXG, path)

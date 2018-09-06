@@ -47,10 +47,12 @@ module Puppet::Util::SUIDManager
   module_function :groups=
 
   def self.root?
-    return Process.uid == 0 unless Puppet.features.microsoft_windows?
-
-    require 'puppet/util/windows/user'
-    Puppet::Util::Windows::User.admin?
+    if Puppet::Util::Platform.windows?
+      require 'puppet/util/windows/user'
+      Puppet::Util::Windows::User.admin?
+    else
+      Process.uid == 0
+    end
   end
 
   # Methods to handle changing uid/gid of the running process. In general,
@@ -61,7 +63,7 @@ module Puppet::Util::SUIDManager
   # If running on Windows or without root, the block will be run with the
   # current euid/egid.
   def asuser(new_uid=nil, new_gid=nil)
-    return yield if Puppet.features.microsoft_windows?
+    return yield if Puppet::Util::Platform.windows?
     return yield unless root?
     return yield unless new_uid or new_gid
 

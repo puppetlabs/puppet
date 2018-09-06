@@ -184,7 +184,7 @@ module Puppet::Util::Execution
       Puppet.debug "Executing#{user_log_s}: '#{command_str}'"
     end
 
-    null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
+    null_file = Puppet::Util::Platform.windows? ? 'NUL' : '/dev/null'
 
     begin
       stdin = Puppet::FileSystem.open(options[:stdinfile] || null_file, nil, 'r')
@@ -264,7 +264,7 @@ module Puppet::Util::Execution
 
           raise e
         end
-      elsif Puppet.features.microsoft_windows?
+      elsif Puppet::Util::Platform.windows?
         process_info = execute_windows(*exec_args)
         begin
           [stdin, stderr].each {|io| io.close rescue nil}
@@ -290,7 +290,7 @@ module Puppet::Util::Execution
       if !options[:squelch]
         # if we opened a pipe, we need to clean it up.
         reader.close if reader
-        stdout.close! if Puppet.features.microsoft_windows?
+        stdout.close! if Puppet::Util::Platform.windows?
       end
     end
 

@@ -1313,7 +1313,7 @@ describe Puppet::Settings do
       @settings.to_catalog
     end
 
-    describe "on Microsoft Windows", :if => Puppet.features.microsoft_windows? do
+    describe "on Microsoft Windows", :if => Puppet::Util::Platform.windows? do
       before :each do
         Puppet.features.stubs(:root?).returns true
 
@@ -1425,7 +1425,7 @@ describe Puppet::Settings do
       before :all do
         # when this spec is run in isolation to build a settings catalog
         # it will not be able to autorequire and load types for the first time
-        # on Windows with microsoft_windows? stubbed to false, because
+        # on Windows with windows? stubbed to false, because
         # Puppet::Util.path_to_uri is called to generate a URI to load code
         # and it manipulates the path based on OS
         # so instead we forcefully "prime" the cached types
@@ -1437,7 +1437,7 @@ describe Puppet::Settings do
       before do
         Puppet.features.stubs(:root?).returns true
         # stubbed to false, as Windows catalogs don't add users / groups
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        Puppet::Util::Platform.stubs(:windows?).returns false
 
         @settings.define_settings :foo,
             :mkusers => { :type => :boolean, :default => true, :desc => "e" },
