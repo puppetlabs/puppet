@@ -276,10 +276,21 @@ ERROR_STRING
 
     # if CSR downloaded from master, but the local keypair was just generated and
     # does not match the public key in the CSR, fail hard
-    if !existing_request.nil? &&
-      (key.content.public_key.to_s != existing_request.content.public_key.to_s)
+    validate_csr_with_key(existing_request, key) if existing_request
 
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: existing_request.fingerprint, csr_public_key: existing_request.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+    generate_certificate_request unless existing_request
+
+    # If we can get a CA instance, then we're a valid CA, and we
+    # should use it to sign our request; else, just try to read
+    # the cert.
+    if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
+      ca.sign(self.name, {allow_dns_alt_names: true})
+    end
+  end
+
+  def validate_csr_with_key(csr, key)
+    if key.content.public_key.to_s != csr.content.public_key.to_s
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
 The CSR retrieved from the master does not match the agent's public key.
 CSR fingerprint: %{fingerprint}
 CSR public key: %{csr_public_key}
@@ -293,15 +304,8 @@ On the agent:
   2. puppet agent -t
 ERROR_STRING
     end
-    generate_certificate_request unless existing_request
-
-    # If we can get a CA instance, then we're a valid CA, and we
-    # should use it to sign our request; else, just try to read
-    # the cert.
-    if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, {allow_dns_alt_names: true})
-    end
   end
+  private :validate_csr_with_key
 
   def initialize(name = nil)
     @name = (name || Puppet[:certname]).downcase
