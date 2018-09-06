@@ -60,21 +60,21 @@ public class MockService : ServiceBase {
 
   protected override void OnStart(string [] args) {
     RequestAdditionalTime(10000);
-    Sleep(8);
+    Sleep(%{start_sleep});
   }
 
   protected override void OnPause() {
     RequestAdditionalTime(10000);
-    Sleep(8);
+    Sleep(%{pause_sleep});
   }
 
   protected override void OnContinue() {
     RequestAdditionalTime(10000);
-    Sleep(8);
+    Sleep(%{continue_sleep});
   }
 
   protected override void OnStop() {
     RequestAdditionalTime(10000);
-    Sleep(8);
+    Sleep(%{stop_sleep});
   }
 }
