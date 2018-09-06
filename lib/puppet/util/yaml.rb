@@ -24,7 +24,7 @@ module Puppet::Util::Yaml
   # @raise [YamlLoadException] If deserialization fails.
   # @return The parsed YAML, which can be Hash, Array or scalar types.
   def self.safe_load(yaml, allowed_classes = [], filename = nil)
-    data = YAML.safe_load(yaml, allowed_classes, [], false, filename)
+    data = YAML.safe_load(yaml, allowed_classes, [], true, filename)
     data = false if data.nil?
     data
   rescue ::Psych::DisallowedClass => detail
