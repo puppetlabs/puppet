@@ -81,6 +81,18 @@ describe Puppet::Node::Facts, "when indirecting" do
       @facts.sanitize
       expect(@facts.values["test"]).to eq({"(?-mix:foo)" => ["bar", "(?-mix:baz)"]})
     end
+
+    it "should handle alien values having a to_s that returns ascii-8bit" do
+      class Alien
+      end
+      an_alien = Alien.new
+      @facts.values["test"] = an_alien
+      @facts.sanitize
+      fact_value = @facts.values['test']
+      expect(fact_value).to eq(an_alien.to_s)
+      expect(fact_value.encoding).to eq(Encoding::UTF_8)
+    end
+
   end
 
   describe "when indirecting" do
