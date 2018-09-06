@@ -2,11 +2,9 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe Puppet::Face[:node, '0.0.1'] do
-  after :all do
-    Puppet::SSL::Host.ca_location = :none
-  end
+require 'puppetserver/ca/cli'
 
+describe Puppet::Face[:node, '0.0.1'] do
   describe '#cleanup' do
     it "should clean everything" do
       {
@@ -90,39 +88,12 @@ describe Puppet::Face[:node, '0.0.1'] do
 
           subject.clean('hostname')
         end
-
-        it "should manage the certs if the host is a CA" do
-          Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(true)
-          Puppet::SSL::Host.expects(:ca_location=).with(:local)
-          subject.clean('hostname')
-        end
-
-        it "should not manage the certs if the host is not a CA" do
-          Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
-          Puppet::SSL::Host.expects(:ca_location=).with(:none)
-          subject.clean('hostname')
-        end
       end
 
       describe "when cleaning certificate" do
-        before :each do
-          Puppet::SSL::Host.stubs(:destroy)
-          @ca = mock()
-          Puppet::SSL::CertificateAuthority.stubs(:instance).returns(@ca)
-        end
-
-        it "should send the :destroy order to the ca if we are a CA" do
-          Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(true)
-          @ca.expects(:revoke).with(@host)
-          @ca.expects(:destroy).with(@host)
-          subject.clean_cert(@host)
-        end
-
-        it "should not destroy the certs if we are not a CA" do
-          Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
-          @ca.expects(:revoke).never
-          @ca.expects(:destroy).never
-          subject.clean_cert(@host)
+        it "should call the CA CLI gem's clean action" do
+          Puppetserver::Ca::Action::Clean.any_instance.expects(:run).with({ 'certnames' => ['hostname'] }).returns(0)
+          subject.clean_cert('hostname')
         end
       end
 
