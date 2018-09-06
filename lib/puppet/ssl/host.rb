@@ -243,6 +243,15 @@ ERROR_STRING
     end
   end
 
+  def download_host_certificate
+    cert = download_certificate_from_ca(name)
+    return nil unless cert
+
+    validate_certificate_with_key(cert)
+    save_host_certificate(cert)
+    cert
+  end
+
   # Search for an existing CSR for this host either cached on
   # disk or stored by the CA. Returns nil if no request exists.
   # @return [Puppet::SSL::CertificateRequest, nil]

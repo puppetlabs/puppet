@@ -29,6 +29,10 @@ ACTIONS
   key pair will be generated. If a CSR has already been submitted with the given `certname`,
   then the operation will fail.
 
+* download_cert:
+  Download a certificate for this host. If the current private key matches the downloaded
+  certificate, then the certificate will be saved and used for subsequent requests. If
+  there is already an existing certificate, it will be overwritten.
 HELP
   end
 
@@ -47,6 +51,9 @@ HELP
     when 'submit_request'
       submit_request(options[:certname])
       exit(0)
+    when 'download_cert'
+      download_cert(options[:certname])
+      exit(0)
     else
       puts "Unknown action '#{action}'"
       exit(1)
@@ -61,6 +68,21 @@ HELP
     puts "Submitted certificate request for '#{ssl.name}' to https://#{Puppet[:ca_server]}:#{Puppet[:ca_port]}"
   rescue => e
     puts "Failed to submit certificate request: #{e.message}"
+    exit(1)
+  end
+
+  def download_cert(certname = nil)
+    Puppet::SSL::Host.ca_location = :remote
+    ssl = Puppet::SSL::Host.new(certname)
+    ssl.ensure_ca_certificate
+    puts "Downloading certificate '#{ssl.name}' from https://#{Puppet[:ca_server]}:#{Puppet[:ca_port]}"
+    if cert = ssl.download_host_certificate
+      puts "Downloaded certificate '#{ssl.name}' with fingerprint #{cert.fingerprint}"
+    else
+      puts "No certificate for '#{ssl.name}' on CA"
+    end
+  rescue => e
+    puts "Failed to download certificate: #{e.message}"
     exit(1)
   end
 end

@@ -181,4 +181,74 @@ describe Puppet::Application::Ssl do
       expect(csr.subject_alt_names).to include('DNS:majortom')
     end
   end
+
+  context 'when downloading a certificate' do
+    before do
+      ssl.command_line.args << 'download_cert'
+
+      File.open(Puppet[:hostprivkey], 'w') { |f| f.write(@host[:private_key].to_pem) }
+      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
+    end
+
+    it 'downloads the CA bundle first when missing' do
+      File.delete(Puppet[:localcacert])
+      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: @ca[:cert].to_pem)
+      stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 404)
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expects_command_to_output
+
+      expect(File.read(Puppet[:localcacert])).to eq(@ca[:cert].to_pem)
+    end
+
+    it 'downloads the CRL bundle first when missing' do
+      File.delete(Puppet[:hostcrl])
+      stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: @crl.to_pem)
+      stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 404)
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expects_command_to_output
+
+      expect(File.read(Puppet[:hostcrl])).to eq(@crl.to_pem)
+    end
+
+    it 'downloads a new cert' do
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
+
+      expects_command_to_output(%r{Downloaded certificate '#{name}' with fingerprint .*})
+
+      expect(File.read(Puppet[:hostcert])).to eq(@host[:cert].to_pem)
+    end
+
+    it 'overwrites an existing cert' do
+      File.open(Puppet[:hostcert], 'w') { |f| f.write "existing certificate" }
+
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
+
+      expects_command_to_output(%r{Downloaded certificate '#{name}' with fingerprint .*})
+
+      expect(File.read(Puppet[:hostcert])).to eq(@host[:cert].to_pem)
+    end
+
+    it "reports an error if the downloaded cert's public key doesn't match our private key" do
+      File.open(Puppet[:hostcert], 'w') { |f| f.write "existing cert" }
+
+      # generate a new host key, whose public key doesn't match the cert
+      private_key = OpenSSL::PKey::RSA.new(512)
+      File.open(Puppet[:hostprivkey], 'w') { |f| f.write(private_key.to_pem) }
+      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(private_key.public_key.to_pem) }
+
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
+
+      expects_command_to_output(%r{^Failed to download certificate: The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?}, 1)
+    end
+
+    it "prints a message if there isn't a cert to download" do
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expects_command_to_output(/No certificate for '#{name}' on CA/)
+    end
+  end
 end
