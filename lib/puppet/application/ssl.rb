@@ -46,6 +46,8 @@ HELP
       exit(1)
     end
 
+    Puppet.settings.use(:main, :agent)
+
     action = command_line.args.first
     case action
     when 'submit_request'
