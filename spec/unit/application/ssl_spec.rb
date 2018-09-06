@@ -144,17 +144,26 @@ describe Puppet::Application::Ssl do
       expects_command_to_output
     end
 
-    it "reports an error if the downloaded CSR doesn't match the local public key" do
-      # generate a new host key, whose public key doesn't match the CSR
+    it "warns if the local CSR doesn't match the local public key, and submits a new CSR" do
+      # write out the local CSR
+      File.open(csr_path, 'w') { |f| f.write(@host[:csr].to_pem) }
+
+      # generate a new host key, whose public key doesn't match
       private_key = OpenSSL::PKey::RSA.new(512)
+      public_key = private_key.public_key
       File.open(Puppet[:hostprivkey], 'w') { |f| f.write(private_key.to_pem) }
-      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(private_key.public_key.to_pem) }
+      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(public_key.to_pem) }
 
-      body = "The CSR retrieved from the master does not match the agent's public key."
-      stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200, body: @host[:csr].to_pem)
-      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 400, body: body)
+      # expect CSR to contain the new pub key
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).with do |request|
+        sent_pem = OpenSSL::X509::Request.new(request.body).public_key.to_pem
+        expect(sent_pem).to eq(public_key.to_pem)
+      end.to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
 
-      expects_command_to_output(/Failed to submit certificate request: #{body}/, 1)
+      Puppet.stubs(:warning) # ignore unrelated warnings
+      Puppet.expects(:warning).with("The local CSR does not match the agent's public key. Generating a new CSR.")
+      expects_command_to_output(%r{Submitted certificate request for '#{name}' to https://.*}, 0)
     end
 
     it 'downloads the certificate when autosigning is enabled' do

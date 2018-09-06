@@ -50,6 +50,7 @@ HELP
     case action
     when 'submit_request'
       submit_request(options[:certname])
+      download_cert(options[:certname])
       exit(0)
     when 'download_cert'
       download_cert(options[:certname])
@@ -64,7 +65,7 @@ HELP
     Puppet::SSL::Host.ca_location = :remote
     ssl = Puppet::SSL::Host.new(certname)
     ssl.ensure_ca_certificate
-    ssl.generate
+    ssl.submit_request
     puts "Submitted certificate request for '#{ssl.name}' to https://#{Puppet[:ca_server]}:#{Puppet[:ca_port]}"
   rescue => e
     puts "Failed to submit certificate request: #{e.message}"
