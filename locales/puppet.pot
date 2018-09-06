@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-547-g1a63db1\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-583-g24ead48\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-08-30 23:33+0000\n"
-"PO-Revision-Date: 2018-08-30 23:33+0000\n"
+"POT-Creation-Date: 2018-09-06 00:20+0000\n"
+"PO-Revision-Date: 2018-09-06 00:20+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1617,12 +1617,7 @@ msgid ""
 "    API: returns a Puppet::Status object.\n"
 msgstr ""
 
-#. TRANSLATORS "win32-process", "win32-dir", and "win32-service" are program names and should not be translated
-#: ../lib/puppet/feature/base.rb:36
-msgid "Cannot run on Microsoft Windows without the win32-process, win32-dir and win32-service gems: %{err}"
-msgstr ""
-
-#: ../lib/puppet/feature/base.rb:40
+#: ../lib/puppet/feature/base.rb:19
 msgid "Cannot determine basic system flavour"
 msgstr ""
 
@@ -4814,12 +4809,12 @@ msgstr ""
 msgid "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:102
+#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:97
 msgid "Use of an Iterator is not supported here"
 msgstr ""
 
 #. TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
-#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:147
+#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:142
 msgid "Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType."
 msgstr ""
 
@@ -7972,7 +7967,7 @@ msgstr ""
 msgid "Failed to generate additional resources using 'eval_generate': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction/event.rb:127
+#: ../lib/puppet/transaction/event.rb:123
 msgid "Event status can only be %{statuses}"
 msgstr ""
 
@@ -8552,78 +8547,78 @@ msgstr ""
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:758
+#: ../lib/puppet/type/user.rb:759
 msgid "Class name must be provided."
 msgstr ""
 
-#: ../lib/puppet/util.rb:65
+#: ../lib/puppet/util.rb:64
 msgid "Unable to retrieve the environment for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:82
+#: ../lib/puppet/util.rb:81
 msgid "Unable to clear the environment for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:98
+#: ../lib/puppet/util.rb:97
 msgid "Unable to set the environment variable %{name} for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:115
+#: ../lib/puppet/util.rb:114
 msgid "Unable to merge given values into the current environment for mode %{mode}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:156
+#: ../lib/puppet/util.rb:155
 msgid "could not change to group %{group}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:157
+#: ../lib/puppet/util.rb:156
 msgid "could not change to group %{group}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:169
+#: ../lib/puppet/util.rb:168
 msgid "Could not change to user %{user}: %{detail}"
 msgstr ""
 
 #. TRANSLATORS 'benchmark' is a method name and should not be translated
-#: ../lib/puppet/util.rb:223
+#: ../lib/puppet/util.rb:222
 msgid "Failed to provide level to benchmark"
 msgstr ""
 
-#: ../lib/puppet/util.rb:226
+#: ../lib/puppet/util.rb:225
 msgid "Benchmarked object does not respond to %{value}"
 msgstr ""
 
 #. TRANSLATORS PATH and HOME are environment variables and should not be translated
-#: ../lib/puppet/util.rb:266
+#: ../lib/puppet/util.rb:265
 msgid "PATH contains a ~ character, and HOME is not set; ignoring PATH element '%{dir}'."
 msgstr ""
 
 #. TRANSLATORS PATH is an environment variable and should not be translated
-#: ../lib/puppet/util.rb:270
+#: ../lib/puppet/util.rb:269
 msgid "Couldn't expand PATH containing a ~ character; ignoring PATH element '%{dir}'."
 msgstr ""
 
-#: ../lib/puppet/util.rb:312
+#: ../lib/puppet/util.rb:311
 msgid "unknown platform %{platform} in absolute_path"
 msgstr ""
 
-#: ../lib/puppet/util.rb:346
+#: ../lib/puppet/util.rb:345
 msgid "Failed to convert '%{path}' to URI: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util.rb:446
+#: ../lib/puppet/util.rb:445
 msgid "path may not be nil"
 msgstr ""
 
-#: ../lib/puppet/util.rb:564
+#: ../lib/puppet/util.rb:563
 msgid "replace_file requires a block"
 msgstr ""
 
-#: ../lib/puppet/util.rb:568
+#: ../lib/puppet/util.rb:567
 msgid "replace_file default_mode: %{default_mode} is invalid"
 msgstr ""
 
-#: ../lib/puppet/util.rb:639
+#: ../lib/puppet/util.rb:638
 msgid "Is a directory: %{directory}"
 msgstr ""
 
@@ -8920,15 +8915,15 @@ msgstr ""
 msgid "Waiting for output; will sleep %{time_to_sleep} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/feature.rb:21
+#: ../lib/puppet/util/feature.rb:88
 msgid "Failed to load feature test for %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/feature.rb:82
+#: ../lib/puppet/util/feature.rb:104
 msgid "Libraries must be passed as strings not %{klass}"
 msgstr ""
 
-#: ../lib/puppet/util/feature.rb:90
+#: ../lib/puppet/util/feature.rb:113
 msgid "Failed to load library '%{lib}' for feature '%{name}': %{detail}"
 msgstr ""
 
@@ -9320,19 +9315,19 @@ msgstr ""
 msgid "Creating state file %{file}"
 msgstr ""
 
-#: ../lib/puppet/util/suidmanager.rb:102
+#: ../lib/puppet/util/suidmanager.rb:104
 msgid "No such group %{group}"
 msgstr ""
 
-#: ../lib/puppet/util/suidmanager.rb:118
+#: ../lib/puppet/util/suidmanager.rb:120
 msgid "No such user %{user}"
 msgstr ""
 
-#: ../lib/puppet/util/suidmanager.rb:146
+#: ../lib/puppet/util/suidmanager.rb:148
 msgid "Invalid id type %{type}"
 msgstr ""
 
-#: ../lib/puppet/util/suidmanager.rb:149
+#: ../lib/puppet/util/suidmanager.rb:151
 msgid "Invalid %{klass}: %{id}"
 msgstr ""
 
@@ -9396,35 +9391,35 @@ msgstr ""
 msgid "Could not resolve name: %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:216
+#: ../lib/puppet/util/windows/adsi.rb:215
 msgid "Puppet is not able to create/delete domain users with the user resource."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:221
+#: ../lib/puppet/util/windows/adsi.rb:220
 msgid "User update failed: %{e}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:316
+#: ../lib/puppet/util/windows/adsi.rb:314
 msgid "Cannot create user if group '%{name}' exists."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:330
+#: ../lib/puppet/util/windows/adsi.rb:328
 msgid "Failed to get user name"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:408
+#: ../lib/puppet/util/windows/adsi.rb:405
 msgid "Cannot delete user profile for '%{sid}' prior to Vista SP1"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:446
+#: ../lib/puppet/util/windows/adsi.rb:443
 msgid "Puppet is not able to create/delete domain groups with the group resource."
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:451
+#: ../lib/puppet/util/windows/adsi.rb:448
 msgid "Group update failed: %{error}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:502
+#: ../lib/puppet/util/windows/adsi.rb:499
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
