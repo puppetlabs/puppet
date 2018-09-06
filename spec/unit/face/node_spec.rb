@@ -92,7 +92,7 @@ describe Puppet::Face[:node, '0.0.1'] do
 
       describe "when cleaning certificate" do
         it "should call the CA CLI gem's clean action" do
-          Puppetserver::Ca::Cli.expects(:run).with("clean", "--certname", "hostname").returns(0)
+          Puppetserver::Ca::Action::Clean.any_instance.expects(:run).with({ 'certnames' => ['hostname'] }).returns(0)
           subject.clean_cert('hostname')
         end
       end

@@ -45,23 +45,23 @@ Puppet::Face.define(:node, '0.0.1') do
     clean_reports(node)
   end
 
+  class LoggerIO
+    def err(message)
+      Puppet.err(message) unless message =~ /^\s*Error:\s*/
+    end
+
+    def inform(message)
+      Puppet.notice(message)
+    end
+  end
+
   # clean signed cert for +host+
   def clean_cert(node)
     begin
       require 'puppetserver/ca/cli'
-      out = StringIO.new
-      err = StringIO.new
-      Puppetserver::Ca::Cli.run(["clean", "--certname", node], out, err)
-
-      if !err.string.empty?
-        Puppet.err err.string
-      end
-
-      if !out.string.empty?
-        Puppet.info out.string
-      end
+      Puppetserver::Ca::Action::Clean.new(LoggerIO.new).run({ 'certnames' => [node] })
     rescue LoadError => e
-      Puppet.warning _("Could not locate CA CLI gem, unable to clean up certs for %{node}") % { node: node }
+      Puppet.warning _("Unable to clean up certs for %{node}: %{error}") % { node: node, error: e }
     end
   end
 
