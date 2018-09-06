@@ -2073,7 +2073,7 @@ EOT
   define_settings(
     :main,
     :rich_data => {
-      :default  => false,
+      :default  => true,
       :type     => :boolean,
       :hook    => proc do |value|
         envs = Puppet.lookup(:environments) { nil }
