@@ -212,19 +212,24 @@ DOC
         return nil
       end
 
-      @certificate = get_host_certificate
-      return nil unless @certificate
+      cert = get_host_certificate
+      return nil unless cert
 
-      validate_certificate_with_key
+      validate_certificate_with_key(cert)
+      @certificate = cert
     end
     @certificate
   end
 
-  def validate_certificate_with_key
-    raise Puppet::Error, _("No certificate to validate.") unless certificate
-    raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: %{fingerprint}") % { fingerprint: certificate.fingerprint } unless key
-    unless certificate.content.check_private_key(key.content)
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: certificate.fingerprint, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+  # Validate that our private key matches the specified certificate.
+  #
+  # @param [Puppet::SSL::Certificate] cert the certificate to check
+  # @raises [Puppet::Error] if the private key does not match
+  def validate_certificate_with_key(cert)
+    raise Puppet::Error, _("No certificate to validate.") unless cert
+    raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: %{fingerprint}") % { fingerprint: cert.fingerprint } unless key
+    unless cert.content.check_private_key(key.content)
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: cert.fingerprint, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
 The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?
 Certificate fingerprint: %{fingerprint}
 To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.
