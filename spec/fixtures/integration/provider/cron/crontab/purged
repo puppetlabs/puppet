@@ -1,8 +1,0 @@
-# HEADER: some simple
-# HEADER: header
-
-# commend with blankline above and below
-
-
-# Puppet Name: only managed entry
-* * * * * /bin/true

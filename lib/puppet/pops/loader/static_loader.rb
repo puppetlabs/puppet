@@ -7,7 +7,6 @@ class StaticLoader < Loader
 
   BUILTIN_TYPE_NAMES = %w{
       Component
-      Cron
       Exec
       File
       Filebucket
