@@ -181,7 +181,7 @@ module Puppet::Util::HttpProxy
         headers.merge!({"Accept-Encoding" => Puppet::Network::HTTP::Compression::ACCEPT_ENCODING})
       end
 
-      response = proxy.send(:head, current_uri.path, headers)
+      response = proxy.send(:head, current_uri, headers)
 
       if [301, 302, 307].include?(response.code.to_i)
         # handle the redirection
@@ -191,9 +191,9 @@ module Puppet::Util::HttpProxy
 
       if method != :head
         if block_given?
-          response = proxy.send("request_#{method}".to_sym, current_uri.path, headers, &block)
+          response = proxy.send("request_#{method}".to_sym, current_uri, headers, &block)
         else
-          response = proxy.send(method, current_uri.path, headers)
+          response = proxy.send(method, current_uri, headers)
         end
       end
 
