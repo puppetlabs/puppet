@@ -712,6 +712,7 @@ ERROR_STRING
       end
     end
   end
+  public :check_for_certificate_on_disk
 
   # Attempts to download this host's certificate from the CA server.
   # Returns nil if the CA does not yet have a signed cert for this host.

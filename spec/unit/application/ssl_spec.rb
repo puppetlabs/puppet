@@ -260,4 +260,54 @@ describe Puppet::Application::Ssl do
       expects_command_to_output(/No certificate for '#{name}' on CA/)
     end
   end
+
+  context 'when verifying' do
+    before do
+      ssl.command_line.args << 'verify'
+
+      File.open(Puppet[:hostprivkey], 'w') { |f| f.write(@host[:private_key].to_pem) }
+      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
+      File.open(Puppet[:hostcert], 'w') { |f| f.write(@host[:cert].to_pem) }
+    end
+
+    it 'reports if the key is missing' do
+      File.delete(Puppet[:hostprivkey])
+
+      expects_command_to_output(/The host's private key is missing/, 1)
+    end
+
+    it 'reports if the cert is missing' do
+      File.delete(Puppet[:hostcert])
+
+      expects_command_to_output(/The host's certificate is missing/, 1)
+    end
+
+    it 'reports if the key and cert are mismatched' do
+      # generate new keys
+      private_key = OpenSSL::PKey::RSA.new(512)
+      public_key = private_key.public_key
+      File.open(Puppet[:hostprivkey], 'w') { |f| f.write(private_key.to_pem) }
+      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(public_key.to_pem) }
+
+      expects_command_to_output(/The host's key does not match the certificate/, 1)
+    end
+
+    it 'reports if the cert verification fails' do
+      # generate a new CA to force an error
+      ca = generate_cert('ca')
+      File.open(Puppet[:localcacert], 'w') { |f| f.write(ca[:cert].to_pem) }
+
+      # and CRL for that CA
+      crl = generate_crl('ca', ca[:cert].subject, ca[:private_key])
+      File.open(Puppet[:hostcrl], 'w') { |f| f.write(crl.to_pem) }
+
+      expects_command_to_output(/Failed to verify certificate '#{name}': certificate signature failure \(7\)/, 1)
+    end
+
+    it 'reports when verification succeeds' do
+      OpenSSL::X509::Store.any_instance.stubs(:verify).returns(true)
+
+      expects_command_to_output(/Verified certificate '#{name}'/, 0)
+    end
+  end
 end

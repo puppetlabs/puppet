@@ -33,6 +33,10 @@ ACTIONS
   Download a certificate for this host. If the current private key matches the downloaded
   certificate, then the certificate will be saved and used for subsequent requests. If
   there is already an existing certificate, it will be overwritten.
+
+* verify:
+  Verify the private key and certificate are present and match, verify the certificate is
+  issued by a trusted CA, and check revocation status.
 HELP
   end
 
@@ -57,6 +61,8 @@ HELP
       download_cert(host)
     when 'download_cert'
       download_cert(host)
+    when 'verify'
+      verify(host)
     else
       puts "Unknown action '#{action}'"
       exit(1)
@@ -86,6 +92,43 @@ HELP
     end
   rescue => e
     puts "Failed to download certificate: #{e.message}"
+    exit(1)
+  end
+
+  def verify(host)
+    host.ensure_ca_certificate
+
+    key = host.key
+    unless key
+      puts "The host's private key is missing"
+      exit(1)
+    end
+
+    cert = host.check_for_certificate_on_disk(host.name)
+    unless cert
+      puts "The host's certificate is missing"
+      exit(1)
+    end
+
+    if cert.content.public_key.to_pem != key.content.public_key.to_pem
+      puts "The host's key does not match the certificate"
+      exit(1)
+    end
+
+    store = host.ssl_store
+    unless store.verify(cert.content)
+      puts "Failed to verify certificate '#{host.name}': #{store.error_string} (#{store.error})"
+      exit(1)
+    end
+
+    puts "Verified certificate '#{host.name}'"
+    # store.chain.reverse.each_with_index do |issuer, i|
+    #   indent = "  " * (i+1)
+    #   puts "#{indent}#{issuer.subject.to_s}"
+    # end
+    exit(0)
+  rescue => e
+    puts "Verify failed: #{e.message}"
     exit(1)
   end
 end
