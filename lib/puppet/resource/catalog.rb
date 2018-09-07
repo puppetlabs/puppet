@@ -581,16 +581,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   private
 
   def prioritizer
-    @prioritizer ||= case Puppet[:ordering]
-                     when "title-hash"
-                       Puppet::Graph::TitleHashPrioritizer.new
-                     when "manifest"
-                       Puppet::Graph::SequentialPrioritizer.new
-                     when "random"
-                       Puppet::Graph::RandomPrioritizer.new
-                     else
-                       raise Puppet::DevError, _("Unknown ordering type %{ordering}") % { ordering: Puppet[:ordering] }
-                     end
+    @prioritizer = Puppet::Graph::SequentialPrioritizer.new
   end
 
   def create_transaction(options)

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'matchers/include_in_order'
 require 'puppet_spec/compiler'
@@ -17,13 +16,13 @@ describe Puppet::Transaction do
   end
 
   def transaction_with_resource(resource)
-    transaction = Puppet::Transaction.new(catalog_with_resource(resource), nil, Puppet::Graph::RandomPrioritizer.new)
+    transaction = Puppet::Transaction.new(catalog_with_resource(resource), nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction
   end
 
   before do
     @basepath = make_absolute("/what/ever")
-    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, Puppet::Graph::RandomPrioritizer.new)
+    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, Puppet::Graph::SequentialPrioritizer.new)
   end
 
   it "should be able to look resource status up by resource reference" do
@@ -166,7 +165,7 @@ describe Puppet::Transaction do
       @catalog.add_resource(@resource)
       @status = Puppet::Resource::Status.new(@resource)
 
-      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
       @transaction.event_manager.stubs(:queue_events)
     end
 
@@ -323,7 +322,7 @@ describe Puppet::Transaction do
 
   describe "when generating resources before traversal" do
     let(:catalog) { Puppet::Resource::Catalog.new }
-    let(:transaction) { Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new) }
+    let(:transaction) { Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new) }
     let(:generator) { Puppet::Type.type(:notify).new :title => "generator" }
     let(:generated) do
       %w[a b c].map { |name| Puppet::Type.type(:notify).new(:name => name) }
@@ -362,7 +361,7 @@ describe Puppet::Transaction do
 
   describe "after resource traversal" do
     let(:catalog) { Puppet::Resource::Catalog.new }
-    let(:prioritizer) { Puppet::Graph::RandomPrioritizer.new }
+    let(:prioritizer) { Puppet::Graph::SequentialPrioritizer.new }
     let(:report) { Puppet::Transaction::Report.new }
     let(:transaction) { Puppet::Transaction.new(catalog, report, prioritizer) }
     let(:generator) { Puppet::Transaction::AdditionalResourceGenerator.new(catalog, nil, prioritizer) }
@@ -528,7 +527,7 @@ describe Puppet::Transaction do
       @resource = Puppet::Type.type(:notify).new :name => "foo"
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource(@resource)
-      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     end
 
     it "should always schedule resources if 'ignoreschedules' is set" do
@@ -688,7 +687,7 @@ describe Puppet::Transaction do
   describe "during teardown" do
     let(:catalog) { Puppet::Resource::Catalog.new }
     let(:transaction) do
-      Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+      Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     end
 
     let(:teardown_type) do
@@ -756,7 +755,7 @@ describe Puppet::Transaction do
   describe 'when checking application run state' do
     before do
       @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     end
 
     context "when stop is requested" do
