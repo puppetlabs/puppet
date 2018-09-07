@@ -95,6 +95,12 @@ describe Puppet::Face[:node, '0.0.1'] do
           Puppetserver::Ca::Action::Clean.any_instance.expects(:run).with({ 'certnames' => ['hostname'] }).returns(0)
           subject.clean_cert('hostname')
         end
+
+        it "should not call the CA CLI gem's clean action if the gem is missing" do
+          Puppet.features.expects(:puppetserver_ca?).returns(false)
+          Puppetserver::Ca::Action::Clean.any_instance.expects(:run).never
+          subject.clean_cert("hostname")
+        end
       end
 
       describe "when cleaning cached facts" do

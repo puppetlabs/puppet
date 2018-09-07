@@ -57,11 +57,11 @@ Puppet::Face.define(:node, '0.0.1') do
 
   # clean signed cert for +host+
   def clean_cert(node)
-    begin
-      require 'puppetserver/ca/cli'
+    if Puppet.features.puppetserver_ca?
+      require 'puppetserver/ca/action/clean'
       Puppetserver::Ca::Action::Clean.new(LoggerIO.new).run({ 'certnames' => [node] })
-    rescue LoadError => e
-      Puppet.warning _("Unable to clean up certs for %{node}: %{error}") % { node: node, error: e }
+    else
+      Puppet.info _("Not managing %{node} certs as this host is not a CA") % { node: node }
     end
   end
 
