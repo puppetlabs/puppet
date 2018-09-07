@@ -84,7 +84,7 @@ describe 'Puppet Pal' do
           end
         end
 
-        it 'instantiates definitions in the given code string' do
+        it 'instantiates a function definition in the given code string' do
           result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |pal|
             pal.with_catalog_compiler do |compiler|
               compiler.evaluate_string(<<-CODE)
@@ -94,6 +94,21 @@ describe 'Puppet Pal' do
             end
           end
           expect(result).to eq('worked1')
+        end
+
+        it 'instantiates a user defined resource definition in the given code string' do
+          result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |pal|
+            pal.with_catalog_compiler do |compiler|
+              compiler.evaluate_string(<<-CODE)
+                define run_me() { }
+                run_me { test: }
+                CODE
+            end
+          end
+          resource = result[0]
+          expect(resource).to be_a(Puppet::Pops::Types::PResourceType)
+          expect(resource.type_name).to eq("Run_me")
+          expect(resource.title).to eq('test')
         end
 
         context 'the with_json_encoding()' do

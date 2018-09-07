@@ -345,6 +345,25 @@ module Pal
     def with_json_encoding(pretty: true, exclude_virtual: true)
       yield JsonCatalogEncoder.new(catalog, pretty: pretty, exclude_virtual: exclude_virtual)
     end
+
+    # Evaluates an AST obtained from `parse_string` or `parse_file` in topscope.
+    # If the ast is a `Puppet::Pops::Model::Program` (what is returned from the `parse` methods, any definitions
+    # in the program (that is, any function, plan, etc. that is defined will be made available for use).
+    #
+    # @param ast [Puppet::Pops::Model::PopsObject] typically the returned `Program` from the parse methods, but can be any `Expression`
+    # @returns [Object] whatever the ast evaluates to
+    #
+    def evaluate(ast)
+      if ast.is_a?(Puppet::Pops::Model::Program)
+        bridged = Puppet::Parser::AST::PopsBridge::Program.new(ast)
+        # define all catalog types
+        internal_compiler.environment.known_resource_types.import_ast(bridged, "")
+        bridged.evaluate(internal_compiler.topscope)
+      else
+        internal_evaluator.evaluate(topscope, ast)
+      end
+    end
+
   end
 
   # The JsonCatalogEncoder is a wrapper around a catalog produced by the Pal::CatalogCompiler.with_json_encoding
