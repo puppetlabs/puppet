@@ -3,7 +3,7 @@ require 'puppet/application/ssl'
 require 'webmock/rspec'
 require 'openssl'
 
-describe Puppet::Application::Ssl do
+describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
   let(:ssl) { Puppet::Application[:ssl] }
   let(:name) { 'ssl-client' }
 
