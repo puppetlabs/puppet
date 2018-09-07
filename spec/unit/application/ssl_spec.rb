@@ -64,6 +64,10 @@ describe Puppet::Application::Ssl do
     # Host assumes ca cert and crl are present
     File.open(Puppet[:localcacert], 'w') { |f| f.write(@ca[:cert].to_pem) }
     File.open(Puppet[:hostcrl], 'w') { |f| f.write(@crl.to_pem) }
+
+    # Setup our ssl client
+    File.open(Puppet[:hostprivkey], 'w') { |f| f.write(@host[:private_key].to_pem) }
+    File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
   end
 
   def expects_command_to_output(expected_message = nil, code = 0)
@@ -74,28 +78,7 @@ describe Puppet::Application::Ssl do
     }.to output(expected_message).to_stdout
   end
 
-  context 'when generating help' do
-    it 'prints usage when no arguments are specified' do
-      ssl.command_line.args << 'whoops'
-
-      expects_command_to_output(/Unknown action 'whoops'/, 1)
-    end
-
-    it 'rejects unknown actions' do
-      expects_command_to_output(/^puppet-ssl.*SYNOPSIS/m, 1)
-    end
-  end
-
-  context 'when submitting a CSR' do
-    let(:csr_path) { File.join(Puppet[:requestdir], "#{name}.pem") }
-
-    before do
-      ssl.command_line.args << 'submit_request'
-
-      File.open(Puppet[:hostprivkey], 'w') { |f| f.write(@host[:private_key].to_pem) }
-      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
-    end
-
+  shared_examples_for 'an ssl action' do
     it 'downloads the CA bundle first when missing' do
       File.delete(Puppet[:localcacert])
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: @ca[:cert].to_pem)
@@ -119,6 +102,28 @@ describe Puppet::Application::Ssl do
 
       expect(File.read(Puppet[:hostcrl])).to eq(@crl.to_pem)
     end
+  end
+
+  context 'when generating help' do
+    it 'prints usage when no arguments are specified' do
+      ssl.command_line.args << 'whoops'
+
+      expects_command_to_output(/Unknown action 'whoops'/, 1)
+    end
+
+    it 'rejects unknown actions' do
+      expects_command_to_output(/^puppet-ssl.*SYNOPSIS/m, 1)
+    end
+  end
+
+  context 'when submitting a CSR' do
+    let(:csr_path) { File.join(Puppet[:requestdir], "#{name}.pem") }
+
+    before do
+      ssl.command_line.args << 'submit_request'
+    end
+
+    it_behaves_like 'an ssl action'
 
     it 'submits the CSR and saves it locally' do
       stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 404)
@@ -194,34 +199,9 @@ describe Puppet::Application::Ssl do
   context 'when downloading a certificate' do
     before do
       ssl.command_line.args << 'download_cert'
-
-      File.open(Puppet[:hostprivkey], 'w') { |f| f.write(@host[:private_key].to_pem) }
-      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
     end
 
-    it 'downloads the CA bundle first when missing' do
-      File.delete(Puppet[:localcacert])
-      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: @ca[:cert].to_pem)
-      stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 404)
-      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
-      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
-
-      expects_command_to_output
-
-      expect(File.read(Puppet[:localcacert])).to eq(@ca[:cert].to_pem)
-    end
-
-    it 'downloads the CRL bundle first when missing' do
-      File.delete(Puppet[:hostcrl])
-      stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: @crl.to_pem)
-      stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 404)
-      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
-      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
-
-      expects_command_to_output
-
-      expect(File.read(Puppet[:hostcrl])).to eq(@crl.to_pem)
-    end
+    it_behaves_like 'an ssl action'
 
     it 'downloads a new cert' do
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
@@ -265,8 +245,6 @@ describe Puppet::Application::Ssl do
     before do
       ssl.command_line.args << 'verify'
 
-      File.open(Puppet[:hostprivkey], 'w') { |f| f.write(@host[:private_key].to_pem) }
-      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
       File.open(Puppet[:hostcert], 'w') { |f| f.write(@host[:cert].to_pem) }
     end
 
