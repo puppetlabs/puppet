@@ -1,4 +1,4 @@
-test_name "the pluginsync functionality should sync feature definitions" do
+test_name "the pluginsync functionality should sync feature and function definitions" do
 
   tag 'audit:medium',
       'audit:integration'
@@ -22,8 +22,9 @@ test_name "the pluginsync functionality should sync feature definitions" do
   master_module_dir = "#{environmentpath}/#{tmp_environment}/modules"
   master_module_type_path = "#{master_module_dir}/#{module_name}/lib/puppet/type/"
   master_module_feature_path = "#{master_module_dir}/#{module_name}/lib/puppet/feature"
+  master_module_function_path = "#{master_module_dir}/#{module_name}/lib/puppet/functions"
   on(master, "mkdir -p '#{master_module_dir}'")
-  on(master, "mkdir -p '#{master_module_type_path}' '#{master_module_feature_path}'")
+  on(master, "mkdir -p '#{master_module_type_path}' '#{master_module_feature_path}' '#{master_module_function_path}'")
 
   master_module_type_file = "#{master_module_type_path}/#{module_name}.rb"
   master_module_type_content = <<-HERE
@@ -59,22 +60,50 @@ test_name "the pluginsync functionality should sync feature definitions" do
   create_remote_file(master, master_module_feature_file, master_module_feature_content)
   on(master, "chmod 755 '#{master_module_type_file}' '#{master_module_feature_file}'")
 
+  master_module_function_file = "#{master_module_function_path}/bogus_function.rb"
+  master_module_function_content = <<-HERE
+    Puppet::Functions.create_function(:bogus_function) do
+      dispatch :bogus_function do
+      end
+      def bogus_function()
+        three = call_function('round', 3.14)
+        hostname = `facter hostname`
+        "Three is 3. bogus_function reporting hostname is \#{hostname}"
+      end
+    end
+  HERE
+  create_remote_file(master, master_module_function_file, master_module_function_content)
+  on(master, "chmod 755 '#{master_module_function_file}' '#{master_module_function_file}'")
+
   site_pp = <<-HERE
     #{module_name} { "This is the title of the #{module_name} type instance in site.pp":
       testfeature => "Hi.  I'm setting the testfeature property of #{module_name} here in site.pp",
     }
+    notify { module_function:
+        message => Deferred('bogus_function', [])
+    }
   HERE
   create_sitepp(master, tmp_environment, site_pp)
 
+  # These master opts should not be necessary whence content negotation for
+  # Puppet 6.0.0 is completed, and this should just be removed.
+  master_opts = {
+    'master' => {
+      'rich_data' => 'true'
+    }
+  }
+
   step 'start the master' do
-    with_puppet_running_on(master, {}) do
+    with_puppet_running_on(master, master_opts) do
       agents.each do |agent|
         agent_lib_dir             = agent.tmpdir('libdir')
         agent_module_type_file    = "#{agent_lib_dir}/puppet/type/#{module_name}.rb"
         agent_module_feature_file = "#{agent_lib_dir}/puppet/feature/#{module_name}.rb"
+        agent_module_function_file = "#{agent_lib_dir}/puppet/functions/bogus_function.rb"
 
+        facter_hostname = on(agent, 'facter hostname').stdout
         step "verify that the module files don't exist on the agent path" do
-          [agent_module_type_file, agent_module_feature_file].each do |file_path|
+          [agent_module_type_file, agent_module_feature_file, agent_module_function_file].each do |file_path|
             if file_exists?(agent, file_path)
               fail_test("file should not exist on the agent yet: '#{file_path}'")
             end
@@ -86,11 +115,13 @@ test_name "the pluginsync functionality should sync feature definitions" do
              :acceptable_exit_codes => [2]) do |result|
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
                          "Expected agent stdout to include confirmation that the feature was 'true'")
+            assert_match(/Three is 3. bogus_function reporting hostname is #{facter_hostname}/, result.stdout,
+                         "Expect the agent stdout to run bogus_function and report hostname")
           end
         end
 
         step 'verify that the module files were synced down to the agent' do
-          [agent_module_type_file, agent_module_feature_file].each do |file_path|
+          [agent_module_type_file, agent_module_feature_file, agent_module_function_file].each do |file_path|
             unless file_exists?(agent, file_path)
               fail_test("Expected file to exist on the agent now: '#{file_path}'")
             end
@@ -102,6 +133,8 @@ test_name "the pluginsync functionality should sync feature definitions" do
              :acceptable_exit_codes => [2]) do |result|
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
                          "Expected agent stdout to include confirmation that the feature was 'true'")
+            assert_match(/Three is 3. bogus_function reporting hostname is #{facter_hostname}/, result.stdout,
+              "Expect the agent stdout to run bogus_function and report hostname")
           end
         end
       end

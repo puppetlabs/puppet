@@ -27,17 +27,16 @@ describe "Application instantiation" do
   before(:each) do
     Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
     Puppet::Parser::EnvironmentCompiler.any_instance.stubs(:loaders).returns(loaders)
+    Puppet.push_context({:loaders => loaders, :current_environment => env})
+    Puppet::Type.newtype :cap, :is_capability => true do
+      newparam :name
+      newparam :host
+    end
   end
 
-  around :each do |example|
-    Puppet.override(:loaders => loaders, :current_environment => env) do
-      Puppet::Type.newtype :cap, :is_capability => true do
-        newparam :name
-        newparam :host
-      end
-      example.run
-      Puppet::Type.rmtype(:cap)
-    end
+  after(:each) do
+    Puppet::Type.rmtype(:cap)
+    Puppet.pop_context()
   end
 
   MANIFEST = <<-EOS

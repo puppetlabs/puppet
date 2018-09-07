@@ -73,7 +73,7 @@ class Puppet::Parser::ScriptCompiler
   # Create a script compiler for the given environment where errors are logged as coming
   # from the given node_name
   #
-  def initialize(environment, node_name)
+  def initialize(environment, node_name, for_agent=false)
     @environment = environment
     @node_name = node_name
 
@@ -81,7 +81,11 @@ class Puppet::Parser::ScriptCompiler
     @topscope = Puppet::Parser::Scope.new(self)
 
     # Initialize loaders and Pcore
-    @loaders = Puppet::Pops::Loaders.new(environment)
+    if for_agent
+      @loaders = Puppet::Pops::Loaders.new(environment, true)
+    else
+      @loaders = Puppet::Pops::Loaders.new(environment)
+    end
 
     # Need to compute overrides here, and remember them, because we are about to
     # Expensive entries in the context are bound lazily.

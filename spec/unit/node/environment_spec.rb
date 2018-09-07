@@ -432,13 +432,11 @@ describe Puppet::Node::Environment do
 
       before(:each) do
         Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+        Puppet.push_context({:loaders => loaders, :current_environment => env})
       end
 
-      around :each do |example|
-        Puppet.override(:loaders => loaders, :current_environment => env) do
-          example.run
-          Puppet::Pops::Loaders.clear
-        end
+      after(:each) do
+        Puppet.pop_context()
       end
 
       it "loads from Puppet[:code]" do

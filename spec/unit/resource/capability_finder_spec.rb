@@ -12,29 +12,25 @@ describe Puppet::Resource::CapabilityFinder do
   end
 
   context 'when PuppetDB is configured' do
-    around(:each) do |example|
-      mock_pdb = !Puppet::Util.const_defined?('Puppetdb')
+
+    before(:each) do
+      Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+      Puppet.push_context({:loaders => loaders, :current_environment => env})
       if mock_pdb
         module Puppet::Util::Puppetdb
           class Http; end
         end
       end
-      begin
-        Puppet.override(:loaders => loaders, :current_environment => env) do
-          make_cap_type
-          example.run
-        end
-      ensure
-        Puppet::Util.send(:remove_const, 'Puppetdb') if mock_pdb
-        Puppet::Type.rmtype(:cap)
-        Puppet::Pops::Loaders.clear
-      end
+      make_cap_type
     end
 
-    before(:each) do
-      Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+    after(:each) do
+      Puppet::Util.send(:remove_const, 'Puppetdb') if mock_pdb
+      Puppet::Type.rmtype(:cap)
+      Puppet.pop_context()
     end
 
+    let(:mock_pdb) { !Puppet::Util.const_defined?('Puppetdb') }
     let(:env) { Puppet::Node::Environment.create(:testing, []) }
     let(:loaders) { Puppet::Pops::Loaders.new(env) }
 

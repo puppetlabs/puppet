@@ -19,6 +19,18 @@ module Loader
 # @api private
 #
 module ModuleLoaders
+  # This is exactly the same as the #system_loader_from method, but the argument for path is changed to
+  # location where pluginsync stores functions.
+  def self.cached_loader_from(parent_loader, loaders)
+    LibRootedFileBased.new(parent_loader,
+      loaders,
+      nil,
+      Puppet[:libdir],
+      'cached_puppet_lib',
+      [:func_4x, :datatype]
+    )
+  end
+
   def self.system_loader_from(parent_loader, loaders)
     # Puppet system may be installed in a fixed location via RPM, installed as a Gem, via source etc.
     # The only way to find this across the different ways puppet can be installed is
