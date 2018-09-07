@@ -1139,14 +1139,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'does not map :undef to empty string in arrays' do
         Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0][0] }
-        expect(parser.evaluate_string(scope, "$a = {} $b = [$a[nope]] bazinga($b)", __FILE__)).to eq(:undef)
-        expect(parser.evaluate_string(scope, "bazinga([undef])", __FILE__)).to eq(:undef)
+        expect(parser.evaluate_string(scope, "$a = {} $b = [$a[nope]] bazinga($b)", __FILE__)).to eq(nil)
+        expect(parser.evaluate_string(scope, "bazinga([undef])", __FILE__)).to eq(nil)
       end
 
       it 'does not map :undef to empty string in hashes' do
         Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0]['a'] }
-        expect(parser.evaluate_string(scope, "$a = {} $b = {a => $a[nope]} bazinga($b)", __FILE__)).to eq(:undef)
-        expect(parser.evaluate_string(scope, "bazinga({a => undef})", __FILE__)).to eq(:undef)
+        expect(parser.evaluate_string(scope, "$a = {} $b = {a => $a[nope]} bazinga($b)", __FILE__)).to eq(nil)
+        expect(parser.evaluate_string(scope, "bazinga({a => undef})", __FILE__)).to eq(nil)
       end
     end
   end

@@ -38,12 +38,12 @@ describe 'when converting to 3.x' do
     expect(converter.convert(nil, {}, 'undef value')).to eql('undef value')
   end
 
-  it 'does not convert a symbol nested in an array' do
-    expect(converter.convert({'foo' => :undef}, {}, 'undef value')).to eql({'foo' => :undef})
+  it 'convert a symbol nested in an array' do
+    expect(converter.convert({'foo' => :undef}, {}, 'undef value')).to eql({'foo' => 'undef value'})
   end
 
-  it 'converts nil to :undef when nested in an array' do
-    expect(converter.convert({'foo' => nil}, {}, 'undef value')).to eql({'foo' => :undef})
+  it 'does not converts nil to given undef value when nested in an array' do
+    expect(converter.convert({'foo' => nil}, {}, 'undef value')).to eql({'foo' => nil})
   end
 
   it 'does not convert a Regex instance to string' do
