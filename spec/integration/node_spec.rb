@@ -25,10 +25,6 @@ describe Puppet::Node do
       expect(Puppet::Node.indirection.find(@name)).to be_nil
     end
 
-    it "should have an ldap terminus" do
-      expect(Puppet::Node.indirection.terminus(:ldap)).not_to be_nil
-    end
-
     it "should be able to use the plain terminus" do
       Puppet::Node.indirection.stubs(:terminus_class).returns :plain
 
