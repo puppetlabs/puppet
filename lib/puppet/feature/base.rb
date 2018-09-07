@@ -72,3 +72,5 @@ Puppet.features.add(:manages_symlinks) do
     WindowsSymlink.is_implemented
   end
 end
+
+Puppet.features.add(:puppetserver_ca, libs: ['puppetserver/ca'])
