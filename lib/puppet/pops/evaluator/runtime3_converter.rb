@@ -61,7 +61,7 @@ class Runtime3Converter
   end
 
   def convert_NilClass(o, scope, undef_value)
-    @inner ? :undef : undef_value
+    @inner ? nil : undef_value
   end
 
   def convert_Integer(o, scope, undef_value)
@@ -98,7 +98,8 @@ class Runtime3Converter
   end
 
   def convert_Symbol(o, scope, undef_value)
-    o == :undef && !@inner ? undef_value : o
+    o == :undef ? undef_value : o
+    #o == :undef && !@inner ? undef_value : o
   end
 
   def convert_PAnyType(o, scope, undef_value)
