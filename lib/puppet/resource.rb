@@ -76,6 +76,13 @@ class Puppet::Resource
     "#{@type}[#{@title}]#{to_hash.inspect}"
   end
 
+  # Produces a Data compliant hash of the resource.
+  # The result depends on the --rich_data setting, and the context value
+  # for Puppet.lookup(:stringify_rich), that if it is `true` will use the
+  # ToStringifiedConverter to produce the value per parameter.
+  # (Note that the ToStringifiedConverter output is lossy and should not
+  # be used when producing a catalog serialization).
+  #
   def to_data_hash
     data = {
       'type' => type,
@@ -89,11 +96,21 @@ class Puppet::Resource
 
     data['exported'] ||= false
 
+    # To get stringified parameter values the flag :stringify_rich can be set
+    # in the puppet context.
+    #
+    stringify = Puppet.lookup(:stringify_rich) { false }
+    converter = stringify ? Puppet::Pops::Serialization::ToStringifiedConverter.new : nil
+
     params = {}
     self.to_hash.each_pair do |param, value|
       # Don't duplicate the title as the namevar
       unless param == namevar && value == title
-        params[param.to_s] = Puppet::Resource.value_to_json_data(value)
+        if stringify
+          params[param.to_s] = converter.convert(value)
+        else
+          params[param.to_s] = Puppet::Resource.value_to_json_data(value)
+        end
       end
     end
 

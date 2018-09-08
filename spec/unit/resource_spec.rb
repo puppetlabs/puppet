@@ -836,6 +836,46 @@ describe Puppet::Resource do
     end
   end
 
+  describe 'when converting to data_hash with stringified parameters' do
+    before(:each) do
+      Puppet.push_context({:stringify_rich => true}, 'resource_spec.rb')
+    end
+
+    after(:each) do
+      Puppet.pop_context
+    end
+
+    let(:resource) do
+      type = Puppet::Resource::Type.new(:definition, "rich::thing")
+      environment.known_resource_types.add type
+
+      r = Puppet::Resource.new('rich::thing', 'stringified', :environment => environment)
+      r['binary'] = Puppet::Pops::Types::PBinaryType::Binary.from_binary_string('hello')
+      r['timestamp'] = Puppet::Pops::Time::Timestamp.parse('2018-09-03T19:45:33.697066000 UTC')
+      r['reference'] = Puppet::Resource.new('File', 'dummy', :environment => environment)
+      r.resource_type
+      r
+    end
+
+    let(:parameters) do
+      resource.to_data_hash['parameters']
+    end
+
+    it 'has Base64 string content for a binary' do
+      expect(parameters['binary']).to eq('aGVsbG8=')
+    end
+
+    it 'has string content for a timestamp' do
+      expect(parameters['timestamp']).to eq('2018-09-03T19:45:33.697066000 UTC')
+    end
+
+    it 'has string content for a Resource instance' do
+      expect(parameters['reference']).to eq('File[dummy]')
+    end
+
+    # Note: to_stringified_spec.rb has tests for all other data types
+  end
+
   describe "when converting from json" do
     before do
       @data = {
