@@ -679,7 +679,7 @@ describe Puppet::Resource do
       expect(newresource).to equal_resource_attributes_of(@resource)
     end
 
-    it 'to_data_hash returns value that is instance of to Data' do
+    it 'to_data_hash returns value that is instance of Data' do
       Puppet::Pops::Types::TypeAsserter.assert_instance_of('', Puppet::Pops::Types::TypeFactory.data, @resource.to_data_hash)
       expect(Puppet::Pops::Types::TypeFactory.data.instance?(@resource.to_data_hash)).to be_truthy
     end
@@ -719,7 +719,7 @@ describe Puppet::Resource do
           :ensure => 'present',
         }
       )
-      expect(singlequote_resource.to_manifest).to eq <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
+      expect(singlequote_resource.to_manifest).to eq(<<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, ''))
         one::two { '/my/file\\'b\\'a\\'r':
           ensure => 'present',
         }
@@ -728,7 +728,7 @@ describe Puppet::Resource do
     end
 
     it "should align, sort and add trailing commas to attributes with ensure first" do
-      expect(@resource.to_manifest).to eq <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
+      expect(@resource.to_manifest).to eq(<<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, ''))
         one::two { '/my/file':
           ensure => 'present',
           foo    => ['one', 'two'],
@@ -750,7 +750,7 @@ describe Puppet::Resource do
     end
 
     it "should align and sort to attributes with ensure first" do
-      expect(@resource.to_hierayaml).to eq <<-HEREDOC.gsub(/^\s{8}/, '')
+      expect(@resource.to_hierayaml).to eq(<<-HEREDOC.gsub(/^\s{8}/, ''))
           /my/file:
             ensure: 'present'
             foo   : ['one', 'two']
@@ -758,6 +758,7 @@ describe Puppet::Resource do
       HEREDOC
     end
   end
+
   describe "when converting to json" do
     # LAK:NOTE For all of these tests, we convert back to the resource so we can
     # trap the actual data structure then.
@@ -817,7 +818,7 @@ describe Puppet::Resource do
     it "should set sensitive parameters as an array of strings" do
       resource = Puppet::Resource.new("File", "/foo", :sensitive_parameters => [:foo, :fee])
       result = JSON.parse(resource.to_json)
-      expect(result["sensitive_parameters"]).to eq ["foo", "fee"]
+      expect(result["sensitive_parameters"]).to eq(["foo", "fee"])
     end
 
     it "should serialize relationships as reference strings" do
