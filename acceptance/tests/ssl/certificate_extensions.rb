@@ -1,10 +1,5 @@
-require 'puppet/acceptance/common_utils'
 require 'puppet/acceptance/temp_file_utils'
-extend Puppet::Acceptance::CAUtils
 extend Puppet::Acceptance::TempFileUtils
-require 'puppet/acceptance/classifier_utils'
-extend Puppet::Acceptance::ClassifierUtils
-
 initialize_temp_dirs
 
 test_name "certificate extensions available as trusted data" do
@@ -19,7 +14,7 @@ test_name "certificate extensions available as trusted data" do
   teardown do
     step "Cleanup the test agent certs"
     agent_certnames.each do |cn|
-      on(master, puppet("cert", "clean", cn), :acceptable_exit_codes => [0,24])
+      on(master, puppetserver("ca", "clean", "--certname", cn), :acceptable_exit_codes => [0,24])
     end
   end
 
