@@ -207,7 +207,7 @@ Puppet::Type.newtype(:file) do
       whose content doesn't match what the `source` or `content` attribute
       specifies.  Setting this to false allows file resources to initialize files
       without overwriting future changes.  Note that this only affects content;
-      Puppet will still manage ownership and permissions. Defaults to `true`."
+      Puppet will still manage ownership and permissions."
     defaultto :true
   end
 
@@ -320,7 +320,7 @@ Puppet::Type.newtype(:file) do
 
   newparam(:validate_replacement) do
     desc "The replacement string in a `validate_cmd` that will be replaced
-      with an input file name. Defaults to: `%`"
+      with an input file name."
 
     defaultto '%'
   end

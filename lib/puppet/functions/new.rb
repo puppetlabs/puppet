@@ -51,16 +51,14 @@
 # The following sections show the arguments and conversion rules
 # per data type built into the Puppet Type System.
 #
-# Conversion to Optional[T] and NotUndef[T]
-# -----------------------------------------
+# ### Conversion to Optional[T] and NotUndef[T]
 #
 # Conversion to these data types is the same as a conversion to the type argument `T`.
 # In the case of `Optional[T]` it is accepted that the argument to convert may be `undef`.
 # It is however not acceptable to give other arguments (than `undef`) that cannot be
 # converted to `T`.
 #
-# Conversion to Integer
-# ---------------------
+# ### Conversion to Integer
 #
 # A new `Integer` can be created from `Integer`, `Float`, `Boolean`, and `String` values.
 # For conversion from `String` it is possible to specify the radix (base).
@@ -108,8 +106,7 @@
 # $a_number = Integer(-38, 10, true) # results in 38
 # ```
 #
-# Conversion to Float
-# -------------------
+# ### Conversion to Float
 #
 # A new `Float` can be created from `Integer`, `Float`, `Boolean`, and `String` values.
 # For conversion from `String` both float and integer formats are supported.
@@ -121,15 +118,13 @@
 # )
 # ```
 #
-#
 # * For an integer, the floating point fraction of `.0` is added to the value.
 # * A `Boolean` `true` is converted to 1.0, and a `false` to 0.0
 # * In `String` format, integer prefixes for hex and binary are understood (but not octal since
 #   floating point in string format may start with a '0').
 # * When `abs` is set to `true`, the result will be an absolute floating point value.
 #
-# Conversion to Numeric
-# ---------------------
+# ### Conversion to Numeric
 #
 # A new `Integer` or `Float` can be created from `Integer`, `Float`, `Boolean` and
 # `String` values.
@@ -158,12 +153,11 @@
 # $a_number = Numeric(-42, true)   # results in 42
 # ```
 #
-# Conversion to Timespan
-# -------------------
+# ### Conversion to Timespan
 #
 # A new `Timespan` can be created from `Integer`, `Float`, `String`, and `Hash` values. Several variants of the constructor are provided.
 #
-# #### Timespan from seconds
+# **Timespan from seconds**
 #
 # When a Float is used, the decimal part represents fractions of a second.
 #
@@ -173,7 +167,7 @@
 # )
 # ```
 #
-# #### Timespan from days, hours, minutes, seconds, and fractions of a second
+# **Timespan from days, hours, minutes, seconds, and fractions of a second**
 #
 # The arguments can be passed separately in which case the first four, days, hours, minutes, and seconds are mandatory and the rest are optional.
 # All values may overflow and/or be negative. The internal 128-bit nano-second integer is calculated as:
@@ -206,7 +200,7 @@
 # )
 # ```
 #
-# #### Timespan from String and format directive patterns
+# **Timespan from String and format directive patterns**
 #
 # The first argument is parsed using the format optionally passed as a string or array of strings. When an array is used, an attempt
 # will be made to parse the string using the first entry and then with each entry in succession until parsing succeeds. If the second
@@ -276,12 +270,11 @@
 # $duration = Timespan('10:03.5', '%M:%S.%N') # 10 minutes, 3 seconds, and 5 nano-seconds
 # ```
 #
-# Conversion to Timestamp
-# -------------------
+# ### Conversion to Timestamp
 #
 # A new `Timestamp` can be created from `Integer`, `Float`, `String`, and `Hash` values. Several variants of the constructor are provided.
 #
-# #### Timestamp from seconds since epoch (1970-01-01 00:00:00 UTC)
+# **Timestamp from seconds since epoch (1970-01-01 00:00:00 UTC)**
 #
 # When a Float is used, the decimal part represents fractions of a second.
 #
@@ -291,7 +284,7 @@
 # )
 # ```
 #
-# #### Timestamp from String and patterns consisting of format directives
+# **Timestamp from String and patterns consisting of format directives**
 #
 # The first argument is parsed using the format optionally passed as a string or array of strings. When an array is used, an attempt
 # will be made to parse the string using the first entry and then with each entry in succession until parsing succeeds. If the second
@@ -470,9 +463,9 @@
 #
 # ```
 #
-# Conversion to Type
-# ------------------
-# A new `Type` can be create from its `String` representation.
+# ### Conversion to Type
+#
+# A new `Type` can be created from its `String` representation.
 #
 # @example Creating a type from a string
 #
@@ -480,8 +473,7 @@
 # $t = Type.new('Integer[10]')
 # ```
 #
-# Conversion to String
-# --------------------
+# ### Conversion to String
 #
 # Conversion to `String` is the most comprehensive conversion as there are many
 # use cases where a string representation is wanted. The defaults for the many options
@@ -524,7 +516,7 @@
 # Note that all data type supports the formats `s` and `p` with the meaning "default string representation" and
 # "default programmatic string representation" (which for example means that a String is quoted in 'p' format).
 #
-# ### Signatures of String conversion
+# **Signatures of String conversion**
 #
 # ```puppet
 # type Format = Pattern[/^%([\s\+\-#0\[\{<\(\|]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])/]
@@ -582,7 +574,7 @@
 # The given formats are merged with the default formats, and matching of values to convert against format is based on
 # the specificity of the mapped type; for example, different formats can be used for short and long arrays.
 #
-# ### Integer to String
+# **Integer to String**
 #
 # | Format  | Integer Formats
 # | ------  | ---------------
@@ -597,7 +589,7 @@
 #
 # Defaults to `d`.
 #
-# ### Float to String
+# **Float to String**
 #
 # | Format  | Float formats
 # | ------  | -------------
@@ -611,7 +603,7 @@
 #
 # Defaults to `p`.
 #
-# ### String to String
+# **String to String**
 #
 # | Format | String
 # | ------ | ------
@@ -625,7 +617,7 @@
 #
 # Defaults to `s` at top level and `p` inside array or hash.
 #
-# ### Boolean to String
+# **Boolean to String**
 #
 # | Format    | Boolean Formats
 # | ----      | -------------------
@@ -636,14 +628,14 @@
 # | s         | String 'true' / 'false'.
 # | p         | String 'true' / 'false'.
 #
-# ### Regexp to String
+# **Regexp to String**
 #
 # | Format    | Regexp Formats
 # | ----      | --------------
 # | s         | No delimiters, quoted if alternative flag `#` is used.
 # | p         | Delimiters `/ /`.
 #
-# ### Undef to String
+# **Undef to String**
 #
 # | Format    | Undef formats
 # | ------    | -------------
@@ -656,7 +648,7 @@
 # | V         | String 'N/A'.
 # | u         | String 'undef', or 'undefined' if alternative `#` flag is used.
 #
-# ### Default value to String
+# **Default value to String**
 #
 # | Format    | Default formats
 # | ------    | ---------------
@@ -664,7 +656,7 @@
 # | s         | Same as d.
 # | p         | Same as d.
 #
-# ### Binary value to String
+# **Binary value to String**
 #
 # | Format    | Default formats
 # | ------    | ---------------
@@ -681,7 +673,7 @@
 #   as hex escaped characters on the form `\\xHH` where `H` is a hex digit.
 # * The width and precision values are applied to the text part only in `%p` format.
 #
-# ### Array & Tuple to String
+# **Array & Tuple to String**
 #
 # | Format    | Array/Tuple Formats
 # | ------    | -------------
@@ -696,7 +688,7 @@
 # it is taken as the maximum allowed length of a sequence of elements (not including delimiters). If this max length
 # is exceeded, each element will be indented.
 #
-# ### Hash & Struct to String
+# **Hash & Struct to String**
 #
 # | Format    | Hash/Struct Formats
 # | ------    | -------------
@@ -710,14 +702,14 @@
 #
 # The alternate form flag `#` will format each hash key/value entry indented on a separate line.
 #
-# ### Type to String
+# **Type to String**
 #
 # | Format    | Array/Tuple Formats
 # | ------    | -------------
 # | s         | The same as `p`, quoted if alternative flag `#` is used.
 # | p         | Outputs the type in string form as specified by the Puppet Language.
 #
-# ### Flags
+# **Flags**
 #
 # | Flag     | Effect
 # | ------   | ------
@@ -728,8 +720,7 @@
 # | 0        | Pad with 0 instead of space for widths larger than value.
 # | <[({\|   | Defines an enclosing pair <> [] () {} or \| \| when used with a container type.
 #
-# Conversion to Boolean
-# ---
+# ### Conversion to Boolean
 #
 # Accepts a single value as argument:
 #
@@ -740,8 +731,7 @@
 #   * `false` if 'false', 'no', 'n' (case independent compare)
 # * Boolean is already boolean and is simply returned
 #
-# Conversion to Array and Tuple
-# ---
+# ### Conversion to Array and Tuple
 #
 # When given a single value as argument:
 #
@@ -750,7 +740,6 @@
 # * An `Array` is simply returned.
 # * An `Iterable[T]` is turned into an array of `T` instances.
 # * A `Binary` is converted to an `Array[Integer[0,255]]` of byte values
-#
 #
 # When given a second Boolean argument:
 #
@@ -766,8 +755,7 @@
 # Conversion to a `Tuple` works exactly as conversion to an `Array`, only that the constructed array is
 # asserted against the given tuple type.
 #
-# Conversion to Hash and Struct
-# ---
+# ### Conversion to Hash and Struct
 #
 # Accepts a single value as argument:
 #
@@ -806,8 +794,8 @@
 # Conversion to a `Struct` works exactly as conversion to a `Hash`, only that the constructed hash is
 # asserted against the given struct type.
 #
-# Conversion to a Regexp
-# ---
+# ### Conversion to a Regexp
+#
 # A `String` can be converted into a `Regexp`
 #
 # **Example**: Converting a String into a Regexp
@@ -819,8 +807,7 @@
 # }
 # ```
 #
-# Creating a SemVer
-# ---
+# ### Creating a SemVer
 #
 # A SemVer object represents a single [Semantic Version](http://semver.org/).
 # It can be created from a String, individual values for its parts, or a hash specifying the value per part.
@@ -869,8 +856,7 @@
 # notice(SemVer('3.4.5') =~ $t) # true
 # ```
 #
-# Creating a SemVerRange
-# ---
+# ### Creating a SemVerRange
 #
 # A `SemVerRange` object represents a range of `SemVer`. It can be created from
 # a `String`, or from two `SemVer` instances, where either end can be given as
@@ -906,8 +892,7 @@
 #
 # For examples of `SemVerRange` use see "Creating a SemVer"
 #
-# Creating a Binary
-# ---
+# ### Creating a Binary
 #
 # A `Binary` object represents a sequence of bytes and it can be created from a String in Base64 format,
 # an Array containing byte values. A Binary can also be created from a Hash containing the value to convert to
@@ -963,8 +948,7 @@
 # * Since 4.5.0
 # * Binary type since 4.8.0
 #
-# Creating an instance of a `Type` using the `Init` type.
-# -------
+# ### Creating an instance of a `Type` using the `Init` type
 #
 # The type `Init[T]` describes a value that can be used when instantiating a type. When used as the first argument in a call to `new`, it
 # will dispatch the call to its contained type and optionally augment the parameter list with additional arguments.

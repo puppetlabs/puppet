@@ -13,7 +13,7 @@ describe Puppet::Util::Windows::ADSI::User,
       #     HRESULT error code:0x800708ad
       #           The user name could not be found.
       # Matching on error code alone is sufficient
-      expect { system.native_user }.to raise_error(/0x800708ad/)
+      expect { system.native_object }.to raise_error(/0x800708ad/)
     end
   end
 
@@ -152,9 +152,9 @@ describe Puppet::Util::Windows::ADSI::Group,
       admins_name = Puppet::Util::Windows::SID.sid_to_name('S-1-5-32-544')
       admins = Puppet::Util::Windows::ADSI::Group.new(admins_name)
 
-      # touch the native_group member to have it lazily loaded, so COM objects can be stubbed
-      admins.native_group
-      admins.native_group.stubs(:Members).returns(members)
+      # touch the native_object member to have it lazily loaded, so COM objects can be stubbed
+      admins.native_object
+      admins.native_object.stubs(:Members).returns(members)
 
       # well-known NULL SID
       expect(admins.members[0].sid).to eq('S-1-0-0')

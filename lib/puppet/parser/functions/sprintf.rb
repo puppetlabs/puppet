@@ -30,7 +30,18 @@ Puppet::Parser::Functions::newfunction(
   :doc => "Perform printf-style formatting of text.
 
   The first parameter is format string describing how the rest of the parameters should be formatted.
-  See the documentation for the `Kernel::sprintf` function in Ruby for all the details."
+  See the documentation for the [`Kernel::sprintf` function](https://ruby-doc.org/core/Kernel.html)
+  in Ruby for details.
+  
+  To use [named format](https://idiosyncratic-ruby.com/49-what-the-format.html) arguments, provide a
+  hash containing the target string values as the argument to be formatted. For example:
+
+  ```puppet
+  notice sprintf(\"%<x>s : %<y>d\", { 'x' => 'value is', 'y' => 42 })
+  ```
+
+  This statement produces a notice of `value is : 42`."
+
 ) do |args|
   fmt = args[0]
   args = args[1..-1]
