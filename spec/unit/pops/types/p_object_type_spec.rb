@@ -74,6 +74,26 @@ describe 'The Object Type' do
         /expects a match for Enum\['constant', 'derived', 'given_or_derived', 'reference'\], got 'derivd'/)
     end
 
+    it 'raises an error if the name is __ptype' do
+      obj = <<-OBJECT
+        attributes => {
+          __ptype => String
+        }
+      OBJECT
+      expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+        /The attribute '__ptype' is reserved and cannot be used/)
+    end
+
+    it 'raises an error if the name is __pvalue' do
+      obj = <<-OBJECT
+        attributes => {
+          __pvalue => String
+        }
+      OBJECT
+      expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+        /The attribute '__pvalue' is reserved and cannot be used/)
+    end
+
     it 'stores value in attribute' do
       tp = parse_object('MyObject', <<-OBJECT)
         attributes => {
