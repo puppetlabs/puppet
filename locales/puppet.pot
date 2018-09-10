@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-602-g24676b0\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-614-g714990c\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-09-07 17:33+0000\n"
-"PO-Revision-Date: 2018-09-07 17:33+0000\n"
+"POT-Creation-Date: 2018-09-10 08:33+0000\n"
+"PO-Revision-Date: 2018-09-10 08:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -4064,7 +4064,7 @@ msgstr ""
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:553 ../lib/puppet/pops/loaders.rb:296
+#: ../lib/puppet/node/environment.rb:553 ../lib/puppet/pops/loaders.rb:298
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -4660,7 +4660,7 @@ msgstr ""
 msgid "Script: Evaluated main"
 msgstr ""
 
-#: ../lib/puppet/parser/script_compiler.rb:108
+#: ../lib/puppet/parser/script_compiler.rb:112
 msgid "having multiple named scopes is not supported when scripting"
 msgstr ""
 
@@ -5586,12 +5586,12 @@ msgid "Gem not found '%{gem_name}'"
 msgstr ""
 
 #. TRANSLATORS 'loadables' is a variable containing loadable modules and should not be translated
-#: ../lib/puppet/pops/loader/module_loaders.rb:120
+#: ../lib/puppet/pops/loader/module_loaders.rb:132
 msgid "given loadables are not of supported loadable kind"
 msgstr ""
 
 #. TRANSLATORS 'TypeSet' should not be translated
-#: ../lib/puppet/pops/loader/module_loaders.rb:223
+#: ../lib/puppet/pops/loader/module_loaders.rb:235
 msgid "The code loaded from %{origin} does not define the TypeSet '%{module_name}'"
 msgstr ""
 
@@ -5699,23 +5699,23 @@ msgstr ""
 msgid "The code loaded from %{source_ref} contains additional logic - can only contain the type '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:31
+#: ../lib/puppet/pops/loaders.rb:32
 msgid "Attempt to redefine already initialized loaders for environment"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:172
+#: ../lib/puppet/pops/loaders.rb:174
 msgid "Internal Error: Puppet Context ':loaders' missing"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:186
+#: ../lib/puppet/pops/loaders.rb:188
 msgid "Unable to find loader named '%{loader_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:207
+#: ../lib/puppet/pops/loaders.rb:209
 msgid "Internal Error: did not find public loader for module: '%{module_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loaders.rb:253
+#: ../lib/puppet/pops/loaders.rb:255
 msgid "Internal Error: Attempt to redefine loader named '%{name}'"
 msgstr ""
 
@@ -6087,52 +6087,56 @@ msgstr ""
 msgid "%{member} attempts to override %{label} with a type that does not match"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:291
+#: ../lib/puppet/pops/types/p_object_type.rb:288
+msgid "The attribute '%{name}' is reserved and cannot be used"
+msgstr ""
+
+#: ../lib/puppet/pops/types/p_object_type.rb:294
 msgid "%{label} of kind 'constant' cannot be combined with final => false"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:298
+#: ../lib/puppet/pops/types/p_object_type.rb:301
 msgid "%{label} of kind '%{kind}' cannot be combined with an attribute value"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:303
+#: ../lib/puppet/pops/types/p_object_type.rb:306
 msgid "%{label} of kind 'constant' requires a value"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:684
+#: ../lib/puppet/pops/types/p_object_type.rb:687
 msgid "reference to unresolved type '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:720
+#: ../lib/puppet/pops/types/p_object_type.rb:723
 msgid "attribute %{label}[%{key}] is defined as both a constant and an attribute"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:752
+#: ../lib/puppet/pops/types/p_object_type.rb:755
 msgid "%{label} conflicts with attribute with the same name"
 msgstr ""
 
 #. TRANSLATORS equality_include_type = false should not be translated
-#: ../lib/puppet/pops/types/p_object_type.rb:765
+#: ../lib/puppet/pops/types/p_object_type.rb:768
 msgid "equality_include_type = false cannot be combined with non empty equality specification"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:777
+#: ../lib/puppet/pops/types/p_object_type.rb:780
 msgid "%{label} equality is referencing %{attribute} which is included in equality of %{including_parent}"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:784
+#: ../lib/puppet/pops/types/p_object_type.rb:787
 msgid "%{label} equality is referencing non existent attribute '%{attribute}'"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:786
+#: ../lib/puppet/pops/types/p_object_type.rb:789
 msgid "%{label} equality is referencing %{attribute}. Only attribute references are allowed"
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:790
+#: ../lib/puppet/pops/types/p_object_type.rb:793
 msgid "%{label} equality is referencing constant %{attribute}."
 msgstr ""
 
-#: ../lib/puppet/pops/types/p_object_type.rb:791
+#: ../lib/puppet/pops/types/p_object_type.rb:794
 msgid "Reference to constant is not allowed in equality"
 msgstr ""
 
