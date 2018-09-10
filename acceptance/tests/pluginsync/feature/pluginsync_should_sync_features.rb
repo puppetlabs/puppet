@@ -101,7 +101,7 @@ test_name "the pluginsync functionality should sync feature and function definit
         agent_module_feature_file = "#{agent_lib_dir}/puppet/feature/#{module_name}.rb"
         agent_module_function_file = "#{agent_lib_dir}/puppet/functions/bogus_function.rb"
 
-        facter_hostname = on(agent, 'facter hostname').stdout
+        facter_hostname = fact_on(agent, 'hostname')
         step "verify that the module files don't exist on the agent path" do
           [agent_module_type_file, agent_module_feature_file, agent_module_function_file].each do |file_path|
             if file_exists?(agent, file_path)
