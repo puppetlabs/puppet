@@ -135,8 +135,7 @@ module Puppet
 
     newparam(:hasstatus) do
       desc "Declare whether the service's init script has a functional status
-        command; defaults to `true`. This attribute's default value changed in
-        Puppet 2.7.0.
+        command. This attribute's default value changed in Puppet 2.7.0.
 
         The init script's status command must return 0 if the service is
         running and a nonzero value otherwise. Ideally, these exit codes
@@ -230,9 +229,7 @@ module Puppet
     newparam :hasrestart do
       desc "Specify that an init script has a `restart` command.  If this is
         false and you do not specify a command in the `restart` attribute,
-        the init script's `stop` and `start` commands will be used.
-
-        Defaults to false."
+        the init script's `stop` and `start` commands will be used."
       newvalues(:true, :false)
     end
 

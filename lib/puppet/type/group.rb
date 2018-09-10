@@ -141,7 +141,7 @@ module Puppet
     end
 
     newparam(:allowdupe, :boolean => true, :parent => Puppet::Parameter::Boolean) do
-      desc "Whether to allow duplicate GIDs. Defaults to `false`."
+      desc "Whether to allow duplicate GIDs."
 
       defaultto false
     end
@@ -154,16 +154,14 @@ module Puppet
       desc "Specify group AIX attributes, as an array of `'key=value'` strings. This
         parameter's behavior can be configured with `attribute_membership`."
 
+      self.log_only_changed_or_new_keys = true
+
       def membership
         :attribute_membership
       end
 
       def delimiter
         " "
-      end
-
-      validate do |value|
-        raise ArgumentError, _("Attributes value pairs must be separated by an =") unless value.include?("=")
       end
     end
 

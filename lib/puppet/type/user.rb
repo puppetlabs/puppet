@@ -378,9 +378,7 @@ module Puppet
         that the user is a part of.
 
         If `inclusive` is specified, Puppet will ensure that the user is a
-        member of **only** specified groups.
-
-        Defaults to `minimum`."
+        member of **only** specified groups."
 
       newvalues(:inclusive, :minimum)
 
@@ -391,13 +389,13 @@ module Puppet
       desc "Whether the user is a system user, according to the OS's criteria;
       on most platforms, a UID less than or equal to 500 indicates a system
       user. This parameter is only used when the resource is created and will
-      not affect the UID when the user is present. Defaults to `false`."
+      not affect the UID when the user is present."
 
       defaultto false
     end
 
     newparam(:allowdupe, :boolean => true, :parent => Puppet::Parameter::Boolean) do
-      desc "Whether to allow duplicate UIDs. Defaults to `false`."
+      desc "Whether to allow duplicate UIDs."
 
       defaultto false
     end
@@ -405,7 +403,7 @@ module Puppet
     newparam(:managehome, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether to manage the home directory when Puppet creates or removes the user.
         This creates the home directory if Puppet also creates the user account, and deletes the
-        home directory if Puppet also removes the user account. Defaults to `false`.
+        home directory if Puppet also removes the user account.
 
         This parameter has no effect unless Puppet is also creating or removing the user in the
         resource at the same time. For instance, Puppet creates a home directory for a managed
@@ -531,7 +529,7 @@ module Puppet
     newparam(:role_membership) do
       desc "Whether specified roles should be considered the **complete list**
         (`inclusive`) or the **minimum list** (`minimum`) of roles the user
-        has. Defaults to `minimum`."
+        has."
 
       newvalues(:inclusive, :minimum)
 
@@ -557,7 +555,7 @@ module Puppet
     newparam(:auth_membership) do
       desc "Whether specified auths should be considered the **complete list**
         (`inclusive`) or the **minimum list** (`minimum`) of auths the user
-        has. Defaults to `minimum`."
+        has."
 
       newvalues(:inclusive, :minimum)
 
@@ -583,7 +581,7 @@ module Puppet
     newparam(:profile_membership) do
       desc "Whether specified roles should be treated as the **complete list**
         (`inclusive`) or the **minimum list** (`minimum`) of roles
-        of which the user is a member. Defaults to `minimum`."
+        of which the user is a member."
 
       newvalues(:inclusive, :minimum)
 
@@ -596,16 +594,12 @@ module Puppet
       def membership
         :key_membership
       end
-
-      validate do |value|
-        raise ArgumentError, _("Key/value pairs must be separated by an =") unless value.include?("=")
-      end
     end
 
     newparam(:key_membership) do
       desc "Whether specified key/value pairs should be considered the
         **complete list** (`inclusive`) or the **minimum list** (`minimum`) of
-        the user's attributes. Defaults to `minimum`."
+        the user's attributes."
 
       newvalues(:inclusive, :minimum)
 
@@ -623,6 +617,8 @@ module Puppet
     newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
       desc "Specify AIX attributes for the user in an array of attribute = value pairs."
 
+      self.log_only_changed_or_new_keys = true
+
       def membership
         :attribute_membership
       end
@@ -630,16 +626,12 @@ module Puppet
       def delimiter
         " "
       end
-
-      validate do |value|
-        raise ArgumentError, _("Attributes value pairs must be separated by an =") unless value.include?("=")
-      end
     end
 
     newparam(:attribute_membership) do
       desc "Whether specified attribute value pairs should be treated as the
         **complete list** (`inclusive`) or the **minimum list** (`minimum`) of
-        attribute/value pairs for the user. Defaults to `minimum`."
+        attribute/value pairs for the user."
 
       newvalues(:inclusive, :minimum)
 

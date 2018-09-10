@@ -411,8 +411,7 @@ module Puppet
 
     newparam(:configfiles) do
       desc "Whether to keep or replace modified config files when installing or
-        upgrading a package. This only affects the `apt` and `dpkg` providers.
-        Defaults to `keep`."
+        upgrading a package. This only affects the `apt` and `dpkg` providers."
 
       defaultto :keep
 
@@ -547,9 +546,7 @@ module Puppet
 
         If you use this, be careful of notifying classes when you want to restart
         services. If the class also contains a refreshable package, doing so could
-        cause unnecessary re-installs.
-
-        Defaults to `false`."
+        cause unnecessary re-installs."
       newvalues(:true, :false)
 
       defaultto :false

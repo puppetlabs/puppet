@@ -1,9 +1,10 @@
 require 'puppet/util/platform'
 module Puppet::Util::Windows
   module ADSI
-    class User; end
+    class ADSIObject; end
+    class User < ADSIObject; end
     class UserProfile; end
-    class Group; end
+    class Group < ADSIObject; end
   end
   module File; end
   module Registry
