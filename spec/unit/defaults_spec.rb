@@ -190,4 +190,24 @@ describe "Defaults" do
       end
     end
   end
+
+  describe 'ordering' do
+    it 'issues a deprecation warning when set to title-hash' do
+      Puppet.expects(:deprecation_warning).with('Setting ordering is deprecated.', 'setting-ordering')
+
+      Puppet.settings[:ordering] = 'title-hash'
+    end
+
+    it 'issues a deprecation warning when set to random' do
+      Puppet.expects(:deprecation_warning).with('Setting ordering is deprecated.', 'setting-ordering')
+
+      Puppet.settings[:ordering] = 'random'
+    end
+
+    it 'does not issue a deprecation warning when set to manifest' do
+      Puppet.expects(:deprecation_warning).with('Setting ordering is deprecated.', 'setting-ordering').never
+
+      Puppet.settings[:ordering] = 'manifest'
+    end
+  end
 end

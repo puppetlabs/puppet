@@ -1,0 +1,32 @@
+
+test_aix_user:
+        password = some_password
+        lastupdate = last_update
+
+no_password_user:
+        lastupdate = another_last_update
+
+daemon:
+        password = *
+
+bin:
+        password = *
+
+sys:
+        password = *
+
+adm:
+        password = *
+
+uucp:
+        password = *
+
+guest:
+        password = *
+
+nobody:
+        password = *
+
+lpd:
+        password = *
+

@@ -3,9 +3,9 @@ require 'spec_helper'
 
 require 'puppet/property/keyvalue'
 
-klass = Puppet::Property::KeyValue
 
-describe klass do
+describe 'Puppet::Property::KeyValue' do 
+  let(:klass) { Puppet::Property::KeyValue }
 
   it "should be a subclass of Property" do
     expect(klass.superclass).to eq(Puppet::Property)
@@ -17,6 +17,7 @@ describe klass do
       klass.initvars
       @resource = stub 'resource', :[]= => nil, :property => nil
       @property = klass.new(:resource => @resource)
+      klass.log_only_changed_or_new_keys = false
     end
 
     it "should have a , as default delimiter" do
@@ -40,6 +41,26 @@ describe klass do
 
       # We can't predict the order the hash is processed in...
       expect(["foo=baz;bar=boo", "bar=boo;foo=baz"]).to be_include s
+    end
+
+    describe "when calling hash_to_key_value_s" do
+      let(:input) do
+        {
+          :key1 => "value1",
+          :key2 => "value2",
+          :key3 => "value3"
+        }
+      end
+
+      before(:each) do
+        @property.instance_variable_set(:@changed_or_new_keys, [:key1, :key2])
+      end
+
+      it "returns only the changed or new keys if log_only_changed_or_new_keys is set" do
+        klass.log_only_changed_or_new_keys = true
+
+        expect(@property.hash_to_key_value_s(input)).to eql("key1=value1;key2=value2")
+      end
     end
 
     describe "when calling inclusive?" do
@@ -103,6 +124,26 @@ describe klass do
         @property.expects(:inclusive?).returns(false)
         expect(@property.should).to eq({ :foo => "baz", :bar => "boo", :do => "re", :mi => "fa" })
       end
+
+      it "should mark the keys that will change or be added as a result of our Puppet run" do
+        @property.should = {
+          :key1 => "new_value1",
+          :key2 => "value2",
+          :key3 => "new_value3",
+          :key4 => "value4"
+        }
+        @property.stubs(:retrieve).returns(
+          {
+            :key1 => "value1",
+            :key2 => "value2",
+            :key3 => "value3"
+          }
+        )
+        @property.stubs(:inclusive?).returns(false)
+
+        @property.should
+        expect(@property.instance_variable_get(:@changed_or_new_keys)).to eql([:key1, :key3, :key4])
+      end
     end
 
     describe "when calling retrieve" do
@@ -130,9 +171,15 @@ describe klass do
       end
     end
 
-    describe "when calling hashify" do
-      it "should return the array hashified" do
-        expect(@property.hashify(["foo=baz", "bar=boo"])).to eq({ :foo => "baz", :bar => "boo" })
+    describe "when calling hashify_should" do
+      it "should return the underlying hash if the user passed in a hash" do
+        @property.should = { "foo" => "bar" }
+        expect(@property.hashify_should).to eql({ :foo => "bar" })
+      end
+
+      it "should hashify the array of key/value pairs if that is what our user passed in" do
+        @property.should = [ "foo=baz", "bar=boo" ]
+        expect(@property.hashify_should).to eq({ :foo => "baz", :bar => "boo" })
       end
     end
 
@@ -148,7 +195,6 @@ describe klass do
       end
 
       it "should return true if the passed in values is nil" do
-        @property.should = "foo"
         @property.safe_insync?(nil) == true
       end
 
@@ -164,6 +210,51 @@ describe klass do
         @property.should = ["foo=baz", "bar=boo"]
         @property.expects(:inclusive?).returns(true)
         expect(@property.safe_insync?({ "foo" => "bee", "bar" => "boo" })).to eq(false)
+      end
+    end
+
+    describe 'when validating a passed-in property value' do
+      it 'should raise a Puppet::Error if the property value is anything but a Hash or a String' do
+        expect { @property.validate(5) }.to raise_error do |error|
+          expect(error).to be_a(Puppet::Error)
+          expect(error.message).to match("specified as a hash or an array")
+        end
+      end
+
+      it 'should accept a Hash property value' do
+        @property.validate({ 'foo' => 'bar' })
+      end
+
+      it "should raise a Puppet::Error if the property value isn't a key/value pair" do
+        expect { @property.validate('foo') }.to raise_error do |error|
+          expect(error).to be_a(Puppet::Error)
+          expect(error.message).to match("separated by '='")
+        end
+      end
+
+      it 'should accept a valid key/value pair property value' do
+        @property.validate('foo=bar')
+      end
+    end
+
+    describe 'when munging a passed-in property value' do
+      it 'should return the value as-is if it is a string' do
+        expect(@property.munge('foo=bar')).to eql('foo=bar')
+      end
+
+      it 'should stringify + symbolize the keys and stringify the values if it is a hash' do
+        input = {
+          1     => 2,
+          true  => false,
+          '   foo   ' => 'bar'
+        }
+        expected_output = {
+          :'1'    => '2',
+          :true => 'false',
+          :foo  => 'bar'
+        }
+
+        expect(@property.munge(input)).to eql(expected_output)
       end
     end
   end
