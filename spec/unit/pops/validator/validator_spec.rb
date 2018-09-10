@@ -145,6 +145,16 @@ describe "validating 4x" do
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
       end
     end
+
+    it 'produces a deprecation for illegal top level constructs' do
+      with_environment(environment) do
+        acceptor = validate(parse('$foo = 1', 'path/aaa/manifests/bbb.pp'))
+        expect(deprecation_count(acceptor)).to eql(1)
+        expect(acceptor.warning_count).to eql(1)
+        expect(acceptor.error_count).to eql(0)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
+      end
+    end
   end
 
   context 'with --strict set to warning' do
@@ -177,6 +187,16 @@ describe "validating 4x" do
         expect(acceptor.warning_count).to eql(0)
         expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+      end
+    end
+
+    it 'produces a deprecation for illegal top level constructs' do
+      with_environment(environment) do
+        acceptor = validate(parse('$foo = 1', 'path/aaa/manifests/bbb.pp'))
+        expect(deprecation_count(acceptor)).to eql(1)
+        expect(acceptor.warning_count).to eql(1)
+        expect(acceptor.error_count).to eql(0)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
       end
     end
   end
@@ -220,6 +240,16 @@ describe "validating 4x" do
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
       end
     end
+
+    it 'produces a deprecation for illegal top level constructs' do
+      with_environment(environment) do
+        acceptor = validate(parse('$foo = 1', 'path/aaa/manifests/bbb.pp'))
+        expect(deprecation_count(acceptor)).to eql(1)
+        expect(acceptor.warning_count).to eql(1)
+        expect(acceptor.error_count).to eql(0)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
+      end
+    end
   end
 
   context 'with --strict set to off' do
@@ -238,6 +268,16 @@ describe "validating 4x" do
         expect(acceptor.warning_count).to eql(0)
         expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+      end
+    end
+
+    it 'produces a deprecation for illegal top level constructs' do
+      with_environment(environment) do
+        acceptor = validate(parse('$foo = 1', 'path/aaa/manifests/bbb.pp'))
+        expect(deprecation_count(acceptor)).to eql(1)
+        expect(acceptor.warning_count).to eql(1)
+        expect(acceptor.error_count).to eql(0)
+        expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
       end
     end
   end
@@ -856,6 +896,71 @@ describe "validating 4x" do
           notice(true)
         CODE
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_EXPRESSION)
+      end
+    end
+  end
+
+  context 'top level constructs' do
+    {
+      'a class' => 'class x{}',
+      'a define' => 'define x{}',
+      'a function' => 'function x() {}',
+      'a type alias' => 'type A = Data',
+      'a type alias for a complex type' => 'type C = Hash[String[1],Integer]',
+      'a type definition' => 'type A {}',
+    }.each_pair do |word, source|
+      it "will not have an issue with #{word} at the top level in a module" do
+        with_environment(environment) do
+          expect(validate(parse(source, 'path/x/manifests/init.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
+        end
+      end
+    end
+  end
+
+  context 'non-top level constructs' do
+    {
+      'an assignment' => '$foo = 1',
+      'a resource' => 'notify { nope: }',
+      'a resource default' => "Notify { message => 'yo' }",
+      'a function call' => "include 'foo'",
+      'a node definition' => 'node default {}',
+      'an expression' => '1+1',
+      'a conditional' => 'if true {42}',
+      'a literal value' => '42',
+      'a virtual collector' => 'User <| tag == web |>',
+      'an exported collector' => 'Sshkey <<| |>>',
+    }.each_pair do |word, source|
+      it "will have an issue with #{word} at the top level in a module" do
+        with_environment(environment) do
+          expect(validate(parse(source, 'path/x/manifests/init.pp'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
+        end
+      end
+
+      it "will not have an issue with #{word} at top level not in a module" do
+        with_environment(environment) do
+          expect(validate(parse(source))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
+        end
+      end
+    end
+
+    it "will give multiple errors in one file with multiple issues" do
+      source = <<-SOURCE
+      class foo {}
+      notify { nope: }
+      node bar {}
+
+      $a = 7
+      SOURCE
+
+      with_environment(environment) do
+        acceptor = validate(parse(source, 'path/foo/manifests/init.pp'))
+        expect(deprecation_count(acceptor)).to eql(3)
+        expect(acceptor.warning_count).to eql(3)
+        expect(acceptor.error_count).to eql(0)
+
+        expect(acceptor.warnings[0].source_pos.line).to eql(2)
+        expect(acceptor.warnings[1].source_pos.line).to eql(3)
+        expect(acceptor.warnings[2].source_pos.line).to eql(5)
       end
     end
   end

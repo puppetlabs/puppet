@@ -48,6 +48,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # tree iterate the model, and call check for each element
     @path = []
     check(model)
+    internal_check_top_construct_in_module(model)
     model._pcore_all_contents(@path) { |element| check(element) }
   end
 
@@ -396,7 +397,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
       acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
     end
 
-    internal_check_file_namespace(o, o.name, o.locator.file)
+    internal_check_file_namespace(o)
     internal_check_reserved_type_name(o, o.name)
     internal_check_future_reserved_word(o, o.name)
   end
@@ -535,16 +536,38 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   NO_NAMESPACE = :no_namespace
   NO_PATH = :no_path
   BAD_MODULE_FILE = :bad_module_file
-  def internal_check_file_namespace(o, name, file)
+
+  def internal_check_file_namespace(o)
+    file = o.locator.file
     return if file.nil? || file == '' #e.g. puppet apply -e '...'
 
     file_namespace = namespace_for_file(file)
     return if file_namespace == NO_NAMESPACE
 
     # Downcasing here because check is case-insensitive
-    if file_namespace == BAD_MODULE_FILE || !name.downcase.start_with?(file_namespace)
-      acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, {:name => name, :file => file})
+    if file_namespace == BAD_MODULE_FILE || !o.name.downcase.start_with?(file_namespace)
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, {:name => o.name, :file => file})
     end
+  end
+
+  def internal_check_top_construct_in_module(prog)
+    return unless prog.is_a?(Model::Program) && !prog.body.nil?
+
+    #Check that this is a module autoloaded file
+    file = prog.locator.file
+    return if file.nil?
+    return if namespace_for_file(file) == NO_NAMESPACE
+
+    body = prog.body
+    if(body.is_a?(Model::BlockExpression))
+      body.statements.each { |s| acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, s) unless valid_top_construct?(s) }
+    else
+      acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, body) unless valid_top_construct?(body)
+    end
+  end
+
+  def valid_top_construct?(o)
+    o.is_a?(Model::Definition) && !o.is_a?(Model::NodeDefinition)
   end
 
   # @api private
