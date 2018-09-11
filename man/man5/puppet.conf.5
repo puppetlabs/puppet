@@ -1312,31 +1312,6 @@ Perform one configuration run and exit, rather than spawning a long\-running dae
 .
 .IP "" 0
 .
-.SS "ordering"
-How unrelated resources should be ordered when applying a catalog\. Allowed values are \fBtitle\-hash\fR, \fBmanifest\fR, and \fBrandom\fR\. This setting affects puppet agent and puppet apply, but not puppet master\.
-.
-.IP "\(bu" 4
-\fBmanifest\fR (the default) will use the order in which the resources were declared in their manifest files\.
-.
-.IP "\(bu" 4
-\fBtitle\-hash\fR (the default in 3\.x) will order resources randomly, but will use the same order across runs and across nodes\. It is only of value if you\'re migrating from 3\.x and have errors running with \fBmanifest\fR\.
-.
-.IP "\(bu" 4
-\fBrandom\fR will order resources randomly and change their order with each run\. This can work like a fuzzer for shaking out undeclared dependencies\.
-.
-.IP "" 0
-.
-.P
-Regardless of this setting\'s value, Puppet will always obey explicit dependencies set with the before/require/notify/subscribe metaparameters and the \fB\->\fR/\fB~>\fR chaining arrows; this setting only affects the relative ordering of \fIunrelated\fR resources\.
-.
-.P
-This setting is deprecated, and will always have a value of \fBmanifest\fR in 6\.0 and up\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: manifest
-.
-.IP "" 0
-.
 .SS "passfile"
 Where puppet agent stores the password for its private key\. Generally unused\.
 .
