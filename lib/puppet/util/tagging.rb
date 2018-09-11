@@ -10,7 +10,7 @@ module Puppet::Util::Tagging
   def tag(*ary)
     @tags ||= new_tags
 
-    ary.flatten.each do |tag|
+    ary.flatten.compact.each do |tag|
       name = tag.to_s.downcase
       # Add the tag before testing if it's valid since this means that
       # we never need to test the same valid tag twice. This speeds things

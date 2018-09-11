@@ -166,6 +166,17 @@ describe Puppet::Util::Tagging do
       tagger.tag("my-tag")
       expect(tagger).to be_tagged("my-tag")
     end
+
+    it 'skips undef /nil tags' do
+      tagger.tag('before')
+      tagger.tag(nil)
+      tagger.tag('after')
+      expect(tagger).to_not be_tagged(nil)
+      expect(tagger).to_not be_tagged('')
+      expect(tagger).to_not be_tagged('undef')
+      expect(tagger).to be_tagged('before')
+      expect(tagger).to be_tagged('after')
+    end
   end
 
   context "when querying if tagged" do
