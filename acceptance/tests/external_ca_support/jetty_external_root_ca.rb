@@ -34,7 +34,7 @@ jetty_confdir = master['puppetserver-confdir']
 teardown do
   step "Restore /etc/hosts and puppetserver configs; Restart puppetserver"
   on master, "cp -p '#{backupdir}/hosts' /etc/hosts"
-  on master, puppet('config set route_file /etc/puppetlabs/puppet/routes.yaml')
+  on master, puppet('config delete route_file --section main')
 
   # Please note that the escaped `\cp` command below is intentional. Most
   # linux systems alias `cp` to `cp -i` which causes interactive mode to be
@@ -119,7 +119,7 @@ master_opts = {
 # https://github.com/puppetlabs/puppetserver/blob/master/documentation/configuration.markdown#service-bootstrapping
 create_remote_file master, "#{jetty_confdir}/../services.d/ca.cfg", "puppetlabs.services.ca.certificate-authority-disabled-service/certificate-authority-disabled-service"
 # disable pdb connectivity
-on master, puppet('config set route_file /tmp/nonexistent.yaml')
+on master, puppet('config set route_file /tmp/nonexistent.yaml --section main')
 # restart master
 on(master, "service #{master['puppetservice']} restart")
 
