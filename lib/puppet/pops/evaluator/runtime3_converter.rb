@@ -77,6 +77,11 @@ class Runtime3Converter
     raise Puppet::Error, "Use of a Ruby BigDecimal value outside Puppet Float range, got '#{o}'"
   end
 
+  def convert_String(o, scope, undef_value)
+    # although wasteful, needed because user code may mutate these strings in Resources
+    o.frozen? ? o.dup : o
+  end
+
   def convert_Object(o, scope, undef_value)
     o
   end
