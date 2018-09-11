@@ -1935,11 +1935,11 @@ EOT
     },
     :ldapserver => {
       :default  => "ldap",
-      :desc     => "The LDAP server.  Only used if `node_terminus` is set to `ldap`.",
+      :desc     => "The LDAP server.",
     },
     :ldapport => {
       :default  => 389,
-      :desc     => "The LDAP port.  Only used if `node_terminus` is set to `ldap`.",
+      :desc     => "The LDAP port.",
     },
 
     :ldapstring => {
