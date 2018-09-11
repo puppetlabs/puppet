@@ -62,7 +62,7 @@ class Puppet::Module
       return true
     end
 
-    def self.get_file_details(path, name_start)
+    def self.get_file_details(path, mod)
       unless File.absolute_path(path) == File.path(path)
         msg = _("File pathnames cannot include relative paths")
         raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
@@ -71,7 +71,8 @@ class Puppet::Module
       # This gets the path from the starting point onward
       # For files this should be the file subpath from the metadata
       # For directories it should be the directory subpath plus whatever we globbed
-      name = "#{name_start}#{path.partition(name_start).last}"
+      # Partition matches on the first instance it finds of the parameter
+      name = "#{mod.name}#{path.partition(mod.path).last}"
 
       { "name" => name, "path" =>  path }
     end
@@ -83,6 +84,9 @@ class Puppet::Module
 
       file_list = files.flat_map do |file|
         module_name, mount, endpath = file.split("/", 3)
+        # If there's a mount directory with no trailing slash this will be nil
+        # We want it to be empty to construct a path
+        endpath ||= ''
 
         pup_module = Puppet::Module.find(module_name, env)
         if pup_module.nil?
@@ -102,16 +106,20 @@ class Puppet::Module
           raise InvalidFile.new(msg)
         end
 
-        last_char = path[-1] == '/'
+        last_char = file[-1] == '/'
         if File.directory?(path)
-          msg = _("Directories specified in task metadata must include a trailing slash: %{dir}" % { dir: path } )
-          raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata') unless last_char
-          dir_files = Dir.glob("#{path}/**/*").select { |f| File.file?(f) }
-          files = dir_files.map { |f| get_file_details(f, pup_module.path) }
+          unless last_char
+            msg = _("Directories specified in task metadata must include a trailing slash: %{dir}" % { dir: file } )
+            raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
+          end
+          dir_files = Dir.glob("#{path}**/*").select { |f| File.file?(f) }
+          files = dir_files.map { |f| get_file_details(f, pup_module) }
         else
-          msg = _("Files specified in task metadata cannot include a trailing slash: %{file}" % { file: path } )
-          raise InvalidMetadata.new(msg, 'puppet.task/invalid-metadata') if last_char
-          files = get_file_details(path, module_name)
+          if last_char
+            msg = _("Files specified in task metadata cannot include a trailing slash: %{file}" % { file: file } )
+            raise InvalidMetadata.new(msg, 'puppet.task/invalid-metadata')
+          end
+          files = get_file_details(path, pup_module)
         end
 
         files
