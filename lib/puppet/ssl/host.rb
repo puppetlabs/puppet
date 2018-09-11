@@ -212,19 +212,24 @@ DOC
         return nil
       end
 
-      @certificate = get_host_certificate
-      return nil unless @certificate
+      cert = get_host_certificate
+      return nil unless cert
 
-      validate_certificate_with_key
+      validate_certificate_with_key(cert)
+      @certificate = cert
     end
     @certificate
   end
 
-  def validate_certificate_with_key
-    raise Puppet::Error, _("No certificate to validate.") unless certificate
-    raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: %{fingerprint}") % { fingerprint: certificate.fingerprint } unless key
-    unless certificate.content.check_private_key(key.content)
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: certificate.fingerprint, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+  # Validate that our private key matches the specified certificate.
+  #
+  # @param [Puppet::SSL::Certificate] cert the certificate to check
+  # @raises [Puppet::Error] if the private key does not match
+  def validate_certificate_with_key(cert)
+    raise Puppet::Error, _("No certificate to validate.") unless cert
+    raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: %{fingerprint}") % { fingerprint: cert.fingerprint } unless key
+    unless cert.content.check_private_key(key.content)
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: cert.fingerprint, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
 The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?
 Certificate fingerprint: %{fingerprint}
 To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.
@@ -236,6 +241,15 @@ On the agent:
   2. puppet agent -t
 ERROR_STRING
     end
+  end
+
+  def download_host_certificate
+    cert = download_certificate_from_ca(name)
+    return nil unless cert
+
+    validate_certificate_with_key(cert)
+    save_host_certificate(cert)
+    cert
   end
 
   # Search for an existing CSR for this host either cached on
@@ -262,10 +276,69 @@ ERROR_STRING
 
     # if CSR downloaded from master, but the local keypair was just generated and
     # does not match the public key in the CSR, fail hard
-    if !existing_request.nil? &&
-      (key.content.public_key.to_s != existing_request.content.public_key.to_s)
+    validate_csr_with_key(existing_request, key) if existing_request
 
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: existing_request.fingerprint, csr_public_key: existing_request.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+    generate_certificate_request unless existing_request
+
+    # If we can get a CA instance, then we're a valid CA, and we
+    # should use it to sign our request; else, just try to read
+    # the cert.
+    if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
+      ca.sign(self.name, {allow_dns_alt_names: true})
+    end
+  end
+
+  # Generate a keypair, generate a CSR, and submit it. If a local key pair
+  # already exists it will be used to generate the CSR. If a local CSR already
+  # exists and matches the key then the existing CSR will be submitted. If the
+  # CSR and key do not match an exception will be raised.
+  #
+  # @return [Puppet::SSL::CertificateRequest, nil]
+  def submit_request
+    generate_key unless key
+
+    csr = load_certificate_request_from_file
+    if csr
+      if key.content.public_key.to_s != csr.content.public_key.to_s
+        Puppet.warning("The local CSR does not match the agent's public key. Generating a new CSR.")
+
+        request_path = certificate_request_location(name)
+        Puppet::FileSystem.unlink(request_path)
+        csr = nil
+      end
+    end
+
+    if csr
+      validate_csr_with_key(csr, key)
+      submit_certificate_request(csr)
+      @certificate_request = csr
+    else
+      generate_certificate_request
+    end
+
+    @certificate_request
+  end
+
+  def validate_local_csr_with_key(csr, key)
+    if key.content.public_key.to_s != csr.content.public_key.to_s
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+The local CSR does not match the agent's public key.
+CSR fingerprint: %{fingerprint}
+CSR public key: %{csr_public_key}
+Agent public key: %{agent_public_key}
+To fix this, remove the CSR from the agent and then start a puppet run, which will automatically regenerate a CSR.
+On the agent:
+  1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete
+  1b. On Windows: del "%{cert_dir}\\%{cert_name}.pem" /f
+  2. puppet agent -t
+ERROR_STRING
+    end
+  end
+  private :validate_local_csr_with_key
+
+  def validate_csr_with_key(csr, key)
+    if key.content.public_key.to_s != csr.content.public_key.to_s
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
 The CSR retrieved from the master does not match the agent's public key.
 CSR fingerprint: %{fingerprint}
 CSR public key: %{csr_public_key}
@@ -279,15 +352,8 @@ On the agent:
   2. puppet agent -t
 ERROR_STRING
     end
-    generate_certificate_request unless existing_request
-
-    # If we can get a CA instance, then we're a valid CA, and we
-    # should use it to sign our request; else, just try to read
-    # the cert.
-    if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, {allow_dns_alt_names: true})
-    end
   end
+  private :validate_csr_with_key
 
   def initialize(name = nil)
     @name = (name || Puppet[:certname]).downcase
@@ -522,6 +588,7 @@ ERROR_STRING
       end
     end
   end
+  public :ensure_ca_certificate
 
   # Creates an arry of SSL Certificate objects from a PEM-encoding string
   # of one or more certs.
@@ -645,6 +712,7 @@ ERROR_STRING
       end
     end
   end
+  public :check_for_certificate_on_disk
 
   # Attempts to download this host's certificate from the CA server.
   # Returns nil if the CA does not yet have a signed cert for this host.

@@ -201,16 +201,14 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
   it "should consider the certificate invalid if it cannot find a key" do
     host = Puppet::SSL::Host.new("foo")
     certificate = mock('cert', :fingerprint => 'DEADBEEF')
-    host.expects(:certificate).twice.returns certificate
     host.expects(:key).returns nil
-    expect { host.validate_certificate_with_key }.to raise_error(Puppet::Error, "No private key with which to validate certificate with fingerprint: DEADBEEF")
+    expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, "No private key with which to validate certificate with fingerprint: DEADBEEF")
   end
 
   it "should consider the certificate invalid if it cannot find a certificate" do
     host = Puppet::SSL::Host.new("foo")
     host.expects(:key).never
-    host.expects(:certificate).returns nil
-    expect { host.validate_certificate_with_key }.to raise_error(Puppet::Error, "No certificate to validate.")
+    expect { host.validate_certificate_with_key(nil) }.to raise_error(Puppet::Error, "No certificate to validate.")
   end
 
   it "should consider the certificate invalid if the SSL certificate's key verification fails" do
@@ -219,9 +217,8 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     sslcert = mock 'sslcert'
     certificate = mock 'cert', {:content => sslcert, :fingerprint => 'DEADBEEF'}
     host.stubs(:key).returns key
-    host.stubs(:certificate).returns certificate
     sslcert.expects(:check_private_key).with("private_key").returns false
-    expect { host.validate_certificate_with_key }.to raise_error(Puppet::Error, /DEADBEEF/)
+    expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, /DEADBEEF/)
   end
 
   it "should consider the certificate valid if the SSL certificate's key verification succeeds" do
@@ -230,9 +227,8 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     sslcert = mock 'sslcert'
     certificate = mock 'cert', :content => sslcert
     host.stubs(:key).returns key
-    host.stubs(:certificate).returns certificate
     sslcert.expects(:check_private_key).with("private_key").returns true
-    expect{ host.validate_certificate_with_key }.not_to raise_error
+    expect{ host.validate_certificate_with_key(certificate) }.not_to raise_error
   end
 
   describe "when specifying the CA location" do
