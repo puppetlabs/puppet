@@ -50,7 +50,7 @@ This corresponds to installing facter and hiera stable from our internal mirror,
 Running Tests on the vcloud (now vmpooler)
 ---------------------------
 
-Only applies to Pulletlabs employees. Community members should see the [guide to running the tests on vagrant boxen](#running-tests-on-vagrant-boxen).
+Only applies to Puppet, Inc. employees. Community members should see the [guide to running the tests on vagrant boxen](#running-tests-on-vagrant-boxen).
 
 This hypervisor has been deprecated: we now use vmpooler. Hosts files have been upgraded as appropriate.
 
