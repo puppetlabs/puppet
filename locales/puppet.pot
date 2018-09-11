@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-77-ge0b7dcc\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-84-gd78e550\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-09-11 19:02+0000\n"
-"PO-Revision-Date: 2018-09-11 19:02+0000\n"
+"POT-Creation-Date: 2018-09-11 19:31+0000\n"
+"PO-Revision-Date: 2018-09-11 19:31+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -7291,6 +7291,34 @@ msgstr ""
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
 msgstr ""
 
+#: ../lib/puppet/provider/service/windows.rb:22
+msgid "Cannot enable %{resource_name}, error was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:28
+msgid "Cannot disable %{resource_name}, error was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:34
+msgid "Cannot enable %{resource_name} for manual start, error was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:50
+msgid "Unknown start type: %{start_type}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:53
+msgid "Cannot get start type %{resource_name}, error was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:60
+msgid "Will not start disabled service %{resource_name} without managing enable. Specify 'enable => false' to override."
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:89
+msgid "Unknown service state '%{current_state}' for service '%{resource_name}'"
+msgstr ""
+
 #. TRANSLATORS 'AIX' is the name of an operating system and should not be translated
 #: ../lib/puppet/provider/user/aix.rb:67
 msgid "Could not convert AIX expires date '%{expires}' on %{class_name}[%{resource_name}]"
@@ -10131,6 +10159,58 @@ msgstr ""
 
 #: ../lib/puppet/util/windows/security.rb:644
 msgid "Failed to set security information"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:256
+msgid "Failed to start the service"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:259
+msgid "Failed to start the service, after calling StartService the service is not in SERVICE_START_PENDING or SERVICE_RUNNING"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:277
+msgid "Failed to send stop control to service, current state is %{current_state}. Failed with"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:280
+msgid "Failed to stop the service, after calling ControlService the service is not in SERVICE_STOP_PENDING or SERVICE_STOPPED"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:298
+msgid "Unknown Service state '%{current_state}' for '%{service_name}'"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:315
+msgid "Unknown start type '%{start_type}' for '%{service_name}'"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:330
+msgid "Unknown start type %{start_type}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:351
+msgid "Failed to update service configuration"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:411
+msgid "Failed to fetch services"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:457
+msgid "Failed to open a handle to the service"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:472
+msgid "Failed to open a handle to the service control manager"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:514 ../lib/puppet/util/windows/service.rb:550
+msgid "Service query failed"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:587
+msgid "No progress made on service operation and dwWaitHint exceeded"
 msgstr ""
 
 #: ../lib/puppet/util/windows/sid.rb:93
