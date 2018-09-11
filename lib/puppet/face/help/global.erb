@@ -7,8 +7,8 @@ Available subcommands:
         because faces can't be run without an application stub.  However, when #6753 is resolved,
         all of the application stubs for faces will go away, and this will need to be updated
         to reflect that.  --cprice 2012-04-26 %>
-<% all_application_summaries.each do |appname, summary| -%>
-  <%= appname.to_s.ljust(16) %>  <%= summary %>
+<% all_application_summaries.each do |appname, summary, indent| -%>
+  <%= indent %><%= appname.to_s.ljust(16) %>  <%= summary %>
 <% end -%>
 
 See 'puppet help <subcommand> <action>' for help on a specific subcommand action.

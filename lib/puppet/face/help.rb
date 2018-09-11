@@ -132,19 +132,21 @@ Puppet::Face.define(:help, '0.0.1') do
   #  element in the outer array is a pair whose first element is a String containing the application
   #  name, and whose second element is a String containing the summary for that application.
   def all_application_summaries()
-    Puppet::Application.available_application_names.sort.inject([]) do |result, appname|
+    available_application_names_special_sort().inject([]) do |result, appname|
       next result if exclude_from_docs?(appname)
 
-      if (is_face_app?(appname))
+      if (appname == COMMON || appname == SPECIALIZED || appname == BLANK)
+        result << appname
+      elsif (is_face_app?(appname))
         begin
           face = Puppet::Face[appname, :current]
           # Add deprecation message to summary if the face is deprecated
           summary = face.deprecated? ? face.summary + ' ' + _("(Deprecated)") : face.summary
-          result << [appname, summary]
+          result << [appname, summary, '  ']
         rescue StandardError, LoadError
           error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
           error_message += ' ' + _("Check error logs.")
-          result << [ error_message ]
+          result << [ error_message, '', '  ' ]
         end
       else
         begin
@@ -152,14 +154,26 @@ Puppet::Face.define(:help, '0.0.1') do
           if summary.empty?
             summary = horribly_extract_summary_from(appname)
           end
-          result << [appname, summary]
+          result << [appname, summary, '  ']
         rescue StandardError, LoadError
           error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
           error_message += ' ' + _("Check error logs.")
-          result << [ error_message ]
+          result << [ error_message, '', '  ' ]
         end
       end
     end
+  end
+
+  COMMON = 'Common:'.freeze
+  SPECIALIZED = 'Specialized:'.freeze
+  BLANK = "\n".freeze
+  def available_application_names_special_sort()
+    full_list = Puppet::Application.available_application_names
+    a_list = full_list & %w{apply agent config help lookup module resource}
+    a_list = a_list.sort
+    also_ran = full_list - a_list
+    also_ran = also_ran.sort
+    [[COMMON], a_list, [BLANK], [SPECIALIZED], also_ran].flatten(1)
   end
 
   def horribly_extract_summary_from(appname)
@@ -181,7 +195,7 @@ Puppet::Face.define(:help, '0.0.1') do
   #private :horribly_extract_summary_from
 
   def exclude_from_docs?(appname)
-    %w{face_base indirection_base}.include? appname
+    %w{face_base indirection_base cert key man plugin report status}.include? appname
   end
   # This should absolutely be a private method, but for some reason it appears
   #  that you can't use the 'private' keyword inside of a Face definition.
