@@ -313,9 +313,6 @@ module Runtime3Support
     mapped_args = Runtime3FunctionArgumentConverter.map_args(args, scope, '')
     # The 3x function performs return value mapping and returns nil if it is not of rvalue type
     Puppet::Pops::PuppetStack.stack(file, line, scope, "function_#{name}", [mapped_args], &block)
-#    result = Puppet::Pops::PuppetStack.stack(file, line, scope, "function_#{name}", [mapped_args], &block)
-#    # Prevent non r-value functions from leaking their result (they are not written to care about this)
-#    Puppet::Parser::Functions.rvalue?(name) ? result : nil
   end
 
   # The o is used for source reference
