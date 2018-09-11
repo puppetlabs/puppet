@@ -7,7 +7,7 @@ module Puppet
       # Return whether a host supports the systemd provider.
       # @param host [String] hostname
       # @return [Boolean] whether the systemd provider is supported.
-      def supports_systemd? (host)
+      def supports_systemd?(host)
         # The Windows MSI doesn't put Puppet in the Ruby vendor or site dir, so loading it fails.
         return false if host.platform.variant == 'windows'
         ruby = Puppet::Acceptance::CommandUtils.ruby_command(host)
@@ -110,6 +110,40 @@ module Puppet
         }
 
         apply_manifest_on(host, refresh_manifest)
+      end
+
+      def run_nonexistent_service_tests(service, error_message_re, operations_to_fail)
+        step "Verify a non-existent service is considered stopped and disabled" do
+          on(agent, puppet_resource('service', service), :catch_failures => true, :catch_changes => true) do |result|
+            assert_match(/ensure[[:space:]]+=>[[:space:]]+'stopped'/, result.stdout, "non-existent service service should be stopped, but received #{result.stdout}")
+            assert_match(/enable[[:space:]]+=>[[:space:]]+'false'/, result.stdout, "non-existent service should be disabled, but received #{result.stdout}")
+          end
+        end
+      
+        step "Verify stopping and disabling a non-existent service is a no-op" do
+          manifest = <<-PP
+            service { '#{service}' : ensure => stopped, enable => false }
+          PP
+          apply_manifest_on(agent, manifest, :catch_changes => true)
+        end
+
+        operations_to_fail.each do |operation, property|
+          step "Verify #{operation} a non-existent service prints an error message but does not fail the run without detailed exit codes" do
+            manifest = <<-PP
+              service { '#{service}' : #{property} }
+            PP
+            apply_manifest_on(agent, manifest) do |result|
+              assert_match(/Error:.*#{error_message_re}/, result.stderr, "non-existent service should error when started, but received #{result.stderr}")
+            end
+          end
+        
+          step "Verify #{operation} a non-existent service with detailed exit codes correctly returns an error code" do
+            manifest = <<-PP
+              service { '#{service}' : #{property} }
+            PP
+            apply_manifest_on(agent, manifest, :acceptable_exit_codes => [4])
+          end
+        end
       end
     end
   end
