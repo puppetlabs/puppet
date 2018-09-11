@@ -1,0 +1,28 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "PUPPET\-SSL" "8" "September 2018" "Puppet, Inc." "Puppet manual"
+.
+.SH "NAME"
+\fBpuppet\-ssl\fR \- Manage SSL keys and certificates for puppet SSL clients
+.
+.SH "SYNOPSIS"
+Manage SSL keys and certificates for an SSL clients needed to communicate with a puppet infrastructure\.
+.
+.SH "USAGE"
+puppet ssl \fIaction\fR [\-\-certname \fINAME\fR]
+.
+.SH "ACTIONS"
+.
+.TP
+submit_request
+Generate a certificate signing request (CSR) and submit it to the CA\. If a private and public key pair already exist, they will be used to generate the CSR\. Otherwise a new key pair will be generated\. If a CSR has already been submitted with the given \fBcertname\fR, then the operation will fail\.
+.
+.TP
+download_cert
+Download a certificate for this host\. If the current private key matches the downloaded certificate, then the certificate will be saved and used for subsequent requests\. If there is already an existing certificate, it will be overwritten\.
+.
+.TP
+verify
+Verify the private key and certificate are present and match, verify the certificate is issued by a trusted CA, and check revocation status\.
+
