@@ -201,7 +201,7 @@ class Puppet::Indirector::Request
     end
 
     # ... Fall back onto the default server.
-     bound_server = Puppet.lookup(:server) do
+    bound_server = Puppet.lookup(:server) do
       if primary_server = Puppet.settings[:server_list][0]
         primary_server[0]
       else

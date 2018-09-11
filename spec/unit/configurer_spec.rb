@@ -1010,32 +1010,41 @@ describe Puppet::Configurer do
 
     it "should select a server when provided" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
-      Puppet::Network::HTTP::Pool.expects(:new).returns(pool)
-      Puppet.expects(:override).with({:http_pool => pool}).yields
-      Puppet.expects(:override).with({:server => "myserver", :serverport => '123'}).twice.yields
-      Puppet::Node.indirection.expects(:find).returns(nil)
-      @agent.expects(:run_internal).returns(nil)
+      response = Net::HTTPOK.new(nil, 200, 'OK')
+      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', '123').returns(mock('request', get: response))
+      @agent.stubs(:run_internal)
+
+      options = {}
+      @agent.run(options)
+      expect(options[:report].master_used).to eq('myserver:123')
+    end
+
+    it "should report when a server is unavailable" do
+      Puppet.settings[:server_list] = ["myserver:123"]
+      response = Net::HTTPInternalServerError.new(nil, 500, 'Internal Server Error')
+      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', '123').returns(mock('request', get: response))
+      @agent.stubs(:run_internal)
+
+      Puppet.expects(:debug).with("Puppet server myserver:123 is unavailable: 500 Internal Server Error")
       @agent.run
     end
 
     it "should fallback to an empty server when failover fails" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
-      Puppet::Network::HTTP::Pool.expects(:new).returns(pool)
-      Puppet.expects(:override).with({:http_pool => pool}).yields
-      Puppet.expects(:override).with({:server => "myserver", :serverport => '123'}).yields
-      Puppet.expects(:override).with({:server => nil, :serverport => nil}).yields
       error = Net::HTTPError.new(400, 'dummy server communication error')
-      Puppet::Node.indirection.expects(:find).raises(error)
-      @agent.expects(:run_internal).returns(nil)
-      @agent.run
+      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', '123').returns(error)
+      @agent.stubs(:run_internal)
+
+      options = {}
+      @agent.run(options)
+      expect(options[:report].master_used).to be_nil
     end
 
     it "should not make multiple node requets when the server is found" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      Puppet::Node.indirection.expects(:find).returns("mynode").once
-      @agent.expects(:prepare_and_retrieve_catalog).returns(nil)
+      Puppet::Network::HttpPool.expects(:http_ssl_instance).once
+      @agent.stubs(:run_internal)
+
       @agent.run
     end
   end

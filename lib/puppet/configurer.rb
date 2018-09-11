@@ -217,26 +217,22 @@ class Puppet::Configurer
 
         # Skip failover logic if the server_list setting is empty
         if Puppet.settings[:server_list].nil? || Puppet.settings[:server_list].empty?
-          do_failover = false;
+          do_failover = false
         else
           do_failover = true
         end
         # When we are passed a catalog, that means we're in apply
         # mode. We shouldn't try to do any failover in that case.
         if options[:catalog].nil? && do_failover
-          found = find_functional_server()
-          server = found[:server]
-          if server.nil?
-            Puppet.warning _("Could not select a functional puppet master")
-            server = [nil, nil]
-          end
-          Puppet.override(:server => server[0], :serverport => server[1]) do
-            if !server.first.nil?
-              Puppet.debug "Selected master: #{server[0]}:#{server[1]}"
-              report.master_used = "#{server[0]}:#{server[1]}"
+          server, port = find_functional_server
+          Puppet.override(server: server, serverport: port) do
+            if server
+              Puppet.debug _("Selected puppet server: %{server}:%{port}") % { server: server, port: port }
+              report.master_used = "#{server}:#{port}"
+            else
+              Puppet.warning _("Could not select a functional puppet server")
             end
-
-            completed = run_internal(options.merge(:node => found[:node]))
+            completed = run_internal(options)
           end
         else
           completed = run_internal(options)
@@ -290,7 +286,7 @@ class Puppet::Configurer
         begin
           node = nil
           node_retr_time = thinmark do
-            node = options[:node] || Puppet::Node.indirection.find(Puppet[:node_name_value],
+            node = Puppet::Node.indirection.find(Puppet[:node_name_value],
               :environment => Puppet::Node::Environment.remote(@environment),
               :configured_environment => configured_environment,
               :ignore_cache => true,
@@ -393,32 +389,23 @@ class Puppet::Configurer
   end
   private :run_internal
 
-  def find_functional_server()
-    configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
+  def find_functional_server
+    Puppet.settings[:server_list].each do |server|
+      host = server[0]
+      port = server[1] || Puppet[:masterport]
+      begin
+        http = Puppet::Network::HttpPool.http_ssl_instance(host, port)
+        response = http.get('/status/v1/simple')
+        return [host, port] if response.is_a?(Net::HTTPOK)
 
-    node = nil
-    selected_server = Puppet.settings[:server_list].find do |server|
-      # Puppet.override doesn't return the result of its block, so we
-      # need to handle this manually
-      found = false
-      server[1] ||= Puppet[:masterport]
-      Puppet.override(:server => server[0], :serverport => server[1]) do
-        begin
-          node = Puppet::Node.indirection.find(Puppet[:node_name_value],
-              :environment => Puppet::Node::Environment.remote(@environment),
-              :configured_environment => configured_environment,
-              :ignore_cache => true,
-              :transaction_uuid => @transaction_uuid,
-              :fail_on_404 => false)
-          found = true
-        rescue
-          # Nothing to see here
-        end
+        Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
+                     { host: host, port: port, code: response.code, reason: response.message })
+      rescue
+        # Nothing to see here
+        Puppet.debug(_("Puppet server %{host}:%{port} is unreachable") % { host: host, port: port })
       end
-      found
     end
-    { :node => node,
-      :server => selected_server }
+    [nil, nil]
   end
   private :find_functional_server
 
