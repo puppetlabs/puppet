@@ -1768,37 +1768,6 @@ EOT
       turn off waiting for certificates by specifying a time of 0, in which case
       puppet agent will exit if it cannot get a cert.
       #{AS_DURATION}",
-    },
-    :ordering => {
-      :type => :enum,
-      :values => ["manifest", "title-hash", "random"],
-      :default => "manifest",
-      :desc => "How unrelated resources should be ordered when applying a catalog.
-      Allowed values are `title-hash`, `manifest`, and `random`. This
-      setting affects puppet agent and puppet apply, but not puppet master.
-
-      * `manifest` (the default) will use the order in which the resources were
-        declared in their manifest files.
-      * `title-hash` (the default in 3.x) will order resources randomly, but
-        will use the same order across runs and across nodes. It is only of
-        value if you're migrating from 3.x and have errors running with
-        `manifest`.
-      * `random` will order resources randomly and change their order with each
-        run. This can work like a fuzzer for shaking out undeclared dependencies.
-
-      Regardless of this setting's value, Puppet will always obey explicit
-      dependencies set with the before/require/notify/subscribe metaparameters
-      and the `->`/`~>` chaining arrows; this setting only affects the relative
-      ordering of _unrelated_ resources.
-
-      This setting is deprecated, and will always have a value of `manifest` in
-      6.0 and up.",
-      :call_hook => :on_initialize_and_write,
-      :hook => proc { |value|
-        if value != "manifest"
-          Puppet.deprecation_warning(_('Setting %{name} is deprecated.') % { name: 'ordering' }, 'setting-ordering')
-        end
-      }
     }
   )
 
