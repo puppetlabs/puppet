@@ -9,8 +9,11 @@ describe Puppet::Module::Task do
 
   let(:modpath) { tmpdir('task_modpath') }
   let(:mymodpath) { File.join(modpath, 'mymod') }
+  let(:othermodpath) { File.join(modpath, 'othermod') }
   let(:mymod) { Puppet::Module.new('mymod', mymodpath, nil) }
+  let(:othermod) { Puppet::Module.new('othermod', othermodpath, nil) }
   let(:tasks_path) { File.join(mymodpath, 'tasks') }
+  let(:other_tasks_path) { File.join(othermodpath, 'tasks') }
   let(:tasks_glob) { File.join(mymodpath, 'tasks', '*') }
 
   it "cannot construct tasks with illegal names" do
@@ -72,6 +75,21 @@ describe Puppet::Module::Task do
     expect(tasks.map{|t| t.name}).to eq(%w{mymod::task1})
     expect(tasks.map{|t| t.metadata_file}).to eq(["#{tasks_path}/task1.json"])
     expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"]])
+  end
+
+  it "constructs a task as expected when a task has files" do
+    og_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+    Dir.expects(:glob).with(tasks_glob).returns(og_files)
+    File.expects(:exist?).with(any_parameters).returns(true).at_least(1)
+
+    Puppet::Module.expects(:find).with(othermod.name, "production").returns(othermod).at_least(1)
+    short_files = %w{other_task.sh other_task.json task_2.sh}.map { |bn| "#{othermod.name}/tasks/#{bn}" }
+    long_files = %w{other_task.sh other_task.json task_2.sh}.map { |bn| "#{other_tasks_path}/#{bn}" }
+    tasks = Puppet::Module::Task.tasks_in_module(mymod)
+    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'files' => short_files})
+
+    expect(tasks.count).to eq(1)
+    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"] + long_files])
   end
 
   it "finds files whose names (besides extensions) are valid task names" do
