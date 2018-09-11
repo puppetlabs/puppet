@@ -32,6 +32,37 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     cert.serial     = 1
     cert.not_before = Time.now - (60*60*24)
     cert.not_after  = Time.now + (60*60*24)
+
+    # Ugly hack, but we need to make sure the CA cert has the proper
+    # X509v3 Basic Constraints to be a valid CA certificate.
+    if name == 'ca'
+      extension_factory = OpenSSL::X509::ExtensionFactory.new
+      extension_factory.subject_certificate = cert
+      extension_factory.issuer_certificate = cert
+
+      extensions = {
+        "keyUsage"         => [%w{cRLSign keyCertSign}, true],
+        "basicConstraints" => ["CA:TRUE", true],
+      }
+
+      cert.extensions = extensions.map do |oid, (val, crit)|
+        val = val.join(', ') unless val.is_a? String
+
+        if Puppet::SSL::Oids.subtree_of?('id-ce', oid) or Puppet::SSL::Oids.subtree_of?('id-pkix', oid)
+          # Attempt to create a X509v3 certificate extension. Standard certificate
+          # extensions may need access to the associated subject certificate and
+          # issuing certificate, so must be created by the OpenSSL::X509::ExtensionFactory
+          # which provides that context.
+          extension_factory.create_ext(oid, val, crit)
+        else
+          # This is not an X509v3 extension which means that the extension
+          # factory cannot generate it. We need to generate the extension
+          # manually.
+          OpenSSL::X509::Extension.new(oid, OpenSSL::ASN1::UTF8String.new(val).to_der, crit)
+        end
+      end
+    end
+
     cert.sign(issuer_key, OpenSSL::Digest::SHA256.new)
 
     {:private_key => private_key, :csr => csr, :cert => cert}
