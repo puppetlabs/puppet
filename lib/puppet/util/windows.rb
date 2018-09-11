@@ -32,5 +32,6 @@ module Puppet::Util::Windows
     require 'puppet/util/windows/adsi'
     require 'puppet/util/windows/registry'
     require 'puppet/util/windows/eventlog'
+    require 'puppet/util/windows/service'
   end
 end
