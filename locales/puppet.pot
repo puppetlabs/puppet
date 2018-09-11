@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-682-gc6298c0\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-688-g779cfb5\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-09-11 16:48+0000\n"
-"PO-Revision-Date: 2018-09-11 16:48+0000\n"
+"POT-Creation-Date: 2018-09-11 18:36+0000\n"
+"PO-Revision-Date: 2018-09-11 18:36+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2723,40 +2723,6 @@ msgstr ""
 msgid "Could not write %{request}: %{detail}"
 msgstr ""
 
-#. TRANSLATORS 'Puppet::Indirector::Ldap' is a class and should not be translated
-#: ../lib/puppet/indirector/ldap.rb:7
-msgid "Puppet::Indirector::Ldap is deprecated and will be removed in a future release of Puppet."
-msgstr ""
-
-#: ../lib/puppet/indirector/ldap.rb:19
-msgid "The 'process' method has not been overridden for the LDAP terminus for %{name}"
-msgstr ""
-
-#: ../lib/puppet/indirector/ldap.rb:33
-msgid "No search string set for LDAP terminus for %{name}"
-msgstr ""
-
-#: ../lib/puppet/indirector/ldap.rb:39
-msgid "You must pass a block to ldapsearch"
-msgstr ""
-
-#: ../lib/puppet/indirector/ldap.rb:56
-msgid "Retrying LDAP connection"
-msgstr ""
-
-#: ../lib/puppet/indirector/ldap.rb:59
-msgid "LDAP Search failed"
-msgstr ""
-
-#. TRANSLATORS "ruby/ldap libraries" are code dependencies
-#: ../lib/puppet/indirector/ldap.rb:72 ../lib/puppet/util/ldap/connection.rb:35
-msgid "Could not set up LDAP Connection: Missing ruby/ldap libraries"
-msgstr ""
-
-#: ../lib/puppet/indirector/ldap.rb:78 ../lib/puppet/util/ldap/connection.rb:69
-msgid "Could not connect to LDAP: %{detail}"
-msgstr ""
-
 #: ../lib/puppet/indirector/memory.rb:14
 msgid "Could not find %{request} to destroy"
 msgstr ""
@@ -2800,18 +2766,6 @@ msgstr ""
 
 #: ../lib/puppet/indirector/node/exec.rb:67
 msgid "Could not load external node results for %{name}: %{detail}"
-msgstr ""
-
-#: ../lib/puppet/indirector/node/ldap.rb:182
-msgid "Could not find parent node '%{parent}'"
-msgstr ""
-
-#: ../lib/puppet/indirector/node/ldap.rb:209
-msgid "Found loop in LDAP node parents; %{parent} appears twice"
-msgstr ""
-
-#: ../lib/puppet/indirector/node/ldap.rb:262
-msgid "Node entry %{entry} specifies more than one parent: %{parents}"
 msgstr ""
 
 #: ../lib/puppet/indirector/report/processor.rb:39
@@ -2951,7 +2905,7 @@ msgstr ""
 msgid "The file %{f} does not exist"
 msgstr ""
 
-#: ../lib/puppet/info_service/task_information_service.rb:20
+#: ../lib/puppet/info_service/task_information_service.rb:20 ../lib/puppet/module/task.rb:93
 msgid "Module %{module_name} not found in environment %{environment_name}."
 msgstr ""
 
@@ -3237,7 +3191,7 @@ msgid ""
 "        A namespaced module name (ex. author-modulename) matching the expression /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/\n"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:24 ../lib/puppet/module/task.rb:131
+#: ../lib/puppet/module/task.rb:24 ../lib/puppet/module/task.rb:197
 msgid "Task names must start with a lowercase letter and be composed of only lowercase letters, numbers, and underscores"
 msgstr ""
 
@@ -3245,23 +3199,43 @@ msgstr ""
 msgid "Task %{task_name} not found in module %{module_name}."
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:74
+#: ../lib/puppet/module/task.rb:67
+msgid "File pathnames cannot include relative paths"
+msgstr ""
+
+#: ../lib/puppet/module/task.rb:98
+msgid "Files must be saved in module directories that Puppet makes available via mount points: %{mounts}"
+msgstr ""
+
+#: ../lib/puppet/module/task.rb:105
+msgid "Could not find %{path} on disk"
+msgstr ""
+
+#: ../lib/puppet/module/task.rb:112
+msgid "Directories specified in task metadata must include a trailing slash: %{dir}"
+msgstr ""
+
+#: ../lib/puppet/module/task.rb:119
+msgid "Files specified in task metadata cannot include a trailing slash: %{file}"
+msgstr ""
+
+#: ../lib/puppet/module/task.rb:140
 msgid "Task metadata for task %{name} does not specify implementations as an array"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:81 ../lib/puppet/pops/loader/task_instantiator.rb:31
+#: ../lib/puppet/module/task.rb:147 ../lib/puppet/pops/loader/task_instantiator.rb:31
 msgid "Task metadata for task %{name} specifies missing implementation %{implementation}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:93 ../lib/puppet/pops/loader/task_instantiator.rb:45
+#: ../lib/puppet/module/task.rb:159 ../lib/puppet/pops/loader/task_instantiator.rb:45
 msgid "No source besides task metadata was found in directory %{directory} for task %{name}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:97 ../lib/puppet/pops/loader/task_instantiator.rb:48
+#: ../lib/puppet/module/task.rb:163 ../lib/puppet/pops/loader/task_instantiator.rb:48
 msgid "Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:145
+#: ../lib/puppet/module/task.rb:211
 msgid "Error reading metadata: %{message}"
 msgstr ""
 
@@ -4821,12 +4795,12 @@ msgstr ""
 msgid "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:97
+#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:102
 msgid "Use of an Iterator is not supported here"
 msgstr ""
 
 #. TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
-#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:143
+#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:148
 msgid "Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType."
 msgstr ""
 
@@ -9039,6 +9013,14 @@ msgstr ""
 
 #: ../lib/puppet/util/json_lockfile.rb:40
 msgid "Unable to read lockfile data from %{path}: not in JSON"
+msgstr ""
+
+#: ../lib/puppet/util/ldap/connection.rb:35
+msgid "Could not set up LDAP Connection: Missing ruby/ldap libraries"
+msgstr ""
+
+#: ../lib/puppet/util/ldap/connection.rb:69
+msgid "Could not connect to LDAP: %{detail}"
 msgstr ""
 
 #. TRANSLATORS '#connect' is a method name and and should not be translated, 'block' refers to a Ruby code block
