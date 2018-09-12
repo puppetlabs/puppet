@@ -24,6 +24,7 @@ gem_runtime_dependencies:
   locale: '~> 2.1'
   multi_json: '~> 1.10'
   httpclient: '~> 2.8'
+  puppet-resource_api: '~>1.5'
 gem_rdoc_options:
   - --title
   - "Puppet - Configuration Management"
