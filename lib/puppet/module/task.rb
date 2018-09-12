@@ -63,11 +63,6 @@ class Puppet::Module
     end
 
     def self.get_file_details(path, mod)
-      unless File.absolute_path(path) == File.path(path)
-        msg = _("File pathnames cannot include relative paths")
-        raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
-      end
-
       # This gets the path from the starting point onward
       # For files this should be the file subpath from the metadata
       # For directories it should be the directory subpath plus whatever we globbed
@@ -102,6 +97,11 @@ class Puppet::Module
         end
 
         path = File.join(pup_module.path, mount, endpath)
+        unless File.absolute_path(path) == File.path(path).chomp('/')
+          msg = _("File pathnames cannot include relative paths")
+          raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
+        end
+
         unless File.exist?(path)
           msg = _("Could not find %{path} on disk" % { path: path })
           raise InvalidFile.new(msg)
