@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-710-g6e33a23\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-741-g904023f\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-09-11 22:48+0000\n"
-"PO-Revision-Date: 2018-09-11 22:48+0000\n"
+"POT-Creation-Date: 2018-09-12 17:33+0000\n"
+"PO-Revision-Date: 2018-09-12 17:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1988,62 +1988,62 @@ msgstr ""
 msgid "No loader present. Call create_loaded_function(:myname, loader,...), instead of 'create_function' if running tests"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:413
+#: ../lib/puppet/functions.rb:414
 msgid "A required parameter cannot be added after an optional parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:462
+#: ../lib/puppet/functions.rb:463
 msgid "A required repeated parameter cannot be added after an optional parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:484
+#: ../lib/puppet/functions.rb:485
 msgid "block_param accepts max 2 arguments (type, name), got %{size}."
 msgstr ""
 
-#: ../lib/puppet/functions.rb:488
+#: ../lib/puppet/functions.rb:489
 msgid "Expected PCallableType or PVariantType thereof, got %{type_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:492
+#: ../lib/puppet/functions.rb:493
 msgid "Expected block_param name to be a Symbol, got %{name_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:499
+#: ../lib/puppet/functions.rb:500
 msgid "Attempt to redefine block"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:521
+#: ../lib/puppet/functions.rb:522
 msgid "Argument to 'return_type' must be a String reference to a Puppet Data Type. Got %{type_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:530
+#: ../lib/puppet/functions.rb:531
 msgid "Parameters cannot be added after a block parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:531
+#: ../lib/puppet/functions.rb:532
 msgid "Parameters cannot be added after a repeated parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:534
+#: ../lib/puppet/functions.rb:535
 msgid "Parameter name argument must be a Symbol. Got %{name_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:547
+#: ../lib/puppet/functions.rb:548
 msgid "Parameter 'type' must be a String reference to a Puppet Data Type. Got %{type_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:591
+#: ../lib/puppet/functions.rb:592
 msgid ""
 "Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:634
+#: ../lib/puppet/functions.rb:635
 msgid ""
 "Parsing of 'type \"%{assignment_string}\"' failed with message: <%{message}>.\n"
 "Called from <%{ruby_file_location}>"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:643
+#: ../lib/puppet/functions.rb:644
 msgid ""
 "Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n"
 "Called from <%{ruby_file_location}>"
@@ -4379,11 +4379,11 @@ msgstr ""
 msgid "%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:208
+#: ../lib/puppet/parser/functions.rb:210
 msgid "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:306
+#: ../lib/puppet/parser/functions.rb:308
 msgid "%{name}() can only be called using the 4.x function API. See Scope#call_function"
 msgstr ""
 
@@ -4791,16 +4791,16 @@ msgstr ""
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:22 ../lib/puppet/pops/evaluator/runtime3_support.rb:23 ../lib/puppet/pops/evaluator/runtime3_support.rb:526
+#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:22 ../lib/puppet/pops/evaluator/runtime3_support.rb:23 ../lib/puppet/pops/evaluator/runtime3_support.rb:525
 msgid "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:102
+#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:104
 msgid "Use of an Iterator is not supported here"
 msgstr ""
 
 #. TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
-#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:148
+#: ../lib/puppet/pops/evaluator/runtime3_converter.rb:150
 msgid "Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType."
 msgstr ""
 
@@ -5671,6 +5671,18 @@ msgstr ""
 
 #: ../lib/puppet/pops/loader/ruby_function_instantiator.rb:24
 msgid "The code loaded from %{source_ref} did not produce a Function class when evaluated. Got '%{klass}'"
+msgstr ""
+
+#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:17
+msgid "The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call."
+msgstr ""
+
+#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:29
+msgid "The code loaded from %{source_ref} did not produce the expected 3x function info Hash when evaluated. Got '%{klass}'"
+msgstr ""
+
+#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:32
+msgid "The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got %{created_name}"
 msgstr ""
 
 #: ../lib/puppet/pops/loader/task_instantiator.rb:91
@@ -6943,6 +6955,34 @@ msgstr ""
 #. TRANSLATORS 'runsvdir' is a linux service name and should not be translated
 #: ../lib/puppet/provider/service/runit.rb:93
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:22
+msgid "Cannot enable %{resource_name}, error was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:28
+msgid "Cannot disable %{resource_name}, error was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:34
+msgid "Cannot enable %{resource_name} for manual start, error was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:50
+msgid "Unknown start type: %{start_type}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:53
+msgid "Cannot get start type %{resource_name}, error was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:60
+msgid "Will not start disabled service %{resource_name} without managing enable. Specify 'enable => false' to override."
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:89
+msgid "Unknown service state '%{current_state}' for service '%{resource_name}'"
 msgstr ""
 
 #. TRANSLATORS 'AIX' is the name of an operating system and should not be translated
@@ -9602,6 +9642,58 @@ msgstr ""
 
 #: ../lib/puppet/util/windows/security.rb:644
 msgid "Failed to set security information"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:256
+msgid "Failed to start the service"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:259
+msgid "Failed to start the service, after calling StartService the service is not in SERVICE_START_PENDING or SERVICE_RUNNING"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:277
+msgid "Failed to send stop control to service, current state is %{current_state}. Failed with"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:280
+msgid "Failed to stop the service, after calling ControlService the service is not in SERVICE_STOP_PENDING or SERVICE_STOPPED"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:298
+msgid "Unknown Service state '%{current_state}' for '%{service_name}'"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:315
+msgid "Unknown start type '%{start_type}' for '%{service_name}'"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:330
+msgid "Unknown start type %{start_type}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:351
+msgid "Failed to update service configuration"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:411
+msgid "Failed to fetch services"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:457
+msgid "Failed to open a handle to the service"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:472
+msgid "Failed to open a handle to the service control manager"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:514 ../lib/puppet/util/windows/service.rb:550
+msgid "Service query failed"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:587
+msgid "No progress made on service operation and dwWaitHint exceeded"
 msgstr ""
 
 #: ../lib/puppet/util/windows/sid.rb:93
