@@ -14,13 +14,12 @@ class DeferredResolver
   # Deferred values inside of custom Object instances are not resolved as this
   # is expected to be done by such objects.
   #
-  # @param node [Puppet::Node] the node for the catalog
   # @param facts [Puppet::Node::Facts] the facts object for the node
   # @param catalog [Puppet::Resource::Catalog] the catalog where all deferred values should be replaced
   # @return [nil] does not return anything - the catalog is modified as a side effect
   #
-  def self.resolve_and_replace(node, facts, catalog)
-    compiler = Puppet::Parser::ScriptCompiler.new(node.environment, node.name, true)
+  def self.resolve_and_replace(facts, catalog)
+    compiler = Puppet::Parser::ScriptCompiler.new(catalog.environment_instance, catalog.name, true)
     resolver = new(compiler)
     resolver.set_facts_variable(facts)
     # TODO:

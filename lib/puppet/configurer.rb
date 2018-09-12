@@ -105,8 +105,8 @@ class Puppet::Configurer
 
     catalog_conversion_time = thinmark do
       # Will mutate the result and replace all Deferred values with resolved values
-      if options[:convert_for_node] && options[:convert_with_facts]
-        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(options[:convert_for_node], options[:convert_with_facts], result)
+      if facts = options[:convert_with_facts]
+        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(facts, result)
       end
 
       catalog = result.to_ral
@@ -176,6 +176,8 @@ class Puppet::Configurer
     result = retrieve_catalog_from_cache({:transaction_uuid => @transaction_uuid, :static_catalog => @static_catalog})
     if result
       Puppet.info _("Using cached catalog from environment '%{catalog_env}'") % { catalog_env: result.environment }
+      # get facts now so that the convert_catalog method can resolve deferred values
+      get_facts(options)
       return convert_catalog(result, @duration, options)
     end
     nil
