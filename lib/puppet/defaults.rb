@@ -1145,11 +1145,6 @@ EOT
         :default    => nil,
         :desc       => "The address the agent should use to initiate requests.",
       },
-      :bindaddress => {
-        :default    => "*",
-        :desc       => "The address a listening server should bind to.",
-        :deprecated  => :completely,
-      }
   )
 
   define_settings(:environment,
@@ -1244,19 +1239,6 @@ EOT
       :desc       => "Code to parse directly.  This is essentially only used
       by `puppet`, and should only be set if you're writing your own Puppet
       executable.",
-    },
-    :masterhttplog => {
-      :default => "$logdir/masterhttp.log",
-      :type => :file,
-      :owner => "service",
-      :group => "service",
-      :mode => "0660",
-      :create => true,
-      :deprecated => :completely,
-      :desc => "Where the puppet master web server saves its access log. This is
-        only used when running a WEBrick puppet master. When puppet master is
-        running under a Rack server like Passenger, that web server will have
-        its own logging behavior."
     },
     :masterport => {
       :default    => 8140,
