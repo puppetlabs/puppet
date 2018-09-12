@@ -4,7 +4,7 @@ require 'puppet/file_system'
 module Puppet::GettextConfig
   LOCAL_PATH = File.absolute_path('../../../locales', File.dirname(__FILE__))
   POSIX_PATH = File.absolute_path('../../../../../share/locale', File.dirname(__FILE__))
-  WINDOWS_PATH = File.absolute_path('../../../../../../../puppet/share/locale', File.dirname(__FILE__))
+  WINDOWS_PATH = File.absolute_path('../../../../../../puppet/share/locale', File.dirname(__FILE__))
 
   # This is the only domain name that won't be a symbol, making it unique from environments.
   DEFAULT_TEXT_DOMAIN = 'default-text-domain'
