@@ -19,12 +19,18 @@ module Loader
 # @api private
 #
 module ModuleLoaders
+
+  # Wildcard module name for module loaders, makes loading possible from any namespace.
+  NAMESPACE_WILDCARD = '*'.freeze
+
   # This is exactly the same as the #system_loader_from method, but the argument for path is changed to
-  # location where pluginsync stores functions.
+  # location where pluginsync stores functions. It also accepts definitions in any namespace since pluginsync
+  # places all of them in the same directory.
+  #
   def self.cached_loader_from(parent_loader, loaders)
     LibRootedFileBased.new(parent_loader,
       loaders,
-      nil,
+      NAMESPACE_WILDCARD,
       Puppet[:libdir],
       'cached_puppet_lib',
       [:func_4x, :datatype]
@@ -94,8 +100,9 @@ module ModuleLoaders
 
   class AbstractPathBasedModuleLoader < BaseLoader
 
-    # The name of the module, or nil, if this is a global "component"
+    # The name of the module, or nil, if this is a global "component", or "any module" if set to the `NAMESPACE_WILDCARD` (*)
     attr_reader :module_name
+
 
     # The path to the location of the module/component - semantics determined by subclass
     attr_reader :path
@@ -181,10 +188,12 @@ module ModuleLoaders
         # The name is in a name space.
 
         # Then entity cannot possible be in this module unless the name starts with the module name.
-        # Note: If "module" represents a "global component", the module_name is nil and cannot match which is
-        # ok since such a "module" cannot have namespaced content).
+        # Note:
+        # * If "module" represents a "global component", the module_name is nil and cannot match which is
+        #   ok since such a "module" cannot have namespaced content).
+        # * If this loader is allowed to have namespaced content, the module_name can be set to NAMESPACE_WILDCARD `*`
         #
-        return nil unless name_parts[0] == module_name
+        return nil unless name_parts[0] == module_name || module_name == NAMESPACE_WILDCARD
       else
         # The name is in the global name space.
 
@@ -215,7 +224,7 @@ module ModuleLoaders
         when :type
           if !global?
             # Global name must be the name of the module
-            unless name_parts[0] == module_name
+            unless name_parts[0] == module_name || module_name == NAMESPACE_WILDCARD
               # Check for ruby defined data type in global namespace before giving up
               origin, smart_path = find_existing_path(typed_name)
               return smart_path.is_a?(LoaderPaths::DataTypePath) ? instantiate(smart_path, typed_name, origin) : nil
@@ -231,9 +240,9 @@ module ModuleLoaders
               return set_entry(typed_name, value, origin)
             end
 
-            #TRANSLATORS 'TypeSet' should not be translated
+            # TRANSLATORS 'TypeSet' should not be translated
             raise ArgumentError, _("The code loaded from %{origin} does not define the TypeSet '%{module_name}'") %
-                { origin: origin, module_name: module_name.capitalize }
+                { origin: origin, module_name: name_parts[0].capitalize }
           end
         else
           # anything else cannot possibly be in this module
@@ -337,7 +346,7 @@ module ModuleLoaders
     # @return [Boolean] `true` if this loader represents a global component
     #
     def global?
-      module_name.nil? || module_name == ENVIRONMENT
+      module_name.nil? || module_name == NAMESPACE_WILDCARD || module_name == ENVIRONMENT
     end
 
     # Answers `true` if the loader used by this instance is rooted beneath 'lib'. This is
