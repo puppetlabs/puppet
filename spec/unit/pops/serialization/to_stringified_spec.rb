@@ -103,8 +103,12 @@ describe 'ToStringifiedConverter' do
     expect(transform({['funky', 'key'] => 10})).to eq({'["funky", "key"]' => 10})
   end
 
-  it 'converts reserved __ptype hash key to string' do
-    expect(transform({'__ptype' => 10})).to eq({'__ptype' => 10})
+  it 'converts reserved __ptype hash key to different string' do
+    expect(transform({'__ptype' => 10})).to eq({'reserved key: __ptype' => 10})
+  end
+
+  it 'converts reserved __pvalue hash key to different string' do
+    expect(transform({'__pvalue' => 10})).to eq({'reserved key: __pvalue' => 10})
   end
 
   it 'converts a Binary to Base64 string' do
