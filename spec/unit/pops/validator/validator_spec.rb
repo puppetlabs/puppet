@@ -146,12 +146,12 @@ describe "validating 4x" do
       end
     end
 
-    it 'produces a deprecation for illegal top level constructs' do
+    it 'produces an error for illegal top level constructs' do
       with_environment(environment) do
         acceptor = validate(parse('$foo = 1', 'path/aaa/manifests/bbb.pp'))
-        expect(deprecation_count(acceptor)).to eql(1)
-        expect(acceptor.warning_count).to eql(1)
-        expect(acceptor.error_count).to eql(0)
+        expect(deprecation_count(acceptor)).to eql(0)
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
       end
     end
@@ -190,12 +190,12 @@ describe "validating 4x" do
       end
     end
 
-    it 'produces a deprecation for illegal top level constructs' do
+    it 'produces an error for illegal top level constructs' do
       with_environment(environment) do
         acceptor = validate(parse('$foo = 1', 'path/aaa/manifests/bbb.pp'))
-        expect(deprecation_count(acceptor)).to eql(1)
-        expect(acceptor.warning_count).to eql(1)
-        expect(acceptor.error_count).to eql(0)
+        expect(deprecation_count(acceptor)).to eql(0)
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
       end
     end
@@ -241,12 +241,12 @@ describe "validating 4x" do
       end
     end
 
-    it 'produces a deprecation for illegal top level constructs' do
+    it 'produces an error for illegal top level constructs' do
       with_environment(environment) do
         acceptor = validate(parse('$foo = 1', 'path/aaa/manifests/bbb.pp'))
-        expect(deprecation_count(acceptor)).to eql(1)
-        expect(acceptor.warning_count).to eql(1)
-        expect(acceptor.error_count).to eql(0)
+        expect(deprecation_count(acceptor)).to eql(0)
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
       end
     end
@@ -271,12 +271,12 @@ describe "validating 4x" do
       end
     end
 
-    it 'produces a deprecation for illegal top level constructs' do
+    it 'produces an error for illegal top level constructs' do
       with_environment(environment) do
         acceptor = validate(parse('$foo = 1', 'path/aaa/manifests/bbb.pp'))
-        expect(deprecation_count(acceptor)).to eql(1)
-        expect(acceptor.warning_count).to eql(1)
-        expect(acceptor.error_count).to eql(0)
+        expect(deprecation_count(acceptor)).to eql(0)
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(1)
         expect(acceptor).to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
       end
     end
@@ -954,13 +954,13 @@ describe "validating 4x" do
 
       with_environment(environment) do
         acceptor = validate(parse(source, 'path/foo/manifests/init.pp'))
-        expect(deprecation_count(acceptor)).to eql(3)
-        expect(acceptor.warning_count).to eql(3)
-        expect(acceptor.error_count).to eql(0)
+        expect(deprecation_count(acceptor)).to eql(0)
+        expect(acceptor.warning_count).to eql(0)
+        expect(acceptor.error_count).to eql(3)
 
-        expect(acceptor.warnings[0].source_pos.line).to eql(2)
-        expect(acceptor.warnings[1].source_pos.line).to eql(3)
-        expect(acceptor.warnings[2].source_pos.line).to eql(5)
+        expect(acceptor.errors[0].source_pos.line).to eql(2)
+        expect(acceptor.errors[1].source_pos.line).to eql(3)
+        expect(acceptor.errors[2].source_pos.line).to eql(5)
       end
     end
   end
