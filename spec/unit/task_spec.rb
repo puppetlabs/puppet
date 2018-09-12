@@ -92,6 +92,18 @@ describe Puppet::Module::Task do
     expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"] + long_files])
   end
 
+  it "fails to load a task if its metadata specifies a non-existent file" do
+    og_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+    Dir.stubs(:glob).with(tasks_glob).returns(og_files)
+    File.stubs(:exist?).with(any_parameters).returns(true)
+
+    Puppet::Module.expects(:find).with(othermod.name, "production").returns(nil).at_least(1)
+    tasks = Puppet::Module::Task.tasks_in_module(mymod)
+    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'files' => ["#{othermod.name}/files/test"]})
+
+    expect { tasks.first.files }.to raise_error(Puppet::Module::Task::InvalidMetadata, /Could not find module #{othermod.name} containing task file test/)
+  end
+
   it "finds files whose names (besides extensions) are valid task names" do
     Dir.expects(:glob).with(tasks_glob).returns(%w{task task_1 xx_t_a_s_k_2_xx})
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
