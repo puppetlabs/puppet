@@ -80,7 +80,7 @@ module Serialization
         end
       elsif value.instance_of?(Hash)
         process(value) do
-          if value.keys.all? { |key| key.is_a?(String) && key != PCORE_TYPE_KEY }
+          if value.keys.all? { |key| key.is_a?(String) && key != PCORE_TYPE_KEY && key != PCORE_VALUE_KEY }
             result = {}
             value.each_pair { |key, elem| with(key) { result[key] = to_data(elem) } }
             result
@@ -199,6 +199,9 @@ module Serialization
           key = key.to_s
         elsif !key.is_a?(String)
           key = unknown_key_to_string(key)
+        end
+        if key == "__ptype" || key =="__pvalue"
+          key = "reserved key: #{key}"
         end
         with(key) { result[key] = to_data(value) }
       end

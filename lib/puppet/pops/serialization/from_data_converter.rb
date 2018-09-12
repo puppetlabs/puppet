@@ -135,6 +135,7 @@ module Serialization
             end
             hash
           else
+            # not a string
             pcore_type_hash_to_value(type, value)
           end
         end
@@ -150,7 +151,7 @@ module Serialization
     def convert(value)
       if value.is_a?(Hash)
         pcore_type = value[PCORE_TYPE_KEY]
-        if pcore_type
+        if pcore_type && (pcore_type.is_a?(String) || pcore_type.is_a?(Hash))
           @pcore_type_procs[pcore_type].call(value, pcore_type)
         else
           build({}) { value.each_pair { |key, elem| with(key) { convert(elem) }}}

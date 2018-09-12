@@ -30,6 +30,13 @@ module Serialization
     io.rewind
   end
 
+  def write_raw(value)
+    io.reopen
+    expect(Types::TypeFactory.data).to be_instance(value)
+    io << [value].to_json
+    io.rewind
+  end
+
   def read
     from_converter.convert(::JSON.parse(io.read)[0])
   end
@@ -445,6 +452,13 @@ module Serialization
 
         # Should fail since no loader knows about 'MyType'
         expect{ read }.to raise_error(Puppet::Error, 'No implementation mapping found for Puppet Type MyType')
+      end
+
+      it 'succeeds and produces a hash when a read __ptype key is something other than a string or a hash' do
+        # i.e. this is for content that is not produced by ToDataHash - writing on-the-wire-format directly
+        # to test that it does not crash.
+        write_raw({'__ptype' => 10, 'x'=> 32})
+        expect(read).to eql({'__ptype'=>10, 'x'=>32})
       end
 
       context "succeeds but produces an rich_type hash when deserializer has 'allow_unresolved' set to true" do
