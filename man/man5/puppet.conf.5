@@ -55,7 +55,7 @@ A lock file to indicate that puppet agent runs have been administratively disabl
 .IP "" 0
 .
 .SS "allow_duplicate_certs"
-Whether to allow a new certificate request to overwrite an existing certificate\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+Whether to allow a new certificate request to overwrite an existing certificate\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: false
@@ -82,7 +82,7 @@ Whether log files should always flush to disk\.
 .IP "" 0
 .
 .SS "autosign"
-Whether (and how) to autosign certificate requests\. This setting is only relevant on a puppet master acting as a certificate authority (CA)\. This setting is also deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+Whether (and how) to autosign certificate requests\. This setting is only relevant on a puppet master acting as a certificate authority (CA)\.
 .
 .P
 Valid values are true (autosigns all certificate requests; not recommended), false (disables autosigning certificates), or the absolute path to a file\.
@@ -115,14 +115,6 @@ These are the modules that will be used by \fIall\fR environments\. Note that th
 .
 .IP "" 0
 .
-.SS "bindaddress"
-The address a listening server should bind to\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: *
-.
-.IP "" 0
-.
 .SS "binder_config"
 The binder configuration file\. Puppet reads this file on each request to configure the bindings system\. If set to nil (the default), a $confdir/binder_config\.yaml is optionally loaded\. If it does not exists, a default configuration is used\. If the setting :binding_config is specified, it must reference a valid and existing yaml file\.
 .
@@ -147,7 +139,7 @@ Whether the master should function as a certificate authority\.
 .IP "" 0
 .
 .SS "ca_name"
-The name to use the Certificate Authority certificate\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+The name to use the Certificate Authority certificate\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: Puppet CA: $certname
@@ -171,7 +163,7 @@ The server to use for certificate authority requests\. It\'s a separate server b
 .IP "" 0
 .
 .SS "ca_ttl"
-The default TTL for new certificates\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+The default TTL for new certificates\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: 5y
@@ -179,7 +171,7 @@ The default TTL for new certificates\. This setting can be a time interval in se
 .IP "" 0
 .
 .SS "cacert"
-The CA certificate\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+The CA certificate\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $cadir/ca_crt\.pem
@@ -187,7 +179,7 @@ The CA certificate\. This setting is deprecated and will be replaced by one in P
 .IP "" 0
 .
 .SS "cacrl"
-The certificate revocation list (CRL) for the CA\. Will be used if present but otherwise ignored\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+The certificate revocation list (CRL) for the CA\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $cadir/ca_crl\.pem
@@ -195,7 +187,7 @@ The certificate revocation list (CRL) for the CA\. Will be used if present but o
 .IP "" 0
 .
 .SS "cadir"
-The root directory for the certificate authority\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+The root directory for the certificate authority\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $ssldir/ca
@@ -203,7 +195,7 @@ The root directory for the certificate authority\. This setting is deprecated an
 .IP "" 0
 .
 .SS "cakey"
-The CA private key\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+The CA private key\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $cadir/ca_key\.pem
@@ -227,7 +219,7 @@ Where the CA stores private certificate information\. This setting is deprecated
 .IP "" 0
 .
 .SS "capub"
-The CA public key\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+The CA public key\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $cadir/ca_pub\.pem
@@ -250,7 +242,7 @@ Where to get node catalogs\. This is useful to change if, for instance, you\'d l
 .IP "" 0
 .
 .SS "cert_inventory"
-The inventory file\. This is a text file to which the CA writes a complete listing of all certificates\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+The inventory file\. This is a text file to which the CA writes a complete listing of all certificates\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $cadir/inventory\.txt
@@ -412,7 +404,7 @@ Extension requests will be permanently embedded in the final certificate\. Exten
 .IP "" 0
 .
 .SS "csrdir"
-Where the CA stores certificate requests\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+Where the CA stores certificate requests\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $cadir/requests
@@ -1138,14 +1130,6 @@ Setting a global value for \fBmanifest\fR in puppet\.conf is not allowed (but it
 \fIDefault\fR:
 
 .
-.SS "masterhttplog"
-Where the puppet master web server saves its access log\. This is only used when running a WEBrick puppet master\. When puppet master is running under a Rack server like Passenger, that web server will have its own logging behavior\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: $logdir/masterhttp\.log
-.
-.IP "" 0
-.
 .SS "masterport"
 The default port puppet subcommands use to communicate with Puppet Server\. (eg \fBpuppet facts upload\fR, \fBpuppet agent\fR)\. May be overridden by more specific settings (see \fBca_port\fR, \fBreport_port\fR)\.
 .
@@ -1573,7 +1557,7 @@ The maximum amount of time an agent run is allowed to take\. A Puppet agent run 
 .IP "" 0
 .
 .SS "serial"
-Where the serial number for certificates is stored\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+Where the serial number for certificates is stored\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $cadir/serial
@@ -1613,7 +1597,7 @@ Whether to log and report a contextual diff when files are being replaced\. This
 .IP "" 0
 .
 .SS "signeddir"
-Where the CA stores signed certificates\. This setting is deprecated and will be replaced by one in Puppet Server\'s configs in Puppet 6\.
+Where the CA stores signed certificates\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $cadir/signed
