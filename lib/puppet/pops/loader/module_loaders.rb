@@ -184,7 +184,12 @@ module ModuleLoaders
         # Note: If "module" represents a "global component", the module_name is nil and cannot match which is
         # ok since such a "module" cannot have namespaced content).
         #
-        return nil unless name_parts[0] == module_name
+        # Special case for the loader that loads from pluginsync; in this case, we want to skip the
+        # checking for the module name aginst the name part, because all namespaced functions will be at this
+        # location.
+       unless loader_name == 'cached_puppet_lib'
+         return nil unless name_parts[0] == module_name
+       end
       else
         # The name is in the global name space.
 
