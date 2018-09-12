@@ -37,7 +37,6 @@ class Puppet::Parser::ScriptCompiler
   def compile
     Puppet[:strict_variables] = true
     Puppet[:strict] = :error
-    Puppet[:rich_data] = true
 
     # TRANSLATORS, "For running script" is not user facing
     Puppet.override( @context_overrides , "For running script") do
@@ -67,6 +66,7 @@ class Puppet::Parser::ScriptCompiler
       :current_environment => environment,
       :global_scope => @topscope,             # 4x placeholder for new global scope
       :loaders  => @loaders,                  # 4x loaders
+      :rich_data => true,
     }
   end
 

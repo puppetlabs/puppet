@@ -181,3 +181,80 @@ Puppet::Network::FormatHandler.create(:console,
     data.collect(&:render).join("\n")
   end
 end
+
+Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.puppet.rich+json', charset: Encoding::UTF_8, weight: 30) do
+  def intern(klass, text)
+    Puppet.override({:rich_data => true}) do
+      data_to_instance(klass, Puppet::Util::Json.load(text))
+    end
+  end
+
+  def intern_multiple(klass, text)
+    Puppet.override({:rich_data => true}) do
+      Puppet::Util::Json.load(text).collect do |data|
+        data_to_instance(klass, data)
+      end
+    end
+  end
+
+  def render(instance)
+    Puppet.override({:rich_data => true}) do
+      instance.to_json
+    end
+  end
+
+  def render_multiple(instances)
+    Puppet.override({:rich_data => true}) do
+      Puppet::Util::Json.dump(instances)
+    end
+  end
+
+  def data_to_instance(klass, data)
+    Puppet.override({:rich_data => true}) do
+      return data if data.is_a?(klass)
+      klass.from_data_hash(data)
+    end
+  end
+
+  def supported?(klass)
+    klass == Puppet::Resource::Catalog &&
+      Puppet.lookup(:current_environment).rich_data?
+  end
+end
+
+Puppet::Network::FormatHandler.create_serialized_formats(:rich_data_msgpack, mime: "application/vnd.puppet.rich+msgpack", weight: 35) do
+  confine :feature => :msgpack
+
+  def intern(klass, text)
+    Puppet.override(rich_data: true) do
+      data = MessagePack.unpack(text)
+      return data if data.is_a?(klass)
+      klass.from_data_hash(data)
+    end
+  end
+
+  def intern_multiple(klass, text)
+    Puppet.override(rich_data: true) do
+      MessagePack.unpack(text).collect do |data|
+        klass.from_data_hash(data)
+      end
+    end
+  end
+
+  def render_multiple(instances)
+    Puppet.override(rich_data: true) do
+      instances.to_msgpack
+    end
+  end
+
+  def render(instance)
+    Puppet.override(rich_data: true) do
+      instance.to_msgpack
+    end
+  end
+
+  def supported?(klass)
+    klass == Puppet::Resource::Catalog &&
+      Puppet.lookup(:current_environment).rich_data?
+  end
+end

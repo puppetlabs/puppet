@@ -868,12 +868,12 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
   context 'when dealing with parameters that have non-Data values' do
     context 'and rich_data is enabled' do
       before(:each) do
-        Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(Puppet.lookup(:environments).get(Puppet[:environment])))
-        Puppet[:rich_data] = true
+        Puppet.push_context(
+          :loaders => Puppet::Pops::Loaders.new(Puppet.lookup(:environments).get(Puppet[:environment])),
+          :rich_data => true)
       end
 
       after(:each) do
-        Puppet[:rich_data] = false
         Puppet.pop_context
       end
 

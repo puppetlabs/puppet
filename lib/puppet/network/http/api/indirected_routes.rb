@@ -43,8 +43,14 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("No handler for %{indirection}") % { indirection: indirection.name }, :NO_INDIRECTION_REMOTE_REQUESTS)
     end
 
-    trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
-    Puppet.override(:trusted_information => trusted) do
+    overrides = {
+      trusted_information: Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate),
+    }
+    if params[:environment]
+      overrides[:current_environment] = params[:environment]
+    end
+
+    Puppet.override(overrides) do
       send("do_#{method}", indirection, key, params, request, response)
     end
   end
@@ -191,7 +197,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       begin
         yield format
         true
-      rescue Puppet::Network::FormatHandler::FormatError
+      rescue Puppet::Network::FormatHandler::FormatError => err
+        Puppet.log_exception(err, err.message, level: :debug)
         false
       end
     end

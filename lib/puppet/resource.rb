@@ -12,7 +12,7 @@ class Puppet::Resource
 
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :strict
-  attr_reader :type, :title, :parameters, :rich_data_enabled
+  attr_reader :type, :title, :parameters
 
   # @!attribute [rw] sensitive_parameters
   #   @api private
@@ -116,7 +116,7 @@ class Puppet::Resource
 
     unless params.empty?
       data['parameters'] = Puppet::Pops::Serialization::ToDataConverter.convert(params, {
-        :rich_data => environment.rich_data?,
+        :rich_data => Puppet.lookup(:rich_data),
         :symbol_as_string => true,
         :local_reference => false,
         :type_by_reference => true,

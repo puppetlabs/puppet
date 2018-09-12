@@ -17,8 +17,9 @@ class Puppet::Resource::Catalog::Json < Puppet::Indirector::JSON
 
   def to_json(object)
     object.render('json')
-  rescue Puppet::Network::FormatHandler::FormatError
+  rescue Puppet::Network::FormatHandler::FormatError => err
     Puppet.info(_("Unable to serialize catalog to json, retrying with pson"))
+    Puppet.log_exception(err, err.message, level: :debug)
     object.render('pson').force_encoding(Encoding::BINARY)
   end
 end
