@@ -19,6 +19,7 @@ end
 step 'Setup'
 
 stub_forge_on(master)
+configure_type_defaults_on master
 
 on master, puppet("module install pmtacceptance-java --version 1.7.0 --modulepath #{prod_env_modulepath}")
 on master, puppet("module install pmtacceptance-java --version 1.6.0 --modulepath #{master['distmoduledir']}")

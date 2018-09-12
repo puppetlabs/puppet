@@ -3,6 +3,8 @@ test_name "puppet module list (with installed modules)"
 tag 'audit:low',
     'audit:unit'
 
+configure_type_defaults_on master
+
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/thelock"
   on master, "rm -rf #{master['distmoduledir']}/appleseed"

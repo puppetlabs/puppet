@@ -8,6 +8,8 @@ tag 'audit:medium',
 # doc:
 # https://puppet.com/docs/puppet/latest/hiera_automatic.html
 
+configure_type_defaults_on master
+
 @module_name = "puppet_lookup_command_test"
 
 ### @testroot = "/etc/puppetlabs"

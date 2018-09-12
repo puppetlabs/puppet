@@ -5,6 +5,8 @@ tag 'audit:low',       # Module management via pmt is not the primary support wo
     'audit:refactor'   # Master is not required for this test. Replace with agents.each
                        # Wrap steps in blocks in accordance with Beaker style guide
 
+configure_type_defaults_on master
+
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/crakorn"
 end

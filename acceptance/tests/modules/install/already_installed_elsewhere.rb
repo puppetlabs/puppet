@@ -12,6 +12,8 @@ module_name   = "nginx"
 module_reference = "#{module_author}-#{module_name}"
 module_dependencies = []
 
+configure_type_defaults_on master
+
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do
   rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
