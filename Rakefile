@@ -32,6 +32,15 @@ if Rake.application.top_level_tasks.grep(/^(pl:|package:)/).any?
   end
 end
 
+namespace :package do
+  task :bootstrap do
+    puts 'Bootstrap is no longer needed, using packaging-as-a-gem'
+  end
+  task :implode do
+    puts 'Implode is no longer needed, using packaging-as-a-gem'
+  end
+end
+
 task :default do
   sh %{rake -T}
 end
