@@ -29,7 +29,7 @@ class Loader
   attr_reader :loader_name
 
   # Describes the kinds of things that loaders can load
-  LOADABLE_KINDS = [:func_4x, :func_4xpp, :datatype, :type_pp, :resource_type_pp, :plan, :task].freeze
+  LOADABLE_KINDS = [:func_4x, :func_4xpp, :func_3x, :datatype, :type_pp, :resource_type_pp, :plan, :task].freeze
 
   # @param [String] name the name of the loader. Must be unique among all loaders maintained by a {Loader} instance
   def initialize(loader_name)
@@ -107,7 +107,7 @@ class Loader
   #
   # @api private
   #
-  def [] (typed_name)
+  def [](typed_name)
     if found = get_entry(typed_name)
       found.value
     else

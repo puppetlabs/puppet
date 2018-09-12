@@ -15,55 +15,34 @@ describe 'Puppet::Type::Service::Provider::Windows',
   let(:provider) { resource.provider }
   let(:config)   { Struct::ServiceConfigInfo.new }
   let(:status)   { Struct::ServiceStatus.new }
+  let(:service_util) { Puppet::Util::Windows::Service }
+  let(:service_handle) { mock() }
 
   before :each do
     # make sure we never actually execute anything (there are two execute methods)
     provider.class.expects(:execute).never
     provider.expects(:execute).never
-
-    Win32::Service.stubs(:config_info).with(name).returns(config)
-    Win32::Service.stubs(:status).with(name).returns(status)
   end
 
   describe ".instances" do
     it "should enumerate all services" do
-      list_of_services = ['snmptrap', 'svchost', 'sshd'].map { |s| stub('service', :service_name => s) }
-      Win32::Service.expects(:services).returns(list_of_services)
+      list_of_services = {'snmptrap' => {}, 'svchost' => {}, 'sshd' => {}}
+      service_util.expects(:services).returns(list_of_services)
 
       expect(provider_class.instances.map(&:name)).to match_array(['snmptrap', 'svchost', 'sshd'])
     end
   end
 
   describe "#start" do
-    before :each do
-      config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_AUTO_START)
-    end
-
     it "should start the service" do
-      provider.expects(:net).with(:start, name)
-
+      service_util.expects(:service_start_type).with(name).returns(:SERVICE_AUTO_START)
+      service_util.expects(:start).with(name)
       provider.start
     end
 
-    it "should raise an error if the start command fails" do
-      provider.expects(:net).with(:start, name).raises(Puppet::ExecutionFailure, "The service name is invalid.")
-
-      expect {
-        provider.start
-      }.to raise_error(Puppet::Error, /Cannot start #{name}, error was: The service name is invalid./)
-    end
-
-    it "raises an error if the service doesn't exist" do
-      Win32::Service.expects(:config_info).with(name).raises(SystemCallError, 'OpenService')
-
-      expect {
-        provider.start
-      }.to raise_error(Puppet::Error, /Cannot get start type for #{name}/)
-    end
-
-    describe "when the service is disabled" do
+    context "when the service is disabled" do
       before :each do
-        config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_DISABLED)
+        service_util.expects(:service_start_type).with(name).returns(:SERVICE_DISABLED)
       end
 
       it "should refuse to start if not managing enable" do
@@ -72,18 +51,16 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
       it "should enable if managing enable and enable is true" do
         resource[:enable] = :true
-
-        provider.expects(:net).with(:start, name)
-        Win32::Service.expects(:configure).with('service_name' => name, 'start_type' => Win32::Service::SERVICE_AUTO_START).returns(Win32::Service)
+        service_util.expects(:start).with(name)
+        service_util.expects(:set_startup_mode).with(name, :SERVICE_AUTO_START)
 
         provider.start
       end
 
       it "should manual start if managing enable and enable is false" do
         resource[:enable] = :false
-
-        provider.expects(:net).with(:start, name)
-        Win32::Service.expects(:configure).with('service_name' => name, 'start_type' => Win32::Service::SERVICE_DEMAND_START).returns(Win32::Service)
+        service_util.expects(:start).with(name)
+        service_util.expects(:set_startup_mode).with(name, :SERVICE_DEMAND_START)
 
         provider.start
       end
@@ -92,43 +69,35 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#stop" do
     it "should stop a running service" do
-      provider.expects(:net).with(:stop, name)
+      service_util.expects(:stop).with(name)
 
       provider.stop
-    end
-
-    it "should raise an error if the stop command fails" do
-      provider.expects(:net).with(:stop, name).raises(Puppet::ExecutionFailure, 'The service name is invalid.')
-
-      expect {
-        provider.stop
-      }.to raise_error(Puppet::Error, /Cannot stop #{name}, error was: The service name is invalid./)
     end
   end
 
   describe "#status" do
-    ['stopped', 'paused', 'stop pending', 'pause pending'].each do |state|
+    [
+      :SERVICE_STOPPED,
+      :SERVICE_PAUSED,
+      :SERVICE_STOP_PENDING,
+      :SERVICE_PAUSE_PENDING,
+    ].each do |state|
       it "should report a #{state} service as stopped" do
-        status.current_state = state
-
+        service_util.expects(:service_state).with(name).returns(state)
         expect(provider.status).to eq(:stopped)
       end
     end
 
-    ["running", "continue pending", "start pending" ].each do |state|
+    [
+      :SERVICE_RUNNING,
+      :SERVICE_CONTINUE_PENDING,
+      :SERVICE_START_PENDING,
+    ].each do |state|
       it "should report a #{state} service as running" do
-        status.current_state = state
+        service_util.expects(:service_state).with(name).returns(state)
 
         expect(provider.status).to eq(:running)
       end
-    end
-
-    it "raises an error if the service doesn't exist" do
-      Win32::Service.expects(:status).with(name).raises(SystemCallError, 'OpenService')
-
-      expect {
-        provider.status
-      }.to raise_error(Puppet::Error, /Cannot get status of #{name}/)
     end
   end
 
@@ -153,33 +122,25 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#enabled?" do
     it "should report a service with a startup type of manual as manual" do
-      config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_DEMAND_START)
-
+      service_util.expects(:service_start_type).with(name).returns(:SERVICE_DEMAND_START)
       expect(provider.enabled?).to eq(:manual)
     end
 
     it "should report a service with a startup type of disabled as false" do
-      config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_DISABLED)
-
+      service_util.expects(:service_start_type).with(name).returns(:SERVICE_DISABLED)
       expect(provider.enabled?).to eq(:false)
-    end
-
-    it "raises an error if the service doesn't exist" do
-      Win32::Service.expects(:config_info).with(name).raises(SystemCallError, 'OpenService')
-
-      expect {
-        provider.enabled?
-      }.to raise_error(Puppet::Error, /Cannot get start type for #{name}/)
     end
 
     # We need to guard this section explicitly since rspec will always
     # construct all examples, even if it isn't going to run them.
-    if Puppet::Util::Platform.windows?
-      [Win32::Service::SERVICE_AUTO_START, Win32::Service::SERVICE_BOOT_START, Win32::Service::SERVICE_SYSTEM_START].each do |start_type_const|
-        start_type = Win32::Service.get_start_type(start_type_const)
+    if Puppet.features.microsoft_windows?
+      [
+        :SERVICE_AUTO_START,
+        :SERVICE_BOOT_START,
+        :SERVICE_SYSTEM_START
+      ].each do |start_type|
         it "should report a service with a startup type of '#{start_type}' as true" do
-          config.start_type = start_type
-
+          service_util.expects(:service_start_type).with(name).returns(start_type)
           expect(provider.enabled?).to eq(:true)
         end
       end
@@ -188,12 +149,12 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#enable" do
     it "should set service start type to Service_Auto_Start when enabled" do
-      Win32::Service.expects(:configure).with('service_name' => name, 'start_type' => Win32::Service::SERVICE_AUTO_START).returns(Win32::Service)
+      service_util.expects(:set_startup_mode).with(name, :SERVICE_AUTO_START)
       provider.enable
     end
 
-    it "raises an error if the service doesn't exist" do
-      Win32::Service.expects(:configure).with(has_entry('service_name' => name)).raises(SystemCallError, 'OpenService')
+    it "raises an error if set_startup_mode fails" do
+      service_util.expects(:set_startup_mode).with(name, :SERVICE_AUTO_START).raises(Puppet::Error.new('foobar'))
 
       expect {
         provider.enable
@@ -203,12 +164,12 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#disable" do
     it "should set service start type to Service_Disabled when disabled" do
-      Win32::Service.expects(:configure).with('service_name' => name, 'start_type' => Win32::Service::SERVICE_DISABLED).returns(Win32::Service)
+      service_util.expects(:set_startup_mode).with(name, :SERVICE_DISABLED)
       provider.disable
-     end
+    end
 
-    it "raises an error if the service doesn't exist" do
-      Win32::Service.expects(:configure).with(has_entry('service_name' => name)).raises(SystemCallError, 'OpenService')
+    it "raises an error if set_startup_mode fails" do
+      service_util.expects(:set_startup_mode).with(name, :SERVICE_DISABLED).raises(Puppet::Error.new('foobar'))
 
       expect {
         provider.disable
@@ -218,12 +179,12 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#manual_start" do
     it "should set service start type to Service_Demand_Start (manual) when manual" do
-      Win32::Service.expects(:configure).with('service_name' => name, 'start_type' => Win32::Service::SERVICE_DEMAND_START).returns(Win32::Service)
+      service_util.expects(:set_startup_mode).with(name, :SERVICE_DEMAND_START)
       provider.manual_start
     end
 
-    it "raises an error if the service doesn't exist" do
-      Win32::Service.expects(:configure).with(has_entry('service_name' => name)).raises(SystemCallError, 'OpenService')
+    it "raises an error if set_startup_mode fails" do
+      service_util.expects(:set_startup_mode).with(name, :SERVICE_DEMAND_START).raises(Puppet::Error.new('foobar'))
 
       expect {
         provider.manual_start

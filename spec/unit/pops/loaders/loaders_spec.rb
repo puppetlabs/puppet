@@ -282,7 +282,10 @@ describe 'loaders' do
           File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
           File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
-          expect { compiler.compile }.to raise_error(Puppet::Error, /Unknown function/)
+          catalog = compiler.compile
+          resource = catalog.resource('Notify', "case_#{case_number}")
+          expect(resource).not_to be_nil
+          expect(resource['message']).to eq(desc[:expects])
         end
       end
     end
@@ -585,22 +588,22 @@ describe 'loaders' do
         expect(type).to be_a(Puppet::Pops::Types::PIntegerType)
       end
 
-      it 'will not resolve implicit transitive dependencies, a -> c' do
+      it 'will resolve implicit transitive dependencies, a -> c' do
         type = Puppet::Pops::Types::TypeParser.singleton.parse('A::N', Puppet::Pops::Loaders.find_loader('a'))
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.name).to eql('A::N')
         type = type.resolved_type
-        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
-        expect(type.type_string).to eql('C::C')
+        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+        expect(type.name).to eql('C::C')
       end
 
-      it 'will not resolve reverse dependencies, b -> a' do
+      it 'will resolve reverse dependencies, b -> a' do
         type = Puppet::Pops::Types::TypeParser.singleton.parse('B::X', Puppet::Pops::Loaders.find_loader('b'))
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.name).to eql('B::X')
         type = type.resolved_type
-        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
-        expect(type.type_string).to eql('A::A')
+        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+        expect(type.name).to eql('A::A')
       end
 
       it 'does not resolve init_typeset when more qualified type is found in typeset' do

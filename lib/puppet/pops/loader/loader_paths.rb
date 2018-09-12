@@ -25,7 +25,9 @@ module LoaderPaths
         if loader.loadables.include?(:func_4xpp)
           result << FunctionPathPP.new(loader)
         end
-        # When wanted also add FunctionPath3x to load 3x functions
+        if loader.loadables.include?(:func_3x)
+          result << FunctionPath3x.new(loader)
+        end
     when :plan
       result << PlanPathPP.new(loader)
     when :task
