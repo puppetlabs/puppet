@@ -1,8 +1,3 @@
-require 'puppet/acceptance/common_utils'
-extend Puppet::Acceptance::CAUtils
-require 'puppet/acceptance/classifier_utils'
-extend Puppet::Acceptance::ClassifierUtils
-
 test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
 
@@ -27,7 +22,7 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   teardown do
     step "clear test certs"
     test_certnames.each do |cn|
-      on(master, puppet("cert", "clean", cn), :acceptable_exit_codes => [0,24])
+      on(master, "puppetserver ca clean --certname #{cn}", :acceptable_exit_codes => [0,24])
     end
   end
 
@@ -179,6 +174,7 @@ custom_attributes:
                          "--csr_attributes '#{agent_csr_attributes[agent]}'",
                          "--certname #{certname}"), :acceptable_exit_codes => [0,2])
         assert_key_generated(agent) unless agent['locale'] == 'ja'
+        assert_match(/Downloaded certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
       end
     end
   end
