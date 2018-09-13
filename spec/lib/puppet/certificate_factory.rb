@@ -4,7 +4,7 @@ require 'puppet/ssl'
 # certificates.
 #
 # @api private
-module Puppet::SSL::CertificateFactory
+module Puppet::CertificateFactory
 
   # Create a new X509 certificate and add any needed extensions to the cert.
   #

@@ -1,8 +1,8 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/certificate_factory'
 
 require 'puppet/ssl/certificate'
-require 'puppet/ssl/certificate_factory'
 
 describe Puppet::SSL::Certificate do
   let :key do Puppet::SSL::Key.new("test.localdomain").generate end
@@ -87,7 +87,7 @@ describe Puppet::SSL::Certificate do
       csr = Puppet::SSL::CertificateRequest.new('quux')
       csr.generate(key, opts)
 
-      raw_cert = Puppet::SSL::CertificateFactory.build('client', csr, csr.content, 14)
+      raw_cert = Puppet::CertificateFactory.build('client', csr, csr.content, 14)
       @class.from_instance(raw_cert)
     end
 

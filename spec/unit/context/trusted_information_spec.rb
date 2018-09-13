@@ -1,7 +1,7 @@
 require 'spec_helper'
+require 'puppet/certificate_factory'
 
 require 'puppet/context/trusted_information'
-require 'puppet/ssl/certificate_factory'
 
 describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java' do
   let(:key) do
@@ -22,7 +22,7 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
   end
 
   let(:cert) do
-    cert = Puppet::SSL::Certificate.from_instance(Puppet::SSL::CertificateFactory.build('ca', csr, csr.content, 1))
+    cert = Puppet::SSL::Certificate.from_instance(Puppet::CertificateFactory.build('ca', csr, csr.content, 1))
 
     # The cert must be signed so that it can be successfully be DER-decoded later
     signer = Puppet::SSL::CertificateSigner.new
