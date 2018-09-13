@@ -411,6 +411,35 @@ describe 'loaders' do
       function = loader.load_typed(typed_name(:function, 'user::caller_ws')).value
       expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'passed in scope'")
     end
+
+  end
+
+  context 'when causing a 3x load followed by a 4x load' do
+    let(:env) { environment_for(mix_4x_and_3x_functions) }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
+    let(:scope) { compiler.topscope }
+    let(:loader) { compiler.loaders.private_loader_for_module('user') }
+
+      before(:each) do
+        Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
+      end
+      after(:each) do
+        Puppet.pop_context
+      end
+
+    it 'a 3x function is loaded once' do
+      # create a 3x function that when called will do a load of "callee_ws"
+      Puppet::Parser::Functions::newfunction(:callee, :type => :rvalue, :arity => 1) do |args|
+        function_callee_ws(['passed in scope'])
+      end
+      Puppet.expects(:warning).with(any_parameters).never
+      scope['passed_in_scope'] = 'value'
+      function = loader.load_typed(typed_name(:function, 'callee')).value
+      expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'value'")
+
+      function = loader.load_typed(typed_name(:function, 'callee_ws')).value
+      expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'value'")
+    end
   end
 
   context 'loading' do

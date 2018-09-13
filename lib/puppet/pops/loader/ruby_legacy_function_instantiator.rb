@@ -20,17 +20,25 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
     loader_for_function = loader.private_loader
     here = get_binding(loader_for_function)
 
-    # This will to do the 3x loading and define the "function_<name>" and "real_function_<name>" methods
-    # in the anonymous module used to hold function definitions.
-    #
-    func_info = eval(ruby_code_string, here, source_ref, 1)
+    # Avoid reloading the function if already loaded via one of the APIs that trigger 3x function loading
+    # Check if function is already loaded the 3x way (and obviously not the 4x way since we would not be here in the
+    # first place.
+    environment = Puppet.lookup(:current_environment)
+    func_info = Puppet::Parser::Functions.environment_module(environment).get_function_info(typed_name.name.to_sym)
+    if func_info.nil?
+      # This will to do the 3x loading and define the "function_<name>" and "real_function_<name>" methods
+      # in the anonymous module used to hold function definitions.
+      #
+      func_info = eval(ruby_code_string, here, source_ref, 1)
 
-    unless func_info.is_a?(Hash)
-      raise ArgumentError, _("The code loaded from %{source_ref} did not produce the expected 3x function info Hash when evaluated. Got '%{klass}'") % { source_ref: source_ref, klass: created.class }
-    end
-    unless func_info[:name] == "function_#{typed_name.name()}"
-      raise ArgumentError, _("The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got %{created_name}") % { 
-        source_ref: source_ref, type_name: typed_name.name, created_name: func_info[:name] }
+      # Validate what was loaded
+      unless func_info.is_a?(Hash)
+        raise ArgumentError, _("The code loaded from %{source_ref} did not produce the expected 3x function info Hash when evaluated. Got '%{klass}'") % { source_ref: source_ref, klass: created.class }
+      end
+      unless func_info[:name] == "function_#{typed_name.name()}"
+        raise ArgumentError, _("The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got %{created_name}") % { 
+          source_ref: source_ref, type_name: typed_name.name, created_name: func_info[:name] }
+      end
     end
 
     created = Puppet::Functions::Function3x.create_function(typed_name.name(), func_info, loader_for_function)
