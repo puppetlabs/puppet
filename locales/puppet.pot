@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-741-g904023f\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-774-gd798621\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-09-12 17:33+0000\n"
-"PO-Revision-Date: 2018-09-12 17:33+0000\n"
+"POT-Creation-Date: 2018-09-13 00:48+0000\n"
+"PO-Revision-Date: 2018-09-13 00:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -477,75 +477,75 @@ msgstr ""
 msgid "Could not retrieve catalog; skipping run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:189
+#: ../lib/puppet/configurer.rb:191
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:230
+#: ../lib/puppet/configurer.rb:232
 msgid "Selected puppet server: %{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:233
+#: ../lib/puppet/configurer.rb:235
 msgid "Could not select a functional puppet server"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:263
+#: ../lib/puppet/configurer.rb:265
 msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:308
+#: ../lib/puppet/configurer.rb:310
 msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:313
+#: ../lib/puppet/configurer.rb:315
 msgid "Using configured environment '%{env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:317
+#: ../lib/puppet/configurer.rb:319
 msgid "Unable to fetch my node definition, but the agent run will continue:"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:345
+#: ../lib/puppet/configurer.rb:347
 msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:356
+#: ../lib/puppet/configurer.rb:358
 msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:358
+#: ../lib/puppet/configurer.rb:360
 msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:377
+#: ../lib/puppet/configurer.rb:379
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:401
+#: ../lib/puppet/configurer.rb:403
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:405
+#: ../lib/puppet/configurer.rb:407
 msgid "Puppet server %{host}:%{port} is unreachable"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:417 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:419 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:426
+#: ../lib/puppet/configurer.rb:428
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:438
+#: ../lib/puppet/configurer.rb:440
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:456
+#: ../lib/puppet/configurer.rb:458
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:476
+#: ../lib/puppet/configurer.rb:478
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -640,11 +640,11 @@ msgstr ""
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1532 ../lib/puppet/defaults.rb:1547
+#: ../lib/puppet/defaults.rb:1499 ../lib/puppet/defaults.rb:1514
 msgid "Attempted to set both server and server_list."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1533 ../lib/puppet/defaults.rb:1548
+#: ../lib/puppet/defaults.rb:1500 ../lib/puppet/defaults.rb:1515
 msgid "Server setting will not be used."
 msgstr ""
 
@@ -2905,7 +2905,7 @@ msgstr ""
 msgid "The file %{f} does not exist"
 msgstr ""
 
-#: ../lib/puppet/info_service/task_information_service.rb:20 ../lib/puppet/module/task.rb:93
+#: ../lib/puppet/info_service/task_information_service.rb:20
 msgid "Module %{module_name} not found in environment %{environment_name}."
 msgstr ""
 
@@ -3191,7 +3191,7 @@ msgid ""
 "        A namespaced module name (ex. author-modulename) matching the expression /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/\n"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:24 ../lib/puppet/module/task.rb:197
+#: ../lib/puppet/module/task.rb:24 ../lib/puppet/module/task.rb:198
 msgid "Task names must start with a lowercase letter and be composed of only lowercase letters, numbers, and underscores"
 msgstr ""
 
@@ -3199,43 +3199,47 @@ msgstr ""
 msgid "Task %{task_name} not found in module %{module_name}."
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:67
-msgid "File pathnames cannot include relative paths"
+#: ../lib/puppet/module/task.rb:88
+msgid "Could not find module %{module_name} containing task file %{filename}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:98
+#: ../lib/puppet/module/task.rb:94
 msgid "Files must be saved in module directories that Puppet makes available via mount points: %{mounts}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:105
+#: ../lib/puppet/module/task.rb:101
+msgid "File pathnames cannot include relative paths"
+msgstr ""
+
+#: ../lib/puppet/module/task.rb:106
 msgid "Could not find %{path} on disk"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:112
+#: ../lib/puppet/module/task.rb:113
 msgid "Directories specified in task metadata must include a trailing slash: %{dir}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:119
+#: ../lib/puppet/module/task.rb:120
 msgid "Files specified in task metadata cannot include a trailing slash: %{file}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:140
+#: ../lib/puppet/module/task.rb:141
 msgid "Task metadata for task %{name} does not specify implementations as an array"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:147 ../lib/puppet/pops/loader/task_instantiator.rb:31
+#: ../lib/puppet/module/task.rb:148 ../lib/puppet/pops/loader/task_instantiator.rb:31
 msgid "Task metadata for task %{name} specifies missing implementation %{implementation}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:159 ../lib/puppet/pops/loader/task_instantiator.rb:45
+#: ../lib/puppet/module/task.rb:160 ../lib/puppet/pops/loader/task_instantiator.rb:45
 msgid "No source besides task metadata was found in directory %{directory} for task %{name}"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:163 ../lib/puppet/pops/loader/task_instantiator.rb:48
+#: ../lib/puppet/module/task.rb:164 ../lib/puppet/pops/loader/task_instantiator.rb:48
 msgid "Multiple executables were found in directory %{directory} for task %{name}; define 'implementations' in metadata to differentiate between them"
 msgstr ""
 
-#: ../lib/puppet/module/task.rb:211
+#: ../lib/puppet/module/task.rb:212
 msgid "Error reading metadata: %{message}"
 msgstr ""
 
@@ -3797,12 +3801,12 @@ msgid "Could not render_multiple to %{format}: %{err}"
 msgstr ""
 
 #. TRANSLATORS "render" is a function name and should not be translated
-#: ../lib/puppet/network/format_support.rb:109
+#: ../lib/puppet/network/format_support.rb:114
 msgid "Could not render to %{format}: %{err}"
 msgstr ""
 
 #. TRANSLATORS "mime" is a function name and should not be translated
-#: ../lib/puppet/network/format_support.rb:118
+#: ../lib/puppet/network/format_support.rb:123
 msgid "Could not mime to %{format}: %{err}"
 msgstr ""
 
@@ -3822,73 +3826,73 @@ msgstr ""
 msgid "No handler for %{indirection}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:60
+#: ../lib/puppet/network/http/api/indirected_routes.rb:66
 msgid "The indirection name must be purely alphanumeric, not '%{indirection_name}'"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:70
+#: ../lib/puppet/network/http/api/indirected_routes.rb:76
 msgid "Indirection '%{indirection_name}' does not match url prefix '%{url_prefix}'"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:76
+#: ../lib/puppet/network/http/api/indirected_routes.rb:82
 msgid "Could not find indirection '%{indirection_name}'"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:82
+#: ../lib/puppet/network/http/api/indirected_routes.rb:88
 msgid "An environment parameter must be specified"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:87
+#: ../lib/puppet/network/http/api/indirected_routes.rb:93
 msgid "The environment must be purely alphanumeric, not '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:104
+#: ../lib/puppet/network/http/api/indirected_routes.rb:110
 msgid "Could not find environment '%{environment}'"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:111
+#: ../lib/puppet/network/http/api/indirected_routes.rb:117
 msgid "No request key specified in %{uri}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:122
+#: ../lib/puppet/network/http/api/indirected_routes.rb:128
 msgid "Could not find %{value0} %{key}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:129
+#: ../lib/puppet/network/http/api/indirected_routes.rb:135
 msgid "Rendered result in %{format}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:135
+#: ../lib/puppet/network/http/api/indirected_routes.rb:141
 msgid "Sent response"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:143
+#: ../lib/puppet/network/http/api/indirected_routes.rb:149
 msgid "Could not find %{indirection} %{key}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:155
+#: ../lib/puppet/network/http/api/indirected_routes.rb:161
 msgid "Could not find instances in %{indirection} with '%{key}'"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:202 ../lib/puppet/network/http/request.rb:60
+#: ../lib/puppet/network/http/api/indirected_routes.rb:209 ../lib/puppet/network/http/request.rb:60
 msgid "No supported formats are acceptable (Accept: %{accepted_formats})"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:227
+#: ../lib/puppet/network/http/api/indirected_routes.rb:234
 msgid "The request body is invalid: %{message}"
 msgstr ""
 
 #. TRANSLATORS "mime-type" is a keyword and should not be translated
 #. TRANSLATORS "mime-type" is a keyword and should not be translated
-#: ../lib/puppet/network/http/api/indirected_routes.rb:233 ../lib/puppet/network/http/request.rb:31
+#: ../lib/puppet/network/http/api/indirected_routes.rb:240 ../lib/puppet/network/http/request.rb:31
 msgid "Client sent a mime-type (%{header}) that doesn't correspond to a format we support"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:239
+#: ../lib/puppet/network/http/api/indirected_routes.rb:246
 msgid "No support for http method %{http_method}"
 msgstr ""
 
-#: ../lib/puppet/network/http/api/indirected_routes.rb:243
+#: ../lib/puppet/network/http/api/indirected_routes.rb:250
 msgid "No support for plurality %{indirection} for %{http_method} operations"
 msgstr ""
 
@@ -4646,7 +4650,7 @@ msgid "Cannot use an unspecific Resource['class'] where a Resource['class', name
 msgstr ""
 
 #. TRANSLATORS "main" is a function name and should not be translated
-#: ../lib/puppet/parser/script_compiler.rb:46
+#: ../lib/puppet/parser/script_compiler.rb:45
 msgid "Script: Evaluated main"
 msgstr ""
 
@@ -5584,12 +5588,12 @@ msgid "Gem not found '%{gem_name}'"
 msgstr ""
 
 #. TRANSLATORS 'loadables' is a variable containing loadable modules and should not be translated
-#: ../lib/puppet/pops/loader/module_loaders.rb:132
+#: ../lib/puppet/pops/loader/module_loaders.rb:139
 msgid "given loadables are not of supported loadable kind"
 msgstr ""
 
 #. TRANSLATORS 'TypeSet' should not be translated
-#: ../lib/puppet/pops/loader/module_loaders.rb:235
+#: ../lib/puppet/pops/loader/module_loaders.rb:244
 msgid "The code loaded from %{origin} does not define the TypeSet '%{module_name}'"
 msgstr ""
 
@@ -5953,7 +5957,7 @@ msgstr ""
 msgid "Unable to deserialize type from %{type}"
 msgstr ""
 
-#: ../lib/puppet/pops/serialization/from_data_converter.rb:217
+#: ../lib/puppet/pops/serialization/from_data_converter.rb:218
 msgid "Cannot create a %{type_name} from a %{arg_class}"
 msgstr ""
 
