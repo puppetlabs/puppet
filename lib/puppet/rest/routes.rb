@@ -107,7 +107,9 @@ module Puppet::Rest
         url.path += "certificate_request/#{name}"
 
         use_ssl = url.is_a? URI::HTTPS
-        verify_mode = ssl_context.verify_mode == OpenSSL::SSL::VERIFY_PEER
+
+        # See notes above as to why verify_mode is hardcoded to false
+        verify_mode = false
 
         client = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl, verify_mode)
 
@@ -131,7 +133,9 @@ module Puppet::Rest
         url.path += "certificate_request/#{name}"
 
         use_ssl = url.is_a? URI::HTTPS
-        verify_mode = ssl_context.verify_mode == OpenSSL::SSL::VERIFY_PEER
+
+        # See notes above as to why verify_mode is hardcoded to false
+        verify_mode = false
 
         client = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl, verify_mode)
 
