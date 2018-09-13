@@ -22,7 +22,7 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   teardown do
     step "clear test certs"
     test_certnames.each do |cn|
-      on(master, "puppetserver ca clean --certname #{cn}"), :acceptable_exit_codes => [0,24])
+      on(master, "puppetserver ca clean --certname #{cn}", :acceptable_exit_codes => [0,24])
     end
   end
 

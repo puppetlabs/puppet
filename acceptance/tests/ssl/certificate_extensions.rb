@@ -14,7 +14,7 @@ test_name "certificate extensions available as trusted data" do
   teardown do
     step "Cleanup the test agent certs"
     agent_certnames.each do |cn|
-      on(master, "puppetserver ca clean --certname #{cn}"), :acceptable_exit_codes => [0,24])
+      on(master, "puppetserver ca clean --certname #{cn}", :acceptable_exit_codes => [0,24])
     end
   end
 
