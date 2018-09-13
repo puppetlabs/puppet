@@ -12,13 +12,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     @file_setting = setting
   end
 
-  # Specify where a specific ca file should be stored.
-  def self.store_ca_at(setting)
-    @ca_setting = setting
-  end
-
   class << self
-    attr_reader :directory_setting, :file_setting, :ca_setting
+    attr_reader :directory_setting, :file_setting
   end
 
   # The full path to where we should store our files.
@@ -33,19 +28,6 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     Puppet.settings[file_setting]
   end
 
-  # The full path to a ca file we would be managing.
-  def self.ca_location
-    return nil unless ca_setting
-    Puppet.settings[ca_setting]
-  end
-
-  # We assume that all files named 'ca' are pointing to individual ca files,
-  # rather than normal host files.  It's a bit hackish, but all the other
-  # solutions seemed even more hackish.
-  def ca?(name)
-    name == Puppet::SSL::Host.ca_name
-  end
-
   def initialize
     Puppet.settings.use(:main, :ssl)
 
@@ -58,9 +40,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
       raise ArgumentError, _("invalid key")
     end
 
-    if ca?(name) and ca_location
-      ca_location
-    elsif collection_directory
+    if collection_directory
       File.join(collection_directory, name.to_s + ".pem")
     else
       file_location
@@ -127,10 +107,6 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     self.class.file_location
   end
 
-  def ca_location
-    self.class.ca_location
-  end
-
   # A hack method to deal with files that exist with a different case.
   # Just renames it; doesn't read it in or anything.
   # LAK:NOTE This is a copy of the method in sslcertificates/support.rb,
@@ -164,25 +140,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     # * SSL::Key may be a .export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), pass) or .to_pem
     # * All other classes are translated to strings by calling .to_pem
 
-    # Serialization of:
-    # Puppet::SSL::Certificate by Puppet::SSL::Certificate::Ca, Puppet::SSL::Certificate::File
-    # -----BEGIN CERTIFICATE-----
-    # Puppet::SSL::Key by Puppet::SSL::Key::Ca, Puppet::SSL::Key::File
-    # -----BEGIN RSA PRIVATE KEY-----
-    if ca?(name) and ca_location
-      Puppet.settings.setting(self.class.ca_setting).open('w:ASCII') { |f| yield f }
-    # Serialization of:
-    # Puppet::SSL::CertificateRevocationList by Puppet::SSL::CertificateRevocationList::Ca, Puppet::SSL::CertificateRevocationList::File
-    # -----BEGIN X509 CRL-----
-    elsif file_location
+    if file_location
       Puppet.settings.setting(self.class.file_setting).open('w:ASCII') { |f| yield f }
-    # Serialization of:
-    # Puppet::SSL::Certificate by Puppet::SSL::Certificate::Ca, Puppet::SSL::Certificate::File
-    # -----BEGIN CERTIFICATE-----
-    # Puppet::SSL::CertificateRequest by Puppet::SSL::CertificateRequest::Ca, Puppet::SSL::CertificateRequest::File
-    # -----BEGIN CERTIFICATE REQUEST-----
-    # Puppet::SSL::Key by Puppet::SSL::Key::Ca, Puppet::SSL::Key::File
-    # -----BEGIN RSA PRIVATE KEY-----
     elsif setting = self.class.directory_setting
       begin
         Puppet.settings.setting(setting).open_file(path, 'w:ASCII') { |f| yield f }

@@ -1,9 +1,7 @@
-require 'puppet/indirector'
 require 'puppet/ssl'
 require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
-require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/ssl/certificate_request_attributes'
 require 'puppet/rest/errors'
 require 'puppet/rest/routes'
@@ -24,21 +22,10 @@ class Puppet::SSL::Host
   CA_NAME = Puppet::SSL::CA_NAME
   Certificate = Puppet::SSL::Certificate
   CertificateRequest = Puppet::SSL::CertificateRequest
-  CertificateRevocationList = Puppet::SSL::CertificateRevocationList
-
-  extend Puppet::Indirector
-  indirects :certificate_status, :terminus_class => :file, :doc => <<DOC
-    This indirection represents the host that ties a key, certificate, and certificate request together.
-    The indirection key is the certificate CN (generally a hostname).
-DOC
 
   attr_reader :name, :crl_path
-  attr_accessor :ca
 
   attr_writer :key, :certificate, :certificate_request, :crl_usage
-
-  # This accessor is used in instances for indirector requests to hold desired state
-  attr_accessor :desired_state
 
   def self.localhost
     return @localhost if @localhost
@@ -52,28 +39,10 @@ DOC
     @localhost = nil
   end
 
-  # This is the constant that people will use to mark that a given host is
-  # a certificate authority.
-  def self.ca_name
-    CA_NAME
-  end
-
-  class << self
-    attr_reader :ca_location
-  end
-
   # Configure how our various classes interact with their various terminuses.
   def self.configure_indirection(terminus, cache = nil)
     Certificate.indirection.terminus_class = terminus
     CertificateRequest.indirection.terminus_class = terminus
-    CertificateRevocationList.indirection.terminus_class = terminus
-
-    host_map = {:ca => :file, :disabled_ca => nil, :file => nil, :rest => :rest}
-    if term = host_map[terminus]
-      self.indirection.terminus_class = term
-    else
-      self.indirection.reset_terminus_class
-    end
 
     if cache
       # This is weird; we don't actually cache our keys, we
@@ -87,7 +56,6 @@ DOC
     if cache
       Certificate.indirection.cache_class = cache
       CertificateRequest.indirection.cache_class = cache
-      CertificateRevocationList.indirection.cache_class = cache
     else
       # Make sure we have no cache configured.  puppet master
       # switches the configurations around a bit, so it's important
@@ -95,37 +63,7 @@ DOC
       # time.
       Certificate.indirection.cache_class = nil
       CertificateRequest.indirection.cache_class = nil
-      CertificateRevocationList.indirection.cache_class = nil
     end
-  end
-
-  CA_MODES = {
-    # Our ca is local, so we use it as the ultimate source of information
-    # And we cache files locally.
-    :local => [:ca, :file],
-    # We're a remote CA client.
-    :remote => [:rest, :file],
-    # We are the CA, so we don't have read/write access to the normal certificates.
-    :only => [:ca],
-    # We have no CA, so we just look in the local file store.
-    :none => [:disabled_ca]
-  }
-
-  # Specify how we expect to interact with our certificate authority.
-  def self.ca_location=(mode)
-    modes = CA_MODES.collect { |m, vals| m.to_s }.join(", ")
-    raise ArgumentError, _("CA Mode can only be one of: %{modes}") % { modes: modes } unless CA_MODES.include?(mode)
-
-    @ca_location = mode
-
-    configure_indirection(*CA_MODES[@ca_location])
-  end
-
-  # Puppet::SSL::Host is actually indirected now so the original implementation
-  # has been moved into the certificate_status indirector.  This method is in-use
-  # in `puppet cert -c <certname>`.
-  def self.destroy(name)
-    indirection.destroy(name)
   end
 
   def self.from_data_hash(data)
@@ -134,18 +72,6 @@ DOC
       instance.desired_state = data["desired_state"]
     end
     instance
-  end
-
-  # Puppet::SSL::Host is actually indirected now so the original implementation
-  # has been moved into the certificate_status indirector.  This method does not
-  # appear to be in use in `puppet cert -l`.
-  def self.search(options = {})
-    indirection.search("*", options)
-  end
-
-  # Is this a ca host, meaning that all of its files go in the CA location?
-  def ca?
-    ca
   end
 
   def key
@@ -175,8 +101,6 @@ DOC
       # ...add our configured dns_alt_names
       if Puppet[:dns_alt_names] and Puppet[:dns_alt_names] != ''
         options[:dns_alt_names] ||= Puppet[:dns_alt_names]
-      elsif Puppet::SSL::CertificateAuthority.ca? and fqdn = Facter.value(:fqdn) and domain = Facter.value(:domain)
-        options[:dns_alt_names] = "puppet, #{fqdn}, puppet.#{domain}"
       end
     end
 
@@ -190,6 +114,7 @@ DOC
     @certificate_request.generate(key.content, options)
     begin
       submit_certificate_request(@certificate_request)
+      save_certificate_request(@certificate_request)
     rescue
       @certificate_request = nil
       raise
@@ -208,7 +133,7 @@ DOC
 
       # get the CA cert first, since it's required for the normal cert
       # to be of any use. If we can't get it, quit.
-      if !ca? && !ensure_ca_certificate
+      if !ensure_ca_certificate
         return nil
       end
 
@@ -259,10 +184,8 @@ ERROR_STRING
     unless @certificate_request
       if csr = load_certificate_request_from_file
         @certificate_request = csr
-      elsif Puppet::SSL::Host.ca_location == :remote
-        if csr = download_csr_from_ca
-          @certificate_request = csr
-        end
+      elsif csr = download_csr_from_ca
+        @certificate_request = csr
       end
     end
     @certificate_request
@@ -279,13 +202,6 @@ ERROR_STRING
     validate_csr_with_key(existing_request, key) if existing_request
 
     generate_certificate_request unless existing_request
-
-    # If we can get a CA instance, then we're a valid CA, and we
-    # should use it to sign our request; else, just try to read
-    # the cert.
-    if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, {allow_dns_alt_names: true})
-    end
   end
 
   # Generate a keypair, generate a CSR, and submit it. If a local key pair
@@ -359,7 +275,6 @@ ERROR_STRING
     @name = (name || Puppet[:certname]).downcase
     Puppet::SSL::Base.validate_certname(@name)
     @key = @certificate = @certificate_request = nil
-    @ca = (name == self.class.ca_name)
     @crl_usage = Puppet.settings[:certificate_revocation]
     @crl_path = Puppet.settings[:hostcrl]
   end
@@ -384,49 +299,6 @@ ERROR_STRING
       @ssl_store = build_ssl_store(purpose)
     end
     @ssl_store
-  end
-
-  def to_data_hash
-    my_cert = Puppet::SSL::Certificate.indirection.find(name)
-    result = { 'name'  => name }
-
-    my_state = state
-
-    result['state'] = my_state
-    result['desired_state'] = desired_state if desired_state
-
-    thing_to_use = (my_state == 'requested') ? certificate_request : my_cert
-
-    # this is for backwards-compatibility
-    # we should deprecate it and transition people to using
-    # json[:fingerprints][:default]
-    # It appears that we have no internal consumers of this api
-    # --jeffweiss 30 aug 2012
-    result['fingerprint'] = thing_to_use.fingerprint
-
-    # The above fingerprint doesn't tell us what message digest algorithm was used
-    # No problem, except that the default is changing between 2.7 and 3.0. Also, as
-    # we move to FIPS 140-2 compliance, MD5 is no longer allowed (and, gasp, will
-    # segfault in rubies older than 1.9.3)
-    # So, when we add the newer fingerprints, we're explicit about the hashing
-    # algorithm used.
-    # --jeffweiss 31 july 2012
-    result['fingerprints'] = {}
-    result['fingerprints']['default'] = thing_to_use.fingerprint
-
-    suitable_message_digest_algorithms.each do |md|
-      result['fingerprints'][md.to_s] = thing_to_use.fingerprint md
-    end
-    result['dns_alt_names'] = thing_to_use.subject_alt_names
-
-    result
-  end
-
-  # eventually we'll probably want to move this somewhere else or make it
-  # configurable
-  # --jeffweiss 29 aug 2012
-  def suitable_message_digest_algorithms
-    [:SHA1, :SHA224, :SHA256, :SHA384, :SHA512]
   end
 
   # Attempt to retrieve a cert, if we don't already have one.
@@ -462,28 +334,21 @@ ERROR_STRING
     end
   end
 
-  def state
-    if certificate_request
-      return 'requested'
-    end
-
-    begin
-      Puppet::SSL::CertificateAuthority.new.verify(name)
-      return 'signed'
-    rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError
-      return 'revoked'
+  # Saves the given certificate to disc, at a location determined by this
+  # host's configuration.
+  # @param [Puppet::SSL::Certificate] cert the cert to save
+  def save_host_certificate(cert)
+    file_path = certificate_location(name)
+    Puppet::Util.replace_file(file_path, 0644) do |f|
+      f.write(cert.to_s)
     end
   end
 
   private
 
-  # Load a previously generated CSR either from memory or from disk
+  # Load a previously generated CSR from disk
   # @return [Puppet::SSL::CertificateRequest, nil]
   def load_certificate_request_from_file
-    if Puppet::SSL::CertificateRequest.indirection.terminus_class == :memory
-      return Puppet::SSL::CertificateRequest.indirection.find(cert_name)
-    end
-
     request_path = certificate_request_location(name)
     if Puppet::FileSystem.exist?(request_path)
       Puppet::SSL::CertificateRequest.from_s(Puppet::FileSystem.read(request_path))
@@ -513,23 +378,15 @@ ERROR_STRING
       end
     end
   end
-  # Submit the CSR to the CA, either via an HTTP PUT request, or when testing,
-  # via the indirector (needed for both memory and CA terminii). This also
-  # caches a copy of the CSR on disk.
+  # Submit the CSR to the CA via an HTTP PUT request.
   # @param [Puppet::SSL::CertificateRequest] csr the request to submit
   def submit_certificate_request(csr)
-    if Puppet::SSL::CertificateRequest.indirection.terminus_class == :memory ||
-      Puppet::SSL::CertificateRequest.indirection.terminus_class == :ca
-      Puppet::SSL::CertificateRequest.indirection.save(csr)
-      return
-    end
+    Puppet::Rest::Routes.put_certificate_request(
+                  http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
+                  csr.render, name)
+  end
 
-    if Puppet::SSL::Host.ca_location == :remote
-      Puppet::Rest::Routes.put_certificate_request(
-                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
-                    csr.render, name)
-    end
-
+  def save_certificate_request(csr)
     Puppet::Util.replace_file(certificate_request_location(name), 0644) do |file|
       file.write(csr.render)
     end
@@ -561,16 +418,13 @@ ERROR_STRING
 
   # Ensures that the CA certificate is available for either generating or
   # validating the host's cert.
-  # It will first check if the cert is present in memory (used for testing),
-  # then check on disk, and finally try to download it.
+  # It will first check on disk, then try to download it.
   # @raise [Puppet::Error] if text form of found certificate bundle is invalid
   #                        and cannot be loaded into cert objects
   # @return [Boolean] true if the CA certificate was found, false otherwise
   def ensure_ca_certificate
     file_path = certificate_location(CA_NAME)
-    if check_for_certificate_in_memory(CA_NAME)
-      true
-    elsif Puppet::FileSystem.exist?(file_path)
+    if Puppet::FileSystem.exist?(file_path)
       begin
         # This load ensures that the file contents is a valid cert bundle.
         # If the text is malformed, load_certificate_bundle will raise.
@@ -641,8 +495,6 @@ ERROR_STRING
   #                        bundle
   # @return [[OpenSSL::X509::Certificate]] the certs loaded from the response
   def download_ca_certificate_bundle
-    return nil if Puppet::SSL::Host.ca_location != :remote
-
     begin
       cert_bundle = Puppet::Rest::Routes.get_certificate(
                     http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE)),
@@ -673,26 +525,13 @@ ERROR_STRING
   # no certificate could be found.
   # @return [Puppet::SSL::Certificate, nil]
   def get_host_certificate
-    if cert = check_for_certificate_in_memory(name)
-      return cert
-    elsif cert = check_for_certificate_on_disk(name)
+    if cert = check_for_certificate_on_disk(name)
       return cert
     elsif cert = download_certificate_from_ca(name)
       save_host_certificate(cert)
       return cert
     else
       return nil
-    end
-  end
-
-  # Checks the certificate indirection for a cert stored in memory.
-  # Only relevant if the memory terminus is in use, and currently
-  # only used in testing.
-  # @param [String] name the name of the cert to look for
-  # @return [Puppet::SSL::Certificate, nil]
-  def check_for_certificate_in_memory(cert_name)
-    if Puppet::SSL::Certificate.indirection.terminus_class == :memory
-      return Puppet::SSL::Certificate.indirection.find(cert_name)
     end
   end
 
@@ -721,8 +560,6 @@ ERROR_STRING
   #                        certificate
   # @return [Puppet::SSL::Certificate, nil]
   def download_certificate_from_ca(cert_name)
-    return nil if Puppet::SSL::Host.ca_location != :remote
-
     begin
       cert = Puppet::Rest::Routes.get_certificate(
                     http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
@@ -742,38 +579,19 @@ ERROR_STRING
     end
   end
 
-  # Saves the given certificate to disc, at a location determined by this
-  # host's configuration.
-  # @param [Puppet::SSL::Certificate] cert the cert to save
-  def save_host_certificate(cert)
-    file_path = certificate_location(name)
-    Puppet::Util.replace_file(file_path, 0644) do |f|
-      f.write(cert.to_s)
-    end
-  end
-
   # Returns the file path for the named certificate, based on this host's
   # configuration.
   # @param [String] name the name of the cert to find
   # @return [String] file path to the cert's location
   def certificate_location(cert_name)
-    if Puppet::SSL::Host.ca_location == :only
-      cert_name == CA_NAME ? Puppet[:cacert] : File.join(Puppet[:signeddir], "#{cert_name}.pem")
-    else
-      cert_name == CA_NAME ? Puppet[:localcacert] : File.join(Puppet[:certdir], "#{cert_name}.pem")
-    end
+    cert_name == CA_NAME ? Puppet[:localcacert] : File.join(Puppet[:certdir], "#{cert_name}.pem")
   end
 
   # Returns the file path for the named CSR, based on this host's configuration.
   # @param [String] name the name of the CSR to find
   # @return [String] file path to the CSR's location
   def certificate_request_location(cert_name)
-    if Puppet::SSL::Host.ca_location == :only ||
-        Puppet::SSL::Host.ca_location == :local
-      File.join(Puppet[:csrdir], "#{cert_name}.pem")
-    else
-      File.join(Puppet[:requestdir], "#{cert_name}.pem")
-    end
+    File.join(Puppet[:requestdir], "#{cert_name}.pem")
   end
 
   # @param [OpenSSL::X509::PURPOSE_*] constant defining the kinds of certs
@@ -808,5 +626,3 @@ ERROR_STRING
     store
   end
 end
-
-require 'puppet/ssl/certificate_authority'

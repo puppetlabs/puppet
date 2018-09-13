@@ -1024,15 +1024,6 @@ EOT
       :mode => "0644",
       :desc => "The certificate revocation list (CRL) for the CA.",
     },
-    :caprivatedir => {
-      :default => "$cadir/private",
-      :type => :directory,
-      :owner => "service",
-      :group => "service",
-      :mode => "0750",
-      :desc => "Where the CA stores private certificate information. This setting is deprecated and will be removed in Puppet 6.",
-      :deprecated => :completely,
-    },
     :csrdir => {
       :default => "$cadir/requests",
       :type => :directory,
@@ -1048,15 +1039,6 @@ EOT
       :group => "service",
       :mode => "0755",
       :desc => "Where the CA stores signed certificates.",
-    },
-    :capass => {
-      :default => "$caprivatedir/ca.pass",
-      :type => :file,
-      :owner => "service",
-      :group => "service",
-      :mode => "0640",
-      :desc => "Where the CA stores the password for the private key. This setting is deprecated and will be removed in Puppet 6.",
-      :deprecated => :completely,
     },
     :serial => {
       :default => "$cadir/serial",
@@ -1271,12 +1253,6 @@ EOT
       rest indirections.  This can be used as a fine-grained authorization system for
       `puppet master`.  The `puppet master` command is deprecated and Puppet Server
       uses its own auth.conf that must be placed within its configuration directory.",
-    },
-    :ca => {
-      :default    => true,
-      :type       => :boolean,
-      :deprecated  => :completely,
-      :desc       => "Whether the master should function as a certificate authority.",
     },
     :trusted_oid_mapping_file => {
       :default    => "$confdir/custom_trusted_oid_mapping.yaml",
