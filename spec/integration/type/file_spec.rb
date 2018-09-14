@@ -579,7 +579,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         if Puppet::Util::Platform.windows? && ['sha512', 'sha384'].include?(example.metadata[:digest_algorithm])
           skip "PUP-8257: Skip file bucket test on windows for #{example.metadata[:digest_algorithm]} due to long path names"
         end
-        
+
         bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
         file = described_class.new({:path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true}.merge(resource_options))
         catalog.add_resource file
@@ -1283,7 +1283,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   describe "when sourcing" do
     it "should give a deprecation warning when the user sets source_permissions" do
       Puppet.expects(:puppet_deprecation_warning).with(
-        'The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`.', 
+        'The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`.',
         {:file => 'my/file.pp', :line => 5})
 
       catalog.add_resource described_class.new(:path => path, :content => 'this is content', :source_permissions => :use_when_creating)
@@ -1525,12 +1525,12 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               catalog.apply
             end
 
-            it "should allow the user to explicitly set the mode to 4" do
+            it "should not allow the user to explicitly set the mode to 4 ,and correct to 7" do
               system_aces = get_aces_for_path_by_sid(path, @sids[:system])
               expect(system_aces).not_to be_empty
 
               system_aces.each do |ace|
-                expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_GENERIC_READ)
+                expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_ALL_ACCESS)
               end
             end
 
@@ -1612,13 +1612,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 catalog.apply
               end
 
-              it "should allow the user to explicitly set the mode to 4" do
+              it "should not allow the user to explicitly set the mode to 4, and correct to 7" do
                 system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
                 expect(system_aces).not_to be_empty
 
                 system_aces.each do |ace|
                   # unlike files, Puppet sets execute bit on directories that are readable
-                  expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_GENERIC_READ | Puppet::Util::Windows::File::FILE_GENERIC_EXECUTE)
+                  expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_ALL_ACCESS)
                 end
               end
 

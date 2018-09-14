@@ -324,6 +324,20 @@ module Puppet::Util::Windows::Security
       # we don't check S_ISYSTEM_MISSING bit, but automatically carry over existing SYSTEM perms
       # by default set SYSTEM perms to full
       system_allow = FILE::FILE_ALL_ACCESS
+    else
+      # It is possible to set SYSTEM with a mode other than Full Control (7) however this makes no sense and in practical terms
+      # should not be done.  We can trap these instances and correct them before being applied.
+      if (sd.owner == well_known_system_sid) && (owner_allow != FILE::FILE_ALL_ACCESS)
+        #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+        Puppet.warning _("An attempt to set mode %{mode} on item %{path} would result in the owner, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode, path: path }
+        owner_allow = FILE::FILE_ALL_ACCESS
+      end
+
+      if (sd.group == well_known_system_sid) && (group_allow != FILE::FILE_ALL_ACCESS)
+        #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+        Puppet.warning _("An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode, path: path }
+        group_allow = FILE::FILE_ALL_ACCESS
+      end
     end
 
     # even though FILE_DELETE_CHILD only applies to directories, it can be set on files
