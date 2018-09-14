@@ -363,15 +363,14 @@ ERROR_STRING
   def download_csr_from_ca
     begin
       body = Puppet::Rest::Routes.get_certificate_request(
-                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
-                    name)
+                    name, Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store))
       begin
         Puppet::SSL::CertificateRequest.from_s(body)
       rescue OpenSSL::X509::RequestError => e
         raise Puppet::Error, _("Response from the CA did not contain a valid certificate request: %{message}") % { message: e.message }
       end
     rescue Puppet::Rest::ResponseError => e
-      if e.response.status_code == 404
+      if e.response.code.to_i == 404
         nil
       else
         raise Puppet::Error, _('Could not download certificate request: %{message}') % { message: e.message }
@@ -382,8 +381,7 @@ ERROR_STRING
   # @param [Puppet::SSL::CertificateRequest] csr the request to submit
   def submit_certificate_request(csr)
     Puppet::Rest::Routes.put_certificate_request(
-                  http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
-                  csr.render, name)
+                  csr.render, name, Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store))
   end
 
   def save_certificate_request(csr)
@@ -477,13 +475,11 @@ ERROR_STRING
   # @return nil
   def download_and_save_crl_bundle(store=nil)
     begin
-      # If no SSL store was suppoed, use this host's SSL store
+      # If no SSL store was supplied, use this host's SSL store
       store ||= ssl_store
-      client = http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, store))
       Puppet::Util.replace_file(crl_path, 0644) do |file|
-        Puppet::Rest::Routes.get_crls(client, CA_NAME) do |chunk|
-          file.write(chunk)
-        end
+        result = Puppet::Rest::Routes.get_crls(CA_NAME, Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, store))
+        file.write(result)
       end
     rescue Puppet::Rest::ResponseError => e
       raise Puppet::Error, _('Could not download CRLs: %{message}') % { message: e.message }
@@ -497,8 +493,9 @@ ERROR_STRING
   def download_ca_certificate_bundle
     begin
       cert_bundle = Puppet::Rest::Routes.get_certificate(
-                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE)),
-                    CA_NAME)
+        CA_NAME,
+        Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE)
+      )
       # This load ensures that the response body is a valid cert bundle.
       # If the text is malformed, load_certificate_bundle will raise.
       begin
@@ -562,15 +559,16 @@ ERROR_STRING
   def download_certificate_from_ca(cert_name)
     begin
       cert = Puppet::Rest::Routes.get_certificate(
-                    http_client(Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)),
-                    cert_name)
+        cert_name,
+        Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)
+      )
       begin
         Puppet::SSL::Certificate.from_s(cert)
       rescue OpenSSL::X509::CertificateError
         raise Puppet::Error, _("Response from the CA did not contain a valid certificate for %{cert_name}.") % { cert_name: cert_name }
       end
     rescue Puppet::Rest::ResponseError => e
-      if e.response.status_code == 404
+      if e.response.code.to_i == 404
         Puppet.debug _("No certificate for %{cert_name} on CA") % { cert_name: cert_name }
         nil
       else

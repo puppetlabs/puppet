@@ -251,7 +251,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       Puppet::SSL::CertificateRequest.expects(:new).returns(request)
 
       Puppet::Rest::Routes.expects(:put_certificate_request)
-        .with(@http, "my request", @host.name)
+        .with("my request", @host.name, anything)
         .returns(nil)
 
       expect(@host.generate_certificate_request).to be true
@@ -285,7 +285,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       Puppet[:certdir] = tmpdir('certs')
       @host.stubs(:key).returns mock("key")
       @host.stubs(:validate_certificate_with_key)
-      @http = mock 'http'
       @host.stubs(:http_client).returns(@http)
       @host.stubs(:ssl_store).returns(mock("ssl store"))
     end
@@ -295,12 +294,12 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
     it "should find the CA certificate and save it to disk" do
       Puppet::Rest::Routes.expects(:get_certificate)
-                          .with(@http, Puppet::SSL::CA_NAME)
+                          .with(Puppet::SSL::CA_NAME, anything)
                           .returns(ca_cert_response)
       Puppet::Rest::Routes.expects(:get_certificate)
-                          .with(@http, @host.name)
+                          .with(@host.name, anything)
                           .raises(Puppet::Rest::ResponseError.new('no client cert',
-                                                                  mock('response', status_code: 404)))
+                                                                  mock('response', code: '404')))
       @host.certificate
       actual_ca_bundle = Puppet::FileSystem.read(Puppet[:localcacert])
       expect(actual_ca_bundle).to match(/BEGIN CERTIFICATE.*END CERTIFICATE.*BEGIN CERTIFICATE/m)
@@ -330,10 +329,10 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
     it "should find the host certificate, write it to file, and return the Puppet certificate instance" do
       Puppet::Rest::Routes.expects(:get_certificate)
-                          .with(@http, Puppet::SSL::CA_NAME)
+                          .with(Puppet::SSL::CA_NAME, anything)
                           .returns(ca_cert_response)
       Puppet::Rest::Routes.expects(:get_certificate)
-                          .with(@http, @host.name)
+                          .with(@host.name, anything)
                           .returns(host_cert_response)
       expected_cert = Puppet::SSL::Certificate.from_s(@pki[:unrevoked_leaf_node_cert])
       actual_cert = @host.certificate
@@ -355,17 +354,17 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     context 'invalid certificates' do
       it "should raise if the CA certificate downloaded from CA is invalid" do
         Puppet::Rest::Routes.expects(:get_certificate)
-                            .with(@http, Puppet::SSL::CA_NAME)
+                            .with(Puppet::SSL::CA_NAME, anything)
                             .returns('garbage')
         expect { @host.certificate }.to raise_error(Puppet::Error, /did not contain a valid CA certificate/)
       end
 
       it "should warn if the host certificate downloaded from CA is invalid" do
         Puppet::Rest::Routes.expects(:get_certificate)
-                            .with(@http, Puppet::SSL::CA_NAME)
+                            .with(Puppet::SSL::CA_NAME, anything)
                             .returns(ca_cert_response)
         Puppet::Rest::Routes.expects(:get_certificate)
-                            .with(@http, @host.name)
+                            .with(@host.name, anything)
                             .returns('garbage')
         expect { @host.certificate }.to raise_error(Puppet::Error, /did not contain a valid certificate for #{@host.name}/)
       end
@@ -379,7 +378,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
       it 'should warn if the host certificate loaded from disk in invalid' do
         Puppet::Rest::Routes.expects(:get_certificate)
-                            .with(@http, Puppet::SSL::CA_NAME)
+                            .with(Puppet::SSL::CA_NAME, anything)
                             .returns(ca_cert_response)
         Puppet::FileSystem.open(File.join(Puppet[:certdir], "#{@host.name}.pem"), nil, "w:ASCII") do |f|
           f.puts 'garbage'
@@ -454,8 +453,8 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
       it "retrieves it from the server" do
         Puppet::Rest::Routes.expects(:get_crls)
-          .with(@http, Puppet::SSL::CA_NAME)
-          .yields(@pki[:crl_chain])
+          .with(Puppet::SSL::CA_NAME, anything)
+          .returns(@pki[:crl_chain])
 
         @host.ssl_store
         expect(Puppet::FileSystem.read(Puppet.settings[:hostcrl], :encoding => Encoding::UTF_8)).to eq(@pki[:crl_chain])
