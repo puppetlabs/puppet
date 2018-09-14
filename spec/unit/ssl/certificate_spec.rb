@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/certificate_factory'
 
 require 'puppet/ssl/certificate'
 
@@ -14,10 +15,6 @@ describe Puppet::SSL::Certificate do
 
   before do
     @class = Puppet::SSL::Certificate
-  end
-
-  after do
-    @class.instance_variable_set("@ca_location", nil)
   end
 
   it "should be extended with the Indirector module" do
@@ -90,7 +87,7 @@ describe Puppet::SSL::Certificate do
       csr = Puppet::SSL::CertificateRequest.new('quux')
       csr.generate(key, opts)
 
-      raw_cert = Puppet::SSL::CertificateFactory.build('client', csr, csr.content, 14)
+      raw_cert = Puppet::CertificateFactory.build('client', csr, csr.content, 14)
       @class.from_instance(raw_cert)
     end
 

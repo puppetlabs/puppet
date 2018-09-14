@@ -8,7 +8,7 @@ class Puppet::Resource::Catalog::Json < Puppet::Indirector::JSON
     utf8 = text.force_encoding(Encoding::UTF_8)
 
     if utf8.valid_encoding?
-      model.convert_from('json', utf8)
+      model.convert_from(json_format, utf8)
     else
       Puppet.info(_("Unable to deserialize catalog from json, retrying with pson"))
       model.convert_from('pson', text.force_encoding(Encoding::BINARY))
@@ -16,10 +16,20 @@ class Puppet::Resource::Catalog::Json < Puppet::Indirector::JSON
   end
 
   def to_json(object)
-    object.render('json')
+    object.render(json_format)
   rescue Puppet::Network::FormatHandler::FormatError => err
     Puppet.info(_("Unable to serialize catalog to json, retrying with pson"))
     Puppet.log_exception(err, err.message, level: :debug)
     object.render('pson').force_encoding(Encoding::BINARY)
+  end
+
+  private
+
+  def json_format
+    if Puppet[:rich_data]
+      'rich_data_json'
+    else
+      'json'
+    end
   end
 end

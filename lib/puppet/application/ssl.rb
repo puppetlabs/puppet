@@ -51,7 +51,6 @@ HELP
     end
 
     Puppet.settings.use(:main, :agent)
-    Puppet::SSL::Host.ca_location = :remote
     host = Puppet::SSL::Host.new(options[:certname])
 
     action = command_line.args.first

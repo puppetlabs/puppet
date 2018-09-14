@@ -14,6 +14,7 @@ Puppet::Face.define(:node, '0.0.1') do
 
       <Reports> - ($vardir/reports/node.domain)
 
+      NOTE: this action now cleans up certs via Puppet Server's CA API. A running server is required for certs to be cleaned.
     EOT
 
     when_invoked do |*args|

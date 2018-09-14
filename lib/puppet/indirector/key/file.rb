@@ -5,7 +5,6 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
   desc "Manage SSL private and public keys on disk."
 
   store_in :privatekeydir
-  store_ca_at :cakey
 
   def allow_remote_requests?
     false
@@ -13,11 +12,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
 
   # Where should we store the public key?
   def public_key_path(name)
-    if ca?(name)
-      Puppet[:capub]
-    else
-      File.join(Puppet[:publickeydir], name.to_s + ".pem")
-    end
+    File.join(Puppet[:publickeydir], name.to_s + ".pem")
   end
 
   # Remove the public key, in addition to the private key

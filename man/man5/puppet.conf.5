@@ -130,14 +130,6 @@ Where FileBucket files are stored\.
 .
 .IP "" 0
 .
-.SS "ca"
-Whether the master should function as a certificate authority\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: true
-.
-.IP "" 0
-.
 .SS "ca_name"
 The name to use the Certificate Authority certificate\.
 .
@@ -199,22 +191,6 @@ The CA private key\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: $cadir/ca_key\.pem
-.
-.IP "" 0
-.
-.SS "capass"
-Where the CA stores the password for the private key\. This setting is deprecated and will be removed in Puppet 6\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: $caprivatedir/ca\.pass
-.
-.IP "" 0
-.
-.SS "caprivatedir"
-Where the CA stores private certificate information\. This setting is deprecated and will be removed in Puppet 6\.
-.
-.IP "\(bu" 4
-\fIDefault\fR: $cadir/private
 .
 .IP "" 0
 .
