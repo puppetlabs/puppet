@@ -11,6 +11,12 @@ module Puppet::Util::Windows
     extend Puppet::Util::Windows::String
 
     FILE = Puppet::Util::Windows::File
+
+    # integer value of the floor for timeouts when waiting for service pending states.
+    # puppet will wait the length of dwWaitHint if it is longer than this value, but
+    # no shorter
+    DEFAULT_TIMEOUT = 30
+
     # Service control codes
     # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-controlserviceexw
     SERVICE_CONTROL_STOP                  = 0x00000001
@@ -583,16 +589,34 @@ module Puppet::Util::Windows
           if status[:dwCheckPoint] > last_checkpoint
             elapsed_time = 0
           else
-            if elapsed_time > (status[:dwWaitHint] / 1000)
+            timeout = milliseconds_to_seconds(status[:dwWaitHint]);
+            timeout = DEFAULT_TIMEOUT if timeout < DEFAULT_TIMEOUT
+            if elapsed_time >= (timeout)
               raise Puppet::Error.new(_("No progress made on service operation and dwWaitHint exceeded"))
             end
-            elapsed_time += time_to_wait
           end
           last_checkpoint = status[:dwCheckPoint]
           sleep(time_to_wait)
+          elapsed_time += time_to_wait
         end
       end
       private :wait_for_pending_transition
+
+      # @api private
+      #
+      # create a usable wait time to wait between querying the service.
+      #
+      # @param [Integer] wait_hint the wait hint of a service in milliseconds
+      # @return [Integer] the time to wait in seconds between querying the service
+      def wait_hint_to_wait_time(wait_hint)
+        # Wait 1/10th the wait_hint, but no less than 1 and
+        # no more than 10 seconds
+        wait_time = milliseconds_to_seconds(wait_hint) / 10;
+        wait_time = 1 if wait_time < 1
+        wait_time = 10 if wait_time > 10
+        wait_time
+      end
+      private :wait_hint_to_wait_time
 
       # @api private
       #
@@ -600,19 +624,11 @@ module Puppet::Util::Windows
       # usable by ruby sleep
       #
       # @param [Integer] wait_hint the wait hint of a service in milliseconds
-      # @return [Integer] the time to wait in seconds between querying the service
-      def wait_hint_to_wait_time(wait_hint)
-        # The first divisor begs a little explanation: the value of
-        # :dwWaitHint will return in milliseconds, but ruby sleep
-        # takes seconds. So we need at least / 1000. After that, the
-        # suggested operation is to wait 1/10 of the actual wait hint
-        # between querying the service. So we get wait_hint / 10000
-        wait_time = wait_hint / 10000;
-        wait_time = 1 if wait_time < 1
-        wait_time = 10 if wait_time > 10
-        wait_time
+      # @return [Integer] wait_hint in seconds
+      def milliseconds_to_seconds(wait_hint)
+        wait_hint / 1000;
       end
-      private :wait_hint_to_wait_time
+      private :milliseconds_to_seconds
     end
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-openscmanagerw
