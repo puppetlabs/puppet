@@ -420,12 +420,13 @@ describe 'loaders' do
     let(:scope) { compiler.topscope }
     let(:loader) { compiler.loaders.private_loader_for_module('user') }
 
-      before(:each) do
-        Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
-      end
-      after(:each) do
-        Puppet.pop_context
-      end
+
+    before(:each) do
+      Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
+    end
+    after(:each) do
+      Puppet.pop_context
+    end
 
     it 'a 3x function is loaded once' do
       # create a 3x function that when called will do a load of "callee_ws"
