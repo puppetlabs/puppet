@@ -151,7 +151,6 @@ describe Puppet::Application::Device do
     before :each do
       @device.options.stubs(:[])
       Puppet[:libdir] = "/dev/null/lib"
-      Puppet::SSL::Host.stubs(:ca_location=)
       Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
       Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
       Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
@@ -215,12 +214,6 @@ describe Puppet::Application::Device do
 
     it "should use :main, :agent, :device and :ssl config" do
       Puppet.settings.expects(:use).with(:main, :agent, :device, :ssl)
-
-      @device.setup
-    end
-
-    it "should install a remote ca location" do
-      Puppet::SSL::Host.expects(:ca_location=).with(:remote)
 
       @device.setup
     end
