@@ -123,11 +123,16 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
         expect{subject.start(mock_service_name)}.to raise_error(Puppet::Error)
       end
 
+      it "raises a puppet error if the services configured dwWaitHint is 0, 30 seconds have passed and dwCheckPoint hasn't increased" do
+        # the number of times here is a little strange: there are 31 and 32 status queries sleeps because:
+        expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_STOP_PENDING, :dwWaitHint => 0, :dwCheckPoint => 0}).times(31)
+        subject.expects(:sleep).times(30).with(1)
+        expect{subject.start(mock_service_name)}.to raise_error(Puppet::Error)
+      end
+
       it "raises a puppet error if the services configured dwWaitHint has passed and dwCheckPoint hasn't increased" do
-        expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_STOP_PENDING, :dwWaitHint => 0, :dwCheckPoint => 0})
-        expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_STOP_PENDING, :dwWaitHint => 0, :dwCheckPoint => 0})
-        expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_STOP_PENDING, :dwWaitHint => 0, :dwCheckPoint => 0})
-        subject.expects(:sleep).twice.with(1)
+        expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_STOP_PENDING, :dwWaitHint => 40000, :dwCheckPoint => 0}).times(11)
+        subject.expects(:sleep).times(10).with(4)
         expect{subject.start(mock_service_name)}.to raise_error(Puppet::Error)
       end
 
@@ -172,10 +177,8 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
 
       it "raises a puppet error if the service's configured dwWaitHint has passed and dwCheckPoint hasn't increased" do
         expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_STOPPED})
-        expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_START_PENDING, :dwWaitHint => 0, :dwCheckPoint => 0})
-        expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_START_PENDING, :dwWaitHint => 0, :dwCheckPoint => 0})
-        expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_START_PENDING, :dwWaitHint => 0, :dwCheckPoint => 0})
-        subject.expects(:sleep).twice.with(1)
+        expect_successful_status_query_and_return({:dwCurrentState => subject::SERVICE_START_PENDING, :dwWaitHint => 40000, :dwCheckPoint => 0}).times(11)
+        subject.expects(:sleep).times(10).with(4)
         expect{subject.start(mock_service_name)}.to raise_error(Puppet::Error)
       end
 
