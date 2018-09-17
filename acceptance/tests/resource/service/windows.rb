@@ -35,7 +35,7 @@ MANIFEST
   # startup
   mock_service_startfail = {
     :name => "mock_service_startfail",
-    :start_sleep => 20,
+    :start_sleep => 60,
     :pause_sleep => 0,
     :continue_sleep => 0,
     :stop_sleep => 0,
@@ -49,7 +49,7 @@ MANIFEST
     :start_sleep => 0,
     :pause_sleep => 0,
     :continue_sleep => 0,
-    :stop_sleep => 20,
+    :stop_sleep => 60,
   }
 
   agents.each do |agent|
