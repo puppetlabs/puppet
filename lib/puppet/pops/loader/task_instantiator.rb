@@ -14,10 +14,12 @@ class TaskInstantiator
     metadata = Puppet::Module::Task.read_metadata(metadata_file)
 
     implementations = Puppet::Module::Task.find_implementations(name, dirname, metadata, executables)
+    files = Puppet::Module::Task.find_files(metadata)
 
     arguments = {
       'name' => name,
-      'implementations' => implementations
+      'implementations' => implementations,
+      'files' => files
     }
 
     begin

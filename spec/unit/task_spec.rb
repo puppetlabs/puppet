@@ -33,18 +33,19 @@ describe Puppet::Module::Task do
     expect(tasks.map{|t| t.metadata_file}).to eq(["#{tasks_path}/task1.json",
                                                   "#{tasks_path}/task2.json",
                                                   "#{tasks_path}/task3.json"])
-    expect(tasks.map{|t| t.files.map { |f| f["path"] } }).to eq([["#{tasks_path}/task1"],
-                                                                 ["#{tasks_path}/task2.exe"],
-                                                                 ["#{tasks_path}/task3.sh"]])
-    expect(tasks.map{|t| t.files.map { |f| f["name"] } }).to eq([["task1"],
-                                                                 ["task2.exe"],
-                                                                 ["task3.sh"]])
+    expect(tasks.map{|t| t.implementations.map { |f| f["path"] } }).to eq([["#{tasks_path}/task1"],
+                                                                           ["#{tasks_path}/task2.exe"],
+                                                                           ["#{tasks_path}/task3.sh"]])
+    expect(tasks.map{|t| t.implementations.map { |f| f["name"] } }).to eq([["task1"],
+                                                                           ["task2.exe"],
+                                                                           ["task3.sh"]])
+    expect(tasks.flat_map{|t| t.files}).to be_empty
 
     tasks.map{|t| t.metadata_file}.each do |metadata_file|
       expect(metadata_file).to eq(File.absolute_path(metadata_file))
     end
 
-    tasks.map{|t| t.files}.each do |file_data|
+    tasks.map{|t| t.implementations}.each do |file_data|
       path = file_data[0]['path']
       expect(path).to eq(File.absolute_path(path))
     end
@@ -59,9 +60,9 @@ describe Puppet::Module::Task do
     expect(tasks.count).to eq(3)
     expect(tasks.map{|t| t.name}).to eq(%w{mymod::task1 mymod::task2 mymod::task3})
     expect(tasks.map{|t| t.metadata_file}).to eq([nil, nil, "#{tasks_path}/task3.json"])
-    expect(tasks.map{|t| t.files.map { |f| f["path"] } }).to eq([["#{tasks_path}/task1"],
-                                          ["#{tasks_path}/task2.exe"],
-                                          ["#{tasks_path}/task3.sh"]])
+    expect(tasks.map{|t| t.implementations.map { |f| f["path"] } }).to eq([["#{tasks_path}/task1"],
+                                                                           ["#{tasks_path}/task2.exe"],
+                                                                           ["#{tasks_path}/task3.sh"]])
   end
 
   it "constructs a task as expected when a task has implementations" do
@@ -74,7 +75,7 @@ describe Puppet::Module::Task do
     expect(tasks.count).to eq(1)
     expect(tasks.map{|t| t.name}).to eq(%w{mymod::task1})
     expect(tasks.map{|t| t.metadata_file}).to eq(["#{tasks_path}/task1.json"])
-    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"]])
+    expect(tasks.map{|t| t.implementations.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"]])
   end
 
   it "constructs a task as expected when a task has files" do
@@ -82,14 +83,15 @@ describe Puppet::Module::Task do
     Dir.expects(:glob).with(tasks_glob).returns(og_files)
     File.expects(:exist?).with(any_parameters).returns(true).at_least(1)
 
-    Puppet::Module.expects(:find).with(othermod.name, "production").returns(othermod).at_least(1)
+    Puppet::Module.expects(:find).with(othermod.name, 'production').returns(othermod).at_least(1)
     short_files = %w{other_task.sh other_task.json task_2.sh}.map { |bn| "#{othermod.name}/tasks/#{bn}" }
     long_files = %w{other_task.sh other_task.json task_2.sh}.map { |bn| "#{other_tasks_path}/#{bn}" }
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
     Puppet::Module::Task.any_instance.stubs(:metadata).returns({'files' => short_files})
 
     expect(tasks.count).to eq(1)
-    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"] + long_files])
+    expect(tasks.map{|t| t.implementations.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"]])
+    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([long_files])
   end
 
   it "fails to load a task if its metadata specifies a non-existent file" do
@@ -97,11 +99,13 @@ describe Puppet::Module::Task do
     Dir.stubs(:glob).with(tasks_glob).returns(og_files)
     File.stubs(:exist?).with(any_parameters).returns(true)
 
-    Puppet::Module.expects(:find).with(othermod.name, "production").returns(nil).at_least(1)
+    Puppet::Module.expects(:find).with(othermod.name, 'production').returns(nil).at_least(1)
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
     Puppet::Module::Task.any_instance.stubs(:metadata).returns({'files' => ["#{othermod.name}/files/test"]})
 
-    expect { tasks.first.files }.to raise_error(Puppet::Module::Task::InvalidMetadata, /Could not find module #{othermod.name} containing task file test/)
+    expect {
+      tasks.first.files
+    }.to raise_error(Puppet::Module::Task::InvalidMetadata, /Could not find module #{othermod.name} containing task file test/)
   end
 
   it "finds files whose names (besides extensions) are valid task names" do
@@ -136,7 +140,7 @@ describe Puppet::Module::Task do
     it "loads metadata for a task" do
       metadata  = {'desciption': 'some info'}
       Dir.expects(:glob).with(tasks_glob).returns(%w{task1.exe task1.json})
-      Puppet::Module::Task.any_instance.stubs(:read_metadata).returns(metadata)
+      Puppet::Module::Task.stubs(:read_metadata).returns(metadata)
 
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
@@ -144,12 +148,12 @@ describe Puppet::Module::Task do
       expect(tasks[0].metadata).to eq(metadata)
     end
 
-    it 'returns nil for metadata if no file is present' do
+    it 'returns {} for metadata if no file is present' do
       Dir.expects(:glob).with(tasks_glob).returns(%w{task1.exe})
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
       expect(tasks.count).to eq(1)
-      expect(tasks[0].metadata).to be_nil
+      expect(tasks[0].metadata).to eq({})
     end
 
     it 'raises InvalidMetadata if the json metadata is invalid' do
@@ -166,47 +170,14 @@ describe Puppet::Module::Task do
     end
   end
 
-  describe :validate do
-    it "validates when there is no metadata" do
-      Dir.expects(:glob).with(tasks_glob).returns(%w{task1.exe})
-
-      tasks = Puppet::Module::Task.tasks_in_module(mymod)
-
-      expect(tasks.count).to eq(1)
-      expect(tasks[0].validate).to eq(true)
-    end
-
-    it "validates when an implementation isn't used" do
-      metadata  = {'desciption' => 'some info',
-        'implementations' => [ {"name" => "task1.exe"}, ] }
-      Dir.expects(:glob).with(tasks_glob).returns(%w{task1.exe task1.sh task1.json})
-      Puppet::Module::Task.any_instance.stubs(:read_metadata).returns(metadata)
-
-      tasks = Puppet::Module::Task.tasks_in_module(mymod)
-
-      expect(tasks.count).to eq(1)
-      expect(tasks[0].validate).to be(true)
-    end
-
-    it "validates when an implementation is another task" do
-      metadata  = {'desciption' => 'some info',
-                   'implementations' => [ {"name" => "task2.sh"}, ] }
-      Dir.expects(:glob).with(tasks_glob).returns(%w{task1.exe task2.sh task1.json})
-      Puppet::Module::Task.any_instance.stubs(:read_metadata).returns(metadata)
-
-      tasks = Puppet::Module::Task.tasks_in_module(mymod)
-
-      expect(tasks.count).to eq(2)
-      expect(tasks.map(&:validate)).to eq([true, true])
-    end
-
+  describe :implementations do
     it "fails validation when there is no metadata and multiple task files" do
       Dir.expects(:glob).with(tasks_glob).returns(%w{task1.elf task1.exe task1.json task2.ps1 task2.sh})
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
       Puppet::Module::Task.any_instance.stubs(:metadata).returns({})
 
       tasks.each do |task|
-        expect {task.validate}.to raise_error(Puppet::Module::Task::InvalidTask)
+        expect {task.implementations}.to raise_error(Puppet::Module::Task::InvalidTask)
       end
     end
 
@@ -216,7 +187,7 @@ describe Puppet::Module::Task do
       Puppet::Module::Task.any_instance.stubs(:metadata).returns({'implementations' => [ { 'name' => 'task1.sh' } ] })
 
       tasks.each do |task|
-        expect {task.validate}.to raise_error(Puppet::Module::Task::InvalidTask)
+        expect {task.implementations}.to raise_error(Puppet::Module::Task::InvalidTask)
       end
     end
 
@@ -225,7 +196,7 @@ describe Puppet::Module::Task do
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
       Puppet::Module::Task.any_instance.stubs(:metadata).returns({})
 
-      expect { tasks.find { |t| t.name == 'mymod::task1' }.validate }.to raise_error(Puppet::Module::Task::InvalidTask)
+      expect { tasks.find { |t| t.name == 'mymod::task1' }.implementations }.to raise_error(Puppet::Module::Task::InvalidTask)
     end
 
     it 'fails validation when the implementations are not an array' do
@@ -233,7 +204,7 @@ describe Puppet::Module::Task do
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
       Puppet::Module::Task.any_instance.stubs(:metadata).returns({"implemenations" => {}})
 
-      expect { tasks.find { |t| t.name == 'mymod::task1' }.validate }.to raise_error(Puppet::Module::Task::InvalidTask)
+      expect { tasks.find { |t| t.name == 'mymod::task1' }.implementations }.to raise_error(Puppet::Module::Task::InvalidTask)
     end
 
     it 'fails validation when the implementation is json' do
@@ -241,7 +212,7 @@ describe Puppet::Module::Task do
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
       Puppet::Module::Task.any_instance.stubs(:metadata).returns({'implementations' => [ { 'name' => 'task1.json' } ] })
 
-      expect { tasks.find { |t| t.name == 'mymod::task1' }.validate }.to raise_error(Puppet::Module::Task::InvalidTask)
+      expect { tasks.find { |t| t.name == 'mymod::task1' }.implementations }.to raise_error(Puppet::Module::Task::InvalidTask)
     end
   end
 end

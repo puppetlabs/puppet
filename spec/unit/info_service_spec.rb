@@ -53,7 +53,7 @@ describe "Puppet::InfoService" do
 
         it 'specifies the other files correctly' do
           task = @mod.tasks[0]
-          expect(@result[:files]).to eq(task.files)
+          expect(@result[:files]).to eq(task.files + task.implementations)
         end
       end
 
