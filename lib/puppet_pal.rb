@@ -364,6 +364,41 @@ module Pal
       end
     end
 
+
+    # Compiles the result of additional evaluation taking place in a PAL catalog compilation.
+    # This will evaluate all lazy constructs until all have been evaluated, and will the validate
+    # the result.
+    #
+    # This should be called if evaluating string or files of puppet logic after the initial
+    # compilation taking place by giving PAL a manifest or code-string.
+    # This method should be called when a series of evaluation should have reached a
+    # valid state (there should be no dangling relationships (to resources that does not
+    # exist).
+    #
+    # As an alternative the methods `evaluate_additions` can be called without any
+    # requirements on consistency and then calling `validate` at the end.
+    #
+    # Can be called multiple times.
+    #
+    # @return [Void]
+    def compile_additions
+      internal_compiler.compile_additions
+    end
+
+    # Validates the state of the catalog (without performing evaluation of any elements
+    # requiring lazy evaluation. Can be called multiple times.
+    #
+    def validate
+      internal_compiler.validate
+    end
+
+    # Evaluates all lazy constructs that were produced as a side effect of evaluating puppet logic.
+    # Can be called multiple times.
+    #
+    def evaluate_additions
+      internal_compiler.evaluate_additions
+    end
+
   end
 
   # The JsonCatalogEncoder is a wrapper around a catalog produced by the Pal::CatalogCompiler.with_json_encoding
