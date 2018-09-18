@@ -204,8 +204,12 @@ class Puppet::Module
       @module_executables = module_executables || []
     end
 
-    def read_metadata(file)
-      Puppet::Util::Json.load(Puppet::FileSystem.read(file, :encoding => 'utf-8')) if file
+    def self.read_metadata(file)
+      if file
+        Puppet::Util::Json.load(Puppet::FileSystem.read(file, :encoding => 'utf-8'))
+      else
+        {}
+      end.freeze
     rescue SystemCallError, IOError => err
       msg = _("Error reading metadata: %{message}" % {message: err.message})
       raise InvalidMetadata.new(msg, 'puppet.tasks/unreadable-metadata')
@@ -214,7 +218,7 @@ class Puppet::Module
     end
 
     def metadata
-      @metadata ||= read_metadata(@metadata_file)
+      @metadata ||= self.class.read_metadata(@metadata_file)
     end
 
     def implementations

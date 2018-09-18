@@ -535,10 +535,6 @@ module TypeFactory
     @error_t ||= TypeParser.singleton.parse('Error', Loaders.loaders.puppet_system_loader)
   end
 
-  def self.task
-    @task_t ||= TypeParser.singleton.parse('Task')
-  end
-
   def self.deferred
     @deferred_t ||= TypeParser.singleton.parse('Deferred')
   end
