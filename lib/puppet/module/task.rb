@@ -74,16 +74,14 @@ class Puppet::Module
 
     # Find task's required lib files and retrieve paths
     # for both 'files' and 'implementation:files' metadata keys
-    def self.find_files(files, mod)
-      env = mod.environment.respond_to?(:name) ? mod.environment.name : 'production'
-
+    def self.find_files(files)
       file_list = files.flat_map do |file|
         module_name, mount, endpath = file.split("/", 3)
         # If there's a mount directory with no trailing slash this will be nil
         # We want it to be empty to construct a path
         endpath ||= ''
 
-        pup_module = Puppet::Module.find(module_name, env)
+        pup_module = Puppet::Module.find(module_name)
         if pup_module.nil?
           msg = _("Could not find module %{module_name} containing task file %{filename}" %
                   {module_name: module_name, filename: endpath})
@@ -235,7 +233,7 @@ class Puppet::Module
         if md.key?('implementations')
           md['implementations'].each { |impl| impl_lib_files << impl['files'] if impl.key?('files') }
         end
-        lib_files = self.class.find_files((impl_lib_files.flatten.uniq + outer_files).uniq, @module)
+        lib_files = self.class.find_files((impl_lib_files.flatten.uniq + outer_files).uniq)
       end
       task_file = implementations.map {|imp| { 'name' => imp['name'], 'path' => imp['path'] } }
       # PXP agent relies on 'impls' (which is the task file) being first if there is no metadata
