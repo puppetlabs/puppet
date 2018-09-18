@@ -153,6 +153,15 @@ module Serialization
       expect(val2).to eql(val)
     end
 
+    it 'ACII_8BIT String as Binary' do
+      val = Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+      strval = val.binary_buffer
+      write(strval)
+      val2 = read
+      expect(val2).to be_a(Types::PBinaryType::Binary)
+      expect(val2).to eql(val)
+    end
+
     it 'URI' do
       val = URI('http://bob:ewing@dallas.example.com:8080/oil/baron?crude=cash#leftovers')
       write(val)

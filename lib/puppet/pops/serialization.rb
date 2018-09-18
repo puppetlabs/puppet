@@ -19,6 +19,7 @@ module Serialization
 
   # Type key used for symbols
   PCORE_TYPE_SENSITIVE = 'Sensitive'.freeze
+  PCORE_TYPE_BINARY = 'Binary'.freeze
 
   # Type key used for symbols
   PCORE_TYPE_SYMBOL = 'Symbol'.freeze

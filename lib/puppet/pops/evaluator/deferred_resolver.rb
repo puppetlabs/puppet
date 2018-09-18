@@ -96,6 +96,9 @@ class DeferredResolver
     elsif x.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
       # rewrap in a new Sensitive after resolving any nested deferred values
       Puppet::Pops::Types::PSensitiveType::Sensitive.new(resolve(x.unwrap))
+    elsif x.is_a?(Puppet::Pops::Types::PBinaryType::Binary)
+      # use the ASCII-8BIT string that it wraps
+      x.binary_buffer
     else
       x
     end
