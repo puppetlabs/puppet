@@ -279,6 +279,11 @@ describe Puppet::Application::Apply do
         expect { @apply.main }.to exit_with 0
       end
 
+      it 'should called the DeferredResolver to resolve any Deferred values' do
+        Puppet::Pops::Evaluator::DeferredResolver.expects(:resolve_and_replace).with(any_parameters)
+        expect { @apply.main }.to exit_with 0
+      end
+
       it 'should make the Puppet::Pops::Loaders available when applying the compiled catalog' do
         Puppet::Resource::Catalog.indirection.expects(:find).returns(@catalog)
         @apply.expects(:apply_catalog).with(@catalog) do
@@ -474,6 +479,15 @@ describe Puppet::Application::Apply do
           true
         end
         expect { @apply.apply }.not_to raise_error
+      end
+
+      it "should call the DeferredResolver to resolve Deferred values" do
+        @apply.options[:catalog] = temporary_catalog
+        Puppet::Resource::Catalog.stubs(:default_format).returns :rot13_piglatin
+        catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
+        Puppet::Resource::Catalog.stubs(:convert_from).with(:rot13_piglatin,'"something"').returns(catalog)
+        Puppet::Pops::Evaluator::DeferredResolver.expects(:resolve_and_replace).with(any_parameters)
+        @apply.apply
       end
     end
   end
