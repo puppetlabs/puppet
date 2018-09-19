@@ -136,7 +136,7 @@ describe Puppet::Module::Task do
     it "loads metadata for a task" do
       metadata  = {'desciption': 'some info'}
       Dir.expects(:glob).with(tasks_glob).returns(%w{task1.exe task1.json})
-      Puppet::Module::Task.any_instance.stubs(:read_metadata).returns(metadata)
+      Puppet::Module::Task.stubs(:read_metadata).returns(metadata)
 
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
@@ -180,7 +180,7 @@ describe Puppet::Module::Task do
       metadata  = {'desciption' => 'some info',
         'implementations' => [ {"name" => "task1.exe"}, ] }
       Dir.expects(:glob).with(tasks_glob).returns(%w{task1.exe task1.sh task1.json})
-      Puppet::Module::Task.any_instance.stubs(:read_metadata).returns(metadata)
+      Puppet::Module::Task.stubs(:read_metadata).returns(metadata)
 
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
@@ -192,7 +192,7 @@ describe Puppet::Module::Task do
       metadata  = {'desciption' => 'some info',
                    'implementations' => [ {"name" => "task2.sh"}, ] }
       Dir.expects(:glob).with(tasks_glob).returns(%w{task1.exe task2.sh task1.json})
-      Puppet::Module::Task.any_instance.stubs(:read_metadata).returns(metadata)
+      Puppet::Module::Task.stubs(:read_metadata).returns(metadata)
 
       tasks = Puppet::Module::Task.tasks_in_module(mymod)
 

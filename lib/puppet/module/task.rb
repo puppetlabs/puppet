@@ -71,19 +71,22 @@ class Puppet::Module
 
       { "name" => name, "path" =>  path }
     end
+    private_class_method :get_file_details
 
-    # Find task's required lib files and retrieve paths
-    # for both 'files' and 'implementation:files' metadata keys
-    def self.find_files(files, mod)
-      env = mod.environment.respond_to?(:name) ? mod.environment.name : 'production'
+    # Find task's required lib files and retrieve paths for both 'files' and 'implementation:files' metadata keys
+    def self.find_extra_files(metadata, envname = nil)
+      return [] if metadata.nil?
 
-      file_list = files.flat_map do |file|
+      files = metadata.fetch('files', []) +
+        metadata.fetch('implementations', []).flat_map { |impl| impl.fetch('files', []) }
+
+      files.uniq.flat_map do |file|
         module_name, mount, endpath = file.split("/", 3)
         # If there's a mount directory with no trailing slash this will be nil
         # We want it to be empty to construct a path
         endpath ||= ''
 
-        pup_module = Puppet::Module.find(module_name, env)
+        pup_module = Puppet::Module.find(module_name, envname)
         if pup_module.nil?
           msg = _("Could not find module %{module_name} containing task file %{filename}" %
                   {module_name: module_name, filename: endpath})
@@ -114,22 +117,18 @@ class Puppet::Module
             raise InvalidMetadata.new(msg, 'puppet.tasks/invalid-metadata')
           end
           dir_files = Dir.glob("#{path}**/*").select { |f| File.file?(f) }
-          files = dir_files.map { |f| get_file_details(f, pup_module) }
+          dir_files.map { |f| get_file_details(f, pup_module) }
         else
           if last_char
             msg = _("Files specified in task metadata cannot include a trailing slash: %{file}" % { file: file } )
             raise InvalidMetadata.new(msg, 'puppet.task/invalid-metadata')
           end
-          files = get_file_details(path, pup_module)
+          get_file_details(path, pup_module)
         end
-
-        files
       end
-      return file_list
     end
+    private_class_method :find_extra_files
 
-    # Copied from TaskInstantiator so we can use the Error classes here
-    # TODO: harmonize on one implementation
     # Executables list should contain the full path of all possible implementation files
     def self.find_implementations(name, directory, metadata, executables)
       basename = name.split('::')[1] || 'init'
@@ -148,7 +147,7 @@ class Puppet::Module
             msg = _("Task metadata for task %{name} specifies missing implementation %{implementation}" % { name: name, implementation: impl['name'] })
             raise InvalidTask.new(msg, 'puppet.tasks/missing-implementation', { missing: [impl['name']] } )
           end
-          { "name" => impl['name'], "requirements" => impl.fetch('requirements', []), "path" => path }
+          { "name" => impl['name'], "path" => path }
         end
         return implementations
       end
@@ -166,7 +165,13 @@ class Puppet::Module
         raise InvalidTask.new(msg, 'puppet.tasks/multiple-implementations')
       end
 
-      [{ "name" => File.basename(implementations.first), "path" => implementations.first, "requirements" => [] }]
+      [{ "name" => File.basename(implementations.first), "path" => implementations.first }]
+    end
+    private_class_method :find_implementations
+
+    def self.find_files(name, directory, metadata, executables, envname = nil)
+      # PXP agent relies on 'impls' (which is the task file) being first if there is no metadata
+      find_implementations(name, directory, metadata, executables) + find_extra_files(metadata, envname)
     end
 
     def self.is_tasks_metadata_filename?(name)
@@ -206,7 +211,7 @@ class Puppet::Module
       @module_executables = module_executables || []
     end
 
-    def read_metadata(file)
+    def self.read_metadata(file)
       Puppet::Util::Json.load(Puppet::FileSystem.read(file, :encoding => 'utf-8')) if file
     rescue SystemCallError, IOError => err
       msg = _("Error reading metadata: %{message}" % {message: err.message})
@@ -216,34 +221,15 @@ class Puppet::Module
     end
 
     def metadata
-      @metadata ||= read_metadata(@metadata_file)
-    end
-
-    def implementations
-      @implementations ||= self.class.find_implementations(@name, @module.tasks_directory, metadata, @module_executables)
+      @metadata ||= self.class.read_metadata(@metadata_file)
     end
 
     def files
-      md = metadata
-      outer_files = []
-      impl_lib_files = []
-      lib_files = []
-
-      unless md.nil?
-        outer_files = md['files'] if md.key?('files')
-        # There's definitely a more elegant way to do this...
-        if md.key?('implementations')
-          md['implementations'].each { |impl| impl_lib_files << impl['files'] if impl.key?('files') }
-        end
-        lib_files = self.class.find_files((impl_lib_files.flatten.uniq + outer_files).uniq, @module)
-      end
-      task_file = implementations.map {|imp| { 'name' => imp['name'], 'path' => imp['path'] } }
-      # PXP agent relies on 'impls' (which is the task file) being first if there is no metadata
-      task_file + lib_files
+      @files ||= self.class.find_files(@name, @module.tasks_directory, metadata, @module_executables, environment_name)
     end
 
     def validate
-      implementations
+      files
       true
     end
 
@@ -251,6 +237,11 @@ class Puppet::Module
       self.name == other.name &&
       self.module == other.module
     end
+
+    def environment_name
+      @module.environment.respond_to?(:name) ? @module.environment.name : 'production'
+    end
+    private :environment_name
 
     def self.new_with_files(pup_module, name, task_files, module_executables)
       metadata_file = task_files.find { |f| is_tasks_metadata_filename?(f) }
