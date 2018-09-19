@@ -500,12 +500,12 @@ module Pal
     # @return [Boolean] if the given arguments are acceptable when running the task
     #
     def runnable_with?(args_hash)
-      params = @task.parameters
+      params = @task['parameters']
       params_type = if params.nil?
         T_GENERIC_TASK_HASH
       else
         key_to_type = {}
-        @task.parameters.each_pair { |k, v| key_to_type[k] = v['type'] }
+        params.each_pair { |k, v| key_to_type[k] = v['type'] }
         Puppet::Pops::Types::TypeFactory.struct(key_to_type)
       end
       return true if params_type.instance?(args_hash)
@@ -517,22 +517,15 @@ module Pal
         else
           tm.describe_struct_signature(params_type, args_hash).flatten.map {|e| e.format }.join("\n")
         end
-        yield "Task #{@task.name}:\n#{error}"
+        yield "Task #{@task['name']}:\n#{error}"
       end
       false
     end
 
-    # Returns the Task instance as a hash
-    #
-    # @return [Hash{String=>Object}] the hash representation of the task
-    def task_hash
-      @task._pcore_init_hash
-    end
-
-    # Returns the Task instance which can be further explored. It contains all meta-data defined for
+    # Returns the Task instance as a hash. It contains all meta-data defined for
     # the task such as the description, parameters, output, etc.
     #
-    # @return [Puppet::Pops::Types::PuppetObject] An instance of a dynamically created Task class
+    # @return [Hash{String=>Object}] the hash representation of the task
     def task
       @task
     end

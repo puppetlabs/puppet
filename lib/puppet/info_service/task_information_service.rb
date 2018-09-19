@@ -6,7 +6,7 @@ class Puppet::InfoService::TaskInformationService
     env = Puppet.lookup(:environments).get!(environment_name)
     env.modules.map do |mod|
       mod.tasks.map do |task|
-        {:module => {:name => task.module.name}, :name => task.name}
+        { :module => {:name => task.module.name}, :name => task.name }
       end
     end.flatten
   end
@@ -18,7 +18,7 @@ class Puppet::InfoService::TaskInformationService
     pup_module = Puppet::Module.find(module_name, environment_name)
     if pup_module.nil?
       raise Puppet::Module::MissingModule, _("Module %{module_name} not found in environment %{environment_name}.") %
-                                            {module_name: module_name, environment_name: environment_name}
+                                            { module_name: module_name, environment_name: environment_name }
     end
 
     task = pup_module.tasks.find { |t| t.name == task_name }
@@ -27,8 +27,8 @@ class Puppet::InfoService::TaskInformationService
     end
 
     begin
-      task.validate
-      {:metadata => task.metadata, :files => task.files}
+      # PXP agent relies on 'impls' (which is the task file) being first if there is no metadata
+      { :metadata => task.metadata, :files => task.implementations + task.files }
     rescue Puppet::Module::Task::Error => err
       { :metadata => nil, :files => [], :error => err.to_h }
     end
