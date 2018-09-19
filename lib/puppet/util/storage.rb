@@ -82,6 +82,18 @@ class Puppet::Util::Storage
 
     Puppet.info _("Creating state file %{file}") % { file: Puppet[:statefile] } unless Puppet::FileSystem.exist?(Puppet[:statefile])
 
+    if Puppet[:statettl] == 0 || Puppet[:statettl] == Float::INFINITY
+      Puppet.debug "Not pruning old state cache entries"
+    else
+      Puppet::Util.benchmark(:debug, "Pruned old state cache entries in %{seconds} seconds") do
+        ttl_cutoff = Time.now - Puppet[:statettl]
+
+        @@state.reject! do |k,v|
+          @@state[k][:checked] && @@state[k][:checked] < ttl_cutoff
+        end
+      end
+    end
+
     Puppet::Util.benchmark(:debug, "Stored state in %{seconds} seconds") do
       Puppet::Util::Yaml.dump(@@state, Puppet[:statefile])
     end
