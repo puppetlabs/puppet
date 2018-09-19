@@ -68,13 +68,58 @@ describe Puppet::Module::Task do
     task_files = %w{task1.elf task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
     Dir.expects(:glob).with(tasks_glob).returns(task_files)
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
-    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'implementations' =>
-    [{"name" => "task1.sh"}]})
+    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'implementations' => [{"name" => "task1.sh"}]})
 
     expect(tasks.count).to eq(1)
     expect(tasks.map{|t| t.name}).to eq(%w{mymod::task1})
     expect(tasks.map{|t| t.metadata_file}).to eq(["#{tasks_path}/task1.json"])
     expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"]])
+  end
+
+  it "constructs a task as expected when task metadata declares additional files" do
+    task_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+    Dir.expects(:glob).with(tasks_glob).returns(task_files)
+    Puppet::Module::Task.expects(:find_extra_files).returns([{'name' => 'mymod/lib/file0.elf', 'path' => "/path/to/file0.elf"}])
+    tasks = Puppet::Module::Task.tasks_in_module(mymod)
+    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'files' => ["mymod/lib/file0.elf"]})
+
+    expect(tasks.count).to eq(1)
+    expect(tasks.map{|t| t.name}).to eq(%w{mymod::task1})
+    expect(tasks.map{|t| t.metadata_file}).to eq(["#{tasks_path}/task1.json"])
+    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh", "/path/to/file0.elf"]])
+  end
+
+  it "constructs a task as expected when a task implementation declares additional files" do
+    task_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+    Dir.expects(:glob).with(tasks_glob).returns(task_files)
+    Puppet::Module::Task.expects(:find_extra_files).returns([{'name' => 'mymod/lib/file0.elf', 'path' => "/path/to/file0.elf"}])
+    tasks = Puppet::Module::Task.tasks_in_module(mymod)
+    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'implementations' => [{"name" => "task1.sh", "files" => ["mymod/lib/file0.elf"]}]})
+
+    expect(tasks.count).to eq(1)
+    expect(tasks.map{|t| t.name}).to eq(%w{mymod::task1})
+    expect(tasks.map{|t| t.metadata_file}).to eq(["#{tasks_path}/task1.json"])
+    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh", "/path/to/file0.elf"]])
+  end
+
+  it "constructs a task as expected when task metadata and a task implementation both declare additional files" do
+    task_files = %w{task1.sh task1.json}.map { |bn| "#{tasks_path}/#{bn}" }
+    Dir.expects(:glob).with(tasks_glob).returns(task_files)
+    Puppet::Module::Task.expects(:find_extra_files).returns([
+      {'name' => 'mymod/lib/file0.elf', 'path' => "/path/to/file0.elf"},
+      {'name' => 'yourmod/files/file1.txt', 'path' => "/other/path/to/file1.txt"}
+    ])
+    tasks = Puppet::Module::Task.tasks_in_module(mymod)
+    Puppet::Module::Task.any_instance.stubs(:metadata).returns({'implementations' => [{"name" => "task1.sh", "files" => ["mymod/lib/file0.elf"]}]})
+
+    expect(tasks.count).to eq(1)
+    expect(tasks.map{|t| t.name}).to eq(%w{mymod::task1})
+    expect(tasks.map{|t| t.metadata_file}).to eq(["#{tasks_path}/task1.json"])
+    expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([[
+      "#{tasks_path}/task1.sh",
+      "/path/to/file0.elf",
+      "/other/path/to/file1.txt"
+    ]])
   end
 
   it "constructs a task as expected when a task has files" do

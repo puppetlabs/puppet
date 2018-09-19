@@ -104,8 +104,8 @@ describe 'FileBased module loader' do
 
       task = module_loader.load_typed(typed_name(:task, 'testmodule::foo')).value
       expect(task.name).to eq('testmodule::foo')
-      expect(task.implementations.length).to eq(1)
-      expect(task.implementations[0]['name']).to eq('foo.py')
+      expect(task.files.length).to eq(1)
+      expect(task.files[0]['name']).to eq('foo.py')
     end
 
     it 'can load tasks with multiple implementations' do
@@ -116,7 +116,7 @@ describe 'FileBased module loader' do
 
       task = module_loader.load_typed(typed_name(:task, 'testmodule::foo')).value
       expect(task.name).to eq('testmodule::foo')
-      expect(task.implementations.map {|impl| impl['name']}).to eq(['foo.py', 'foo.ps1'])
+      expect(task.files.map {|impl| impl['name']}).to eq(['foo.py', 'foo.ps1'])
     end
 
     it 'can load multiple tasks with multiple files' do
@@ -128,11 +128,11 @@ describe 'FileBased module loader' do
       foobar_task = module_loader.load_typed(typed_name(:task, 'testmodule::foobar')).value
 
       expect(foo_task.name).to eq('testmodule::foo')
-      expect(foo_task.implementations.length).to eq(1)
-      expect(foo_task.implementations[0]['name']).to eq('foo.py')
+      expect(foo_task.files.length).to eq(1)
+      expect(foo_task.files[0]['name']).to eq('foo.py')
       expect(foobar_task.name).to eq('testmodule::foobar')
-      expect(foobar_task.implementations.length).to eq(1)
-      expect(foobar_task.implementations[0]['name']).to eq('foobar.py')
+      expect(foobar_task.files.length).to eq(1)
+      expect(foobar_task.files[0]['name']).to eq('foobar.py')
     end
 
     it "won't load tasks with invalid names" do
