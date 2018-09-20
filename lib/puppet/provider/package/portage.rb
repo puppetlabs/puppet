@@ -117,7 +117,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       if match
         result_fields.zip(match.captures) do |field, value|
           # some fields can be empty or (null) (if we are not passed a category in the package name for instance)
-          if value == '(null)'
+          if value == '(null)' || value == '<unset>'
             package_info[field] = nil
           elsif !value or value.empty?
             package_info[field] = nil
@@ -133,7 +133,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def qatom_output_format
-    '"[%{CATEGORY}] [%{PN}] [%{PV}] [%[PR]] [%[SLOT]] [%[pfx]] [%[sfx]]"'
+    '"[%[CATEGORY]] [%[PN]] [%[PV]] [%[PR]] [%[SLOT]] [%[pfx]] [%[sfx]]"'
   end
 
   def qatom_result_format
