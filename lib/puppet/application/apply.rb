@@ -173,6 +173,11 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     else
       main
     end
+  ensure
+    if @profiler
+      Puppet::Util::Profiler.remove_profiler(@profiler)
+      @profiler.shutdown
+    end
   end
 
   def apply
@@ -189,53 +194,15 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def main
-    # Set our code or file to use.
-    if options[:code] or command_line.args.length == 0
-      Puppet[:code] = options[:code] || STDIN.read
-    else
-      manifest = command_line.args.shift
-      raise _("Could not find file %{manifest}") % { manifest: manifest } unless Puppet::FileSystem.exist?(manifest)
-      Puppet.warning(_("Only one file can be applied per run.  Skipping %{files}") % { files: command_line.args.join(', ') }) if command_line.args.size > 0
-    end
+    manifest          = get_manifest() # Get either a manifest or nil if apply should use content of Puppet[:code]
+    splay                              # splay if needed
+    facts             = get_facts()    # facts or nil
+    node              = get_node()     # node or error
+    apply_environment = get_configured_environment(node, manifest)
 
-    # splay if needed
-    splay
-
-    unless Puppet[:node_name_fact].empty?
-      # Collect our facts.
-      unless facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
-        raise _("Could not find facts for %{node}") % { node: Puppet[:node_name_value] }
-      end
-
-      Puppet[:node_name_value] = facts.values[Puppet[:node_name_fact]]
-      facts.name = Puppet[:node_name_value]
-    end
-
-    # Find our Node
-    unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
-      raise _("Could not find node %{node}") % { node: Puppet[:node_name_value] }
-    end
-
-    configured_environment = node.environment || Puppet.lookup(:current_environment)
-
-    apply_environment = manifest ?
-      configured_environment.override_with(:manifest => manifest) :
-      configured_environment
-
-    # Modify the node descriptor to use the special apply_environment.
-    # It is based on the actual environment from the node, or the locally
-    # configured environment if the node does not specify one.
-    # If a manifest file is passed on the command line, it overrides
-    # the :manifest setting of the apply_environment.
-    node.environment = apply_environment
-
-    #TRANSLATORS "puppet apply" is a program command and should not be translated
+    # TRANSLATORS "puppet apply" is a program command and should not be translated
     Puppet.override({:current_environment => apply_environment}, _("For puppet apply")) do
-      # Merge in the facts.
-      node.merge(facts.values) if facts
-
-      # Add server facts so $server_facts[environment] exists when doing a puppet apply
-      node.add_server_facts({})
+      configure_node_facts(node, facts)
 
       # Allow users to load the classes that puppet agent creates.
       if options[:loadclasses]
@@ -287,7 +254,6 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
             catalog.write_resource_file
           end
 
-          #exit_status = Puppet.override(:loaders => Puppet::Pops::Loaders.new(apply_environment)) { apply_catalog(catalog) }
           apply_catalog(catalog)
         end
         if not exit_status
@@ -301,12 +267,6 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         Puppet.log_exception(detail)
         exit(1)
       end
-    end
-
-  ensure
-    if @profiler
-      Puppet::Util::Profiler.remove_profiler(@profiler)
-      @profiler.shutdown
     end
   end
 
@@ -350,18 +310,98 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   private
 
   def read_catalog(text)
-    format = Puppet::Resource::Catalog.default_format
-    begin
-      catalog = Puppet::Resource::Catalog.convert_from(format, text)
-    rescue => detail
-      raise Puppet::Error, _("Could not deserialize catalog from %{format}: %{detail}") % { format: format, detail: detail }, detail.backtrace
-    end
+    facts = get_facts()
+    node = get_node()
+    configured_environment = get_configured_environment(node)
 
-    catalog.to_ral
+    # TRANSLATORS "puppet apply" is a program command and should not be translated
+    Puppet.override({:current_environment => configured_environment}, _("For puppet apply")) do
+      configure_node_facts(node, facts)
+
+      # NOTE: Does not set rich_data = true automatically (which would ensure always reading catalog with rich data
+      # on (seemingly the right thing to do)), but that would remove the ability to test what happens when a
+      # rich catalog is processed without rich_data being turned on.
+      format = Puppet::Resource::Catalog.default_format
+      begin
+        catalog = Puppet::Resource::Catalog.convert_from(format, text)
+      rescue => detail
+        raise Puppet::Error, _("Could not deserialize catalog from %{format}: %{detail}") % { format: format, detail: detail }, detail.backtrace
+      end
+      # Resolve all deferred values and replace them / mutate the catalog
+      Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog)
+
+      catalog.to_ral
+    end
   end
 
   def apply_catalog(catalog)
     configurer = Puppet::Configurer.new
     configurer.run(:catalog => catalog, :pluginsync => false)
+  end
+
+  # Returns facts or nil
+  #
+  def get_facts()
+    facts = nil
+    unless Puppet[:node_name_fact].empty?
+      # Collect our facts.
+      unless facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
+        raise _("Could not find facts for %{node}") % { node: Puppet[:node_name_value] }
+      end
+
+      Puppet[:node_name_value] = facts.values[Puppet[:node_name_fact]]
+      facts.name = Puppet[:node_name_value]
+    end
+    facts
+  end
+
+  # Returns the node or raises and error if node not found.
+  #
+  def get_node()
+    node = Puppet::Node.indirection.find(Puppet[:node_name_value])
+    raise _("Could not find node %{node}") % { node: Puppet[:node_name_value] } unless node
+    node
+  end
+
+  # Returns either a manifest (filename) or nil if apply should use content of Puppet[:code]
+  #
+  def get_manifest()
+    manifest = nil
+    # Set our code or file to use.
+    if options[:code] or command_line.args.length == 0
+      Puppet[:code] = options[:code] || STDIN.read
+    else
+      manifest = command_line.args.shift
+      raise _("Could not find file %{manifest}") % { manifest: manifest } unless Puppet::FileSystem.exist?(manifest)
+      Puppet.warning(_("Only one file can be applied per run.  Skipping %{files}") % { files: command_line.args.join(', ') }) if command_line.args.size > 0
+    end
+    manifest
+  end
+
+  # Returns a configured environment, if a manifest is given it overrides what is configured for the environment
+  # specified by the node (or the current_environment found in the Puppet context).
+  # The node's resolved environment is modified  if needed.
+  #
+  def get_configured_environment(node, manifest = nil)
+    configured_environment = node.environment || Puppet.lookup(:current_environment)
+
+    apply_environment = manifest ?
+      configured_environment.override_with(:manifest => manifest) :
+      configured_environment
+
+    # Modify the node descriptor to use the special apply_environment.
+    # It is based on the actual environment from the node, or the locally
+    # configured environment if the node does not specify one.
+    # If a manifest file is passed on the command line, it overrides
+    # the :manifest setting of the apply_environment.
+    node.environment = apply_environment
+    apply_environment
+  end
+
+  # Mixes the facts into the node, and mixes in server facts
+  def configure_node_facts(node, facts)
+    node.merge(facts.values) if facts
+    # Add server facts so $server_facts[environment] exists when doing a puppet apply
+    node.add_server_facts({})
   end
 end
