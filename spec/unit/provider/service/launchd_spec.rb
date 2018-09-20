@@ -343,4 +343,23 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       expect { provider.jobsearch("NOSUCH") }.to raise_error(Puppet::Error)
     end
   end
+
+  describe "read_overrides" do
+    before do
+      Kernel.stubs(:sleep)
+    end
+    it "should read overrides" do
+      provider.expects(:read_plist).once.returns({})
+      expect(provider.read_overrides).to eq({})
+    end
+    it "should retry if read_plist fails" do
+      provider.expects(:read_plist).once.returns({})
+      provider.expects(:read_plist).once.returns(nil)
+      expect(provider.read_overrides).to eq({})
+    end
+    it "raises Puppet::Error after 20 attempts" do
+      provider.expects(:read_plist).times(20).returns(nil)
+      expect { provider.read_overrides }.to raise_error(Puppet::Error)
+    end
+ end
 end
