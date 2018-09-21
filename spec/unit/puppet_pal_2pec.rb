@@ -767,13 +767,13 @@ describe 'Puppet Pal' do
               [ signature.runnable_with?('string_param' => 'foo', 'int_param' => 10),
                 signature.runnable_with?('anything_goes' => 'foo'),
                 signature.task_hash['name'],
-                signature.task_hash['parameters']['string_param']['description'],
-                signature.task.description,
-                signature.task.parameters['int_param']['type'],
+                signature.task_hash['metadata']['parameters']['string_param']['description'],
+                signature.task_hash['metadata']['description'],
+                signature.task_hash['metadata']['parameters']['int_param']['type'],
               ]
             end
           end
-          expect(result).to eq([true, false, 'b::atask', 'A string parameter', 'test task b::atask', Puppet::Pops::Types::PIntegerType::DEFAULT])
+          expect(result).to eq([true, false, 'b::atask', 'A string parameter', 'test task b::atask', 'Integer'])
         end
 
         it '"TaskSignature#runnable_with?" calls a given lambda if there is an error' do
@@ -802,7 +802,7 @@ describe 'Puppet Pal' do
               signature.task_hash
             end
           end
-          expect(result['input_method']).to be_nil
+          expect(result['metadata']['input_method']).to be_nil
         end
 
         it 'task input_method is parsed from task metadata' do
@@ -812,7 +812,7 @@ describe 'Puppet Pal' do
               signature.task_hash
             end
           end
-          expect(result['input_method']).to eq('stdin')
+          expect(result['metadata']['input_method']).to eq('stdin')
         end
 
         it '"list_tasks" returns an array with all tasks that can be loaded' do

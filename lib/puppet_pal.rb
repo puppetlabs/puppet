@@ -504,9 +504,7 @@ module Pal
       params_type = if params.nil?
         T_GENERIC_TASK_HASH
       else
-        key_to_type = {}
-        @task.parameters.each_pair { |k, v| key_to_type[k] = v['type'] }
-        Puppet::Pops::Types::TypeFactory.struct(key_to_type)
+        Puppet::Pops::Types::TypeFactory.struct(params)
       end
       return true if params_type.instance?(args_hash)
 
