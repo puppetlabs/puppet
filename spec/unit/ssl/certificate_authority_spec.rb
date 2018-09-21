@@ -943,7 +943,6 @@ describe Puppet::SSL::CertificateAuthority do
         end
 
         it "should be deprecated" do
-          Puppet.expects(:deprecation_warning).with(regexp_matches(/Accessing 'cacert' as a setting is deprecated/))
           Puppet.expects(:deprecation_warning).with(regexp_matches(/certificate_is_alive\? is deprecated/))
           @ca.certificate_is_alive?(@cert)
         end
