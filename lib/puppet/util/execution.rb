@@ -114,6 +114,9 @@ module Puppet::Util::Execution
   #   an Array the first element should be the executable and the rest of the
   #   elements should be the individual arguments to that executable.
   # @param options [Hash] a Hash of options
+  # @option options [String] :cwd the directory from which to run the command. Raises an error if the directory does not exist.
+  #   This option is only available on the agent. It cannot be used on the master, meaning it cannot be used in, for example,
+  #   regular functions, hiera backends, or report processors.
   # @option options [Boolean]  :failonfail if this value is set to true, then this method will raise an error if the
   #   command is not executed successfully.
   # @option options [Integer, String] :uid (nil) the user id of the user that the process should be run as. Will be ignored if the
@@ -185,6 +188,11 @@ module Puppet::Util::Execution
     end
 
     null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
+
+    cwd = options[:cwd]
+    if cwd && ! Puppet::FileSystem.directory?(cwd)
+      raise ArgumentError, _("Working directory %{cwd} does not exist!") % { cwd: cwd }
+    end
 
     begin
       stdin = Puppet::FileSystem.open(options[:stdinfile] || null_file, nil, 'r')
@@ -320,7 +328,6 @@ module Puppet::Util::Execution
   #
   def self.execute_posix(command, options, stdin, stdout, stderr)
     child_pid = Puppet::Util.safe_posix_fork(stdin, stdout, stderr) do
-
       # We can't just call Array(command), and rely on it returning
       # things like ['foo'], when passed ['foo'], because
       # Array(command) will call command.to_a internally, which when
@@ -329,6 +336,12 @@ module Puppet::Util::Execution
       command = [command].flatten
       Process.setsid
       begin
+        # We need to chdir to our cwd before changing privileges as there's a
+        # chance that the user may not have permissions to access the cwd, which
+        # would cause execute_posix to fail.
+        cwd = options[:cwd]
+        Dir.chdir(cwd) if cwd
+
         Puppet::Util::SUIDManager.change_privileges(options[:uid], options[:gid], true)
 
         # if the caller has requested that we override locale environment variables,
