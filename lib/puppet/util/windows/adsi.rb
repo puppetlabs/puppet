@@ -472,6 +472,8 @@ module Puppet::Util::Windows::ADSI
     def set_members(desired_members, inclusive = true)
       return if desired_members.nil?
 
+      desired_members = desired_members.split(',').map(&:strip)
+
       current_hash = Hash[ self.member_sids.map { |sid| [sid.sid, sid] } ]
       desired_hash = self.class.name_sid_hash(desired_members)
 
