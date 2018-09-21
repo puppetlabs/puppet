@@ -103,6 +103,26 @@ module Puppet::Etc
       override_field_values_to_utf8(::Etc.getpwuid(id))
     end
 
+    # Etc::group returns a Ruby iterator that executes a block for
+    # each entry in the /etc/group file. The code-block is passed
+    # a Group struct. See getgrent above for more details.
+    def group
+      # The implementation here duplicates the logic in https://github.com/ruby/etc/blob/master/ext/etc/etc.c#L523-L537
+      # Note that we do not call ::Etc.group directly, because we
+      # want to use our wrappers for methods like getgrent, setgrent,
+      # endgrent, etc.
+      return getgrent unless block_given?
+
+      setgrent
+      begin
+        while cur_group = getgrent
+          yield cur_group
+        end
+      ensure
+        endgrent
+      end
+    end
+
     private
 
     # @api private
