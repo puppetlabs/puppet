@@ -4,31 +4,11 @@ test_name "The exec resource should be able to run commands as a different user"
   tag 'audit:high',
       'audit:acceptance'
 
+  require 'puppet/acceptance/common_utils'
+  extend Puppet::Acceptance::BeakerUtils
+
   def random_username
     "pl#{rand(999999).to_i}"
-  end
-
-  # TODO: Remove the wrappers to user_present
-  # and user_absent if Beaker::Host's user_present
-  # and user_absent functions are fixed to work with
-  # Arista (EOS).
-
-  def user_present(host, username)
-    case host['platform']
-    when /eos/
-      on(host, "useradd #{username}")
-    else
-      host.user_present(username)
-    end
-  end
-
-  def user_absent(host, username)
-    case host['platform']
-    when /eos/
-      on(host, "userdel #{username}", acceptable_exit_codes: [0, 1])
-    else
-      host.user_absent(username)
-    end
   end
 
   def exec_resource_manifest(params = {})
