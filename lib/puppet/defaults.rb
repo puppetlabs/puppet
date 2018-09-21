@@ -981,8 +981,7 @@ EOT
     :ca,
     :ca_name => {
       :default    => "Puppet CA: $certname",
-      :desc       => "The name to use the Certificate Authority certificate. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc       => "The name to use the Certificate Authority certificate.",
     },
     :cadir => {
       :default => "$ssldir/ca",
@@ -990,8 +989,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0755",
-      :desc => "The root directory for the certificate authority. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc => "The root directory for the certificate authority.",
     },
     :cacert => {
       :default => "$cadir/ca_crt.pem",
@@ -999,8 +997,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "The CA certificate. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc => "The CA certificate.",
     },
     :cakey => {
       :default => "$cadir/ca_key.pem",
@@ -1008,8 +1005,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0640",
-      :desc => "The CA private key. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc => "The CA private key.",
     },
     :capub => {
       :default => "$cadir/ca_pub.pem",
@@ -1017,8 +1013,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "The CA public key. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc => "The CA public key.",
     },
     :cacrl => {
       :default => "$cadir/ca_crl.pem",
@@ -1026,8 +1021,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
     },
     :caprivatedir => {
       :default => "$cadir/private",
@@ -1036,7 +1030,9 @@ EOT
       :group => "service",
       :mode => "0750",
       :desc => "Where the CA stores private certificate information. This setting is deprecated and will be removed in Puppet 6.",
-      :deprecated => :completely,
+      :hook => proc do |value|
+        Puppet.deprecation_warning(_("The 'caprivatedir' setting is deprecated and will be removed in Puppet 6."))
+      end,
     },
     :csrdir => {
       :default => "$cadir/requests",
@@ -1044,8 +1040,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode  => "0755",
-      :desc => "Where the CA stores certificate requests. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc => "Where the CA stores certificate requests.",
     },
     :signeddir => {
       :default => "$cadir/signed",
@@ -1053,8 +1048,7 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0755",
-      :desc => "Where the CA stores signed certificates. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc => "Where the CA stores signed certificates.",
     },
     :capass => {
       :default => "$caprivatedir/ca.pass",
@@ -1063,7 +1057,9 @@ EOT
       :group => "service",
       :mode => "0640",
       :desc => "Where the CA stores the password for the private key. This setting is deprecated and will be removed in Puppet 6.",
-      :deprecated => :completely,
+      :hook => proc do |value|
+        Puppet.deprecation_warning(_("The 'caprivatedir' setting is deprecated and will be removed in Puppet 6."))
+      end,
     },
     :serial => {
       :default => "$cadir/serial",
@@ -1071,17 +1067,13 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => "0644",
-      :desc => "Where the serial number for certificates is stored. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc => "Where the serial number for certificates is stored.",
     },
     :autosign => {
       :default => "$confdir/autosign.conf",
       :type => :autosign,
-      :deprecated => :completely,
       :desc => "Whether (and how) to autosign certificate requests. This setting
         is only relevant on a puppet master acting as a certificate authority (CA).
-        This setting is also deprecated and will be replaced by one in Puppet Server's
-        configs in Puppet 6.
 
         Valid values are true (autosigns all certificate requests; not recommended),
         false (disables autosigning certificates), or the absolute path to a file.
@@ -1108,15 +1100,13 @@ EOT
     :allow_duplicate_certs => {
       :default    => false,
       :type       => :boolean,
-      :desc       => "Whether to allow a new certificate request to overwrite an existing certificate. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      :desc       => "Whether to allow a new certificate request to overwrite an existing certificate.",
     },
     :ca_ttl => {
       :default    => "5y",
       :type       => :duration,
       :desc       => "The default TTL for new certificates.
-      #{AS_DURATION} This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+      #{AS_DURATION}",
     },
     :keylength => {
       :default    => 4096,
@@ -1129,8 +1119,7 @@ EOT
       :owner => "service",
       :group => "service",
       :desc => "The inventory file. This is a text file to which the CA writes a
-        complete listing of all certificates. This setting is deprecated and will be replaced by one in Puppet Server's configs in Puppet 6.",
-      :deprecated => :completely,
+        complete listing of all certificates.",
     }
   )
 
