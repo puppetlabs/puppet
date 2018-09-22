@@ -463,6 +463,64 @@ describe 'Puppet Pal' do
         end.to raise_error(/does not represent a literal value/)
       end
 
+      it 'the "evaluate" method evaluates but does not evaluate lazy constructs' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_catalog_compiler do |c|
+            c.evaluate(c.parse_string('define foo() { notify {nope: }} foo { test: }'))
+            c.with_json_encoding() {|encoder| encoder.encode }
+          end
+        end
+        parsed = JSON.parse(result)
+        expect(parsed['resources']).to_not include(include('type' => 'Notify'))
+      end
+
+      it 'an "evaluate" followed by "compile_additions" evaluates lazy constructs' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_catalog_compiler do |c|
+            c.evaluate(c.parse_string('define foo() { notify {nope: }} foo { test: }'))
+            c.compile_additions
+            c.with_json_encoding() {|encoder| encoder.encode }
+          end
+        end
+        parsed = JSON.parse(result)
+        expect(parsed['resources']).to include(include('type' => 'Notify'))
+      end
+
+      it 'an "evaluate" followed by "compile_additions" validates the result' do
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            ctx.with_catalog_compiler do |c|
+              c.evaluate(c.parse_string('define foo() { notify {nope: }} foo { test: before =>"Bar[nope]"}'))
+              c.compile_additions
+            end
+          end
+        end.to raise_error(Puppet::Error, /Could not find resource 'Bar\[nope\]'/)
+      end
+
+      it 'an "evaluate" followed by "evaluate_additions" does not validate the result' do
+        result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+          ctx.with_catalog_compiler do |c|
+            c.evaluate(c.parse_string('define foo() { notify {nope: }} foo { test: before =>"Bar[nope]"}'))
+            c.evaluate_additions
+            c.with_json_encoding() {|encoder| encoder.encode }
+          end
+        end
+        parsed = JSON.parse(result)
+        expect(parsed['resources']).to include(include('type' => 'Notify'))
+      end
+
+      it 'an "evaluate" followed by "evaluate_additions" and "validate" validates the result' do
+        expect do
+          Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do | ctx|
+            ctx.with_catalog_compiler do |c|
+              c.evaluate(c.parse_string('define foo() { notify {nope: }} foo { test: before =>"Bar[nope]"}'))
+              c.compile_additions
+              c.validate
+            end
+          end
+        end.to raise_error(Puppet::Error, /Could not find resource 'Bar\[nope\]'/)
+      end
+
     end
   end
 

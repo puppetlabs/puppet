@@ -29,4 +29,28 @@ class Puppet::Parser::CatalogCompiler < Puppet::Parser::Compiler
     raise Puppet::Error, message, detail.backtrace
   end
 
+  # Evaluates all added constructs, and validates the resulting catalog.
+  # This can be called whenever a series of evaluation of puppet code strings
+  # have reached a stable state (essentially that there are no relationships to
+  # non-existing resources).
+  #
+  # Raises an error if validation fails.
+  #
+  def compile_additions
+    evaluate_additions
+    validate
+  end
+
+  # Evaluates added constructs that are lazily evaluated until all of them have been evaluated.
+  # 
+  def evaluate_additions
+    evaluate_generators
+    finish
+  end
+
+  # Validates the current state of the catalog.
+  # Does not cause evaluation of lazy constructs.
+  def validate
+    validate_catalog(CatalogValidator::FINAL)
+  end
 end
