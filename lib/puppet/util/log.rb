@@ -300,13 +300,15 @@ class Puppet::Util::Log
 
     @time = Time.now
 
-    if tags = args[:tags]
+    tags = args[:tags]
+    if tags
       tags.each { |t| self.tag(t) }
     end
 
     # Don't add these unless defined (preserve 3.x API as much as possible)
     [:file, :line, :pos, :issue_code, :environment, :node, :backtrace].each do |attr|
-      next unless value = args[attr]
+      value = args[attr]
+      next unless value
       send(attr.to_s + '=', value)
     end
 
@@ -324,7 +326,8 @@ class Puppet::Util::Log
     end
     # Don't add these unless defined (preserve 3.x API as much as possible)
     %w(file line pos issue_code environment node backtrace).each do |name|
-      next unless value = data[name]
+      value = data[name]
+      next unless value
       send(name + '=', value)
     end
   end

@@ -208,7 +208,7 @@ class Puppet::Graph::SimpleGraph
 
     # frame struct is vertex, [path]
     stack = [[cycle.first, []]]
-    while frame = stack.shift do
+    while frame = stack.shift do #rubocop:disable Lint/AssignmentInCondition
       if frame[1].member?(frame[0]) then
         found << frame[1] + [frame[0]]
         break if found.length >= max_paths
@@ -343,7 +343,8 @@ class Puppet::Graph::SimpleGraph
 
   # Find adjacent edges.
   def adjacent(v, options = {})
-    return [] unless ns = (options[:direction] == :in) ? @in_to[v] : @out_from[v]
+    ns = (options[:direction] == :in) ? @in_to[v] : @out_from[v]
+    return [] unless ns
     (options[:type] == :edges) ? ns.values.flatten : ns.keys
   end
 

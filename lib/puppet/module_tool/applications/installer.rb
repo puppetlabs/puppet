@@ -60,7 +60,8 @@ module Puppet::ModuleTool
         results = { :action => :install, :module_name => name, :module_version => version }
 
         begin
-          if installed_module = installed_modules[name]
+          installed_module = installed_modules[name]
+          if installed_module
             unless forced?
               if Puppet::Module.parse_range(version).include? installed_module.version
                 results[:result] = :noop
@@ -136,7 +137,8 @@ module Puppet::ModuleTool
           unless forced?
             # Check for module name conflicts.
             releases.each do |rel|
-              if installed_module = installed_modules_source.by_name[rel.name.split('-').last]
+              installed_module = installed_modules_source.by_name[rel.name.split('-').last]
+              if installed_module
                 next if installed_module.has_metadata? && installed_module.forge_name.tr('/', '-') == rel.name
 
                 if rel.name != name

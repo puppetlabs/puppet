@@ -355,7 +355,8 @@ class Lexer2
         else
           before = scn.pos
           # regexp position is a regexp, else a div
-          if regexp_acceptable? && value = scn.scan(PATTERN_REGEX)
+          value = scn.scan(PATTERN_REGEX) if regexp_acceptable?
+          if value
             # Ensure an escaped / was not matched
             while escaped_end(value)
               more = scn.scan_until(PATTERN_REGEX_END)
@@ -452,7 +453,8 @@ class Lexer2
       '$' => lambda do
         scn = @scanner
         before = scn.pos
-        if value = scn.scan(PATTERN_DOLLAR_VAR)
+        value = scn.scan(PATTERN_DOLLAR_VAR)
+        if value
           emit_completed([:VARIABLE, value[1..-1].freeze, scn.pos - before], before)
         else
           # consume the $ and let higher layer complain about the error instead of getting a syntax error
@@ -703,7 +705,8 @@ class Lexer2
 
     # This is the lexer's main loop
     until queue.empty? && scn.eos? do
-      if token = queue.shift || selector[scn.peek(1)].call
+      token = queue.shift || selector[scn.peek(1)].call
+      if token
         ctx[:after] = token[0]
         yield token
       end

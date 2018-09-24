@@ -231,13 +231,12 @@ describe Puppet::Indirector::Request do
   end
 
   it "should use its uri, if it has one, as its description" do
-    Puppet.override({
-      :environments => Puppet::Environments::Static.new(
-        Puppet::Node::Environment.create(:baz, [])
-    )},
-      "Static loader for spec") do
+    Puppet.override(
+      { :environments => Puppet::Environments::Static.new(Puppet::Node::Environment.create(:baz, [])) },
+      "Static loader for spec"
+    ) do
       expect(Puppet::Indirector::Request.new(:myind, :find, "foo://bar/baz", nil).description).to eq("foo://bar/baz")
-      end
+    end
   end
 
   it "should use its indirection name and key, if it has no uri, as its description" do

@@ -135,7 +135,8 @@ class Puppet::SSL::Base
       /sha\d*/i
     )
     ln = content.signature_algorithm
-    if match = digest_re.match(ln)
+    match = digest_re.match(ln)
+    if match
       match[0].downcase
     else
       raise Puppet::Error, _("Unknown signature algorithm '%{ln}'") % { ln: ln }

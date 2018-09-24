@@ -232,7 +232,8 @@ module Puppet::Util::SELinux
   # Internal helper function to return which type of filesystem a given file
   # path resides on
   def find_fs(path)
-    return nil unless mounts = read_mounts
+    mounts = read_mounts
+    return nil unless mounts
 
     # cleanpath eliminates useless parts of the path (like '.', or '..', or
     # multiple slashes), without touching the filesystem, and without

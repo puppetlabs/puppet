@@ -68,7 +68,8 @@ module Puppet::ModuleTool
       end
 
       def parse_filename(filename)
-        if match = /^((.*?)-(.*?))-(\d+\.\d+\.\d+.*?)$/.match(File.basename(filename, '.tar.gz'))
+        match = /^((.*?)-(.*?))-(\d+\.\d+\.\d+.*?)$/.match(File.basename(filename, '.tar.gz'))
+        if match
           module_name, author, shortname, version = match.captures
         else
           raise ArgumentError, _("Could not parse filename to obtain the username, module name and version.  (%{release_name})") % { release_name: @release_name }

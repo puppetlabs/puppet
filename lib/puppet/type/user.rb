@@ -147,7 +147,7 @@ module Puppet
         # We know the 'is' is a number, so we need to convert the 'should' to a number,
         # too.
         @should.each do |value|
-          return true if number = Puppet::Util.gid(value) and is == number
+          return true if is == Puppet::Util.gid(value)
         end
 
         false
@@ -156,7 +156,8 @@ module Puppet
       def sync
         found = false
         @should.each do |value|
-          if number = Puppet::Util.gid(value)
+          number = Puppet::Util.gid(value)
+          if number
             provider.gid = number
             found = true
             break
@@ -444,7 +445,9 @@ module Puppet
     autorequire(:group) do
       autos = []
 
-      if obj = @parameters[:gid] and groups = obj.shouldorig
+      obj = @parameters[:gid]
+      groups = obj.shouldorig if obj
+      if groups
         groups = groups.collect { |group|
           if group =~ /^\d+$/
             Integer(group)
@@ -455,7 +458,8 @@ module Puppet
         groups.each { |group|
           case group
           when Integer
-            if resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) and r.should(:gid) == group }
+            resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) && r.should(:gid) == group }
+            if resource
               autos << resource
             end
           else
@@ -464,7 +468,9 @@ module Puppet
         }
       end
 
-      if obj = @parameters[:groups] and groups = obj.should
+      obj = @parameters[:groups]
+      groups = obj.should if obj
+      if groups
         autos += groups.split(",")
       end
 
@@ -522,7 +528,9 @@ module Puppet
     autorequire(:user) do
       reqs = []
 
-      if roles_property = @parameters[:roles] and roles = roles_property.should
+      roles_property = @parameters[:roles]
+      roles = roles_property.should if roles_property
+      if roles
         reqs += roles.split(',')
       end
 

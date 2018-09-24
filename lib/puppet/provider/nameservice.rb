@@ -26,7 +26,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       objects = []
       begin
         method = Puppet::Etc.method(:"get#{section}ent")
-        while ent = method.call
+        while ent = method.call #rubocop:disable Lint/AssignmentInCondition
           objects << new(:name => ent.name, :canonical_name => ent.canonical_name, :ensure => :present)
         end
       ensure
@@ -61,7 +61,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       names = []
       Puppet::Etc.send("set#{section()}ent")
       begin
-        while ent = Puppet::Etc.send("get#{section()}ent")
+        while ent = Puppet::Etc.send("get#{section()}ent") #rubocop:disable Lint/AssignmentInCondition
           names << ent.name
           yield ent.name if block_given?
         end
@@ -124,7 +124,8 @@ class Puppet::Provider::NameService < Puppet::Provider
     if id_generators[@resource.class.name] == field
       return self.class.autogen_id(field, @resource.class.name)
     else
-      if value = self.class.autogen_default(field)
+      value = self.class.autogen_default(field)
+      if value
         return value
       elsif respond_to?("autogen_#{field}")
         return send("autogen_#{field}")
@@ -214,7 +215,8 @@ class Puppet::Provider::NameService < Puppet::Provider
   end
 
   def munge(name, value)
-    if block = self.class.option(name, :munge) and block.is_a? Proc
+    block = self.class.option(name, :munge)
+    if block and block.is_a? Proc
       block.call(value)
     else
       value
@@ -222,7 +224,8 @@ class Puppet::Provider::NameService < Puppet::Provider
   end
 
   def unmunge(name, value)
-    if block = self.class.option(name, :unmunge) and block.is_a? Proc
+    block = self.class.option(name, :unmunge)
+    if block and block.is_a? Proc
       block.call(value)
     else
       value

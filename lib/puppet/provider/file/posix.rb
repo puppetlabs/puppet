@@ -53,7 +53,8 @@ Puppet::Type.type(:file).provide :posix do
   end
 
   def owner
-    unless stat = resource.stat
+    stat = resource.stat
+    unless stat
       return :absent
     end
 
@@ -86,7 +87,8 @@ Puppet::Type.type(:file).provide :posix do
   end
 
   def group
-    return :absent unless stat = resource.stat
+    stat = resource.stat
+    return :absent unless stat
 
     currentvalue = stat.gid
 
@@ -117,7 +119,8 @@ Puppet::Type.type(:file).provide :posix do
   end
 
   def mode
-    if stat = resource.stat
+    stat = resource.stat
+    if stat
       return (stat.mode & 007777).to_s(8).rjust(4, '0')
     else
       return :absent

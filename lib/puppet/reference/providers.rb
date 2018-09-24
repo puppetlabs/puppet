@@ -41,7 +41,8 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
       provider = type.provider(pname)
 
       # Add the suitability note
-      if missing = provider.suitable?(false) and missing.empty?
+      missing = provider.suitable?(false)
+      if missing && missing.empty?
         data << "*X*"
         suit = true
         functional = true

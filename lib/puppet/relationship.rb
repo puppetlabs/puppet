@@ -19,12 +19,8 @@ class Puppet::Relationship
     target = data['target']
 
     args = {}
-    if event = data["event"]
-      args[:event] = :"#{event}"
-    end
-    if callback = data["callback"]
-      args[:callback] = :"#{callback}"
-    end
+    args[:event] = :"#{data['event']}" if data["event"]
+    args[:callback] = :"#{data['callback']}" if data["callback"]
 
     new(source, target, args)
   end
@@ -40,9 +36,8 @@ class Puppet::Relationship
 
     options = (options || {}).inject({}) { |h,a| h[a[0].to_sym] = a[1]; h }
     [:callback, :event].each do |option|
-      if value = options[option]
-        send(option.to_s + "=", value)
-      end
+      value = options[option]
+      send(option.to_s + "=", value) if value
     end
   end
 

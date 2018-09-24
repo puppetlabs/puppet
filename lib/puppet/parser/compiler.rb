@@ -61,7 +61,8 @@ class Puppet::Parser::Compiler
   # Store a resource override.
   def add_override(override)
     # If possible, merge the override in immediately.
-    if resource = @catalog.resource(override.ref)
+    resource = @catalog.resource(override.ref)
+    if resource
       resource.merge(override)
     else
       # Otherwise, store the override for later; these
@@ -493,7 +494,8 @@ class Puppet::Parser::Compiler
     # Now see if we can find the node.
     astnode = nil
     @node.names.each do |name|
-      break if astnode = krt.node(name.to_s.downcase)
+      astnode = krt.node(name.to_s.downcase)
+      break if astnode
     end
 
     unless (astnode ||= krt.node("default"))
@@ -627,7 +629,8 @@ class Puppet::Parser::Compiler
 
     resources.each do |resource|
       # Add in any resource overrides.
-      if overrides = resource_overrides(resource)
+      overrides = resource_overrides(resource)
+      if overrides
         overrides.each do |over|
           resource.merge(over)
         end
@@ -645,7 +648,8 @@ class Puppet::Parser::Compiler
   protected :finish
 
   def add_resource_metaparams
-    unless main = catalog.resource(:class, :main)
+    main = catalog.resource(:class, :main)
+    unless main
       #TRANSLATORS "main" is a function name and should not be translated
       raise _("Couldn't find main")
     end
@@ -655,7 +659,8 @@ class Puppet::Parser::Compiler
     end
     data = {}
     catalog.walk(main, :out) do |source, target|
-      if source_data = data[source] || metaparams_as_data(source, names)
+      source_data = data[source] || metaparams_as_data(source, names)
+      if source_data
         # only store anything in the data hash if we've actually got
         # data
         data[source] ||= source_data

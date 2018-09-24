@@ -63,7 +63,8 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
     str << scrub(type.doc) + "\n\n"
 
     # Handle the feature docs.
-    if featuredocs = type.featuredocs
+    featuredocs = type.featuredocs
+    if featuredocs
       str << markdown_header("Features", 4)
       str << featuredocs
     end
@@ -79,7 +80,8 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
 
       raise _("Could not retrieve property %{sname} on type %{type_name}") % { sname: sname, type_name: type.name } unless property
 
-      unless doc = property.doc
+      doc = property.doc
+      unless doc
         $stderr.puts _("No docs for %{type}[%{sname}]") % { type: type, sname: sname }
         next
       end

@@ -82,7 +82,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
     if options[:source]
       command_options << "--source" << options[:source]
     end
-    if name = options[:justme]
+    name = options[:justme]
+    if name
       command_options << '\A' + name + '\z'
     end
 
@@ -161,7 +162,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
       command_options << "--no-document"
     end
 
-    if source = resource[:source]
+    source = resource[:source]
+    if source
       begin
         uri = URI.parse(source)
       rescue => detail

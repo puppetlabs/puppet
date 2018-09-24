@@ -56,7 +56,8 @@ class Puppet::Parser::Resource < Puppet::Resource
   def add_edge_to_stage
     return unless self.class?
 
-    unless stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
+    stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
+    unless stage
       raise ArgumentError, _("Could not find stage %{stage} specified by %{resource}") % { stage: self[:stage] || :main, resource: self }
     end
 
@@ -298,7 +299,8 @@ class Puppet::Parser::Resource < Puppet::Resource
 
         # evaluate mappings in that scope
         resource_type.arguments.keys.each do |name|
-          if expr = blueprint[:mappings][name]
+          expr = blueprint[:mappings][name]
+          if expr
             # Explicit mapping
             value = expr.safeevaluate(cns_scope)
           else
@@ -348,7 +350,8 @@ class Puppet::Parser::Resource < Puppet::Resource
   def override_parameter(param)
     # This can happen if the override is defining a new parameter, rather
     # than replacing an existing one.
-    (set_parameter(param) and return) unless current = @parameters[param.name]
+    current = @parameters[param.name]
+    (set_parameter(param) and return) unless current
 
     # Parameter is already set - if overriding with a default - simply ignore the setting of the default value
     return if scope.is_default?(type, param.name, param.value)

@@ -104,7 +104,8 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     teardown = options[:teardown] || lambda {}
     graph_cycle_handler = options[:graph_cycle_handler] || lambda { [] }
 
-    if cycles = report_cycles_in_graph
+    cycles = report_cycles_in_graph
+    if cycles
       graph_cycle_handler.call(cycles)
     end
 

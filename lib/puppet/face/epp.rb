@@ -402,7 +402,8 @@ Puppet::Face.define(:epp, '0.0.1') do
 
   def get_values(compiler, options)
     template_values = nil
-    if values_file = options[:values_file]
+    values_file = options[:values_file]
+    if values_file
       begin
         if values_file =~ /\.yaml$/
           template_values = Puppet::Util::Yaml.safe_load_file(values_file, [Symbol])
@@ -420,7 +421,8 @@ Puppet::Face.define(:epp, '0.0.1') do
       end
     end
 
-    if values = options[:values]
+    values = options[:values]
+    if values
       evaluating_parser = Puppet::Pops::Parser::EvaluatingParser.new
       result = evaluating_parser.evaluate_string(compiler.topscope, values, 'values-hash')
       case result

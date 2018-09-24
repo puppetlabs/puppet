@@ -44,11 +44,14 @@ class Puppet::Resource
   end
 
   def initialize_from_hash(data)
-    raise ArgumentError, _('No resource type provided in serialized data') unless type = data['type']
-    raise ArgumentError, _('No resource title provided in serialized data') unless title = data['title']
+    type = data['type']
+    raise ArgumentError, _('No resource type provided in serialized data') unless type
+    title = data['title']
+    raise ArgumentError, _('No resource title provided in serialized data') unless title
     @type, @title = self.class.type_and_title(type, title)
 
-    if params = data['parameters']
+    params = data['parameters']
+    if params
       params = Puppet::Pops::Serialization::FromDataConverter.convert(params)
       @parameters = {}
       params.each { |param, value| self[param] = value }
@@ -56,13 +59,15 @@ class Puppet::Resource
       @parameters = EMPTY_HASH
     end
 
-    if sensitives = data['sensitive_parameters']
+    sensitives = data['sensitive_parameters']
+    if sensitives
       @sensitive_parameters = sensitives.map(&:to_sym)
     else
       @sensitive_parameters = EMPTY_ARRAY
     end
 
-    if tags = data['tags']
+    tags = data['tags']
+    if tags
       tag(*tags)
     end
 
@@ -554,7 +559,8 @@ class Puppet::Resource
     arg_types = resource_type.argument_types
     # Parameters is a map from name, to parameter, and the parameter again has name and value
     parameters.each do |name, value|
-      next unless t = arg_types[name.to_s]  # untyped, and parameters are symbols here (aargh, strings in the type)
+      t = arg_types[name.to_s] # untyped, and parameters are symbols here (aargh, strings in the type)
+      next unless t
       unless Puppet::Pops::Types::TypeCalculator.instance?(t, value.value)
         inferred_type = Puppet::Pops::Types::TypeCalculator.infer_set(value.value)
         actual = inferred_type.generalize()
@@ -658,7 +664,8 @@ class Puppet::Resource
     type = resource_type
     if type.respond_to?(:title_patterns) && !type.title_patterns.nil?
       type.title_patterns.each { |regexp, symbols_and_lambdas|
-        if captures = regexp.match(title.to_s)
+      captures = regexp.match(title.to_s)  
+      if captures
           symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|
             symbol, proc = symbol_and_lambda
             # Many types pass "identity" as the proc; we might as well give

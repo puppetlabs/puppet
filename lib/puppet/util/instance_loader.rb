@@ -45,7 +45,8 @@ module Puppet::Util::InstanceLoader
   # Retrieve an already-loaded instance, or attempt to load our instance.
   def loaded_instance(type, name)
     name = name.intern
-    return nil unless instances = instance_hash(type)
+    instances = instance_hash(type)
+    return nil unless instances
     unless instances.include? name
       if instance_loader(type).load(name, Puppet.lookup(:current_environment))
         unless instances.include? name

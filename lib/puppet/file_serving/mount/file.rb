@@ -60,7 +60,8 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
   end
 
   def search(path, request)
-    return nil unless path = complete_path(path, request.node)
+    path = complete_path(path, request.node)
+    return nil unless path
     [path]
   end
 

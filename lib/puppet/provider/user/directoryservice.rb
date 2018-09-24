@@ -71,7 +71,8 @@ Puppet::Type.type(:user).provide :directoryservice do
   # takes time and front-loads your Puppet run.
   def self.prefetch(resources)
     instances.each do |prov|
-      if resource = resources[prov.name]
+      resource = resources[prov.name]
+      if resource
         resource.provider = prov
       end
     end

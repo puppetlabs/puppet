@@ -464,7 +464,7 @@ class TypeCalculator
   # Produces the superclasses of the given class, including the class
   def superclasses(c)
     result = [c]
-    while s = c.superclass
+    while s = c.superclass #rubocop:disable Lint/AssignmentInCondition
       result << s
       c = s
     end

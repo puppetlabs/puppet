@@ -121,7 +121,8 @@ module Puppet
         return false if munged_mode.nil?
         currentvalue = munged_mode
       end
-      if stat = @resource.stat and stat.ftype == "link" and @resource[:links] != :follow
+      stat = @resource.stat
+      if stat && stat.ftype == "link" && @resource[:links] != :follow
         self.debug _("Not managing symlink mode")
         return true
       else

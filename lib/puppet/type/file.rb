@@ -361,7 +361,8 @@ Puppet::Type.newtype(:file) do
     if !path.root?
       # Start at our parent, to avoid autorequiring ourself
       parents = path.parent.enum_for(:ascend)
-      if found = parents.find { |p| catalog.resource(:file, p.to_s) }
+      found = parents.find { |p| catalog.resource(:file, p.to_s) }
+      if found
         req << found.to_s
       end
     end
@@ -375,7 +376,8 @@ Puppet::Type.newtype(:file) do
     autorequire(type) do
       if @parameters.include?(property)
         # The user/group property automatically converts to IDs
-        next unless should = @parameters[property].shouldorig
+        should = @parameters[property].shouldorig
+        next unless should
         val = should[0]
         if val.is_a?(Integer) or val =~ /^\d+$/
           nil
@@ -458,7 +460,8 @@ Puppet::Type.newtype(:file) do
       fail _("Can not find filebucket for backups without a catalog")
     end
 
-    unless catalog and filebucket = catalog.resource(:filebucket, backup) or backup == "puppet"
+    filebucket = catalog.resource(:filebucket, backup) if catalog
+    if !catalog || (!filebucket && backup != 'puppet')
       fail _("Could not find filebucket %{backup} specified in backup") % { backup: backup }
     end
 
@@ -569,7 +572,8 @@ Puppet::Type.newtype(:file) do
   def pathbuilder
     # We specifically need to call the method here, so it looks
     # up our parent in the catalog graph.
-    if parent = parent()
+    parent = parent()
+    if parent
       # We only need to behave specially when our parent is also
       # a file
       if parent.is_a?(self.class)
@@ -692,14 +696,16 @@ Puppet::Type.newtype(:file) do
     total = self[:source].collect do |source|
       # For each inlined file resource, the catalog contains a hash mapping
       # source path to lists of metadata returned by a server-side search.
-      if recursive_metadata = catalog.recursive_metadata[title]
+      recursive_metadata = catalog.recursive_metadata[title]
+      if recursive_metadata
         result = recursive_metadata[source]
       else
         result = perform_recursion(source)
       end
 
       next unless result
-      return [] if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
+      top = result.find { |r| r.relative_path == "." }
+      return [] if top && top.ftype != "directory"
       result.each do |data|
         if data.relative_path == '.'
           data.source = source
@@ -823,12 +829,12 @@ Puppet::Type.newtype(:file) do
     return true if self[:ensure] == :file
 
     # I.e., it's set to something like "directory"
-    return false if e = self[:ensure] and e != :present
+    return false if self[:ensure] && self[:ensure] != :present
 
     # The user doesn't really care, apparently
     if self[:ensure] == :present
-      return true unless s = stat
-      return(s.ftype == "file" ? true : false)
+      return true unless stat
+      return(stat.ftype == "file" ? true : false)
     end
 
     # If we've gotten here, then :ensure isn't set

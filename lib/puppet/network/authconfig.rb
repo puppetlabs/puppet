@@ -54,7 +54,8 @@ module Puppet
       right = @rights.newright(acl[:acl])
       right.allow(acl[:allow] || "*")
 
-      if method = acl[:method]
+      method = acl[:method]
+      if method
         method = [method] unless method.is_a?(Array)
         method.each { |m| right.restrict_method(m) }
       end
@@ -65,7 +66,8 @@ module Puppet
     # raise an Puppet::Network::AuthorizedError if the request
     # is denied.
     def check_authorization(method, path, params)
-      if authorization_failure_exception = @rights.is_request_forbidden_and_why?(method, path, params)
+      authorization_failure_exception = @rights.is_request_forbidden_and_why?(method, path, params)
+      if authorization_failure_exception
         Puppet.warning(_("Denying access: %{authorization_failure_exception}") % { authorization_failure_exception: authorization_failure_exception })
         raise authorization_failure_exception
       end

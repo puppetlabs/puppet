@@ -6,7 +6,8 @@ module Puppet
 
     def retrieve
       current_value = :absent
-      if stat = @resource.stat
+      stat = @resource.stat
+      if stat
         current_value = stat.ctime
       end
       current_value

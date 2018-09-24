@@ -33,7 +33,8 @@ module Puppet::Util::HttpProxy
   #   .example.com
   # We'll accommodate both here.
   def self.no_proxy?(dest)
-    unless no_proxy_env = ENV["no_proxy"] || ENV["NO_PROXY"]
+    no_proxy_env = ENV["no_proxy"] || ENV["NO_PROXY"]
+    unless no_proxy_env
       return false
     end
 

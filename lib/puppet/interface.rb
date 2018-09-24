@@ -91,7 +91,8 @@ class Puppet::Interface
     #
     # @api public
     def [](name, version)
-      unless face = Puppet::Interface::FaceCollection[name, version]
+      face = Puppet::Interface::FaceCollection[name, version]
+      unless face
         # REVISIT (#18042) no sense in rechecking if version == :current -- josh
         if Puppet::Interface::FaceCollection[name, :current]
           raise Puppet::Error, "Could not find version #{version} of #{name}"

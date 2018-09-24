@@ -118,7 +118,8 @@ Puppet::Type.newtype(:tidy) do
     }
 
     def convert(unit, multi)
-      if num = AgeConvertors[unit]
+      num = AgeConvertors[unit]
+      if num
         return num * multi
       else
         self.fail _("Invalid age unit '%{unit}'") % { unit: unit }
@@ -157,7 +158,8 @@ Puppet::Type.newtype(:tidy) do
       be used."
 
     def convert(unit, multi)
-      if num = { :b => 0, :k => 1, :m => 2, :g => 3, :t => 4 }[unit]
+      num = { :b => 0, :k => 1, :m => 2, :g => 3, :t => 4 }[unit]
+      if num
         result = multi
         num.times do result *= 1024 end
         return result
@@ -236,7 +238,8 @@ Puppet::Type.newtype(:tidy) do
 
   def retrieve
     # Our ensure property knows how to retrieve everything for us.
-    if obj = @parameters[:ensure]
+    obj = @parameters[:ensure]
+    if obj
       return obj.retrieve
     else
       return {}
@@ -282,7 +285,8 @@ Puppet::Type.newtype(:tidy) do
 
     files_by_name.keys.sort { |a,b| b <=> a }.each do |path|
       dir = ::File.dirname(path)
-      next unless resource = files_by_name[dir]
+      resource = files_by_name[dir]
+      next unless resource
       if resource[:require]
         resource[:require] << Puppet::Resource.new(:file, path)
       else
@@ -314,17 +318,20 @@ Puppet::Type.newtype(:tidy) do
     # those files anyway
     return false if catalog.resource(:file, path)
 
-    return false unless stat = self.stat(path)
+    stat = self.stat(path)
+    return false unless stat
 
     return false if stat.ftype == "directory" and ! rmdirs?
 
     # The 'matches' parameter isn't OR'ed with the other tests --
     # it's just used to reduce the list of files we can match.
-    return false if param = parameter(:matches) and ! param.tidy?(path, stat)
+    param = parameter(:matches)
+    return false if param && ! param.tidy?(path, stat)
 
     tested = false
     [:age, :size].each do |name|
-      next unless param = parameter(name)
+      param = parameter(name)
+      next unless param
       tested = true
       return true if param.tidy?(path, stat)
     end

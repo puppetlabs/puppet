@@ -107,7 +107,8 @@ module Puppet
       #
       def retrieve
         #ok, some 'convention' if the keyvalue property is named properties, provider should implement a properties method
-        if key_hash = provider.send(name) and key_hash != :absent
+        key_hash = provider.send(name) 
+        if key_hash != :absent
           return key_hash
         else
           return :absent

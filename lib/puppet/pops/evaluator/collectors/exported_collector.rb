@@ -44,7 +44,8 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
       found_resources = found.map {|x| x.is_a?(Puppet::Parser::Resource) ? x : x.to_resource(@scope)}
 
       found_resources.each do |item|
-        if existing = @scope.findresource(item.resource_type, item.title)
+        existing = @scope.findresource(item.resource_type, item.title)
+        if existing
           unless existing.collector_id == item.collector_id
             raise Puppet::ParseError,
               _("A duplicate resource was found while collecting exported resources, with the type and title %{title}") % { title: item.ref }

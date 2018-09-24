@@ -49,7 +49,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     checkforcdrom
     cmd = %w{-q -y}
 
-    if config = @resource[:configfiles]
+    config = @resource[:configfiles]
+    if config
       if config == :keep
         cmd << "-o" << 'DPkg::Options::=--force-confold'
       else
@@ -89,7 +90,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # preseeds answers to dpkg-set-selection from the "responsefile"
   #
   def run_preseed
-    if response = @resource[:responsefile] and Puppet::FileSystem.exist?(response)
+    response = @resource[:responsefile]
+    if response && Puppet::FileSystem.exist?(response)
       self.info(_("Preseeding %{response} to debconf-set-selections") % { response: response })
 
       preseed response

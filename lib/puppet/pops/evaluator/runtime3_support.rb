@@ -252,7 +252,8 @@ module Runtime3Support
     if v.is_a?(Numeric)
       return v
     end
-    unless n = Utils.to_n(v)
+    n = Utils.to_n(v)
+    unless n
       fail(Issues::NOT_NUMERIC, o, {:value => v})
     end
     # this point is reached if there was a conversion
@@ -276,7 +277,8 @@ module Runtime3Support
     # and it does not defined the visibility of functions from a ruby function's perspective. Instead,
     # this is done from the perspective of the environment.
     loader = loaders.private_environment_loader
-    if loader && func = loader.load(:function, name)
+    func = loader.load(:function, name) if loader
+    if func
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
         return func.call(scope, *args, &block)
       end
@@ -299,7 +301,8 @@ module Runtime3Support
     # 'ruby -wc' thinks that _func is unused, because the only reference to it
     # is inside of the Kernel.eval string below. By prefixing it with the
     # underscore, we let Ruby know to not worry about whether it's unused or not.
-    if loader && _func = loader.load(:function, name)
+    _func = loader.load(:function, name) if loader
+    if _func
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
         # Add stack frame when calling. See Puppet::Pops::PuppetStack
         return Kernel.eval('_func.call(scope, *args, &block)'.freeze, Kernel.binding, file || '', line)
@@ -415,7 +418,8 @@ module Runtime3Support
       # The defaults must be looked up in the scope where the resource was created (not in the given
       # scope where the lookup takes place.
       resource_scope = resource.scope
-      if val.nil? && resource_scope && defaults = resource_scope.lookupdefaults(resource.type)
+      defaults = resource_scope.lookupdefaults(resource.type) if val.nil? && resource_scope
+      if defaults
         # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
         # name and value.
         # NOTE: meta parameters that are unset ends up here, and there are no defaults for those encoded

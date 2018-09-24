@@ -29,7 +29,8 @@ module Puppet
       # yay insecure overrides
       return true if globalallow?
 
-      if decl = declarations.find { |d| d.match?(name, ip) }
+      decl = declarations.find { |d| d.match?(name, ip) }
+      if decl
         return decl.result
       end
 

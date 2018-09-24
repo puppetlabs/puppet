@@ -425,7 +425,8 @@ module Validation
     def prune(&block)
       removed = []
       @diagnostics.delete_if do |d|
-        if should_remove = yield(d)
+        should_remove = yield(d)
+        if should_remove
           removed << d
         end
         should_remove

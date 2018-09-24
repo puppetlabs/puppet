@@ -29,10 +29,13 @@ class Puppet::Indirector::Terminus
     def indirection=(name)
       if name.is_a?(Puppet::Indirector::Indirection)
         @indirection = name
-      elsif ind = Puppet::Indirector::Indirection.instance(name)
-        @indirection = ind
       else
-        raise ArgumentError, _("Could not find indirection instance %{name} for %{terminus}") % { name: name, terminus: self.name }
+        ind = Puppet::Indirector::Indirection.instance(name)
+        if ind
+          @indirection = ind
+        else
+          raise ArgumentError, _("Could not find indirection instance %{name} for %{terminus}") % { name: name, terminus: self.name }
+        end
       end
     end
 

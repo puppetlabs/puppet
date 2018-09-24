@@ -112,8 +112,8 @@ class Puppet::Indirector::Face < Puppet::Face
     EOT
 
     when_invoked do |options|
-      if t = indirection.terminus_class
-        _("Run mode '%{mode}': %{terminus}") % { mode: Puppet.run_mode.name, terminus: t }
+      if indirection.terminus_class
+        _("Run mode '%{mode}': %{terminus}") % { mode: Puppet.run_mode.name, terminus: indirection.terminus_class }
       else
         _("No default terminus class for run mode '%{mode}'") % { mode: Puppet.run_mode.name }
       end

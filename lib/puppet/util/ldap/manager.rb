@@ -56,10 +56,12 @@ class Puppet::Util::Ldap::Manager
         ssl = false
       end
       options = {:ssl => ssl}
-      if user = Puppet[:ldapuser] and user != ""
+      user = Puppet[:ldapuser]
+      if user && user != ""
         options[:user] = user
       end
-      if password = Puppet[:ldappassword] and password != ""
+      password = Puppet[:ldappassword]
+      if password && password != ""
         options[:password] = password
       end
       @connection = Puppet::Util::Ldap::Connection.new(Puppet[:ldapserver], Puppet[:ldapport], options)
@@ -138,7 +140,8 @@ class Puppet::Util::Ldap::Manager
       next if values[generator.name]
 
       if generator.source
-        unless value = values[generator.source]
+        value = values[generator.source]
+        unless value
           raise ArgumentError, _("%{source} must be defined to generate %{name}") %
               { source: generator.source, name: generator.name }
         end

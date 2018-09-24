@@ -30,7 +30,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     dpkgquery_piped('-W', '--showformat', self::DPKG_QUERY_FORMAT_STRING) do |pipe|
       # now turn each returned line into a package object
       pipe.each_line do |line|
-        if hash = parse_line(line)
+        hash = parse_line(line)
+        if hash
           packages << new(hash)
         end
       end
@@ -53,7 +54,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   def self.parse_line(line)
     hash = nil
 
-    if match = self::FIELDS_REGEX.match(line)
+    match = self::FIELDS_REGEX.match(line)
+    if match
       hash = {}
 
       self::FIELDS.zip(match.captures) do |field,value|
@@ -78,7 +80,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   public
 
   def install
-    unless file = @resource[:source]
+    file = @resource[:source]
+    unless file
       raise ArgumentError, _("You cannot install dpkg packages without a source")
     end
     args = []

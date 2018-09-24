@@ -96,7 +96,8 @@ class Puppet::Settings::IniFile
   end
 
   def set_default_section_write_sectionline(value)
-    if index = @lines.find_index { |line| line.is_a?(DefaultSection) }
+    index = @lines.find_index { |line| line.is_a?(DefaultSection) }
+    if index
       @lines[index].write_sectionline = true
     end
   end

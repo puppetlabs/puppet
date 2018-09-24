@@ -126,7 +126,8 @@ class Puppet::FileBucket::Dipper
     end
 
     if restore
-      if newcontents = get_bucket_file(sum)
+      newcontents = get_bucket_file(sum)
+      if newcontents
         newsum = newcontents.checksum_data
         changed = nil
         if Puppet::FileSystem.exist?(file_handle) and ! Puppet::FileSystem.writable?(file_handle)

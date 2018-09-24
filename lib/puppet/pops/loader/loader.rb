@@ -69,7 +69,8 @@ class Loader
   # @api public
   #
   def load(type, name)
-    if result = load_typed(TypedName.new(type, name.to_s))
+    result = load_typed(TypedName.new(type, name.to_s))
+    if result
       result.value
     end
   end
@@ -108,7 +109,8 @@ class Loader
   # @api private
   #
   def [](typed_name)
-    if found = get_entry(typed_name)
+    found = get_entry(typed_name)
+    if found
       found.value
     else
       nil

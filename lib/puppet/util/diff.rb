@@ -6,10 +6,12 @@ module Puppet::Util::Diff
   require 'tempfile'
 
   def diff(old, new)
-    return '' unless diff_cmd = Puppet[:diff] and diff_cmd != ""
+    diff_cmd = Puppet[:diff]
+    return '' unless diff_cmd && diff_cmd != ""
 
     command = [diff_cmd]
-    if args = Puppet[:diff_args] and args != ""
+    args = Puppet[:diff_args]
+    if args && args != ""
       args.split(' ').each do|arg|
         command << arg
       end

@@ -512,7 +512,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def internal_check_no_idem_last(o)
-    if violator = ends_with_idem(o.body)
+    violator = ends_with_idem(o.body)
+    if violator
       acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
     end
   end
@@ -731,7 +732,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # Check that hostnames are valid hostnames (or regular expressions)
     hostname(o.host_matches, o)
     top(o)
-    if violator = ends_with_idem(o.body)
+    violator = ends_with_idem(o.body)
+    if violator
       acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
     end
     unless o.parent.nil?
@@ -917,7 +919,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def hostname_ConcatenatedString(o, semantic)
     # Puppet 3.1. only accepts a concatenated string without interpolated expressions
-    if the_expr = o.segments.index {|s| s.is_a?(Model::TextExpression) }
+    the_expr = o.segments.index {|s| s.is_a?(Model::TextExpression) }
+    if the_expr
       acceptor.accept(Issues::ILLEGAL_HOSTNAME_INTERPOLATION, o.segments[the_expr].expr)
     elsif o.segments.size() != 1
       # corner case, bad model, concatenation of several plain strings

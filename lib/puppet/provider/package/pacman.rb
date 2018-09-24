@@ -78,7 +78,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
         # pacman -Q output is 'packagename version-rel'
         regex = %r{^(\S+)\s(\S+)}
         pipe.each_line do |line|
-          if match = regex.match(line)
+          match = regex.match(line)
+          if match
             packages[match.captures[0]] = match.captures[1]
           else
             warning(_("Failed to match line '%{line}'") % { line: line })

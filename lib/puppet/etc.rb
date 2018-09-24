@@ -115,7 +115,7 @@ module Puppet::Etc
 
       setgrent
       begin
-        while cur_group = getgrent
+        while cur_group = getgrent #rubocop:disable Lint/AssignmentInCondition
           yield cur_group
         end
       ensure

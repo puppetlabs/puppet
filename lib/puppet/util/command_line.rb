@@ -93,10 +93,13 @@ module Puppet
           end
         elsif Puppet::Application.available_application_names.include?(subcommand_name)
           ApplicationSubcommand.new(subcommand_name, self)
-        elsif path_to_subcommand = external_subcommand
-          ExternalSubcommand.new(path_to_subcommand, self)
         else
-          UnknownSubcommand.new(subcommand_name, self)
+          path_to_subcommand = external_subcommand
+          if path_to_subcommand
+            ExternalSubcommand.new(path_to_subcommand, self)
+          else
+            UnknownSubcommand.new(subcommand_name, self)
+          end
         end
       end
 
@@ -121,7 +124,8 @@ module Puppet
           # If we cannot find the configured environment, which may not exist,
           # we do not attempt to add plugin directories to the load path.
           unless @subcommand_name == 'master' || @subcommand_name == 'agent' || (@subcommand_name == 'device' && (['--apply', '--facts', '--resource'] - @command_line.args).empty?)
-            if configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+            configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+            if configured_environment
               configured_environment.each_plugin_directory do |dir|
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
               end

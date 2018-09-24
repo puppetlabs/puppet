@@ -33,7 +33,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
         # now turn each returned line into a package object
         process.each_line { |line|
-          if match = regex.match(line.split[0])
+          match = regex.match(line.split[0])
+          if match
             fields.zip(match.captures) { |field,value|
               hash[field] = value
             }
@@ -120,13 +121,17 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     unless @resource[:source]
       if Puppet::FileSystem.exist?("/etc/pkg.conf")
         File.open("/etc/pkg.conf", "rb").readlines.each do |line|
-          if matchdata = line.match(/^installpath\s*=\s*(.+)\s*$/i)
+          matchdata = line.match(/^installpath\s*=\s*(.+)\s*$/i)
+          if matchdata
             @resource[:source] = matchdata[1]
-          elsif matchdata = line.match(/^installpath\s*\+=\s*(.+)\s*$/i)
-            if @resource[:source].nil?
-              @resource[:source] = matchdata[1]
-            else
-              @resource[:source] += ":" + matchdata[1]
+          else
+            matchdata = line.match(/^installpath\s*\+=\s*(.+)\s*$/i)
+            if matchdata
+              if @resource[:source].nil?
+                @resource[:source] = matchdata[1]
+              else
+                @resource[:source] += ":" + matchdata[1]
+              end
             end
           end
         end
@@ -198,7 +203,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       version = -1
 
       process.each_line do |line|
-        if match = regex.match(line.split[0])
+        match = regex.match(line.split[0])
+        if match
           # now we return the first version, unless ensure is latest
           version = match.captures[1]
           return version unless @resource[:ensure] == "latest"

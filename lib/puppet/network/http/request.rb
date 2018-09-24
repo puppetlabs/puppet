@@ -20,7 +20,8 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
   end
 
   def formatter
-    if header = headers['content-type']
+    header = headers['content-type']
+    if header
       header.gsub!(/\s*;.*$/,'') # strip any charset
       format = Puppet::Network::FormatHandler.mime(header)
 

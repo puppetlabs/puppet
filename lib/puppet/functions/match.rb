@@ -124,8 +124,7 @@ Puppet::Functions.create_function(:match) do
   private
 
   def do_match(s, regexp)
-    if result = regexp.match(s)
-      result.to_a
-    end
+    result = regexp.match(s)
+    result.to_a if result
   end
 end

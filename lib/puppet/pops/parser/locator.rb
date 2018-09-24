@@ -177,7 +177,8 @@ class Locator
         # use cache
         return @prev_line
       end
-      if line_nbr = ary_bsearch_i(line_index, offset)
+      line_nbr = ary_bsearch_i(line_index, offset)
+      if line_nbr
         # cache
         @prev_offset = offset
         @prev_line = line_nbr

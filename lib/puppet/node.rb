@@ -61,7 +61,8 @@ class Puppet::Node
     if @environment
       @environment
     else
-      if env = parameters[ENVIRONMENT]
+      env = parameters[ENVIRONMENT]
+      if env
         self.environment = env
       elsif environment_name
         self.environment = environment_name
@@ -101,7 +102,8 @@ class Puppet::Node
     raise ArgumentError, _("Node names cannot be nil") unless name
     @name = name
 
-    if classes = options[:classes]
+    classes = options[:classes]
+    if classes
       if classes.is_a?(String)
         @classes = [classes]
       else
@@ -117,7 +119,8 @@ class Puppet::Node
 
     @server_facts = {}
 
-    if env = options[:environment]
+    env = options[:environment]
+    if env
       self.environment = env
     end
 
@@ -187,7 +190,8 @@ class Puppet::Node
     names += split_name(name) if name.include?(".")
 
     # First, get the fqdn
-    unless fqdn = parameters["fqdn"]
+    fqdn = parameters["fqdn"]
+    unless fqdn
       if parameters["hostname"] and parameters["domain"]
         fqdn = parameters["hostname"] + "." + parameters["domain"]
       else

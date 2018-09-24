@@ -60,12 +60,6 @@ Style/RedundantParentheses:
 Lint/AmbiguousOperator:
   Enabled: false
 
-# DISABLED since for all the checked, we are basically checking nil
-# TODO: Change the checking so that if the variable being assigned to has
-# a value ALREADY, then raise an error.
-Lint/AssignmentInCondition:
-  Enabled: false
-
 # DISABLED - not useful
 Layout/SpaceBeforeComment:
   Enabled: false

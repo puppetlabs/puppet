@@ -41,7 +41,8 @@ module Pal
     #
     def function_signature(function_name)
       loader = internal_compiler.loaders.private_environment_loader
-      if func = loader.load(:function, function_name)
+      func = loader.load(:function, function_name)
+      if func
         return FunctionSignature.new(func.class)
       end
       # Could not find function

@@ -83,7 +83,8 @@ class Puppet::Network::HTTP::Route
     end
 
     subrequest = request.route_into(match(request.routing_path).to_s)
-    if chained_route = @chained.find { |route| route.matches?(subrequest) }
+    chained_route = @chained.find { |route| route.matches?(subrequest) }
+    if chained_route
       chained_route.process(subrequest, response)
     end
   end

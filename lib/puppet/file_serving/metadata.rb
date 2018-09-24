@@ -127,7 +127,8 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     @owner       = data.delete('owner')
     @group       = data.delete('group')
     @mode        = data.delete('mode')
-    if checksum = data.delete('checksum')
+    checksum = data.delete('checksum')
+    if checksum
       @checksum_type = checksum['type']
       @checksum      = checksum['value']
     end

@@ -61,10 +61,7 @@ module Puppet
   def self.version
     version_file = File.join(File.dirname(__FILE__), 'VERSION')
     return @puppet_version if @puppet_version
-    if version = read_version_file(version_file)
-      @puppet_version = version
-    end
-    @puppet_version ||= PUPPETVERSION
+    @puppet_version = read_version_file(version_file) || PUPPETVERSION
   end
 
   # @return [String] containing the puppet version to minor specificity, e.g. "3.0"

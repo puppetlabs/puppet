@@ -39,7 +39,8 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
   def create_node(name, result, facts = nil)
     node = Puppet::Node.new(name)
     [:parameters, :classes, :environment].each do |param|
-      if value = result[param]
+      value = result[param]
+      if value
         node.send(param.to_s + "=", value)
       end
     end

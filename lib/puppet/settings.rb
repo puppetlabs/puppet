@@ -298,7 +298,7 @@ class Puppet::Settings
 
     # remove run_mode options from the arguments so that later parses don't think
     # it is an unknown option.
-    while option_index = args.index('--run_mode') do
+    while option_index = args.index('--run_mode') do #rubocop:disable Lint/AssignmentInCondition
       args.delete_at option_index
       args.delete_at option_index
     end
@@ -380,7 +380,8 @@ class Puppet::Settings
 
   # Return a value's description.
   def description(name)
-    if obj = @config[name.to_sym]
+    obj = @config[name.to_sym]
+    if obj
       obj.desc
     else
       nil
@@ -436,7 +437,8 @@ class Puppet::Settings
       end
     end
 
-    if s = @config[str]
+    s = @config[str]
+    if s
       @deprecated_settings_that_have_been_configured << s if s.completely_deprecated?
     end
 
@@ -651,7 +653,8 @@ class Puppet::Settings
     # and I'm too lazy to only set the metadata once.
     if @configuration_file
       searchpath(nil, preferred_run_mode).reverse_each do |source|
-        if source.type == :section && section = @configuration_file.sections[source.name]
+        section = @configuration_file.sections[source.name] if source.type == :section
+        if section
           apply_metadata_from_section(section)
         end
       end
@@ -661,7 +664,8 @@ class Puppet::Settings
 
   def apply_metadata_from_section(section)
     section.settings.each do |setting|
-      if setting.has_metadata? && type = @config[setting.name]
+      type = @config[setting.name] if setting.has_metadata?
+      if type
         type.set_meta(setting.meta)
       end
     end
@@ -695,8 +699,10 @@ class Puppet::Settings
     klass = nil
     hash[:section] = hash[:section].to_sym if hash[:section]
 
-    if type = hash[:type]
-      unless klass = SETTING_TYPES[type]
+    type = hash[:type]
+    if type
+      klass = SETTING_TYPES[type]
+      unless klass
         raise ArgumentError, _("Invalid setting type '%{type}'") % { type: type }
       end
       hash.delete(:type)
@@ -728,7 +734,8 @@ class Puppet::Settings
   # Reparse our config file, if necessary.
   def reparse_config_files
     if files
-      if filename = any_files_changed?
+      filename = any_files_changed?
+      if filename
         Puppet.notice "Config file #{filename} changed; triggering re-parse of all config files."
         parse_config_files
         reuse
@@ -835,7 +842,8 @@ class Puppet::Settings
     when :values
       @value_sets[source.name]
     when :section
-      if @configuration_file && section = @configuration_file.sections[source.name]
+      section = @configuration_file.sections[source.name] if @configuration_file
+      if section
         ValuesFromSection.new(source.name, section)
       end
     when :environment
@@ -850,7 +858,8 @@ class Puppet::Settings
   def set_by_config?(param, environment = nil, run_mode = preferred_run_mode)
     param = param.to_sym
     configsearchpath(environment, run_mode).any? do |source|
-      if vals = searchpath_values(source)
+      vals = searchpath_values(source)
+      if vals
         vals.lookup(param)
       end
     end
@@ -910,8 +919,10 @@ class Puppet::Settings
       hash[:section] = section
       raise ArgumentError, _("Setting %{name} is already defined") % { name: name } if @config.include?(name)
       tryconfig = newsetting(hash)
-      if short = tryconfig.short
-        if other = @shortnames[short]
+      short = tryconfig.short
+      if short
+        other = @shortnames[short]
+        if other
           raise ArgumentError, _("Setting %{name} is already using short name '%{short}'") % { name: other.name, short: short }
         end
         @shortnames[short] = tryconfig
@@ -946,7 +957,8 @@ class Puppet::Settings
       file = @config[key]
       next if file.value.nil?
       next unless (sections.nil? or sections.include?(file.section))
-      next unless resource = file.to_resource
+      resource = file.to_resource
+      next unless resource
       next if catalog.resource(resource.ref)
 
       Puppet.debug {"Using settings: adding file resource '#{key}': '#{resource.inspect}'"}
@@ -1147,7 +1159,8 @@ Generated on #{Time.now}.
   def record_deprecations_from_puppet_conf(puppet_conf)
     puppet_conf.sections.values.each do |section|
       section.settings.each do |conf_setting|
-        if setting = self.setting(conf_setting.name)
+        setting = self.setting(conf_setting.name)
+        if setting
           @deprecated_settings_that_have_been_configured << setting if setting.deprecated?
         end
       end
@@ -1209,12 +1222,14 @@ Generated on #{Time.now}.
       next unless setting.respond_to?(:owner)
       next unless sections.nil? or sections.include?(setting.section)
 
-      if user = setting.owner and user != "root" and catalog.resource(:user, user).nil?
+      user = setting.owner
+      if user && user != "root" && catalog.resource(:user, user).nil?
         resource = Puppet::Resource.new(:user, user, :parameters => {:ensure => :present})
         resource[:gid] = self[:group] if self[:group]
         catalog.add_resource resource
       end
-      if group = setting.group and ! %w{root wheel}.include?(group) and catalog.resource(:group, group).nil?
+      group = setting.group
+      if group && ! %w{root wheel}.include?(group) && catalog.resource(:group, group).nil?
         catalog.add_resource Puppet::Resource.new(:group, group, :parameters => {:ensure => :present})
       end
     end
@@ -1478,9 +1493,11 @@ Generated on #{Time.now}.
     end
 
     def conf
-      @conf ||= if environments = Puppet.lookup(:environments) { nil }
-                  environments.get_conf(@environment_name)
-                end
+      unless @conf
+        environments = Puppet.lookup(:environments) { nil }
+        @conf = environments.get_conf(@environment_name) if environments
+      end
+      @conf
     end
 
     def inspect

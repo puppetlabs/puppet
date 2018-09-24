@@ -124,7 +124,8 @@ class Puppet::Resource::TypeCollection
   def node(name)
     name = munge_name(name)
 
-    if node = @nodes[name]
+    node = @nodes[name]
+    if node
       return node
     end
 
@@ -250,7 +251,8 @@ class Puppet::Resource::TypeCollection
   end
 
   def dupe_check(instance, hash)
-    return unless dupe = hash[instance.name]
+    dupe = hash[instance.name]
+    return unless dupe
     message = yield dupe
     instance.fail Puppet::ParseError, message
   end

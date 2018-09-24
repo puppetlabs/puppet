@@ -82,11 +82,14 @@ class Puppet::Provider::Exec < Puppet::Provider
   def extractexe(command)
     if command.is_a? Array
       command.first
-    elsif match = /^"([^"]+)"|^'([^']+)'/.match(command)
-      # extract whichever of the two sides matched the content.
-      match[1] or match[2]
     else
-      command.split(/ /)[0]
+      match = /^"([^"]+)"|^'([^']+)'/.match(command)
+      if match
+        # extract whichever of the two sides matched the content.
+        match[1] or match[2]
+      else
+        command.split(/ /)[0]
+      end
     end
   end
 

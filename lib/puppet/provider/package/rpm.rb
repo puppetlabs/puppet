@@ -126,7 +126,8 @@ These options should be specified as an array where each element is either a str
 
   # Here we just retrieve the version from the file specified in the source.
   def latest
-    unless source = @resource[:source]
+    source = @resource[:source]
+    unless source
       @resource.fail _("RPMs must specify a package source")
     end
 
@@ -138,7 +139,8 @@ These options should be specified as an array where each element is either a str
   end
 
   def install
-    unless source = @resource[:source]
+    source = @resource[:source]
+    unless source
       @resource.fail _("RPMs must specify a package source")
     end
 
@@ -333,7 +335,8 @@ These options should be specified as an array where each element is either a str
     if ri
       v = s[0,ri]
       r = s[ri+1,s.length]
-      if arch = r.scan(ARCH_REGEX)[0]
+      arch = r.scan(ARCH_REGEX)[0]
+      if arch
         a = arch.gsub(/\./, '')
         r.gsub!(ARCH_REGEX, '')
       end
@@ -401,7 +404,8 @@ These options should be specified as an array where each element is either a str
     line.strip!
     hash = {}
 
-    if match = self::NEVRA_REGEX.match(line)
+    match = self::NEVRA_REGEX.match(line)
+    if match
       self::NEVRA_FIELDS.zip(match.captures) { |f, v| hash[f] = v }
       hash[:provider] = self.name
       hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"

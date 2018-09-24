@@ -105,7 +105,8 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
   # If they pass class information, we want to ignore it.
   # This is required for compatibility with Puppet 3.x
   def data_to_instance(klass, data)
-    if data.is_a?(Hash) and d = data['data']
+    d = data['data'] if data.is_a?(Hash)
+    if d
       data = d
     end
     return data if data.is_a?(klass)

@@ -81,7 +81,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   end
 
   def install(useversion = true)
-    unless source = @resource[:source]
+    source = @resource[:source]
+    unless source
       self.fail _("A directory is required which will be used to find packages")
     end
 
@@ -101,7 +102,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   def self.pkglist(hash = {})
     cmd = [command(:lslpp), "-qLc"]
 
-    if name = hash[:pkgname]
+    name = hash[:pkgname]
+    if name
       cmd << name
     end
 

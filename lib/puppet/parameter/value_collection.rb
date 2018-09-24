@@ -18,9 +18,8 @@ class Puppet::Parameter::ValueCollection
   #
   def aliasvalue(name, other)
     other = other.to_sym
-    unless value = match?(other)
-      raise Puppet::DevError, _("Cannot alias nonexistent value %{value}") % { value: other }
-    end
+    value = match?(other)
+    raise Puppet::DevError, _("Cannot alias nonexistent value %{value}") % { value: other } unless value
 
     value.alias(name)
   end
@@ -35,7 +34,8 @@ class Puppet::Parameter::ValueCollection
       unless values.empty?
         @doc << "Valid values are "
         @doc << @strings.collect do |value|
-          if aliases = value.aliases and ! aliases.empty?
+          aliases = value.aliases
+          if aliases && ! aliases.empty?
             "`#{value.name}` (also called `#{aliases.join(", ")}`)"
           else
             "`#{value.name}`"
@@ -81,9 +81,8 @@ class Puppet::Parameter::ValueCollection
   #
   def match?(test_value)
     # First look for normal values
-    if value = @strings.find { |v| v.match?(test_value) }
-      return value
-    end
+    value = @strings.find { |v| v.match?(test_value) }
+    return value if value
 
     # Then look for a regex match
     @regexes.find { |v| v.match?(test_value) }
@@ -100,7 +99,8 @@ class Puppet::Parameter::ValueCollection
   def munge(value)
     return value if empty?
 
-    if instance = match?(value)
+    instance = match?(value)
+    if instance
       if instance.regex?
         return value
       else
