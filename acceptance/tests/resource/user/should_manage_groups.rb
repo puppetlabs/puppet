@@ -14,6 +14,9 @@ test_name "should correctly manage the groups property for the User resource" do
                          # in ways that might require special permissions
                          # or be harmful to the system running the test
 
+  require 'puppet/acceptance/common_utils'
+  extend Puppet::Acceptance::BeakerUtils
+
   def random_name
     "pl#{rand(999999).to_i}"
   end
@@ -42,11 +45,6 @@ MANIFEST
     # This bit of code reads the user's groups from the /etc/group file.
     result = on(host, "#{privatebindir}/ruby -e \"require 'puppet'; puts(Puppet::Util::POSIX.groups_of('#{user}').to_s)\"")
     Kernel.eval(result.stdout.chomp)
-  end
-
-  # TODO: This should be added to Beaker
-  def assert_matching_arrays(expected, actual, message = "")
-    assert_equal(expected.sort, actual.sort, message)
   end
 
   agents.each do |agent|

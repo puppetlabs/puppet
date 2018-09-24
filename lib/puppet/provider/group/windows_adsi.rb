@@ -22,10 +22,12 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
     # Cannot use munge of the group property to canonicalize @should
     # since the default array_matching comparison is not commutative
-
-    current_sids = current.map(&:sid)
     # dupes automatically weeded out when hashes built
-    specified_sids = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should).keys.to_a
+    current_members = Puppet::Util::Windows::ADSI::User.name_sid_hash(current)
+    specified_members = Puppet::Util::Windows::ADSI::User.name_sid_hash(should)
+
+    current_sids = current_members.keys.to_a
+    specified_sids = specified_members.keys.to_a
 
     if @resource[:auth_membership]
       current_sids.sort == specified_sids.sort
@@ -63,7 +65,8 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def members
-    group.members
+    @members ||= Puppet::Util::Windows::ADSI::User.name_sid_hash(group.members)
+    @members.keys
   end
 
   def members=(members)
