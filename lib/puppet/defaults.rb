@@ -1453,7 +1453,20 @@ EOT
         with the running configuration.  In the case of puppet master,
         this file reflects the state discovered through interacting
         with clients."
-      },
+    },
+    :statettl => {
+      :default => "32d",
+      :type    => :ttl,
+      :desc    => "How long the Puppet agent should cache when a resource was last checked or synced.
+      #{AS_DURATION}
+      A value of `0` or `unlimited` will disable cache pruning.
+
+      This setting affects the usage of `schedule` resources, as the information
+      about when a resource was last checked (and therefore when it needs to be
+      checked again) is stored in the `statefile`. The `statettl` needs to be
+      large enough to ensure that a resource will not trigger multiple times
+      during a schedule due to its entry expiring from the cache."
+    },
     :transactionstorefile => {
       :default => "$statedir/transactionstore.yaml",
       :type => :file,
