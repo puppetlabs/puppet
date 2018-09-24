@@ -397,7 +397,7 @@ class Puppet::Configurer
       port = server[1] || Puppet[:masterport]
       begin
         http = Puppet::Network::HttpPool.http_ssl_instance(host, port)
-        response = http.get('/status/v1/simple')
+        response = http.get('/status/v1/simple/master')
         return [host, port] if response.is_a?(Net::HTTPOK)
 
         Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %

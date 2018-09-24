@@ -518,7 +518,10 @@ class amod::bad_type {
         apply.options[:catalog] = file_containing('manifest', serialized_catalog)
         apply.expects(:apply_catalog).with do |cat|
           expect(cat.resource(:notify, 'rx')['message']).to be_a(Regexp)
-          expect(cat.resource(:notify, 'bin')['message']).to be_a(Puppet::Pops::Types::PBinaryType::Binary)
+          # The resource return in this expect is a String, but since it was a Binary type that
+          # was converted with `resolve_and_replace`, we want to make sure that the encoding
+          # of that string is the expected ASCII-8BIT.
+          expect(cat.resource(:notify, 'bin')['message'].encoding.inspect).to include('ASCII-8BIT')
           expect(cat.resource(:notify, 'ver')['message']).to be_a(SemanticPuppet::Version)
           expect(cat.resource(:notify, 'vrange')['message']).to be_a(SemanticPuppet::VersionRange)
           expect(cat.resource(:notify, 'tspan')['message']).to be_a(Puppet::Pops::Time::Timespan)
