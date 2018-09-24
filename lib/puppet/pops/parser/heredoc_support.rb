@@ -98,8 +98,7 @@ module HeredocSupport
 
         # Use a new lexer instance configured with a sub-locator to enable correct positioning
         sublexer = self.class.new()
-        locator = Locator::SubLocator.sub_locator(str,
-          locator.file, heredoc_line, heredoc_offset, leading.length())
+        locator = Locator::SubLocator.new(locator, heredoc_line, heredoc_offset, leading.length())
 
         # Emit a token that provides the grammar with location information about the lines on which the heredoc
         # content is based.
