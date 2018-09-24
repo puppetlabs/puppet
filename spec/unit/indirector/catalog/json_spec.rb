@@ -17,8 +17,9 @@ describe Puppet::Resource::Catalog::Json do
     let(:binary) { "\xC0\xFF".force_encoding(Encoding::BINARY) }
     let(:key)    { 'foo' }
     let(:file)   { subject.path(key) }
+    let(:env)    { Puppet::Node::Environment.create(:testing, []) }
     let(:catalog) do
-      catalog = Puppet::Resource::Catalog.new(key, Puppet::Node::Environment.create(:testing, []))
+      catalog = Puppet::Resource::Catalog.new(key, env)
       catalog.add_resource(Puppet::Resource.new(:file, '/tmp/a_file', :parameters => { :content => binary }))
       catalog
     end
@@ -27,6 +28,11 @@ describe Puppet::Resource::Catalog::Json do
       Puppet.run_mode.stubs(:master?).returns(true)
       Puppet[:server_datadir] = tmpdir('jsondir')
       FileUtils.mkdir_p(File.join(Puppet[:server_datadir], 'indirector_testing'))
+      Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(env))
+    end
+
+    after :each do
+      Puppet.pop_context()
     end
 
     it 'saves a catalog containing binary content' do
@@ -43,7 +49,7 @@ describe Puppet::Resource::Catalog::Json do
       parsed_catalog = subject.find(request)
 
       content = parsed_catalog.resource(:file, '/tmp/a_file')[:content]
-      expect(content.bytes.to_a).to eq(binary.bytes.to_a)
+      expect(content.binary_buffer.bytes.to_a).to eq(binary.bytes.to_a)
     end
 
     it 'searches for catalogs contains binary content' do
@@ -55,7 +61,7 @@ describe Puppet::Resource::Catalog::Json do
 
       expect(parsed_catalogs.size).to eq(1)
       content = parsed_catalogs.first.resource(:file, '/tmp/a_file')[:content]
-      expect(content.bytes.to_a).to eq(binary.bytes.to_a)
+      expect(content.binary_buffer.bytes.to_a).to eq(binary.bytes.to_a)
     end
   end
 end

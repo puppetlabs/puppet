@@ -577,6 +577,7 @@ class Puppet::Parser::Compiler
       end
     end
   end
+  protected :evaluate_generators
 
   # Find and evaluate our main object, if possible.
   def evaluate_main
@@ -641,6 +642,7 @@ class Puppet::Parser::Compiler
 
     add_resource_metaparams
   end
+  protected :finish
 
   def add_resource_metaparams
     unless main = catalog.resource(:class, :main)
@@ -780,8 +782,8 @@ class Puppet::Parser::Compiler
     settings_resource = Puppet::Parser::Resource.new('class', SETTINGS, :scope => @topscope)
 
     @catalog.add_resource(settings_resource)
-
     settings_type.evaluate_code(settings_resource)
+    settings_resource.instance_variable_set(:@evaluated, true) # Prevents settings from being reevaluated
 
     scope = @topscope.class_scope(settings_type)
     scope.merge_settings(environment.name)

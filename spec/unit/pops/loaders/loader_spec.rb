@@ -329,13 +329,6 @@ describe 'The Loader' do
               'bad_syntax.json' => <<-TXT.unindent,
                 text => This is not a task because JSON is unparsable
                 TXT
-              'bad_content.sh' => '',
-              'bad_content.json' => <<-JSON.unindent,
-                {
-                  "description": "This is not a task because parameters is misspelled",
-                  "paramters": { "string_param": { "type": "String[1]" } }
-                }
-                JSON
               'missing_adjacent.json' => <<-JSON.unindent,
                 {
                   "description": "This is not a task because there is no adjacent file with the same base name",
@@ -415,7 +408,7 @@ describe 'The Loader' do
                   contain_exactly(tn(:task, 'c::foo')))
               end
               expect(logs.select { |log| log.level == :warning }.map { |log| log.message }).to(
-                contain_exactly(/unexpected token/, /unrecognized key/, /No source besides task metadata was found/)
+                contain_exactly(/unexpected token/, /No source besides task metadata was found/)
               )
             end
 
@@ -427,11 +420,11 @@ describe 'The Loader' do
                   contain_exactly(tn(:task, 'c::foo')))
               end
               expect(logs.select { |log| log.level == :warning }.map { |log| log.message }).to be_empty
-              expect(error_collector.size).to eql(3)
+              expect(error_collector.size).to eql(2)
               expect(error_collector.all? { |e| e.is_a?(Puppet::DataTypes::Error) })
               expect(error_collector.all? { |e| e.issue_code == Puppet::Pops::Issues::LOADER_FAILURE.issue_code })
               expect(error_collector.map { |e| e.details['original_error'] }).to(
-                contain_exactly(/unexpected token/, /unrecognized key/, /No source besides task metadata was found/)
+                contain_exactly(/unexpected token/, /No source besides task metadata was found/)
               )
             end
 
