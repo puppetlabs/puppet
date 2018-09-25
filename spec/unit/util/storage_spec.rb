@@ -225,5 +225,112 @@ describe Puppet::Util::Storage do
 
       expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
     end
+
+    it "expires entries with a :checked older than statettl seconds ago" do
+      Puppet[:statettl] = '1d'
+      recent_checked = Time.now
+      stale_checked = Time.now - (Puppet[:statettl] + 1)
+      Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
+      Puppet::Util::Storage.cache(:stale)[:checked] = stale_checked
+      expect(Puppet::Util::Storage.state).to eq(
+        {
+          :yayness => {
+            :checked => recent_checked
+          },
+          :stale => {
+            :checked => stale_checked
+          }
+        }
+      )
+
+      Puppet::Util::Storage.store
+      Puppet::Util::Storage.clear
+
+      expect(Puppet::Util::Storage.state).to eq({})
+
+      Puppet::Util::Storage.load
+
+      expect(Puppet::Util::Storage.state).to eq(
+        {
+          :yayness => {
+            :checked => recent_checked
+          }
+        }
+      )
+    end
+
+
+    it "does not expire entries when statettl is 0" do
+      Puppet[:statettl] = '0'
+      recent_checked = Time.now
+      older_checked = Time.now - 10_000_000
+      Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
+      Puppet::Util::Storage.cache(:older)[:checked] = older_checked
+      expect(Puppet::Util::Storage.state).to eq(
+        {
+          :yayness => {
+            :checked => recent_checked
+          },
+          :older => {
+            :checked => older_checked
+          }
+        }
+      )
+
+      Puppet::Util::Storage.store
+      Puppet::Util::Storage.clear
+
+      expect(Puppet::Util::Storage.state).to eq({})
+
+      Puppet::Util::Storage.load
+
+      expect(Puppet::Util::Storage.state).to eq(
+        {
+          :yayness => {
+            :checked => recent_checked
+          },
+          :older => {
+            :checked => older_checked
+          }
+        }
+      )
+    end
+
+
+    it "does not expire entries when statettl is 'unlimited'" do
+      Puppet[:statettl] = 'unlimited'
+      recent_checked = Time.now
+      older_checked = Time.now - 10_000_000
+      Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
+      Puppet::Util::Storage.cache(:older)[:checked] = older_checked
+      expect(Puppet::Util::Storage.state).to eq(
+        {
+          :yayness => {
+            :checked => recent_checked
+          },
+          :older => {
+            :checked => older_checked
+          }
+        }
+      )
+
+      Puppet::Util::Storage.store
+      Puppet::Util::Storage.clear
+
+      expect(Puppet::Util::Storage.state).to eq({})
+
+      Puppet::Util::Storage.load
+
+      expect(Puppet::Util::Storage.state).to eq(
+        {
+          :yayness => {
+            :checked => recent_checked
+          },
+          :older => {
+            :checked => older_checked
+          }
+        }
+      )
+    end
   end
 end

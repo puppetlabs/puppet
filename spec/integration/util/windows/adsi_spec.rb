@@ -118,7 +118,8 @@ describe Puppet::Util::Windows::ADSI::Group,
         # create a test group and add above 5 members by SID
         group = described_class.create(temp_groupname)
         group.commit()
-        group.set_members(users.map { |u| u[:sid]} )
+        members = users.map { |u| u[:sid] }
+        group.set_members(members.join(','))
 
         # most importantly make sure that all name are convertible to SIDs
         expect { described_class.name_sid_hash(group.members) }.to_not raise_error

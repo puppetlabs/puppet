@@ -9,7 +9,22 @@ module Puppet::Util::Windows::Process
   WAIT_TIMEOUT = 0x102
 
   def execute(command, arguments, stdin, stdout, stderr)
-    Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr}, :close_handles => false )
+    create_args = {
+      :command_line => command,
+      :startup_info => {
+        :stdin => stdin,
+        :stdout => stdout,
+        :stderr => stderr
+      },
+      :close_handles => false
+    }
+
+    cwd = arguments[:cwd]
+    if cwd
+      Dir.chdir(cwd) { Process.create(create_args) }
+    else
+      Process.create(create_args)
+    end
   end
   module_function :execute
 

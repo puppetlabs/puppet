@@ -1683,6 +1683,17 @@ Where puppet agent and puppet master store state associated with the running con
 .
 .IP "" 0
 .
+.SS "statettl"
+How long the Puppet agent should cache when a resource was last checked or synced\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\. A value of \fB0\fR or \fBunlimited\fR will disable cache pruning\.
+.
+.P
+This setting affects the usage of \fBschedule\fR resources, as the information about when a resource was last checked (and therefore when it needs to be checked again) is stored in the \fBstatefile\fR\. The \fBstatettl\fR needs to be large enough to ensure that a resource will not trigger multiple times during a schedule due to its entry expiring from the cache\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: 32d
+.
+.IP "" 0
+.
 .SS "static_catalogs"
 Whether to compile a static catalog \fIhttps://puppet\.com/docs/puppet/latest/static_catalogs\.html#enabling\-or\-disabling\-static\-catalogs\fR, which occurs only on a Puppet Server master when the \fBcode\-id\-command\fR and \fBcode\-content\-command\fR settings are configured in its \fBpuppetserver\.conf\fR file\.
 .
