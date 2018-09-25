@@ -247,31 +247,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   # The list of all groups the user is a member of.  Different
   # user mgmt systems will need to override this method.
   def groups
-    groups = []
-
-    # Reset our group list
-    Puppet::Etc.setgrent
-
-    user = @resource[:name]
-
-    # Now iterate across all of the groups, adding each one our
-    # user is a member of
-    while group = Puppet::Etc.getgrent
-      members = group.mem
-
-      groups << group.name if members.include? user
-    end
-
-    # We have to close the file, so each listing is a separate
-    # reading of the file.
-    Puppet::Etc.endgrent
-
-    uniq_groups = groups.uniq
-    if groups != uniq_groups
-      debug("Removing any duplicate group entries")
-    end
-    # remove any double listed groups
-    uniq_groups.join(",")
+    Puppet::Util::POSIX.groups_of(@resource[:name]).join(',')
   end
 
   # Convert the Etc struct into a hash.

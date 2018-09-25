@@ -338,7 +338,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
           adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user')
           adsi_group.expects(:Add).with('WinNT://DOMAIN2/user3,user')
 
-          group.set_members(['user2', 'DOMAIN2\user3'])
+          group.set_members('user2,DOMAIN2\user3')
         end
 
         it "should add the desired_members to an existing group when not inclusive" do
@@ -365,7 +365,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
 
           adsi_group.expects(:Add).with('WinNT://DOMAIN2/user3,user')
 
-          group.set_members(['user2', 'DOMAIN2\user3'],false)
+          group.set_members('user2,DOMAIN2\user3',false)
         end
 
         it "should return immediately when desired_members is nil" do
@@ -397,7 +397,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
           adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user')
           adsi_group.expects(:Remove).with('WinNT://testcomputername/user2,user')
 
-          group.set_members([])
+          group.set_members('')
         end
 
         it "should do nothing when desired_members is empty and not inclusive" do
@@ -416,13 +416,13 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
           adsi_group.expects(:Remove).never
           adsi_group.expects(:Add).never
 
-          group.set_members([],false)
+          group.set_members('',false)
         end
 
         it "should raise an error when a username does not resolve to a SID" do
           expect {
             adsi_group.expects(:Members).returns []
-            group.set_members(['foobar'])
+            group.set_members('foobar')
           }.to raise_error(Puppet::Error, /Could not resolve name: foobar/)
         end
       end
