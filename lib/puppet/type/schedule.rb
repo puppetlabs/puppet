@@ -46,6 +46,13 @@ module Puppet
           }
 
       This will cause resources to be applied every 30 minutes by default.
+
+      The `statettl` setting on the agent affects the ability of a schedule to
+      determine if a resource has already been checked. If the `statettl` is
+      set lower than the span of the associated schedule resource, then a
+      resource could be checked & applied multiple times in the schedule as
+      the information about when the resource was last checked will have
+      expired from the cache.
       EOT
 
     apply_to_all

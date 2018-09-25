@@ -54,23 +54,4 @@ describe 'Puppet::Type::Group::Provider::Aix' do
       expect(provider_class.find(1, ia_module_args)).to eql(expected_group)
     end
   end
-
-  describe '.users_to_members' do
-    it 'converts the users attribute to the members property' do
-      expect(provider_class.users_to_members('foo,bar'))
-        .to eql(['foo', 'bar'])
-    end
-  end
-
-  describe '.members_to_users' do
-    it 'returns the members property as-is if it is not an Array' do
-      expect(provider_class.members_to_users('members'))
-        .to eql('members')
-    end
-
-    it 'returns the members property as a comma-separated string if it is an Array' do
-      expect(provider_class.members_to_users(['user1', 'user2']))
-        .to eql('user1,user2')
-    end
-  end
 end

@@ -12,6 +12,34 @@ describe Puppet::Util::POSIX do
     @posix = PosixTest.new
   end
 
+  describe '.groups_of' do
+    let(:mock_groups) do
+      [
+        ['group1', ['user1', 'user2']],
+        ['group2', ['user2']],
+        ['group1', ['user1', 'user2']],
+        ['group3', ['user1']],
+        ['group4', ['user2']]
+      ].map do |(name, members)|
+        group_struct = stub("Group #{name}")
+        group_struct.stubs(:name).returns(name)
+        group_struct.stubs(:mem).returns(members)
+
+        group_struct
+      end
+    end
+
+    before(:each) do
+      Puppet::Etc.stubs(:group).multiple_yields(*mock_groups)
+    end
+
+    it 'returns the groups of the given user' do
+      expect(Puppet::Util::POSIX.groups_of('user1')).to eql(
+        ['group1', 'group3']
+      )
+    end
+  end
+
   [:group, :gr].each do |name|
     it "should return :gid as the field for #{name}" do
       expect(@posix.idfield(name)).to eq(:gid)

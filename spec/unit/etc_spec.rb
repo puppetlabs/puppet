@@ -412,6 +412,31 @@ describe Puppet::Etc, :if => !Puppet::Util::Platform.windows? do
     end
   end
 
+  describe :group do
+    it 'should return the next group struct if a block is not provided' do
+      Puppet::Etc.expects(:getgrent).returns(ascii_group_struct)
+
+      expect(Puppet::Etc.group).to eql(ascii_group_struct)
+    end
+
+    it 'should iterate over the available groups if a block is provided' do
+      expected_groups = [
+        utf_8_group_struct,
+        euc_kr_group_struct,
+        ascii_group_struct
+      ]
+      Puppet::Etc.stubs(:getgrent).returns(*(expected_groups + [nil]))
+
+      Puppet::Etc.expects(:setgrent)
+      Puppet::Etc.expects(:endgrent)
+
+      actual_groups = []
+      Puppet::Etc.group { |group| actual_groups << group }
+
+      expect(actual_groups).to eql(expected_groups)
+    end
+  end
+
   describe "endgrent" do
     it "should call Etc.getgrent" do
       Etc.expects(:getgrent)

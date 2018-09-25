@@ -119,6 +119,17 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
         call_exec_posix("/bin/echo 'foo' ; \n /bin/echo 'bar' ;", {:uid => 50, :gid => 55}, @stdin, @stdout, @stderr)
       end
 
+      context 'cwd option' do
+        let(:cwd) { 'cwd' }
+
+        it 'should run the command in the specified working directory' do
+          Dir.expects(:chdir).with(cwd)
+          Kernel.expects(:exec).with('test command')
+
+          call_exec_posix('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
+        end
+      end
+
       it "should return the pid of the child process" do
         expect(call_exec_posix('test command', {}, @stdin, @stdout, @stderr)).to eq(pid)
       end
@@ -142,6 +153,24 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
         ).returns(proc_info_stub)
 
         call_exec_windows('test command', {}, @stdin, @stdout, @stderr)
+      end
+
+      context 'cwd option' do
+        let(:cwd) { 'cwd' }
+        it "should execute the command in the specified working directory" do
+          Dir.expects(:chdir).with(cwd).yields
+          Process.expects(:create).with(
+            :command_line => "test command",
+            :startup_info => {
+              :stdin => @stdin,
+              :stdout => @stdout,
+              :stderr => @stderr
+            },
+            :close_handles => false
+          )
+  
+          call_exec_windows('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
+        end
       end
 
       it "should return the process info of the child process" do
@@ -216,6 +245,36 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
             end.returns(rval)
 
             Puppet::Util::Execution.execute('test command', :squelch => true)
+          end
+        end
+
+        describe "cwd option" do
+          def expect_cwd_to_be(cwd)
+            Puppet::Util::Execution.expects(executor).with(
+              anything,
+              has_entries(:cwd => cwd),
+              anything,
+              anything,
+              anything
+            ).returns(rval)
+          end
+
+          it 'should raise an ArgumentError if the specified working directory does not exist' do
+            cwd = 'cwd'
+            Puppet::FileSystem.stubs(:directory?).with(cwd).returns(false)
+
+            expect {
+              Puppet::Util::Execution.execute('test command', cwd: cwd)
+            }.to raise_error do |error|
+              expect(error).to be_a(ArgumentError)
+              expect(error.message).to match(cwd)
+            end
+          end
+
+          it "should set the cwd to the user-specified one" do
+            Puppet::FileSystem.stubs(:directory?).with('cwd').returns(true)
+            expect_cwd_to_be('cwd')
+            Puppet::Util::Execution.execute('test command', cwd: 'cwd')
           end
         end
 

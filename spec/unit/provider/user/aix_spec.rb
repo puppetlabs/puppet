@@ -70,16 +70,55 @@ describe 'Puppet::Type::User::Provider::Aix' do
     end
   end
 
-  describe '.groups_to_groups' do
+  describe '.groups_attribute_to_property' do
+    it "reads the user's groups from the etc/groups file" do
+      groups = ['system', 'adm']
+      Puppet::Util::POSIX.stubs(:groups_of).with(resource[:name]).returns(groups)
+
+      actual_groups = provider_class.groups_attribute_to_property(provider, 'unused_value')
+      expected_groups = groups.join(',')
+
+      expect(actual_groups).to eql(expected_groups)
+    end
+  end
+
+  describe '.groups_property_to_attribute' do
     it 'raises an ArgumentError if the groups are space-separated' do
       groups = "foo bar baz"
       expect do
-        provider_class.groups_to_groups(groups)
+        provider_class.groups_property_to_attribute(groups)
       end.to raise_error do |error|
         expect(error).to be_a(ArgumentError)
 
         expect(error.message).to match(groups)
         expect(error.message).to match("Groups")
+      end
+    end
+  end
+
+  describe '#gid=' do
+    let(:value) { 'new_pgrp' }
+
+    let(:old_pgrp) { 'old_pgrp' }
+    let(:cur_groups) { 'system,adm' }
+    before(:each) do
+      provider.stubs(:gid).returns(old_pgrp)
+      provider.stubs(:groups).returns(cur_groups)
+      provider.stubs(:set)
+    end
+
+    it 'raises a Puppet::Error if it fails to set the groups property' do
+      provider.stubs(:set)
+        .with(:groups, cur_groups)
+        .raises(Puppet::ExecutionFailure, 'failed to reset the groups!')
+
+      expect { provider.gid = value }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Error)
+
+        expect(error.message).to match('groups')
+        expect(error.message).to match(cur_groups)
+        expect(error.message).to match(old_pgrp)
+        expect(error.message).to match(value)
       end
     end
   end
@@ -163,9 +202,11 @@ describe 'Puppet::Type::User::Provider::Aix' do
   describe '#create' do
     it 'should create the user' do
       provider.resource.stubs(:should).with(anything).returns(nil)
+      provider.resource.stubs(:should).with(:groups).returns('g1,g2')
       provider.resource.stubs(:should).with(:password).returns('password')
 
       provider.expects(:execute)
+      provider.expects(:groups=).with('g1,g2')
       provider.expects(:password=).with('password')
 
       provider.create
