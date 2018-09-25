@@ -47,6 +47,9 @@ module Pcore
             # Task metadata
             metadata => { type => Hash[String, Any] },
 
+            # The path of the module the task came from
+            module => { type => String },
+
             # Map parameter names to their parsed data type
             parameters => { type => Optional[Hash[Pattern[/\\A[a-z][a-z0-9_]*\\z/], Type]], value => undef },
           }

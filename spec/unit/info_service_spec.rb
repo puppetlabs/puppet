@@ -44,7 +44,7 @@ describe "Puppet::InfoService" do
         end
 
         it 'returns the right set of keys' do
-          expect(@result.keys.sort).to eq([:files, :metadata])
+          expect(@result.keys.sort).to eq([:files, :metadata, :module])
         end
 
         it 'specifies the metadata_file correctly' do
@@ -102,7 +102,7 @@ describe "Puppet::InfoService" do
         end
 
         it 'returns the right set of keys' do
-          expect(@result.keys.sort).to eq([:files, :metadata])
+          expect(@result.keys.sort).to eq([:files, :metadata, :module])
         end
 
         it 'specifies the metadata_file correctly' do

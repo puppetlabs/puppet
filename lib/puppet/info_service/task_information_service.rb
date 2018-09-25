@@ -28,7 +28,7 @@ class Puppet::InfoService::TaskInformationService
 
     begin
       task.validate
-      {:metadata => task.metadata, :files => task.files}
+      {:metadata => task.metadata, :files => task.files, :module => pup_module.path}
     rescue Puppet::Module::Task::Error => err
       { :metadata => nil, :files => [], :error => err.to_h }
     end
