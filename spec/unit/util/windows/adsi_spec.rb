@@ -264,6 +264,101 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
           end
         end
       end
+
+      describe 'userflags' do
+        # Avoid having to type out the constant everytime we want to
+        # retrieve a userflag's value.
+        def ads_userflags(flag)
+          Puppet::Util::Windows::ADSI::User::ADS_USERFLAGS[flag]
+        end
+
+        before(:each) do
+          userflags = [
+            :ADS_UF_SCRIPT,
+            :ADS_UF_ACCOUNTDISABLE,
+            :ADS_UF_HOMEDIR_REQUIRED,
+            :ADS_UF_LOCKOUT
+          ].inject(0) do |flags, flag|
+            flags | ads_userflags(flag)
+          end
+
+          user.stubs(:[]).with('UserFlags').returns(userflags)
+        end
+
+        describe '#userflag_set?' do
+          it 'returns true if the specified userflag is set' do
+            expect(user.userflag_set?(:ADS_UF_SCRIPT)).to be true
+          end
+
+          it 'returns false if the specified userflag is not set' do
+            expect(user.userflag_set?(:ADS_UF_PASSWD_NOTREQD)).to be false
+          end
+
+          it 'returns false if the specified userflag is an unrecognized userflag' do
+            expect(user.userflag_set?(:ADS_UF_UNRECOGNIZED_FLAG)).to be false
+          end
+        end
+
+        shared_examples 'set/unset common tests' do |method|
+          it 'raises an ArgumentError for any unrecognized userflags' do
+            unrecognized_flags = [
+              :ADS_UF_UNRECOGNIZED_FLAG_ONE,
+              :ADS_UF_UNRECOGNIZED_FLAG_TWO
+            ]
+            input_flags = unrecognized_flags + [
+              :ADS_UF_PASSWORD_EXPIRED,
+              :ADS_UF_DONT_EXPIRE_PASSWD
+            ]
+
+            expect { user.send(method, *input_flags) }.to raise_error(
+              ArgumentError, /#{unrecognized_flags.join(', ')}/
+            )
+          end
+
+          it 'noops if no userflags are passed-in' do
+            user.expects(:[]=).never
+            user.expects(:commit).never
+
+            user.send(method)
+          end
+        end
+
+        describe '#set_userflags' do
+          include_examples 'set/unset common tests', :set_userflags
+
+          it 'should add the passed-in flags to the current set of userflags' do
+            input_flags = [
+              :ADS_UF_PASSWORD_EXPIRED,
+              :ADS_UF_DONT_EXPIRE_PASSWD
+            ]
+
+            userflags = user['UserFlags']
+            expected_userflags = userflags | ads_userflags(input_flags[0]) | ads_userflags(input_flags[1])
+
+            user.expects(:[]=).with('UserFlags', expected_userflags)
+
+            user.set_userflags(*input_flags)
+          end
+        end
+
+        describe '#unset_userflags' do
+          include_examples 'set/unset common tests', :unset_userflags
+
+          it 'should remove the passed-in flags from the current set of userflags' do
+            input_flags = [
+              :ADS_UF_SCRIPT,
+              :ADS_UF_ACCOUNTDISABLE
+            ]
+
+            # ADS_UF_HOMEDIR_REQUIRED and ADS_UF_LOCKOUT should be the only flags set.
+            expected_userflags = 0 | ads_userflags(:ADS_UF_HOMEDIR_REQUIRED) | ads_userflags(:ADS_UF_LOCKOUT)
+
+            user.expects(:[]=).with('UserFlags', expected_userflags)
+
+            user.unset_userflags(*input_flags)
+          end
+        end
+      end
     end
   end
 
