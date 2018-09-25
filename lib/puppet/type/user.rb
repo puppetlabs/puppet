@@ -45,11 +45,19 @@ module Puppet
     feature :manages_expiry,
       "The provider can manage the expiry date for a user."
 
-   feature :system_users,
-     "The provider allows you to create system users with lower UIDs."
+    feature :system_users,
+      "The provider allows you to create system users with lower UIDs."
 
     feature :manages_aix_lam,
       "The provider can manage AIX Loadable Authentication Module (LAM) system."
+
+    feature :manages_attributes,
+      "The provider can manage other, non-Puppet-property attributes on the target system."
+
+    feature :implements_attribute_membership,
+      "The provider implements the concept of inclusive vs. minimum attribute membership.
+       If this feature is not specified but :manages_attributes is, then the provider
+       will default to minimum membership when managing non-Puppet property attributes."
 
     feature :libuser,
       "Allows local users to be managed on systems that also use some other
@@ -617,8 +625,8 @@ module Puppet
       desc "The name of the I&A module to use to manage this user."
     end
 
-    newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
-      desc "Specify AIX attributes for the user in an array of attribute = value pairs."
+    newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_attributes) do
+      desc "Specify additional attributes for the user in a hash (or array) of attribute = value pairs."
 
       self.log_only_changed_or_new_keys = true
 
@@ -631,8 +639,8 @@ module Puppet
       end
     end
 
-    newparam(:attribute_membership) do
-      desc "Whether specified attribute value pairs should be treated as the
+    newparam(:attribute_membership, :required_features => [:manages_attributes, :implements_attribute_membership]) do
+      desc "Whether the specified attribute value pairs should be treated as the
         **complete list** (`inclusive`) or the **minimum list** (`minimum`) of
         attribute/value pairs for the user."
 
