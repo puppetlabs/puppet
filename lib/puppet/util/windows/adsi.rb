@@ -251,7 +251,7 @@ module Puppet::Util::Windows::ADSI
         # ERROR_BAD_USERNAME 2202L from winerror.h
         if e.message =~ /8007089A/m
           raise Puppet::Error.new(
-            _("Puppet is not able to create/delete domain %{object_class}s with the %{object_class} resource.") % { object_class: object_class },
+            _("Puppet is not able to create/delete domain %{object_class} objects with the %{object_class} resource.") % { object_class: object_class },
           )
         end
 
