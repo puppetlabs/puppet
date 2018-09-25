@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-122-gf5b6e8b\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-130-g8fd265e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-09-24 19:02+0000\n"
-"PO-Revision-Date: 2018-09-24 19:02+0000\n"
+"POT-Creation-Date: 2018-09-25 17:17+0000\n"
+"PO-Revision-Date: 2018-09-25 17:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -672,20 +672,20 @@ msgstr ""
 msgid "The 'caprivatedir' setting is deprecated and will be removed in Puppet 6."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1518 ../lib/puppet/defaults.rb:1533
+#: ../lib/puppet/defaults.rb:1531 ../lib/puppet/defaults.rb:1546
 msgid "Attempted to set both server and server_list."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1519 ../lib/puppet/defaults.rb:1534
+#: ../lib/puppet/defaults.rb:1532 ../lib/puppet/defaults.rb:1547
 msgid "Server setting will not be used."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1804 ../lib/puppet/settings.rb:1167
+#: ../lib/puppet/defaults.rb:1817 ../lib/puppet/settings.rb:1167
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'pluginsync' is a setting and should not be translated
-#: ../lib/puppet/defaults.rb:1855
+#: ../lib/puppet/defaults.rb:1868
 msgid "Setting 'pluginsync' is deprecated."
 msgstr ""
 
@@ -8830,39 +8830,39 @@ msgstr ""
 msgid "Could not find resource type"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:96
+#: ../lib/puppet/type/schedule.rb:103
 msgid "Invalid range value '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:113
+#: ../lib/puppet/type/schedule.rb:120
 msgid "Invalid range %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:117
+#: ../lib/puppet/type/schedule.rb:124
 msgid "Invalid hour '%{n}'"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:121
+#: ../lib/puppet/type/schedule.rb:128
 msgid "Invalid minute '%{n}'"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:155
+#: ../lib/puppet/type/schedule.rb:162
 msgid "Incorrectly converted time: %{time}: %{hour} vs %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:164
+#: ../lib/puppet/type/schedule.rb:171
 msgid "Assuming upper limit should be that time the next day"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:322
+#: ../lib/puppet/type/schedule.rb:329
 msgid "Repeat must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:331
+#: ../lib/puppet/type/schedule.rb:338
 msgid "Repeat must be 1 unless periodmatch is 'distance', not '%{period}'"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:375
+#: ../lib/puppet/type/schedule.rb:382
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
@@ -10197,56 +10197,56 @@ msgstr ""
 msgid "Failed to set security information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:262
+#: ../lib/puppet/util/windows/service.rb:259
 msgid "Failed to start the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:265
-msgid "Failed to start the service, after calling StartService the service is not in SERVICE_START_PENDING or SERVICE_RUNNING"
-msgstr ""
-
-#: ../lib/puppet/util/windows/service.rb:283
+#: ../lib/puppet/util/windows/service.rb:275
 msgid "Failed to send stop control to service, current state is %{current_state}. Failed with"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:286
-msgid "Failed to stop the service, after calling ControlService the service is not in SERVICE_STOP_PENDING or SERVICE_STOPPED"
-msgstr ""
-
-#: ../lib/puppet/util/windows/service.rb:304
+#: ../lib/puppet/util/windows/service.rb:294
 msgid "Unknown Service state '%{current_state}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:321
+#: ../lib/puppet/util/windows/service.rb:311
 msgid "Unknown start type '%{start_type}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:336
+#: ../lib/puppet/util/windows/service.rb:326
 msgid "Unknown start type %{start_type}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:357
+#: ../lib/puppet/util/windows/service.rb:347
 msgid "Failed to update service configuration"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:417
+#: ../lib/puppet/util/windows/service.rb:407
 msgid "Failed to fetch services"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:463
+#: ../lib/puppet/util/windows/service.rb:453
 msgid "Failed to open a handle to the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:478
+#: ../lib/puppet/util/windows/service.rb:468
 msgid "Failed to open a handle to the service control manager"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:520 ../lib/puppet/util/windows/service.rb:556
+#: ../lib/puppet/util/windows/service.rb:532 ../lib/puppet/util/windows/service.rb:568
 msgid "Service query failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:595
-msgid "No progress made on service operation and dwWaitHint exceeded"
+#: ../lib/puppet/util/windows/service.rb:594
+msgid "Transition timed out, service still in %{current_state}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:616
+msgid "Service was not in pending state: %{pending_state}, current state is %{current_state}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:634
+msgid "Pending operation timed out, service still in %{current_state}"
 msgstr ""
 
 #: ../lib/puppet/util/windows/sid.rb:93
