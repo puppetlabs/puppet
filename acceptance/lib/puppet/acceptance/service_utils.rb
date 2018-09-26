@@ -111,6 +111,41 @@ module Puppet
 
         apply_manifest_on(host, refresh_manifest)
       end
+
+      # Runs some common acceptance tests for nonexistent services.
+      # @param service [String] name of the service
+      # @return None
+      def run_nonexistent_service_tests(service)
+        step "Verify that a nonexistent service is considered stopped and disabled" do
+          on(agent, puppet_resource('service', service)) do |result|
+            { enable: false, ensure: :stopped }.each do |property, value|
+              assert_match(/#{property}.*#{value}.*$/, result.stdout, "Puppet does not report #{property}=#{value} for a non-existent service")
+            end
+          end
+        end
+      
+        step "Verify that stopping and disabling a nonexistent service is a no-op" do
+          manifest =  service_manifest(service, ensure: :stopped, enable: false)
+          apply_manifest_on(agent, manifest, catch_changes: true)
+        end
+
+        [
+          [ :enabling,  [ :enable, true     ]],
+          [ :starting,  [ :ensure, :running ]]
+        ].each do |operation, (property, value)|
+          manifest = service_manifest(service, property => value)
+
+          step "Verify #{operation} a non-existent service prints an error message but does not fail the run without detailed exit codes" do
+            apply_manifest_on(agent, manifest) do |result|
+              assert_match(/Error:.*#{service}.*$/, result.stderr, "Puppet does not error when #{operation} a non-existent service.")
+            end
+          end
+        
+          step "Verify #{operation} a non-existent service with detailed exit codes correctly returns an error code" do
+            apply_manifest_on(agent, manifest, :acceptable_exit_codes => [4])
+          end
+        end
+      end
     end
   end
 end
