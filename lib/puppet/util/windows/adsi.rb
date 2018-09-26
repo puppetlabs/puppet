@@ -436,6 +436,26 @@ module Puppet::Util::Windows::ADSI
       op_userflags(*flags) { |userflags, flag| userflags & ~ADS_USERFLAGS[flag] }
     end
 
+    def disabled?
+      userflag_set?(:ADS_UF_ACCOUNTDISABLE)
+    end
+
+    def locked_out?
+      # Note that the LOCKOUT flag is known to be inaccurate when using the
+      # LDAP IADsUser provider, but this class consistently uses the WinNT
+      # provider, which is expected to be accurate.
+      userflag_set?(:ADS_UF_LOCKOUT)
+    end
+
+    def expired?
+      expires = native_object.Get('AccountExpirationDate')
+      expires && expires < Time.now
+    rescue WIN32OLERuntimeError => e
+      # This OLE error code indicates the property can't be found in the cache
+      raise e unless e.message =~ /8000500D/m
+      false
+    end
+
     # UNLEN from lmcons.h - https://stackoverflow.com/a/2155176
     MAX_USERNAME_LENGTH = 256
     def self.current_user_name
