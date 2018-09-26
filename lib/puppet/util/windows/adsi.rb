@@ -250,7 +250,7 @@ module Puppet::Util::Windows::ADSI
         # ERROR_BAD_USERNAME 2202L from winerror.h
         if e.message =~ /8007089A/m
           raise Puppet::Error.new(
-            _("Puppet is not able to create/delete domain %{object_class}s with the %{object_class} resource.") % { object_class: object_class },
+            _("Puppet is not able to create/delete domain %{object_class} objects with the %{object_class} resource.") % { object_class: object_class },
           )
         end
 
@@ -376,6 +376,63 @@ module Puppet::Util::Windows::ADSI
       end
     end
 
+    # Declare all of the available user flags on the system. Note that
+    # ADS_UF is read as ADS_UserFlag
+    #   https://docs.microsoft.com/en-us/windows/desktop/api/iads/ne-iads-ads_user_flag
+    # and
+    #   https://support.microsoft.com/en-us/help/305144/how-to-use-the-useraccountcontrol-flags-to-manipulate-user-account-pro
+    # for the flag values.
+    ADS_USERFLAGS = {
+      ADS_UF_SCRIPT:                                 0x0001,
+      ADS_UF_ACCOUNTDISABLE:                         0x0002,
+      ADS_UF_HOMEDIR_REQUIRED:                       0x0008,
+      ADS_UF_LOCKOUT:                                0x0010,                          
+      ADS_UF_PASSWD_NOTREQD:                         0x0020,                   
+      ADS_UF_PASSWD_CANT_CHANGE:                     0x0040,               
+      ADS_UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED:        0x0080,       
+      ADS_UF_TEMP_DUPLICATE_ACCOUNT:                 0x0100,           
+      ADS_UF_NORMAL_ACCOUNT:                         0x0200,                   
+      ADS_UF_INTERDOMAIN_TRUST_ACCOUNT:              0x0800,        
+      ADS_UF_WORKSTATION_TRUST_ACCOUNT:              0x1000,        
+      ADS_UF_SERVER_TRUST_ACCOUNT:                   0x2000,             
+      ADS_UF_DONT_EXPIRE_PASSWD:                     0x10000,            
+      ADS_UF_MNS_LOGON_ACCOUNT:                      0x20000,               
+      ADS_UF_SMARTCARD_REQUIRED:                     0x40000,              
+      ADS_UF_TRUSTED_FOR_DELEGATION:                 0x80000,          
+      ADS_UF_NOT_DELEGATED:                          0x100000,                  
+      ADS_UF_USE_DES_KEY_ONLY:                       0x200000,               
+      ADS_UF_DONT_REQUIRE_PREAUTH:                   0x400000,               
+      ADS_UF_PASSWORD_EXPIRED:                       0x800000,               
+      ADS_UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION: 0x1000000
+    }
+
+    def userflag_set?(flag)
+      flag_value = ADS_USERFLAGS[flag] || 0
+      ! (self['UserFlags'] & flag_value).zero?
+    end
+
+    # Common helper for set_userflags and unset_userflags.
+    #
+    # @api private
+    def op_userflags(*flags, &block)
+      # Avoid an unnecessary set + commit operation.
+      return if flags.empty?
+
+      unrecognized_flags = flags.reject { |flag| ADS_USERFLAGS.keys.include?(flag) }
+      unless unrecognized_flags.empty?
+        raise ArgumentError, _("Unrecognized ADS UserFlags: %{unrecognized_flags}") % { unrecognized_flags: unrecognized_flags.join(', ') }
+      end
+
+      self['UserFlags'] = flags.inject(self['UserFlags'], &block)
+    end
+
+    def set_userflags(*flags)
+      op_userflags(*flags) { |userflags, flag| userflags | ADS_USERFLAGS[flag] }
+    end
+
+    def unset_userflags(*flags)
+      op_userflags(*flags) { |userflags, flag| userflags & ~ADS_USERFLAGS[flag] }
+    end
 
     # UNLEN from lmcons.h - https://stackoverflow.com/a/2155176
     MAX_USERNAME_LENGTH = 256
