@@ -30,20 +30,34 @@ describe 'when converting to 3.x' do
     expect(converter.convert(v, {}, nil)).to equal(v)
   end
 
-  it 'converts the symbol :undef to the undef value' do
+  it 'converts top level symbol :undef to the given undef value' do
     expect(converter.convert(:undef, {}, 'undef value')).to eql('undef value')
   end
 
-  it 'converts the nil to the undef value' do
+  it 'converts top level nil value to the given undef value' do
     expect(converter.convert(nil, {}, 'undef value')).to eql('undef value')
   end
 
-  it 'convert a symbol nested in an array' do
-    expect(converter.convert({'foo' => :undef}, {}, 'undef value')).to eql({'foo' => 'undef value'})
+  it 'converts nested :undef in a hash to nil' do
+    expect(converter.convert({'foo' => :undef}, {}, 'undef value')).to eql({'foo' => nil})
+  end
+
+  it 'converts nested :undef in an array to nil' do
+    expect(converter.convert(['boo', :undef], {}, 'undef value')).to eql(['boo', nil])
   end
 
   it 'does not converts nil to given undef value when nested in an array' do
     expect(converter.convert({'foo' => nil}, {}, 'undef value')).to eql({'foo' => nil})
+  end
+
+  it 'does not convert top level symbols' do
+    expect(converter.convert(:default, {}, 'undef value')).to eql(:default)
+    expect(converter.convert(:whatever, {}, 'undef value')).to eql(:whatever)
+  end
+
+  it 'does not convert nested symbols' do
+    expect(converter.convert([:default], {}, 'undef value')).to eql([:default])
+    expect(converter.convert([:whatever], {}, 'undef value')).to eql([:whatever])
   end
 
   it 'does not convert a Regex instance to string' do
