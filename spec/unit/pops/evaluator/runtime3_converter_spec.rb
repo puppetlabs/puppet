@@ -46,6 +46,10 @@ describe 'when converting to 3.x' do
     expect(converter.convert(['boo', :undef], {}, 'undef value')).to eql(['boo', nil])
   end
 
+  it 'converts deeply nested :undef in to nil' do
+    expect(converter.convert({'foo' => [[:undef]], 'bar' => { 'x' => :undef }}, {}, 'undef value')).to eql({'foo' => [[nil]], 'bar' => { 'x' => nil}})
+  end
+
   it 'does not converts nil to given undef value when nested in an array' do
     expect(converter.convert({'foo' => nil}, {}, 'undef value')).to eql({'foo' => nil})
   end
