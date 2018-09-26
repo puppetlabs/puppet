@@ -15,7 +15,7 @@ class TaskInstantiator
 
     files = Puppet::Module::Task.find_files(name, dirname, metadata, executables)
 
-    task = { 'name' => name, 'metadata' => metadata, 'files' => files }
+    task = { 'name' => name, 'metadata' => metadata, 'files' => files, 'module' => dirname.chomp("/tasks") }
 
     begin
       task['parameters'] = convert_types(metadata['parameters'])

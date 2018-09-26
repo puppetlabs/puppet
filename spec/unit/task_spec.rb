@@ -30,6 +30,7 @@ describe Puppet::Module::Task do
 
     expect(tasks.count).to eq(3)
     expect(tasks.map{|t| t.name}).to eq(%w{mymod::task1 mymod::task2 mymod::task3})
+    expect(tasks.map{|t| t.module.name}).to eq(%w{mymod mymod mymod})
     expect(tasks.map{|t| t.metadata_file}).to eq(["#{tasks_path}/task1.json",
                                                   "#{tasks_path}/task2.json",
                                                   "#{tasks_path}/task3.json"])
@@ -134,6 +135,7 @@ describe Puppet::Module::Task do
     Puppet::Module::Task.any_instance.stubs(:metadata).returns({'files' => short_files})
 
     expect(tasks.count).to eq(1)
+    expect(tasks.map{|t| t.module.name}).to eq(%w{mymod})
     expect(tasks.map{|t| t.files.map{ |f| f["path"] } }).to eq([["#{tasks_path}/task1.sh"] + long_files])
   end
 
