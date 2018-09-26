@@ -4,6 +4,12 @@ require 'spec_helper'
 describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_windows? do
   require 'puppet/util/windows'
 
+  before(:each) do
+    Puppet::Util::Windows::Error.stubs(:format_error_code)
+      .with(anything)
+      .returns("fake error!")
+  end
+
   # The following should emulate a successful call to the private function
   # query_status that returns the value of query_return. This should give
   # us a way to mock changes in service status.
@@ -47,12 +53,41 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
     subject::SERVICE_STATUS_PROCESS.stubs(:new)
     subject::QUERY_SERVICE_CONFIGW.stubs(:new)
     subject::SERVICE_STATUS.stubs(:new).returns({:dwCurrentState => subject::SERVICE_RUNNING})
-    Puppet::Util::Windows::Error.stubs(:new).raises(Puppet::Error.new('fake error'))
+    FFI.stubs(:errno).returns(0)
     FFI::MemoryPointer.stubs(:new).yields(pointer)
     pointer.stubs(:read_dword)
     pointer.stubs(:write_dword)
     pointer.stubs(:size)
     subject.stubs(:sleep)
+  end
+
+  describe "#exists?" do
+    context "when the service control manager cannot be opened" do
+      let(:scm) { FFI::Pointer::NULL_HANDLE }
+      it "raises a puppet error" do
+        expect{ subject.exists?(mock_service_name) }.to raise_error(Puppet::Error)
+      end
+    end
+
+    context "when the service cannot be opened" do
+      let(:service) { FFI::Pointer::NULL_HANDLE }
+
+      it "returns false if it fails to open because the service does not exist" do
+        FFI.stubs(:errno).returns(Puppet::Util::Windows::Service::ERROR_SERVICE_DOES_NOT_EXIST)
+
+        expect(subject.exists?(mock_service_name)).to be false
+      end
+
+      it "raises a puppet error if it fails to open for some other reason" do
+        expect{ subject.exists?(mock_service_name) }.to raise_error(Puppet::Error)
+      end
+    end
+
+    context "when the service can be opened" do
+      it "returns true" do
+        expect(subject.exists?(mock_service_name)).to be true
+      end
+    end
   end
 
   describe "#start" do
