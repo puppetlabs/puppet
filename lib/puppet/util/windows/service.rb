@@ -17,6 +17,10 @@ module Puppet::Util::Windows
     # no shorter
     DEFAULT_TIMEOUT = 30
 
+    # Service error codes
+    # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--1000-1299-
+    ERROR_SERVICE_DOES_NOT_EXIST = 0x00000424
+
     # Service control codes
     # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-controlserviceexw
     SERVICE_CONTROL_STOP                  = 0x00000001
@@ -249,6 +253,19 @@ module Puppet::Util::Windows
       )
     end
 
+    # Returns true if the service exists, false otherwise.
+    #
+    # @param [:string] service_name name of the service
+    def exists?(service_name)
+      open_service(service_name, SC_MANAGER_CONNECT, SERVICE_QUERY_STATUS) do |_|
+        true
+      end
+    rescue Puppet::Util::Windows::Error => e
+      return false if e.code == ERROR_SERVICE_DOES_NOT_EXIST
+      raise e
+    end
+    module_function :exists?
+
     # Start a windows service, assume that the service is already in the stopped state
     #
     # @param [:string] service_name name of the service to start
@@ -446,13 +463,18 @@ module Puppet::Util::Windows
       # @param [Integer] service_access code corresponding to the access type requested for the service
       # @yieldparam [:handle] service the windows native handle used to access
       #   the service
+      # @return the result of the block
       def open_service(service_name, scm_access, service_access, &block)
         service = FFI::Pointer::NULL_HANDLE
+
+        result = nil
         open_scm(scm_access) do |scm|
           service = OpenServiceW(scm, wide_string(service_name), service_access)
           raise Puppet::Util::Windows::Error.new(_("Failed to open a handle to the service")) if service == FFI::Pointer::NULL_HANDLE
-          yield service
+          result = yield service
         end
+
+        result
       ensure
         CloseServiceHandle(service)
       end
