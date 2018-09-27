@@ -116,7 +116,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       ds_value = input_hash[key]
       case ds_to_ns_attribute_map[ds_attribute]
         when :members
-          ds_value = ds_value # only members uses arrays so far
+          ds_value = ds_value.join(',')
         when :gid, :uid
           # OS X stores objects like uid/gid as strings.
           # Try casting to an integer for these cases to be
@@ -344,8 +344,10 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def set(param, value)
     self.class.validate(param, value)
-    current_members = @property_value_cache_hash[:members]
     if param == :members
+      current_members = @property_value_cache_hash[:members].split(',')
+      value = value.split(',')
+
       # If we are meant to be authoritative for the group membership
       # then remove all existing members who haven't been specified
       # in the manifest.
@@ -409,7 +411,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       end
       if value != "" and not value.nil?
         if property == :members
-          add_members(nil, value)
+          add_members(nil, value.split(','))
         else
           exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
           exec_arg_vector << ns_to_ds_attribute_map[property.intern]

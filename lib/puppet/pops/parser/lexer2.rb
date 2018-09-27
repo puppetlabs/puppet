@@ -189,7 +189,7 @@ class Lexer2
       ',' => lambda {  emit(TOKEN_COMMA, @scanner.pos) },
       '[' => lambda do
         before = @scanner.pos
-        if (before == 0 || @scanner.string[locator.char_offset(before)-1,1] =~ /[[:blank:]\r\n]+/)
+        if (before == 0 || locator.string[locator.char_offset(before)-1,1] =~ /[[:blank:]\r\n]+/)
           emit(TOKEN_LISTSTART, before)
         else
           emit(TOKEN_LBRACK, before)

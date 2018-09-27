@@ -16,7 +16,7 @@ class Puppet::Configurer
   # For benchmarking
   include Puppet::Util
 
-  attr_reader :compile_time, :environment
+  attr_reader :environment
 
   # Provide more helpful strings to the logging that the Agent does
   def self.to_s
@@ -42,7 +42,6 @@ class Puppet::Configurer
   # Initialize and load storage
   def init_storage
       Puppet::Util::Storage.load
-      @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
   rescue => detail
     Puppet.log_exception(detail, _("Removing corrupt state file %{file}: %{detail}") % { file: Puppet[:statefile], detail: detail })
     begin

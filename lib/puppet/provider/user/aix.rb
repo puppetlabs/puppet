@@ -10,6 +10,7 @@
 # See https://puppet.com/docs/puppet/latest/provider_development.html
 # for more information
 require 'puppet/provider/aix_object'
+require 'puppet/util/posix'
 require 'tempfile'
 require 'date'
 
@@ -76,12 +77,22 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     # a String, etc. in the property. This routine does a final check to
     # ensure our value doesn't have whitespace before we convert it to
     # an attribute.
-    def groups_to_groups(groups)
+    def groups_property_to_attribute(groups)
       if groups =~ /\s/
         raise ArgumentError, _("Invalid value %{groups}: Groups must be comma separated!") % { groups: groups }
       end
 
       groups
+    end
+
+    # We do not directly use the groups attribute value because that will
+    # always include the primary group, even if our user is not one of its
+    # members. Instead, we retrieve our property value by parsing the etc/group file,
+    # which matches what we do on our other POSIX platforms like Linux and Solaris.
+    #
+    # See https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.files/group_security.htm
+    def groups_attribute_to_property(provider, _groups)
+      Puppet::Util::POSIX.groups_of(provider.resource[:name]).join(',')
     end
   end
 
@@ -99,7 +110,8 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
           attribute_to_property: method(:pgrp_to_gid)
 
   mapping puppet_property: :groups, 
-          property_to_attribute: method(:groups_to_groups)
+          property_to_attribute: method(:groups_property_to_attribute),
+          attribute_to_property: method(:groups_attribute_to_property)
 
   mapping puppet_property: :home
   mapping puppet_property: :shell
@@ -120,6 +132,24 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   # the resource methods (property getters + setters for our mapped
   # properties + a getter for the attributes property).
   mk_resource_methods
+
+  # Setting the primary group (pgrp attribute) on AIX causes both the
+  # current and new primary groups to be included in our user's groups,
+  # which is undesirable behavior. Thus, this custom setter resets the
+  # 'groups' property back to its previous value after setting the primary
+  # group.
+  def gid=(value)
+    old_pgrp = gid
+    cur_groups = groups
+
+    set(:gid, value)
+
+    begin
+      self.groups = cur_groups
+    rescue Puppet::Error => detail
+      raise Puppet::Error, _("Could not reset the groups property back to %{cur_groups} after setting the primary group on %{resource}[%{name}]. This means that the previous primary group of %{old_pgrp} and the new primary group of %{new_pgrp} have been added to %{cur_groups}. You will need to manually reset the groups property if this is undesirable behavior. Detail: %{detail}") % { cur_groups: cur_groups, resource: @resource.class.name, name: @resource.name, old_pgrp: old_pgrp, new_pgrp: value, detail: detail }, detail.backtrace
+    end
+  end
 
   # Helper function that parses the password from the given
   # password filehandle. This is here to make testing easier
@@ -212,6 +242,22 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   def create
     super
+
+    # We specify the 'groups' AIX attribute in AixObject's create method
+    # when creating our user. However, this does not always guarantee that
+    # our 'groups' property is set to the right value. For example, the
+    # primary group will always be included in the 'groups' property. This is
+    # bad if we're explicitly managing the 'groups' property under inclusive
+    # membership, and we are not specifying the primary group in the 'groups'
+    # property value.
+    #
+    # Setting the groups property here a second time will ensure that our user is
+    # created and in the right state. Note that this is an idempotent operation,
+    # so if AixObject's create method already set it to the right value, then this
+    # will noop.
+    if (groups = @resource.should(:groups))
+      self.groups = groups
+    end
 
     if (password = @resource.should(:password))
       self.password = password

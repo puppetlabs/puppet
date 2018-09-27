@@ -17,6 +17,10 @@ module Puppet::Util::Windows
     # no shorter
     DEFAULT_TIMEOUT = 30
 
+    # Service error codes
+    # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--1000-1299-
+    ERROR_SERVICE_DOES_NOT_EXIST = 0x00000424
+
     # Service control codes
     # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-controlserviceexw
     SERVICE_CONTROL_STOP                  = 0x00000001
@@ -249,20 +253,28 @@ module Puppet::Util::Windows
       )
     end
 
+    # Returns true if the service exists, false otherwise.
+    #
+    # @param [:string] service_name name of the service
+    def exists?(service_name)
+      open_service(service_name, SC_MANAGER_CONNECT, SERVICE_QUERY_STATUS) do |_|
+        true
+      end
+    rescue Puppet::Util::Windows::Error => e
+      return false if e.code == ERROR_SERVICE_DOES_NOT_EXIST
+      raise e
+    end
+    module_function :exists?
+
     # Start a windows service, assume that the service is already in the stopped state
     #
     # @param [:string] service_name name of the service to start
     def start(service_name)
       open_service(service_name, SC_MANAGER_CONNECT, SERVICE_START | SERVICE_QUERY_STATUS) do |service|
-        # don't attempt to fail here if the service isn't stopped because windows error codes
-        # are likely more informative than ours and a failed call to StartServiceW will produce
-        # those errors
-        wait_for_pending_transition(service, SERVICE_STOP_PENDING, SERVICE_STOPPED)
-        if StartServiceW(service, 0, FFI::Pointer::NULL) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to start the service"))
-        end
-        unless wait_for_pending_transition(service, SERVICE_START_PENDING, SERVICE_RUNNING)
-          raise Puppet::Error.new(_("Failed to start the service, after calling StartService the service is not in SERVICE_START_PENDING or SERVICE_RUNNING"))
+        transition_service_state(service, SERVICE_STOP_PENDING, SERVICE_STOPPED, SERVICE_START_PENDING, SERVICE_RUNNING) do
+          if StartServiceW(service, 0, FFI::Pointer::NULL) == FFI::WIN32_FALSE
+            raise Puppet::Util::Windows::Error.new(_("Failed to start the service"))
+          end
         end
       end
     end
@@ -273,17 +285,12 @@ module Puppet::Util::Windows
     # @param [:string] service_name name of the service to stop
     def stop(service_name)
       open_service(service_name, SC_MANAGER_CONNECT, SERVICE_STOP | SERVICE_QUERY_STATUS) do |service|
-        FFI::MemoryPointer.new(SERVICE_STATUS.size) do |status_ptr|
-          status = SERVICE_STATUS.new(status_ptr)
-          # don't attempt to fail here if the service isn't started because windows error codes
-          # are likely more informative than ours and a failed call to ControlService will produce
-          # those errors
-          wait_for_pending_transition(service, SERVICE_START_PENDING, SERVICE_RUNNING)
-          if ControlService(service, SERVICE_CONTROL_STOP, status) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new(_("Failed to send stop control to service, current state is %{current_state}. Failed with") % { current_state: status[:dwCurrentState].to_s })
-          end
-          unless wait_for_pending_transition(service, SERVICE_STOP_PENDING, SERVICE_STOPPED)
-            raise Puppet::Error.new(_("Failed to stop the service, after calling ControlService the service is not in SERVICE_STOP_PENDING or SERVICE_STOPPED"))
+        transition_service_state(service, SERVICE_START_PENDING, SERVICE_RUNNING, SERVICE_STOP_PENDING, SERVICE_STOPPED) do
+          FFI::MemoryPointer.new(SERVICE_STATUS.size) do |status_ptr|
+            status = SERVICE_STATUS.new(status_ptr)
+            if ControlService(service, SERVICE_CONTROL_STOP, status) == FFI::WIN32_FALSE
+              raise Puppet::Util::Windows::Error.new(_("Failed to send stop control to service, current state is %{current_state}. Failed with") % { current_state: status[:dwCurrentState].to_s })
+            end
           end
         end
       end
@@ -456,13 +463,18 @@ module Puppet::Util::Windows
       # @param [Integer] service_access code corresponding to the access type requested for the service
       # @yieldparam [:handle] service the windows native handle used to access
       #   the service
+      # @return the result of the block
       def open_service(service_name, scm_access, service_access, &block)
         service = FFI::Pointer::NULL_HANDLE
+
+        result = nil
         open_scm(scm_access) do |scm|
           service = OpenServiceW(scm, wide_string(service_name), service_access)
           raise Puppet::Util::Windows::Error.new(_("Failed to open a handle to the service")) if service == FFI::Pointer::NULL_HANDLE
-          yield service
+          result = yield service
         end
+
+        result
       ensure
         CloseServiceHandle(service)
       end
@@ -481,6 +493,28 @@ module Puppet::Util::Windows
         CloseServiceHandle(scm)
       end
       private :open_scm
+
+      # @api private
+      # Wait for preceeding_transition, then execute a block, then wait for resulting_transition.
+      # Do not fail on preceeding_transition,
+      #
+      # @param [:handle] service handle of the service to query
+      # @param [:Integer] preceeding_transition integer value corresponding to the transition state to wait for
+      #   before executing the block
+      # @param [:Integer] resulting_transition integer value corresponding to the transition state to wait for
+      #   after executing the block
+      def transition_service_state(service, preceeding_transition, preceeding_state, resulting_transition, resulting_state, &block)
+        # ignore the return from the pending transition, we don't care what state the service
+        # is in after this point, only that we waited on preceeding_pending_state if that's where
+        # the service was
+        wait_on_pending_transition(service, preceeding_transition, preceeding_state, raise_on_timeout: false)
+        yield
+        # After returning from the block, wait to see a pending or active state.
+        wait_for_state_transition(service, [resulting_transition, resulting_state])
+        # After that If the state is pending, attempt to wait for the pending operation to finish
+        wait_on_pending_transition(service, resulting_transition, resulting_state, raise_on_timeout: true)
+      end
+      private :transition_service_state
 
       # @api private
       # perform QueryServiceStatusEx on a windows service and return the
@@ -562,15 +596,37 @@ module Puppet::Util::Windows
       private :query_config
 
       # @api private
+      # waits for a windows service to report one of the acceptable_states
+      #
+      # @param [:handle] service handle to the service to wait on
+      # @param [Array<Integer>] acceptable_states array of acceptable states to wait for
+      # @return [bool] 'true' once the service is reporting an acceptable_state,
+      #   'false' if the service never reached one of the acceptable_states
+      def wait_for_state_transition(service, acceptable_states)
+        elapsed_time = 0
+        while elapsed_time <= DEFAULT_TIMEOUT
+          status = query_status(service)
+          state = status[:dwCurrentState]
+          if acceptable_states.include?(state)
+            return true
+          end
+          sleep(1)
+          elapsed_time += 1
+        end
+        raise Puppet::Error.new(_("Transition timed out, service still in %{current_state}") % { current_state: SERVICE_STATES[state] })
+      end
+      private :wait_for_state_transition
+
+      # @api private
       # waits for a windows service to report final_state if it
       # is in pending_state
       #
       # @param [:handle] service handle to the service to wait on
-      # @param [Integer] pending_state the state to wait on
+      # @param [Integer] pending_states array of acceptable states to wait on
       # @param [Integer] final_state the state indicating the transition is finished
       # @return [bool] 'true' once the service is reporting final_state,
-      #   'false' if the service was not in pending_state or finaL_state
-      def wait_for_pending_transition(service, pending_state, final_state)
+      #   'false' if the service never reached final_state or was not in pending_states
+      def wait_on_pending_transition(service, pending_state, final_state, raise_on_timeout: false)
         elapsed_time = 0
         last_checkpoint = -1
         loop do
@@ -578,7 +634,11 @@ module Puppet::Util::Windows
           state = status[:dwCurrentState]
           return true if state == final_state
           unless state == pending_state
-            return false
+            if raise_on_timeout
+              raise Puppet::Error.new(_("Service was not in pending state: %{pending_state}, current state is %{current_state}") % { pending_state: SERVICE_STATES[pending_state], current_state: SERVICE_STATES[state] })
+            else
+              return false
+            end
           end
           # When the service is in the pending state we need to do the following:
           # 1. check if any progress has been made since dwWaitHint using dwCheckPoint,
@@ -592,7 +652,11 @@ module Puppet::Util::Windows
             timeout = milliseconds_to_seconds(status[:dwWaitHint]);
             timeout = DEFAULT_TIMEOUT if timeout < DEFAULT_TIMEOUT
             if elapsed_time >= (timeout)
-              raise Puppet::Error.new(_("No progress made on service operation and dwWaitHint exceeded"))
+              if raise_on_timeout
+                raise Puppet::Error.new(_("Pending operation timed out, service still in %{current_state}") % { current_state: SERVICE_STATES[state] })
+              else
+                return false
+              end
             end
           end
           last_checkpoint = status[:dwCheckPoint]
@@ -600,7 +664,7 @@ module Puppet::Util::Windows
           elapsed_time += time_to_wait
         end
       end
-      private :wait_for_pending_transition
+      private :wait_on_pending_transition
 
       # @api private
       #
