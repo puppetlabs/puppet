@@ -64,7 +64,7 @@ class Puppet::Transaction::Persistence
       begin
         result = Puppet::Util::Yaml.safe_load_file(filename, [Symbol])
       rescue Puppet::Util::Yaml::YamlLoadError => detail
-        Puppet.log_exception(detail, _("Transaction store file %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail }, { :level => :warning })
+        Puppet.log_exception(detail, _("Transaction store file %{filename} is corrupt (%{detail}); replacing") % { filename: filename, detail: detail })
 
         begin
           File.rename(filename, filename + ".bad")

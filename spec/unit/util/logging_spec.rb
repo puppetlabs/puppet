@@ -99,6 +99,64 @@ describe Puppet::Util::Logging do
     end
   end
 
+  describe "log_exception" do
+    context "when requesting a debug level it is logged at debug" do
+      it "the exception is a ParseErrorWithIssue and message is :default" do
+        Puppet::Util::Log.expects(:create).with do |args|
+          expect(args[:message]).to eq("Test")
+          expect(args[:level]).to eq(:debug)
+        end
+
+        begin
+          raise Puppet::ParseErrorWithIssue, "Test"
+        rescue Puppet::ParseErrorWithIssue => err
+          Puppet.log_exception(err, :default, level: :debug)
+        end
+      end
+
+      it "the exception is something else" do
+        Puppet::Util::Log.expects(:create).with do |args|
+          expect(args[:message]).to eq("Test")
+          expect(args[:level]).to eq(:debug)
+        end
+
+        begin
+          raise Puppet::Error, "Test"
+        rescue Puppet::Error => err
+          Puppet.log_exception(err, :default, level: :debug)
+        end
+      end
+    end
+
+    context "no log level is requested it defaults to err" do
+      it "the exception is a ParseErrorWithIssue and message is :default" do
+        Puppet::Util::Log.expects(:create).with do |args|
+          expect(args[:message]).to eq("Test")
+          expect(args[:level]).to eq(:err)
+        end
+
+        begin
+          raise Puppet::ParseErrorWithIssue, "Test"
+        rescue Puppet::ParseErrorWithIssue => err
+          Puppet.log_exception(err)
+        end
+      end
+
+      it "the exception is something else" do
+        Puppet::Util::Log.expects(:create).with do |args|
+          expect(args[:message]).to eq("Test")
+          expect(args[:level]).to eq(:err)
+        end
+
+        begin
+          raise Puppet::Error, "Test"
+        rescue Puppet::Error => err
+          Puppet.log_exception(err)
+        end
+      end
+    end
+  end
+
   describe "when sending a deprecation warning" do
     it "does not log a message when deprecation warnings are disabled" do
       Puppet.expects(:[]).with(:disable_warnings).returns %w[deprecations]

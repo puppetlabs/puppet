@@ -222,7 +222,7 @@ describe Puppet::Configurer::Downloader do
     end
 
     it "should catch and log exceptions" do
-      Puppet.expects(:err)
+      Puppet.expects(:log_exception)
       # The downloader creates a new catalog for each apply, and really the only object
       # that it is possible to stub for the purpose of generating a puppet error
       Puppet::Resource::Catalog.any_instance.stubs(:apply).raises(Puppet::Error, "testing")

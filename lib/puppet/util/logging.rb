@@ -49,12 +49,13 @@ module Logging
   #    to take advantage of the backtrace logging.
   def log_exception(exception, message = :default, options = {})
     trace = Puppet[:trace] || options[:trace]
+    level = options[:level] || :err
     if message == :default && exception.is_a?(Puppet::ParseErrorWithIssue)
       # Retain all detailed info and keep plain message and stacktrace separate
       backtrace = []
       build_exception_trace(backtrace, exception, trace)
       Puppet::Util::Log.create({
-          :level => options[:level] || :err,
+          :level => level,
           :source => log_source,
           :message => exception.basic_message,
           :issue_code => exception.issue_code,
@@ -66,7 +67,7 @@ module Logging
           :node => exception.node
         }.merge(log_metadata))
     else
-      err(format_exception(exception, message, trace))
+      send_log(level, format_exception(exception, message, trace))
     end
   end
 

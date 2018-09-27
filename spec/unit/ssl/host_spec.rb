@@ -601,7 +601,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       @host.stubs(:generate)
       @host.stubs(:sleep)
 
-      Puppet.expects(:err)
+      Puppet.expects(:log_exception)
 
       @host.wait_for_cert(1)
     end

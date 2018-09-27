@@ -551,8 +551,8 @@ describe Puppet::Configurer do
 
       Puppet::Transaction::Report.indirection.expects(:save).raises("whatever")
 
-      Puppet.expects(:err)
-      expect { @configurer.send_report(@report) }.not_to raise_error
+      Puppet.expects(:send_log).with(:err, 'Could not send report: whatever')
+      @configurer.send_report(@report)
     end
   end
 
@@ -590,8 +590,8 @@ describe Puppet::Configurer do
 
       Puppet::Util.expects(:replace_file).yields(fh)
 
-      Puppet.expects(:err)
-      expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
+      Puppet.expects(:send_log).with(:err, 'Could not save last run local report: failed to do print')
+      @configurer.save_last_run_summary(@report)
     end
 
     it "should create the last run file with the correct mode" do
@@ -609,7 +609,7 @@ describe Puppet::Configurer do
 
     it "should report invalid last run file permissions" do
       Puppet.settings.setting(:lastrunfile).expects(:mode).returns('892')
-      Puppet.expects(:err).with(regexp_matches(/Could not save last run local report.*892 is invalid/))
+      Puppet.expects(:send_log).with(:err, regexp_matches(/Could not save last run local report.*892 is invalid/))
       @configurer.save_last_run_summary(@report)
     end
   end
