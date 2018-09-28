@@ -228,8 +228,8 @@ describe Puppet::Util::Storage do
 
     it "expires entries with a :checked older than statettl seconds ago" do
       Puppet[:statettl] = '1d'
-      recent_checked = Time.now
-      stale_checked = Time.now - (Puppet[:statettl] + 1)
+      recent_checked = Time.now.round
+      stale_checked = recent_checked - (Puppet[:statettl] + 10)
       Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
       Puppet::Util::Storage.cache(:stale)[:checked] = stale_checked
       expect(Puppet::Util::Storage.state).to eq(
@@ -262,8 +262,8 @@ describe Puppet::Util::Storage do
 
     it "does not expire entries when statettl is 0" do
       Puppet[:statettl] = '0'
-      recent_checked = Time.now
-      older_checked = Time.now - 10_000_000
+      recent_checked = Time.now.round
+      older_checked = recent_checked - 10_000_000
       Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
       Puppet::Util::Storage.cache(:older)[:checked] = older_checked
       expect(Puppet::Util::Storage.state).to eq(
