@@ -35,6 +35,8 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
   end
 
   def enabled?
+    return :false unless Puppet::Util::Windows::Service.exists?(@resource[:name])
+
     start_type = Puppet::Util::Windows::Service.service_start_type(@resource[:name])
     debug("Service #{@resource[:name]} start type is #{start_type}")
     case start_type
@@ -74,6 +76,8 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
   end
 
   def status
+    return :stopped unless Puppet::Util::Windows::Service.exists?(@resource[:name])
+
     current_state = Puppet::Util::Windows::Service.service_state(@resource[:name])
     state = case current_state
       when :SERVICE_STOPPED,

@@ -7,6 +7,9 @@ test_name "Windows Service Provider" do
   require 'puppet/acceptance/windows_utils'
   extend Puppet::Acceptance::WindowsUtils
 
+  require 'puppet/acceptance/service_utils'
+  extend Puppet::Acceptance::ServiceUtils
+
   def service_manifest(name, params)
     params_str = params.map do |param, value|
       value_str = value.to_s
@@ -55,27 +58,7 @@ MANIFEST
   agents.each do |agent|
     delete_service(agent, mock_service_nofail[:name])
 
-    # TODO: Once non-existent service semantics have been properly enabled for
-    # Windows, these tests + the AIX non-existent service tests should be moved
-    # into a generic 'run_nonexistent_service_tests' routine. To make that move
-    # easier, we've written these tests in a more generic style.
-    #
-    # NOTE: Currently, we only run a subset of the nonexistent service tests.
-    {
-      'enabling' => { enable: true },
-      'starting' => { ensure: :running }
-    }.each do |operation, property|
-      manifest = service_manifest(mock_service_nofail[:name], property)
-      step "Verify #{operation} a non-existent service prints an error message but does not fail the run without detailed exit codes" do
-        apply_manifest_on(agent, manifest) do |result|
-          assert_match(/#{mock_service_nofail[:name]}/, result.stderr, "non-existent service should error when started, but received #{result.stderr}")
-        end
-      end
-
-      step "Verify #{operation} a non-existent service with detailed exit codes correctly returns an error code" do
-        apply_manifest_on(agent, manifest, :acceptable_exit_codes => [4])
-      end
-    end
+    run_nonexistent_service_tests(mock_service_nofail[:name])
 
     setup_service(agent, mock_service_nofail, 'MockService.cs')
 

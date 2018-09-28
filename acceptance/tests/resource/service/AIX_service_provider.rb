@@ -60,36 +60,7 @@ end
 
 agents.each do |agent|
 
-  ## Setup
-  step "Verify a non-existent service is considered stopped and disabled" do
-    on(agent, puppet_resource('service', 'sloth_daemon'), :catch_failures => true, :catch_changes => true) do |result|
-      assert_match(/ensure[[:space:]]+=>[[:space:]]+'stopped'/, result.stdout, "non-existent service service should be stopped, but received #{result.stdout}")
-      assert_match(/enable[[:space:]]+=>[[:space:]]+'false'/, result.stdout, "non-existent service should be disabled, but received #{result.stdout}")
-    end
-  end
-
-  step "Verify stopping and disabling a non-existent service is a no-op" do
-    manifest = <<-PP
-      service { 'sloth_daemon' : ensure => stopped, enable => false }
-    PP
-    apply_manifest_on(agent, manifest, :catch_changes => true)
-  end
-  
-  step "Verify starting a non-existent service prints an error message but does not fail the run without detailed exit codes" do
-    manifest = <<-PP
-      service { 'sloth_daemon' : ensure => running }
-    PP
-    apply_manifest_on(agent, manifest) do |result|
-      assert_match(/Error:.*The sloth_daemon Subsystem is not on file/, result.stderr, "non-existent service should error when started, but received #{result.stderr}")
-    end
-  end
-
-  step "Verify starting a non-existent service with detailed exit codes correctly returns an error code" do
-    manifest = <<-PP
-      service { 'sloth_daemon' : ensure => running }
-    PP
-    apply_manifest_on(agent, manifest, :acceptable_exit_codes => [4])
-  end
+  run_nonexistent_service_tests('nonexistent_service')
 
   step "Setup on #{agent}"
   sloth_daemon_path = agent.tmpfile("sloth_daemon.sh")
