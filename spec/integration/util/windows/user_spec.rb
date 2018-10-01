@@ -6,54 +6,74 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
   describe "2003 without UAC" do
     before :each do
       Puppet::Util::Windows::Process.stubs(:windows_major_version).returns(5)
+      Puppet::Util::Windows::Process.stubs(:supports_elevated_security?).returns(false)
     end
 
     it "should be an admin if user's token contains the Administrators SID" do
       Puppet::Util::Windows::User.expects(:check_token_membership).returns(true)
-      Puppet::Util::Windows::Process.expects(:elevated_security?).never
 
       expect(Puppet::Util::Windows::User).to be_admin
     end
 
     it "should not be an admin if user's token doesn't contain the Administrators SID" do
       Puppet::Util::Windows::User.expects(:check_token_membership).returns(false)
-      Puppet::Util::Windows::Process.expects(:elevated_security?).never
 
       expect(Puppet::Util::Windows::User).not_to be_admin
     end
 
     it "should raise an exception if we can't check token membership" do
       Puppet::Util::Windows::User.expects(:check_token_membership).raises(Puppet::Util::Windows::Error, "Access denied.")
-      Puppet::Util::Windows::Process.expects(:elevated_security?).never
 
       expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
     end
   end
 
-  describe "2008 with UAC" do
+  context "2008 with UAC" do
     before :each do
       Puppet::Util::Windows::Process.stubs(:windows_major_version).returns(6)
+      Puppet::Util::Windows::Process.stubs(:supports_elevated_security?).returns(true)
     end
 
-    it "should be an admin if user is running with elevated privileges" do
-      Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(true)
-      Puppet::Util::Windows::User.expects(:check_token_membership).never
+    describe "in local administrators group" do
+      before :each do
+        Puppet::Util::Windows::User.stubs(:check_token_membership).returns(true)
+      end
 
-      expect(Puppet::Util::Windows::User).to be_admin
+      it "should be an admin if user is running with elevated privileges" do
+        Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(true)
+
+        expect(Puppet::Util::Windows::User).to be_admin
+      end
+
+      it "should not be an admin if user is not running with elevated privileges" do
+        Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(false)
+
+        expect(Puppet::Util::Windows::User).not_to be_admin
+      end
+
+      it "should raise an exception if the process fails to open the process token" do
+        Puppet::Util::Windows::Process.stubs(:elevated_security?).raises(Puppet::Util::Windows::Error, "Access denied.")
+
+        expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
+      end
     end
 
-    it "should not be an admin if user is not running with elevated privileges" do
-      Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(false)
-      Puppet::Util::Windows::User.expects(:check_token_membership).never
+    describe "not in local administrators group" do
+      before :each do
+        Puppet::Util::Windows::User.stubs(:check_token_membership).returns(false)
+      end
 
-      expect(Puppet::Util::Windows::User).not_to be_admin
-    end
+      it "should not be an admin if user is running with elevated privileges" do
+        Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(true)
 
-    it "should raise an exception if the process fails to open the process token" do
-      Puppet::Util::Windows::Process.stubs(:elevated_security?).raises(Puppet::Util::Windows::Error, "Access denied.")
-      Puppet::Util::Windows::User.expects(:check_token_membership).never
+        expect(Puppet::Util::Windows::User).not_to be_admin
+      end
 
-      expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
+      it "should not be an admin if user is not running with elevated privileges" do
+        Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(false)
+
+        expect(Puppet::Util::Windows::User).not_to be_admin
+      end
     end
   end
 
