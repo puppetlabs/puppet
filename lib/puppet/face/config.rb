@@ -23,7 +23,7 @@ Puppet::Face.define(:config, '0.0.1') do
       The three most commonly used sections are 'main', 'master', and 'agent'.
       'Main' is the default, and is used by all Puppet applications. Other
       sections can override 'main' values for specific applications --- the
-      'master' section affects puppet master and puppet cert, and the 'agent'
+      'master' section affects Puppet Server, and the 'agent'
       section affects puppet agent.
 
       Less commonly used is the 'user' section, which affects puppet apply. Any
