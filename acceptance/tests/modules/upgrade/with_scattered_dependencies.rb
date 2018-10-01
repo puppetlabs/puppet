@@ -12,6 +12,7 @@ tag 'audit:low',       # Module management via pmt is not the primary support wo
 fq_prod_env_modpath = "#{environmentpath}/production/modules"
 
 stub_forge_on(master)
+configure_type_defaults_on master
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do

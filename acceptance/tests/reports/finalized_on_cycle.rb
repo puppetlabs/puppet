@@ -26,6 +26,8 @@ notify { 'bar':
 MANIFEST
 
 agents.each do |agent|
+  configure_type_defaults_on agent
+
   tmpdir = agent.tmpdir('report_finalized')
   check = "#{tmpdir}/check_report.rb"
   manifest = "#{tmpdir}/manifest.pp"

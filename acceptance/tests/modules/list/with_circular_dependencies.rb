@@ -5,6 +5,8 @@ tag 'audit:low',
     'audit:refactor'     # Master is not required for this test.
                          # Refactor to use agent.
 
+configure_type_defaults_on master
+
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/appleseed"
   on master, "rm -rf #{master['sitemoduledir']}/crakorn"

@@ -23,6 +23,8 @@ package_name = {'el'     => 'httpd',
 }
 
 agents.each do |agent|
+  configure_type_defaults_on agent
+
   platform = agent.platform.variant
 
   if agent['platform'] =~ /(debian|ubuntu)/

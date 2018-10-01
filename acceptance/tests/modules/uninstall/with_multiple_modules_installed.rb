@@ -13,6 +13,7 @@ step 'Setup'
 testdir = master.tmpdir('unistallmultiple')
 
 stub_forge_on(master)
+configure_type_defaults_on master
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/java"
