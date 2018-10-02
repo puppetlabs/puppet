@@ -409,6 +409,8 @@ class Application
   end
 
   def handle_logdest_arg(arg)
+    return if options[:setdest] || arg.nil?
+
     begin
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true

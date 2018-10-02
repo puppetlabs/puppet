@@ -648,6 +648,18 @@ describe Puppet::Application do
       @app.handle_logdest_arg(test_arg)
       expect(@app.options[:setdest]).to be_truthy
     end
-  end
 
+    it "does not set the log destination if setdest is true" do
+      Puppet::Util::Log.expects(:newdestination).never
+      @app.options[:setdest] = true
+
+      @app.handle_logdest_arg(test_arg)
+    end
+
+    it "does not set the log destination if arg is nil" do
+      Puppet::Util::Log.expects(:newdestination).never
+
+      @app.handle_logdest_arg(nil)
+    end
+  end
 end
