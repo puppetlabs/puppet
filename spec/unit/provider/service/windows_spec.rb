@@ -34,6 +34,16 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
   end
 
   describe "#start" do
+    before(:each) do
+      provider.stubs(:status).returns(:stopped)
+    end
+
+    it "should resume a paused service" do
+      provider.stubs(:status).returns(:paused)
+      service_util.expects(:resume).with(name)
+      provider.start
+    end
+
     it "should start the service" do
       service_util.expects(:service_start_type).with(name).returns(:SERVICE_AUTO_START)
       service_util.expects(:start).with(name)
@@ -83,10 +93,18 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
     end
 
     [
-      :SERVICE_STOPPED,
       :SERVICE_PAUSED,
-      :SERVICE_STOP_PENDING,
-      :SERVICE_PAUSE_PENDING,
+      :SERVICE_PAUSE_PENDING
+    ].each do |state|
+      it "should report a #{state} service as paused" do
+        service_util.expects(:service_state).with(name).returns(state)
+        expect(provider.status).to eq(:paused)
+      end
+    end
+
+    [
+      :SERVICE_STOPPED,
+      :SERVICE_STOP_PENDING
     ].each do |state|
       it "should report a #{state} service as stopped" do
         service_util.expects(:service_state).with(name).returns(state)
