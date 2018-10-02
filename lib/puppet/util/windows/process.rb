@@ -7,6 +7,7 @@ module Puppet::Util::Windows::Process
   extend FFI::Library
 
   WAIT_TIMEOUT = 0x102
+  WAIT_INTERVAL = 15
 
   def execute(command, arguments, stdin, stdout, stderr)
     create_args = {
@@ -29,8 +30,8 @@ module Puppet::Util::Windows::Process
   module_function :execute
 
   def wait_process(handle)
-    while WaitForSingleObject(handle, 0) == WAIT_TIMEOUT
-      sleep(1)
+    while WaitForSingleObject(handle, WAIT_INTERVAL) == WAIT_TIMEOUT
+      sleep(0)
     end
 
     exit_status = -1
