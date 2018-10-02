@@ -1,6 +1,8 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet_spec/compiler'
+require 'puppet/test_ca'
+
 
 module Puppet::Pops
 module Types
@@ -8,45 +10,69 @@ describe 'The Encrypted Type' do
   include PuppetSpec::Compiler
   include PuppetSpec::Files
 
+  let(:test_ca) { Puppet::TestCa.new }
+  let(:issuer) { test_ca.ca_cert }
+
+  let(:host) { Puppet::SSL::Host.new("example.com") }
+  let(:other_host) { Puppet::SSL::Host.new("example2.com") }
+  let(:third_host) { Puppet::SSL::Host.new("example3.com") }
+  let(:bad_host) { Puppet::SSL::Host.new("bad_example.com") }
+
+  let(:host_key)       { OpenSSL::PKey::RSA.new(1024) }
+  let(:other_host_key) { OpenSSL::PKey::RSA.new(1024) }
+  let(:third_host_key) { OpenSSL::PKey::RSA.new(1024) }
+
+  let(:host_cert)       { generate(test_ca(), 'example.com', host_key) }
+  let(:other_host_cert) { generate(test_ca(),'example2.com', other_host_key) }
+  let(:third_host_cert) { generate(test_ca(), 'example3.com', third_host_key) }
+
+  def generate(testca, name, host_key)
+    # create_csr is a private method in TestCa
+    csr = testca.send(:create_csr, name, host_key)
+    testca.sign(csr, {})
+  end
 
   before(:each) do
-    # Configure a CA and create host certificates used when testing
+    host.expects(:certificate).at_least(0).returns(host_cert)
+    other_host.expects(:certificate).at_least(0).returns(other_host_cert)
+    third_host.expects(:certificate).at_least(0).returns(third_host_cert)
 
-    # Get a safe temporary file for CA stuff
+    # At runtime the Host.key methods returns Puppet::SSL::Key, and the content is the RSA private key
+    wrapped_key_host = mock()
+    wrapped_key_host.stubs(:content).returns(host_key)
+
+    wrapped_key_other_host = mock()
+    wrapped_key_other_host.stubs(:content).returns(other_host_key)
+
+    wrapped_key_third_host = mock()
+    wrapped_key_third_host.stubs(:content).returns(third_host_key)
+
+    host.expects(:key).at_least(0).returns(wrapped_key_host)
+    other_host.expects(:key).at_least(0).returns(wrapped_key_other_host)
+    third_host.expects(:key).at_least(0).returns(wrapped_key_third_host)
+    bad_host.expects(:key).at_least(0).returns(nil)
+
+    Puppet::SSL::Host.expects(:new).with('example.com').at_least(0).returns(host)
+    Puppet::SSL::Host.expects(:new).with('example2.com').at_least(0).returns(other_host)
+    Puppet::SSL::Host.expects(:new).with('example3.com').at_least(0).returns(third_host)
+    Puppet::SSL::Host.expects(:new).with('bad_example.com').at_least(0).returns(bad_host)
+
+    Puppet.push_context({:rich_data => true}, "set rich_data to true for tests")
+
     dir = tmpdir("host_integration_testing")
 
     Puppet.settings[:confdir] = dir
     Puppet.settings[:vardir] = dir
-
-    Puppet::SSL::Host.ca_location = :local
-
-    @ca = Puppet::SSL::CertificateAuthority.new
-
-    # The catalog requesting host / and localhost in apply
-    @host = Puppet::SSL::Host.new("example.com")
-    @host.generate_key
-    @host.generate_certificate_request
-
-    # The compiling (local) host in tests for agent/master
-    @other_host = Puppet::SSL::Host.new("example2.com")
-    @other_host.generate_key
-    @other_host.generate_certificate_request
-
-    # host that is neither requesting or compiling
-    @third_host = Puppet::SSL::Host.new("example3.com")
-    @third_host.generate_key
-    @third_host.generate_certificate_request
-
-    @ca.sign(@host.name)
-    @ca.sign(@other_host.name)
-    @ca.sign(@third_host.name)
   end
 
   after(:each) {
-    Puppet::SSL::Host.ca_location = :none
+    Puppet.pop_context()
   }
 
   shared_examples_for :encrypted_values do
+    before(:each) {
+      Puppet::SSL::Host.stubs(:localhost).returns(host)
+    }
     context 'supports operations at the type level, such that' do
       it 'Type[Encrypted] can be obtained from the type factory' do
         t = TypeFactory.encrypted()
@@ -234,12 +260,13 @@ describe 'The Encrypted Type' do
     # a request for a catalog does. (requesting host is not the same as compiling host).
     #
     before(:each) {
-      found_cert = Puppet::SSL::Certificate.indirection.find(@host.name)
+      # found_cert = Puppet::SSL::Certificate.indirection.find(@host.name)
+      found_cert = host_cert
 
       fake_authentication = true
-      trusted_information = Puppet::Context::TrustedInformation.remote(fake_authentication, @host.name, found_cert)
+      trusted_information = Puppet::Context::TrustedInformation.remote(fake_authentication, host.name, found_cert)
       Puppet.push_context({:trusted_information => trusted_information}, "Fake trusted information for p_encrypted_type_spec.rb")
-      Puppet::SSL::Host.stubs(:localhost).returns(@other_host)
+      Puppet::SSL::Host.stubs(:localhost).returns(other_host)
     }
 
     after(:each) {
@@ -324,7 +351,7 @@ describe 'The Encrypted Type' do
           expect(the_message.crypt).to be_a(Puppet::Pops::Types::PBinaryType::Binary)
 
           # localhost is @other_host, so give catalog requesting @host here
-          expect(the_message.decrypt(scope, @host).unwrap).to eql('There, and Back Again')
+          expect(the_message.decrypt(scope, host).unwrap).to eql('There, and Back Again')
         end
       end
     end
@@ -337,12 +364,13 @@ describe 'The Encrypted Type' do
     # a puppet apply does (requesting host is the same as compiling host).
     #
     before(:each) {
-      found_cert = Puppet::SSL::Certificate.indirection.find(@host.name)
+#      found_cert = Puppet::SSL::Certificate.indirection.find(@host.name)
+      found_cert = host_cert
 
       fake_authentication = true
-      trusted_information = Puppet::Context::TrustedInformation.remote(fake_authentication, @host.name, found_cert)
+      trusted_information = Puppet::Context::TrustedInformation.remote(fake_authentication, host.name, found_cert)
       Puppet.push_context({:trusted_information => trusted_information}, "Fake trusted information for p_encrypted_type_spec.rb")
-      Puppet::SSL::Host.stubs(:localhost).returns(@host)
+      Puppet::SSL::Host.stubs(:localhost).returns(host)
     }
 
     after(:each) {
