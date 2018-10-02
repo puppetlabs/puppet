@@ -159,7 +159,7 @@ The certificate retrieved from the master does not match the agent's private key
 Certificate fingerprint: %{fingerprint}
 To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.
 On the master:
-  puppet cert clean %{cert_name}
+  puppetserver ca clean --certname %{cert_name}
 On the agent:
   1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete
   1b. On Windows: del "%{cert_dir}\\%{cert_name}.pem" /f
@@ -261,7 +261,7 @@ CSR public key: %{csr_public_key}
 Agent public key: %{agent_public_key}
 To fix this, remove the CSR from both the master and the agent and then start a puppet run, which will automatically regenerate a CSR.
 On the master:
-  puppet cert clean %{cert_name}
+  puppetserver ca clean --certname %{cert_name}
 On the agent:
   1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete
   1b. On Windows: del "%{cert_dir}\\%{cert_name}.pem" /f

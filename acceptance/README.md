@@ -146,6 +146,16 @@ There also may be scenarios where you want to specify the host(s) to release. E.
     HOST_NAMES=lvwwr9tdplg351u bundle exec rake ci:release_hosts
     HOST_NAMES=lvwwr9tdplg351u,ylrqjh5l6xvym4t bundle exec rake ci:release_hosts
 
+### Syncing local development code with VMPooler Windows machines
+
+If you want to copy local code to a Windows machine that is running in beaker, you can use the `ci:sync:windows` rake task:
+
+    WIN_MACHINE=edqa6se2xxo5r21 rake ci:sync:windows
+
+Optional environment variables for this are:
+
+    LIB_DIR (defaults to `type`) - Path in `lib/puppet` to sync with the Windows machine.
+
 
 Running Tests on Vagrant Boxen
 ------------------------------

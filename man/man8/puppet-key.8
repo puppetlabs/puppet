@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-KEY" "8" "September 2018" "Puppet, Inc." "Puppet manual"
+.TH "PUPPET\-KEY" "8" "October 2018" "Puppet, Inc." "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-key\fR \- Create, save, and remove certificate keys\.
@@ -10,7 +10,7 @@
 puppet key \fIaction\fR [\-\-terminus _TERMINUS] [\-\-extra HASH]
 .
 .SH "DESCRIPTION"
-This subcommand manages certificate private keys\. Keys are created automatically by puppet agent and when certificate requests are generated with \'puppet certificate generate\'; it should not be necessary to use this subcommand directly\.
+This subcommand manages certificate private keys\. Keys are created automatically by puppet agent and when certificate requests are generated with \'puppet ssl submit_request\'; it should not be necessary to use this subcommand directly\.
 .
 .SH "OPTIONS"
 Note that any setting that\'s valid in the configuration file is also a valid long argument, although it may or may not be relevant to the present action\. For example, \fBserver\fR and \fBrun_mode\fR are valid settings, so you can specify \fB\-\-server <servername>\fR, or \fB\-\-run_mode <runmode>\fR as an argument\.

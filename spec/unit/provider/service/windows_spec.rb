@@ -22,6 +22,8 @@ describe 'Puppet::Type::Service::Provider::Windows',
     # make sure we never actually execute anything (there are two execute methods)
     provider.class.expects(:execute).never
     provider.expects(:execute).never
+
+    service_util.stubs(:exists?).with(resource[:name]).returns(true)
   end
 
   describe ".instances" do
@@ -76,6 +78,12 @@ describe 'Puppet::Type::Service::Provider::Windows',
   end
 
   describe "#status" do
+    it "should report a nonexistent service as stopped" do
+      service_util.stubs(:exists?).with(resource[:name]).returns(false)
+
+      expect(provider.status).to eql(:stopped)
+    end
+
     [
       :SERVICE_STOPPED,
       :SERVICE_PAUSED,
@@ -121,6 +129,12 @@ describe 'Puppet::Type::Service::Provider::Windows',
   end
 
   describe "#enabled?" do
+    it "should report a nonexistent service as false" do
+      service_util.stubs(:exists?).with(resource[:name]).returns(false)
+
+      expect(provider.enabled?).to eql(:false)
+    end
+
     it "should report a service with a startup type of manual as manual" do
       service_util.expects(:service_start_type).with(name).returns(:SERVICE_DEMAND_START)
       expect(provider.enabled?).to eq(:manual)

@@ -12,17 +12,17 @@ describe test_title, '(integration)', :if => Puppet::Util::Platform.windows? do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns provider_class
   end
 
-  context 'should fail querying services that do not exist' do
+  context 'should return valid values when querying a service that does not exist' do
     let(:service) do
       Puppet::Type.type(:service).new(:name => 'foobarservice1234')
     end
 
-    it "with a Puppet::Error when querying enabled?" do
-      expect { service.provider.enabled? }.to raise_error(Puppet::Error)
+    it "with :false when asked if enabled" do
+      expect(service.provider.enabled?).to eql(:false)
     end
 
-    it "with a Puppet::Error when querying status" do
-      expect { service.provider.status }.to raise_error(Puppet::Error)
+    it "with :stopped when asked about status" do
+      expect(service.provider.status).to eql(:stopped)
     end
   end
 
