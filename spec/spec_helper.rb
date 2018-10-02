@@ -117,7 +117,6 @@ RSpec.configure do |config|
     # I suck for letting this float. --daniel 2011-04-21
     Signal.stubs(:trap)
 
-
     # TODO: in a more sane world, we'd move this logging redirection into our TestHelper class.
     #  Without doing so, external projects will all have to roll their own solution for
     #  redirecting logging, and for validating expected log messages.  However, because the

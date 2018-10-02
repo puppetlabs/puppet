@@ -91,6 +91,13 @@ describe Puppet::Application::Apply do
       @apply.setup
     end
 
+    it "sets the log destination if logdest is provided via settings" do
+      Puppet::Log.expects(:newdestination).with("set_via_config")
+      Puppet[:logdest] = "set_via_config"
+
+      @apply.setup
+    end
+
     it "should set INT trap" do
       Signal.expects(:trap).with(:INT)
 

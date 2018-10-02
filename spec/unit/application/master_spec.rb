@@ -155,6 +155,13 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
           @master.setup
         end
       end
+
+      it "sets the log destination using settings" do
+        Puppet::Util::Log.expects(:newdestination).with("set_via_config")
+        Puppet[:logdest] = "set_via_config"
+
+        @master.setup
+      end
     end
 
     it "should print puppet config if asked to in Puppet config" do
