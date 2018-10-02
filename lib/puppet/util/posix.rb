@@ -9,7 +9,22 @@ module Puppet::Util::POSIX
   # environment for "exec" runs
   USER_ENV_VARS = ['HOME', 'USER', 'LOGNAME']
 
+  class << self
+    # Returns an array of all the groups that the user's a member of.
+    def groups_of(user)
+      groups = []
+      Puppet::Etc.group do |group|
+        groups << group.name if group.mem.include?(user)
+      end
+  
+      uniq_groups = groups.uniq
+      if uniq_groups != groups
+        Puppet.debug(_('Removing any duplicate group entries'))
+      end
 
+      uniq_groups
+    end
+  end
 
   # Retrieve a field from a POSIX Etc object.  The id can be either an integer
   # or a name.  This only works for users and groups.  It's also broken on

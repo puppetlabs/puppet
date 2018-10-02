@@ -18,6 +18,16 @@ EOS
       Rake::Task["ci:test:aio"].invoke
     end
   end
+
+  namespace :sync do
+    task :windows do
+      raise 'WIN_MACHINE environment variable is required' unless ENV['WIN_MACHINE']
+      win_machine = ENV['WIN_MACHINE'] + '.delivery.puppetlabs.net'
+      path = ENV['LIB_DIR'] || 'type' # 'lib/puppet' prefix is implicit.
+      dest_path = path.split('/')[0...-1].join
+      system("scp -r #{File.dirname(__FILE__)}/../lib/puppet/#{path} Administrator@#{win_machine}:'C:/Program\\ Files/Puppet\\ Labs/Puppet/sys/ruby/lib/ruby/vendor_ruby/puppet/#{dest_path}'")
+    end
+  end
 end
 
 def get_test_sample

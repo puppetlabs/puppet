@@ -105,8 +105,8 @@ class Runtime3Converter
   end
 
   def convert_Symbol(o, scope, undef_value)
-    o == :undef ? undef_value : o
-    #o == :undef && !@inner ? undef_value : o
+    return o unless o == :undef
+    !@inner ? undef_value : nil
   end
 
   def convert_PAnyType(o, scope, undef_value)

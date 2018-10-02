@@ -734,9 +734,8 @@ module Puppet
       :desc    => <<EOT,
 A comma-separated list of alternate DNS names for Puppet Server. These are extra
 hostnames (in addition to its `certname`) that the server is allowed to use when
-serving agents. Puppet checks this setting when automatically requesting a
-certificate for Puppet agent or Puppet Server, and when manually generating a
-certificate with `puppet cert generate`. These can be either IP or DNS, and the type
+serving agents. Puppet checks this setting when automatically creating a
+certificate for Puppet agent or Puppet Server. These can be either IP or DNS, and the type
 should be specified and followed with a colon. Untyped inputs will default to DNS.
 
 In order to handle agent requests at a given hostname (like
@@ -749,23 +748,12 @@ names.
 
 **Note:** The list of alternate names is locked in when the server's
 certificate is signed. If you need to change the list later, you can't just
-change this setting; you also need to:
-
-* On the server: Stop Puppet Server.
-* On the CA server: Revoke and clean the server's old certificate. (`puppet cert clean <NAME>`)
-  (Note `puppet cert clean` is deprecated and will be replaced with `puppetserver ca clean`
-  in Puppet 6.)
-* On the server: Delete the old certificate (and any old certificate signing requests)
-  from the [ssldir](https://puppet.com/docs/puppet/latest/dirs_ssldir.html).
-* On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to request a new certificate
-* On the CA server: Sign the certificate request, explicitly allowing alternate names
-  (`puppet cert sign --allow-dns-alt-names <NAME>`). (Note `puppet cert sign` is deprecated
-  and will be replaced with `puppetserver ca sign` in Puppet 6.)
-* On the server: Run `puppet agent -t --ca_server <CA HOSTNAME>` to retrieve the cert.
-* On the server: Start Puppet Server again.
+change this setting; you also need to regenerate the certificate. For more
+information on that process, see the [cert regen docs]
+(https://puppet.com/docs/puppet/latest/ssl_regenerate_certificates.html).
 
 To see all the alternate names your servers are using, log into your CA server
-and run `puppet cert list -a`, then check the output for `(alt names: ...)`.
+and run `puppetserver ca list --all`, then check the output for `(alt names: ...)`.
 Most agent nodes should NOT have alternate names; the only certs that should
 have them are Puppet Server nodes that you want other agents to trust.
 EOT
@@ -777,7 +765,7 @@ EOT
 An optional file containing custom attributes to add to certificate signing
 requests (CSRs). You should ensure that this file does not exist on your CA
 puppet master; if it does, unwanted certificate extensions may leak into
-certificates created with the `puppet cert generate` command.
+certificates created with the `puppetserver ca generate` command.
 
 If present, this file must be a YAML hash containing a `custom_attributes` key
 and/or an `extension_requests` key. The value of each key must be a hash, where
@@ -1070,7 +1058,7 @@ EOT
         and non-zero if the cert should not be autosigned.
 
         If a certificate request is not autosigned, it will persist for review. An admin
-        user can use the `puppet cert sign` command to manually sign it, or can delete
+        user can use the `puppetserver ca sign` command to manually sign it, or can delete
         the request.
 
         For info on autosign configuration files, see
@@ -1410,7 +1398,20 @@ EOT
         with the running configuration.  In the case of puppet master,
         this file reflects the state discovered through interacting
         with clients."
-      },
+    },
+    :statettl => {
+      :default => "32d",
+      :type    => :ttl,
+      :desc    => "How long the Puppet agent should cache when a resource was last checked or synced.
+      #{AS_DURATION}
+      A value of `0` or `unlimited` will disable cache pruning.
+
+      This setting affects the usage of `schedule` resources, as the information
+      about when a resource was last checked (and therefore when it needs to be
+      checked again) is stored in the `statefile`. The `statettl` needs to be
+      large enough to ensure that a resource will not trigger multiple times
+      during a schedule due to its entry expiring from the cache."
+    },
     :transactionstorefile => {
       :default => "$statedir/transactionstore.yaml",
       :type => :file,

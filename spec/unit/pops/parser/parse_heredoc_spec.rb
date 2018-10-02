@@ -140,6 +140,22 @@ describe "egrammar parsing heredoc" do
     ].join("\n"))
   end
 
+  it "parses interpolated [] expression by looking at the correct preceding char for space" do
+    # NOTE: Important not to use the left margin feature here
+    src = <<-CODE
+$xxxxxxx = @("END")
+${facts['os']['family']}
+XXXXXXX XXX
+END
+CODE
+    expect(dump(parse(src))).to eq([
+      "(= $xxxxxxx (@()",
+      "  (sublocated (cat (str (slice (slice $facts 'os') 'family')) '",
+      "XXXXXXX XXX",
+      "'))",
+      "))"].join("\n"))
+  end
+
   it 'parses multiple heredocs on the same line' do
     src = <<-CODE
     notice({ @(foo) => @(bar) })
