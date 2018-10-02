@@ -100,6 +100,24 @@ describe resources do
         user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
         expect(res.user_check(user)).to be_falsey
       end
+
+      it "should not purge Windows system users" do
+        res = Puppet::Type.type(:resources).new :name => :user, :purge => true
+        res.catalog = Puppet::Resource::Catalog.new
+        user_hash = {:name => 'Administrator', :uid => 'S-1-5-21-12345-500'}
+        user = Puppet::Type.type(:user).new(user_hash)
+        user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+        expect(res.user_check(user)).to be_falsey
+      end
+
+      it "should not purge Windows system users" do
+        res = Puppet::Type.type(:resources).new :name => :user, :purge => true
+        res.catalog = Puppet::Resource::Catalog.new
+        user_hash = {:name => 'other', :uid => 'S-1-5-21-12345-1001'}
+        user = Puppet::Type.type(:user).new(user_hash)
+        user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+        expect(res.user_check(user)).to be_truthy
+      end
     end
 
     %w(FreeBSD OpenBSD).each do |os|
