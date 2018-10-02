@@ -134,7 +134,7 @@ module Puppet::Util::Windows::ADSI
   
       def parse_name(name)
         if name =~ /\//
-          raise Puppet::Error.new( _("Value must be in DOMAIN\\user style syntax") )
+          raise Puppet::Error.new( _("Value must be in DOMAIN\\%{object_class} style syntax") % { object_class: @object_class } )
         end
   
         matches = name.scan(/((.*)\\)?(.*)/)
