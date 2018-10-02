@@ -7,7 +7,7 @@ module Puppet::Util::Windows::Process
   extend FFI::Library
 
   WAIT_TIMEOUT = 0x102
-  WAIT_INTERVAL = 15
+  WAIT_INTERVAL = 200
 
   ERROR_DIRECTORY = 0x10B
   def execute(command, arguments, stdin, stdout, stderr)
