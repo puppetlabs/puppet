@@ -12,6 +12,10 @@ describe 'collectors' do
     expect(messages).to include(*expected_messages)
   end
 
+  def warnings
+    @logs.select { |log| log.level == :warning }.map { |log| log.message }
+  end
+  
   context "virtual resource collection" do
     it "matches everything when no query given" do
       expect_the_message_to_be(["the other message", "the message"], <<-MANIFEST)
@@ -313,8 +317,6 @@ describe 'collectors' do
       end
 
       context 'when overriding an already evaluated resource' do
-        let(:logs) { [] }
-        let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
         let(:manifest) { <<-MANIFEST }
           define foo($message) {
             notify { "testing": message => $message }
@@ -325,12 +327,6 @@ describe 'collectors' do
           }
           delayed {'do it now': }
         MANIFEST
-
-        around(:each) do |example|
-          Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-            example.run
-          end
-        end
 
         it 'and --strict=off, it silently skips the override' do
           Puppet[:strict] = :off
