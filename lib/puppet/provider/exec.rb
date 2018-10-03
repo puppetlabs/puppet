@@ -46,10 +46,7 @@ class Puppet::Provider::Exec < Puppet::Provider
     #
     # This is backwards compatible all the way to Ruby 1.8.7.
     Timeout::timeout(resource[:timeout], Timeout::Error) do
-      # If we're running a command that's meant to be a check on whether we should run
-      # our actual command (e.g. like a command passed to the :onlyif or :unless properties),
-      # then we should not set the cwd when executing the check's corresponding command.
-      cwd = check ? nil : resource[:cwd]
+      cwd = resource[:cwd]
       cwd ||= Dir.pwd
 
       # note that we are passing "false" for the "override_locale" parameter, which ensures that the user's
