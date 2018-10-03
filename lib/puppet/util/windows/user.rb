@@ -8,11 +8,13 @@ module Puppet::Util::Windows::User
   extend FFI::Library
 
   def admin?
-    return false unless check_token_membership
+    elevated_supported = Puppet::Util::Windows::Process.supports_elevated_security?
 
     # if Vista or later, check for unrestricted process token
-    elevated_supported = Puppet::Util::Windows::Process.supports_elevated_security?
-    return elevated_supported ? Puppet::Util::Windows::Process.elevated_security? : true
+    return Puppet::Util::Windows::Process.elevated_security? if elevated_supported
+
+    # otherwise 2003 or less
+    check_token_membership
   end
   module_function :admin?
 
