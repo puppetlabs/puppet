@@ -6,7 +6,7 @@ describe Puppet::Type.type(:package).provider(:windows), :if => Puppet.features.
   let (:source)      { 'E:\Rando\Directory\mysql-5.1.58-win-x64.msi' }
   let (:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :windows, :source => source) }
   let (:provider)    { resource.provider }
-  let (:execute_options) do {:failonfail => false, :combine => true} end
+  let (:execute_options) do {:failonfail => false, :combine => true, :suppress_window => true} end
 
   before :each do
     # make sure we never try to execute anything
@@ -86,7 +86,7 @@ describe Puppet::Type.type(:package).provider(:windows), :if => Puppet.features.
   context '#install' do
     let(:command) { 'blarg.exe /S' }
     let(:klass) { mock('installer', :install_command => ['blarg.exe', '/S'] ) }
-    let(:execute_options) do {:failonfail => false, :combine => true, :cwd => 'E:\Rando\Directory'} end
+    let(:execute_options) do {:failonfail => false, :combine => true, :cwd => 'E:\Rando\Directory', :suppress_window => true} end
     before :each do
       Puppet::Provider::Package::Windows::Package.expects(:installer_class).returns(klass)
     end

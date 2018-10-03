@@ -8,6 +8,8 @@ module Puppet::Util::Windows::Process
 
   WAIT_TIMEOUT = 0x102
   WAIT_INTERVAL = 200
+  # https://docs.microsoft.com/en-us/windows/desktop/ProcThread/process-creation-flags
+  CREATE_NO_WINDOW = 0x08000000
 
   def execute(command, arguments, stdin, stdout, stderr)
     create_args = {
@@ -17,9 +19,11 @@ module Puppet::Util::Windows::Process
         :stdout => stdout,
         :stderr => stderr
       },
-      :close_handles => false
+      :close_handles => false,
     }
-
+    if arguments[:suppress_window]
+      create_args[:creation_flags] = CREATE_NO_WINDOW
+    end
     cwd = arguments[:cwd]
     if cwd
       Dir.chdir(cwd) { Process.create(create_args) }
