@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-157-g2c80760\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-163-g1424f2a\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-10-02 18:21+0000\n"
-"PO-Revision-Date: 2018-10-02 18:21+0000\n"
+"POT-Creation-Date: 2018-10-03 16:45+0000\n"
+"PO-Revision-Date: 2018-10-03 16:45+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -7349,6 +7349,18 @@ msgstr ""
 msgid "ruby-shadow doesn't support %{method}"
 msgstr ""
 
+#: ../lib/puppet/provider/user/windows_adsi.rb:128
+msgid "The user account '%s' is disabled; puppet will not reset the password"
+msgstr ""
+
+#: ../lib/puppet/provider/user/windows_adsi.rb:130
+msgid "The user account '%s' is locked out; puppet will not reset the password"
+msgstr ""
+
+#: ../lib/puppet/provider/user/windows_adsi.rb:132
+msgid "The user account '%s' is expired; puppet will not reset the password"
+msgstr ""
+
 #: ../lib/puppet/provider/yumrepo/inifile.rb:185
 msgid "changing mode of %{file} from %{current_mode} to %{target_mode}"
 msgstr ""
@@ -10001,15 +10013,15 @@ msgstr ""
 msgid "Unrecognized ADS UserFlags: %{unrecognized_flags}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:449
+#: ../lib/puppet/util/windows/adsi.rb:469
 msgid "Failed to get user name"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:486
+#: ../lib/puppet/util/windows/adsi.rb:506
 msgid "Cannot delete user profile for '%{sid}' prior to Vista SP1"
 msgstr ""
 
-#: ../lib/puppet/util/windows/adsi.rb:504
+#: ../lib/puppet/util/windows/adsi.rb:524
 msgid "Cannot create group if user '%{name}' exists."
 msgstr ""
 
@@ -10085,27 +10097,27 @@ msgstr ""
 msgid "Failed to call LookupAccountSidW with bytes: %{sid_bytes}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:39
+#: ../lib/puppet/util/windows/process.rb:40
 msgid "Failed to get child process exit code"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:232
+#: ../lib/puppet/util/windows/process.rb:233
 msgid "GetVersionEx failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:261
+#: ../lib/puppet/util/windows/process.rb:262
 msgid "Discarding environment variable %{string} which contains invalid bytes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:277
+#: ../lib/puppet/util/windows/process.rb:278
 msgid "environment variable name must not be nil or empty"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:282
+#: ../lib/puppet/util/windows/process.rb:283
 msgid "Failed to remove environment variable: %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:287
+#: ../lib/puppet/util/windows/process.rb:288
 msgid "Failed to set environment variable: %{name}"
 msgstr ""
 
