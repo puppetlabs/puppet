@@ -62,14 +62,14 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   def install
     installer = Puppet::Provider::Package::Windows::Package.installer_class(resource)
 
-    command = [installer.install_command(resource), install_options].flatten.compact.join(' ')
+    command = installer.install_command(resource, install_options)
     output = execute(command, :failonfail => false, :combine => true, :cwd => File.dirname(resource[:source]))
 
     check_result(output.exitstatus)
   end
 
   def uninstall
-    command = [package.uninstall_command, uninstall_options].flatten.compact.join(' ')
+    command = package.uninstall_command(uninstall_options)
     output = execute(command, :failonfail => false, :combine => true)
 
     check_result(output.exitstatus)

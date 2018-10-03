@@ -51,12 +51,12 @@ class Puppet::Provider::Package::Windows
         resource[:name] == name
     end
 
-    def self.install_command(resource)
-      ['msiexec.exe', '/qn', '/norestart', '/i', munge(resource[:source])]
+    def self.install_command(resource, install_options)
+      ['msiexec.exe', '/qn', '/norestart', '/i', munge(resource[:source]), install_options].flatten.compact.join(' ')
     end
 
-    def uninstall_command
-      ['msiexec.exe', '/qn', '/norestart', '/x', productcode]
+    def uninstall_command(uninstall_options)
+      ['msiexec.exe', '/qn', '/norestart', '/x', productcode, uninstall_options].flatten.compact.join(' ')
     end
   end
 end
