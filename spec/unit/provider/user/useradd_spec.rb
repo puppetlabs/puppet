@@ -138,10 +138,10 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         provider.create
       end
 
-      it "should not use -e with luseradd, should call lusermod with -e after luseradd when expiry is set" do
+      it "should not use -e with luseradd, should call usermod with -e after luseradd when expiry is set" do
         resource[:expiry] = '2038-01-24'
         provider.expects(:execute).with(all_of(includes('/usr/sbin/luseradd'), Not(includes('-e'))), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
-        provider.expects(:execute).with(all_of(includes('/usr/sbin/lusermod'), includes('-e')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        provider.expects(:execute).with(all_of(includes('/usr/sbin/usermod'), includes('-e')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
 

@@ -179,7 +179,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def modifycmd(param, value)
     if @resource.forcelocal?
-      if param == :groups
+      case param
+      when :groups, :expiry
         cmd = [command(:modify)]
       else
         cmd = [command(property_manages_password_age?(param) ? :localpassword : :localmodify)]
