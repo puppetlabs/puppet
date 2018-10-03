@@ -25,7 +25,7 @@ EOS
       win_machine = ENV['WIN_MACHINE'] + '.delivery.puppetlabs.net'
       path = ENV['LIB_DIR'] || 'type' # 'lib/puppet' prefix is implicit.
       dest_path = path.split('/')[0...-1].join
-      system("scp -r #{File.dirname(__FILE__)}/../lib/puppet/#{path} Administrator@#{win_machine}:'C:/Program\\ Files/Puppet\\ Labs/Puppet/sys/ruby/lib/ruby/vendor_ruby/puppet/#{dest_path}'")
+      system("scp -r #{File.dirname(__FILE__)}/../lib/puppet/#{path} Administrator@#{win_machine}:'C:/Program\\ Files/Puppet\\ Labs/Puppet/puppet/lib/ruby/vendor_ruby/puppet/#{dest_path}'")
     end
   end
 end
