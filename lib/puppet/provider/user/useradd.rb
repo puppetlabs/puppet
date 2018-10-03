@@ -134,15 +134,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd
   end
 
-  def check_manage_expiry
-    cmd = []
-    if @resource[:expiry] and not @resource.forcelocal?
-      cmd << "-e #{@resource[:expiry]}"
-    end
-
-    cmd
-  end
-
   def check_system_users
     if self.class.system_users? and resource.system?
       ["-r"]
