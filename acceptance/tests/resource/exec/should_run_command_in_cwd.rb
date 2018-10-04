@@ -98,29 +98,20 @@ MANIFEST
       end
     end
 
-    step 'Runs a "check" command (:onlyif or :unless) in the PWD instead of the passed-in CWD' do
-      # Idea here is to create a directory (subdir) inside our tmpdir.
-      # This will be our CWD. We run our print_cwd command unless
-      # subdir exists, which can only happen if our CWD is our tmpdir.
-      # Thus, if print_cwd runs successfully, that means our unless
-      # check indicated that subdir did not exist, meaning it ran in our
-      # pwd instead of our CWD. Note that this is an approximation, but
-      # I think it is a good (and simple enough) test to ensure that we
-      # enforce this property.
-      subdir = 'FOO'
+    step 'Runs a "check" command (:onlyif or :unless) in the CWD' do
+      cwd = "#{tmpdir}"
+      onlyif = print_cwd
       if agent.platform =~ /windows/
-        cwd = "#{tmpdir}\\#{subdir}"
-        on(agent, "cmd.exe /c mkdir '#{cwd}'")
-        unless_ = "cmd.exe /c dir #{subdir}"
+        command = "cmd.exe /c echo Hello"
       else
-        cwd = "#{tmpdir}/#{subdir}"
-        on(agent, "mkdir '#{cwd}'")
-        unless_ = "ls #{subdir}"
+        command = "echo Hello"
       end
 
-      manifest = exec_resource_manifest.call(cwd: cwd, unless: unless_)
-      apply_manifest_on(agent, manifest) do |result|
-        assert_match(to_regex(cwd), result.stdout, 'The Exec resource runs a "check" command in the CWD when it should run it in the PWD instead, only using the CWD for the actual command.')
+      manifest = exec_resource_manifest.call(command: command, cwd: cwd, onlyif: onlyif)
+
+      # debug: true prints the output of the onlyif command
+      apply_manifest_on(agent, manifest, debug: true) do |result|
+        assert_match(to_regex(cwd), result.stdout, 'The Exec resource runs a "check" command in the PWD instead of the CWD.')
       end
     end
   end

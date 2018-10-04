@@ -218,6 +218,9 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet::Util::
     end
 
     it "should set a user's password" do
+      provider.user.expects(:disabled?).returns(false)
+      provider.user.expects(:locked_out?).returns(false)
+      provider.user.expects(:expired?).returns(false)
       provider.user.expects(:password=).with('plaintextbad')
 
       provider.password = "plaintextbad"
