@@ -41,31 +41,38 @@ class Puppet::Provider::Package::Windows
       resource[:name] == name
     end
 
-    def self.install_command(resource)
-      ['cmd.exe', '/c', 'start', '"puppet-install"', '/w', munge(resource[:source])]
+    def self.install_command(resource, install_options)
+      Puppet::Util::Windows::PowershellCommandString.make_powershell_command(
+        munge(resource[:source]),
+        arguments: install_options
+      )
     end
 
-    def uninstall_command
-      # 1. Launch using cmd /c start because if the executable is a console
-      #    application Windows will automatically display its console window
-      # 2. Specify a quoted title, otherwise if uninstall_string is quoted,
-      #    start will interpret that to be the title, and get confused
-      # 3. Specify /w (wait) to wait for uninstall to finish
-      command = ['cmd.exe', '/c', 'start', '"puppet-uninstall"', '/w']
-
+    def uninstall_command(uninstall_options)
+      # split the uninstall_command on the first instance of
+      # .exe by only allowing split to return an array of size
+      # two, forcing the function to only return the split of
+      # the first instance of the .exe string
+      #
+      # anything after .exe(") is assumed to be arguments to the
+      # uninstaller
+      arguments = uninstall_string.split(/\.exe"?/, 2)[1]
+      # The uninstall command is the uninstall_string with the
+      # arguments removed.
+      command = uninstall_string.gsub(arguments, '')
       # Only quote bare uninstall strings, e.g.
       #   C:\Program Files (x86)\Notepad++\uninstall.exe
       # Don't quote uninstall strings that are already quoted, e.g.
       #   "c:\ruby187\unins000.exe"
       # Don't quote uninstall strings that contain arguments:
       #   "C:\Program Files (x86)\Git\unins000.exe" /SILENT
-      if uninstall_string =~ /\A[^"]*.exe\Z/i
-        command << "\"#{uninstall_string}\""
-      else
-        command << uninstall_string
+      if command =~ /\A[^"]*.exe\Z/i
+        command = "\"#{command}\""
       end
-
-      command
+      Puppet::Util::Windows::PowershellCommandString.make_powershell_command(
+        command,
+        arguments: [uninstall_options, arguments]
+      )
     end
   end
 end
