@@ -172,7 +172,7 @@ module Puppet
               when is == @latest
                 return true
               when is == :present
-                # This will only happen on retarded packaging systems
+                # This will only happen on packaging systems
                 # that can't query versions.
                 return true
               else

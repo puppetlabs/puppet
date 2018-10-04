@@ -63,7 +63,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     installer = Puppet::Provider::Package::Windows::Package.installer_class(resource)
 
     command = [installer.install_command(resource), install_options].flatten.compact.join(' ')
-    output = execute(command, :failonfail => false, :combine => true)
+    output = execute(command, :failonfail => false, :combine => true, :cwd => File.dirname(resource[:source]))
 
     check_result(output.exitstatus)
   end

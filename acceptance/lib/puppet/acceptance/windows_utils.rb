@@ -4,6 +4,7 @@ module Puppet
   module Acceptance
     module WindowsUtils
       require 'puppet/acceptance/windows_utils/service.rb'
+      require 'puppet/acceptance/windows_utils/package_installer.rb'
 
       def profile_base(agent)
         ruby = Puppet::Acceptance::CommandUtils.ruby_command(agent)
