@@ -34,7 +34,7 @@ test_name 'C100568: puppet apply of module for an unsupported language should fa
     step "Run puppet apply of a module with language #{unsupported_language} and verify default english returned" do
       step 'verify custom fact messages not translatated' do
         on(agent, puppet("apply -e \"class { 'i18ndemo': filename => '#{type_path}' }\"", 'ENV' => shell_env_language)) do |apply_result|
-          assert_match(/Error:.*i18ndemo_fact: this is a raise from a custom fact from \w+-i18ndemo/, apply_result.stderr, 'missing untranslated message for raise from ruby fact')
+          assert_match(/.*i18ndemo_fact: this is a raise from a custom fact from \w+-i18ndemo/, apply_result.stderr, 'missing untranslated message for raise from ruby fact')
         end
       end
 
