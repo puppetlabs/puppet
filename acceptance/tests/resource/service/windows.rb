@@ -24,6 +24,7 @@ service { '#{name}':
 }
 MANIFEST
   end
+
   mock_service_nofail = {
     :name => "mock_service_nofail",
     :start_sleep => 0,

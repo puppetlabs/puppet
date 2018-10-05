@@ -1,9 +1,9 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:package).provider(:windows) do
+describe Puppet::Type.type(:package).provider(:windows), :if => Puppet.features.microsoft_windows? do
   let (:name)        { 'mysql-5.1.58-win-x64' }
-  let (:source)      { 'E:\mysql-5.1.58-win-x64.msi' }
+  let (:source)      { 'E:\Rando\Directory\mysql-5.1.58-win-x64.msi' }
   let (:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :windows, :source => source) }
   let (:provider)    { resource.provider }
   let (:execute_options) do {:failonfail => false, :combine => true} end
@@ -86,7 +86,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
   context '#install' do
     let(:command) { 'blarg.exe /S' }
     let(:klass) { mock('installer', :install_command => ['blarg.exe', '/S'] ) }
-
+    let(:execute_options) do {:failonfail => false, :combine => true, :cwd => 'E:\Rando\Directory'} end
     before :each do
       Puppet::Provider::Package::Windows::Package.expects(:installer_class).returns(klass)
     end
