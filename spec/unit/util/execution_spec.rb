@@ -168,8 +168,26 @@ describe Puppet::Util::Execution do
             },
             :close_handles => false
           )
-  
+
           call_exec_windows('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
+        end
+      end
+
+      context 'suppress_window option' do
+        let(:cwd) { 'cwd' }
+        it "should execute the command in the specified working directory" do
+          Process.expects(:create).with(
+            :command_line => "test command",
+            :startup_info => {
+              :stdin => @stdin,
+              :stdout => @stdout,
+              :stderr => @stderr
+            },
+            :close_handles => false,
+            :creation_flags => Puppet::Util::Windows::Process::CREATE_NO_WINDOW
+          )
+
+          call_exec_windows('test command', { :suppress_window => true }, @stdin, @stdout, @stderr)
         end
       end
 

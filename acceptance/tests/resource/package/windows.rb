@@ -46,6 +46,13 @@ MANIFEST
     mock_package[:install_commands] = 'System.IO.File.ReadAllLines("install.txt");'
     installer_location = create_mock_package(agent, tmpdir, mock_package)
 
+    # Since we didn't add the install.txt package the installation should fail with code 1004
+    step 'Verify that ensure = present fails when an installer fails with a non-zero exit code' do
+      apply_manifest_on(agent, package_manifest(mock_package[:name], {ensure: :present}, installer_location)) do |result|
+        assert_match(/#{mock_package[:name]}/, result.stderr, 'Windows package provider did not fail when the package install failed')
+      end
+    end
+
     step 'Verify that ensure = present installs a package that requires additional resources' do
       create_remote_file(agent, "#{tmpdir}/install.txt", 'foobar')
       apply_manifest_on(agent, package_manifest(mock_package[:name], {ensure: :present}, installer_location))
