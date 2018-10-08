@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-163-g1424f2a\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-173-g99fb47a\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-10-03 16:45+0000\n"
-"PO-Revision-Date: 2018-10-03 16:45+0000\n"
+"POT-Creation-Date: 2018-10-08 17:45+0000\n"
+"PO-Revision-Date: 2018-10-08 17:45+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6640,7 +6640,7 @@ msgstr ""
 msgid "Overriding environment setting '%{var}' with '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/provider/exec.rb:94
+#: ../lib/puppet/provider/exec.rb:91
 msgid "'%{command}' is not qualified and no path was specified. Please qualify the command or specify a path."
 msgstr ""
 
@@ -7323,11 +7323,11 @@ msgstr ""
 msgid "Cannot get start type %{resource_name}, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:62
+#: ../lib/puppet/provider/service/windows.rb:69
 msgid "Will not start disabled service %{resource_name} without managing enable. Specify 'enable => false' to override."
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:93
+#: ../lib/puppet/provider/service/windows.rb:101
 msgid "Unknown service state '%{current_state}' for service '%{resource_name}'"
 msgstr ""
 
@@ -10233,87 +10233,95 @@ msgstr ""
 msgid "Successfully stopped the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:345
+#: ../lib/puppet/util/windows/service.rb:338
+msgid "Resuming the %{service_name} service"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:354
+msgid "Successfully resumed the %{service_name} service"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:369
 msgid "Unknown Service state '%{current_state}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:362
+#: ../lib/puppet/util/windows/service.rb:386
 msgid "Unknown start type '%{start_type}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:377
+#: ../lib/puppet/util/windows/service.rb:401
 msgid "Unknown start type %{start_type}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:398
+#: ../lib/puppet/util/windows/service.rb:422
 msgid "Failed to update service configuration"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:458
+#: ../lib/puppet/util/windows/service.rb:482
 msgid "Failed to fetch services"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:507
+#: ../lib/puppet/util/windows/service.rb:531
 msgid "Failed to open a handle to the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:524
+#: ../lib/puppet/util/windows/service.rb:548
 msgid "Failed to open a handle to the service control manager"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:547
+#: ../lib/puppet/util/windows/service.rb:571
 msgid "The service is already in the %{final_state} state. No further work needs to be done."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:559
+#: ../lib/puppet/util/windows/service.rb:583
 msgid "The service must be in one of the %{valid_initial_states} states to perform this transition. It is currently in the %{current_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:570
+#: ../lib/puppet/util/windows/service.rb:594
 msgid "There is already a pending transition to the %{final_state} state for the %{service_name} service."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:586
+#: ../lib/puppet/util/windows/service.rb:610
 msgid "The service is in the %{pending_state} state, which is an unsafe pending state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:591
+#: ../lib/puppet/util/windows/service.rb:615
 msgid "Transitioning the %{service_name} service from %{initial_state} to %{final_state}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:595
+#: ../lib/puppet/util/windows/service.rb:619
 msgid "Waiting for the transition to finish"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:599
+#: ../lib/puppet/util/windows/service.rb:623
 msgid "Failed to transition the %{service_name} service to the %{final_state} state. Detail: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:638 ../lib/puppet/util/windows/service.rb:674
+#: ../lib/puppet/util/windows/service.rb:662 ../lib/puppet/util/windows/service.rb:698
 msgid "Service query failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:691
+#: ../lib/puppet/util/windows/service.rb:715
 msgid "Failed to send the %{control_signal} signal to the service. Its current state is %{current_state}. Failed with"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:725
+#: ../lib/puppet/util/windows/service.rb:749
 msgid "The service transitioned to the %{pending_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:735
+#: ../lib/puppet/util/windows/service.rb:759
 msgid "Timed out while waiting for the service to transition from %{initial_state} to %{final_state} OR from %{initial_state} to %{pending_state} to %{final_state}. The service's current state is %{current_state}."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:749
+#: ../lib/puppet/util/windows/service.rb:773
 msgid "Waiting for the pending transition to the %{final_state} state to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:762
+#: ../lib/puppet/util/windows/service.rb:786
 msgid "Unexpected transition to the %{current_state} state while waiting for the pending transition from %{pending_state} to %{final_state} to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:776
+#: ../lib/puppet/util/windows/service.rb:800
 msgid "Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}."
 msgstr ""
 
