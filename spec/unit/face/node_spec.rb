@@ -2,8 +2,6 @@
 require 'spec_helper'
 require 'puppet/face'
 
-require 'puppetserver/ca/cli'
-
 describe Puppet::Face[:node, '0.0.1'] do
   describe '#cleanup' do
     it "should clean everything" do
@@ -90,7 +88,7 @@ describe Puppet::Face[:node, '0.0.1'] do
         end
       end
 
-      describe "when cleaning certificate" do
+      describe "when cleaning certificate", :if => Puppet.features.puppetserver_ca? do
         it "should call the CA CLI gem's clean action" do
           Puppetserver::Ca::Action::Clean.any_instance.expects(:run).with({ 'certnames' => ['hostname'] }).returns(0)
           subject.clean_cert('hostname')
