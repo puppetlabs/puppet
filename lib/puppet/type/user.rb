@@ -423,7 +423,10 @@ module Puppet
         resource at the same time. For instance, Puppet creates a home directory for a managed
         user if `ensure => present` and the user does not exist at the time of the Puppet run.
         If the home directory is then deleted manually, Puppet will not recreate it on the next
-        run."
+        run.
+
+        Note that on Windows, this manages creation/deletion of the user profile instead of the
+        home directory. The user profile is stored in the `C:\Users\<username>` directory."
 
       defaultto false
 
