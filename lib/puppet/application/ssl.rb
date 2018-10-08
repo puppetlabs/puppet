@@ -37,6 +37,9 @@ ACTIONS
 * verify:
   Verify the private key and certificate are present and match, verify the certificate is
   issued by a trusted CA, and check revocation status.
+
+* clean:
+  Delete the private key and certificate related files for this host.
 HELP
   end
 
@@ -62,6 +65,8 @@ HELP
       download_cert(host)
     when 'verify'
       verify(host)
+    when 'clean'
+      clean(host)
     else
       puts "Unknown action '#{action}'"
       exit(1)
@@ -129,5 +134,15 @@ HELP
   rescue => e
     puts "Verify failed: #{e.message}"
     exit(1)
+  end
+
+  def clean(host)
+    %w[hostprivkey hostpubkey hostcsr hostcert passfile].each do |setting|
+      path = Puppet[setting]
+      if Puppet::FileSystem.exist?(path)
+        Puppet::FileSystem.unlink(path)
+        puts "Deleted #{path}"
+      end
+    end
   end
 end

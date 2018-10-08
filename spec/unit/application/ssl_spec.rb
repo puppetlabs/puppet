@@ -319,4 +319,50 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       expects_command_to_output(/Verified certificate '#{name}'/, 0)
     end
   end
+
+  context 'when cleaning' do
+    before do
+      ssl.command_line.args << 'clean'
+    end
+
+    it 'deletes the hostcert' do
+      File.open(Puppet[:hostcert], 'w') { |f| f.write(@host[:cert].to_pem) }
+
+      expects_command_to_output(%r{Deleted #{Puppet[:cert]}}, 0)
+    end
+
+    it 'deletes the private key' do
+      File.open(Puppet[:hostprivkey], 'w') { |f| f.write(@host[:private_key].to_pem) }
+
+      expects_command_to_output(%r{Deleted #{Puppet[:hostprivkey]}}, 0)
+    end
+
+    it 'deletes the public key' do
+      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
+
+      expects_command_to_output(%r{Deleted #{Puppet[:hostpubkey]}}, 0)
+    end
+
+    it 'deletes the request' do
+      File.open(Puppet[:hostcsr], 'w') { |f| f.write(@host[:csr].to_pem) }
+
+      expects_command_to_output(%r{Deleted #{Puppet[:hostcsr]}}, 0)
+    end
+
+    it 'deletes the passfile' do
+      File.open(Puppet[:passfile], 'w') { |_| }
+
+      expects_command_to_output(%r{Deleted #{Puppet[:passfile]}}, 0)
+    end
+
+    it 'skips files that do not exist' do
+      File.delete(Puppet[:hostprivkey])
+
+      expect {
+        expect {
+          ssl.run_command
+        }.to exit_with(0)
+      }.to_not output(%r{Deleted #{Puppet[:hostprivkey]}}).to_stdout
+    end
+  end
 end
