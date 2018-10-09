@@ -76,15 +76,6 @@ describe "validating 4x" do
     end
   end
 
-  it 'should not raise error for legal definition locations' do
-    with_environment(environment, :manifest => 'a/manifest/file.pp') do
-      expect(validate(parse('function aaa::bbb() {}',      'path/aaa/manifests/bbb.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
-      expect(validate(parse('class aaa() {}',      'path/aaa/manifests/init.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
-      expect(validate(parse('function aaa::bbB::ccc() {}', 'path/aaa/manifests/bBb.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
-      expect(validate(parse('function aaa::bbb::ccc() {}', 'path/aaa/manifests/bbb/CCC.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
-    end
-  end
-
   it 'should not raise error for definitions inside initial --manifest file' do
     with_environment(environment, :manifest => 'a/manifest/file.pp') do
       expect(validate(parse('class aaa() {}', 'a/manifest/file.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
