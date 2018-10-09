@@ -71,7 +71,7 @@ HELP
     when 'clean'
       clean(host)
     else
-      puts "Unknown action '#{action}'"
+      puts _("Unknown action '%{action}'") % { action: action }
       exit(1)
     end
 
@@ -82,23 +82,29 @@ HELP
     host.ensure_ca_certificate
 
     host.submit_request
-    puts "Submitted certificate request for '#{host.name}' to https://#{Puppet[:ca_server]}:#{Puppet[:ca_port]}"
+    puts _("Submitted certificate request for '%{name}' to https://%{server}:%{port}") % {
+      name: host.name, server: Puppet[:ca_server], port: Puppet[:ca_port]
+    }
   rescue => e
-    puts "Failed to submit certificate request: #{e.message}"
+    puts _("Failed to submit certificate request: %{message}") % { message: e.message }
     exit(1)
   end
 
   def download_cert(host)
     host.ensure_ca_certificate
 
-    puts "Downloading certificate '#{host.name}' from https://#{Puppet[:ca_server]}:#{Puppet[:ca_port]}"
+    puts _("Downloading certificate '%{name}' from https://%{server}:%{port}") % {
+      name: host.name, server: Puppet[:ca_server], port: Puppet[:ca_port]
+    }
     if cert = host.download_host_certificate
-      puts "Downloaded certificate '#{host.name}' with fingerprint #{cert.fingerprint}"
+      puts _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % {
+        name: host.name, fingerprint: cert.fingerprint
+      }
     else
-      puts "No certificate for '#{host.name}' on CA"
+      puts _("No certificate for '%{name}' on CA") % { name: host.name }
     end
   rescue => e
-    puts "Failed to download certificate: #{e.message}"
+    puts _("Failed to download certificate: %{message}") % { message: e.message }
     exit(1)
   end
 
@@ -107,35 +113,39 @@ HELP
 
     key = host.key
     unless key
-      puts "The host's private key is missing"
+      puts _("The host's private key is missing")
       exit(1)
     end
 
     cert = host.check_for_certificate_on_disk(host.name)
     unless cert
-      puts "The host's certificate is missing"
+      puts _("The host's certificate is missing")
       exit(1)
     end
 
     if cert.content.public_key.to_pem != key.content.public_key.to_pem
-      puts "The host's key does not match the certificate"
+      puts _("The host's key does not match the certificate")
       exit(1)
     end
 
     store = host.ssl_store
     unless store.verify(cert.content)
-      puts "Failed to verify certificate '#{host.name}': #{store.error_string} (#{store.error})"
+      puts _("Failed to verify certificate '%{name}': %{message} (%{error})") % {
+        name: host.name, message: store.error_string, error: store.error
+      }
       exit(1)
     end
 
-    puts "Verified certificate '#{host.name}'"
+    puts _("Verified certificate '%{name}'") % {
+      name: host.name
+    }
     # store.chain.reverse.each_with_index do |issuer, i|
     #   indent = "  " * (i+1)
     #   puts "#{indent}#{issuer.subject.to_s}"
     # end
     exit(0)
   rescue => e
-    puts "Verify failed: #{e.message}"
+    puts _("Verify failed: %{message}") % { message: e.message }
     exit(1)
   end
 
@@ -146,7 +156,7 @@ HELP
       path = Puppet[setting]
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.unlink(path)
-        puts "Deleted #{path}"
+        puts _("Deleted %{path}") % { path: path }
       end
     end
   end
