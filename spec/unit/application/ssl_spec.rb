@@ -12,7 +12,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     @ca = Puppet::TestCa.new
     @ca_cert = @ca.ca_cert
     @crl = @ca.ca_crl
-    @host = @ca.generate_client('ssl-client', {})
+    @host = @ca.generate('ssl-client', {})
   end
 
   before do

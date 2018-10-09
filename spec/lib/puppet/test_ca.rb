@@ -49,16 +49,10 @@ module Puppet
       @crl.add_revoked(revoked)
     end
 
-    def generate_client(name, opts)
-      host_key = OpenSSL::PKey::RSA.new(1024)
-      csr = create_csr(name, host_key)
-      { private_key: host_key, csr: csr, cert: sign(csr, opts).content }
-    end
-
     def generate(name, opts)
       host_key = OpenSSL::PKey::RSA.new(1024)
       csr = create_csr(name, host_key)
-      sign(csr, opts)
+      { private_key: host_key, csr: csr, cert: sign(csr, opts).content }
     end
 
     private

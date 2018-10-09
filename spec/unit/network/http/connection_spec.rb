@@ -97,7 +97,7 @@ describe Puppet::Network::HTTP::Connection do
       :verify => ConstantErrorValidator.new(
         :fails_with => 'hostname was not match with server certificate',
         :peer_certs => [Puppet::TestCa.new.generate('not_my_server',
-                                                    :subject_alt_names => 'DNS:foo,DNS:bar,DNS:baz,DNS:not_my_server').content]))
+                                                    :subject_alt_names => 'DNS:foo,DNS:bar,DNS:baz,DNS:not_my_server')[:cert]]))
 
       expect do
         connection.get('request')
@@ -120,7 +120,7 @@ describe Puppet::Network::HTTP::Connection do
     it "should check all peer certificates for upcoming expiration", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
       Puppet[:confdir] = tmpdir('conf')
       cert = Puppet::TestCa.new.generate('server',
-                                         :subject_alt_names => 'DNS:foo,DNS:bar,DNS:baz,DNS:server')
+                                         :subject_alt_names => 'DNS:foo,DNS:bar,DNS:baz,DNS:server')[:cert]
 
       connection = Puppet::Network::HTTP::Connection.new(
         host, port,
