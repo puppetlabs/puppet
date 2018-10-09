@@ -292,5 +292,24 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
         }.to exit_with(0)
       }.to_not output(%r{Deleted #{Puppet[:hostprivkey]}}).to_stdout
     end
+
+    context 'when deleting local CA' do
+      before do
+        ssl.command_line.args << '--localca'
+        ssl.parse_options
+      end
+
+      it 'deletes the local CA cert' do
+        File.open(Puppet[:localcacert], 'w') { |f| f.write(@ca_cert.to_pem) }
+
+        expects_command_to_output(%r{Deleted #{Puppet[:localcacert]}}, 0)
+      end
+
+      it 'deletes the local CRL' do
+        File.open(Puppet[:hostcrl], 'w') { |f| f.write(@crl.to_pem) }
+
+        expects_command_to_output(%r{Deleted #{Puppet[:hostcrl]}}, 0)
+      end
+    end
   end
 end

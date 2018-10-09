@@ -18,7 +18,7 @@ to communicate with a puppet infrastructure.
 
 USAGE
 -----
-puppet ssl <action> [--certname <NAME>]
+puppet ssl <action> [--certname <NAME>] [--localca]
 
 ACTIONS
 -------
@@ -39,13 +39,16 @@ ACTIONS
   issued by a trusted CA, and check revocation status.
 
 * clean:
-  Delete the private key and certificate related files for this host.
+  Delete the private key and certificate related files for this host. If `--localca` is
+  specified, then also delete this host's local copy of the CA certificate(s) and CRL bundle.
 HELP
   end
 
   option('--certname NAME') do |arg|
     options[:certname] = arg
   end
+
+  option('--localca')
 
   def main
     if command_line.args.empty?
@@ -137,7 +140,9 @@ HELP
   end
 
   def clean(host)
-    %w[hostprivkey hostpubkey hostcsr hostcert passfile].each do |setting|
+    settings = %w[hostprivkey hostpubkey hostcsr hostcert passfile]
+    settings.concat(%w[localcacert hostcrl]) if options[:localca]
+    settings.each do |setting|
       path = Puppet[setting]
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.unlink(path)
