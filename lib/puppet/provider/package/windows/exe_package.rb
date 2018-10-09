@@ -42,17 +42,10 @@ class Puppet::Provider::Package::Windows
     end
 
     def self.install_command(resource)
-      ['cmd.exe', '/c', 'start', '"puppet-install"', '/w', munge(resource[:source])]
+      munge(resource[:source])
     end
 
     def uninstall_command
-      # 1. Launch using cmd /c start because if the executable is a console
-      #    application Windows will automatically display its console window
-      # 2. Specify a quoted title, otherwise if uninstall_string is quoted,
-      #    start will interpret that to be the title, and get confused
-      # 3. Specify /w (wait) to wait for uninstall to finish
-      command = ['cmd.exe', '/c', 'start', '"puppet-uninstall"', '/w']
-
       # Only quote bare uninstall strings, e.g.
       #   C:\Program Files (x86)\Notepad++\uninstall.exe
       # Don't quote uninstall strings that are already quoted, e.g.
@@ -60,9 +53,9 @@ class Puppet::Provider::Package::Windows
       # Don't quote uninstall strings that contain arguments:
       #   "C:\Program Files (x86)\Git\unins000.exe" /SILENT
       if uninstall_string =~ /\A[^"]*.exe\Z/i
-        command << "\"#{uninstall_string}\""
+        command = "\"#{uninstall_string}\""
       else
-        command << uninstall_string
+        command = uninstall_string
       end
 
       command
