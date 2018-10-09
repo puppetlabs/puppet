@@ -623,9 +623,9 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def is_parent_dir_of(parent_dir, child_dir)
     parent_dir_path = Pathname.new(parent_dir)
-    clean_parent = parent_dir_path.cleanpath
+    clean_parent = parent_dir_path.cleanpath.to_s + File::SEPARATOR
 
-    return child_dir.to_s.start_with?(clean_parent.to_s)
+    return child_dir.to_s.start_with?(clean_parent)
   end
 
   def dir_to_names(relative_path)
