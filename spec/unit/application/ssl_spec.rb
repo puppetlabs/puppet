@@ -311,5 +311,34 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
         expects_command_to_output(%r{Removed local CRL #{Puppet[:hostcrl]}}, 0)
       end
     end
+
+    context 'on the puppetserver host' do
+      before :each do
+        Puppet[:certname] = 'puppetserver'
+        Puppet[:server] = 'puppetserver'
+      end
+
+      it "prints an error when the CA is local and the CA has not cleaned its cert" do
+        stub_request(:get, %r{puppet-ca/v1/certificate/puppetserver}).to_return(status: 200, body: @host[:cert].to_pem)
+
+        expects_command_to_output(%r{The certificate puppetserver must be cleaned from the CA first}, 1)
+      end
+
+      it "cleans the cert when the CA is local and the CA has already cleaned its cert" do
+        File.open(Puppet[:hostcert], 'w') { |f| f.write(@host[:cert].to_pem) }
+
+        stub_request(:get, %r{puppet-ca/v1/certificate/puppetserver}).to_return(status: 404)
+
+        expects_command_to_output(%r{Removed certificate .*puppetserver.pem}, 0)
+      end
+
+      it "cleans the cert when run on a puppetserver that isn't the CA" do
+        File.open(Puppet[:hostcert], 'w') { |f| f.write(@host[:cert].to_pem) }
+
+        Puppet[:ca_server] = 'caserver'
+
+        expects_command_to_output(%r{Removed certificate .*puppetserver.pem}, 0)
+      end
+    end
   end
 end

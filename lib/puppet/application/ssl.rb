@@ -150,6 +150,22 @@ HELP
   end
 
   def clean(host)
+    # resolve the `ca_server` setting using `agent` run mode
+    ca_server = Puppet.settings.values(Puppet[:environment].to_sym, :agent).interpolate(:ca_server)
+    if Puppet[:certname] == ca_server
+      # make sure cert has been removed from the CA
+      cert = host.download_certificate_from_ca(Puppet[:certname])
+      if cert
+        puts _(<<END) % { certname: Puppet[:certname] }
+The certificate %{certname} must be cleaned from the CA first. To fix this,
+run the following commands on the CA:
+  puppetserver ca clean --certname %{certname}
+  puppet ssl clean
+END
+        exit(1)
+      end
+    end
+
     settings = {
       hostprivkey: 'private key',
       hostpubkey: 'public key',

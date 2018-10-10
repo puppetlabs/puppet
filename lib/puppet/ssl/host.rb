@@ -573,6 +573,7 @@ ERROR_STRING
       end
     end
   end
+  public :download_certificate_from_ca
 
   # Returns the file path for the named certificate, based on this host's
   # configuration.
