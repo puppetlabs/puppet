@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.6-173-g99fb47a\n"
+"Project-Id-Version: Puppet automation framework 5.5.6-182-g088460f\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-10-08 17:45+0000\n"
-"PO-Revision-Date: 2018-10-08 17:45+0000\n"
+"POT-Creation-Date: 2018-10-10 17:59+0000\n"
+"PO-Revision-Date: 2018-10-10 17:59+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -9439,23 +9439,23 @@ msgstr ""
 msgid "%{klass} failed with error %{error_type}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:194
+#: ../lib/puppet/util/execution.rb:195
 msgid "Working directory %{cwd} does not exist!"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:284
+#: ../lib/puppet/util/execution.rb:285
 msgid "Could not get output"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:293
+#: ../lib/puppet/util/execution.rb:294
 msgid "Execution of '%{str}' returned %{exit_status}: %{output}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:370
+#: ../lib/puppet/util/execution.rb:371
 msgid "Could not execute posix command: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:418
+#: ../lib/puppet/util/execution.rb:419
 msgid "Waiting for output; will sleep %{time_to_sleep} seconds"
 msgstr ""
 
@@ -10097,27 +10097,27 @@ msgstr ""
 msgid "Failed to call LookupAccountSidW with bytes: %{sid_bytes}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:40
+#: ../lib/puppet/util/windows/process.rb:44
 msgid "Failed to get child process exit code"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:233
+#: ../lib/puppet/util/windows/process.rb:237
 msgid "GetVersionEx failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:262
+#: ../lib/puppet/util/windows/process.rb:266
 msgid "Discarding environment variable %{string} which contains invalid bytes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:278
+#: ../lib/puppet/util/windows/process.rb:282
 msgid "environment variable name must not be nil or empty"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:283
+#: ../lib/puppet/util/windows/process.rb:287
 msgid "Failed to remove environment variable: %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/process.rb:288
+#: ../lib/puppet/util/windows/process.rb:292
 msgid "Failed to set environment variable: %{name}"
 msgstr ""
 
@@ -10173,43 +10173,53 @@ msgstr ""
 msgid "Failed to get volume information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:395 ../lib/puppet/util/windows/security.rb:412 ../lib/puppet/util/windows/sid.rb:154 ../lib/puppet/util/windows/sid.rb:216 ../lib/puppet/util/windows/user.rb:43
+#. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+#: ../lib/puppet/util/windows/security.rb:332
+msgid "An attempt to set mode %{mode} on item %{path} would result in the owner, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
+msgstr ""
+
+#. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+#: ../lib/puppet/util/windows/security.rb:338
+msgid "An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:409 ../lib/puppet/util/windows/security.rb:426 ../lib/puppet/util/windows/sid.rb:154 ../lib/puppet/util/windows/sid.rb:216 ../lib/puppet/util/windows/user.rb:43
 msgid "Invalid SID"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:399 ../lib/puppet/util/windows/security.rb:416
+#: ../lib/puppet/util/windows/security.rb:413 ../lib/puppet/util/windows/security.rb:430
 msgid "Failed to add access control entry"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:427 ../lib/puppet/util/windows/security.rb:609
+#: ../lib/puppet/util/windows/security.rb:441 ../lib/puppet/util/windows/security.rb:623
 msgid "Invalid DACL"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:450
+#: ../lib/puppet/util/windows/security.rb:464
 msgid "Unsupported access control entry type: 0x%{type}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:484
+#: ../lib/puppet/util/windows/security.rb:498
 msgid "Failed to open '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:531
+#: ../lib/puppet/util/windows/security.rb:545
 msgid "Failed to adjust process privileges"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:561
+#: ../lib/puppet/util/windows/security.rb:575
 msgid "Failed to get security information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:572
+#: ../lib/puppet/util/windows/security.rb:586
 msgid "Failed to get security descriptor control"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:605
+#: ../lib/puppet/util/windows/security.rb:619
 msgid "Failed to initialize ACL"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:644
+#: ../lib/puppet/util/windows/security.rb:658
 msgid "Failed to set security information"
 msgstr ""
 
