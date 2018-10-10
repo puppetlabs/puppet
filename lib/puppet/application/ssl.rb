@@ -52,8 +52,7 @@ HELP
 
   def main
     if command_line.args.empty?
-      puts help
-      exit(1)
+      raise Puppet::Error, _("An action must be specified.\n%{help}") % { help: help }
     end
 
     Puppet.settings.use(:main, :agent)
@@ -71,11 +70,8 @@ HELP
     when 'clean'
       clean(host)
     else
-      puts _("Unknown action '%{action}'") % { action: action }
-      exit(1)
+      raise Puppet::Error, _("Unknown action '%{action}'") % { action: action }
     end
-
-    exit(0)
   end
 
   def submit_request(host)
@@ -86,8 +82,7 @@ HELP
       name: host.name, server: Puppet[:ca_server], port: Puppet[:ca_port]
     }
   rescue => e
-    puts _("Failed to submit certificate request: %{message}") % { message: e.message }
-    exit(1)
+    raise Puppet::Error, _("Failed to submit certificate request: %{message}") % { message: e.message }
   end
 
   def download_cert(host)
@@ -104,36 +99,27 @@ HELP
       puts _("No certificate for '%{name}' on CA") % { name: host.name }
     end
   rescue => e
-    puts _("Failed to download certificate: %{message}") % { message: e.message }
-    exit(1)
+    raise Puppet::Error, _("Failed to download certificate: %{message}") % { message: e.message }
   end
 
   def verify(host)
     host.ensure_ca_certificate
 
     key = host.key
-    unless key
-      puts _("The host's private key is missing")
-      exit(1)
-    end
+    raise _("The host's private key is missing") unless key
 
     cert = host.check_for_certificate_on_disk(host.name)
-    unless cert
-      puts _("The host's certificate is missing")
-      exit(1)
-    end
+    raise _("The host's certificate is missing") unless cert
 
     if cert.content.public_key.to_pem != key.content.public_key.to_pem
-      puts _("The host's key does not match the certificate")
-      exit(1)
+      raise _("The host's key does not match the certificate")
     end
 
     store = host.ssl_store
     unless store.verify(cert.content)
-      puts _("Failed to verify certificate '%{name}': %{message} (%{error})") % {
+      raise _("Failed to verify certificate '%{name}': %{message} (%{error})") % {
         name: host.name, message: store.error_string, error: store.error
       }
-      exit(1)
     end
 
     puts _("Verified certificate '%{name}'") % {
@@ -143,10 +129,8 @@ HELP
     #   indent = "  " * (i+1)
     #   puts "#{indent}#{issuer.subject.to_s}"
     # end
-    exit(0)
   rescue => e
-    puts _("Verify failed: %{message}") % { message: e.message }
-    exit(1)
+    raise Puppet::Error, _("Verify failed: %{message}") % { message: e.message }
   end
 
   def clean(host)
@@ -156,13 +140,12 @@ HELP
       # make sure cert has been removed from the CA
       cert = host.download_certificate_from_ca(Puppet[:certname])
       if cert
-        puts _(<<END) % { certname: Puppet[:certname] }
+        raise Puppet::Error, _(<<END) % { certname: Puppet[:certname] }
 The certificate %{certname} must be cleaned from the CA first. To fix this,
 run the following commands on the CA:
   puppetserver ca clean --certname %{certname}
   puppet ssl clean
 END
-        exit(1)
       end
     end
 
