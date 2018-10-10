@@ -39,8 +39,8 @@ ACTIONS
   issued by a trusted CA, and check revocation status.
 
 * clean:
-  Delete the private key and certificate related files for this host. If `--localca` is
-  specified, then also delete this host's local copy of the CA certificate(s) and CRL bundle.
+  Remove the private key and certificate related files for this host. If `--localca` is
+  specified, then also remove this host's local copy of the CA certificate(s) and CRL bundle.
 HELP
   end
 
@@ -150,13 +150,19 @@ HELP
   end
 
   def clean(host)
-    settings = %w[hostprivkey hostpubkey hostcsr hostcert passfile]
-    settings.concat(%w[localcacert hostcrl]) if options[:localca]
-    settings.each do |setting|
+    settings = {
+      hostprivkey: 'private key',
+      hostpubkey: 'public key',
+      hostcsr: 'certificate request',
+      hostcert: 'certificate',
+      passfile: 'private key password file'
+    }
+    settings.merge!(localcacert: 'local CA certificate', hostcrl: 'local CRL') if options[:localca]
+    settings.each_pair do |setting, label|
       path = Puppet[setting]
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.unlink(path)
-        puts _("Deleted %{path}") % { path: path }
+        puts _("Removed %{label} %{path}") % { label: label, path: path }
       end
     end
   end

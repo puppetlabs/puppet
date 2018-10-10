@@ -256,31 +256,31 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     it 'deletes the hostcert' do
       File.open(Puppet[:hostcert], 'w') { |f| f.write(@host[:cert].to_pem) }
 
-      expects_command_to_output(%r{Deleted #{Puppet[:cert]}}, 0)
+      expects_command_to_output(%r{Removed certificate #{Puppet[:cert]}}, 0)
     end
 
     it 'deletes the private key' do
       File.open(Puppet[:hostprivkey], 'w') { |f| f.write(@host[:private_key].to_pem) }
 
-      expects_command_to_output(%r{Deleted #{Puppet[:hostprivkey]}}, 0)
+      expects_command_to_output(%r{Removed private key #{Puppet[:hostprivkey]}}, 0)
     end
 
     it 'deletes the public key' do
       File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
 
-      expects_command_to_output(%r{Deleted #{Puppet[:hostpubkey]}}, 0)
+      expects_command_to_output(%r{Removed public key #{Puppet[:hostpubkey]}}, 0)
     end
 
     it 'deletes the request' do
       File.open(Puppet[:hostcsr], 'w') { |f| f.write(@host[:csr].to_pem) }
 
-      expects_command_to_output(%r{Deleted #{Puppet[:hostcsr]}}, 0)
+      expects_command_to_output(%r{Removed certificate request #{Puppet[:hostcsr]}}, 0)
     end
 
     it 'deletes the passfile' do
       File.open(Puppet[:passfile], 'w') { |_| }
 
-      expects_command_to_output(%r{Deleted #{Puppet[:passfile]}}, 0)
+      expects_command_to_output(%r{Removed private key password file #{Puppet[:passfile]}}, 0)
     end
 
     it 'skips files that do not exist' do
@@ -290,7 +290,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
         expect {
           ssl.run_command
         }.to exit_with(0)
-      }.to_not output(%r{Deleted #{Puppet[:hostprivkey]}}).to_stdout
+      }.to_not output(%r{Removed private key #{Puppet[:hostprivkey]}}).to_stdout
     end
 
     context 'when deleting local CA' do
@@ -302,13 +302,13 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       it 'deletes the local CA cert' do
         File.open(Puppet[:localcacert], 'w') { |f| f.write(@ca_cert.to_pem) }
 
-        expects_command_to_output(%r{Deleted #{Puppet[:localcacert]}}, 0)
+        expects_command_to_output(%r{Removed local CA certificate #{Puppet[:localcacert]}}, 0)
       end
 
       it 'deletes the local CRL' do
         File.open(Puppet[:hostcrl], 'w') { |f| f.write(@crl.to_pem) }
 
-        expects_command_to_output(%r{Deleted #{Puppet[:hostcrl]}}, 0)
+        expects_command_to_output(%r{Removed local CRL #{Puppet[:hostcrl]}}, 0)
       end
     end
   end
