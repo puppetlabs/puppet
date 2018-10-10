@@ -76,7 +76,7 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     it 'should install using the source' do
       cmd = subject.install_command({:source => source})
 
-      expect(cmd).to eq(['cmd.exe', '/c', 'start', '"puppet-install"', '/w', source])
+      expect(cmd).to eq(source)
     end
   end
 
@@ -84,7 +84,7 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     ['C:\uninstall.exe', 'C:\Program Files\uninstall.exe'].each do |exe|
       it "should quote #{exe}" do
         expect(subject.new(name, version, exe).uninstall_command).to eq(
-          ['cmd.exe', '/c', 'start', '"puppet-uninstall"', '/w', "\"#{exe}\""]
+          "\"#{exe}\""
         )
       end
     end
@@ -92,7 +92,7 @@ describe Puppet::Provider::Package::Windows::ExePackage do
     ['"C:\Program Files\uninstall.exe"', '"C:\Program Files (x86)\Git\unins000.exe" /SILENT"'].each do |exe|
       it "should not quote #{exe}" do
         expect(subject.new(name, version, exe).uninstall_command).to eq(
-          ['cmd.exe', '/c', 'start', '"puppet-uninstall"', '/w', exe]
+          exe
         )
       end
     end

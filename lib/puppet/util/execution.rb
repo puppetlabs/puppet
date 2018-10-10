@@ -157,6 +157,7 @@ module Puppet::Util::Execution
         :override_locale => true,
         :custom_environment => {},
         :sensitive => false,
+        :suppress_window => false,
     }
 
     options = default_options.merge(options)

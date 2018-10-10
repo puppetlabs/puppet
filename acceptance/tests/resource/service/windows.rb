@@ -130,6 +130,26 @@ MANIFEST
       assert_service_properties_on(agent, mock_service_nofail[:name], StartMode: 'Auto', State: 'Running')
     end
 
+    step 'Pause the service to prepare for the next test' do
+      on(agent, powershell("Suspend-Service #{mock_service_nofail[:name]}"))
+      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Paused')
+    end
+
+    step 'Verify that Puppet can resume a paused service' do
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], ensure: :running))
+      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Running')
+    end
+
+    step 'Pause the service (again) to prepare for the next test' do
+      on(agent, powershell("Suspend-Service #{mock_service_nofail[:name]}"))
+      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Paused')
+    end
+
+    step 'Verify that Puppet can stop a paused service' do
+      apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], ensure: :stopped))
+      assert_service_properties_on(agent, mock_service_nofail[:name], State: 'Stopped')
+    end
+
     # delete the service so it doesn't interfere with subsequent tests
     delete_service(agent, mock_service_nofail[:name])
 

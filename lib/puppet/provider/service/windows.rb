@@ -56,6 +56,13 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
   end
 
   def start
+    if status == :paused
+      Puppet::Util::Windows::Service.resume(@resource[:name])
+      return
+    end
+
+    # status == :stopped here
+
     if enabled? == :false
       # If disabled and not managing enable, respect disabled and fail.
       if @resource[:enable].nil?
@@ -81,10 +88,11 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     current_state = Puppet::Util::Windows::Service.service_state(@resource[:name])
     state = case current_state
       when :SERVICE_STOPPED,
-           :SERVICE_PAUSED,
-           :SERVICE_STOP_PENDING,
-           :SERVICE_PAUSE_PENDING
+           :SERVICE_STOP_PENDING
         :stopped
+      when :SERVICE_PAUSED,
+           :SERVICE_PAUSE_PENDING
+        :paused
       when :SERVICE_RUNNING,
            :SERVICE_CONTINUE_PENDING,
            :SERVICE_START_PENDING

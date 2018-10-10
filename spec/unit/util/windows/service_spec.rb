@@ -423,6 +423,86 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
     end
   end
 
+  describe "#resume" do
+    next unless Puppet.features.microsoft_windows?
+
+    context "when the service control manager cannot be opened" do
+      let(:scm) { FFI::Pointer::NULL_HANDLE }
+      it "raises a puppet error" do
+        expect{ subject.start(mock_service_name) }.to raise_error(Puppet::Error)
+      end
+    end
+
+    context "when the service cannot be opened" do
+      let(:service) { FFI::Pointer::NULL_HANDLE }
+      it "raises a puppet error" do
+        expect{ subject.start(mock_service_name) }.to raise_error(Puppet::Error)
+      end
+    end
+
+    context "when the service can be opened" do
+      service = Puppet::Util::Windows::Service
+      valid_initial_states = [
+        service::SERVICE_PAUSE_PENDING,
+        service::SERVICE_PAUSED,
+        service::SERVICE_CONTINUE_PENDING
+      ]
+      final_state = service::SERVICE_RUNNING
+  
+      include_examples "a service action that transitions the service state", :resume, valid_initial_states, service::SERVICE_CONTINUE_PENDING, final_state do
+        let(:initial_state) { service::SERVICE_PAUSED }
+        let(:mock_state_transition) do
+          lambda do
+            # We need to mock the status query because in the block for #resume, we
+            # wait for the service to enter the SERVICE_PAUSED state prior to
+            # performing the transition (in case it is in SERVICE_PAUSE_PENDING).
+            expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_PAUSED)
+
+            subject.stubs(:ControlService).returns(1)
+          end
+        end
+      end
+
+      context "waiting for the SERVICE_PAUSE_PENDING => SERVICE_PAUSED transition to finish before resuming it" do
+        before(:each) do
+          # This mocks the status query to return the SERVICE_RUNNING state by default.
+          # Otherwise, we will fail the tests in the latter parts of the code where we
+          # wait for the service to finish transitioning to the 'SERVICE_RUNNING' state.
+          subject::SERVICE_STATUS_PROCESS.stubs(:new).returns(dwCurrentState: subject::SERVICE_RUNNING)
+
+          expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_PAUSE_PENDING)
+
+          subject.stubs(:ControlService).returns(1)
+        end
+
+        include_examples "a service action waiting on a pending transition", service::SERVICE_PAUSE_PENDING do
+          let(:action) { :resume }
+        end
+      end
+
+      it "raises a Puppet::Error if ControlService returns false" do
+        expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_PAUSED)
+        expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_PAUSED)
+
+        subject.stubs(:ControlService).returns(FFI::WIN32_FALSE)
+
+        expect { subject.resume(mock_service_name) }.to raise_error(Puppet::Error)
+      end
+  
+      it "resumes the service" do
+        expect_successful_status_queries_and_return(
+          { dwCurrentState: subject::SERVICE_PAUSED },
+          { dwCurrentState: subject::SERVICE_PAUSED },
+          { dwCurrentState: subject::SERVICE_RUNNING }
+        )
+
+        subject.expects(:ControlService).returns(1)
+
+        subject.resume(mock_service_name)
+      end
+    end
+  end
+
   describe "#service_state" do
     context "when the service control manager cannot be opened" do
       let(:scm) { FFI::Pointer::NULL_HANDLE }

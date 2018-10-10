@@ -331,6 +331,30 @@ module Puppet::Util::Windows
     end
     module_function :stop
 
+    # Resume a paused windows service
+    #
+    # @param [:string] service_name name of the service to resume
+    def resume(service_name)
+      Puppet.debug _("Resuming the %{service_name} service") % { service_name: service_name }
+
+      valid_initial_states = [
+        SERVICE_PAUSE_PENDING,
+        SERVICE_PAUSED,
+        SERVICE_CONTINUE_PENDING
+      ]
+
+      transition_service_state(service_name, valid_initial_states, SERVICE_RUNNING) do |service|
+        # The SERVICE_CONTROL_CONTINUE signal can only be sent when
+        # the service is in the SERVICE_PAUSED state
+        wait_on_pending_state(service, SERVICE_PAUSE_PENDING)
+
+        send_service_control_signal(service, SERVICE_CONTROL_CONTINUE)
+      end
+
+      Puppet.debug _("Successfully resumed the %{service_name} service") % { service_name: service_name }
+    end
+    module_function :resume
+
     # Query the state of a service using QueryServiceStatusEx
     #
     # @param [:string] service_name name of the service to query
