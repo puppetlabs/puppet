@@ -75,6 +75,12 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     end
   end
 
+  it 'uses the agent run mode' do
+    # make sure the ssl app resolves certname, server, etc
+    # the same way the agent application does
+    expect(ssl.class.run_mode.name).to eq(:agent)
+  end
+
   context 'when generating help' do
     it 'prints a message when an unknown action is specified' do
       ssl.command_line.args << 'whoops'

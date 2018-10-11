@@ -2,6 +2,9 @@ require 'puppet/application'
 require 'puppet/ssl/oids'
 
 class Puppet::Application::Ssl < Puppet::Application
+
+  run_mode :agent
+
   def summary
     _("Manage SSL keys and certificates for puppet SSL clients")
   end
@@ -162,9 +165,7 @@ HELP
   end
 
   def clean(host)
-    # resolve the `ca_server` setting using `agent` run mode
-    ca_server = Puppet.settings.values(Puppet[:environment].to_sym, :agent).interpolate(:ca_server)
-    if Puppet[:certname] == ca_server
+    if Puppet[:certname] == Puppet[:ca_server]
       # make sure cert has been removed from the CA
       cert = host.download_certificate_from_ca(Puppet[:certname])
       if cert
