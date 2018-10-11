@@ -13,46 +13,68 @@ puppet-ssl(8) -- #{summary}
 
 SYNOPSIS
 --------
-Manage SSL keys and certificates for an SSL clients needed
+Manage SSL keys and certificates for SSL clients needing
 to communicate with a puppet infrastructure.
 
 USAGE
 -----
-puppet ssl <action> [--certname <NAME>] [--localca]
+puppet ssl <action> [-h|--help] [-v|--verbose] [-d|--debug] [--localca]
+
+
+OPTIONS
+-------
+
+* --help:
+  Print this help messsge.
+
+* --verbose:
+  Print extra information.
+
+* --debug:
+  Enable full debugging.
+
+* --localca
+  Also clean the local CA certificate and CRL.
+
 
 ACTIONS
 -------
 
 * submit_request:
-  Generate a certificate signing request (CSR) and submit it to the CA. If a private and
-  public key pair already exist, they will be used to generate the CSR. Otherwise a new
-  key pair will be generated. If a CSR has already been submitted with the given `certname`,
-  then the operation will fail.
+  Generate a certificate signing request (CSR) and submit it to the CA. If
+  a private and public key pair already exist, they will be used to generate
+  the CSR. Otherwise a new key pair will be generated. If a CSR has already
+  been submitted with the given `certname`, then the operation will fail.
 
 * download_cert:
-  Download a certificate for this host. If the current private key matches the downloaded
-  certificate, then the certificate will be saved and used for subsequent requests. If
-  there is already an existing certificate, it will be overwritten.
+  Download a certificate for this host. If the current private key matches
+  the downloaded certificate, then the certificate will be saved and used
+  for subsequent requests. If there is already an existing certificate, it
+  will be overwritten.
 
 * verify:
-  Verify the private key and certificate are present and match, verify the certificate is
-  issued by a trusted CA, and check revocation status.
+  Verify the private key and certificate are present and match, verify the
+  certificate is issued by a trusted CA, and check revocation status.
 
 * clean:
-  Remove the private key and certificate related files for this host. If `--localca` is
-  specified, then also remove this host's local copy of the CA certificate(s) and CRL bundle.
+  Remove the private key and certificate related files for this host. If
+  `--localca` is specified, then also remove this host's local copy of the
+  CA certificate(s) and CRL bundle.
 HELP
   end
 
-  option('--certname NAME') do |arg|
-    options[:certname] = arg
-  end
-
   option('--localca')
+  option('--verbose', '-v')
+  option('--debug', '-d')
+
+  def setup_logs
+    set_log_level(options)
+    Puppet::Util::Log.newdestination(:console)
+  end
 
   def main
     if command_line.args.empty?
-      raise Puppet::Error, _("An action must be specified.\n%{help}") % { help: help }
+      raise Puppet::Error, _("An action must be specified.")
     end
 
     Puppet.settings.use(:main, :agent)
@@ -62,9 +84,15 @@ HELP
     case action
     when 'submit_request'
       submit_request(host)
-      download_cert(host)
+      cert = download_cert(host)
+      unless cert
+        Puppet.info _("The certificate for '%{name}' has not yet been signed") % { name: host.name }
+      end
     when 'download_cert'
-      download_cert(host)
+      cert = download_cert(host)
+      unless cert
+        raise Puppet::Error, _("The certificate for '%{name}' has not yet been signed") % { name: host.name }
+      end
     when 'verify'
       verify(host)
     when 'clean'
@@ -78,7 +106,7 @@ HELP
     host.ensure_ca_certificate
 
     host.submit_request
-    puts _("Submitted certificate request for '%{name}' to https://%{server}:%{port}") % {
+    Puppet.notice _("Submitted certificate request for '%{name}' to https://%{server}:%{port}") % {
       name: host.name, server: Puppet[:ca_server], port: Puppet[:ca_port]
     }
   rescue => e
@@ -88,16 +116,16 @@ HELP
   def download_cert(host)
     host.ensure_ca_certificate
 
-    puts _("Downloading certificate '%{name}' from https://%{server}:%{port}") % {
+    Puppet.info _("Downloading certificate '%{name}' from https://%{server}:%{port}") % {
       name: host.name, server: Puppet[:ca_server], port: Puppet[:ca_port]
     }
-    if cert = host.download_host_certificate
-      puts _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % {
-        name: host.name, fingerprint: cert.fingerprint
-      }
-    else
-      puts _("No certificate for '%{name}' on CA") % { name: host.name }
-    end
+    cert = host.download_host_certificate
+    return unless cert
+
+    Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % {
+      name: host.name, fingerprint: cert.fingerprint
+    }
+    cert
   rescue => e
     raise Puppet::Error, _("Failed to download certificate: %{message}") % { message: e.message }
   end
@@ -122,12 +150,12 @@ HELP
       }
     end
 
-    puts _("Verified certificate '%{name}'") % {
+    Puppet.notice _("Verified certificate '%{name}'") % {
       name: host.name
     }
     # store.chain.reverse.each_with_index do |issuer, i|
     #   indent = "  " * (i+1)
-    #   puts "#{indent}#{issuer.subject.to_s}"
+    #   Puppet.notice "#{indent}#{issuer.subject.to_s}"
     # end
   rescue => e
     raise Puppet::Error, _("Verify failed: %{message}") % { message: e.message }
@@ -161,7 +189,7 @@ END
       path = Puppet[setting]
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.unlink(path)
-        puts _("Removed %{label} %{path}") % { label: label, path: path }
+        Puppet.notice _("Removed %{label} %{path}") % { label: label, path: path }
       end
     end
   end

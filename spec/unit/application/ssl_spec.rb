@@ -5,7 +5,12 @@ require 'openssl'
 require 'puppet/test_ca'
 
 describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
-  let(:ssl) { Puppet::Application[:ssl] }
+  let(:ssl) do
+    app = Puppet::Application[:ssl]
+    app.options[:verbose] = true
+    app.setup_logs
+    app
+  end
   let(:name) { 'ssl-client' }
 
   before :all do
@@ -33,15 +38,15 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
   def expects_command_to_pass(expected_output = nil)
     expect {
       ssl.run_command
-    }.to output(expected_output).to_stdout
+    }.to have_printed(expected_output)
   end
 
-  def expects_command_to_fail(message, expected_output = '')
+  def expects_command_to_fail(message)
     expect {
       expect {
         ssl.run_command
       }.to raise_error(Puppet::Error, message)
-    }.to output(expected_output).to_stdout
+    }.to have_printed(/.*/) # ignore output
   end
 
   shared_examples_for 'an ssl action' do
@@ -50,7 +55,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: @ca.ca_cert.to_pem)
       stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 404)
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
-      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
       expects_command_to_pass
 
@@ -62,7 +67,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: @crl.to_pem)
       stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 404)
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
-      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
       expects_command_to_pass
 
@@ -71,14 +76,14 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
   end
 
   context 'when generating help' do
-    it 'prints usage when no arguments are specified' do
+    it 'prints a message when an unknown action is specified' do
       ssl.command_line.args << 'whoops'
 
       expects_command_to_fail(/Unknown action 'whoops'/)
     end
 
-    it 'rejects unknown actions' do
-      expects_command_to_fail(/^puppet-ssl.*SYNOPSIS/m)
+    it 'prints a message requiring an action to be specified' do
+      expects_command_to_fail(/An action must be specified/)
     end
   end
 
@@ -198,15 +203,14 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
       expects_command_to_fail(
-        %r{^Failed to download certificate: The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?},
-        /Downloading certificate/
+        %r{^Failed to download certificate: The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?}
       )
     end
 
     it "prints a message if there isn't a cert to download" do
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
 
-      expects_command_to_pass(/No certificate for '#{name}' on CA/)
+      expects_command_to_fail(/The certificate for '#{name}' has not yet been signed/)
     end
   end
 
