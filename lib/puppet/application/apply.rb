@@ -312,6 +312,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
+    handle_logdest_arg(Puppet[:logdest])
     Puppet::Util::Log.newdestination(:console) unless options[:setdest]
 
     Signal.trap(:INT) do

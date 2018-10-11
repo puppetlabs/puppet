@@ -398,7 +398,6 @@ describe Puppet::Application do
   end
 
   describe "when calling default setup" do
-
     before :each do
       @app.options.stubs(:[])
     end
@@ -416,6 +415,14 @@ describe Puppet::Application do
       @app.options.stubs(:[]).with(:setdest).returns(false)
 
       Puppet::Util::Log.expects(:setup_default)
+
+      @app.setup
+    end
+  
+    it "sets the log destination if provided via settings" do
+      @app.options.unstub(:[])
+      Puppet[:logdest] = "set_via_config"
+      Puppet::Util::Log.expects(:newdestination).with("set_via_config")
 
       @app.setup
     end
@@ -628,7 +635,6 @@ describe Puppet::Application do
   end
 
   describe "#handle_logdest_arg" do
-
     let(:test_arg) { "arg_test_logdest" }
 
     it "should log an exception that is raised" do
@@ -648,6 +654,18 @@ describe Puppet::Application do
       @app.handle_logdest_arg(test_arg)
       expect(@app.options[:setdest]).to be_truthy
     end
-  end
 
+    it "does not set the log destination if setdest is true" do
+      Puppet::Util::Log.expects(:newdestination).never
+      @app.options[:setdest] = true
+
+      @app.handle_logdest_arg(test_arg)
+    end
+
+    it "does not set the log destination if arg is nil" do
+      Puppet::Util::Log.expects(:newdestination).never
+
+      @app.handle_logdest_arg(nil)
+    end
+  end
 end

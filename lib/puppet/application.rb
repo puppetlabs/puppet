@@ -388,6 +388,8 @@ class Application
   end
 
   def setup_logs
+    handle_logdest_arg(Puppet[:logdest])
+
     unless options[:setdest]
       if options[:debug] || options[:verbose]
         Puppet::Util::Log.newdestination(:console)
@@ -409,7 +411,10 @@ class Application
   end
 
   def handle_logdest_arg(arg)
+    return if options[:setdest] || arg.nil?
+
     begin
+      Puppet[:logdest] = arg
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
