@@ -40,12 +40,15 @@ describe 'The Encrypted Type' do
     # At runtime the Host.key methods returns Puppet::SSL::Key, and the content is the RSA private key
     wrapped_key_host = mock()
     wrapped_key_host.stubs(:content).returns(host_key)
+    wrapped_key_host.stubs(:fingerprint).returns(host_cert.fingerprint)
 
     wrapped_key_other_host = mock()
     wrapped_key_other_host.stubs(:content).returns(other_host_key)
+    wrapped_key_other_host.stubs(:fingerprint).returns(other_host_cert.fingerprint)
 
     wrapped_key_third_host = mock()
     wrapped_key_third_host.stubs(:content).returns(third_host_key)
+    wrapped_key_third_host.stubs(:fingerprint).returns(third_host_cert.fingerprint)
 
     host.expects(:key).at_least(0).returns(wrapped_key_host)
     other_host.expects(:key).at_least(0).returns(wrapped_key_other_host)

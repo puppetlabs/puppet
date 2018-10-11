@@ -237,7 +237,7 @@ class PEncryptedType < PAnyType
 
       # Check if this was for "this recipient"
       #
-      unless fingerprint == host.certificate.fingerprint
+      unless fingerprint == host.key.fingerprint
         raise Puppet::DecryptionError.new(_("Decryption failed, the Encrypted is not encrypted for given host"))
       end
 
@@ -319,14 +319,16 @@ class PEncryptedType < PAnyType
           trusted = Puppet.lookup(:trusted_information) { nil }
           if trusted.nil?
             # Get the localhost certificate (in apply mode)
-            certificate = Puppet::SSL::Host.localhost.certificate
+            lh = Puppet::SSL::Host.localhost
+            certificate = lh.certificate || lh.key # certificate or use private key if available
           else
             # Get the certificate for the request
             certificate = trusted.certificate
           end
         else
           # Get certificate for the given node name
-          certificate = Puppet::SSL::Host.new(node_name).certificate
+          host = Puppet::SSL::Host.new(node_name)
+          certificate = host.certificate || host.key # certificate or use private key if available
           if certificate.nil?
             raise ArgumentError, _("Encrypted.new() Cannot find a certificate for given node '%{node_name}'.") % { node_name: node_name }
           end
