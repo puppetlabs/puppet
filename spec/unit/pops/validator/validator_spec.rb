@@ -23,7 +23,11 @@ describe "validating 4x" do
 
   def with_environment(environment, env_params = {})
     override_env = environment
-    override_env = environment.override_with(env_params) if env_params.count > 0
+    override_env = environment.override_with({
+      modulepath:     env_params[:modulepath]     || environment.full_modulepath,
+      manifest:       env_params[:manifest]       || environment.manifest,
+      config_version: env_params[:config_version] || environment.config_version
+    }) if env_params.count > 0
     Puppet.override(current_environment: override_env) do
       yield
     end
@@ -72,15 +76,6 @@ describe "validating 4x" do
     end
   end
 
-  it 'should not raise error for legal definition locations' do
-    with_environment(environment, :manifest => 'a/manifest/file.pp') do
-      expect(validate(parse('function aaa::bbb() {}',      'path/aaa/manifests/bbb.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
-      expect(validate(parse('class aaa() {}',      'path/aaa/manifests/init.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
-      expect(validate(parse('function aaa::bbB::ccc() {}', 'path/aaa/manifests/bBb.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
-      expect(validate(parse('function aaa::bbb::ccc() {}', 'path/aaa/manifests/bbb/CCC.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
-    end
-  end
-
   it 'should not raise error for definitions inside initial --manifest file' do
     with_environment(environment, :manifest => 'a/manifest/file.pp') do
       expect(validate(parse('class aaa() {}', 'a/manifest/file.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
@@ -97,6 +92,13 @@ describe "validating 4x" do
   it 'should not raise error for definitions not inside initial --manifest but also not in modulepath' do
     with_environment(environment, :manifest => 'a/manifest/somewhere/else') do
       expect(validate(parse('class aaa() {}', 'a/random/dir/file1.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    end
+  end
+
+  it 'should not raise error for empty files in modulepath' do
+    with_environment(environment) do
+      expect(validate(parse('', 'path/aaa/manifests/init.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
+      expect(validate(parse('#this is a comment', 'path/aaa/manifests/init.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION)
     end
   end
 
