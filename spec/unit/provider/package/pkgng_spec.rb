@@ -40,7 +40,7 @@ describe provider_class do
   before do
     provider_class.stubs(:command).with(:pkg) { '/usr/local/sbin/pkg' }
 
-    info = File.read(my_fixture('pkg.info'))
+    info = File.read(my_fixture('pkg.query'))
     provider_class.stubs(:get_query).returns(info)
 
     version_list = File.read(my_fixture('pkg.version'))
