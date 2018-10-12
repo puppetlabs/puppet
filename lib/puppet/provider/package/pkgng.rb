@@ -137,6 +137,10 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     @property_hash[:version]
   end
 
+  def version=
+    pkg(['install', '-qfy', "#{resource[:name]}-#{resource[:version]}"])
+  end
+
   # Upgrade to the latest version
   def update
     install
