@@ -150,6 +150,8 @@ describe provider_class do
     end
 
     it "should call update to upgrade the version" do
+      provider_class.stubs(:get_resource_info).with('ftp/curl').returns('curl 7.61.1 ftp/curl')
+
       resource = Puppet::Type.type(:package).new(
         :name     => 'ftp/curl',
         :provider => pkgng,
