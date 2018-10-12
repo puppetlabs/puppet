@@ -115,6 +115,18 @@ describe "validating 4x" do
     end
   end
 
+  it 'should not raise error when one modulepath is a substring of another' do
+    with_environment(environment, modulepath: ['path', 'pathplus']) do
+      expect(validate(parse('class aaa::ccc() {}', 'pathplus/aaa/manifests/ccc.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    end
+  end
+
+  it 'should not raise error when a modulepath ends with a file separator' do
+    with_environment(environment, modulepath: ['path/']) do
+      expect(validate(parse('class aaa::ccc() {}', 'pathplus/aaa/manifests/ccc.pp'))).not_to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_LOCATION)
+    end
+  end
+
   it 'should raise error for illegal type names' do
     expect(validate(parse('type ::Aaa = Any'))).to have_issue(Puppet::Pops::Issues::ILLEGAL_DEFINITION_NAME)
   end
