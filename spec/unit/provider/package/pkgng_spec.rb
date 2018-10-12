@@ -164,13 +164,15 @@ describe provider_class do
   describe "get_latest_version" do
     it "should rereturn nil when the current package is the latest" do
       version_list = File.read(my_fixture('pkg.version'))
-      nmap_latest_version = provider_class.get_latest_version('security/nmap', version_list)
+      provider_class.stubs(:get_version_list).returns(version_list)
+      nmap_latest_version = provider_class.get_latest_version('security/nmap')
       expect(nmap_latest_version).to be_nil
     end
 
     it "should match the package name exactly" do
       version_list = File.read(my_fixture('pkg.version'))
-      bash_comp_latest_version = provider_class.get_latest_version('shells/bash-completion', version_list)
+      provider_class.stubs(:get_version_list).returns(version_list)
+      bash_comp_latest_version = provider_class.get_latest_version('shells/bash-completion')
       expect(bash_comp_latest_version).to eq('2.1_3')
     end
   end

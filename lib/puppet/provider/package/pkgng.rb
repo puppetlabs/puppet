@@ -16,12 +16,16 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     pkg(['query', '-a', '%n %v %o'])
   end
 
-  def self.get_version_list
-    pkg(['version', '-voRL='])
+  def self.cached_version_list
+    @version_list ||= get_version_list
   end
 
-  def self.get_latest_version(origin, version_list)
-    if latest_version = version_list.lines.find { |l| l =~ /^#{origin} / }
+  def self.get_version_list
+    @version_list = pkg(['version', '-voRL='])
+  end
+
+  def self.get_latest_version(origin)
+    if latest_version = cached_version_list.lines.find { |l| l =~ /^#{origin} / }
       latest_version = latest_version.split(' ').last.split(')').first
       return latest_version
     end
@@ -32,7 +36,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     packages = []
     begin
       info = self.get_query
-      version_list = self.get_version_list
+      get_version_list
 
       unless info
         return packages
@@ -41,7 +45,7 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
       info.lines.each do |line|
 
         name, version, origin = line.chomp.split(" ", 3)
-        latest_version  = get_latest_version(origin, version_list) || version
+        latest_version  = get_latest_version(origin) || version
 
         pkg = {
           :ensure   => version,
