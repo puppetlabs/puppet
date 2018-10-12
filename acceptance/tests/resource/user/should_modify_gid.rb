@@ -28,6 +28,7 @@ agents.each do |host|
     if host['platform'] =~ /osx/
         match = result.stdout.match(/gid: (\d+)/)
         user_gid1 = match ? match[1] : nil
+        user_gid1 ||= result.stdout.split(':')[3]
     else
         user_gid1 = result.stdout.split(':')[3]
     end
@@ -44,6 +45,7 @@ agents.each do |host|
     if host['platform'] =~ /osx/
         match = result.stdout.match(/gid: (\d+)/)
         user_gid2 = match ? match[1] : nil
+        user_gid2 ||= result.stdout.split(':')[3]
     else
         user_gid2 = result.stdout.split(':')[3]
     end
