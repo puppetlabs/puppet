@@ -125,13 +125,14 @@ describe provider_class do
 
   context "#query" do
     it "should return the installed version if present" do
+      pkg_query_zsh = File.read(my_fixture('pkg.query.zsh'))
+      provider_class.stubs(:get_resource_info).with('zsh').returns(pkg_query_zsh)
       provider_class.prefetch({installed_name => installed_resource})
-      expect(installed_provider.query).to eq({:version=>'5.0.2_1'})
+      expect(installed_provider.query).to be >= {:version=>'5.0.2_1'}
     end
 
     it "should return nil if not present" do
-      fixture = File.read(my_fixture('pkg.query_absent'))
-      provider_class.stubs(:get_resource_info).with('bash').returns(fixture)
+      provider_class.stubs(:get_resource_info).with('bash').raises(Puppet::ExecutionFailure, 'An error occurred')
       expect(provider.query).to equal(nil)
     end
   end
