@@ -166,6 +166,12 @@ class Puppet::Util::FileType
   end
 
   # Handle Linux-style cron tabs.
+  #
+  # TODO: We can possibly eliminate the "-u <username>" option in cmdbase
+  # by just running crontab under <username>'s uid (like we do for suntab
+  # and aixtab). It may be worth investigating this alternative
+  # implementation in the future. This way, we can refactor all three of
+  # our cron file types into a common crontab file type.
   newfiletype(:crontab) do
     def initialize(user)
       self.path = user
@@ -185,16 +191,26 @@ class Puppet::Util::FileType
 
     # Read a specific @path's cron tab.
     def read
-      %x{#{cmdbase} -l 2>/dev/null}
+      Puppet::Util::Execution.execute("#{cmdbase} -l", failonfail: true, combine: true)
+    rescue => detail
+      case detail.to_s
+      when /no crontab for/
+        return ""
+      when /are not allowed to/
+        raise FileReadError, _("User %{path} not authorized to use cron") % { path: @path }, detail.backtrace
+      else
+        raise FileReadError, _("Could not read crontab for %{path}: %{detail}") % { path: @path, detail: detail }, detail.backtrace
+      end
     end
 
     # Remove a specific @path's cron tab.
     def remove
+      cmd = "#{cmdbase} -r"
       if %w{Darwin FreeBSD DragonFly}.include?(Facter.value("operatingsystem"))
-        %x{/bin/echo yes | #{cmdbase} -r 2>/dev/null}
-      else
-        %x{#{cmdbase} -r 2>/dev/null}
+        cmd = "/bin/echo yes | #{cmd}"
       end
+
+      Puppet::Util::Execution.execute(cmd, failonfail: true, combine: true)
     end
 
     # Overwrite a specific @path's cron tab; must be passed the @path name
@@ -270,7 +286,7 @@ class Puppet::Util::FileType
       Puppet::Util::Execution.execute(%w{crontab -l}, cronargs)
     rescue => detail
       case detail.to_s
-      when /Cannot open a file in the .* directory/
+      when /open.*in.*directory/
         return ""
       when /You are not authorized to use the cron command/
         raise FileReadError, _("User %{path} not authorized to use cron") % { path: @path }, detail.backtrace
