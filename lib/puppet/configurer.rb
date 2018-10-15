@@ -422,7 +422,10 @@ class Puppet::Configurer
   end
 
   def save_last_run_summary(report)
-    mode = Puppet.settings.setting(:lastrunfile).mode
+    # Pass nil to use file system inherited permissions, set by the Puppet Agent package.
+    mode = Puppet::Util::Platform.windows? ?
+      nil :
+      Puppet.settings.setting(:lastrunfile).mode
     Puppet::Util.replace_file(Puppet[:lastrunfile], mode) do |fh|
       fh.print YAML.dump(report.raw_summary)
     end

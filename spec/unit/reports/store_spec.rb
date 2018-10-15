@@ -35,6 +35,30 @@ describe processor do
       Puppet::FileSystem.expects(:exist?).never
       expect { @report.process }.to raise_error(ArgumentError, /Invalid node/)
     end
+
+    context "when storing the report" do
+      context "and on Windows" do
+        before :each do
+          Puppet::Util::Platform.stubs(:windows?).returns(true)
+        end
+
+        it "does not set mode" do
+          Puppet::Util.expects(:replace_file).with() { |_path, mode| mode.nil? }
+          @report.process
+        end
+      end
+
+      context "and not on Windows" do
+        before :each do
+          Puppet::Util::Platform.stubs(:windows?).returns(false)
+        end
+
+        it "uses mode 640" do
+          Puppet::Util.expects(:replace_file).with() { |_path, mode| mode == 0640 }
+          @report.process
+        end
+      end
+    end
   end
 
   describe "::destroy" do

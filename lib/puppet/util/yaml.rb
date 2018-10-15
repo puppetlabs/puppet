@@ -29,7 +29,9 @@ module Puppet::Util::Yaml
   end
 
   def self.dump(structure, filename)
-    Puppet::Util.replace_file(filename, 0660) do |fh|
+    # Pass nil to use file system inherited permissions, set by the Puppet Agent package.
+    mode = Puppet::Util::Platform.windows? ? nil : 0660
+    Puppet::Util.replace_file(filename, mode) do |fh|
       YAML.dump(structure, fh)
     end
   end

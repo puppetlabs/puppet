@@ -47,7 +47,8 @@ describe Puppet::Configurer do
       t2 = Time.now.tv_sec
 
       # sticky bit only applies to directories in windows
-      file_mode = Puppet.features.microsoft_windows? ? '666' : '100666'
+      # windows uses inherited permissions for this file
+      file_mode = Puppet.features.microsoft_windows? ? '2000700' : '100666'
 
       expect(Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode.to_s(8)).to eq(file_mode)
 

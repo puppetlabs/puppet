@@ -250,7 +250,9 @@ module Puppet::FileBucketFile
     # @return [void]
     # @api private
     def copy_bucket_file_to_contents_file(contents_file, bucket_file)
-      Puppet::Util.replace_file(contents_file, 0440) do |of|
+      # Pass nil to use file system inherited permissions, set by the Puppet Agent package.
+      mode = Puppet::Util::Platform.windows? ? nil : 0440
+      Puppet::Util.replace_file(contents_file, mode) do |of|
         # PUP-1044 writes all of the contents
         bucket_file.stream() do |src|
           FileUtils.copy_stream(src, of)

@@ -595,10 +595,11 @@ describe Puppet::Configurer do
       if Puppet::Util::Platform.windows?
         require 'puppet/util/windows/security'
         mode = Puppet::Util::Windows::Security.get_mode(Puppet[:lastrunfile])
+        expect(mode & 0777).to eq(0700)
       else
         mode = Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode
+        expect(mode & 0777).to eq(0664)
       end
-      expect(mode & 0777).to eq(0664)
     end
 
     it "should report invalid last run file permissions" do

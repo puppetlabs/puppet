@@ -32,7 +32,11 @@ Puppet::Reports.register_report(:store) do
     file = File.join(dir, name)
 
     begin
-      Puppet::Util.replace_file(file, 0640) do |fh|
+      # Mode 640 has known issues on Windows when the owner and group of the report file are SYSTEM
+      # which can occur when Puppet is running on a service.  Instead by passing nil we can use the
+      # file system inherited permissions, which are set by the Puppet Agent package.
+      mode = Puppet::Util::Platform.windows? ? nil: 0640
+      Puppet::Util.replace_file(file, mode) do |fh|
         fh.print to_yaml
       end
     rescue => detail

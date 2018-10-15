@@ -21,7 +21,9 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
     filename = path(request.key)
     FileUtils.mkdir_p(File.dirname(filename))
 
-    Puppet::Util.replace_file(filename, 0660) {|f| f.print to_msgpack(request.instance) }
+    # Pass nil to use file system inherited permissions, set by the Puppet Agent package.
+    mode = Puppet::Util::Platform.windows? ? nil : 0660
+    Puppet::Util.replace_file(filename, mode) {|f| f.print to_msgpack(request.instance) }
   rescue TypeError => detail
     Puppet.log_exception(detail, _("Could not save %{name} %{request}: %{detail}") % { name: self.name, request: request.key, detail: detail })
   end
