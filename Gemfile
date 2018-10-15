@@ -39,7 +39,9 @@ group(:development, :test) do
   # be removed here *yet* due to TravisCI / AppVeyor which call:
   # bundle install --without development
   # PUP-7433 describes work necessary to restructure this
-  gem "rake", '~> 12.2.1', :require => false
+  gem "rake", *location_for(ENV['RAKE_LOCATION'] || '~> 12.2.1') if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
+  gem "rake", *location_for(ENV['RAKE_LOCATION'] || '~> 12.2') if Gem::Version.new(RUBY_VERSION.dup) >= Gem::Version.new('2.0.0') # rubocop:disable Bundler/DuplicatedGem
+
   gem "rspec", "~> 3.1", :require => false
   gem "rspec-its", "~> 1.1", :require => false
   gem "rspec-collection_matchers", "~> 1.1", :require => false
