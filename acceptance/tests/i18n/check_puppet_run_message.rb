@@ -11,8 +11,8 @@ test_name 'C100559: puppet agent run output with a supported language should be 
   require 'puppet/acceptance/i18n_utils'
   extend Puppet::Acceptance::I18nUtils
 
-  language = 'ja_JP'
   agents.each do |agent|
+    language = 'ja_JP'
 
     step("ensure #{language} locale is configured") do
       language = enable_locale_language(agent, language)
