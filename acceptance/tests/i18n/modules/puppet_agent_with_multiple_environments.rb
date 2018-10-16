@@ -71,12 +71,12 @@ test_name 'C100575: puppet agent with different modules in different environment
       PP
       create_sitepp(master, tmp_environment_1, site_pp_content)
       on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => 2) do |result|
-        assert_match(/Notice: --\*ENV_1:\w+-i18ndemo function: それは楽しい時間です\*--/, result.stdout, 'missing translated notice message for environment 1')
+        assert_match(/Notice: --\*(ENV_1:)?ENV_1:\w+-i18ndemo function: それは楽しい時間です\*--/, result.stdout, 'missing translated notice message for environment 1')
       end
 
       create_sitepp(master, tmp_environment_2, site_pp_content)
       on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_2}", 'ENV' => shell_env_language), :acceptable_exit_codes => 2) do |result|
-        assert_match(/Notice: --\*ENV_2:\w+-i18ndemo function: それは楽しい時間です\*--/, result.stdout, 'missing translated notice message for environment 2')
+        assert_match(/Notice: --\*(ENV_2:)?ENV_2:\w+-i18ndemo function: それは楽しい時間です\*--/, result.stdout, 'missing translated notice message for environment 2')
       end
     end
   end
