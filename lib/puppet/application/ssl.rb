@@ -165,9 +165,15 @@ HELP
   end
 
   def clean(host)
+    # make sure cert has been removed from the CA
     if Puppet[:certname] == Puppet[:ca_server]
-      # make sure cert has been removed from the CA
-      cert = host.download_certificate_from_ca(Puppet[:certname])
+      cert =
+        begin
+          host.download_certificate_from_ca(Puppet[:certname])
+        rescue
+          raise Puppet::Error, _("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: Puppet[:certname] }
+        end
+
       if cert
         raise Puppet::Error, _(<<END) % { certname: Puppet[:certname] }
 The certificate %{certname} must be cleaned from the CA first. To fix this,

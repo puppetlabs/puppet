@@ -312,6 +312,15 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       }.to_not output(%r{Removed private key #{Puppet[:hostprivkey]}}).to_stdout
     end
 
+    it "raises if we fail to retrieve server's cert that we're about to clean" do
+      Puppet[:certname] = name
+      Puppet[:server] = name
+
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_raise(Errno::ECONNREFUSED)
+
+      expects_command_to_fail(%r{Failed to connect to the CA to determine if certificate #{name} has been cleaned})
+    end
+
     context 'when deleting local CA' do
       before do
         ssl.command_line.args << '--localca'
