@@ -113,7 +113,7 @@ HELP
       name: host.name, server: Puppet[:ca_server], port: Puppet[:ca_port]
     }
   rescue => e
-    raise Puppet::Error, _("Failed to submit certificate request: %{message}") % { message: e.message }
+    raise Puppet::Error.new(_("Failed to submit certificate request: %{message}") % { message: e.message }, e)
   end
 
   def download_cert(host)
@@ -130,7 +130,7 @@ HELP
     }
     cert
   rescue => e
-    raise Puppet::Error, _("Failed to download certificate: %{message}") % { message: e.message }
+    raise Puppet::Error.new(_("Failed to download certificate: %{message}") % { message: e.message }, e)
   end
 
   def verify(host)
@@ -161,7 +161,7 @@ HELP
     #   Puppet.notice "#{indent}#{issuer.subject.to_s}"
     # end
   rescue => e
-    raise Puppet::Error, _("Verify failed: %{message}") % { message: e.message }
+    raise Puppet::Error.new(_("Verify failed: %{message}") % { message: e.message }, e)
   end
 
   def clean(host)
@@ -170,8 +170,8 @@ HELP
       cert =
         begin
           host.download_certificate_from_ca(Puppet[:certname])
-        rescue
-          raise Puppet::Error, _("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: Puppet[:certname] }
+        rescue => e
+          raise Puppet::Error.new(_("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: Puppet[:certname] }, e)
         end
 
       if cert
