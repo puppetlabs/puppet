@@ -7,10 +7,26 @@
 \fBpuppet\-ssl\fR \- Manage SSL keys and certificates for puppet SSL clients
 .
 .SH "SYNOPSIS"
-Manage SSL keys and certificates for an SSL clients needed to communicate with a puppet infrastructure\.
+Manage SSL keys and certificates for SSL clients needing to communicate with a puppet infrastructure\.
 .
 .SH "USAGE"
-puppet ssl \fIaction\fR [\-\-certname \fINAME\fR]
+puppet ssl \fIaction\fR [\-h|\-\-help] [\-v|\-\-verbose] [\-d|\-\-debug] [\-\-localca]
+.
+.SH "OPTIONS"
+.
+.IP "\(bu" 4
+\-\-help: Print this help messsge\.
+.
+.IP "\(bu" 4
+\-\-verbose: Print extra information\.
+.
+.IP "\(bu" 4
+\-\-debug: Enable full debugging\.
+.
+.IP "\(bu" 4
+\-\-localca Also clean the local CA certificate and CRL\.
+.
+.IP "" 0
 .
 .SH "ACTIONS"
 .
@@ -25,4 +41,8 @@ Download a certificate for this host\. If the current private key matches the do
 .TP
 verify
 Verify the private key and certificate are present and match, verify the certificate is issued by a trusted CA, and check revocation status\.
+.
+.TP
+clean
+Remove the private key and certificate related files for this host\. If \fB\-\-localca\fR is specified, then also remove this host\'s local copy of the CA certificate(s) and CRL bundle\.
 
