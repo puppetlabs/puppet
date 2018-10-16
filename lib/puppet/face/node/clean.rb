@@ -59,7 +59,6 @@ Puppet::Face.define(:node, '0.0.1') do
   # clean signed cert for +host+
   def clean_cert(node)
     if Puppet.features.puppetserver_ca?
-      require 'puppetserver/ca/action/clean'
       Puppetserver::Ca::Action::Clean.new(LoggerIO.new).run({ 'certnames' => [node] })
     else
       Puppet.info _("Not managing %{node} certs as this host is not a CA") % { node: node }

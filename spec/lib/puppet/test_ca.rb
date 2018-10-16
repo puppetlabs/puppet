@@ -52,7 +52,7 @@ module Puppet
     def generate(name, opts)
       host_key = OpenSSL::PKey::RSA.new(1024)
       csr = create_csr(name, host_key)
-      sign(csr, opts)
+      { private_key: host_key, csr: csr, cert: sign(csr, opts).content }
     end
 
     private

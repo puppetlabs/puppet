@@ -2,88 +2,22 @@ require 'spec_helper'
 require 'puppet/application/ssl'
 require 'webmock/rspec'
 require 'openssl'
+require 'puppet/test_ca'
 
 describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
-  let(:ssl) { Puppet::Application[:ssl] }
+  let(:ssl) do
+    app = Puppet::Application[:ssl]
+    app.options[:verbose] = true
+    app.setup_logs
+    app
+  end
   let(:name) { 'ssl-client' }
 
-  def generate_cert(name, issuer = nil, issuer_key = nil)
-    # generate CA key pair
-    private_key = OpenSSL::PKey::RSA.new(512)
-    public_key = private_key.public_key
-
-    # generate CSR
-    csr = OpenSSL::X509::Request.new
-    csr.version = 0
-    csr.subject = OpenSSL::X509::Name.new([["CN", name]])
-    csr.public_key = public_key
-    csr.sign(private_key, OpenSSL::Digest::SHA256.new)
-
-    # is it self-signed?
-    issuer ||= csr.subject
-    issuer_key ||= private_key
-
-    # issue cert
-    cert = OpenSSL::X509::Certificate.new
-    cert.version    = 2 # X509v3
-    cert.subject    = csr.subject
-    cert.issuer     = issuer
-    cert.public_key = csr.public_key
-    cert.serial     = 1
-    cert.not_before = Time.now - (60*60*24)
-    cert.not_after  = Time.now + (60*60*24)
-
-    # Ugly hack, but we need to make sure the CA cert has the proper
-    # X509v3 Basic Constraints to be a valid CA certificate.
-    if name == 'ca'
-      extension_factory = OpenSSL::X509::ExtensionFactory.new
-      extension_factory.subject_certificate = cert
-      extension_factory.issuer_certificate = cert
-
-      extensions = {
-        "keyUsage"         => [%w{cRLSign keyCertSign}, true],
-        "basicConstraints" => ["CA:TRUE", true],
-      }
-
-      cert.extensions = extensions.map do |oid, (val, crit)|
-        val = val.join(', ') unless val.is_a? String
-
-        if Puppet::SSL::Oids.subtree_of?('id-ce', oid) or Puppet::SSL::Oids.subtree_of?('id-pkix', oid)
-          # Attempt to create a X509v3 certificate extension. Standard certificate
-          # extensions may need access to the associated subject certificate and
-          # issuing certificate, so must be created by the OpenSSL::X509::ExtensionFactory
-          # which provides that context.
-          extension_factory.create_ext(oid, val, crit)
-        else
-          # This is not an X509v3 extension which means that the extension
-          # factory cannot generate it. We need to generate the extension
-          # manually.
-          OpenSSL::X509::Extension.new(oid, OpenSSL::ASN1::UTF8String.new(val).to_der, crit)
-        end
-      end
-    end
-
-    cert.sign(issuer_key, OpenSSL::Digest::SHA256.new)
-
-    {:private_key => private_key, :csr => csr, :cert => cert}
-  end
-
-  def generate_crl(name, issuer, issuer_key)
-    crl = OpenSSL::X509::CRL.new
-    crl.version = 1
-    crl.issuer = issuer
-    crl.last_update = Time.now - (60*60*24)
-    crl.next_update =  Time.now + (60*60*24)
-    crl.extensions = [OpenSSL::X509::Extension.new('crlNumber', OpenSSL::ASN1::Integer(0))]
-    crl.sign(issuer_key, OpenSSL::Digest::SHA256.new)
-
-    crl
-  end
-
   before :all do
-    @ca = generate_cert('ca')
-    @crl = generate_crl('ca', @ca[:cert].subject, @ca[:private_key])
-    @host = generate_cert('ssl-client', @ca[:cert].subject, @ca[:private_key])
+    @ca = Puppet::TestCa.new
+    @ca_cert = @ca.ca_cert
+    @crl = @ca.ca_crl
+    @host = @ca.generate('ssl-client', {})
   end
 
   before do
@@ -93,7 +27,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     Puppet[:certname] = name
 
     # Host assumes ca cert and crl are present
-    File.open(Puppet[:localcacert], 'w') { |f| f.write(@ca[:cert].to_pem) }
+    File.open(Puppet[:localcacert], 'w') { |f| f.write(@ca_cert.to_pem) }
     File.open(Puppet[:hostcrl], 'w') { |f| f.write(@crl.to_pem) }
 
     # Setup our ssl client
@@ -101,25 +35,31 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
   end
 
-  def expects_command_to_output(expected_message = nil, code = 0)
+  def expects_command_to_pass(expected_output = nil)
+    expect {
+      ssl.run_command
+    }.to have_printed(expected_output)
+  end
+
+  def expects_command_to_fail(message)
     expect {
       expect {
         ssl.run_command
-      }.to exit_with(code)
-    }.to output(expected_message).to_stdout
+      }.to raise_error(Puppet::Error, message)
+    }.to have_printed(/.*/) # ignore output
   end
 
   shared_examples_for 'an ssl action' do
     it 'downloads the CA bundle first when missing' do
       File.delete(Puppet[:localcacert])
-      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: @ca[:cert].to_pem)
+      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: @ca.ca_cert.to_pem)
       stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 404)
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
-      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
-      expects_command_to_output
+      expects_command_to_pass
 
-      expect(File.read(Puppet[:localcacert])).to eq(@ca[:cert].to_pem)
+      expect(File.read(Puppet[:localcacert])).to eq(@ca.ca_cert.to_pem)
     end
 
     it 'downloads the CRL bundle first when missing' do
@@ -127,23 +67,29 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: @crl.to_pem)
       stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 404)
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
-      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
-      expects_command_to_output
+      expects_command_to_pass
 
       expect(File.read(Puppet[:hostcrl])).to eq(@crl.to_pem)
     end
   end
 
+  it 'uses the agent run mode' do
+    # make sure the ssl app resolves certname, server, etc
+    # the same way the agent application does
+    expect(ssl.class.run_mode.name).to eq(:agent)
+  end
+
   context 'when generating help' do
-    it 'prints usage when no arguments are specified' do
+    it 'prints a message when an unknown action is specified' do
       ssl.command_line.args << 'whoops'
 
-      expects_command_to_output(/Unknown action 'whoops'/, 1)
+      expects_command_to_fail(/Unknown action 'whoops'/)
     end
 
-    it 'rejects unknown actions' do
-      expects_command_to_output(/^puppet-ssl.*SYNOPSIS/m, 1)
+    it 'prints a message requiring an action to be specified' do
+      expects_command_to_fail(/An action must be specified/)
     end
   end
 
@@ -161,7 +107,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
 
-      expects_command_to_output(%r{Submitted certificate request for '#{name}' to https://.*}, 0)
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
 
       expect(Puppet::FileSystem).to be_exist(csr_path)
     end
@@ -171,13 +117,13 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
 
-      expects_command_to_output(%r{Submitted certificate request for '#{name}' to https://.*}, 0)
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
 
       stub_request(:get, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200, body: @host[:csr].to_pem)
       #  we skip :put
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
 
-      expects_command_to_output
+      expects_command_to_pass
     end
 
     it "warns if the local CSR doesn't match the local public key, and submits a new CSR" do
@@ -199,7 +145,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
 
       Puppet.stubs(:warning) # ignore unrelated warnings
       Puppet.expects(:warning).with("The local CSR does not match the agent's public key. Generating a new CSR.")
-      expects_command_to_output(%r{Submitted certificate request for '#{name}' to https://.*}, 0)
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
     end
 
     it 'downloads the certificate when autosigning is enabled' do
@@ -207,7 +153,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
-      expects_command_to_output(%r{Submitted certificate request for '#{name}' to https://.*}, 0)
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
 
       expect(Puppet::FileSystem).to be_exist(Puppet[:hostcert])
     end
@@ -219,7 +165,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
 
-      expects_command_to_output
+      expects_command_to_pass
 
       csr = Puppet::SSL::CertificateRequest.new(name)
       csr.read(csr_path)
@@ -237,7 +183,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     it 'downloads a new cert' do
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
-      expects_command_to_output(%r{Downloaded certificate '#{name}' with fingerprint .*})
+      expects_command_to_pass(%r{Downloaded certificate '#{name}' with fingerprint .*})
 
       expect(File.read(Puppet[:hostcert])).to eq(@host[:cert].to_pem)
     end
@@ -247,7 +193,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
 
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
-      expects_command_to_output(%r{Downloaded certificate '#{name}' with fingerprint .*})
+      expects_command_to_pass(%r{Downloaded certificate '#{name}' with fingerprint .*})
 
       expect(File.read(Puppet[:hostcert])).to eq(@host[:cert].to_pem)
     end
@@ -262,13 +208,15 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
 
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
-      expects_command_to_output(%r{^Failed to download certificate: The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?}, 1)
+      expects_command_to_fail(
+        %r{^Failed to download certificate: The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?}
+      )
     end
 
     it "prints a message if there isn't a cert to download" do
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
 
-      expects_command_to_output(/No certificate for '#{name}' on CA/)
+      expects_command_to_fail(/The certificate for '#{name}' has not yet been signed/)
     end
   end
 
@@ -282,13 +230,13 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     it 'reports if the key is missing' do
       File.delete(Puppet[:hostprivkey])
 
-      expects_command_to_output(/The host's private key is missing/, 1)
+      expects_command_to_fail(/The host's private key is missing/)
     end
 
     it 'reports if the cert is missing' do
       File.delete(Puppet[:hostcert])
 
-      expects_command_to_output(/The host's certificate is missing/, 1)
+      expects_command_to_fail(/The host's certificate is missing/)
     end
 
     it 'reports if the key and cert are mismatched' do
@@ -298,25 +246,127 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       File.open(Puppet[:hostprivkey], 'w') { |f| f.write(private_key.to_pem) }
       File.open(Puppet[:hostpubkey], 'w') { |f| f.write(public_key.to_pem) }
 
-      expects_command_to_output(/The host's key does not match the certificate/, 1)
+      expects_command_to_fail(/The host's key does not match the certificate/)
     end
 
     it 'reports if the cert verification fails' do
       # generate a new CA to force an error
-      ca = generate_cert('ca')
-      File.open(Puppet[:localcacert], 'w') { |f| f.write(ca[:cert].to_pem) }
+      new_ca = Puppet::TestCa.new
+      File.open(Puppet[:localcacert], 'w') { |f| f.write(new_ca.ca_cert.to_pem) }
 
       # and CRL for that CA
-      crl = generate_crl('ca', ca[:cert].subject, ca[:private_key])
-      File.open(Puppet[:hostcrl], 'w') { |f| f.write(crl.to_pem) }
+      File.open(Puppet[:hostcrl], 'w') { |f| f.write(new_ca.ca_crl.to_pem) }
 
-      expects_command_to_output(/Failed to verify certificate '#{name}': certificate signature failure \(7\)/, 1)
+      expects_command_to_fail(
+        /Failed to verify certificate '#{name}': certificate signature failure \(7\)/
+      )
     end
 
     it 'reports when verification succeeds' do
       OpenSSL::X509::Store.any_instance.stubs(:verify).returns(true)
 
-      expects_command_to_output(/Verified certificate '#{name}'/, 0)
+      expects_command_to_pass(/Verified certificate '#{name}'/)
+    end
+  end
+
+  context 'when cleaning' do
+    before do
+      ssl.command_line.args << 'clean'
+    end
+
+    it 'deletes the hostcert' do
+      File.open(Puppet[:hostcert], 'w') { |f| f.write(@host[:cert].to_pem) }
+
+      expects_command_to_pass(%r{Removed certificate #{Puppet[:cert]}})
+    end
+
+    it 'deletes the private key' do
+      File.open(Puppet[:hostprivkey], 'w') { |f| f.write(@host[:private_key].to_pem) }
+
+      expects_command_to_pass(%r{Removed private key #{Puppet[:hostprivkey]}})
+    end
+
+    it 'deletes the public key' do
+      File.open(Puppet[:hostpubkey], 'w') { |f| f.write(@host[:private_key].public_key.to_pem) }
+
+      expects_command_to_pass(%r{Removed public key #{Puppet[:hostpubkey]}})
+    end
+
+    it 'deletes the request' do
+      File.open(Puppet[:hostcsr], 'w') { |f| f.write(@host[:csr].to_pem) }
+
+      expects_command_to_pass(%r{Removed certificate request #{Puppet[:hostcsr]}})
+    end
+
+    it 'deletes the passfile' do
+      File.open(Puppet[:passfile], 'w') { |_| }
+
+      expects_command_to_pass(%r{Removed private key password file #{Puppet[:passfile]}})
+    end
+
+    it 'skips files that do not exist' do
+      File.delete(Puppet[:hostprivkey])
+
+      expect {
+        ssl.run_command
+      }.to_not output(%r{Removed private key #{Puppet[:hostprivkey]}}).to_stdout
+    end
+
+    it "raises if we fail to retrieve server's cert that we're about to clean" do
+      Puppet[:certname] = name
+      Puppet[:server] = name
+
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_raise(Errno::ECONNREFUSED)
+
+      expects_command_to_fail(%r{Failed to connect to the CA to determine if certificate #{name} has been cleaned})
+    end
+
+    context 'when deleting local CA' do
+      before do
+        ssl.command_line.args << '--localca'
+        ssl.parse_options
+      end
+
+      it 'deletes the local CA cert' do
+        File.open(Puppet[:localcacert], 'w') { |f| f.write(@ca_cert.to_pem) }
+
+        expects_command_to_pass(%r{Removed local CA certificate #{Puppet[:localcacert]}})
+      end
+
+      it 'deletes the local CRL' do
+        File.open(Puppet[:hostcrl], 'w') { |f| f.write(@crl.to_pem) }
+
+        expects_command_to_pass(%r{Removed local CRL #{Puppet[:hostcrl]}})
+      end
+    end
+
+    context 'on the puppetserver host' do
+      before :each do
+        Puppet[:certname] = 'puppetserver'
+        Puppet[:server] = 'puppetserver'
+      end
+
+      it "prints an error when the CA is local and the CA has not cleaned its cert" do
+        stub_request(:get, %r{puppet-ca/v1/certificate/puppetserver}).to_return(status: 200, body: @host[:cert].to_pem)
+
+        expects_command_to_fail(%r{The certificate puppetserver must be cleaned from the CA first})
+      end
+
+      it "cleans the cert when the CA is local and the CA has already cleaned its cert" do
+        File.open(Puppet[:hostcert], 'w') { |f| f.write(@host[:cert].to_pem) }
+
+        stub_request(:get, %r{puppet-ca/v1/certificate/puppetserver}).to_return(status: 404)
+
+        expects_command_to_pass(%r{Removed certificate .*puppetserver.pem})
+      end
+
+      it "cleans the cert when run on a puppetserver that isn't the CA" do
+        File.open(Puppet[:hostcert], 'w') { |f| f.write(@host[:cert].to_pem) }
+
+        Puppet[:ca_server] = 'caserver'
+
+        expects_command_to_pass(%r{Removed certificate .*puppetserver.pem})
+      end
     end
   end
 end
