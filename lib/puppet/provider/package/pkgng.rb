@@ -16,42 +16,53 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
     pkg(['query', '-a', '%n %v %o'])
   end
 
-  def self.get_version_list
-    pkg(['version', '-voRL='])
+  def self.get_resource_info(name)
+    pkg(['query', '%n %v %o', name])
   end
 
-  def self.get_latest_version(origin, version_list)
-    if latest_version = version_list.lines.find { |l| l =~ /^#{origin} / }
+  def self.cached_version_list
+    @version_list ||= get_version_list
+  end
+
+  def self.get_version_list
+    @version_list = pkg(['version', '-voRL='])
+  end
+
+  def self.get_latest_version(origin)
+    if latest_version = cached_version_list.lines.find { |l| l =~ /^#{origin} / }
       latest_version = latest_version.split(' ').last.split(')').first
       return latest_version
     end
     nil
   end
 
+  def self.parse_pkg_query_line(line)
+    name, version, origin = line.chomp.split(' ', 3)
+    latest_version  = get_latest_version(origin) || version
+
+    {
+      :ensure   => version,
+      :name     => name,
+      :provider => self.name,
+      :origin   => origin,
+      :version  => version,
+      :latest   => latest_version
+    }
+  end
+
   def self.instances
     packages = []
     begin
       info = self.get_query
-      version_list = self.get_version_list
+      get_version_list
 
       unless info
         return packages
       end
 
       info.lines.each do |line|
-
-        name, version, origin = line.chomp.split(" ", 3)
-        latest_version  = get_latest_version(origin, version_list) || version
-
-        pkg = {
-          :ensure   => version,
-          :name     => name,
-          :provider => self.name,
-          :origin   => origin,
-          :version  => version,
-          :latest   => latest_version
-        }
-        packages << new(pkg)
+        hash = parse_pkg_query_line(line)
+        packages << new(hash)
       end
 
       return packages
@@ -113,16 +124,21 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   end
 
   def query
-    if @property_hash[:ensure] == nil
+    begin
+      output = self.class.get_resource_info(resource[:name])
+    rescue Puppet::ExecutionFailure
       return nil
-    else
-      version = @property_hash[:version]
-      return { :version => version }
     end
+
+    self.class.parse_pkg_query_line(output)
   end
 
   def version
     @property_hash[:version]
+  end
+
+  def version=
+    pkg(['install', '-qfy', "#{resource[:name]}-#{resource[:version]}"])
   end
 
   # Upgrade to the latest version
