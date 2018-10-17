@@ -121,9 +121,7 @@ describe Puppet::Util::SUIDManager do
       end
     end
 
-    it "should not get or set euid/egid on Windows" do
-      Puppet.features.stubs(:microsoft_windows?).returns true
-
+    it "should not get or set euid/egid on Windows", if: Puppet::Util::Platform.windows? do
       Puppet::Util::SUIDManager.asuser(user[:uid], user[:gid]) {}
 
       expect(xids).to be_empty
