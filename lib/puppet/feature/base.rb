@@ -73,4 +73,4 @@ Puppet.features.add(:manages_symlinks) do
   end
 end
 
-Puppet.features.add(:puppetserver_ca, libs: ['puppetserver/ca'])
+Puppet.features.add(:puppetserver_ca, libs: ['puppetserver/ca', 'puppetserver/ca/action/clean'])

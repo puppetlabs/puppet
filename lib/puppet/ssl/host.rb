@@ -154,15 +154,14 @@ class Puppet::SSL::Host
     raise Puppet::Error, _("No certificate to validate.") unless cert
     raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: %{fingerprint}") % { fingerprint: cert.fingerprint } unless key
     unless cert.content.check_private_key(key.content)
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: cert.fingerprint, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: cert.fingerprint, cert_name: Puppet[:certname] }
 The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?
 Certificate fingerprint: %{fingerprint}
 To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.
 On the master:
   puppetserver ca clean --certname %{cert_name}
 On the agent:
-  1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete
-  1b. On Windows: del "%{cert_dir}\\%{cert_name}.pem" /f
+  1. puppet ssl clean
   2. puppet agent -t
 ERROR_STRING
     end
@@ -237,15 +236,14 @@ ERROR_STRING
 
   def validate_local_csr_with_key(csr, key)
     if key.content.public_key.to_s != csr.content.public_key.to_s
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text }
 The local CSR does not match the agent's public key.
 CSR fingerprint: %{fingerprint}
 CSR public key: %{csr_public_key}
 Agent public key: %{agent_public_key}
 To fix this, remove the CSR from the agent and then start a puppet run, which will automatically regenerate a CSR.
 On the agent:
-  1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete
-  1b. On Windows: del "%{cert_dir}\\%{cert_name}.pem" /f
+  1. puppet ssl clean
   2. puppet agent -t
 ERROR_STRING
     end
@@ -254,7 +252,7 @@ ERROR_STRING
 
   def validate_csr_with_key(csr, key)
     if key.content.public_key.to_s != csr.content.public_key.to_s
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], ssl_dir: Puppet[:ssldir], cert_dir: Puppet[:certdir].gsub('/', '\\') }
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname] }
 The CSR retrieved from the master does not match the agent's public key.
 CSR fingerprint: %{fingerprint}
 CSR public key: %{csr_public_key}
@@ -263,8 +261,7 @@ To fix this, remove the CSR from both the master and the agent and then start a 
 On the master:
   puppetserver ca clean --certname %{cert_name}
 On the agent:
-  1a. On most platforms: find %{ssl_dir} -name %{cert_name}.pem -delete
-  1b. On Windows: del "%{cert_dir}\\%{cert_name}.pem" /f
+  1. puppet ssl clean
   2. puppet agent -t
 ERROR_STRING
     end
@@ -576,6 +573,7 @@ ERROR_STRING
       end
     end
   end
+  public :download_certificate_from_ca
 
   # Returns the file path for the named certificate, based on this host's
   # configuration.
