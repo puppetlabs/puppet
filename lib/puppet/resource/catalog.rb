@@ -559,11 +559,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     Puppet::FileSystem.open(resourcefile.value, resourcefile.mode.to_i(8), "w:UTF-8") do |f|
       to_print = resources.map do |resource|
         next unless resource.managed?
-        if resource.name_var
-          "#{resource.type}[#{resource[resource.name_var]}]"
-        else
-          "#{resource.ref.downcase}"
-        end
+        "#{resource.ref.downcase}"
       end.compact
       f.puts to_print.join("\n")
     end

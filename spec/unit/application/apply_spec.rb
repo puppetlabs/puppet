@@ -7,6 +7,8 @@ require 'puppet/configurer'
 require 'fileutils'
 
 describe Puppet::Application::Apply do
+  include PuppetSpec::Files
+
   before :each do
     @apply = Puppet::Application[:apply]
     Puppet::Util::Log.stubs(:newdestination)
@@ -179,8 +181,6 @@ describe Puppet::Application::Apply do
     end
 
     describe "the main command" do
-      include PuppetSpec::Files
-
       before :each do
         Puppet[:prerun_command] = ''
         Puppet[:postrun_command] = ''
@@ -481,6 +481,38 @@ describe Puppet::Application::Apply do
         end
         expect { @apply.apply }.not_to raise_error
       end
+    end
+  end
+
+  describe "when really executing" do
+    let(:testfile) { tmpfile('secret_file_name') }
+    let(:resourcefile) { tmpfile('resourcefile') }
+    let(:classfile) { tmpfile('classfile') }
+
+    it "should not expose sensitive data in the relationship file" do
+      @apply.options[:code] = <<-CODE
+        $secret = Sensitive('cat #{testfile}')
+
+        exec { 'do it':
+          command => $secret,
+          path    => '/bin/'
+        }
+      CODE
+
+      @apply.options[:write_catalog_summary] = true
+
+      Puppet.settings[:resourcefile] = resourcefile
+      Puppet.settings[:classfile] = classfile
+
+      #We don't actually need the resource to do anything, we are using it's properties in other parts of the workflow.
+      Puppet::Util::Execution.stubs(:execute)
+
+      expect { @apply.main }.to exit_with 0
+
+      result = File.read(resourcefile)
+
+      expect(result).not_to match(/secret_file_name/)
+      expect(result).to match(/do it/)
     end
   end
 
