@@ -285,10 +285,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet::Util::Platform.window
                     # access mask, and back to mode without loss of information
                     # (provided the owner and group are not the same)
                     next if ((u & g) != g) or ((g & o) != o)
-
-                    mode = (s << 9 | u << 6 | g << 3 | o << 0)
-                    winsec.set_mode(mode, path)
-                    expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
+                    applied_mode  = (s << 9 | u << 6 | g << 3 | o << 0)
+                    # SYSTEM must always be Full Control (7)
+                    expected_mode = (s << 9 | u << 6 | 7 << 3 | o << 0)
+                    winsec.set_mode(applied_mode, path)
+                    expect(winsec.get_mode(path).to_s(8)).to eq(expected_mode.to_s(8))
                   end
                 end
               end
@@ -634,9 +635,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet::Util::Platform.window
                   # access mask, and back to mode without loss of information
                   # (provided the owner and group are the same)
                   next if ((ug & o) != o)
-                  mode = (s << 9 | ug << 6 | ug << 3 | o << 0)
-                  winsec.set_mode(mode, path)
-                  expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
+                  applied_mode  = (s << 9 | ug << 6 | ug << 3 | o << 0)
+                  # SYSTEM must always be Full Control (7)
+                  expected_mode = (s << 9 | 7 << 6 | 7 << 3 | o << 0)
+                  winsec.set_mode(applied_mode, path)
+                  expect(winsec.get_mode(path).to_s(8)).to eq(expected_mode.to_s(8))
                 end
               end
             end

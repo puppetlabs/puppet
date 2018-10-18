@@ -134,15 +134,6 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd
   end
 
-  def check_manage_expiry
-    cmd = []
-    if @resource[:expiry] and not @resource.forcelocal?
-      cmd << "-e #{@resource[:expiry]}"
-    end
-
-    cmd
-  end
-
   def check_system_users
     if self.class.system_users? and resource.system?
       ["-r"]
@@ -188,7 +179,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def modifycmd(param, value)
     if @resource.forcelocal?
-      if param == :groups
+      case param
+      when :groups, :expiry
         cmd = [command(:modify)]
       else
         cmd = [command(property_manages_password_age?(param) ? :localpassword : :localmodify)]

@@ -43,7 +43,7 @@ test_name 'C100574: puppet apply using a module should translate messages in a l
     step "Run puppet apply of a module with language #{agent_language} and verify default english returned" do
       step 'verify custom fact message translated and applied catalog message not translatated' do
         on(agent, puppet("apply -e \"class { 'i18ndemo': filename => '#{type_path}' }\"", 'ENV' => shell_env_language)) do |apply_result|
-          assert_match(/Error: Facter: error while resolving custom fact "i18ndemo_fact": i18ndemo_fact: tämä on korotus mukautetusta tosiasiasta \w+-i18ndemo/,
+          assert_match(/i18ndemo_fact: tämä on korotus mukautetusta tosiasiasta \w+-i18ndemo/,
                        apply_result.stderr, 'missing translated message for raise from ruby fact')
           assert_match(/Notice: Applied catalog in [0-9.]+ seconds/, apply_result.stdout, 'missing untranslated message for catalog applied')
         end
