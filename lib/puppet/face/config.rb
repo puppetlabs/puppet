@@ -210,7 +210,7 @@ https://puppet.com/docs/puppet/latest/configuration.html#environment
 
   action(:delete) do
     summary _("Delete a Puppet setting.")
-    arguments _("(<setting>")
+    arguments _("<setting>")
     #TRANSLATORS 'main' is a specific section name and should not be translated
     description "Deletes a setting from the specified section. (The default is the section 'main')."
     notes <<-'EOT'
