@@ -583,7 +583,9 @@ class Puppet::Resource
         delete(attribute)
       end
 
-      parameters_to_include = options[:parameters_to_include] || []
+      parameters_to_include = resource_type.parameters_to_include
+      parameters_to_include += options[:parameters_to_include] || []
+
       delete(attribute) unless properties.include?(attribute) || parameters_to_include.include?(attribute)
     end
     self
