@@ -5,6 +5,8 @@ require 'openssl'
 require 'puppet/test_ca'
 
 describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
+  include PuppetSpec::Files
+
   let(:ssl) do
     app = Puppet::Application[:ssl]
     app.options[:verbose] = true
@@ -25,6 +27,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
 
     Puppet.settings.use(:main)
     Puppet[:certname] = name
+    Puppet[:vardir] = tmpdir("ssl_testing")
 
     # Host assumes ca cert and crl are present
     File.open(Puppet[:localcacert], 'w') { |f| f.write(@ca_cert.to_pem) }
@@ -368,5 +371,20 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
         expects_command_to_pass(%r{Removed certificate .*puppetserver.pem})
       end
     end
+
+    context 'when cleaning a device' do
+      before do
+        ssl.command_line.args = ['clean', '--target', 'device.example.com']
+        ssl.parse_options
+      end
+
+      it 'deletes the device certificate' do
+        device_cert_path = File.join(Puppet[:devicedir], 'device.example.com', 'ssl', 'certs')
+        device_cert_file = File.join(device_cert_path, 'device.example.com.pem')
+        FileUtils.mkdir_p(device_cert_path)
+        File.open(device_cert_file, 'w') { |f| f.write('device.example.com') }
+        expects_command_to_pass(%r{Removed certificate #{device_cert_file}})
+     end
+  end
   end
 end
