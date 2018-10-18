@@ -391,6 +391,12 @@ class Type
     @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
   end
 
+  # Returns any parameters that should be included by default in puppet resource's output
+  # @return [Array<Symbol>] the parameters to include
+  def self.parameters_to_include
+    []
+  end
+
   # Returns a mapping from the title string to setting of attribute values.
   # This default implementation provides a mapping of title to the one and only _namevar_ present
   # in the type's definition.

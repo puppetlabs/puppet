@@ -271,6 +271,10 @@ module Puppet
     providify
     paramclass(:provider).isnamevar
 
+    def self.parameters_to_include
+      [:provider]
+    end
+
     # We have more than one namevar, so we need title_patterns. However, we
     # cheat and set the patterns to map to name only and completely ignore
     # provider. So far, the logic that determines uniqueness appears to just

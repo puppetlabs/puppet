@@ -6,15 +6,11 @@ test_name "Puppet returns only resource package declaration when querying an uni
                          # actual changing of resources could irreparably damage a
                          # host running this, or require special permissions.
 
-  resource_declaration_regex = %r@package \{ 'not-installed-on-this-host':
-  ensure => '(?:purged|absent)',
-\}@m
-
   agents.each do |agent|
 
     step "test puppet resource package" do
       on(agent, puppet('resource', 'package', 'not-installed-on-this-host')) do
-        assert_match(resource_declaration_regex, stdout)
+        assert_match(/package.*not-installed-on-this-host.*\n.*ensure.*(?:absent|purged).*\n.*provider/, stdout)
       end
     end
 

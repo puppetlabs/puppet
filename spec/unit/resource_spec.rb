@@ -1082,6 +1082,18 @@ describe Puppet::Resource do
         newparam(:admits_to_age)
         newparam(:name)
       end
+
+      Puppet::Type.newtype('brown') do
+        newproperty(:ensure)
+        newparam(:admits_to_dying_hair)
+        newparam(:admits_to_age)
+        newparam(:hair_length)
+        newparam(:name)
+
+        def self.parameters_to_include
+          [:admits_to_dying_hair, :admits_to_age]
+        end
+      end
     end
 
     it "should strip all parameters and strip properties that are nil, empty or absent except for ensure" do
@@ -1123,6 +1135,25 @@ describe Puppet::Resource do
         :friends         => ['Oprah'],
       })
       )
+    end
+
+    context "when the resource type has a default set of parameters it wants to include" do
+      it "should leave those parameters alone" do
+        resource = Puppet::Resource.new("brown", "Esmeralda", :parameters => {
+          :admits_to_age        => true,
+          :admits_to_dying_hair => false,
+          :hair_length          => 10
+        })
+
+        pruned_resource = resource.prune_parameters
+        expected_resource = Puppet::Resource.new(
+          "brown",
+          "Esmeralda",
+          :parameters => { :admits_to_age => true, :admits_to_dying_hair => false }
+        )
+  
+        expect(pruned_resource).to eq(expected_resource)
+      end
     end
   end
 end
