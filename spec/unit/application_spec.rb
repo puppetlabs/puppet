@@ -33,7 +33,7 @@ describe Puppet::Application do
   describe "application defaults" do
     it "should fail if required app default values are missing" do
       @app.stubs(:app_defaults).returns({ :foo => 'bar' })
-      Puppet.expects(:err).with(regexp_matches(/missing required app default setting/))
+      Puppet.expects(:send_log).with(:err, regexp_matches(/missing required app default setting/))
       expect {
         @app.run
       }.to exit_with(1)
@@ -55,10 +55,10 @@ describe Puppet::Application do
     end
 
     it "should error if it can't find a class" do
-      Puppet.expects(:err).with do |value|
-        value =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
-          value =~ /puppet\/application\/thisshallneverevereverexist/ and
-          value =~ /no such file to load|cannot load such file/
+      Puppet.expects(:send_log).with do |_level, message|
+        message =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
+          message =~ /puppet\/application\/thisshallneverevereverexist/ and
+          message =~ /no such file to load|cannot load such file/
       end
 
       expect {
@@ -553,19 +553,19 @@ describe Puppet::Application do
     end
 
     it "should warn and exit if no command can be called" do
-      Puppet.expects(:err)
+      Puppet.expects(:send_log).with(:err, "Could not run: No valid command or main")
       expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns no command" do
       @app.stubs(:get_command).returns(nil)
-      Puppet.expects(:err)
+      Puppet.expects(:send_log).with(:err, "Could not run: No valid command or main")
       expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns an invalid command" do
       @app.stubs(:get_command).returns(:this_function_doesnt_exist)
-      Puppet.expects(:err)
+      Puppet.expects(:send_log).with(:err, "Could not run: No valid command or main")
       expect { @app.run }.to exit_with 1
     end
   end

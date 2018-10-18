@@ -73,7 +73,7 @@ describe Puppet::Transaction::Persistence do
       it "should initialize with a clear internal state if the file does not contain valid YAML" do
         write_state_file('{ invalid')
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
+        Puppet.expects(:send_log).with(:err, regexp_matches(/Transaction store file .* is corrupt/))
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
@@ -97,8 +97,8 @@ describe Puppet::Transaction::Persistence do
 
         File.expects(:rename).raises(SystemCallError)
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
-        Puppet.expects(:err).with(regexp_matches(/Unable to rename/))
+        Puppet.expects(:send_log).with(:err, regexp_matches(/Transaction store file .* is corrupt/))
+        Puppet.expects(:send_log).with(:err, regexp_matches(/Unable to rename/))
 
         persistence = Puppet::Transaction::Persistence.new
         expect { persistence.load }.to raise_error(Puppet::Error, /Could not rename/)
@@ -109,7 +109,7 @@ describe Puppet::Transaction::Persistence do
 
         File.expects(:rename).at_least_once
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
+        Puppet.expects(:send_log).with(:err, regexp_matches(/Transaction store file .* is corrupt/))
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
