@@ -75,25 +75,25 @@ describe Puppet::Application::Device do
     it "should set waitforcert to 0 with --onetime and if --waitforcert wasn't given" do
       Puppet[:onetime] = true
       Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(0)
-      @device.setup_host
+      @device.setup_host('device.example.com')
     end
 
     it "should use supplied waitforcert when --onetime is specified" do
       Puppet[:onetime] = true
       @device.handle_waitforcert(60)
       Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(60)
-      @device.setup_host
+      @device.setup_host('device.example.com')
     end
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
       Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(120)
-      @device.setup_host
+      @device.setup_host('device.example.com')
     end
 
     it "should use the waitforcert setting when checking for a signed certificate" do
       Puppet[:waitforcert] = 10
       Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(10)
-      @device.setup_host
+      @device.setup_host('device.example.com')
     end
 
     it "should set the log destination with --logdest" do
@@ -271,14 +271,14 @@ describe Puppet::Application::Device do
 
     it "should create a new ssl host" do
       Puppet::SSL::Host.expects(:new).returns(@host)
-      @device.setup_host
+      @device.setup_host('device.example.com')
     end
 
     it "should wait for a certificate" do
       @device.options.stubs(:[]).with(:waitforcert).returns(123)
       @host.expects(:wait_for_cert).with(123)
 
-      @device.setup_host
+      @device.setup_host('device.example.com')
     end
   end
 

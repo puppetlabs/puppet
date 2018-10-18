@@ -21,7 +21,7 @@ to communicate with a puppet infrastructure.
 
 USAGE
 -----
-puppet ssl <action> [-h|--help] [-v|--verbose] [-d|--debug] [--localca]
+puppet ssl <action> [-h|--help] [-v|--verbose] [-d|--debug] [--localca] [--device CERTNAME]
 
 
 OPTIONS
@@ -39,6 +39,8 @@ OPTIONS
 * --localca
   Also clean the local CA certificate and CRL.
 
+* --device CERTNAME
+  Clean a device certificate instead of this agent's certificate.
 
 ACTIONS
 -------
@@ -62,10 +64,14 @@ ACTIONS
 * clean:
   Remove the private key and certificate related files for this host. If
   `--localca` is specified, then also remove this host's local copy of the
-  CA certificate(s) and CRL bundle.
+  CA certificate(s) and CRL bundle. if `--device CERTNAME` is specified, then
+  remove the files for that device instead of this agent.
 HELP
   end
 
+  option('--device CERTNAME') do |arg|
+    options[:device] = arg.to_s
+  end
   option('--localca')
   option('--verbose', '-v')
   option('--debug', '-d')
@@ -80,8 +86,15 @@ HELP
       raise Puppet::Error, _("An action must be specified.")
     end
 
-    Puppet.settings.use(:main, :agent)
-    host = Puppet::SSL::Host.new(options[:certname])
+    if options[:device]
+      # Override the following, as per lib/puppet/application/device.rb
+      Puppet[:certname] = options[:device]
+      Puppet[:confdir]  = File.join(Puppet[:devicedir], options[:device])
+      Puppet[:vardir]   = File.join(Puppet[:devicedir], options[:device])
+      host = Puppet::SSL::Host.new(options[:device], true)
+    else
+      host = Puppet::SSL::Host.new
+    end
 
     action = command_line.args.first
     case action
@@ -166,16 +179,16 @@ HELP
 
   def clean(host)
     # make sure cert has been removed from the CA
-    if Puppet[:certname] == Puppet[:ca_server]
+    if host.name == Puppet[:ca_server]
       cert =
         begin
-          host.download_certificate_from_ca(Puppet[:certname])
+          host.download_certificate_from_ca(host.name)
         rescue => e
-          raise Puppet::Error.new(_("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: Puppet[:certname] }, e)
+          raise Puppet::Error.new(_("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: host.name }, e)
         end
 
       if cert
-        raise Puppet::Error, _(<<END) % { certname: Puppet[:certname] }
+        raise Puppet::Error, _(<<END) % { certname: host.name }
 The certificate %{certname} must be cleaned from the CA first. To fix this,
 run the following commands on the CA:
   puppetserver ca clean --certname %{certname}
