@@ -5,6 +5,9 @@ script:
   - "bundle exec rake $CHECK"
 notifications:
   email: false
+os:
+  - linux
+  - windows
 rvm:
   - 2.5.1
   - 2.4.0
@@ -34,3 +37,11 @@ matrix:
       env: "CHECK=warnings"
     - rvm: jruby-9.2.0.0
       env: "CHECK=warnings"
+    - os: windows
+      env: "CHECK=rubocop"
+    - os: windows
+      env: "CHECK=commits"
+    - os: windows
+      env: "CHECK=warnings"
+    - os: windows
+      rvm: jruby-9.2.0.0
