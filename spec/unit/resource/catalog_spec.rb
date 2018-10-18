@@ -48,8 +48,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
     catalog.add_resource(res, res2, res3, res4, comp_res)
     catalog.write_resource_file
     expect(File.readlines(resourcefile).map(&:chomp)).to match_array([
-      "file[#{File.expand_path('/tmp/sam')}]",
-      "exec[#{File.expand_path('/bin/rm')} -rf /]"
+      "file[#{res.title.downcase}]",
+      "exec[#{res2.title.downcase}]"
     ])
   end
 
