@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.0.2-40-g5a58b3d\n"
+"Project-Id-Version: Puppet automation framework 6.0.2-87-gd2c9723\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-10-16 22:05+0000\n"
-"PO-Revision-Date: 2018-10-16 22:05+0000\n"
+"POT-Creation-Date: 2018-10-18 18:20+0000\n"
+"PO-Revision-Date: 2018-10-18 18:20+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -160,7 +160,7 @@ msgstr ""
 msgid "No valid command or main"
 msgstr ""
 
-#: ../lib/puppet/application.rb:499
+#: ../lib/puppet/application.rb:504
 msgid "No help available for puppet %{app_name}"
 msgstr ""
 
@@ -194,7 +194,7 @@ msgstr ""
 
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
 #. TRANSLATORS "puppet apply" is a program command and should not be translated
-#: ../lib/puppet/application/apply.rb:204 ../lib/puppet/application/apply.rb:318
+#: ../lib/puppet/application/apply.rb:204 ../lib/puppet/application/apply.rb:319
 msgid "For puppet apply"
 msgstr ""
 
@@ -202,27 +202,27 @@ msgstr ""
 msgid "%{file} is not readable"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:289 ../lib/puppet/application/script.rb:238
+#: ../lib/puppet/application/apply.rb:290 ../lib/puppet/application/script.rb:238
 msgid "Exiting"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:328
+#: ../lib/puppet/application/apply.rb:329
 msgid "Could not deserialize catalog from %{format}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:349 ../lib/puppet/application/script.rb:141
+#: ../lib/puppet/application/apply.rb:350 ../lib/puppet/application/script.rb:141
 msgid "Could not find facts for %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:362 ../lib/puppet/application/script.rb:150
+#: ../lib/puppet/application/apply.rb:363 ../lib/puppet/application/script.rb:150
 msgid "Could not find node %{node}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:375 ../lib/puppet/application/script.rb:134
+#: ../lib/puppet/application/apply.rb:376 ../lib/puppet/application/script.rb:134
 msgid "Could not find file %{manifest}"
 msgstr ""
 
-#: ../lib/puppet/application/apply.rb:376
+#: ../lib/puppet/application/apply.rb:377
 msgid "Only one file can be applied per run.  Skipping %{files}"
 msgstr ""
 
@@ -705,11 +705,11 @@ msgstr ""
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1449 ../lib/puppet/defaults.rb:1464
+#: ../lib/puppet/defaults.rb:1458 ../lib/puppet/defaults.rb:1473
 msgid "Attempted to set both server and server_list."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1450 ../lib/puppet/defaults.rb:1465
+#: ../lib/puppet/defaults.rb:1459 ../lib/puppet/defaults.rb:1474
 msgid "Server setting will not be used."
 msgstr ""
 
@@ -7079,19 +7079,19 @@ msgstr ""
 msgid "Could not create class file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:570
+#: ../lib/puppet/resource/catalog.rb:566
 msgid "Could not create resource file %{file}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:604
+#: ../lib/puppet/resource/catalog.rb:600
 msgid "Duplicate declaration: %{resource} is already declared; cannot redeclare"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:606
+#: ../lib/puppet/resource/catalog.rb:602
 msgid "Duplicate declaration: %{resource} is already declared at %{error_location}; cannot redeclare"
 msgstr ""
 
-#: ../lib/puppet/resource/catalog.rb:654 ../lib/puppet/resource/catalog.rb:658
+#: ../lib/puppet/resource/catalog.rb:650 ../lib/puppet/resource/catalog.rb:654
 msgid "Could not find resource %{resource} when converting %{message} resources"
 msgstr ""
 
@@ -8275,65 +8275,65 @@ msgstr ""
 msgid "Group names must not be empty. If you want to specify \"no groups\" pass an empty array"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:418
+#: ../lib/puppet/type/user.rb:421
 msgid "User provider %{name} can not manage home directories"
 msgstr ""
 
 #. TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
 #. TRANSLATORS separated by dashes.
-#: ../lib/puppet/type/user.rb:435
+#: ../lib/puppet/type/user.rb:438
 msgid "Expiry dates must be YYYY-MM-DD or the string \"absent\""
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:512
+#: ../lib/puppet/type/user.rb:515
 msgid "Role names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:514
+#: ../lib/puppet/type/user.rb:517
 msgid "Role names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:549
+#: ../lib/puppet/type/user.rb:552
 msgid "Auth names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:551
+#: ../lib/puppet/type/user.rb:554
 msgid "Auth names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:575
+#: ../lib/puppet/type/user.rb:578
 msgid "Profile names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:577
+#: ../lib/puppet/type/user.rb:580
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:672
+#: ../lib/puppet/type/user.rb:675
 msgid "Ssh_authorized_key type is not available. Cannot purge SSH keys."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:710
+#: ../lib/puppet/type/user.rb:713
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:713
+#: ../lib/puppet/type/user.rb:716
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:717
+#: ../lib/puppet/type/user.rb:720
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:729
+#: ../lib/puppet/type/user.rb:732
 msgid "purge_ssh_keys can only be true for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:736
+#: ../lib/puppet/type/user.rb:739
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:751
+#: ../lib/puppet/type/user.rb:754
 msgid "Class name must be provided."
 msgstr ""
 
@@ -8932,20 +8932,20 @@ msgstr ""
 msgid "Unable to set ownership to %{user}:%{group} for log file: %{path}"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:82 ../lib/puppet/util/logging.rb:105
+#: ../lib/puppet/util/logging.rb:83 ../lib/puppet/util/logging.rb:106
 msgid "Wrapped exception:"
 msgstr ""
 
 #. TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
-#: ../lib/puppet/util/logging.rb:149
+#: ../lib/puppet/util/logging.rb:150
 msgid "Need either :file and :line, or :key"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:179
+#: ../lib/puppet/util/logging.rb:180
 msgid "(file & line not available)"
 msgstr ""
 
-#: ../lib/puppet/util/logging.rb:281
+#: ../lib/puppet/util/logging.rb:282
 msgid "(location: %{location})"
 msgstr ""
 
@@ -9373,43 +9373,53 @@ msgstr ""
 msgid "Failed to get volume information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:395 ../lib/puppet/util/windows/security.rb:412 ../lib/puppet/util/windows/sid.rb:154 ../lib/puppet/util/windows/sid.rb:216 ../lib/puppet/util/windows/user.rb:43
+#. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+#: ../lib/puppet/util/windows/security.rb:332
+msgid "An attempt to set mode %{mode} on item %{path} would result in the owner, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
+msgstr ""
+
+#. TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+#: ../lib/puppet/util/windows/security.rb:338
+msgid "An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control"
+msgstr ""
+
+#: ../lib/puppet/util/windows/security.rb:409 ../lib/puppet/util/windows/security.rb:426 ../lib/puppet/util/windows/sid.rb:154 ../lib/puppet/util/windows/sid.rb:216 ../lib/puppet/util/windows/user.rb:43
 msgid "Invalid SID"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:399 ../lib/puppet/util/windows/security.rb:416
+#: ../lib/puppet/util/windows/security.rb:413 ../lib/puppet/util/windows/security.rb:430
 msgid "Failed to add access control entry"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:427 ../lib/puppet/util/windows/security.rb:609
+#: ../lib/puppet/util/windows/security.rb:441 ../lib/puppet/util/windows/security.rb:623
 msgid "Invalid DACL"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:450
+#: ../lib/puppet/util/windows/security.rb:464
 msgid "Unsupported access control entry type: 0x%{type}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:484
+#: ../lib/puppet/util/windows/security.rb:498
 msgid "Failed to open '%{path}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:531
+#: ../lib/puppet/util/windows/security.rb:545
 msgid "Failed to adjust process privileges"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:561
+#: ../lib/puppet/util/windows/security.rb:575
 msgid "Failed to get security information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:572
+#: ../lib/puppet/util/windows/security.rb:586
 msgid "Failed to get security descriptor control"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:605
+#: ../lib/puppet/util/windows/security.rb:619
 msgid "Failed to initialize ACL"
 msgstr ""
 
-#: ../lib/puppet/util/windows/security.rb:644
+#: ../lib/puppet/util/windows/security.rb:658
 msgid "Failed to set security information"
 msgstr ""
 
