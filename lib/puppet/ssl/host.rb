@@ -23,7 +23,7 @@ class Puppet::SSL::Host
   Certificate = Puppet::SSL::Certificate
   CertificateRequest = Puppet::SSL::CertificateRequest
 
-  attr_reader :name, :crl_path
+  attr_reader :name, :device, :crl_path
 
   attr_writer :key, :certificate, :certificate_request, :crl_usage
 
@@ -146,6 +146,17 @@ class Puppet::SSL::Host
     @certificate
   end
 
+  # The puppet parameters for commands output by the validate_ methods depend
+  # upon whether this is an agent or a device.
+
+  def clean_params
+    @device ? "--target #{Puppet[:certname]}" : ''
+  end
+
+  def puppet_params
+    @device ? "device -v --target #{Puppet[:certname]}" : 'agent -t'
+  end
+
   # Validate that our private key matches the specified certificate.
   #
   # @param [Puppet::SSL::Certificate] cert the certificate to check
@@ -154,15 +165,15 @@ class Puppet::SSL::Host
     raise Puppet::Error, _("No certificate to validate.") unless cert
     raise Puppet::Error, _("No private key with which to validate certificate with fingerprint: %{fingerprint}") % { fingerprint: cert.fingerprint } unless key
     unless cert.content.check_private_key(key.content)
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: cert.fingerprint, cert_name: Puppet[:certname] }
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: cert.fingerprint, cert_name: Puppet[:certname], clean_params: clean_params, puppet_params: puppet_params }
 The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?
 Certificate fingerprint: %{fingerprint}
 To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certificate.
 On the master:
   puppetserver ca clean --certname %{cert_name}
 On the agent:
-  1. puppet ssl clean
-  2. puppet agent -t
+  1. puppet ssl clean %{clean_params}
+  2. puppet %{puppet_params}
 ERROR_STRING
     end
   end
@@ -236,15 +247,15 @@ ERROR_STRING
 
   def validate_local_csr_with_key(csr, key)
     if key.content.public_key.to_s != csr.content.public_key.to_s
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text }
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, clean_params: clean_params, puppet_params: puppet_params }
 The local CSR does not match the agent's public key.
 CSR fingerprint: %{fingerprint}
 CSR public key: %{csr_public_key}
 Agent public key: %{agent_public_key}
 To fix this, remove the CSR from the agent and then start a puppet run, which will automatically regenerate a CSR.
 On the agent:
-  1. puppet ssl clean
-  2. puppet agent -t
+  1. puppet ssl clean %{clean_params}
+  2. puppet %{puppet_params}
 ERROR_STRING
     end
   end
@@ -252,7 +263,7 @@ ERROR_STRING
 
   def validate_csr_with_key(csr, key)
     if key.content.public_key.to_s != csr.content.public_key.to_s
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname] }
+      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], clean_params: clean_params, puppet_params: puppet_params }
 The CSR retrieved from the master does not match the agent's public key.
 CSR fingerprint: %{fingerprint}
 CSR public key: %{csr_public_key}
@@ -261,15 +272,16 @@ To fix this, remove the CSR from both the master and the agent and then start a 
 On the master:
   puppetserver ca clean --certname %{cert_name}
 On the agent:
-  1. puppet ssl clean
-  2. puppet agent -t
+  1. puppet ssl clean %{clean_params}
+  2. puppet %{puppet_params}
 ERROR_STRING
     end
   end
   private :validate_csr_with_key
 
-  def initialize(name = nil)
+  def initialize(name = nil, device = false)
     @name = (name || Puppet[:certname]).downcase
+    @device = device
     Puppet::SSL::Base.validate_certname(@name)
     @key = @certificate = @certificate_request = nil
     @crl_usage = Puppet.settings[:certificate_revocation]
