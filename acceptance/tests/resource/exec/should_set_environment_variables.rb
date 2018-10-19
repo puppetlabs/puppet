@@ -56,10 +56,10 @@ test_name "The Exec resource should set user-specified environment variables" do
         # Single quote the strings in case our value is a Windows
         # path
         value_str = "'#{value_str}'" if value.is_a?(String)
-  
+
         "  #{param} => #{value_str}"
       end.join(",\n")
-  
+
       <<-MANIFEST
   exec { 'run_test_command':
     #{params_str}
@@ -89,14 +89,14 @@ MANIFEST
       end
     end
 
-    step "Does not override the environment variable if the passed-in value is empty" do
+    step "Temporarily overrides previously set environment variables even if the passed-in value is empty" do
       manifest = exec_resource_manifest.call(
         command: print_env_vars.call('ENV_VAR_ONE'),
         environment: ['ENV_VAR_ONE=']
       )
 
       apply_manifest_on(agent, manifest, environment: { 'ENV_VAR_ONE' => 'VALUE' }) do |result|
-        assert_env_var_values(result.stdout, ENV_VAR_ONE: 'VALUE')
+        assert_env_var_values(result.stdout, ENV_VAR_ONE: '')
       end
     end
   end

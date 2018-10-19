@@ -15,7 +15,7 @@ class Puppet::Provider::Exec < Puppet::Provider
 
     envlist = [envlist] unless envlist.is_a? Array
     envlist.each do |setting|
-      unless (match = /^(\w+)=((.|\n)+)$/.match(setting))
+      unless (match = /^(\w+)=((.|\n)*)$/.match(setting))
         warning _("Cannot understand environment setting %{setting}") % { setting: setting.inspect }
         next
       end
@@ -24,6 +24,11 @@ class Puppet::Provider::Exec < Puppet::Provider
 
       if env.include?(var) || env.include?(var.to_sym)
         warning _("Overriding environment setting '%{var}' with '%{value}'") % { var: var, value: value }
+      end
+
+      if value.nil? || value.empty?
+        msg = _("Empty environment setting '%{var}'") % {var: var}
+        Puppet.warn_once('undefined_variables', "empty_env_var_#{var}", msg, resource.file, resource.line)
       end
 
       env[var] = value
