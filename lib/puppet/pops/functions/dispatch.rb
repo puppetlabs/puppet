@@ -65,6 +65,8 @@ class Dispatch < Evaluator::CallableSignature
 
   # @api private
   def weave(scope, args)
+    # Must be done late as PAL cannot be initialized until after all of puppet, and requiring PAL means also requiring puppet
+    require 'puppet_pal'
     # no need to weave if there are no injections
     if @injections.empty?
       args
@@ -78,13 +80,21 @@ class Dispatch < Evaluator::CallableSignature
             when :scope
               scope
             when :pal_script_compiler
-              Puppet.lookup(:pal_script_compiler)
+              unless Puppet[:tasks]
+                raise ArgumentError("Function requires a Script Compiler, cannot be used when --tasks == false")
+              end
+              Puppet.lookup(:pal_script_compiler) {|| Puppet::Pal::ScriptCompiler.new(scope.compiler) }
             when :cache
               Puppet::Pops::Adapters::ObjectIdCacheAdapter.adapt(scope.compiler)
             when :pal_catalog_compiler
-              Puppet.lookup(:pal_catalog_compiler)
+              if Puppet[:tasks]
+                raise ArgumentError("Function requires a Catalog Compiler, cannot be used when --tasks == true")
+              end
+              Puppet.lookup(:pal_catalog_compiler) {|| Puppet::Pal::CatalogCompiler.new(scope.compiler)}
             when :pal_compiler
-              Puppet.lookup(:pal_compiler)
+              Puppet.lookup(:pal_compiler) do||
+                (Puppet[:tasks] ? Puppet::Pal::ScriptCompiler : Puppet::Pal::CatalogCompiler).new(scope.compiler)
+              end
             else
               raise ArgumentError, _("Unknown injection %{injection_name}") % { injection_name: injection_name }
             end
