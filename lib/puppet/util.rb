@@ -478,9 +478,13 @@ module Util
 
   def safe_posix_fork(stdin=$stdin, stdout=$stdout, stderr=$stderr, &block)
     child_pid = Kernel.fork do
-      $stdin.reopen(stdin)
-      $stdout.reopen(stdout)
-      $stderr.reopen(stderr)
+      STDIN.reopen(stdin)
+      STDOUT.reopen(stdout)
+      STDERR.reopen(stderr)
+
+      $stdin = STDIN
+      $stdout = STDOUT
+      $stderr = STDERR
 
       begin
         Dir.foreach('/proc/self/fd') do |f|
