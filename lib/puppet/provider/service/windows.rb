@@ -15,6 +15,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
   confine    :operatingsystem => :windows
 
   has_feature :refreshable
+  has_feature :configurable_timeout
 
   def enable
     Puppet::Util::Windows::Service.set_startup_mode( @resource[:name], :SERVICE_AUTO_START )
@@ -57,7 +58,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
 
   def start
     if status == :paused
-      Puppet::Util::Windows::Service.resume(@resource[:name])
+      Puppet::Util::Windows::Service.resume(@resource[:name], timeout: @resource[:timeout])
       return
     end
 
@@ -75,11 +76,11 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
         manual_start
       end
     end
-    Puppet::Util::Windows::Service.start(@resource[:name])
+    Puppet::Util::Windows::Service.start(@resource[:name], timeout: @resource[:timeout])
   end
 
   def stop
-    Puppet::Util::Windows::Service.stop(@resource[:name])
+    Puppet::Util::Windows::Service.stop(@resource[:name], timeout: @resource[:timeout])
   end
 
   def status
@@ -102,6 +103,10 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     end
     debug("Service #{@resource[:name]} is #{current_state}")
     return state
+  end
+
+  def default_timeout
+    Puppet::Util::Windows::Service::DEFAULT_TIMEOUT
   end
 
   # returns all providers for all existing services and startup state
