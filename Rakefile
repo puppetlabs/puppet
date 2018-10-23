@@ -73,7 +73,7 @@ task(:commits) do
   %x{git log --no-merges --pretty=%s #{commit_range}}.each_line do |commit_summary|
     # This regex tests for the currently supported commit summary tokens: maint, doc, packaging, or pup-<number>.
     # The exception tries to explain it in more full.
-    if /^\((maint|doc|docs|packaging|pup-\d+)\)|revert/i.match(commit_summary).nil?
+    if /^\((maint|doc|docs|packaging|l10n|pup-\d+)\)|revert/i.match(commit_summary).nil?
       raise "\n\n\n\tThis commit summary didn't match CONTRIBUTING.md guidelines:\n" \
         "\n\t\t#{commit_summary}\n" \
         "\tThe commit summary (i.e. the first line of the commit message) should start with one of:\n"  \
@@ -82,6 +82,7 @@ task(:commits) do
         "\t\t(docs)(DOCUMENT-<digits>)\n" \
         "\t\t(maint)\n" \
         "\t\t(packaging)\n" \
+        "\t\t(L10n)\n" \
         "\n\tThis test for the commit summary is case-insensitive.\n\n\n"
     else
       puts "#{commit_summary}"
