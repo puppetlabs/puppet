@@ -37,7 +37,7 @@ module Pal
       yield JsonCatalogEncoder.new(catalog, pretty: pretty, exclude_virtual: exclude_virtual)
     end
 
-    # Evaluates an AST obtained from `parse_string` or `parse_file` in topscope.
+    # Evaluates an AST obtained from `parse_string` or `parse_file` in current scope.
     # If the ast is a `Puppet::Pops::Model::Program` (what is returned from the `parse` methods, any definitions
     # in the program (that is, any function, plan, etc. that is defined will be made available for use).
     #
@@ -49,9 +49,9 @@ module Pal
         bridged = Puppet::Parser::AST::PopsBridge::Program.new(ast)
         # define all catalog types
         internal_compiler.environment.known_resource_types.import_ast(bridged, "")
-        bridged.evaluate(internal_compiler.topscope)
+        bridged.evaluate(current_scope)
       else
-        internal_evaluator.evaluate(topscope, ast)
+        internal_evaluator.evaluate(current_scope, ast)
       end
     end
 

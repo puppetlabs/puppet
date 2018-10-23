@@ -26,7 +26,7 @@ module Pal
       # TRANSLATORS: do not translate variable name strings in these assertions
       Pal::assert_non_empty_string(function_name, 'function_name', false)
       Pal::assert_type(Pal::T_ANY_ARRAY, args, 'args', false)
-      internal_evaluator.evaluator.external_call_function(function_name, args, topscope, &block)
+      internal_evaluator.evaluator.external_call_function(function_name, args, current_scope, &block)
     end
 
     # Returns a Puppet::Pal::FunctionSignature object or nil if function is not found
@@ -88,7 +88,7 @@ module Pal
       evaluate(parse_string(puppet_code, source_file))
     end
 
-    # Evaluates a puppet language file in top scope.
+    # Evaluates a puppet language file in current scope.
     # The file must exist and contain valid puppet language code or an error is raised.
     #
     # @param file [Path, String] an absolute path to a file with puppet language code, must exist
@@ -98,7 +98,7 @@ module Pal
       evaluate(parse_file(file))
     end
 
-    # Evaluates an AST obtained from `parse_string` or `parse_file` in topscope.
+    # Evaluates an AST obtained from `parse_string` or `parse_file` in current scope.
     # If the ast is a `Puppet::Pops::Model::Program` (what is returned from the `parse` methods, any definitions
     # in the program (that is, any function, plan, etc. that is defined will be made available for use).
     #
@@ -110,7 +110,7 @@ module Pal
         loaders = Puppet.lookup(:loaders)
         loaders.instantiate_definitions(ast, loaders.public_environment_loader)
       end
-      internal_evaluator.evaluate(topscope, ast)
+      internal_evaluator.evaluate(current_scope, ast)
     end
 
     # Produces a literal value if the AST obtained from `parse_string` or `parse_file` does not require any actual evaluation.
@@ -199,6 +199,13 @@ module Pal
       false
     end
 
+    def in_local_scope(variables={}, &block)
+      current_scope.with_guarded_scope do
+        current_scope.ephemeral_from(variables)
+        yield
+      end
+    end
+
     protected
 
     def list_loadable_kind(kind, filter_regex = nil, error_collector = nil)
@@ -212,7 +219,7 @@ module Pal
 
     private
 
-    def topscope
+    def current_scope
       internal_compiler.topscope
     end
   end

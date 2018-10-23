@@ -65,8 +65,6 @@ class Dispatch < Evaluator::CallableSignature
 
   # @api private
   def weave(scope, args)
-    # Must be done late as PAL cannot be initialized until after all of puppet, and requiring PAL means also requiring puppet
-    require 'puppet_pal'
     # no need to weave if there are no injections
     if @injections.empty?
       args
