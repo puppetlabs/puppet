@@ -29,6 +29,15 @@ rescue LoadError => e
   puts "Error loading packaging rake tasks: #{e}"
 end
 
+namespace :package do
+  task :bootstrap do
+    puts 'Bootstrap is no longer needed, using packaging-as-a-gem'
+  end
+  task :implode do
+    puts 'Implode is no longer needed, using packaging-as-a-gem'
+  end
+end
+
 task :default do
   sh %{rake -T}
 end
