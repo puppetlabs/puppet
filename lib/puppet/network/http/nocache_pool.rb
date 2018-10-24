@@ -12,7 +12,14 @@ class Puppet::Network::HTTP::NoCachePool
   def with_connection(site, verify, &block)
     http = @factory.create_connection(site)
     verify.setup_connection(http)
-    yield http
+    Puppet.debug("Starting connection for #{site}")
+    http.start
+    begin
+      yield http
+    ensure
+      Puppet.debug("Closing connection for #{site}")
+      http.finish
+    end
   end
 
   def close
