@@ -45,10 +45,10 @@ in.
 For more complete docs on developing with Puppet, take a look at the
 rest of the [developer documents](https://github.com/puppetlabs/puppet/blob/master/docs/index.md).
 
-License
--------
+Licensing
+---------
 
-See [LICENSE](https://github.com/puppetlabs/puppet/blob/master/LICENSE) file.
+See [LICENSE](https://github.com/puppetlabs/puppet/blob/master/LICENSE) file. Puppet is licensed by Puppet, Inc. under the Apache license. Puppet, Inc. can be contacted at: info@puppet.com
 
 Support
 -------
