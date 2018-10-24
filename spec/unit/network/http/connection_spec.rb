@@ -54,6 +54,8 @@ describe Puppet::Network::HTTP::Connection do
       :request_post => "param: value" }.each do |method,body|
       context "##{method}" do
         it "should yield to the block" do
+          Net::HTTP.any_instance.stubs(method).yields.returns(httpok)
+
           block_executed = false
           subject.send(method, "/foo", body) do |response|
             block_executed = true
