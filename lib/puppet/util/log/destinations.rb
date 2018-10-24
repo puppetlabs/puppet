@@ -77,9 +77,10 @@ Puppet::Util::Log.newdesttype :file do
 
     # create the log file, if it doesn't already exist
     need_array_start = false
+    file_exists = File.exists?(path)
     if @json == 1
       need_array_start = true
-      if File.exists?(path)
+      if file_exists
         sz = File.size(path)
         need_array_start = sz == 0
 
@@ -93,7 +94,7 @@ Puppet::Util::Log.newdesttype :file do
     file.puts('[') if need_array_start
 
     # Give ownership to the user and group puppet will run as
-    if Puppet.features.root? && !Puppet::Util::Platform.windows?
+    if Puppet.features.root? && !Puppet::Util::Platform.windows? && !file_exists
       begin
         FileUtils.chown(Puppet[:user], Puppet[:group], path)
       rescue ArgumentError, Errno::EPERM
