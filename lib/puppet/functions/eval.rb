@@ -12,7 +12,7 @@
 # Note the escaped `$` characters since interpolation is unwanted.
 #
 # ```puppet
-# Deferred('eval' ["$x + $y", { 'x' => 10, 'y' => 20})] # produces 30 on the agent
+# Deferred('eval' ["\$x + \$y", { 'x' => 10, 'y' => 20})] # produces 30 on the agent
 # ```
 #
 # This function can be used when there is the need to format or transform deferred
