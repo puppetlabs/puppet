@@ -7,7 +7,9 @@ test_name "should correctly manage the attributes property for the Group (AIX on
                          # in ways that might require special permissions
                          # or be harmful to the system running the test
   
+  require 'puppet/acceptance/common_tests.rb'
   require 'puppet/acceptance/aix_util'
+  extend Puppet::Acceptance::CommonTests::AttributesProperty
   extend Puppet::Acceptance::AixUtil
 
   initial_attributes = {
@@ -17,6 +19,14 @@ test_name "should correctly manage the attributes property for the Group (AIX on
     'admin' => false
   }
 
-  run_attribute_management_tests('group', :gid, initial_attributes, changed_attributes)
+  agents.each do |agent|
+    run_aix_attribute_property_tests_on(
+      agent,
+      'group',
+      :gid,
+      initial_attributes,
+      changed_attributes
+    )
+  end
 
 end
