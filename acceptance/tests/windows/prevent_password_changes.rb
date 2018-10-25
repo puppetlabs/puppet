@@ -66,11 +66,26 @@ test_name 'PUP-6569 Puppet should not reset passwords for disabled, expired, or 
       assert_password_matches_on(host, locked_username, OLD_PASSWORD, "Expected the locked out user account's password to remain unchanged")
     end
 
+    password_change_required_username = random_username
+
+    step "Create a user account, then require the user to change their password the next time they log-in" do
+      on(host, "cmd.exe /c net user #{password_change_required_username} /logonpasswordchg:yes /add")
+    end
+
+    step "Try to change the user account's password with puppet" do
+      apply_manifest_on(host, change_password_manifest(password_change_required_username))
+    end
+
+    step "Ensure the password wasn't changed" do
+      assert_password_matches_on(host, password_change_required_username, OLD_PASSWORD, "Expected the user account's password to remain unchanged")
+    end
+
     teardown do
       on(host, "cmd.exe /c net accounts /lockoutthreshold:10")
       host.user_absent(disabled_username)
       host.user_absent(expired_username)
       host.user_absent(locked_username)
+      host.user_absent(password_change_required_username)
     end
   end
 end
