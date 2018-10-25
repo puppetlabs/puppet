@@ -49,5 +49,32 @@ module Puppet
       end
       module_function :gem_command
     end
+
+    module ManifestUtils
+      def resource_manifest(resource, title, params = {})
+        params_str = params.map do |param, value|
+          # This is not quite correct for all parameter values,
+          # but it is good enough for most purposes.
+          value_str = value.to_s
+          value_str = "\"#{value_str}\"" if value.is_a?(String)
+    
+          "  #{param} => #{value_str}"
+        end.join(",\n")
+    
+        <<-MANIFEST
+#{resource} { '#{title}':
+  #{params_str}
+}
+MANIFEST
+      end
+
+      def file_manifest(path, params = {})
+        resource_manifest('file', path, params)
+      end
+
+      def cron_manifest(entry_name, params = {})
+        resource_manifest('cron', entry_name, params)
+      end
+    end
   end
 end
