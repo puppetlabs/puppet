@@ -77,7 +77,7 @@ class Puppet::FileBucket::Dipper
           tmp_file.unlink
         end
       else
-        raise Puppet::Error, _("Please provide a file or checksum do diff with")
+        raise Puppet::Error, _("Please provide a file or checksum to diff with")
       end
     elsif file_a
       if checksum_b
