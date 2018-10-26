@@ -63,14 +63,28 @@ describe 'Puppet::Type::Group::Provider::Aix' do
   end
 
   describe '.members_to_users' do
-    it 'returns the members property as-is if it is not an Array' do
-      expect(provider_class.members_to_users('members'))
-        .to eql('members')
+    context 'when auth_membership == true' do
+      before(:each) do
+        resource[:auth_membership] = true
+      end
+
+      it 'returns only the passed-in members' do
+        expect(provider_class.members_to_users(provider, ['user1', 'user2']))
+          .to eql('user1,user2')
+      end
     end
 
-    it 'returns the members property as a comma-separated string if it is an Array' do
-      expect(provider_class.members_to_users(['user1', 'user2']))
-        .to eql('user1,user2')
+    context 'when auth_membership == false' do
+      before(:each) do
+        resource[:auth_membership] = false
+
+        provider.stubs(:members).returns(['user3', 'user1'])
+      end
+
+      it 'adds the passed-in members to the current list of members, filtering out any duplicates' do
+        expect(provider_class.members_to_users(provider, ['user1', 'user2']))
+          .to eql('user1,user2,user3')
+      end
     end
   end
 end
