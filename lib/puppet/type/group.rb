@@ -1,7 +1,6 @@
 require 'etc'
 require 'facter'
 require 'puppet/property/keyvalue'
-require 'puppet/property/list'
 require 'puppet/parameter/boolean'
 
 module Puppet
@@ -82,76 +81,15 @@ module Puppet
       end
     end
 
-    newproperty(:members, :parent => Puppet::Property::List, :required_features => :manages_members) do
+    newproperty(:members, :array_matching => :all, :required_features => :manages_members) do
       desc "The members of the group. For platforms or directory services where group
         membership is stored in the group objects, not the users. This parameter's
         behavior can be configured with `auth_membership`."
 
-      validate do |value|
-        unless value.is_a?(String)
-          raise ArgumentError, _("The members property must be specified as either an array of strings, or as a single string consisting of a comma-separated list of members")
-        end
-
-        if value.is_a?(Integer) || value =~ /^\d+$/
-          raise ArgumentError, _("User names must be provided, not UID numbers.")
-        end
-
-        if value.empty?
-          raise ArgumentError, _("User names must not be empty. If you want to specify \"no users\" pass an empty array")
-        end
-
-        if provider.respond_to?(:member_valid?)
-          return provider.member_valid?(value)
-        end
-      end
-
-      def inclusive?
-        @resource[:auth_membership]
-      end
-
       def change_to_s(currentvalue, newvalue)
-        newvalue = newvalue.split(",") if newvalue != :absent
-
-        if provider.respond_to?(:members_to_s)
-          # for Windows ADSI
-          # de-dupe the "newvalue" when the sync event message is generated,
-          # due to final retrieve called after the resource has been modified
-          newvalue = provider.members_to_s(newvalue).split(',').uniq
-        end
-
+        currentvalue = currentvalue.join(",") if currentvalue != :absent
+        newvalue = newvalue.join(",")
         super(currentvalue, newvalue)
-      end
-
-      # override Puppet::Property::List#retrieve
-      def retrieve
-        if provider.respond_to?(:members_to_s)
-          # Windows ADSI members returns SIDs, but retrieve needs names
-          # must return qualified names for SIDs for "is" value and puppet resource
-          return provider.members_to_s(provider.members).split(',')
-        end
-
-        super
-      end
-
-      # The members property should also accept a comma separated
-      # list of members (a String parameter) for backwards
-      # compatibility. Unfortunately, the List property would treat
-      # our comma separated list of members as a single-element Array.
-      # This override of should= ensures that a comma separated list of
-      # members is munged to an array of members, which is what we want.
-      # Note that we cannot use `munge` because that will pass in each
-      # array element instead of the entire array if the members property
-      # is specified as an array of members, which would cause each member
-      # to be munged into an array for that case. This is undesirable
-      # behavior.
-      def should=(values)
-        super(values)
-
-        if @should.length == 1 && @should.first.include?(delimiter)
-          @should = @should.first.split(delimiter)
-        end
-
-        @should
       end
 
       def insync?(current)
@@ -160,6 +98,24 @@ module Puppet
         end
 
         super(current)
+      end
+
+      def is_to_s(currentvalue)
+        if provider.respond_to?(:members_to_s)
+          currentvalue = '' if currentvalue.nil?
+          currentvalue = currentvalue.is_a?(Array) ? currentvalue : currentvalue.split(',')
+
+          return provider.members_to_s(currentvalue)
+        end
+
+        super(currentvalue)
+      end
+      alias :should_to_s :is_to_s
+
+      validate do |value|
+        if provider.respond_to?(:member_valid?)
+          return provider.member_valid?(value)
+        end
       end
     end
 

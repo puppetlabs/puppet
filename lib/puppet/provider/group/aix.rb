@@ -53,10 +53,24 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
 
       group_hash
     end
+
+    # Define some Puppet Property => AIX Attribute (and vice versa)
+    # conversion functions here. This is so we can unit test them.
+
+    def members_to_users(members)
+      return members unless members.is_a?(Array)
+      members.join(',')
+    end
+
+    def users_to_members(users)
+      users.split(',')
+    end
   end
 
   mapping puppet_property: :members,
-          aix_attribute: :users
+          aix_attribute: :users,
+          property_to_attribute: method(:members_to_users),
+          attribute_to_property: method(:users_to_members)
 
   numeric_mapping puppet_property: :gid,
                   aix_attribute: :id

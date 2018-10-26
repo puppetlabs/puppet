@@ -17,13 +17,13 @@ end
 
     it "[#6009] should handle nested arrays of members" do
       current = ["foo", "bar", "baz"]
-      desired = "foo,quux,qorp"
+      desired = ["foo", ["quux"], "qorp"]
       group   = 'example'
 
       @resource.stubs(:[]).with(:name).returns(group)
       @resource.stubs(:[]).with(:auth_membership).returns(true)
       @provider.instance_variable_set(:@property_value_cache_hash,
-                                      { :members => current.join(',') })
+                                      { :members => current })
 
       %w{bar baz}.each do |del|
         @provider.expects(:execute).once.
