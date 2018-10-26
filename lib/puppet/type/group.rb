@@ -87,6 +87,8 @@ module Puppet
         behavior can be configured with `auth_membership`."
 
       def change_to_s(currentvalue, newvalue)
+        newvalue = actual_should(currentvalue, newvalue)
+
         currentvalue = currentvalue.join(",") if currentvalue != :absent
         newvalue = newvalue.join(",")
         super(currentvalue, newvalue)
@@ -110,7 +112,33 @@ module Puppet
 
         super(currentvalue)
       end
-      alias :should_to_s :is_to_s
+
+      def should_to_s(newvalue)
+        is_to_s(actual_should(retrieve, newvalue))
+      end
+
+      # Calculates the actual should value given the current and
+      # new values. This is only used in should_to_s and change_to_s
+      # to fix the change notification issue reported in PUP-6542.
+      def actual_should(currentvalue, newvalue)
+        currentvalue = munge_members_value(currentvalue)
+        newvalue = munge_members_value(newvalue)
+
+        if @resource[:auth_membership]
+          newvalue.uniq.sort 
+        else
+          (currentvalue + newvalue).uniq.sort
+        end
+      end
+
+      # Useful helper to handle the possible property value types that we can
+      # both pass-in and return. It munges the value into an array
+      def munge_members_value(value)
+        return [] if value == :absent
+        return value.split(',') if value.is_a?(String)
+
+        value
+      end
 
       validate do |value|
         if provider.respond_to?(:member_valid?)

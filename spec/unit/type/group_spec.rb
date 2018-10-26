@@ -72,7 +72,15 @@ describe Puppet::Type.type(:group) do
 
   describe "should delegate :members implementation to the provider:"  do
 
-    let (:provider) { @class.provide(:testing) { has_features :manages_members } }
+    let (:provider) do
+      @class.provide(:testing) do
+        has_features :manages_members
+
+        def members
+          []
+        end
+      end
+    end
     let (:provider_instance) { provider.new }
     let (:type) { @class.new(:name => "group", :provider => provider_instance, :members => ['user1']) }
 
@@ -82,11 +90,11 @@ describe Puppet::Type.type(:group) do
     end
 
     it "is_to_s and should_to_s call members_to_s" do
-      provider_instance.expects(:members_to_s).with(['user2', 'user1']).returns "user2 (), user1 ()"
+      provider_instance.expects(:members_to_s).with(['user1', 'user2']).returns "user1 (), user2 ()"
       provider_instance.expects(:members_to_s).with(['user1']).returns "user1 ()"
 
       expect(type.property(:members).is_to_s('user1')).to eq('user1 ()')
-      expect(type.property(:members).should_to_s('user2,user1')).to eq('user2 (), user1 ()')
+      expect(type.property(:members).should_to_s('user1,user2')).to eq('user1 (), user2 ()')
     end
   end
 end
