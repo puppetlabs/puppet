@@ -33,10 +33,11 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
 
       # Validate what was loaded
       unless func_info.is_a?(Hash)
-        raise ArgumentError, _("The code loaded from %{source_ref} did not produce the expected 3x function info Hash when evaluated. Got '%{klass}'") % { source_ref: source_ref, klass: created.class }
+        # TRANSLATORS - the word 'newfunction' shoud not be translated as it is a method name.
+        raise ArgumentError, _("Illegal legacy function definition! The code loaded from %{source_ref} did not return the result of calling 'newfunction'. Got '%{klass}'") % { source_ref: source_ref, klass: func_info.class }
       end
       unless func_info[:name] == "function_#{typed_name.name()}"
-        raise ArgumentError, _("The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got %{created_name}") % { 
+        raise ArgumentError, _("The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got '%{created_name}'") % { 
           source_ref: source_ref, type_name: typed_name.name, created_name: func_info[:name] }
       end
     end
