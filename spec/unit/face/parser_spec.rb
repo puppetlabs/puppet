@@ -35,6 +35,21 @@ describe Puppet::Face[:parser, :current] do
         expect { parser.validate(manifest) }.to exit_with(1)
       end
 
+      it "validates static heredoc with specified syntax" do
+        manifest = file_containing('site.pp', "@(EOT:pp)
+          { invalid =>
+          EOT
+        ")
+        expect { parser.validate(manifest) }.to exit_with(1)
+      end
+
+      it "does not validates dynamic heredoc with specified syntax" do
+        manifest = file_containing('site.pp', "@(\"EOT\":pp)
+        {invalid => ${1+1}
+        EOT")
+        expect { parser.validate(manifest) }.to_not exit_with(1)
+      end
+
       it "runs error free when there are no validation errors" do
         expect {
             manifest = file_containing('site.pp', "notify { valid: }")
