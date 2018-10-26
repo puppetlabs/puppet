@@ -1385,6 +1385,24 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect(parser.evaluate_string(scope, src)).to eq('dGhlIHF1aWNrIHJlZCBmb3g=')
     end
 
+    it "parses pp syntax checked specification" do
+      src = <<-CODE
+      @(END:pp)
+        $x = 42
+        |- END
+      CODE
+      expect(parser.evaluate_string(scope, src)).to eq('$x = 42')
+    end
+
+    it "parses epp syntax checked specification" do
+      src = <<-CODE
+      @(END:epp)
+        <% $x = 42 %><%= $x %>
+        |- END
+      CODE
+      expect(parser.evaluate_string(scope, src)).to eq('<% $x = 42 %><%= $x %>')
+    end
+
     it "parses json syntax checked specification with error and reports it" do
       src = <<-CODE
       @(END:json)
@@ -1401,6 +1419,24 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         |- END
       CODE
       expect { parser.evaluate_string(scope, src)}.to raise_error(/Cannot parse invalid Base64 string/)
+    end
+
+    it "parses pp syntax checked specification with error and reports it" do
+      src = <<-CODE
+      @(END:pp)
+        $x ==== 42
+        |- END
+      CODE
+      expect{parser.evaluate_string(scope, src)}.to raise_error(/Invalid produced text having syntax: 'pp'/)
+    end
+
+    it "parses epp syntax checked specification with error and reports it" do
+      src = <<-CODE
+      @(END:epp)
+        <% $x ==== 42 %>
+        |- END
+      CODE
+      expect{parser.evaluate_string(scope, src)}.to raise_error(/Invalid produced text having syntax: 'epp'/)
     end
 
     it "parses interpolated heredoc expression" do
