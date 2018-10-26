@@ -1067,7 +1067,7 @@ EOT
       :mode => "0640",
       :desc => "Where the CA stores the password for the private key. This setting is deprecated and will be removed in Puppet 6.",
       :hook => proc do |value|
-        Puppet.deprecation_warning(_("The 'caprivatedir' setting is deprecated and will be removed in Puppet 6."))
+        Puppet.deprecation_warning(_("The 'capass' setting is deprecated and will be removed in Puppet 6."))
       end,
     },
     :serial => {
@@ -1305,8 +1305,10 @@ EOT
     :ca => {
       :default    => true,
       :type       => :boolean,
-      :deprecated  => :completely,
       :desc       => "Whether the master should function as a certificate authority.",
+      :hook => proc do |value|
+        Puppet.deprecation_warning(_("The 'ca' setting is deprecated and will be removed in Puppet 6."))
+      end,
     },
     :trusted_oid_mapping_file => {
       :default    => "$confdir/custom_trusted_oid_mapping.yaml",
