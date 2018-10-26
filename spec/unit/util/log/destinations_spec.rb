@@ -54,6 +54,7 @@ describe Puppet::Util::Log.desttypes[:file] do
         it_behaves_like "file destination"
 
         it "logs an error if it can't chown the file owner & group" do
+          File.expects(:exists?).with(abspath).returns(false)
           FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).raises(Errno::EPERM)
           Puppet.features.expects(:root?).returns(true)
           Puppet.expects(:err).with("Unable to set ownership to #{Puppet[:user]}:#{Puppet[:group]} for log file: #{abspath}")
@@ -62,8 +63,17 @@ describe Puppet::Util::Log.desttypes[:file] do
         end
 
         it "doesn't attempt to chown when running as non-root" do
+          File.expects(:exists?).with(abspath).returns(false)
           FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).never
           Puppet.features.expects(:root?).returns(false)
+
+          @class.new(abspath)
+        end
+
+        it "doesn't attempt to chown when file already exists" do
+          File.expects(:exists?).with(abspath).returns(true)
+          FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).never
+          Puppet.features.expects(:root?).returns(true)
 
           @class.new(abspath)
         end
