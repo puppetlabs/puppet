@@ -14,4 +14,5 @@ module Puppet::SSL # :nodoc:
   require 'puppet/ssl/verifier'
   require 'puppet/ssl/verifier_adapter'
   require 'puppet/ssl/ssl_provider'
+  require 'puppet/ssl/fetcher'
 end
