@@ -509,8 +509,8 @@ class Loaders
         nil
       else
         module_data.private_loader =
-          if module_data.restrict_to_dependencies?
-            create_loader_with_dependencies_first(module_data)
+          if module_data.restrict_to_dependencies? && !Puppet[:tasks]
+            create_loader_with_only_dependencies_visible(module_data)
           else
             create_loader_with_all_modules_visible(module_data)
           end
@@ -520,13 +520,29 @@ class Loaders
     private
 
     def create_loader_with_all_modules_visible(from_module_data)
+      Puppet.debug{"ModuleLoader: module '#{from_module_data.name}' has unknown dependencies - it will have all other modules visible"}
+
       @loaders.add_loader_by_name(Loader::DependencyLoader.new(from_module_data.public_loader, "#{from_module_data.name} private", all_module_loaders()))
     end
 
-    def create_loader_with_dependencies_first(from_module_data)
+    def create_loader_with_only_dependencies_visible(from_module_data)
+      if from_module_data.unmet_dependencies?
+        if Puppet[:strict] != :off
+          msg = "ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies" \
+              " - it will only see those that are resolved." \
+              " Use 'puppet module list --tree' to see information about modules"
+          case Puppet[:strict]
+          when :error
+              raise LoaderError.new(msg)
+          when :warning
+            Puppet.warn_once(:unresolved_module_dependencies,
+                             "unresolved_dependencies_for_module_#{from_module_data.name}",
+                             msg)
+          end
+        end
+      end
       dependency_loaders = from_module_data.dependency_names.collect { |name| @index[name].public_loader }
-      visible_loaders = dependency_loaders + (all_module_loaders() - dependency_loaders)
-      @loaders.add_loader_by_name(Loader::DependencyLoader.new(from_module_data.public_loader, "#{from_module_data.name} private", visible_loaders))
+      @loaders.add_loader_by_name(Loader::DependencyLoader.new(from_module_data.public_loader, "#{from_module_data.name} private", dependency_loaders))
     end
   end
 end

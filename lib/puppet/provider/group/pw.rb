@@ -9,10 +9,7 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
   defaultfor :operatingsystem => [:freebsd, :dragonfly]
   confine    :operatingsystem => [:freebsd, :dragonfly]
 
-  options :members,
-          :flag    => "-M",
-          :method  => :mem,
-          :unmunge => proc { |members| members.join(',') }
+  options :members, :flag => "-M", :method => :mem
 
   verify :gid, _("GID must be an integer") do |value|
     value.is_a? Integer
@@ -29,6 +26,9 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
 
     if members = @resource.should(:members)
       unless members == :absent
+        if members.is_a?(Array)
+          members = members.join(",")
+        end
         cmd << "-M" << members
       end
     end
@@ -39,6 +39,10 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
   end
 
   def modifycmd(param, value)
+    # members may be an array, need a comma separated list
+    if param == :members and value.is_a?(Array)
+      value = value.join(",")
+    end
     super(param, value)
   end
 end
