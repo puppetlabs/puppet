@@ -107,7 +107,7 @@ class Loader
   #
   # @api private
   #
-  def [] (typed_name)
+  def [](typed_name)
     if found = get_entry(typed_name)
       found.value
     else
