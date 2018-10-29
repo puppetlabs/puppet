@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.7-37-gc2c25c4\n"
+"Project-Id-Version: Puppet automation framework 5.5.7-41-g4cc0859\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-10-29 17:47+0000\n"
-"PO-Revision-Date: 2018-10-29 17:47+0000\n"
+"POT-Creation-Date: 2018-10-29 19:01+0000\n"
+"PO-Revision-Date: 2018-10-29 19:01+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -2159,62 +2159,62 @@ msgstr ""
 msgid "No loader present. Call create_loaded_function(:myname, loader,...), instead of 'create_function' if running tests"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:414
+#: ../lib/puppet/functions.rb:413
 msgid "A required parameter cannot be added after an optional parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:463
+#: ../lib/puppet/functions.rb:462
 msgid "A required repeated parameter cannot be added after an optional parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:485
+#: ../lib/puppet/functions.rb:484
 msgid "block_param accepts max 2 arguments (type, name), got %{size}."
 msgstr ""
 
-#: ../lib/puppet/functions.rb:489
+#: ../lib/puppet/functions.rb:488
 msgid "Expected PCallableType or PVariantType thereof, got %{type_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:493
+#: ../lib/puppet/functions.rb:492
 msgid "Expected block_param name to be a Symbol, got %{name_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:500
+#: ../lib/puppet/functions.rb:499
 msgid "Attempt to redefine block"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:522
+#: ../lib/puppet/functions.rb:521
 msgid "Argument to 'return_type' must be a String reference to a Puppet Data Type. Got %{type_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:531
+#: ../lib/puppet/functions.rb:530
 msgid "Parameters cannot be added after a block parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:532
+#: ../lib/puppet/functions.rb:531
 msgid "Parameters cannot be added after a repeated parameter"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:535
+#: ../lib/puppet/functions.rb:534
 msgid "Parameter name argument must be a Symbol. Got %{name_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:548
+#: ../lib/puppet/functions.rb:547
 msgid "Parameter 'type' must be a String reference to a Puppet Data Type. Got %{type_class}"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:592
+#: ../lib/puppet/functions.rb:591
 msgid ""
 "Parsing of type string '\"%{type_string}\"' failed with message: <%{message}>.\n"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:635
+#: ../lib/puppet/functions.rb:634
 msgid ""
 "Parsing of 'type \"%{assignment_string}\"' failed with message: <%{message}>.\n"
 "Called from <%{ruby_file_location}>"
 msgstr ""
 
-#: ../lib/puppet/functions.rb:644
+#: ../lib/puppet/functions.rb:643
 msgid ""
 "Expected a type alias assignment on the form 'AliasType = T', got '%{assignment_string}'.\n"
 "Called from <%{ruby_file_location}>"
@@ -4546,11 +4546,11 @@ msgstr ""
 msgid "%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:178
+#: ../lib/puppet/parser/functions.rb:176
 msgid "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
 msgstr ""
 
-#: ../lib/puppet/parser/functions.rb:276
+#: ../lib/puppet/parser/functions.rb:274
 msgid "%{name}() can only be called using the 4.x function API. See Scope#call_function"
 msgstr ""
 
@@ -4954,7 +4954,7 @@ msgstr ""
 msgid "Can only delete from an Array or Hash."
 msgstr ""
 
-#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:22 ../lib/puppet/pops/evaluator/runtime3_support.rb:23 ../lib/puppet/pops/evaluator/runtime3_support.rb:525
+#: ../lib/puppet/pops/evaluator/external_syntax_support.rb:22 ../lib/puppet/pops/evaluator/runtime3_support.rb:23 ../lib/puppet/pops/evaluator/runtime3_support.rb:526
 msgid "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
 msgstr ""
 
@@ -5826,18 +5826,6 @@ msgstr ""
 
 #: ../lib/puppet/pops/loader/ruby_function_instantiator.rb:24
 msgid "The code loaded from %{source_ref} did not produce a Function class when evaluated. Got '%{klass}'"
-msgstr ""
-
-#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:17
-msgid "The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call."
-msgstr ""
-
-#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:36
-msgid "The code loaded from %{source_ref} did not produce the expected 3x function info Hash when evaluated. Got '%{klass}'"
-msgstr ""
-
-#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:39
-msgid "The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got %{created_name}"
 msgstr ""
 
 #: ../lib/puppet/pops/loader/task_instantiator.rb:16
