@@ -50,7 +50,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
       it "should return true for same lists of members" do
         current = [
           'user1',
-          'user2'
+          'user2',
         ]
         expect(provider.members_insync?(current, ['user1', 'user2'])).to be_truthy
       end
@@ -58,7 +58,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
       it "should return true for same lists of unordered members" do
         current = [
           'user1',
-          'user2'
+          'user2',
         ]
         expect(provider.members_insync?(current, ['user2', 'user1'])).to be_truthy
       end
@@ -67,7 +67,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         current = [
           'user1',
           'user2',
-          'user2'
+          'user2',
         ]
         expect(provider.members_insync?(current, ['user2', 'user1', 'user1'])).to be_truthy
       end
@@ -93,7 +93,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
           current = [
             'user1',
             'user2',
-            'user3'
+            'user3',
           ]
           expect(provider.members_insync?(current, ['user3', 'user1', 'user2'])).to be_truthy
         end
@@ -104,21 +104,21 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
         it "should return false when should is nil" do
           current = [
-            'user1'
+            'user1',
           ]
           expect(provider.members_insync?(current, nil)).to be_falsey
         end
 
         it "should return false when current contains different users than should" do
           current = [
-            'user1'
+            'user1',
           ]
           expect(provider.members_insync?(current, ['user2'])).to be_falsey
         end
 
         it "should return false when current contains members and should is empty" do
           current = [
-            'user1'
+            'user1',
           ]
           expect(provider.members_insync?(current, [])).to be_falsey
         end
@@ -130,7 +130,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         it "should return false when should user(s) are not the only items in the current" do
           current = [
             'user1',
-            'user2'
+            'user2',
           ]
           expect(provider.members_insync?(current, ['user1'])).to be_falsey
         end
@@ -138,7 +138,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         it "should return false when current user(s) is not empty and should is an empty list" do
           current = [
             'user1',
-            'user2'
+            'user2',
           ]
           expect(provider.members_insync?(current, [])).to be_falsey
         end
@@ -156,21 +156,21 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
         it "should return true when should is nil" do
           current = [
-            'user1'
+            'user1',
           ]
           expect(provider.members_insync?(current, nil)).to be_truthy
         end
 
         it "should return false when current contains different users than should" do
           current = [
-            'user1'
+            'user1',
           ]
           expect(provider.members_insync?(current, ['user2'])).to be_falsey
         end
 
         it "should return true when current contains members and should is empty" do
           current = [
-            'user1'
+            'user1',
           ]
           expect(provider.members_insync?(current, [])).to be_truthy
         end
@@ -182,7 +182,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         it "should return true when current user(s) contains at least the should list" do
           current = [
             'user1',
-            'user2'
+            'user2',
           ]
           expect(provider.members_insync?(current, ['user1'])).to be_truthy
         end
@@ -190,7 +190,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
         it "should return true when current user(s) is not empty and should is an empty list" do
           current = [
             'user1',
-            'user2'
+            'user2',
           ]
           expect(provider.members_insync?(current, [])).to be_truthy
         end
@@ -199,7 +199,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
           current = [
             'user3',
             'user1',
-            'user2'
+            'user2',
           ]
           expect(provider.members_insync?(current, ['user2','user1'])).to be_truthy
         end
@@ -232,20 +232,31 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
   end
 
   describe "when managing members" do
+    let(:user1) { stub(:account => 'user1', :domain => '.', :sid => 'user1sid') }
+    let(:user2) { stub(:account => 'user2', :domain => '.', :sid => 'user2sid') }
+    let(:user3) { stub(:account => 'user3', :domain => '.', :sid => 'user3sid') }
+
     before :each do
+      Puppet::Util::Windows::SID.stubs(:name_to_principal).with('user1').returns(user1)
+      Puppet::Util::Windows::SID.stubs(:name_to_principal).with('user2').returns(user2)
+      Puppet::Util::Windows::SID.stubs(:name_to_principal).with('user3').returns(user3)
+
       resource[:auth_membership] = true
     end
 
     it "should be able to provide a list of members" do
-      provider.group.stubs(:members).returns ['user1', 'user2', 'user3']
-      Puppet::Util::Windows::ADSI::User.stubs(:name_sid_hash)
-        .with(provider.group.members)
-        .returns({ 'user1' => '', 'user2' => '', 'user3' => '' })
+      provider.group.stubs(:members).returns [
+        'user1',
+        'user2',
+        'user3',
+      ]
 
-      expect(provider.members).to match_array(['user1', 'user2', 'user3'])
+      expect(provider.members).to match_array([user1.sid, user2.sid, user3.sid])
     end
 
     it "should be able to set group members" do
+      provider.group.stubs(:members).returns ['user1', 'user2']
+
       member_sids = [
         stub(:account => 'user1', :domain => 'testcomputername', :sid => 1),
         stub(:account => 'user2', :domain => 'testcomputername', :sid => 2),
@@ -260,7 +271,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
       provider.group.expects(:remove_member_sids).with(member_sids[0])
       provider.group.expects(:add_member_sids).with(member_sids[2])
 
-      provider.members = 'user2,user3'
+      provider.members = ['user2', 'user3']
     end
   end
 
@@ -269,13 +280,12 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
       resource[:members] = ['user1', 'user2']
 
       group = stub 'group'
-      group.stubs(:members).returns([])
       Puppet::Util::Windows::ADSI::Group.expects(:create).with('testers').returns group
 
       create = sequence('create')
       group.expects(:commit).in_sequence(create)
       # due to PUP-1967, defaultto false will set the default to nil
-      group.expects(:set_members).with('user1,user2', nil).in_sequence(create)
+      group.expects(:set_members).with(['user1', 'user2'], nil).in_sequence(create)
 
       provider.create
     end
