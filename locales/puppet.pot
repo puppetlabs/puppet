@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.0.3-23-gc04c0e0\n"
+"Project-Id-Version: Puppet automation framework 6.0.3-67-g08602c1\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-10-24 16:20+0000\n"
-"PO-Revision-Date: 2018-10-24 16:20+0000\n"
+"POT-Creation-Date: 2018-10-29 20:33+0000\n"
+"PO-Revision-Date: 2018-10-29 20:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3932,6 +3932,85 @@ msgstr ""
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
+#: ../lib/puppet/pal/compiler.rb:86
+msgid "The argument 'puppet_code' must be a String, got %{type}"
+msgstr ""
+
+#. TRANSLATORS, the 'ast' is the name of a parameter, do not translate
+#: ../lib/puppet/pal/compiler.rb:128
+msgid "The given 'ast' does not represent a literal value"
+msgstr ""
+
+#: ../lib/puppet/pal/compiler.rb:140
+msgid "The argument 'code_string' must be a String, got %{type}"
+msgstr ""
+
+#: ../lib/puppet/pal/compiler.rb:153
+msgid "The argument 'file' must be a String, got %{type}"
+msgstr ""
+
+#: ../lib/puppet/pal/compiler.rb:190
+msgid "Given data_type value is not a data type, got '%{type}'"
+msgstr ""
+
+#. TRANSLATORS 'type' and 'title' are internal parameter names - do not translate
+#: ../lib/puppet/pal/json_catalog_encoder.rb:52
+msgid "Both type and title must be given"
+msgstr ""
+
+#. TRANSLATORS: do not translate the variable names in this error message
+#. TRANSLATORS: do not translate the variable names in this error message
+#: ../lib/puppet/pal/pal_impl.rb:73 ../lib/puppet/pal/pal_impl.rb:166
+msgid "manifest_file or code_string cannot be given when configured_by_env is true"
+msgstr ""
+
+#: ../lib/puppet/pal/pal_impl.rb:206
+msgid "temporary environment name"
+msgstr ""
+
+#. TRANSLATORS: do not translate variable name string in these assertions
+#: ../lib/puppet/pal/pal_impl.rb:211
+msgid "A block must be given to 'in_tmp_environment'"
+msgstr ""
+
+#. TRANSLATORS terms in the assertions below are names of terms in code
+#: ../lib/puppet/pal/pal_impl.rb:265
+msgid "A block must be given to 'in_environment'"
+msgstr ""
+
+#. TRANSLATORS 'in_environment' is a name, do not translate
+#: ../lib/puppet/pal/pal_impl.rb:270
+msgid "The environment directory '%{env_dir}' does not exist"
+msgstr ""
+
+#: ../lib/puppet/pal/pal_impl.rb:293
+msgid "No directory found for the environment '%{env_name}' on the path '%{envpath}'"
+msgstr ""
+
+#: ../lib/puppet/pal/pal_impl.rb:347
+msgid "Given variables must be a hash, got %{type}"
+msgstr ""
+
+#: ../lib/puppet/pal/pal_impl.rb:353
+msgid "Given variable '%{varname}' has illegal name"
+msgstr ""
+
+#: ../lib/puppet/pal/pal_impl.rb:357
+msgid "Given value for '%{varname}' has illegal type - got: %{type}"
+msgstr ""
+
+#: ../lib/puppet/pal/pal_impl.rb:497
+msgid "Puppet Pal: %{what}"
+msgstr ""
+
+#: ../lib/puppet/pal/pal_impl.rb:511
+msgid "Cannot use '%{a_term}' and '%{b_term}' at the same time"
+msgstr ""
+
+#: ../lib/puppet/pal/pal_impl.rb:518
+msgid "A block must be given"
+msgstr ""
+
 #: ../lib/puppet/parameter.rb:345
 msgid "No resource set for %{name}"
 msgstr ""
@@ -6843,31 +6922,31 @@ msgstr ""
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:22
+#: ../lib/puppet/provider/service/windows.rb:23
 msgid "Cannot enable %{resource_name}, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:28
+#: ../lib/puppet/provider/service/windows.rb:29
 msgid "Cannot disable %{resource_name}, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:34
+#: ../lib/puppet/provider/service/windows.rb:35
 msgid "Cannot enable %{resource_name} for manual start, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:52
+#: ../lib/puppet/provider/service/windows.rb:53
 msgid "Unknown start type: %{start_type}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:55
+#: ../lib/puppet/provider/service/windows.rb:56
 msgid "Cannot get start type %{resource_name}, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:69
+#: ../lib/puppet/provider/service/windows.rb:70
 msgid "Will not start disabled service %{resource_name} without managing enable. Specify 'enable => false' to override."
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:101
+#: ../lib/puppet/provider/service/windows.rb:102
 msgid "Unknown service state '%{current_state}' for service '%{resource_name}'"
 msgstr ""
 
@@ -8216,8 +8295,12 @@ msgstr ""
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:89
+#: ../lib/puppet/type/service.rb:91
 msgid "Setting enable to manual is only supported on Microsoft Windows."
+msgstr ""
+
+#: ../lib/puppet/type/service.rb:247
+msgid "\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer"
 msgstr ""
 
 #: ../lib/puppet/type/tidy.rb:85
@@ -9427,115 +9510,115 @@ msgstr ""
 msgid "Failed to set security information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:300
-msgid "Starting the %{service_name} service"
+#: ../lib/puppet/util/windows/service.rb:301
+msgid "Starting the %{service_name} service. Timeout set to: %{timeout} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:310
+#: ../lib/puppet/util/windows/service.rb:311
 msgid "Failed to start the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:314
+#: ../lib/puppet/util/windows/service.rb:315
 msgid "Successfully started the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:322
-msgid "Stopping the %{service_name} service"
+#: ../lib/puppet/util/windows/service.rb:324
+msgid "Stopping the %{service_name} service. Timeout set to: %{timeout} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:330
+#: ../lib/puppet/util/windows/service.rb:332
 msgid "Successfully stopped the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:338
-msgid "Resuming the %{service_name} service"
+#: ../lib/puppet/util/windows/service.rb:341
+msgid "Resuming the %{service_name} service. Timeout set to: %{timeout} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:354
+#: ../lib/puppet/util/windows/service.rb:357
 msgid "Successfully resumed the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:369
+#: ../lib/puppet/util/windows/service.rb:372
 msgid "Unknown Service state '%{current_state}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:386
+#: ../lib/puppet/util/windows/service.rb:389
 msgid "Unknown start type '%{start_type}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:401
+#: ../lib/puppet/util/windows/service.rb:404
 msgid "Unknown start type %{start_type}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:422
+#: ../lib/puppet/util/windows/service.rb:425
 msgid "Failed to update service configuration"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:482
+#: ../lib/puppet/util/windows/service.rb:485
 msgid "Failed to fetch services"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:531
+#: ../lib/puppet/util/windows/service.rb:534
 msgid "Failed to open a handle to the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:548
+#: ../lib/puppet/util/windows/service.rb:551
 msgid "Failed to open a handle to the service control manager"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:571
+#: ../lib/puppet/util/windows/service.rb:575
 msgid "The service is already in the %{final_state} state. No further work needs to be done."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:583
+#: ../lib/puppet/util/windows/service.rb:587
 msgid "The service must be in one of the %{valid_initial_states} states to perform this transition. It is currently in the %{current_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:594
+#: ../lib/puppet/util/windows/service.rb:598
 msgid "There is already a pending transition to the %{final_state} state for the %{service_name} service."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:610
+#: ../lib/puppet/util/windows/service.rb:614
 msgid "The service is in the %{pending_state} state, which is an unsafe pending state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:615
+#: ../lib/puppet/util/windows/service.rb:619
 msgid "Transitioning the %{service_name} service from %{initial_state} to %{final_state}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:619
+#: ../lib/puppet/util/windows/service.rb:623
 msgid "Waiting for the transition to finish"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:623
+#: ../lib/puppet/util/windows/service.rb:627
 msgid "Failed to transition the %{service_name} service to the %{final_state} state. Detail: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:662 ../lib/puppet/util/windows/service.rb:698
+#: ../lib/puppet/util/windows/service.rb:666 ../lib/puppet/util/windows/service.rb:702
 msgid "Service query failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:715
+#: ../lib/puppet/util/windows/service.rb:719
 msgid "Failed to send the %{control_signal} signal to the service. Its current state is %{current_state}. Failed with"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:749
+#: ../lib/puppet/util/windows/service.rb:754
 msgid "The service transitioned to the %{pending_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:759
+#: ../lib/puppet/util/windows/service.rb:764
 msgid "Timed out while waiting for the service to transition from %{initial_state} to %{final_state} OR from %{initial_state} to %{pending_state} to %{final_state}. The service's current state is %{current_state}."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:773
+#: ../lib/puppet/util/windows/service.rb:779
 msgid "Waiting for the pending transition to the %{final_state} state to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:786
+#: ../lib/puppet/util/windows/service.rb:792
 msgid "Unexpected transition to the %{current_state} state while waiting for the pending transition from %{pending_state} to %{final_state} to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:800
+#: ../lib/puppet/util/windows/service.rb:806
 msgid "Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}."
 msgstr ""
 
@@ -9577,83 +9660,4 @@ msgstr ""
 
 #: ../lib/puppet/util/yaml.rb:47
 msgid "Puppet::Util::Yaml.load_file is deprecated. Use safe_load_file instead."
-msgstr ""
-
-#: ../lib/puppet_pal.rb:112
-msgid "The argument 'puppet_code' must be a String, got %{type}"
-msgstr ""
-
-#. TRANSLATORS, the 'ast' is the name of a parameter, do not translate
-#: ../lib/puppet_pal.rb:154
-msgid "The given 'ast' does not represent a literal value"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:166
-msgid "The argument 'code_string' must be a String, got %{type}"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:179
-msgid "The argument 'file' must be a String, got %{type}"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:216
-msgid "Given data_type value is not a data type, got '%{type}'"
-msgstr ""
-
-#. TRANSLATORS 'type' and 'title' are internal parameter names - do not translate
-#: ../lib/puppet_pal.rb:455
-msgid "Both type and title must be given"
-msgstr ""
-
-#. TRANSLATORS: do not translate the variable names in this error message
-#. TRANSLATORS: do not translate the variable names in this error message
-#: ../lib/puppet_pal.rb:684 ../lib/puppet_pal.rb:777
-msgid "manifest_file or code_string cannot be given when configured_by_env is true"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:817
-msgid "temporary environment name"
-msgstr ""
-
-#. TRANSLATORS: do not translate variable name string in these assertions
-#: ../lib/puppet_pal.rb:822
-msgid "A block must be given to 'in_tmp_environment'"
-msgstr ""
-
-#. TRANSLATORS terms in the assertions below are names of terms in code
-#: ../lib/puppet_pal.rb:876
-msgid "A block must be given to 'in_environment'"
-msgstr ""
-
-#. TRANSLATORS 'in_environment' is a name, do not translate
-#: ../lib/puppet_pal.rb:881
-msgid "The environment directory '%{env_dir}' does not exist"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:904
-msgid "No directory found for the environment '%{env_name}' on the path '%{envpath}'"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:958
-msgid "Given variables must be a hash, got %{type}"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:964
-msgid "Given variable '%{varname}' has illegal name"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:968
-msgid "Given value for '%{varname}' has illegal type - got: %{type}"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:1108
-msgid "Puppet Pal: %{what}"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:1122
-msgid "Cannot use '%{a_term}' and '%{b_term}' at the same time"
-msgstr ""
-
-#: ../lib/puppet_pal.rb:1129
-msgid "A block must be given"
 msgstr ""
