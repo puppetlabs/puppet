@@ -33,27 +33,15 @@ MANIFEST
     :stop_sleep => 0,
   }
 
-  # The wait hint we provide in MockService.cs is
-  # 10 seconds, having the service sleep for 20
-  # will supply the failure scenario on a failed
-  # startup
-  mock_service_startfail = {
-    :name => "mock_service_startfail",
-    :start_sleep => 60,
+  # Since the default timeout for service operations is
+  # 30 seconds, waiting for 40 should ensure that the service
+  # operation will fail with a default timeout.
+  mock_service_long_start_stop = {
+    :name => "mock_service_long_start_stop",
+    :start_sleep => 40,
     :pause_sleep => 0,
     :continue_sleep => 0,
-    :stop_sleep => 0,
-  }
-  # The wait hint we provide in MockService.cs is
-  # 10 seconds, having the service sleep for 20
-  # will supply the failure scenario on a failed
-  # shutdown
-  mock_service_stopfail = {
-    :name => "mock_service_stopfail",
-    :start_sleep => 0,
-    :pause_sleep => 0,
-    :continue_sleep => 0,
-    :stop_sleep => 60,
+    :stop_sleep => 40,
   }
 
   agents.each do |agent|
@@ -153,30 +141,34 @@ MANIFEST
     # delete the service so it doesn't interfere with subsequent tests
     delete_service(agent, mock_service_nofail[:name])
 
-    setup_service(agent, mock_service_startfail, 'MockService.cs')
+    setup_service(agent, mock_service_long_start_stop, 'MockService.cs')
 
     step 'Verify that starting a service fails if the service does not start by the expiration of the wait hint' do
-      apply_manifest_on(agent, service_manifest(mock_service_startfail[:name], ensure: :running)) do |result|
-        assert_match(/#{mock_service_startfail[:name]}/, result.stderr, 'No progress made on service operation and dwWaitHint exceeded')
+      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], ensure: :running)) do |result|
+        assert_match(/#{mock_service_long_start_stop[:name]}/, result.stderr, 'No progress made on service operation and dwWaitHint exceeded')
       end
     end
 
-    # delete the service so it doesn't interfere with subsequent tests
-    delete_service(agent, mock_service_startfail[:name])
+    # delete and recreate the service so it doesn't interfere with subsequent tests
+    delete_service(agent, mock_service_long_start_stop[:name])
+    setup_service(agent, mock_service_long_start_stop, 'MockService.cs')
 
-    setup_service(agent, mock_service_stopfail, 'MockService.cs')
+    step 'Verify that starting a service works if the service has a long start and a long timeout' do
+      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], ensure: :running, timeout: 45))
+      assert_service_properties_on(agent, mock_service_long_start_stop[:name], State: 'Running')
+    end
 
     step 'Start the Service to prepare for subsequent test' do
-      apply_manifest_on(agent, service_manifest(mock_service_stopfail[:name], enable: true, ensure: :running))
+      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], enable: true, ensure: :running))
     end
 
     step 'Verify that stopping a service fails if the service does not stop by the expiration of the wait hint' do
-      apply_manifest_on(agent, service_manifest(mock_service_stopfail[:name], ensure: :stopped)) do |result|
-        assert_match(/#{mock_service_stopfail[:name]}/, result.stderr, 'No progress made on service operation and dwWaitHint exceeded')
+      apply_manifest_on(agent, service_manifest(mock_service_long_start_stop[:name], ensure: :stopped)) do |result|
+        assert_match(/#{mock_service_long_start_stop[:name]}/, result.stderr, 'No progress made on service operation and dwWaitHint exceeded')
       end
     end
 
     # delete the service so it doesn't interfere with subsequent tests
-    delete_service(agent, mock_service_stopfail[:name])
+    delete_service(agent, mock_service_long_start_stop[:name])
   end
 end

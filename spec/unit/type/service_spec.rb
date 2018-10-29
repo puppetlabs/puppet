@@ -29,7 +29,7 @@ end
 describe test_title, "when validating attributes" do
   safely_load_service_type
 
-  [:name, :binary, :hasstatus, :path, :pattern, :start, :restart, :stop, :status, :hasrestart, :control].each do |param|
+  [:name, :binary, :hasstatus, :path, :pattern, :start, :restart, :stop, :status, :hasrestart, :control, :timeout].each do |param|
     it "should have a #{param} parameter" do
       expect(Puppet::Type.type(:service).attrtype(param)).to eq(:param)
     end
@@ -100,6 +100,32 @@ describe test_title, "when validating attribute values" do
         Puppet::Error,
         /Setting enable to manual is only supported on Microsoft Windows\./
       )
+    end
+  end
+
+  describe "the timeout parameter" do
+    before do
+      provider_class_with_timeout = Puppet::Type.type(:service).provide(:simple) do
+        has_features :configurable_timeout
+      end
+      Puppet::Type.type(:service).stubs(:defaultprovider).returns provider_class_with_timeout
+    end
+
+    it "should fail when timeout is not an integer" do
+      expect { Puppet::Type.type(:service).new(:name => "yay", :timeout => 'foobar') }.to raise_error(Puppet::Error)
+    end
+
+    [-999, -1, 0].each do |int|
+      it "should not support #{int} as a value to :timeout" do
+        expect { Puppet::Type.type(:service).new(:name => "yay", :timeout => int) }.to raise_error(Puppet::Error)
+      end
+    end
+
+    [1, 30, 999].each do |int|
+      it "should support #{int} as a value to :timeout" do
+        srv = Puppet::Type.type(:service).new(:name => "yay", :timeout => int)
+        expect(srv[:timeout]).to eq(int)
+      end
     end
   end
 

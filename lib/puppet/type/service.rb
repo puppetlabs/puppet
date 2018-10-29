@@ -45,6 +45,8 @@ module Puppet
     feature :maskable, "The provider can 'mask' the service.",
       :methods => [:mask]
 
+    feature :configurable_timeout, "The provider can specify a minumum timeout for syncing service properties"
+
     newproperty(:enable, :required_features => :enableable) do
       desc "Whether a service should be enabled to start at boot.
         This property behaves quite differently depending on the platform;
@@ -235,6 +237,16 @@ module Puppet
 
     newparam(:manifest) do
       desc "Specify a command to config a service, or a path to a manifest to do so."
+    end
+
+    newparam(:timeout, :required_features => :configurable_timeout) do
+      desc "Specify an optional minimum timeout (in seconds) for puppet to wait when syncing service properties"
+      defaultto { provider.class.respond_to?(:default_timeout) ? provider.default_timeout : 10 }
+      validate do |value|
+        if (not value.is_a? Integer) || value < 1
+          raise Puppet::Error.new(_("\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer") % { value: value })
+        end
+      end
     end
 
     # Basically just a synonym for restarting.  Used to respond

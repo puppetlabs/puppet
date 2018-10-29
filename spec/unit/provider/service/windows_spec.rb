@@ -42,13 +42,13 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
     it "should resume a paused service" do
       provider.stubs(:status).returns(:paused)
-      service_util.expects(:resume).with(name)
+      service_util.expects(:resume)
       provider.start
     end
 
     it "should start the service" do
       service_util.expects(:service_start_type).with(name).returns(:SERVICE_AUTO_START)
-      service_util.expects(:start).with(name)
+      service_util.expects(:start)
       provider.start
     end
 
@@ -63,7 +63,7 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
       it "should enable if managing enable and enable is true" do
         resource[:enable] = :true
-        service_util.expects(:start).with(name)
+        service_util.expects(:start)
         service_util.expects(:set_startup_mode).with(name, :SERVICE_AUTO_START)
 
         provider.start
@@ -71,7 +71,7 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
       it "should manual start if managing enable and enable is false" do
         resource[:enable] = :false
-        service_util.expects(:start).with(name)
+        service_util.expects(:start)
         service_util.expects(:set_startup_mode).with(name, :SERVICE_DEMAND_START)
 
         provider.start
@@ -81,7 +81,7 @@ describe 'Puppet::Type::Service::Provider::Windows',
 
   describe "#stop" do
     it "should stop a running service" do
-      service_util.expects(:stop).with(name)
+      service_util.expects(:stop)
 
       provider.stop
     end
