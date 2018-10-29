@@ -196,22 +196,6 @@ class Runtime3FunctionArgumentConverter < Runtime3Converter
     o.to_s
   end
 
-  # Converts result back to 4.x by replacing :undef with nil in Array and Hash objects
-  #
-  def self.convert_return(val3x)
-    if val3x == :undef
-      nil
-    elsif val3x.is_a?(Array)
-      val3x.map {|v| convert_return(v) }
-    elsif val3x.is_a?(Hash)
-      hsh = {}
-      val3x.each_pair {|k,v| hsh[convert_return(k)] = convert_return(v)}
-      hsh
-    else
-      val3x
-    end
-  end
-
   @instance = self.new
 end
 
