@@ -36,10 +36,10 @@ unless the '--all' option is set.
   `openssl x509 -noout -text -in certificate.pem`
 
 * revoke:
-  Use `puppetserver ca revoke --cerntname NAME[,NAME...]`
+  Use `puppetserver ca revoke --certname NAME[,NAME...]`
 
 * sign:
-  Use `puppetserver ca sign --cerntname NAME[,NAME...]`
+  Use `puppetserver ca sign --certname NAME[,NAME...]`
 
 * verify:
   Use `puppet ssl verify [--certname NAME]`
