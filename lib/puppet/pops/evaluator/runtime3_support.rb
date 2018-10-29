@@ -305,15 +305,14 @@ module Runtime3Support
         return Kernel.eval('_func.call(scope, *args, &block)'.freeze, Kernel.binding, file || '', line)
       end
     end
-    # Call via 3x API if function exists there
+    # Call via 3x API if function exists there without having been autoloaded
     fail(Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
     mapped_args = Runtime3FunctionArgumentConverter.map_args(args, scope, '')
-    result = Puppet::Pops::PuppetStack.stack(file, line, scope, "function_#{name}", [mapped_args], &block)
-    # Prevent non r-value functions from leaking their result (they are not written to care about this)
-    Puppet::Parser::Functions.rvalue?(name) ? result : nil
+    # The 3x function performs return value mapping and returns nil if it is not of rvalue type
+    Puppet::Pops::PuppetStack.stack(file, line, scope, "function_#{name}", [mapped_args], &block)
   end
 
   # The o is used for source reference

@@ -385,6 +385,7 @@ module Puppet::Functions
     end
   end
 
+
   # Public api methods of the DispatcherBuilder are available within dispatch()
   # blocks declared in a Puppet::Function.create_function() call.
   #
@@ -678,6 +679,128 @@ module Puppet::Functions
       internal_call_function(scope, function_name, args, &block)
     end
   end
+
+  class Function3x < InternalFunction
+
+    # Table of optimized parameter names - 0 to 5 parameters
+    PARAM_NAMES = [
+      [],
+      ['p0'.freeze].freeze,
+      ['p0'.freeze, 'p1'.freeze].freeze,
+      ['p0'.freeze, 'p1'.freeze, 'p2'.freeze].freeze,
+      ['p0'.freeze, 'p1'.freeze, 'p2'.freeze, 'p3'.freeze].freeze,
+      ['p0'.freeze, 'p1'.freeze, 'p2'.freeze, 'p3'.freeze, 'p4'.freeze].freeze,
+    ]
+
+    # Creates an anonymous Function3x class that wraps a 3x function
+    #
+    # @api private
+    def self.create_function(func_name, func_info, loader)
+      func_name = func_name.to_s
+
+      # Creates an anonymous class to represent the function
+      # The idea being that it is garbage collected when there are no more
+      # references to it.
+      #
+      # (Do not give the class the block here, as instance variables should be set first)
+      the_class = Class.new(Function3x)
+
+      unless loader.nil?
+        the_class.instance_variable_set(:'@loader', loader.private_loader)
+      end
+
+      the_class.instance_variable_set(:'@func_name', func_name)
+      the_class.instance_variable_set(:'@method3x', :"function_#{func_name}")
+
+      # Make the anonymous class appear to have the class-name <func_name>
+      # Even if this class is not bound to such a symbol in a global ruby scope and
+      # must be resolved via the loader.
+      # This also overrides any attempt to define a name method in the given block
+      # (Since it redefines it)
+      #
+      the_class.instance_eval do
+        def name
+          @func_name
+        end
+
+        def loader
+          @loader
+        end
+
+        def method3x
+          @method3x
+        end
+      end
+
+      # Add the method that is called - it simply delegates to
+      # the 3.x function by calling it via the calling scope using the @method3x symbol
+      # :"function_#{name}".
+      #
+      # When function is not an rvalue function, make sure it produces nil
+      #
+      the_class.class_eval do
+
+        # Bypasses making the  call via the dispatcher to make sure errors
+        # are reported exactly the same way as in 3x. The dispatcher is still needed as it is
+        # used to support other features than calling.
+        #
+        def call(scope, *args, &block)
+          begin
+            result = catch(:return) do
+              mapped_args = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.map_args(args, scope, '')
+              # this is the scope.function_xxx(...) call
+              return scope.send(self.class.method3x, mapped_args)
+            end
+            return result.value
+          rescue Puppet::Pops::Evaluator::Next => jumper
+            begin
+              throw :next, jumper.value
+            rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
+              raise Puppet::ParseError.new("next() from context where this is illegal", jumper.file, jumper.line)
+            end
+          rescue Puppet::Pops::Evaluator::Return => jumper
+            begin
+              throw :return, jumper
+            rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
+              raise Puppet::ParseError.new("return() from context where this is illegal", jumper.file, jumper.line)
+            end
+          end
+        end
+      end
+
+      # Create a dispatcher based on func_info
+      type, names = Puppet::Functions.any_signature(*from_to_names(func_info))
+      last_captures_rest = (type.size_range[1] == Float::INFINITY)
+
+      # The method '3x_function' here is a dummy as the dispatcher is not used for calling, only for information.
+      the_class.dispatcher.add(Puppet::Pops::Functions::Dispatch.new(type, '3x_function', names, last_captures_rest))
+      # The function class is returned as the result of the create function method
+      the_class
+    end
+
+    # Compute min and max number of arguments and a list of constructed
+    # parameter names p0 - pn (since there are no parameter names in 3x functions).
+    #
+    # @api private
+    def self.from_to_names(func_info)
+      arity = func_info[:arity]
+      if arity.nil?
+        arity = -1
+      end
+      if arity < 0
+        from = -arity - 1 # arity -1 is 0 min param, -2 is min 1 param
+        to = :default     # infinite range
+        count = -arity    # the number of named parameters
+      else
+        count = from = to = arity
+      end
+      # Names of parameters, up to 5 are optimized and use frozen version
+      # Note that (0..count-1) produces expected empty array for count == 0, 0-n for count >= 1
+      names = count <= 5 ? PARAM_NAMES[count] : (0..count-1).map {|n| "p#{n}" }
+      [from, to, names]
+    end
+  end
+
 
   # Injection and Weaving of parameters
   # ---
