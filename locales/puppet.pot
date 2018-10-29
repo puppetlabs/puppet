@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.7-31-g24e5d95\n"
+"Project-Id-Version: Puppet automation framework 5.5.7-37-gc2c25c4\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-10-26 16:46+0000\n"
-"PO-Revision-Date: 2018-10-26 16:46+0000\n"
+"POT-Creation-Date: 2018-10-29 17:47+0000\n"
+"PO-Revision-Date: 2018-10-29 17:47+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6544,7 +6544,7 @@ msgstr ""
 msgid "aix.object_info(): Could not find %{resource}[%{name}]"
 msgstr ""
 
-#: ../lib/puppet/provider/aix_object.rb:469 ../lib/puppet/provider/nameservice.rb:180 ../lib/puppet/provider/nameservice/directoryservice.rb:423
+#: ../lib/puppet/provider/aix_object.rb:469 ../lib/puppet/provider/nameservice.rb:180 ../lib/puppet/provider/nameservice/directoryservice.rb:421
 msgid "Could not create %{resource} %{name}: %{detail}"
 msgstr ""
 
@@ -6692,7 +6692,7 @@ msgstr ""
 msgid "No AIX group exists with a group name or gid of %{group}!"
 msgstr ""
 
-#: ../lib/puppet/provider/group/groupadd.rb:13 ../lib/puppet/provider/group/pw.rb:17
+#: ../lib/puppet/provider/group/groupadd.rb:13 ../lib/puppet/provider/group/pw.rb:14
 msgid "GID must be an integer"
 msgstr ""
 
@@ -6824,7 +6824,7 @@ msgstr ""
 msgid "autogen_id() does not support auto generation of id for resource type %{resource_type}"
 msgstr ""
 
-#: ../lib/puppet/provider/nameservice.rb:169 ../lib/puppet/provider/nameservice/directoryservice.rb:378
+#: ../lib/puppet/provider/nameservice.rb:169 ../lib/puppet/provider/nameservice/directoryservice.rb:376
 msgid "already exists"
 msgstr ""
 
@@ -6836,7 +6836,7 @@ msgstr ""
 msgid "Nameservice command must be an array"
 msgstr ""
 
-#: ../lib/puppet/provider/nameservice.rb:282 ../lib/puppet/provider/nameservice/directoryservice.rb:337 ../lib/puppet/provider/nameservice/directoryservice.rb:368
+#: ../lib/puppet/provider/nameservice.rb:282 ../lib/puppet/provider/nameservice/directoryservice.rb:337 ../lib/puppet/provider/nameservice/directoryservice.rb:366
 msgid "Could not set %{param} on %{resource}[%{name}]: %{detail}"
 msgstr ""
 
@@ -6861,15 +6861,15 @@ msgstr ""
 msgid "Invalid id_type %{id_type}. Only 'uid' and 'gid' supported"
 msgstr ""
 
-#: ../lib/puppet/provider/nameservice/directoryservice.rb:395
+#: ../lib/puppet/provider/nameservice/directoryservice.rb:393
 msgid "Could not set GeneratedUID for %{resource} %{name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/nameservice/directoryservice.rb:443
+#: ../lib/puppet/provider/nameservice/directoryservice.rb:441
 msgid "Could not remove %{member} from group: %{resource}, %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/nameservice/directoryservice.rb:457
+#: ../lib/puppet/provider/nameservice/directoryservice.rb:455
 msgid "Could not add %{new_member} to group: %{name}, %{detail}"
 msgstr ""
 
@@ -8714,24 +8714,12 @@ msgstr ""
 msgid "Could not create %{type} filebucket: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/group.rb:61
+#: ../lib/puppet/type/group.rb:60
 msgid "GID cannot be deleted"
 msgstr ""
 
-#: ../lib/puppet/type/group.rb:73
+#: ../lib/puppet/type/group.rb:72
 msgid "Invalid GID %{gid}"
-msgstr ""
-
-#: ../lib/puppet/type/group.rb:92
-msgid "The members property must be specified as either an array of strings, or as a single string consisting of a comma-separated list of members"
-msgstr ""
-
-#: ../lib/puppet/type/group.rb:96
-msgid "User names must be provided, not UID numbers."
-msgstr ""
-
-#: ../lib/puppet/type/group.rb:100
-msgid "User names must not be empty. If you want to specify \"no users\" pass an empty array"
 msgstr ""
 
 #: ../lib/puppet/type/host.rb:32
