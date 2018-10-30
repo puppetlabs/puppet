@@ -53,10 +53,30 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
 
       group_hash
     end
+
+    # Define some Puppet Property => AIX Attribute (and vice versa)
+    # conversion functions here. This is so we can unit test them.
+
+    def members_to_users(provider, members)
+      members = members.split(',') if members.is_a?(String)
+      unless provider.resource[:auth_membership]
+        current_members = provider.members
+        current_members = [] if current_members == :absent
+        members = (members + current_members).uniq
+      end
+
+      members.join(',')
+    end
+
+    def users_to_members(users)
+      users.split(',')
+    end
   end
 
   mapping puppet_property: :members,
-          aix_attribute: :users
+          aix_attribute: :users,
+          property_to_attribute: method(:members_to_users),
+          attribute_to_property: method(:users_to_members)
 
   numeric_mapping puppet_property: :gid,
                   aix_attribute: :id
@@ -65,4 +85,14 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   # the resource methods (property getters + setters for our mapped
   # properties + a getter for the attributes property).
   mk_resource_methods
+
+  # We could add this to the top-level members property since the
+  # implementation is not platform-specific; however, it is best
+  # to do it this way so that we do not accidentally break something.
+  # This is ok for now, since we do plan on moving this and the
+  # auth_membership management over to the property class in a future
+  # Puppet release.
+  def members_insync?(current, should)
+    current.sort == @resource.parameter(:members).actual_should(current, should)
+  end
 end
