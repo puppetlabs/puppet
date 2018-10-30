@@ -35,7 +35,7 @@ Puppet::Face.define(:config, '0.0.1') do
 
   action(:print) do
     summary _("Examine Puppet's current settings.")
-    arguments _("(all | <setting> [<setting> ...]")
+    arguments _("all | <setting> [<setting> ...]")
     description <<-'EOT'
       Prints the value of a single setting or a list of settings.
 
