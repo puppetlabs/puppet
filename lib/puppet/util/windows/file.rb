@@ -5,6 +5,9 @@ module Puppet::Util::Windows::File
   extend FFI::Library
   extend Puppet::Util::Windows::String
 
+  # https://docs.microsoft.com/en-us/windows/desktop/fileio/naming-a-file#maximum-path-length-limitation
+  MAX_PATH = 260
+
   FILE_ATTRIBUTE_READONLY      = 0x00000001
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379607(v=vs.85).aspx

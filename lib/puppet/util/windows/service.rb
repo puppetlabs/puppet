@@ -282,7 +282,7 @@ module Puppet::Util::Windows
 
     # Returns true if the service exists, false otherwise.
     #
-    # @param [:string] service_name name of the service
+    # @param [String] service_name name of the service
     def exists?(service_name)
       open_service(service_name, SC_MANAGER_CONNECT, SERVICE_QUERY_STATUS) do |_|
         true
@@ -567,7 +567,7 @@ module Puppet::Util::Windows
 
           # If the service is already in the final_state, then
           # no further work needs to be done
-          if initial_state == final_state 
+          if initial_state == final_state
             Puppet.debug _("The service is already in the %{final_state} state. No further work needs to be done.") % { final_state: SERVICE_STATES[final_state] }
 
             next
@@ -633,6 +633,7 @@ module Puppet::Util::Windows
       def query_status(service)
         size_required = nil
         status = nil
+        status_hash = {}
         # Fetch the bytes of memory required to be allocated
         # for QueryServiceConfigW to return succesfully. This
         # is done by sending NULL and 0 for the pointer and size
@@ -661,9 +662,22 @@ module Puppet::Util::Windows
             if success == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(_("Service query failed"))
             end
+            # Write the contents of status to a ruby hash, that will not be freed
+            status_hash = {
+              :dwServiceType => status[:dwServiceType],
+              :dwCurrentState => status[:dwCurrentState],
+              :dwControlsAccepted => status[:dwControlsAccepted],
+              :dwWin32ExitCode => status[:dwWin32ExitCode],
+              :dwServiceSpecificExitCode => status[:dwServiceSpecificExitCode],
+              :dwCheckPoint => status[:dwCheckPoint],
+              :dwWaitHint => status[:dwWaitHint],
+              :dwProcessId => status[:dwProcessId],
+              :dwServiceFlags => status[:dwServiceFlags]
+            }
+          # memory inside the 'status' SERVICE_STATUS_PROCESS is freed at this closing end
           end
         end
-        status
+        status_hash
       end
       private :query_status
 
@@ -676,6 +690,7 @@ module Puppet::Util::Windows
       def query_config(service)
         config = nil
         size_required = nil
+        config_hash = {}
         # Fetch the bytes of memory required to be allocated
         # for QueryServiceConfigW to return succesfully. This
         # is done by sending NULL and 0 for the pointer and size
@@ -697,9 +712,24 @@ module Puppet::Util::Windows
             if success == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(_("Service query failed"))
             end
+            # Write the contents of config to a ruby hash that will not be freed.
+            # read the values of pointers with read_arbitrary_wide_string_up_to, otherwise
+            # just clone them
+            config_hash = {
+              :dwServiceType      => config[:dwServiceType],
+              :dwStartType        => config[:dwStartType],
+              :dwErrorControl     => config[:dwErrorControl],
+              :lpBinaryPathName   => config[:lpBinaryPathName].read_arbitrary_wide_string_up_to(FILE::MAX_PATH),
+              :lpLoadOrderGroup   => config[:lpLoadOrderGroup].read_arbitrary_wide_string_up_to(65534),
+              :dwTagId            => config[:dwTagId],
+              :lpDependencies     => config[:lpDependencies].read_arbitrary_wide_string_up_to(65534),
+              :lpServiceStartName => config[:lpServiceStartName].read_arbitrary_wide_string_up_to(SERVICENAME_MAX),
+              :lpDisplayName      => config[:lpDisplayName].read_arbitrary_wide_string_up_to(SERVICENAME_MAX),
+            }
+          # memory inside the 'config' QUERY_SERVICE_CONFIGW is freed at this closing end
           end
         end
-        config
+        config_hash
       end
       private :query_config
 
@@ -794,7 +824,7 @@ module Puppet::Util::Windows
             last_checkpoint = status[:dwCheckPoint]
           else
             wait_hint = milliseconds_to_seconds(status[:dwWaitHint])
-            timeout = wait_hint < DEFAULT_TIMEOUT ? DEFAULT_TIMEOUT : wait_hint 
+            timeout = wait_hint < DEFAULT_TIMEOUT ? DEFAULT_TIMEOUT : wait_hint
 
             if elapsed_time >= timeout
               raise Puppet::Error, _("Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}.") % { pending_state: SERVICE_STATES[pending_state], final_state: SERVICE_STATES[final_state], current_state: SERVICE_STATES[state] }

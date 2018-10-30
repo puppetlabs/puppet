@@ -66,6 +66,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
     pointer.stubs(:read_dword)
     pointer.stubs(:write_dword)
     pointer.stubs(:size)
+    pointer.stubs(:read_arbitrary_wide_string_up_to)
     subject.stubs(:sleep)
   end
 
@@ -210,7 +211,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
       it "raises a Puppet::Error if the service's initial state is not one of #{valid_initial_states_str}" do
         invalid_initial_state = invalid_initial_states.first
         expect_successful_status_query_and_return(dwCurrentState: invalid_initial_state)
-  
+
         expect{ subject.send(action, mock_service_name) }.to raise_error(Puppet::Error)
       end
     end
@@ -340,7 +341,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
         service::SERVICE_START_PENDING
       ]
       final_state = service::SERVICE_RUNNING
-  
+
       include_examples "a service action that transitions the service state", :start, valid_initial_states, service::SERVICE_START_PENDING, final_state do
         let(:initial_state) { subject::SERVICE_STOPPED }
         let(:mock_state_transition) do
@@ -349,23 +350,23 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
           end
         end
       end
-  
+
       it "raises a Puppet::Error if StartServiceW returns false" do
         expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_STOPPED)
-  
+
         subject.expects(:StartServiceW).returns(FFI::WIN32_FALSE)
 
         expect { subject.start(mock_service_name) }.to raise_error(Puppet::Error)
       end
-  
+
       it "starts the service" do
         expect_successful_status_queries_and_return(
           { dwCurrentState: subject::SERVICE_STOPPED },
           { dwCurrentState: subject::SERVICE_RUNNING }
         )
-  
+
         subject.expects(:StartServiceW).returns(1)
-  
+
         subject.start(mock_service_name)
       end
     end
@@ -392,7 +393,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
       service = Puppet::Util::Windows::Service
       valid_initial_states = service::SERVICE_STATES.keys - [service::SERVICE_STOPPED]
       final_state = service::SERVICE_STOPPED
-  
+
       include_examples "a service action that transitions the service state", :stop, valid_initial_states, service::SERVICE_STOP_PENDING, final_state do
         let(:initial_state) { subject::SERVICE_RUNNING }
         let(:mock_state_transition) do
@@ -409,7 +410,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
 
         expect { subject.stop(mock_service_name) }.to raise_error(Puppet::Error)
       end
-  
+
       it "stops the service" do
         expect_successful_status_queries_and_return(
           { dwCurrentState: subject::SERVICE_RUNNING },
@@ -448,7 +449,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
         service::SERVICE_CONTINUE_PENDING
       ]
       final_state = service::SERVICE_RUNNING
-  
+
       include_examples "a service action that transitions the service state", :resume, valid_initial_states, service::SERVICE_CONTINUE_PENDING, final_state do
         let(:initial_state) { service::SERVICE_PAUSED }
         let(:mock_state_transition) do
@@ -488,7 +489,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
 
         expect { subject.resume(mock_service_name) }.to raise_error(Puppet::Error)
       end
-  
+
       it "resumes the service" do
         expect_successful_status_queries_and_return(
           { dwCurrentState: subject::SERVICE_PAUSED },
@@ -551,6 +552,16 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
   end
 
   describe "#service_start_type" do
+    let(:config_struct) do
+      {
+        :lpBinaryPathName => pointer,
+        :lpLoadOrderGroup => pointer,
+        :lpDependencies => pointer,
+        :lpServiceStartName => pointer,
+        :lpDisplayName => pointer,
+      }
+    end
+
     context "when the service control manager cannot be opened" do
       let(:scm) { FFI::Pointer::NULL_HANDLE }
       it "raises a puppet error" do
@@ -578,7 +589,8 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
           :SERVICE_DISABLED => Puppet::Util::Windows::Service::SERVICE_DISABLED,
         }.each do |start_type_name, start_type|
           it "queries the service and returns the service start type #{start_type_name}" do
-            expect_successful_config_query_and_return({:dwStartType => start_type})
+            config_struct[:dwStartType] = start_type
+            expect_successful_config_query_and_return(config_struct)
             expect(subject.service_start_type(mock_service_name)).to eq(start_type_name)
           end
         end
