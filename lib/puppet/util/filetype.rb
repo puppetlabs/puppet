@@ -223,7 +223,15 @@ class Puppet::Util::FileType
 
     # Overwrite a specific @path's cron tab; must be passed the @path name
     # and the text with which to create the cron tab.
+    #
+    # TODO: We should refactor this at some point to make it identical to the
+    # :aixtab and :suntab's write methods so that, at the very least, the pipe
+    # is not created and the crontab command's errors are not swallowed.
     def write(text)
+      unless Puppet::Util.uid(@path)
+        raise Puppet::Error, _("Cannot write the %{path} user's crontab: The user does not exist") % { path: @path }
+      end
+
       # this file is managed by the OS and should be using system encoding
       IO.popen("#{cmdbase()} -", "w", :encoding => Encoding.default_external) { |p|
         p.print text
