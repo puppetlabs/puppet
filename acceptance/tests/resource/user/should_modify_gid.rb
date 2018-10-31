@@ -25,12 +25,7 @@ agents.each do |host|
   step "verify that the user has the correct gid"
   group_gid1 = host.group_gid(group1)
   host.user_get(user) do |result|
-    if host['platform'] =~ /osx/
-        match = result.stdout.match(/gid: (\d+)/)
-        user_gid1 = match ? match[1] : nil
-    else
-        user_gid1 = result.stdout.split(':')[3]
-    end
+    user_gid1 = result.stdout.split(':')[3]
 
     fail_test "didn't have the expected old GID #{group_gid1}, but got: #{user_gid1}" unless group_gid1 == user_gid1
   end
@@ -41,12 +36,7 @@ agents.each do |host|
   step "verify that the user has the updated gid"
   group_gid2 = host.group_gid(group2)
   host.user_get(user) do |result|
-    if host['platform'] =~ /osx/
-        match = result.stdout.match(/gid: (\d+)/)
-        user_gid2 = match ? match[1] : nil
-    else
-        user_gid2 = result.stdout.split(':')[3]
-    end
+    user_gid2 = result.stdout.split(':')[3]
 
     fail_test "didn't have the expected old GID #{group_gid}, but got: #{user_gid2}" unless group_gid2 == user_gid2
   end
