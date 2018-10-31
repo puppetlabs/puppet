@@ -124,7 +124,7 @@ RUBY
       end
     end
 
-    step "Verify that Puppet noops when the group's members are already set" do
+    step "Verify that Puppet noops when the group's members are already set after creating the group" do
       manifest = group_manifest(group, members: group_members)
       apply_manifest_on(agent, manifest, catch_changes: true)
       assert_matching_arrays(group_members, members_of(agent, group), "The group's members somehow changed despite Puppet reporting a noop")
@@ -138,6 +138,12 @@ RUBY
 
       group_members += new_members
       assert_matching_arrays(group_members, members_of(agent, group), "Puppet fails to enforce minimum user membership when auth_membership == false")
+    end
+
+    step "Verify that Puppet noops when the group's members are already set after enforcing minimum user membership" do
+      manifest = group_manifest(group, members: group_members)
+      apply_manifest_on(agent, manifest, catch_changes: true)
+      assert_matching_arrays(group_members, members_of(agent, group), "The group's members somehow changed despite Puppet reporting a noop")
     end
 
     # Run some special, platform-specific tests. If these get too large, then
@@ -159,10 +165,8 @@ RUBY
           end
         end
       end
-    else
-      # On Windows, the user cannot specify a comma-separated list of members
-      # because doing so would fail the validation step.
-      step "(Non-Windows) Verify that Puppet accepts a comma-separated list of members for backwards compatibility" do
+    when /aix/
+      step "(AIX) Verify that Puppet accepts a comma-separated list of members for backwards compatibility" do
         new_members = [users[3], users[5]]
 
         manifest = group_manifest(group, members: new_members.join(','), auth_membership: false)
@@ -179,6 +183,12 @@ RUBY
       manifest = group_manifest(group, members: group_members, auth_membership: true)
       apply_manifest_on(agent, manifest)
       assert_matching_arrays(group_members, members_of(agent, group), "Puppet fails to enforce inclusive group membership when auth_membership == true")
+    end
+
+    step "Verify that Puppet noops when the group's members are already set after enforcing inclusive user membership" do
+      manifest = group_manifest(group, members: group_members)
+      apply_manifest_on(agent, manifest, catch_changes: true)
+      assert_matching_arrays(group_members, members_of(agent, group), "The group's members somehow changed despite Puppet reporting a noop")
     end
   end
 end

@@ -10,17 +10,11 @@ require 'puppet/util/fileparsing'
 #
 # Once the provider prefetches the data, it's the resource's job to copy
 # that data over to the @is variables.
-#
-# NOTE: The prefetch method swallows FileReadErrors by treating the
-# corresponding target as an empty file. If you would like to turn this
-# behavior off, then set the swallow_prefetch_errors class variable to
-# false. Doing so will error all resources associated with the failed
-# target.
 class Puppet::Provider::ParsedFile < Puppet::Provider
   extend Puppet::Util::FileParsing
 
   class << self
-    attr_accessor :default_target, :target, :swallow_prefetch_errors
+    attr_accessor :default_target, :target
   end
 
   attr_accessor :property_hash
@@ -95,10 +89,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Flush all of the records relating to a specific target.
   def self.flush_target(target)
-    if ! @swallow_prefetch_errors && @failed_prefetch_targets.key?(target)
-      raise Puppet::Error, _("Failed to read %{target}'s records when prefetching them. Reason: %{detail}") % { target: target, detail: @failed_prefetch_targets[target] }
-    end
-
     backup_target(target)
 
     records = target_records(target).reject { |r|
@@ -151,10 +141,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.initvars
     @records = []
     @target_objects = {}
-
-    # Hash of <target> => <failure reason>.
-    @failed_prefetch_targets = {}
-    @swallow_prefetch_errors = true
 
     @target = nil
 
@@ -274,19 +260,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Prefetch an individual target.
   def self.prefetch_target(target)
+
     begin
       target_records = retrieve(target)
     rescue Puppet::Util::FileType::FileReadError => detail
-      if ! @swallow_prefetch_errors
-        # We will raise an error later in flush_target. This way,
-        # only the resources linked to our target will fail
-        # evaluation.
-        @failed_prefetch_targets[target] = detail.to_s
-      else
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err _("Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty") % { resource: self.resource_type.name, name: self.name, target: target, detail: detail }
-      end
-
+      puts detail.backtrace if Puppet[:trace]
+      Puppet.err _("Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty") % { resource: self.resource_type.name, name: self.name, target: target, detail: detail }
       target_records = []
     end
 
