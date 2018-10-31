@@ -15,6 +15,7 @@ test.pp
 /pkg/
 Gemfile.lock
 Gemfile.local
+Guardfile
 puppet-acceptance/
 /.project
 .ruby-version
