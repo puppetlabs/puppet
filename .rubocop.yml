@@ -8,7 +8,6 @@ AllCops:
   Exclude:
     - '**/*.erb'
     - 'acceptance/**/*'
-    - 'autotest/**/*'
     - 'spec/**/*'
     - 'tasks/**/*'
     - 'ext/suse/puppet.spec'
