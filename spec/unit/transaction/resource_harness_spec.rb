@@ -173,6 +173,10 @@ describe Puppet::Transaction::ResourceHarness do
           def insync?(value)
             @resource.behaviors[:ensure_insync?]
           end
+
+          def should_to_s(value)
+            (@resource.behaviors[:on_should_to_s] || proc { "'#{value}'" }).call
+          end
         end
 
         newparam(:name) do
@@ -265,6 +269,20 @@ describe Puppet::Transaction::ResourceHarness do
       status = @harness.evaluate(resource)
 
       expect(status.events).to be_empty
+    end
+
+    it "ensure errors in message still get a log entry" do
+      resource = an_ensurable_resource_reacting_as(:ensure_insync? => false, :on_ensure => proc { raise StandardError }, :on_should_to_s => proc { raise StandardError }, :present? => true)
+
+      status = @harness.evaluate(resource)
+
+      expect(status.events.length).to eq(2)
+      testing_errors = status.events.find_all { |x| x.name.to_s == "Testing_created" }
+      resource_errors = status.events.find_all { |x| x.name.to_s == "resource_error" }
+      expect(testing_errors.length).to eq(1)
+      expect(resource_errors.length).to eq(1)
+      expect(testing_errors[0].message).not_to be_nil
+      expect(resource_errors[0].message).not_to eq("Puppet::Util::Log requires a message")
     end
   end
 
