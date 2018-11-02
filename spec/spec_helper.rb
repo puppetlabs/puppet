@@ -5,7 +5,7 @@
 dir = File.expand_path(File.dirname(__FILE__))
 $LOAD_PATH.unshift File.join(dir, 'lib')
 
-# Don't want puppet getting the command line arguments for rake or autotest
+# Don't want puppet getting the command line arguments for rake
 ARGV.clear
 
 begin
