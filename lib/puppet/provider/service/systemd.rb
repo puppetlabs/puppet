@@ -123,6 +123,21 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     end
   end
 
+  # Define the daemon_reload? function to check if the unit is requiring to trigger a "systemctl daemon-reload"
+  # If the unit file is flagged with NeedDaemonReload=yes, then a systemd daemon-reload will be run.
+  # If multiple unit files have been updated, the first one flagged will trigger the daemon-reload for all of them.
+  # The others will be then flagged with NeedDaemonReload=no. So the command will run only once in a puppet run.
+  # This function is called only on start & restart unit options.
+  # Reference: (PUP-3483) Systemd provider doesn't scan for changed units
+  def daemon_reload?
+    cmd = [command(:systemctl), 'show', @resource[:name], '--property=NeedDaemonReload']
+    daemon_reload = execute(cmd, :failonfail => false).strip.split('=').last
+    if daemon_reload == 'yes'
+      daemon_reload_cmd = [command(:systemctl), 'daemon-reload']
+      execute(daemon_reload_cmd, :failonfail => false)
+    end
+  end
+
   def enable
     self.unmask
     systemctl_change_enable(:enable)
@@ -156,6 +171,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def restart
     begin
+      daemon_reload?
       super
     rescue Puppet::Error => e
       raise Puppet::Error.new(prepare_error_message(@resource[:name], 'restart', e))
@@ -164,6 +180,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def start
     begin
+      daemon_reload?
       super
     rescue Puppet::Error => e
       raise Puppet::Error.new(prepare_error_message(@resource[:name], 'start', e))
