@@ -1,0 +1,6 @@
+fmri         svc:/application/tstapp:default
+name         Dummy
+enabled      false
+state        disabled
+next_state   none
+state_time   July 26, 2018 11:57:49 AM PDT

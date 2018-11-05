@@ -60,5 +60,25 @@ test_name "SMF: basic tests" do
         assert_no_match( /state\s+online/, result.stdout, "err: #{agent}")
       end
     end
+
+    if agent['platform'] =~ /11/
+      step "SMF: unset the general/complete property to mark the service as an incomplete service" do
+        fmri = on(agent, "svcs -H -o fmri tstapp").stdout.chomp
+        on(agent, "svccfg -s #{fmri} delprop general/complete") 
+      end
+
+      step "Verify that an incomplete service is considered stopped and disabled" do
+        on(agent, puppet_resource('service', 'tstapp')) do |result|
+          { enable: false, ensure: :stopped }.each do |property, value|
+            assert_match(/#{property}.*#{value}.*$/, result.stdout, "Puppet does not report #{property}=#{value} for an incomplete service")
+          end
+        end
+      end
+      
+      step "Verify that stopping and disabling an incomplete service is a no-op" do
+        manifest =  service_manifest('tstapp', ensure: :stopped, enable: false)
+        apply_manifest_on(agent, manifest, catch_changes: true)
+      end
+    end
   end
 end
