@@ -9,6 +9,9 @@ test_name "SMF: basic tests" do
   require 'puppet/acceptance/solaris_util'
   extend Puppet::Acceptance::SMFUtils
 
+  require 'puppet/acceptance/service_utils'
+  extend Puppet::Acceptance::ServiceUtils
+
   teardown do
     step "SMF: cleanup" do
       agents.each do |agent|
@@ -19,6 +22,9 @@ test_name "SMF: basic tests" do
 
   agents.each do |agent|
     clean agent, :service => 'tstapp'
+
+    run_nonexistent_service_tests('tstapp')
+
     manifest, _ = setup agent, :service => 'tstapp'
 
     step "SMF: ensure it is created with a manifest" do
