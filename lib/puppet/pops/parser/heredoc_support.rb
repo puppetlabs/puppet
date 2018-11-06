@@ -94,11 +94,11 @@ module HeredocSupport
 
 
         # Process captured lines - remove leading, and trailing newline
-        str = heredoc_text(lines, leading, has_margin, remove_break)
+        str = heredoc_text(lines, leading, has_margin, remove_break, heredoc_line)
 
         # Use a new lexer instance configured with a sub-locator to enable correct positioning
         sublexer = self.class.new()
-        locator = Locator::SubLocator.new(locator, heredoc_line, heredoc_offset, leading.length())
+        locator = Locator::SubLocator.new(locator, str, heredoc_line, heredoc_offset, has_margin ? leading.length() : 0)
 
         # Emit a token that provides the grammar with location information about the lines on which the heredoc
         # content is based.
@@ -126,10 +126,20 @@ module HeredocSupport
   # @param has_margin [Boolean] if the left margin should be adjusted as indicated by `leading`
   # @param remove_break [Boolean] if the line break (\r?\n) at the end of the last line should be removed or not
   #
-  def heredoc_text(lines, leading, has_margin, remove_break)
-    if has_margin
+  def heredoc_text(lines, leading, has_margin, remove_break, heredoc_line)
+    if has_margin && leading.length > 0
       leading_pattern = /^#{Regexp.escape(leading)}/
-      lines = lines.collect {|s| s.gsub(leading_pattern, '') }
+      processed_lines = lines.collect {|s| s.gsub(leading_pattern, '') }
+      margin_error_lines = processed_lines.length.times.reject {|x| processed_lines[x].length < lines[x].length }
+      unless margin_error_lines.empty?
+        # get the offset to the start of the offending line
+        first_line_with_error = margin_error_lines[0]
+        # get the offset of the offending character in the margin
+        offset_in_margin = leading.length.times.find {|x| leading[x] != lines[first_line_with_error][x] }
+        error_offset = @locator.line_index()[heredoc_line + first_line_with_error] + offset_in_margin
+        lex_error(Issues::HEREDOC_DIRTY_MARGIN, {:heredoc_line => margin_error_lines[0] + 1}, error_offset)
+      end
+      lines = processed_lines
     end
     result = lines.join('')
     result.gsub!(/\r?\n\z/m, '') if remove_break

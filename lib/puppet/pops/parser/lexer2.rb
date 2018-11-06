@@ -189,7 +189,12 @@ class Lexer2
       ',' => lambda {  emit(TOKEN_COMMA, @scanner.pos) },
       '[' => lambda do
         before = @scanner.pos
-        if (before == 0 || locator.string[locator.char_offset(before)-1,1] =~ /[[:blank:]\r\n]+/)
+        # Must check the preceding character to see if it is whitespace.
+        # The fastest thing to do is to simply byteslice to get the string ending at the offset before
+        # and then check what the last character is. (This is the same as  what an locator.char_offset needs
+        # to compute, but with less overhead of trying to find out the global offset from a local offset in the
+        # case when this is sublocated in a heredoc).
+        if before == 0 || @scanner.string.byteslice(0, before)[-1] =~ /[[:blank:]\r\n]+/
           emit(TOKEN_LISTSTART, before)
         else
           emit(TOKEN_LBRACK, before)
