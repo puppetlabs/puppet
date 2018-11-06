@@ -117,6 +117,30 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       expect(@logs.map {|l| "#{l.level}: #{l.message}" }).to eq(["warning: Overriding environment setting 'WHATEVER' with '/foo'"])
     end
 
+    it "should warn when setting an empty environment variable" do
+      provider.resource[:environment] = ['WHATEVER=']
+      command = make_exe
+
+      Puppet::Util::Execution.expects(:execute).with(command, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
+      provider.run(command)
+
+      expect(@logs.map(&:to_s).join).to match(/Empty environment setting 'WHATEVER'\n\s+\(file & line not available\)/m)
+    end
+
+    it "should warn when setting an empty environment variable (within a manifest)" do
+      provider.resource[:environment] = ['WHATEVER=']
+      provider.resource.file = '/tmp/foobar'
+      provider.resource.line = 42
+      command = make_exe
+
+      Puppet::Util::Execution.expects(:execute).with(command, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
+      provider.run(command)
+
+      expect(@logs.map(&:to_s).join).to match(/Empty environment setting 'WHATEVER'\n\s+\(file: \/tmp\/foobar, line: 42\)/m)
+    end
+
     it "should set umask before execution if umask parameter is in use" do
       provider.resource[:umask] = '0027'
       Puppet::Util.expects(:withumask).with(0027)
