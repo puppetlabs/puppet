@@ -118,7 +118,7 @@ class Parser
       if locator.is_a?(Puppet::Pops::Parser::Locator::SubLocator)
         # The error occurs when doing sub-parsing and the token must be transformed
         # Transpose the local offset, length to global "coordinates"
-        global_offset, global_length = locator.to_global(value.offset, value.length)
+        global_offset, _ = locator.to_global(value.offset, value.length)
         line = locator.locator.line_for_offset(global_offset)
         pos = locator.locator.pos_on_line(global_offset)
       else
