@@ -14,7 +14,7 @@ describe Puppet::Application::Lookup do
       $stdout = saved_stdout
     end
     # capture.string.strip
-    capture.string.strip
+    capture.string
   end
 
   context "when running with incorrect command line options" do
