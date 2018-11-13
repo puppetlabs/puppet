@@ -13,6 +13,7 @@ describe Puppet::Application::Lookup do
     ensure
       $stdout = saved_stdout
     end
+    # capture.string.strip
     capture.string.strip
   end
 
@@ -85,6 +86,7 @@ describe Puppet::Application::Lookup do
 
       Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
 
+      require 'byebug'; debugger
       expect(run_lookup(lookup)).to eql("--- rand\n...")
     end
   end
