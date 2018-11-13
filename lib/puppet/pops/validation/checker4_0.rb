@@ -1,5 +1,8 @@
+require 'puppet/pops/evaluator/external_syntax_support'
+
 module Puppet::Pops
 module Validation
+
 # A Validator validates a model.
 #
 # Validation is performed on each model element in isolation. Each method should validate the model element's state
@@ -12,6 +15,8 @@ module Validation
 #       This is however mostly valuable when validating model to model transformations, and is therefore T.B.D
 #
 class Checker4_0 < Evaluator::LiteralEvaluator
+  include Puppet::Pops::Evaluator::ExternalSyntaxSupport
+
   attr_reader :acceptor
   attr_reader :migration_checker
 
@@ -321,6 +326,14 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     if p.is_a?(Model::LambdaExpression)
       internal_check_no_capture(p, o)
       internal_check_parameter_name_uniqueness(p)
+    end
+  end
+
+  def check_HeredocExpression(o)
+    # Only check static text in heredoc
+    expr = o.text_expr.expr # Always a SublocatedExpression with an expression
+    if expr.is_a?(Model::LiteralString)
+      assert_external_syntax(nil, expr.value, o.syntax, o.text_expr)
     end
   end
 
