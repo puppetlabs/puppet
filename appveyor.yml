@@ -5,6 +5,9 @@ build: off
 matrix:
   fast_finish: true
 
+# Pin back to worker before https://github.com/appveyor/ci/issues/2702
+image: Previous Visual Studio 2015
+
 # Ruby versions under test
 platform:
   - Ruby24-x64
