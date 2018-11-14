@@ -558,7 +558,7 @@ module Puppet
     newparam(:auth_membership) do
       desc "Whether specified auths should be considered the **complete list**
         (`inclusive`) or the **minimum list** (`minimum`) of auths the user
-        has."
+        has. This setting is specific to managing Solaris authorizations."
 
       newvalues(:inclusive, :minimum)
 
