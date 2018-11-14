@@ -14,8 +14,9 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   # @return [Puppet::Pops::Functions.Function] - an instantiated function with global scope closure associated with the given loader
   #
   def self.create(loader, typed_name, source_ref, ruby_code_string)
-    assert_code(ruby_code_string)
-    unless ruby_code_string.is_a?(String) && ruby_code_string =~ /Puppet\:\:Parser\:\:Functions.*newfunction/m
+    assertion_result = []
+    assert_code(ruby_code_string, assertion_result)
+    unless ruby_code_string.is_a?(String) && assertion_result.include?(:found_newfunction)
       raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call.") % { source_ref: source_ref }
     end
     # make the private loader available in a binding to allow it to be passed on
@@ -63,26 +64,35 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   end
   private_class_method :get_binding
 
-  def self.assert_code(code_string)
+  def self.assert_code(code_string, result)
     ripped = Ripper.sexp(code_string)
     return if ripped.nil?  # Let the next real parse crash and tell where and what is wrong
-    ripped.each {|x| walk(x) }
+    ripped.each {|x| walk(x, result) }
   end
+  private_class_method :assert_code
 
-  def self.walk(x)
+  def self.walk(x, result)
     return unless x.is_a?(Array)
-    # There should not be any calls to def in a 3x function
-    # Ripper returns an array [:def, ...] for a regular def name, and a [:defs ...] for a def self.name
-    if x[0] == :def || x[0] == :defs
+    first = x[0]
+    case first
+    when :fcall, :call
+      # Ripper returns a :fcall for a function call in a module (want to know there is a call to newfunction()).
+      # And it returns :call for a qualified named call
+      result << :found_newfunction if find_identity(x)[1] == 'newfunction'
+    when :def, :defs
+      # There should not be any calls to def in a 3x function
+      # Ripper returns an array [:def, ...] for a regular def name, and a [:defs ...] for a def self.name
       identity_part = find_identity(x)
       # assume there is nothing fancy and that there is always an array with name/line to use (or get nothing)
       mname, mline = (identity_part.is_a?(Array) ? [identity_part[1], identity_part[2]] : [nil, nil]).map {|x| x.nil? ? '<unknown>' : x }
       raise SecurityError, _("Illegal method definition of method '%{method_name}' on line %{line}' in legacy function") % { method_name: mname, line: mline }
     end
-    x.each {|x| walk(x) }
+    x.each {|x| walk(x, result) }
   end
+  private_class_method :walk
 
   def self.find_identity(rast)
     rast.find{|x| x.is_a?(Array) && x[0] == :@ident }
   end
+  private_class_method :find_identity
 end
