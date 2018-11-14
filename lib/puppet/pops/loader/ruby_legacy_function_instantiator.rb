@@ -84,10 +84,10 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
       # Ripper returns an array [:def, ...] for a regular def name, and a [:defs ...] for a def self.name
       identity_part = find_identity(x)
       # assume there is nothing fancy and that there is always an array with name/line to use (or get nothing)
-      mname, mline = (identity_part.is_a?(Array) ? [identity_part[1], identity_part[2]] : [nil, nil]).map {|x| x.nil? ? '<unknown>' : x }
+      mname, mline = (identity_part.is_a?(Array) ? [identity_part[1], identity_part[2][1]] : [nil, nil]).map {|v| v.nil? ? '<unknown>' : v }
       raise SecurityError, _("Illegal method definition of method '%{method_name}' on line %{line}' in legacy function") % { method_name: mname, line: mline }
     end
-    x.each {|x| walk(x, result) }
+    x.each {|v| walk(v, result) }
   end
   private_class_method :walk
 
