@@ -129,8 +129,8 @@ describe Puppet::SSL::Key do
     end
 
     it "should create the private key with the keylength specified in the settings" do
-      Puppet[:keylength] = "50"
-      OpenSSL::PKey::RSA.expects(:new).with(50).returns(@key)
+      Puppet[:keylength] = 513
+      OpenSSL::PKey::RSA.expects(:new).with(513).returns(@key)
 
       @instance.generate
     end
@@ -172,8 +172,6 @@ describe Puppet::SSL::Key do
       end
 
       it "should export the private key to text using the password" do
-        Puppet[:keylength] = "50"
-
         @instance.password_file = "/path/to/pass"
         @instance.stubs(:password).returns "my password"
 
