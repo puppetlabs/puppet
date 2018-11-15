@@ -43,7 +43,7 @@ describe Puppet::Network::HTTP::Factory do
     let(:proxy_host) { 'myhost' }
     let(:proxy_port) { 432 }
 
-    it "should not set a proxy if the value is 'none'" do
+    it "should not set a proxy if the http_proxy_host setting is 'none'" do
       Puppet[:http_proxy_host] = 'none'
       conn = create_connection(site)
 
@@ -59,6 +59,16 @@ describe Puppet::Network::HTTP::Factory do
         expect(conn.proxy_address).to be_nil
         expect(conn.proxy_port).to be_nil
       end
+    end
+
+    it 'should not set a proxy if the no_proxy setting matches the destination' do
+      Puppet[:http_proxy_host] = proxy_host
+      Puppet[:http_proxy_port] = proxy_port
+      Puppet[:no_proxy] = site.host
+      conn = create_connection(site)
+
+      expect(conn.proxy_address).to be_nil
+      expect(conn.proxy_port).to be_nil
     end
 
     it 'sets proxy_address' do
