@@ -41,8 +41,6 @@ describe Puppet::SSL::Key, unless: Puppet::Util::Platform.jruby? do
     end
 
     it "should be able to read an existing private key given the correct password" do
-      Puppet[:keylength] = '50'
-
       key_name = 'test'
       # use OpenSSL APIs to generate a private key
       private_key = OpenSSL::PKey::RSA.generate(512)
@@ -69,8 +67,6 @@ describe Puppet::SSL::Key, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'should export the private key to PEM using the password' do
-      Puppet[:keylength] = '50'
-
       key_name = 'test'
 
       # uses specified :passfile when writing the private key

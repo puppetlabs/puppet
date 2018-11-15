@@ -101,7 +101,7 @@ task(:warnings) do
   puts "Checking modified files #{commit_range}"
   %x{git diff --diff-filter=ACM --name-only #{commit_range}}.each_line do |modified_file|
     modified_file.chomp!
-    next unless File.extname(modified_file) == '.rb'
+    next if modified_file.start_with?('spec/fixtures/', 'acceptance/fixtures/') || File.extname(modified_file) != '.rb'
     puts modified_file
 
     stdout, stderr, _ = Open3.capture3("ruby -wc \"#{modified_file}\"")

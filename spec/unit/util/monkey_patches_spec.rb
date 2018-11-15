@@ -101,13 +101,26 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
     store.set_default_paths
   end
 
-  it "warns when adding a certificate that already exists" do
-    with_root_certs([cert])
-    store.add_cert(cert)
+  # openssl 1.1.1 ignores duplicate certs
+  # https://github.com/openssl/openssl/commit/c0452248ea1a59a41023a4765ef7d9825e80a62b
+  if OpenSSL::OPENSSL_VERSION_NUMBER < 0x10101000
+    it "warns when adding a certificate that already exists" do
+      with_root_certs([cert])
+      store.add_cert(cert)
 
-    store.expects(:warn).with('Failed to add /DC=com/DC=microsoft/CN=Microsoft Root Certificate Authority')
+      store.expects(:warn).with('Failed to add /DC=com/DC=microsoft/CN=Microsoft Root Certificate Authority')
 
-    store.set_default_paths
+      store.set_default_paths
+    end
+  else
+    it "doesn't warn when adding a duplicate cert" do
+      with_root_certs([cert])
+      store.add_cert(cert)
+
+      store.expects(:warn).never
+
+      store.set_default_paths
+    end
   end
 
   it "raises when adding an invalid certificate" do
