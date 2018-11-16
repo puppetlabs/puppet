@@ -155,6 +155,27 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     expect{ host.validate_certificate_with_key(certificate) }.not_to raise_error
   end
 
+  it "should output agent-specific commands when validation fails" do
+    host = Puppet::SSL::Host.new("foo")
+    key = mock 'key', :content => "private_key"
+    sslcert = mock 'sslcert'
+    certificate = mock 'cert', {:content => sslcert, :fingerprint => 'DEADBEEF'}
+    host.stubs(:key).returns key
+    sslcert.expects(:check_private_key).with("private_key").returns false
+    expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, /puppet ssl clean \n/)
+  end
+
+  it "should output device-specific commands when validation fails" do
+    Puppet[:certname] = "device.example.com"
+    host = Puppet::SSL::Host.new("device.example.com", true)
+    key = mock 'key', :content => "private_key"
+    sslcert = mock 'sslcert'
+    certificate = mock 'cert', {:content => sslcert, :fingerprint => 'DEADBEEF'}
+    host.stubs(:key).returns key
+    sslcert.expects(:check_private_key).with("private_key").returns false
+    expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, /puppet ssl clean --target device.example.com/)
+  end
+
   describe "when initializing" do
     it "should default its name to the :certname setting" do
       Puppet[:certname] = "myname"
