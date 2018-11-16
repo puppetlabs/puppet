@@ -222,6 +222,7 @@ Licensed under the Apache 2.0 License
       raise _("missing argument: --target is required when using --apply") if options[:target].nil?
       raise _("%{file} does not exist, cannot apply") % { file: options[:apply] } unless File.file?(options[:apply])
     end
+    libdir = Puppet[:libdir]
     vardir = Puppet[:vardir]
     confdir = Puppet[:confdir]
     certname = Puppet[:certname]
@@ -251,6 +252,7 @@ Licensed under the Apache 2.0 License
 
           # override local $vardir and $certname
           Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
+          Puppet[:libdir] = ::File.join(Puppet[:devicedir], device.name, 'lib')
           Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:certname] = device.name
 
@@ -316,6 +318,7 @@ Licensed under the Apache 2.0 License
           # If we rescued an error, then we return 1 as the exit code
           1
         ensure
+          Puppet[:libdir] = libdir
           Puppet[:vardir] = vardir
           Puppet[:confdir] = confdir
           Puppet[:certname] = certname
