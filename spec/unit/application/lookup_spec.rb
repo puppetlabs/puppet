@@ -13,7 +13,8 @@ describe Puppet::Application::Lookup do
     ensure
       $stdout = saved_stdout
     end
-    capture.string.strip
+    # Drop end of line and an optional yaml end of document
+    capture.string.gsub(/\n(\.\.\.\n)?\Z/m, '')
   end
 
   context "when running with incorrect command line options" do
