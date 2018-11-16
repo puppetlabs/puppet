@@ -712,7 +712,7 @@ module Puppet::Util::Windows
         FFI::MemoryPointer.new(SERVICE_STATUS.size) do |status_ptr|
           status = SERVICE_STATUS.new(status_ptr)
           if ControlService(service, signal, status) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error, _("Failed to send the %{control_signal} signal to the service. Its current state is %{current_state}. Failed with") % { control_signal: SERVICE_CONTROL_SIGNALS[signal], current_state: SERVICE_STATES[status[:dwCurrentState]] }
+            raise Puppet::Util::Windows::Error, _("Failed to send the %{control_signal} signal to the service. Its current state is %{current_state}. Reason for failure:") % { control_signal: SERVICE_CONTROL_SIGNALS[signal], current_state: SERVICE_STATES[status[:dwCurrentState]] }
           end
         end
       end
