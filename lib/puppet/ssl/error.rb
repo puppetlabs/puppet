@@ -12,7 +12,7 @@ module Puppet::SSL
 
   class CertMismatchError < Puppet::SSL::SSLError
     def initialize(peer_cert, host)
-      valid_certnames = [peer_cert.subject.to_s.sub(/.*=/, ''),
+      valid_certnames = [peer_cert.subject.to_utf8.sub(/.*=/, ''),
                          *Puppet::SSL::Certificate.subject_alt_names_for(peer_cert)].uniq
       if valid_certnames.size > 1
         expected_certnames = _("expected one of %{certnames}") % { certnames: valid_certnames.join(', ') }

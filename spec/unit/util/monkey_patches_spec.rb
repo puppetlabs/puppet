@@ -106,7 +106,7 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
       with_root_certs([cert])
       store.add_cert(cert)
 
-      expect(store).to receive(:warn).with('Failed to add /DC=com/DC=microsoft/CN=Microsoft Root Certificate Authority')
+      expect(store).to receive(:warn).with('Failed to add CN=Microsoft Root Certificate Authority,DC=microsoft,DC=com')
 
       store.set_default_paths
     end

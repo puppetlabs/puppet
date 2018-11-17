@@ -239,9 +239,9 @@ class Puppet::SSL::StateMachine
       chain.reverse.each_with_index do |cert, i|
         digest = Puppet::SSL::Digest.new('SHA256', cert.to_der)
         if i == chain.length - 1
-          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_s, digest: digest})
+          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
         else
-          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_s, digest: digest})
+          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
         end
       end
     end

@@ -50,7 +50,7 @@ describe Puppet::Rest::Client, unless: Puppet::Util::Platform.jruby? do
       expect {
         client.get(uri)
       }.to raise_error(Puppet::Error,
-                       %r{certificate verify failed.* .self signed certificate in certificate chain for /CN=Test CA.})
+                       %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
     end
   end
 

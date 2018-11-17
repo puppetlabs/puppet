@@ -153,11 +153,11 @@ class Puppet::SSL::SSLProvider
   end
 
   def subject(x509)
-    x509.subject.to_s
+    x509.subject.to_utf8
   end
 
   def issuer(x509)
-    x509.issuer.to_s
+    x509.issuer.to_utf8
   end
 
   def revocation_mode(mode)

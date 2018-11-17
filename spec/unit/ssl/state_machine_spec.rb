@@ -254,7 +254,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         expect {
           state.next_state
-        }.to raise_error(Puppet::SSL::SSLError, %r{The certificate for '/CN=signed' does not match its private key})
+        }.to raise_error(Puppet::SSL::SSLError, %r{The certificate for 'CN=signed' does not match its private key})
       end
 
       it 'generates a new private key, saves it and passes it to the next state' do
@@ -451,7 +451,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         state.next_state
 
-        expect(@logs).to include(an_object_having_attributes(message: %r{The certificate for '/CN=127.0.0.1' does not match its private key}))
+        expect(@logs).to include(an_object_having_attributes(message: %r{The certificate for 'CN=127.0.0.1' does not match its private key}))
         expect(File).to_not exist(Puppet[:hostcert])
       end
 
@@ -461,7 +461,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         state.next_state
 
-        expect(@logs).to include(an_object_having_attributes(message: %r{Certificate '/CN=revoked' is revoked}))
+        expect(@logs).to include(an_object_having_attributes(message: %r{Certificate 'CN=revoked' is revoked}))
         expect(File).to_not exist(Puppet[:hostcert])
       end
     end

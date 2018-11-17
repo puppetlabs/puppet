@@ -88,13 +88,13 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
             Puppet.debug("Ignoring CRL not yet valid, current time #{Time.now.utc}, CRL last updated #{crl.last_update.utc}")
             preverify_ok = true
           else
-            @verify_errors << "#{error_string} for #{crl.issuer}"
+            @verify_errors << "#{error_string} for #{crl.issuer.to_utf8}"
           end
         else
           @verify_errors << error_string
         end
       else
-        @verify_errors << "#{error_string} for #{current_cert.subject}"
+        @verify_errors << "#{error_string} for #{current_cert.subject.to_utf8}"
       end
     end
     preverify_ok
@@ -156,8 +156,8 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
     if not has_authz_peer_cert(descending_cert_chain, authz_ca_certs)
       msg = "The server presented a SSL certificate chain which does not include a " <<
         "CA listed in the ssl_client_ca_auth file.  "
-      msg << "Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject}.join(', ')}  " <<
-        "Peer Chain: #{descending_cert_chain.collect {|c| c.subject}.join(' => ')}"
+      msg << "Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject.to_utf8}.join(', ')}  " <<
+        "Peer Chain: #{descending_cert_chain.collect {|c| c.subject.to_utf8}.join(' => ')}"
       @verify_errors << msg
       false
     else
