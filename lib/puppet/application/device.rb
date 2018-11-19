@@ -305,7 +305,7 @@ Licensed under the Apache 2.0 License
             Puppet.settings.use :main, :agent, :ssl
             # ask for a ssl cert if needed, but at least
             # setup the ssl system for this device.
-            setup_host
+            setup_host(device.name)
 
             require 'puppet/configurer'
             configurer = Puppet::Configurer.new
@@ -354,8 +354,8 @@ Licensed under the Apache 2.0 License
     end
   end
 
-  def setup_host
-    @host = Puppet::SSL::Host.new
+  def setup_host(name)
+    @host = Puppet::SSL::Host.new(name, true)
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
     @host.wait_for_cert(waitforcert)
   end

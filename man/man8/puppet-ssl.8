@@ -10,7 +10,7 @@
 Manage SSL keys and certificates for SSL clients needing to communicate with a puppet infrastructure\.
 .
 .SH "USAGE"
-puppet ssl \fIaction\fR [\-h|\-\-help] [\-v|\-\-verbose] [\-d|\-\-debug] [\-\-localca]
+puppet ssl \fIaction\fR [\-h|\-\-help] [\-v|\-\-verbose] [\-d|\-\-debug] [\-\-localca] [\-\-target CERTNAME]
 .
 .SH "OPTIONS"
 .
@@ -25,6 +25,9 @@ puppet ssl \fIaction\fR [\-h|\-\-help] [\-v|\-\-verbose] [\-d|\-\-debug] [\-\-lo
 .
 .IP "\(bu" 4
 \-\-localca Also clean the local CA certificate and CRL\.
+.
+.IP "\(bu" 4
+\-\-target CERTNAME Clean the specified device certificate instead of this host\'s certificate\.
 .
 .IP "" 0
 .
@@ -44,5 +47,5 @@ Verify the private key and certificate are present and match, verify the certifi
 .
 .TP
 clean
-Remove the private key and certificate related files for this host\. If \fB\-\-localca\fR is specified, then also remove this host\'s local copy of the CA certificate(s) and CRL bundle\.
+Remove the private key and certificate related files for this host\. If \fB\-\-localca\fR is specified, then also remove this host\'s local copy of the CA certificate(s) and CRL bundle\. if \fB\-\-target CERTNAME\fR is specified, then remove the files for the specified device on this host instead of this host\.
 
