@@ -90,17 +90,18 @@ describe Puppet::Util::Windows::Registry do
 
   context "#values" do
     let(:key) { stub('uninstall') }
+    let(:ignore_invalid_values) { false }
 
     def expects_registry_value(array)
       key.expects(:each_value).never
-      subject.expects(:each_value).with(key).multiple_yields(array)
+      subject.expects(:each_value).with(key, ignore_invalid_values).multiple_yields(array)
 
       subject.values(key).first[1]
     end
 
     it "should return each value's name and data" do
       key.expects(:each_value).never
-      subject.expects(:each_value).with(key).multiple_yields(
+      subject.expects(:each_value).with(key, ignore_invalid_values).multiple_yields(
         ['string', 1, 'foo'], ['dword', 4, 0]
       )
       expect(subject.values(key)).to eq({ 'string' => 'foo', 'dword' => 0 })
@@ -108,7 +109,7 @@ describe Puppet::Util::Windows::Registry do
 
     it "should return an empty hash if there are no values" do
       key.expects(:each_value).never
-      subject.expects(:each_value).with(key)
+      subject.expects(:each_value).with(key, ignore_invalid_values)
 
       expect(subject.values(key)).to eq({})
     end

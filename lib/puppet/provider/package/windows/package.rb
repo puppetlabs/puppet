@@ -37,7 +37,9 @@ class Puppet::Provider::Package::Windows
             open(hive, 'Software\Microsoft\Windows\CurrentVersion\Uninstall', mode) do |uninstall|
               each_key(uninstall) do |name, wtime|
                 open(hive, "#{uninstall.keyname}\\#{name}", mode) do |key|
-                  yield key, values(key)
+                  # Ignore invalid values so that we can continue to enumerate other packages in the run
+                  # The `valid?` methods in the derived classes will determine if the package is actually valid
+                  yield key, values(key, true)
                 end
               end
             end

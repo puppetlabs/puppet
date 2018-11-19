@@ -59,21 +59,29 @@ module Puppet::Util::Windows
       reg_delete_key_ex(key, subkey_name, mode)
     end
 
-    def values(key)
+    def values(key, ignore_invalid_values = false)
       vals = {}
-      each_value(key) { |subkey, type, data| vals[subkey] = data }
+      each_value(key, ignore_invalid_values) { |subkey, type, data| vals[subkey] = data }
       vals
     end
 
-    def each_value(key, &block)
+    def each_value(key, ignore_invalid_values = false, &block)
       index = 0
       subkey = nil
 
       _, value_max_len = reg_query_info_key_max_lengths(key)
 
       begin
-        subkey, type, data = reg_enum_value(key, index, value_max_len)
-        yield subkey, type, data if !subkey.nil?
+        begin
+          subkey, type, data = reg_enum_value(key, index, value_max_len)
+          yield subkey, type, data if !subkey.nil?
+        rescue Exception => ex
+          if ignore_invalid_values
+            Puppet.debug "Error while enumerating registry value #{key.keyname}, value index #{index} - #{ex.inspect}"
+          else
+            raise
+          end
+        end
         index += 1
       end while !subkey.nil?
 
