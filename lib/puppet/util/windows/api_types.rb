@@ -58,7 +58,7 @@ module Puppet::Util::Windows::APITypes
       str = get_bytes(0, char_length * 2).force_encoding('UTF-16LE')
       str.encode(dst_encoding, str.encoding, encode_options)
     rescue Exception => e
-      Puppet.debug "Unable to convert value #{str.dump} to encoding #{dst_encoding} due to #{e.inspect}"
+      Puppet.debug "Unable to convert value #{str.nil? ? 'nil' : str.dump} to encoding #{dst_encoding} due to #{e.inspect}"
       raise
     end
 
