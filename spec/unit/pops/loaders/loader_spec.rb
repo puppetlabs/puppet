@@ -447,8 +447,7 @@ describe 'The Loader' do
           end
 
           context 'with no explicit dependencies' do
-
-            let(:modules) {
+            let(:modules) do
               {
                 'a' => {
                   'functions' => a_functions,
@@ -468,12 +467,12 @@ describe 'The Loader' do
                   'types' => c_types,
                 },
               }
+            end
 
-              it 'discover is only called once on dependent loader' do
-                ModuleLoaders::FileBased.any_instance.expects(:discover).times(4).with(:type, Pcore::RUNTIME_NAME_AUTHORITY).returns([])
-                expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(contain_exactly())
-              end
-            }
+            it 'discover is only called once on dependent loader' do
+              ModuleLoaders::FileBased.any_instance.expects(:discover).times(4).with(:type, nil, Pcore::RUNTIME_NAME_AUTHORITY).returns([])
+              expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(contain_exactly())
+            end
           end
         end
       end
