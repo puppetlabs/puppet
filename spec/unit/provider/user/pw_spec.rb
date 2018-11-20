@@ -1,14 +1,11 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:user).provider(:pw)
-
-describe provider_class do
+describe Puppet::Type.type(:user).provider(:pw) do
   let :resource do
     Puppet::Type.type(:user).new(:name => "testuser", :provider => :pw)
   end
 
-  describe "when creating users" do
+  context "when creating users" do
     let :provider do
       prov = resource.provider
       prov.expects(:exists?).returns nil
@@ -16,8 +13,8 @@ describe provider_class do
     end
 
     it "should run pw with no additional flags when no properties are given" do
-      expect(provider.addcmd).to eq([provider_class.command(:pw), "useradd", "testuser"])
-      provider.expects(:execute).with([provider_class.command(:pw), "useradd", "testuser"], kind_of(Hash))
+      expect(provider.addcmd).to eq([described_class.command(:pw), "useradd", "testuser"])
+      provider.expects(:execute).with([described_class.command(:pw), "useradd", "testuser"], kind_of(Hash))
       provider.create
     end
 
@@ -104,12 +101,12 @@ describe provider_class do
     end
   end
 
-  describe "when deleting users" do
+  context "when deleting users" do
     it "should run pw with no additional flags" do
       provider = resource.provider
       provider.expects(:exists?).returns true
-      expect(provider.deletecmd).to eq([provider_class.command(:pw), "userdel", "testuser"])
-      provider.expects(:execute).with([provider_class.command(:pw), "userdel", "testuser"], has_entry(:custom_environment, {}))
+      expect(provider.deletecmd).to eq([described_class.command(:pw), "userdel", "testuser"])
+      provider.expects(:execute).with([described_class.command(:pw), "userdel", "testuser"], has_entry(:custom_environment, {}))
       provider.delete
     end
 
@@ -133,14 +130,14 @@ describe provider_class do
     end
   end
 
-  describe "when modifying users" do
+  context "when modifying users" do
     let :provider do
       resource.provider
     end
 
     it "should run pw with the correct arguments" do
-      expect(provider.modifycmd("uid", 12345)).to eq([provider_class.command(:pw), "usermod", "testuser", "-u", 12345])
-      provider.expects(:execute).with([provider_class.command(:pw), "usermod", "testuser", "-u", 12345], has_entry(:custom_environment, {}))
+      expect(provider.modifycmd("uid", 12345)).to eq([described_class.command(:pw), "usermod", "testuser", "-u", 12345])
+      provider.expects(:execute).with([described_class.command(:pw), "usermod", "testuser", "-u", 12345], has_entry(:custom_environment, {}))
       provider.uid = 12345
     end
 

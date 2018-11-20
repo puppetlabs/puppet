@@ -1,8 +1,6 @@
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:macports)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:macports) do
   let :resource_name do
     "foo"
   end
@@ -21,7 +19,7 @@ describe provider_class do
     {:name => resource_name, :ensure => "1.2.3", :revision => "1", :provider => :macports}
   end
 
-  describe "provider features" do
+  context "provider features" do
     subject { provider }
 
     it { is_expected.to be_installable }
@@ -30,30 +28,30 @@ describe provider_class do
     it { is_expected.to be_versionable }
   end
 
-  describe "when listing all instances" do
+  context "when listing all instances" do
     it "should call port -q installed" do
-      provider_class.expects(:port).with("-q", :installed).returns("")
-      provider_class.instances
+      described_class.expects(:port).with("-q", :installed).returns("")
+      described_class.instances
     end
 
     it "should create instances from active ports" do
-      provider_class.expects(:port).returns("foo @1.234.5_2 (active)")
-      expect(provider_class.instances.size).to eq(1)
+      described_class.expects(:port).returns("foo @1.234.5_2 (active)")
+      expect(described_class.instances.size).to eq(1)
     end
 
     it "should ignore ports that aren't activated" do
-      provider_class.expects(:port).returns("foo @1.234.5_2")
-      expect(provider_class.instances.size).to eq(0)
+      described_class.expects(:port).returns("foo @1.234.5_2")
+      expect(described_class.instances.size).to eq(0)
     end
 
     it "should ignore variants" do
-      expect(provider_class.parse_installed_query_line("bar @1.0beta2_38_1+x11+java (active)")).
+      expect(described_class.parse_installed_query_line("bar @1.0beta2_38_1+x11+java (active)")).
         to eq({:provider=>:macports, :revision=>"1", :name=>"bar", :ensure=>"1.0beta2_38"})
     end
 
   end
 
-  describe "when installing" do
+  context "when installing" do
    it "should not specify a version when ensure is set to latest" do
      resource[:ensure] = :latest
      provider.expects(:port).with { |flag, method, name, version|
@@ -79,7 +77,7 @@ describe provider_class do
    end
   end
 
-  describe "when querying for the latest version" do
+  context "when querying for the latest version" do
     let :new_info_line do
       "1.2.3 2"
     end
@@ -120,7 +118,7 @@ describe provider_class do
     end
   end
 
-  describe "when updating a port" do
+  context "when updating a port" do
     it "should execute port install if the port is installed" do
       resource[:name] = resource_name
       resource[:ensure] = :present

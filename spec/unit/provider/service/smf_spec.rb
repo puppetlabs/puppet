@@ -1,20 +1,11 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the SMF service Provider
-#
-# author Dominic Cleal
-#
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:smf)
-
-describe provider_class, :if => Puppet.features.posix? do
-
+describe Puppet::Type.type(:service).provider(:smf), :if => Puppet.features.posix? do
   before(:each) do
     # Create a mock resource
     @resource = Puppet::Type.type(:service).new(
       :name => "/system/myservice", :ensure => :running, :enable => :true)
-    @provider = provider_class.new(@resource)
+    @provider = described_class.new(@resource)
 
     FileTest.stubs(:file?).with('/usr/sbin/svcadm').returns true
     FileTest.stubs(:executable?).with('/usr/sbin/svcadm').returns true
@@ -25,14 +16,14 @@ describe provider_class, :if => Puppet.features.posix? do
     Facter.stubs(:value).with(:operatingsystemrelease).returns '11.2'
   end
 
-  describe ".instances" do
+  context ".instances" do
     it "should have an instances method" do
-      expect(provider_class).to respond_to :instances
+      expect(described_class).to respond_to :instances
     end
 
     it "should get a list of services (excluding legacy)" do
-      provider_class.expects(:svcs).with('-H', '-o', 'state,fmri').returns File.read(my_fixture('svcs.out'))
-      instances = provider_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      described_class.expects(:svcs).with('-H', '-o', 'state,fmri').returns File.read(my_fixture('svcs.out'))
+      instances = described_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
       # we dont manage legacy
       expect(instances.size).to eq(3)
       expect(instances[0]).to eq({:name => 'svc:/system/svc/restarter:default', :ensure => :running })
@@ -69,7 +60,7 @@ describe provider_class, :if => Puppet.features.posix? do
     expect(@provider).to respond_to(:disable)
   end
 
-  describe "when checking status" do
+  context "when checking status" do
     it "should call the external command 'svcs /system/myservice' once" do
       @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.status
@@ -104,7 +95,7 @@ describe provider_class, :if => Puppet.features.posix? do
     end
   end
 
-  describe "when starting" do
+  context "when starting" do
     it "should enable the service if it is not enabled" do
       @provider.expects(:status).returns :stopped
       @provider.expects(:texecute).with(:start, ['/usr/sbin/svcadm', :enable, '-rs', '/system/myservice'], true)
@@ -141,10 +132,10 @@ describe provider_class, :if => Puppet.features.posix? do
     end
   end
 
-  describe "when starting a service with a manifest" do
+  context "when starting a service with a manifest" do
     before(:each) do
       @resource = Puppet::Type.type(:service).new(:name => "/system/myservice", :ensure => :running, :enable => :true, :manifest => "/tmp/myservice.xml")
-      @provider = provider_class.new(@resource)
+      @provider = described_class.new(@resource)
       $CHILD_STATUS.stubs(:exitstatus).returns(1)
     end
 
@@ -164,7 +155,7 @@ describe provider_class, :if => Puppet.features.posix? do
     end
   end
 
-  describe "when stopping" do
+  context "when stopping" do
     it "should execute external command 'svcadm disable /system/myservice'" do
       @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, '-s', "/system/myservice"], true)
       @provider.expects(:wait).with('offline', 'disabled', 'uninitialized')
@@ -178,8 +169,7 @@ describe provider_class, :if => Puppet.features.posix? do
     end
   end
 
-  describe "when restarting" do
-
+  context "when restarting" do
     it "should error if timeout occurs while restarting the service" do
       @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, '-s', "/system/myservice"], true)
       Timeout.expects(:timeout).with(60).raises(Timeout::Error)
@@ -212,6 +202,5 @@ describe provider_class, :if => Puppet.features.posix? do
         @provider.restart
       end
     end
-
   end
 end

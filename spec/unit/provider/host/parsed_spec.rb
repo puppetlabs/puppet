@@ -1,12 +1,9 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
-require 'shared_behaviours/all_parsedfile_providers'
 
+require 'shared_behaviours/all_parsedfile_providers'
 require 'puppet_spec/files'
 
-provider_class = Puppet::Type.type(:host).provider(:parsed)
-
-describe provider_class do
+describe Puppet::Type.type(:host).provider(:parsed) do
   include PuppetSpec::Files
 
   before do
@@ -46,7 +43,6 @@ describe provider_class do
   end
 
   describe "when parsing on incomplete line" do
-
     it "should work for only ip" do
       expect(@provider.parse_line("127.0.0.1")[:line]).to eq("127.0.0.1")
     end
@@ -78,11 +74,9 @@ describe provider_class do
     it "should work for crazy incomplete lines" do
       expect(@provider.parse_line("%th1s is a\t cr$zy    !incompl1t line")[:line]).to eq("%th1s is a\t cr$zy    !incompl1t line")
     end
-
   end
 
   describe "when parsing a line with ip and hostname" do
-
     it "should parse an ipv4 from the first field" do
       expect(@provider.parse_line("127.0.0.1    localhost")[:ip]).to eq("127.0.0.1")
     end
@@ -102,7 +96,6 @@ describe provider_class do
     it "should set host_aliases to :absent" do
       expect(@provider.parse_line("::1     localhost")[:host_aliases]).to eq(:absent)
     end
-
   end
 
   describe "when parsing a line with ip, hostname and comment" do
@@ -121,11 +114,9 @@ describe provider_class do
     it "should parse the comment after the first '#' character" do
       expect(@provider.parse_line(@testline)[:comment]).to eq('A comment with a #-char')
     end
-
   end
 
   describe "when parsing a line with ip, hostname and aliases" do
-
     it "should parse alias from the third field" do
       expect(@provider.parse_line("127.0.0.1   localhost   localhost.localdomain")[:host_aliases]).to eq("localhost.localdomain")
     end
@@ -135,11 +126,9 @@ describe provider_class do
       expect(@provider.parse_line("127.0.0.1 host alias1\talias2")[:host_aliases]).to eq('alias1 alias2')
       expect(@provider.parse_line("127.0.0.1 host alias1\talias2   alias3")[:host_aliases]).to eq('alias1 alias2 alias3')
     end
-
   end
 
   describe "when parsing a line with ip, hostname, aliases and comment" do
-
     before do
       # Just playing with a few different delimiters
       @testline = "127.0.0.1\t   host  alias1\talias2   alias3   #   A comment with a #-char"
@@ -160,12 +149,11 @@ describe provider_class do
     it "should parse the comment after the first '#' character" do
       expect(@provider.parse_line(@testline)[:comment]).to eq('A comment with a #-char')
     end
-
   end
 
   describe "when operating on /etc/hosts like files" do
     it_should_behave_like "all parsedfile providers",
-      provider_class, my_fixtures('valid*')
+      described_class, my_fixtures('valid*')
 
     it "should be able to generate a simple hostfile entry" do
       host = mkhost(
@@ -227,7 +215,5 @@ describe provider_class do
       )
       expect(genhost(host)).to eq("192.0.0.1\thost\ta1 a2 a3 a4\t# Bazinga!\n")
     end
-
   end
-
 end

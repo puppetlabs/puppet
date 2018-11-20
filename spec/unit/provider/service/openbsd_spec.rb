@@ -1,12 +1,6 @@
-#!/usr/bin/env ruby
-#
-# Unit testing for the OpenBSD service provider
-
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:openbsd)
-
-describe provider_class, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:service).provider(:openbsd), :unless => Puppet.features.microsoft_windows? do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     Facter.stubs(:value).with(:operatingsystem).returns :openbsd
@@ -15,7 +9,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     FileTest.stubs(:executable?).with('/usr/sbin/rcctl').returns true
   end
 
-  describe "#instances" do
+  context "#instances" do
     it "should have an instances method" do
       expect(described_class).to respond_to :instances
     end
@@ -28,7 +22,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#start" do
+  context "#start" do
     it "should use the supplied start command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :start => '/bin/foo'))
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
@@ -42,7 +36,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#stop" do
+  context "#stop" do
     it "should use the supplied stop command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :stop => '/bin/foo'))
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
@@ -56,7 +50,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#status" do
+  context "#status" do
     it "should use the status command from the resource" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
       provider.expects(:execute).with(['/usr/sbin/rcctl', :get, 'sshd', :status], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
@@ -81,7 +75,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#restart" do
+  context "#restart" do
     it "should use the supplied restart command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
       provider.expects(:execute).with(['/usr/sbin/rcctl', '-f', :restart, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
@@ -104,7 +98,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#enabled?" do
+  context "#enabled?" do
     it "should return :true if the service is enabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:get, 'sshd', :status)
@@ -120,7 +114,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#enable" do
+  context "#enable" do
     it "should run rcctl enable to enable the service" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:enable, 'sshd').returns('')
@@ -138,7 +132,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#disable" do
+  context "#disable" do
     it "should run rcctl disable to disable the service" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:disable, 'sshd').returns('')
@@ -147,7 +141,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#running?" do
+  context "#running?" do
     it "should run rcctl check to check the service" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(ok)')
@@ -170,7 +164,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#flags" do
+  context "#flags" do
     it "should return flags when set" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :flags => '-6'))
       described_class.stubs(:rcctl).with('get', 'sshd', 'flags').returns('-6')
@@ -193,7 +187,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#flags=" do
+  context "#flags=" do
     it "should run rcctl to set flags" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       described_class.stubs(:rcctl).with(:set, 'sshd', :flags, '-4').returns('')
