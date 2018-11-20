@@ -1,20 +1,16 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:bsd)
-
-describe provider_class, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:service).provider(:bsd), :unless => Puppet.features.microsoft_windows? do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     Facter.stubs(:value).with(:operatingsystem).returns :netbsd
     Facter.stubs(:value).with(:osfamily).returns 'NetBSD'
     described_class.stubs(:defpath).returns('/etc/rc.conf.d')
-    @provider = provider_class.new
+    @provider = subject()
     @provider.stubs(:initscript)
   end
 
-  describe "#instances" do
+  context "#instances" do
     it "should have an instances method" do
       expect(described_class).to respond_to :instances
     end
@@ -24,7 +20,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#disable" do
+  context "#disable" do
     it "should have a disable method" do
       expect(@provider).to respond_to(:disable)
     end
@@ -45,7 +41,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#enable" do
+  context "#enable" do
     it "should have an enable method" do
       expect(@provider).to respond_to(:enable)
     end
@@ -70,7 +66,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#enabled?" do
+  context "#enabled?" do
     it "should have an enabled? method" do
       expect(@provider).to respond_to(:enabled?)
     end
@@ -90,7 +86,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#startcmd" do
+  context "#startcmd" do
     it "should have a startcmd method" do
       expect(@provider).to respond_to(:startcmd)
     end
@@ -109,7 +105,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
-  describe "#stopcmd" do
+  context "#stopcmd" do
     it "should have a stopcmd method" do
       expect(@provider).to respond_to(:stopcmd)
     end

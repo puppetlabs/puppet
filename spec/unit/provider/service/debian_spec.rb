@@ -1,14 +1,6 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the debian service provider
-#
-
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:debian)
-
-describe provider_class do
-
+describe Puppet::Type.type(:service).provider(:debian) do
   if Puppet.features.microsoft_windows?
     # Get a pid for $CHILD_STATUS to latch on to
     command = "cmd.exe /c \"exit 0\""
@@ -19,7 +11,7 @@ describe provider_class do
     # Create a mock resource
     @resource = stub 'resource'
 
-    @provider = provider_class.new
+    @provider = subject()
 
     # A catch all; no parameters set
     @resource.stubs(:[]).returns(nil)
@@ -43,14 +35,14 @@ describe provider_class do
     it "should be the default provider on CumulusLinux #{version}" do
       Facter.expects(:value).with(:operatingsystem).at_least_once.returns('CumulusLinux')
       Facter.expects(:value).with(:operatingsystemmajrelease).returns(version)
-      expect(provider_class.default?).to be_truthy
+      expect(described_class.default?).to be_truthy
     end
   end
 
   it "should be the default provider on Debian" do
     Facter.expects(:value).with(:operatingsystem).at_least_once.returns('Debian')
     Facter.expects(:value).with(:operatingsystemmajrelease).returns('7')
-    expect(provider_class.default?).to be_truthy
+    expect(described_class.default?).to be_truthy
   end
 
   it "should have an enabled? method" do
@@ -65,14 +57,14 @@ describe provider_class do
     expect(@provider).to respond_to(:disable)
   end
 
-  describe "when enabling" do
+  context "when enabling" do
     it "should call update-rc.d twice" do
       @provider.expects(:update_rc).twice
       @provider.enable
     end
   end
 
-  describe "when disabling" do
+  context "when disabling" do
     it "should be able to disable services with newer sysv-rc versions" do
       @provider.stubs(:`).with("dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?").returns "0"
 
@@ -91,7 +83,7 @@ describe provider_class do
     end
   end
 
-  describe "when checking whether it is enabled" do
+  context "when checking whether it is enabled" do
     it "should call Kernel.system() with the appropriate parameters" do
       @provider.expects(:system).with("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start").once
       $CHILD_STATUS.stubs(:exitstatus).returns(0)
@@ -151,7 +143,7 @@ describe provider_class do
     end
   end
 
-  describe "when checking service status" do
+  context "when checking service status" do
     it "should use the service command" do
       Facter.stubs(:value).with(:operatingsystem).returns('Debian')
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns('8')

@@ -1,9 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:puppet_gem)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:puppet_gem) do
   let(:resource) do
     Puppet::Type.type(:package).new(
       :name     => 'myresource',
@@ -12,7 +9,7 @@ describe provider_class do
   end
 
   let(:provider) do
-    provider = provider_class.new
+    provider = described_class.new
     provider.resource = resource
     provider
   end
@@ -27,9 +24,9 @@ describe provider_class do
     resource.provider = provider
   end
 
-  describe "when installing" do
+  context "when installing" do
     it "should use the path to the gem" do
-      provider_class.expects(:which).with(puppet_gem).returns(puppet_gem)
+      described_class.expects(:which).with(puppet_gem).returns(puppet_gem)
       provider.expects(:execute).with { |args| args[0] == puppet_gem }.returns ''
       provider.install
     end
@@ -46,9 +43,9 @@ describe provider_class do
     end
   end
 
-  describe "when uninstalling" do
+  context "when uninstalling" do
     it "should use the path to the gem" do
-      provider_class.expects(:which).with(puppet_gem).returns(puppet_gem)
+      described_class.expects(:which).with(puppet_gem).returns(puppet_gem)
       provider.expects(:execute).with { |args| args[0] == puppet_gem }.returns ''
       provider.install
     end

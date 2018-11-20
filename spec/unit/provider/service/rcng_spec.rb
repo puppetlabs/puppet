@@ -1,20 +1,16 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:service).provider(:rcng)
-
-describe provider_class, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:service).provider(:rcng), :unless => Puppet.features.microsoft_windows? do
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     Facter.stubs(:value).with(:operatingsystem).returns :netbsd
     Facter.stubs(:value).with(:osfamily).returns 'NetBSD'
     described_class.stubs(:defpath).returns('/etc/rc.d')
-    @provider = provider_class.new
+    @provider = subject()
     @provider.stubs(:initscript)
   end
 
-  describe "#enable" do
+  context "#enable" do
     it "should have an enable method" do
       expect(@provider).to respond_to(:enable)
     end

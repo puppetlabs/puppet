@@ -1,9 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:zypper)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:zypper) do
   before(:each) do
     # Create a mock resource
     @resource = stub 'resource'
@@ -16,35 +13,35 @@ describe provider_class do
     @resource.stubs(:[]).with(:ensure).returns :installed
     @resource.stubs(:command).with(:zypper).returns "/usr/bin/zypper"
 
-    @provider = provider_class.new(@resource)
+    @provider = described_class.new(@resource)
   end
 
   it "should have an install method" do
-    @provider = provider_class.new
+    @provider = described_class.new
     expect(@provider).to respond_to(:install)
   end
 
   it "should have an uninstall method" do
-    @provider = provider_class.new
+    @provider = described_class.new
     expect(@provider).to respond_to(:uninstall)
   end
 
   it "should have an update method" do
-    @provider = provider_class.new
+    @provider = described_class.new
     expect(@provider).to respond_to(:update)
   end
 
   it "should have a latest method" do
-    @provider = provider_class.new
+    @provider = described_class.new
     expect(@provider).to respond_to(:latest)
   end
 
   it "should have a install_options method" do
-    @provider = provider_class.new
+    @provider = described_class.new
     expect(@provider).to respond_to(:install_options)
   end
 
-  describe "when installing with zypper version >= 1.0" do
+  context "when installing with zypper version >= 1.0" do
     it "should use a command-line with versioned package'" do
       @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
       @resource.stubs(:allow_virtual?).returns false
@@ -65,7 +62,7 @@ describe provider_class do
     end
   end
 
-  describe "when installing with zypper version = 0.6.104" do
+  context "when installing with zypper version = 0.6.104" do
     it "should use a command-line with versioned package'" do
       @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
       @resource.stubs(:allow_virtual?).returns false
@@ -86,7 +83,7 @@ describe provider_class do
     end
   end
 
-  describe "when installing with zypper version = 0.6.13" do
+  context "when installing with zypper version = 0.6.13" do
     it "should use a command-line with versioned package'" do
       @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
       @resource.stubs(:allow_virtual?).returns false
@@ -107,15 +104,16 @@ describe provider_class do
     end
   end
 
-  describe "when updating" do
+  context "when updating" do
     it "should call install method of instance" do
       @provider.expects(:install)
       @provider.update
     end
   end
 
-  describe "when getting latest version" do
-    after do described_class.reset! end
+  context "when getting latest version" do
+    after { described_class.reset! }
+
     context "when the package has available update" do
       it "should return a version string with valid list-updates data from SLES11sp1" do
         fake_data = File.read(my_fixture('zypper-list-updates-SLES11sp1.out'))
@@ -144,7 +142,7 @@ describe provider_class do
     end
   end
 
-  describe "should install a virtual package" do
+  context "should install a virtual package" do
     it "when zypper version = 0.6.13" do
       @resource.stubs(:should).with(:ensure).returns :installed
       @resource.stubs(:allow_virtual?).returns true
@@ -164,7 +162,7 @@ describe provider_class do
     end
   end
 
-  describe "when installing with zypper install options" do
+  context "when installing with zypper install options" do
     it "should install the package without checking keys" do
       @resource.stubs(:[]).with(:name).returns "php5"
       @resource.stubs(:[]).with(:install_options).returns ['--no-gpg-check', {'-p' => '/vagrant/files/localrepo/'}]
@@ -215,7 +213,7 @@ describe provider_class do
     end
   end
 
-  describe 'when uninstalling' do
+  context 'when uninstalling' do
     it 'should use remove to uninstall on zypper version 1.6 and above' do
       @provider.stubs(:zypper_version).returns '1.6.308'
       @provider.expects(:zypper).with(:remove, '--no-confirm', 'mypackage')
