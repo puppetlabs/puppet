@@ -478,6 +478,13 @@ class Puppet::Parameter
 
   # @return [Object] Gets the value of this parameter after performing any specified unmunging.
   def value
+    if @needs_resolve
+      @value = Puppet.lookup(:deferred_resolver).resolve(@value)
+      @needs_resolve = false
+      # perform what value= performs when a value did not need to be resolved
+      validate(@value)
+      @value = unmunge(@value)
+    end
     unmunge(@value) unless @value.nil?
   end
 
@@ -493,9 +500,14 @@ class Puppet::Parameter
   # @raise (see #validate)
   #
   def value=(value)
-    validate(value)
-
-    @value = munge(value)
+    if Puppet::Pops::Evaluator::DeferredResolver.needs_resolve?(value)
+      # The value needs to be resolved later, cannot validate and munge yet
+      @needs_resolve = true
+      @value = value
+    else
+      validate(value)
+      @value = munge(value)
+    end
   end
 
   # @return [Puppet::Provider] Returns the provider of the associated resource.

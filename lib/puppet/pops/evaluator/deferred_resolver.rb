@@ -33,6 +33,13 @@ class DeferredResolver
     nil
   end
 
+  def self.create_resolver(facts, environment, node_name)
+    compiler = Puppet::Parser::ScriptCompiler.new(environment, node_name, true)
+    resolver = new(compiler)
+    resolver.set_facts_variable(facts)
+    resolver
+  end
+
   # Resolves a value such that a direct Deferred, or any nested Deferred values
   # are resolved and used instead of the deferred value.
   # A direct Deferred value, or nested deferred values inside of Array, Hash or
@@ -51,11 +58,15 @@ class DeferredResolver
     resolver.resolve(value)
   end
 
+  def self.deferred_class
+    Puppet::Pops::Types::TypeFactory.deferred.implementation_class
+  end
+
   def initialize(compiler)
     @compiler = compiler
     # Always resolve in top scope
     @scope = @compiler.topscope
-    @deferred_class = Puppet::Pops::Types::TypeFactory.deferred.implementation_class
+    @deferred_class = self.class.deferred_class
   end
 
   # @param facts [Puppet::Node::Facts] the facts to set in $facts in the compiler's topscope
@@ -101,6 +112,24 @@ class DeferredResolver
       x.binary_buffer
     else
       x
+    end
+  end
+
+  # Returns true if the value needs to be resolved (as it contains Deferred or Binary values)
+  #
+  def self.needs_resolve?(value)
+    if value.class == deferred_class
+      true
+    elsif value.is_a?(Array)
+      value.any? {|x| needs_resolve?(x) }
+    elsif value.is_a?(Hash)
+      value.any? {|k,v| needs_resolve?(v) || needs_resolve?(k) }
+    elsif value.is_a?(Puppet::Pops::Types::PSensitiveType::Sensitive)
+      needs_resolve?(value.unwrap)
+    elsif value.is_a?(Puppet::Pops::Types::PBinaryType::Binary)
+      true
+    else
+      false
     end
   end
 

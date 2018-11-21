@@ -522,6 +522,7 @@ class Puppet::Property < Puppet::Parameter
   #
   def should
     return nil unless defined?(@should)
+    do_resolve_if_needed
 
     self.devfail "should for #{self.class.name} on #{resource.name} is not an array" unless @should.is_a?(Array)
 
@@ -530,6 +531,24 @@ class Puppet::Property < Puppet::Parameter
     else
       return self.unmunge(@should[0])
     end
+  end
+
+  def shouldorig
+    do_resolve_if_needed
+    @shouldorig
+  end
+
+  def do_resolve_if_needed
+    return unless @needs_resolve
+
+    # resolve
+    @should = Puppet.lookup(:deferred_resolver).resolve(@should)
+    @needs_resolve = false
+
+    # then do what should=() deferred
+    @shouldorig = @should
+    @should.each {|val| validate(val) }
+    @should = @should.collect {|val| self.munge(val) }
   end
 
   # Sets the wanted _(should)_ value of this property.
@@ -542,11 +561,15 @@ class Puppet::Property < Puppet::Parameter
   #
   def should=(values)
     values = [values] unless values.is_a?(Array)
-
-    @shouldorig = values
-
-    values.each { |val| validate(val) }
-    @should = values.collect { |val| self.munge(val) }
+    if Puppet::Pops::Evaluator::DeferredResolver.needs_resolve?(values)
+      # The value needs to be resolved later, cannot validate and munge yet
+      @needs_resolve = true
+      @should = values
+    else
+      @shouldorig = values
+      values.each { |val| validate(val) }
+      @should = values.collect { |val| self.munge(val) }
+    end
   end
 
   # Produces a pretty printing string for the given value.

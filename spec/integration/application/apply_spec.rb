@@ -487,7 +487,7 @@ class amod::bad_type {
         apply.run
       end
 
-      it 'will notify a string that is the result of to_s on uknown data types' do
+      it 'will notify a string that is the result of to_s on unknown data types' do
         json = compile_to_catalog('include amod::bad_type', node).to_json
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', json)
@@ -517,15 +517,18 @@ class amod::bad_type {
         end
         apply.options[:catalog] = file_containing('manifest', serialized_catalog)
         apply.expects(:apply_catalog).with do |cat|
-          expect(cat.resource(:notify, 'rx')['message']).to be_a(Regexp)
-          # The resource return in this expect is a String, but since it was a Binary type that
-          # was converted with `resolve_and_replace`, we want to make sure that the encoding
-          # of that string is the expected ASCII-8BIT.
-          expect(cat.resource(:notify, 'bin')['message'].encoding.inspect).to include('ASCII-8BIT')
-          expect(cat.resource(:notify, 'ver')['message']).to be_a(SemanticPuppet::Version)
-          expect(cat.resource(:notify, 'vrange')['message']).to be_a(SemanticPuppet::VersionRange)
-          expect(cat.resource(:notify, 'tspan')['message']).to be_a(Puppet::Pops::Time::Timespan)
-          expect(cat.resource(:notify, 'tstamp')['message']).to be_a(Puppet::Pops::Time::Timestamp)
+          # Since catalog contains deferred values they will require a resolver when accessing them
+          Puppet.override(:deferred_resolver => Puppet::Pops::Evaluator::DeferredResolver.create_resolver(nil, catalog.environment_instance, catalog.name)) {
+            expect(cat.resource(:notify, 'rx')['message']).to be_a(Regexp)
+            # The resource returns in this expect is a String, but since it was a Binary type that
+            # was converted with the deferred resolver, it is asserted that the encoding
+            # of that string is the expected ASCII-8BIT.
+            expect(cat.resource(:notify, 'bin')['message'].encoding.inspect).to include('ASCII-8BIT')
+            expect(cat.resource(:notify, 'ver')['message']).to be_a(SemanticPuppet::Version)
+            expect(cat.resource(:notify, 'vrange')['message']).to be_a(SemanticPuppet::VersionRange)
+            expect(cat.resource(:notify, 'tspan')['message']).to be_a(Puppet::Pops::Time::Timespan)
+            expect(cat.resource(:notify, 'tstamp')['message']).to be_a(Puppet::Pops::Time::Timestamp)
+          }
         end
         apply.run
       end

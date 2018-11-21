@@ -286,8 +286,8 @@ describe Puppet::Application::Apply do
         expect { @apply.main }.to exit_with 0
       end
 
-      it 'should called the DeferredResolver to resolve any Deferred values' do
-        Puppet::Pops::Evaluator::DeferredResolver.expects(:resolve_and_replace).with(any_parameters)
+      it 'should create a DeferredResolver for resolution of any Deferred values' do
+        Puppet::Pops::Evaluator::DeferredResolver.expects(:create_resolver).with(any_parameters)
         expect { @apply.main }.to exit_with 0
       end
 
@@ -468,9 +468,11 @@ describe Puppet::Application::Apply do
 
         configurer = stub 'configurer'
         Puppet::Configurer.expects(:new).returns configurer
-        configurer.expects(:run).
-          with(:catalog => "mycatalog", :pluginsync => false)
-
+        configurer.expects(:run).with() {|options|
+          options[:catalog] == 'mycatalog' &&
+          options[:pluginsync] == false    &&
+          options[:facts].is_a?(Puppet::Node::Facts)
+        }
         @apply.apply
       end
 
@@ -493,7 +495,7 @@ describe Puppet::Application::Apply do
         Puppet::Resource::Catalog.stubs(:default_format).returns :rot13_piglatin
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
         Puppet::Resource::Catalog.stubs(:convert_from).with(:rot13_piglatin,'"something"').returns(catalog)
-        Puppet::Pops::Evaluator::DeferredResolver.expects(:resolve_and_replace).with(any_parameters)
+        Puppet::Pops::Evaluator::DeferredResolver.expects(:create_resolver).with(any_parameters)
         @apply.apply
       end
     end
@@ -535,8 +537,8 @@ describe Puppet::Application::Apply do
     it "should call the configurer with the catalog" do
       catalog = "I am a catalog"
       Puppet::Configurer.any_instance.expects(:run).
-        with(:catalog => catalog, :pluginsync => false)
-      @apply.send(:apply_catalog, catalog)
+        with(:catalog => catalog, :pluginsync => false, :facts => nil)
+      @apply.send(:apply_catalog, catalog, nil)
     end
   end
 

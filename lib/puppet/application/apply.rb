@@ -186,10 +186,16 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     else
       text = Puppet::FileSystem.read(options[:catalog], :encoding => 'utf-8')
     end
-    env = Puppet.lookup(:environments).get(Puppet[:environment])
-    Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
+
+    facts = get_facts()
+    node = get_node()
+    configured_environment = get_configured_environment(node)
+    loaders = Puppet::Pops::Loaders.new(configured_environment)
+    # TRANSLATORS "puppet apply" is a program command and should not be translated
+    Puppet.override({:current_environment => configured_environment, :loaders => loaders}, _("For puppet apply")) do
+      configure_node_facts(node, facts)
       catalog = read_catalog(text)
-      apply_catalog(catalog)
+      apply_catalog(catalog, node.facts)
     end
   end
 
@@ -238,10 +244,6 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         # resolution and once for the apply).
         #
         exit_status = Puppet.override(:loaders => Puppet::Pops::Loaders.new(apply_environment)) do
-
-          # Resolve all deferred values and replace them / mutate the catalog
-          Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog)
-
           # Translate it to a RAL catalog
           catalog = catalog.to_ral
 
@@ -254,7 +256,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
             catalog.write_resource_file
           end
 
-          apply_catalog(catalog)
+          apply_catalog(catalog, node.facts)
         end
         if not exit_status
           exit(1)
@@ -311,14 +313,6 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   private
 
   def read_catalog(text)
-    facts = get_facts()
-    node = get_node()
-    configured_environment = get_configured_environment(node)
-
-    # TRANSLATORS "puppet apply" is a program command and should not be translated
-    Puppet.override({:current_environment => configured_environment}, _("For puppet apply")) do
-      configure_node_facts(node, facts)
-
       # NOTE: Does not set rich_data = true automatically (which would ensure always reading catalog with rich data
       # on (seemingly the right thing to do)), but that would remove the ability to test what happens when a
       # rich catalog is processed without rich_data being turned on.
@@ -328,16 +322,12 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       rescue => detail
         raise Puppet::Error, _("Could not deserialize catalog from %{format}: %{detail}") % { format: format, detail: detail }, detail.backtrace
       end
-      # Resolve all deferred values and replace them / mutate the catalog
-      Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(node.facts, catalog)
-
       catalog.to_ral
-    end
   end
 
-  def apply_catalog(catalog)
+  def apply_catalog(catalog, facts)
     configurer = Puppet::Configurer.new
-    configurer.run(:catalog => catalog, :pluginsync => false)
+    configurer.run(:catalog => catalog, :pluginsync => false, :facts => facts)
   end
 
   # Returns facts or nil

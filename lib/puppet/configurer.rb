@@ -103,11 +103,6 @@ class Puppet::Configurer
     catalog = nil
 
     catalog_conversion_time = thinmark do
-      # Will mutate the result and replace all Deferred values with resolved values
-      if facts = options[:convert_with_facts]
-        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(facts, result)
-      end
-
       catalog = result.to_ral
       catalog.finalize
       catalog.retrieval_duration = duration
@@ -140,7 +135,7 @@ class Puppet::Configurer
       # facts_for_uploading may set Puppet[:node_name_value] as a side effect
       facter_time = thinmark do
         facts = find_facts
-        options[:convert_with_facts] =  facts
+        options[:facts] =  facts
         facts_hash = encode_facts(facts) # encode for uploading # was: facts_for_uploading
       end
       options[:report].add_times(:fact_generation, facter_time) if options[:report]
@@ -175,8 +170,6 @@ class Puppet::Configurer
     result = retrieve_catalog_from_cache({:transaction_uuid => @transaction_uuid, :static_catalog => @static_catalog})
     if result
       Puppet.info _("Using cached catalog from environment '%{catalog_env}'") % { catalog_env: result.environment }
-      # get facts now so that the convert_catalog method can resolve deferred values
-      get_facts(options)
       return convert_catalog(result, @duration, options)
     end
     nil
@@ -187,13 +180,34 @@ class Puppet::Configurer
     report = options[:report]
     report.configuration_version = catalog.version
 
-    benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
-      apply_catalog_time = thinmark do
-        catalog.apply(options)
-      end
-      options[:report].add_times(:catalog_application, apply_catalog_time)
+    # Dig out the facts from options, and get them if not present there.
+    # As last resort, use nil to mean "no facts" (if tests passed something strange for example).
+    # These facts are used to set $facts (and more) when the deferred resolver resolves Deferred property and parameter
+    # values on demand.
+    #
+    the_facts = options[:facts]
+    unless the_facts
+      local_options = {}
+      get_facts(local_options) # this sets :facts in the given hash if facts were obtained
+      the_facts = local_options[:facts]
+    end
+    unless the_facts.is_a?(Puppet::Node::Facts)
+      the_facts = nil
     end
 
+    options.delete(:facts) # the catalog does not want this option
+    # Create a context containing a 'deferred_resolver' - it is used from Parameter and Property classes
+    # when first reading a Deferred value.
+    Puppet.override({
+        :deferred_resolver => Puppet::Pops::Evaluator::DeferredResolver.create_resolver(the_facts, Puppet.lookup(:current_environment), catalog.name)
+    }) do
+      benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
+        apply_catalog_time = thinmark do
+          catalog.apply(options)
+        end
+        options[:report].add_times(:catalog_application, apply_catalog_time)
+      end
+    end
     report
   end
 
@@ -372,6 +386,7 @@ class Puppet::Configurer
       options[:report].code_id = catalog.code_id
       options[:report].catalog_uuid = catalog.catalog_uuid
       options[:report].cached_catalog_status = @cached_catalog_status
+
       apply_catalog(catalog, options)
       true
     rescue => detail
