@@ -143,6 +143,24 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
     end
   end
 
+  [ '10', '11', '12', '13', '14', '15', '16', '17' ].each do |ver|
+    it "should not be the default provider on LinuxMint#{ver}" do
+      Facter.stubs(:value).with(:osfamily).returns(:debian)
+      Facter.stubs(:value).with(:operatingsystem).returns(:LinuxMint)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
+      expect(provider_class).not_to be_default
+    end
+  end
+
+  [ '18', '19' ].each do |ver|
+    it "should be the default provider on LinuxMint#{ver}" do
+      Facter.stubs(:value).with(:osfamily).returns(:debian)
+      Facter.stubs(:value).with(:operatingsystem).returns(:LinuxMint)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
+      expect(provider_class).to be_default
+    end
+  end
+
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
       expect(provider).to respond_to(method)
