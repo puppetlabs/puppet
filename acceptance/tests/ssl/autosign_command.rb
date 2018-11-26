@@ -50,6 +50,7 @@ EOF
       'master' => {
         'autosign' => autosign_true_script_path,
         'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
+        'server' => fqdn
       }
     }
     with_puppet_running_on(master, master_opts) do
@@ -58,7 +59,6 @@ EOF
 
         test_certnames << (certname = "#{agent}-autosign")
         on(agent, puppet("agent --test",
-                  "--server #{master}",
                   "--waitforcert 0",
                   "--ssldir", "'#{testdirs[agent]}/ssldir-autosign'",
                   "--certname #{certname}"), :acceptable_exit_codes => [0,2])
@@ -91,6 +91,7 @@ EOF
       'master' => {
         'autosign' => autosign_false_script_path,
         'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
+        'server' => fqdn
       }
     }
     with_puppet_running_on(master, master_opts) do
@@ -99,7 +100,6 @@ EOF
 
         test_certnames << (certname = "#{agent}-reject")
         on(agent, puppet("agent --test",
-                        "--server #{master}",
                         "--waitforcert 0",
                         "--ssldir", "'#{testdirs[agent]}/ssldir-reject'",
                         "--certname #{certname}"), :acceptable_exit_codes => [1])
@@ -159,6 +159,7 @@ custom_attributes:
       'master' => {
         'autosign' => autosign_inspect_csr_path,
         'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
+        'server' => fqdn
       },
     }
     with_puppet_running_on(master, master_opts) do
@@ -168,7 +169,6 @@ custom_attributes:
         step "attempting to obtain cert for #{agent}"
         test_certnames << (certname = "#{agent}-attrs")
         on(agent, puppet("agent --test",
-                         "--server #{master}",
                          "--waitforcert 0",
                          "--ssldir", "'#{testdirs[agent]}/ssldir-attrs'",
                          "--csr_attributes '#{agent_csr_attributes[agent]}'",
