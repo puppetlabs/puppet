@@ -73,6 +73,10 @@ describe Puppet::Util::SELinux do
       expect(selinux_label_support?('/etc/puppetlabs/puppet/testfile')).to be_truthy
     end
 
+    it "should return true if tmpfs" do
+      expect(selinux_label_support?('/dev/shm/testfile')).to be_truthy
+    end
+
     it "should return false for a noncapable filesystem" do
       expect(selinux_label_support?('/mnt/nfs/testfile')).to be_falsey
     end
