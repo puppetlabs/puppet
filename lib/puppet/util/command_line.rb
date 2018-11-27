@@ -64,8 +64,12 @@ module Puppet
       #
       # @return [void]
       def execute
+        require_config = true
+        if @argv.first =~ /help|-h|--help|-V|--version/
+          require_config = false
+        end
         Puppet::Util.exit_on_fail(_("Could not initialize global default settings")) do
-          Puppet.initialize_settings(args)
+          Puppet.initialize_settings(args, require_config)
         end
 
         setpriority(Puppet[:priority])
