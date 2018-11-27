@@ -51,7 +51,7 @@ module Puppet
       # on the agent. For simplicity, these are any lines that do
       # not begin with '#'.
       def crontab_entries_of(host, username)
-        crontab_contents = run_cron_on(host, :list, username).stdout.chomp
+        crontab_contents = run_cron_on(host, :list, username).stdout.strip
         crontab_contents.lines.map(&:chomp).reject { |line| line =~ /^#/ }
       end
     end
@@ -207,6 +207,10 @@ MANIFEST
 
       def cron_manifest(entry_name, params = {})
         resource_manifest('cron', entry_name, params)
+      end
+
+      def user_manifest(username, params = {})
+        resource_manifest('user', username, params)
       end
     end
   end
