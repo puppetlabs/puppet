@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.8-55-ge52ac61\n"
+"Project-Id-Version: Puppet automation framework 5.5.8-60-geb9638a\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-11-27 22:45+0000\n"
-"PO-Revision-Date: 2018-11-27 22:45+0000\n"
+"POT-Creation-Date: 2018-11-28 18:32+0000\n"
+"PO-Revision-Date: 2018-11-28 18:32+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -7301,6 +7301,18 @@ msgstr ""
 #. TRANSLATORS 'runsvdir' is a linux service name and should not be translated
 #: ../lib/puppet/provider/service/runit.rb:93
 msgid "Waiting 5 seconds for runsvdir to discover service %{service}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/smf.rb:68
+msgid "Failed to get the FMRI of the %{service} service: The pattern '%{service}' matches multiple FMRIs! These are the FMRIs it matches: %{all_fmris}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/smf.rb:83
+msgid "Cannot query if the %{service} service is complete: The concept of complete/incomplete services was introduced in Solaris 11.1. You are on a Solaris %{release} machine."
+msgstr ""
+
+#: ../lib/puppet/provider/service/smf.rb:182
+msgid "The %{service} service is incomplete so its status will be reported as :stopped. See `svcs -xv %{fmri}` for more details."
 msgstr ""
 
 #: ../lib/puppet/provider/service/windows.rb:22
