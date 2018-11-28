@@ -28,6 +28,7 @@ test_name "certificate extensions available as trusted data" do
     'master' => {
       'autosign' => true,
       'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
+      'server' => fqdn
     }
   }
 
@@ -80,7 +81,6 @@ test_name "certificate extensions available as trusted data" do
 
       step "Check in as #{agent_certname}"
       on(agent, puppet("agent", "--test",
-                       "--server", master,
                        "--waitforcert", 0,
                        "--csr_attributes", agent_csr_attributes,
                        "--certname", agent_certname,
