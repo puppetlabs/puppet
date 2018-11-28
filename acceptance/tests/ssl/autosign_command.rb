@@ -21,8 +21,14 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
 
   teardown do
     step "clear test certs"
-    test_certnames.each do |cn|
-      on(master, "puppetserver ca clean --certname #{cn}", :acceptable_exit_codes => [0,24])
+    master_opts = {
+      'main' => { 'server' => fqdn },
+      'master' => { 'dns_alt_names' => "puppet,#{hostname},#{fqdn}" }
+    }
+    with_puppet_running_on(master, master_opts) do
+      on(master,
+         "puppetserver ca clean --certname #{test_certnames.join(',')}",
+         :acceptable_exit_codes => [0,24])
     end
   end
 
@@ -47,10 +53,10 @@ EOF
     on(master, "chmod 777 #{autosign_true_script_path}")
 
     master_opts = {
+      'main' => { 'server' => fqdn },
       'master' => {
         'autosign' => autosign_true_script_path,
-        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
-        'server' => fqdn
+        'dns_alt_names' => "puppet,#{hostname},#{fqdn}"
       }
     }
     with_puppet_running_on(master, master_opts) do
@@ -88,10 +94,10 @@ EOF
     on(master, "chmod 777 #{autosign_false_script_path}")
 
     master_opts = {
+      'main' => { 'server' => fqdn },
       'master' => {
         'autosign' => autosign_false_script_path,
-        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
-        'server' => fqdn
+        'dns_alt_names' => "puppet,#{hostname},#{fqdn}"
       }
     }
     with_puppet_running_on(master, master_opts) do
@@ -156,10 +162,10 @@ custom_attributes:
 
   step "Step 5: successfully obtain a cert" do
     master_opts = {
+      'main' => { 'server' => fqdn },
       'master' => {
         'autosign' => autosign_inspect_csr_path,
-        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
-        'server' => fqdn
+        'dns_alt_names' => "puppet,#{hostname},#{fqdn}"
       },
     }
     with_puppet_running_on(master, master_opts) do
