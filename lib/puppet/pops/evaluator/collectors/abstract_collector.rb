@@ -51,7 +51,9 @@ class Puppet::Pops::Evaluator::Collectors::AbstractCollector
 
       objects.each do |res|
         unless @collected.include?(res.ref)
-          newres = Puppet::Parser::Resource.new(res.type, res.title, @overrides)
+          t = res.type
+          t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t)
+          newres = Puppet::Parser::Resource.new(t, res.title, @overrides)
           scope.compiler.add_override(newres)
         end
       end

@@ -41,7 +41,7 @@ agents.each do |agent|
 
   step "IPS: check it was created"
   on(agent, puppet("resource package mypkg")) do
-    assert_match( /ensure => '0\.0\.1,.*'/, result.stdout, "err: #{agent}")
+    assert_match( /ensure => '0\.0\.1.*'/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: do not upgrade until latest is mentioned"
@@ -52,7 +52,7 @@ agents.each do |agent|
 
   step "IPS: verify it was not upgraded"
   on(agent, puppet("resource package mypkg")) do
-    assert_match( /ensure => '0\.0\.1,.*'/, result.stdout, "err: #{agent}")
+    assert_match( /ensure => '0\.0\.1.*'/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: ask to be latest"
@@ -60,7 +60,7 @@ agents.each do |agent|
 
   step "IPS: ensure it was upgraded"
   on(agent, puppet("resource package mypkg")) do
-    assert_match( /ensure => '0\.0\.2,.*'/, result.stdout, "err: #{agent}")
+    assert_match( /ensure => '0\.0\.2.*'/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: when there are more than one option, choose latest."
@@ -68,7 +68,7 @@ agents.each do |agent|
   send_pkg agent,:pkg => 'mypkg@0.0.4'
   apply_manifest_on(agent, 'package {mypkg : ensure=>latest}')
   on(agent, puppet("resource package mypkg")) do
-    assert_match( /ensure => '0\.0\.4,.*'/, result.stdout, "err: #{agent}")
+    assert_match( /ensure => '0\.0\.4.*'/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: ensure removed."

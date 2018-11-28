@@ -1,19 +1,16 @@
 require "spec_helper"
 
-provider_class = Puppet::Type.type(:package).provider(:pkgin)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:pkgin) do
   let(:resource) { Puppet::Type.type(:package).new(:name => "vim", :provider => :pkgin) }
   subject        { resource.provider }
 
   describe "Puppet provider interface" do
     it "can return the list of all packages" do
-      expect(provider_class).to respond_to(:instances)
+      expect(described_class).to respond_to(:instances)
     end
   end
 
   describe "#install" do
-
    describe "a package not installed" do
     before { resource[:ensure] = :absent }
     it "uses pkgin install to install" do
@@ -29,7 +26,6 @@ describe provider_class do
       subject.install
     end
    end
-
   end
 
   describe "#uninstall" do
@@ -45,19 +41,19 @@ describe provider_class do
     end
 
     before do
-      provider_class.stubs(:pkgin).with(:list).returns(pkgin_ls_output)
+      described_class.stubs(:pkgin).with(:list).returns(pkgin_ls_output)
     end
 
     it "returns an array of providers for each package" do
-      instances = provider_class.instances
+      instances = described_class.instances
       expect(instances).to have(2).items
       instances.each do |instance|
-        expect(instance).to be_a(provider_class)
+        expect(instance).to be_a(described_class)
       end
     end
 
     it "populates each provider with an installed package" do
-      zlib_provider, zziplib_provider = provider_class.instances
+      zlib_provider, zziplib_provider = described_class.instances
       expect(zlib_provider.get(:name)).to eq("zlib")
       expect(zlib_provider.get(:ensure)).to eq("1.2.3")
       expect(zziplib_provider.get(:name)).to eq("zziplib")
@@ -67,7 +63,7 @@ describe provider_class do
 
   describe "#latest" do
     before do
-      provider_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
+      described_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
     end
 
     context "when the package is installed" do
@@ -119,7 +115,7 @@ SEARCH
       end
 
       it "returns the newest available version" do
-        provider_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
+        described_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
         expect(subject.latest).to eq("7.3")
       end
     end
@@ -140,7 +136,7 @@ SEARCH
       let(:package) { "vim-7.2.446;=;Vim editor (vi clone) without GUI" }
 
       it "extracts the name and status" do
-        expect(provider_class.parse_pkgin_line(package)).to eq({ :name => "vim" ,
+        expect(described_class.parse_pkgin_line(package)).to eq({ :name => "vim" ,
                                                              :status => "=" ,
                                                              :ensure => "7.2.446" })
       end
@@ -150,7 +146,7 @@ SEARCH
       let(:package) { "ruby18-puppet-0.25.5nb1;>;Configuration management framework written in Ruby" }
 
       it "extracts the name and status" do
-        expect(provider_class.parse_pkgin_line(package)).to eq({ :name =>  "ruby18-puppet",
+        expect(described_class.parse_pkgin_line(package)).to eq({ :name =>  "ruby18-puppet",
                                                              :status => ">" ,
                                                              :ensure => "0.25.5nb1" })
       end
@@ -160,7 +156,7 @@ SEARCH
       let(:package) { "ruby200-facter-2.4.3nb1;=;Cross-platform Ruby library for retrieving facts from OS" }
 
       it "extracts the name and status" do
-        expect(provider_class.parse_pkgin_line(package)).to eq({ :name =>  "ruby200-facter",
+        expect(described_class.parse_pkgin_line(package)).to eq({ :name =>  "ruby200-facter",
                                                              :status => "=" ,
                                                              :ensure => "2.4.3nb1" })
       end
@@ -170,18 +166,17 @@ SEARCH
       let(:package) { "vim-7.2.446;Vim editor (vi clone) without GUI" }
 
       it "extracts the name and status" do
-        expect(provider_class.parse_pkgin_line(package)).to eq({ :name => "vim" ,
+        expect(described_class.parse_pkgin_line(package)).to eq({ :name => "vim" ,
                                                              :status => nil ,
                                                              :ensure => "7.2.446" })
       end
-
     end
 
     context "with an invalid package" do
       let(:package) { "" }
 
       it "returns nil" do
-        expect(provider_class.parse_pkgin_line(package)).to be_nil
+        expect(described_class.parse_pkgin_line(package)).to be_nil
       end
     end
   end

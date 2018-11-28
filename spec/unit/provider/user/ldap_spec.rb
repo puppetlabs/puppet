@@ -1,27 +1,24 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:user).provider(:ldap)
-
-describe provider_class do
+describe Puppet::Type.type(:user).provider(:ldap) do
   it "should have the Ldap provider class as its baseclass" do
-    expect(provider_class.superclass).to equal(Puppet::Provider::Ldap)
+    expect(described_class.superclass).to equal(Puppet::Provider::Ldap)
   end
 
   it "should manage :posixAccount and :person objectclasses" do
-    expect(provider_class.manager.objectclasses).to eq([:posixAccount, :person])
+    expect(described_class.manager.objectclasses).to eq([:posixAccount, :person])
   end
 
   it "should use 'ou=People' as its relative base" do
-    expect(provider_class.manager.location).to eq("ou=People")
+    expect(described_class.manager.location).to eq("ou=People")
   end
 
   it "should use :uid as its rdn" do
-    expect(provider_class.manager.rdn).to eq(:uid)
+    expect(described_class.manager.rdn).to eq(:uid)
   end
 
   it "should be able to manage passwords" do
-    expect(provider_class).to be_manages_passwords
+    expect(described_class).to be_manages_passwords
   end
 
   {:name => "uid",
@@ -33,15 +30,15 @@ describe provider_class do
     :shell => "loginShell"
   }.each do |puppet, ldap|
     it "should map :#{puppet.to_s} to '#{ldap}'" do
-      expect(provider_class.manager.ldap_name(puppet)).to eq(ldap)
+      expect(described_class.manager.ldap_name(puppet)).to eq(ldap)
     end
   end
 
-  describe "when being created" do
+  context "when being created" do
     before do
       # So we don't try to actually talk to ldap
       @connection = mock 'connection'
-      provider_class.manager.stubs(:connect).yields @connection
+      described_class.manager.stubs(:connect).yields @connection
     end
 
     it "should generate the sn as the last field of the cn" do
@@ -50,7 +47,7 @@ describe provider_class do
       resource = stub 'resource', :should => %w{whatever}
       resource.stubs(:should).with(:comment).returns ["Luke Kanies"]
       resource.stubs(:should).with(:ensure).returns :present
-      instance = provider_class.new(:name => "luke", :ensure => :absent)
+      instance = described_class.new(:name => "luke", :ensure => :absent)
 
       instance.stubs(:resource).returns resource
 
@@ -66,7 +63,7 @@ describe provider_class do
       resource = stub 'resource', :should => %w{whatever}
       resource.stubs(:should).with(:gid).returns 'bar'
       resource.stubs(:should).with(:ensure).returns :present
-      instance = provider_class.new(:name => "luke", :ensure => :absent)
+      instance = described_class.new(:name => "luke", :ensure => :absent)
       instance.stubs(:resource).returns resource
 
       @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["101"] }
@@ -75,18 +72,18 @@ describe provider_class do
       instance.flush
     end
 
-    describe "with no uid specified" do
+    context "with no uid specified" do
       it "should pick the first available UID after the largest existing UID" do
         Puppet::Type.type(:group).provider(:ldap).expects(:name2id).with(["whatever"]).returns [123]
 
         low = {:name=>["luke"], :shell=>:absent, :uid=>["600"], :home=>["/h"], :gid=>["1000"], :password=>["blah"], :comment=>["l k"]}
         high = {:name=>["testing"], :shell=>:absent, :uid=>["640"], :home=>["/h"], :gid=>["1000"], :password=>["blah"], :comment=>["t u"]}
-        provider_class.manager.expects(:search).returns([low, high])
+        described_class.manager.expects(:search).returns([low, high])
 
         resource = stub 'resource', :should => %w{whatever}
         resource.stubs(:should).with(:uid).returns nil
         resource.stubs(:should).with(:ensure).returns :present
-        instance = provider_class.new(:name => "luke", :ensure => :absent)
+        instance = described_class.new(:name => "luke", :ensure => :absent)
         instance.stubs(:resource).returns resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["uidNumber"] == ["641"] }
@@ -98,12 +95,12 @@ describe provider_class do
       it "should pick 501 of no users exist" do
         Puppet::Type.type(:group).provider(:ldap).expects(:name2id).with(["whatever"]).returns [123]
 
-        provider_class.manager.expects(:search).returns nil
+        described_class.manager.expects(:search).returns nil
 
         resource = stub 'resource', :should => %w{whatever}
         resource.stubs(:should).with(:uid).returns nil
         resource.stubs(:should).with(:ensure).returns :present
-        instance = provider_class.new(:name => "luke", :ensure => :absent)
+        instance = described_class.new(:name => "luke", :ensure => :absent)
         instance.stubs(:resource).returns resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["uidNumber"] == ["501"] }
@@ -114,11 +111,11 @@ describe provider_class do
     end
   end
 
-  describe "when flushing" do
+  context "when flushing" do
     before do
-      provider_class.stubs(:suitable?).returns true
+      described_class.stubs(:suitable?).returns true
 
-      @instance = provider_class.new(:name => "myname", :groups => %w{whatever}, :uid => "400")
+      @instance = described_class.new(:name => "myname", :groups => %w{whatever}, :uid => "400")
     end
 
     it "should remove the :groups value before updating" do
@@ -144,13 +141,13 @@ describe provider_class do
     end
   end
 
-  describe "when checking group membership" do
+  context "when checking group membership" do
     before do
       @groups = Puppet::Type.type(:group).provider(:ldap)
       @group_manager = @groups.manager
-      provider_class.stubs(:suitable?).returns true
+      described_class.stubs(:suitable?).returns true
 
-      @instance = provider_class.new(:name => "myname")
+      @instance = described_class.new(:name => "myname")
     end
 
     it "should show its group membership as the sorted list of all groups returned by an ldap query of group memberships" do
@@ -175,11 +172,11 @@ describe provider_class do
     end
   end
 
-  describe "when modifying group membership" do
+  context "when modifying group membership" do
     before do
       @groups = Puppet::Type.type(:group).provider(:ldap)
       @group_manager = @groups.manager
-      provider_class.stubs(:suitable?).returns true
+      described_class.stubs(:suitable?).returns true
 
       @one = {:name => "one", :gid => "500"}
       @group_manager.stubs(:find).with("one").returns(@one)
@@ -187,7 +184,7 @@ describe provider_class do
       @two = {:name => "one", :gid => "600"}
       @group_manager.stubs(:find).with("two").returns(@two)
 
-      @instance = provider_class.new(:name => "myname")
+      @instance = described_class.new(:name => "myname")
 
       @instance.stubs(:groups).returns :absent
     end
@@ -231,7 +228,7 @@ describe provider_class do
       @instance.groups = "one"
     end
 
-    describe "for groups that have no members" do
+    context "for groups that have no members" do
       it "should create a new members attribute with its value being the user's name" do
         @group_manager.expects(:update).with { |name, is, should| should[:members] == %w{myname} }
 
@@ -239,7 +236,7 @@ describe provider_class do
       end
     end
 
-    describe "for groups it is being removed from" do
+    context "for groups it is being removed from" do
       it "should replace the group's member list with one missing the user's name" do
         @one[:members] = %w{myname a}
         @two[:members] = %w{myname b}
@@ -261,7 +258,7 @@ describe provider_class do
       end
     end
 
-    describe "for groups that already have members" do
+    context "for groups that already have members" do
       it "should replace each group's member list with a new list including the user's name" do
         @one[:members] = %w{a b}
         @group_manager.expects(:update).with { |name, is, should| should[:members] == %w{a b myname} }
@@ -272,7 +269,7 @@ describe provider_class do
       end
     end
 
-    describe "for groups of which it is a member" do
+    context "for groups of which it is a member" do
       it "should do nothing" do
         @one[:members] = %w{a b}
         @group_manager.expects(:update).with { |name, is, should| should[:members] == %w{a b myname} }
