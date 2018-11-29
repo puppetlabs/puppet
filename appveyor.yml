@@ -8,14 +8,13 @@ matrix:
 # Ruby versions under test
 platform:
   - Ruby24-x64
-  - Ruby21-x64
 
 # Note that locales are mainly code page changes and are not the FULL set of localization
 #  changes that happen when you install French/Germam/Japanese etc. Windows
 environment:
+  APPVEYOR_RDP_PASSWORD: e9?kf7+BdYs3
   matrix:
   - LOCALE: en-US
-  - LOCALE: ja-JP
 
 before_test:
   # Semicolons are required below.  This renders as a single line powershell command in AppVeyor
@@ -67,3 +66,5 @@ notifications:
     on_build_success: false
     on_build_failure: false
     on_build_status_changed: false
+    on_finish:
+    - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
