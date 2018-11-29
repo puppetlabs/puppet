@@ -18,6 +18,7 @@ describe 'the log function' do
 
   def expect_log(code, log_level, message)
     logs = collect_logs(code)
+puts logs.inspect
     expect(logs.size).to eql(1)
     expect(logs[0].level).to eql(log_level)
     expect(logs[0].message).to eql(message)
