@@ -158,7 +158,9 @@ class Puppet::Transaction::ResourceHarness
       raise
     ensure
       if event
-        event.calculate_corrective_change(@persistence.get_system_value(context.resource.ref, param.name.to_s))
+        name = param.name.to_s
+        event.message ||= _("could not create change error message for %{name}") % { name: name }
+        event.calculate_corrective_change(@persistence.get_system_value(context.resource.ref, name))
         context.record(event)
         event.send_log
         context.synced_params << param.name

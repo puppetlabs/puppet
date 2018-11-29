@@ -1,17 +1,15 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:yum)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:yum) do
   include PuppetSpec::Fixtures
-  it_behaves_like 'RHEL package provider', provider_class, 'yum'
+
+  it_behaves_like 'RHEL package provider', described_class, 'yum'
 
   it "should have lower specificity" do
     Facter.stubs(:value).with(:osfamily).returns(:redhat)
     Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
     Facter.stubs(:value).with(:operatingsystemmajrelease).returns("22")
-    expect(provider_class.specificity).to be < 200
+    expect(described_class.specificity).to be < 200
   end
 
   describe "when supplied the source param" do
@@ -25,12 +23,12 @@ describe provider_class do
     end
 
     let(:provider) do
-      provider = provider_class.new
+      provider = described_class.new
       provider.resource = resource
       provider
     end
 
-    before { provider_class.stubs(:command).with(:cmd).returns("/usr/bin/yum") }
+    before { described_class.stubs(:command).with(:cmd).returns("/usr/bin/yum") }
 
     context "when installing" do
       it "should use the supplied source as the explicit path to a package to install" do
@@ -58,16 +56,18 @@ describe provider_class do
     end
   end
 
-  describe "parsing the output of check-update" do
-    describe "with no multiline entries" do
+  context "parsing the output of check-update" do
+    context "with no multiline entries" do
       let(:check_update) { File.read(my_fixture("yum-check-update-simple.txt")) }
       let(:output) { described_class.parse_updates(check_update) }
+
       it 'creates an entry for each package keyed on the package name' do
         expect(output['curl']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}, {:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
         expect(output['gawk']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
         expect(output['dhclient']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
         expect(output['selinux-policy']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
       end
+
       it 'creates an entry for each package keyed on the package name and package architecture' do
         expect(output['curl.i686']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}])
         expect(output['curl.x86_64']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
@@ -77,55 +77,69 @@ describe provider_class do
         expect(output['java-1.8.0-openjdk.x86_64']).to eq([{:name => 'java-1.8.0-openjdk', :epoch => '1', :version => '1.8.0.131', :release => '2.b11.el7_3', :arch => 'x86_64'}])
       end
     end
-    describe "with multiline entries" do
+
+    context "with multiline entries" do
       let(:check_update) { File.read(my_fixture("yum-check-update-multiline.txt")) }
       let(:output) { described_class.parse_updates(check_update) }
+
       it "parses multi-line values as a single package tuple" do
         expect(output['libpcap']).to eq([{:name => 'libpcap', :epoch => '14', :version => '1.4.0', :release => '1.20130826git2dbcaa1.el6', :arch => 'x86_64'}])
       end
     end
-    describe "with obsoleted packages" do
+
+    context "with obsoleted packages" do
       let(:check_update) { File.read(my_fixture("yum-check-update-obsoletes.txt")) }
       let(:output) { described_class.parse_updates(check_update) }
+
       it "ignores all entries including and after 'Obsoleting Packages'" do
         expect(output).not_to include("Obsoleting")
         expect(output).not_to include("NetworkManager-bluetooth.x86_64")
         expect(output).not_to include("1:1.0.0-14.git20150121.b4ea599c.el7")
       end
     end
-    describe "with security notifications" do
+
+    context "with security notifications" do
       let(:check_update) { File.read(my_fixture("yum-check-update-security.txt")) }
       let(:output) { described_class.parse_updates(check_update) }
+
       it "ignores all entries including and after 'Security'" do
         expect(output).not_to include("Security")
       end
+
       it "includes updates before 'Security'" do
         expect(output).to include("yum-plugin-fastestmirror.noarch")
       end
     end
-    describe "with broken update notices" do
+
+    context "with broken update notices" do
       let(:check_update) { File.read(my_fixture("yum-check-update-broken-notices.txt")) }
       let(:output) { described_class.parse_updates(check_update) }
+
       it "ignores all entries including and after 'Update'" do
         expect(output).not_to include("Update")
       end
+
       it "includes updates before 'Update'" do
         expect(output).to include("yum-plugin-fastestmirror.noarch")
       end
     end
-    describe "with improper package names in output" do
+
+    context "with improper package names in output" do
       it "raises an exception parsing package name" do
         expect {
           described_class.update_to_hash('badpackagename', '1')
         }.to raise_exception(Exception, /Failed to parse/)
       end
     end
-    describe "with trailing plugin output" do
+
+    context "with trailing plugin output" do
       let(:check_update) { File.read(my_fixture("yum-check-update-plugin-output.txt")) }
       let(:output) { described_class.parse_updates(check_update) }
+
       it "parses correctly formatted entries" do
         expect(output['bash']).to eq([{:name => 'bash', :epoch => '0', :version => '4.2.46', :release => '12.el7', :arch => 'x86_64'}])
       end
+
       it "ignores all mentions of plugin output" do
         expect(output).not_to include("Random plugin")
       end

@@ -1,12 +1,9 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'stringio'
 
-provider_class = Puppet::Type.type(:package).provider(:openbsd)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:openbsd) do
   let(:package) { Puppet::Type.type(:package).new(:name => 'bash', :provider => 'openbsd') }
-  let(:provider) { provider_class.new(package) }
+  let(:provider) { described_class.new(package) }
 
   def expect_read_from_pkgconf(lines)
     pkgconf = stub(:readlines => lines)
@@ -37,7 +34,7 @@ describe provider_class do
     expect(ENV).not_to be_key('PKG_PATH')
   end
 
-  describe 'provider features' do
+  context 'provider features' do
     it { is_expected.to be_installable }
     it { is_expected.to be_install_options }
     it { is_expected.to be_uninstallable }
@@ -49,34 +46,34 @@ describe provider_class do
   before :each do
     # Stub some provider methods to avoid needing the actual software
     # installed, so we can test on whatever platform we want.
-    provider_class.stubs(:command).with(:pkginfo).returns('/bin/pkg_info')
-    provider_class.stubs(:command).with(:pkgadd).returns('/bin/pkg_add')
-    provider_class.stubs(:command).with(:pkgdelete).returns('/bin/pkg_delete')
+    described_class.stubs(:command).with(:pkginfo).returns('/bin/pkg_info')
+    described_class.stubs(:command).with(:pkgadd).returns('/bin/pkg_add')
+    described_class.stubs(:command).with(:pkgdelete).returns('/bin/pkg_delete')
   end
 
   context "#instances" do
     it "should return nil if execution failed" do
-      provider_class.expects(:execpipe).raises(Puppet::ExecutionFailure, 'wawawa')
-      expect(provider_class.instances).to be_nil
+      described_class.expects(:execpipe).raises(Puppet::ExecutionFailure, 'wawawa')
+      expect(described_class.instances).to be_nil
     end
 
     it "should return the empty set if no packages are listed" do
-      provider_class.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(StringIO.new(''))
-      expect(provider_class.instances).to be_empty
+      described_class.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(StringIO.new(''))
+      expect(described_class.instances).to be_empty
     end
 
     it "should return all packages when invoked" do
       fixture = File.read(my_fixture('pkginfo.list'))
-      provider_class.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(fixture)
-      expect(provider_class.instances.map(&:name).sort).to eq(
+      described_class.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(fixture)
+      expect(described_class.instances.map(&:name).sort).to eq(
         %w{bash bzip2 expat gettext libiconv lzo openvpn python vim wget}.sort
       )
     end
 
     it "should return all flavors if set" do
       fixture = File.read(my_fixture('pkginfo_flavors.list'))
-      provider_class.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(fixture)
-      instances = provider_class.instances.map {|p| {:name => p.get(:name),
+      described_class.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(fixture)
+      instances = described_class.instances.map {|p| {:name => p.get(:name),
         :ensure => p.get(:ensure), :flavor => p.get(:flavor)}}
       expect(instances.size).to eq(2)
       expect(instances[0]).to eq({:name => 'bash', :ensure => '3.1.17', :flavor => 'static'})
