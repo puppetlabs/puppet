@@ -1,13 +1,7 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the SMF service Provider
-#
-# author Dominic Cleal
-#
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Smf',
-    if: Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
+         if: Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:smf) }
 
   before(:each) do
@@ -25,7 +19,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     Facter.stubs(:value).with(:operatingsystemrelease).returns '11.2'
   end
 
-  describe ".instances" do
+  context ".instances" do
     it "should have an instances method" do
       expect(provider_class).to respond_to :instances
     end
@@ -69,7 +63,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     expect(@provider).to respond_to(:disable)
   end
 
-  describe "when checking status" do
+  context "when checking status" do
     it "should call the external command 'svcs /system/myservice' once" do
       @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.status
@@ -104,7 +98,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
   end
 
-  describe "when starting" do
+  context "when starting" do
     it "should enable the service if it is not enabled" do
       @provider.expects(:status).returns :stopped
       @provider.expects(:texecute).with(:start, ['/usr/sbin/svcadm', :enable, '-rs', '/system/myservice'], true)
@@ -141,7 +135,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
   end
 
-  describe "when starting a service with a manifest" do
+  context "when starting a service with a manifest" do
     before(:each) do
       @resource = Puppet::Type.type(:service).new(:name => "/system/myservice", :ensure => :running, :enable => :true, :manifest => "/tmp/myservice.xml")
       @provider = provider_class.new(@resource)
@@ -164,7 +158,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
   end
 
-  describe "when stopping" do
+  context "when stopping" do
     it "should execute external command 'svcadm disable /system/myservice'" do
       @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, '-s', "/system/myservice"], true)
       @provider.expects(:wait).with('offline', 'disabled', 'uninitialized')
@@ -178,8 +172,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
   end
 
-  describe "when restarting" do
-
+  context "when restarting" do
     it "should error if timeout occurs while restarting the service" do
       @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, '-s', "/system/myservice"], true)
       Timeout.expects(:timeout).with(60).raises(Timeout::Error)
@@ -212,6 +205,5 @@ describe 'Puppet::Type::Service::Provider::Smf',
         @provider.restart
       end
     end
-
   end
 end

@@ -1,12 +1,7 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the Daemontools service Provider
-#
-# author Brice Figureau
-#
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Daemontools', unless: Puppet::Util::Platform.jruby? do
+describe 'Puppet::Type::Service::Provider::Daemontools',
+         unless: Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:daemontools) }
 
   before(:each) do
@@ -62,7 +57,7 @@ describe 'Puppet::Type::Service::Provider::Daemontools', unless: Puppet::Util::P
     expect(@provider).to respond_to(:disable)
   end
 
-  describe "when starting" do
+  context "when starting" do
     it "should use 'svc' to start the service" do
       @provider.stubs(:enabled?).returns :true
       @provider.expects(:svc).with("-u", "/etc/service/myservice")
@@ -80,7 +75,7 @@ describe 'Puppet::Type::Service::Provider::Daemontools', unless: Puppet::Util::P
     end
   end
 
-  describe "when stopping" do
+  context "when stopping" do
     it "should use 'svc' to stop the service" do
       @provider.stubs(:disable)
       @provider.expects(:svc).with("-d", "/etc/service/myservice")
@@ -89,7 +84,7 @@ describe 'Puppet::Type::Service::Provider::Daemontools', unless: Puppet::Util::P
     end
   end
 
-  describe "when restarting" do
+  context "when restarting" do
     it "should use 'svc' to restart the service" do
       @provider.expects(:svc).with("-t", "/etc/service/myservice")
 
@@ -97,7 +92,7 @@ describe 'Puppet::Type::Service::Provider::Daemontools', unless: Puppet::Util::P
     end
   end
 
-  describe "when enabling" do
+  context "when enabling" do
     it "should create a symlink between daemon dir and service dir", :if => Puppet.features.manages_symlinks?  do
       daemon_path = File.join(@daemondir, "myservice")
       service_path = File.join(@servicedir, "myservice")
@@ -108,7 +103,7 @@ describe 'Puppet::Type::Service::Provider::Daemontools', unless: Puppet::Util::P
     end
   end
 
-  describe "when disabling" do
+  context "when disabling" do
     it "should remove the symlink between daemon dir and service dir" do
       FileTest.stubs(:directory?).returns(false)
       path = File.join(@servicedir,"myservice")
@@ -127,7 +122,7 @@ describe 'Puppet::Type::Service::Provider::Daemontools', unless: Puppet::Util::P
     end
   end
 
-  describe "when checking if the service is enabled?" do
+  context "when checking if the service is enabled?" do
     it "should return true if it is running" do
       @provider.stubs(:status).returns(:running)
 
@@ -145,26 +140,27 @@ describe 'Puppet::Type::Service::Provider::Daemontools', unless: Puppet::Util::P
     end
   end
 
-  describe "when checking status" do
+  context "when checking status" do
     it "should call the external command 'svstat /etc/service/myservice'" do
       @provider.expects(:svstat).with(File.join(@servicedir,"myservice"))
       @provider.status
     end
   end
 
-  describe "when checking status" do
+  context "when checking status" do
     it "and svstat fails, properly raise a Puppet::Error" do
       @provider.expects(:svstat).with(File.join(@servicedir,"myservice")).raises(Puppet::ExecutionFailure, "failure")
       expect { @provider.status }.to raise_error(Puppet::Error, 'Could not get status for service Service[myservice]: failure')
     end
+
     it "and svstat returns up, then return :running" do
       @provider.expects(:svstat).with(File.join(@servicedir,"myservice")).returns("/etc/service/myservice: up (pid 454) 954326 seconds")
       expect(@provider.status).to eq(:running)
     end
+
     it "and svstat returns not running, then return :stopped" do
       @provider.expects(:svstat).with(File.join(@servicedir,"myservice")).returns("/etc/service/myservice: supervise not running")
       expect(@provider.status).to  eq(:stopped)
     end
   end
-
 end

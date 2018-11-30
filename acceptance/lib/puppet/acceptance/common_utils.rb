@@ -75,6 +75,10 @@ MANIFEST
       def cron_manifest(entry_name, params = {})
         resource_manifest('cron', entry_name, params)
       end
+
+      def user_manifest(username, params = {})
+        resource_manifest('user', username, params)
+      end
     end
   end
 end

@@ -1,10 +1,7 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'stringio'
 
-provider_class = Puppet::Type.type(:package).provider(:dpkg)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:dpkg) do
   let(:bash_version) { '4.2-5ubuntu3' }
   let(:bash_installed_output) { "install ok installed bash #{bash_version}\n" }
   let(:bash_installed_io) { StringIO.new(bash_installed_output) }
@@ -16,37 +13,37 @@ describe provider_class do
   end
   let(:resource_name) { 'package' }
   let(:resource) { stub 'resource', :[] => resource_name }
-  let(:provider) { provider_class.new(resource) }
+  let(:provider) { described_class.new(resource) }
 
   it "has documentation" do
-    expect(provider_class.doc).to be_instance_of(String)
+    expect(described_class.doc).to be_instance_of(String)
   end
 
-  describe "when listing all instances" do
+  context "when listing all instances" do
     let(:execpipe_args) { args.unshift('myquery') }
 
     before do
-      provider_class.stubs(:command).with(:dpkgquery).returns 'myquery'
+      described_class.stubs(:command).with(:dpkgquery).returns 'myquery'
     end
 
     it "creates and return an instance for a single dpkg-query entry" do
       Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields bash_installed_io
 
       installed = mock 'bash'
-      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns installed
+      described_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns installed
 
-      expect(provider_class.instances).to eq([installed])
+      expect(described_class.instances).to eq([installed])
     end
 
     it "parses multiple dpkg-query multi-line entries in the output" do
       Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields all_installed_io
 
       bash = mock 'bash'
-      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns bash
+      described_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns bash
       vim = mock 'vim'
-      provider_class.expects(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg).returns vim
+      described_class.expects(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg).returns vim
 
-      expect(provider_class.instances).to eq([bash, vim])
+      expect(described_class.instances).to eq([bash, vim])
     end
 
     it "continues without failing if it encounters bad lines between good entries" do
@@ -54,13 +51,13 @@ describe provider_class do
 
       bash = mock 'bash'
       vim = mock 'vim'
-      provider_class.expects(:new).twice.returns(bash, vim)
+      described_class.expects(:new).twice.returns(bash, vim)
 
-      expect(provider_class.instances).to eq([bash, vim])
+      expect(described_class.instances).to eq([bash, vim])
     end
   end
 
-  describe "when querying the current state" do
+  context "when querying the current state" do
     let(:dpkgquery_path) { '/bin/dpkg-query' }
     let(:query_args) do
       args.unshift(dpkgquery_path)
@@ -132,7 +129,7 @@ describe provider_class do
       expect(provider.query[:ensure]).to eq(:held)
     end
 
-    describe "parsing tests" do
+    context "parsing tests" do
       let(:resource_name) { 'name' }
       let(:package_hash) do
         {
@@ -174,7 +171,7 @@ describe provider_class do
     end
   end
 
-  describe "when installing" do
+  context "when installing" do
     before do
       resource.stubs(:[]).with(:source).returns "mypkg"
     end
@@ -216,7 +213,7 @@ describe provider_class do
     end
   end
 
-  describe "when holding or unholding" do
+  context "when holding or unholding" do
     let(:tempfile) { stub 'tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file" }
 
     before do
@@ -248,7 +245,7 @@ describe provider_class do
     provider.update
   end
 
-  describe "when determining latest available version" do
+  context "when determining latest available version" do
     it "returns the version found by dpkg-deb" do
       resource.expects(:[]).with(:source).returns "myfile"
       provider.expects(:dpkg_deb).with { |*command| command[-1] == "myfile" }.returns "package\t1.0"
@@ -263,7 +260,7 @@ describe provider_class do
 
     it "copes with names containing ++" do
       resource = stub 'resource', :[] => "package++"
-      provider = provider_class.new(resource)
+      provider = described_class.new(resource)
       provider.expects(:dpkg_deb).returns "package++\t1.0"
       expect(provider.latest).to eq("1.0")
     end

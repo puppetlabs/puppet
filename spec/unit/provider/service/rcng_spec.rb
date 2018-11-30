@@ -1,9 +1,7 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Rcng',
-    :unless => Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:rcng) }
 
   before :each do
@@ -15,7 +13,7 @@ describe 'Puppet::Type::Service::Provider::Rcng',
     @provider.stubs(:initscript)
   end
 
-  describe "#enable" do
+  context "#enable" do
     it "should have an enable method" do
       expect(@provider).to respond_to(:enable)
     end
