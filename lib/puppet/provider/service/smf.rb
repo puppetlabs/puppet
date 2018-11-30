@@ -49,6 +49,52 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
    end
   end
 
+  # Returns the service's FMRI. We fail if multiple FMRIs correspond to
+  # @resource[:name].
+  #
+  # If the service does not exist or we fail to get any FMRIs from svcs,
+  # this method will raise a Puppet::Error
+  def service_fmri
+    return @fmri if @fmri
+
+    # `svcs -l` is better to use because we can detect service instances
+    # that have not yet been activated or enabled (i.e. it lets us detect
+    # services that svcadm has not yet touched). `svcs -H -o fmri` is a bit
+    # more limited.
+    lines = svcs("-l", @resource[:name]).chomp.lines.to_a
+    lines.select! { |line| line =~ /^fmri/ }
+    fmris = lines.map! { |line| line.split(' ')[-1].chomp }
+    unless fmris.length == 1
+      raise Puppet::Error, _("Failed to get the FMRI of the %{service} service: The pattern '%{service}' matches multiple FMRIs! These are the FMRIs it matches: %{all_fmris}") % { service: @resource[:name], all_fmris: fmris.join(', ') }
+    end
+
+    @fmri = fmris.first
+  end
+
+  # Returns true if the provider supports incomplete services.
+  def supports_incomplete_services?
+    Puppet::Util::Package.versioncmp(Facter.value(:operatingsystemrelease), '11.1') >= 0
+  end
+
+  # Returns true if the service is complete. A complete service is a service that
+  # has the general/complete property defined.
+  def complete_service?
+    unless supports_incomplete_services?
+      raise Puppet::Error, _("Cannot query if the %{service} service is complete: The concept of complete/incomplete services was introduced in Solaris 11.1. You are on a Solaris %{release} machine.") % { service: @resource[:name], release: Facter.value(:operatingsystemrelease) }
+    end
+
+    return @complete_service if @complete_service
+
+    # We need to use the service's FMRI when querying its config. because
+    # general/complete is an instance-specific property.
+    fmri = service_fmri
+
+    # Check if the general/complete property is defined. If it is undefined,
+    # then svccfg will not print anything to the console.
+    property_defn = svccfg("-s", fmri, "listprop", "general/complete").chomp
+    @complete_service = ! property_defn.empty?
+  end
+
   def enable
     self.start
   end
@@ -131,6 +177,14 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     end
 
     begin
+      if supports_incomplete_services?
+        unless complete_service?
+          debug _("The %{service} service is incomplete so its status will be reported as :stopped. See `svcs -xv %{fmri}` for more details.") % { service: @resource[:name], fmri: service_fmri }
+
+          return :stopped
+        end
+      end
+
       # get the current state and the next state, and if the next
       # state is set (i.e. not "-") use it for state comparison
       states = service_states
