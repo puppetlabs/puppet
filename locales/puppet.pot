@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.0.4-54-g38d83a1\n"
+"Project-Id-Version: Puppet automation framework 6.0.4-82-gdf1ab55\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-11-19 21:35+0000\n"
-"PO-Revision-Date: 2018-11-19 21:35+0000\n"
+"POT-Creation-Date: 2018-11-30 19:20+0000\n"
+"PO-Revision-Date: 2018-11-30 19:20+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6794,23 +6794,27 @@ msgstr ""
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
-#: ../lib/puppet/provider/parsedfile.rb:46
+#: ../lib/puppet/provider/parsedfile.rb:52
 msgid "Invalid filetype %{type}"
 msgstr ""
 
-#: ../lib/puppet/provider/parsedfile.rb:268
+#: ../lib/puppet/provider/parsedfile.rb:99
+msgid "Failed to read %{target}'s records when prefetching them. Reason: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/parsedfile.rb:287
 msgid "Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty"
 msgstr ""
 
-#: ../lib/puppet/provider/parsedfile.rb:280
+#: ../lib/puppet/provider/parsedfile.rb:301
 msgid "Prefetching %{target} for provider %{name} returned nil"
 msgstr ""
 
-#: ../lib/puppet/provider/parsedfile.rb:353
+#: ../lib/puppet/provider/parsedfile.rb:374
 msgid "Parsed Providers must define a default target"
 msgstr ""
 
-#: ../lib/puppet/provider/parsedfile.rb:442
+#: ../lib/puppet/provider/parsedfile.rb:463
 msgid "Somehow got told to prefetch with no resource set"
 msgstr ""
 
@@ -7834,23 +7838,27 @@ msgstr ""
 msgid "change from %s to %s failed: "
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:212
+#: ../lib/puppet/transaction/resource_harness.rb:162
+msgid "could not create change error message for %{name}"
+msgstr ""
+
+#: ../lib/puppet/transaction/resource_harness.rb:214
 msgid "audit change: previously recorded value %s has been changed to %s"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:222
+#: ../lib/puppet/transaction/resource_harness.rb:224
 msgid " (previously recorded value was %s)"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:229
+#: ../lib/puppet/transaction/resource_harness.rb:231
 msgid "current_value %s, should be %s (noop)"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:238
+#: ../lib/puppet/transaction/resource_harness.rb:240
 msgid "changed %s to %s"
 msgstr ""
 
-#: ../lib/puppet/transaction/resource_harness.rb:261
+#: ../lib/puppet/transaction/resource_harness.rb:263
 msgid "audit change: newly-recorded value %s"
 msgstr ""
 
@@ -8774,19 +8782,27 @@ msgstr ""
 msgid "Could not retrieve user %{user}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/filetype.rb:200 ../lib/puppet/util/filetype.rb:249 ../lib/puppet/util/filetype.rb:292
-msgid "User %{path} not authorized to use cron"
+#: ../lib/puppet/util/filetype.rb:195 ../lib/puppet/util/filetype.rb:260 ../lib/puppet/util/filetype.rb:311
+msgid "The %{path} user does not exist. Treating their crontab file as empty in case Puppet creates them in the middle of the run."
 msgstr ""
 
-#: ../lib/puppet/util/filetype.rb:202 ../lib/puppet/util/filetype.rb:251 ../lib/puppet/util/filetype.rb:294
+#: ../lib/puppet/util/filetype.rb:206 ../lib/puppet/util/filetype.rb:271 ../lib/puppet/util/filetype.rb:322
+msgid "The %{path} user is not authorized to use cron. Their crontab file is treated as empty in case Puppet authorizes them in the middle of the run (by, for example, modifying the cron.deny or cron.allow files)."
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:210 ../lib/puppet/util/filetype.rb:275 ../lib/puppet/util/filetype.rb:326
 msgid "Could not read crontab for %{path}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/filetype.rb:259 ../lib/puppet/util/filetype.rb:302
+#: ../lib/puppet/util/filetype.rb:232
+msgid "Cannot write the %{path} user's crontab: The user does not exist"
+msgstr ""
+
+#: ../lib/puppet/util/filetype.rb:283 ../lib/puppet/util/filetype.rb:334
 msgid "Could not remove crontab for %{path}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/filetype.rb:274 ../lib/puppet/util/filetype.rb:318
+#: ../lib/puppet/util/filetype.rb:298 ../lib/puppet/util/filetype.rb:350
 msgid "Could not write crontab for %{path}: %{detail}"
 msgstr ""
 
