@@ -153,6 +153,14 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
         described_class.expects(:pkg).with(:list,'-Hvn','dummy').returns File.read(my_fixture('dummy_solaris11.installed'))
         provider.latest
       end
+
+      it "applies install options if available" do
+        resource[:install_options] = ['--foo', {'--bar' => 'baz'}]
+        described_class.expects(:pkg).with(:list,'-Hvn','dummy').returns File.read(my_fixture('dummy_solaris11.known'))
+        Puppet::Util::Execution.expects(:execute)
+            .with(['/bin/pkg', 'update', '-n', '--foo', '--bar=baz', 'dummy'], {failonfail: false, combine: true})
+        provider.latest
+      end
     end
 
     context ":instances" do
@@ -251,6 +259,16 @@ describe Puppet::Type.type(:package).provider(:pkg), unless: Puppet::Util::Platf
           before :each do
             Facter.stubs(:value).with(:operatingsystemrelease).returns hash[:osrel]
           end
+
+          it "should support install options" do
+            resource[:install_options] = ['--foo', {'--bar' => 'baz'}]
+            provider.expects(:query).returns({:ensure => :absent})
+            provider.expects(:unhold)
+            Puppet::Util::Execution.expects(:execute)
+              .with(['/bin/pkg', 'install', *hash[:flags], '--foo', '--bar=baz', 'dummy'], {:failonfail => false, :combine => true})
+            provider.install
+          end
+
           it "should accept all licenses" do
             provider.expects(:query).with().returns({:ensure => :absent})
             Puppet::Util::Execution.expects(:execute)
