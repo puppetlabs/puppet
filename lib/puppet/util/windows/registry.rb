@@ -247,7 +247,9 @@ module Puppet::Util::Windows
               buffer_ptr, length_ptr)
 
             if result != FFI::ERROR_SUCCESS
-              msg = _("Failed to read registry value %{value} at %{key}") % { value: name_ptr.read_wide_string, key: key.keyname }
+              # buffer is raw bytes, *not* chars - less a NULL terminator
+              name_length = (name_ptr.size / FFI.type_size(:wchar)) - 1 if name_ptr.size > 0
+              msg = _("Failed to read registry value %{value} at %{key}") % { value: name_ptr.read_wide_string(name_length), key: key.keyname }
               raise Puppet::Util::Windows::Error.new(msg)
             end
 
