@@ -144,18 +144,42 @@ class Puppet::Transaction::EventManager
       return false
     end
 
+    message = "Triggered '#{callback}' from #{events.length} events"
+    event = create_callback_status_event(resource, callback, message) if not resource.is_a?(Puppet::Type.type(:whit))
+
     resource.send(callback)
 
-    if not resource.is_a?(Puppet::Type.type(:whit))
-      resource.notice "Triggered '#{callback}' from #{events.length} events"
-    end
+    resource.notice message if not resource.is_a?(Puppet::Type.type(:whit))
     return true
   rescue => detail
-    resource.err "Failed to call #{callback}: #{detail}"
+    event = handle_callback_error(resource, transaction, callback, detail)
+    return false
+  rescue Exception => detail
+    event = handle_callback_error(resource, transaction, callback, detail)
+    return false
+  ensure
+    if event
+      transaction.resource_status(resource) << event
+    end
+  end
+
+  def handle_callback_error(resource, transaction, callback, detail)
+    resource_error_message = "Failed to call #{callback}: #{detail}"
+    resource.err resource_error_message
+    if not resource.is_a?(Puppet::Type.type(:whit))
+      event = create_callback_status_event(resource, callback, resource_error_message)
+      event.status = "failure"
+    end
 
     transaction.resource_status(resource).failed_to_restart = true
     resource.log_exception(detail)
-    return false
+
+    event
+  end
+
+  def create_callback_status_event(resource, callback, message)
+    options = { message: message, status: "success", name: callback.to_s }
+    resource.event options
   end
 
   def process_noop_events(resource, callback, events)
