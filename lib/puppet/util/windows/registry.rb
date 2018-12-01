@@ -65,6 +65,28 @@ module Puppet::Util::Windows
       vals
     end
 
+    # Retrieve a set of values from a registry key given their names
+    # Value names listed but not found in the registry will not be added to the
+    # resultant Hashtable
+    #
+    # @param key [RegistryKey] An open handle to a Registry Key
+    # @param names [String[]] An array of names of registry values to return if they exist
+    # @return [Hashtable<String, Object>] A hashtable of all of the found values in the registry key
+    def values_by_name(key, names)
+      vals = {}
+      names.each do |name|
+        FFI::Pointer.from_string_to_wide_string(name) do |subkeyname_ptr|
+          begin
+            _, vals[name] = read(key, subkeyname_ptr)
+          rescue Puppet::Util::Windows::Error => e
+            # ignore missing names, but raise other errors
+            raise e unless e.code == Puppet::Util::Windows::Error::ERROR_FILE_NOT_FOUND
+          end
+        end
+      end
+      vals
+    end
+
     def each_value(key, &block)
       index = 0
       subkey = nil
