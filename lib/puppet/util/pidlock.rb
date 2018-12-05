@@ -54,7 +54,14 @@ class Puppet::Util::Pidlock
     begin
       Process.kill(0, lock_pid)
     rescue *errors
-      @lockfile.unlock
+      return @lockfile.unlock
+    end
+
+    # Check the process name in case a non-puppet process happens to be using
+    # that pid. This is a POSIX-only platform check for now (PUP-9247).
+    if Puppet.features.posix?
+      procname = Puppet::Util::Execution.execute(["ps", "-p", lock_pid, "-o", "comm="]).strip
+      @lockfile.unlock unless procname =~ /puppet/
     end
   end
   private :clear_if_stale
