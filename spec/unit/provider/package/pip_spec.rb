@@ -1,21 +1,19 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:pip)
 osfamilies = { 'windows' => ['pip.exe'], 'other' => ['pip', 'pip-python'] }
 
-describe provider_class do
-  before do
+describe Puppet::Type.type(:package).provider(:pip) do
+  before do  
     @resource = Puppet::Resource.new(:package, "fake_package")
-    @provider = provider_class.new(@resource)
+    @provider = described_class.new(@resource)
     @client = stub_everything('client')
     @client.stubs(:call).with('package_releases', 'real_package').returns(["1.3", "1.2.5", "1.2.4"])
     @client.stubs(:call).with('package_releases', 'fake_package').returns([])
   end
 
-  describe "parse" do
+  context "parse" do
     it "should return a hash on valid input" do
-      expect(provider_class.parse("real_package==1.2.5")).to eq({
+      expect(described_class.parse("real_package==1.2.5")).to eq({
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
@@ -23,43 +21,43 @@ describe provider_class do
     end
 
     it "should return nil on invalid input" do
-      expect(provider_class.parse("foo")).to eq(nil)
+      expect(described_class.parse("foo")).to eq(nil)
     end
   end
 
-  describe "cmd" do
+  context "cmd" do
     it "should return 'pip.exe' by default on Windows systems" do
       Puppet::Util::Platform.stubs(:windows?).returns true
-      expect(provider_class.cmd[0]).to eq('pip.exe')
+      expect(described_class.cmd[0]).to eq('pip.exe')
     end
 
     it "could return pip-python on legacy redhat systems which rename pip" do
       Puppet::Util::Platform.stubs(:windows?).returns false
-      expect(provider_class.cmd[1]).to eq('pip-python')
+      expect(described_class.cmd[1]).to eq('pip-python')
     end
 
     it "should return pip by default on other systems" do
       Puppet::Util::Platform.stubs(:windows?).returns false
-      expect(provider_class.cmd[0]).to eq('pip')
+      expect(described_class.cmd[0]).to eq('pip')
     end
   end
 
-  describe "instances" do
+  context "instances" do
     osfamilies.each do |osfamily, pip_cmds|
       it "should return an array on #{osfamily} systems when #{pip_cmds.join(' or ')} is present" do
         Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
         pip_cmds.each do |pip_cmd|
           pip_cmds.each do |cmd|
             unless cmd == pip_cmd
-              provider_class.expects(:which).with(cmd).returns(nil)
+              described_class.expects(:which).with(cmd).returns(nil)
             end
           end
-          provider_class.stubs(:pip_version).returns('8.0.1')
-          provider_class.expects(:which).with(pip_cmd).returns("/fake/bin/#{pip_cmd}")
+          described_class.stubs(:pip_version).returns('8.0.1')
+          described_class.expects(:which).with(pip_cmd).returns("/fake/bin/#{pip_cmd}")
           p = stub("process")
           p.expects(:collect).yields("real_package==1.2.5")
-          provider_class.expects(:execpipe).with(["/fake/bin/#{pip_cmd}", "freeze"]).yields(p)
-          provider_class.instances
+          described_class.expects(:execpipe).with(["/fake/bin/#{pip_cmd}", "freeze"]).yields(p)
+          described_class.instances
         end
       end
 
@@ -68,12 +66,12 @@ describe provider_class do
         versions.each do |version|
           it "should use the --all option when version is '#{version}'" do
             Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
-            provider_class.stubs(:pip_cmd).returns('/fake/bin/pip')
-            provider_class.stubs(:pip_version).returns(version)
+            described_class.stubs(:pip_cmd).returns('/fake/bin/pip')
+            described_class.stubs(:pip_version).returns(version)
             p = stub("process")
             p.expects(:collect).yields("real_package==1.2.5")
-            provider_class.expects(:execpipe).with(["/fake/bin/pip", "freeze", "--all"]).yields(p)
-            provider_class.instances
+            described_class.expects(:execpipe).with(["/fake/bin/pip", "freeze", "--all"]).yields(p)
+            described_class.instances
           end
         end
       end
@@ -81,20 +79,20 @@ describe provider_class do
       it "should return an empty array on #{osfamily} systems when #{pip_cmds.join(' and ')} are missing" do
         Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
         pip_cmds.each do |cmd|
-          provider_class.expects(:which).with(cmd).returns nil
+          described_class.expects(:which).with(cmd).returns nil
         end
-        expect(provider_class.instances).to eq([])
+        expect(described_class.instances).to eq([])
       end
     end
   end
 
-  describe "query" do
+  context "query" do
     before do
       @resource[:name] = "real_package"
     end
 
     it "should return a hash when pip and the package are present" do
-      provider_class.expects(:instances).returns [provider_class.new({
+      described_class.expects(:instances).returns [described_class.new({
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
@@ -108,14 +106,14 @@ describe provider_class do
     end
 
     it "should return nil when the package is missing" do
-      provider_class.expects(:instances).returns []
+      described_class.expects(:instances).returns []
       expect(@provider.query).to eq(nil)
     end
 
     it "should be case insensitive" do
       @resource[:name] = "Real_Package"
 
-      provider_class.expects(:instances).returns [provider_class.new({
+      described_class.expects(:instances).returns [described_class.new({
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
@@ -127,16 +125,15 @@ describe provider_class do
         :provider => :pip,
       })
     end
-
   end
 
-  describe "latest" do
+  context "latest" do
     context "with pip version < 1.5.4" do
       before :each do
-        provider_class.stubs(:pip_version).returns('1.0.1')
-        provider_class.stubs(:which).with('pip').returns("/fake/bin/pip")
-        provider_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
-        provider_class.stubs(:which).with('pip.exe').returns("/fake/bin/pip")
+        described_class.stubs(:pip_version).returns('1.0.1')
+        described_class.stubs(:which).with('pip').returns("/fake/bin/pip")
+        described_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
+        described_class.stubs(:which).with('pip.exe').returns("/fake/bin/pip")
       end
 
       it "should find a version number for new_pip_package" do
@@ -188,12 +185,11 @@ describe provider_class do
     context "with pip version >= 1.5.4" do
       # For Pip 1.5.4 and above, you can get a version list from CLI - which allows for native pip behavior
       # with regards to custom repositories, proxies and the like
-
       before :each do
-        provider_class.stubs(:pip_version).returns('1.5.4')
-        provider_class.stubs(:which).with('pip').returns("/fake/bin/pip")
-        provider_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
-        provider_class.stubs(:which).with('pip.exe').returns("/fake/bin/pip")
+        described_class.stubs(:pip_version).returns('1.5.4')
+        described_class.stubs(:which).with('pip').returns("/fake/bin/pip")
+        described_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
+        described_class.stubs(:which).with('pip.exe').returns("/fake/bin/pip")
       end
 
       it "should find a version number for real_package" do
@@ -239,7 +235,7 @@ describe provider_class do
     end
   end
 
-  describe "install" do
+  context "install" do
     before do
       @resource[:name] = "fake_package"
       @url = "git+https://example.com/fake_package.git"
@@ -304,7 +300,7 @@ describe provider_class do
     end
   end
 
-  describe "uninstall" do
+  context "uninstall" do
     it "should uninstall" do
       @resource[:name] = "fake_package"
       @provider.expects(:lazy_pip).
@@ -313,29 +309,29 @@ describe provider_class do
     end
   end
 
-  describe "update" do
+  context "update" do
     it "should just call install" do
       @provider.expects(:install).returns(nil)
       @provider.update
     end
   end
 
-  describe "pip_version" do
+  context "pip_version" do
     it "should return nil on missing pip" do
-      provider_class.stubs(:pip_cmd).returns(nil)
-      expect(provider_class.pip_version).to eq(nil)
+      described_class.stubs(:pip_cmd).returns(nil)
+      expect(described_class.pip_version).to eq(nil)
     end
 
     it "should look up version if pip is present" do
-      provider_class.stubs(:pip_cmd).returns('/fake/bin/pip')
+      described_class.stubs(:pip_cmd).returns('/fake/bin/pip')
       p = stub("process")
       p.expects(:collect).yields('pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)')
-      provider_class.expects(:execpipe).with(['/fake/bin/pip', '--version']).yields(p)
-      expect(provider_class.pip_version).to eq('8.0.2')
+      described_class.expects(:execpipe).with(['/fake/bin/pip', '--version']).yields(p)
+      expect(described_class.pip_version).to eq('8.0.2')
     end
   end
 
-  describe "lazy_pip" do
+  context "lazy_pip" do
     after(:each) do
       Puppet::Type::Package::ProviderPip.instance_variable_set(:@confine_collection, nil)
     end

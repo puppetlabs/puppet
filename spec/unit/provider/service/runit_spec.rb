@@ -1,9 +1,3 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the Runit service Provider
-#
-# author Brice Figureau
-#
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platform.jruby? do
@@ -62,7 +56,7 @@ describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platfor
     expect(@provider).to respond_to(:disable)
   end
 
-  describe "when starting" do
+  context "when starting" do
     it "should enable the service if it is not enabled" do
       @provider.stubs(:sv)
 
@@ -80,21 +74,21 @@ describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platfor
     end
   end
 
-  describe "when stopping" do
+  context "when stopping" do
     it "should execute external command 'sv stop /etc/service/myservice'" do
       @provider.expects(:sv).with("stop", "/etc/service/myservice")
       @provider.stop
     end
   end
 
-  describe "when restarting" do
+  context "when restarting" do
     it "should call 'sv restart /etc/service/myservice'" do
       @provider.expects(:sv).with("restart","/etc/service/myservice")
       @provider.restart
     end
   end
 
-  describe "when enabling" do
+  context "when enabling" do
     it "should create a symlink between daemon dir and service dir", :if => Puppet.features.manages_symlinks? do
       daemon_path = File.join(@daemondir,"myservice")
       service_path = File.join(@servicedir,"myservice")
@@ -104,7 +98,7 @@ describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platfor
     end
   end
 
-  describe "when disabling" do
+  context "when disabling" do
     it "should remove the '/etc/service/myservice' symlink" do
       path = File.join(@servicedir,"myservice")
 #      mocked_file = mock(path, :symlink? => true)
@@ -115,14 +109,14 @@ describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platfor
     end
   end
 
-  describe "when checking status" do
+  context "when checking status" do
     it "should call the external command 'sv status /etc/sv/myservice'" do
       @provider.expects(:sv).with('status',File.join(@daemondir,"myservice"))
       @provider.status
     end
   end
 
-  describe "when checking status" do
+  context "when checking status" do
     it "and sv status fails, properly raise a Puppet::Error" do
       @provider.expects(:sv).with('status',File.join(@daemondir,"myservice")).raises(Puppet::ExecutionFailure, "fail: /etc/sv/myservice: file not found")
       expect { @provider.status }.to raise_error(Puppet::Error, 'Could not get status for service Service[myservice]: fail: /etc/sv/myservice: file not found')
@@ -140,5 +134,4 @@ describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platfor
       expect(@provider.status).to eq(:stopped)
     end
   end
-
 end

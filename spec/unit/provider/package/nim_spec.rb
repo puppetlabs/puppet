@@ -1,10 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:nim)
-
-describe provider_class do
-
+describe Puppet::Type.type(:package).provider(:nim) do
   before(:each) do
     # Create a mock resource
     @resource = stub 'resource'
@@ -17,12 +13,12 @@ describe provider_class do
     @resource.stubs(:[]).with(:source).returns "mysource"
     @resource.stubs(:[]).with(:ensure).returns :installed
 
-    @provider = provider_class.new
+    @provider = subject()
     @provider.resource = @resource
   end
 
   it "should have an install method" do
-    @provider = provider_class.new
+    @provider = subject()
     expect(@provider).to respond_to(:install)
   end
 
@@ -48,7 +44,6 @@ END
 
   context "when installing" do
     it "should install a package" do
-
       @resource.stubs(:should).with(:ensure).returns(:installed)
       Puppet::Util::Execution.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo'").returns(bff_showres_output)
       @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.8")
@@ -56,7 +51,6 @@ END
     end
 
     context "when installing versioned packages" do
-
       it "should fail if the package is not available on the lpp source" do
         nimclient_showres_output = ""
 
@@ -130,7 +124,6 @@ OUTPUT
 
         expect { @provider.install }.to raise_error(Puppet::Error, "NIM package provider is unable to downgrade packages")
     end
-
 
     it "should succeed if an RPM package is available on the lpp source" do
         nimclient_sequence = sequence('nimclient')

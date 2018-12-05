@@ -1,9 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:apt)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:apt) do
   let(:name) { 'asdf' }
 
   let(:resource) do
@@ -14,7 +11,7 @@ describe provider_class do
   end
 
   let(:provider) do
-    provider = provider_class.new
+    provider = subject()
     provider.resource = resource
     provider
   end
@@ -25,7 +22,7 @@ describe provider_class do
   end
 
   it "should be versionable" do
-    expect(provider_class).to be_versionable
+    expect(described_class).to be_versionable
   end
 
   it "should use :install to update" do

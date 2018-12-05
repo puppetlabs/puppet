@@ -18,9 +18,16 @@ describe 'the log function' do
 
   def expect_log(code, log_level, message)
     logs = collect_logs(code)
-    expect(logs.size).to eql(1)
-    expect(logs[0].level).to eql(log_level)
-    expect(logs[0].message).to eql(message)
+
+    # There's a chance that additional messages could have been
+    # added during code compilation like debug messages from
+    # Facter. This happened on Appveyor when the Appveyor image
+    # failed to resolve the domain fact. Since these messages are
+    # not relevant to our test, and since they can (possibly) be
+    # injected at any location in our logs array, it is good enough
+    # to assert that our desired log _is_ included in the logs array
+    # instead of trying to figure out _where_ it is included.
+    expect(logs).to include(satisfy { |log| log.level == log_level && log.message == message })
   end
 
   before(:each) do

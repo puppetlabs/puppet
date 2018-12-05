@@ -12,7 +12,13 @@ exec_prefix=/opt/csw
 sysconfdir=/opt/csw/etc
 sbindir=/opt/csw/sbin
 
-pidfile=/var/run/puppetlabs/agent.pid
+if [ -z $SMF_SYSVOL_FS ]; then 
+  piddir=/var/run/puppetlabs
+else
+  piddir=$SMF_SYSVOL_FS/puppetlabs
+fi;
+
+pidfile=$piddir/agent.pid
 
 case "$1" in
 start)
@@ -20,6 +26,7 @@ start)
     # Start daemons.
 
     printf "Starting Puppet client services:"
+    mkdir -p $piddir
 
     /opt/csw/sbin/puppetd
 

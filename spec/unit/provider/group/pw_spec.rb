@@ -1,9 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:group).provider(:pw)
-
-describe provider_class do
+describe Puppet::Type.type(:group).provider(:pw) do
   let :resource do
     Puppet::Type.type(:group).new(:name => "testgroup", :provider => :pw)
   end
@@ -20,8 +17,8 @@ describe provider_class do
     end
 
     it "should run pw with no additional flags when no properties are given" do
-      expect(provider.addcmd).to eq([provider_class.command(:pw), "groupadd", "testgroup"])
-      provider.expects(:execute).with([provider_class.command(:pw), "groupadd", "testgroup"], kind_of(Hash))
+      expect(provider.addcmd).to eq([described_class.command(:pw), "groupadd", "testgroup"])
+      provider.expects(:execute).with([described_class.command(:pw), "groupadd", "testgroup"], kind_of(Hash))
       provider.create
     end
 
@@ -53,16 +50,16 @@ describe provider_class do
   describe "when deleting groups" do
     it "should run pw with no additional flags" do
       provider.expects(:exists?).returns true
-      expect(provider.deletecmd).to eq([provider_class.command(:pw), "groupdel", "testgroup"])
-      provider.expects(:execute).with([provider_class.command(:pw), "groupdel", "testgroup"], has_entry(:custom_environment, {}))
+      expect(provider.deletecmd).to eq([described_class.command(:pw), "groupdel", "testgroup"])
+      provider.expects(:execute).with([described_class.command(:pw), "groupdel", "testgroup"], has_entry(:custom_environment, {}))
       provider.delete
     end
   end
 
   describe "when modifying groups" do
     it "should run pw with the correct arguments" do
-      expect(provider.modifycmd("gid", 12345)).to eq([provider_class.command(:pw), "groupmod", "testgroup", "-g", 12345])
-      provider.expects(:execute).with([provider_class.command(:pw), "groupmod", "testgroup", "-g", 12345], has_entry(:custom_environment, {}))
+      expect(provider.modifycmd("gid", 12345)).to eq([described_class.command(:pw), "groupmod", "testgroup", "-g", 12345])
+      provider.expects(:execute).with([described_class.command(:pw), "groupmod", "testgroup", "-g", 12345], has_entry(:custom_environment, {}))
       provider.gid = 12345
     end
 

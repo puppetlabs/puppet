@@ -1,13 +1,7 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the SMF service Provider
-#
-# author Dominic Cleal
-#
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Smf',
-    if: Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
+         if: Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:smf) }
 
   before(:each) do
@@ -25,7 +19,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     Facter.stubs(:value).with(:operatingsystemrelease).returns '11.2'
   end
 
-  describe ".instances" do
+  context ".instances" do
     it "should have an instances method" do
       expect(provider_class).to respond_to :instances
     end
@@ -70,12 +64,21 @@ describe 'Puppet::Type::Service::Provider::Smf',
   end
 
   describe "when checking status" do
+    before(:each) do
+      @provider.stubs(:complete_service?).returns(true)
+    end
+
     it "should call the external command 'svcs /system/myservice' once" do
       @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.status
     end
     it "should return stopped if svcs can't find the service" do
       @provider.stubs(:svcs).raises(Puppet::ExecutionFailure.new("no svc found"))
+      expect(@provider.status).to eq(:stopped)
+    end
+    it "should return stopped for an incomplete service on Solaris 11" do
+      Facter.stubs(:value).with(:operatingsystemrelease).returns('11.3')
+      @provider.stubs(:complete_service?).returns(false)
       expect(@provider.status).to eq(:stopped)
     end
     it "should return running if online in svcs output" do
@@ -104,7 +107,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
   end
 
-  describe "when starting" do
+  context "when starting" do
     it "should enable the service if it is not enabled" do
       @provider.expects(:status).returns :stopped
       @provider.expects(:texecute).with(:start, ['/usr/sbin/svcadm', :enable, '-rs', '/system/myservice'], true)
@@ -141,7 +144,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
   end
 
-  describe "when starting a service with a manifest" do
+  context "when starting a service with a manifest" do
     before(:each) do
       @resource = Puppet::Type.type(:service).new(:name => "/system/myservice", :ensure => :running, :enable => :true, :manifest => "/tmp/myservice.xml")
       @provider = provider_class.new(@resource)
@@ -149,6 +152,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
 
     it "should import the manifest if service is missing" do
+      @provider.stubs(:complete_service?).returns(true)
       @provider.expects(:svcs).with('-l', '/system/myservice').raises(Puppet::ExecutionFailure, "Exited 1")
       @provider.expects(:svccfg).with(:import, "/tmp/myservice.xml")
       @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, '-rs', "/system/myservice"], true)
@@ -164,7 +168,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
   end
 
-  describe "when stopping" do
+  context "when stopping" do
     it "should execute external command 'svcadm disable /system/myservice'" do
       @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, '-s', "/system/myservice"], true)
       @provider.expects(:wait).with('offline', 'disabled', 'uninitialized')
@@ -178,8 +182,7 @@ describe 'Puppet::Type::Service::Provider::Smf',
     end
   end
 
-  describe "when restarting" do
-
+  context "when restarting" do
     it "should error if timeout occurs while restarting the service" do
       @provider.expects(:texecute).with(:restart, ["/usr/sbin/svcadm", :restart, '-s', "/system/myservice"], true)
       Timeout.expects(:timeout).with(60).raises(Timeout::Error)
@@ -212,6 +215,67 @@ describe 'Puppet::Type::Service::Provider::Smf',
         @provider.restart
       end
     end
+  end
 
+  describe '#service_fmri' do
+    it 'raises a Puppet::Error if the service resource matches multiple FMRIs' do
+      @provider.stubs(:svcs).with('-l', @provider.resource[:name]).returns(File.read(my_fixture('svcs_multiple_fmris.out')))
+
+      expect { @provider.service_fmri }.to raise_error do |error|
+        expect(error).to be_a(Puppet::Error)
+        expect(error.message).to match(@provider.resource[:name])
+        expect(error.message).to match('multiple')
+
+        matched_fmris = ["svc:/application/tstapp:one", "svc:/application/tstapp:two"]
+        expect(error.message).to match(matched_fmris.join(', '))
+      end
+    end
+
+    it 'raises a Puppet:ExecutionFailure if svcs fails' do
+      @provider.stubs(:svcs).with('-l', @provider.resource[:name]).raises(
+        Puppet::ExecutionFailure, 'svcs failed!'
+      )
+
+      expect { @provider.service_fmri }.to raise_error do |error|
+        expect(error).to be_a(Puppet::ExecutionFailure)
+        expect(error.message).to match('svcs failed!')
+      end
+    end
+
+    it "returns the service resource's fmri and memoizes it" do
+      @provider.stubs(:svcs).with('-l', @provider.resource[:name]).returns(File.read(my_fixture('svcs_fmri.out')))
+
+      expected_fmri = 'svc:/application/tstapp:default'
+
+      expect(@provider.service_fmri).to eql(expected_fmri)
+      expect(@provider.instance_variable_get(:@fmri)).to eql(expected_fmri)
+    end
+  end
+
+  describe '#complete_service?' do
+    let(:fmri) { 'service_fmri' }
+
+    before(:each) do
+      @provider.stubs(:service_fmri).returns(fmri)
+    end
+
+    it 'should raise a Puppet::Error if it is called on an older Solaris machine' do
+      Facter.stubs(:value).with(:operatingsystemrelease).returns('10.0')
+
+      expect { @provider.complete_service? }.to raise_error(Puppet::Error)
+    end
+
+    it 'should return false for an incomplete service' do
+      @provider.stubs(:svccfg).with('-s', fmri, 'listprop', 'general/complete').returns("")
+      expect(@provider.complete_service?).to be false
+    end
+
+    it 'should return true for a complete service' do
+      @provider.stubs(:svccfg)
+        .with('-s', fmri, 'listprop', 'general/complete')
+        .returns("general/complete astring")
+
+      expect(@provider.complete_service?).to be true
+    end
   end
 end

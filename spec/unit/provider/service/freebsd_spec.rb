@@ -1,7 +1,7 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Freebsd', unless: Puppet::Util::Platform.jruby? do
+describe 'Puppet::Type::Service::Provider::Freebsd',
+         unless: Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:freebsd) }
 
   before :each do

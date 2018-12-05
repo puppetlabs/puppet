@@ -107,6 +107,10 @@ describe Puppet::Util::FileType do
     end
 
     describe "#read" do
+      before(:each) do
+        Puppet::Util.stubs(:uid).with(uid).returns 9000
+      end
+
       it "should run crontab -l as the target user" do
         Puppet::Util::Execution.expects(:execute)
           .with(['crontab', '-l'], user_options)
@@ -115,7 +119,7 @@ describe Puppet::Util::FileType do
       end
 
       it "should not switch user if current user is the target user" do
-        Puppet::Util.expects(:uid).with(uid).returns 9000
+        Puppet::Util.expects(:uid).with(uid).twice.returns 9000
         Puppet::Util::SUIDManager.expects(:uid).returns 9000
         Puppet::Util::Execution
           .expects(:execute).with(['crontab', '-l'], options)
@@ -128,11 +132,15 @@ describe Puppet::Util::FileType do
         expect(cron.read).to eq('')
       end
 
-      it "should raise an error if the user is not authorized to use cron" do
+      it "should treat a nonexistent user's crontab as empty" do
+        Puppet::Util.expects(:uid).with(uid).returns nil
+
+        expect(cron.read).to eq('')
+      end
+
+      it "should return empty if the user is not authorized to use cron" do
         Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], user_options).raises(Puppet::ExecutionFailure, unauthorized_crontab)
-        expect {
-          cron.read
-        }.to raise_error Puppet::Error, /User #{uid} not authorized to use cron/
+        expect(cron.read).to eq('')
       end
     end
 
