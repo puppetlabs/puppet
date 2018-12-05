@@ -10,16 +10,23 @@ test_name "certificate extensions available as trusted data" do
       'server'             # Ruby implimentation is deprecated
 
   agent_certnames = []
+  hostname = master.execute('facter hostname')
+  fqdn = master.execute('facter fqdn')
 
   teardown do
     step "Cleanup the test agent certs"
-    agent_certnames.each do |cn|
-      on(master, "puppetserver ca clean --certname #{cn}", :acceptable_exit_codes => [0,24])
+    master_config = {
+      'main' => { 'server' => fqdn },
+      'master' => { 'dns_alt_names' => "puppet,#{hostname},#{fqdn}" }
+    }
+
+    with_puppet_running_on(master, master_config) do
+      on(master,
+         "puppetserver ca clean --certname #{agent_certnames.join(',')}",
+         :acceptable_exit_codes => [0,24])
     end
   end
 
-  hostname = master.execute('facter hostname')
-  fqdn = master.execute('facter fqdn')
   environments_dir = get_test_file_path(master, "environments")
   master_config = {
     'main' => {
@@ -28,7 +35,6 @@ test_name "certificate extensions available as trusted data" do
     'master' => {
       'autosign' => true,
       'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
-      'server' => fqdn
     }
   }
 
@@ -85,6 +91,7 @@ test_name "certificate extensions available as trusted data" do
                        "--csr_attributes", agent_csr_attributes,
                        "--certname", agent_certname,
                        "--ssldir", agent_ssldir,
+                       "--server", fqdn,
                        'ENV' => { "FACTER_test_dir" => get_test_file_path(agent, "") }),
         :acceptable_exit_codes => [0, 2])
 
