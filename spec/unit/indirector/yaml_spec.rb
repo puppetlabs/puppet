@@ -124,7 +124,7 @@ describe Puppet::Indirector::Yaml do
       Dir.expects(:glob).with(:glob).returns(%w{one.yaml two.yaml})
       YAML.expects(:load_file).with("one.yaml").returns @one;
       YAML.expects(:load_file).with("two.yaml").returns @two;
-      expect(@store.search(@request)).to eq([@one, @two])
+      expect(@store.search(@request)).to contain_exactly(@one, @two)
     end
 
     it "should return an array containing a single instance of fact when globbing 'one*'" do
