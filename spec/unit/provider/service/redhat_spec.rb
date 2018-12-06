@@ -1,11 +1,7 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the RedHat service Provider
-#
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Redhat',
-    :if => Puppet.features.posix? && !Puppet::Util::Platform.jruby? do
+         if: Puppet.features.posix? && !Puppet::Util::Platform.jruby?do
   let(:provider_class) { Puppet::Type.type(:service).provider(:redhat) }
 
   before :each do
@@ -40,7 +36,7 @@ describe 'Puppet::Type::Service::Provider::Redhat',
   end
 
   # test self.instances
-  describe "when getting all service instances" do
+  context "when getting all service instances" do
     before :each do
       @services = ['one', 'two', 'three', 'four', 'kudzu', 'functions', 'halt', 'killall', 'single', 'linuxconf', 'boot', 'reboot']
       @not_services = ['functions', 'halt', 'killall', 'single', 'linuxconf', 'reboot', 'boot']
@@ -78,7 +74,7 @@ describe 'Puppet::Type::Service::Provider::Redhat',
     expect(@provider).to respond_to(:enabled?)
   end
 
-  describe "when checking enabled? on Suse" do
+  context "when checking enabled? on Suse" do
     before :each do
       Facter.expects(:value).with(:osfamily).returns 'Suse'
     end
@@ -132,20 +128,23 @@ describe 'Puppet::Type::Service::Provider::Redhat',
     end
   end
 
-  describe "when checking status" do
-    describe "when hasstatus is :true" do
+  context "when checking status" do
+    context "when hasstatus is :true" do
       before :each do
         @resource.stubs(:[]).with(:hasstatus).returns :true
       end
+
       it "should execute the service script with fail_on_failure false" do
         @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
         @provider.status
       end
+
       it "should consider the process running if the command returns 0" do
         @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
         $CHILD_STATUS.stubs(:exitstatus).returns(0)
         expect(@provider.status).to eq(:running)
       end
+
       [-10,-1,1,10].each { |ec|
         it "should consider the process stopped if the command returns something non-0" do
           @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
@@ -154,11 +153,13 @@ describe 'Puppet::Type::Service::Provider::Redhat',
         end
       }
     end
-    describe "when hasstatus is not :true" do
+
+    context "when hasstatus is not :true" do
       it "should consider the service :running if it has a pid" do
         @provider.expects(:getpid).returns "1234"
         expect(@provider.status).to eq(:running)
       end
+
       it "should consider the service :stopped if it doesn't have a pid" do
         @provider.expects(:getpid).returns nil
         expect(@provider.status).to eq(:stopped)
@@ -166,7 +167,7 @@ describe 'Puppet::Type::Service::Provider::Redhat',
     end
   end
 
-  describe "when restarting and hasrestart is not :true" do
+  context "when restarting and hasrestart is not :true" do
     it "should stop and restart the process with the server script" do
       @provider.expects(:texecute).with(:stop,  ['/sbin/service', 'myservice', 'stop'],  true)
       @provider.expects(:texecute).with(:start, ['/sbin/service', 'myservice', 'start'], true)

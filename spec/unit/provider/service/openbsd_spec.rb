@@ -1,11 +1,7 @@
-#!/usr/bin/env ruby
-#
-# Unit testing for the OpenBSD service provider
-
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Openbsd',
-    unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:openbsd) }
 
   before :each do
@@ -16,7 +12,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     FileTest.stubs(:executable?).with('/usr/sbin/rcctl').returns true
   end
 
-  describe "#instances" do
+  context "#instances" do
     it "should have an instances method" do
       expect(provider_class).to respond_to :instances
     end
@@ -29,7 +25,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#start" do
+  context "#start" do
     it "should use the supplied start command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :start => '/bin/foo'))
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
@@ -43,7 +39,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#stop" do
+  context "#stop" do
     it "should use the supplied stop command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :stop => '/bin/foo'))
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
@@ -57,7 +53,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#status" do
+  context "#status" do
     it "should use the status command from the resource" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
       provider.expects(:execute).with(['/usr/sbin/rcctl', :get, 'sshd', :status], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
@@ -82,7 +78,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#restart" do
+  context "#restart" do
     it "should use the supplied restart command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
       provider.expects(:execute).with(['/usr/sbin/rcctl', '-f', :restart, 'sshd'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
@@ -105,7 +101,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#enabled?" do
+  context "#enabled?" do
     it "should return :true if the service is enabled" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider_class.stubs(:rcctl).with(:get, 'sshd', :status)
@@ -121,7 +117,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#enable" do
+  context "#enable" do
     it "should run rcctl enable to enable the service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider_class.stubs(:rcctl).with(:enable, 'sshd').returns('')
@@ -139,7 +135,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#disable" do
+  context "#disable" do
     it "should run rcctl disable to disable the service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider_class.stubs(:rcctl).with(:disable, 'sshd').returns('')
@@ -148,7 +144,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#running?" do
+  context "#running?" do
     it "should run rcctl check to check the service" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider_class.stubs(:rcctl).with(:check, 'sshd').returns('sshd(ok)')
@@ -171,7 +167,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#flags" do
+  context "#flags" do
     it "should return flags when set" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :flags => '-6'))
       provider_class.stubs(:rcctl).with('get', 'sshd', 'flags').returns('-6')
@@ -194,8 +190,8 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
     end
   end
 
-  describe "#flags=" do
-    it "should run rcctl to set flags", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
+  context "#flags=" do
+    it "should run rcctl to set flags", unless: Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider_class.stubs(:rcctl).with(:set, 'sshd', :flags, '-4').returns('')
       provider.expects(:rcctl).with(:set, 'sshd', :flags, '-4')

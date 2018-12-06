@@ -1,11 +1,7 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the AIX System Resource Controller (src) provider
-#
-
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Src', unless: Puppet::Util::Platform.jruby? do
+describe 'Puppet::Type::Service::Provider::Src',
+         unless: Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:src) }
 
   if Puppet::Util::Platform.windows?
@@ -41,7 +37,7 @@ describe 'Puppet::Type::Service::Provider::Src', unless: Puppet::Util::Platform.
     @provider.stubs(:chitab)
   end
 
-  describe ".instances" do
+  context ".instances" do
     it "should have a .instances method" do
       expect(provider_class).to respond_to :instances
     end
@@ -65,7 +61,7 @@ _EOF_
 
   end
 
-  describe "when starting a service" do
+  context "when starting a service" do
     it "should execute the startsrc command" do
       @provider.expects(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
       @provider.expects(:status).returns :running
@@ -79,7 +75,7 @@ _EOF_
     end
   end
 
-  describe "when stopping a service" do
+  context "when stopping a service" do
     it "should execute the stopsrc command" do
       @provider.expects(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
       @provider.expects(:status).returns :stopped
@@ -93,7 +89,7 @@ _EOF_
     end
   end
 
-  describe "should have a set of methods" do
+  context "should have a set of methods" do
     [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
       it "should have a #{method} method" do
         expect(@provider).to respond_to(method)
@@ -101,21 +97,21 @@ _EOF_
     end
   end
 
-  describe "when enabling" do
+  context "when enabling" do
     it "should execute the mkitab command" do
       @provider.expects(:mkitab).with("myservice:2:once:/usr/bin/startsrc -s myservice").once
       @provider.enable
     end
   end
 
-  describe "when disabling" do
+  context "when disabling" do
     it "should execute the rmitab command" do
       @provider.expects(:rmitab).with("myservice")
       @provider.disable
     end
   end
 
-  describe "when checking if it is enabled" do
+  context "when checking if it is enabled" do
     it "should execute the lsitab command" do
       @provider.expects(:execute).with(['/usr/sbin/lsitab', 'myservice'], {:combine => true, :failonfail => false})
       $CHILD_STATUS.stubs(:exitstatus).returns(0)
@@ -135,8 +131,7 @@ _EOF_
     end
   end
 
-
-  describe "when checking a subsystem's status" do
+  context "when checking a subsystem's status" do
     it "should execute status and return running if the subsystem is active" do
       sample_output = <<_EOF_
   Subsystem         Group            PID          Status
@@ -173,7 +168,7 @@ _EOF_
     end
   end
 
-  describe "when restarting a service" do
+  context "when restarting a service" do
     it "should execute restart which runs refresh" do
       sample_output = <<_EOF_
 #subsysname:synonym:cmdargs:path:uid:auditid:standin:standout:standerr:action:multi:contact:svrkey:svrmtype:priority:signorm:sigforce:display:waittime:grpname:

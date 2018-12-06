@@ -19,15 +19,21 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
     end
   end
 
-  teardown do
-    step "clear test certs"
-    test_certnames.each do |cn|
-      on(master, "puppetserver ca clean --certname #{cn}", :acceptable_exit_codes => [0,24])
-    end
-  end
-
   hostname = master.execute('facter hostname')
   fqdn = master.execute('facter fqdn')
+
+  teardown do
+    step "clear test certs"
+    master_opts = {
+      'main' => { 'server' => fqdn },
+      'master' => { 'dns_alt_names' => "puppet,#{hostname},#{fqdn}" }
+    }
+    with_puppet_running_on(master, master_opts) do
+      on(master,
+         "puppetserver ca clean --certname #{test_certnames.join(',')}",
+         :acceptable_exit_codes => [0,24])
+    end
+  end
 
   step "Step 1: ensure autosign command can approve CSRs" do
 
@@ -49,8 +55,7 @@ EOF
     master_opts = {
       'master' => {
         'autosign' => autosign_true_script_path,
-        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
-        'server' => fqdn
+        'dns_alt_names' => "puppet,#{hostname},#{fqdn}"
       }
     }
     with_puppet_running_on(master, master_opts) do
@@ -61,6 +66,7 @@ EOF
         on(agent, puppet("agent --test",
                   "--waitforcert 0",
                   "--ssldir", "'#{testdirs[agent]}/ssldir-autosign'",
+                  "--server", fqdn,
                   "--certname #{certname}"), :acceptable_exit_codes => [0,2])
         unless agent['locale'] == 'ja'
           assert_key_generated(agent)
@@ -90,8 +96,7 @@ EOF
     master_opts = {
       'master' => {
         'autosign' => autosign_false_script_path,
-        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
-        'server' => fqdn
+        'dns_alt_names' => "puppet,#{hostname},#{fqdn}"
       }
     }
     with_puppet_running_on(master, master_opts) do
@@ -102,6 +107,7 @@ EOF
         on(agent, puppet("agent --test",
                         "--waitforcert 0",
                         "--ssldir", "'#{testdirs[agent]}/ssldir-reject'",
+                        "--server", fqdn,
                         "--certname #{certname}"), :acceptable_exit_codes => [1])
         unless agent['locale'] == 'ja'
           assert_key_generated(agent)
@@ -158,8 +164,7 @@ custom_attributes:
     master_opts = {
       'master' => {
         'autosign' => autosign_inspect_csr_path,
-        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
-        'server' => fqdn
+        'dns_alt_names' => "puppet,#{hostname},#{fqdn}"
       },
     }
     with_puppet_running_on(master, master_opts) do
@@ -171,6 +176,7 @@ custom_attributes:
         on(agent, puppet("agent --test",
                          "--waitforcert 0",
                          "--ssldir", "'#{testdirs[agent]}/ssldir-attrs'",
+                         "--server", fqdn,
                          "--csr_attributes '#{agent_csr_attributes[agent]}'",
                          "--certname #{certname}"), :acceptable_exit_codes => [0,2])
         assert_key_generated(agent) unless agent['locale'] == 'ja'

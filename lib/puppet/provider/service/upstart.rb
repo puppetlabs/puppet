@@ -17,6 +17,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   ]
 
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"]
+  defaultfor :operatingsystem => :LinuxMint, :operatingsystemmajrelease => ["10", "11", "12", "13", "14", "15", "16", "17"]
 
   commands :start   => "/sbin/start",
            :stop    => "/sbin/stop",
