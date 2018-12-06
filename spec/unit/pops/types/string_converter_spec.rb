@@ -698,6 +698,15 @@ describe 'The string converter' do
      expect(formatted).to eq(result)
     end
 
+    it 'applies a short form format' do
+      result = [
+        "[1,",
+        "  [2, 3],",
+        "  4]"
+        ].join("\n")
+      expect(converter.convert([1, [2,3], 4], '%#a')).to eq(result)
+    end
+
     it 'treats hashes as nested arrays wrt indentation' do
       string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>", " } }
       # formatting matters here
@@ -844,6 +853,17 @@ describe 'The string converter' do
        ].join("\n")
 
       expect(converter.convert({1 => "hello", 2 => {3=> "world"}}, string_formats)).to eq(result)
+    end
+
+    it 'applies a short form format' do
+      result = [
+        "{",
+        "  1 => {",
+        "    2 => 3",
+        "  },",
+        "  4 => 5",
+        "}"].join("\n")
+      expect(converter.convert({1 => {2 => 3}, 4 => 5}, '%#h')).to eq(result)
     end
 
     context "containing an array" do
