@@ -253,5 +253,44 @@ describe Puppet::Util::Windows::Registry do
       end
     end
   end
+
+  context "#values_by_name" do
+    let(:hkey)   { stub 'hklm' }
+    let(:subkey) { stub 'subkey' }
+
+    before :each do
+      subject.stubs(:root).returns(hkey)
+    end
+
+    context "when reading values" do
+      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+
+      before(:each) do
+        hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          reg.write('valuename1', Win32::Registry::REG_SZ, 'value1')
+          reg.write('valuename2', Win32::Registry::REG_SZ, 'value2')
+        end
+      end
+
+      after(:each) do
+        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          subject.delete_key(reg, subkey_name)
+        end
+      end
+
+      it "should return only the values for the names specified" do
+        hklm.open("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg_key|
+          vals = subject.values_by_name(reg_key, ['valuename1', 'missingname'])
+
+          expect(vals).to have_key('valuename1')
+          expect(vals).to_not have_key('valuename2')
+          expect(vals['valuename1']).to eq('value1')
+          expect(vals['missingname']).to be_nil
+        end
+      end
+    end
+  end
 end
 end

@@ -32,7 +32,7 @@ agents.each do |agent|
   end
   step "IPS: check it was created"
   on(agent, puppet("resource package mypkg")) do
-    assert_match( /ensure => '0\.0\.1.*'/, result.stdout, "err: #{agent}")
+    assert_match( /ensure\s+=> '0\.0\.1[,:]?.*'/, result.stdout, "err: #{agent}")
   end
   on agent, "pkg list -v mypkg" do
     assert_match( /mypkg@0.0.1/, result.stdout, "err: #{agent}")

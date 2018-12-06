@@ -8,6 +8,14 @@ class Puppet::Provider::Package::Windows
     INSTALLSTATE_DEFAULT = 5 # product is installed for the current user
     INSTALLUILEVEL_NONE  = 2 # completely silent installation
 
+    # registry values to load under each product entry in
+    # HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+    # for this provider
+    REG_VALUE_NAMES = [
+      'DisplayVersion',
+      'WindowsInstaller'
+    ]
+
     # Get the COM installer object, it's in a separate method for testing
     def self.installer
       # REMIND: when does the COM release happen?
