@@ -1,7 +1,6 @@
 test_name "Cron: should allow changing parameters after creation"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500
-confine :except, :platform => /^fedora-28/
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_name`
     'audit:acceptance' # Could be done at the integration (or unit) layer though

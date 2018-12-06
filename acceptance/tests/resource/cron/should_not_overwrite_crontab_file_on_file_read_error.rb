@@ -1,10 +1,9 @@
 test_name "The crontab provider should not overwrite the crontab file when it cannot read it" do
   confine :except, :platform => 'windows'
   confine :except, :platform => /^eos-/ # See PUP-5500
-  confine :except, :platform => /^fedora-28/
   tag 'audit:medium',
       'audit:unit'
-  
+
   require 'puppet/acceptance/common_utils'
   extend Puppet::Acceptance::BeakerUtils
   extend Puppet::Acceptance::CronUtils
@@ -31,7 +30,7 @@ test_name "The crontab provider should not overwrite the crontab file when it ca
       crontab_exe = on(agent, "which crontab").stdout.chomp
     end
 
-    stub_crontab_bin_dir = nil 
+    stub_crontab_bin_dir = nil
     stub_crontab_exe = nil
     step "Create the stub crontab executable that triggers the read error" do
       stub_crontab_bin_dir = agent.tmpdir("stub_crontab_bin_dir")
@@ -94,7 +93,7 @@ SCRIPT
       script = <<-SCRIPT
 #!/usr/bin/env bash
 
-cd #{stub_crontab_bin_dir} && puppet apply #{manifest_file} 
+cd #{stub_crontab_bin_dir} && puppet apply #{manifest_file}
 SCRIPT
       create_remote_file(agent, apply_crontab_overwrite_manifest, script)
       on(agent, "chmod a+x #{apply_crontab_overwrite_manifest}")
