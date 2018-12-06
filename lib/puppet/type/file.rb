@@ -391,6 +391,18 @@ Puppet::Type.newtype(:file) do
     self.warning _("Checksum value is ignored unless content or source are specified") if self[:checksum_value] && !self[:content] && !self[:source]
 
     provider.validate if provider.respond_to?(:validate)
+
+    # Configure derived values
+    # If they've specified a source, we get our 'should' values
+    # from it.
+    unless self[:ensure]
+      if self[:target]
+        self[:ensure] = :link
+      elsif self[:content]
+        self[:ensure] = :file
+      end
+    end
+
   end
 
   def self.[](path)
@@ -488,16 +500,6 @@ Puppet::Type.newtype(:file) do
     @clients = {}
 
     super
-
-    # If they've specified a source, we get our 'should' values
-    # from it.
-    unless self[:ensure]
-      if self[:target]
-        self[:ensure] = :link
-      elsif self[:content]
-        self[:ensure] = :file
-      end
-    end
 
     @stat = :needs_stat
   end

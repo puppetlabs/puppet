@@ -479,11 +479,17 @@ class Puppet::Parameter
   # @return [Object] Gets the value of this parameter after performing any specified unmunging.
   def value
     if @needs_resolve
-      @value = Puppet.lookup(:deferred_resolver).resolve(@value)
-      @needs_resolve = false
-      # perform what value= performs when a value did not need to be resolved
-      validate(@value)
-      @value = unmunge(@value)
+      # Let the resource do any validation that is needed (may do nothing)
+      resource.do_validation
+      # The validation may reenter this method during validation. Thus causing the reentry to perform the resolve.
+      # The check below is to protect against resolving the value after it was resolved by the reentrant call.
+      if @needs_resolve
+        @value = Puppet.lookup(:deferred_resolver).resolve(@value)
+        @needs_resolve = false
+        # perform what value= performs for a regular value (not needed a resolve).
+        validate(@value)
+        @value = munge(@value)
+      end
     end
     unmunge(@value) unless @value.nil?
   end
@@ -501,6 +507,8 @@ class Puppet::Parameter
   #
   def value=(value)
     if Puppet::Pops::Evaluator::DeferredResolver.needs_resolve?(value)
+      # The resource needs to be made aware that it holds deferred values
+      resource.needs_resolve = true
       # The value needs to be resolved later, cannot validate and munge yet
       @needs_resolve = true
       @value = value

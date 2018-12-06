@@ -70,10 +70,19 @@ class Puppet::Transaction::ResourceHarness
   def perform_changes(resource, context)
     cache(resource, :checked, Time.now)
 
+    # The validation may have been delayed - make sure validation has taken place as it may
+    # set the ensure value based on validated input which could cause no action to be taken
+    # if the ensure value is derived. It is also important that any other validation processing
+    # has been performed as the logic here assumes all parameters/properties have been validated.
+    # This call does nothing when the resource is already validated.
+    #
+    resource.do_validation
+
     # Record the current state in state.yml.
     context.audited_params.each do |param|
       cache(resource, param, context.current_values[param])
     end
+
 
     ensure_param = resource.parameter(:ensure)
     if ensure_param && ensure_param.should

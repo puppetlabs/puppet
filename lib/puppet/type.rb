@@ -2330,6 +2330,10 @@ end
   # @return [Boolean] Flag indicating if the type is virtual (it should not be).
   attr_accessor :virtual
 
+  # This is set from Parameter and Property values when their value is set to something that needs to be resolved.
+  # @return [Boolean] Flag indicating if the type has parameters or properties that needs to be resolved (contains Deferred or Binary)
+  attr_accessor :needs_resolve
+
   # Creates a log entry with the given message at the log level specified by the parameter `loglevel`
   # @return [void]
   #
@@ -2401,15 +2405,27 @@ end
 
     set_parameters(@original_parameters)
 
+    # Validation is delayed for a resource that contains values that needs to be resolved
+    @needs_validate = self.respond_to?(:validate)
+    if @needs_validate && !self.needs_resolve
+      do_validation
+    end
+
+    set_sensitive_parameters(resource.sensitive_parameters)
+  end
+
+  # Validates the resource if needed, rescues any ArgumentError and translates this to a ResourceError with context which is then raised.
+  #
+  def do_validation
+    return unless @needs_validate
+    @needs_validate = false
     begin
-      self.validate if self.respond_to?(:validate)
+      self.validate
     rescue Puppet::Error, ArgumentError => detail
       error = Puppet::ResourceError.new("Validation of #{ref} failed: #{detail}")
       adderrorcontext(error, detail)
       raise error
     end
-
-    set_sensitive_parameters(resource.sensitive_parameters)
   end
 
   protected

@@ -540,6 +540,12 @@ class Puppet::Property < Puppet::Parameter
 
   def do_resolve_if_needed
     return unless @needs_resolve
+    # Let the resource do any pending validation that is needed (may do nothing)
+    resource.do_validation
+
+    # The call to do_valdiation may result in a reentrant call to this method so need to check again
+    # to not waste one meaningless round of resolution.
+    return unless @needs_resolve
 
     # resolve
     @should = Puppet.lookup(:deferred_resolver).resolve(@should)
@@ -562,6 +568,9 @@ class Puppet::Property < Puppet::Parameter
   def should=(values)
     values = [values] unless values.is_a?(Array)
     if Puppet::Pops::Evaluator::DeferredResolver.needs_resolve?(values)
+      require 'byebug'; debugger
+      # The resource needs to be made aware that it holds deferred values
+      resource.needs_resolve = true
       # The value needs to be resolved later, cannot validate and munge yet
       @needs_resolve = true
       @should = values
