@@ -141,7 +141,7 @@ describe Puppet::Indirector::Yaml do
       dir_containing_instances([one, two])
 
       request = indirection.request(:search, "*", nil)
-      expect(terminus.search(request)).to eq([one, two])
+      expect(terminus.search(request)).to contain_exactly(one, two)
     end
 
     it "should return an array containing a single instance of fact when globbing 'one*'" do
