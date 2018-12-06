@@ -67,7 +67,7 @@ module Types
       when Integer
         impl_class.new(arg * Time::NSECS_PER_SEC)
       when Float
-        (min ? -Float::INFINITY : Float::INFINITY) ? arg : impl_class.new(arg * Time::NSECS_PER_SEC)
+        impl_class.new(arg * Time::NSECS_PER_SEC)
       else
         raise ArgumentError, "Unable to create a #{impl_class.name} from a #{arg.class.name}" unless arg.nil? || arg == :default
         nil

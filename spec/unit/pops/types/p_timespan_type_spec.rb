@@ -74,8 +74,10 @@ describe 'Timespan type' do
             notice(Timespan(1) =~ Timespan[1, 2])
             notice(Timespan(3) =~ Timespan[1])
             notice(Timespan(0) =~ Timespan[default, 2])
+            notice(Timespan(0) =~ Timespan[1, 2])
+            notice(Timespan(3) =~ Timespan[1, 2])
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(true true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true true true false false))
       end
 
       it 'accepts float values when specifying the range' do
@@ -83,8 +85,10 @@ describe 'Timespan type' do
             notice(Timespan(1.0) =~ Timespan[1.0, 2.0])
             notice(Timespan(3.0) =~ Timespan[1.0])
             notice(Timespan(0.0) =~ Timespan[default, 2.0])
+            notice(Timespan(0.0) =~ Timespan[1.0, 2.0])
+            notice(Timespan(3.0) =~ Timespan[1.0, 2.0])
         CODE
-        expect(eval_and_collect_notices(code)).to eq(%w(true true true))
+        expect(eval_and_collect_notices(code)).to eq(%w(true true true false false))
       end
     end
 
