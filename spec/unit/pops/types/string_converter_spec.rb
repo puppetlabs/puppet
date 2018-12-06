@@ -128,8 +128,12 @@ describe 'The string converter' do
          expect(converter.convert("hello\tworld.\r\nSun is brigth today.", string_formats)).to eq('"hello\\tworld.\\r\\nSun is brigth today."')
       end
 
-      it 'singe quoted result for string that is plain ascii without \\, $ or control characters' do
+      it 'single quoted result for string that is plain ascii without \\, $ or control characters' do
         expect(converter.convert('hello world', string_formats)).to eq("'hello world'")
+      end
+
+      it 'double quoted result when using %#p if it would otherwise be single quoted' do
+        expect(converter.convert('hello world', '%#p')).to eq('"hello world"')
       end
 
       it 'quoted 5-byte unicode chars' do

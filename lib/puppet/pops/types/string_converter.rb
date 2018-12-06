@@ -804,7 +804,7 @@ class StringConverter
       Kernel.format(f.orig_fmt, val)
 
     when :p
-      apply_string_flags(f, puppet_quote(val))
+      apply_string_flags(f, puppet_quote(val, f.alt?))
 
     when :c
       c_val = val.capitalize
@@ -836,10 +836,15 @@ class StringConverter
   # strings will be quoted using double quotes.
   #
   # @param [String] str the string that should be formatted
+  # @param [Boolean] enforce_double_quotes if true the result will be double quoted (even if single quotes would be possible)
   # @return [String] the formatted string
   #
   # @api public
-  def puppet_quote(str)
+  def puppet_quote(str, enforce_double_quotes = false)
+    if enforce_double_quotes
+      return puppet_double_quote(str)
+    end
+
     # Assume that the string can be single quoted
     bld = '\''
     bld.force_encoding(str.encoding)

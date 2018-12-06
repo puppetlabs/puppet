@@ -608,7 +608,7 @@
 # | Format | String
 # | ------ | ------
 # | s      | Unquoted string, verbatim output of control chars.
-# | p      | Programmatic representation - strings are quoted, interior quotes and control chars are escaped.
+# | p      | Programmatic representation - strings are quoted, interior quotes and control chars are escaped. Selects single or double quotes based on content, or uses double quotes if alternative flag `#` is used.
 # | C      | Each `::` name segment capitalized, quoted if alternative flag `#` is used.
 # | c      | Capitalized string, quoted if alternative flag `#` is used.
 # | d      | Downcased string, quoted if alternative flag `#` is used.
