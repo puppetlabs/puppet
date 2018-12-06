@@ -85,7 +85,11 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
       identity_part = find_identity(x)
       # assume there is nothing fancy and that there is always an array with name/line to use (or get nothing)
       mname, mline = (identity_part.is_a?(Array) ? [identity_part[1], identity_part[2][1]] : [nil, nil]).map {|v| v.nil? ? '<unknown>' : v }
-      raise SecurityError, _("Illegal method definition of method '%{method_name}' on line %{line}' in legacy function") % { method_name: mname, line: mline }
+      raise SecurityError, _("Illegal method definition of method '%{method_name}' on line %{line}' in legacy function. See %{url} for more information") % { 
+        method_name: mname,
+        line: mline,
+        url: "https://puppet.com/docs/puppet/latest/functions_refactor_legacy.html"
+      }
     end
     x.each {|v| walk(v, result) }
   end
