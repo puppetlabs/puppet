@@ -237,7 +237,7 @@ Licensed under the Apache 2.0 License
     confdir = Puppet[:confdir]
     certname = Puppet[:certname]
 
-    env = Puppet.lookup(:environments).get(Puppet[:environment])
+    env = Puppet::Node::Environment.remote(Puppet[:environment])
     returns = Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
       # find device list
       require 'puppet/util/network_device/config'
