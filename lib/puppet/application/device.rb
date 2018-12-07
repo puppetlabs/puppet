@@ -1,4 +1,5 @@
 require 'puppet/application'
+require 'puppet/configurer'
 require 'puppet/util/network_device'
 
 class Puppet::Application::Device < Puppet::Application
@@ -256,6 +257,9 @@ Licensed under the Apache 2.0 License
           Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:certname] = device.name
 
+          unless options[:resource] || options[:facts] || options[:apply]
+            Puppet::Configurer::PluginHandler.new.download_plugins(env)
+          end
           # this init the device singleton, so that the facts terminus
           # and the various network_device provider can use it
           Puppet::Util::NetworkDevice.init(device)

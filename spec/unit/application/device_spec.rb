@@ -504,7 +504,9 @@ describe Puppet::Application::Device do
         expect { @device.main }.to exit_with 1
       end
 
-      it "should print the device url scheme, host, and port" do
+      it "should retrieve plugins and print the device url scheme, host, and port" do
+        Puppet.stubs(:info)
+        Puppet.expects(:info).with "Retrieving pluginfacts"
         Puppet.expects(:info).with "starting applying configuration to device1 at ssh://testhost"
         Puppet.expects(:info).with "starting applying configuration to device2 at https://testhost:443/some/path"
         expect { @device.main }.to exit_with 1
