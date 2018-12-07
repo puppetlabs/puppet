@@ -1,4 +1,5 @@
 require 'puppet/application'
+require 'puppet/configurer'
 require 'puppet/util/network_device'
 
 class Puppet::Application::Device < Puppet::Application
@@ -53,6 +54,10 @@ class Puppet::Application::Device < Puppet::Application
     options[:detailed_exitcodes] = true
   end
 
+  option("--libdir LIBDIR") do |arg|
+    options[:libdir] = arg
+  end
+
   option("--apply MANIFEST") do |arg|
     options[:apply] = arg.to_s
   end
@@ -93,10 +98,11 @@ a scheduled task, or a similar tool.
 
 USAGE
 -----
-  puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
-                [-h|--help] [-l|--logdest syslog|<file>|console]
-                [-v|--verbose] [-w|--waitforcert <seconds>] [-f|--facts]
-                [-a|--apply <file>] [-r|--resource <type> [name]]
+  puppet device [-h|--help] [-v|--verbose] [-d|--debug]
+                [-l|--logdest syslog|<file>|console] [--detailed-exitcodes]
+                [--deviceconfig <file>] [-w|--waitforcert <seconds>]
+                [--libdir <directory>]
+                [-a|--apply <file>] [-f|--facts] [-r|--resource <type> [name]]
                 [-t|--target <device>] [--user=<user>] [-V|--version]
 
 
@@ -135,8 +141,24 @@ Note that any setting that's valid in the configuration file is also a valid
 long argument. For example, 'server' is a valid configuration parameter, so
 you can specify '--server <servername>' as an argument.
 
-* --debug:
+* --help, -h:
+  Print this help message
+
+* --verbose, -v:
+  Turn on verbose reporting.
+
+* --debug, -d:
   Enable full debugging.
+
+* --logdest, -l:
+  Where to send log messages. Choose between 'syslog' (the POSIX syslog
+  service), 'console', or the path to a log file. If debugging or verbosity is
+  enabled, this defaults to 'console'. Otherwise, it defaults to 'syslog'.
+
+  A path ending with '.json' will receive structured output in JSON format. The
+  log file will not have an ending ']' automatically written to it due to the
+  appending nature of logging. It must be appended manually to make the content
+  valid JSON.
 
 * --detailed-exitcodes:
   Provide transaction information via exit codes. If this is enabled, an exit
@@ -149,18 +171,16 @@ you can specify '--server <servername>' as an argument.
   Path to the device config file for puppet device.
   Default: $confdir/device.conf
 
-* --help:
-  Print this help message
+* --waitforcert, -w:
+  This option only matters for targets that do not yet have certificates
+  and it is enabled by default, with a value of 120 (seconds).  This causes
+  +puppet device+ to poll the server every 2 minutes and ask it to sign a
+  certificate request.  This is useful for the initial setup of a target.
+  You can turn off waiting for certificates by specifying a time of 0.
 
-* --logdest:
-  Where to send log messages. Choose between 'syslog' (the POSIX syslog
-  service), 'console', or the path to a log file. If debugging or verbosity is
-  enabled, this defaults to 'console'. Otherwise, it defaults to 'syslog'.
-
-  A path ending with '.json' will receive structured output in JSON format. The
-  log file will not have an ending ']' automatically written to it due to the
-  appending nature of logging. It must be appended manually to make the content
-  valid JSON.
+* --libdir:
+  Override the per-device libdir with a local directory. Specifying a libdir also
+  disables pluginsync. This is useful for testing.
 
 * --apply:
   Apply a manifest against a remote target. Target must be specified.
@@ -183,16 +203,6 @@ you can specify '--server <servername>' as an argument.
 * --user:
   The user to run as.
 
-* --verbose:
-  Turn on verbose reporting.
-
-* --waitforcert:
-  This option only matters for daemons that do not yet have certificates
-  and it is enabled by default, with a value of 120 (seconds).  This causes
-  +puppet agent+ to connect to the server every 2 minutes and ask it to sign a
-  certificate request.  This is useful for the initial setup of a puppet
-  client.  You can turn off waiting for certificates by specifying a time of 0.
-
 
 EXAMPLE
 -------
@@ -205,7 +215,7 @@ Brice Figureau
 
 COPYRIGHT
 ---------
-Copyright (c) 2011 Puppet Inc., LLC
+Copyright (c) 2011-2018 Puppet Inc., LLC
 Licensed under the Apache 2.0 License
       HELP
   end
@@ -222,11 +232,12 @@ Licensed under the Apache 2.0 License
       raise _("missing argument: --target is required when using --apply") if options[:target].nil?
       raise _("%{file} does not exist, cannot apply") % { file: options[:apply] } unless File.file?(options[:apply])
     end
+    libdir = Puppet[:libdir]
     vardir = Puppet[:vardir]
     confdir = Puppet[:confdir]
     certname = Puppet[:certname]
 
-    env = Puppet.lookup(:environments).get(Puppet[:environment])
+    env = Puppet::Node::Environment.remote(Puppet[:environment])
     returns = Puppet.override(:current_environment => env, :loaders => Puppet::Pops::Loaders.new(env)) do
       # find device list
       require 'puppet/util/network_device/config'
@@ -251,9 +262,13 @@ Licensed under the Apache 2.0 License
 
           # override local $vardir and $certname
           Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
+          Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
           Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:certname] = device.name
 
+          unless options[:resource] || options[:facts] || options[:apply] || options[:libdir]
+            Puppet::Configurer::PluginHandler.new.download_plugins(env)
+          end
           # this init the device singleton, so that the facts terminus
           # and the various network_device provider can use it
           Puppet::Util::NetworkDevice.init(device)
@@ -309,13 +324,14 @@ Licensed under the Apache 2.0 License
 
             require 'puppet/configurer'
             configurer = Puppet::Configurer.new
-            configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
+            configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync? && !options[:libdir])
           end
         rescue => detail
           Puppet.log_exception(detail)
           # If we rescued an error, then we return 1 as the exit code
           1
         ensure
+          Puppet[:libdir] = libdir
           Puppet[:vardir] = vardir
           Puppet[:confdir] = confdir
           Puppet[:certname] = certname

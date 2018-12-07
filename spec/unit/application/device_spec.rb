@@ -299,6 +299,7 @@ describe Puppet::Application::Device do
       @device.options.stubs(:[]).with(:facts).returns(false)
       @device.options.stubs(:[]).with(:resource).returns(false)
       @device.options.stubs(:[]).with(:to_yaml).returns(false)
+      @device.options.stubs(:[]).with(:libdir).returns(nil)
       @device.options.stubs(:[]).with(:client)
       @device.command_line.stubs(:args).returns([])
       Puppet::Util::NetworkDevice::Config.stubs(:devices).returns({})
@@ -504,7 +505,9 @@ describe Puppet::Application::Device do
         expect { @device.main }.to exit_with 1
       end
 
-      it "should print the device url scheme, host, and port" do
+      it "should retrieve plugins and print the device url scheme, host, and port" do
+        Puppet.stubs(:info)
+        Puppet.expects(:info).with "Retrieving pluginfacts"
         Puppet.expects(:info).with "starting applying configuration to device1 at ssh://testhost"
         Puppet.expects(:info).with "starting applying configuration to device2 at https://testhost:443/some/path"
         expect { @device.main }.to exit_with 1
