@@ -54,6 +54,10 @@ class Puppet::Application::Device < Puppet::Application
     options[:detailed_exitcodes] = true
   end
 
+  option("--libdir LIBDIR") do |arg|
+    options[:libdir] = arg
+  end
+
   option("--apply MANIFEST") do |arg|
     options[:apply] = arg.to_s
   end
@@ -97,6 +101,7 @@ USAGE
   puppet device [-h|--help] [-v|--verbose] [-d|--debug]
                 [-l|--logdest syslog|<file>|console] [--detailed-exitcodes]
                 [--deviceconfig <file>] [-w|--waitforcert <seconds>]
+                [--libdir <directory>]
                 [-a|--apply <file>] [-f|--facts] [-r|--resource <type> [name]]
                 [-t|--target <device>] [--user=<user>] [-V|--version]
 
@@ -172,6 +177,10 @@ you can specify '--server <servername>' as an argument.
   +puppet device+ to poll the server every 2 minutes and ask it to sign a
   certificate request.  This is useful for the initial setup of a target.
   You can turn off waiting for certificates by specifying a time of 0.
+
+* --libdir:
+  Override the per-device libdir with a local directory. Specifying a libdir also
+  disables pluginsync. This is useful for testing.
 
 * --apply:
   Apply a manifest against a remote target. Target must be specified.
@@ -253,11 +262,11 @@ Licensed under the Apache 2.0 License
 
           # override local $vardir and $certname
           Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
-          Puppet[:libdir] = ::File.join(Puppet[:devicedir], device.name, 'lib')
+          Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
           Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:certname] = device.name
 
-          unless options[:resource] || options[:facts] || options[:apply]
+          unless options[:resource] || options[:facts] || options[:apply] || options[:libdir]
             Puppet::Configurer::PluginHandler.new.download_plugins(env)
           end
           # this init the device singleton, so that the facts terminus
@@ -315,7 +324,7 @@ Licensed under the Apache 2.0 License
 
             require 'puppet/configurer'
             configurer = Puppet::Configurer.new
-            configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync?)
+            configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync? && !options[:libdir])
           end
         rescue => detail
           Puppet.log_exception(detail)

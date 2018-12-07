@@ -299,6 +299,7 @@ describe Puppet::Application::Device do
       @device.options.stubs(:[]).with(:facts).returns(false)
       @device.options.stubs(:[]).with(:resource).returns(false)
       @device.options.stubs(:[]).with(:to_yaml).returns(false)
+      @device.options.stubs(:[]).with(:libdir).returns(nil)
       @device.options.stubs(:[]).with(:client)
       @device.command_line.stubs(:args).returns([])
       Puppet::Util::NetworkDevice::Config.stubs(:devices).returns({})
