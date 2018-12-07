@@ -423,7 +423,7 @@ describe 'loaders' do
 
   end
 
-  context 'when causing a 3x load followed by a 4x load' do
+  context 'when a 3x load has illegal method added' do
     let(:env) { environment_for(mix_4x_and_3x_functions) }
     let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
     let(:scope) { compiler.topscope }
@@ -436,8 +436,30 @@ describe 'loaders' do
       Puppet.pop_context
     end
 
-    it "a 3x function with code outside body is reported as an error" do
-      expect { loader.load_typed(typed_name(:function, 'bad_func_load')) }.to raise_error(/Illegal legacy function definition/)
+    it "outside function body is reported as an error" do
+      expect { loader.load_typed(typed_name(:function, 'bad_func_load')) }.to raise_error(/Illegal method definition/)
+    end
+
+    it "to self outside function body is reported as an error" do
+      expect { loader.load_typed(typed_name(:function, 'bad_func_load5')) }.to raise_error(/Illegal method definition.*'bad_func_load5_illegal_method'/)
+    end
+
+    it "outside body is reported as an error even if returning the right func_info" do
+      expect { loader.load_typed(typed_name(:function, 'bad_func_load2'))}.to raise_error(/Illegal method definition/)
+    end
+
+    it "inside function body is reported as an error" do
+      expect { 
+        f = loader.load_typed(typed_name(:function, 'bad_func_load3')).value
+        f.call(scope)
+      }.to raise_error(/Illegal method definition.*'bad_func_load3_illegal_method'/)
+    end
+
+    it "to self inside function body is reported as an error" do
+      expect { 
+        f = loader.load_typed(typed_name(:function, 'bad_func_load4')).value
+        f.call(scope)
+      }.to raise_error(/Illegal method definition.*'bad_func_load4_illegal_method'/)
     end
   end
 
