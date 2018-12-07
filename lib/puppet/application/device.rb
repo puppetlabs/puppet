@@ -182,6 +182,9 @@ you can specify '--server <servername>' as an argument.
   Override the per-device libdir with a local directory. Specifying a libdir also
   disables pluginsync. This is useful for testing.
 
+  A path ending with '.jsonl' will receive structured output in JSON Lines
+  format.
+
 * --apply:
   Apply a manifest against a remote target. Target must be specified.
 

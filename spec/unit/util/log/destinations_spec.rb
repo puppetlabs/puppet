@@ -92,6 +92,24 @@ describe Puppet::Util::Log.desttypes[:file] do
           expect(JSON.parse(File.read(abspath) + ']')).to include(a_hash_including({"message" => "don't panic"}))
         end
       end
+
+      describe "with a JSON lines file" do
+        let (:abspath) { '/tmp/log.jsonl' }
+        let (:relpath) { 'log.jsonl' }
+
+        it_behaves_like "file destination"
+
+        it "should log messages as JSON lines" do
+          msg1 = Puppet::Util::Log.new(:level => :info, :message => "don't panic")
+          msg2 = Puppet::Util::Log.new(:level => :err, :message => "panic!")
+          dest = @class.new(abspath)
+          dest.handle(msg1)
+          dest.handle(msg2)
+          lines = IO.readlines(abspath)
+          expect(JSON.parse(lines[-2])).to include("level" => "info", "message" => "don't panic")
+          expect(JSON.parse(lines[-1])).to include("level" => "err", "message" => "panic!")
+        end
+      end
     end
 
     describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
