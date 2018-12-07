@@ -65,6 +65,28 @@ module Puppet::Util::Windows
       vals
     end
 
+    # Retrieve a set of values from a registry key given their names
+    # Value names listed but not found in the registry will not be added to the
+    # resultant Hashtable
+    #
+    # @param key [RegistryKey] An open handle to a Registry Key
+    # @param names [String[]] An array of names of registry values to return if they exist
+    # @return [Hashtable<String, Object>] A hashtable of all of the found values in the registry key
+    def values_by_name(key, names)
+      vals = {}
+      names.each do |name|
+        FFI::Pointer.from_string_to_wide_string(name) do |subkeyname_ptr|
+          begin
+            _, vals[name] = read(key, subkeyname_ptr)
+          rescue Puppet::Util::Windows::Error => e
+            # ignore missing names, but raise other errors
+            raise e unless e.code == Puppet::Util::Windows::Error::ERROR_FILE_NOT_FOUND
+          end
+        end
+      end
+      vals
+    end
+
     def each_value(key, &block)
       index = 0
       subkey = nil
@@ -104,7 +126,7 @@ module Puppet::Util::Windows
 
             if result != FFI::ERROR_SUCCESS
               msg = _("Failed to enumerate %{key} registry keys at index %{index}") % { key: key.keyname, index: index }
-              raise Puppet::Util::Windows::Error.new(msg)
+              raise Puppet::Util::Windows::Error.new(msg, result)
             end
 
             filetime = FFI::WIN32::FILETIME.new(filetime_ptr)
@@ -135,7 +157,7 @@ module Puppet::Util::Windows
 
           if result != FFI::ERROR_SUCCESS
             msg = _("Failed to enumerate %{key} registry values at index %{index}") % { key: key.keyname, index: index }
-            raise Puppet::Util::Windows::Error.new(msg)
+            raise Puppet::Util::Windows::Error.new(msg, result)
           end
 
           subkey_length = subkey_length_ptr.read_dword
@@ -165,7 +187,7 @@ module Puppet::Util::Windows
 
           if status != FFI::ERROR_SUCCESS
             msg = _("Failed to query registry %{key} for sizes") % { key: key.keyname }
-            raise Puppet::Util::Windows::Error.new(msg)
+            raise Puppet::Util::Windows::Error.new(msg, status)
           end
 
           result = [
@@ -247,8 +269,10 @@ module Puppet::Util::Windows
               buffer_ptr, length_ptr)
 
             if result != FFI::ERROR_SUCCESS
-              msg = _("Failed to read registry value %{value} at %{key}") % { value: name_ptr.read_wide_string, key: key.keyname }
-              raise Puppet::Util::Windows::Error.new(msg)
+              # buffer is raw bytes, *not* chars - less a NULL terminator
+              name_length = (name_ptr.size / FFI.type_size(:wchar)) - 1 if name_ptr.size > 0
+              msg = _("Failed to read registry value %{value} at %{key}") % { value: name_ptr.read_wide_string(name_length), key: key.keyname }
+              raise Puppet::Util::Windows::Error.new(msg, result)
             end
 
             # allows caller to use FFI MemoryPointer helpers to read / shape

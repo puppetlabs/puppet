@@ -1,11 +1,7 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the debian service provider
-#
-
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Debian', unless: Puppet::Util::Platform.jruby? do
+describe 'Puppet::Type::Service::Provider::Debian',
+         unless: Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:debian) }
 
   if Puppet::Util::Platform.windows?
@@ -69,14 +65,14 @@ describe 'Puppet::Type::Service::Provider::Debian', unless: Puppet::Util::Platfo
     expect(@provider).to respond_to(:disable)
   end
 
-  describe "when enabling" do
+  context "when enabling" do
     it "should call update-rc.d twice" do
       @provider.expects(:update_rc).twice
       @provider.enable
     end
   end
 
-  describe "when disabling" do
+  context "when disabling" do
     it "should be able to disable services with newer sysv-rc versions" do
       @provider.stubs(:`).with("dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?").returns "0"
 
@@ -95,7 +91,7 @@ describe 'Puppet::Type::Service::Provider::Debian', unless: Puppet::Util::Platfo
     end
   end
 
-  describe "when checking whether it is enabled" do
+  context "when checking whether it is enabled" do
     it "should call Kernel.system() with the appropriate parameters" do
       @provider.expects(:system).with("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start").once
       $CHILD_STATUS.stubs(:exitstatus).returns(0)
@@ -155,7 +151,7 @@ describe 'Puppet::Type::Service::Provider::Debian', unless: Puppet::Util::Platfo
     end
   end
 
-  describe "when checking service status" do
+  context "when checking service status" do
     it "should use the service command" do
       Facter.stubs(:value).with(:operatingsystem).returns('Debian')
       Facter.stubs(:value).with(:operatingsystemmajrelease).returns('8')

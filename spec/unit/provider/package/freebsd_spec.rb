@@ -1,9 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:freebsd)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:freebsd) do
   before :each do
     # Create a mock resource
     @resource = stub 'resource'
@@ -15,16 +12,16 @@ describe provider_class do
     @resource.stubs(:[]).with(:name).returns   "mypackage"
     @resource.stubs(:[]).with(:ensure).returns :installed
 
-    @provider = provider_class.new
+    @provider = subject()
     @provider.resource = @resource
   end
 
   it "should have an install method" do
-    @provider = provider_class.new
+    @provider = subject()
     expect(@provider).to respond_to(:install)
   end
 
-  describe "when installing" do
+  context "when installing" do
     before :each do
       @resource.stubs(:should).with(:ensure).returns(:installed)
     end

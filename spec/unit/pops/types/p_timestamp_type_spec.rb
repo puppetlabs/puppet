@@ -74,6 +74,25 @@ describe 'Timestamp type' do
         CODE
         expect(eval_and_collect_notices(code)).to eq(%w(true false))
       end
+
+      it 'accepts integer values when specifying the range' do
+        code = <<-CODE
+            notice(Timestamp(1) =~ Timestamp[1, 2])
+            notice(Timestamp(3) =~ Timestamp[1])
+            notice(Timestamp(0) =~ Timestamp[default, 2])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true true true))
+      end
+
+      it 'accepts float values when specifying the range' do
+        code = <<-CODE
+            notice(Timestamp(1.0) =~ Timestamp[1.0, 2.0])
+            notice(Timestamp(3.0) =~ Timestamp[1.0])
+            notice(Timestamp(0.0) =~ Timestamp[default, 2.0])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true true true))
+      end
+
     end
 
     context 'a Timestamp instance' do

@@ -1,11 +1,9 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
 describe 'Puppet::Type::Service::Provider::Bsd',
          :unless => Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
-
   let(:provider_class) { Puppet::Type.type(:service).provider(:bsd) }
+
   before :each do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns provider_class
     Facter.stubs(:value).with(:operatingsystem).returns :netbsd
@@ -15,7 +13,7 @@ describe 'Puppet::Type::Service::Provider::Bsd',
     @provider.stubs(:initscript)
   end
 
-  describe "#instances" do
+  context "#instances" do
     it "should have an instances method" do
       expect(provider_class).to respond_to :instances
     end
@@ -25,7 +23,7 @@ describe 'Puppet::Type::Service::Provider::Bsd',
     end
   end
 
-  describe "#disable" do
+  context "#disable" do
     it "should have a disable method" do
       expect(@provider).to respond_to(:disable)
     end
@@ -46,7 +44,7 @@ describe 'Puppet::Type::Service::Provider::Bsd',
     end
   end
 
-  describe "#enable" do
+  context "#enable" do
     it "should have an enable method" do
       expect(@provider).to respond_to(:enable)
     end
@@ -71,7 +69,7 @@ describe 'Puppet::Type::Service::Provider::Bsd',
     end
   end
 
-  describe "#enabled?" do
+  context "#enabled?" do
     it "should have an enabled? method" do
       expect(@provider).to respond_to(:enabled?)
     end
@@ -91,7 +89,7 @@ describe 'Puppet::Type::Service::Provider::Bsd',
     end
   end
 
-  describe "#startcmd" do
+  context "#startcmd" do
     it "should have a startcmd method" do
       expect(@provider).to respond_to(:startcmd)
     end
@@ -110,7 +108,7 @@ describe 'Puppet::Type::Service::Provider::Bsd',
     end
   end
 
-  describe "#stopcmd" do
+  context "#stopcmd" do
     it "should have a stopcmd method" do
       expect(@provider).to respond_to(:stopcmd)
     end

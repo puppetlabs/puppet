@@ -1,10 +1,8 @@
-#!/usr/bin/env ruby
 require 'spec_helper'
 require 'etc'
 
-provider_class = Puppet::Type.type(:user).provider(:hpuxuseradd)
-
-describe provider_class, :unless => Puppet::Util::Platform.windows? do
+describe Puppet::Type.type(:user).provider(:hpuxuseradd),
+         unless: Puppet::Util::Platform.windows? do
   let :resource do
     Puppet::Type.type(:user).new(
       :title => 'testuser',
@@ -39,7 +37,7 @@ describe provider_class, :unless => Puppet::Util::Platform.windows? do
     end
 
     it "should have feature manages_passwords" do
-      expect(provider_class).to be_manages_passwords
+      expect(described_class).to be_manages_passwords
     end
 
     it "should return nil if user does not exist" do

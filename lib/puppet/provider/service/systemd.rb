@@ -26,6 +26,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2"]
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["8", "stretch/sid", "9", "buster/sid"]
 
+  defaultfor :operatingsystem => :LinuxMint
+  notdefaultfor :operatingsystem => :LinuxMint, :operatingsystemmajrelease => ["10", "11", "12", "13", "14", "15", "16", "17"] # These are using upstart
   defaultfor :operatingsystem => :ubuntu
   notdefaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"] # These are using upstart
   defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3"]

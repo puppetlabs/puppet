@@ -4,6 +4,19 @@ class Puppet::Provider::Package::Windows
   class ExePackage < Puppet::Provider::Package::Windows::Package
     attr_reader :uninstall_string
 
+    # registry values to load under each product entry in
+    # HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
+    # for this provider
+    REG_VALUE_NAMES = [
+      'DisplayVersion',
+      'UninstallString',
+      'ParentKeyName',
+      'Security Update',
+      'Update Rollup',
+      'Hotfix',
+      'WindowsInstaller',
+    ]
+
     # Return an instance of the package from the registry, or nil
     def self.from_registry(name, values)
       if valid?(name, values)

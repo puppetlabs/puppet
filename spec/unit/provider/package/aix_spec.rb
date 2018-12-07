@@ -1,9 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:package).provider(:aix)
-
-describe provider_class do
+describe Puppet::Type.type(:package).provider(:aix) do
   before(:each) do
     # Create a mock resource
     @resource = Puppet::Type.type(:package).new(:name => 'mypackage', :ensure => :installed, :source => 'mysource', :provider => :aix)
@@ -23,7 +20,7 @@ describe provider_class do
     @provider.uninstall
   end
 
-  describe "when installing" do
+  context "when installing" do
     it "should install a package" do
       @provider.expects(:installp).with('-acgwXY', '-d', 'mysource', 'mypackage')
       @provider.install
@@ -86,7 +83,7 @@ mypackage                 1.2.3.3         Already superseded by 1.2.3.4
     end
   end
 
-  describe "when finding the latest version" do
+  context "when finding the latest version" do
     it "should return the current version when no later version is present" do
       @provider.stubs(:latest_info).returns(nil)
       @provider.stubs(:properties).returns( { :ensure => "1.2.3.4" } )
@@ -126,7 +123,7 @@ END
     latest = Puppet::Type.type(:package).new(:name => 'mypackage', :ensure => :latest, :source => 'mysource', :provider => :aix)
     absent = Puppet::Type.type(:package).new(:name => 'otherpackage', :ensure => :absent, :provider => :aix)
     Process.stubs(:euid).returns(0)
-    provider_class.expects(:execute).returns 'mypackage:mypackage.rte:1.8.6.4::I:T:::::N:A Super Cool Package::::0::\n'
-    provider_class.prefetch({ 'mypackage' => latest, 'otherpackage' => absent })
+    described_class.expects(:execute).returns 'mypackage:mypackage.rte:1.8.6.4::I:T:::::N:A Super Cool Package::::0::\n'
+    described_class.prefetch({ 'mypackage' => latest, 'otherpackage' => absent })
   end
 end
