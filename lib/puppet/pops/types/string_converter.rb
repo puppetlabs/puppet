@@ -484,8 +484,17 @@ class StringConverter
 
     value_type = TypeCalculator.infer_set(value)
     if string_formats.is_a?(String)
-      # add the format given for the exact type
-      string_formats = { value_type => string_formats }
+      # For Array and Hash, the format is given as a Hash where 'format' key is the format for the collection itself
+      if Puppet::Pops::Types::PArrayType::DEFAULT.assignable?(value_type)
+        # add the format given for the exact type
+        string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => {'format' => string_formats }}
+      elsif Puppet::Pops::Types::PHashType::DEFAULT.assignable?(value_type)
+          # add the format given for the exact type
+          string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => {'format' => string_formats }}
+      else
+        # add the format given for the exact type
+        string_formats = { value_type => string_formats }
+      end
     end
 
     case string_formats
