@@ -93,10 +93,10 @@ a scheduled task, or a similar tool.
 
 USAGE
 -----
-  puppet device [-d|--debug] [--detailed-exitcodes] [--deviceconfig <file>]
-                [-h|--help] [-l|--logdest syslog|<file>|console]
-                [-v|--verbose] [-w|--waitforcert <seconds>] [-f|--facts]
-                [-a|--apply <file>] [-r|--resource <type> [name]]
+  puppet device [-h|--help] [-v|--verbose] [-d|--debug]
+                [-l|--logdest syslog|<file>|console] [--detailed-exitcodes]
+                [--deviceconfig <file>] [-w|--waitforcert <seconds>]
+                [-a|--apply <file>] [-f|--facts] [-r|--resource <type> [name]]
                 [-t|--target <device>] [--user=<user>] [-V|--version]
 
 
@@ -135,8 +135,24 @@ Note that any setting that's valid in the configuration file is also a valid
 long argument. For example, 'server' is a valid configuration parameter, so
 you can specify '--server <servername>' as an argument.
 
-* --debug:
+* --help, -h:
+  Print this help message
+
+* --verbose, -v:
+  Turn on verbose reporting.
+
+* --debug, -d:
   Enable full debugging.
+
+* --logdest, -l:
+  Where to send log messages. Choose between 'syslog' (the POSIX syslog
+  service), 'console', or the path to a log file. If debugging or verbosity is
+  enabled, this defaults to 'console'. Otherwise, it defaults to 'syslog'.
+
+  A path ending with '.json' will receive structured output in JSON format. The
+  log file will not have an ending ']' automatically written to it due to the
+  appending nature of logging. It must be appended manually to make the content
+  valid JSON.
 
 * --detailed-exitcodes:
   Provide transaction information via exit codes. If this is enabled, an exit
@@ -149,18 +165,12 @@ you can specify '--server <servername>' as an argument.
   Path to the device config file for puppet device.
   Default: $confdir/device.conf
 
-* --help:
-  Print this help message
-
-* --logdest:
-  Where to send log messages. Choose between 'syslog' (the POSIX syslog
-  service), 'console', or the path to a log file. If debugging or verbosity is
-  enabled, this defaults to 'console'. Otherwise, it defaults to 'syslog'.
-
-  A path ending with '.json' will receive structured output in JSON format. The
-  log file will not have an ending ']' automatically written to it due to the
-  appending nature of logging. It must be appended manually to make the content
-  valid JSON.
+* --waitforcert, -w:
+  This option only matters for targets that do not yet have certificates
+  and it is enabled by default, with a value of 120 (seconds).  This causes
+  +puppet device+ to poll the server every 2 minutes and ask it to sign a
+  certificate request.  This is useful for the initial setup of a target.
+  You can turn off waiting for certificates by specifying a time of 0.
 
 * --apply:
   Apply a manifest against a remote target. Target must be specified.
@@ -183,16 +193,6 @@ you can specify '--server <servername>' as an argument.
 * --user:
   The user to run as.
 
-* --verbose:
-  Turn on verbose reporting.
-
-* --waitforcert:
-  This option only matters for daemons that do not yet have certificates
-  and it is enabled by default, with a value of 120 (seconds).  This causes
-  +puppet agent+ to connect to the server every 2 minutes and ask it to sign a
-  certificate request.  This is useful for the initial setup of a puppet
-  client.  You can turn off waiting for certificates by specifying a time of 0.
-
 
 EXAMPLE
 -------
@@ -205,7 +205,7 @@ Brice Figureau
 
 COPYRIGHT
 ---------
-Copyright (c) 2011 Puppet Inc., LLC
+Copyright (c) 2011-2018 Puppet Inc., LLC
 Licensed under the Apache 2.0 License
       HELP
   end
