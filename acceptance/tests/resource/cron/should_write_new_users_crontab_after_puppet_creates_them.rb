@@ -1,10 +1,9 @@
 test_name "The crontab provider should be able to write a new user's crontab after Puppet creates them" do
   confine :except, :platform => 'windows'
   confine :except, :platform => /^eos-/ # See PUP-5500
-  confine :except, :platform => /^fedora-28/
   tag 'audit:medium',
       'audit:unit'
-  
+
   require 'puppet/acceptance/common_utils'
   extend Puppet::Acceptance::BeakerUtils
   extend Puppet::Acceptance::CronUtils

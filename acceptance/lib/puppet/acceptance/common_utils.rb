@@ -41,7 +41,7 @@ module Puppet
         o = {:user => 'tstuser'}.merge(o)
         apply_manifest_on(agent, %[user { '%s': ensure => present, managehome => false }] % o[:user])
         apply_manifest_on(agent, %[case $operatingsystem {
-                                     centos, redhat: {$cron = 'cronie'}
+                                     centos, redhat, fedora: {$cron = 'cronie'}
                                      solaris: { $cron = 'core-os' }
                                      default: {$cron ='cron'} }
                                      package {'cron': name=> $cron, ensure=>present, }])
@@ -190,10 +190,10 @@ module Puppet
           # but it is good enough for most purposes.
           value_str = value.to_s
           value_str = "\"#{value_str}\"" if value.is_a?(String)
-    
+
           "  #{param} => #{value_str}"
         end.join(",\n")
-    
+
         <<-MANIFEST
 #{resource} { '#{title}':
   #{params_str}

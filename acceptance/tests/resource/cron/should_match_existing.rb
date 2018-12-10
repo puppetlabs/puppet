@@ -1,7 +1,6 @@
 test_name "puppet should match existing job"
 confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See PUP-5500
-confine :except, :platform => /^fedora-28/
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_name`
     'audit:unit'
