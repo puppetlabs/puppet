@@ -760,6 +760,10 @@ module Issues
     _("An escape char for @() may only appear once. Got '%{escapes}'") % { escapes: escapes.join(', ') }
   end
 
+  HEREDOC_DIRTY_MARGIN = hard_issue :HEREDOC_DIRTY_MARGIN, :heredoc_line do
+    _("Heredoc with text in the margin is not allowed (line %{heredoc_line} in this heredoc)") % { heredoc_line: heredoc_line }
+  end
+
   ILLEGAL_BOM = hard_issue :ILLEGAL_BOM, :format_name, :bytes do
     _("Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source") % { format: format_name, bom: bytes }
   end
