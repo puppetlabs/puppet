@@ -423,6 +423,25 @@ describe 'loaders' do
 
   end
 
+  context 'when a 3x load takes place' do
+    let(:env) { environment_for(mix_4x_and_3x_functions) }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
+    let(:scope) { compiler.topscope }
+    let(:loader) { compiler.loaders.private_loader_for_module('user') }
+
+    before(:each) do
+      Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
+    end
+    after(:each) do
+      Puppet.pop_context
+    end
+
+    it "a function with no illegal constructs can be loaded" do
+      function = loader.load_typed(typed_name(:function, 'good_func_load')).value
+      expect(function.call(scope)).to eql(Float("3.14"))
+    end
+  end
+
   context 'when a 3x load has illegal method added' do
     let(:env) { environment_for(mix_4x_and_3x_functions) }
     let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }

@@ -78,7 +78,8 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
     when :fcall, :call
       # Ripper returns a :fcall for a function call in a module (want to know there is a call to newfunction()).
       # And it returns :call for a qualified named call
-      result << :found_newfunction if find_identity(x)[1] == 'newfunction'
+      identity_part = find_identity(x)
+      result << :found_newfunction if identity_part.is_a?(Array) && identity_part[1] == 'newfunction'
     when :def, :defs
       # There should not be any calls to def in a 3x function
       # Ripper returns an array [:def, ...] for a regular def name, and a [:defs ...] for a def self.name
