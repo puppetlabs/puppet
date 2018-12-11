@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.8-60-geb9638a\n"
+"Project-Id-Version: Puppet automation framework 5.5.8-105-gf31fd0f\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2018-11-28 18:32+0000\n"
-"PO-Revision-Date: 2018-11-28 18:32+0000\n"
+"POT-Creation-Date: 2018-12-11 19:16+0000\n"
+"PO-Revision-Date: 2018-12-11 19:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -168,7 +168,7 @@ msgstr ""
 msgid "No help available for puppet %{app_name}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:24 ../lib/puppet/application/device.rb:22
+#: ../lib/puppet/application/agent.rb:24 ../lib/puppet/application/device.rb:23
 msgid "Cancelling startup"
 msgstr ""
 
@@ -245,51 +245,51 @@ msgstr ""
 msgid "Display help about resource types"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:77
+#: ../lib/puppet/application/device.rb:82
 msgid "Manage remote network devices"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:216
+#: ../lib/puppet/application/device.rb:226
 msgid "resource command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:219
+#: ../lib/puppet/application/device.rb:229
 msgid "facts command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:222
+#: ../lib/puppet/application/device.rb:232
 msgid "missing argument: --target is required when using --apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:223
+#: ../lib/puppet/application/device.rb:233
 msgid "%{file} does not exist, cannot apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:239
+#: ../lib/puppet/application/device.rb:250
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:241
+#: ../lib/puppet/application/device.rb:252
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:263
+#: ../lib/puppet/application/device.rb:278
 msgid "retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:278
+#: ../lib/puppet/application/device.rb:293
 msgid "retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:303
+#: ../lib/puppet/application/device.rb:318
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:340 ../lib/puppet/application/resource.rb:196
+#: ../lib/puppet/application/device.rb:356 ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:341 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:357 ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -5575,142 +5575,146 @@ msgid "An escape char for @() may only appear once. Got '%{escapes}'"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:764
-msgid "Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source"
+msgid "Heredoc with text in the margin is not allowed (line %{heredoc_line} in this heredoc)"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:768
-msgid "No such file or directory: %{file}"
+msgid "Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:772
+msgid "No such file or directory: %{file}"
+msgstr ""
+
+#: ../lib/puppet/pops/issues.rb:776
 msgid "%{file} is not a file"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:777
+#: ../lib/puppet/pops/issues.rb:781
 msgid "%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:779
+#: ../lib/puppet/pops/issues.rb:783
 msgid "%{expression} resulted in a value outside of Puppet Integer min range, got '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:784
+#: ../lib/puppet/pops/issues.rb:788
 msgid "This runtime does not support hiera.yaml version %{version}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:788
+#: ../lib/puppet/pops/issues.rb:792
 msgid "hiera.yaml version 3 cannot be used in %{location}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:792
+#: ../lib/puppet/pops/issues.rb:796
 msgid "hiera.yaml version 4 cannot be used in the global layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:796
+#: ../lib/puppet/pops/issues.rb:800
 msgid "Undefined variable '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:800
+#: ../lib/puppet/pops/issues.rb:804
 msgid "Backend '%{name}' is defined more than once."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:803 ../lib/puppet/pops/issues.rb:816
+#: ../lib/puppet/pops/issues.rb:807 ../lib/puppet/pops/issues.rb:820
 msgid "First defined at %{error_location}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:809
+#: ../lib/puppet/pops/issues.rb:813
 msgid "No data provider is registered for backend '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:813
+#: ../lib/puppet/pops/issues.rb:817
 msgid "Hierarchy name '%{name}' defined more than once."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:822
+#: ../lib/puppet/pops/issues.rb:826
 msgid "'hiera3_backend' is only allowed in the global layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:826
+#: ../lib/puppet/pops/issues.rb:830
 msgid "'default_hierarchy' is only allowed in the module layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:830
+#: ../lib/puppet/pops/issues.rb:834
 msgid "Use \"data_hash: %{function_name}_data\" instead of \"hiera3_backend: %{function_name}\""
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:834
+#: ../lib/puppet/pops/issues.rb:838
 msgid "One of %{keys} must be defined in hierarchy '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:838 ../lib/puppet/pops/issues.rb:846
+#: ../lib/puppet/pops/issues.rb:842 ../lib/puppet/pops/issues.rb:850
 msgid "Only one of %{keys} can be defined in hierarchy '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:842
+#: ../lib/puppet/pops/issues.rb:846
 msgid "Only one of %{keys} can be defined in defaults"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:850
+#: ../lib/puppet/pops/issues.rb:854
 msgid "Option key '%{key}' used in hierarchy '%{name}' is reserved by Puppet"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:854
+#: ../lib/puppet/pops/issues.rb:858
 msgid "Option key '%{key}' used in defaults is reserved by Puppet"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:858
+#: ../lib/puppet/pops/issues.rb:862
 msgid "Unable to find '%{function_type}' function named '%{function_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:862
+#: ../lib/puppet/pops/issues.rb:866
 msgid "'alias' interpolation is only permitted if the expression is equal to the entire string"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:866
+#: ../lib/puppet/pops/issues.rb:870
 msgid "Unknown interpolation method '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:870
+#: ../lib/puppet/pops/issues.rb:874
 msgid "Interpolation using method syntax is not allowed in this context"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:874
+#: ../lib/puppet/pops/issues.rb:878
 msgid "Endless recursion detected when attempting to serialize value of class %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:878
+#: ../lib/puppet/pops/issues.rb:882
 msgid "%{path} contains the special value default. It will be converted to the String 'default'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:882
+#: ../lib/puppet/pops/issues.rb:886
 msgid "%{path} contains %{klass} value. It will be converted to the String '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:886
+#: ../lib/puppet/pops/issues.rb:890
 msgid "%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:890
+#: ../lib/puppet/pops/issues.rb:894
 msgid "The feature '%{feature}' is only available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:894
+#: ../lib/puppet/pops/issues.rb:898
 msgid "The catalog operation '%{operation}' is only available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:898
+#: ../lib/puppet/pops/issues.rb:902
 msgid "The task operation '%{operation}' is not available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:902
+#: ../lib/puppet/pops/issues.rb:906
 msgid "The 'bolt' library is required to %{action}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:906
+#: ../lib/puppet/pops/issues.rb:910
 msgid "Task not found: %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:910
+#: ../lib/puppet/pops/issues.rb:914
 msgid "Failed to load: %{type_name}"
 msgstr ""
 
@@ -6031,19 +6035,19 @@ msgid "Unacceptable transform - found an Object without a rule: %{klass}"
 msgstr ""
 
 #. TRANSLATORS 'NUMBER' refers to a method name and the 'name_or_numeric' was the passed in value and should not be translated
-#: ../lib/puppet/pops/model/factory.rb:809
+#: ../lib/puppet/pops/model/factory.rb:843
 msgid "Internal Error, NUMBER token does not contain a valid number, %{name_or_numeric}"
 msgstr ""
 
-#: ../lib/puppet/pops/model/factory.rb:1117
+#: ../lib/puppet/pops/model/factory.rb:1151
 msgid "can only concatenate strings, got %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/parser_support.rb:195
+#: ../lib/puppet/pops/parser/parser_support.rb:204
 msgid "attempt to pass argument list to the function '%{name}' which cannot be called without parentheses"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/parser_support.rb:197
+#: ../lib/puppet/pops/parser/parser_support.rb:206
 msgid "illegal comma separated argument list"
 msgstr ""
 
@@ -7217,15 +7221,15 @@ msgstr ""
 msgid "The source parameter cannot be empty when using the Windows provider."
 msgstr ""
 
-#: ../lib/puppet/provider/package/windows/package.rb:53
+#: ../lib/puppet/provider/package/windows/package.rb:61
 msgid "The source parameter is required when using the Windows provider."
 msgstr ""
 
-#: ../lib/puppet/provider/package/windows/package.rb:61
+#: ../lib/puppet/provider/package/windows/package.rb:69
 msgid "The source does not exist: '%{source}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/windows/package.rb:64
+#: ../lib/puppet/provider/package/windows/package.rb:72
 msgid "Don't know how to install '%{source}'"
 msgstr ""
 
@@ -9254,15 +9258,15 @@ msgstr ""
 msgid "Could not initialize global default settings"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:166
+#: ../lib/puppet/util/command_line.rb:165
 msgid "Error: Could not parse application options: invalid option: %{opt}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:169
+#: ../lib/puppet/util/command_line.rb:168
 msgid "See 'puppet help' for help on available puppet subcommands"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:182
+#: ../lib/puppet/util/command_line.rb:181
 msgid "Error: Unknown Puppet subcommand '%{cmd}'"
 msgstr ""
 
@@ -10141,39 +10145,39 @@ msgstr ""
 msgid "Failed to open registry key '%{key}\\%{path}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:106
+#: ../lib/puppet/util/windows/registry.rb:128
 msgid "Failed to enumerate %{key} registry keys at index %{index}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:137
+#: ../lib/puppet/util/windows/registry.rb:159
 msgid "Failed to enumerate %{key} registry values at index %{index}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:167
+#: ../lib/puppet/util/windows/registry.rb:189
 msgid "Failed to query registry %{key} for sizes"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:203
+#: ../lib/puppet/util/windows/registry.rb:225
 msgid "Type mismatch (expect %{rtype} but %{type} present)"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:225
+#: ../lib/puppet/util/windows/registry.rb:247
 msgid "Type %{type} is not supported."
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:230
+#: ../lib/puppet/util/windows/registry.rb:252
 msgid "A value in the registry key %{parent_key_name}%{key} is corrupt or invalid"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:250
+#: ../lib/puppet/util/windows/registry.rb:274
 msgid "Failed to read registry value %{value} at %{key}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:268
+#: ../lib/puppet/util/windows/registry.rb:292
 msgid "Failed to delete registry value %{name} at %{key}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/registry.rb:283
+#: ../lib/puppet/util/windows/registry.rb:307
 msgid "Failed to delete registry key %{name} at %{key}"
 msgstr ""
 
@@ -10263,87 +10267,87 @@ msgstr ""
 msgid "Successfully resumed the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:369
+#: ../lib/puppet/util/windows/service.rb:370
 msgid "Unknown Service state '%{current_state}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:386
+#: ../lib/puppet/util/windows/service.rb:388
 msgid "Unknown start type '%{start_type}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:401
+#: ../lib/puppet/util/windows/service.rb:403
 msgid "Unknown start type %{start_type}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:422
+#: ../lib/puppet/util/windows/service.rb:424
 msgid "Failed to update service configuration"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:482
+#: ../lib/puppet/util/windows/service.rb:484
 msgid "Failed to fetch services"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:531
+#: ../lib/puppet/util/windows/service.rb:533
 msgid "Failed to open a handle to the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:548
+#: ../lib/puppet/util/windows/service.rb:550
 msgid "Failed to open a handle to the service control manager"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:571
+#: ../lib/puppet/util/windows/service.rb:572
 msgid "The service is already in the %{final_state} state. No further work needs to be done."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:583
+#: ../lib/puppet/util/windows/service.rb:584
 msgid "The service must be in one of the %{valid_initial_states} states to perform this transition. It is currently in the %{current_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:594
+#: ../lib/puppet/util/windows/service.rb:595
 msgid "There is already a pending transition to the %{final_state} state for the %{service_name} service."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:610
+#: ../lib/puppet/util/windows/service.rb:611
 msgid "The service is in the %{pending_state} state, which is an unsafe pending state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:615
+#: ../lib/puppet/util/windows/service.rb:616
 msgid "Transitioning the %{service_name} service from %{initial_state} to %{final_state}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:619
+#: ../lib/puppet/util/windows/service.rb:620
 msgid "Waiting for the transition to finish"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:623
+#: ../lib/puppet/util/windows/service.rb:625
 msgid "Failed to transition the %{service_name} service to the %{final_state} state. Detail: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:662 ../lib/puppet/util/windows/service.rb:698
+#: ../lib/puppet/util/windows/service.rb:664 ../lib/puppet/util/windows/service.rb:700
 msgid "Service query failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:715
+#: ../lib/puppet/util/windows/service.rb:717
 msgid "Failed to send the %{control_signal} signal to the service. Its current state is %{current_state}. Reason for failure:"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:749
+#: ../lib/puppet/util/windows/service.rb:751
 msgid "The service transitioned to the %{pending_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:759
+#: ../lib/puppet/util/windows/service.rb:765
 msgid "Timed out while waiting for the service to transition from %{initial_state} to %{final_state} OR from %{initial_state} to %{pending_state} to %{final_state}. The service's current state is %{current_state}."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:773
+#: ../lib/puppet/util/windows/service.rb:779
 msgid "Waiting for the pending transition to the %{final_state} state to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:786
+#: ../lib/puppet/util/windows/service.rb:793
 msgid "Unexpected transition to the %{current_state} state while waiting for the pending transition from %{pending_state} to %{final_state} to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:800
+#: ../lib/puppet/util/windows/service.rb:807
 msgid "Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}."
 msgstr ""
 
