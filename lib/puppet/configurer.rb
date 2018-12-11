@@ -215,6 +215,7 @@ class Puppet::Configurer
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
+    require 'byebug'; debugger
     pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
     # We create the report pre-populated with default settings for
     # environment and transaction_uuid very early, this is to ensure
@@ -261,6 +262,7 @@ class Puppet::Configurer
   end
 
   def run_internal(options)
+    require 'byebug'; debugger
     start = Time.now
     report = options[:report]
 
@@ -270,6 +272,7 @@ class Puppet::Configurer
       Puppet::GettextConfig.reset_text_domain('agent')
       Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
 
+      # TODO: Needs deferred resolver around this
       if catalog = prepare_and_retrieve_catalog_from_cache(options)
         options[:catalog] = catalog
         @cached_catalog_status = 'explicitly_requested'
@@ -344,7 +347,7 @@ class Puppet::Configurer
                                          current_environment.config_version)
       end
       Puppet.push_context({
-        :current_environment => local_node_environment, 
+        :current_environment => local_node_environment,
         :loaders => Puppet::Pops::Loaders.new(local_node_environment, true)
       }, "Local node environment for configurer transaction")
 
@@ -377,6 +380,7 @@ class Puppet::Configurer
         query_options = get_facts(options)
         query_options[:configured_environment] = configured_environment
 
+        # TODO: Needs deferred_resolver
         return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
         tries += 1
       end
