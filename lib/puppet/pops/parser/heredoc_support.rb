@@ -125,6 +125,7 @@ module HeredocSupport
   # @param leading [String] the leading text up (up to pipe or other terminating char)
   # @param has_margin [Boolean] if the left margin should be adjusted as indicated by `leading`
   # @param remove_break [Boolean] if the line break (\r?\n) at the end of the last line should be removed or not
+  # @param heredoc_line [Integer] the source line number the heredoc starts on
   #
   def heredoc_text(lines, leading, has_margin, remove_break, heredoc_line)
     if has_margin && leading.length > 0
