@@ -14,11 +14,15 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
   # @return [Puppet::Pops::Functions.Function] - an instantiated function with global scope closure associated with the given loader
   #
   def self.create(loader, typed_name, source_ref, ruby_code_string)
-    assertion_result = []
-    assert_code(ruby_code_string, assertion_result)
-    unless ruby_code_string.is_a?(String) && assertion_result.include?(:found_newfunction)
-      raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call.") % { source_ref: source_ref }
+    # When func3x turned on, assert content by parsing, when turned off continue with (legacy) undefined behavior
+    if Puppet[:func3x_check]
+      assertion_result = []
+      assert_code(ruby_code_string, assertion_result)
+      unless ruby_code_string.is_a?(String) && assertion_result.include?(:found_newfunction)
+        raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call.") % { source_ref: source_ref }
+      end
     end
+
     # make the private loader available in a binding to allow it to be passed on
     loader_for_function = loader.private_loader
     here = get_binding(loader_for_function)
@@ -29,14 +33,14 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
     environment = Puppet.lookup(:current_environment)
     func_info = Puppet::Parser::Functions.environment_module(environment).get_function_info(typed_name.name.to_sym)
     if func_info.nil?
-      # This will to do the 3x loading and define the "function_<name>" and "real_function_<name>" methods
+      # This will do the 3x loading and define the "function_<name>" and "real_function_<name>" methods
       # in the anonymous module used to hold function definitions.
       #
       func_info = eval(ruby_code_string, here, source_ref, 1)
 
       # Validate what was loaded
       unless func_info.is_a?(Hash)
-        # TRANSLATORS - the word 'newfunction' shoud not be translated as it is a method name.
+        # TRANSLATORS - the word 'newfunction' should not be translated as it is a method name.
         raise ArgumentError, _("Illegal legacy function definition! The code loaded from %{source_ref} did not return the result of calling 'newfunction'. Got '%{klass}'") % { source_ref: source_ref, klass: func_info.class }
       end
       unless func_info[:name] == "function_#{typed_name.name()}"

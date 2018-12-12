@@ -468,7 +468,7 @@ describe 'loaders' do
     end
 
     it "inside function body is reported as an error" do
-      expect { 
+      expect {
         f = loader.load_typed(typed_name(:function, 'bad_func_load3')).value
         f.call(scope)
       }.to raise_error(/Illegal method definition.*'bad_func_load3_illegal_method'/)
@@ -481,6 +481,27 @@ describe 'loaders' do
       }.to raise_error(/Illegal method definition.*'bad_func_load4_illegal_method'/)
     end
   end
+
+context 'when a 3x load has illegal construct and --func3x_check is false' do
+  let(:env) { environment_for(mix_4x_and_3x_functions) }
+  let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
+  let(:scope) { compiler.topscope }
+  let(:loader) { compiler.loaders.private_loader_for_module('user') }
+
+  before(:each) do
+    Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
+    Puppet[:func3x_check] = false
+  end
+  after(:each) do
+    Puppet.pop_context
+    Puppet[:func3x_check] = true
+  end
+
+  it "an illegal function is loaded" do
+      f = loader.load_typed(typed_name(:function, 'bad_func_load3')).value
+      expect(f.call(scope)).to eql("some return value")
+  end
+end
 
   context 'when causing a 3x load followed by a 4x load' do
     let(:env) { environment_for(mix_4x_and_3x_functions) }
