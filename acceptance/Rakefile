@@ -2,6 +2,8 @@ require 'beaker-puppet'
 
 Beaker::DSL::Helpers::RakeHelpers.load_tasks
 
+ENV['SERVER_VERSION'] = '2.8.1'
+
 namespace :ci do
   namespace :test do
     desc <<-EOS
