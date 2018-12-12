@@ -71,6 +71,16 @@ class Locator
   def line_index()
   end
 
+  # Common byte based impl that works for all rubies (stringscanner is byte based
+  def self.compute_line_index(string)
+    scanner = StringScanner.new(string)
+    result = [0] # first line starts at 0
+    while scanner.scan_until(/\n/)
+      result << scanner.pos
+    end
+    result.freeze
+  end
+
   # Produces an URI with path?line=n&pos=n. If origin is unknown the URI is string:?line=n&pos=n
   def to_uri(ast)
     f = file
@@ -83,81 +93,8 @@ class Locator
     URI("#{f}?line=#{line_for_offset(offset).to_s}&pos=#{pos_on_line(offset).to_s}")
   end
 
-  # A Sublocator locates a concrete locator (subspace) in a virtual space.
-  # The `leading_line_count` is the (virtual) number of lines preceding the first line in the concrete locator.
-  # The `leading_offset` is the (virtual) byte offset of the first byte in the concrete locator.
-  # The `leading_line_offset` is the (virtual) offset / margin in characters for each line.
-  #
-  # This illustrates characters in the sublocator (`.`) inside the subspace (`X`):
-  #
-  #      1:XXXXXXXX
-  #      2:XXXX.... .. ... ..
-  #      3:XXXX. . .... ..
-  #      4:XXXX............
-  #
-  # This sublocator would be configured with leading_line_count = 1,
-  # leading_offset=8, and leading_line_offset=4
-  #
-  # Note that leading_offset must be the same for all lines and measured in characters.
-  #
-  class SubLocator < Locator
-    attr_reader :locator
-    attr_reader :leading_line_count
-    attr_reader :leading_offset
-    attr_reader :leading_line_offset
-
-    def self.sub_locator(string, file, leading_line_count, leading_offset, leading_line_offset)
-      self.new(Locator.locator(string, file),
-        leading_line_count,
-        leading_offset,
-        leading_line_offset)
-    end
-
-    def initialize(locator, leading_line_count, leading_offset, leading_line_offset)
-      @locator = locator
-      @leading_line_count = leading_line_count
-      @leading_offset = leading_offset
-      @leading_line_offset = leading_line_offset
-    end
-
-    def file
-      @locator.file
-    end
-
-    def string
-      @locator.string
-    end
-
-    # Given offset is offset in the subspace
-    def line_for_offset(offset)
-      @locator.line_for_offset(offset) + @leading_line_count
-    end
-
-    # Given offset is offset in the subspace
-    def offset_on_line(offset)
-      @locator.offset_on_line(offset) + @leading_line_offset
-    end
-
-    # Given offset is offset in the subspace
-    def char_offset(offset)
-      effective_line = @locator.line_for_offset(offset)
-      locator.char_offset(offset) + (effective_line * @leading_line_offset) + @leading_offset
-    end
-
-    # Given offsets are offsets in the subspace
-    def char_length(offset, end_offset)
-      effective_line = @locator.line_for_offset(end_offset) - @locator.line_for_offset(offset)
-      locator.char_length(offset, end_offset) + (effective_line * @leading_line_offset)
-    end
-
-    def pos_on_line(offset)
-      offset_on_line(offset) +1
-    end
-  end
-
   class AbstractLocator < Locator
     attr_accessor :line_index
-    attr_accessor :string
     attr_reader   :string
     attr_reader   :file
 
@@ -169,8 +106,7 @@ class Locator
       @file = file.freeze
       @prev_offset = nil
       @prev_line = nil
-      @line_index = line_index
-      compute_line_index if line_index.nil?
+      @line_index = line_index.nil? ? Locator.compute_line_index(@string) : line_index
     end
 
     # Returns the position on line (first position on a line is 1)
@@ -235,16 +171,6 @@ class Locator
       self.class == o.class && string == o.string && file == o.file && line_index == o.line_index
     end
 
-    # Common impl for 18 and 19 since scanner is byte based
-    def compute_line_index
-      scanner = StringScanner.new(string)
-      result = [0] # first line starts at 0
-      while scanner.scan_until(/\n/)
-        result << scanner.pos
-      end
-      self.line_index = result.freeze
-    end
-
     # Returns the line number (first line is 1) for the given offset
     def line_for_offset(offset)
       if @prev_offset == offset
@@ -262,6 +188,86 @@ class Locator
       @prev_offset = @prev_line = nil
       return line_index.size
     end
+  end
+
+  # A Sublocator locates a concrete locator (subspace) in a virtual space.
+  # The `leading_line_count` is the (virtual) number of lines preceding the first line in the concrete locator.
+  # The `leading_offset` is the (virtual) byte offset of the first byte in the concrete locator.
+  # The `leading_line_offset` is the (virtual) offset / margin in characters for each line.
+  #
+  # This illustrates characters in the sublocator (`.`) inside the subspace (`X`):
+  #
+  #      1:XXXXXXXX
+  #      2:XXXX.... .. ... ..
+  #      3:XXXX. . .... ..
+  #      4:XXXX............
+  #
+  # This sublocator would be configured with leading_line_count = 1,
+  # leading_offset=8, and leading_line_offset=4
+  #
+  # Note that leading_offset must be the same for all lines and measured in characters.
+  #
+  # A SubLocator is only used during parsing as the parser will translate the local offsets/lengths to
+  # the parent locator when a sublocated expression is reduced. Do not call the methods
+  # `char_offset` or `char_length` as those methods will raise an error.
+  #
+  class SubLocator < AbstractLocator
+    attr_reader :locator
+    attr_reader :leading_line_count
+    attr_reader :leading_offset
+    attr_reader :leading_line_offset
+
+    def initialize(locator, str, leading_line_count, leading_offset, leading_line_offset)
+      super(str, locator.file)
+      @locator = locator
+      @leading_line_count = leading_line_count
+      @leading_offset = leading_offset
+      @leading_line_offset = leading_line_offset
+    end
+
+    def file
+      @locator.file
+    end
+
+    # Returns array with transposed (local) offset and (local) length. The transposed values
+    # take the margin into account such that it is added to the content to the right
+    # 
+    # Using X to denote margin and where end of line is explicitly shown as \n:
+    # ```
+    # XXXXabc\n
+    # XXXXdef\n
+    # ```
+    # A local offset of 0 is translated to the start of the first heredoc line, and a length of 1 is adjusted to
+    # 5 - i.e to cover "XXXXa". A local offset of 1, with length 1 would cover "b".
+    # A local offset of 4 and length 1 would cover "XXXXd"
+    #
+    def to_global(offset, length)
+      # simple case, no margin
+      return [offset + @leading_offset, length] if @leading_line_offset == 0
+
+      # compute local start and end line
+      start_line = line_for_offset(offset)
+      end_line = line_for_offset(offset+length)
+      # Add a line start if position on line is 0 (since first position includes the preceding margin)
+      number_line_starts = end_line - start_line + (offset_on_line(offset) == 0 ? 1 : 0)
+
+      # complex case when there is a margin
+      transposed_offset = offset == 0 ? @leading_offset : offset + @leading_offset + @leading_line_offset * start_line
+
+      transposed_length = length + @leading_line_offset * number_line_starts
+      [transposed_offset, transposed_length]
+    end
+
+    # Do not call this method
+    def char_offset(offset)
+      raise "Should not be called"
+    end
+
+    # Do not call this method
+    def char_length(offset, end_offset)
+      raise "Should not be called"
+    end
+
   end
 
   class LocatorForChars < AbstractLocator
@@ -311,7 +317,7 @@ class Locator
     # Ruby 19 is multibyte but has no character position methods, must use byteslice
     def offset_on_line(offset)
       line_offset = line_index[ line_for_offset(offset)-1 ]
-      string.byteslice(line_offset, offset-line_offset).length
+      @string.byteslice(line_offset, offset-line_offset).length
     end
 
     # Returns the character offset for a given byte offset
