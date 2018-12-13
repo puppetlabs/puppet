@@ -234,7 +234,7 @@ describe Puppet::Transaction do
     expect(Puppet::FileSystem.exist?(path)).not_to be_truthy
   end
 
-  it "one failed refresh should propagate its failure to dependent refreshes" do
+  it "failed refresh should result in dependent refreshes being skipped" do
     path = tmpfile("path")
     newfile = tmpfile("file")
       file = Puppet::Type.type(:file).new(
