@@ -215,14 +215,27 @@ class Locator
     attr_reader :locator
     attr_reader :leading_line_count
     attr_reader :leading_offset
-    attr_reader :leading_line_offset
+    attr_reader :has_margin
+    attr_reader :margin_per_line
 
-    def initialize(locator, str, leading_line_count, leading_offset, leading_line_offset)
+    def initialize(locator, str, leading_line_count, leading_offset, has_margin, margin_per_line)
       super(str, locator.file)
       @locator = locator
       @leading_line_count = leading_line_count
       @leading_offset = leading_offset
-      @leading_line_offset = leading_line_offset
+      @has_margin = has_margin
+      @margin_per_line = margin_per_line
+
+      # Since lines can have different margin - accumulated margin per line must be computed
+      # and since this accumulated margin adjustment is needed more than once; both for start offset,
+      # and for end offset (to compute global length) it is computed up front here.
+      # The accumulated_offset holds the sum of all removed margins before a position on line n (line index is 1-n,
+      # and (unused) position 0 is always 0).
+      # The last entry is duplicated since there will be  the line "after last line" that would otherwise require
+      # conditional logic.
+      #
+      @accumulated_margin = margin_per_line.reduce([0]) {|memo, val| memo << memo[-1] + val; memo }
+      @accumulated_margin << @accumulated_margin[-1]
     end
 
     def file
@@ -241,9 +254,11 @@ class Locator
     # 5 - i.e to cover "XXXXa". A local offset of 1, with length 1 would cover "b".
     # A local offset of 4 and length 1 would cover "XXXXd"
     #
+    # It is possible that lines have different margin and that is taken into account.
+    #
     def to_global(offset, length)
       # simple case, no margin
-      return [offset + @leading_offset, length] if @leading_line_offset == 0
+      return [offset + @leading_offset, length] unless @has_margin # if @leading_line_offset == 0
 
       # compute local start and end line
       start_line = line_for_offset(offset)
@@ -252,9 +267,10 @@ class Locator
       number_line_starts = end_line - start_line + (offset_on_line(offset) == 0 ? 1 : 0)
 
       # complex case when there is a margin
-      transposed_offset = offset == 0 ? @leading_offset : offset + @leading_offset + @leading_line_offset * start_line
-
-      transposed_length = length + @leading_line_offset * number_line_starts
+      transposed_offset = offset == 0 ? @leading_offset : offset + @leading_offset + @accumulated_margin[start_line]
+      transposed_length = length +
+        @accumulated_margin[end_line] - @accumulated_margin[start_line] + # the margins between start and end (0 is line 1)
+        (offset_on_line(offset) == 0 ? margin_per_line[start_line -1] : 0)        # include start's margin in position 0
       [transposed_offset, transposed_length]
     end
 

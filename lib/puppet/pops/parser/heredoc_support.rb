@@ -94,11 +94,12 @@ module HeredocSupport
 
 
         # Process captured lines - remove leading, and trailing newline
-        str = heredoc_text(lines, leading, has_margin, remove_break, heredoc_line)
+        # get processed string and index of removed margin/leading size per line
+        str, margin_per_line = heredoc_text(lines, leading, has_margin, remove_break)
 
         # Use a new lexer instance configured with a sub-locator to enable correct positioning
         sublexer = self.class.new()
-        locator = Locator::SubLocator.new(locator, str, heredoc_line, heredoc_offset, has_margin ? leading.length() : 0)
+        locator = Locator::SubLocator.new(locator, str, heredoc_line, heredoc_offset, has_margin, margin_per_line)
 
         # Emit a token that provides the grammar with location information about the lines on which the heredoc
         # content is based.
@@ -120,33 +121,31 @@ module HeredocSupport
     raise eof_error
   end
 
-  # Produces the heredoc text string given the individual (unprocessed) lines as an array.
+  # Produces the heredoc text string given the individual (unprocessed) lines as an array and array with margin sizes per line
   # @param lines [Array<String>] unprocessed lines of text in the heredoc w/o terminating line
   # @param leading [String] the leading text up (up to pipe or other terminating char)
   # @param has_margin [Boolean] if the left margin should be adjusted as indicated by `leading`
   # @param remove_break [Boolean] if the line break (\r?\n) at the end of the last line should be removed or not
-  # @param heredoc_line [Integer] the source line number the heredoc starts on
+  # @return [Array] - a tuple with resulting string, and an array with margin size per line
   #
-  def heredoc_text(lines, leading, has_margin, remove_break, heredoc_line)
+  def heredoc_text(lines, leading, has_margin, remove_break)
     if has_margin && leading.length > 0
       leading_pattern = /^#{Regexp.escape(leading)}/
+      # TODO: This implementation is not according to the specification, but is kept to be bug compatible.
+      # The specification says that leading space up to the margin marker should be removed, but this implementation
+      # simply leaves lines that have text in the margin untouched.
+      #
       processed_lines = lines.collect {|s| s.gsub(leading_pattern, '') }
-      margin_error_lines = processed_lines.length.times.reject {|x| processed_lines[x].length < lines[x].length }
-      unless margin_error_lines.empty?
-        # get the offset to the start of the offending line
-        first_line_with_error = margin_error_lines[0]
-        # get the offset of the offending character in the margin
-        offset_in_margin = leading.length.times.find {|x| leading[x] != lines[first_line_with_error][x] }
-        error_offset = @locator.line_index()[heredoc_line + first_line_with_error] + offset_in_margin
-        lex_error(Issues::HEREDOC_DIRTY_MARGIN, {:heredoc_line => margin_error_lines[0] + 1}, error_offset)
-      end
+      margin_per_line = processed_lines.length.times.map {|x| lines[x].length - processed_lines[x].length }
       lines = processed_lines
+    else
+      # Array with a 0 per line
+      margin_per_line = Array.new(lines.length, 0)
     end
     result = lines.join('')
     result.gsub!(/\r?\n\z/m, '') if remove_break
-    result
+    [result, margin_per_line]
   end
-
 
 end
 end

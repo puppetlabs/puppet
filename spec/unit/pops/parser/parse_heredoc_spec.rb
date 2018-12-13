@@ -243,13 +243,12 @@ AAA
     CODE
     expect(dump(parse(src))).to eq([
       "(@()",
-      "  'AAA", # left space trimmed
-      "  BBB",  # - " -
+      "  'AAA", # no left space trimmed
+      " BBB",
       "  CCC",
-      "  DDD",
-      "  EEE",
-      "   FFF", # indented one because it is one in from margin marker
-      "')",
+      "   DDD",
+      "EEE", # left space trimmed
+      " FFF'", # indented one because it is one in from margin marker
       ")"].join("\n"))
   end
 
