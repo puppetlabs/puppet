@@ -39,7 +39,7 @@ describe Puppet::Transaction do
 
     resource.expects(:eval_generate).returns([child_resource])
 
-    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
 
     resource.expects(:retrieve).raises "this is a failure"
     resource.stubs(:err)
@@ -55,7 +55,7 @@ describe Puppet::Transaction do
     resource.virtual = true
     catalog.add_resource resource
 
-    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
 
     resource.expects(:evaluate).never
 
@@ -80,7 +80,7 @@ describe Puppet::Transaction do
     resource.virtual = true
     catalog.add_resource resource
 
-    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
 
     resource.expects(:evaluate).never
 
@@ -92,7 +92,7 @@ describe Puppet::Transaction do
     resource = Puppet::Type.type(:interface).new :name => "FastEthernet 0/1"
     catalog.add_resource resource
 
-    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction.for_network_device = false
 
     transaction.expects(:apply).never.with(resource, nil)
@@ -106,7 +106,7 @@ describe Puppet::Transaction do
     resource = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar"), :backup => false
     catalog.add_resource resource
 
-    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction.for_network_device = true
 
     transaction.expects(:apply).never.with(resource, nil)
@@ -120,7 +120,7 @@ describe Puppet::Transaction do
     resource = Puppet::Type.type(:interface).new :name => "FastEthernet 0/1"
     catalog.add_resource resource
 
-    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction.for_network_device = true
 
     transaction.expects(:apply).with(resource, nil)
@@ -134,7 +134,7 @@ describe Puppet::Transaction do
     resource = Puppet::Type.type(:schedule).new :name => "test"
     catalog.add_resource resource
 
-    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction.for_network_device = true
 
     transaction.expects(:apply).with(resource, nil)
