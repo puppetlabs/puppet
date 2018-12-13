@@ -4,6 +4,11 @@ require 'puppet_spec/compiler'
 
 require 'puppet/transaction'
 
+Puppet::Type.newtype(:devicetype) do
+  apply_to_device
+  newparam(:name)
+end
+
 describe Puppet::Transaction do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
@@ -89,7 +94,7 @@ describe Puppet::Transaction do
 
   it "should not apply device resources on normal host" do
     catalog = Puppet::Resource::Catalog.new
-    resource = Puppet::Type.type(:interface).new :name => "FastEthernet 0/1"
+    resource = Puppet::Type.type(:devicetype).new :name => "FastEthernet 0/1"
     catalog.add_resource resource
 
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
@@ -117,7 +122,7 @@ describe Puppet::Transaction do
 
   it "should apply device resources on device" do
     catalog = Puppet::Resource::Catalog.new
-    resource = Puppet::Type.type(:interface).new :name => "FastEthernet 0/1"
+    resource = Puppet::Type.type(:devicetype).new :name => "FastEthernet 0/1"
     catalog.add_resource resource
 
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
