@@ -106,7 +106,7 @@ module Puppet
         def run
           # For most applications, we want to be able to load code from the modulepath,
           # such as apply, describe, resource, and faces.
-          # For agent and device, we only want to load pluginsync'ed code from libdir.
+          # For agent and device in agent mode, we only want to load pluginsync'ed code from libdir.
           # For master, we shouldn't ever be loading per-environment code into the master's
           # ruby process, but that requires fixing (#17210, #12173, #8750). So for now
           # we try to restrict to only code that can be autoloaded from the node's
@@ -116,7 +116,7 @@ module Puppet
           # have an appropriate application-wide current_environment set.
           # If we cannot find the configured environment, which may not exist,
           # we do not attempt to add plugin directories to the load path.
-          unless ['master', 'agent', 'device'].include? @subcommand_name
+          unless @subcommand_name == 'master' || @subcommand_name == 'agent' || (@subcommand_name == 'device' && (['--apply', '--facts', '--resource'] - @command_line.args).empty?)
             if configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
               configured_environment.each_plugin_directory do |dir|
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
