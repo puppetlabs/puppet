@@ -363,13 +363,14 @@ module Puppet::Util::Windows
     # @param [string] service_name name of the service to query
     # @return [string] the status of the service
     def service_state(service_name)
-      status = nil
+      state = nil
       open_service(service_name, SC_MANAGER_CONNECT, SERVICE_QUERY_STATUS) do |service|
-        status = query_status(service)
+        query_status(service) do |status|
+          state = SERVICE_STATES[status[:dwCurrentState]]
+        end
       end
-      state = SERVICE_STATES[status[:dwCurrentState]]
       if state.nil?
-        raise Puppet::Error.new(_("Unknown Service state '%{current_state}' for '%{service_name}'") % { current_state: status[:dwCurrentState].to_s, service_name: service_name})
+        raise Puppet::Error.new(_("Unknown Service state '%{current_state}' for '%{service_name}'") % { current_state: state.to_s, service_name: service_name})
       end
       state
     end
@@ -380,13 +381,14 @@ module Puppet::Util::Windows
     # @param [String] service_name name of the service to query
     # @return [QUERY_SERVICE_CONFIGW.struct] the configuration of the service
     def service_start_type(service_name)
-      config = nil
+      start_type = nil
       open_service(service_name, SC_MANAGER_CONNECT, SERVICE_QUERY_CONFIG) do |service|
-        config = query_config(service)
+        query_config(service) do |config|
+          start_type = SERVICE_START_TYPES[config[:dwStartType]]
+        end
       end
-      start_type = SERVICE_START_TYPES[config[:dwStartType]]
       if start_type.nil?
-        raise Puppet::Error.new(_("Unknown start type '%{start_type}' for '%{service_name}'") % { start_type: config[:dwStartType].to_s, service_name: service_name})
+        raise Puppet::Error.new(_("Unknown start type '%{start_type}' for '%{service_name}'") % { start_type: start_type.to_s, service_name: service_name})
       end
       start_type
     end
@@ -566,62 +568,62 @@ module Puppet::Util::Windows
       def transition_service_state(service_name, valid_initial_states, final_state, timeout, &block)
         service_access = SERVICE_START | SERVICE_STOP | SERVICE_PAUSE_CONTINUE | SERVICE_QUERY_STATUS
         open_service(service_name, SC_MANAGER_CONNECT, service_access) do |service|
-          status = query_status(service)
-          initial_state = status[:dwCurrentState]
+          query_status(service) do |status|
+            initial_state = status[:dwCurrentState]
+            # If the service is already in the final_state, then
+            # no further work needs to be done
+            if initial_state == final_state
+              Puppet.debug _("The service is already in the %{final_state} state. No further work needs to be done.") % { final_state: SERVICE_STATES[final_state] }
 
-          # If the service is already in the final_state, then
-          # no further work needs to be done
-          if initial_state == final_state
-            Puppet.debug _("The service is already in the %{final_state} state. No further work needs to be done.") % { final_state: SERVICE_STATES[final_state] }
+              next
+            end
 
-            next
+            # Check that initial_state corresponds to a valid
+            # initial state
+            unless valid_initial_states.include?(initial_state)
+              valid_initial_states_str = valid_initial_states.map do |state|
+                SERVICE_STATES[state]
+              end.join(", ")
+
+              raise Puppet::Error, _("The service must be in one of the %{valid_initial_states} states to perform this transition. It is currently in the %{current_state} state.") % { valid_initial_states: valid_initial_states_str, current_state: SERVICE_STATES[initial_state] }
+            end
+
+            # Check if there's a pending transition to the final_state. If so, then wait for
+            # that transition to finish.
+            possible_pending_states = FINAL_STATES.keys.select do |pending_state|
+              # SERVICE_RUNNING has two pending states, SERVICE_START_PENDING and
+              # SERVICE_CONTINUE_PENDING. That is why we need the #select here
+              FINAL_STATES[pending_state] == final_state
+            end
+            if possible_pending_states.include?(initial_state)
+              Puppet.debug _("There is already a pending transition to the %{final_state} state for the %{service_name} service.")  % { final_state: SERVICE_STATES[final_state], service_name: service_name }
+              wait_on_pending_state(service, initial_state)
+
+              next
+            end
+
+            # If we are in an unsafe pending state like SERVICE_START_PENDING
+            # or SERVICE_STOP_PENDING, then we want to wait for that pending
+            # transition to finish before transitioning the service state.
+            # The reason we do this is because SERVICE_START_PENDING is when
+            # the service thread is being created and initialized, while
+            # SERVICE_STOP_PENDING is when the service thread is being cleaned
+            # up and destroyed. Thus there is a chance that when the service is
+            # in either of these states, its service thread may not yet be ready
+            # to perform the state transition (it may not even exist).
+            if UNSAFE_PENDING_STATES.include?(initial_state)
+              Puppet.debug _("The service is in the %{pending_state} state, which is an unsafe pending state.") % { pending_state: SERVICE_STATES[initial_state] }
+              wait_on_pending_state(service, initial_state)
+              initial_state = FINAL_STATES[initial_state]
+            end
+
+            Puppet.debug _("Transitioning the %{service_name} service from %{initial_state} to %{final_state}") % { service_name: service_name, initial_state: SERVICE_STATES[initial_state], final_state: SERVICE_STATES[final_state] }
+
+            yield service
+
+            Puppet.debug _("Waiting for the transition to finish")
+            wait_on_state_transition(service, initial_state, final_state)
           end
-
-          # Check that initial_state corresponds to a valid
-          # initial state
-          unless valid_initial_states.include?(initial_state)
-            valid_initial_states_str = valid_initial_states.map do |state|
-              SERVICE_STATES[state]
-            end.join(", ")
-
-            raise Puppet::Error, _("The service must be in one of the %{valid_initial_states} states to perform this transition. It is currently in the %{current_state} state.") % { valid_initial_states: valid_initial_states_str, current_state: SERVICE_STATES[initial_state] }
-          end
-
-          # Check if there's a pending transition to the final_state. If so, then wait for
-          # that transition to finish.
-          possible_pending_states = FINAL_STATES.keys.select do |pending_state|
-            # SERVICE_RUNNING has two pending states, SERVICE_START_PENDING and
-            # SERVICE_CONTINUE_PENDING. That is why we need the #select here
-            FINAL_STATES[pending_state] == final_state
-          end
-          if possible_pending_states.include?(initial_state)
-            Puppet.debug _("There is already a pending transition to the %{final_state} state for the %{service_name} service.")  % { final_state: SERVICE_STATES[final_state], service_name: service_name }
-            wait_on_pending_state(service, initial_state, timeout)
-
-            next
-          end
-
-          # If we are in an unsafe pending state like SERVICE_START_PENDING
-          # or SERVICE_STOP_PENDING, then we want to wait for that pending
-          # transition to finish before transitioning the service state.
-          # The reason we do this is because SERVICE_START_PENDING is when
-          # the service thread is being created and initialized, while
-          # SERVICE_STOP_PENDING is when the service thread is being cleaned
-          # up and destroyed. Thus there is a chance that when the service is
-          # in either of these states, its service thread may not yet be ready
-          # to perform the state transition (it may not even exist).
-          if UNSAFE_PENDING_STATES.include?(initial_state)
-            Puppet.debug _("The service is in the %{pending_state} state, which is an unsafe pending state.") % { pending_state: SERVICE_STATES[initial_state] }
-            wait_on_pending_state(service, initial_state, timeout)
-            initial_state = FINAL_STATES[initial_state]
-          end
-
-          Puppet.debug _("Transitioning the %{service_name} service from %{initial_state} to %{final_state}") % { service_name: service_name, initial_state: SERVICE_STATES[initial_state], final_state: SERVICE_STATES[final_state] }
-
-          yield service
-
-          Puppet.debug _("Waiting for the transition to finish")
-          wait_on_state_transition(service, initial_state, final_state, timeout)
         end
       rescue => detail
         raise Puppet::Error, _("Failed to transition the %{service_name} service to the %{final_state} state. Detail: %{detail}") % { service_name: service_name, final_state: SERVICE_STATES[final_state], detail: detail }, detail.backtrace
@@ -665,9 +667,9 @@ module Puppet::Util::Windows
             if success == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(_("Service query failed"))
             end
+            yield status
           end
         end
-        status
       end
       private :query_status
 
@@ -677,7 +679,7 @@ module Puppet::Util::Windows
       #
       # @param [:handle] service handle of the service to query
       # @return [QUERY_SERVICE_CONFIGW struct] the result of the query
-      def query_config(service)
+      def query_config(service, &block)
         config = nil
         size_required = nil
         # Fetch the bytes of memory required to be allocated
@@ -701,9 +703,9 @@ module Puppet::Util::Windows
             if success == FFI::WIN32_FALSE
               raise Puppet::Util::Windows::Error.new(_("Service query failed"))
             end
+            yield config
           end
         end
-        config
       end
       private :query_config
 
@@ -745,22 +747,26 @@ module Puppet::Util::Windows
         # Wait for the transition to finish
         state = nil
         elapsed_time = 0
-        while elapsed_time <= timeout
-          status = query_status(service)
-          state = status[:dwCurrentState]
+        while elapsed_time <= DEFAULT_TIMEOUT
 
-          return if state == final_state
-          if state == pending_state
-            Puppet.debug _("The service transitioned to the %{pending_state} state.") % { pending_state: SERVICE_STATES[pending_state] }
-            wait_on_pending_state(service, pending_state, timeout)
-            return
+          query_status(service) do |status|
+            state = status[:dwCurrentState]
+            return if state == final_state
+            if state == pending_state
+              Puppet.debug _("The service transitioned to the %{pending_state} state.") % { pending_state: SERVICE_STATES[pending_state] }
+              wait_on_pending_state(service, pending_state)
+              return
+            end
+            sleep(1)
+            elapsed_time += 1
           end
-
-          sleep(1)
-          elapsed_time += 1
         end
-
         # Timed out while waiting for the transition to finish. Raise an error
+        # We can still use the state variable read from the FFI struct because
+        # FFI creates new Integer objects during an assignment of an integer value
+        # stored in an FFI struct. We verified that the '=' operater is safe
+        # from the freed memory since the new ruby object created during the
+        # assignment will remain in ruby memory and remain immutable and constant.
         raise Puppet::Error, _("Timed out while waiting for the service to transition from %{initial_state} to %{final_state} OR from %{initial_state} to %{pending_state} to %{final_state}. The service's current state is %{current_state}.") % { initial_state: SERVICE_STATES[initial_state], final_state: SERVICE_STATES[final_state], pending_state: SERVICE_STATES[pending_state], current_state: SERVICE_STATES[state] }
       end
       private :wait_on_state_transition
@@ -781,36 +787,37 @@ module Puppet::Util::Windows
         elapsed_time = 0
         last_checkpoint = -1
         loop do
-          status = query_status(service)
-          state = status[:dwCurrentState]
-
-          # Check if our service has finished transitioning to
-          # the final_state OR if an unexpected transition
-          # has occurred
-          return if state == final_state
-          unless state == pending_state
-            raise Puppet::Error, _("Unexpected transition to the %{current_state} state while waiting for the pending transition from %{pending_state} to %{final_state} to finish.") % { current_state: SERVICE_STATES[state], pending_state: SERVICE_STATES[pending_state], final_state: SERVICE_STATES[final_state] }
-          end
-
-          # Check if any progress has been made since our last sleep
-          # using the dwCheckPoint. If no progress has been made then
-          # check if we've timed out, and raise an error if so
-          if status[:dwCheckPoint] > last_checkpoint
-            elapsed_time = 0
-            last_checkpoint = status[:dwCheckPoint]
-          else
-            wait_hint = milliseconds_to_seconds(status[:dwWaitHint])
-            timeout = wait_hint < timeout ? timeout : wait_hint
-
-            if elapsed_time >= timeout
-              raise Puppet::Error, _("Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}.") % { pending_state: SERVICE_STATES[pending_state], final_state: SERVICE_STATES[final_state], current_state: SERVICE_STATES[state] }
+          query_status(service) do |status|
+            state = status[:dwCurrentState]
+            checkpoint = status[:dwCheckPoint]
+            wait_hint = status[:dwWaitHint]
+            # Check if our service has finished transitioning to
+            # the final_state OR if an unexpected transition
+            # has occurred
+            return if state == final_state
+            unless state == pending_state
+              raise Puppet::Error, _("Unexpected transition to the %{current_state} state while waiting for the pending transition from %{pending_state} to %{final_state} to finish.") % { current_state: SERVICE_STATES[state], pending_state: SERVICE_STATES[pending_state], final_state: SERVICE_STATES[final_state] }
             end
-          end
 
-          # Wait a bit before rechecking the service's state
-          wait_time = wait_hint_to_wait_time(status[:dwWaitHint])
-          sleep(wait_time)
-          elapsed_time += wait_time
+            # Check if any progress has been made since our last sleep
+            # using the dwCheckPoint. If no progress has been made then
+            # check if we've timed out, and raise an error if so
+            if checkpoint > last_checkpoint
+              elapsed_time = 0
+              last_checkpoint = checkpoint
+            else
+              wait_hint_in_seconds = milliseconds_to_seconds(wait_hint)
+              timeout = wait_hint_in_seconds < DEFAULT_TIMEOUT ? DEFAULT_TIMEOUT : wait_hint_in_seconds
+
+              if elapsed_time >= timeout
+                raise Puppet::Error, _("Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}.") % { pending_state: SERVICE_STATES[pending_state], final_state: SERVICE_STATES[final_state], current_state: SERVICE_STATES[state] }
+              end
+            end
+            wait_time = wait_hint_to_wait_time(wait_hint)
+            # Wait a bit before rechecking the service's state
+            sleep(wait_time)
+            elapsed_time += wait_time
+          end
         end
       end
       private :wait_on_pending_state

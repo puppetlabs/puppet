@@ -164,7 +164,7 @@ msgstr ""
 msgid "No help available for puppet %{app_name}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:24 ../lib/puppet/application/device.rb:22
+#: ../lib/puppet/application/agent.rb:24 ../lib/puppet/application/device.rb:23
 msgid "Cancelling startup"
 msgstr ""
 
@@ -234,51 +234,51 @@ msgstr ""
 msgid "Display help about resource types"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:77
+#: ../lib/puppet/application/device.rb:82
 msgid "Manage remote network devices"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:216
+#: ../lib/puppet/application/device.rb:226
 msgid "resource command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:219
+#: ../lib/puppet/application/device.rb:229
 msgid "facts command requires target"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:222
+#: ../lib/puppet/application/device.rb:232
 msgid "missing argument: --target is required when using --apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:223
+#: ../lib/puppet/application/device.rb:233
 msgid "%{file} does not exist, cannot apply"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:239
+#: ../lib/puppet/application/device.rb:250
 msgid "Target device / certificate '%{target}' not found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:241
+#: ../lib/puppet/application/device.rb:252
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:263
+#: ../lib/puppet/application/device.rb:278
 msgid "retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:278
+#: ../lib/puppet/application/device.rb:293
 msgid "retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:303
+#: ../lib/puppet/application/device.rb:318
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:340 ../lib/puppet/application/resource.rb:196
+#: ../lib/puppet/application/device.rb:356 ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:341 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:357 ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -506,7 +506,7 @@ msgid ""
 "  puppet ssl clean\n"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:214
+#: ../lib/puppet/application/ssl.rb:213
 msgid "Removed %{label} %{path}"
 msgstr ""
 
@@ -701,15 +701,15 @@ msgstr ""
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:961 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:962 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1458 ../lib/puppet/defaults.rb:1473
+#: ../lib/puppet/defaults.rb:1459 ../lib/puppet/defaults.rb:1474
 msgid "Attempted to set both server and server_list."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1459 ../lib/puppet/defaults.rb:1474
+#: ../lib/puppet/defaults.rb:1460 ../lib/puppet/defaults.rb:1475
 msgid "Server setting will not be used."
 msgstr ""
 
@@ -8624,15 +8624,15 @@ msgstr ""
 msgid "Could not initialize global default settings"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:166
+#: ../lib/puppet/util/command_line.rb:165
 msgid "Error: Could not parse application options: invalid option: %{opt}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:169
+#: ../lib/puppet/util/command_line.rb:168
 msgid "See 'puppet help' for help on available puppet subcommands"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:182
+#: ../lib/puppet/util/command_line.rb:181
 msgid "Error: Unknown Puppet subcommand '%{cmd}'"
 msgstr ""
 
