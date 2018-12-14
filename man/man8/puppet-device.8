@@ -13,7 +13,7 @@ Retrieves catalogs from the Puppet master and applies them to remote devices\.
 This subcommand can be run manually; or periodically using cron, a scheduled task, or a similar tool\.
 .
 .SH "USAGE"
-puppet device [\-d|\-\-debug] [\-\-detailed\-exitcodes] [\-\-deviceconfig \fIfile\fR] [\-h|\-\-help] [\-l|\-\-logdest syslog|\fIfile\fR|console] [\-v|\-\-verbose] [\-w|\-\-waitforcert \fIseconds\fR] [\-f|\-\-facts] [\-a|\-\-apply \fIfile\fR] [\-r|\-\-resource \fItype\fR [name]] [\-t|\-\-target \fIdevice\fR] [\-\-user=\fIuser\fR] [\-V|\-\-version]
+puppet device [\-h|\-\-help] [\-v|\-\-verbose] [\-d|\-\-debug] [\-l|\-\-logdest syslog|\fIfile\fR|console] [\-\-detailed\-exitcodes] [\-\-deviceconfig \fIfile\fR] [\-w|\-\-waitforcert \fIseconds\fR] [\-\-libdir \fIdirectory\fR] [\-a|\-\-apply \fIfile\fR] [\-f|\-\-facts] [\-r|\-\-resource \fItype\fR [name]] [\-t|\-\-target \fIdevice\fR] [\-\-user=\fIuser\fR] [\-V|\-\-version]
 .
 .SH "DESCRIPTION"
 Devices require a proxy Puppet agent to request certificates, collect facts, retrieve and apply catalogs, and store reports\.
@@ -43,8 +43,23 @@ See https://puppet\.com/docs/puppet/latest/config_file_device\.html for details\
 Note that any setting that\'s valid in the configuration file is also a valid long argument\. For example, \'server\' is a valid configuration parameter, so you can specify \'\-\-server \fIservername\fR\' as an argument\.
 .
 .TP
-\-\-debug
+\-\-help, \-h
+Print this help message
+.
+.TP
+\-\-verbose, \-v
+Turn on verbose reporting\.
+.
+.TP
+\-\-debug, \-d
 Enable full debugging\.
+.
+.TP
+\-\-logdest, \-l
+Where to send log messages\. Choose between \'syslog\' (the POSIX syslog service), \'console\', or the path to a log file\. If debugging or verbosity is enabled, this defaults to \'console\'\. Otherwise, it defaults to \'syslog\'\.
+.
+.IP
+A path ending with \'\.json\' will receive structured output in JSON format\. The log file will not have an ending \']\' automatically written to it due to the appending nature of logging\. It must be appended manually to make the content valid JSON\.
 .
 .TP
 \-\-detailed\-exitcodes
@@ -55,15 +70,12 @@ Provide transaction information via exit codes\. If this is enabled, an exit cod
 Path to the device config file for puppet device\. Default: $confdir/device\.conf
 .
 .TP
-\-\-help
-Print this help message
+\-\-waitforcert, \-w
+This option only matters for targets that do not yet have certificates and it is enabled by default, with a value of 120 (seconds)\. This causes +puppet device+ to poll the server every 2 minutes and ask it to sign a certificate request\. This is useful for the initial setup of a target\. You can turn off waiting for certificates by specifying a time of 0\.
 .
 .TP
-\-\-logdest
-Where to send log messages\. Choose between \'syslog\' (the POSIX syslog service), \'console\', or the path to a log file\. If debugging or verbosity is enabled, this defaults to \'console\'\. Otherwise, it defaults to \'syslog\'\.
-.
-.IP
-A path ending with \'\.json\' will receive structured output in JSON format\. The log file will not have an ending \']\' automatically written to it due to the appending nature of logging\. It must be appended manually to make the content valid JSON\.
+\-\-libdir
+Override the per\-device libdir with a local directory\. Specifying a libdir also disables pluginsync\. This is useful for testing\.
 .
 .TP
 \-\-apply
@@ -89,14 +101,6 @@ Output found resources in yaml format, suitable to use with Hiera and create_res
 \-\-user
 The user to run as\.
 .
-.TP
-\-\-verbose
-Turn on verbose reporting\.
-.
-.TP
-\-\-waitforcert
-This option only matters for daemons that do not yet have certificates and it is enabled by default, with a value of 120 (seconds)\. This causes +puppet agent+ to connect to the server every 2 minutes and ask it to sign a certificate request\. This is useful for the initial setup of a puppet client\. You can turn off waiting for certificates by specifying a time of 0\.
-.
 .SH "EXAMPLE"
 .
 .nf
@@ -109,4 +113,4 @@ This option only matters for daemons that do not yet have certificates and it is
 Brice Figureau
 .
 .SH "COPYRIGHT"
-Copyright (c) 2011 Puppet Inc\., LLC Licensed under the Apache 2\.0 License
+Copyright (c) 2011\-2018 Puppet Inc\., LLC Licensed under the Apache 2\.0 License
