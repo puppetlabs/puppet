@@ -101,6 +101,8 @@ task(:warnings) do
   puts "Checking modified files #{commit_range}"
   %x{git diff --diff-filter=ACM --name-only #{commit_range}}.each_line do |modified_file|
     modified_file.chomp!
+    # Skip racc generated file as it can have many warnings that cannot be manually fixed
+    next if modified_file.end_with?("pops/parser/eparser.rb")
     next if modified_file.start_with?('spec/fixtures/', 'acceptance/fixtures/') || File.extname(modified_file) != '.rb'
     puts modified_file
 
