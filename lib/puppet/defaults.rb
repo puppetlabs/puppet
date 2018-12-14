@@ -851,7 +851,8 @@ EOT
       :mode => "0644",
       :owner => "service",
       :group => "service",
-      :desc => "Where individual hosts store and look for their certificate requests."
+      :deprecated  => :completely,
+      :desc => "This setting is deprecated."
     },
     :hostcert => {
       :default => "$certdir/$certname.pem",
