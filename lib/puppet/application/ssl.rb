@@ -199,16 +199,15 @@ END
       end
     end
 
-    settings = {
-      hostprivkey: 'private key',
-      hostpubkey: 'public key',
-      hostcsr: 'certificate request',
-      hostcert: 'certificate',
-      passfile: 'private key password file'
+    paths = {
+      'private key' => Puppet[:hostprivkey],
+      'public key'  => Puppet[:hostpubkey],
+      'certificate request' => File.join(Puppet[:requestdir], "#{Puppet[:certname]}.pem"),
+      'certificate' => Puppet[:hostcert],
+      'private key password file' => Puppet[:passfile]
     }
-    settings.merge!(localcacert: 'local CA certificate', hostcrl: 'local CRL') if options[:localca]
-    settings.each_pair do |setting, label|
-      path = Puppet[setting]
+    paths.merge!('local CA certificate' => Puppet[:localcacert], 'local CRL' => Puppet[:hostcrl]) if options[:localca]
+    paths.each_pair do |label, path|
       if Puppet::FileSystem.exist?(path)
         Puppet::FileSystem.unlink(path)
         Puppet.notice _("Removed %{label} %{path}") % { label: label, path: path }

@@ -57,10 +57,10 @@ module Puppet
           # but it is good enough for most purposes.
           value_str = value.to_s
           value_str = "\"#{value_str}\"" if value.is_a?(String)
-    
+
           "  #{param} => #{value_str}"
         end.join(",\n")
-    
+
         <<-MANIFEST
 #{resource} { '#{title}':
   #{params_str}
@@ -70,10 +70,6 @@ MANIFEST
 
       def file_manifest(path, params = {})
         resource_manifest('file', path, params)
-      end
-
-      def cron_manifest(entry_name, params = {})
-        resource_manifest('cron', entry_name, params)
       end
 
       def user_manifest(username, params = {})

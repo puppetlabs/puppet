@@ -296,9 +296,10 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'deletes the request' do
-      File.open(Puppet[:hostcsr], 'w') { |f| f.write(@host[:csr].to_pem) }
+      path = File.join(Puppet[:requestdir], "#{Puppet[:certname]}.pem")
+      File.open(path, 'w') { |f| f.write(@host[:csr].to_pem) }
 
-      expects_command_to_pass(%r{Removed certificate request #{Puppet[:hostcsr]}})
+      expects_command_to_pass(%r{Removed certificate request #{path}})
     end
 
     it 'deletes the passfile' do
