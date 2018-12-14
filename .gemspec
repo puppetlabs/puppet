@@ -31,7 +31,7 @@ Gem::Specification.new do |s|
   s.rubyforge_project = "puppet"
   s.summary = "Puppet, an automated configuration management tool"
   s.specification_version = 3
-  s.add_runtime_dependency(%q<facter>, [">= 2.0.1", "< 4"])
+  s.add_runtime_dependency(%q<facter>, [">= 2.4.0", "< 4"])
   s.add_runtime_dependency(%q<hiera>, [">= 3.2.1", "< 4"])
   # PUP-7115 - return to a gem dependency in Puppet 5
   # s.add_runtime_dependency(%q<semantic_puppet>, ['>= 0.1.3', '< 2'])

@@ -289,21 +289,6 @@ original
       Facter.unstub(:debugging)
     end
 
-    describe 'does not support debugging' do
-      before :each do
-        Facter.stubs(:respond_to?).with(:debugging).returns false
-        Facter.stubs(:debugging).never
-      end
-
-      it 'does not enable Facter debugging for debug level' do
-        Puppet::Util::Log.level = :debug
-      end
-
-      it 'does not enable Facter debugging non-debug level' do
-        Puppet::Util::Log.level = :info
-      end
-    end
-
     describe 'does support debugging' do
       before :each do
         Facter.stubs(:respond_to?).with(:debugging).returns true
@@ -320,21 +305,6 @@ original
       end
     end
 
-    describe 'does not support trace' do
-      before :each do
-        Facter.stubs(:respond_to?).with(:trace).returns false
-        Facter.stubs(:trace).never
-      end
-
-      it 'does not enable Facter trace when enabled' do
-        Puppet[:trace] = true
-      end
-
-      it 'does not enable Facter trace when disabled' do
-        Puppet[:trace] = false
-      end
-    end
-
     describe 'does support trace' do
       before :each do
         Facter.stubs(:respond_to?).with(:trace).returns true
@@ -348,17 +318,6 @@ original
       it 'disables Facter trace when disabled' do
         Facter.stubs(:trace).with(false)
         Puppet[:trace] = false
-      end
-    end
-
-    describe 'does not support on_message' do
-      before :each do
-        Facter.stubs(:respond_to?).with(:on_message).returns false
-        Facter.stubs(:on_message).never
-      end
-
-      it 'does not call Facter.on_message' do
-        expect(Puppet::Util::Logging::setup_facter_logging!).to be_falsey
       end
     end
 
