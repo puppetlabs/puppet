@@ -4,6 +4,7 @@ require 'matchers/include_in_order'
 require 'puppet_spec/compiler'
 
 require 'puppet/transaction'
+require 'puppet/type/notify'
 require 'fileutils'
 
 describe Puppet::Transaction do
@@ -896,6 +897,30 @@ describe Puppet::Transaction do
       expect(transaction.report.resource_statuses['Notify[b]']).to be_skipped
     end
   end
+
+  describe "failed dependency is depended on multiple times" do
+    it "notifies the failed dependency once" do
+      command_string = File.expand_path('/my/command')
+      Puppet::Util::Execution.stubs(:execute).with([command_string]).raises(Puppet::ExecutionFailure, "Failed")
+
+      Puppet::Type::Notify.any_instance.expects(:send_log).with(:notice, "Dependency Exec[exec1] has failures: true")
+      Puppet::Type::Notify.any_instance.expects(:send_log).with(:notice, "Dependency Exec[exec2] has failures: true")
+      Puppet::Type::Notify.any_instance.expects(:send_log).with(:notice, "Dependency Exec[exec3] has failures: true")
+      Puppet::Type::Notify.any_instance.expects(:send_log).with(:notice, "Dependency Exec[exec4] has failures: true")
+      Puppet::Type::Notify.any_instance.expects(:send_log).with(:notice, "Dependency Exec[exec5] has failures: true")
+
+      Puppet::Type::Notify.any_instance.expects(:send_log).with(:warning, "Skipping because of failed dependencies").times(3)
+
+      apply_compiled_manifest(<<-MANIFEST)
+        exec { ['exec1', 'exec2', 'exec3', 'exec4', 'exec5']:
+          command => '#{command_string}'
+        } ->
+        notify { ['notify1', 'notify2', 'notify3']: }
+      MANIFEST
+
+    end
+  end
+
 end
 
 describe Puppet::Transaction, " when determining tags" do
