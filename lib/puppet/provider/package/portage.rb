@@ -111,7 +111,16 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     @atom ||= begin
       package_info = {}
       # do the search
-      search_output = qatom_bin(*([@resource[:name], '--format', output_format]))
+      should = @resource[:ensure]
+      case should
+      # The terms present, absent, purged, held, installed, latest in :ensure 
+      # resolve as Symbols, and we do not need specific package version in this case
+      when true, false, Symbol
+        search = @resource[:name]
+      else
+        search = '=' + @resource[:name] + '-' + "#{should}"
+      end
+      search_output = qatom_bin(*([search, '--format', output_format]))
       # verify if the search found anything
       match = result_format.match(search_output)
       if match
@@ -197,9 +206,11 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
           # ensure is what is currently installed
           # This DOES NOT choose to install/upgrade or not, just provides current info
           # prefer checking versions to slots as versions are finer grained
-          if qatom[:pv]
-            package[:version_available] = eix_get_version_for_versions(package[:installable_versions], qatom[:pv])
-            package[:ensure] = eix_get_version_for_versions(package[:installed_versions], qatom[:pv])
+          search = qatom[:pv]
+          search = search + '-' + qatom[:pr] if qatom[:pr]
+          if search
+            package[:version_available] = eix_get_version_for_versions(package[:installable_versions], search)
+            package[:ensure] = eix_get_version_for_versions(package[:installed_versions], search)
           elsif qatom[:slot]
             package[:version_available] = eix_get_version_for_slot(package[:slot_versions_available], qatom[:slot])
             package[:ensure] = eix_get_version_for_slot(package[:installed_slots], qatom[:slot])

@@ -23,14 +23,16 @@ describe provider do
     @slotted_resource.stubs(:[]).with(:name).returns(slotted_packagename)
     @slotted_resource.stubs(:[]).with(:install_options).returns(['--foo', { '--bar' => 'baz', '--baz' => 'foo' }])
 
-    versioned_packagename = "dev-lang/ruby-1.9.3"
+    versioned_packagename = "=dev-lang/ruby-1.9.3"
     @versioned_resource = stub('resource', :should => true)
     @versioned_resource.stubs(:[]).with(:name).returns(versioned_packagename)
+    @versioned_resource.stubs(:[]).with(:install_options).returns([])
     @versioned_resource.stubs(:[]).with(:uninstall_options).returns([])
 
     versioned_slotted_packagename = "=dev-lang/ruby-1.9.3:1.9"
     @versioned_slotted_resource = stub('resource', :should => true)
     @versioned_slotted_resource.stubs(:[]).with(:name).returns(versioned_slotted_packagename)
+    @versioned_slotted_resource.stubs(:[]).with(:install_options).returns([])
     @versioned_slotted_resource.stubs(:[]).with(:uninstall_options).returns([])
 
     set_packagename = "@system"
@@ -49,7 +51,7 @@ describe provider do
     @slotted_provider.stubs(:qatom).returns({:category=>"dev-lang", :pn=>"ruby", :pv=>nil, :pr=>nil, :slot=>":2.1", :pfx=>nil, :sfx=>nil})
     @slotted_provider.class.stubs(:emerge).with('--list-sets').returns(package_sets)
     @versioned_provider = provider.new(@versioned_resource)
-    @versioned_provider.stubs(:qatom).returns({:category=>"dev-lang", :pn=>"ruby", :pv=>"1.9.3", :pr=>nil, :slot=>nil, :pfx=>nil, :sfx=>nil})
+    @versioned_provider.stubs(:qatom).returns({:category=>"dev-lang", :pn=>"ruby", :pv=>"1.9.3", :pr=>nil, :slot=>nil, :pfx=>"=", :sfx=>nil})
     @versioned_provider.class.stubs(:emerge).with('--list-sets').returns(package_sets)
     @versioned_slotted_provider = provider.new(@versioned_slotted_resource)
     @versioned_slotted_provider.stubs(:qatom).returns({:category=>"dev-lang", :pn=>"ruby", :pv=>"1.9.3", :pr=>nil, :slot=>":1.9", :pfx=>"=", :sfx=>nil})
@@ -96,6 +98,18 @@ describe provider do
     @provider.expects(:emerge).with('--rage-clean', '--foo', '--bar=baz', '--baz=foo', @resource[:name])
 
     @provider.uninstall
+  end
+
+  it 'should support install of specific version' do
+    @versioned_provider.expects(:emerge).with(@versioned_resource[:name])
+
+    @versioned_provider.install
+  end
+
+  it 'should support install of specific version and slot' do
+    @versioned_slotted_provider.expects(:emerge).with(@versioned_slotted_resource[:name])
+
+    @versioned_slotted_provider.install
   end
 
   it 'should support uninstall of specific version' do
