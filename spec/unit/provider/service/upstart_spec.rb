@@ -1,10 +1,9 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platform.jruby? do
+describe Puppet::Type.type(:service).provider(:upstart), unless: Puppet::Util::Platform.jruby? do
   let(:manual) { "\nmanual" }
   let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
-  let!(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
 
   if Puppet::Util::Platform.windows?
     # Get a pid for $CHILD_STATUS to latch on to
@@ -24,13 +23,13 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
 
   def lists_processes_as(output)
     Puppet::Util::Execution.stubs(:execpipe).with("/sbin/initctl list").yields(output)
-    provider_class.stubs(:which).with("/sbin/initctl").returns("/sbin/initctl")
+    described_class.stubs(:which).with("/sbin/initctl").returns("/sbin/initctl")
   end
 
   it "should be the default provider on Ubuntu" do
     Facter.expects(:value).with(:operatingsystem).returns("Ubuntu")
     Facter.expects(:value).with(:operatingsystemmajrelease).returns("12.04")
-    expect(provider_class.default?).to be_truthy
+    expect(described_class.default?).to be_truthy
   end
 
   context "upstart daemon existence confine" do
@@ -41,9 +40,9 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
     # in one place makes updating it less painful in case we ever need to do this.
     def assert_upstart_daemon_existence_confine_is(expected_value)
       # Reload our provider to evaluate the :confine block
-      provider_class = Puppet::Type.type(:service).provider(:upstart)
+      described_class = Puppet::Type.type(:service).provider(:upstart)
 
-      upstart_daemon_existence_confine = provider_class.confine_collection.instance_variable_get(:@confines)[-1]
+      upstart_daemon_existence_confine = described_class.confine_collection.instance_variable_get(:@confines)[-1]
       expect(upstart_daemon_existence_confine.valid?).to be(expected_value)
     end
 
@@ -76,8 +75,8 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
   describe "excluding services" do
     it "ignores tty and serial on Redhat systems" do
       Facter.stubs(:value).with(:osfamily).returns('RedHat')
-      expect(provider_class.excludes).to include 'serial'
-      expect(provider_class.excludes).to include 'tty'
+      expect(described_class.excludes).to include 'serial'
+      expect(described_class.excludes).to include 'tty'
     end
   end
 
@@ -85,19 +84,19 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
     it "should be able to find all instances" do
       lists_processes_as("rc stop/waiting\nssh start/running, process 712")
 
-      expect(provider_class.instances.map {|provider| provider.name}).to match_array(["rc","ssh"])
+      expect(described_class.instances.map {|provider| provider.name}).to match_array(["rc","ssh"])
     end
 
     it "should attach the interface name for network interfaces" do
       lists_processes_as("network-interface (eth0)")
 
-      expect(provider_class.instances.first.name).to eq("network-interface INTERFACE=eth0")
+      expect(described_class.instances.first.name).to eq("network-interface INTERFACE=eth0")
     end
 
     it "should attach the job name for network interface security" do
       processes = "network-interface-security (network-interface/eth0)"
-      provider_class.stubs(:execpipe).yields(processes)
-      expect(provider_class.instances.first.name).to eq("network-interface-security JOB=network-interface/eth0")
+      described_class.stubs(:execpipe).yields(processes)
+      expect(described_class.instances.first.name).to eq("network-interface-security JOB=network-interface/eth0")
     end
 
     it "should not find excluded services" do
@@ -108,8 +107,8 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
       processes += "\ncryptdisks-udev stop/waiting"
       processes += "\nstatd-mounting stop/waiting"
       processes += "\ngssd-mounting stop/waiting"
-      provider_class.stubs(:execpipe).yields(processes)
-      expect(provider_class.instances).to be_empty
+      described_class.stubs(:execpipe).yields(processes)
+      expect(described_class.instances).to be_empty
     end
   end
 
@@ -119,7 +118,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
       Puppet::FileSystem.stubs(:exist?).returns(false)
       Puppet::FileSystem.expects(:exist?).with("/etc/init/foo-bar.conf").returns(true)
       resource = Puppet::Type.type(:service).new(:name => "foo-bar", :provider => :upstart)
-      provider = provider_class.new(resource)
+      provider = described_class.new(resource)
 
       expect(provider.initscript).to eq("/etc/init/foo-bar.conf")
     end
@@ -129,7 +128,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
       Puppet::FileSystem.stubs(:exist?).returns(false)
       Puppet::FileSystem.expects(:exist?).with("/etc/init/network-interface.conf").returns(true)
       resource = Puppet::Type.type(:service).new(:name => "network-interface INTERFACE=lo", :provider => :upstart)
-      provider = provider_class.new(resource)
+      provider = described_class.new(resource)
 
       expect(provider.initscript).to eq("/etc/init/network-interface.conf")
     end
@@ -138,7 +137,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
   describe "#status" do
     it "should use the default status command if none is specified" do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
-      provider = provider_class.new(resource)
+      provider = described_class.new(resource)
       provider.stubs(:is_upstart?).returns(true)
 
       provider.expects(:status_exec).with(["foo"]).returns("foo start/running, process 1000")
@@ -149,7 +148,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
     describe "when a special status command is specifed" do
       it "should use the provided status command" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -160,7 +159,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
 
       it "should return :stopped when the provided status command return non-zero" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -171,7 +170,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
 
       it "should return :running when the provided status command return zero" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -184,7 +183,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
     describe "when :hasstatus is set to false" do
       it "should return :stopped if the pid can not be found" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -194,7 +193,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
 
       it "should return :running if the pid can be found" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -206,7 +205,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
     describe "when a special status command is specifed" do
       it "should use the provided status command" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -217,7 +216,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
 
       it "should return :stopped when the provided status command return non-zero" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -228,7 +227,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
 
       it "should return :running when the provided status command return zero" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -241,7 +240,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
     describe "when :hasstatus is set to false" do
       it "should return :stopped if the pid can not be found" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -251,7 +250,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
 
       it "should return :running if the pid can be found" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
-        provider = provider_class.new(resource)
+        provider = described_class.new(resource)
         provider.stubs(:is_upstart?).returns(true)
 
         provider.expects(:status_exec).with(['foo']).never
@@ -262,7 +261,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
 
     it "should properly handle services with 'start' in their name" do
       resource = Puppet::Type.type(:service).new(:name => "foostartbar", :provider => :upstart)
-      provider = provider_class.new(resource)
+      provider = described_class.new(resource)
       provider.stubs(:is_upstart?).returns(true)
 
       provider.expects(:status_exec).with(["foostartbar"]).returns("foostartbar stop/waiting")
@@ -277,7 +276,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
     end
 
     let :provider do
-      provider_class.new(resource)
+      described_class.new(resource)
     end
 
     describe "when upstart job" do
@@ -301,7 +300,7 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
     end
 
     let :provider do
-      provider_class.new(resource)
+      described_class.new(resource)
     end
 
     let :init_script do

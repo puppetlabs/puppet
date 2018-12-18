@@ -1,11 +1,8 @@
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Freebsd',
-         unless: Puppet::Util::Platform.jruby? do
-  let(:provider_class) { Puppet::Type.type(:service).provider(:freebsd) }
-
+describe Puppet::Type.type(:service).provider(:freebsd) do
   before :each do
-    @provider = provider_class.new
+    @provider = described_class.new
     @provider.stubs(:initscript)
     Facter.stubs(:value).with(:osfamily).returns 'FreeBSD'
   end
