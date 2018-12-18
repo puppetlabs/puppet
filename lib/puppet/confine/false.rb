@@ -1,6 +1,8 @@
-require 'puppet/confine'
+require 'puppet/confine/boolean'
 
 class Puppet::Confine::False < Puppet::Confine
+  include Puppet::Confine::Boolean
+
   def self.summarize(confines)
     confines.inject(0) { |count, confine| count + confine.summary }
   end

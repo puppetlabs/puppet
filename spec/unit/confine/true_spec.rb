@@ -12,6 +12,11 @@ describe Puppet::Confine::True do
     expect { Puppet::Confine::True.new }.to raise_error(ArgumentError)
   end
 
+  it "should accept a lambda as a value for lazy evaluation" do
+    confine = Puppet::Confine::True.new(lambda { true })
+    expect(confine.values).to eql([true])
+  end
+
   describe "when testing values" do
     before do
       @confine = Puppet::Confine::True.new("foo")
