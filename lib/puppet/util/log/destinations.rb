@@ -66,6 +66,7 @@ Puppet::Util::Log.newdesttype :file do
   def initialize(path)
     @name = path
     @json = path.end_with?('.json') ? 1 : 0
+    @jsonl = path.end_with?('.jsonl')
 
     # first make sure the directory exists
     # We can't just use 'Config.use' here, because they've
@@ -110,6 +111,8 @@ Puppet::Util::Log.newdesttype :file do
   def handle(msg)
     if @json > 0
       @json > 1 ? @file.puts(',') : @json = 2
+      @file.puts(Puppet::Util::Json.dump(msg.to_structured_hash))
+    elsif @jsonl
       @file.puts(Puppet::Util::Json.dump(msg.to_structured_hash))
     else
       @file.puts("#{msg.time} #{msg.source} (#{msg.level}): #{msg}")
