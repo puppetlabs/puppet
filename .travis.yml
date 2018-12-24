@@ -1,6 +1,12 @@
 language: ruby
 sudo: false
+
+before_install:
+  - gem update --system
+  - gem install bundler
 bundler_args: --jobs 4 --retry 2 --without packaging documentation
+cache: bundler
+
 script:
   - "bundle exec rake $CHECK"
 notifications:

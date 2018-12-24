@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 context Puppet::Type.type(:package).provider(:gem) do
+
   context 'installing myresource' do
     let(:resource) do
       Puppet::Type.type(:package).new(
@@ -22,6 +23,7 @@ context Puppet::Type.type(:package).provider(:gem) do
     context "when installing" do
       it "should use the path to the gem" do
         described_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+        described_class.stubs(:validate_package_command).with("/my/gem").returns "/my/gem"
         provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
         provider.install
       end
@@ -109,10 +111,12 @@ context Puppet::Type.type(:package).provider(:gem) do
 
     context "#latest" do
       it "should return a single value for 'latest'" do
-        #gemlist is used for retrieving both local and remote version numbers, and there are cases
+        described_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+        described_class.stubs(:validate_package_command).with("/my/gem").returns "/my/gem"
+        # gemlist is used for retrieving both local and remote version numbers, and there are cases
         # (particularly local) where it makes sense for it to return an array.  That doesn't make
         # sense for '#latest', though.
-        provider.class.expects(:gemlist).with({ :justme => 'myresource'}).returns({
+        provider.class.expects(:gemlist).with({:command => '/my/gem', :justme => 'myresource'}).returns({
           :name     => 'myresource',
           :ensure   => ["3.0"],
           :provider => :gem,
@@ -121,9 +125,11 @@ context Puppet::Type.type(:package).provider(:gem) do
       end
 
       it "should list from the specified source repository" do
+        described_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+        described_class.stubs(:validate_package_command).with("/my/gem").returns "/my/gem"
         resource[:source] = "http://foo.bar.baz/gems"
         provider.class.expects(:gemlist).
-          with({:justme => 'myresource', :source => "http://foo.bar.baz/gems"}).
+          with({:command => '/my/gem', :justme => 'myresource', :source => "http://foo.bar.baz/gems"}).
           returns({
             :name     => 'myresource',
             :ensure   => ["3.0"],
@@ -136,6 +142,7 @@ context Puppet::Type.type(:package).provider(:gem) do
     context "#instances" do
       before do
         described_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+        described_class.stubs(:validate_package_command).with("/my/gem").returns "/my/gem"
       end
 
       it "should return an empty array when no gems installed" do
@@ -150,8 +157,8 @@ context Puppet::Type.type(:package).provider(:gem) do
         HEREDOC
 
         expect(described_class.instances.map {|p| p.properties}).to eq([
-          {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
-          {:ensure => ["0.8.7", "0.6.9"], :provider => :gem, :name => 'vagrant'}
+          {:ensure => ["1.2.0"],          :provider => :gem, :target=>'/my/gem', :name => 'systemu'},
+          {:ensure => ["0.8.7", "0.6.9"], :provider => :gem, :target=>'/my/gem', :name => 'vagrant'}
         ])
       end
 
@@ -162,8 +169,8 @@ context Puppet::Type.type(:package).provider(:gem) do
         HEREDOC
 
         expect(described_class.instances.map {|p| p.properties}).to eq([
-          {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
-          {:ensure => ["1.6.1", "1.4.4.1"], :provider => :gem, :name => 'nokogiri'}
+          {:ensure => ["1.2.0"],            :provider => :gem, :target=>'/my/gem', :name => 'systemu'},
+          {:ensure => ["1.6.1", "1.4.4.1"], :provider => :gem, :target=>'/my/gem', :name => 'nokogiri'}
         ])
       end
 
@@ -173,7 +180,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         HEREDOC
 
         expect(described_class.instances.map {|p| p.properties}).to eq([
-          {:name => 'bundler', :ensure => ["1.16.1", "1.16.0", "1.15.1"], :provider => :gem}
+          {:name => 'bundler', :ensure => ["1.16.1", "1.16.0", "1.15.1"], :provider => :gem, :target=>'/my/gem'}
         ])
       end
 
@@ -182,16 +189,16 @@ context Puppet::Type.type(:package).provider(:gem) do
           returns(File.read(my_fixture('line-with-1.8.5-warning')))
 
         expect(described_class.instances.map {|p| p.properties}).
-          to eq([{:provider=>:gem, :ensure=>["0.3.2"], :name=>"columnize"},
-                 {:provider=>:gem, :ensure=>["1.1.3"], :name=>"diff-lcs"},
-                 {:provider=>:gem, :ensure=>["0.0.1"], :name=>"metaclass"},
-                 {:provider=>:gem, :ensure=>["0.10.5"], :name=>"mocha"},
-                 {:provider=>:gem, :ensure=>["0.8.7"], :name=>"rake"},
-                 {:provider=>:gem, :ensure=>["2.9.0"], :name=>"rspec-core"},
-                 {:provider=>:gem, :ensure=>["2.9.1"], :name=>"rspec-expectations"},
-                 {:provider=>:gem, :ensure=>["2.9.0"], :name=>"rspec-mocks"},
-                 {:provider=>:gem, :ensure=>["0.9.0"], :name=>"rubygems-bundler"},
-                 {:provider=>:gem, :ensure=>["1.11.3.3"], :name=>"rvm"}])
+          to eq([{:provider=>:gem, :target=>'/my/gem', :ensure=>["0.3.2"],    :name=>"columnize"},
+                 {:provider=>:gem, :target=>'/my/gem', :ensure=>["1.1.3"],    :name=>"diff-lcs"},
+                 {:provider=>:gem, :target=>'/my/gem', :ensure=>["0.0.1"],    :name=>"metaclass"},
+                 {:provider=>:gem, :target=>'/my/gem', :ensure=>["0.10.5"],   :name=>"mocha"},
+                 {:provider=>:gem, :target=>'/my/gem', :ensure=>["0.8.7"],    :name=>"rake"},
+                 {:provider=>:gem, :target=>'/my/gem', :ensure=>["2.9.0"],    :name=>"rspec-core"},
+                 {:provider=>:gem, :target=>'/my/gem', :ensure=>["2.9.1"],    :name=>"rspec-expectations"},
+                 {:provider=>:gem, :target=>'/my/gem', :ensure=>["2.9.0"],    :name=>"rspec-mocks"},
+                 {:provider=>:gem, :target=>'/my/gem', :ensure=>["0.9.0"],    :name=>"rubygems-bundler"},
+                 {:provider=>:gem, :target=>'/my/gem', :ensure=>["1.11.3.3"], :name=>"rvm"}])
       end
     end
 
@@ -276,6 +283,37 @@ context Puppet::Type.type(:package).provider(:gem) do
     end
   end
 
+  context 'installing myresource with a target' do
+
+    it { is_expected.to be_targetable }
+
+    let(:resource) do
+      Puppet::Type.type(:package).new(
+        :name     => 'myresource',
+        :ensure   => :installed,
+      )
+    end
+
+    let(:provider) do
+      provider = described_class.new
+      provider.resource = resource
+      provider
+    end
+
+    before :each do
+      resource.provider = provider
+    end
+
+    context "when installing" do
+      it "should use the path to the gem" do
+        resource[:target] = "/other/gem"
+        described_class.stubs(:validate_package_command).with("/other/gem").returns "/other/gem"
+        provider.expects(:execute).with { |args| args[0] == "/other/gem" }.returns ""
+        provider.install
+      end
+    end
+  end
+
   context 'uninstalling myresource' do
     let(:resource) do
       Puppet::Type.type(:package).new(
@@ -297,6 +335,7 @@ context Puppet::Type.type(:package).provider(:gem) do
     context "when uninstalling" do
       it "should use the path to the gem" do
         described_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+        described_class.stubs(:validate_package_command).with("/my/gem").returns "/my/gem"
         provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
         provider.uninstall
       end

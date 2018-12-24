@@ -6,12 +6,13 @@ Puppet::Type.type(:package).provide :puppet_gem, :parent => :gem do
 
   has_feature :versionable, :install_options, :uninstall_options
 
+  # Puppet on Windows prepends its paths to PATH, including Puppet's RUBY_DIR.
+  # This means that we do not need to specify the absolute path.
   if Puppet::Util::Platform.windows?
-    # On windows, we put our ruby ahead of anything that already
-    # existed on the system PATH. This means that we do not need to
-    # sort out the absolute path.
-    commands :gemcmd => "gem"
+    gem_cmd = 'gem.bat'
   else
-    commands :gemcmd => "/opt/puppetlabs/puppet/bin/gem"
+    gem_cmd = '/opt/puppetlabs/puppet/bin/gem'
   end
+
+  commands :gemcmd => gem_cmd
 end

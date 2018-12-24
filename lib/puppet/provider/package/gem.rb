@@ -15,13 +15,44 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
     or an array where each element is either a string or a hash."
 
-  has_feature :versionable, :install_options, :uninstall_options
+  has_feature :versionable, :install_options, :uninstall_options, :targetable
 
-  commands :gemcmd => "gem"
+  gem_cmd = 'gem'
+
+  # Puppet on Windows prepends its paths to PATH, including Puppet's RUBY_DIR.
+  # That results in the which() method in command() in lib/puppet/provider.rb
+  # always returning Puppet's ruby 'gem' command. Instead, use which()
+  # with a PATH without Puppet's RUBY_DIR, and return the absolute path.
+  if Puppet::Util::Platform.windows?
+    puppet_ruby_dir = Puppet::Util.get_env('RUBY_DIR')
+    unless puppet_ruby_dir.nil?
+      puppet_ruby_bin_dir = puppet_ruby_dir + '\bin'
+      path_array = Puppet::Util.get_env('PATH').split(';')
+      path_array.reject! { |p| p == puppet_ruby_bin_dir }
+      path = path_array.join(';')
+      gem_cmd = Puppet::Util.withenv({ :PATH => path }, :windows) { which('gem') }
+    end
+  end
+
+  # Define command(s) as optional when the provider is targetable.
+  # This avoids the evaluation of provider suitability until targets are evaluated.
+  has_command(:gemcmd, gem_cmd) do
+    is_optional
+  end
+
+  # Instances!
+
+  def self.instances(cmd = nil)
+    cmd = command_or_default_package_command(cmd, :gemcmd)
+    gemlist(:command => cmd, :local => true).collect do |pkg|
+      # Track the package command when the provider is targetable.
+      pkg[:target] = cmd
+      new(pkg)
+    end
+  end
 
   def self.gemlist(options)
-    gem_list_command = [command(:gemcmd), "list"]
-
+    gem_list_command = [options[:command], 'list']
     if options[:local]
       gem_list_command << "--local"
     else
@@ -70,12 +101,6 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
   end
 
-  def self.instances(justme = false)
-    gemlist(:local => true).collect do |hash|
-      new(hash)
-    end
-  end
-
   def insync?(is)
     return false unless is && is != :absent
 
@@ -93,7 +118,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   end
 
   def install(useversion = true)
-    command = [command(:gemcmd), "install"]
+    command = [resource_or_default_package_command(:gemcmd), 'install']
     command += install_options if resource[:install_options]
     if Puppet::Util::Platform.windows?
       version = resource[:ensure]
@@ -137,8 +162,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   end
 
   def latest
-    # This always gets the latest version available.
-    gemlist_options = {:justme => resource[:name]}
+    gemlist_options = {:command => resource_or_default_package_command(:gemcmd), :justme => resource[:name]}
     gemlist_options.merge!({:source => resource[:source]}) unless resource[:source].nil?
     hash = self.class.gemlist(gemlist_options)
 
@@ -146,11 +170,11 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   end
 
   def query
-    self.class.gemlist(:justme => resource[:name], :local => true)
+    self.class.gemlist(:command => resource_or_default_package_command(:gemcmd), :justme => resource[:name], :local => true)
   end
 
   def uninstall
-    command = [command(:gemcmd), "uninstall"]
+    command = [resource_or_default_package_command(:gemcmd), 'uninstall']
     command << "--executables" << "--all" << resource[:name]
 
     command += uninstall_options if resource[:uninstall_options]

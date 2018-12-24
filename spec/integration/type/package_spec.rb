@@ -93,23 +93,23 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
   end
 
   describe "with different title" do
-    before :each do
-      @alt_package = Puppet::Type.type(:package).new(:name => "yay", :title => "gem-yay", :ensure => :present)
-    end
+    before {
+      @alt_package = Puppet::Type.type(:package).new(:name => "yay", :title => "different-yay", :ensure => :present)
+    }
 
     it "should give an error" do
       provider_name = Puppet::Type.type(:package).defaultprovider.name
       expect {
         @catalog.add_resource(@alt_package)
-      }.to raise_error ArgumentError, "Cannot alias Package[gem-yay] to [\"yay\", :#{provider_name}]; resource [\"Package\", \"yay\", :#{provider_name}] already declared"
+      }.to raise_error ArgumentError, "Cannot alias Package[different-yay] to [\"yay\", :#{provider_name}, nil]; resource [\"Package\", \"yay\", :#{provider_name}, nil] already declared"
     end
   end
 
   describe "from multiple providers", unless: Puppet::Util::Platform.jruby? do
-    provider_class = Puppet::Type.type(:package).provider(:gem)
+    alt_provider_class = Puppet::Type.type(:package).provider(:gem)
 
     before :each do
-      @alt_provider = provider_class.new
+      @alt_provider = alt_provider_class.new
       @alt_package = Puppet::Type.type(:package).new(:name => "yay", :title => "gem-yay", :provider => @alt_provider, :ensure => :present)
       @catalog.add_resource(@alt_package)
     end
@@ -132,6 +132,29 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
           @catalog.apply
         end
       end
+    end
+  end
+
+  describe "from one provider with multiple targets", unless: Puppet::Util::Platform.jruby? do
+    alt_provider_class = Puppet::Type.type(:package).provider(:gem)
+
+    before :each do
+      alt_provider_class.stubs(:validate_gem_command).with("/other/gem2").returns "/other/gem2"
+      alt_provider_class.stubs(:validate_gem_command).with("/other/gem3").returns "/other/gem3"
+      alt_provider_class.stubs(:instances).returns([])
+      @alt_provider = alt_provider_class.new
+      @alt_package1 = Puppet::Type.type(:package).new(:name => "yay", :title => "gem-default", :provider => @alt_provider, :ensure => :absent)
+      @alt_package2 = Puppet::Type.type(:package).new(:name => "yay", :title => "gem-other-2", :provider => @alt_provider, :target => '/other/gem2', :ensure => :absent)
+      @alt_package3 = Puppet::Type.type(:package).new(:name => "yay", :title => "gem-other-3", :provider => @alt_provider, :target => '/other/gem3', :ensure => :absent)
+      @catalog.add_resource(@alt_package1)
+      @catalog.add_resource(@alt_package2)
+    end
+
+    it "it should not error" do
+      @alt_provider.stubs(:properties).returns(:ensure => :absent)
+      @provider.stubs(:properties).returns(:ensure => :absent)
+      @provider.expects(:install)
+      @catalog.apply
     end
   end
 end
