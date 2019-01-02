@@ -1,6 +1,8 @@
 language: ruby
 sudo: false
 bundler_args: --without development extra packaging
+before_install:
+  - if [[ $TRAVIS_RUBY_VERSION == "1.9.3" ]]; then gem update bundler; bundler -v; fi
 script:
   - "bundle exec rake $CHECK"
 notifications:
