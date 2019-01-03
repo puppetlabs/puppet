@@ -28,8 +28,12 @@ describe provider_class do
   end
 
   describe "when installing" do
+    before :each do
+      described_class.stubs(:command).with(:gemcmd).returns puppet_gem
+      provider.stubs(:gem_version).with(puppet_gem).returns '1.9.9'
+    end
+
     it "should use the path to the gem" do
-      provider_class.expects(:which).with(puppet_gem).returns(puppet_gem)
       provider.expects(:execute).with { |args| args[0] == puppet_gem }.returns ''
       provider.install
     end
@@ -48,9 +52,9 @@ describe provider_class do
 
   describe "when uninstalling" do
     it "should use the path to the gem" do
-      provider_class.expects(:which).with(puppet_gem).returns(puppet_gem)
+      described_class.stubs(:command).with(:gemcmd).returns puppet_gem
       provider.expects(:execute).with { |args| args[0] == puppet_gem }.returns ''
-      provider.install
+      provider.uninstall
     end
 
     it "should not append uninstall_options by default" do

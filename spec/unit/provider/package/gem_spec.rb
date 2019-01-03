@@ -23,8 +23,12 @@ context 'installing myresource' do
     end
 
     describe "when installing" do
+      before :each do
+        described_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+        provider.stubs(:gem_version).with("/my/gem").returns '1.9.9'
+      end
+
       it "should use the path to the gem" do
-        provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"
         provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
         provider.install
       end
@@ -34,13 +38,19 @@ context 'installing myresource' do
         provider.install
       end
 
-      it "should specify that documentation should not be included" do
+      it "should specify that rdoc should not be included when gem version is < 2.0.0" do
         provider.expects(:execute).with { |args| args[2] == "--no-rdoc" }.returns ""
         provider.install
       end
 
-      it "should specify that RI should not be included" do
+      it "should specify that ri should not be included when gem version is < 2.0.0" do
         provider.expects(:execute).with { |args| args[3] == "--no-ri" }.returns ""
+        provider.install
+      end
+
+      it "should specify that document should not be included when gem version is >= 2.0.0" do
+        provider.stubs(:gem_version).with("/my/gem").returns '2.0.0'
+        provider.expects(:execute).with { |args| args[2] == "--no-document" }.returns ""
         provider.install
       end
 
@@ -84,7 +94,7 @@ context 'installing myresource' do
         describe "as a non-file and non-puppet url" do
           it "should treat the source as a gem repository" do
             resource[:source] = "http://host/my/file"
-            provider.expects(:execute).with { |args| args[2..4] == ["--source", "http://host/my/file", "myresource"] }.returns ""
+            provider.expects(:execute).with { |args| args[2..3] == ["--source", "http://host/my/file"] }.returns ""
             provider.install
           end
         end
