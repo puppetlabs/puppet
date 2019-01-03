@@ -3,6 +3,8 @@
 #
 require 'ripper'
 class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
+  UNKNOWN = '<unknown>'.freeze
+
   # Produces an instance of the Function class with the given typed_name, or fails with an error if the
   # given ruby source does not produce this instance when evaluated.
   #
@@ -86,10 +88,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
       result << :found_newfunction if identity_part.is_a?(Array) && identity_part[1] == 'newfunction'
     when :def, :defs
       # There should not be any calls to def in a 3x function
-      # Ripper returns an array [:def, ...] for a regular def name, and a [:defs ...] for a def self.name
-      identity_part = find_identity(x)
-      # assume there is nothing fancy and that there is always an array with name/line to use (or get nothing)
-      mname, mline = (identity_part.is_a?(Array) ? [identity_part[1], identity_part[2][1]] : [nil, nil]).map {|v| v.nil? ? '<unknown>' : v }
+      mname, mline = extract_name_line(find_identity(x))
       raise SecurityError, _("Illegal method definition of method '%{method_name}' on line %{line}' in legacy function. See %{url} for more information") % { 
         method_name: mname,
         line: mline,
@@ -104,4 +103,17 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
     rast.find{|x| x.is_a?(Array) && x[0] == :@ident }
   end
   private_class_method :find_identity
+
+  # Extracts the method name and line number from the Ripper Rast for an id entry.
+  # The expected input (a result from Ripper :@ident entry) is an array with:
+  # [0] == :def (or :defs for self.def)
+  # [1] == method name
+  # [2] == [ <filename>, <linenumber> ]
+  #
+  # Returns an Array; a tuple with method name and line number or "<unknown>" if either is missing, or format is not the expected
+  #
+  def self.extract_name_line(x)
+    (x.is_a?(Array) ? [ x[1], x[2].is_a?(Array) ? x[2][1] : nil] : [nil, nil]).map {|v| v.nil? ? UNKNOWN : v }
+  end
+  private_class_method :extract_name_line
 end
