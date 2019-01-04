@@ -25,9 +25,13 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
   end
 
   context "when installing" do
+    before :each do
+      allow(described_class).to receive(:command).with(:gemcmd).and_return(puppet_gem)
+      allow(provider).to receive(:gem_version).with(puppet_gem).and_return('1.9.9')
+    end
+
     it "should use the path to the gem" do
-      expect(described_class).to receive(:which).with(puppet_gem).and_return(puppet_gem)
-      expect(provider).to receive(:execute) do |args|
+      expect(provider).to receive(:execute).at_least(:once) do |args|
         expect(args[0]).to eq(puppet_gem)
         ''
       end
@@ -35,7 +39,7 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
     end
 
     it "should not append install_options by default" do
-      expect(provider).to receive(:execute) do |args|
+      expect(provider).to receive(:execute).with(array_including(puppet_gem, 'install'), be_a(Hash)).at_least(:once) do |args|
         expect(args.length).to eq(5)
         ''
       end
@@ -44,7 +48,7 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
 
     it "should allow setting an install_options parameter" do
       resource[:install_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-      expect(provider).to receive(:execute) do |args|
+      expect(provider).to receive(:execute).with(array_including(puppet_gem, 'install'), be_a(Hash)).at_least(:once) do |args|
         expect(args[2]).to eq('--force')
         expect(args[3]).to eq('--bindir=/usr/bin')
         ''
@@ -60,7 +64,7 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
         expect(args[0]).to eq(puppet_gem)
         ''
       end
-      provider.install
+      provider.uninstall
     end
 
     it "should not append uninstall_options by default" do

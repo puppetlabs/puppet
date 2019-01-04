@@ -20,8 +20,12 @@ context Puppet::Type.type(:package).provider(:gem) do
     end
 
     context "when installing" do
-      it "should use the path to the gem" do
+      before :each do
         allow(described_class).to receive(:command).with(:gemcmd).and_return("/my/gem")
+        allow(provider).to receive(:gem_version).with("/my/gem").and_return('1.9.9')
+      end
+
+      it "should use the path to the gem" do
         expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[0]).to eq("/my/gem") }.and_return("")
         provider.install
       end
@@ -31,13 +35,19 @@ context Puppet::Type.type(:package).provider(:gem) do
         provider.install
       end
 
-      it "should specify that documentation should not be included" do
+      it "should specify that --rdoc should not be included when gem version is < 2.0.0" do
         expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[2]).to eq("--no-rdoc") }.and_return("")
         provider.install
       end
 
-      it "should specify that RI should not be included" do
+      it "should specify that --ri should not be included when gem version is < 2.0.0" do
         expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[3]).to eq("--no-ri") }.and_return("")
+        provider.install
+      end
+
+      it "should specify that --document should not be included when gem version is >= 2.0.0" do
+        allow(provider).to receive(:gem_version).with("/my/gem").and_return('2.0.0')
+        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[2]).to eq("--no-document") }.and_return("")
         provider.install
       end
 
@@ -65,7 +75,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a normal file" do
           it "should use the file name instead of the gem name" do
             resource[:source] = "/my/file"
-            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[2]).to eq("/my/file") }.and_return("")
+            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4]).to eq("/my/file") }.and_return("")
             provider.install
           end
         end
@@ -73,7 +83,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a file url" do
           it "should use the file name instead of the gem name" do
             resource[:source] = "file:///my/file"
-            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[2]).to eq("/my/file") }.and_return("")
+            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4]).to eq("/my/file") }.and_return("")
             provider.install
           end
         end
@@ -88,7 +98,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a non-file and non-puppet url" do
           it "should treat the source as a gem repository" do
             resource[:source] = "http://host/my/file"
-            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[2..4]).to eq(["--source", "http://host/my/file", "myresource"]) }.and_return("")
+            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4..6]).to eq(["--source", "http://host/my/file", "myresource"]) }.and_return("")
             provider.install
           end
         end
@@ -96,7 +106,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a windows path on windows", :if => Puppet.features.microsoft_windows? do
           it "should treat the source as a local path" do
             resource[:source] = "c:/this/is/a/path/to/a/gem.gem"
-            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[2]).to eq("c:/this/is/a/path/to/a/gem.gem") }.and_return("")
+            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4]).to eq("c:/this/is/a/path/to/a/gem.gem") }.and_return("")
             provider.install
           end
         end

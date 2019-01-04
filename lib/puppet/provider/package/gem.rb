@@ -92,14 +92,27 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     is.any? { |version| dependency.match?('', version) }
   end
 
+  def gem_version(cmd)
+    command = [cmd, '--version']
+    execute(command, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
+  end
+
   def install(useversion = true)
     command = [command(:gemcmd), "install"]
     command += install_options if resource[:install_options]
+
     if Puppet.features.microsoft_windows?
       version = resource[:ensure]
       command << "-v" << %Q["#{version}"] if (! resource[:ensure].is_a? Symbol) and useversion
     else
       command << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
+    end
+
+    command_version = gem_version(command(:gemcmd))
+    if Puppet::Util::Package.versioncmp(command_version, '2.0.0') == -1
+      command << '--no-rdoc' << '--no-ri'
+    else
+      command << '--no-document'
     end
 
     if source = resource[:source]
@@ -128,7 +141,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         end
       end
     else
-      command << "--no-rdoc" << "--no-ri" << resource[:name]
+      command << resource[:name]
     end
 
     output = execute(command, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
