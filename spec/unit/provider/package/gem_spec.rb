@@ -20,40 +20,50 @@ context Puppet::Type.type(:package).provider(:gem) do
     end
 
     context "when installing" do
-      it "should use the path to the gem" do
+      before :each do
         described_class.stubs(:command).with(:gemcmd).returns "/my/gem"
-        provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
+        provider.stubs(:rubygem_version).returns '1.9.9'
+      end
+
+      it "should use the path to the gem" do
+        described_class.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
         provider.install
       end
 
       it "should specify that the gem is being installed" do
-        provider.expects(:execute).with { |args| args[1] == "install" }.returns ""
+        described_class.expects(:execute).with { |args| args[1] == "install" }.returns ""
         provider.install
       end
 
-      it "should specify that documentation should not be included" do
-        provider.expects(:execute).with { |args| args[2] == "--no-rdoc" }.returns ""
+      it "should specify that --rdoc should not be included when gem version is < 2.0.0" do
+        described_class.expects(:execute).with { |args| args[2] == "--no-rdoc" }.returns ""
         provider.install
       end
 
-      it "should specify that RI should not be included" do
-        provider.expects(:execute).with { |args| args[3] == "--no-ri" }.returns ""
+      it "should specify that --ri should not be included when gem version is < 2.0.0" do
+        described_class.expects(:execute).with { |args| args[3] == "--no-ri" }.returns ""
+        provider.install
+      end
+
+      it "should specify that --document should not be included when gem version is >= 2.0.0" do
+        provider.stubs(:rubygem_version).returns '2.0.0'
+        described_class.expects(:execute).with { |args| args[2] == "--no-document" }.returns ""
         provider.install
       end
 
       it "should specify the package name" do
-        provider.expects(:execute).with { |args| args[4] == "myresource" }.returns ""
+        described_class.expects(:execute).with { |args| args[4] == "myresource" }.returns ""
         provider.install
       end
 
       it "should not append install_options by default" do
-        provider.expects(:execute).with { |args| args.length == 5 }.returns ""
+        described_class.expects(:execute).with { |args| args.length == 5 }.returns ""
         provider.install
       end
 
       it "should allow setting an install_options parameter" do
         resource[:install_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-        provider.expects(:execute).with { |args| args[2] == '--force' && args[3] == '--bindir=/usr/bin' }.returns ''
+        described_class.expects(:execute).with { |args| args[2] == '--force' && args[3] == '--bindir=/usr/bin' }.returns ''
         provider.install
       end
 
@@ -61,7 +71,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a normal file" do
           it "should use the file name instead of the gem name" do
             resource[:source] = "/my/file"
-            provider.expects(:execute).with { |args| args[2] == "/my/file" }.returns ""
+            described_class.expects(:execute).with { |args| args[4] == "/my/file" }.returns ""
             provider.install
           end
         end
@@ -69,7 +79,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a file url" do
           it "should use the file name instead of the gem name" do
             resource[:source] = "file:///my/file"
-            provider.expects(:execute).with { |args| args[2] == "/my/file" }.returns ""
+            described_class.expects(:execute).with { |args| args[4] == "/my/file" }.returns ""
             provider.install
           end
         end
@@ -84,7 +94,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a non-file and non-puppet url" do
           it "should treat the source as a gem repository" do
             resource[:source] = "http://host/my/file"
-            provider.expects(:execute).with { |args| args[2..4] == ["--source", "http://host/my/file", "myresource"] }.returns ""
+            described_class.expects(:execute).with { |args| args[4..5] == ["--source", "http://host/my/file"] }.returns ""
             provider.install
           end
         end
@@ -92,7 +102,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a windows path on windows", :if => Puppet.features.microsoft_windows? do
           it "should treat the source as a local path" do
             resource[:source] = "c:/this/is/a/path/to/a/gem.gem"
-            provider.expects(:execute).with { |args| args[2] == "c:/this/is/a/path/to/a/gem.gem" }.returns ""
+            described_class.expects(:execute).with { |args| args[4] == "c:/this/is/a/path/to/a/gem.gem" }.returns ""
             provider.install
           end
         end
@@ -297,38 +307,38 @@ context Puppet::Type.type(:package).provider(:gem) do
     context "when uninstalling" do
       it "should use the path to the gem" do
         described_class.stubs(:command).with(:gemcmd).returns "/my/gem"
-        provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
+        described_class.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
         provider.uninstall
       end
 
       it "should specify that the gem is being uninstalled" do
-        provider.expects(:execute).with { |args| args[1] == "uninstall" }.returns ""
+        described_class.expects(:execute).with { |args| args[1] == "uninstall" }.returns ""
         provider.uninstall
       end
 
       it "should specify that the relevant executables should be removed without confirmation" do
-        provider.expects(:execute).with { |args| args[2] == "--executables" }.returns ""
+        described_class.expects(:execute).with { |args| args[2] == "--executables" }.returns ""
         provider.uninstall
       end
 
       it "should specify that all the matching versions should be removed" do
-        provider.expects(:execute).with { |args| args[3] == "--all" }.returns ""
+        described_class.expects(:execute).with { |args| args[3] == "--all" }.returns ""
         provider.uninstall
       end
 
       it "should specify the package name" do
-        provider.expects(:execute).with { |args| args[4] == "myresource" }.returns ""
+        described_class.expects(:execute).with { |args| args[4] == "myresource" }.returns ""
         provider.uninstall
       end
 
       it "should not append uninstall_options by default" do
-        provider.expects(:execute).with { |args| args.length == 5 }.returns ""
+        described_class.expects(:execute).with { |args| args.length == 5 }.returns ""
         provider.uninstall
       end
 
       it "should allow setting an uninstall_options parameter" do
         resource[:uninstall_options] = [ '--ignore-dependencies', {'--version' => '0.1.1' } ]
-        provider.expects(:execute).with { |args| args[5] == '--ignore-dependencies' && args[6] == '--version=0.1.1' }.returns ''
+        described_class.expects(:execute).with { |args| args[5] == '--ignore-dependencies' && args[6] == '--version=0.1.1' }.returns ''
         provider.uninstall
       end
     end
