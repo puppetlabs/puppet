@@ -59,10 +59,11 @@ describe Puppet::Forge do
       it "includes any defined module_groups, ensuring to only encode them once in the URI" do
         Puppet[:module_groups] = 'base+pe'
         module_name = 'puppetlabs-acl'
+        exclusions = "readme%2Cchangelog%2Clicense%2Curi%2Cmodule%2Ctags%2Csupported%2Cfile_size%2Cdownloads%2Ccreated_at%2Cupdated_at%2Cdeleted_at"
 
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
-          encoded_uri = "/v3/releases?module=#{module_name}&sort_by=version&module_groups=base%20pe"
+          encoded_uri = "/v3/releases?module=#{module_name}&sort_by=version&exclude_fields=#{exclusions}&module_groups=base%20pe"
           http.expects(:request).with(responds_with(:path, encoded_uri))
         end
 
@@ -71,10 +72,11 @@ describe Puppet::Forge do
 
       it "single encodes the module name term in the URI" do
         module_name = "puppetlabs-#{mixed_utf8_query_param}"
+        exclusions = "readme%2Cchangelog%2Clicense%2Curi%2Cmodule%2Ctags%2Csupported%2Cfile_size%2Cdownloads%2Ccreated_at%2Cupdated_at%2Cdeleted_at"
 
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
-          encoded_uri = "/v3/releases?module=puppetlabs-#{mixed_utf8_query_param_encoded}&sort_by=version"
+          encoded_uri = "/v3/releases?module=puppetlabs-#{mixed_utf8_query_param_encoded}&sort_by=version&exclude_fields=#{exclusions}"
           http.expects(:request).with(responds_with(:path, encoded_uri))
         end
 
