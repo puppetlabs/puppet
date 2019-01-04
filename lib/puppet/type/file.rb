@@ -298,6 +298,30 @@ Puppet::Type.newtype(:file) do
     defaultto :true
   end
 
+  newparam(:staging_location) do
+    desc "When rendering a file first render it to this location. The default
+         location is the same path as the desired location with a unique filename.
+         This parameter is useful in conjuction with validate_cmd to test a
+         file before moving the file to it's final location.
+         WARNING: File replacement is only guaranteed to be atomic if the staging
+         location is on the same filesystem as the final location."
+
+    validate do |value|
+      unless Puppet::Util.absolute_path?(value)
+        fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
+      end
+    end
+
+    munge do |value|
+      if value.start_with?('//') and ::File.basename(value) == "/"
+        # This is a UNC path pointing to a share, so don't add a trailing slash
+        ::File.expand_path(value)
+      else
+        ::File.join(::File.split(::File.expand_path(value)))
+      end
+    end
+  end
+
   newparam(:validate_cmd) do
     desc "A command for validating the file's syntax before replacing it. If
       Puppet would need to rewrite a file due to new `source` or `content`, it
@@ -862,7 +886,7 @@ Puppet::Type.newtype(:file) do
     mode_int = mode ? symbolic_mode_to_int(mode, Puppet::Util::DEFAULT_POSIX_MODE) : nil
 
     if write_temporary_file?
-      Puppet::Util.replace_file(self[:path], mode_int) do |file|
+      Puppet::Util.replace_file(self[:path], mode_int, self[:staging_location]) do |file|
         file.binmode
         devfail 'a property should have been provided if write_temporary_file? returned true' if property.nil?
         content_checksum = property.write(file)

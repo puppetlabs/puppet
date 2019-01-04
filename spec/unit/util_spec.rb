@@ -855,7 +855,7 @@ describe Puppet::Util do
       subject.replace_file(temp_path, 0440) do |fh|
         fh.puts('some text in there')
       end
-      
+
       expect(File.read(temp_path)).to eq("some text in there\n")
       expect(get_mode(temp_path)).to eq(0440)
     end
@@ -869,6 +869,23 @@ describe Puppet::Util do
         expect(get_mode(new_target)).to eq(0555)
       ensure
         Puppet::FileSystem.unlink(new_target) if Puppet::FileSystem.exist?(new_target)
+      end
+    end
+
+    it "should use a temporary staging location if provided" do
+      new_target = target.path + '.baz'
+      expect(Puppet::FileSystem.exist?(new_target)).to be_falsey
+
+      temp_target = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(new_target), Dir.tmpdir())
+
+      begin
+        Puppet::FileSystem::Uniquefile.expects(:new)
+          .with(Puppet::FileSystem.basename_string(new_target), Dir.tmpdir())
+          .returns(temp_target)
+        subject.replace_file(new_target, 0555, Dir.tmpdir()) {|fh| fh.puts "foo" }
+      ensure
+        Puppet::FileSystem.unlink(new_target) if Puppet::FileSystem.exist?(new_target)
+        Puppet::FileSystem.unlink(temp_target) if Puppet::FileSystem.exist?(temp_target.to_s)
       end
     end
 
