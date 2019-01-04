@@ -1,11 +1,84 @@
 class Puppet::Provider::Package < Puppet::Provider
   # Prefetch our package list, yo.
+  #
+  # The packages hash is deduplicated, as the hash is keyed by package name, in transaction.rb.
+  # A unique key would be: [name, provider, command].
   def self.prefetch(packages)
-    instances.each do |prov|
-      if pkg = packages[prov.name]
-        pkg.provider = prov
+    # Instances for each package provider.
+    instances.each do |instance|
+      if packages[instance.name]
+        packages[instance.name].provider = instance
+      end
+      self.debug "Prefetched instance: #{instance.name}"
+    end
+
+    # Collect unique providers and commands from all package resources.
+    targets = {}
+    packages.each do |name, package|
+      if package[:command] && package[:command] != 'default'
+        targets[package[:command]] = package.provider.class
       end
     end
+
+    # Instances for each package provider with a targeted package command.
+    targets.each do |target, provider|
+      provider::instances(target).each do |instance|
+        # Given that the packages hash is deduplicated, do not set provider:
+        # if packages[instance.name]
+        #   packages[instance.name].provider = instance
+        # end
+        # Inspection indicates that provider is already set anyway.
+        self.debug "Prefetched via: #{target}, instance: #{instance.name}"
+      end
+    end
+  end
+
+  # Determine the package command of a targetable package resource.
+  # Adds the resource command to the commands for the package provider, if necessary.
+  # Returns the symbol for the resource command or default package command, or raises an error,
+  #
+  # key: the symbol for the default package command in the commands hash
+  def resource_or_default_package_command(key)
+    if resource[:command] && resource[:command] != 'default'
+      resource_command = self.class.has_target_command(resource[:command])
+      resource_command
+    else
+      self.class.validate_package_command(command(key))
+      key
+    end
+  end
+
+  # Define a resource package command, if necessary, and return its name as a symbol.
+  #
+  # cmd: the full path to the package command
+  def self.has_target_command(cmd)
+    cmd_sym = cmd.to_sym
+    return cmd_sym if @commands[cmd_sym]
+    command(cmd_sym, cmd)
+    cmd_sym
+  end
+
+  # Targetable providers use has_command/is_optional to defer validation of provider suitability.
+  # This validates the package command for provider suitability.
+  #
+  # cmd: the full path to the package command
+  def self.validate_package_command(cmd)
+    unless cmd
+      raise Puppet::Error, _("Provider %{name} package command is not functional on this host") % { name: name }
+    end
+    unless File.file?(cmd)
+      raise Puppet::Error, _("Provider %{name} package command '%{cmd}' does not exist on this host") % { name: name, cmd: cmd }
+    end
+  end
+
+  # Return information about the package, provider, and command.
+  def to_s
+    "#{@resource}(provider=#{self.class.name})(command=#{resource_command})"
+  end
+
+  # Not all providers are targetable, not all targetable packages have a target.
+  def resource_command
+    resource[:command] || 'default'
   end
 
   # Clear out the cached values.

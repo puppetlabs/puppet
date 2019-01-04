@@ -3,7 +3,15 @@ require 'spec_helper'
 osfamilies = { 'windows' => ['pip.exe'], 'other' => ['pip', 'pip-python'] }
 
 describe Puppet::Type.type(:package).provider(:pip) do
-  before do  
+
+  it { is_expected.to be_installable }
+  it { is_expected.to be_uninstallable }
+  it { is_expected.to be_upgradeable }
+  it { is_expected.to be_versionable }
+  it { is_expected.to be_install_options }
+  it { is_expected.to be_targetable }
+
+  before do
     @resource = Puppet::Resource.new(:package, "fake_package")
     @provider = described_class.new(@resource)
     @client = stub_everything('client')
@@ -27,17 +35,17 @@ describe Puppet::Type.type(:package).provider(:pip) do
 
   context "cmd" do
     it "should return 'pip.exe' by default on Windows systems" do
-      Puppet.features.stubs(:microsoft_windows?).returns true
+      Puppet::Util::Platform.stubs(:windows?).returns true
       expect(described_class.cmd[0]).to eq('pip.exe')
     end
 
     it "could return pip-python on legacy redhat systems which rename pip" do
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      Puppet::Util::Platform.stubs(:windows?).returns false
       expect(described_class.cmd[1]).to eq('pip-python')
     end
 
     it "should return pip by default on other systems" do
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      Puppet::Util::Platform.stubs(:windows?).returns false
       expect(described_class.cmd[0]).to eq('pip')
     end
   end
@@ -45,14 +53,15 @@ describe Puppet::Type.type(:package).provider(:pip) do
   context "instances" do
     osfamilies.each do |osfamily, pip_cmds|
       it "should return an array on #{osfamily} systems when #{pip_cmds.join(' or ')} is present" do
-        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
-        pip_cmds.each do |pip_cmd|  
+        Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
+        pip_cmds.each do |pip_cmd|
           pip_cmds.each do |cmd|
             unless cmd == pip_cmd
               described_class.expects(:which).with(cmd).returns(nil)
             end
           end
-          described_class.stubs(:pip_version).returns('8.0.1')
+          described_class.stubs(:validate_package_command).with("/fake/bin/#{pip_cmd}").returns "/fake/bin/#{pip_cmd}"
+          described_class.stubs(:pip_version).with("/fake/bin/#{pip_cmd}").returns('8.0.1')
           described_class.expects(:which).with(pip_cmd).returns("/fake/bin/#{pip_cmd}")
           p = stub("process")
           p.expects(:collect).yields("real_package==1.2.5")
@@ -65,19 +74,20 @@ describe Puppet::Type.type(:package).provider(:pip) do
         versions = ['8.1.0', '9.0.1']
         versions.each do |version|
           it "should use the --all option when version is '#{version}'" do
-            Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
-            described_class.stubs(:pip_cmd).returns('/fake/bin/pip')
-            described_class.stubs(:pip_version).returns(version)
+            Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
+            described_class.stubs(:default_pip_cmd).returns('/fake/bin/pip')
+            described_class.stubs(:validate_package_command).with('/fake/bin/pip').returns '/fake/bin/pip'
+            described_class.stubs(:pip_version).with('/fake/bin/pip').returns(version)
             p = stub("process")
             p.expects(:collect).yields("real_package==1.2.5")
-            described_class.expects(:execpipe).with(["/fake/bin/pip", "freeze", "--all"]).yields(p)
+            described_class.expects(:execpipe).with(['/fake/bin/pip', "freeze", "--all"]).yields(p)
             described_class.instances
           end
         end
       end
 
       it "should return an empty array on #{osfamily} systems when #{pip_cmds.join(' and ')} are missing" do
-        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
+        Puppet::Util::Platform.stubs(:windows?).returns (osfamily == 'windows')
         pip_cmds.each do |cmd|
           described_class.expects(:which).with(cmd).returns nil
         end
@@ -130,10 +140,10 @@ describe Puppet::Type.type(:package).provider(:pip) do
   context "latest" do
     context "with pip version < 1.5.4" do
       before :each do
-        described_class.stubs(:pip_version).returns('1.0.1')
         described_class.stubs(:which).with('pip').returns("/fake/bin/pip")
         described_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
         described_class.stubs(:which).with('pip.exe').returns("/fake/bin/pip")
+        @provider.stubs(:pip_version).with("/fake/bin/pip").returns('1.5.3')
       end
 
       it "should find a version number for new_pip_package" do
@@ -186,10 +196,10 @@ describe Puppet::Type.type(:package).provider(:pip) do
       # For Pip 1.5.4 and above, you can get a version list from CLI - which allows for native pip behavior
       # with regards to custom repositories, proxies and the like
       before :each do
-        described_class.stubs(:pip_version).returns('1.5.4')
         described_class.stubs(:which).with('pip').returns("/fake/bin/pip")
         described_class.stubs(:which).with('pip-python').returns("/fake/bin/pip")
         described_class.stubs(:which).with('pip.exe').returns("/fake/bin/pip")
+        @provider.stubs(:pip_version).with("/fake/bin/pip").returns('1.5.4')
       end
 
       it "should find a version number for real_package" do
@@ -319,15 +329,14 @@ describe Puppet::Type.type(:package).provider(:pip) do
   context "pip_version" do
     it "should return nil on missing pip" do
       described_class.stubs(:pip_cmd).returns(nil)
-      expect(described_class.pip_version).to eq(nil)
+      expect(described_class.pip_version(nil)).to eq(nil)
     end
 
     it "should look up version if pip is present" do
-      described_class.stubs(:pip_cmd).returns('/fake/bin/pip')
       p = stub("process")
       p.expects(:collect).yields('pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)')
       described_class.expects(:execpipe).with(['/fake/bin/pip', '--version']).yields(p)
-      expect(described_class.pip_version).to eq('8.0.2')
+      expect(described_class.pip_version('/fake/bin/pip')).to eq('8.0.2')
     end
   end
 
@@ -341,39 +350,10 @@ describe Puppet::Type.type(:package).provider(:pip) do
       @provider.method(:lazy_pip).call "freeze"
     end
 
-    osfamilies.each do |osfamily, pip_cmds|
-      pip_cmds.each do |pip_cmd|
-        it "should retry on #{osfamily} systems if #{pip_cmd} has not yet been found" do
-          Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
-          @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
-          pip_cmds.each do |cmd|
-            unless cmd == pip_cmd
-              @provider.expects(:which).with(cmd).returns(nil)
-            end
-          end
-          @provider.expects(:which).with(pip_cmd).returns("/fake/bin/#{pip_cmd}")
-          @provider.method(:lazy_pip).call "freeze"
-        end
-      end
-
-      it "should fail on #{osfamily} systems if #{pip_cmds.join(' and ')} are missing" do
-        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
-        @provider.expects(:pip).with('freeze').raises(NoMethodError)
-        pip_cmds.each do |pip_cmd|
-          @provider.expects(:which).with(pip_cmd).returns(nil)
-        end
-        expect { @provider.method(:lazy_pip).call("freeze") }.to raise_error(NoMethodError)
-      end
-
-      it "should output a useful error message on #{osfamily} systems if #{pip_cmds.join(' and ')} are missing" do
-        Puppet.features.stubs(:microsoft_windows?).returns (osfamily == 'windows')
-        @provider.expects(:pip).with('freeze').raises(NoMethodError)
-        pip_cmds.each do |pip_cmd|
-          @provider.expects(:which).with(pip_cmd).returns(nil)
-        end
-        expect { @provider.method(:lazy_pip).call("freeze") }.
-          to raise_error(NoMethodError, "Could not locate command #{pip_cmds.join(' and ')}.")
-      end
-    end
+	it "should retry on systems if the pip command has not yet been found" do
+      @provider.stubs(:resource_or_default_package_command).returns('/fake/bin/pip')
+      @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
+	  @provider.method(:lazy_pip).call "freeze"
+	end
   end
 end
