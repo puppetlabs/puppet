@@ -17,6 +17,9 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
 
   USER_AGENT = "PMT/1.1.1 (v3; Net::HTTP)".freeze
 
+  # From https://forgeapi.puppet.com/#!/release/getReleases
+  MODULE_RELEASE_EXCLUSIONS=%w[readme changelog license uri module tags supported file_size downloads created_at updated_at deleted_at].join(',').freeze
+
   attr_reader :host, :repository
 
   def initialize(host = Puppet[:module_repository])
@@ -89,7 +92,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   # @see SemanticPuppet::Dependency::Source#fetch
   def fetch(input)
     name = input.tr('/', '-')
-    uri = "/v3/releases?module=#{name}&sort_by=version"
+    uri = "/v3/releases?module=#{name}&sort_by=version&exclude_fields=#{MODULE_RELEASE_EXCLUSIONS}"
     if Puppet[:module_groups]
       uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
     end
