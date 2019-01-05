@@ -56,6 +56,8 @@ class Puppet::Transaction
     @prefetched_providers = Hash.new { |h,k| h[k] = {} }
 
     @prefetch_failed_providers = Hash.new { |h,k| h[k] = {} }
+
+    @failed_dependencies_already_notified = Set.new()
   end
 
   # Invoke the pre_run_check hook in every resource in the catalog.
@@ -291,8 +293,9 @@ class Puppet::Transaction
     if s && s.dependency_failed?
       # See above. --daniel 2011-06-06
       unless suppress_report then
-        s.failed_dependencies.each do |dep|
+        s.failed_dependencies.find_all { |d| !(@failed_dependencies_already_notified.include?(d.ref)) }.each do |dep|
           resource.notice _("Dependency %{dep} has failures: %{status}") % { dep: dep, status: resource_status(dep).failed }
+          @failed_dependencies_already_notified.add(dep.ref)
         end
       end
     end
