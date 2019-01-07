@@ -42,6 +42,10 @@ describe 'Puppet::Pops::Model::PNTransformer' do
       expect(Puppet::Pops::Model::PNTransformer.transform(x.model)).to eq(
         call('hash', call('=>', 'a', 1), call('=>', 'b', 2)))
     end
+
+    it 'replaces empty/nil body with a Nop' do
+      expect(Puppet::Pops::Model::PNTransformer.transform(nil)).to eq(call('nop'))
+    end
   end
 
   def lit(value)
