@@ -194,6 +194,11 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     end
   end
 
+  def check_Application(o)
+    check_NamedDefinition(o)
+    acceptor.accept(Issues::DEPRECATED_APP_ORCHESTRATION, o, {:klass => o})
+  end
+
   def check_AssignmentExpression(o)
     case o.operator
     when '='
@@ -291,6 +296,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_CapabilityMapping(o)
+    acceptor.accept(Issues::DEPRECATED_APP_ORCHESTRATION, o, {:klass => o})
     ok =
     case o.component
     when Model::QualifiedReference
@@ -848,6 +854,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def check_SelectorEntry(o)
     rvalue(o.matching_expr)
+  end
+
+  def check_SiteDefinition(o)
+    acceptor.accept(Issues::DEPRECATED_APP_ORCHESTRATION, o, {:klass => o})
   end
 
   def check_UnaryExpression(o)

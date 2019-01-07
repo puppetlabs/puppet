@@ -913,5 +913,10 @@ module Issues
   LOADER_FAILURE = issue :LOADER_FAILURE, :type do
     _('Failed to load: %{type_name}') % { type: type }
   end
+
+  DEPRECATED_APP_ORCHESTRATION = issue :DEPRECATED_APP_ORCHESTRATION, :klass do
+    _("Use of the application-orchestration %{expr} is deprecated. See http://links.puppet.com/tbd-app-orchestration-deprecation" % { expr: label(klass) })
+  end
+
 end
 end
