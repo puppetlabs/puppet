@@ -200,6 +200,11 @@ class PNTransformer
     PN::Call.new('nop')
   end
 
+  # Some elements may have a nil element instead of a Nop Expression
+  def transform_NilClass(e)
+    PN::Call.new('nop')
+  end
+
   def transform_NotExpression(e)
     PN::Call.new('!', transform(e.expr))
   end
