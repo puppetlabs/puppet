@@ -4,14 +4,15 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 # 
 # Translators:
-# LarissaLane <larissa@puppet.com>, 2018
-# satoko inoue <satoko-inoue@to-in.co.jp>, 2018
-# James Shen <James.Shen@puppet.com>, 2018
-# sayaka inagaki <sayaka-inagaki@to-in.co.jp>, 2018
-# Hidekatsu Tsuru <hidekatsu-tsuru@to-in.co.jp>, 2018
-# Eriko Kashiwagi <eriko.55@d5.dion.ne.jp>, 2018
-# Kojima Ai <ai-kojima@to-in.co.jp>, 2018
-# 梅田智世 <c-umeda@nifty.com>, 2018
+# James Shen <James.Shen@puppet.com>, 2019
+# sayaka inagaki <sayaka-inagaki@to-in.co.jp>, 2019
+# LarissaLane <larissa@puppet.com>, 2019
+# satoko inoue <satoko-inoue@to-in.co.jp>, 2019
+# Hidekatsu Tsuru <hidekatsu-tsuru@to-in.co.jp>, 2019
+# 梅田智世 <c-umeda@nifty.com>, 2019
+# Eriko Kashiwagi <eriko.55@d5.dion.ne.jp>, 2019
+# Kojima Ai <ai-kojima@to-in.co.jp>, 2019
+# Erwin Hom <erwin.hom@puppet.com>, 2019
 # 
 #, fuzzy
 msgid ""
@@ -20,8 +21,8 @@ msgstr ""
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
 "POT-Creation-Date: 2018-12-11 23:05+0000\n"
-"PO-Revision-Date: 2018-09-21 20:14+0000\n"
-"Last-Translator: 梅田智世 <c-umeda@nifty.com>, 2018\n"
+"PO-Revision-Date: 2019-01-09 20:46+0000\n"
+"Last-Translator: Erwin Hom <erwin.hom@puppet.com>, 2019\n"
 "Language-Team: Japanese (Japan) (https://www.transifex.com/puppet/teams/29089/ja_JP/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -7932,15 +7933,15 @@ msgstr "%{file} plistには'label'キーが含まれていません。Puppetに�
 
 #: ../lib/puppet/provider/service/launchd.rb:204
 msgid "Reading overrides plist, attempt %{i}"
-msgstr "読み込みによってplistがオーバーライドされます。%{i}を試行します。"
+msgstr "オーバーライドplistを読み込んでいます。%{i}を試行します。"
 
 #: ../lib/puppet/provider/service/launchd.rb:207
 msgid "Unable to read overrides plist, too many attempts"
-msgstr "オーバーライドされたplistを読み込めません。試行が多すぎます。"
+msgstr "オーバーライドplistを読み込めません。試行が多すぎます。"
 
 #: ../lib/puppet/provider/service/launchd.rb:208
 msgid "Overrides file could not be read, trying again."
-msgstr "オーバーライドされたファイルが読み込めませんでした。もう一度試行しています。"
+msgstr "オーバーライドファイルが読み込めませんでした。もう一度試行しています。"
 
 #. TRANSLATORS 'runsvdir' is a linux service name and should not be translated
 #: ../lib/puppet/provider/service/runit.rb:93
@@ -10880,7 +10881,7 @@ msgstr "セキュリティ情報の設定に失敗しました。"
 
 #: ../lib/puppet/util/windows/service.rb:300
 msgid "Starting the %{service_name} service"
-msgstr "%{service_name}サービスを開始します。"
+msgstr "%{service_name}サービスを起動しています。"
 
 #: ../lib/puppet/util/windows/service.rb:310
 msgid "Failed to start the service"
@@ -10888,7 +10889,7 @@ msgstr "サービスの起動に失敗しました。"
 
 #: ../lib/puppet/util/windows/service.rb:314
 msgid "Successfully started the %{service_name} service"
-msgstr "%{service_name}サービスの起動に成功しました。"
+msgstr "%{service_name}サービスを起動しました。"
 
 #: ../lib/puppet/util/windows/service.rb:322
 msgid "Stopping the %{service_name} service"
@@ -10900,7 +10901,7 @@ msgstr "%{service_name}サービスを停止しました。"
 
 #: ../lib/puppet/util/windows/service.rb:338
 msgid "Resuming the %{service_name} service"
-msgstr "%{service_name}サービスを中断しています。"
+msgstr "%{service_name}サービスを再開しています。"
 
 #: ../lib/puppet/util/windows/service.rb:354
 msgid "Successfully resumed the %{service_name} service"
@@ -11001,7 +11002,7 @@ msgstr ""
 #: ../lib/puppet/util/windows/service.rb:779
 msgid ""
 "Waiting for the pending transition to the %{final_state} state to finish."
-msgstr "%{final_state}状態への移行が完了するまで待機しています。"
+msgstr "%{final_state}状態への移行完了を待機しています。"
 
 #: ../lib/puppet/util/windows/service.rb:793
 msgid ""
