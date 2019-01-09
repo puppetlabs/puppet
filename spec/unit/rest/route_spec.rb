@@ -91,7 +91,7 @@ describe Puppet::Rest::Route do
           @srv_records = [record]
 
           @dns_mock.expects(:getresources).
-            with("_x-puppet._tcp.test_service", Resolv::DNS::Resource::IN::SRV).
+            with("_x-puppet-test_service._tcp.example.com", Resolv::DNS::Resource::IN::SRV).
             returns(@srv_records)
         end
 
