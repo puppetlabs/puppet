@@ -358,15 +358,16 @@ class Puppet::Transaction
     Puppet.debug "Prefetching #{provider_class.name} resources for #{type_name}"
     begin
       provider_class.prefetch(resources)
-    rescue Exception => detail
-      if !detail.is_a?(LoadError) && !detail.is_a?(Puppet::MissingCommand)
-        raise unless Puppet.settings[:future_features]
-        
-        @prefetch_failed_providers[type_name][provider_class.name] = true
-      end
+    rescue LoadError, Puppet::MissingCommand => detail
       #TRANSLATORS `prefetch` is a function name and should not be translated
       message = _("Could not prefetch %{type_name} provider '%{name}': %{detail}") % { type_name: type_name, name: provider_class.name, detail: detail }
       Puppet.log_exception(detail, message)
+      @prefetch_failed_providers[type_name][provider_class.name] = true if Puppet.settings[:future_features]
+    rescue StandardError => detail
+      message = _("Could not prefetch %{type_name} provider '%{name}': %{detail}") % { type_name: type_name, name: provider_class.name, detail: detail }
+      Puppet.log_exception(detail, message)
+      raise unless Puppet.settings[:future_features]
+      @prefetch_failed_providers[type_name][provider_class.name] = true
     end
     @prefetched_providers[type_name][provider_class.name] = true
   end
