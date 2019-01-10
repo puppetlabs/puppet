@@ -600,6 +600,18 @@ describe Puppet::Transaction do
       transaction.prefetch_if_necessary(resource)
     end
 
+    it "should not catch SystemExit without future_features flag" do
+      Puppet.settings[:future_features] = false
+      resource.provider.class.expects(:prefetch).raises(SystemExit, "message")
+      expect { transaction.prefetch_if_necessary(resource) }.to raise_error(SystemExit)
+    end
+
+    it "should not catch SystemExit with future_features flag" do
+      Puppet.settings[:future_features] = true
+      resource.provider.class.expects(:prefetch).raises(SystemExit, "message")
+      expect { transaction.prefetch_if_necessary(resource) }.to raise_error(SystemExit)
+    end
+
     describe "and prefetching fails" do
       before :each do
         resource.provider.class.expects(:prefetch).raises(Puppet::Error, "message")
@@ -612,6 +624,11 @@ describe Puppet::Transaction do
 
         it "should not rescue prefetch executions" do
           expect { transaction.prefetch_if_necessary(resource) }.to raise_error(Puppet::Error)
+        end
+
+        it "should log the exception during prefetch" do
+          Puppet.expects(:log_exception).with(anything, "Could not prefetch sshkey provider 'parsed': message")
+          expect { transaction.prefetch_if_necessary(resource) }.to raise_error(Puppet::Error, "message")
         end
       end
 
