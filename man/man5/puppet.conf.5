@@ -692,6 +692,14 @@ Freezes the \'main\' class, disallowing any code to be added to it\. This essent
 .
 .IP "" 0
 .
+.SS "func3x_check"
+Causes validation of loaded legacy Ruby functions (3x API) to raise errors about illegal constructs that could cause harm or that simply does not work\. This flag is on by default\. This flag is made available so that the validation can be turned off in case the method of validation is faulty \- if encountered, please file a bug report\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: true
+.
+.IP "" 0
+.
 .SS "future_features"
 Whether or not to enable all features currently being developed for future major releases of Puppet\. Should be used with caution, as in development features are experimental and can have unexpected effects\.
 .
