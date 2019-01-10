@@ -50,7 +50,7 @@ module Puppet::Rest
       end
 
       if Puppet[:use_srv_records]
-        dns_resolver.each_srv_record(@srv_service) do |srv_server, srv_port|
+        dns_resolver.each_srv_record(Puppet[:srv_domain], @srv_service) do |srv_server, srv_port|
           # Try each of the servers for this service in weighted order
           # until a working one is found.
           begin
