@@ -30,10 +30,12 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     end
   end
 
-  it "should be the default provider on rhel7" do
-    Facter.stubs(:value).with(:osfamily).returns(:redhat)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
-    expect(described_class).to be_default
+  [7, 8].each do |ver|
+    it "should be the default provider on rhel#{ver}" do
+      Facter.stubs(:value).with(:osfamily).returns(:redhat)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns(ver.to_s)
+      expect(described_class).to be_default
+    end
   end
 
   [ 4, 5, 6 ].each do |ver|
