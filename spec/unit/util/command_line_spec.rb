@@ -67,8 +67,8 @@ describe Puppet::Util::CommandLine do
       end
     end
 
-    %w{--help -h}.each do|arg|
-      it "should print help" do
+    %w{--help -h help}.each do|arg|
+      it "should print help and exit if #{arg} is given" do
         commandline = Puppet::Util::CommandLine.new("puppet", [arg])
         commandline.expects(:exec).never
 
@@ -76,6 +76,27 @@ describe Puppet::Util::CommandLine do
           commandline.execute
         }.to have_printed(/Usage: puppet <subcommand> \[options\] <action> \[options\]/).and_exit_with(0)
       end
+    end
+
+    it "should fail if the config file isn't readable and we're running a subcommand that requires a readable config file" do
+      Puppet::FileSystem.stubs(:exist?).with(Puppet[:config]).returns(true)
+      Puppet::Settings.any_instance.stubs(:read_file).returns('')
+      Puppet::Settings.any_instance.expects(:read_file).with(Puppet[:config]).raises('Permission denied')
+
+      expect{ described_class.new("puppet", ['config']).execute }.to raise_error(SystemExit)
+    end
+
+    it "should not fail if the config file isn't readable and we're running a subcommand that does not require a readable config file" do
+      Puppet::FileSystem.stubs(:exist?)
+      Puppet::FileSystem.stubs(:exist?).with(Puppet[:config]).returns(true)
+      Puppet::Settings.any_instance.stubs(:read_file).returns('')
+      Puppet::Settings.any_instance.expects(:read_file).with(Puppet[:config]).raises('Permission denied')
+
+      commandline = described_class.new("puppet", ['help'])
+
+      expect {
+        commandline.execute
+      }.to have_printed(/Usage: puppet <subcommand> \[options\] <action> \[options\]/).and_exit_with(0)
     end
   end
 
