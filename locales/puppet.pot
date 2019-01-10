@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.8-146-g284800b\n"
+"Project-Id-Version: Puppet automation framework 5.5.8-151-gb4981ef\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-01-10 09:47+0000\n"
-"PO-Revision-Date: 2019-01-10 09:47+0000\n"
+"POT-Creation-Date: 2019-01-10 19:16+0000\n"
+"PO-Revision-Date: 2019-01-10 19:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -688,7 +688,7 @@ msgstr ""
 msgid "Server setting will not be used."
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:1828 ../lib/puppet/settings.rb:1167
+#: ../lib/puppet/defaults.rb:1828 ../lib/puppet/settings.rb:1172
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
@@ -7719,49 +7719,53 @@ msgstr ""
 msgid "Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:695
+#: ../lib/puppet/settings.rb:599
+msgid "Could not load %{file}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:700
 msgid "Invalid setting type '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:839
+#: ../lib/puppet/settings.rb:844
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:901
+#: ../lib/puppet/settings.rb:906
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:906
+#: ../lib/puppet/settings.rb:911
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:910
+#: ../lib/puppet/settings.rb:915
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1172
+#: ../lib/puppet/settings.rb:1177
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1339
+#: ../lib/puppet/settings.rb:1344
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1363
+#: ../lib/puppet/settings.rb:1368
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1373
+#: ../lib/puppet/settings.rb:1378
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1374
+#: ../lib/puppet/settings.rb:1379
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1405
+#: ../lib/puppet/settings.rb:1410
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -9254,19 +9258,19 @@ msgstr ""
 msgid "Already a generated class named %{klassname}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:67
+#: ../lib/puppet/util/command_line.rb:71
 msgid "Could not initialize global default settings"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:165
+#: ../lib/puppet/util/command_line.rb:169
 msgid "Error: Could not parse application options: invalid option: %{opt}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:168
+#: ../lib/puppet/util/command_line.rb:172
 msgid "See 'puppet help' for help on available puppet subcommands"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:181
+#: ../lib/puppet/util/command_line.rb:185
 msgid "Error: Unknown Puppet subcommand '%{cmd}'"
 msgstr ""
 
