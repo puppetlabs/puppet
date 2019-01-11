@@ -19,23 +19,24 @@ end
 
 agents.each do |host|
   step "ensure the user exist via puppet"
+  user = cron_user(host)
   setup host
 
   step "create the existing job by hand..."
-  run_cron_on(host,:add,'tstuser',"* * * * * /bin/true")
+  run_cron_on(host, :add, user, "* * * * * /bin/true")
 
   step "verify that crontab -l contains what you expected"
-  run_cron_on(host,:list,'tstuser') do
+  run_cron_on(host, :list, user) do
     assert_match(/\* \* \* \* \* \/bin\/true/, stdout, "Didn't find correct crobtab entry for tstuser on #{host}")
   end
 
   step "apply the resource change on the host"
-  on(host, puppet_resource("cron", "crontest", "user=tstuser", "command=/bin/true", "ensure=present", "hour='0-6'")) do
+  on(host, puppet_resource("cron", "crontest", "user=#{user}", "command=/bin/true", "ensure=present", "hour='0-6'")) do
     assert_match(/hour\s+=>\s+\['0-6'\]/, stdout, "Modifying cron entry failed for tstuser on #{host}")
   end
 
   step "verify that crontab -l contains what you expected"
-  run_cron_on(host,:list,'tstuser') do
+  run_cron_on(host, :list, user) do
     assert_match(/\* 0-6 \* \* \* \/bin\/true/, stdout, "Didn't find correctly modified time entry in crobtab entry for tstuser on #{host}")
   end
 end

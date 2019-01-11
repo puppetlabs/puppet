@@ -32,13 +32,14 @@ module Puppet
 
     module CronUtils
       def clean(agent, o={})
-        o = {:user => 'tstuser'}.merge(o)
+        o = { :user => cron_user(agent) }.merge(o)
         run_cron_on(agent, :remove, o[:user])
+        return if agent[:platform] =~ /osx-10.14/ # don't try to delete osx user, it will fail
         apply_manifest_on(agent, %[user { '%s': ensure => absent, managehome => false }] % o[:user])
       end
 
       def setup(agent, o={})
-        o = {:user => 'tstuser'}.merge(o)
+        o = { :user => cron_user(agent) }.merge(o)
         apply_manifest_on(agent, %[user { '%s': ensure => present, managehome => false }] % o[:user])
         apply_manifest_on(agent, %[case $operatingsystem {
                                      centos, redhat, fedora: {$cron = 'cronie'}
@@ -53,6 +54,15 @@ module Puppet
       def crontab_entries_of(host, username)
         crontab_contents = run_cron_on(host, :list, username).stdout.strip
         crontab_contents.lines.map(&:chomp).reject { |line| line =~ /^#/ }
+      end
+
+      # Due to OSX 10.14 Mojave new security feature called “Full Disk Access”
+      # that limits the operations that a OSX user can do,
+      # we can not manage users properly using puppet.
+      # We will use an already existing user('osx') to run the cron tests.
+      def cron_user(agent)
+        return 'osx' if agent[:platform] =~ /osx-10.14/
+        'tstuser'
       end
     end
 

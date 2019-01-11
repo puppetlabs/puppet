@@ -20,18 +20,19 @@ end
 
 agents.each do |agent|
   step "ensure the user exist via puppet"
+  user = cron_user(agent)
   setup agent
 
   step "Cron: basic - verify that it can be created"
-  apply_manifest_on(agent, 'cron { "myjob": command => "/bin/true", user    => "tstuser", hour    => "*", minute  => [1], ensure  => present,}') do
+  apply_manifest_on(agent, "cron { 'myjob': command => '/bin/true', user    => #{user}, hour    => '*', minute  => [1], ensure  => present,}") do
     assert_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
-  run_cron_on(agent,:list,'tstuser') do
+  run_cron_on(agent,:list, user) do
     assert_match(/. . . . . .bin.true/, result.stdout, "err: #{agent}")
   end
 
   step "Cron: basic - should not create again"
-  apply_manifest_on(agent, 'cron { "myjob": command => "/bin/true", user    => "tstuser", hour    => "*", minute  => [1], ensure  => present,}') do
+  apply_manifest_on(agent, "cron { 'myjob': command => '/bin/true', user    => #{user}, hour    => '*', minute  => [1], ensure  => present,}") do
     assert_no_match( /ensure: created/, result.stdout, "err: #{agent}")
   end
 end
