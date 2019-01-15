@@ -432,11 +432,10 @@ module Issues
 
   BAD_SLICE_KEY_TYPE = issue :BAD_SLICE_KEY_TYPE, :left_value, :expected_classes, :actual do
     expected_text = if expected_classes.size > 1
-      _("one of %{expected} are") % { expected: expected_classes.join(', ') }
+      _("%{expression}[] cannot use %{actual} where one of the following is expected: %{expected}") % { expression: label.a_an_uc(left_value), actual: actual, expected: expected_classes.join(', ') }
     else
-      _("%{expected} is") % { expected: expected_classes[0] }
+      _("%{expression}[] cannot use %{actual} where %{expected} is expected") % { expression: label.a_an_uc(left_value), actual: actual, expected: expected_classes[0] }
     end
-    _("%{expression}[] cannot use %{actual} where %{expected_text} expected") % { expression: label.a_an_uc(left_value), actual: actual, expected_text: expected_text }
   end
 
   BAD_STRING_SLICE_KEY_TYPE = issue :BAD_STRING_SLICE_KEY_TYPE, :left_value, :actual_type do
