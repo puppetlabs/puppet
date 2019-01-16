@@ -702,6 +702,42 @@ describe Puppet::Settings do
         @settings.send(:parse_config_files)
       end
     end
+
+    describe "when the file exists" do
+      it "fails if the file is not readable" do
+        Puppet::FileSystem.expects(:exist?).with(user_config_file_default_location).returns(true)
+        @settings.expects(:read_file).raises('Permission denied')
+
+        expect{ @settings.send(:parse_config_files) }.to raise_error(RuntimeError, /Could not load #{user_config_file_default_location}: Permission denied/)
+      end
+
+      it "does not fail if the file is not readable and when `require_config` is false" do
+        Puppet::FileSystem.expects(:exist?).with(user_config_file_default_location).returns(true)
+        @settings.expects(:read_file).raises('Permission denied')
+
+        @settings.expects(:parse_config).never
+        Puppet.expects(:log_exception)
+
+        expect{ @settings.send(:parse_config_files, false) }.not_to raise_error
+      end
+
+      it "reads the file if it is readable" do
+        Puppet::FileSystem.expects(:exist?).with(user_config_file_default_location).returns(true)
+        @settings.expects(:read_file).returns('server = host.string')
+        @settings.expects(:parse_config)
+
+        @settings.send(:parse_config_files)
+      end
+    end
+
+    describe "when the file does not exist" do
+      it "does not attempt to parse the config file" do
+        Puppet::FileSystem.expects(:exist?).with(user_config_file_default_location).returns(false)
+        @settings.expects(:parse_config).never
+
+        @settings.send(:parse_config_files)
+      end
+    end
   end
 
   describe "when parsing its configuration" do
