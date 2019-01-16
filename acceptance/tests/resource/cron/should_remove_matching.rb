@@ -19,19 +19,20 @@ end
 
 agents.each do |host|
   step "ensure the user exist via puppet"
+  user = cron_user(host)
   setup host
 
   step "create the existing job by hand..."
-  run_cron_on(host,:add,'tstuser',"* * * * * /bin/true")
+  run_cron_on(host,:add, user, "* * * * * /bin/true")
 
   step "Remove cron resource"
-  on(host, puppet_resource("cron", "bogus", "user=tstuser",
+  on(host, puppet_resource("cron", "bogus", "user=#{user}",
                            "command=/bin/true", "ensure=absent")) do
     assert_match(/bogus\D+ensure: removed/, stdout, "Removing cron entry failed for tstuser on #{host}")
   end
 
   step "verify that crontab -l contains what you expected"
-  run_cron_on(host,:list,'tstuser') do
+  run_cron_on(host,:list, user) do
     count = stdout.scan("/bin/true").length
     fail_test "found /bin/true the wrong number of times (#{count})" unless count == 0
   end

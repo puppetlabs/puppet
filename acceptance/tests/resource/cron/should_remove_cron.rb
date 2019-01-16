@@ -19,19 +19,20 @@ end
 
 agents.each do |host|
   step "ensure the user exist via puppet"
+  user = cron_user(host)
   setup host
 
   step "create the existing job by hand..."
-  run_cron_on(host,:add,'tstuser',"* * * * * /bin/true")
+  run_cron_on(host,:add, user, "* * * * * /bin/true")
 
   step "apply the resource on the host using puppet resource"
-  on(host, puppet_resource("cron", "crontest", "user=tstuser",
+  on(host, puppet_resource("cron", "crontest", "user=#{user}",
                            "command=/bin/true", "ensure=absent")) do
     assert_match(/crontest\D+ensure:\s+removed/, stdout, "Didn't remove crobtab entry for tstuser on #{host}")
   end
 
   step "verify that crontab -l contains what you expected"
-  run_cron_on(host, :list, 'tstuser') do
+  run_cron_on(host, :list, user) do
     assert_no_match(/\/bin\/true/, stderr, "Error: Found entry for tstuser on #{host}")
   end
 

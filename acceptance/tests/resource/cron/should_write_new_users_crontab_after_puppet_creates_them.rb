@@ -1,6 +1,10 @@
 test_name "The crontab provider should be able to write a new user's crontab after Puppet creates them" do
   confine :except, :platform => 'windows'
   confine :except, :platform => /^eos-/ # See PUP-5500
+  # Due to OSX 10.14 Mojave new security feature called “Full Disk Access”
+  # that limits the operations that a OSX user can do,
+  # we can not manage users properly using puppet.
+  confine :except, :platform => /^osx-10.14/
   tag 'audit:medium',
       'audit:unit'
 
