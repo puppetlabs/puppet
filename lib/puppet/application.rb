@@ -418,7 +418,7 @@ class Application
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
-      Puppet.log_exception(detail)
+      Puppet.log_and_raise(detail, _("Could not set logdest to %{dest}.") % { dest: arg })
     end
   end
 

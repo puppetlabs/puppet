@@ -88,6 +88,21 @@ describe Puppet::Util::Log do
     expect(logs.last.source).to eq(utf_8_msg)
   end
 
+  require 'puppet/util/log/destinations'
+
+  it "raises an error when it has no successful logging destinations" do
+    # spec_helper.rb redirects log output away from the console,
+    # so we have to stop that here, or else the logic we are testing
+    # will not be reached.
+    Puppet::Util::Log.stubs(:destinations).returns({})
+
+    our_exception = Puppet::DevError.new("test exception")
+    Puppet::FileSystem.expects(:dir).raises(our_exception)
+    bad_file = tmpfile("bad_file")
+
+    expect { Puppet::Util::Log.newdestination(bad_file) }.to raise_error(Puppet::DevError)
+  end
+
   describe ".setup_default" do
     it "should default to :syslog" do
       Puppet.features.stubs(:syslog?).returns(true)
