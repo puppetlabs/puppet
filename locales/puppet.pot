@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.0.4-216-g741d298\n"
+"Project-Id-Version: Puppet automation framework 6.0.5-41-gf785859\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-01-10 09:35+0000\n"
-"PO-Revision-Date: 2019-01-10 09:35+0000\n"
+"POT-Creation-Date: 2019-01-18 21:37+0000\n"
+"PO-Revision-Date: 2019-01-18 21:37+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -5286,150 +5286,154 @@ msgid "An escape char for @() may only appear once. Got '%{escapes}'"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:764
-msgid "Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source"
+msgid "Heredoc with text in the margin is not allowed (line %{heredoc_line} in this heredoc)"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:768
-msgid "No such file or directory: %{file}"
+msgid "Illegal %{format} Byte Order mark at beginning of input: %{bom} - remove these from the puppet source"
 msgstr ""
 
 #: ../lib/puppet/pops/issues.rb:772
+msgid "No such file or directory: %{file}"
+msgstr ""
+
+#: ../lib/puppet/pops/issues.rb:776
 msgid "%{file} is not a file"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:777
+#: ../lib/puppet/pops/issues.rb:781
 msgid "%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:779
+#: ../lib/puppet/pops/issues.rb:783
 msgid "%{expression} resulted in a value outside of Puppet Integer min range, got '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:784
+#: ../lib/puppet/pops/issues.rb:788
 msgid "This runtime does not support hiera.yaml version %{version}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:788
+#: ../lib/puppet/pops/issues.rb:792
 msgid "hiera.yaml version 3 cannot be used in %{location}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:792
+#: ../lib/puppet/pops/issues.rb:796
 msgid "hiera.yaml version 4 cannot be used in the global layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:796
+#: ../lib/puppet/pops/issues.rb:800
 msgid "Undefined variable '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:800
+#: ../lib/puppet/pops/issues.rb:804
 msgid "Backend '%{name}' is defined more than once."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:803 ../lib/puppet/pops/issues.rb:816
+#: ../lib/puppet/pops/issues.rb:807 ../lib/puppet/pops/issues.rb:820
 msgid "First defined at %{error_location}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:809
+#: ../lib/puppet/pops/issues.rb:813
 msgid "No data provider is registered for backend '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:813
+#: ../lib/puppet/pops/issues.rb:817
 msgid "Hierarchy name '%{name}' defined more than once."
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:822
+#: ../lib/puppet/pops/issues.rb:826
 msgid "'hiera3_backend' is only allowed in the global layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:826
+#: ../lib/puppet/pops/issues.rb:830
 msgid "'default_hierarchy' is only allowed in the module layer"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:830
+#: ../lib/puppet/pops/issues.rb:834
 msgid "Use \"data_hash: %{function_name}_data\" instead of \"hiera3_backend: %{function_name}\""
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:834
+#: ../lib/puppet/pops/issues.rb:838
 msgid "One of %{keys} must be defined in hierarchy '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:838 ../lib/puppet/pops/issues.rb:846
+#: ../lib/puppet/pops/issues.rb:842 ../lib/puppet/pops/issues.rb:850
 msgid "Only one of %{keys} can be defined in hierarchy '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:842
+#: ../lib/puppet/pops/issues.rb:846
 msgid "Only one of %{keys} can be defined in defaults"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:850
+#: ../lib/puppet/pops/issues.rb:854
 msgid "Option key '%{key}' used in hierarchy '%{name}' is reserved by Puppet"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:854
+#: ../lib/puppet/pops/issues.rb:858
 msgid "Option key '%{key}' used in defaults is reserved by Puppet"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:858
+#: ../lib/puppet/pops/issues.rb:862
 msgid "Unable to find '%{function_type}' function named '%{function_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:862
+#: ../lib/puppet/pops/issues.rb:866
 msgid "'alias' interpolation is only permitted if the expression is equal to the entire string"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:866
+#: ../lib/puppet/pops/issues.rb:870
 msgid "Unknown interpolation method '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:870
+#: ../lib/puppet/pops/issues.rb:874
 msgid "Interpolation using method syntax is not allowed in this context"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:874
+#: ../lib/puppet/pops/issues.rb:878
 msgid "Endless recursion detected when attempting to serialize value of class %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:878
+#: ../lib/puppet/pops/issues.rb:882
 msgid "%{path} contains the special value default. It will be converted to the String 'default'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:882
+#: ../lib/puppet/pops/issues.rb:886
 msgid "%{path} contains %{klass} value. It will be converted to the String '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:886
+#: ../lib/puppet/pops/issues.rb:890
 msgid "%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:890
+#: ../lib/puppet/pops/issues.rb:894
 msgid "The feature '%{feature}' is only available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:894
+#: ../lib/puppet/pops/issues.rb:898
 msgid "The catalog operation '%{operation}' is only available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:898
+#: ../lib/puppet/pops/issues.rb:902
 msgid "%{expr} is only available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:902
+#: ../lib/puppet/pops/issues.rb:906
 msgid "The task operation '%{operation}' is not available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:906
+#: ../lib/puppet/pops/issues.rb:910
 msgid "%{expr} is not available when compiling a catalog"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:910
+#: ../lib/puppet/pops/issues.rb:914
 msgid "The 'bolt' library is required to %{action}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:914
+#: ../lib/puppet/pops/issues.rb:918
 msgid "Task not found: %{type_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/issues.rb:918
+#: ../lib/puppet/pops/issues.rb:922
 msgid "Failed to load: %{type_name}"
 msgstr ""
 
@@ -5759,19 +5763,19 @@ msgid "Unacceptable transform - found an Object without a rule: %{klass}"
 msgstr ""
 
 #. TRANSLATORS 'NUMBER' refers to a method name and the 'name_or_numeric' was the passed in value and should not be translated
-#: ../lib/puppet/pops/model/factory.rb:814
+#: ../lib/puppet/pops/model/factory.rb:848
 msgid "Internal Error, NUMBER token does not contain a valid number, %{name_or_numeric}"
 msgstr ""
 
-#: ../lib/puppet/pops/model/factory.rb:1130
+#: ../lib/puppet/pops/model/factory.rb:1164
 msgid "can only concatenate strings, got %{class_name}"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/parser_support.rb:195
+#: ../lib/puppet/pops/parser/parser_support.rb:204
 msgid "attempt to pass argument list to the function '%{name}' which cannot be called without parentheses"
 msgstr ""
 
-#: ../lib/puppet/pops/parser/parser_support.rb:197
+#: ../lib/puppet/pops/parser/parser_support.rb:206
 msgid "illegal comma separated argument list"
 msgstr ""
 
@@ -7260,53 +7264,57 @@ msgstr ""
 msgid "Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:695
+#: ../lib/puppet/settings.rb:599
+msgid "Could not load %{file}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/settings.rb:700
 msgid "Invalid setting type '%{type}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:839
+#: ../lib/puppet/settings.rb:844
 msgid "Unknown searchpath case: %{source_type} for the %{source} settings path element."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:901
+#: ../lib/puppet/settings.rb:906
 msgid "setting definition for '%{name}' is not a hash!"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:906
+#: ../lib/puppet/settings.rb:911
 msgid "Setting %{name} is already defined"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:910
+#: ../lib/puppet/settings.rb:915
 msgid "Setting %{name} is already using short name '%{short}'"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1167
+#: ../lib/puppet/settings.rb:1172
 msgid "Setting %{name} is deprecated."
 msgstr ""
 
 #. TRANSLATORS 'puppet.conf' is a file name and should not be translated
-#: ../lib/puppet/settings.rb:1172
+#: ../lib/puppet/settings.rb:1177
 msgid "Setting %{name} is deprecated in puppet.conf."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1339
+#: ../lib/puppet/settings.rb:1344
 msgid "Error converting value for param '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1363
+#: ../lib/puppet/settings.rb:1368
 msgid "Could not find value for %{expression}"
 msgstr ""
 
 #. TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
-#: ../lib/puppet/settings.rb:1373
+#: ../lib/puppet/settings.rb:1378
 msgid "You cannot interpolate $environment within '%{setting_name}' when using directory environments."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1374
+#: ../lib/puppet/settings.rb:1379
 msgid "Its value will remain %{value}."
 msgstr ""
 
-#: ../lib/puppet/settings.rb:1405
+#: ../lib/puppet/settings.rb:1410
 msgid "Attempt to assign a value to unknown setting %{name}"
 msgstr ""
 
@@ -7761,15 +7769,15 @@ msgid "Prefetch failed for %{type_name} provider '%{name}'"
 msgstr ""
 
 #. TRANSLATORS `prefetch` is a function name and should not be translated
-#: ../lib/puppet/transaction.rb:368
+#: ../lib/puppet/transaction.rb:363 ../lib/puppet/transaction.rb:366
 msgid "Could not prefetch %{type_name} provider '%{name}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:397
+#: ../lib/puppet/transaction.rb:399
 msgid "Skipping because of failed dependencies"
 msgstr ""
 
-#: ../lib/puppet/transaction.rb:402
+#: ../lib/puppet/transaction.rb:404
 msgid "Skipping because provider prefetch failed"
 msgstr ""
 
@@ -8505,19 +8513,19 @@ msgstr ""
 msgid "Already a generated class named %{klassname}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:67
+#: ../lib/puppet/util/command_line.rb:71
 msgid "Could not initialize global default settings"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:165
+#: ../lib/puppet/util/command_line.rb:169
 msgid "Error: Could not parse application options: invalid option: %{opt}"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:168
+#: ../lib/puppet/util/command_line.rb:172
 msgid "See 'puppet help' for help on available puppet subcommands"
 msgstr ""
 
-#: ../lib/puppet/util/command_line.rb:181
+#: ../lib/puppet/util/command_line.rb:185
 msgid "Error: Unknown Puppet subcommand '%{cmd}'"
 msgstr ""
 
