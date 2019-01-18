@@ -17,6 +17,8 @@ require 'puppet/acceptance/mount_utils'
 extend Puppet::Acceptance::MountUtils
 
 name = "pl#{rand(999999).to_i}"
+name_w_slash = "pl#{rand(999999).to_i}\/"
+munged_name = name_w_slash.gsub(%r{^(.+?)/*$}, '\1')
 
 agents.each do |agent|
   fs_file = filesystem_file(agent)
@@ -33,9 +35,22 @@ agents.each do |agent|
   step "(setup) add entry to filesystem table"
   add_entry_to_filesystem_table(agent, name)
 
+  step "(setup) add entry with slash to filesystem table"
+  add_entry_to_filesystem_table(agent, name_w_slash)
+
   #------- TESTS -------#
   step "verify mount with puppet"
   on(agent, puppet_resource('mount', "/#{name}")) do |res|
     fail_test "didn't find the mount #{name}" unless res.stdout.match(/'\/#{name}':\s+ensure\s+=>\s+'unmounted'/)
   end
+
+# There is a discrepancy between how `puppet resource` and `puppet apply` handle this case.
+# With this patch, using a resource title with a trailing slash in `puppet apply` will match a mount resource without a trailing slash.
+# However, `puppet resource mount` with a trailing slash will not match.
+# Therefore, this test cheats by performing the munging that occurs during a manifest application
+  step "verify mount with slash with puppet"
+  on(agent, puppet_resource('mount', "/#{munged_name}")) do |result|
+    fail_test "didn't find the mount #{name_w_slash}" unless result.stdout =~ %r{'/#{munged_name}':\s+ensure\s+=>\s+'unmounted'}
+  end
+
 end
