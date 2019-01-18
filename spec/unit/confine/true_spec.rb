@@ -12,33 +12,6 @@ describe Puppet::Confine::True do
     expect { Puppet::Confine::True.new }.to raise_error(ArgumentError)
   end
 
-  describe "when passing in a lambda as a value for lazy evaluation" do
-    it "should accept it" do
-      confine = Puppet::Confine::True.new(lambda { true })
-      expect(confine.values).to eql([true])
-    end
-
-    describe "when enforcing cache-positive behavior" do
-      def cached_value_of(confine)
-        confine.instance_variable_get(:@cached_value)
-      end
-
-      it "should cache a true value" do
-        confine = Puppet::Confine::True.new(lambda { true })
-        confine.values
-
-        expect(cached_value_of(confine)).to eql([true])
-      end
-
-      it "should not cache a false value" do
-        confine = Puppet::Confine::True.new(lambda { false })
-        confine.values
-
-        expect(cached_value_of(confine)).to be_nil
-      end
-    end
-  end
-
   describe "when testing values" do
     before do
       @confine = Puppet::Confine::True.new("foo")
