@@ -255,7 +255,7 @@ class Puppet::Settings
     @global_defaults_initialized
   end
 
-  def initialize_global_settings(args = [])
+  def initialize_global_settings(args = [], require_config = true)
     raise Puppet::DevError, _("Attempting to initialize global default settings more than once!") if global_defaults_initialized?
 
     # The first two phases of the lifecycle of a puppet application are:
@@ -264,7 +264,7 @@ class Puppet::Settings
     # 2) Parse the puppet config file(s).
 
     parse_global_options(args)
-    parse_config_files
+    parse_config_files(require_config)
 
     @global_defaults_initialized = true
   end
@@ -590,14 +590,19 @@ class Puppet::Settings
   end
 
   # Parse the configuration file.  Just provides thread safety.
-  def parse_config_files
+  def parse_config_files(require_config = true)
     file = which_configuration_file
     if Puppet::FileSystem.exist?(file)
       begin
         text = read_file(file)
       rescue => detail
-        Puppet.log_exception(detail, "Could not load #{file}: #{detail}")
-        return
+        message = _("Could not load %{file}: %{detail}") % { file: file, detail: detail}
+        if require_config
+          Puppet.log_and_raise(detail, message)
+        else
+          Puppet.log_exception(detail, message)
+          return
+        end
       end
     else
       return

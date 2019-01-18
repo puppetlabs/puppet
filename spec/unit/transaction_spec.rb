@@ -600,6 +600,30 @@ describe Puppet::Transaction do
       transaction.prefetch_if_necessary(resource)
     end
 
+    it "should not rescue SystemExit without future_features flag" do
+      Puppet.settings[:future_features] = false
+      resource.provider.class.expects(:prefetch).raises(SystemExit, "SystemMessage")
+      expect { transaction.prefetch_if_necessary(resource) }.to raise_error(SystemExit, "SystemMessage")
+    end
+
+    it "should not rescue SystemExit with future_features flag" do
+      Puppet.settings[:future_features] = true
+      resource.provider.class.expects(:prefetch).raises(SystemExit, "SystemMessage")
+      expect { transaction.prefetch_if_necessary(resource) }.to raise_error(SystemExit, "SystemMessage")
+    end
+
+    it "should rescue LoadError without future_features flag" do
+      Puppet.settings[:future_features] = false
+      resource.provider.class.expects(:prefetch).raises(LoadError, "LoadMessage")
+      expect { transaction.prefetch_if_necessary(resource) }.not_to raise_error
+    end
+
+    it "should rescue LoadError with future_features flag" do
+      Puppet.settings[:future_features] = true
+      resource.provider.class.expects(:prefetch).raises(LoadError, "LoadMessage")
+      expect { transaction.prefetch_if_necessary(resource) }.not_to raise_error
+    end
+
     describe "and prefetching fails" do
       before :each do
         resource.provider.class.expects(:prefetch).raises(Puppet::Error, "message")
@@ -612,6 +636,11 @@ describe Puppet::Transaction do
 
         it "should not rescue prefetch executions" do
           expect { transaction.prefetch_if_necessary(resource) }.to raise_error(Puppet::Error)
+        end
+
+        it "should log the exception during prefetch" do
+          Puppet.expects(:log_exception).with(anything, "Could not prefetch package provider 'pkgng': message")
+          expect { transaction.prefetch_if_necessary(resource) }.to raise_error(Puppet::Error, "message")
         end
       end
 

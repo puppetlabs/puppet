@@ -6,6 +6,11 @@ tag 'audit:medium',     # startup/configuration, high impact, low risk
                         # but changing a person running the tests users and
                         # groups can be very onerous
 
+# Due to OSX 10.14 Mojave new security feature called “Full Disk Access”
+# that limits the operations that a OSX user can do,
+# we can not manage users properly using puppet.
+confine :except, :platform => /^osx-10.14/
+
 # puppet doesn't try to manage ownership on windows.
 confine :except, :platform => 'windows'
 confine :except, :platform => /solaris-10/ # See PUP-5200
