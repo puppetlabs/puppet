@@ -857,8 +857,8 @@ heredoc
   : HEREDOC sublocated_text  { result = Factory.HEREDOC(val[0][:value], val[1]); loc result, val[0] }
 
 sublocated_text
-  : SUBLOCATE string    { result = Factory.SUBLOCATE(val[0], val[1]); loc result, val[0] }
-  | SUBLOCATE dq_string { result = Factory.SUBLOCATE(val[0], val[1]); loc result, val[0] }
+  : SUBLOCATE string    { result = Factory.SUBLOCATE(val[0], val[1]); }
+  | SUBLOCATE dq_string { result = Factory.SUBLOCATE(val[0], val[1]); }
 
 epp_expression
   : EPP_START epp_parameters_list optional_statements { result = Factory.EPP(val[1], val[2]); loc result, val[0] }

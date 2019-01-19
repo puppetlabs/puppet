@@ -33,11 +33,13 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
     end
   end
 
-  it "should be the default provider on rhel7" do
-    Facter.stubs(:value).with(:osfamily).returns(:redhat)
-    Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
-    expect(provider_class).to be_default
+  [7, 8].each do |ver|
+    it "should be the default provider on rhel#{ver}" do
+      Facter.stubs(:value).with(:osfamily).returns(:redhat)
+      Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
+      Facter.stubs(:value).with(:operatingsystemmajrelease).returns(ver.to_s)
+      expect(provider_class).to be_default
+    end
   end
 
   [ 4, 5, 6 ].each do |ver|
