@@ -28,7 +28,6 @@ class Factory
   BUILD_VISITOR = Visitor.new(self, 'build')
   INFER_VISITOR = Visitor.new(self, 'infer')
   INTERPOLATION_VISITOR = Visitor.new(self, 'interpolate')
-  MAPOFFSET_VISITOR = Visitor.new(self, 'map_offset')
 
   def self.infer(o)
     if o.instance_of?(Factory)
@@ -88,29 +87,6 @@ class Factory
     else
       INFER_VISITOR.visit_this(self, o, EMPTY_ARRAY)
     end
-  end
-
-  def map_offset(model, locator)
-    MAPOFFSET_VISITOR.visit_this_1(self, model, locator)
-  end
-
-  def map_offset_Object(o, locator)
-    o
-  end
-
-  def map_offset_Factory(o, locator)
-    map_offset(o.model, locator)
-  end
-
-  def map_offset_Positioned(o, locator)
-    # Transpose the local offset, length to global "coordinates"
-    global_offset, global_length = locator.to_global(o.offset, o.length)
-
-    # mutate
-    o.instance_variable_set(:'@offset', global_offset)
-    o.instance_variable_set(:'@length', global_length)
-    # Change locator since the positions were transposed to the global coordinates
-    o.instance_variable_set(:'@locator', locator.locator) if locator.is_a? Puppet::Pops::Parser::Locator::SubLocator
   end
 
   # Polymorphic interpolate
@@ -457,7 +433,8 @@ class Factory
     @init_hash[KEY_LOCATOR] = locator
     @init_hash['leading_line_count'] = locator.leading_line_count
     @init_hash['leading_line_offset'] = locator.leading_line_offset
-    @init_hash['line_offsets'] = locator.line_index # index of lines in sublocated
+    # Index is held in sublocator's parent locator - needed to be able to reconstruct
+    @init_hash['line_offsets'] = locator.locator.line_index
   end
 
   def build_SelectorEntry(o, matching, value)
@@ -752,6 +729,8 @@ class Factory
 
   def self.STRING(*args);                new(ConcatenatedString, args);                  end
 
+  def self.SUBLOCATE(token, expr)        new(SubLocatedExpression, token, expr);         end
+
   def self.LIST(entries);                new(LiteralList, entries);                      end
 
   def self.PARAM(name, expr=nil);        new(Parameter, name, expr);                     end
@@ -784,19 +763,6 @@ class Factory
   #
   def self.fqr(o)
     o.instance_of?(Factory) && o.model_class <= QualifiedReference ? self : new(QualifiedReference, o)
-  end
-
-  def self.SUBLOCATE(token, expr_factory)
-    # expr is a Factory wrapped LiteralString, or ConcatenatedString
-    # The token is SUBLOCATED token which has a SubLocator as the token's locator
-    # Use the SubLocator to recalculate the offsets and lengths.
-    model = expr_factory.model
-    locator = token.locator
-    expr_factory.map_offset(model, locator)
-    model._pcore_all_contents([]) { |element| expr_factory.map_offset(element, locator) }
-
-    # Returned the factory wrapping the now offset/length transformed expression(s)
-    expr_factory
   end
 
   def self.TEXT(expr)
