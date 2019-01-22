@@ -26,6 +26,21 @@ END
           assert_match(/True/, result.stdout.strip, msg)
         end
       end
+
+      def deny_administrator_access_to(host, filepath)
+        # we need to create a fake directory in the user's tempdir with powershell because the ACL
+        # perms set down by cygwin when making tempdirs makes the ACL unusable. Thus we create a
+        # tempdir using powershell and pull its' ACL as a starting point for the new ACL.
+        script = <<-PS1
+  mkdir -Force $env:TMP\\fake-dir-for-acl
+  $acl = Get-ACL $env:TMP\\fake-dir-for-acl
+  rm -Force $env:TMP\\fake-dir-for-acl
+  $ar = New-Object system.security.accesscontrol.filesystemaccessrule("Administrator","FullControl","Deny")
+  $acl.SetAccessRule($ar)
+  Set-ACL #{filepath} $acl
+        PS1
+        execute_powershell_script_on(host, script)
+      end
     end
   end
 end

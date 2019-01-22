@@ -158,7 +158,6 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
       context 'cwd option' do
         let(:cwd) { 'cwd' }
         it "should execute the command in the specified working directory" do
-          Dir.expects(:chdir).with(cwd).yields
           Process.expects(:create).with(
             :command_line => "test command",
             :startup_info => {
@@ -166,7 +165,8 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
               :stdout => @stdout,
               :stderr => @stderr
             },
-            :close_handles => false
+            :close_handles => false,
+            :cwd => cwd
           )
 
           call_exec_windows('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
