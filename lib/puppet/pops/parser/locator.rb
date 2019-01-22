@@ -258,17 +258,19 @@ class Locator
     #
     def to_global(offset, length)
       # simple case, no margin
-      return [offset + @leading_offset, length] unless @has_margin
+      return [offset + @leading_offset, length] unless @has_margin # if @leading_line_offset == 0
 
       # compute local start and end line
       start_line = line_for_offset(offset)
       end_line = line_for_offset(offset+length)
+      # Add a line start if position on line is 0 (since first position includes the preceding margin)
+      number_line_starts = end_line - start_line + (offset_on_line(offset) == 0 ? 1 : 0)
 
       # complex case when there is a margin
       transposed_offset = offset == 0 ? @leading_offset : offset + @leading_offset + @accumulated_margin[start_line]
       transposed_length = length +
-        @accumulated_margin[end_line] - @accumulated_margin[start_line] +    # the margins between start and end (0 is line 1)
-        (offset_on_line(offset) == 0 ? margin_per_line[start_line - 1] : 0)  # include start's margin in position 0
+        @accumulated_margin[end_line] - @accumulated_margin[start_line] + # the margins between start and end (0 is line 1)
+        (offset_on_line(offset) == 0 ? margin_per_line[start_line -1] : 0)        # include start's margin in position 0
       [transposed_offset, transposed_length]
     end
 
