@@ -226,31 +226,7 @@ CODE
     # line 8
     # line 9
     CODE
-    expect{parse(src)}.to raise_error(/Syntax error at '\]' \(line: 6, column: 23\)/)
-  end
-
-  it "correctly reports an error location in a heredoc with line endings escaped when there is text in the margin" do
-    # DO NOT CHANGE INDENTATION OR SPACING OF THIS HEREDOC
-    src = <<-CODE
-    @(END)
-AAA
- BBB
-  CCC
-   DDD
-    EEE
-     FFF
-    |- END
-    CODE
-    expect(dump(parse(src))).to eq([
-      "(@()",
-      "  'AAA", # left space trimmed
-      "  BBB",  # - " -
-      "  CCC",
-      "  DDD",
-      "  EEE",
-      "   FFF", # indented one because it is one in from margin marker
-      "')",
-      ")"].join("\n"))
+    expect{parse(src)}.to raise_error(/Heredoc with text in the margin is not allowed \(line 3 in this heredoc\) \(line: 6, column: 3\)/)
   end
 
   it 'parses multiple heredocs on the same line' do
