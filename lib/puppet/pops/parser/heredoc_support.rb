@@ -94,12 +94,11 @@ module HeredocSupport
 
 
         # Process captured lines - remove leading, and trailing newline
-        # get processed string and index of removed margin/leading size per line
-        str, margin_per_line = heredoc_text(lines, leading, has_margin, remove_break)
+        str = heredoc_text(lines, leading, has_margin, remove_break)
 
         # Use a new lexer instance configured with a sub-locator to enable correct positioning
         sublexer = self.class.new()
-        locator = Locator::SubLocator.new(locator, str, heredoc_line, heredoc_offset, has_margin, margin_per_line)
+        locator = Locator::SubLocator.new(locator, heredoc_line, heredoc_offset, leading.length())
 
         # Emit a token that provides the grammar with location information about the lines on which the heredoc
         # content is based.
@@ -121,31 +120,22 @@ module HeredocSupport
     raise eof_error
   end
 
-  # Produces the heredoc text string given the individual (unprocessed) lines as an array and array with margin sizes per line
+  # Produces the heredoc text string given the individual (unprocessed) lines as an array.
   # @param lines [Array<String>] unprocessed lines of text in the heredoc w/o terminating line
   # @param leading [String] the leading text up (up to pipe or other terminating char)
   # @param has_margin [Boolean] if the left margin should be adjusted as indicated by `leading`
   # @param remove_break [Boolean] if the line break (\r?\n) at the end of the last line should be removed or not
-  # @return [Array] - a tuple with resulting string, and an array with margin size per line
   #
   def heredoc_text(lines, leading, has_margin, remove_break)
-    if has_margin && leading.length > 0
+    if has_margin
       leading_pattern = /^#{Regexp.escape(leading)}/
-      # TODO: This implementation is not according to the specification, but is kept to be bug compatible.
-      # The specification says that leading space up to the margin marker should be removed, but this implementation
-      # simply leaves lines that have text in the margin untouched.
-      #
-      processed_lines = lines.collect {|s| s.gsub(leading_pattern, '') }
-      margin_per_line = processed_lines.length.times.map {|x| lines[x].length - processed_lines[x].length }
-      lines = processed_lines
-    else
-      # Array with a 0 per line
-      margin_per_line = Array.new(lines.length, 0)
+      lines = lines.collect {|s| s.gsub(leading_pattern, '') }
     end
     result = lines.join('')
     result.gsub!(/\r?\n\z/m, '') if remove_break
-    [result, margin_per_line]
+    result
   end
+
 
 end
 end
