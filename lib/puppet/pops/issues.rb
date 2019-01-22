@@ -143,7 +143,7 @@ module Issues
   # @todo configuration
   #
   NAME_WITH_HYPHEN = issue :NAME_WITH_HYPHEN, :name do
-    _("%{issue} may not have a name containing a hyphen. The name '%{name}' is not legal") % { issue: label.a_an_uc(semantic), name: name }
+    _("The name '%{name}' contains a hyphen which is illegal in an expression of type %{type}.") % { type: label(semantic), name: name }
   end
 
   # When a variable name contains a hyphen and these are illegal.
@@ -165,7 +165,7 @@ module Issues
   end
 
   NOT_ABSOLUTE_TOP_LEVEL = hard_issue :NOT_ABSOLUTE_TOP_LEVEL do
-    _("%{value} may only appear at toplevel") % { value: label.a_an_uc(semantic) }
+    _("An expression of type %{expression_type} may only appear at top level.") % { expression_type: label(semantic) }
   end
 
   CROSS_SCOPE_ASSIGNMENT = hard_issue :CROSS_SCOPE_ASSIGNMENT, :name do
@@ -174,7 +174,7 @@ module Issues
 
   # Assignment can only be made to certain types of left hand expressions such as variables.
   ILLEGAL_ASSIGNMENT = hard_issue :ILLEGAL_ASSIGNMENT do
-    _("Illegal attempt to assign to '%{value}'. Not an assignable reference") % { value: label.a_an(semantic) }
+    _("Illegal attempt to assign to the type %{type}. Not an assignable reference.") % { type: label(semantic) }
   end
 
   # Variables are immutable, cannot reassign in the same assignment scope
@@ -211,14 +211,14 @@ module Issues
   # mutation.
   #
   ILLEGAL_INDEXED_ASSIGNMENT = issue :ILLEGAL_INDEXED_ASSIGNMENT do
-    _("Illegal attempt to assign via [index/key]. Not an assignable reference")
+    _("Illegal attempt to assign via [index/key]. Not an assignable reference.")
   end
 
   # When indexed assignment ($x[]=) is allowed, the leftmost expression must be
   # a variable expression.
   #
   ILLEGAL_ASSIGNMENT_VIA_INDEX = hard_issue :ILLEGAL_ASSIGNMENT_VIA_INDEX do
-    _("Illegal attempt to assign to %{value} via [index/key]. Not an assignable reference") % { value: label.a_an(semantic) }
+    _("Illegal attempt to assign to the type %{type} via [index/key]. Not an assignable reference.") % { type: label(semantic) }
   end
 
   ILLEGAL_MULTI_ASSIGNMENT_SIZE = hard_issue :ILLEGAL_MULTI_ASSIGNMENT_SIZE, :expected, :actual do
@@ -247,17 +247,17 @@ module Issues
   # resource defaults)
   #
   UNSUPPORTED_OPERATOR_IN_CONTEXT = hard_issue :UNSUPPORTED_OPERATOR_IN_CONTEXT, :operator do
-    _("The operator '%{operator}' in %{value} is not supported.") % { operator: operator, value: label.a_an(semantic) }
+    _("The operator '%{operator}' is not supported in an expression of type %{type}.") % { operator: operator, type: label(semantic) }
   end
 
   # For non applicable operators (e.g. << on Hash).
   #
   OPERATOR_NOT_APPLICABLE = hard_issue :OPERATOR_NOT_APPLICABLE, :operator, :left_value do
-    _("Operator '%{operator}' is not applicable to %{left}.") % { operator: operator, left: label.a_an(left_value) }
+    _("Operator '%{operator}' is not applicable to an expression of type %{left}.") % { operator: operator, left: label(left_value) }
   end
 
   OPERATOR_NOT_APPLICABLE_WHEN = hard_issue :OPERATOR_NOT_APPLICABLE_WHEN, :operator, :left_value, :right_value do
-    _("Operator '%{operator}' is not applicable to %{left} when right side is %{right}.") % { operator: operator, left: label.a_an(left_value), right: label.a_an(right_value) }
+    _("Operator '%{operator}' is not applicable to an expression of type %{left} when right side is of type %{right}.") % { operator: operator, left: label(left_value), right: label(right_value) }
   end
 
   COMPARISON_NOT_POSSIBLE = hard_issue :COMPARISON_NOT_POSSIBLE, :operator, :left_value, :right_value, :detail do
@@ -269,20 +269,20 @@ module Issues
   end
 
   MATCH_NOT_STRING = hard_issue :MATCH_NOT_STRING, :left_value do
-    _("Left match operand must result in a String value. Got %{left}.") % { left: label.a_an(left_value) }
+    _("Left match operand must result in a String value. Instead, got a value of type %{left}.") % { left: label(left_value) }
   end
 
   # Some expressions/statements may not produce a value (known as right-value, or rvalue).
   # This may vary between puppet versions.
   #
   NOT_RVALUE = issue :NOT_RVALUE do
-    _("Invalid use of expression. %{value} does not produce a value") % { value: label.a_an_uc(semantic) }
+    _("Invalid use of expression. An expression of type %{expression_type} does not produce a value.") % { expression_type: label(semantic) }
   end
 
   # Appending to attributes is only allowed in certain types of resource expressions.
   #
   ILLEGAL_ATTRIBUTE_APPEND = hard_issue :ILLEGAL_ATTRIBUTE_APPEND, :name, :parent do
-    _("Illegal +> operation on attribute %{attr}. This operator can not be used in %{expression}") % { attr: name, expression: label.a_an(parent) }
+    _("Illegal +> operation on attribute %{attr}. This operator can not be used in an expression of type %{expression}.") % { attr: name, expression: label(parent) }
   end
 
   ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
@@ -290,11 +290,11 @@ module Issues
   end
 
   ILLEGAL_SINGLE_TYPE_MAPPING = hard_issue :ILLEGAL_TYPE_MAPPING, :expression do
-    _("Illegal type mapping. Expected a Type on the left side, got %{expression}") % { expression: label.a_an_uc(semantic) }
+    _("Illegal type mapping. Expected a Type on the left side. Instead, got an expression of type %{expression_type}.") % { expression_type: label(semantic) }
   end
 
   ILLEGAL_REGEXP_TYPE_MAPPING = hard_issue :ILLEGAL_TYPE_MAPPING, :expression do
-    _("Illegal type mapping. Expected a Tuple[Regexp,String] on the left side, got %{expression}") % { expression: label.a_an_uc(semantic) }
+    _("Illegal type mapping. Expected a Tuple[Regexp,String] on the left side. Instead, got an expression of type %{expression_type}.") % { expression_type: label(semantic) }
   end
 
   ILLEGAL_PARAM_NAME = hard_issue :ILLEGAL_PARAM_NAME, :name do
@@ -347,20 +347,20 @@ module Issues
   # E.g. an arithmetic expression where a hostname is expected.
   #
   ILLEGAL_EXPRESSION = hard_issue :ILLEGAL_EXPRESSION, :feature, :container do
-    _("Illegal expression. %{expression} is unacceptable as %{feature} in %{container}") % { expression: label.a_an_uc(semantic), feature: feature, container: label.a_an(container) }
+    _("Illegal expression: %{expression}. It is unacceptable as %{feature} in an expression of type %{container}") % { expression: label(semantic), feature: feature, container: label(container) }
   end
 
   # Issues when a variable is not a NAME
   #
   ILLEGAL_VARIABLE_EXPRESSION = hard_issue :ILLEGAL_VARIABLE_EXPRESSION do
-    _("Illegal variable expression. %{expression} did not produce a variable name (String or Numeric).") % { expression: label.a_an_uc(semantic) }
+    _("Illegal variable expression. The expression of type %{expression_type} did not produce a variable name (String or Numeric).") % { expression_type: label(semantic) }
   end
 
   # Issues when an expression is used illegally in a query.
   # query only supports == and !=, and not <, > etc.
   #
   ILLEGAL_QUERY_EXPRESSION = hard_issue :ILLEGAL_QUERY_EXPRESSION do
-    _("Illegal query expression. %{expression} cannot be used in a query") % { expression: label.a_an_uc(semantic) }
+    _("Illegal query expression. An expression of type %{expression_type} cannot be used in a query.") % { expression_type: label(semantic) }
   end
 
   # If an attempt is made to make a resource default virtual or exported.
@@ -377,21 +377,21 @@ module Issues
   # This is not supported in 3x, but it allowed in 4x.
   #
   UNSUPPORTED_RANGE = issue :UNSUPPORTED_RANGE, :count do
-    _("Attempt to use unsupported range in %{expression}, %{count} values given for max 1") % { expression: label.a_an(semantic), count: count }
+    _("Attempt to use unsupported range in an expression of type %{expression_type}. Was given %{count} where max 1 is accepted.") % { expression: label(semantic), count: count }
   end
 
   # Issues when expressions that are not implemented or activated in the current version are used.
   #
   UNSUPPORTED_EXPRESSION = issue :UNSUPPORTED_EXPRESSION do
-    _("Expressions of type %{expression} are not supported in this version of Puppet") % { expression: label.a_an(semantic) }
+    _("Expressions of type %{expression} are not supported in this version of Puppet.") % { expression: label(semantic) }
   end
 
   ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
-    _("Illegal relationship operand, can not form a relationship with %{expression}. A Catalog type is required.") % { expression: label.a_an(operand) }
+    _("Illegal relationship operand. Can not form a relationship with an expression of type %{expression}. A Catalog type is required.") % { expression: label(operand) }
   end
 
   NOT_CATALOG_TYPE = issue :NOT_CATALOG_TYPE, :type do
-    _("Illegal relationship operand, can not form a relationship with something of type %{expression_type}. A Catalog type is required.") % { expression_type: type }
+    _("Illegal relationship operand. Can not form a relationship with something of type %{expression_type}. A Catalog type is required.") % { expression_type: type }
   end
 
   BAD_STRING_SLICE_ARITY = issue :BAD_STRING_SLICE_ARITY, :actual do
@@ -399,7 +399,7 @@ module Issues
   end
 
   BAD_STRING_SLICE_TYPE = issue :BAD_STRING_SLICE_TYPE, :actual do
-    _("String-Type [] requires all arguments to be integers (or default). Got %{actual}") % { actual: actual }
+    _("String-Type [] requires all arguments to be integers (or default). Instead, got a value of type %{actual}") % { actual: label(actual) }
   end
 
   BAD_ARRAY_SLICE_ARITY = issue :BAD_ARRAY_SLICE_ARITY, :actual do
@@ -419,7 +419,7 @@ module Issues
   end
 
   BAD_COLLECTION_SLICE_TYPE = issue :BAD_COLLECTION_SLICE_TYPE, :actual do
-    _("A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got %{actual}") % { actual: label.a_an(actual) }
+    _("A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Instead, got a value of type %{actual}.") % { actual: label(actual) }
   end
 
   BAD_FLOAT_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do
@@ -432,9 +432,9 @@ module Issues
 
   BAD_SLICE_KEY_TYPE = issue :BAD_SLICE_KEY_TYPE, :left_value, :expected_classes, :actual do
     if expected_classes.size > 1
-      _("%{expression}[] cannot use %{actual} where one of the following is expected: %{expected}") % { expression: label.a_an_uc(left_value), actual: actual, expected: expected_classes.join(', ') }
+      _("%{expression}[] cannot use %{actual} where one of the following is expected: %{expected}") % { expression: label(left_value), actual: actual, expected: expected_classes.join(', ') }
     else
-      _("%{expression}[] cannot use %{actual} where %{expected} is expected") % { expression: label.a_an_uc(left_value), actual: actual, expected: expected_classes[0] }
+      _("%{expression}[] cannot use %{actual} where %{expected} is expected.") % { expression: label(left_value), actual: actual, expected: expected_classes[0] }
     end
   end
 
@@ -451,7 +451,7 @@ module Issues
   end
 
   BAD_TYPE_SLICE_ARITY = issue :BAD_TYPE_SLICE_ARITY, :base_type, :min, :max, :actual do
-    base_type_label = base_type.is_a?(String) ? base_type : label.a_an_uc(base_type)
+    base_type_label = base_type.is_a?(String) ? base_type : label(base_type)
     if max == -1 || max == Float::INFINITY
       _("%{base_type_label}[] accepts %{min} or more arguments. Got %{actual}") % { base_type_label: base_type_label, min: min, actual: actual }
     elsif max && max != min
@@ -462,7 +462,7 @@ module Issues
   end
 
   BAD_TYPE_SPECIALIZATION = hard_issue :BAD_TYPE_SPECIALIZATION, :type, :message do
-    _("Error creating type specialization of %{base_type}, %{message}") % { base_type: label.a_an(type), message: message }
+    _("Error creating type specialization of data type %{data_type}. %{message}") % { data_type: label(type), message: message }
   end
 
   ILLEGAL_TYPE_SPECIALIZATION = issue :ILLEGAL_TYPE_SPECIALIZATION, :kind do
@@ -478,11 +478,11 @@ module Issues
   end
 
   ILLEGAL_HOSTCLASS_NAME = hard_issue :ILLEGAL_HOSTCLASS_NAME, :name do
-    _("Illegal Class name in class reference. %{expression} cannot be used where a String is expected") % { expression: label.a_an_uc(name) }
+    _("Illegal Class name in class reference. An expression of type %{expression_type} cannot be used where a String is expected.") % { expression_type: label(name) }
   end
 
   ILLEGAL_DEFINITION_NAME = hard_issue :ILLEGAL_DEFINITION_NAME, :name do
-    _("Unacceptable name. The name '%{name}' is unacceptable as the name of %{value}") % { name: name, value: label.a_an(semantic) }
+    _("Unacceptable name. The name '%{name}' is unacceptable as the name of a definition of type %{type}.") % { name: name, type: label(semantic) }
   end
 
   ILLEGAL_DEFINITION_LOCATION = issue :ILLEGAL_DEFINITION_LOCATION, :name, :file do
@@ -502,7 +502,7 @@ module Issues
   end
 
   CAPTURES_REST_NOT_SUPPORTED = hard_issue :CAPTURES_REST_NOT_SUPPORTED, :container, :param_name do
-    _("Parameter $%{param} has 'captures rest' - not supported in %{container}") % { param: param_name, container: label.a_an(container) }
+    _("Parameter $%{param} has 'captures rest' which is not supported in an expression of type %{container}.") % { param: param_name, container: label(container) }
   end
 
   REQUIRED_PARAMETER_AFTER_OPTIONAL = hard_issue :REQUIRED_PARAMETER_AFTER_OPTIONAL, :param_name do
@@ -530,7 +530,7 @@ module Issues
   end
 
   RUNTIME_ERROR = issue :RUNTIME_ERROR, :detail do
-    _("Error while evaluating %{expression}, %{detail}") % { expression: label.a_an(semantic), detail: detail }
+    _("Error while evaluating an expression of type %{expression_type}. %{detail}") % { expression_type: label(semantic), detail: detail }
   end
 
   UNKNOWN_RESOURCE_TYPE = issue :UNKNOWN_RESOURCE_TYPE, :type_name do
@@ -604,7 +604,7 @@ module Issues
   end
 
   IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
-    _("This %{expression} has no effect. %{container} can not end with a value-producing expression without other effect") % { expression: label.label(semantic), container: label.a_an_uc(container) }
+    _("This expression of type %{expression_type} has no effect. The container of type %{container_type} can not end with a value-producing expression without side effects.") % { expression_type: label(semantic), container_type: label(container) }
   end
 
   RESERVED_WORD = hard_issue :RESERVED_WORD, :word do
@@ -616,7 +616,7 @@ module Issues
   end
 
   RESERVED_TYPE_NAME = hard_issue :RESERVED_TYPE_NAME, :name do
-    _("The name: '%{name}' is already defined by Puppet and can not be used as the name of %{expression}.") % { name: name, expression: label.a_an(semantic) }
+    _("The name: '%{name}' is already defined by Puppet and can not be used as the name of this expression of type %{expression}.") % { name: name, expression: label(semantic) }
   end
 
   UNMATCHED_SELECTOR = hard_issue :UNMATCHED_SELECTOR, :param_value do
@@ -773,9 +773,9 @@ module Issues
 
   NUMERIC_OVERFLOW = hard_issue :NUMERIC_OVERFLOW, :value do
     if value > 0
-      _("%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
+      _("An expression of type %{expression_type} resulted in the value of '%{value}' outside of Puppet Integer max range.") % { expression_type: label(semantic), value: ("%#+x" % value) }
     else
-      _("%{expression} resulted in a value outside of Puppet Integer min range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
+      _("An expression of type %{expression_type} resulted in the value of '%{value}' outside of Puppet Integer min range.") % { expression_type: label(semantic), value: ("%#+x" % value) }
     end
   end
 
@@ -784,7 +784,14 @@ module Issues
   end
 
   HIERA_VERSION_3_NOT_GLOBAL = hard_issue :HIERA_VERSION_3_NOT_GLOBAL, :where do
-    _("hiera.yaml version 3 cannot be used in %{location}") % { location: label.a_an(where) }
+    case where
+    when 'environment':
+      _("hiera.yaml version 3 cannot be used in an environment.")
+    when 'module':
+      _("hiera.yaml version 3 cannot be used in a module.")
+    else
+      _("hiera.yaml version 3 cannot be used here.")
+    end
   end
 
   HIERA_UNSUPPORTED_VERSION_IN_GLOBAL = hard_issue :HIERA_UNSUPPORTED_VERSION_IN_GLOBAL do
@@ -878,11 +885,11 @@ module Issues
   end
 
   SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path, :klass, :value do
-    _("%{path} contains %{klass} value. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
+    _("%{path} contains a value of data type %{klass}. It will be converted to the String '%{value}'.") % { path: path, klass: label(klass), value: value }
   end
 
   SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path, :klass, :value do
-    _("%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
+    _("%{path} contains a hash with a key of data type %{klass}. It will be converted to the String '%{value}'.") % { path: path, klass: label(klass), value: value }
   end
 
   FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = issue :NOT_SUPPORTED_WHEN_SCRIPTING, :feature do
@@ -894,15 +901,15 @@ module Issues
   end
 
   EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING = issue :EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING, :klass do
-    _("%{expr} is only available when compiling a catalog") % { expr: label.a_an_uc(klass) }
+    _("An expression of type %{expression_type} is only available when compiling a catalog.") % { expression_type: label(klass) }
   end
 
   TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = issue :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, :operation do
-    _("The task operation '%{operation}' is not available when compiling a catalog") % { operation: operation }
+    _("The task operation '%{operation}' is not available when compiling a catalog.") % { operation: operation }
   end
 
   EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING = issue :EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, :klass do
-    _("%{expr} is not available when compiling a catalog") % { expr: label.a_an_uc(klass) }
+    _("An expression of type %{expression_type} is not available when compiling a catalog.") % { expression_type: label(klass) }
   end
 
   TASK_MISSING_BOLT = issue :TASK_MISSING_BOLT, :action do
