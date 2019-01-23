@@ -172,6 +172,7 @@ FSTAB
       expect(mounts[2]).to eq({ :name => '/sys', :mounted => :yes })
       expect(mounts[3]).to eq({ :name => '/usr/portage', :mounted => :yes })
       expect(mounts[4]).to eq({ :name => '/ghost', :mounted => :yes })
+      expect(mounts[5]).to eq({ :name => '/run', :mounted => :yes})
     end
 
     it "should get name from mountoutput found on AIX" do
@@ -283,10 +284,11 @@ FSTAB
         @res_mounted = Puppet::Type::Mount.new(:name => '/')       # in every fake fstab
         @res_unmounted = Puppet::Type::Mount.new(:name => '/boot') # in every fake fstab
         @res_absent = Puppet::Type::Mount.new(:name => '/absent')  # in no fake fstab
+        @res_trailing_slash = Puppet::Type::Mount.new(:name => '/run/') # in every fake fstab
 
         # Simulate transaction.rb:prefetch
         @resource_hash = {}
-        [@res_ghost, @res_mounted, @res_unmounted, @res_absent].each do |resource|
+        [@res_ghost, @res_mounted, @res_unmounted, @res_absent, @res_trailing_slash].each do |resource|
           @resource_hash[resource.name] = resource
         end
       end
@@ -305,6 +307,11 @@ FSTAB
         it "should set :ensure to :mounted if found in fstab and mounted" do
           described_class.prefetch(@resource_hash)
           expect(@res_mounted.provider.get(:ensure)).to eq(:mounted)
+        end
+
+        it 'strips trailing slashes from resource titles' do
+          described_class.prefetch(@resource_hash)
+          expect(@res_trailing_slash.provider.get(:ensure)).to eq(:mounted)
         end
       end
 

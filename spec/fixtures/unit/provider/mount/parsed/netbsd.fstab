@@ -7,3 +7,4 @@
 /dev/ad3s1b             none            swap    sw              0       0
 /dev/ad3s1e             /data           ufs     rw              2       2
 /dev/ad3s1g             /boot           ufs     rw              2       2
+tmpfs                   /run/           tmpfs   rw,nosuid,nodev,seclabel,mode=755        0 0
