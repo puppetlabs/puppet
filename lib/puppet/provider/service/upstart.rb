@@ -28,12 +28,22 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   # We only want to use upstart as our provider if the upstart daemon is running.
   # This can be checked by running `initctl version --quiet` on a machine that has
   # upstart installed.
-  confine :true => begin
-    initctl('version', '--quiet')
-    true
-  rescue
-    false
-  end
+  confine :true => lambda {
+    # Puppet::Util::Execution.execute does not currently work on jRuby.
+    # Unfortunately, since this confine is invoked whenever we check for
+    # provider suitability and since provider suitability is still checked
+    # on the master, this confine will still be invoked on the master. Thus
+    # to avoid raising an exception, we do an early return if we're running
+    # on jRuby.
+    next false if Puppet::Util::Platform.jruby?
+
+    begin
+      initctl('version', '--quiet')
+      true
+    rescue
+      false
+    end
+  }
 
   # upstart developer haven't implemented initctl enable/disable yet:
   # http://www.linuxplanet.com/linuxplanet/tutorials/7033/2/
