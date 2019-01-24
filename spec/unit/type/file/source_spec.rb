@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'uri'
 require 'puppet/network/http_pool'

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http'
 require 'puppet/util/http_proxy'

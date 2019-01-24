@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "the 'fail' parser function" do

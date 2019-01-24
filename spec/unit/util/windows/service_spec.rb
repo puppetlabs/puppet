@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 require 'spec_helper'
 
 describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_windows? do

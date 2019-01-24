@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.features.microsoft_windows? do

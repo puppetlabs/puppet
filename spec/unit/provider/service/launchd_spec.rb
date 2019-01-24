@@ -1,6 +1,3 @@
-# Spec Tests for the Launchd provider
-#
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:launchd) do

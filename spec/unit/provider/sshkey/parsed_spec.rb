@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "sshkey parsed provider" do

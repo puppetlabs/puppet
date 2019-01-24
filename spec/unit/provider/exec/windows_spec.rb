@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.microsoft_windows? do

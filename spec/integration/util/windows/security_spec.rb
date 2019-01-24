@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 require 'spec_helper'
 
 if Puppet.features.microsoft_windows?

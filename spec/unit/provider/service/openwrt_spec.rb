@@ -1,7 +1,3 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the OpenWrt service Provider
-#
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.posix? do

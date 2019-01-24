@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 shared_examples_for "Puppet::FileServing::Files" do |indirection|
   %w[find search].each do |method|
     let(:request) { Puppet::Indirector::Request.new(indirection, method, 'foo', nil) }

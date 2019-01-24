@@ -1,6 +1,4 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/indirector/certificate/ca'
 
 describe Puppet::SSL::Certificate::Ca do

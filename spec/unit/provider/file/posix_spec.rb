@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix? do

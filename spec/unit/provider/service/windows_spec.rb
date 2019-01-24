@@ -1,8 +1,3 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the Windows service Provider
-#
-
 require 'spec_helper'
 
 require 'win32/service' if Puppet.features.microsoft_windows?

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 maillist = Puppet::Type.type(:maillist)

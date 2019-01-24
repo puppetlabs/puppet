@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet_spec/files'

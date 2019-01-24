@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "Windows UTF8 environment variables", :if => Puppet.features.microsoft_windows? do

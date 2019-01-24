@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:package), "when choosing a default package provider" do

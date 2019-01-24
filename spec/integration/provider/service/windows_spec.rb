@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:windows), '(integration)',

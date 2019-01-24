@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/character_encoding'
 require 'puppet_spec/character_encoding'

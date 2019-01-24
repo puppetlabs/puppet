@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet/indirector/indirector_testing/msgpack'

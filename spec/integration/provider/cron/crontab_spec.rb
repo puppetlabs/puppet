@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 require 'puppet_spec/compiler'

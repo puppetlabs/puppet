@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/file_serving/http_metadata'
 require 'matchers/json'

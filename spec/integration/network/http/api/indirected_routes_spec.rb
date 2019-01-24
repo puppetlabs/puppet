@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http'
 require 'puppet/network/http/api/indirected_routes'

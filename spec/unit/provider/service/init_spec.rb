@@ -1,8 +1,3 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the Init service Provider
-#
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:init) do

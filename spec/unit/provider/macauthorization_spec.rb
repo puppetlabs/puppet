@@ -1,8 +1,3 @@
-#! /usr/bin/env ruby
-#
-# Unit testing for the macauthorization provider
-#
-
 require 'spec_helper'
 
 require 'puppet'

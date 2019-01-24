@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/configurer'
 require 'puppet/configurer/fact_handler'

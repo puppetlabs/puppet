@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 # encoding: ASCII-8BIT
 require 'spec_helper'
 

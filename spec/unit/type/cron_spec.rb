@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows? do

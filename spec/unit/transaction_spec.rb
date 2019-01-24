@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'matchers/include_in_order'
 require 'puppet_spec/compiler'

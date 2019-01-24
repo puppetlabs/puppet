@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/auth_config_parser'
 require 'puppet/network/authconfig'

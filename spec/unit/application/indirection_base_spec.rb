@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/command_line'
 require 'puppet/application/indirection_base'

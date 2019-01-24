@@ -1,4 +1,3 @@
-# spec/unit/provider/package/up2date_spec.rb
 require 'spec_helper'
 
 describe 'up2date package provider' do

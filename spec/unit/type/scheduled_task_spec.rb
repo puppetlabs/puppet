@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_windows? do

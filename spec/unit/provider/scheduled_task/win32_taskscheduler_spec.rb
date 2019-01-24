@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/windows/taskscheduler' if Puppet.features.microsoft_windows?
