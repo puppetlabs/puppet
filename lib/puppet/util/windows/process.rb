@@ -24,12 +24,10 @@ module Puppet::Util::Windows::Process
     if arguments[:suppress_window]
       create_args[:creation_flags] = CREATE_NO_WINDOW
     end
-    cwd = arguments[:cwd]
-    if cwd
-      Dir.chdir(cwd) { Process.create(create_args) }
-    else
-      Process.create(create_args)
+    if arguments[:cwd]
+      create_args[:cwd] = arguments[:cwd]
     end
+    Process.create(create_args)
   end
   module_function :execute
 
