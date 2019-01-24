@@ -3204,14 +3204,14 @@ module_eval(<<'.,.,', 'egrammar.ra', 856)
 
 module_eval(<<'.,.,', 'egrammar.ra', 859)
   def _reduce_259(val, _values, result)
-     result = Factory.SUBLOCATE(val[0], val[1]); loc result, val[0] 
+     result = Factory.SUBLOCATE(val[0], val[1]); 
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'egrammar.ra', 860)
   def _reduce_260(val, _values, result)
-     result = Factory.SUBLOCATE(val[0], val[1]); loc result, val[0] 
+     result = Factory.SUBLOCATE(val[0], val[1]); 
     result
   end
 .,.,
