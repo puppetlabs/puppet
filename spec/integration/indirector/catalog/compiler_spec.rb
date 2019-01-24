@@ -6,7 +6,7 @@ Puppet::Resource::Catalog.indirection.terminus(:compiler)
 
 describe Puppet::Resource::Catalog::Compiler do
   before do
-    Facter.stubs(:value).returns "something"
+    allow(Facter).to receive(:value).and_return("something")
     @catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
     @catalog.add_resource(@one = Puppet::Resource.new(:file, "/one"))
     @catalog.add_resource(@two = Puppet::Resource.new(:file, "/two"))
@@ -31,8 +31,8 @@ describe Puppet::Resource::Catalog::Compiler do
   it "should filter out virtual resources when finding a catalog" do
     Puppet[:node_terminus] = :memory
     Puppet::Node.indirection.save(Puppet::Node.new("mynode"))
-    Puppet::Resource::Catalog.indirection.terminus.stubs(:extract_facts_from_request)
-    Puppet::Resource::Catalog.indirection.terminus.stubs(:compile).returns(@catalog)
+    allow(Puppet::Resource::Catalog.indirection.terminus).to receive(:extract_facts_from_request)
+    allow(Puppet::Resource::Catalog.indirection.terminus).to receive(:compile).and_return(@catalog)
 
     @one.virtual = true
 
@@ -42,8 +42,8 @@ describe Puppet::Resource::Catalog::Compiler do
   it "should not filter out exported resources when finding a catalog" do
     Puppet[:node_terminus] = :memory
     Puppet::Node.indirection.save(Puppet::Node.new("mynode"))
-    Puppet::Resource::Catalog.indirection.terminus.stubs(:extract_facts_from_request)
-    Puppet::Resource::Catalog.indirection.terminus.stubs(:compile).returns(@catalog)
+    allow(Puppet::Resource::Catalog.indirection.terminus).to receive(:extract_facts_from_request)
+    allow(Puppet::Resource::Catalog.indirection.terminus).to receive(:compile).and_return(@catalog)
 
     @one.exported = true
 
@@ -53,8 +53,8 @@ describe Puppet::Resource::Catalog::Compiler do
   it "should filter out virtual exported resources when finding a catalog" do
     Puppet[:node_terminus] = :memory
     Puppet::Node.indirection.save(Puppet::Node.new("mynode"))
-    Puppet::Resource::Catalog.indirection.terminus.stubs(:extract_facts_from_request)
-    Puppet::Resource::Catalog.indirection.terminus.stubs(:compile).returns(@catalog)
+    allow(Puppet::Resource::Catalog.indirection.terminus).to receive(:extract_facts_from_request)
+    allow(Puppet::Resource::Catalog.indirection.terminus).to receive(:compile).and_return(@catalog)
 
     @one.exported = true
     @one.virtual = true
@@ -66,10 +66,10 @@ describe Puppet::Resource::Catalog::Compiler do
     Puppet[:node_terminus] = :memory
     Puppet::Node.indirection.save(Puppet::Node.new("mynode"))
 
-    Puppet::Parser::Resource::Catalog.any_instance.expects(:to_resource).with do |catalog|
-      expect(Puppet.lookup(:current_environment).name).to eq(:production)
-    end
+    catalog_environment = nil
+    expect_any_instance_of(Puppet::Parser::Resource::Catalog).to receive(:to_resource) {catalog_environment = Puppet.lookup(:current_environment).name}
 
     Puppet::Resource::Catalog.indirection.find("mynode")
+    expect(catalog_environment).to eq(:production)
   end
 end

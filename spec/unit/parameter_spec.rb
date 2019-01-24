@@ -8,8 +8,9 @@ describe Puppet::Parameter do
       @name = :foo
     end
     @class.initvars
-    @resource = mock 'resource'
-    @resource.stub_everything
+    @resource = double('resource')
+    allow(@resource).to receive(:expects)
+    allow(@resource).to receive(:pathbuilder)
     @parameter = @class.new :resource => @resource
   end
 
@@ -26,13 +27,13 @@ describe Puppet::Parameter do
 
   [:line, :file, :version].each do |data|
     it "should return its resource's #{data} as its #{data}" do
-      @resource.expects(data).returns "foo"
+      expect(@resource).to receive(data).and_return("foo")
       expect(@parameter.send(data)).to eq("foo")
     end
   end
 
   it "should return the resource's tags plus its name as its tags" do
-    @resource.expects(:tags).returns %w{one two}
+    expect(@resource).to receive(:tags).and_return(%w{one two})
     expect(@parameter.tags).to eq(%w{one two foo})
   end
 
@@ -46,12 +47,12 @@ describe Puppet::Parameter do
     end
 
     it "should validate the value" do
-      @parameter.expects(:validate).with("foo")
+      expect(@parameter).to receive(:validate).with("foo")
       @parameter.value = "foo"
     end
 
     it "should munge the value and use any result as the actual value" do
-      @parameter.expects(:munge).with("foo").returns "bar"
+      expect(@parameter).to receive(:munge).with("foo").and_return("bar")
       @parameter.value = "foo"
       expect(@parameter.value).to eq("bar")
     end
@@ -148,8 +149,8 @@ describe Puppet::Parameter do
 
   describe "when logging" do
     it "should use its resource's log level and the provided message" do
-      @resource.expects(:[]).with(:loglevel).returns :notice
-      @parameter.expects(:send_log).with(:notice, "mymessage")
+      expect(@resource).to receive(:[]).with(:loglevel).and_return(:notice)
+      expect(@parameter).to receive(:send_log).with(:notice, "mymessage")
       @parameter.log "mymessage"
     end
   end

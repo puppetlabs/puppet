@@ -375,11 +375,11 @@ goodbye world
   end
 
   def from_an_interactive_terminal
-    STDIN.stubs(:tty?).returns(true)
+    allow(STDIN).to receive(:tty?).and_return(true)
   end
 
   def from_a_piped_input_of(contents)
-    STDIN.stubs(:tty?).returns(false)
-    STDIN.stubs(:read).returns(contents)
+    allow(STDIN).to receive(:tty?).and_return(false)
+    allow(STDIN).to receive(:read).and_return(contents)
   end
 end

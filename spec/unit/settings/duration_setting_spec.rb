@@ -4,7 +4,7 @@ require 'puppet/settings'
 require 'puppet/settings/duration_setting'
 
 describe Puppet::Settings::DurationSetting do
-  subject { described_class.new(:settings => mock('settings'), :desc => "test") }
+  subject { described_class.new(:settings => double('settings'), :desc => "test") }
 
   describe "when munging the setting" do
     it "should return the same value if given an integer" do

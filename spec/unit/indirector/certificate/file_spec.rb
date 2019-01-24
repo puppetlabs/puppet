@@ -13,10 +13,10 @@ describe Puppet::SSL::Certificate::File do
   end
 
   it "should store the ca certificate at the :localcacert location" do
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
     Puppet[:localcacert] = File.expand_path("/ca/cert")
     file = Puppet::SSL::Certificate::File.new
-    file.stubs(:ca?).returns true
+    allow(file).to receive(:ca?).and_return(true)
     expect(file.path("whatever")).to eq(Puppet[:localcacert])
   end
 end

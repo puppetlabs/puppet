@@ -117,58 +117,58 @@ describe Puppet::Network::Rights do
 
   describe "when checking if right is allowed" do
     before :each do
-      @right.stubs(:right).returns(nil)
+      allow(@right).to receive(:right).and_return(nil)
 
-      @pathacl = stub 'pathacl', :"<=>" => 1, :line => 0, :file => 'dummy'
-      Puppet::Network::Rights::Right.stubs(:new).returns(@pathacl)
+      @pathacl = double('pathacl', :"<=>" => 1, :line => 0, :file => 'dummy')
+      allow(Puppet::Network::Rights::Right).to receive(:new).and_return(@pathacl)
     end
 
     it "should delegate to is_forbidden_and_why?" do
-      @right.expects(:is_forbidden_and_why?).with("namespace", :node => "host.domain.com", :ip => "127.0.0.1").returns(nil)
+      expect(@right).to receive(:is_forbidden_and_why?).with("namespace", :node => "host.domain.com", :ip => "127.0.0.1").and_return(nil)
 
       @right.allowed?("namespace", "host.domain.com", "127.0.0.1")
     end
 
     it "should return true if is_forbidden_and_why? returns nil" do
-      @right.stubs(:is_forbidden_and_why?).returns(nil)
+      allow(@right).to receive(:is_forbidden_and_why?).and_return(nil)
       expect(@right.allowed?("namespace", :args)).to be_truthy
     end
 
     it "should return false if is_forbidden_and_why? returns an AuthorizationError" do
-      @right.stubs(:is_forbidden_and_why?).returns(Puppet::Network::AuthorizationError.new("forbidden"))
+      allow(@right).to receive(:is_forbidden_and_why?).and_return(Puppet::Network::AuthorizationError.new("forbidden"))
       expect(@right.allowed?("namespace", :args1, :args2)).to be_falsey
     end
 
     it "should pass the match? return to allowed?" do
       @right.newright("/path/to/there")
 
-      @pathacl.expects(:match?).returns(:match)
-      @pathacl.expects(:allowed?).with { |node,ip,h| h[:match] == :match }.returns(true)
+      expect(@pathacl).to receive(:match?).and_return(:match)
+      expect(@pathacl).to receive(:allowed?).with(anything, anything, hash_including(match: :match)).and_return(true)
 
       expect(@right.is_forbidden_and_why?("/path/to/there", {})).to eq(nil)
     end
 
     describe "with path acls" do
       before :each do
-        @long_acl = stub 'longpathacl', :name => "/path/to/there", :line => 0, :file => 'dummy'
-        Puppet::Network::Rights::Right.stubs(:new).with("/path/to/there", 0, nil).returns(@long_acl)
+        @long_acl = double('longpathacl', :name => "/path/to/there", :line => 0, :file => 'dummy')
+        allow(Puppet::Network::Rights::Right).to receive(:new).with("/path/to/there", 0, nil).and_return(@long_acl)
 
-        @short_acl = stub 'shortpathacl', :name => "/path/to", :line => 0, :file => 'dummy'
-        Puppet::Network::Rights::Right.stubs(:new).with("/path/to", 0, nil).returns(@short_acl)
+        @short_acl = double('shortpathacl', :name => "/path/to", :line => 0, :file => 'dummy')
+        allow(Puppet::Network::Rights::Right).to receive(:new).with("/path/to", 0, nil).and_return(@short_acl)
 
-        @long_acl.stubs(:"<=>").with(@short_acl).returns(0)
-        @short_acl.stubs(:"<=>").with(@long_acl).returns(0)
+        allow(@long_acl).to receive(:"<=>").with(@short_acl).and_return(0)
+        allow(@short_acl).to receive(:"<=>").with(@long_acl).and_return(0)
       end
 
       it "should select the first match" do
         @right.newright("/path/to", 0)
         @right.newright("/path/to/there", 0)
 
-        @long_acl.stubs(:match?).returns(true)
-        @short_acl.stubs(:match?).returns(true)
+        allow(@long_acl).to receive(:match?).and_return(true)
+        allow(@short_acl).to receive(:match?).and_return(true)
 
-        @short_acl.expects(:allowed?).returns(true)
-        @long_acl.expects(:allowed?).never
+        expect(@short_acl).to receive(:allowed?).and_return(true)
+        expect(@long_acl).not_to receive(:allowed?)
 
         expect(@right.is_forbidden_and_why?("/path/to/there/and/there", {})).to eq(nil)
       end
@@ -177,11 +177,11 @@ describe Puppet::Network::Rights do
         @right.newright("/path/to/there", 0, nil)
         @right.newright("/path/to", 0, nil)
 
-        @long_acl.stubs(:match?).returns(true)
-        @short_acl.stubs(:match?).returns(true)
+        allow(@long_acl).to receive(:match?).and_return(true)
+        allow(@short_acl).to receive(:match?).and_return(true)
 
-        @long_acl.expects(:allowed?).returns(:dunno)
-        @short_acl.expects(:allowed?).returns(true)
+        expect(@long_acl).to receive(:allowed?).and_return(:dunno)
+        expect(@short_acl).to receive(:allowed?).and_return(true)
 
         expect(@right.is_forbidden_and_why?("/path/to/there/and/there", {})).to eq(nil)
       end
@@ -190,11 +190,11 @@ describe Puppet::Network::Rights do
         @right.newright("/path/to/there", 0)
         @right.newright("/path/to", 0)
 
-        @long_acl.stubs(:match?).returns(false)
-        @short_acl.stubs(:match?).returns(true)
+        allow(@long_acl).to receive(:match?).and_return(false)
+        allow(@short_acl).to receive(:match?).and_return(true)
 
-        @long_acl.expects(:allowed?).never
-        @short_acl.expects(:allowed?).returns(true)
+        expect(@long_acl).not_to receive(:allowed?)
+        expect(@short_acl).to receive(:allowed?).and_return(true)
 
         expect(@right.is_forbidden_and_why?("/path/to/there/and/there", {})).to eq(nil)
       end
@@ -202,8 +202,8 @@ describe Puppet::Network::Rights do
       it "should not raise an AuthorizationError if allowed" do
         @right.newright("/path/to/there", 0)
 
-        @long_acl.stubs(:match?).returns(true)
-        @long_acl.stubs(:allowed?).returns(true)
+        allow(@long_acl).to receive(:match?).and_return(true)
+        allow(@long_acl).to receive(:allowed?).and_return(true)
 
         expect(@right.is_forbidden_and_why?("/path/to/there/and/there", {})).to eq(nil)
       end
@@ -211,8 +211,8 @@ describe Puppet::Network::Rights do
       it "should raise an AuthorizationError if the match is denied" do
         @right.newright("/path/to/there", 0, nil)
 
-        @long_acl.stubs(:match?).returns(true)
-        @long_acl.stubs(:allowed?).returns(false)
+        allow(@long_acl).to receive(:match?).and_return(true)
+        allow(@long_acl).to receive(:allowed?).and_return(false)
 
         expect(@right.is_forbidden_and_why?("/path/to/there", {})).to be_instance_of(Puppet::Network::AuthorizationError)
       end
@@ -224,25 +224,25 @@ describe Puppet::Network::Rights do
 
     describe "with regex acls" do
       before :each do
-        @regex_acl1 = stub 'regex_acl1', :name => "/files/(.*)/myfile", :line => 0, :file => 'dummy'
-        Puppet::Network::Rights::Right.stubs(:new).with("~ /files/(.*)/myfile", 0, nil).returns(@regex_acl1)
+        @regex_acl1 = double('regex_acl1', :name => "/files/(.*)/myfile", :line => 0, :file => 'dummy')
+        allow(Puppet::Network::Rights::Right).to receive(:new).with("~ /files/(.*)/myfile", 0, nil).and_return(@regex_acl1)
 
-        @regex_acl2 = stub 'regex_acl2', :name => "/files/(.*)/myfile/", :line => 0, :file => 'dummy'
-        Puppet::Network::Rights::Right.stubs(:new).with("~ /files/(.*)/myfile/", 0, nil).returns(@regex_acl2)
+        @regex_acl2 = double('regex_acl2', :name => "/files/(.*)/myfile/", :line => 0, :file => 'dummy')
+        allow(Puppet::Network::Rights::Right).to receive(:new).with("~ /files/(.*)/myfile/", 0, nil).and_return(@regex_acl2)
 
-        @regex_acl1.stubs(:"<=>").with(@regex_acl2).returns(0)
-        @regex_acl2.stubs(:"<=>").with(@regex_acl1).returns(0)
+        allow(@regex_acl1).to receive(:"<=>").with(@regex_acl2).and_return(0)
+        allow(@regex_acl2).to receive(:"<=>").with(@regex_acl1).and_return(0)
       end
 
       it "should select the first match" do
         @right.newright("~ /files/(.*)/myfile", 0)
         @right.newright("~ /files/(.*)/myfile/", 0)
 
-        @regex_acl1.stubs(:match?).returns(true)
-        @regex_acl2.stubs(:match?).returns(true)
+        allow(@regex_acl1).to receive(:match?).and_return(true)
+        allow(@regex_acl2).to receive(:match?).and_return(true)
 
-        @regex_acl1.expects(:allowed?).returns(true)
-        @regex_acl2.expects(:allowed?).never
+        expect(@regex_acl1).to receive(:allowed?).and_return(true)
+        expect(@regex_acl2).not_to receive(:allowed?)
 
         expect(@right.is_forbidden_and_why?("/files/repository/myfile/other", {})).to eq(nil)
       end
@@ -251,11 +251,11 @@ describe Puppet::Network::Rights do
         @right.newright("~ /files/(.*)/myfile", 0)
         @right.newright("~ /files/(.*)/myfile/", 0)
 
-        @regex_acl1.stubs(:match?).returns(true)
-        @regex_acl2.stubs(:match?).returns(true)
+        allow(@regex_acl1).to receive(:match?).and_return(true)
+        allow(@regex_acl2).to receive(:match?).and_return(true)
 
-        @regex_acl1.expects(:allowed?).returns(:dunno)
-        @regex_acl2.expects(:allowed?).returns(true)
+        expect(@regex_acl1).to receive(:allowed?).and_return(:dunno)
+        expect(@regex_acl2).to receive(:allowed?).and_return(true)
 
         expect(@right.is_forbidden_and_why?("/files/repository/myfile/other", {})).to eq(nil)
       end
@@ -264,11 +264,11 @@ describe Puppet::Network::Rights do
         @right.newright("~ /files/(.*)/myfile", 0)
         @right.newright("~ /files/(.*)/myfile/", 0)
 
-        @regex_acl1.stubs(:match?).returns(false)
-        @regex_acl2.stubs(:match?).returns(true)
+        allow(@regex_acl1).to receive(:match?).and_return(false)
+        allow(@regex_acl2).to receive(:match?).and_return(true)
 
-        @regex_acl1.expects(:allowed?).never
-        @regex_acl2.expects(:allowed?).returns(true)
+        expect(@regex_acl1).not_to receive(:allowed?)
+        expect(@regex_acl2).to receive(:allowed?).and_return(true)
 
         expect(@right.is_forbidden_and_why?("/files/repository/myfile/other", {})).to eq(nil)
       end
@@ -276,8 +276,8 @@ describe Puppet::Network::Rights do
       it "should not raise an AuthorizationError if allowed" do
         @right.newright("~ /files/(.*)/myfile", 0)
 
-        @regex_acl1.stubs(:match?).returns(true)
-        @regex_acl1.stubs(:allowed?).returns(true)
+        allow(@regex_acl1).to receive(:match?).and_return(true)
+        allow(@regex_acl1).to receive(:allowed?).and_return(true)
 
         expect(@right.is_forbidden_and_why?("/files/repository/myfile/other", {})).to eq(nil)
       end
@@ -424,13 +424,13 @@ describe Puppet::Network::Rights do
       end
 
       it "should interpolate allow/deny patterns with the given match" do
-        @acl.expects(:interpolate).with(:match)
+        expect(@acl).to receive(:interpolate).with(:match)
 
         @acl.allowed?("me","127.0.0.1", { :method => :save, :match => :match, :authenticated => true })
       end
 
       it "should reset interpolation after the match" do
-        @acl.expects(:reset_interpolation)
+        expect(@acl).to receive(:reset_interpolation)
 
         @acl.allowed?("me","127.0.0.1", { :method => :save, :match => :match, :authenticated => true })
       end

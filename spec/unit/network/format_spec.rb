@@ -75,7 +75,7 @@ describe Puppet::Network::Format do
     it "should consider a class supported if the provided class has all required methods present" do
       format = Puppet::Network::Format.new(:foo)
       [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method].each do |method|
-        format.expects(:required_method_present?).with { |name, klass, type| name == method and klass == String }.returns true
+        expect(format).to receive(:required_method_present?).with(method, String, anything).and_return(true)
       end
 
       expect(format).to be_required_methods_present(String)
@@ -83,8 +83,8 @@ describe Puppet::Network::Format do
 
     it "should consider a class not supported if any required methods are missing from the provided class" do
       format = Puppet::Network::Format.new(:foo)
-      format.stubs(:required_method_present?).returns true
-      format.expects(:required_method_present?).with { |name, *args| name == :intern_method }.returns false
+      allow(format).to receive(:required_method_present?).and_return(true)
+      expect(format).to receive(:required_method_present?).with(:intern_method, anything, anything).and_return(false)
       expect(format).not_to be_required_methods_present(String)
     end
 
@@ -94,13 +94,13 @@ describe Puppet::Network::Format do
 
     it "should only test for required methods if specific methods are specified as required" do
       format = Puppet::Network::Format.new(:foo, :required_methods => [:intern_method])
-      format.expects(:required_method_present?).with { |name, klass, type| name == :intern_method }
+      expect(format).to receive(:required_method_present?).with(:intern_method, anything, anything)
 
       format.required_methods_present?(String)
     end
 
     it "should not consider a class supported unless the format is suitable" do
-      @format.expects(:suitable?).returns false
+      expect(@format).to receive(:suitable?).and_return(false)
       expect(@format).not_to be_supported(FormatRenderer)
     end
 
@@ -167,22 +167,22 @@ describe Puppet::Network::Format do
     end
 
     it "should return the results of calling the instance-specific render method if the method is present" do
-      @instance.expects(:to_my_format).returns "foo"
+      expect(@instance).to receive(:to_my_format).and_return("foo")
       expect(@format.render(@instance)).to eq("foo")
     end
 
     it "should return the results of calling the class-specific render_multiple method if the method is present" do
-      @instance.class.expects(:to_multiple_my_format).returns ["foo"]
+      expect(@instance.class).to receive(:to_multiple_my_format).and_return(["foo"])
       expect(@format.render_multiple([@instance])).to eq(["foo"])
     end
 
     it "should return the results of calling the class-specific intern method if the method is present" do
-      FormatRenderer.expects(:from_my_format).with("foo").returns @instance
+      expect(FormatRenderer).to receive(:from_my_format).with("foo").and_return(@instance)
       expect(@format.intern(FormatRenderer, "foo")).to equal(@instance)
     end
 
     it "should return the results of calling the class-specific intern_multiple method if the method is present" do
-      FormatRenderer.expects(:from_multiple_my_format).with("foo").returns [@instance]
+      expect(FormatRenderer).to receive(:from_multiple_my_format).with("foo").and_return([@instance])
       expect(@format.intern_multiple(FormatRenderer, "foo")).to eq([@instance])
     end
 

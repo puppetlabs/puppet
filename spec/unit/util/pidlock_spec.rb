@@ -50,7 +50,7 @@ describe Puppet::Util::Pidlock do
     end
 
     it 'should create an empty lock file even when pid is missing' do
-      Process.stubs(:pid).returns('')
+      allow(Process).to receive(:pid).and_return('')
       @lock.lock
       expect(Puppet::FileSystem.exist?(@lock.file_path)).to be_truthy
       expect(Puppet::FileSystem.read(@lock.file_path)).to be_empty
@@ -58,12 +58,12 @@ describe Puppet::Util::Pidlock do
 
     it 'should replace an existing empty lockfile with a pid, given a subsequent lock call made against a valid pid' do
       # empty pid results in empty lockfile
-      Process.stubs(:pid).returns('')
+      allow(Process).to receive(:pid).and_return('')
       @lock.lock
       expect(Puppet::FileSystem.exist?(@lock.file_path)).to be_truthy
 
       # next lock call with valid pid kills existing empty lockfile
-      Process.stubs(:pid).returns(1234)
+      allow(Process).to receive(:pid).and_return(1234)
       @lock.lock
       expect(Puppet::FileSystem.exist?(@lock.file_path)).to be_truthy
       expect(Puppet::FileSystem.read(@lock.file_path)).to eq('1234')
@@ -104,7 +104,7 @@ describe Puppet::Util::Pidlock do
     end
 
     it "should remove the lockfile when pid is missing" do
-      Process.stubs(:pid).returns('')
+      allow(Process).to receive(:pid).and_return('')
       @lock.lock
       expect(@lock.locked?).to be_falsey
       expect(Puppet::FileSystem.exist?(@lock.file_path)).to be_falsey
@@ -114,7 +114,7 @@ describe Puppet::Util::Pidlock do
   describe '#lock_pid' do
     it 'should return nil if the pid is empty' do
       # fake pid to get empty lockfile
-      Process.stubs(:pid).returns('')
+      allow(Process).to receive(:pid).and_return('')
       @lock.lock
       expect(@lock.lock_pid).to eq(nil)
     end
@@ -123,15 +123,15 @@ describe Puppet::Util::Pidlock do
   describe "with a stale lock" do
     before(:each) do
       # fake our pid to be 1234
-      Process.stubs(:pid).returns(1234)
+      allow(Process).to receive(:pid).and_return(1234)
       # lock the file
       @lock.lock
       # fake our pid to be a different pid, to simulate someone else
       #  holding the lock
-      Process.stubs(:pid).returns(6789)
+      allow(Process).to receive(:pid).and_return(6789)
 
-      Process.stubs(:kill).with(0, 6789)
-      Process.stubs(:kill).with(0, 1234).raises(Errno::ESRCH)
+      allow(Process).to receive(:kill).with(0, 6789)
+      allow(Process).to receive(:kill).with(0, 1234).and_raise(Errno::ESRCH)
     end
 
     it "should not be locked" do
@@ -168,15 +168,15 @@ describe Puppet::Util::Pidlock do
   describe "with another process lock" do
     before(:each) do
       # fake our pid to be 1234
-      Process.stubs(:pid).returns(1234)
+      allow(Process).to receive(:pid).and_return(1234)
       # lock the file
       @lock.lock
       # fake our pid to be a different pid, to simulate someone else
       #  holding the lock
-      Process.stubs(:pid).returns(6789)
+      allow(Process).to receive(:pid).and_return(6789)
 
-      Process.stubs(:kill).with(0, 6789)
-      Process.stubs(:kill).with(0, 1234)
+      allow(Process).to receive(:kill).with(0, 6789)
+      allow(Process).to receive(:kill).with(0, 1234)
     end
 
     it "should be locked" do

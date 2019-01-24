@@ -24,13 +24,13 @@ describe 'the type asserter' do
   end
 
   it 'does not produce a string unless the assertion fails' do
-    TypeAsserter.expects(:report_type_mismatch).never
+    expect(TypeAsserter).not_to receive(:report_type_mismatch)
     asserter.assert_instance_of(nil, PIntegerType::DEFAULT, 1)
   end
 
   it 'does not format string unless the assertion fails' do
     fmt_string = 'The %s in the %s'
-    fmt_string.expects(:'%').never
+    expect(fmt_string).not_to receive(:'%')
     asserter.assert_instance_of([fmt_string, 'gizmo', 'gadget'], PIntegerType::DEFAULT, 1)
   end
 

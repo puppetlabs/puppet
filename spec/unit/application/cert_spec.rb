@@ -4,7 +4,7 @@ require 'puppet/application/cert'
 describe Puppet::Application::Cert => true do
   before :each do
     @cert_app = Puppet::Application[:cert]
-    Puppet::Util::Log.stubs(:newdestination)
+    allow(Puppet::Util::Log).to receive(:newdestination)
   end
 
   it "should operate in master run_mode" do
@@ -82,55 +82,55 @@ describe Puppet::Application::Cert => true do
   describe "during setup" do
 
     before :each do
-      Puppet::Log.stubs(:newdestination)
-      Puppet::SSL::Host.stubs(:ca_location=)
-      Puppet::SSL::CertificateAuthority.stubs(:new)
+      allow(Puppet::Log).to receive(:newdestination)
+      allow(Puppet::SSL::Host).to receive(:ca_location=)
+      allow(Puppet::SSL::CertificateAuthority).to receive(:new)
     end
 
     it "should set console as the log destination" do
-      Puppet::Log.expects(:newdestination).with(:console)
+      expect(Puppet::Log).to receive(:newdestination).with(:console)
 
       @cert_app.setup
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      Puppet.settings.stubs(:print_configs?).returns(true)
-      Puppet.settings.expects(:print_configs).returns true
+      allow(Puppet.settings).to receive(:print_configs?).and_return(true)
+      expect(Puppet.settings).to receive(:print_configs).and_return(true)
       expect { @cert_app.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
-      Puppet.settings.stubs(:print_configs?).returns(true)
+      allow(Puppet.settings).to receive(:print_configs?).and_return(true)
       expect { @cert_app.setup }.to exit_with 1
     end
 
     it "should set the CA location to 'only'" do
-      Puppet::SSL::Host.expects(:ca_location=).with(:only)
+      expect(Puppet::SSL::Host).to receive(:ca_location=).with(:only)
 
       @cert_app.setup
     end
 
     it "should create a new certificate authority" do
-      Puppet::SSL::CertificateAuthority.expects(:new)
+      expect(Puppet::SSL::CertificateAuthority).to receive(:new)
 
       @cert_app.setup
     end
 
     it "should set the ca_location to :local if the cert_mode is generate" do
       @cert_app.subcommand = 'generate'
-      Puppet::SSL::Host.expects(:ca_location=).with(:local)
+      expect(Puppet::SSL::Host).to receive(:ca_location=).with(:local)
       @cert_app.setup
     end
 
     it "should set the ca_location to :local if the cert_mode is destroy" do
       @cert_app.subcommand = 'destroy'
-      Puppet::SSL::Host.expects(:ca_location=).with(:local)
+      expect(Puppet::SSL::Host).to receive(:ca_location=).with(:local)
       @cert_app.setup
     end
 
     it "should set the ca_location to :only if the cert_mode is print" do
       @cert_app.subcommand = 'print'
-      Puppet::SSL::Host.expects(:ca_location=).with(:only)
+      expect(Puppet::SSL::Host).to receive(:ca_location=).with(:only)
       @cert_app.setup
     end
   end
@@ -138,15 +138,15 @@ describe Puppet::Application::Cert => true do
   describe "when running" do
     before :each do
       @cert_app.all = false
-      @ca = stub_everything( 'ca', :waiting? => ['unsigned-node'] )
+      @ca = double('ca', :waiting? => ['unsigned-node'])
       @cert_app.ca = @ca
-      @cert_app.command_line.stubs(:args).returns([])
-      @iface = stub_everything 'iface'
-      Puppet::SSL::CertificateAuthority::Interface.stubs(:new).returns(@iface)
+      allow(@cert_app.command_line).to receive(:args).and_return([])
+      @iface = double('iface', apply: nil)
+      allow(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).and_return(@iface)
     end
 
     it "should delegate to the CertificateAuthority" do
-      @iface.expects(:apply)
+      expect(@iface).to receive(:apply)
 
       @cert_app.main
     end
@@ -154,61 +154,55 @@ describe Puppet::Application::Cert => true do
     it "should delegate with :all if option --all was given" do
       @cert_app.handle_all(0)
 
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| to[:to] == :all }
+      expect(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).with(anything, hash_including(to: :all)).and_return(@iface)
 
       @cert_app.main
     end
 
     it "should delegate to ca.apply with the hosts given on command line" do
-      @cert_app.command_line.stubs(:args).returns(["host"])
+      allow(@cert_app.command_line).to receive(:args).and_return(["host"])
 
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| to[:to] == ["host"]}
+      expect(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).with(anything, hash_including(to: ["host"])).and_return(@iface)
 
       @cert_app.main
     end
 
     it "should send the currently set digest" do
-      @cert_app.command_line.stubs(:args).returns(["host"])
+      allow(@cert_app.command_line).to receive(:args).and_return(["host"])
       @cert_app.handle_digest(:digest)
 
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| to[:digest] == :digest}
+      expect(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).with(anything, hash_including(digest: :digest)).and_return(@iface)
 
       @cert_app.main
     end
 
     it "should revoke cert if cert_mode is clean" do
       @cert_app.subcommand = :destroy
-      @cert_app.command_line.stubs(:args).returns(["host"])
+      allow(@cert_app.command_line).to receive(:args).and_return(["host"])
 
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| cert_mode == :revoke }
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| cert_mode == :destroy }
+      expect(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).with(:revoke, anything).and_return(@iface)
+      expect(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).with(:destroy, anything).and_return(@iface)
 
       @cert_app.main
     end
 
     it "should not revoke cert if node does not have a signed certificate" do
       @cert_app.subcommand = :destroy
-      @cert_app.command_line.stubs(:args).returns(["unsigned-node"])
+      allow(@cert_app.command_line).to receive(:args).and_return(["unsigned-node"])
 
-      Puppet::SSL::CertificateAuthority::Interface.unstub(:new)
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:revoke, anything).never
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:destroy, {:to => ['unsigned-node'], :digest => nil}).returns(@iface)
+      allow(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).and_call_original
+      expect(Puppet::SSL::CertificateAuthority::Interface).not_to receive(:new).with(:revoke, anything)
+      expect(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).with(:destroy, {:to => ['unsigned-node'], :digest => nil}).and_return(@iface)
 
       @cert_app.main
     end
 
     it "should only revoke signed certificate and destroy certificate signing requests" do
       @cert_app.subcommand = :destroy
-      @cert_app.command_line.stubs(:args).returns(["host","unsigned-node"])
+      allow(@cert_app.command_line).to receive(:args).and_return(["host","unsigned-node"])
 
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with do |cert_mode,to|
-        cert_mode == :revoke &&
-        to[:to] == ["host"]
-      end
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with do |cert_mode,to|
-        cert_mode == :destroy &&
-        to[:to] == ["host","unsigned-node"]
-      end
+      expect(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).with(:revoke, hash_including(to: ["host"])).and_return(@iface)
+      expect(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).with(:destroy, hash_including(to: ["host", "unsigned-node"])).and_return(@iface)
 
       @cert_app.main
     end
@@ -217,10 +211,10 @@ describe Puppet::Application::Cert => true do
       @cert_app.subcommand = :destroy
       @cert_app.all = true
 
-      Puppet::SSL::CertificateAuthority::Interface.unstub(:new)
-      Puppet::SSL::CertificateAuthority::Interface.expects(:new).never
+      allow(Puppet::SSL::CertificateAuthority::Interface).to receive(:new).and_call_original
+      expect(Puppet::SSL::CertificateAuthority::Interface).not_to receive(:new)
 
-      Puppet.expects(:log_exception).with {|e| e.message == "Refusing to destroy all certs, provide an explicit list of certs to destroy"}
+      expect(Puppet).to receive(:log_exception) {|e| expect(e.message).to eq("Refusing to destroy all certs, provide an explicit list of certs to destroy")}
 
       expect { @cert_app.main }.to exit_with(24)
     end
@@ -229,7 +223,7 @@ describe Puppet::Application::Cert => true do
   describe "when identifying subcommands" do
     before :each do
       @cert_app.all = false
-      @ca = stub_everything 'ca'
+      @ca = double('ca')
       @cert_app.ca = @ca
     end
 
@@ -244,7 +238,7 @@ describe Puppet::Application::Cert => true do
         it "should recognise '#{option}'" do
           args = [option, "fun.example.com"]
 
-          @cert_app.command_line.stubs(:args).returns(args)
+          allow(@cert_app.command_line).to receive(:args).and_return(args)
           @cert_app.parse_options
           expect(@cert_app.subcommand).to eq(cmd.to_sym)
 
@@ -257,7 +251,7 @@ describe Puppet::Application::Cert => true do
       it "should recognise the '#{ugly}' option as destroy" do
         args = [ugly, "fun.example.com"]
 
-        @cert_app.command_line.stubs(:args).returns(args)
+        allow(@cert_app.command_line).to receive(:args).and_return(args)
         @cert_app.parse_options
         expect(@cert_app.subcommand).to eq(:destroy)
 
@@ -267,9 +261,9 @@ describe Puppet::Application::Cert => true do
 
     it "should print help and exit if there is no subcommand" do
       args = []
-      @cert_app.command_line.stubs(:args).returns(args)
-      @cert_app.stubs(:help).returns("I called for help!")
-      @cert_app.expects(:puts).with("I called for help!")
+      allow(@cert_app.command_line).to receive(:args).and_return(args)
+      allow(@cert_app).to receive(:help).and_return("I called for help!")
+      expect(@cert_app).to receive(:puts).with("I called for help!")
 
       expect { @cert_app.parse_options }.to exit_with 0
       expect(@cert_app.subcommand).to be_nil

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Puppet::Type.type(:service).provider(:daemontools) do
   before(:each) do
     # Create a mock resource
-    @resource = stub 'resource'
+    @resource = double('resource')
 
     @provider = subject()
     @servicedir = "/etc/service"
@@ -12,22 +12,22 @@ describe Puppet::Type.type(:service).provider(:daemontools) do
     @provider.class.defpath=@daemondir
 
     # A catch all; no parameters set
-    @resource.stubs(:[]).returns(nil)
+    allow(@resource).to receive(:[]).and_return(nil)
 
     # But set name, source and path (because we won't run
     # the thing that will fetch the resource path from the provider)
-    @resource.stubs(:[]).with(:name).returns "myservice"
-    @resource.stubs(:[]).with(:ensure).returns :enabled
-    @resource.stubs(:[]).with(:path).returns @daemondir
-    @resource.stubs(:ref).returns "Service[myservice]"
+    allow(@resource).to receive(:[]).with(:name).and_return("myservice")
+    allow(@resource).to receive(:[]).with(:ensure).and_return(:enabled)
+    allow(@resource).to receive(:[]).with(:path).and_return(@daemondir)
+    allow(@resource).to receive(:ref).and_return("Service[myservice]")
 
     @provider.resource = @resource
 
-    @provider.stubs(:command).with(:svc).returns "svc"
-    @provider.stubs(:command).with(:svstat).returns "svstat"
+    allow(@provider).to receive(:command).with(:svc).and_return("svc")
+    allow(@provider).to receive(:command).with(:svstat).and_return("svstat")
 
-    @provider.stubs(:svc)
-    @provider.stubs(:svstat)
+    allow(@provider).to receive(:svc)
+    allow(@provider).to receive(:svstat)
   end
 
   it "should have a restart method" do
@@ -56,17 +56,17 @@ describe Puppet::Type.type(:service).provider(:daemontools) do
 
   context "when starting" do
     it "should use 'svc' to start the service" do
-      @provider.stubs(:enabled?).returns :true
-      @provider.expects(:svc).with("-u", "/etc/service/myservice")
+      allow(@provider).to receive(:enabled?).and_return(:true)
+      expect(@provider).to receive(:svc).with("-u", "/etc/service/myservice")
 
       @provider.start
     end
 
     it "should enable the service if it is not enabled" do
-      @provider.stubs(:svc)
+      allow(@provider).to receive(:svc)
 
-      @provider.expects(:enabled?).returns :false
-      @provider.expects(:enable)
+      expect(@provider).to receive(:enabled?).and_return(:false)
+      expect(@provider).to receive(:enable)
 
       @provider.start
     end
@@ -74,8 +74,8 @@ describe Puppet::Type.type(:service).provider(:daemontools) do
 
   context "when stopping" do
     it "should use 'svc' to stop the service" do
-      @provider.stubs(:disable)
-      @provider.expects(:svc).with("-d", "/etc/service/myservice")
+      allow(@provider).to receive(:disable)
+      expect(@provider).to receive(:svc).with("-d", "/etc/service/myservice")
 
       @provider.stop
     end
@@ -83,7 +83,7 @@ describe Puppet::Type.type(:service).provider(:daemontools) do
 
   context "when restarting" do
     it "should use 'svc' to restart the service" do
-      @provider.expects(:svc).with("-t", "/etc/service/myservice")
+      expect(@provider).to receive(:svc).with("-t", "/etc/service/myservice")
 
       @provider.restart
     end
@@ -93,8 +93,8 @@ describe Puppet::Type.type(:service).provider(:daemontools) do
     it "should create a symlink between daemon dir and service dir", :if => Puppet.features.manages_symlinks?  do
       daemon_path = File.join(@daemondir, "myservice")
       service_path = File.join(@servicedir, "myservice")
-      Puppet::FileSystem.expects(:symlink?).with(service_path).returns(false)
-      Puppet::FileSystem.expects(:symlink).with(daemon_path, service_path).returns(0)
+      expect(Puppet::FileSystem).to receive(:symlink?).with(service_path).and_return(false)
+      expect(Puppet::FileSystem).to receive(:symlink).with(daemon_path, service_path).and_return(0)
 
       @provider.enable
     end
@@ -102,35 +102,35 @@ describe Puppet::Type.type(:service).provider(:daemontools) do
 
   context "when disabling" do
     it "should remove the symlink between daemon dir and service dir" do
-      FileTest.stubs(:directory?).returns(false)
+      allow(FileTest).to receive(:directory?).and_return(false)
       path = File.join(@servicedir,"myservice")
-      Puppet::FileSystem.expects(:symlink?).with(path).returns(true)
-      Puppet::FileSystem.expects(:unlink).with(path)
-      @provider.stubs(:texecute).returns("")
+      expect(Puppet::FileSystem).to receive(:symlink?).with(path).and_return(true)
+      expect(Puppet::FileSystem).to receive(:unlink).with(path)
+      allow(@provider).to receive(:texecute).and_return("")
       @provider.disable
     end
 
     it "should stop the service" do
-      FileTest.stubs(:directory?).returns(false)
-      Puppet::FileSystem.expects(:symlink?).returns(true)
-      Puppet::FileSystem.stubs(:unlink)
-      @provider.expects(:stop)
+      allow(FileTest).to receive(:directory?).and_return(false)
+      expect(Puppet::FileSystem).to receive(:symlink?).and_return(true)
+      allow(Puppet::FileSystem).to receive(:unlink)
+      expect(@provider).to receive(:stop)
       @provider.disable
     end
   end
 
   context "when checking if the service is enabled?" do
     it "should return true if it is running" do
-      @provider.stubs(:status).returns(:running)
+      allow(@provider).to receive(:status).and_return(:running)
 
       expect(@provider.enabled?).to eq(:true)
     end
 
     [true, false].each do |t|
       it "should return #{t} if the symlink exists" do
-        @provider.stubs(:status).returns(:stopped)
+        allow(@provider).to receive(:status).and_return(:stopped)
         path = File.join(@servicedir,"myservice")
-        Puppet::FileSystem.expects(:symlink?).with(path).returns(t)
+        expect(Puppet::FileSystem).to receive(:symlink?).with(path).and_return(t)
 
         expect(@provider.enabled?).to eq("#{t}".to_sym)
       end
@@ -139,24 +139,24 @@ describe Puppet::Type.type(:service).provider(:daemontools) do
 
   context "when checking status" do
     it "should call the external command 'svstat /etc/service/myservice'" do
-      @provider.expects(:svstat).with(File.join(@servicedir,"myservice"))
+      expect(@provider).to receive(:svstat).with(File.join(@servicedir,"myservice"))
       @provider.status
     end
   end
 
   context "when checking status" do
     it "and svstat fails, properly raise a Puppet::Error" do
-      @provider.expects(:svstat).with(File.join(@servicedir,"myservice")).raises(Puppet::ExecutionFailure, "failure")
+      expect(@provider).to receive(:svstat).with(File.join(@servicedir,"myservice")).and_raise(Puppet::ExecutionFailure, "failure")
       expect { @provider.status }.to raise_error(Puppet::Error, 'Could not get status for service Service[myservice]: failure')
     end
 
     it "and svstat returns up, then return :running" do
-      @provider.expects(:svstat).with(File.join(@servicedir,"myservice")).returns("/etc/service/myservice: up (pid 454) 954326 seconds")
+      expect(@provider).to receive(:svstat).with(File.join(@servicedir,"myservice")).and_return("/etc/service/myservice: up (pid 454) 954326 seconds")
       expect(@provider.status).to eq(:running)
     end
 
     it "and svstat returns not running, then return :stopped" do
-      @provider.expects(:svstat).with(File.join(@servicedir,"myservice")).returns("/etc/service/myservice: supervise not running")
+      expect(@provider).to receive(:svstat).with(File.join(@servicedir,"myservice")).and_return("/etc/service/myservice: supervise not running")
       expect(@provider.status).to  eq(:stopped)
     end
   end

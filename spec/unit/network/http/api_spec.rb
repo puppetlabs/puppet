@@ -102,7 +102,7 @@ describe Puppet::Network::HTTP::API do
 
     describe "when processing CA routes" do
       it "responds to v1 indirector requests" do
-        Puppet::SSL::Certificate.indirection.stubs(:find).returns "foo"
+        allow(Puppet::SSL::Certificate.indirection).to receive(:find).and_return("foo")
         req = Puppet::Network::HTTP::Request.from_hash(:path => "#{ca_prefix}/v1/certificate/foo",
                                                        :params => {:environment => "production"},
                                                        :headers => {'accept' => "s"})

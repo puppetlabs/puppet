@@ -34,19 +34,19 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
   end
 
   before do
-    described_class.stubs(:command).with(:pkg) { '/usr/local/sbin/pkg' }
+    allow(described_class).to receive(:command).with(:pkg).and_return('/usr/local/sbin/pkg')
 
     info = File.read(my_fixture('pkg.info'))
-    described_class.stubs(:get_query).returns(info)
+    allow(described_class).to receive(:get_query).and_return(info)
 
     version_list = File.read(my_fixture('pkg.version'))
-    described_class.stubs(:get_version_list).returns(version_list)
+    allow(described_class).to receive(:get_version_list).and_return(version_list)
   end
 
   context "#instances" do
     it "should return the empty set if no packages are listed" do
-      described_class.stubs(:get_query).returns('')
-      described_class.stubs(:get_version_list).returns('')
+      allow(described_class).to receive(:get_query).and_return('')
+      allow(described_class).to receive(:get_version_list).and_return('')
       expect(described_class.instances).to be_empty
     end
 
@@ -62,14 +62,14 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
     end
 
     it "should return an empty array when pkg calls raise an exception" do
-      described_class.stubs(:get_query).raises(Puppet::ExecutionFailure, 'An error occurred.')
+      allow(described_class).to receive(:get_query).and_raise(Puppet::ExecutionFailure, 'An error occurred.')
       expect(described_class.instances).to eq([])
     end
 
     describe "version" do
       it "should retrieve the correct version of the current package" do
         zsh = described_class.instances.find {|i| i.properties[:origin] == 'shells/zsh' }
-        expect( zsh.properties[:version]).to eq('5.0.2_1')
+        expect(zsh.properties[:version]).to eq('5.0.2_1')
       end
     end
   end
@@ -81,8 +81,8 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
         :provider => :pkgng,
         :ensure   => '7.33.1'
       )
-      resource.provider.expects(:pkg) do |arg|
-        arg.should include('curl-7.33.1')
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('curl-7.33.1')
       end
       resource.provider.install
     end
@@ -93,8 +93,8 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
         :provider => :pkgng,
         :ensure   => '7.33.1'
       )
-      resource.provider.expects(:pkg) do |arg|
-        arg.should include('curl-7.33.1')
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('curl-7.33.1')
       end
       resource.provider.install
     end
@@ -105,8 +105,8 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
         :provider => :pkgng,
         :source   => 'urn:freebsd:repo:FreeBSD'
       )
-      resource.provider.expects(:pkg) do |arg|
-        arg.should include('FreeBSD')
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('FreeBSD')
       end
       resource.provider.install
     end
@@ -114,7 +114,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
 
   context "#prefetch" do
     it "should fail gracefully when " do
-      described_class.stubs(:instances).returns([])
+      allow(described_class).to receive(:instances).and_return([])
       expect{ described_class.prefetch({}) }.to_not raise_error
     end
   end
@@ -127,7 +127,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
 
     it "should return nil if not present" do
       fixture = File.read(my_fixture('pkg.query_absent'))
-      described_class.stubs(:get_resource_info).with('bash').returns(fixture)
+      allow(described_class).to receive(:get_resource_info).with('bash').and_return(fixture)
       expect(provider.query).to equal(nil)
     end
   end
@@ -151,7 +151,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
         :ensure   => :latest
       )
 
-      resource.provider.expects(:update)
+      expect(resource.provider).to receive(:update)
 
       resource.property(:ensure).sync
     end
@@ -174,7 +174,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
   describe "confine" do
     context "on FreeBSD" do
       it "should be the default provider" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :freebsd
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:freebsd)
         expect(described_class).to be_default
       end
     end

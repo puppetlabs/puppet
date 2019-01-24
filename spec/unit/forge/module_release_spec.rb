@@ -20,7 +20,7 @@ describe Puppet::Forge::ModuleRelease do
 
   let(:mock_file) {
     mock_io = StringIO.new
-    mock_io.stubs(:path).returns('/dev/null')
+    allow(mock_io).to receive(:path).and_return('/dev/null')
     mock_io
   }
 
@@ -28,19 +28,19 @@ describe Puppet::Forge::ModuleRelease do
 
   shared_examples 'a module release' do
     def mock_digest_file_with_md5(md5)
-      Digest::MD5.stubs(:file).returns(stub(:hexdigest => md5))
+      allow(Digest::MD5).to receive(:file).and_return(double(:hexdigest => md5))
     end
 
     describe '#prepare' do
       before :each do
-        release.stubs(:tmpfile).returns(mock_file)
-        release.stubs(:tmpdir).returns(mock_dir)
+        allow(release).to receive(:tmpfile).and_return(mock_file)
+        allow(release).to receive(:tmpdir).and_return(mock_dir)
       end
 
       it 'should call sub methods with correct params' do
-        release.expects(:download).with("/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file)
-        release.expects(:validate_checksum).with(mock_file, module_md5)
-        release.expects(:unpack).with(mock_file, mock_dir)
+        expect(release).to receive(:download).with("/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file)
+        expect(release).to receive(:validate_checksum).with(mock_file, module_md5)
+        expect(release).to receive(:unpack).with(mock_file, mock_dir)
 
         release.prepare
       end
@@ -48,7 +48,7 @@ describe Puppet::Forge::ModuleRelease do
 
     describe '#tmpfile' do
       it 'should be opened in binary mode' do
-        Puppet::Forge::Cache.stubs(:base_path).returns(Dir.tmpdir)
+        allow(Puppet::Forge::Cache).to receive(:base_path).and_return(Dir.tmpdir)
         expect(release.send(:tmpfile).binmode?).to be_truthy
       end
     end
@@ -56,14 +56,14 @@ describe Puppet::Forge::ModuleRelease do
     describe '#download' do
       it 'should call make_http_request with correct params' do
         # valid URI comes from file_uri in JSON blob above
-        ssl_repository.expects(:make_http_request).with("/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file).returns(stub(:body => '{}', :code => '200'))
+        expect(ssl_repository).to receive(:make_http_request).with("/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file).and_return(double(:body => '{}', :code => '200'))
 
         release.send(:download, "/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file)
       end
 
       it 'should raise a response error when it receives an error from forge' do
-        ssl_repository.stubs(:make_http_request).returns(stub(:body => '{"errors": ["error"]}', :code => '500', :message => 'server error'))
-        expect { release.send(:download, "/some/path", mock_file)}. to raise_error Puppet::Forge::Errors::ResponseError
+        allow(ssl_repository).to receive(:make_http_request).and_return(double(:body => '{"errors": ["error"]}', :code => '500', :message => 'server error'))
+        expect { release.send(:download, "/some/path", mock_file)}.to raise_error Puppet::Forge::Errors::ResponseError
       end
     end
 
@@ -84,7 +84,7 @@ describe Puppet::Forge::ModuleRelease do
 
     describe '#unpack' do
       it 'should call unpacker with correct params' do
-        Puppet::ModuleTool::Applications::Unpacker.expects(:unpack).with(mock_file.path, mock_dir).returns(true)
+        expect(Puppet::ModuleTool::Applications::Unpacker).to receive(:unpack).with(mock_file.path, mock_dir).and_return(true)
 
         release.send(:unpack, mock_file, mock_dir)
       end
@@ -271,15 +271,15 @@ describe Puppet::Forge::ModuleRelease do
 
     describe '#prepare' do
       before :each do
-        release.stubs(:tmpfile).returns(mock_file)
-        release.stubs(:tmpdir).returns(mock_dir)
-        release.stubs(:download)
-        release.stubs(:validate_checksum)
-        release.stubs(:unpack)
+        allow(release).to receive(:tmpfile).and_return(mock_file)
+        allow(release).to receive(:tmpdir).and_return(mock_dir)
+        allow(release).to receive(:download)
+        allow(release).to receive(:validate_checksum)
+        allow(release).to receive(:unpack)
       end
 
       it 'should emit warning about module deprecation' do
-        Puppet.expects(:warning).with(regexp_matches(/#{Regexp.escape(module_full_name)}.*deprecated/i))
+        expect(Puppet).to receive(:warning).with(/#{Regexp.escape(module_full_name)}.*deprecated/i)
 
         release.prepare
       end

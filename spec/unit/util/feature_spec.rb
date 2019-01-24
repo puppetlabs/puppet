@@ -5,7 +5,7 @@ require 'puppet/util/feature'
 describe Puppet::Util::Feature do
   before do
     @features = Puppet::Util::Feature.new("features")
-    @features.stubs(:warn)
+    allow(@features).to receive(:warn)
   end
 
   it "should be able to add new features" do
@@ -58,30 +58,31 @@ describe Puppet::Util::Feature do
 
   it "should consider a feature to be present if all of its libraries are present" do
     @features.add(:myfeature, :libs => %w{foo bar})
-    @features.expects(:require).with("foo")
-    @features.expects(:require).with("bar")
+    expect(@features).to receive(:require).with("foo")
+    expect(@features).to receive(:require).with("bar")
 
     expect(@features).to be_myfeature
   end
 
   it "should log and consider a feature to be absent if any of its libraries are absent" do
     @features.add(:myfeature, :libs => %w{foo bar})
-    @features.expects(:require).with("foo").raises(LoadError)
-    @features.stubs(:require).with("bar")
+    expect(@features).to receive(:require).with("foo").and_raise(LoadError)
+    allow(@features).to receive(:require).with("bar")
 
-    Puppet.expects(:debug)
+    expect(Puppet).to receive(:debug)
 
     expect(@features).not_to be_myfeature
   end
 
   it "should change the feature to be present when its libraries become available" do
     @features.add(:myfeature, :libs => %w{foo bar})
-    @features.expects(:require).twice().with("foo").raises(LoadError).then.returns(nil)
-    @features.stubs(:require).with("bar")
-    Puppet::Util::RubyGems::Source.stubs(:source).returns(Puppet::Util::RubyGems::OldGemsSource)
-    Puppet::Util::RubyGems::OldGemsSource.any_instance.expects(:clear_paths).times(3)
+    expect(@features).to receive(:require).ordered.with("foo").and_raise(LoadError)
+    expect(@features).to receive(:require).ordered.with("foo").and_return(nil)
+    allow(@features).to receive(:require).with("bar")
+    allow(Puppet::Util::RubyGems::Source).to receive(:source).and_return(Puppet::Util::RubyGems::OldGemsSource)
+    expect_any_instance_of(Puppet::Util::RubyGems::OldGemsSource).to receive(:clear_paths).exactly(3).times
 
-    Puppet.expects(:debug)
+    expect(Puppet).to receive(:debug)
 
     expect(@features).not_to be_myfeature
     expect(@features).to be_myfeature
@@ -91,7 +92,7 @@ describe Puppet::Util::Feature do
     Puppet[:always_retry_plugins] = false
 
     @features.add(:myfeature, :libs => %w{foo bar})
-    @features.expects(:require).with("foo").raises(LoadError)
+    expect(@features).to receive(:require).with("foo").and_raise(LoadError)
 
     expect(@features).not_to be_myfeature
     # second call would cause an expectation exception if 'require' was

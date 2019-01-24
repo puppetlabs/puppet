@@ -4,7 +4,7 @@ require 'puppet/reports'
 
 describe Puppet::Reports, " when using report types" do
   before do
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
   end
 
   it "should load report types as modules" do

@@ -19,10 +19,10 @@ describe Puppet::ModuleTool::Applications::Builder do
     end
 
     def build
-      tarrer = mock('tarrer')
-      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
-      Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
-      tarrer.expects(:pack).with(release_name, tarball)
+      tarrer = double('tarrer')
+      expect(Puppet::ModuleTool::Tar).to receive(:instance).and_return(tarrer)
+      expect(Dir).to receive(:chdir).with(File.join(path, 'pkg')).and_yield
+      expect(tarrer).to receive(:pack).with(release_name, tarball)
 
       builder.run
     end
@@ -432,7 +432,7 @@ symlinkfile
 
   context 'when in FIPS mode...' do
     it 'module builder refuses to run' do
-      Facter.stubs(:value).with(:fips_enabled).returns(true)
+      allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
       expect { builder.run }.to raise_error(/Module building is prohibited in FIPS mode/)
     end 
   end

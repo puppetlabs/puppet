@@ -8,25 +8,25 @@ describe provider_class do
   # :all executes once for the test group and before :each.
   before :each do
     # Create a mock resource
-    @resource = stub 'resource'
+    @resource = double('resource')
 
     @provider = provider_class.new
     @attached_to = "/Users/foobar"
     @ds_path = "/Local/Default/Users/foobar"
 
     # A catch all; no parameters set
-    @resource.stubs(:[]).returns(nil)
+    allow(@resource).to receive(:[]).and_return(nil)
 
     # But set name, ensure and enable
-    @resource.stubs(:[]).with(:name).returns @attached_to
-    @resource.stubs(:[]).with(:ensure).returns :present
-    @resource.stubs(:ref).returns "Mcx[#{@attached_to}]"
+    allow(@resource).to receive(:[]).with(:name).and_return(@attached_to)
+    allow(@resource).to receive(:[]).with(:ensure).and_return(:present)
+    allow(@resource).to receive(:ref).and_return("Mcx[#{@attached_to}]")
 
     # stub out the provider methods that actually touch the filesystem
     # or execute commands
-    @provider.class.stubs(:execute).returns('')
-    @provider.stubs(:execute).returns('')
-    @provider.stubs(:resource).returns @resource
+    allow(@provider.class).to receive(:execute).and_return('')
+    allow(@provider).to receive(:execute).and_return('')
+    allow(@provider).to receive(:resource).and_return(@resource)
   end
 
   it "should have a create method." do
@@ -51,51 +51,51 @@ describe provider_class do
 
   describe "when managing the resource" do
     it "should execute external command dscl from :create" do
-      @provider.stubs(:has_mcx?).returns(false)
-      @provider.class.expects(:dscl).returns('').once
+      allow(@provider).to receive(:has_mcx?).and_return(false)
+      expect(@provider.class).to receive(:dscl).and_return('').once
       @provider.create
     end
 
     it "deletes existing mcx prior to import from :create" do
-      @provider.stubs(:has_mcx?).returns(true)
-      @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path, anything()).once
-      @provider.class.expects(:dscl).with('localhost', '-mcximport', @ds_path, anything()).once
+      allow(@provider).to receive(:has_mcx?).and_return(true)
+      expect(@provider.class).to receive(:dscl).with('localhost', '-mcxdelete', @ds_path, any_args()).once
+      expect(@provider.class).to receive(:dscl).with('localhost', '-mcximport', @ds_path, any_args()).once
       @provider.create
     end
 
     it "should execute external command dscl from :destroy" do
-      @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path).returns('').once
+      expect(@provider.class).to receive(:dscl).with('localhost', '-mcxdelete', @ds_path).and_return('').once
       @provider.destroy
     end
 
     it "should execute external command dscl from :exists?" do
-      @provider.class.expects(:dscl).with('localhost', '-mcxexport', @ds_path).returns('').once
+      expect(@provider.class).to receive(:dscl).with('localhost', '-mcxexport', @ds_path).and_return('').once
       @provider.exists?
     end
 
     it "should execute external command dscl from :content" do
-      @provider.class.expects(:dscl).with('localhost', '-mcxexport', @ds_path).returns('')
+      expect(@provider.class).to receive(:dscl).with('localhost', '-mcxexport', @ds_path).and_return('')
       @provider.content
     end
 
     it "should execute external command dscl from :content=" do
-      @provider.stubs(:has_mcx?).returns(false)
-      @provider.class.expects(:dscl).returns('').once
+      allow(@provider).to receive(:has_mcx?).and_return(false)
+      expect(@provider.class).to receive(:dscl).and_return('').once
       @provider.content=''
     end
 
     it "deletes existing mcx prior to import from :content=" do
-      @provider.stubs(:has_mcx?).returns(true)
-      @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path, anything()).once
-      @provider.class.expects(:dscl).with('localhost', '-mcximport', @ds_path, anything()).once
+      allow(@provider).to receive(:has_mcx?).and_return(true)
+      expect(@provider.class).to receive(:dscl).with('localhost', '-mcxdelete', @ds_path, any_args()).once
+      expect(@provider.class).to receive(:dscl).with('localhost', '-mcximport', @ds_path, any_args()).once
       @provider.content=''
     end
   end
 
   describe "when creating and parsing the name for ds_type" do
     before :each do
-      @provider.class.stubs(:dscl).returns('')
-      @resource.stubs(:[]).with(:name).returns "/Foo/bar"
+      allow(@provider.class).to receive(:dscl).and_return('')
+      allow(@resource).to receive(:[]).with(:name).and_return("/Foo/bar")
     end
 
     it "should not accept /Foo/bar" do
@@ -103,30 +103,30 @@ describe provider_class do
     end
 
     it "should accept /Foo/bar with ds_type => user" do
-      @resource.stubs(:[]).with(:ds_type).returns "user"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("user")
       expect { @provider.create }.to_not raise_error
     end
 
     it "should accept /Foo/bar with ds_type => group" do
-      @resource.stubs(:[]).with(:ds_type).returns "group"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("group")
       expect { @provider.create }.to_not raise_error
     end
 
     it "should accept /Foo/bar with ds_type => computer" do
-      @resource.stubs(:[]).with(:ds_type).returns "computer"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("computer")
       expect { @provider.create }.to_not raise_error
     end
 
     it "should accept :name => /Foo/bar with ds_type => computerlist" do
-      @resource.stubs(:[]).with(:ds_type).returns "computerlist"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("computerlist")
       expect { @provider.create }.to_not raise_error
     end
   end
 
   describe "when creating and :name => foobar" do
     before :each do
-      @provider.class.stubs(:dscl).returns('')
-      @resource.stubs(:[]).with(:name).returns "foobar"
+      allow(@provider.class).to receive(:dscl).and_return('')
+      allow(@resource).to receive(:[]).with(:name).and_return("foobar")
     end
 
     it "should not accept unspecified :ds_type and :ds_name" do
@@ -134,42 +134,42 @@ describe provider_class do
     end
 
     it "should not accept unspecified :ds_type" do
-      @resource.stubs(:[]).with(:ds_type).returns "user"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("user")
       expect { @provider.create }.to raise_error(MCXContentProviderException)
     end
 
     it "should not accept unspecified :ds_name" do
-      @resource.stubs(:[]).with(:ds_name).returns "foo"
+      allow(@resource).to receive(:[]).with(:ds_name).and_return("foo")
       expect { @provider.create }.to raise_error(MCXContentProviderException)
     end
 
     it "should accept :ds_type => user, ds_name => foo" do
-      @resource.stubs(:[]).with(:ds_type).returns "user"
-      @resource.stubs(:[]).with(:ds_name).returns "foo"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("user")
+      allow(@resource).to receive(:[]).with(:ds_name).and_return("foo")
       expect { @provider.create }.to_not raise_error
     end
 
     it "should accept :ds_type => group, ds_name => foo" do
-      @resource.stubs(:[]).with(:ds_type).returns "group"
-      @resource.stubs(:[]).with(:ds_name).returns "foo"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("group")
+      allow(@resource).to receive(:[]).with(:ds_name).and_return("foo")
       expect { @provider.create }.to_not raise_error
     end
 
     it "should accept :ds_type => computer, ds_name => foo" do
-      @resource.stubs(:[]).with(:ds_type).returns "computer"
-      @resource.stubs(:[]).with(:ds_name).returns "foo"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("computer")
+      allow(@resource).to receive(:[]).with(:ds_name).and_return("foo")
       expect { @provider.create }.to_not raise_error
     end
 
     it "should accept :ds_type => computerlist, ds_name => foo" do
-      @resource.stubs(:[]).with(:ds_type).returns "computerlist"
-      @resource.stubs(:[]).with(:ds_name).returns "foo"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("computerlist")
+      allow(@resource).to receive(:[]).with(:ds_name).and_return("foo")
       expect { @provider.create }.to_not raise_error
     end
 
     it "should not accept :ds_type => bogustype, ds_name => foo" do
-      @resource.stubs(:[]).with(:ds_type).returns "bogustype"
-      @resource.stubs(:[]).with(:ds_name).returns "foo"
+      allow(@resource).to receive(:[]).with(:ds_type).and_return("bogustype")
+      allow(@resource).to receive(:[]).with(:ds_name).and_return("foo")
       expect { @provider.create }.to raise_error(MCXContentProviderException)
     end
   end
@@ -180,10 +180,10 @@ describe provider_class do
     end
 
     it "should call external command dscl -list /Local/Default/<ds_type> on each known ds_type" do
-      @provider.class.expects(:dscl).with('localhost', '-list', "/Local/Default/Users").returns('')
-      @provider.class.expects(:dscl).with('localhost', '-list', "/Local/Default/Groups").returns('')
-      @provider.class.expects(:dscl).with('localhost', '-list', "/Local/Default/Computers").returns('')
-      @provider.class.expects(:dscl).with('localhost', '-list', "/Local/Default/ComputerLists").returns('')
+      expect(@provider.class).to receive(:dscl).with('localhost', '-list', "/Local/Default/Users").and_return('')
+      expect(@provider.class).to receive(:dscl).with('localhost', '-list', "/Local/Default/Groups").and_return('')
+      expect(@provider.class).to receive(:dscl).with('localhost', '-list', "/Local/Default/Computers").and_return('')
+      expect(@provider.class).to receive(:dscl).with('localhost', '-list', "/Local/Default/ComputerLists").and_return('')
       @provider.class.instances
     end
   end

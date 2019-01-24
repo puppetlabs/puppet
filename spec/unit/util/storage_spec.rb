@@ -67,7 +67,7 @@ describe Puppet::Util::Storage do
 
   describe "when loading from the state file" do
     before do
-      Puppet.settings.stubs(:use).returns(true)
+      allow(Puppet.settings).to receive(:use).and_return(true)
     end
 
     describe "when the state file/directory does not exist" do
@@ -145,7 +145,7 @@ describe Puppet::Util::Storage do
       it "should raise an error if the state file does not contain valid YAML and cannot be renamed" do
         write_state_file('{ invalid')
 
-        File.expects(:rename).raises(SystemCallError)
+        expect(File).to receive(:rename).and_raise(SystemCallError)
 
         expect { Puppet::Util::Storage.load }.to raise_error(Puppet::Error, /Could not rename/)
       end
@@ -153,7 +153,7 @@ describe Puppet::Util::Storage do
       it "should attempt to rename the state file if the file is corrupted" do
         write_state_file('{ invalid')
 
-        File.expects(:rename).at_least_once
+        expect(File).to receive(:rename).at_least(:once)
 
         Puppet::Util::Storage.load
       end

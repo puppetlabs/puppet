@@ -13,31 +13,31 @@ describe Puppet::Util::Splayer do
 
   it "should do nothing if splay is disabled" do
     Puppet[:splay] = false
-    subject.expects(:sleep).never
+    expect(subject).not_to receive(:sleep)
     subject.splay
   end
 
   it "should do nothing if it has already splayed" do
-    subject.expects(:splayed?).returns true
-    subject.expects(:sleep).never
+    expect(subject).to receive(:splayed?).and_return(true)
+    expect(subject).not_to receive(:sleep)
     subject.splay
   end
 
   it "should log that it is splaying" do
-    subject.stubs :sleep
-    Puppet.expects :info
+    allow(subject).to receive(:sleep)
+    expect(Puppet).to receive(:info)
     subject.splay
   end
 
   it "should sleep for a random portion of the splaylimit plus 1" do
     Puppet[:splaylimit] = "50"
-    subject.expects(:rand).with(51).returns 10
-    subject.expects(:sleep).with(10)
+    expect(subject).to receive(:rand).with(51).and_return(10)
+    expect(subject).to receive(:sleep).with(10)
     subject.splay
   end
 
   it "should mark that it has splayed" do
-    subject.stubs(:sleep)
+    allow(subject).to receive(:sleep)
     subject.splay
     expect(subject).to be_splayed
   end

@@ -32,7 +32,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
   describe "#validate" do
     it "should fail if the set values are not URLs" do
-      URI.expects(:parse).with('foo').raises RuntimeError
+      expect(URI).to receive(:parse).with('foo').and_raise(RuntimeError)
 
       expect(lambda { resource[:source] = %w{foo} }).to raise_error(Puppet::Error)
     end
@@ -95,10 +95,10 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
   describe "when returning the metadata" do
     before do
-      @metadata = stub 'metadata', :source= => nil
-      resource.stubs(:[]).with(:links).returns :manage
-      resource.stubs(:[]).with(:source_permissions).returns :use
-      resource.stubs(:[]).with(:checksum).returns :checksum
+      @metadata = double('metadata', :source= => nil)
+      allow(resource).to receive(:[]).with(:links).and_return(:manage)
+      allow(resource).to receive(:[]).with(:source_permissions).and_return(:use)
+      allow(resource).to receive(:[]).with(:checksum).and_return(:checksum)
     end
 
     it "should return already-available metadata" do
@@ -114,18 +114,20 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
     it "should collect its metadata using the Metadata class if it is not already set" do
       @source = described_class.new(:resource => resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with do |uri, options|
-        expect(uri).to eq @foobar_uri
-        expect(options[:environment]).to eq environment
-        expect(options[:links]).to eq :manage
-        expect(options[:checksum_type]).to eq :checksum
-      end.returns @metadata
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find) do |uri, options|
+        expect(uri).to eq(@foobar_uri)
+        expect(options[:environment]).to eq(environment)
+        expect(options[:links]).to eq(:manage)
+        expect(options[:checksum_type]).to eq(:checksum)
+
+        @metadata
+      end
 
       @source.metadata
     end
 
     it "should use the metadata from the first found source" do
-      metadata = stub 'metadata', :source= => nil
+      metadata = double('metadata', :source= => nil)
       @source = described_class.new(:resource => resource, :value => [@foobar, @feebooz])
       options = {
         :environment => environment,
@@ -133,48 +135,52 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
         :source_permissions => :use,
         :checksum_type => :checksum
       }
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, options).returns nil
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz_uri, options).returns metadata
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(@foobar_uri, options).and_return(nil)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(@feebooz_uri, options).and_return(metadata)
       expect(@source.metadata).to equal(metadata)
     end
 
     it "should store the found source as the metadata's source" do
-      metadata = mock 'metadata'
+      metadata = double('metadata')
       @source = described_class.new(:resource => resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with do |uri, options|
-        expect(uri).to eq @foobar_uri
-        expect(options[:environment]).to eq environment
-        expect(options[:links]).to eq :manage
-        expect(options[:checksum_type]).to eq :checksum
-      end.returns metadata
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find) do |uri, options|
+        expect(uri).to eq(@foobar_uri)
+        expect(options[:environment]).to eq(environment)
+        expect(options[:links]).to eq(:manage)
+        expect(options[:checksum_type]).to eq(:checksum)
 
-      metadata.expects(:source=).with(@foobar_uri)
+        metadata
+      end
+
+      expect(metadata).to receive(:source=).with(@foobar_uri)
       @source.metadata
     end
 
     it "should fail intelligently if an exception is encountered while querying for metadata" do
       @source = described_class.new(:resource => resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with do |uri, options|
-        expect(uri).to eq @foobar_uri
-        expect(options[:environment]).to eq environment
-        expect(options[:links]).to eq :manage
-        expect(options[:checksum_type]).to eq :checksum
-      end.raises RuntimeError
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find) do |uri, options|
+        expect(uri).to eq(@foobar_uri)
+        expect(options[:environment]).to eq(environment)
+        expect(options[:links]).to eq(:manage)
+        expect(options[:checksum_type]).to eq(:checksum)
+      end.and_raise(RuntimeError)
 
-      @source.expects(:fail).raises ArgumentError
+      expect(@source).to receive(:fail).and_raise(ArgumentError)
       expect { @source.metadata }.to raise_error(ArgumentError)
     end
 
     it "should fail if no specified sources can be found" do
       @source = described_class.new(:resource => resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with  do |uri, options|
-        expect(uri).to eq @foobar_uri
-        expect(options[:environment]).to eq environment
-        expect(options[:links]).to eq :manage
-        expect(options[:checksum_type]).to eq :checksum
-      end.returns nil
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find)  do |uri, options|
+        expect(uri).to eq(@foobar_uri)
+        expect(options[:environment]).to eq(environment)
+        expect(options[:links]).to eq(:manage)
+        expect(options[:checksum_type]).to eq(:checksum)
 
-      @source.expects(:fail).raises RuntimeError
+        nil
+      end
+
+      expect(@source).to receive(:fail).and_raise(RuntimeError)
 
       expect { @source.metadata }.to raise_error(RuntimeError)
     end
@@ -185,24 +191,23 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
   end
 
   describe "when copying the source values" do
-
     before do
-      Puppet::Type.type(:file).any_instance.stubs(:file).returns('my/file.pp')
-      Puppet::Type.type(:file).any_instance.stubs(:line).returns 5
+      allow_any_instance_of(Puppet::Type.type(:file)).to receive(:file).and_return('my/file.pp')
+      allow_any_instance_of(Puppet::Type.type(:file)).to receive(:line).and_return(5)
     end
 
     before :each do
       @resource = Puppet::Type.type(:file).new :path => @foobar
 
       @source = described_class.new(:resource => @resource)
-      @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => "173", :checksum => "{md5}asdfasdf", :checksum_type => "md5", :ftype => "file", :source => @foobar
-      @source.stubs(:metadata).returns @metadata
+      @metadata = double('metadata', :owner => 100, :group => 200, :mode => "173", :checksum => "{md5}asdfasdf", :checksum_type => "md5", :ftype => "file", :source => @foobar)
+      allow(@source).to receive(:metadata).and_return(@metadata)
 
-      Puppet.features.stubs(:root?).returns true
+      allow(Puppet.features).to receive(:root?).and_return(true)
     end
 
     it "should not issue an error - except on Windows - if the source mode value is a Numeric" do
-      @metadata.stubs(:mode).returns 0173
+      allow(@metadata).to receive(:mode).and_return(0173)
       @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
         expect { @source.copy_source_values }.to raise_error("Should not have tried to use source owner/mode/group on Windows (file: my/file.pp, line: 5)")
@@ -212,7 +217,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
     end
 
     it "should not issue an error - except on Windows - if the source mode value is a String" do
-      @metadata.stubs(:mode).returns "173"
+      allow(@metadata).to receive(:mode).and_return("173")
       @resource[:source_permissions] = :use
       if Puppet::Util::Platform.windows?
         expect { @source.copy_source_values }.to raise_error("Should not have tried to use source owner/mode/group on Windows (file: my/file.pp, line: 5)")
@@ -222,20 +227,20 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
     end
 
     it "should fail if there is no metadata" do
-      @source.stubs(:metadata).returns nil
-      @source.expects(:devfail).raises ArgumentError
+      allow(@source).to receive(:metadata).and_return(nil)
+      expect(@source).to receive(:devfail).and_raise(ArgumentError)
       expect { @source.copy_source_values }.to raise_error(ArgumentError)
     end
 
     it "should set :ensure to the file type" do
-      @metadata.stubs(:ftype).returns "file"
+      allow(@metadata).to receive(:ftype).and_return("file")
 
       @source.copy_source_values
       expect(@resource[:ensure]).to eq(:file)
     end
 
     it "should not set 'ensure' if it is already set to 'absent'" do
-      @metadata.stubs(:ftype).returns "file"
+      allow(@metadata).to receive(:ftype).and_return("file")
 
       @resource[:ensure] = :absent
       @source.copy_source_values
@@ -244,8 +249,8 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
     describe "and the source is a file" do
       before do
-        @metadata.stubs(:ftype).returns "file"
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        allow(@metadata).to receive(:ftype).and_return("file")
+        allow(Puppet.features).to receive(:microsoft_windows?).and_return(false)
       end
 
       context "when source_permissions is `use`" do
@@ -283,7 +288,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
         describe "and puppet is not running as root" do
           before do
-            Puppet.features.stubs(:root?).returns false
+            allow(Puppet.features).to receive(:root?).and_return(false)
           end
 
           it "should not try to set the owner" do
@@ -301,13 +306,13 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       context "when source_permissions is `use_when_creating`" do
         before :each do
           @resource[:source_permissions] = "use_when_creating"
-          Puppet.features.expects(:root?).returns true
-          @source.stubs(:local?).returns(false)
+          expect(Puppet.features).to receive(:root?).and_return(true)
+          allow(@source).to receive(:local?).and_return(false)
         end
 
         context "when managing a new file" do
           it "should copy owner and group from local sources" do
-            @source.stubs(:local?).returns true
+            allow(@source).to receive(:local?).and_return(true)
 
             @source.copy_source_values
 
@@ -337,11 +342,11 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
         context "when managing an existing file" do
           before :each do
-            Puppet::FileSystem.stubs(:exist?).with(@resource[:path]).returns(true)
+            allow(Puppet::FileSystem).to receive(:exist?).with(@resource[:path]).and_return(true)
           end
 
           it "should not copy owner, group or mode from local sources" do
-            @source.stubs(:local?).returns true
+            allow(@source).to receive(:local?).and_return(true)
 
             @source.copy_source_values
 
@@ -372,12 +377,12 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
       context "when source_permissions is default" do
         before :each do
-          @source.stubs(:local?).returns(false)
-          Puppet.features.expects(:root?).returns true
+          allow(@source).to receive(:local?).and_return(false)
+          expect(Puppet.features).to receive(:root?).and_return(true)
         end
 
         it "should not copy owner, group or mode from local sources" do
-          @source.stubs(:local?).returns true
+          allow(@source).to receive(:local?).and_return(true)
 
           @source.copy_source_values
 
@@ -408,19 +413,19 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
     describe "and the source is a link" do
       before do
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        allow(Puppet.features).to receive(:microsoft_windows?).and_return(false)
       end
 
       it "should set the target to the link destination" do
-        @metadata.stubs(:ftype).returns "link"
-        @metadata.stubs(:links).returns "manage"
-        @metadata.stubs(:checksum_type).returns nil
-        @resource.stubs(:[])
-        @resource.stubs(:[]=)
+        allow(@metadata).to receive(:ftype).and_return("link")
+        allow(@metadata).to receive(:links).and_return("manage")
+        allow(@metadata).to receive(:checksum_type).and_return(nil)
+        allow(@resource).to receive(:[])
+        allow(@resource).to receive(:[]=)
 
-        @metadata.expects(:destination).returns "/path/to/symlink"
+        expect(@metadata).to receive(:destination).and_return("/path/to/symlink")
 
-        @resource.expects(:[]=).with(:target, "/path/to/symlink")
+        expect(@resource).to receive(:[]=).with(:target, "/path/to/symlink")
         @source.copy_source_values
       end
     end
@@ -483,11 +488,10 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
         before(:each) do
           metadata = Puppet::FileServing::Metadata.new(path, :source => uri, 'type' => 'file')
-          #metadata = stub('remote', :ftype => "file", :source => uri)
-          Puppet::FileServing::Metadata.indirection.stubs(:find).
-            with(uri,all_of(has_key(:environment), has_key(:links))).returns metadata
-          Puppet::FileServing::Metadata.indirection.stubs(:find).
-            with(uri,all_of(has_key(:environment), has_key(:links))).returns metadata
+          allow(Puppet::FileServing::Metadata.indirection).to receive(:find).
+            with(uri, include(:environment, :links)).and_return(metadata)
+          allow(Puppet::FileServing::Metadata.indirection).to receive(:find).
+            with(uri, include(:environment, :links)).and_return(metadata)
           resource[:source] = uri
         end
 
@@ -580,52 +584,52 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
     describe 'from remote source' do
       let(:source_content) { "source file content\n"*10 }
       let(:source) { resource.newattr(:source) }
-      let(:response) { stub_everything('response') }
-      let(:conn) { mock('connection') }
+      let(:response) { double('response', :[] => nil, :body => nil, :message => nil) }
+      let(:conn) { double('connection') }
 
       before do
         resource[:backup] = false
 
-        response.stubs(:read_body).multiple_yields(*source_content.lines)
-        conn.stubs(:request_get).yields(response)
+        expectation = receive(:read_body)
+        source_content.lines.each { |line| expectation = expectation.and_yield(line) }
+        allow(response).to expectation
+        allow(conn).to receive(:request_get).and_yield(response)
       end
 
       it 'should use an explicit fileserver if source starts with puppet://' do
-        response.stubs(:code).returns('200')
-        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet://somehostname/test/foo', :ftype => 'file')
-        Puppet::Network::HttpPool.expects(:http_instance).with('somehostname', anything).returns(conn)
+        allow(response).to receive(:code).and_return('200')
+        allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet://somehostname/test/foo', :ftype => 'file', :content_uri => nil))
+        expect(Puppet::Network::HttpPool).to receive(:http_instance).with('somehostname', anything).and_return(conn)
 
         resource.write(source)
       end
 
       it 'should use the default fileserver if source starts with puppet:///' do
-        response.stubs(:code).returns('200')
-        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo', :ftype => 'file')
-        Puppet::Network::HttpPool.expects(:http_instance).with(Puppet.settings[:server], anything).returns(conn)
+        allow(response).to receive(:code).and_return('200')
+        allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet:///test/foo', :ftype => 'file', :content_uri => nil))
+        expect(Puppet::Network::HttpPool).to receive(:http_instance).with(Puppet.settings[:server], anything).and_return(conn)
 
         resource.write(source)
       end
 
       it 'should percent encode reserved characters' do
-        response.stubs(:code).returns('200')
-        Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
-        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
+        allow(response).to receive(:code).and_return('200')
+        allow(Puppet::Network::HttpPool).to receive(:http_instance).and_return(conn)
+        allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file', :content_uri => nil))
 
-        conn.unstub(:request_get)
-        conn.expects(:request_get).with("#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3/file_content/test/foo%20bar?environment=myenv&", anything).yields(response)
+        expect(conn).to receive(:request_get).with("#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v3/file_content/test/foo%20bar?environment=myenv&", anything).and_yield(response)
 
         resource.write(source)
       end
 
       it 'should request binary content' do
-        response.stubs(:code).returns('200')
-        Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
-        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
+        allow(response).to receive(:code).and_return('200')
+        allow(Puppet::Network::HttpPool).to receive(:http_instance).and_return(conn)
+        allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file', :content_uri => nil))
 
-        conn.unstub(:request_get)
-        conn.expects(:request_get).with do |_, options|
+        expect(conn).to receive(:request_get) do |_, options|
           expect(options).to include('Accept' => 'application/octet-stream')
-        end.yields(response)
+        end.and_yield(response)
 
         resource.write(source)
       end
@@ -636,25 +640,25 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
         end
 
         before(:each) do
-          Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
-          source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo', :ftype => 'file')
+          allow(Puppet::Network::HttpPool).to receive(:http_instance).and_return(conn)
+          allow(source).to receive(:metadata).and_return(double('metadata', :source => 'puppet:///test/foo', :ftype => 'file', :content_uri => nil))
         end
 
         it 'should not write anything if source is not found' do
-          response.stubs(:code).returns('404')
+          allow(response).to receive(:code).and_return('404')
 
           expect { resource.write(source) }.to raise_error(Net::HTTPError, /404/)
           expect(File.read(filename)).to eq('initial file content')
         end
 
         it 'should raise an HTTP error in case of server error' do
-          response.stubs(:code).returns('500')
+          allow(response).to receive(:code).and_return('500')
 
           expect { resource.write(source) }.to raise_error(Net::HTTPError, /500/)
         end
 
         context 'and the request was successful' do
-          before(:each) { response.stubs(:code).returns '200' }
+          before(:each) { allow(response).to receive(:code).and_return('200') }
 
           it 'should write the contents to the file' do
             resource.write(source)

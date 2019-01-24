@@ -63,8 +63,8 @@ end
 
 describe Puppet::Type.type(:package), "when packages with the same name are sourced" do
   before :each do
-    Process.stubs(:euid).returns 0
-    @provider = stub(
+    allow(Process).to receive(:euid).and_return(0)
+    @provider = double(
       'provider',
       :class           => Puppet::Type.type(:package).defaultprovider,
       :clear           => nil,
@@ -72,8 +72,8 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
       :name            => :mock,
       :validate_source => nil
     )
-    Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
-    Puppet::Type.type(:package).defaultprovider.stubs(:instances).returns([])
+    allow(Puppet::Type.type(:package).defaultprovider).to receive(:new).and_return(@provider)
+    allow(Puppet::Type.type(:package).defaultprovider).to receive(:instances).and_return([])
     @package = Puppet::Type.type(:package).new(:name => "yay", :ensure => :present)
 
     @catalog = Puppet::Resource::Catalog.new
@@ -116,18 +116,18 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
     describe "when it should be present" do
       [:present, :latest, "1.0"].each do |state|
         it "should do nothing if it is #{state.to_s}" do
-          @provider.expects(:properties).returns(:ensure => state).at_least_once
-          @alt_provider.expects(:properties).returns(:ensure => state).at_least_once
+          expect(@provider).to receive(:properties).and_return(:ensure => state).at_least(:once)
+          expect(@alt_provider).to receive(:properties).and_return(:ensure => state).at_least(:once)
           @catalog.apply
         end
       end
 
       [:purged, :absent].each do |state|
         it "should install if it is #{state.to_s}" do
-          @provider.stubs(:properties).returns(:ensure => state)
-          @provider.expects(:install)
-          @alt_provider.stubs(:properties).returns(:ensure => state)
-          @alt_provider.expects(:install)
+          allow(@provider).to receive(:properties).and_return(:ensure => state)
+          expect(@provider).to receive(:install)
+          allow(@alt_provider).to receive(:properties).and_return(:ensure => state)
+          expect(@alt_provider).to receive(:install)
           @catalog.apply
         end
       end
@@ -137,16 +137,16 @@ end
 
 describe Puppet::Type.type(:package), 'logging package state transitions' do
   let(:catalog) { Puppet::Resource::Catalog.new }
-  let(:provider) { stub('provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil, :validate_source => nil) }
+  let(:provider) { double('provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil, :validate_source => nil) }
 
   before :each do
-    Process.stubs(:euid).returns 0
-    provider.stubs(:satisfies?).with([:purgeable]).returns(true)
-    provider.class.stubs(:instances).returns([])
-    provider.stubs(:install).returns nil
-    provider.stubs(:uninstall).returns nil
-    provider.stubs(:purge).returns nil
-    Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(provider)
+    allow(Process).to receive(:euid).and_return(0)
+    allow(provider).to receive(:satisfies?).with([:purgeable]).and_return(true)
+    allow(provider.class).to receive(:instances).and_return([])
+    allow(provider).to receive(:install).and_return(nil)
+    allow(provider).to receive(:uninstall).and_return(nil)
+    allow(provider).to receive(:purge).and_return(nil)
+    allow(Puppet::Type.type(:package).defaultprovider).to receive(:new).and_return(provider)
   end
 
   after :each do
@@ -178,7 +178,7 @@ describe Puppet::Type.type(:package), 'logging package state transitions' do
   states.each do |old, new_states|
     describe "#{old} package" do
       before :each do
-        provider.stubs(:properties).returns(:ensure => old)
+        allow(provider).to receive(:properties).and_return(:ensure => old)
       end
 
       new_states.each do |new, status|

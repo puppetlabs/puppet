@@ -42,27 +42,27 @@ describe 'the find_file function' do
 
   it 'finds an existing file in a module' do
     with_file_content('file content') do |name|
-      mod = mock 'module'
-      mod.stubs(:file).with('myfile').returns(name)
+      mod = double('module')
+      allow(mod).to receive(:file).with('myfile').and_return(name)
       Puppet[:code] = "notify { find_file('mymod/myfile'):}"
       node = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
-      compiler.environment.stubs(:module).with('mymod').returns(mod)
+      allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)
 
       expect(compiler.compile().filter { |r| r.virtual? }).to have_resource("Notify[#{name}]")
     end
   end
 
   it 'returns undef when none of the paths were found' do
-    mod = mock 'module'
-    mod.stubs(:file).with('myfile').returns(nil)
+    mod = double('module')
+    allow(mod).to receive(:file).with('myfile').and_return(nil)
     Puppet[:code] = "notify { String(type(find_file('mymod/myfile', 'nomod/nofile'))):}"
     node = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
     # For a module that does not have the file
-    compiler.environment.stubs(:module).with('mymod').returns(mod)
+    allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)
     # For a module that does not exist
-    compiler.environment.stubs(:module).with('nomod').returns(nil)
+    allow(compiler.environment).to receive(:module).with('nomod').and_return(nil)
 
     expect(compiler.compile().filter { |r| r.virtual? }).to have_resource("Notify[Undef]")
   end

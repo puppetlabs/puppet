@@ -17,20 +17,20 @@ describe Puppet::ConfineCollection do
 
   describe "when creating confine instances" do
     it "should create an instance of the named test with the provided values" do
-      test_class = mock 'test_class'
-      test_class.expects(:new).with(%w{my values}).returns(stub('confine', :label= => nil))
-      Puppet::Confine.expects(:test).with(:foo).returns test_class
+      test_class = double('test_class')
+      expect(test_class).to receive(:new).with(%w{my values}).and_return(double('confine', :label= => nil))
+      expect(Puppet::Confine).to receive(:test).with(:foo).and_return(test_class)
 
       Puppet::ConfineCollection.new("label").confine :foo => %w{my values}
     end
 
     it "should copy its label to the confine instance" do
-      confine = mock 'confine'
-      test_class = mock 'test_class'
-      test_class.expects(:new).returns confine
-      Puppet::Confine.expects(:test).returns test_class
+      confine = double('confine')
+      test_class = double('test_class')
+      expect(test_class).to receive(:new).and_return(confine)
+      expect(Puppet::Confine).to receive(:test).and_return(test_class)
 
-      confine.expects(:label=).with("label")
+      expect(confine).to receive(:label=).with("label")
 
       Puppet::ConfineCollection.new("label").confine :foo => %w{my values}
     end
@@ -38,8 +38,8 @@ describe Puppet::ConfineCollection do
     describe "and the test cannot be found" do
       it "should create a Facter test with the provided values and set the name to the test name" do
         confine = Puppet::Confine.test(:variable).new(%w{my values})
-        confine.expects(:name=).with(:foo)
-        confine.class.expects(:new).with(%w{my values}).returns confine
+        expect(confine).to receive(:name=).with(:foo)
+        expect(confine.class).to receive(:new).with(%w{my values}).and_return(confine)
         Puppet::ConfineCollection.new("label").confine(:foo => %w{my values})
       end
     end
@@ -47,8 +47,8 @@ describe Puppet::ConfineCollection do
     describe "and the 'for_binary' option was provided" do
       it "should mark the test as a binary confine" do
         confine = Puppet::Confine.test(:exists).new(:bar)
-        confine.expects(:for_binary=).with true
-        Puppet::Confine.test(:exists).expects(:new).with(:bar).returns confine
+        expect(confine).to receive(:for_binary=).with(true)
+        expect(Puppet::Confine.test(:exists)).to receive(:new).with(:bar).and_return(confine)
         Puppet::ConfineCollection.new("label").confine :exists => :bar, :for_binary => true
       end
     end
@@ -59,11 +59,11 @@ describe Puppet::ConfineCollection do
   end
 
   it "should be valid if all confines pass" do
-    c1 = stub 'c1', :valid? => true, :label= => nil
-    c2 = stub 'c2', :valid? => true, :label= => nil
+    c1 = double('c1', :valid? => true, :label= => nil)
+    c2 = double('c2', :valid? => true, :label= => nil)
 
-    Puppet::Confine.test(:true).expects(:new).returns(c1)
-    Puppet::Confine.test(:false).expects(:new).returns(c2)
+    expect(Puppet::Confine.test(:true)).to receive(:new).and_return(c1)
+    expect(Puppet::Confine.test(:false)).to receive(:new).and_return(c2)
 
     confiner = Puppet::ConfineCollection.new("label")
     confiner.confine :true => :bar, :false => :bee
@@ -72,11 +72,11 @@ describe Puppet::ConfineCollection do
   end
 
   it "should not be valid if any confines fail" do
-    c1 = stub 'c1', :valid? => true, :label= => nil
-    c2 = stub 'c2', :valid? => false, :label= => nil
+    c1 = double('c1', :valid? => true, :label= => nil)
+    c2 = double('c2', :valid? => false, :label= => nil)
 
-    Puppet::Confine.test(:true).expects(:new).returns(c1)
-    Puppet::Confine.test(:false).expects(:new).returns(c2)
+    expect(Puppet::Confine.test(:true)).to receive(:new).and_return(c1)
+    expect(Puppet::Confine.test(:false)).to receive(:new).and_return(c2)
 
     confiner = Puppet::ConfineCollection.new("label")
     confiner.confine :true => :bar, :false => :bee
@@ -99,32 +99,32 @@ describe Puppet::ConfineCollection do
 
     it "should add each test type's summary to the hash" do
       @confiner.confine :true => :bar, :false => :bee
-      Puppet::Confine.test(:true).expects(:summarize).returns :tsumm
-      Puppet::Confine.test(:false).expects(:summarize).returns :fsumm
+      expect(Puppet::Confine.test(:true)).to receive(:summarize).and_return(:tsumm)
+      expect(Puppet::Confine.test(:false)).to receive(:summarize).and_return(:fsumm)
 
       expect(@confiner.summary).to eq({:true => :tsumm, :false => :fsumm})
     end
 
     it "should not include tests that return 0" do
       @confiner.confine :true => :bar, :false => :bee
-      Puppet::Confine.test(:true).expects(:summarize).returns 0
-      Puppet::Confine.test(:false).expects(:summarize).returns :fsumm
+      expect(Puppet::Confine.test(:true)).to receive(:summarize).and_return(0)
+      expect(Puppet::Confine.test(:false)).to receive(:summarize).and_return(:fsumm)
 
       expect(@confiner.summary).to eq({:false => :fsumm})
     end
 
     it "should not include tests that return empty arrays" do
       @confiner.confine :true => :bar, :false => :bee
-      Puppet::Confine.test(:true).expects(:summarize).returns []
-      Puppet::Confine.test(:false).expects(:summarize).returns :fsumm
+      expect(Puppet::Confine.test(:true)).to receive(:summarize).and_return([])
+      expect(Puppet::Confine.test(:false)).to receive(:summarize).and_return(:fsumm)
 
       expect(@confiner.summary).to eq({:false => :fsumm})
     end
 
     it "should not include tests that return empty hashes" do
       @confiner.confine :true => :bar, :false => :bee
-      Puppet::Confine.test(:true).expects(:summarize).returns({})
-      Puppet::Confine.test(:false).expects(:summarize).returns :fsumm
+      expect(Puppet::Confine.test(:true)).to receive(:summarize).and_return({})
+      expect(Puppet::Confine.test(:false)).to receive(:summarize).and_return(:fsumm)
 
       expect(@confiner.summary).to eq({:false => :fsumm})
     end

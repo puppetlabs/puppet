@@ -422,7 +422,7 @@ module Serialization
     it 'succeeds when deserializer is aware of the referenced type' do
       obj = type.create(32)
       write(obj)
-      loaders.find_loader(nil).expects(:load).with(:type, 'mytype').returns(type)
+      expect(loaders.find_loader(nil)).to receive(:load).with(:type, 'mytype').and_return(type)
       expect(read).to eql(obj)
     end
   end

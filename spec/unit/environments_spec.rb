@@ -266,7 +266,7 @@ config_version=relative/script
       end
 
       it "interprets glob modulepaths from the environment's directory" do
-        Dir.stubs(:glob).with(File.join(envdir, 'env1', 'other', '*', 'modules')).returns([
+        allow(Dir).to receive(:glob).with(File.join(envdir, 'env1', 'other', '*', 'modules')).and_return([
           File.join(envdir, 'env1', 'other', 'foo', 'modules'),
           File.join(envdir, 'env1', 'other', 'bar', 'modules')
         ])
@@ -563,9 +563,9 @@ config_version=$vardir/random/scripts
 
       it "does not reload the environment if it isn't expired" do
         env = Puppet::Node::Environment.create(:cached, [])
-        mocked_loader = mock('loader')
-        mocked_loader.expects(:get).with(:cached).returns(env).once
-        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+        mocked_loader = double('loader')
+        expect(mocked_loader).to receive(:get).with(:cached).and_return(env).once
+        expect(mocked_loader).to receive(:get_conf).with(:cached).and_return(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
 
         cached = Puppet::Environments::Cached.new(mocked_loader)
 
@@ -589,9 +589,9 @@ config_version=$vardir/random/scripts
 
       it "does not reload the environment if it isn't expired" do
         env = Puppet::Node::Environment.create(:cached, [])
-        mocked_loader = mock('loader')
-        mocked_loader.expects(:get).with(:cached).returns(env).once
-        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+        mocked_loader = double('loader')
+        expect(mocked_loader).to receive(:get).with(:cached).and_return(env).once
+        expect(mocked_loader).to receive(:get_conf).with(:cached).and_return(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
 
         cached = Puppet::Environments::Cached.new(mocked_loader)
 

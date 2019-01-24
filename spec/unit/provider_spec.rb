@@ -148,13 +148,13 @@ describe Puppet::Provider do
     # otherwise is to assign it to a constant, and that hurts more here in
     # testing world. --daniel 2012-01-29
     a = Class.new(Puppet::Provider).new(res)
-    a.class.stubs(:name).returns "Puppet::Provider::Notify::A"
+    allow(a.class).to receive(:name).and_return("Puppet::Provider::Notify::A")
 
     b = Class.new(Puppet::Provider).new(res)
-    b.class.stubs(:name).returns "Puppet::Provider::Notify::B"
+    allow(b.class).to receive(:name).and_return("Puppet::Provider::Notify::B")
 
     c = Class.new(Puppet::Provider).new(res)
-    c.class.stubs(:name).returns "Puppet::Provider::Notify::C"
+    allow(c.class).to receive(:name).and_return("Puppet::Provider::Notify::C")
 
     [[a, b, c], [a, c, b], [b, a, c], [b, c, a], [c, a, b], [c, b, a]].each do |this|
       expect(this.sort).to eq([a, b, c])
@@ -280,7 +280,7 @@ describe Puppet::Provider do
 
     describe "regex matches" do
       it "should match a singular regex" do
-        Facter.expects(:value).with(:osfamily).at_least_once.returns "solaris"
+        expect(Facter).to receive(:value).with(:osfamily).at_least(:once).and_return("solaris")
 
         one = type.provide(:one) do
           defaultfor :osfamily => /solaris/
@@ -290,7 +290,7 @@ describe Puppet::Provider do
       end
 
       it "should not match a non-matching regex " do
-        Facter.expects(:value).with(:osfamily).at_least_once.returns "redhat"
+        expect(Facter).to receive(:value).with(:osfamily).at_least(:once).and_return("redhat")
 
         one = type.provide(:one) do
           defaultfor :osfamily => /solaris/
@@ -301,8 +301,8 @@ describe Puppet::Provider do
 
       it "should allow a mix of regex and string" do
 
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns "fedora"
-        Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "24"
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return("fedora")
+        expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("24")
 
         one = type.provide(:one) do
           defaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => /^2[2-9]$/
@@ -326,14 +326,14 @@ describe Puppet::Provider do
       let(:alternate) { type.provide(:alternate) {} }
 
       it "should be default for the first defaultfor" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os1
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os1)
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
       end
 
       it "should be default for the last defaultfor" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os2
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os2)
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
@@ -350,23 +350,23 @@ describe Puppet::Provider do
       let(:alternate) { type.provide(:alternate) {} }
 
       it "should be default for a more specific, but matching, defaultfor" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os2
-        Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "42"
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os2)
+        expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("42")
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
       end
 
       it "should be default for a more specific, but matching, defaultfor with regex" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os3
-        Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "42"
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os3)
+        expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("42")
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
       end
 
       it "should be default for a less specific, but matching, defaultfor" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os1
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os1)
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
@@ -390,8 +390,8 @@ describe Puppet::Provider do
     end
 
     it "should consider two defaults to be higher specificity than one default" do
-      Facter.expects(:value).with(:osfamily).at_least_once.returns "solaris"
-      Facter.expects(:value).with(:operatingsystemrelease).at_least_once.returns "5.10"
+      expect(Facter).to receive(:value).with(:osfamily).at_least(:once).and_return("solaris")
+      expect(Facter).to receive(:value).with(:operatingsystemrelease).at_least(:once).and_return("5.10")
 
       one = type.provide(:one) do
         defaultfor :osfamily => "solaris"
@@ -458,7 +458,7 @@ describe Puppet::Provider do
       subject.commands :testing => "puppet-bug-1197"
       expect(subject.command(:testing)).to be_nil
 
-      subject.stubs(:which).with("puppet-bug-1197").returns("/puppet-bug-1197")
+      allow(subject).to receive(:which).with("puppet-bug-1197").and_return("/puppet-bug-1197")
       expect(subject.command(:testing)).to eq("/puppet-bug-1197")
 
       # Ideally, we would also test that `suitable?` returned the right thing
@@ -494,43 +494,43 @@ describe Puppet::Provider do
 
   context "execution" do
     before :each do
-      Puppet.expects(:deprecation_warning).never
+      expect(Puppet).not_to receive(:deprecation_warning)
     end
 
     it "delegates instance execute to Puppet::Util::Execution" do
-      Puppet::Util::Execution.expects(:execute).with("a_command", { :option => "value" })
+      expect(Puppet::Util::Execution).to receive(:execute).with("a_command", { :option => "value" })
 
       provider.new.send(:execute, "a_command", { :option => "value" })
     end
 
     it "delegates class execute to Puppet::Util::Execution" do
-      Puppet::Util::Execution.expects(:execute).with("a_command", { :option => "value" })
+      expect(Puppet::Util::Execution).to receive(:execute).with("a_command", { :option => "value" })
 
       provider.send(:execute, "a_command", { :option => "value" })
     end
 
     it "delegates instance execpipe to Puppet::Util::Execution" do
       block = Proc.new { }
-      Puppet::Util::Execution.expects(:execpipe).with("a_command", true, block)
+      expect(Puppet::Util::Execution).to receive(:execpipe).with("a_command", true, block)
 
       provider.new.send(:execpipe, "a_command", true, block)
     end
 
     it "delegates class execpipe to Puppet::Util::Execution" do
       block = Proc.new { }
-      Puppet::Util::Execution.expects(:execpipe).with("a_command", true, block)
+      expect(Puppet::Util::Execution).to receive(:execpipe).with("a_command", true, block)
 
       provider.send(:execpipe, "a_command", true, block)
     end
 
     it "delegates instance execfail to Puppet::Util::Execution" do
-      Puppet::Util::Execution.expects(:execfail).with("a_command", "an exception to raise")
+      expect(Puppet::Util::Execution).to receive(:execfail).with("a_command", "an exception to raise")
 
       provider.new.send(:execfail, "a_command", "an exception to raise")
     end
 
     it "delegates class execfail to Puppet::Util::Execution" do
-      Puppet::Util::Execution.expects(:execfail).with("a_command", "an exception to raise")
+      expect(Puppet::Util::Execution).to receive(:execfail).with("a_command", "an exception to raise")
 
       provider.send(:execfail, "a_command", "an exception to raise")
     end
@@ -754,16 +754,17 @@ describe Puppet::Provider do
 
   def expect_command_executed(name, path, *args)
     command = Puppet::Provider::Command.new(name, path, Puppet::Util, Puppet::Util::Execution)
-    command.expects(:execute).with(*args)
+    args = [no_args] if args.empty?
+    expect(command).to receive(:execute).with(*args)
     command
   end
 
   def allow_creation_of(command, environment = {})
-      Puppet::Provider::Command.stubs(:new).with(command.name, command.executable, Puppet::Util, Puppet::Util::Execution, { :failonfail => true, :combine => true, :custom_environment => environment }).returns(command)
+      allow(Puppet::Provider::Command).to receive(:new).with(command.name, command.executable, Puppet::Util, Puppet::Util::Execution, { :failonfail => true, :combine => true, :custom_environment => environment }).and_return(command)
   end
 
   def file_exists_and_is_executable(path)
-    FileTest.expects(:file?).with(path).returns(true)
-    FileTest.expects(:executable?).with(path).returns(true)
+    expect(FileTest).to receive(:file?).with(path).and_return(true)
+    expect(FileTest).to receive(:executable?).with(path).and_return(true)
   end
 end

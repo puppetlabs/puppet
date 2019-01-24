@@ -11,7 +11,7 @@ describe "Puppet::Indirector::CertificateStatus::File" do
   end
 
   before do
-    Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
+    allow(Puppet::SSL::CertificateAuthority).to receive(:ca?).and_return(true)
     @terminus = Puppet::SSL::Host.indirection.terminus(:file)
 
     @tmpdir = tmpdir("certificate_status_ca_testing")
@@ -61,7 +61,7 @@ describe "Puppet::Indirector::CertificateStatus::File" do
 
   describe "when creating the CA" do
     it "should fail if it is not a valid CA" do
-      Puppet::SSL::CertificateAuthority.expects(:ca?).returns false
+      expect(Puppet::SSL::CertificateAuthority).to receive(:ca?).and_return(false)
       expect { @terminus.ca }.to raise_error(ArgumentError, "This process is not configured as a certificate authority")
     end
   end

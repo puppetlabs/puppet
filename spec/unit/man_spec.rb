@@ -12,8 +12,8 @@ describe Puppet::Face[:man, :current] do
   end
 
   it "exits with 0 when generating man documentation for each available application" do
-    Puppet::Util.stubs(:which).with('ronn').returns(nil)
-    Puppet::Util.stubs(:which).with(pager).returns(pager)
+    allow(Puppet::Util).to receive(:which).with('ronn').and_return(nil)
+    allow(Puppet::Util).to receive(:which).with(pager).and_return(pager)
 
     Puppet::Application.available_application_names.each do |name|
       next if %w{man face_base indirection_base}.include? name
@@ -22,7 +22,7 @@ describe Puppet::Face[:man, :current] do
       app = klass.new(Puppet::Util::CommandLine.new('puppet', ['man', name]))
 
       expect do
-        IO.stubs(:popen).with(pager, 'w:UTF-8').yields($stdout)
+        allow(IO).to receive(:popen).with(pager, 'w:UTF-8').and_yield($stdout)
 
         expect { app.run }.to exit_with(0)
       end.to_not have_printed(/undefined method `gsub'/)

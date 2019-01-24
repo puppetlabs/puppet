@@ -23,8 +23,8 @@ describe Puppet::Type.type(:vlan) do
 
   describe "when validating attribute values" do
     before do
-      @provider = stub 'provider', :class => Puppet::Type.type(:vlan).defaultprovider, :clear => nil
-      Puppet::Type.type(:vlan).defaultprovider.stubs(:new).returns(@provider)
+      @provider = double('provider', :class => Puppet::Type.type(:vlan).defaultprovider, :clear => nil)
+      allow(Puppet::Type.type(:vlan).defaultprovider).to receive(:new).and_return(@provider)
     end
 
     it "should support :present as a value to :ensure" do

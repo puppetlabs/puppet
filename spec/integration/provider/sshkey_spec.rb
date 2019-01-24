@@ -10,10 +10,10 @@ describe Puppet::Type.type(:sshkey).provider(:parsed), '(integration)',
 
   before :each do
     # Don't backup to filebucket
-    Puppet::FileBucket::Dipper.any_instance.stubs(:backup)
+    allow_any_instance_of(Puppet::FileBucket::Dipper).to receive(:backup)
     # We don't want to execute anything
-    described_class.stubs(:filetype).
-      returns Puppet::Util::FileType::FileTypeFlat
+    allow(described_class).to receive(:filetype).
+      and_return(Puppet::Util::FileType::FileTypeFlat)
 
     @sshkey_file = tmpfile('sshkey_integration_specs')
     FileUtils.cp(my_fixture('sample'), @sshkey_file)
@@ -143,12 +143,10 @@ describe Puppet::Type.type(:sshkey).provider(:parsed), '(integration)',
     it "should fetch an entry from resources" do
       @resource_app = Puppet::Application[:resource]
       @resource_app.preinit
-      @resource_app.command_line.stubs(:args).
-        returns([type_under_test, sshkey_name, "target=#{@sshkey_file}"])
+      allow(@resource_app.command_line).to receive(:args).
+        and_return([type_under_test, sshkey_name, "target=#{@sshkey_file}"])
 
-      @resource_app.expects(:puts).with do |args|
-        expect(args).to match(/#{sshkey_name}/)
-      end
+      expect(@resource_app).to receive(:puts).with(/#{sshkey_name}/)
       @resource_app.main
     end
   end

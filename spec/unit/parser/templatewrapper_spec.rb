@@ -5,20 +5,20 @@ describe Puppet::Parser::TemplateWrapper do
   let(:known_resource_types) { Puppet::Resource::TypeCollection.new("env") }
   let(:scope) do
     compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-    compiler.environment.stubs(:known_resource_types).returns known_resource_types
+    allow(compiler.environment).to receive(:known_resource_types).and_return(known_resource_types)
     Puppet::Parser::Scope.new compiler
   end
 
   let(:tw) { Puppet::Parser::TemplateWrapper.new(scope) }
 
   it "fails if a template cannot be found" do
-    Puppet::Parser::Files.expects(:find_template).returns nil
+    expect(Puppet::Parser::Files).to receive(:find_template).and_return(nil)
 
     expect { tw.file = "fake_template" }.to raise_error(Puppet::ParseError)
   end
 
   it "stringifies as template[<filename>] for a file based template" do
-    Puppet::Parser::Files.stubs(:find_template).returns("/tmp/fake_template")
+    allow(Puppet::Parser::Files).to receive(:find_template).and_return("/tmp/fake_template")
     tw.file = "fake_template"
     expect(tw.to_s).to eql("template[/tmp/fake_template]")
   end
@@ -46,19 +46,19 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "provides the defined classes with #classes" do
-    catalog = mock 'catalog', :classes => ["class1", "class2"]
-    scope.expects(:catalog).returns( catalog )
+    catalog = double('catalog', :classes => ["class1", "class2"])
+    expect(scope).to receive(:catalog).and_return(catalog)
     expect(tw.classes).to eq(["class1", "class2"])
   end
 
   it "provides all the tags with #all_tags" do
-    catalog = mock 'catalog', :tags => ["tag1", "tag2"]
-    scope.expects(:catalog).returns( catalog )
+    catalog = double('catalog', :tags => ["tag1", "tag2"])
+    expect(scope).to receive(:catalog).and_return(catalog)
     expect(tw.all_tags).to eq(["tag1","tag2"])
   end
 
   it "provides the tags defined in the current scope with #tags" do
-    scope.expects(:tags).returns( ["tag1", "tag2"] )
+    expect(scope).to receive(:tags).and_return(["tag1", "tag2"])
     expect(tw.tags).to eq(["tag1","tag2"])
   end
 
@@ -90,10 +90,10 @@ describe Puppet::Parser::TemplateWrapper do
 
   def given_a_template_file(name, contents)
     full_name = "/full/path/to/#{name}"
-    Puppet::Parser::Files.stubs(:find_template).
+    allow(Puppet::Parser::Files).to receive(:find_template).
       with(name, anything()).
-      returns(full_name)
-    Puppet::FileSystem.stubs(:read_preserve_line_endings).with(full_name).returns(contents)
+      and_return(full_name)
+    allow(Puppet::FileSystem).to receive(:read_preserve_line_endings).with(full_name).and_return(contents)
 
     full_name
   end

@@ -294,14 +294,14 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     before :each do
       # Stub out all calls to dscl with default values from above
       defaults.each do |key, val|
-        provider.stubs(:merge_attribute_with_dscl).with('Users', username, key, val)
+        allow(provider).to receive(:merge_attribute_with_dscl).with('Users', username, key, val)
       end
 
       # Mock the rest of the dscl calls. We can't assume that our Linux
       # build system will have the dscl binary
-      provider.stubs(:create_new_user).with(username)
-      provider.class.stubs(:get_attribute_from_dscl).with('Users', username, 'GeneratedUID').returns({'dsAttrTypeStandard:GeneratedUID' => ['GUID']})
-      provider.stubs(:next_system_id).returns('1000')
+      allow(provider).to receive(:create_new_user).with(username)
+      allow(provider.class).to receive(:get_attribute_from_dscl).with('Users', username, 'GeneratedUID').and_return({'dsAttrTypeStandard:GeneratedUID' => ['GUID']})
+      allow(provider).to receive(:next_system_id).and_return('1000')
     end
 
     it 'should not raise any errors when creating a user with default values' do
@@ -312,31 +312,31 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
       it "should call ##{value}= if a #{value} attribute is specified" do
         resource[value.intern] = 'somevalue'
         setter = (value << '=').intern
-        provider.expects(setter).with('somevalue')
+        expect(provider).to receive(setter).with('somevalue')
         provider.create
       end
     end
 
     it 'should merge the GroupMembership and GroupMembers dscl values if a groups attribute is specified' do
       resource[:groups] = 'somegroup'
-      provider.expects(:merge_attribute_with_dscl).with('Groups', 'somegroup', 'GroupMembership', username)
-      provider.expects(:merge_attribute_with_dscl).with('Groups', 'somegroup', 'GroupMembers', 'GUID')
+      expect(provider).to receive(:merge_attribute_with_dscl).with('Groups', 'somegroup', 'GroupMembership', username)
+      expect(provider).to receive(:merge_attribute_with_dscl).with('Groups', 'somegroup', 'GroupMembers', 'GUID')
       provider.create
     end
 
     it 'should convert group names into integers' do
       resource[:gid] = 'somegroup'
-      Puppet::Util.expects(:gid).with('somegroup').returns(21)
-      provider.expects(:merge_attribute_with_dscl).with('Users', username, 'PrimaryGroupID', 21)
+      expect(Puppet::Util).to receive(:gid).with('somegroup').and_return(21)
+      expect(provider).to receive(:merge_attribute_with_dscl).with('Users', username, 'PrimaryGroupID', 21)
       provider.create
     end
   end
 
   describe 'self#instances' do
     it 'should create an array of provider instances' do
-      provider.class.expects(:get_all_users).returns(['foo', 'bar'])
+      expect(provider.class).to receive(:get_all_users).and_return(['foo', 'bar'])
       ['foo', 'bar'].each do |user|
-        provider.class.expects(:generate_attribute_hash).with(user).returns({})
+        expect(provider.class).to receive(:generate_attribute_hash).with(user).and_return({})
       end
       instances = provider.class.instances
 
@@ -358,12 +358,12 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should return a hash of user attributes' do
-      provider.class.expects(:dscl).with('-plist', '.', 'readall', '/Users').returns(user_plist_xml)
+      expect(provider.class).to receive(:dscl).with('-plist', '.', 'readall', '/Users').and_return(user_plist_xml)
       expect(provider.class.get_all_users).to eq(user_plist_hash)
     end
 
     it 'should return a hash when passed an empty plist' do
-      provider.class.expects(:dscl).with('-plist', '.', 'readall', '/Users').returns(empty_plist)
+      expect(provider.class).to receive(:dscl).with('-plist', '.', 'readall', '/Users').and_return(empty_plist)
       expect(provider.class.get_all_users).to eq({})
     end
   end
@@ -385,11 +385,11 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     before :each do
-      provider.class.stubs(:get_os_version).returns('10.7')
-      provider.class.stubs(:get_all_users).returns(testuser_hash)
-      provider.class.stubs(:get_list_of_groups).returns(group_plist_hash_guid)
-      provider.class.stubs(:convert_binary_to_hash).with(sha512_embedded_bplist).returns(sha512_embedded_bplist_hash)
-      provider.class.stubs(:convert_binary_to_hash).with(pbkdf2_embedded_plist).returns(pbkdf2_embedded_bplist_hash)
+      allow(provider.class).to receive(:get_os_version).and_return('10.7')
+      allow(provider.class).to receive(:get_all_users).and_return(testuser_hash)
+      allow(provider.class).to receive(:get_list_of_groups).and_return(group_plist_hash_guid)
+      allow(provider.class).to receive(:convert_binary_to_hash).with(sha512_embedded_bplist).and_return(sha512_embedded_bplist_hash)
+      allow(provider.class).to receive(:convert_binary_to_hash).with(pbkdf2_embedded_plist).and_return(pbkdf2_embedded_bplist_hash)
       provider.class.prefetch({})
     end
 
@@ -425,9 +425,9 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     before :each do
-      provider.class.stubs(:get_os_version).returns('10.7')
-      provider.class.stubs(:get_all_users).returns(testuser_hash)
-      provider.class.stubs(:get_list_of_groups).returns(group_plist_hash_guid)
+      allow(provider.class).to receive(:get_os_version).and_return('10.7')
+      allow(provider.class).to receive(:get_all_users).and_return(testuser_hash)
+      allow(provider.class).to receive(:get_list_of_groups).and_return(group_plist_hash_guid)
       provider.class.prefetch({})
     end
 
@@ -453,9 +453,9 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should handle empty shadowhashdata' do
-      provider.class.stubs(:get_os_version).returns('10.7')
-      provider.class.stubs(:get_all_users).returns([testuser_base])
-      provider.class.stubs(:get_list_of_groups).returns(group_plist_hash_guid)
+      allow(provider.class).to receive(:get_os_version).and_return('10.7')
+      allow(provider.class).to receive(:get_all_users).and_return([testuser_base])
+      allow(provider.class).to receive(:get_list_of_groups).and_return(group_plist_hash_guid)
       provider.class.prefetch({})
       expect(provider.class.generate_attribute_hash(user_plist_hash)).to eq(user_plist_resource)
     end
@@ -463,7 +463,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
   describe '#delete' do
     it 'should call dscl when destroying/deleting a resource' do
-      provider.expects(:dscl).with('.', '-delete', user_path)
+      expect(provider).to receive(:dscl).with('.', '-delete', user_path)
       provider.delete
     end
   end
@@ -513,19 +513,19 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     before :each do
-      provider.class.stubs(:get_all_users).returns(testuser_hash)
-      provider.class.stubs(:get_os_version).returns('10.7')
+      allow(provider.class).to receive(:get_all_users).and_return(testuser_hash)
+      allow(provider.class).to receive(:get_os_version).and_return('10.7')
     end
 
     it "should return a list of groups if the user's name matches GroupMembership" do
-      provider.class.expects(:get_list_of_groups).returns(group_plist_hash)
-      provider.class.expects(:get_list_of_groups).returns(group_plist_hash)
+      expect(provider.class).to receive(:get_list_of_groups).and_return(group_plist_hash)
+      expect(provider.class).to receive(:get_list_of_groups).and_return(group_plist_hash)
       expect(provider.class.prefetch({}).first.groups).to eq('second,testgroup')
     end
 
     it "should return a list of groups if the user's GUID matches GroupMembers" do
-      provider.class.expects(:get_list_of_groups).returns(group_plist_hash_guid)
-      provider.class.expects(:get_list_of_groups).returns(group_plist_hash_guid)
+      expect(provider.class).to receive(:get_list_of_groups).and_return(group_plist_hash_guid)
+      expect(provider.class).to receive(:get_list_of_groups).and_return(group_plist_hash_guid)
       expect(provider.class.prefetch({}).first.groups).to eq('testgroup,third')
     end
   end
@@ -570,65 +570,65 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     before :each do
-      provider.class.stubs(:get_all_users).returns(testuser_hash)
-      provider.class.stubs(:get_list_of_groups).returns(group_plist_one_two_three)
+      allow(provider.class).to receive(:get_all_users).and_return(testuser_hash)
+      allow(provider.class).to receive(:get_list_of_groups).and_return(group_plist_one_two_three)
     end
 
     it 'should call dscl to add necessary groups' do
-      provider.class.expects(:get_attribute_from_dscl).with('Users', username, 'GeneratedUID').returns({'dsAttrTypeStandard:GeneratedUID' => ['guidnonexistent_user']})
-      provider.expects(:groups).returns('two,three')
-      provider.expects(:dscl).with('.', '-merge', '/Groups/one', 'GroupMembership', 'nonexistent_user')
-      provider.expects(:dscl).with('.', '-merge', '/Groups/one', 'GroupMembers', 'guidnonexistent_user')
+      expect(provider.class).to receive(:get_attribute_from_dscl).with('Users', username, 'GeneratedUID').and_return({'dsAttrTypeStandard:GeneratedUID' => ['guidnonexistent_user']})
+      expect(provider).to receive(:groups).and_return('two,three')
+      expect(provider).to receive(:dscl).with('.', '-merge', '/Groups/one', 'GroupMembership', 'nonexistent_user')
+      expect(provider).to receive(:dscl).with('.', '-merge', '/Groups/one', 'GroupMembers', 'guidnonexistent_user')
       provider.class.prefetch({})
       provider.groups= 'one,two,three'
     end
 
     it 'should call the get_salted_sha512 method on 10.7 and return the correct hash' do
-      provider.class.expects(:convert_binary_to_hash).with(sha512_embedded_bplist).returns(sha512_embedded_bplist_hash)
-      provider.class.expects(:convert_binary_to_hash).with(pbkdf2_embedded_plist).returns(pbkdf2_embedded_bplist_hash)
+      expect(provider.class).to receive(:convert_binary_to_hash).with(sha512_embedded_bplist).and_return(sha512_embedded_bplist_hash)
+      expect(provider.class).to receive(:convert_binary_to_hash).with(pbkdf2_embedded_plist).and_return(pbkdf2_embedded_bplist_hash)
       expect(provider.class.prefetch({}).first.password).to eq(sha512_password_hash)
     end
 
     it 'should call the get_salted_sha512_pbkdf2 method on 10.8 and return the correct hash' do
-      provider.class.expects(:convert_binary_to_hash).with(sha512_embedded_bplist).returns(sha512_embedded_bplist_hash)
-      provider.class.expects(:convert_binary_to_hash).with(pbkdf2_embedded_plist).returns(pbkdf2_embedded_bplist_hash)
+      expect(provider.class).to receive(:convert_binary_to_hash).with(sha512_embedded_bplist).and_return(sha512_embedded_bplist_hash)
+      expect(provider.class).to receive(:convert_binary_to_hash).with(pbkdf2_embedded_plist).and_return(pbkdf2_embedded_bplist_hash)
       expect(provider.class.prefetch({}).last.password).to eq(pbkdf2_password_hash)
     end
   end
 
   describe '#password=' do
     before :each do
-      provider.stubs(:sleep)
-      provider.stubs(:flush_dscl_cache)
+      allow(provider).to receive(:sleep)
+      allow(provider).to receive(:flush_dscl_cache)
     end
 
     it 'should call write_password_to_users_plist when setting the password' do
-      provider.class.stubs(:get_os_version).returns('10.7')
-      provider.expects(:write_password_to_users_plist).with(sha512_password_hash)
+      allow(provider.class).to receive(:get_os_version).and_return('10.7')
+      expect(provider).to receive(:write_password_to_users_plist).with(sha512_password_hash)
       provider.password = sha512_password_hash
     end
 
     it 'should call write_password_to_users_plist when setting the password' do
-      provider.class.stubs(:get_os_version).returns('10.8')
+      allow(provider.class).to receive(:get_os_version).and_return('10.8')
       resource[:salt] = pbkdf2_salt_value
       resource[:iterations] = pbkdf2_iterations_value
       resource[:password] = pbkdf2_password_hash
 
-      provider.expects(:write_password_to_users_plist).with(pbkdf2_password_hash)
+      expect(provider).to receive(:write_password_to_users_plist).with(pbkdf2_password_hash)
 
       provider.password = resource[:password]
     end
 
 
     it "should raise an error on 10.7 if a password hash that doesn't contain 136 characters is passed" do
-      provider.class.stubs(:get_os_version).returns('10.7')
+      allow(provider.class).to receive(:get_os_version).and_return('10.7')
       expect { provider.password = 'password' }.to raise_error Puppet::Error, /OS X 10\.7 requires a Salted SHA512 hash password of 136 characters\.  Please check your password and try again/
     end
   end
 
   describe "passwords on 10.8" do
     before :each do
-      provider.class.stubs(:get_os_version).returns('10.8')
+      allow(provider.class).to receive(:get_os_version).and_return('10.8')
     end
 
     it "should raise an error on 10.8 if a password hash that doesn't contain 256 characters is passed" do
@@ -724,7 +724,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should return an array of hashes containing group data' do
-      provider.class.expects(:dscl).with('-plist', '.', 'readall', '/Groups').returns(groups_xml)
+      expect(provider.class).to receive(:dscl).with('-plist', '.', 'readall', '/Groups').and_return(groups_xml)
       expect(provider.class.get_list_of_groups).to eq(groups_hash)
     end
   end
@@ -753,28 +753,28 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should return a hash containing a user\'s dscl attribute data' do
-      provider.class.expects(:dscl).with('-plist', '.', 'read', user_path, 'GeneratedUID').returns(user_guid_xml)
+      expect(provider.class).to receive(:dscl).with('-plist', '.', 'read', user_path, 'GeneratedUID').and_return(user_guid_xml)
       expect(provider.class.get_attribute_from_dscl('Users', username, 'GeneratedUID')).to eq(user_guid_hash)
     end
   end
 
   describe '#convert_hash_to_binary' do
     it 'should use plutil to successfully convert an xml plist to a binary plist' do
-      Puppet::Util::Plist.expects(:dump_plist).with('ruby_hash', :binary).returns('binary_plist_data')
+      expect(Puppet::Util::Plist).to receive(:dump_plist).with('ruby_hash', :binary).and_return('binary_plist_data')
       expect(provider.class.convert_hash_to_binary('ruby_hash')).to eq('binary_plist_data')
     end
   end
 
   describe '#convert_binary_to_hash' do
     it 'should accept a binary plist and return a ruby hash containing the plist data' do
-      Puppet::Util::Plist.expects(:parse_plist).with('binary_plist_data').returns(user_plist_hash)
+      expect(Puppet::Util::Plist).to receive(:parse_plist).with('binary_plist_data').and_return(user_plist_hash)
       expect(provider.class.convert_binary_to_hash('binary_plist_data')).to eq(user_plist_hash)
     end
   end
 
   describe '#next_system_id' do
     it 'should return the next available UID number that is not in the list obtained from dscl and is greater than the passed integer value' do
-      provider.expects(:dscl).with('.', '-list', '/Users', 'uid').returns("kathee 312\ngary 11\ntanny 33\njohn 9\nzach 5")
+      expect(provider).to receive(:dscl).with('.', '-list', '/Users', 'uid').and_return("kathee 312\ngary 11\ntanny 33\njohn 9\nzach 5")
       expect(provider.next_system_id(30)).to eq(34)
     end
   end
@@ -805,33 +805,33 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
   describe '#get_sha1' do
     let(:password_hash_file) { '/var/db/shadow/hash/user_guid' }
-    let(:stub_password_file) { stub('connection') }
+    let(:stub_password_file) { double('connection') }
 
     it 'should return a sha1 hash read from disk' do
-      Puppet::FileSystem.expects(:exist?).with(password_hash_file).returns(true)
-      File.expects(:file?).with(password_hash_file).returns(true)
-      File.expects(:readable?).with(password_hash_file).returns(true)
-      File.expects(:new).with(password_hash_file).returns(stub_password_file)
-      stub_password_file.expects(:read).returns('sha1_password_hash')
-      stub_password_file.expects(:close)
+      expect(Puppet::FileSystem).to receive(:exist?).with(password_hash_file).and_return(true)
+      expect(File).to receive(:file?).with(password_hash_file).and_return(true)
+      expect(File).to receive(:readable?).with(password_hash_file).and_return(true)
+      expect(File).to receive(:new).with(password_hash_file).and_return(stub_password_file)
+      expect(stub_password_file).to receive(:read).and_return('sha1_password_hash')
+      expect(stub_password_file).to receive(:close)
       expect(provider.class.get_sha1('user_guid')).to eq('sha1_password_hash')
     end
 
     it 'should return nil if the password_hash_file does not exist' do
-      Puppet::FileSystem.expects(:exist?).with(password_hash_file).returns(false)
+      expect(Puppet::FileSystem).to receive(:exist?).with(password_hash_file).and_return(false)
       expect(provider.class.get_sha1('user_guid')).to eq(nil)
     end
 
     it 'should return nil if the password_hash_file is not a file' do
-      Puppet::FileSystem.expects(:exist?).with(password_hash_file).returns(true)
-      File.expects(:file?).with(password_hash_file).returns(false)
+      expect(Puppet::FileSystem).to receive(:exist?).with(password_hash_file).and_return(true)
+      expect(File).to receive(:file?).with(password_hash_file).and_return(false)
       expect(provider.class.get_sha1('user_guid')).to eq(nil)
     end
 
     it 'should raise an error if the password_hash_file is not readable' do
-      Puppet::FileSystem.expects(:exist?).with(password_hash_file).returns(true)
-      File.expects(:file?).with(password_hash_file).returns(true)
-      File.expects(:readable?).with(password_hash_file).returns(false)
+      expect(Puppet::FileSystem).to receive(:exist?).with(password_hash_file).and_return(true)
+      expect(File).to receive(:file?).with(password_hash_file).and_return(true)
+      expect(File).to receive(:readable?).with(password_hash_file).and_return(false)
       expect { expect(provider.class.get_sha1('user_guid')).to eq(nil) }.to raise_error(Puppet::Error, /Could not read password hash file at #{password_hash_file}/)
     end
   end
@@ -885,26 +885,26 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should call set_salted_sha512 on 10.7 when given a salted-SHA512 password hash' do
-      provider.expects(:get_users_plist).returns(sample_users_plist)
-      provider.expects(:get_shadow_hash_data).with(sample_users_plist).returns(sha512_shadowhashdata)
-      provider.class.expects(:get_os_version).returns('10.7')
-      provider.expects(:set_salted_sha512).with(sample_users_plist, sha512_shadowhashdata, sha512_password_hash)
+      expect(provider).to receive(:get_users_plist).and_return(sample_users_plist)
+      expect(provider).to receive(:get_shadow_hash_data).with(sample_users_plist).and_return(sha512_shadowhashdata)
+      expect(provider.class).to receive(:get_os_version).and_return('10.7')
+      expect(provider).to receive(:set_salted_sha512).with(sample_users_plist, sha512_shadowhashdata, sha512_password_hash)
       provider.write_password_to_users_plist(sha512_password_hash)
     end
 
     it 'should call set_salted_pbkdf2 on 10.8 when given a PBKDF2 password hash' do
-      provider.expects(:get_users_plist).returns(sample_users_plist)
-      provider.expects(:get_shadow_hash_data).with(sample_users_plist).returns(pbkdf2_shadowhashdata)
-      provider.class.expects(:get_os_version).returns('10.8')
-      provider.expects(:set_salted_pbkdf2).with(sample_users_plist, pbkdf2_shadowhashdata, 'entropy', pbkdf2_password_hash)
+      expect(provider).to receive(:get_users_plist).and_return(sample_users_plist)
+      expect(provider).to receive(:get_shadow_hash_data).with(sample_users_plist).and_return(pbkdf2_shadowhashdata)
+      expect(provider.class).to receive(:get_os_version).and_return('10.8')
+      expect(provider).to receive(:set_salted_pbkdf2).with(sample_users_plist, pbkdf2_shadowhashdata, 'entropy', pbkdf2_password_hash)
       provider.write_password_to_users_plist(pbkdf2_password_hash)
     end
 
     it "should delete the SALTED-SHA512 key in the shadow_hash_data hash if it exists on a 10.8 system and write_password_to_users_plist has been called to set the user's password" do
-      provider.expects(:get_users_plist).returns('users_plist')
-      provider.expects(:get_shadow_hash_data).with('users_plist').returns(sha512_shadowhashdata)
-      provider.class.expects(:get_os_version).returns('10.8')
-      provider.expects(:set_salted_pbkdf2).with('users_plist', {}, 'entropy', pbkdf2_password_hash)
+      expect(provider).to receive(:get_users_plist).and_return('users_plist')
+      expect(provider).to receive(:get_shadow_hash_data).with('users_plist').and_return(sha512_shadowhashdata)
+      expect(provider.class).to receive(:get_os_version).and_return('10.8')
+      expect(provider).to receive(:set_salted_pbkdf2).with('users_plist', {}, 'entropy', pbkdf2_password_hash)
       provider.write_password_to_users_plist(pbkdf2_password_hash)
     end
   end
@@ -918,14 +918,14 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should set the SALTED-SHA512 password hash for a user in 10.7 and call the set_shadow_hash_data method to write the plist to disk' do
-      provider.class.expects(:convert_hash_to_binary).with(sha512_embedded_bplist_hash).returns(sha512_embedded_bplist)
-      provider.expects(:set_shadow_hash_data).with(users_plist, sha512_embedded_bplist)
+      expect(provider.class).to receive(:convert_hash_to_binary).with(sha512_embedded_bplist_hash).and_return(sha512_embedded_bplist)
+      expect(provider).to receive(:set_shadow_hash_data).with(users_plist, sha512_embedded_bplist)
       provider.set_salted_sha512(users_plist, sha512_embedded_bplist_hash, sha512_password_hash)
     end
 
     it 'should set the salted-SHA512 password, even if a blank shadow_hash_data hash is passed' do
-      provider.class.expects(:convert_hash_to_binary).with(sha512_shadow_hash_data).returns(sha512_embedded_bplist)
-      provider.expects(:set_shadow_hash_data).with(users_plist, sha512_embedded_bplist)
+      expect(provider.class).to receive(:convert_hash_to_binary).with(sha512_shadow_hash_data).and_return(sha512_embedded_bplist)
+      expect(provider).to receive(:set_shadow_hash_data).with(users_plist, sha512_embedded_bplist)
       provider.set_salted_sha512(users_plist, false, sha512_password_hash)
     end
   end
@@ -944,46 +944,46 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     # This will also catch the edge-case where a 10.6-style user exists on
     # a 10.8 system and Puppet attempts to set a password
     it 'should not fail if shadow_hash_data is not a Hash' do
-      Puppet::Util::Plist.expects(:string_to_blob).with(provider.base64_decode_string(pbkdf2_password_hash)).returns('binary_string')
-      provider.class.expects(:convert_hash_to_binary).with(entropy_shadow_hash_data).returns('binary_plist')
-      provider.expects(:set_shadow_hash_data).with({'passwd' => '********'}, 'binary_plist')
+      expect(Puppet::Util::Plist).to receive(:string_to_blob).with(provider.base64_decode_string(pbkdf2_password_hash)).and_return('binary_string')
+      expect(provider.class).to receive(:convert_hash_to_binary).with(entropy_shadow_hash_data).and_return('binary_plist')
+      expect(provider).to receive(:set_shadow_hash_data).with({'passwd' => '********'}, 'binary_plist')
       provider.set_salted_pbkdf2({}, false, 'entropy', pbkdf2_password_hash)
     end
 
     it "should set the PBKDF2 password hash when the 'entropy' field is passed with a valid password hash" do
-      Puppet::Util::Plist.expects(:string_to_blob).with(provider.base64_decode_string(pbkdf2_password_hash))
-      provider.class.expects(:convert_hash_to_binary).with(pbkdf2_embedded_bplist_hash).returns(pbkdf2_embedded_plist)
-      provider.expects(:set_shadow_hash_data).with(users_plist, pbkdf2_embedded_plist)
-      users_plist.expects(:[]=).with('passwd', '********')
+      expect(Puppet::Util::Plist).to receive(:string_to_blob).with(provider.base64_decode_string(pbkdf2_password_hash))
+      expect(provider.class).to receive(:convert_hash_to_binary).with(pbkdf2_embedded_bplist_hash).and_return(pbkdf2_embedded_plist)
+      expect(provider).to receive(:set_shadow_hash_data).with(users_plist, pbkdf2_embedded_plist)
+      expect(users_plist).to receive(:[]=).with('passwd', '********')
       provider.set_salted_pbkdf2(users_plist, pbkdf2_embedded_bplist_hash, 'entropy', pbkdf2_password_hash)
     end
 
     it "should set the PBKDF2 password hash when the 'salt' field is passed with a valid password hash" do
-      Puppet::Util::Plist.expects(:string_to_blob).with(provider.base64_decode_string(pbkdf2_salt_value))
-      provider.class.expects(:convert_hash_to_binary).with(pbkdf2_embedded_bplist_hash).returns(pbkdf2_embedded_plist)
-      provider.expects(:set_shadow_hash_data).with(users_plist, pbkdf2_embedded_plist)
-      users_plist.expects(:[]=).with('passwd', '********')
+      expect(Puppet::Util::Plist).to receive(:string_to_blob).with(provider.base64_decode_string(pbkdf2_salt_value))
+      expect(provider.class).to receive(:convert_hash_to_binary).with(pbkdf2_embedded_bplist_hash).and_return(pbkdf2_embedded_plist)
+      expect(provider).to receive(:set_shadow_hash_data).with(users_plist, pbkdf2_embedded_plist)
+      expect(users_plist).to receive(:[]=).with('passwd', '********')
       provider.set_salted_pbkdf2(users_plist, pbkdf2_embedded_bplist_hash, 'salt', pbkdf2_salt_value)
     end
 
     it "should set the PBKDF2 password hash when the 'iterations' field is passed with a valid password hash" do
-      provider.class.expects(:convert_hash_to_binary).with(pbkdf2_embedded_bplist_hash).returns(pbkdf2_embedded_plist)
-      provider.expects(:set_shadow_hash_data).with(users_plist, pbkdf2_embedded_plist)
-      users_plist.expects(:[]=).with('passwd', '********')
+      expect(provider.class).to receive(:convert_hash_to_binary).with(pbkdf2_embedded_bplist_hash).and_return(pbkdf2_embedded_plist)
+      expect(provider).to receive(:set_shadow_hash_data).with(users_plist, pbkdf2_embedded_plist)
+      expect(users_plist).to receive(:[]=).with('passwd', '********')
       provider.set_salted_pbkdf2(users_plist, pbkdf2_embedded_bplist_hash, 'iterations', pbkdf2_iterations_value)
     end
   end
 
   describe '#write_users_plist_to_disk' do
     it 'should save the passed plist to disk and convert it to a binary plist' do
-      Puppet::Util::Plist.expects(:write_plist_file).with(user_plist_xml, "#{users_plist_dir}/nonexistent_user.plist", :binary)
+      expect(Puppet::Util::Plist).to receive(:write_plist_file).with(user_plist_xml, "#{users_plist_dir}/nonexistent_user.plist", :binary)
       provider.write_users_plist_to_disk(user_plist_xml)
     end
   end
 
   describe '#merge_attribute_with_dscl' do
     it 'should raise an error if a dscl command raises an error' do
-      provider.expects(:dscl).with('.', '-merge', user_path, 'GeneratedUID', 'GUID').raises(Puppet::ExecutionFailure, 'boom')
+      expect(provider).to receive(:dscl).with('.', '-merge', user_path, 'GeneratedUID', 'GUID').and_raise(Puppet::ExecutionFailure, 'boom')
       expect { provider.merge_attribute_with_dscl('Users', username, 'GeneratedUID', 'GUID') }.to raise_error Puppet::Error, /Could not set the dscl GeneratedUID key with value: GUID/
     end
   end
@@ -997,7 +997,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should convert a plist to a valid Ruby hash' do
-      Puppet::Util::Plist.expects(:read_plist_file).with("#{users_plist_dir}/#{username}.plist").returns(test_hash)
+      expect(Puppet::Util::Plist).to receive(:read_plist_file).with("#{users_plist_dir}/#{username}.plist").and_return(test_hash)
       expect(provider.get_users_plist(username)).to eq(test_hash, )
     end
   end
@@ -1022,7 +1022,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     it 'should call convert_binary_to_hash() with the string ' +
        'located in the first element of the array of the ShadowHashData key if the ' +
        'passed users_plist contains a ShadowHashData key' do
-      provider.class.expects(:convert_binary_to_hash).with('test').returns('returnvalue')
+      expect(provider.class).to receive(:convert_binary_to_hash).with('test').and_return('returnvalue')
       expect(provider.get_shadow_hash_data(shadow_hash)).to eq('returnvalue')
     end
   end
@@ -1035,7 +1035,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
     it 'should call Facter.value(:macosx_productversion_major) ONLY ONCE no matter how ' +
        'many times get_os_version() is called' do
-      Facter.expects(:value).with(:macosx_productversion_major).once.returns('10.8')
+      expect(Facter).to receive(:value).with(:macosx_productversion_major).once.and_return('10.8')
       expect(provider.class.get_os_version).to eq('10.8')
       expect(provider.class.get_os_version).to eq('10.8')
       expect(provider.class.get_os_version).to eq('10.8')
@@ -1123,8 +1123,8 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     before :each do
-      provider.class.stubs(:get_all_users).returns(all_users_hash)
-      provider.class.stubs(:get_list_of_groups).returns(group_plist_hash_guid)
+      allow(provider.class).to receive(:get_all_users).and_return(all_users_hash)
+      allow(provider.class).to receive(:get_list_of_groups).and_return(group_plist_hash_guid)
       provider.class.prefetch({})
     end
 
@@ -1134,12 +1134,12 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
       resource[:salt] = pbkdf2_salt_value
       resource[:iterations] = pbkdf2_iterations_value
       resource[:password] = pbkdf2_password_hash
-      provider.class.stubs(:get_os_version).returns('10.8')
-      provider.stubs(:sleep)
-      provider.stubs(:flush_dscl_cache)
+      allow(provider.class).to receive(:get_os_version).and_return('10.8')
+      allow(provider).to receive(:sleep)
+      allow(provider).to receive(:flush_dscl_cache)
 
-      provider.expects(:get_users_plist).with('testuser').returns(user_plist_hash)
-      provider.expects(:set_salted_pbkdf2).with(user_plist_hash, false, 'entropy', pbkdf2_password_hash)
+      expect(provider).to receive(:get_users_plist).with('testuser').and_return(user_plist_hash)
+      expect(provider).to receive(:set_salted_pbkdf2).with(user_plist_hash, false, 'entropy', pbkdf2_password_hash)
       provider.password = resource[:password]
     end
   end

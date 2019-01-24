@@ -68,34 +68,34 @@ describe Puppet::Util::Checksums do
   {:md5 => Digest::MD5, :sha1 => Digest::SHA1, :sha256 => Digest::SHA256, :sha512 => Digest::SHA512, :sha384 => Digest::SHA384}.each do |sum, klass|
     describe("when using #{sum}") do
       it "should use #{klass} to calculate string checksums" do
-        klass.expects(:hexdigest).with("mycontent").returns "whatever"
+        expect(klass).to receive(:hexdigest).with("mycontent").and_return("whatever")
         expect(@summer.send(sum, "mycontent")).to eq("whatever")
       end
 
       it "should use incremental #{klass} sums to calculate file checksums" do
-        digest = mock 'digest'
-        klass.expects(:new).returns digest
+        digest = double('digest')
+        expect(klass).to receive(:new).and_return(digest)
 
         file = "/path/to/my/file"
 
-        fh = mock 'filehandle'
-        fh.expects(:read).with(4096).times(3).returns("firstline").then.returns("secondline").then.returns(nil)
+        fh = double('filehandle')
+        expect(fh).to receive(:read).with(4096).exactly(3).times().and_return("firstline", "secondline", nil)
 
-        File.expects(:open).with(file, "rb").yields(fh)
+        expect(File).to receive(:open).with(file, "rb").and_yield(fh)
 
-        digest.expects(:<<).with "firstline"
-        digest.expects(:<<).with "secondline"
-        digest.expects(:hexdigest).returns :mydigest
+        expect(digest).to receive(:<<).with("firstline")
+        expect(digest).to receive(:<<).with("secondline")
+        expect(digest).to receive(:hexdigest).and_return(:mydigest)
 
         expect(@summer.send(sum.to_s + "_file", file)).to eq(:mydigest)
       end
 
       it "should behave like #{klass} to calculate stream checksums" do
-        digest = mock 'digest'
-        klass.expects(:new).returns digest
-        digest.expects(:<<).with "firstline"
-        digest.expects(:<<).with "secondline"
-        digest.expects(:hexdigest).returns :mydigest
+        digest = double('digest')
+        expect(klass).to receive(:new).and_return(digest)
+        expect(digest).to receive(:<<).with "firstline"
+        expect(digest).to receive(:<<).with "secondline"
+        expect(digest).to receive(:hexdigest).and_return(:mydigest)
 
         expect(@summer.send(sum.to_s + "_stream") do |checksum|
           checksum << "firstline"
@@ -109,33 +109,33 @@ describe Puppet::Util::Checksums do
     describe("when using #{sum}") do
       it "should use #{klass} to calculate string checksums from the first 512 characters of the string" do
         content = "this is a test" * 100
-        klass.expects(:hexdigest).with(content[0..511]).returns "whatever"
+        expect(klass).to receive(:hexdigest).with(content[0..511]).and_return("whatever")
         expect(@summer.send(sum, content)).to eq("whatever")
       end
 
       it "should use #{klass} to calculate a sum from the first 512 characters in the file" do
-        digest = mock 'digest'
-        klass.expects(:new).returns digest
+        digest = double('digest')
+        expect(klass).to receive(:new).and_return(digest)
 
         file = "/path/to/my/file"
 
-        fh = mock 'filehandle'
-        fh.expects(:read).with(512).returns('my content')
+        fh = double('filehandle')
+        expect(fh).to receive(:read).with(512).and_return('my content')
 
-        File.expects(:open).with(file, "rb").yields(fh)
+        expect(File).to receive(:open).with(file, "rb").and_yield(fh)
 
-        digest.expects(:<<).with "my content"
-        digest.expects(:hexdigest).returns :mydigest
+        expect(digest).to receive(:<<).with("my content")
+        expect(digest).to receive(:hexdigest).and_return(:mydigest)
 
         expect(@summer.send(sum.to_s + "_file", file)).to eq(:mydigest)
       end
 
       it "should use #{klass} to calculate a sum from the first 512 characters in a stream" do
-        digest = mock 'digest'
+        digest = double('digest')
         content = "this is a test" * 100
-        klass.expects(:new).returns digest
-        digest.expects(:<<).with content[0..511]
-        digest.expects(:hexdigest).returns :mydigest
+        expect(klass).to receive(:new).and_return(digest)
+        expect(digest).to receive(:<<).with(content[0..511])
+        expect(digest).to receive(:hexdigest).and_return(:mydigest)
 
         expect(@summer.send(sum.to_s + "_stream") do |checksum|
           checksum << content
@@ -143,13 +143,13 @@ describe Puppet::Util::Checksums do
       end
 
       it "should use #{klass} to calculate a sum from the first 512 characters in a multi-part stream" do
-        digest = mock 'digest'
+        digest = double('digest')
         content = "this is a test" * 100
-        klass.expects(:new).returns digest
-        digest.expects(:<<).with content[0..5]
-        digest.expects(:<<).with content[6..510]
-        digest.expects(:<<).with content[511..511]
-        digest.expects(:hexdigest).returns :mydigest
+        expect(klass).to receive(:new).and_return(digest)
+        expect(digest).to receive(:<<).with(content[0..5])
+        expect(digest).to receive(:<<).with(content[6..510])
+        expect(digest).to receive(:<<).with(content[511..511])
+        expect(digest).to receive(:hexdigest).and_return(:mydigest)
 
         expect(@summer.send(sum.to_s + "_stream") do |checksum|
           checksum << content[0..5]
@@ -164,15 +164,15 @@ describe Puppet::Util::Checksums do
     describe("when using #{sum}") do
       it "should use the '#{sum}' on the file to determine the ctime" do
         file = "/my/file"
-        stat = mock 'stat', sum => "mysum"
-        Puppet::FileSystem.expects(:stat).with(file).returns(stat)
+        stat = double('stat', sum => "mysum")
+        expect(Puppet::FileSystem).to receive(:stat).with(file).and_return(stat)
 
         expect(@summer.send(sum.to_s + "_file", file)).to eq("mysum")
       end
 
       it "should return nil for streams" do
-        expectation = stub "expectation"
-        expectation.expects(:do_something!).at_least_once
+        expectation = double("expectation")
+        expect(expectation).to receive(:do_something!).at_least(:once)
         expect(@summer.send(sum.to_s + "_stream"){ |checksum| checksum << "anything" ; expectation.do_something!  }).to be_nil
       end
     end
@@ -184,8 +184,8 @@ describe Puppet::Util::Checksums do
     end
 
     it "should return an empty string for streams" do
-      expectation = stub "expectation"
-      expectation.expects(:do_something!).at_least_once
+      expectation = double("expectation")
+      expect(expectation).to receive(:do_something!).at_least(:once)
       expect(@summer.none_stream{ |checksum| checksum << "anything" ; expectation.do_something!  }).to eq("")
     end
   end

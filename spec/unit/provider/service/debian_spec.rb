@@ -9,39 +9,39 @@ describe Puppet::Type.type(:service).provider(:debian) do
 
   before(:each) do
     # Create a mock resource
-    @resource = stub 'resource'
+    @resource = double('resource')
 
     @provider = subject()
 
     # A catch all; no parameters set
-    @resource.stubs(:[]).returns(nil)
+    allow(@resource).to receive(:[]).and_return(nil)
 
     # But set name, source and path
-    @resource.stubs(:[]).with(:name).returns "myservice"
-    @resource.stubs(:[]).with(:ensure).returns :enabled
-    @resource.stubs(:ref).returns "Service[myservice]"
+    allow(@resource).to receive(:[]).with(:name).and_return("myservice")
+    allow(@resource).to receive(:[]).with(:ensure).and_return(:enabled)
+    allow(@resource).to receive(:ref).and_return("Service[myservice]")
 
     @provider.resource = @resource
 
-    @provider.stubs(:command).with(:update_rc).returns "update_rc"
-    @provider.stubs(:command).with(:invoke_rc).returns "invoke_rc"
-    @provider.stubs(:command).with(:service).returns "service"
+    allow(@provider).to receive(:command).with(:update_rc).and_return("update_rc")
+    allow(@provider).to receive(:command).with(:invoke_rc).and_return("invoke_rc")
+    allow(@provider).to receive(:command).with(:service).and_return("service")
 
-    @provider.stubs(:update_rc)
-    @provider.stubs(:invoke_rc)
+    allow(@provider).to receive(:update_rc)
+    allow(@provider).to receive(:invoke_rc)
   end
 
   ['1','2'].each do |version|
     it "should be the default provider on CumulusLinux #{version}" do
-      Facter.expects(:value).with(:operatingsystem).at_least_once.returns('CumulusLinux')
-      Facter.expects(:value).with(:operatingsystemmajrelease).returns(version)
+      expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return('CumulusLinux')
+      expect(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return(version)
       expect(described_class.default?).to be_truthy
     end
   end
 
   it "should be the default provider on Debian" do
-    Facter.expects(:value).with(:operatingsystem).at_least_once.returns('Debian')
-    Facter.expects(:value).with(:operatingsystemmajrelease).returns('7')
+    expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return('Debian')
+    expect(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('7')
     expect(described_class.default?).to be_truthy
   end
 
@@ -59,25 +59,25 @@ describe Puppet::Type.type(:service).provider(:debian) do
 
   context "when enabling" do
     it "should call update-rc.d twice" do
-      @provider.expects(:update_rc).twice
+      expect(@provider).to receive(:update_rc).twice
       @provider.enable
     end
   end
 
   context "when disabling" do
     it "should be able to disable services with newer sysv-rc versions" do
-      @provider.stubs(:`).with("dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?").returns "0"
+      allow(@provider).to receive(:`).with("dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?").and_return("0")
 
-      @provider.expects(:update_rc).with(@resource[:name], "disable")
+      expect(@provider).to receive(:update_rc).with(@resource[:name], "disable")
 
       @provider.disable
     end
 
     it "should be able to enable services with older sysv-rc versions" do
-      @provider.stubs(:`).with("dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?").returns "1"
+      allow(@provider).to receive(:`).with("dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?").and_return("1")
 
-      @provider.expects(:update_rc).with("-f", @resource[:name], "remove")
-      @provider.expects(:update_rc).with(@resource[:name], "stop", "00", "1", "2", "3", "4", "5", "6", ".")
+      expect(@provider).to receive(:update_rc).with("-f", @resource[:name], "remove")
+      expect(@provider).to receive(:update_rc).with(@resource[:name], "stop", "00", "1", "2", "3", "4", "5", "6", ".")
 
       @provider.disable
     end
@@ -85,34 +85,34 @@ describe Puppet::Type.type(:service).provider(:debian) do
 
   context "when checking whether it is enabled" do
     it "should call Kernel.system() with the appropriate parameters" do
-      @provider.expects(:system).with("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start").once
-      $CHILD_STATUS.stubs(:exitstatus).returns(0)
+      expect(@provider).to receive(:system).with("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start").once
+      allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
       @provider.enabled?
     end
 
     it "should return true when invoke-rc.d exits with 104 status" do
-      @provider.stubs(:system)
-      $CHILD_STATUS.stubs(:exitstatus).returns(104)
+      allow(@provider).to receive(:system)
+      allow($CHILD_STATUS).to receive(:exitstatus).and_return(104)
       expect(@provider.enabled?).to eq(:true)
     end
 
     it "should return true when invoke-rc.d exits with 106 status" do
-      @provider.stubs(:system)
-      $CHILD_STATUS.stubs(:exitstatus).returns(106)
+      allow(@provider).to receive(:system)
+      allow($CHILD_STATUS).to receive(:exitstatus).and_return(106)
       expect(@provider.enabled?).to eq(:true)
     end
 
     shared_examples "manually queries service status" do |status|
       it "links count is 4" do
-        @provider.stubs(:system)
-        $CHILD_STATUS.stubs(:exitstatus).returns(status)
-        @provider.stubs(:get_start_link_count).returns(4)
+        allow(@provider).to receive(:system)
+        allow($CHILD_STATUS).to receive(:exitstatus).and_return(status)
+        allow(@provider).to receive(:get_start_link_count).and_return(4)
         expect(@provider.enabled?).to eq(:true)
       end
       it "links count is less than 4" do
-        @provider.stubs(:system)
-        $CHILD_STATUS.stubs(:exitstatus).returns(status)
-        @provider.stubs(:get_start_link_count).returns(3)
+        allow(@provider).to receive(:system)
+        allow($CHILD_STATUS).to receive(:exitstatus).and_return(status)
+        allow(@provider).to receive(:get_start_link_count).and_return(3)
         expect(@provider.enabled?).to eq(:false)
       end
     end
@@ -136,8 +136,8 @@ describe Puppet::Type.type(:service).provider(:debian) do
     # pick a range of non-[104.106] numbers, strings and booleans to test with.
     [-100, -1, 0, 1, 100, "foo", "", :true, :false].each do |exitstatus|
       it "should return false when invoke-rc.d exits with #{exitstatus} status" do
-        @provider.stubs(:system)
-        $CHILD_STATUS.stubs(:exitstatus).returns(exitstatus)
+        allow(@provider).to receive(:system)
+        allow($CHILD_STATUS).to receive(:exitstatus).and_return(exitstatus)
         expect(@provider.enabled?).to eq(:false)
       end
     end
@@ -145,9 +145,9 @@ describe Puppet::Type.type(:service).provider(:debian) do
 
   context "when checking service status" do
     it "should use the service command" do
-      Facter.stubs(:value).with(:operatingsystem).returns('Debian')
-      Facter.stubs(:value).with(:operatingsystemmajrelease).returns('8')
-      @resource.stubs(:[]).with(:hasstatus).returns(:true)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('Debian')
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('8')
+      allow(@resource).to receive(:[]).with(:hasstatus).and_return(:true)
       expect(@provider.statuscmd).to eq(["service", @resource[:name], "status"])
     end
   end

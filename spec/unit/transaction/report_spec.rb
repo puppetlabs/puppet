@@ -9,7 +9,7 @@ describe Puppet::Transaction::Report do
   include PuppetSpec::Files
 
   before do
-    Puppet::Util::Storage.stubs(:store)
+    allow(Puppet::Util::Storage).to receive(:store)
   end
 
   it "should set its host name to the node_name_value" do
@@ -23,7 +23,7 @@ describe Puppet::Transaction::Report do
   end
 
   it "should create an initialization timestamp" do
-    Time.expects(:now).returns "mytime"
+    expect(Time).to receive(:now).and_return("mytime")
     expect(Puppet::Transaction::Report.new.time).to eq("mytime")
   end
 
@@ -115,7 +115,7 @@ describe Puppet::Transaction::Report do
   end
 
   it "should not include whits" do
-    Puppet::FileBucket::File.indirection.stubs(:save)
+    allow(Puppet::FileBucket::File.indirection).to receive(:save)
 
     filename = tmpfile('whit_test')
     file = Puppet::Type.type(:file).new(:path => filename)
@@ -166,7 +166,7 @@ describe Puppet::Transaction::Report do
     end
 
     it "should add each status to its status list" do
-      status = stub 'status', :resource => "foo"
+      status = double('status', :resource => "foo")
       @report.add_resource_status status
       expect(@report.resource_statuses["foo"]).to equal(status)
     end
@@ -174,11 +174,11 @@ describe Puppet::Transaction::Report do
 
   describe "when using the indirector" do
     it "should redirect :save to the indirection" do
-      Facter.stubs(:value).returns("eh")
-      @indirection = stub 'indirection', :name => :report
-      Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
+      allow(Facter).to receive(:value).and_return("eh")
+      @indirection = double('indirection', :name => :report)
+      allow(Puppet::Transaction::Report).to receive(:indirection).and_return(@indirection)
       report = Puppet::Transaction::Report.new
-      @indirection.expects(:save)
+      expect(@indirection).to receive(:save)
       Puppet::Transaction::Report.indirection.save(report)
     end
 
@@ -188,7 +188,7 @@ describe Puppet::Transaction::Report do
 
     it "should delegate its name attribute to its host method" do
       report = Puppet::Transaction::Report.new
-      report.expects(:host).returns "me"
+      expect(report).to receive(:host).and_return("me")
       expect(report.name).to eq("me")
     end
   end
@@ -454,7 +454,7 @@ describe Puppet::Transaction::Report do
 
   describe "when producing a summary" do
     before do
-      Benchmark.stubs(:realtime).returns(5.05683418)
+      allow(Benchmark).to receive(:realtime).and_return(5.05683418)
       resource = Puppet::Type.type(:notify).new(:name => "testing")
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource resource
@@ -473,7 +473,7 @@ describe Puppet::Transaction::Report do
     end
 
     it "should include the last run time in the raw summary hash" do
-      Time.stubs(:now).returns(Time.utc(2010,11,10,12,0,24))
+      allow(Time).to receive(:now).and_return(Time.utc(2010,11,10,12,0,24))
       expect(@report.raw_summary["time"]["last_run"]).to eq(1289390424)
     end
 

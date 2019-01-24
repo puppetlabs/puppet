@@ -387,8 +387,10 @@ describe 'The Loader' do
           end
 
           it 'discover is only called once on dependent loader' do
-            ModuleLoaders::FileBased.any_instance.expects(:discover).times(4).with(:type, nil, Pcore::RUNTIME_NAME_AUTHORITY).returns([])
+            times_called = 0
+            allow_any_instance_of(ModuleLoaders::FileBased).to receive(:discover).with(:type, nil, Pcore::RUNTIME_NAME_AUTHORITY) { times_called += 1 }.and_return([])
             expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(contain_exactly())
+            expect(times_called).to eq(4)
           end
 
           context 'with tasks enabled' do
@@ -461,13 +463,13 @@ describe 'The Loader' do
               let(:env) { Puppet::Node::Environment.create(:none_such, [modules_dir]) }
 
               it 'an EmptyLoader is used and module loader finds types' do
-                Puppet::Pops::Loader::ModuleLoaders::EmptyLoader.any_instance.expects(:find).at_least_once.returns(nil)
+                expect_any_instance_of(Puppet::Pops::Loader::ModuleLoaders::EmptyLoader).to receive(:find).and_return(nil)
                 expect(Loaders.find_loader('a').discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
                   contain_exactly(tn(:type, 'a::atype')))
               end
 
               it 'an EmptyLoader is used and module loader finds tasks' do
-                Puppet::Pops::Loader::ModuleLoaders::EmptyLoader.any_instance.expects(:find).at_least_once.returns(nil)
+                expect_any_instance_of(Puppet::Pops::Loader::ModuleLoaders::EmptyLoader).to receive(:find).and_return(nil)
                 expect(Loaders.find_loader('a').discover(:task) { |t| t.name =~ /^.::.*\z/ }).to(
                   contain_exactly(tn(:task, 'a::atask')))
               end
@@ -498,8 +500,10 @@ describe 'The Loader' do
             end
 
             it 'discover is only called once on dependent loader' do
-              ModuleLoaders::FileBased.any_instance.expects(:discover).times(4).with(:type, nil, Pcore::RUNTIME_NAME_AUTHORITY).returns([])
+              times_called = 0
+              allow_any_instance_of(ModuleLoaders::FileBased).to receive(:discover).with(:type, nil, Pcore::RUNTIME_NAME_AUTHORITY) { times_called += 1 }.and_return([])
               expect(loader.private_loader.discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(contain_exactly())
+              expect(times_called).to eq(4)
             end
           end
         end

@@ -36,8 +36,8 @@ describe "Puppet::Util::Windows::Process", :if => Puppet.features.microsoft_wind
     after :each do
       # spec\integration\test\test_helper_spec.rb calls set_environment_strings
       # after :all and thus needs access to the real APIs once again
-      Puppet::Util::Windows::Process.unstub(:GetEnvironmentStringsW)
-      Puppet::Util::Windows::Process.unstub(:FreeEnvironmentStringsW)
+      allow(Puppet::Util::Windows::Process).to receive(:GetEnvironmentStringsW).and_call_original
+      allow(Puppet::Util::Windows::Process).to receive(:FreeEnvironmentStringsW).and_call_original
     end
 
     it "will ignore only keys or values with corrupt byte sequences" do
@@ -61,9 +61,9 @@ describe "Puppet::Util::Windows::Process", :if => Puppet.features.microsoft_wind
         ptr.put_array_of_uchar(0, env_var_block_bytes)
 
         # stub the block of memory that the Win32 API would typically return via pointer
-        Puppet::Util::Windows::Process.expects(:GetEnvironmentStringsW).returns(ptr)
+        expect(Puppet::Util::Windows::Process).to receive(:GetEnvironmentStringsW).and_return(ptr)
         # stub out the real API call to free memory, else process crashes
-        Puppet::Util::Windows::Process.expects(:FreeEnvironmentStringsW)
+        expect(Puppet::Util::Windows::Process).to receive(:FreeEnvironmentStringsW)
 
         env_vars = Puppet::Util::Windows::Process.get_environment_strings
       end

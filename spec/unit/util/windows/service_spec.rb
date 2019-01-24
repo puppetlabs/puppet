@@ -4,9 +4,9 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
   require 'puppet/util/windows'
 
   before(:each) do
-    Puppet::Util::Windows::Error.stubs(:format_error_code)
+    allow(Puppet::Util::Windows::Error).to receive(:format_error_code)
       .with(anything)
-      .returns("fake error!")
+      .and_return("fake error!")
   end
 
   def service_state_str(state)
@@ -21,7 +21,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
   # just an expectation of subject::SERVICE_STATUS_PROCESS.new in sequence that
   # returns the value passed in as a param
   def expect_successful_status_query_and_return(query_return)
-    subject::SERVICE_STATUS_PROCESS.expects(:new).in_sequence(status_checks).returns(query_return)
+    expect(subject::SERVICE_STATUS_PROCESS).to receive(:new).and_return(query_return)
   end
 
   def expect_successful_status_queries_and_return(*query_returns)
@@ -38,34 +38,33 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
   # just an expectation of subject::QUERY_SERVICE_CONFIGW.new in sequence that
   # returns the value passed in as a param
   def expect_successful_config_query_and_return(query_return)
-    subject::QUERY_SERVICE_CONFIGW.expects(:new).in_sequence(status_checks).returns(query_return)
+    expect(subject::QUERY_SERVICE_CONFIGW).to receive(:new).and_return(query_return)
   end
 
   let(:subject)      { Puppet::Util::Windows::Service }
-  let(:pointer) { mock() }
-  let(:status_checks) { sequence('status_checks') }
-  let(:mock_service_name) { mock() }
-  let(:service) { mock() }
-  let(:scm) { mock() }
+  let(:pointer) { double() }
+  let(:mock_service_name) { double() }
+  let(:service) { double() }
+  let(:scm) { double() }
 
   before do
-    subject.stubs(:QueryServiceStatusEx).returns(1)
-    subject.stubs(:QueryServiceConfigW).returns(1)
-    subject.stubs(:ChangeServiceConfigW).returns(1)
-    subject.stubs(:OpenSCManagerW).returns(scm)
-    subject.stubs(:OpenServiceW).returns(service)
-    subject.stubs(:CloseServiceHandle)
-    subject.stubs(:EnumServicesStatusExW).returns(1)
-    subject.stubs(:wide_string)
-    subject::SERVICE_STATUS_PROCESS.stubs(:new)
-    subject::QUERY_SERVICE_CONFIGW.stubs(:new)
-    subject::SERVICE_STATUS.stubs(:new).returns({:dwCurrentState => subject::SERVICE_RUNNING})
-    FFI.stubs(:errno).returns(0)
-    FFI::MemoryPointer.stubs(:new).yields(pointer)
-    pointer.stubs(:read_dword)
-    pointer.stubs(:write_dword)
-    pointer.stubs(:size)
-    subject.stubs(:sleep)
+    allow(subject).to receive(:QueryServiceStatusEx).and_return(1)
+    allow(subject).to receive(:QueryServiceConfigW).and_return(1)
+    allow(subject).to receive(:ChangeServiceConfigW).and_return(1)
+    allow(subject).to receive(:OpenSCManagerW).and_return(scm)
+    allow(subject).to receive(:OpenServiceW).and_return(service)
+    allow(subject).to receive(:CloseServiceHandle)
+    allow(subject).to receive(:EnumServicesStatusExW).and_return(1)
+    allow(subject).to receive(:wide_string)
+    allow(subject::SERVICE_STATUS_PROCESS).to receive(:new)
+    allow(subject::QUERY_SERVICE_CONFIGW).to receive(:new)
+    allow(subject::SERVICE_STATUS).to receive(:new).and_return({:dwCurrentState => subject::SERVICE_RUNNING})
+    allow(FFI).to receive(:errno).and_return(0)
+    allow(FFI::MemoryPointer).to receive(:new).and_yield(pointer)
+    allow(pointer).to receive(:read_dword)
+    allow(pointer).to receive(:write_dword)
+    allow(pointer).to receive(:size)
+    allow(subject).to receive(:sleep)
   end
 
   describe "#exists?" do
@@ -80,7 +79,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
       let(:service) { FFI::Pointer::NULL_HANDLE }
 
       it "returns false if it fails to open because the service does not exist" do
-        FFI.stubs(:errno).returns(Puppet::Util::Windows::Service::ERROR_SERVICE_DOES_NOT_EXIST)
+        allow(FFI).to receive(:errno).and_return(Puppet::Util::Windows::Service::ERROR_SERVICE_DOES_NOT_EXIST)
 
         expect(subject.exists?(mock_service_name)).to be false
       end
@@ -112,7 +111,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
     final_state_str = Puppet::Util::Windows::Service::SERVICE_STATES[final_state].to_s
 
     it "raises a Puppet::Error if the service query fails" do
-      subject.expects(:QueryServiceStatusEx).in_sequence(status_checks).returns(FFI::WIN32_FALSE)
+      expect(subject).to receive(:QueryServiceStatusEx).and_return(FFI::WIN32_FALSE)
 
       expect { subject.send(action, mock_service_name) }.to raise_error(Puppet::Error)
     end
@@ -131,7 +130,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
         { :dwCurrentState => final_state }
       )
 
-      subject.expects(:sleep).with(1)
+      expect(subject).to receive(:sleep).with(1)
 
       subject.send(action, mock_service_name)
     end
@@ -142,7 +141,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
         { :dwCurrentState => final_state }
       )
 
-      subject.expects(:sleep).with(10)
+      expect(subject).to receive(:sleep).with(10)
 
       subject.send(action, mock_service_name)
     end
@@ -237,7 +236,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
           # This mocks the status query to return the 'final_state' by default. Otherwise,
           # we will fail the tests in the latter parts of the code where we wait for the
           # service to finish transitioning to the 'final_state'.
-          subject::SERVICE_STATUS_PROCESS.stubs(:new).returns(dwCurrentState: final_state)
+          allow(subject::SERVICE_STATUS_PROCESS).to receive(:new).and_return(dwCurrentState: final_state)
 
           # Set our service's initial state
           expect_successful_status_query_and_return(dwCurrentState: unsafe_pending_state)
@@ -263,7 +262,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
       end
 
       it "raises a Puppet::Error if the service query fails" do
-        subject.expects(:QueryServiceStatusEx).in_sequence(status_checks).returns(FFI::WIN32_FALSE)
+        expect(subject).to receive(:QueryServiceStatusEx).and_return(FFI::WIN32_FALSE)
 
         expect { subject.send(action, mock_service_name) }.to raise_error(Puppet::Error)
       end
@@ -275,7 +274,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
           { :dwCurrentState => final_state }
         )
 
-        subject.expects(:sleep).with(1).twice
+        expect(subject).to receive(:sleep).with(1).twice
 
         subject.send(action, mock_service_name)
       end
@@ -344,7 +343,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
         let(:initial_state) { subject::SERVICE_STOPPED }
         let(:mock_state_transition) do
           lambda do
-            subject.stubs(:StartServiceW).returns(1)
+            allow(subject).to receive(:StartServiceW).and_return(1)
           end
         end
       end
@@ -352,7 +351,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
       it "raises a Puppet::Error if StartServiceW returns false" do
         expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_STOPPED)
   
-        subject.expects(:StartServiceW).returns(FFI::WIN32_FALSE)
+        expect(subject).to receive(:StartServiceW).and_return(FFI::WIN32_FALSE)
 
         expect { subject.start(mock_service_name) }.to raise_error(Puppet::Error)
       end
@@ -363,7 +362,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
           { dwCurrentState: subject::SERVICE_RUNNING }
         )
   
-        subject.expects(:StartServiceW).returns(1)
+        expect(subject).to receive(:StartServiceW).and_return(1)
   
         subject.start(mock_service_name)
       end
@@ -396,7 +395,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
         let(:initial_state) { subject::SERVICE_RUNNING }
         let(:mock_state_transition) do
           lambda do
-            subject.stubs(:ControlService).returns(1)
+            allow(subject).to receive(:ControlService).and_return(1)
           end
         end
       end
@@ -404,7 +403,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
       it "raises a Puppet::Error if ControlService returns false" do
         expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_RUNNING)
 
-        subject.stubs(:ControlService).returns(FFI::WIN32_FALSE)
+        allow(subject).to receive(:ControlService).and_return(FFI::WIN32_FALSE)
 
         expect { subject.stop(mock_service_name) }.to raise_error(Puppet::Error)
       end
@@ -415,7 +414,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
           { dwCurrentState: subject::SERVICE_STOPPED }
         )
 
-        subject.expects(:ControlService).returns(1)
+        expect(subject).to receive(:ControlService).and_return(1)
 
         subject.stop(mock_service_name)
       end
@@ -457,7 +456,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
             # performing the transition (in case it is in SERVICE_PAUSE_PENDING).
             expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_PAUSED)
 
-            subject.stubs(:ControlService).returns(1)
+            allow(subject).to receive(:ControlService).and_return(1)
           end
         end
       end
@@ -467,11 +466,11 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
           # This mocks the status query to return the SERVICE_RUNNING state by default.
           # Otherwise, we will fail the tests in the latter parts of the code where we
           # wait for the service to finish transitioning to the 'SERVICE_RUNNING' state.
-          subject::SERVICE_STATUS_PROCESS.stubs(:new).returns(dwCurrentState: subject::SERVICE_RUNNING)
+          allow(subject::SERVICE_STATUS_PROCESS).to receive(:new).and_return(dwCurrentState: subject::SERVICE_RUNNING)
 
           expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_PAUSE_PENDING)
 
-          subject.stubs(:ControlService).returns(1)
+          allow(subject).to receive(:ControlService).and_return(1)
         end
 
         include_examples "a service action waiting on a pending transition", service::SERVICE_PAUSE_PENDING do
@@ -483,7 +482,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
         expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_PAUSED)
         expect_successful_status_query_and_return(dwCurrentState: subject::SERVICE_PAUSED)
 
-        subject.stubs(:ControlService).returns(FFI::WIN32_FALSE)
+        allow(subject).to receive(:ControlService).and_return(FFI::WIN32_FALSE)
 
         expect { subject.resume(mock_service_name) }.to raise_error(Puppet::Error)
       end
@@ -495,7 +494,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
           { dwCurrentState: subject::SERVICE_RUNNING }
         )
 
-        subject.expects(:ControlService).returns(1)
+        expect(subject).to receive(:ControlService).and_return(1)
 
         subject.resume(mock_service_name)
       end
@@ -583,8 +582,8 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
       end
 
       it "raises a puppet error if the service query fails" do
-        subject.expects(:QueryServiceConfigW).in_sequence(status_checks)
-        subject.expects(:QueryServiceConfigW).in_sequence(status_checks).returns(FFI::WIN32_FALSE)
+        expect(subject).to receive(:QueryServiceConfigW)
+        expect(subject).to receive(:QueryServiceConfigW).and_return(FFI::WIN32_FALSE)
         expect{ subject.service_start_type(mock_service_name) }.to raise_error(Puppet::Error)
       end
     end
@@ -609,7 +608,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
 
     context "when the service can be opened" do
       it "Raises an error on an unsuccessful change" do
-        subject.expects(:ChangeServiceConfigW).returns(FFI::WIN32_FALSE)
+        expect(subject).to receive(:ChangeServiceConfigW).and_return(FFI::WIN32_FALSE)
         expect{ subject.set_startup_mode(mock_service_name, :SERVICE_DEMAND_START) }.to raise_error(Puppet::Error)
       end
     end
@@ -627,36 +626,36 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
 
     context "when the service control manager is open" do
       let(:cursor) { [ 'svc1', 'svc2', 'svc3' ] }
-      let(:svc1name_ptr) { mock() }
-      let(:svc2name_ptr) { mock() }
-      let(:svc3name_ptr) { mock() }
-      let(:svc1displayname_ptr) { mock() }
-      let(:svc2displayname_ptr) { mock() }
-      let(:svc3displayname_ptr) { mock() }
+      let(:svc1name_ptr) { double() }
+      let(:svc2name_ptr) { double() }
+      let(:svc3name_ptr) { double() }
+      let(:svc1displayname_ptr) { double() }
+      let(:svc2displayname_ptr) { double() }
+      let(:svc3displayname_ptr) { double() }
       let(:svc1) { { :lpServiceName => svc1name_ptr, :lpDisplayName => svc1displayname_ptr, :ServiceStatusProcess => 'foo' } }
       let(:svc2) { { :lpServiceName => svc2name_ptr, :lpDisplayName => svc2displayname_ptr, :ServiceStatusProcess => 'foo' } }
       let(:svc3) { { :lpServiceName => svc3name_ptr, :lpDisplayName => svc3displayname_ptr, :ServiceStatusProcess => 'foo' } }
 
       it "Raises an error if EnumServicesStatusExW fails" do
-        subject.expects(:EnumServicesStatusExW).in_sequence(pointer_sequence)
-        subject.expects(:EnumServicesStatusExW).in_sequence(pointer_sequence).returns(FFI::WIN32_FALSE)
+        expect(subject).to receive(:EnumServicesStatusExW)
+        expect(subject).to receive(:EnumServicesStatusExW).and_return(FFI::WIN32_FALSE)
         expect{ subject.services }.to raise_error(Puppet::Error)
       end
 
       it "Reads the buffer using pointer arithmetic to create a hash of service entries" do
         # the first read_dword is for reading the bytes required, let that return 3 too.
         # the second read_dword will actually read the number of services returned
-        pointer.expects(:read_dword).twice.returns(3)
-        FFI::Pointer.expects(:new).with(subject::ENUM_SERVICE_STATUS_PROCESSW, pointer).returns(cursor)
-        subject::ENUM_SERVICE_STATUS_PROCESSW.expects(:new).in_sequence(pointer_sequence).with('svc1').returns(svc1)
-        subject::ENUM_SERVICE_STATUS_PROCESSW.expects(:new).in_sequence(pointer_sequence).with('svc2').returns(svc2)
-        subject::ENUM_SERVICE_STATUS_PROCESSW.expects(:new).in_sequence(pointer_sequence).with('svc3').returns(svc3)
-        svc1name_ptr.expects(:read_arbitrary_wide_string_up_to).returns('svc1')
-        svc2name_ptr.expects(:read_arbitrary_wide_string_up_to).returns('svc2')
-        svc3name_ptr.expects(:read_arbitrary_wide_string_up_to).returns('svc3')
-        svc1displayname_ptr.expects(:read_arbitrary_wide_string_up_to).returns('service 1')
-        svc2displayname_ptr.expects(:read_arbitrary_wide_string_up_to).returns('service 2')
-        svc3displayname_ptr.expects(:read_arbitrary_wide_string_up_to).returns('service 3')
+        expect(pointer).to receive(:read_dword).twice.and_return(3)
+        expect(FFI::Pointer).to receive(:new).with(subject::ENUM_SERVICE_STATUS_PROCESSW, pointer).and_return(cursor)
+        expect(subject::ENUM_SERVICE_STATUS_PROCESSW).to receive(:new).with('svc1').and_return(svc1)
+        expect(subject::ENUM_SERVICE_STATUS_PROCESSW).to receive(:new).with('svc2').and_return(svc2)
+        expect(subject::ENUM_SERVICE_STATUS_PROCESSW).to receive(:new).with('svc3').and_return(svc3)
+        expect(svc1name_ptr).to receive(:read_arbitrary_wide_string_up_to).and_return('svc1')
+        expect(svc2name_ptr).to receive(:read_arbitrary_wide_string_up_to).and_return('svc2')
+        expect(svc3name_ptr).to receive(:read_arbitrary_wide_string_up_to).and_return('svc3')
+        expect(svc1displayname_ptr).to receive(:read_arbitrary_wide_string_up_to).and_return('service 1')
+        expect(svc2displayname_ptr).to receive(:read_arbitrary_wide_string_up_to).and_return('service 2')
+        expect(svc3displayname_ptr).to receive(:read_arbitrary_wide_string_up_to).and_return('service 3')
         expect(subject.services).to eq({
           'svc1' => { :display_name => 'service 1', :service_status_process => 'foo' },
           'svc2' => { :display_name => 'service 2', :service_status_process => 'foo' },

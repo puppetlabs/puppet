@@ -33,24 +33,26 @@ describe Puppet::SSL::Certificate do
 
   describe "when converting from a string" do
     it "should create a certificate instance with its name set to the certificate subject and its content set to the extracted certificate" do
-      cert = stub 'certificate',
+      cert = double(
+        'certificate',
         :subject => OpenSSL::X509::Name.parse("/CN=Foo.madstop.com"),
         :is_a? => true
-      OpenSSL::X509::Certificate.expects(:new).with("my certificate").returns(cert)
+      )
+      expect(OpenSSL::X509::Certificate).to receive(:new).with("my certificate").and_return(cert)
 
-      mycert = stub 'sslcert'
-      mycert.expects(:content=).with(cert)
+      mycert = double('sslcert')
+      expect(mycert).to receive(:content=).with(cert)
 
-      @class.expects(:new).with("Foo.madstop.com").returns mycert
+      expect(@class).to receive(:new).with("Foo.madstop.com").and_return(mycert)
 
       @class.from_s("my certificate")
     end
 
     it "should create multiple certificate instances when asked" do
-      cert1 = stub 'cert1'
-      @class.expects(:from_s).with("cert1").returns cert1
-      cert2 = stub 'cert2'
-      @class.expects(:from_s).with("cert2").returns cert2
+      cert1 = double('cert1')
+      expect(@class).to receive(:from_s).with("cert1").and_return(cert1)
+      cert2 = double('cert2')
+      expect(@class).to receive(:from_s).with("cert2").and_return(cert2)
 
       expect(@class.from_multiple_s("cert1\n---\ncert2")).to eq([cert1, cert2])
     end
@@ -66,15 +68,15 @@ describe Puppet::SSL::Certificate do
     end
 
     it "should convert the certificate to pem format" do
-      certificate = mock 'certificate', :to_pem => "pem"
+      certificate = double('certificate', :to_pem => "pem")
       @certificate.content = certificate
       expect(@certificate.to_s).to eq("pem")
     end
 
     it "should be able to convert multiple instances to a string" do
       cert2 = @class.new("foo")
-      @certificate.expects(:to_s).returns "cert1"
-      cert2.expects(:to_s).returns "cert2"
+      expect(@certificate).to receive(:to_s).and_return("cert1")
+      expect(cert2).to receive(:to_s).and_return("cert2")
 
       expect(@class.to_multiple_s([@certificate, cert2])).to eq("cert1\n---\ncert2")
 
@@ -143,32 +145,32 @@ describe Puppet::SSL::Certificate do
     end
 
     it "should return a nil expiration if there is no actual certificate" do
-      @certificate.stubs(:content).returns nil
+      allow(@certificate).to receive(:content).and_return(nil)
 
       expect(@certificate.expiration).to be_nil
     end
 
     it "should use the expiration of the certificate as its expiration date" do
-      cert = stub 'cert'
-      @certificate.stubs(:content).returns cert
+      cert = double('cert')
+      allow(@certificate).to receive(:content).and_return(cert)
 
-      cert.expects(:not_after).returns "sometime"
+      expect(cert).to receive(:not_after).and_return("sometime")
 
       expect(@certificate.expiration).to eq("sometime")
     end
 
     it "should be able to read certificates from disk" do
       path = "/my/path"
-      Puppet::FileSystem.expects(:read).with(path, :encoding => Encoding::ASCII).returns("my certificate")
-      certificate = mock 'certificate'
-      OpenSSL::X509::Certificate.expects(:new).with("my certificate").returns(certificate)
+      expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding::ASCII).and_return("my certificate")
+      certificate = double('certificate')
+      expect(OpenSSL::X509::Certificate).to receive(:new).with("my certificate").and_return(certificate)
       expect(@certificate.read(path)).to equal(certificate)
       expect(@certificate.content).to equal(certificate)
     end
 
     it "should have a :to_text method that it delegates to the actual key" do
-      real_certificate = mock 'certificate'
-      real_certificate.expects(:to_text).returns "certificatetext"
+      real_certificate = double('certificate')
+      expect(real_certificate).to receive(:to_text).and_return("certificatetext")
       @certificate.content = real_certificate
       expect(@certificate.to_text).to eq("certificatetext")
     end

@@ -2,20 +2,17 @@ require 'spec_helper'
 
 require 'puppet/property/ordered_list'
 
-ordered_list_class = Puppet::Property::OrderedList
-
-describe ordered_list_class do
-
+describe Puppet::Property::OrderedList do
   it "should be a subclass of List" do
-    expect(ordered_list_class.superclass).to eq(Puppet::Property::List)
+    expect(described_class.superclass).to eq(Puppet::Property::List)
   end
 
   describe "as an instance" do
     before do
       # Wow that's a messy interface to the resource.
-      ordered_list_class.initvars
-      @resource = stub 'resource', :[]= => nil, :property => nil
-      @property = ordered_list_class.new(:resource => @resource)
+      described_class.initvars
+      @resource = double('resource', :[]= => nil, :property => nil)
+      @property = described_class.new(:resource => @resource)
     end
 
     describe "when adding should to current" do
@@ -39,22 +36,22 @@ describe ordered_list_class do
 
       it "should return the values of @should (without sorting) as a string if inclusive" do
         @property.should = ["foo", "bar"]
-        @property.expects(:inclusive?).returns(true)
+        expect(@property).to receive(:inclusive?).and_return(true)
         expect(@property.should).to eq("foo,bar")
       end
 
       it "should return the uniq values of @should + retrieve as a string if !inclusive with the @ values leading" do
         @property.should = ["foo", "bar"]
-        @property.expects(:inclusive?).returns(false)
-        @property.expects(:retrieve).returns(["foo","baz"])
+        expect(@property).to receive(:inclusive?).and_return(false)
+        expect(@property).to receive(:retrieve).and_return(["foo","baz"])
         expect(@property.should).to eq("foo,bar,baz")
       end
     end
 
     describe "when calling dearrayify" do
       it "should join the array with the delimiter" do
-        array = mock "array"
-        array.expects(:join).with(@property.delimiter)
+        array = double("array")
+        expect(array).to receive(:join).with(@property.delimiter)
         @property.dearrayify(array)
       end
     end

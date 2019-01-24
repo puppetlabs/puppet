@@ -7,8 +7,13 @@ describe Puppet::Resource do
   let(:basepath) { make_absolute("/somepath") }
   let(:environment) { Puppet::Node::Environment.create(:testing, []) }
 
-  def expect_lookup(key)
-    Puppet::Pops::Lookup::GlobalDataProvider.any_instance.expects(:unchecked_key_lookup).with(Puppet::Pops::Lookup::LookupKey.new(key), any_parameters)
+  def expect_lookup(key, options = {})
+    expectation = receive(:unchecked_key_lookup).with(Puppet::Pops::Lookup::LookupKey.new(key), any_args)
+    expectation = expectation.and_throw(options[:throws]) if options[:throws]
+    expectation = expectation.and_raise(*options[:raises]) if options[:raises]
+    expectation = expectation.and_return(options[:returns]) if options[:returns]
+
+    expect_any_instance_of(Puppet::Pops::Lookup::GlobalDataProvider).to expectation
   end
 
   [:catalog, :file, :line].each do |attr|
@@ -326,9 +331,9 @@ describe Puppet::Resource do
       before do
         environment.known_resource_types.add(apache)
 
-        scope.stubs(:host).returns('host')
-        scope.stubs(:environment).returns(environment)
-        scope.stubs(:facts).returns(Puppet::Node::Facts.new("facts", fact_values))
+        allow(scope).to receive(:host).and_return('host')
+        allow(scope).to receive(:environment).and_return(environment)
+        allow(scope).to receive(:facts).and_return(Puppet::Node::Facts.new("facts", fact_values))
       end
 
       context 'with a default value expression' do
@@ -340,14 +345,14 @@ describe Puppet::Resource do
           end
 
           it "should query the data_binding terminus using a namespaced key" do
-            expect_lookup('lookup_options').throws(:no_such_key)
+            expect_lookup('lookup_options', throws: :no_such_key)
             expect_lookup('apache::port')
             inject_and_set_defaults(resource, scope)
           end
 
           it "should use the value from the data_binding terminus" do
-            expect_lookup('lookup_options').throws(:no_such_key)
-            expect_lookup('apache::port').returns('443')
+            expect_lookup('lookup_options', throws: :no_such_key)
+            expect_lookup('apache::port', returns: '443')
 
             inject_and_set_defaults(resource, scope)
 
@@ -355,8 +360,8 @@ describe Puppet::Resource do
           end
 
           it 'should use the default value if no value is found using the data_binding terminus' do
-            expect_lookup('lookup_options').throws(:no_such_key)
-            expect_lookup('apache::port').throws(:no_such_key)
+            expect_lookup('lookup_options', throws: :no_such_key)
+            expect_lookup('apache::port', throws: :no_such_key)
 
             inject_and_set_defaults(resource, scope)
 
@@ -364,8 +369,8 @@ describe Puppet::Resource do
           end
 
           it 'should use the default value if an undef value is found using the data_binding terminus' do
-            expect_lookup('lookup_options').throws(:no_such_key)
-            expect_lookup('apache::port').returns(nil)
+            expect_lookup('lookup_options', throws: :no_such_key)
+            expect_lookup('apache::port', returns: nil)
 
             inject_and_set_defaults(resource, scope)
 
@@ -373,8 +378,8 @@ describe Puppet::Resource do
           end
 
           it "should fail with error message about data binding on a hiera failure" do
-            expect_lookup('lookup_options').throws(:no_such_key)
-            expect_lookup('apache::port').raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
+            expect_lookup('lookup_options', throws: :no_such_key)
+            expect_lookup('apache::port', raises: [Puppet::DataBinding::LookupError, 'Forgettabotit'])
             expect {
               inject_and_set_defaults(resource, scope)
             }.to raise_error(Puppet::Error, /Lookup of key 'apache::port' failed: Forgettabotit/)
@@ -394,19 +399,19 @@ describe Puppet::Resource do
           end
 
           it "should not query the data_binding terminus" do
-            Puppet::DataBinding.indirection.expects(:find).never
+            expect(Puppet::DataBinding.indirection).not_to receive(:find)
             inject_and_set_defaults(resource, scope)
           end
 
           it "should use the value provided" do
-            Puppet::DataBinding.indirection.expects(:find).never
+            expect(Puppet::DataBinding.indirection).not_to receive(:find)
             expect(resource.set_default_parameters(scope)).to eq([])
             expect(resource[:port]).to eq('8080')
           end
 
           it "should use the value from the data_binding terminus when provided value is undef" do
-            expect_lookup('lookup_options').throws(:no_such_key)
-            expect_lookup('apache::port').returns('443')
+            expect_lookup('lookup_options', throws: :no_such_key)
+            expect_lookup('apache::port', returns: '443')
 
             rs = Puppet::Parser::Resource.new("class", "apache", :scope => scope,
               :parameters => [Puppet::Parser::Resource::Param.new({ :name => 'port', :value => nil })])
@@ -422,8 +427,8 @@ describe Puppet::Resource do
         let(:resource) { Puppet::Parser::Resource.new("class", "apache", :scope => scope) }
 
         it "should use the value from the data_binding terminus" do
-          expect_lookup('lookup_options').throws(:no_such_key)
-          expect_lookup('apache::port').returns('443')
+          expect_lookup('lookup_options', throws: :no_such_key)
+          expect_lookup('apache::port', returns: '443')
 
           inject_and_set_defaults(resource, scope)
 
@@ -431,8 +436,8 @@ describe Puppet::Resource do
         end
 
         it "should use an undef value from the data_binding terminus" do
-          expect_lookup('lookup_options').throws(:no_such_key)
-          expect_lookup('apache::port').returns(nil)
+          expect_lookup('lookup_options', throws: :no_such_key)
+          expect_lookup('apache::port', returns: nil)
 
           inject_and_set_defaults(resource, scope)
 
@@ -532,14 +537,14 @@ describe Puppet::Resource do
 
     it "should set the namevar when asked to set the name" do
       resource = Puppet::Resource.new("user", "bob")
-      Puppet::Type.type(:user).stubs(:key_attributes).returns [:myvar]
+      allow(Puppet::Type.type(:user)).to receive(:key_attributes).and_return([:myvar])
       resource[:name] = "bob"
       expect(resource[:myvar]).to eq("bob")
     end
 
     it "should return the namevar when asked to return the name" do
       resource = Puppet::Resource.new("user", "bob")
-      Puppet::Type.type(:user).stubs(:key_attributes).returns [:myvar]
+      allow(Puppet::Type.type(:user)).to receive(:key_attributes).and_return([:myvar])
       resource[:myvar] = "test"
       expect(resource[:name]).to eq("test")
     end
@@ -618,7 +623,7 @@ describe Puppet::Resource do
 
     it "should use the title as the namevar to the hash if no namevar is present" do
       resource = Puppet::Resource.new("user", "bob")
-      Puppet::Type.type(:user).stubs(:key_attributes).returns [:myvar]
+      allow(Puppet::Type.type(:user)).to receive(:key_attributes).and_return([:myvar])
       expect(resource.to_hash[:myvar]).to eq("bob")
     end
 
@@ -626,7 +631,7 @@ describe Puppet::Resource do
       krt = Puppet::Resource::TypeCollection.new("myenv")
       krt.add Puppet::Resource::Type.new(:definition, :foo)
       resource = Puppet::Resource.new :foo, "bar"
-      resource.stubs(:known_resource_types).returns krt
+      allow(resource).to receive(:known_resource_types).and_return(krt)
       expect(resource.to_hash[:name]).to eq("bar")
     end
   end
@@ -934,11 +939,11 @@ describe Puppet::Resource do
 
   describe "when resolving resources with a catalog" do
     it "should resolve all resources using the catalog" do
-      catalog = mock 'catalog'
+      catalog = double('catalog')
       resource = Puppet::Resource.new("foo::bar", "yay")
       resource.catalog = catalog
 
-      catalog.expects(:resource).with("Foo::Bar[yay]").returns(:myresource)
+      expect(catalog).to receive(:resource).with("Foo::Bar[yay]").and_return(:myresource)
 
       expect(resource.resolve).to eq(:myresource)
     end
@@ -946,8 +951,8 @@ describe Puppet::Resource do
 
   describe "when generating the uniqueness key" do
     it "should include all of the key_attributes in alphabetical order by attribute name" do
-      Puppet::Type.type(:file).stubs(:key_attributes).returns [:myvar, :owner, :path]
-      Puppet::Type.type(:file).stubs(:title_patterns).returns(
+      allow(Puppet::Type.type(:file)).to receive(:key_attributes).and_return([:myvar, :owner, :path])
+      allow(Puppet::Type.type(:file)).to receive(:title_patterns).and_return(
         [ [ /(.*)/, [ [:path, lambda{|x| x} ] ] ] ]
       )
       res = Puppet::Resource.new("file", "/my/file", :parameters => {:owner => 'root', :content => 'hello'})

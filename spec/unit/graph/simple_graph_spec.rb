@@ -303,28 +303,28 @@ describe Puppet::Graph::SimpleGraph do
 
     it "should report two-vertex loops" do
       add_edges :a => :b, :b => :a
-      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/))
+      expect(Puppet).to receive(:err).with(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/)
       cycle = @graph.report_cycles_in_graph.first
       expect_cycle_to_include(cycle, :a, :b)
     end
 
     it "should report multi-vertex loops" do
       add_edges :a => :b, :b => :c, :c => :a
-      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[c\] => Notify\[a\]\)/))
+      expect(Puppet).to receive(:err).with(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[c\] => Notify\[a\]\)/)
       cycle = @graph.report_cycles_in_graph.first
       expect_cycle_to_include(cycle, :a, :b, :c)
     end
 
     it "should report when a larger tree contains a small cycle" do
       add_edges :a => :b, :b => :a, :c => :a, :d => :c
-      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/))
+      expect(Puppet).to receive(:err).with(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/)
       cycle = @graph.report_cycles_in_graph.first
       expect_cycle_to_include(cycle, :a, :b)
     end
 
     it "should succeed on trees with no cycles" do
       add_edges :a => :b, :b => :e, :c => :a, :d => :c
-      Puppet.expects(:err).never
+      expect(Puppet).not_to receive(:err)
       expect(@graph.report_cycles_in_graph).to be_nil
     end
 
@@ -428,14 +428,14 @@ describe Puppet::Graph::SimpleGraph do
     end
 
     it "should only write when graphing is enabled" do
-      File.expects(:open).with(@file).never
+      expect(File).not_to receive(:open).with(@file)
       Puppet[:graph] = false
       @graph.write_graph(@name)
     end
 
     it "should write a dot file based on the passed name" do
-      File.expects(:open).with(@file, "w:UTF-8").yields(stub("file", :puts => nil))
-      @graph.expects(:to_dot).with("name" => @name.to_s.capitalize)
+      expect(File).to receive(:open).with(@file, "w:UTF-8").and_yield(double("file", :puts => nil))
+      expect(@graph).to receive(:to_dot).with("name" => @name.to_s.capitalize)
       Puppet[:graph] = true
       @graph.write_graph(@name)
     end
@@ -463,7 +463,7 @@ describe Puppet::Graph::SimpleGraph do
       # because indexing a String with a non-Integer throws an exception (and none of
       # these tests need anything meaningful from []).
       resource = "a"
-      resource.stubs(:[])
+      allow(resource).to receive(:[])
       @event = Puppet::Transaction::Event.new(:name => :yay, :resource => resource)
       @none = Puppet::Transaction::Event.new(:name => :NONE, :resource => resource)
 

@@ -14,12 +14,12 @@ describe checksum do
 
   it "should use its current value when asked to sum content" do
     @checksum.value = :md5lite
-    @checksum.expects(:md5lite).with("foobar").returns "yay"
+    expect(@checksum).to receive(:md5lite).with("foobar").and_return("yay")
     @checksum.sum("foobar")
   end
 
   it "should use :md5 to sum when no value is set" do
-    @checksum.expects(:md5).with("foobar").returns "yay"
+    expect(@checksum).to receive(:md5).with("foobar").and_return("yay")
     @checksum.sum("foobar")
   end
 
@@ -53,36 +53,36 @@ describe checksum do
 
   it "should use its current value when asked to sum a file's content" do
     @checksum.value = :md5lite
-    @checksum.expects(:md5lite_file).with(@path).returns "yay"
+    expect(@checksum).to receive(:md5lite_file).with(@path).and_return("yay")
     @checksum.sum_file(@path)
   end
 
   it "should use :md5 to sum a file when no value is set" do
-    @checksum.expects(:md5_file).with(@path).returns "yay"
+    expect(@checksum).to receive(:md5_file).with(@path).and_return("yay")
     @checksum.sum_file(@path)
   end
 
   it "should convert all sums to strings when summing files" do
     @checksum.value = :mtime
-    @checksum.expects(:mtime_file).with(@path).returns Time.now
+    expect(@checksum).to receive(:mtime_file).with(@path).and_return(Time.now)
     expect { @checksum.sum_file(@path) }.not_to raise_error
   end
 
   it "should return the summed contents of a file with a checksum label" do
     @resource[:checksum] = :md5
-    @checksum.expects(:md5_file).returns "mysum"
+    expect(@checksum).to receive(:md5_file).and_return("mysum")
     expect(@checksum.sum_file(@path)).to eq("{md5}mysum")
   end
 
   it "should return the summed contents of a stream with a checksum label" do
     @resource[:checksum] = :md5
-    @checksum.expects(:md5_stream).returns "mysum"
+    expect(@checksum).to receive(:md5_stream).and_return("mysum")
     expect(@checksum.sum_stream).to eq("{md5}mysum")
   end
 
   it "should yield the sum_stream block to the underlying checksum" do
     @resource[:checksum] = :md5
-    @checksum.expects(:md5_stream).yields("something").returns("mysum")
+    expect(@checksum).to receive(:md5_stream).and_yield("something").and_return("mysum")
     @checksum.sum_stream do |sum|
       expect(sum).to eq("something")
     end
@@ -95,7 +95,7 @@ describe checksum do
   end
 
   it 'rejects md5 checksums in FIPS mode' do
-    Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+    allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
     expect {
       @resource[:checksum] = :md5
     }.to raise_error(Puppet::ResourceError,

@@ -1,15 +1,15 @@
 require 'spec_helper'
 require 'puppet'
 
+RSpec::Matchers.define_negated_matcher :neq, :eq
+
 module Puppet::Util::Plist
 end
 
-provider_class = Puppet::Type.type(:macauthorization).provider(:macauthorization)
-
-describe provider_class do
+describe Puppet::Type.type(:macauthorization).provider(:macauthorization) do
   before :each do
     # Create a mock resource
-    @resource = stub 'resource'
+    @resource = double('resource')
 
     @authname = "foo.spam.eggs.puppettest"
     @authplist = {}
@@ -21,18 +21,18 @@ describe provider_class do
     authdb["rights"] = { "fooright" => "foo" }
 
     # Stub out Plist::parse_xml
-    Puppet::Util::Plist.stubs(:parse_plist).returns(authdb)
-    Puppet::Util::Plist.stubs(:write_plist_file)
+    allow(Puppet::Util::Plist).to receive(:parse_plist).and_return(authdb)
+    allow(Puppet::Util::Plist).to receive(:write_plist_file)
 
     # A catch all; no parameters set
-    @resource.stubs(:[]).returns(nil)
+    allow(@resource).to receive(:[]).and_return(nil)
 
     # But set name, ensure
-    @resource.stubs(:[]).with(:name).returns @authname
-    @resource.stubs(:[]).with(:ensure).returns :present
-    @resource.stubs(:ref).returns "MacAuthorization[#{@authname}]"
+    allow(@resource).to receive(:[]).with(:name).and_return(@authname)
+    allow(@resource).to receive(:[]).with(:ensure).and_return(:present)
+    allow(@resource).to receive(:ref).and_return("MacAuthorization[#{@authname}]")
 
-    @provider = provider_class.new(@resource)
+    @provider = described_class.new(@resource)
   end
 
   it "should have a create method" do
@@ -67,63 +67,50 @@ describe provider_class do
 
   describe "when destroying a right" do
     before :each do
-      @resource.stubs(:[]).with(:auth_type).returns(:right)
+      allow(@resource).to receive(:[]).with(:auth_type).and_return(:right)
     end
 
     it "should call the internal method destroy_right" do
-      @provider.expects(:destroy_right)
+      expect(@provider).to receive(:destroy_right)
       @provider.destroy
     end
     it "should call the external command 'security authorizationdb remove @authname" do
-      @provider.expects(:security).with("authorizationdb", :remove, @authname)
+      expect(@provider).to receive(:security).with("authorizationdb", :remove, @authname)
       @provider.destroy
     end
   end
 
   describe "when destroying a rule" do
     before :each do
-      @resource.stubs(:[]).with(:auth_type).returns(:rule)
+      allow(@resource).to receive(:[]).with(:auth_type).and_return(:rule)
     end
 
     it "should call the internal method destroy_rule" do
-      @provider.expects(:destroy_rule)
+      expect(@provider).to receive(:destroy_rule)
       @provider.destroy
     end
   end
 
   describe "when flushing a right" do
     before :each do
-      @resource.stubs(:[]).with(:auth_type).returns(:right)
+      allow(@resource).to receive(:[]).with(:auth_type).and_return(:right)
     end
 
     it "should call the internal method flush_right" do
-      @provider.expects(:flush_right)
+      expect(@provider).to receive(:flush_right)
       @provider.flush
     end
 
     it "should call the internal method set_right" do
-      @provider.expects(:execute).with { |cmds, args|
-        cmds.include?("read") and
-        cmds.include?(@authname) and
-        args[:combine] == false
-      }.once
-      @provider.expects(:set_right)
+      expect(@provider).to receive(:execute).with(include("read").and(include(@authname)), hash_including(combine: false)).once
+      expect(@provider).to receive(:set_right)
       @provider.flush
     end
 
     it "should read and write to the auth database with the right arguments" do
-      @provider.expects(:execute).with { |cmds, args|
-        cmds.include?("read") and
-        cmds.include?(@authname) and
-        args[:combine] == false
-      }.once
+      expect(@provider).to receive(:execute).with(include("read").and(include(@authname)), hash_including(combine: false)).once
+      expect(@provider).to receive(:execute).with(include("write").and(include(@authname)), hash_including(combine: false, stdinfile: neq(nil))).once
 
-      @provider.expects(:execute).with { |cmds, args|
-        cmds.include?("write") and
-        cmds.include?(@authname) and
-        args[:combine] == false and
-        args[:stdinfile] != nil
-      }.once
       @provider.flush
     end
 
@@ -131,16 +118,16 @@ describe provider_class do
 
   describe "when flushing a rule" do
     before :each do
-      @resource.stubs(:[]).with(:auth_type).returns(:rule)
+      allow(@resource).to receive(:[]).with(:auth_type).and_return(:rule)
     end
 
     it "should call the internal method flush_rule" do
-      @provider.expects(:flush_rule)
+      expect(@provider).to receive(:flush_rule)
       @provider.flush
     end
 
     it "should call the internal method set_rule" do
-      @provider.expects(:set_rule)
+      expect(@provider).to receive(:set_rule)
       @provider.flush
     end
   end

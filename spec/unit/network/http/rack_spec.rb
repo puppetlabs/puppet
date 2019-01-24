@@ -15,27 +15,27 @@ describe "Puppet::Network::HTTP::Rack", :if => Puppet.features.rack? do
 
     it "should create a Request object" do
       request = Rack::Request.new(@env)
-      Rack::Request.expects(:new).returns request
+      expect(Rack::Request).to receive(:new).and_return(request)
       @linted.call(@env)
     end
 
     it "should create a Response object" do
-      Rack::Response.expects(:new).returns stub_everything
+      expect(Rack::Response).to receive(:new).and_return(double('rack response', :[]= => nil, :status= => nil, :write => nil, :finish => nil))
       @app.call(@env) # can't lint when Rack::Response is a stub
     end
 
     it "should let RackREST process the request" do
-      Puppet::Network::HTTP::RackREST.any_instance.expects(:process).once
+      expect_any_instance_of(Puppet::Network::HTTP::RackREST).to receive(:process).once
       @linted.call(@env)
     end
 
     it "should catch unhandled exceptions from RackREST" do
-      Puppet::Network::HTTP::RackREST.any_instance.expects(:process).raises(ArgumentError, 'test error')
+      expect_any_instance_of(Puppet::Network::HTTP::RackREST).to receive(:process).and_raise(ArgumentError, 'test error')
       expect { @linted.call(@env) }.not_to raise_error
     end
 
     it "should finish() the Response" do
-      Rack::Response.any_instance.expects(:finish).once
+      expect_any_instance_of(Rack::Response).to receive(:finish).once
       @app.call(@env) # can't lint when finish is a stub
     end
   end

@@ -9,7 +9,6 @@ module PuppetSpec::Files
     $global_tempfiles ||= []
     while path = $global_tempfiles.pop do
       begin
-        Dir.unstub(:entries)
         FileUtils.rm_rf path, :secure => true
       rescue Errno::ENOENT
         # nothing to do

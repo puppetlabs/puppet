@@ -57,13 +57,13 @@ describe Puppet::Configurer::FactHandler do
     end
 
     it "should fail if finding facts fails" do
-      Puppet::Node::Facts.indirection.expects(:find).raises RuntimeError
+      expect(Puppet::Node::Facts.indirection).to receive(:find).and_raise(RuntimeError)
 
       expect { facthandler.find_facts }.to raise_error(Puppet::Error, /Could not retrieve local facts/)
     end
 
     it "should only load fact plugins once" do
-      Puppet::Node::Facts.indirection.expects(:find).once
+      expect(Puppet::Node::Facts.indirection).to receive(:find).once
       facthandler.find_facts
     end
   end

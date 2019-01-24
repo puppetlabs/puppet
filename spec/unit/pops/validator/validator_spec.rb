@@ -911,7 +911,7 @@ describe "validating 4x" do
       result = '$hg_oais::archivematica::requirements::automation_tools::USER' =~ Puppet::Pops::Patterns::VAR_NAME
       t2 = Time.now.nsec
       expect(result).to be(nil)
-      expect(t2-t).to be < 1000000 # one ms as a check for very slow operation, is in fact at ~< 10 microsecond 
+      expect(t2-t).to be < 1000000 # one ms as a check for very slow operation, is in fact at ~< 10 microsecond
     end
   end
 

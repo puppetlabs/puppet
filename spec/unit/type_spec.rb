@@ -103,18 +103,18 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
   it "should delegate to the tagging module when tags are added" do
     resource = Puppet::Type.type(:mount).new(:name => "foo")
-    resource.stubs(:tag).with(:mount)
+    allow(resource).to receive(:tag).with(:mount)
 
-    resource.expects(:tag).with(:tag1, :tag2)
+    expect(resource).to receive(:tag).with(:tag1, :tag2)
 
     resource.tags = [:tag1,:tag2]
   end
 
   it "should add the current type as tag" do
     resource = Puppet::Type.type(:mount).new(:name => "foo")
-    resource.stubs(:tag)
+    allow(resource).to receive(:tag)
 
-    resource.expects(:tag).with(:mount)
+    expect(resource).to receive(:tag).with(:mount)
 
     resource.tags = [:tag1,:tag2]
   end
@@ -220,7 +220,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     {:file => "/my/file", :line => 50}.each do |attr, value|
       it "should set the #{attr}" do
-        @resource.stubs(attr).returns value
+        allow(@resource).to receive(attr).and_return(value)
         expect(@resource.event.send(attr)).to eq(value)
       end
     end
@@ -359,8 +359,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       basic = type.provide(:basic) {}
       greater = type.provide(:greater) {}
 
-      basic.stubs(:specificity).returns 1
-      greater.stubs(:specificity).returns 2
+      allow(basic).to receive(:specificity).and_return(1)
+      allow(greater).to receive(:specificity).and_return(2)
 
       expect(type.defaultprovider).to equal(greater)
     end
@@ -568,7 +568,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         resource = Puppet::Resource.new(:mount, "/foo",
                                         :parameters => {:atboot => :yes, :fstype => "boo", :remounts => true},
                                         :sensitive_parameters => [:remounts])
-        Puppet::Type.type(:mount).any_instance.expects(:warning).with(regexp_matches(/Unable to mark 'remounts' as sensitive: remounts is a parameter and not a property/))
+        expect_any_instance_of(Puppet::Type.type(:mount)).to receive(:warning).with(/Unable to mark 'remounts' as sensitive: remounts is a parameter and not a property/)
         Puppet::Type.type(:mount).new(resource)
       end
 
@@ -576,7 +576,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         resource = Puppet::Resource.new(:mount, "/foo",
                                         :parameters => {:atboot => :yes, :fstype => "boo"},
                                         :sensitive_parameters => [:device])
-        Puppet::Type.type(:mount).any_instance.expects(:warning).with("Unable to mark 'device' as sensitive: the property itself was not assigned a value.")
+        expect_any_instance_of(Puppet::Type.type(:mount)).to receive(:warning).with("Unable to mark 'device' as sensitive: the property itself was not assigned a value.")
         Puppet::Type.type(:mount).new(resource)
       end
 
@@ -584,7 +584,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         resource = Puppet::Resource.new(:mount, "/foo",
                                         :parameters => {:atboot => :yes, :fstype => "boo"},
                                         :sensitive_parameters => [:content])
-        Puppet::Type.type(:mount).any_instance.expects(:err).with("Unable to mark 'content' as sensitive: the property itself is not defined on mount.")
+        expect_any_instance_of(Puppet::Type.type(:mount)).to receive(:err).with("Unable to mark 'content' as sensitive: the property itself is not defined on mount.")
         Puppet::Type.type(:mount).new(resource)
       end
     end
@@ -638,8 +638,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should include the file/line in the error" do
-        Puppet::Type.type(:file).any_instance.stubs(:file).returns("example.pp")
-        Puppet::Type.type(:file).any_instance.stubs(:line).returns(42)
+        allow_any_instance_of(Puppet::Type.type(:file)).to receive(:file).and_return("example.pp")
+        allow_any_instance_of(Puppet::Type.type(:file)).to receive(:line).and_return(42)
         expect { Puppet::Type.type(:file).new(:title => "/foo", :source => "unknown:///") }.to raise_error(Puppet::ResourceError, /\(file: example\.pp, line: 42\)/)
       end
     end
@@ -655,15 +655,15 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should set the attributes in the order returned by the class's :allattrs method" do
-      Puppet::Type.type(:mount).stubs(:allattrs).returns([:name, :atboot, :noop])
+      allow(Puppet::Type.type(:mount)).to receive(:allattrs).and_return([:name, :atboot, :noop])
       resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => :yes, :noop => "whatever"})
 
       set = []
 
-      Puppet::Type.type(:mount).any_instance.stubs(:newattr).with do |param, hash|
+      allow_any_instance_of(Puppet::Type.type(:mount)).to receive(:newattr) do |_, param, hash|
         set << param
-        true
-      end.returns(stub_everything("a property"))
+        double("a property", :value= => nil, :default => nil, :name => nil)
+      end
 
       Puppet::Type.type(:mount).new(resource)
 
@@ -672,15 +672,15 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should always set the name and then default provider before anything else" do
-      Puppet::Type.type(:mount).stubs(:allattrs).returns([:provider, :name, :atboot])
+      allow(Puppet::Type.type(:mount)).to receive(:allattrs).and_return([:provider, :name, :atboot])
       resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => :yes})
 
       set = []
 
-      Puppet::Type.type(:mount).any_instance.stubs(:newattr).with do |param, hash|
+      allow_any_instance_of(Puppet::Type.type(:mount)).to receive(:newattr) do |_, param, hash|
         set << param
-        true
-      end.returns(stub_everything("a property"))
+        double("a property", :value= => nil, :default => nil, :name => nil)
+      end
 
       Puppet::Type.type(:mount).new(resource)
       expect(set[0]).to eq(:name)
@@ -690,7 +690,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     # This one is really hard to test :/
     it "should set each default immediately if no value is provided" do
       defaults = []
-      Puppet::Type.type(:service).any_instance.stubs(:set_default).with { |value| defaults << value; true }
+      allow_any_instance_of(Puppet::Type.type(:service)).to receive(:set_default) { |_, value| defaults << value }
 
       Puppet::Type.type(:service).new :name => "whatever"
 
@@ -707,7 +707,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     context "when validating the resource" do
       it "should call the type's validate method if present" do
-        Puppet::Type.type(:file).any_instance.expects(:validate)
+        expect_any_instance_of(Puppet::Type.type(:file)).to receive(:validate)
         Puppet::Type.type(:file).new(:name => make_absolute('/foo'))
       end
 
@@ -722,8 +722,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should raise Puppet::ResourceError with manifest file and line on failure" do
-        Puppet::Type.type(:file).any_instance.stubs(:file).returns("example.pp")
-        Puppet::Type.type(:file).any_instance.stubs(:line).returns(42)
+        allow_any_instance_of(Puppet::Type.type(:file)).to receive(:file).and_return("example.pp")
+        allow_any_instance_of(Puppet::Type.type(:file)).to receive(:line).and_return(42)
         expect do
           Puppet::Type.type(:file).new(
             :name => make_absolute('/foo'),
@@ -775,7 +775,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should use the Resource Type's namevar to determine how to find the name in the hash" do
-      @type.stubs(:key_attributes).returns([ :myname ])
+      allow(@type).to receive(:key_attributes).and_return([ :myname ])
 
       expect(@type.hash2resource(:myname => "foo").title).to eq("foo")
     end
@@ -809,26 +809,26 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   describe "when retrieving current property values" do
     before do
       @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
-      @resource.property(:ensure).stubs(:retrieve).returns :absent
+      allow(@resource.property(:ensure)).to receive(:retrieve).and_return(:absent)
     end
 
     it "should always retrieve the ensure value by default" do
       @ensurable_resource = Puppet::Type.type(:file).new(:name => "/not/existent", :mode => "0644")
-      Puppet::Type::File::Ensure.stubs(:ensure).returns :absent
-      Puppet::Type::File::Ensure.any_instance.expects(:retrieve).once
+      allow(Puppet::Type::File::Ensure).to receive(:ensure).and_return(:absent)
+      expect_any_instance_of(Puppet::Type::File::Ensure).to receive(:retrieve).once
       @ensurable_resource.retrieve_resource
     end
 
     it "should not retrieve the ensure value if specified" do
       @ensurable_resource = Puppet::Type.type(:service).new(:name => "DummyService", :enable => true)
-      @ensurable_resource.properties.each { |prop| prop.stubs(:retrieve) }
-      Puppet::Type::Service::Ensure.any_instance.expects(:retrieve).never
+      @ensurable_resource.properties.each { |prop| allow(prop).to receive(:retrieve) }
+      expect_any_instance_of(Puppet::Type::Service::Ensure).not_to receive(:retrieve)
       @ensurable_resource.retrieve_resource
     end
 
     it "should fail if its provider is unsuitable" do
       @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
-      @resource.provider.class.expects(:suitable?).returns false
+      expect(@resource.provider.class).to receive(:suitable?).and_return(false)
       expect { @resource.retrieve_resource }.to raise_error(Puppet::Error)
     end
 
@@ -855,14 +855,14 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should not call retrieve on non-ensure properties if the resource is absent and should consider the property absent" do
-      @resource.property(:ensure).expects(:retrieve).returns :absent
-      @resource.property(:fstype).expects(:retrieve).never
+      expect(@resource.property(:ensure)).to receive(:retrieve).and_return(:absent)
+      expect(@resource.property(:fstype)).not_to receive(:retrieve)
       expect(@resource.retrieve_resource[:fstype]).to eq(:absent)
     end
 
     it "should include the result of retrieving each property's current value if the resource is present" do
-      @resource.property(:ensure).expects(:retrieve).returns :present
-      @resource.property(:fstype).expects(:retrieve).returns 15
+      expect(@resource.property(:ensure)).to receive(:retrieve).and_return(:present)
+      expect(@resource.property(:fstype)).to receive(:retrieve).and_return(15)
       @resource.retrieve_resource[:fstype] == 15
     end
   end
@@ -881,8 +881,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       expect(type_resource.parameters[:remounts]).not_to be_a(Puppet::Property)
       expect(type_resource.parameters[:fstype].is_a?(Puppet::Property)).to be_truthy
 
-      type_resource.property(:ensure).expects(:retrieve).returns :present
-      type_resource.property(:fstype).expects(:retrieve).returns 15
+      expect(type_resource.property(:ensure)).to receive(:retrieve).and_return(:present)
+      expect(type_resource.property(:fstype)).to receive(:retrieve).and_return(15)
 
       resource = type_resource.to_resource
 
@@ -897,7 +897,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     describe "when there's one namevar" do
       before do
         @type_class = Puppet::Type.type(:notify)
-        @type_class.stubs(:key_attributes).returns([:one])
+        allow(@type_class).to receive(:key_attributes).and_return([:one])
       end
 
       it "should have a default pattern for when there's one namevar" do
@@ -952,7 +952,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     let(:provider) { resource.provider }
 
     it "should be suitable if its type doesn't use providers" do
-      type.stubs(:paramclass).with(:provider).returns nil
+      allow(type).to receive(:paramclass).with(:provider).and_return(nil)
       expect(resource).to be_suitable
     end
 
@@ -961,18 +961,18 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should not be suitable if it has a provider which is not suitable" do
-      provider.class.stubs(:suitable?).returns false
+      allow(provider.class).to receive(:suitable?).and_return(false)
       expect(resource).not_to be_suitable
     end
 
     it "should be suitable if it does not have a provider and there is a default provider" do
-      resource.stubs(:provider).returns nil
+      allow(resource).to receive(:provider).and_return(nil)
       expect(resource).to be_suitable
     end
 
     it "should not be suitable if it doesn't have a provider and there is not default provider" do
-      resource.stubs(:provider).returns nil
-      type.stubs(:defaultprovider).returns nil
+      allow(resource).to receive(:provider).and_return(nil)
+      allow(type).to receive(:defaultprovider).and_return(nil)
 
       expect(resource).not_to be_suitable
     end
@@ -1104,27 +1104,29 @@ describe Puppet::Type::RelationshipMetaparam do
   end
 
   it "should be able to validate relationships" do
-    expect(Puppet::Type.metaparamclass(:require).new(:resource => mock("resource"))).to respond_to(:validate_relationship)
+    expect(Puppet::Type.metaparamclass(:require).new(:resource => double("resource"))).to respond_to(:validate_relationship)
   end
 
   describe 'if any specified resource is not in the catalog' do
-    let(:catalog) { mock 'catalog' }
+    let(:catalog) { double('catalog') }
 
     let(:resource) do
-      stub 'resource',
+      double(
+        'resource',
         :catalog => catalog,
         :ref     => 'resource',
         :line=   => nil,
         :line    => nil,
         :file=   => nil,
         :file    => nil
+      )
     end
 
     let(:param) { Puppet::Type.metaparamclass(:require).new(:resource => resource, :value => %w{Foo[bar] Class[test]}) }
 
     before do
-      catalog.expects(:resource).with("Foo[bar]").returns "something"
-      catalog.expects(:resource).with("Class[Test]").returns nil
+      expect(catalog).to receive(:resource).with("Foo[bar]").and_return("something")
+      expect(catalog).to receive(:resource).with("Class[Test]").and_return(nil)
     end
 
     describe "and the resource doesn't have a file or line number" do
@@ -1138,8 +1140,8 @@ describe Puppet::Type::RelationshipMetaparam do
 
     describe "and the resource has a file or line number" do
       before do
-        resource.stubs(:line).returns '42'
-        resource.stubs(:file).returns '/hitchhikers/guide/to/the/galaxy'
+        allow(resource).to receive(:line).and_return('42')
+        allow(resource).to receive(:file).and_return('/hitchhikers/guide/to/the/galaxy')
       end
 
       it "raises an error with context" do
@@ -1199,8 +1201,8 @@ describe Puppet::Type.metaparamclass(:audit) do
 
   describe "when generating the uniqueness key" do
     it "should include all of the key_attributes in alphabetical order by attribute name" do
-      Puppet::Type.type(:file).stubs(:key_attributes).returns [:path, :mode, :owner]
-      Puppet::Type.type(:file).stubs(:title_patterns).returns(
+      allow(Puppet::Type.type(:file)).to receive(:key_attributes).and_return([:path, :mode, :owner])
+      allow(Puppet::Type.type(:file)).to receive(:title_patterns).and_return(
         [ [ /(.*)/, [ [:path, lambda{|x| x} ] ] ] ]
       )
       myfile = make_absolute('/my/file')

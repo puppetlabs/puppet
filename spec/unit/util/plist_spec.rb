@@ -69,60 +69,60 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
 
   describe "#read_plist_file" do
     it "calls #convert_cfpropertylist_to_native_types on a plist object when a valid binary plist is read" do
-      subject.stubs(:read_file_with_offset).with(plist_path, 8).returns(binary_plist_magic_number)
-      subject.stubs(:new_cfpropertylist).with({:file => plist_path}).returns('plist_object')
-      subject.expects(:convert_cfpropertylist_to_native_types).with('plist_object').returns('plist_hash')
+      allow(subject).to receive(:read_file_with_offset).with(plist_path, 8).and_return(binary_plist_magic_number)
+      allow(subject).to receive(:new_cfpropertylist).with({:file => plist_path}).and_return('plist_object')
+      expect(subject).to receive(:convert_cfpropertylist_to_native_types).with('plist_object').and_return('plist_hash')
       expect(subject.read_plist_file(plist_path)).to eq('plist_hash')
     end
 
     it "returns a valid hash when a valid XML plist is read" do
-      subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
-      subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(valid_xml_plist)
+      allow(subject).to receive(:read_file_with_offset).with(plist_path, 8).and_return('notbinary')
+      allow(subject).to receive(:open_file_with_args).with(plist_path, 'r:UTF-8').and_return(valid_xml_plist)
       expect(subject.read_plist_file(plist_path)).to eq(valid_xml_plist_hash)
     end
 
     it "raises a debug message and replaces a bad XML plist doctype should one be encountered" do
-      subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
-      subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(bad_xml_doctype)
-      subject.expects(:new_cfpropertylist).with({:data => good_xml_doctype}).returns('plist_object')
-      subject.stubs(:convert_cfpropertylist_to_native_types).with('plist_object').returns('plist_hash')
-      Puppet.expects(:debug).with("Had to fix plist with incorrect DOCTYPE declaration: #{plist_path}")
+      allow(subject).to receive(:read_file_with_offset).with(plist_path, 8).and_return('notbinary')
+      allow(subject).to receive(:open_file_with_args).with(plist_path, 'r:UTF-8').and_return(bad_xml_doctype)
+      expect(subject).to receive(:new_cfpropertylist).with({:data => good_xml_doctype}).and_return('plist_object')
+      allow(subject).to receive(:convert_cfpropertylist_to_native_types).with('plist_object').and_return('plist_hash')
+      expect(Puppet).to receive(:debug).with("Had to fix plist with incorrect DOCTYPE declaration: #{plist_path}")
       expect(subject.read_plist_file(plist_path)).to eq('plist_hash')
     end
 
     it "attempts to read pure xml using plutil when reading an improperly formatted service plist" do
-      subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
-      subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(invalid_xml_plist)
-      Puppet.expects(:debug).with(regexp_matches(/^Failed with CFFormatError/))
-      Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
-      Puppet::Util::Execution.expects(:execute)
+      allow(subject).to receive(:read_file_with_offset).with(plist_path, 8).and_return('notbinary')
+      allow(subject).to receive(:open_file_with_args).with(plist_path, 'r:UTF-8').and_return(invalid_xml_plist)
+      expect(Puppet).to receive(:debug).with(/^Failed with CFFormatError/)
+      expect(Puppet).to receive(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
+      expect(Puppet::Util::Execution).to receive(:execute)
         .with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
               {:failonfail => true, :combine => true})
-        .returns(Puppet::Util::Execution::ProcessOutput.new(valid_xml_plist, 0))
+        .and_return(Puppet::Util::Execution::ProcessOutput.new(valid_xml_plist, 0))
       expect(subject.read_plist_file(plist_path)).to eq(valid_xml_plist_hash)
     end
 
     it "returns nil when direct parsing and plutil conversion both fail" do
-      subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
-      subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(non_plist_data)
-      Puppet.expects(:debug).with(regexp_matches(/^Failed with (CFFormatError|NoMethodError)/))
-      Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
-      Puppet::Util::Execution.expects(:execute)
+      allow(subject).to receive(:read_file_with_offset).with(plist_path, 8).and_return('notbinary')
+      allow(subject).to receive(:open_file_with_args).with(plist_path, 'r:UTF-8').and_return(non_plist_data)
+      expect(Puppet).to receive(:debug).with(/^Failed with (CFFormatError|NoMethodError)/)
+      expect(Puppet).to receive(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
+      expect(Puppet::Util::Execution).to receive(:execute)
         .with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
               {:failonfail => true, :combine => true})
-        .raises(Puppet::ExecutionFailure, 'boom')
+        .and_raise(Puppet::ExecutionFailure, 'boom')
       expect(subject.read_plist_file(plist_path)).to eq(nil)
     end
 
     it "returns nil when file is a non-plist binary blob" do
-      subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
-      subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(binary_data)
-      Puppet.expects(:debug).with(regexp_matches(/^Failed with (CFFormatError|ArgumentError)/))
-      Puppet.expects(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
-      Puppet::Util::Execution.expects(:execute)
+      allow(subject).to receive(:read_file_with_offset).with(plist_path, 8).and_return('notbinary')
+      allow(subject).to receive(:open_file_with_args).with(plist_path, 'r:UTF-8').and_return(binary_data)
+      expect(Puppet).to receive(:debug).with(/^Failed with (CFFormatError|ArgumentError)/)
+      expect(Puppet).to receive(:debug).with("Plist #{plist_path} ill-formatted, converting with plutil")
+      expect(Puppet::Util::Execution).to receive(:execute)
         .with(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', plist_path],
               {:failonfail => true, :combine => true})
-        .raises(Puppet::ExecutionFailure, 'boom')
+        .and_raise(Puppet::ExecutionFailure, 'boom')
       expect(subject.read_plist_file(plist_path)).to eq(nil)
     end
   end
@@ -133,15 +133,15 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
     end
 
     it "raises a debug message and replaces a bad XML plist doctype should one be encountered" do
-      subject.expects(:new_cfpropertylist).with({:data => good_xml_doctype}).returns('plist_object')
-      subject.stubs(:convert_cfpropertylist_to_native_types).with('plist_object')
-      Puppet.expects(:debug).with("Had to fix plist with incorrect DOCTYPE declaration: #{plist_path}")
+      expect(subject).to receive(:new_cfpropertylist).with({:data => good_xml_doctype}).and_return('plist_object')
+      allow(subject).to receive(:convert_cfpropertylist_to_native_types).with('plist_object')
+      expect(Puppet).to receive(:debug).with("Had to fix plist with incorrect DOCTYPE declaration: #{plist_path}")
       subject.parse_plist(bad_xml_doctype, plist_path)
     end
 
     it "raises a debug message with malformed plist" do
-      subject.stubs(:convert_cfpropertylist_to_native_types).with('plist_object')
-      Puppet.expects(:debug).with(regexp_matches(/^Failed with CFFormatError/))
+      allow(subject).to receive(:convert_cfpropertylist_to_native_types).with('plist_object')
+      expect(Puppet).to receive(:debug).with(/^Failed with CFFormatError/)
       subject.parse_plist("<plist><dict><key>Foo</key>")
     end
   end

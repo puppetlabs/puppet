@@ -5,7 +5,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
   include PuppetSpec::Files
 
   before :each do
-    Puppet.run_mode.stubs(:master?).returns(true)
+    allow(Puppet.run_mode).to receive(:master?).and_return(true)
     Puppet[:ca]     = true
     Puppet[:ssldir] = tmpdir("face-ca-ssldir")
 
@@ -14,7 +14,7 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
 
     # This is way more intimate than I want to be with the implementation, but
     # there doesn't seem any other way to test this. --daniel 2011-07-18
-    Puppet::SSL::CertificateAuthority.stubs(:instance).returns(
+    allow(Puppet::SSL::CertificateAuthority).to receive(:instance).and_return(
         # ...and this actually does the directory creation, etc.
         Puppet::SSL::CertificateAuthority.new
     )

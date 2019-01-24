@@ -17,14 +17,14 @@ describe Puppet::Face[:certificate, '0.0.1'] do
 
   before :each do
     Puppet[:confdir] = tmpdir('conf')
-    Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
+    allow(Puppet::SSL::CertificateAuthority).to receive(:ca?).and_return(true)
 
     Puppet::SSL::Host.ca_location = :local
 
     # We can't cache the CA between tests, because each one has its own SSL dir.
     ca = Puppet::SSL::CertificateAuthority.new
-    Puppet::SSL::CertificateAuthority.stubs(:new).returns ca
-    Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+    allow(Puppet::SSL::CertificateAuthority).to receive(:new).and_return(ca)
+    allow(Puppet::SSL::CertificateAuthority).to receive(:instance).and_return(ca)
   end
 
   it "should have a ca-location option" do
@@ -32,17 +32,15 @@ describe Puppet::Face[:certificate, '0.0.1'] do
   end
 
   it "should set the ca location when invoked" do
-    Puppet::SSL::Host.expects(:ca_location=).with(:local)
-    ca.expects(:sign).with do |name,options|
-      name == "hello, friend"
-    end
+    expect(Puppet::SSL::Host).to receive(:ca_location=).with(:local)
+    expect(ca).to receive(:sign).with("hello, friend", anything)
 
     subject.sign "hello, friend", :ca_location => :local
   end
 
   it "(#7059) should set the ca location when an inherited action is invoked" do
-    Puppet::SSL::Host.expects(:ca_location=).with(:local)
-    subject.indirection.expects(:find)
+    expect(Puppet::SSL::Host).to receive(:ca_location=).with(:local)
+    expect(subject.indirection).to receive(:find)
     subject.find "hello, friend", :ca_location => :local
   end
 

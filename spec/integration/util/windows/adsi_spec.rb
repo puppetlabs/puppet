@@ -133,13 +133,13 @@ describe Puppet::Util::Windows::ADSI::Group,
     it 'should return a list of Principal objects even with unresolvable SIDs' do
       members = [
         # NULL SID is not localized
-        stub('WIN32OLE', {
+        double('WIN32OLE', {
           :objectSID => [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
           :Name => 'NULL SID',
           :ole_respond_to? => true,
         }),
         # unresolvable SID is a different story altogether
-        stub('WIN32OLE', {
+        double('WIN32OLE', {
           # completely valid SID, but Name is just a stringified version
           :objectSID => [1, 5, 0, 0, 0, 0, 0, 5, 21, 0, 0, 0, 5, 113, 65, 218, 15, 127, 9, 57, 219, 4, 84, 126, 88, 4, 0, 0],
           :Name => 'S-1-5-21-3661721861-956923663-2119435483-1112',
@@ -152,7 +152,7 @@ describe Puppet::Util::Windows::ADSI::Group,
 
       # touch the native_object member to have it lazily loaded, so COM objects can be stubbed
       admins.native_object
-      admins.native_object.stubs(:Members).returns(members)
+      allow(admins.native_object).to receive(:Members).and_return(members)
 
       # well-known NULL SID
       expect(admins.members[0].sid).to eq('S-1-0-0')

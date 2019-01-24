@@ -14,8 +14,8 @@ describe Puppet::Resource::TypeCollection do
   end
 
   it "should consider '<<' to be an alias to 'add' but should return self" do
-    @code.expects(:add).with "foo"
-    @code.expects(:add).with "bar"
+    expect(@code).to receive(:add).with("foo")
+    expect(@code).to receive(:add).with("bar")
     @code << "foo" << "bar"
   end
 
@@ -96,39 +96,40 @@ describe Puppet::Resource::TypeCollection do
 
     it "should not attempt to import anything when the type is already defined" do
       @code.add @type
-      @code.loader.expects(:import).never
+      expect(@code.loader).not_to receive(:import)
       expect(@code.find_hostclass("ns::klass")).to equal(@type)
     end
 
     describe "that need to be loaded" do
       it "should use the loader to load the files" do
-        @code.loader.expects(:try_load_fqname).with(:hostclass, "klass")
+        expect(@code.loader).to receive(:try_load_fqname).with(:hostclass, "klass")
         @code.find_hostclass("klass")
       end
+
       it "should use the loader to load the files" do
-        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
+        expect(@code.loader).to receive(:try_load_fqname).with(:hostclass, "ns::klass")
         @code.find_hostclass("ns::klass")
       end
 
       it "should downcase the name and downcase and array-fy the namespaces before passing to the loader" do
-        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
+        expect(@code.loader).to receive(:try_load_fqname).with(:hostclass, "ns::klass")
         @code.find_hostclass("ns::klass")
       end
 
       it "should use the class returned by the loader" do
-        @code.loader.expects(:try_load_fqname).returns(:klass)
-        @code.expects(:hostclass).with("ns::klass").returns(false)
+        expect(@code.loader).to receive(:try_load_fqname).and_return(:klass)
+        expect(@code).to receive(:hostclass).with("ns::klass").and_return(false)
         expect(@code.find_hostclass("ns::klass")).to eq(:klass)
       end
 
       it "should return nil if the name isn't found" do
-        @code.loader.stubs(:try_load_fqname).returns(nil)
+        allow(@code.loader).to receive(:try_load_fqname).and_return(nil)
         expect(@code.find_hostclass("Ns::Klass")).to be_nil
       end
 
       it "already-loaded names at broader scopes should not shadow autoloaded names" do
         @code.add Puppet::Resource::Type.new(:hostclass, "bar")
-        @code.loader.expects(:try_load_fqname).with(:hostclass, "foo::bar").returns(:foobar)
+        expect(@code.loader).to receive(:try_load_fqname).with(:hostclass, "foo::bar").and_return(:foobar)
         expect(@code.find_hostclass("foo::bar")).to eq(:foobar)
       end
 
@@ -145,9 +146,9 @@ describe Puppet::Resource::TypeCollection do
 
         it "should not try to autoload names that we couldn't autoload in a previous step if ignoremissingtypes is enabled" do
           Puppet[:ignoremissingtypes] = true
-          @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass").returns(nil)
+          expect(@code.loader).to receive(:try_load_fqname).with(:hostclass, "ns::klass").and_return(nil)
           expect(@code.find_hostclass("ns::klass")).to be_nil
-          Puppet.expects(:debug).at_least_once.with {|msg| msg =~ /Not attempting to load hostclass/}
+          expect(Puppet).to receive(:debug).at_least(:once).with(/Not attempting to load hostclass/)
           expect(@code.find_hostclass("ns::klass")).to be_nil
         end
       end
@@ -310,7 +311,7 @@ describe Puppet::Resource::TypeCollection do
     it "should default to the current time" do
       time = Time.now
 
-      Time.stubs(:now).returns time
+      allow(Time).to receive(:now).and_return(time)
       expect(@code.version).to eq(time.to_i)
     end
 
@@ -318,15 +319,15 @@ describe Puppet::Resource::TypeCollection do
       let(:environment) { Puppet::Node::Environment.create(:testing, [], '', '/my/foo') }
 
       it "should use the output of the environment's config_version setting if one is provided" do
-        Puppet::Util::Execution.expects(:execute)
+        expect(Puppet::Util::Execution).to receive(:execute)
           .with(["/my/foo"])
-          .returns Puppet::Util::Execution::ProcessOutput.new("output\n", 0)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new("output\n", 0))
         expect(@code.version).to be_instance_of(String)
         expect(@code.version).to eq("output")
       end
 
       it "should raise a puppet parser error if executing config_version fails" do
-        Puppet::Util::Execution.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
+        expect(Puppet::Util::Execution).to receive(:execute).and_raise(Puppet::ExecutionFailure.new("msg"))
 
         expect { @code.version }.to raise_error(Puppet::ParseError)
       end

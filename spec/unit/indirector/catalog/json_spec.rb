@@ -23,7 +23,7 @@ describe Puppet::Resource::Catalog::Json do
     end
 
     before :each do
-      Puppet.run_mode.stubs(:master?).returns(true)
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       Puppet[:server_datadir] = tmpdir('jsondir')
       FileUtils.mkdir_p(File.join(Puppet[:server_datadir], 'indirector_testing'))
     end

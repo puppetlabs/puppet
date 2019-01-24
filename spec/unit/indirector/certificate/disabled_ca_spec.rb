@@ -24,7 +24,7 @@ describe Puppet::SSL::Certificate::DisabledCa do
       end
 
       it "should forward local #{name} requests" do
-        Puppet::SSL::Certificate.indirection.terminus(:file).expects(name)
+        expect(Puppet::SSL::Certificate.indirection.terminus(:file)).to receive(name)
         subject.send(name, request(name, false))
       end
     end

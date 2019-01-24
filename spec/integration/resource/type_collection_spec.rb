@@ -12,12 +12,12 @@ describe Puppet::Resource::TypeCollection do
       FileUtils.mkdir_p @dir
 
       loader = Object.new
-      loader.stubs(:load).returns nil
-      loader.stubs(:set_entry)
+      allow(loader).to receive(:load).and_return(nil)
+      allow(loader).to receive(:set_entry)
 
       loaders = Object.new
-      loaders.expects(:runtime3_type_loader).at_most_once.returns loader
-      Puppet::Pops::Loaders.expects(:loaders).at_most_once.returns loaders
+      expect(loaders).to receive(:runtime3_type_loader).at_most(:once).and_return(loader)
+      expect(Puppet::Pops::Loaders).to receive(:loaders).at_most(:once).and_return(loaders)
 
       environment = Puppet::Node::Environment.create(:env, [@dir])
       @code = environment.known_resource_types

@@ -54,13 +54,13 @@ describe Puppet::Interface::FaceCollection do
     end
 
     it "should attempt to load the face if it isn't found" do
-      subject.expects(:require).once.with('puppet/face/bar')
-      subject.expects(:require).once.with('puppet/face/0.0.1/bar')
+      expect(subject).to receive(:require).once.with('puppet/face/bar')
+      expect(subject).to receive(:require).once.with('puppet/face/0.0.1/bar')
       subject["bar", '0.0.1']
     end
 
     it "should attempt to load the default face for the specified version :current" do
-      subject.expects(:require).with('puppet/face/fozzie')
+      expect(subject).to receive(:require).with('puppet/face/fozzie')
       subject['fozzie', :current]
     end
 
@@ -70,30 +70,37 @@ describe Puppet::Interface::FaceCollection do
     end
 
     it "should attempt to require the face if it is not registered" do
-      subject.expects(:require).with do |file|
+      expect(subject).to receive(:require) do |file|
         subject.instance_variable_get("@faces")[:bar][SemanticPuppet::Version.parse('0.0.1')] = true
-        file == 'puppet/face/bar'
+        expect(file).to eq('puppet/face/bar')
       end
 
       expect(subject["bar", '0.0.1']).to be_truthy
     end
 
     it "should return false if the face is not registered" do
-      subject.stubs(:require).returns(true)
+      allow(subject).to receive(:require).and_return(true)
       expect(subject["bar", '0.0.1']).to be_falsey
     end
 
     it "should return false if the face file itself is missing" do
-      subject.stubs(:require).
-        raises(LoadError, 'no such file to load -- puppet/face/bar').then.
-        raises(LoadError, 'no such file to load -- puppet/face/0.0.1/bar')
+      num_calls = 0
+      allow(subject).to receive(:require) do
+        num_calls += 1
+        if num_calls == 1
+          raise LoadError.new('no such file to load -- puppet/face/bar')
+        else
+          raise LoadError.new('no such file to load -- puppet/face/0.0.1/bar')
+        end
+      end
+
       expect(subject["bar", '0.0.1']).to be_falsey
     end
 
     it "should register the version loaded by `:current` as `:current`" do
-      subject.expects(:require).with do |file|
+      expect(subject).to receive(:require) do |file|
         subject.instance_variable_get("@faces")[:huzzah]['2.0.1'] = :huzzah_face
-        file == 'puppet/face/huzzah'
+        expect(file).to eq('puppet/face/huzzah')
       end
       subject["huzzah", :current]
       expect(subject.instance_variable_get("@faces")[:huzzah][:current]).to eq(:huzzah_face)

@@ -9,7 +9,7 @@ describe Puppet::Resource::Status do
   let(:status) { Puppet::Resource::Status.new(resource) }
 
   before do
-    resource.stubs(:pathbuilder).returns(containment_path)
+    allow(resource).to receive(:pathbuilder).and_return(containment_path)
   end
 
   it "should compute type and title correctly" do
@@ -41,7 +41,7 @@ describe Puppet::Resource::Status do
   end
 
   it "should set its source description to the resource's path" do
-    resource.expects(:path).returns "/my/path"
+    expect(resource).to receive(:path).and_return("/my/path")
     expect(Puppet::Resource::Status.new(resource).source_description).to eq("/my/path")
   end
 
@@ -51,7 +51,7 @@ describe Puppet::Resource::Status do
 
   [:file, :line].each do |attr|
     it "should copy the resource's #{attr}" do
-      resource.expects(attr).returns "foo"
+      expect(resource).to receive(attr).and_return("foo")
       expect(Puppet::Resource::Status.new(resource).send(attr)).to eq("foo")
     end
   end
@@ -64,7 +64,7 @@ describe Puppet::Resource::Status do
   end
 
   it "should always convert the resource to a string" do
-    resource.expects(:to_s).returns "foo"
+    expect(resource).to receive(:to_s).and_return("foo")
     expect(Puppet::Resource::Status.new(resource).resource).to eq("foo")
   end
 
@@ -109,8 +109,8 @@ describe Puppet::Resource::Status do
 
   it "fails and records a failure event with a given exception" do
     error = StandardError.new("the message")
-    resource.expects(:log_exception).with(error, "Could not evaluate: the message")
-    status.expects(:fail_with_event).with("the message")
+    expect(resource).to receive(:log_exception).with(error, "Could not evaluate: the message")
+    expect(status).to receive(:fail_with_event).with("the message")
 
     status.failed_because(error)
   end

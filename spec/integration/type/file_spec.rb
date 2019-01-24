@@ -78,10 +78,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
   before do
     # stub this to not try to create state.yaml
-    Puppet::Util::Storage.stubs(:store)
+    allow(Puppet::Util::Storage).to receive(:store)
 
-    Puppet::Type.type(:file).any_instance.stubs(:file).returns('my/file.pp')
-    Puppet::Type.type(:file).any_instance.stubs(:line).returns 5
+    allow_any_instance_of(Puppet::Type.type(:file)).to receive(:file).and_return('my/file.pp')
+    allow_any_instance_of(Puppet::Type.type(:file)).to receive(:line).and_return(5)
   end
 
   it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
@@ -418,7 +418,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
             it "should not give a deprecation warning about using a checksum in content when using source to define content" do
               FileUtils.touch(path)
-              Puppet.expects(:puppet_deprecation_warning).never
+              expect(Puppet).not_to receive(:puppet_deprecation_warning)
               catalog.add_resource described_class.new(:path => path, :source => link, :links => :follow)
               catalog.apply
             end
@@ -532,7 +532,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         # Create a directory where the backup should be so that writing to it fails
         Dir.mkdir(File.join(dir, "testfile.bak"))
 
-        Puppet::Util::Log.stubs(:newmessage)
+        allow(Puppet::Util::Log).to receive(:newmessage)
 
         catalog.apply
 
@@ -602,7 +602,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
 
     it "should not give a checksum deprecation warning when given actual content" do
-      Puppet.expects(:puppet_deprecation_warning).never
+      expect(Puppet).not_to receive(:puppet_deprecation_warning)
       catalog.add_resource described_class.new(:path => path, :content => 'this is content')
       catalog.apply
     end
@@ -613,14 +613,14 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       end
 
       it "should give a checksum deprecation warning" do
-        Puppet.expects(:puppet_deprecation_warning).with('Using a checksum in a file\'s "content" property is deprecated. The ability to use a checksum to retrieve content from the filebucket using the "content" property will be removed in a future release. The literal value of the "content" property will be written to the file. The checksum retrieval functionality is being replaced by the use of static catalogs. See https://puppet.com/docs/puppet/latest/static_catalogs.html for more information.', {:file => 'my/file.pp', :line => 5})
+        expect(Puppet).to receive(:puppet_deprecation_warning).with('Using a checksum in a file\'s "content" property is deprecated. The ability to use a checksum to retrieve content from the filebucket using the "content" property will be removed in a future release. The literal value of the "content" property will be written to the file. The checksum retrieval functionality is being replaced by the use of static catalogs. See https://puppet.com/docs/puppet/latest/static_catalogs.html for more information.', {:file => 'my/file.pp', :line => 5})
         d = digest("this is some content")
         catalog.add_resource described_class.new(:path => path, :content => "{#{digest_algorithm}}#{d}")
         catalog.apply
       end
 
       it "should not give a checksum deprecation warning when no content is specified while checksum and checksum value are used" do
-        Puppet.expects(:puppet_deprecation_warning).never
+        expect(Puppet).not_to receive(:puppet_deprecation_warning)
         d = digest("this is some content")
         catalog.add_resource described_class.new(:path => path, :checksum => digest_algorithm, :checksum_value => d)
         catalog.apply
@@ -1281,7 +1281,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
   describe "when sourcing" do
     it "should give a deprecation warning when the user sets source_permissions" do
-      Puppet.expects(:puppet_deprecation_warning).with(
+      expect(Puppet).to receive(:puppet_deprecation_warning).with(
         'The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`.',
         {:file => 'my/file.pp', :line => 5})
 
@@ -1290,7 +1290,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
 
     it "should not give a deprecation warning when the user does not set source_permissions" do
-      Puppet.expects(:puppet_deprecation_warning).never
+      expect(Puppet).not_to receive(:puppet_deprecation_warning)
       catalog.add_resource described_class.new(:path => path, :content => 'this is content')
       catalog.apply
     end
@@ -1682,7 +1682,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   describe "when using validate_cmd" do
     it "should fail the file resource if command fails" do
       catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env false"))
-      Puppet::Util::Execution.expects(:execute).with("/usr/bin/env false", {:combine => true, :failonfail => true}).raises(Puppet::ExecutionFailure, "Failed")
+      expect(Puppet::Util::Execution).to receive(:execute).with("/usr/bin/env false", {:combine => true, :failonfail => true}).and_raise(Puppet::ExecutionFailure, "Failed")
       report = catalog.apply.report
       expect(report.resource_statuses["File[#{path}]"]).to be_failed
       expect(Puppet::FileSystem.exist?(path)).to be_falsey
@@ -1690,9 +1690,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
     it "should succeed the file resource if command succeeds" do
       catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env true"))
-      Puppet::Util::Execution.expects(:execute)
+      expect(Puppet::Util::Execution).to receive(:execute)
         .with("/usr/bin/env true", {:combine => true, :failonfail => true})
-        .returns Puppet::Util::Execution::ProcessOutput.new('', 0)
+        .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
       report = catalog.apply.report
       expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
       expect(Puppet::FileSystem.exist?(path)).to be_truthy

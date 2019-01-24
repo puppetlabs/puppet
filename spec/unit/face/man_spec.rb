@@ -19,7 +19,7 @@ describe Puppet::Face[:man, '0.0.1'] do
   end
 
   it 'raises an ArgumentError when given to many arguments' do
-    subject.stubs(:print_man_help)
+    allow(subject).to receive(:print_man_help)
     expect { subject.man(:man, 'cert', 'extra') }.to raise_error(ArgumentError)
   end
 end

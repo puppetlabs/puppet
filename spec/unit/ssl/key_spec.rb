@@ -62,36 +62,36 @@ describe Puppet::SSL::Key do
 
     it "should be able to read keys from disk" do
       path = "/my/path"
-      Puppet::FileSystem.expects(:read).with(path, :encoding => Encoding::ASCII).returns("my key")
-      key = mock 'key'
-      OpenSSL::PKey::RSA.expects(:new).returns(key)
+      expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding::ASCII).and_return("my key")
+      key = double('key')
+      expect(OpenSSL::PKey::RSA).to receive(:new).and_return(key)
       expect(@key.read(path)).to equal(key)
       expect(@key.content).to equal(key)
     end
 
     it "should not try to use the provided password file if the file does not exist" do
-      Puppet::FileSystem.stubs(:exist?).returns false
+      allow(Puppet::FileSystem).to receive(:exist?).and_return(false)
       @key.password_file = "/path/to/password"
 
       path = "/my/path"
 
-      Puppet::FileSystem.stubs(:read).with(path, :encoding => Encoding::ASCII).returns("my key")
-      OpenSSL::PKey::RSA.expects(:new).with("my key", nil).returns(mock('key'))
-      Puppet::FileSystem.expects(:read).with("/path/to/password", :encoding => Encoding::BINARY).never
+      allow(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding::ASCII).and_return("my key")
+      expect(OpenSSL::PKey::RSA).to receive(:new).with("my key", nil).and_return(double('key'))
+      expect(Puppet::FileSystem).not_to receive(:read).with("/path/to/password", :encoding => Encoding::BINARY)
 
       @key.read(path)
     end
 
     it "should read the key with the password retrieved from the password file if one is provided" do
-      Puppet::FileSystem.stubs(:exist?).returns true
+      allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
       @key.password_file = "/path/to/password"
 
       path = "/my/path"
-      Puppet::FileSystem.expects(:read).with(path, :encoding => Encoding::ASCII).returns("my key")
-      Puppet::FileSystem.expects(:read).with("/path/to/password", :encoding => Encoding::BINARY).returns("my password")
+      expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding::ASCII).and_return("my key")
+      expect(Puppet::FileSystem).to receive(:read).with("/path/to/password", :encoding => Encoding::BINARY).and_return("my password")
 
-      key = mock 'key'
-      OpenSSL::PKey::RSA.expects(:new).with("my key", "my password").returns(key)
+      key = double('key')
+      expect(OpenSSL::PKey::RSA).to receive(:new).with("my key", "my password").and_return(key)
       expect(@key.read(path)).to equal(key)
       expect(@key.content).to equal(key)
     end
@@ -101,14 +101,14 @@ describe Puppet::SSL::Key do
     end
 
     it "should convert the key to pem format when converted to a string" do
-      key = mock 'key', :to_pem => "pem"
+      key = double('key', :to_pem => "pem")
       @key.content = key
       expect(@key.to_s).to eq("pem")
     end
 
     it "should have a :to_text method that it delegates to the actual key" do
-      real_key = mock 'key'
-      real_key.expects(:to_text).returns "keytext"
+      real_key = double('key')
+      expect(real_key).to receive(:to_text).and_return("keytext")
       @key.content = real_key
       expect(@key.to_text).to eq("keytext")
     end
@@ -118,43 +118,43 @@ describe Puppet::SSL::Key do
     before do
       @instance = @class.new("test")
 
-      @key = mock 'key'
+      @key = double('key')
     end
 
     it "should create an instance of OpenSSL::PKey::RSA" do
-      OpenSSL::PKey::RSA.expects(:new).returns(@key)
+      expect(OpenSSL::PKey::RSA).to receive(:new).and_return(@key)
 
       @instance.generate
     end
 
     it "should create the private key with the keylength specified in the settings" do
       Puppet[:keylength] = 513
-      OpenSSL::PKey::RSA.expects(:new).with(513).returns(@key)
+      expect(OpenSSL::PKey::RSA).to receive(:new).with(513).and_return(@key)
 
       @instance.generate
     end
 
     it "should set the content to the generated key" do
-      OpenSSL::PKey::RSA.stubs(:new).returns(@key)
+      allow(OpenSSL::PKey::RSA).to receive(:new).and_return(@key)
       @instance.generate
       expect(@instance.content).to equal(@key)
     end
 
     it "should return the generated key" do
-      OpenSSL::PKey::RSA.stubs(:new).returns(@key)
+      allow(OpenSSL::PKey::RSA).to receive(:new).and_return(@key)
       expect(@instance.generate).to equal(@key)
     end
 
     it "should return the key in pem format" do
       @instance.generate
-      @instance.content.expects(:to_pem).returns "my normal key"
+      expect(@instance.content).to receive(:to_pem).and_return("my normal key")
       expect(@instance.to_s).to eq("my normal key")
     end
 
     describe "with a password file set" do
       it "should return a nil password if the password file does not exist" do
-        Puppet::FileSystem.expects(:exist?).with("/path/to/pass").returns false
-        Puppet::FileSystem.expects(:read).with("/path/to/pass", :encoding => Encoding::BINARY).never
+        expect(Puppet::FileSystem).to receive(:exist?).with("/path/to/pass").and_return(false)
+        expect(Puppet::FileSystem).not_to receive(:read).with("/path/to/pass", :encoding => Encoding::BINARY)
 
         @instance.password_file = "/path/to/pass"
 
@@ -162,8 +162,8 @@ describe Puppet::SSL::Key do
       end
 
       it "should return the contents of the password file as its password" do
-        Puppet::FileSystem.expects(:exist?).with("/path/to/pass").returns true
-        Puppet::FileSystem.expects(:read).with("/path/to/pass", :encoding => Encoding::BINARY).returns "my password"
+        expect(Puppet::FileSystem).to receive(:exist?).with("/path/to/pass").and_return(true)
+        expect(Puppet::FileSystem).to receive(:read).with("/path/to/pass", :encoding => Encoding::BINARY).and_return("my password")
 
         @instance.password_file = "/path/to/pass"
 
@@ -172,14 +172,14 @@ describe Puppet::SSL::Key do
 
       it "should export the private key to text using the password" do
         @instance.password_file = "/path/to/pass"
-        @instance.stubs(:password).returns "my password"
+        allow(@instance).to receive(:password).and_return("my password")
 
-        OpenSSL::PKey::RSA.expects(:new).returns(@key)
+        expect(OpenSSL::PKey::RSA).to receive(:new).and_return(@key)
         @instance.generate
 
-        cipher = mock 'cipher'
-        OpenSSL::Cipher::DES.expects(:new).with(:EDE3, :CBC).returns cipher
-        @key.expects(:export).with(cipher, "my password").returns "my encrypted key"
+        cipher = double('cipher')
+        expect(OpenSSL::Cipher::DES).to receive(:new).with(:EDE3, :CBC).and_return(cipher)
+        expect(@key).to receive(:export).with(cipher, "my password").and_return("my encrypted key")
 
         expect(@instance.to_s).to eq("my encrypted key")
       end

@@ -25,7 +25,7 @@ describe "Puppet defaults" do
 
   describe "when setting the :factpath" do
     it "should add the :factpath to Facter's search paths" do
-      Facter.expects(:search).with("/my/fact/path")
+      expect(Facter).to receive(:search).with("/my/fact/path")
 
       Puppet.settings[:factpath] = "/my/fact/path"
     end
@@ -82,19 +82,19 @@ describe "Puppet defaults" do
   end
 
   it "should use the service user and group for the yamldir" do
-    Puppet.settings.stubs(:service_user_available?).returns true
-    Puppet.settings.stubs(:service_group_available?).returns true
+    allow(Puppet.settings).to receive(:service_user_available?).and_return(true)
+    allow(Puppet.settings).to receive(:service_group_available?).and_return(true)
     expect(Puppet.settings.setting(:yamldir).owner).to eq(Puppet.settings[:user])
     expect(Puppet.settings.setting(:yamldir).group).to eq(Puppet.settings[:group])
   end
 
   it "should specify that the host private key should be owned by the service user" do
-    Puppet.settings.stubs(:service_user_available?).returns true
+    allow(Puppet.settings).to receive(:service_user_available?).and_return(true)
     expect(Puppet.settings.setting(:hostprivkey).owner).to eq(Puppet.settings[:user])
   end
 
   it "should specify that the host certificate should be owned by the service user" do
-    Puppet.settings.stubs(:service_user_available?).returns true
+    allow(Puppet.settings).to receive(:service_user_available?).and_return(true)
     expect(Puppet.settings.setting(:hostcert).owner).to eq(Puppet.settings[:user])
   end
 

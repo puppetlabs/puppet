@@ -250,7 +250,7 @@ describe "Puppet::InfoService" do
     it "avoids parsing file more than once when environments have same feature flag set" do
       # in this version of puppet, all environments are equal in this respect
       result = Puppet::Pops::Parser::EvaluatingParser.new.parse_file("#{code_dir}/fum.pp")
-      Puppet::Pops::Parser::EvaluatingParser.any_instance.expects(:parse_file).with("#{code_dir}/fum.pp").returns(result).once
+      expect_any_instance_of(Puppet::Pops::Parser::EvaluatingParser).to receive(:parse_file).with("#{code_dir}/fum.pp").once.and_return(result)
       files_production = ['fum.pp'].map {|f| File.join(code_dir, f) }
       files_test       = files_production
 

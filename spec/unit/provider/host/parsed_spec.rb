@@ -10,7 +10,7 @@ describe Puppet::Type.type(:host).provider(:parsed) do
     @host_class = Puppet::Type.type(:host)
     @provider = @host_class.provider(:parsed)
     @hostfile = tmpfile('hosts')
-    @provider.any_instance.stubs(:target).returns @hostfile
+    allow_any_instance_of(@provider).to receive(:target).and_return(@hostfile)
   end
 
   after :each do
@@ -19,7 +19,7 @@ describe Puppet::Type.type(:host).provider(:parsed) do
 
   def mkhost(args)
     hostresource = Puppet::Type::Host.new(:name => args[:name])
-    hostresource.stubs(:should).with(:target).returns @hostfile
+    allow(hostresource).to receive(:should).with(:target).and_return(@hostfile)
 
     # Using setters of provider to build our testobject
     # Note: We already proved, that in case of host_aliases
@@ -34,10 +34,10 @@ describe Puppet::Type.type(:host).provider(:parsed) do
   end
 
   def genhost(host)
-    @provider.stubs(:filetype).returns(Puppet::Util::FileType::FileTypeRam)
-    File.stubs(:chown)
-    File.stubs(:chmod)
-    Puppet::Util::SUIDManager.stubs(:asuser).yields
+    allow(@provider).to receive(:filetype).and_return(Puppet::Util::FileType::FileTypeRam)
+    allow(File).to receive(:chown)
+    allow(File).to receive(:chmod)
+    allow(Puppet::Util::SUIDManager).to receive(:asuser).and_yield
     host.flush
     @provider.target_object(@hostfile).read
   end

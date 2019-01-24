@@ -18,29 +18,29 @@ describe Puppet::Util::Logging do
   end
 
   it "should have a method for sending a log with a specified log level" do
-    @logger.expects(:to_s).returns "I'm a string!"
-    Puppet::Util::Log.expects(:create).with { |args| args[:source] == "I'm a string!" and args[:level] == "loglevel" and args[:message] == "mymessage" }
+    expect(@logger).to receive(:to_s).and_return("I'm a string!")
+    expect(Puppet::Util::Log).to receive(:create).with(hash_including(source: "I'm a string!", level: "loglevel", message: "mymessage"))
 
     @logger.send_log "loglevel", "mymessage"
   end
 
   describe "when sending a log" do
     it "should use the Log's 'create' entrance method" do
-      Puppet::Util::Log.expects(:create)
+      expect(Puppet::Util::Log).to receive(:create)
 
       @logger.notice "foo"
     end
 
     it "should send itself converted to a string as the log source" do
-      @logger.expects(:to_s).returns "I'm a string!"
-      Puppet::Util::Log.expects(:create).with { |args| args[:source] == "I'm a string!" }
+      expect(@logger).to receive(:to_s).and_return("I'm a string!")
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(source: "I'm a string!"))
 
       @logger.notice "foo"
     end
 
     it "should queue logs sent without a specified destination" do
       Puppet::Util::Log.close_all
-      Puppet::Util::Log.expects(:queuemessage)
+      expect(Puppet::Util::Log).to receive(:queuemessage)
 
       @logger.notice "foo"
     end
@@ -48,9 +48,9 @@ describe Puppet::Util::Logging do
     it "should use the path of any provided resource type" do
       resource = Puppet::Type.type(:host).new :name => "foo"
 
-      resource.expects(:path).returns "/path/to/host".to_sym
+      expect(resource).to receive(:path).and_return("/path/to/host".to_sym)
 
-      Puppet::Util::Log.expects(:create).with { |args| args[:source] == "/path/to/host" }
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(source: "/path/to/host"))
 
       resource.notice "foo"
     end
@@ -60,21 +60,21 @@ describe Puppet::Util::Logging do
 
       param = resource.parameter(:name)
 
-      param.expects(:path).returns "/path/to/param".to_sym
+      expect(param).to receive(:path).and_return("/path/to/param".to_sym)
 
-      Puppet::Util::Log.expects(:create).with { |args| args[:source] == "/path/to/param" }
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(source: "/path/to/param"))
 
       param.notice "foo"
     end
 
     it "should send the provided argument as the log message" do
-      Puppet::Util::Log.expects(:create).with { |args| args[:message] == "foo" }
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(message: "foo"))
 
       @logger.notice "foo"
     end
 
     it "should join any provided arguments into a single string for the message" do
-      Puppet::Util::Log.expects(:create).with { |args| args[:message] == "foo bar baz" }
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(message: "foo bar baz"))
 
       @logger.notice ["foo", "bar", "baz"]
     end
@@ -85,7 +85,7 @@ describe Puppet::Util::Logging do
 
         @logger.send(attr.to_s + "=", "myval")
 
-        Puppet::Util::Log.expects(:create).with { |args| args[attr] == "myval" }
+        expect(Puppet::Util::Log).to receive(:create).with(hash_including(attr => "myval"))
         @logger.notice "foo"
       end
     end
@@ -93,47 +93,41 @@ describe Puppet::Util::Logging do
 
   describe "when sending a deprecation warning" do
     it "does not log a message when deprecation warnings are disabled" do
-      Puppet.expects(:[]).with(:disable_warnings).returns %w[deprecations]
-      @logger.expects(:warning).never
+      expect(Puppet).to receive(:[]).with(:disable_warnings).and_return(%w[deprecations])
+      expect(@logger).not_to receive(:warning)
       @logger.deprecation_warning 'foo'
     end
 
     it "logs the message with warn" do
-      @logger.expects(:warning).with do |msg|
-        msg =~ /^foo\n/
-      end
+      expect(@logger).to receive(:warning).with(/^foo\n/)
       @logger.deprecation_warning 'foo'
     end
 
     it "only logs each offending line once" do
-      @logger.expects(:warning).with do |msg|
-        msg =~ /^foo\n/
-      end .once
+      expect(@logger).to receive(:warning).with(/^foo\n/).once
       5.times { @logger.deprecation_warning 'foo' }
     end
 
     it "ensures that deprecations from same origin are logged if their keys differ" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo/)).times(5)
+      expect(@logger).to receive(:warning).with(/deprecated foo/).exactly(5).times()
       5.times { |i| @logger.deprecation_warning('deprecated foo', :key => "foo#{i}") }
     end
 
     it "does not duplicate deprecations for a given key" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo/)).once
+      expect(@logger).to receive(:warning).with(/deprecated foo/).once
       5.times { @logger.deprecation_warning('deprecated foo', :key => 'foo-msg') }
     end
 
     it "only logs the first 100 messages" do
       (1..100).each { |i|
-        @logger.expects(:warning).with do |msg|
-          msg =~ /^#{i}\n/
-        end .once
+        expect(@logger).to receive(:warning).with(/^#{i}\n/).once
         # since the deprecation warning will only log each offending line once, we have to do some tomfoolery
         # here in order to make it think each of these calls is coming from a unique call stack; we're basically
         # mocking the method that it would normally use to find the call stack.
-        @logger.expects(:get_deprecation_offender).returns(["deprecation log count test ##{i}"])
+        expect(@logger).to receive(:get_deprecation_offender).and_return(["deprecation log count test ##{i}"])
         @logger.deprecation_warning i
       }
-      @logger.expects(:warning).with(101).never
+      expect(@logger).not_to receive(:warning).with(101)
       @logger.deprecation_warning 101
     end
   end
@@ -153,25 +147,25 @@ describe Puppet::Util::Logging do
     end
 
     it "warns with file and line" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*\(file: afile, line: 5\)/m))
+      expect(@logger).to receive(:warning).with(/deprecated foo.*\(file: afile, line: 5\)/m)
       @logger.puppet_deprecation_warning("deprecated foo", :file => 'afile', :line => 5)
     end
 
     it "warns keyed from file and line" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*\(file: afile, line: 5\)/m)).once
+      expect(@logger).to receive(:warning).with(/deprecated foo.*\(file: afile, line: 5\)/m).once
       5.times do
         @logger.puppet_deprecation_warning("deprecated foo", :file => 'afile', :line => 5)
       end
     end
 
     it "warns with separate key only once regardless of file and line" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*\(file: afile, line: 5\)/m)).once
+      expect(@logger).to receive(:warning).with(/deprecated foo.*\(file: afile, line: 5\)/m).once
       @logger.puppet_deprecation_warning("deprecated foo", :key => 'some_key', :file => 'afile', :line => 5)
       @logger.puppet_deprecation_warning("deprecated foo", :key => 'some_key', :file => 'bfile', :line => 3)
     end
 
     it "warns with key but no file and line" do
-      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*\(file: unknown, line: unknown\)/m))
+      expect(@logger).to receive(:warning).with(/deprecated foo.*\(file: unknown, line: unknown\)/m)
       @logger.puppet_deprecation_warning("deprecated foo", :key => 'some_key')
     end
   end
@@ -180,29 +174,24 @@ describe Puppet::Util::Logging do
     before(:each) {
       @logger.clear_deprecation_warnings
     }
-    after(:each) {
-      # this is required because of bugs in Mocha whe tearing down expectations for each test
-      # why it works elsewhere is a mystery.
-      @logger.unstub(:send_log)
-    }
 
     it "warns with file when only file is given" do
-      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(file: aFile\)/m))
+      expect(@logger).to receive(:send_log).with(:warning, /wet paint.*\(file: aFile\)/m)
       @logger.warn_once('kind', 'wp', "wet paint", 'aFile')
     end
 
     it "warns with unknown file and line when only line is given" do
-      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(line: 5\)/m))
+      expect(@logger).to receive(:send_log).with(:warning, /wet paint.*\(line: 5\)/m)
       @logger.warn_once('kind', 'wp', "wet paint", nil, 5)
     end
 
     it "warns with file and line when both are given" do
-      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*\(file: aFile, line: 5\)/m))
+      expect(@logger).to receive(:send_log).with(:warning, /wet paint.*\(file: aFile, line: 5\)/m)
       @logger.warn_once('kind', 'wp', "wet paint",'aFile', 5)
     end
 
     it "warns once per key" do
-      @logger.expects(:send_log).with(:warning, regexp_matches(/wet paint.*/m)).once
+      expect(@logger).to receive(:send_log).with(:warning, /wet paint.*/m).once
       5.times do
         @logger.warn_once('kind', 'wp', "wet paint")
       end
@@ -210,7 +199,7 @@ describe Puppet::Util::Logging do
 
     Puppet::Util::Log.eachlevel do |level|
       it "can use log level #{level}" do
-        @logger.expects(:send_log).with(level, regexp_matches(/wet paint.*/m)).once
+        expect(@logger).to receive(:send_log).with(level, /wet paint.*/m).once
         5.times do
           @logger.warn_once('kind', 'wp', "wet paint", nil, nil, level)
         end
@@ -221,17 +210,21 @@ describe Puppet::Util::Logging do
   describe "does not warn about undefined variables when disabled_warnings says so" do
     let(:logger) { LoggingTester.new }
 
-    around(:each) do |example|
+    before(:each) do
       Puppet.settings.initialize_global_settings
       logger.clear_deprecation_warnings
       Puppet[:disable_warnings] = ['undefined_variables']
-      example.run
+    end
+
+    after(:each) do
       Puppet[:disable_warnings] = []
-      logger.unstub(:send_log)
+      allow(Facter).to receive(:respond_to?).and_call_original()
+      allow(Facter).to receive(:debugging).and_call_original()
+      allow(logger).to receive(:send_log).and_call_original()
     end
 
     it "does not produce warning if kind is disabled" do
-      logger.expects(:send_log).never
+      expect(logger).not_to receive(:send_log)
       logger.warn_once('undefined_variables', 'wp', "wet paint")
     end
   end
@@ -239,17 +232,21 @@ describe Puppet::Util::Logging do
   describe "warns about undefined variables when deprecations are in disabled_warnings" do
     let(:logger) { LoggingTester.new }
 
-    around(:each) do |example|
+    before(:each) do
       Puppet.settings.initialize_global_settings
       logger.clear_deprecation_warnings
       Puppet[:disable_warnings] = ['deprecations']
-      example.run
+    end
+
+    after(:each) do
       Puppet[:disable_warnings] = []
-      logger.unstub(:send_log)
+      allow(Facter).to receive(:respond_to?).and_call_original()
+      allow(Facter).to receive(:debugging).and_call_original()
+      allow(logger).to receive(:send_log).and_call_original()
     end
 
     it "produces warning even if deprecation warnings are disabled " do
-      logger.expects(:send_log).with(:warning, regexp_matches(/wet paint/)).once
+      expect(logger).to receive(:send_log).with(:warning, /wet paint/).once
       logger.warn_once('undefined_variables', 'wp', "wet paint")
     end
   end
@@ -284,49 +281,49 @@ original
     after :each do
       # Unstub these calls as there is global code run after
       # each spec that may reset the log level to debug
-      Facter.unstub(:respond_to?)
-      Facter.unstub(:debugging)
+      allow(Facter).to receive(:respond_to?).and_call_original()
+      allow(Facter).to receive(:debugging).and_call_original()
     end
 
     describe 'does support debugging' do
       before :each do
-        Facter.stubs(:respond_to?).with(:debugging).returns true
+        allow(Facter).to receive(:respond_to?).with(:debugging).and_return(true)
       end
 
       it 'enables Facter debugging when debug level' do
-        Facter.stubs(:debugging).with(true)
+        allow(Facter).to receive(:debugging).with(true)
         Puppet::Util::Log.level = :debug
       end
 
       it 'disables Facter debugging when not debug level' do
-        Facter.stubs(:debugging).with(false)
+        allow(Facter).to receive(:debugging).with(false)
         Puppet::Util::Log.level = :info
       end
     end
 
     describe 'does support trace' do
       before :each do
-        Facter.stubs(:respond_to?).with(:trace).returns true
+        allow(Facter).to receive(:respond_to?).with(:trace).and_return(true)
       end
 
       it 'enables Facter trace when enabled' do
-        Facter.stubs(:trace).with(true)
+        allow(Facter).to receive(:trace).with(true)
         Puppet[:trace] = true
       end
 
       it 'disables Facter trace when disabled' do
-        Facter.stubs(:trace).with(false)
+        allow(Facter).to receive(:trace).with(false)
         Puppet[:trace] = false
       end
     end
 
     describe 'does support on_message' do
       before :each do
-        Facter.stubs(:respond_to?).with(:on_message).returns true
+        allow(Facter).to receive(:respond_to?).with(:on_message).and_return(true)
       end
 
       def setup(level, message)
-        Facter.stubs(:on_message).yields level, message
+        allow(Facter).to receive(:on_message).and_yield(level, message)
 
         # Transform from Facter level to Puppet level
         case level
@@ -340,11 +337,7 @@ original
           level = :crit
         end
 
-        Puppet::Util::Log.stubs(:create).with do |options|
-          expect(options[:level]).to eq(level)
-          expect(options[:message]).to eq(message)
-          expect(options[:source]).to eq('Facter')
-        end.once
+        allow(Puppet::Util::Log).to receive(:create).with(hash_including(level: level, message: message, source: 'Facter')).once
       end
 
       [:trace, :debug, :info, :warn, :error, :fatal].each do |level|

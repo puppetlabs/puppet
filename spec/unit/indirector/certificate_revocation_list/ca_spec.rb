@@ -8,7 +8,7 @@ describe Puppet::SSL::CertificateRevocationList::Ca do
   end
 
   it "should use the :cacrl setting as the crl location" do
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
     Puppet[:cacrl] = File.expand_path("/request/dir")
     expect(Puppet::SSL::CertificateRevocationList::Ca.new.path("whatever")).to eq(Puppet[:cacrl])
   end

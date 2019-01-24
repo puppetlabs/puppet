@@ -22,7 +22,7 @@ describe Puppet::Forge do
   let (:mixed_utf8_query_param) { "foo + A\u06FF\u16A0\u{2070E}" } # Aۿᚠ
   let (:mixed_utf8_query_param_encoded) { "foo%20%2B%20A%DB%BF%E1%9A%A0%F0%A0%9C%8E"}
   let (:empty_json) { '{ "results": [], "pagination" : { "next" : null } }' }
-  let (:ok_response) { stub('response', :code => '200', :body => empty_json) }
+  let (:ok_response) { double('response', :code => '200', :body => empty_json) }
 
   describe "making a" do
     before :each do
@@ -36,7 +36,7 @@ describe Puppet::Forge do
         # ignores Puppet::Forge::Repository#read_response, provides response to search
         performs_an_http_request(ok_response) do |http|
           encoded_uri = "/v3/modules?query=#{mixed_utf8_query_param_encoded}&module_groups=base%20pe"
-          http.expects(:request).with(responds_with(:path, encoded_uri))
+          expect(http).to receive(:request).with(have_attributes(path: encoded_uri))
         end
 
         forge.search(mixed_utf8_query_param)
@@ -46,7 +46,7 @@ describe Puppet::Forge do
         # ignores Puppet::Forge::Repository#read_response, provides response to search
         performs_an_http_request(ok_response) do |http|
           encoded_uri = "/v3/modules?query=#{mixed_utf8_query_param_encoded}"
-          http.expects(:request).with(responds_with(:path, encoded_uri))
+          expect(http).to receive(:request).with(have_attributes(path: encoded_uri))
         end
 
         forge.search(mixed_utf8_query_param)
@@ -63,7 +63,7 @@ describe Puppet::Forge do
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
           encoded_uri = "/v3/releases?module=#{module_name}&sort_by=version&exclude_fields=#{exclusions}&module_groups=base%20pe"
-          http.expects(:request).with(responds_with(:path, encoded_uri))
+          expect(http).to receive(:request).with(have_attributes(path: encoded_uri))
         end
 
         forge.fetch(module_name)
@@ -76,7 +76,7 @@ describe Puppet::Forge do
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
           encoded_uri = "/v3/releases?module=puppetlabs-#{mixed_utf8_query_param_encoded}&sort_by=version&exclude_fields=#{exclusions}"
-          http.expects(:request).with(responds_with(:path, encoded_uri))
+          expect(http).to receive(:request).with(have_attributes(path: encoded_uri))
         end
 
         forge.fetch(module_name)
@@ -95,17 +95,17 @@ describe Puppet::Forge do
   end
 
   def mock_proxy(port, proxy_args, result, &block)
-    http = mock("http client")
-    proxy = mock("http proxy")
-    proxy_class = mock("http proxy class")
+    http = double("http client")
+    proxy = double("http proxy")
+    proxy_class = double("http proxy class")
 
-    Net::HTTP.expects(:Proxy).with(*proxy_args).returns(proxy_class)
-    proxy_class.expects(:new).with(host, port).returns(proxy)
+    expect(Net::HTTP).to receive(:Proxy).with(*proxy_args).and_return(proxy_class)
+    expect(proxy_class).to receive(:new).with(host, port).and_return(proxy)
 
-    proxy.expects(:open_timeout=)
-    proxy.expects(:read_timeout=)
+    expect(proxy).to receive(:open_timeout=)
+    expect(proxy).to receive(:read_timeout=)
 
-    proxy.expects(:start).yields(http).returns(result)
+    expect(proxy).to receive(:start).and_yield(http).and_return(result)
     yield http
 
     proxy

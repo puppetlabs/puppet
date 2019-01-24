@@ -83,7 +83,7 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
 
             context "with selinux" do
               it "should return correct values based on SELinux state" do
-                sel_param.stubs(:debug)
+                allow(sel_param).to receive(:debug)
                 expectedresult = case param
                   when :seluser; "user_u"
                   when :selrole; "object_r"
@@ -96,14 +96,14 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
 
             context 'without selinux' do
               it 'should not try to determine the initial state' do
-                Puppet::Type::K5login::ProviderK5login.any_instance.stubs(:selinux_support?).returns false
+                allow_any_instance_of(Puppet::Type::K5login::ProviderK5login).to receive(:selinux_support?).and_return(false)
 
                 expect(subject[:selrole]).to be_nil
               end
 
               it "should do nothing for safe_insync? if no SELinux support" do
                 sel_param.should = 'newcontext'
-                sel_param.expects(:selinux_support?).returns false
+                expect(sel_param).to receive(:selinux_support?).and_return(false)
                 expect(sel_param.safe_insync?('oldcontext')).to eq(true)
               end
             end

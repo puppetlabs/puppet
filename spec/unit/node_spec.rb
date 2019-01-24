@@ -268,18 +268,18 @@ describe Puppet::Node, "when merging facts" do
     let(:facts) { Puppet::Node::Facts.new(@node.name, "foo" => "bar") }
 
     it "accepts facts to merge with the node" do
-      @node.expects(:merge).with({ 'foo' => 'bar' })
+      expect(@node).to receive(:merge).with({ 'foo' => 'bar' })
       @node.fact_merge(facts)
     end
 
     it "will not query the facts indirection if facts are supplied" do
-      Puppet::Node::Facts.indirection.expects(:find).never
+      expect(Puppet::Node::Facts.indirection).not_to receive(:find)
       @node.fact_merge(facts)
     end
   end
 
   it "recovers with a Puppet::Error if something is thrown from the facts indirection" do
-    Puppet::Node::Facts.indirection.expects(:find).raises "something bad happened in the indirector"
+    expect(Puppet::Node::Facts.indirection).to receive(:find).and_raise("something bad happened in the indirector")
     expect { @node.fact_merge }.to raise_error(Puppet::Error, /Could not retrieve facts for testnode: something bad happened in the indirector/)
   end
 
@@ -297,7 +297,7 @@ describe Puppet::Node, "when merging facts" do
 
   it "warns when a parameter value is not updated" do
     @node = Puppet::Node.new("testnode", :parameters => {"one" => "a"})
-    Puppet.expects(:warning).with('The node parameter \'one\' for node \'testnode\' was already set to \'a\'. It could not be set to \'b\'')
+    expect(Puppet).to receive(:warning).with('The node parameter \'one\' for node \'testnode\' was already set to \'a\'. It could not be set to \'b\'')
     @node.merge "one" => "b"
   end
 

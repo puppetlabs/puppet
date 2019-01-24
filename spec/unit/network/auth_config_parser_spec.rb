@@ -47,53 +47,52 @@ describe Puppet::Network::AuthConfigParser do
     end
 
     it "should strip whitespace around ACE" do
-      Puppet::Network::Rights::Right.any_instance.expects(:allow).with('127.0.0.1')
-      Puppet::Network::Rights::Right.any_instance.expects(:allow).with('172.16.10.0')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:allow).with('127.0.0.1')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:allow).with('172.16.10.0')
 
       described_class.new("path /\n allow 127.0.0.1 , 172.16.10.0  ").parse_rights
     end
 
     it "should allow ACE inline comments" do
-
-      Puppet::Network::Rights::Right.any_instance.expects(:allow).with('127.0.0.1')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:allow).with('127.0.0.1')
 
       described_class.new("path /\n allow 127.0.0.1 # will it work?").parse_rights
     end
 
     it "should create an allow ACE on each subsequent allow" do
-      Puppet::Network::Rights::Right.any_instance.expects(:allow).with('127.0.0.1')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:allow).with('127.0.0.1')
 
       described_class.new("path /\nallow 127.0.0.1").parse_rights
     end
 
     it "should create a deny ACE on each subsequent deny" do
-      Puppet::Network::Rights::Right.any_instance.expects(:deny).with('127.0.0.1')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:deny).with('127.0.0.1')
 
       described_class.new("path /\ndeny 127.0.0.1").parse_rights
     end
 
     it "should inform the current ACL if we get the 'method' directive" do
-      Puppet::Network::Rights::Right.any_instance.expects(:restrict_method).with('search')
-      Puppet::Network::Rights::Right.any_instance.expects(:restrict_method).with('find')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:restrict_method).with('search')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:restrict_method).with('find')
 
       described_class.new("path /certificates\nmethod search,find").parse_rights
     end
 
     it "should inform the current ACL if we get the 'environment' directive" do
-      Puppet::Network::Rights::Right.any_instance.expects(:restrict_environment).with('production')
-      Puppet::Network::Rights::Right.any_instance.expects(:restrict_environment).with('development')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:restrict_environment).with('production')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:restrict_environment).with('development')
 
       described_class.new("path /certificates\nenvironment production,development").parse_rights
     end
 
     it "should inform the current ACL if we get the 'auth' directive" do
-      Puppet::Network::Rights::Right.any_instance.expects(:restrict_authenticated).with('yes')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:restrict_authenticated).with('yes')
 
       described_class.new("path /certificates\nauth yes").parse_rights
     end
 
     it "should also allow the long form 'authenticated' directive" do
-      Puppet::Network::Rights::Right.any_instance.expects(:restrict_authenticated).with('yes')
+      expect_any_instance_of(Puppet::Network::Rights::Right).to receive(:restrict_authenticated).with('yes')
 
       described_class.new("path /certificates\nauthenticated yes").parse_rights
     end

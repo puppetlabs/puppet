@@ -111,19 +111,18 @@ describe Puppet::Util::IniConfig::PhysicalFile do
 
   describe "when reading a file" do
     it "raises an error if the file does not exist" do
-      subject.filetype.stubs(:read)
+      allow(subject.filetype).to receive(:read)
       expect {
         subject.read
       }.to raise_error(%r[Cannot read nonexistent file .*/some/nonexistent/file])
     end
 
     it "passes the contents of the file to #parse" do
-      subject.filetype.stubs(:read).returns "[section]"
-      subject.expects(:parse).with("[section]")
+      allow(subject.filetype).to receive(:read).and_return("[section]")
+      expect(subject).to receive(:parse).with("[section]")
 
       subject.read
     end
-
   end
 
   describe "when parsing a file" do
@@ -148,7 +147,7 @@ describe Puppet::Util::IniConfig::PhysicalFile do
       end
 
       it "raises an error if a section is redefined in the file collection" do
-        subject.file_collection = stub('file collection', :get_section => true)
+        subject.file_collection = double('file collection', :get_section => true)
         text = "[mysect]\n[mysect]\n"
 
         expect {
@@ -323,7 +322,7 @@ INIFILE
       describe "and destroy_empty is true" do
         before { subject.destroy_empty = true }
         it "removes the file if there are no sections" do
-          File.expects(:unlink)
+          expect(File).to receive(:unlink)
           subject.store
         end
 
@@ -332,7 +331,7 @@ INIFILE
           first_sect.destroy = true
           second_sect.destroy = true
 
-          File.expects(:unlink)
+          expect(File).to receive(:unlink)
           subject.store
         end
 
@@ -341,8 +340,8 @@ INIFILE
           first_sect.destroy = true
           second_sect.destroy = false
 
-          File.expects(:unlink).never
-          subject.filetype.stubs(:write)
+          expect(File).not_to receive(:unlink)
+          allow(subject.filetype).to receive(:write)
           subject.store
         end
       end
@@ -352,9 +351,9 @@ INIFILE
         first_sect.destroy = true
         second_sect.destroy = true
 
-        File.expects(:unlink).never
-        subject.stubs(:format).returns "formatted"
-        subject.filetype.expects(:write).with("formatted")
+        expect(File).not_to receive(:unlink)
+        allow(subject).to receive(:format).and_return("formatted")
+        expect(subject.filetype).to receive(:write).with("formatted")
         subject.store
       end
     end
@@ -364,8 +363,8 @@ INIFILE
       first_sect.mark_dirty
       second_sect.mark_clean
 
-      subject.stubs(:format).returns "formatted"
-      subject.filetype.expects(:write).with("formatted")
+      allow(subject).to receive(:format).and_return("formatted")
+      expect(subject.filetype).to receive(:write).with("formatted")
       subject.store
     end
 
@@ -374,8 +373,8 @@ INIFILE
       first_sect.mark_clean
       second_sect.mark_clean
 
-      subject.stubs(:format).returns "formatted"
-      subject.filetype.expects(:write).never
+      allow(subject).to receive(:format).and_return("formatted")
+      expect(subject.filetype).not_to receive(:write)
       subject.store
     end
   end
@@ -400,20 +399,20 @@ describe Puppet::Util::IniConfig::FileCollection do
   end
 
   describe "reading a file" do
-    let(:stub_file) { stub('Physical file') }
+    let(:stub_file) { double('Physical file') }
 
     it "creates a new PhysicalFile and uses that to read the file" do
-      stub_file.expects(:read)
-      stub_file.expects(:file_collection=)
-      Puppet::Util::IniConfig::PhysicalFile.expects(:new).with(path_a).returns stub_file
+      expect(stub_file).to receive(:read)
+      expect(stub_file).to receive(:file_collection=)
+      expect(Puppet::Util::IniConfig::PhysicalFile).to receive(:new).with(path_a).and_return(stub_file)
 
       subject.read(path_a)
     end
 
     it "stores the PhysicalFile and the path to the file" do
-      stub_file.stubs(:read)
-      stub_file.stubs(:file_collection=)
-      Puppet::Util::IniConfig::PhysicalFile.stubs(:new).with(path_a).returns stub_file
+      allow(stub_file).to receive(:read)
+      allow(stub_file).to receive(:file_collection=)
+      allow(Puppet::Util::IniConfig::PhysicalFile).to receive(:new).with(path_a).and_return(stub_file)
       subject.read(path_a)
 
       path, physical_file = subject.files.first
@@ -430,8 +429,8 @@ describe Puppet::Util::IniConfig::FileCollection do
     end
 
     it "stores all files in the collection" do
-      file_a.expects(:store).once
-      file_b.expects(:store).once
+      expect(file_a).to receive(:store).once
+      expect(file_b).to receive(:store).once
 
       subject.store
     end
@@ -445,7 +444,7 @@ describe Puppet::Util::IniConfig::FileCollection do
 
     it "yields every section from every file" do
       [sect_a1, sect_a2, sect_b1, sect_b2].each do |sect|
-        sect.expects(:touch).once
+        expect(sect).to receive(:touch).once
       end
 
       subject.each_section do |sect|
@@ -512,7 +511,7 @@ describe Puppet::Util::IniConfig::FileCollection do
     end
 
     it "adds the section to the appropriate file" do
-      file_a.expects(:add_section).with('newsect')
+      expect(file_a).to receive(:add_section).with('newsect')
       subject.add_section('newsect', path_a)
     end
   end

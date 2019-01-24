@@ -16,19 +16,19 @@ describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
     end
 
     it "uses the :server_datadir setting if this is the master" do
-      Puppet.run_mode.stubs(:master?).returns(true)
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       expected = File.join(Puppet[:server_datadir], 'indirector_testing', 'testing.msgpack')
       expect(subject.path('testing')).to eq(expected)
     end
 
     it "uses the :client_datadir setting if this is not the master" do
-      Puppet.run_mode.stubs(:master?).returns(false)
+      allow(Puppet.run_mode).to receive(:master?).and_return(false)
       expected = File.join(Puppet[:client_datadir], 'indirector_testing', 'testing.msgpack')
       expect(subject.path('testing')).to eq(expected)
     end
 
     it "overrides the default extension with a supplied value" do
-      Puppet.run_mode.stubs(:master?).returns(true)
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       expected = File.join(Puppet[:server_datadir], 'indirector_testing', 'testing.not-msgpack')
       expect(subject.path('testing', '.not-msgpack')).to eq(expected)
     end
@@ -50,7 +50,7 @@ describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
 
   context "handling requests" do
     before :each do
-      Puppet.run_mode.stubs(:master?).returns(true)
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       Puppet[:server_datadir] = tmpdir('msgpackdir')
       FileUtils.mkdir_p(File.join(Puppet[:server_datadir], 'indirector_testing'))
     end
@@ -90,7 +90,7 @@ describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
           # I don't like this, but there isn't a credible alternative that
           # also works on Windows, so a stub it is. At least the expectation
           # will fail if the implementation changes. Sorry to the next dev.
-          Puppet::FileSystem.expects(:read).with(file, {:encoding => 'utf-8'}).raises(Errno::EPERM)
+          expect(Puppet::FileSystem).to receive(:read).with(file, {:encoding => 'utf-8'}).and_raise(Errno::EPERM)
           expect { subject.find(request) }.
             to raise_error Puppet::Error, /Could not read MessagePack/
         end
@@ -148,18 +148,17 @@ describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
       end
 
       it "raises an informative error for other failures" do
-        Puppet::FileSystem.stubs(:unlink).with(file).raises(Errno::EPERM, 'fake permission problem')
+        allow(Puppet::FileSystem).to receive(:unlink).with(file).and_raise(Errno::EPERM, 'fake permission problem')
         with_content('hello') do
           expect { subject.destroy(request) }.to raise_error(Puppet::Error)
         end
-        Puppet::FileSystem.unstub(:unlink)    # thanks, mocha
       end
     end
   end
 
   context "#search" do
     before :each do
-      Puppet.run_mode.stubs(:master?).returns(true)
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       Puppet[:server_datadir] = tmpdir('msgpackdir')
       FileUtils.mkdir_p(File.join(Puppet[:server_datadir], 'indirector_testing'))
     end

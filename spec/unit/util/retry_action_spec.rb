@@ -22,8 +22,8 @@ describe Puppet::Util::RetryAction do
   end
 
   it 'should retry on any exception if no acceptable exceptions given' do
-    Puppet::Util::RetryAction.expects(:sleep).with( (((2 ** 1) -1) * 0.1) )
-    Puppet::Util::RetryAction.expects(:sleep).with( (((2 ** 2) -1) * 0.1) )
+    expect(Puppet::Util::RetryAction).to receive(:sleep).with( (((2 ** 1) -1) * 0.1) )
+    expect(Puppet::Util::RetryAction).to receive(:sleep).with( (((2 ** 2) -1) * 0.1) )
 
     expect do
       Puppet::Util::RetryAction.retry_action( :retries => 2 ) do
@@ -33,8 +33,8 @@ describe Puppet::Util::RetryAction do
   end
 
   it 'should retry on acceptable exceptions' do
-    Puppet::Util::RetryAction.expects(:sleep).with( (((2 ** 1) -1) * 0.1) )
-    Puppet::Util::RetryAction.expects(:sleep).with( (((2 ** 2) -1) * 0.1) )
+    expect(Puppet::Util::RetryAction).to receive(:sleep).with( (((2 ** 1) -1) * 0.1) )
+    expect(Puppet::Util::RetryAction).to receive(:sleep).with( (((2 ** 2) -1) * 0.1) )
 
     expect do
       Puppet::Util::RetryAction.retry_action( :retries => 2, :retry_exceptions => exceptions) do
@@ -44,7 +44,7 @@ describe Puppet::Util::RetryAction do
   end
 
   it 'should not retry on unacceptable exceptions' do
-    Puppet::Util::RetryAction.expects(:sleep).never
+    expect(Puppet::Util::RetryAction).not_to receive(:sleep)
 
     expect do
       Puppet::Util::RetryAction.retry_action( :retries => 2, :retry_exceptions => exceptions) do
@@ -54,7 +54,7 @@ describe Puppet::Util::RetryAction do
   end
 
   it 'should succeed if nothing is raised' do
-    Puppet::Util::RetryAction.expects(:sleep).never
+    expect(Puppet::Util::RetryAction).not_to receive(:sleep)
 
     Puppet::Util::RetryAction.retry_action( :retries => 2) do
       true
@@ -63,7 +63,7 @@ describe Puppet::Util::RetryAction do
 
   it 'should succeed if an expected exception is raised retried and succeeds' do
     should_retry = nil
-    Puppet::Util::RetryAction.expects(:sleep).once
+    expect(Puppet::Util::RetryAction).to receive(:sleep).once
 
     Puppet::Util::RetryAction.retry_action( :retries => 2, :retry_exceptions => exceptions) do
       if should_retry

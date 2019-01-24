@@ -54,7 +54,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         checksum_value = save_bucket_file(first_contents, "/foo/bar")
 
         # We expect Puppet to log an error with the path to the file
-        Puppet.expects(:err).with(regexp_matches(/Unable to verify existing FileBucket backup at '#{Puppet[:bucketdir]}.*#{checksum_value}\/contents'/))
+        expect(Puppet).to receive(:err).with(/Unable to verify existing FileBucket backup at '#{Puppet[:bucketdir]}.*#{checksum_value}\/contents'/)
 
         # But the exception should not contain it
         expect do
@@ -79,7 +79,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         end
 
         it "issues a warning that the backup will be overwritten" do
-          Puppet.expects(:warning).with(regexp_matches(/Existing backup does not match its expected sum, #{bucket_file.checksum}/))
+          expect(Puppet).to receive(:warning).with(/Existing backup does not match its expected sum, #{bucket_file.checksum}/)
           Puppet::FileBucket::File.indirection.save(bucket_file)
         end
 
@@ -337,7 +337,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         describe "when #{supply_path ? 'supplying' : 'not supplying'} a path" do
           with_digest_algorithms do
             before :each do
-              Puppet.settings.stubs(:use)
+              allow(Puppet.settings).to receive(:use)
               @store = Puppet::FileBucketFile::File.new
 
               @bucket_top_dir = tmpdir("bucket")

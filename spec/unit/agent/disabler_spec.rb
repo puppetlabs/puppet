@@ -26,7 +26,7 @@ describe Puppet::Agent::Disabler do
     lockfile = File.expand_path("/my/lock.disabled")
     Puppet[:agent_disabled_lockfile] = lockfile
     lock = Puppet::Util::JsonLockfile.new(lockfile)
-    Puppet::Util::JsonLockfile.expects(:new).with(lockfile).returns lock
+    expect(Puppet::Util::JsonLockfile).to receive(:new).with(lockfile).and_return(lock)
 
     @disabler.send(:disable_lockfile)
   end
@@ -36,19 +36,19 @@ describe Puppet::Agent::Disabler do
   end
 
   it "should lock the file when disabled" do
-    @disabler.send(:disable_lockfile).expects(:lock)
+    expect(@disabler.send(:disable_lockfile)).to receive(:lock)
 
     @disabler.disable
   end
 
   it "should unlock the file when enabled" do
-    @disabler.send(:disable_lockfile).expects(:unlock)
+    expect(@disabler.send(:disable_lockfile)).to receive(:unlock)
 
     @disabler.enable
   end
 
   it "should check the lock if it is disabled" do
-    @disabler.send(:disable_lockfile).expects(:locked?)
+    expect(@disabler.send(:disable_lockfile)).to receive(:locked?)
 
     @disabler.disabled?
   end

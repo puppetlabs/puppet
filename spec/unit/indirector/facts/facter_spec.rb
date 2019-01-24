@@ -1,7 +1,6 @@
 require 'spec_helper'
 require 'puppet/indirector/facts/facter'
 
-module NodeFactsFacterSpec
 describe Puppet::Node::Facts::Facter do
   FS = Puppet::FileSystem
 
@@ -23,38 +22,35 @@ describe Puppet::Node::Facts::Facter do
   end
 
   before :each do
-    Puppet::Node::Facts::Facter.stubs(:reload_facter)
+    allow(Puppet::Node::Facts::Facter).to receive(:reload_facter)
     @facter = Puppet::Node::Facts::Facter.new
-    Facter.stubs(:to_hash).returns({})
+    allow(Facter).to receive(:to_hash).and_return({})
     @name = "me"
-    @request = stub 'request', :key => @name
-    @environment = stub 'environment'
-    @request.stubs(:environment).returns(@environment)
-    @request.environment.stubs(:modules).returns([])
-    @request.environment.stubs(:modulepath).returns([])
+    @request = double('request', :key => @name)
+    @environment = double('environment')
+    allow(@request).to receive(:environment).and_return(@environment)
+    allow(@request.environment).to receive(:modules).and_return([])
+    allow(@request.environment).to receive(:modulepath).and_return([])
   end
 
   describe 'when finding facts' do
     it 'should reset facts' do
-      reset = sequence 'reset'
-      Facter.expects(:reset).in_sequence(reset)
-      Puppet::Node::Facts::Facter.expects(:setup_search_paths).in_sequence(reset)
+      expect(Facter).to receive(:reset).ordered
+      expect(Puppet::Node::Facts::Facter).to receive(:setup_search_paths).ordered
       @facter.find(@request)
     end
 
     it 'should add the puppetversion and agent_specified_environment facts' do
-      reset = sequence 'reset'
-      Facter.expects(:reset).in_sequence(reset)
-      Facter.expects(:add).with(:puppetversion)
-      Facter.expects(:add).with(:agent_specified_environment)
+      expect(Facter).to receive(:reset).ordered
+      expect(Facter).to receive(:add).with(:puppetversion)
+      expect(Facter).to receive(:add).with(:agent_specified_environment)
       @facter.find(@request)
     end
 
     it 'should include external facts' do
-      reset = sequence 'reset'
-      Facter.expects(:reset).in_sequence(reset)
-      Puppet::Node::Facts::Facter.expects(:setup_external_search_paths).in_sequence(reset)
-      Puppet::Node::Facts::Facter.expects(:setup_search_paths).in_sequence(reset)
+      expect(Facter).to receive(:reset).ordered
+      expect(Puppet::Node::Facts::Facter).to receive(:setup_external_search_paths).ordered
+      expect(Puppet::Node::Facts::Facter).to receive(:setup_search_paths).ordered
       @facter.find(@request)
     end
 
@@ -67,23 +63,23 @@ describe Puppet::Node::Facts::Facter do
     end
 
     it "should return the Facter facts as the values in the Facts instance" do
-      Facter.expects(:to_hash).returns("one" => "two")
+      expect(Facter).to receive(:to_hash).and_return("one" => "two")
       facts = @facter.find(@request)
       expect(facts.values["one"]).to eq("two")
     end
 
     it "should add local facts" do
       facts = Puppet::Node::Facts.new("foo")
-      Puppet::Node::Facts.expects(:new).returns facts
-      facts.expects(:add_local_facts)
+      expect(Puppet::Node::Facts).to receive(:new).and_return(facts)
+      expect(facts).to receive(:add_local_facts)
 
       @facter.find(@request)
     end
 
     it "should sanitize facts" do
       facts = Puppet::Node::Facts.new("foo")
-      Puppet::Node::Facts.expects(:new).returns facts
-      facts.expects(:sanitize)
+      expect(Puppet::Node::Facts).to receive(:new).and_return(facts)
+      expect(facts).to receive(:sanitize)
 
       @facter.find(@request)
     end
@@ -106,26 +102,26 @@ describe Puppet::Node::Facts::Facter do
     let(:modulepluginsfacter) { File.expand_path 'module/foo/plugins/facter' }
 
     before :each do
-      FileTest.expects(:directory?).with(factpath1).returns true
-      FileTest.expects(:directory?).with(factpath2).returns true
-      @request.environment.stubs(:modulepath).returns [modulepath]
-      Dir.expects(:glob).with("#{modulepath}/*/lib/facter").returns [modulelibfacter]
-      Dir.expects(:glob).with("#{modulepath}/*/plugins/facter").returns [modulepluginsfacter]
+      expect(FileTest).to receive(:directory?).with(factpath1).and_return(true)
+      expect(FileTest).to receive(:directory?).with(factpath2).and_return(true)
+      allow(@request.environment).to receive(:modulepath).and_return([modulepath])
+      expect(Dir).to receive(:glob).with("#{modulepath}/*/lib/facter").and_return([modulelibfacter])
+      expect(Dir).to receive(:glob).with("#{modulepath}/*/plugins/facter").and_return([modulepluginsfacter])
 
       Puppet[:factpath] = factpath
     end
 
     it 'should skip files' do
-      FileTest.expects(:directory?).with(modulelibfacter).returns false
-      FileTest.expects(:directory?).with(modulepluginsfacter).returns false
-      Facter.expects(:search).with(factpath1, factpath2)
+      expect(FileTest).to receive(:directory?).with(modulelibfacter).and_return(false)
+      expect(FileTest).to receive(:directory?).with(modulepluginsfacter).and_return(false)
+      expect(Facter).to receive(:search).with(factpath1, factpath2)
       Puppet::Node::Facts::Facter.setup_search_paths @request
     end
 
     it 'should add directories' do
-      FileTest.expects(:directory?).with(modulelibfacter).returns true
-      FileTest.expects(:directory?).with(modulepluginsfacter).returns true
-      Facter.expects(:search).with(modulelibfacter, modulepluginsfacter, factpath1, factpath2)
+      expect(FileTest).to receive(:directory?).with(modulelibfacter).and_return(true)
+      expect(FileTest).to receive(:directory?).with(modulepluginsfacter).and_return(true)
+      expect(Facter).to receive(:search).with(modulelibfacter, modulepluginsfacter, factpath1, factpath2)
       Puppet::Node::Facts::Facter.setup_search_paths @request
     end
   end
@@ -136,23 +132,22 @@ describe Puppet::Node::Facts::Facter do
     let(:modulefactsd) { File.expand_path 'module/foo/facts.d'  }
 
     before :each do
-      FileTest.expects(:directory?).with(pluginfactdest).returns true
+      expect(FileTest).to receive(:directory?).with(pluginfactdest).and_return(true)
       mod = Puppet::Module.new('foo', modulepath, @request.environment)
-      @request.environment.stubs(:modules).returns [mod]
+      allow(@request.environment).to receive(:modules).and_return([mod])
       Puppet[:pluginfactdest] = pluginfactdest
     end
 
     it 'should skip files' do
-      File.expects(:directory?).with(modulefactsd).returns false
-      Facter.expects(:search_external).with [pluginfactdest]
+      expect(File).to receive(:directory?).with(modulefactsd).and_return(false)
+      expect(Facter).to receive(:search_external).with([pluginfactdest])
       Puppet::Node::Facts::Facter.setup_external_search_paths @request
     end
 
     it 'should add directories' do
-      File.expects(:directory?).with(modulefactsd).returns true
-      Facter.expects(:search_external).with [modulefactsd, pluginfactdest]
+      expect(File).to receive(:directory?).with(modulefactsd).and_return(true)
+      expect(Facter).to receive(:search_external).with([modulefactsd, pluginfactdest])
       Puppet::Node::Facts::Facter.setup_external_search_paths @request
     end
   end
-end
 end

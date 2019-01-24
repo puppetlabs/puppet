@@ -54,19 +54,19 @@ describe Puppet::Indirector::FileMetadata::FileServer, " when finding files" do
   describe "when node name expansions are used" do
     with_checksum_types("file_server_testing", "mynode/myfile") do
       it "should return the correct metadata" do
-        Puppet::FileSystem.stubs(:exist?).with(checksum_file).returns true
-        Puppet::FileSystem.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(checksum_file).and_return(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(Puppet[:fileserverconfig]).and_return(true)
 
         # Use a real mount, so the integration is a bit deeper.
         mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
-        mount1.stubs(:globalallow?).returns true
-        mount1.stubs(:allowed?).returns true
+        allow(mount1).to receive(:globalallow?).and_return(true)
+        allow(mount1).to receive(:allowed?).and_return(true)
         mount1.path = File.join(env_path, "%h")
 
-        parser = stub 'parser', :changed? => false
-        parser.stubs(:parse).returns("one" => mount1)
+        parser = double('parser', :changed? => false)
+        allow(parser).to receive(:parse).and_return("one" => mount1)
 
-        Puppet::FileServing::Configuration::Parser.stubs(:new).returns(parser)
+        allow(Puppet::FileServing::Configuration::Parser).to receive(:new).and_return(parser)
         env = Puppet::Node::Environment.create(:foo, [])
 
         result = Puppet::FileServing::Metadata.indirection.find("one/myfile", :environment => env, :node => "mynode", :checksum_type => checksum_type)

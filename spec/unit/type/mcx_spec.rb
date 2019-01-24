@@ -33,7 +33,7 @@ end
 describe mcx_type, "default values" do
   before :each do
     provider_class = mcx_type.provider(mcx_type.providers[0])
-    mcx_type.stubs(:defaultprovider).returns provider_class
+    allow(mcx_type).to receive(:defaultprovider).and_return(provider_class)
   end
 
   it "should be nil for :ds_type" do
@@ -52,7 +52,7 @@ end
 describe mcx_type, "when validating properties" do
   before :each do
     provider_class = mcx_type.provider(mcx_type.providers[0])
-    mcx_type.stubs(:defaultprovider).returns provider_class
+    allow(mcx_type).to receive(:defaultprovider).and_return(provider_class)
   end
 
   it "should be able to create an instance" do

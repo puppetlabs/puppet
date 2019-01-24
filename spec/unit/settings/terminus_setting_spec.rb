@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Puppet::Settings::TerminusSetting do
-  let(:setting) { described_class.new(:settings => mock('settings'), :desc => "test") }
+  let(:setting) { described_class.new(:settings => double('settings'), :desc => "test") }
 
   describe "#munge" do
     it "converts strings to symbols" do

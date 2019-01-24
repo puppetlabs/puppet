@@ -18,7 +18,7 @@ describe 'Puppet::Util::AtFork' do
   describe '.get_handler' do
     context 'when on Solaris' do
       before :each do
-        Facter.expects(:value).with(:operatingsystem).returns('Solaris')
+        expect(Facter).to receive(:value).with(:operatingsystem).and_return('Solaris')
       end
 
       after :each do
@@ -28,7 +28,7 @@ describe 'Puppet::Util::AtFork' do
       end
 
       def stub_solaris_handler(stub_noop_too = false)
-        Puppet::Util::AtFork.stubs(:require).with() do |lib|
+        allow(Puppet::Util::AtFork).to receive(:require).with(anything) do |lib|
           if lib == 'puppet/util/at_fork/solaris'
             load lib + '.rb'
             true
@@ -40,7 +40,7 @@ describe 'Puppet::Util::AtFork' do
           else
             false
           end
-        end.returns(true)
+        end.and_return(true)
 
         unless stub_noop_too
           Object.class_exec do
@@ -55,18 +55,18 @@ describe 'Puppet::Util::AtFork' do
           end
         end
 
-        TOPLEVEL_BINDING.eval('self').stubs(:require).with() do |lib|
+        allow(TOPLEVEL_BINDING.eval('self')).to receive(:require).with(anything) do |lib|
           if lib == 'fiddle'
             raise LoadError, 'no fiddle' if stub_noop_too
           else
             Kernel.require lib
           end
           true
-        end.returns(true)
+        end.and_return(true)
       end
 
       it %q(should return the Solaris specific AtFork handler) do
-        Puppet::Util::AtFork.stubs(:require).with() do |lib|
+        allow(Puppet::Util::AtFork).to receive(:require).with(anything) do |lib|
           if lib == 'puppet/util/at_fork/solaris'
             Puppet::Util::AtFork.class_exec do
               const_set(:Solaris, Class.new)
@@ -75,7 +75,7 @@ describe 'Puppet::Util::AtFork' do
           else
             false
           end
-        end.returns(true)
+        end.and_return(true)
         load 'puppet/util/at_fork.rb'
         expect(Puppet::Util::AtFork.get_handler.class).to eq(Puppet::Util::AtFork::Solaris)
       end
@@ -88,24 +88,24 @@ describe 'Puppet::Util::AtFork' do
 
       it %q(should fail when libcontract cannot be loaded) do
         stub_solaris_handler
-        Fiddle::Handle.expects(:new).with(regexp_matches(/^libcontract.so.*/)).raises(Fiddle::DLError, 'no such library')
+        expect(Fiddle::Handle).to receive(:new).with(/^libcontract.so.*/).and_raise(Fiddle::DLError, 'no such library')
         expect { load 'puppet/util/at_fork.rb' }.to raise_error(Fiddle::DLError, 'no such library')
       end
 
       it %q(should fail when libcontract doesn't define all the necessary functions) do
         stub_solaris_handler
-        handle = stub('Fiddle::Handle')
-        Fiddle::Handle.expects(:new).with(regexp_matches(/^libcontract.so.*/)).returns(handle)
-        handle.expects(:[]).raises(Fiddle::DLError, 'no such method')
+        handle = double('Fiddle::Handle')
+        expect(Fiddle::Handle).to receive(:new).with(/^libcontract.so.*/).and_return(handle)
+        expect(handle).to receive(:[]).and_raise(Fiddle::DLError, 'no such method')
         expect { load 'puppet/util/at_fork.rb' }.to raise_error(Fiddle::DLError, 'no such method')
       end
 
       it %q(the returned Solaris specific handler should respond to the expected methods) do
         stub_solaris_handler
-        handle = stub('Fiddle::Handle')
-        Fiddle::Handle.expects(:new).with(regexp_matches(/^libcontract.so.*/)).returns(handle)
-        handle.stubs(:[]).returns(nil)
-        Fiddle::Function.stubs(:new).returns(Proc.new {})
+        handle = double('Fiddle::Handle')
+        expect(Fiddle::Handle).to receive(:new).with(/^libcontract.so.*/).and_return(handle)
+        allow(handle).to receive(:[]).and_return(nil)
+        allow(Fiddle::Function).to receive(:new).and_return(Proc.new {})
         load 'puppet/util/at_fork.rb'
         expect(Puppet::Util::AtFork.get_handler.public_methods).to include(*EXPECTED_HANDLER_METHODS)
       end
@@ -113,11 +113,11 @@ describe 'Puppet::Util::AtFork' do
 
     context 'when NOT on Solaris' do
       before :each do
-        Facter.expects(:value).with(:operatingsystem).returns(nil)
+        expect(Facter).to receive(:value).with(:operatingsystem).and_return(nil)
       end
 
       def stub_noop_handler(namespace_only = false)
-        Puppet::Util::AtFork.stubs(:require).with() do |lib|
+        allow(Puppet::Util::AtFork).to receive(:require).with(anything) do |lib|
           if lib == 'puppet/util/at_fork/noop'
             if namespace_only
               Puppet::Util::AtFork.class_exec do
@@ -130,7 +130,7 @@ describe 'Puppet::Util::AtFork' do
           else
             false
           end
-        end.returns(true)
+        end.and_return(true)
       end
 
       it %q(should return the Noop AtFork handler) do

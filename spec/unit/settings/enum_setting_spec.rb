@@ -19,7 +19,7 @@ describe Puppet::Settings::EnumSetting do
   end
 
   def enum_setting_allowing(*values)
-    Puppet::Settings::EnumSetting.new(:settings => mock('settings'),
+    Puppet::Settings::EnumSetting.new(:settings => double('settings'),
                                       :name => "testing",
                                       :desc => "description of testing",
                                       :values => values)

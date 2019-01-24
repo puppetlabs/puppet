@@ -2,16 +2,15 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:nim) do
   before(:each) do
-    # Create a mock resource
-    @resource = stub 'resource'
+    @resource = double('resource')
 
     # A catch all; no parameters set
-    @resource.stubs(:[]).returns(nil)
+    allow(@resource).to receive(:[]).and_return(nil)
 
     # But set name and source
-    @resource.stubs(:[]).with(:name).returns "mypackage.foo"
-    @resource.stubs(:[]).with(:source).returns "mysource"
-    @resource.stubs(:[]).with(:ensure).returns :installed
+    allow(@resource).to receive(:[]).with(:name).and_return("mypackage.foo")
+    allow(@resource).to receive(:[]).with(:source).and_return("mysource")
+    allow(@resource).to receive(:[]).with(:ensure).and_return(:installed)
 
     @provider = subject()
     @provider.resource = @resource
@@ -44,9 +43,9 @@ END
 
   context "when installing" do
     it "should install a package" do
-      @resource.stubs(:should).with(:ensure).returns(:installed)
-      Puppet::Util::Execution.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo'").returns(bff_showres_output)
-      @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.8")
+      allow(@resource).to receive(:should).with(:ensure).and_return(:installed)
+      expect(Puppet::Util::Execution).to receive(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo'").and_return(bff_showres_output)
+      expect(@provider).to receive(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.8")
       @provider.install
     end
 
@@ -54,25 +53,21 @@ END
       it "should fail if the package is not available on the lpp source" do
         nimclient_showres_output = ""
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
-        Puppet::Util::Execution.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(nimclient_showres_output)
+        allow(@resource).to receive(:should).with(:ensure).and_return("1.2.3.4")
+        expect(Puppet::Util::Execution).to receive(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").and_return(nimclient_showres_output)
         expect {
           @provider.install
         }.to raise_error(Puppet::Error, "Unable to find package 'mypackage.foo' with version '1.2.3.4' on lpp_source 'mysource'")
       end
 
       it "should succeed if a BFF/installp package is available on the lpp source" do
-        nimclient_sequence = sequence('nimclient')
-
-        @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
-        Puppet::Util::Execution.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(bff_showres_output).in_sequence(nimclient_sequence)
-        @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.4").in_sequence(nimclient_sequence)
+        allow(@resource).to receive(:should).with(:ensure).and_return("1.2.3.4")
+        expect(Puppet::Util::Execution).to receive(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").and_return(bff_showres_output).ordered
+        expect(@provider).to receive(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.4").ordered
         @provider.install
       end
 
       it "should fail if the specified version of a BFF package is superseded" do
-        nimclient_sequence = sequence('nimclient')
-
         install_output = <<OUTPUT
 +-----------------------------------------------------------------------------+
                     Pre-installation Verification...
@@ -118,26 +113,22 @@ Name                      Level           Pre-installation Failure/Warning
 mypackage.foo              1.2.3.1         Already superseded by 1.2.3.4
 OUTPUT
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3.1")
-        Puppet::Util::Execution.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.1'").returns(bff_showres_output).in_sequence(nimclient_sequence)
-        @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.1").in_sequence(nimclient_sequence).returns(install_output)
+        allow(@resource).to receive(:should).with(:ensure).and_return("1.2.3.1")
+        expect(Puppet::Util::Execution).to receive(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.1'").and_return(bff_showres_output).ordered
+        expect(@provider).to receive(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.1").and_return(install_output).ordered
 
         expect { @provider.install }.to raise_error(Puppet::Error, "NIM package provider is unable to downgrade packages")
     end
 
     it "should succeed if an RPM package is available on the lpp source" do
-        nimclient_sequence = sequence('nimclient')
-
-        @resource.stubs(:should).with(:ensure).returns("1.2.3-4")
-        Puppet::Util::Execution.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-4'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
-        @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-4").in_sequence(nimclient_sequence)
+        allow(@resource).to receive(:should).with(:ensure).and_return("1.2.3-4")
+        expect(Puppet::Util::Execution).to receive(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-4'").and_return(rpm_showres_output).ordered
+        expect(@provider).to receive(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-4").ordered
         @provider.install
       end
     end
 
     it "should fail if the specified version of a RPM package is superseded" do
-      nimclient_sequence = sequence('nimclient')
-
       install_output = <<OUTPUT
 
 
@@ -155,9 +146,9 @@ mypackage.foo-1.2.3-1 is superseded by mypackage.foo-1.2.3-4
 
 OUTPUT
 
-      @resource.stubs(:should).with(:ensure).returns("1.2.3-1")
-      Puppet::Util::Execution.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-1'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
-      @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-1").in_sequence(nimclient_sequence).returns(install_output)
+      allow(@resource).to receive(:should).with(:ensure).and_return("1.2.3-1")
+      expect(Puppet::Util::Execution).to receive(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-1'").and_return(rpm_showres_output)
+      expect(@provider).to receive(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-1").and_return(install_output)
 
       expect { @provider.install }.to raise_error(Puppet::Error, "NIM package provider is unable to downgrade packages")
     end
@@ -165,16 +156,16 @@ OUTPUT
 
   context "when uninstalling" do
     it "should call installp to uninstall a bff package" do
-      @provider.expects(:lslpp).with("-qLc", "mypackage.foo").returns("#bos.atm:bos.atm.atmle:7.1.2.0: : :C: :ATM LAN Emulation Client Support : : : : : : :0:0:/:1241")
-      @provider.expects(:installp).with("-gu", "mypackage.foo")
-      @provider.class.expects(:pkglist).with(:pkgname => 'mypackage.foo').returns(nil)
+      expect(@provider).to receive(:lslpp).with("-qLc", "mypackage.foo").and_return("#bos.atm:bos.atm.atmle:7.1.2.0: : :C: :ATM LAN Emulation Client Support : : : : : : :0:0:/:1241")
+      expect(@provider).to receive(:installp).with("-gu", "mypackage.foo")
+      expect(@provider.class).to receive(:pkglist).with(:pkgname => 'mypackage.foo').and_return(nil)
       @provider.uninstall
     end
 
     it "should call rpm to uninstall an rpm package" do
-      @provider.expects(:lslpp).with("-qLc", "mypackage.foo").returns("cdrecord:cdrecord-1.9-6:1.9-6: : :C:R:A command line CD/DVD recording program.: :/bin/rpm -e cdrecord: : : : :0: :/opt/freeware:Wed Jun 29 09:41:32 PDT 2005")
-      @provider.expects(:rpm).with("-e", "mypackage.foo")
-      @provider.class.expects(:pkglist).with(:pkgname => 'mypackage.foo').returns(nil)
+      expect(@provider).to receive(:lslpp).with("-qLc", "mypackage.foo").and_return("cdrecord:cdrecord-1.9-6:1.9-6: : :C:R:A command line CD/DVD recording program.: :/bin/rpm -e cdrecord: : : : :0: :/opt/freeware:Wed Jun 29 09:41:32 PDT 2005")
+      expect(@provider).to receive(:rpm).with("-e", "mypackage.foo")
+      expect(@provider.class).to receive(:pkglist).with(:pkgname => 'mypackage.foo').and_return(nil)
       @provider.uninstall
     end
   end
@@ -202,7 +193,7 @@ OUTPUT
       end
     end
 
-    describe "#determine_latest_version" do
+    context "#determine_latest_version" do
       context "when there are multiple versions" do
         it "should return the latest version" do
           expect(subject.send(:determine_latest_version, rpm_showres_output, 'mypackage.foo')).to eq([:rpm, '1.2.3-8'])
@@ -221,7 +212,7 @@ END
       end
     end
 
-    describe "#determine_package_type" do
+    context "#determine_package_type" do
       it "should return :rpm for rpm packages" do
         expect(subject.send(:determine_package_type, rpm_showres_output, 'mypackage.foo', '1.2.3-4')).to eq(:rpm)
       end

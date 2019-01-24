@@ -32,10 +32,10 @@ describe Puppet::Node::Facts::Yaml do
     def assert_search_matches(matching, nonmatching, query)
       request = Puppet::Indirector::Request.new(:inventory, :search, nil, nil, query)
 
-      Dir.stubs(:glob).returns(matching.keys + nonmatching.keys)
+      allow(Dir).to receive(:glob).and_return(matching.keys + nonmatching.keys)
       [matching, nonmatching].each do |examples|
         examples.each do |key, value|
-          YAML.stubs(:load_file).with(key).returns value
+          allow(YAML).to receive(:load_file).with(key).and_return(value)
         end
       end
       expect(Puppet::Node::Facts::Yaml.new.search(request)).to match_array(matching.values.map {|facts| facts.name})

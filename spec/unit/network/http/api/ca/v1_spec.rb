@@ -14,7 +14,7 @@ describe Puppet::Network::HTTP::API::CA::V1 do
   }
 
   it "mounts ca routes" do
-    Puppet::SSL::Certificate.indirection.stubs(:find).returns "foo"
+    allow(Puppet::SSL::Certificate.indirection).to receive(:find).and_return("foo")
     request = Puppet::Network::HTTP::Request.
         from_hash(:path => "#{ca_url_prefix}/certificate/foo",
                   :params => {:environment => "production"},

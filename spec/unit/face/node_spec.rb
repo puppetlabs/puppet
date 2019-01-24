@@ -13,32 +13,32 @@ describe Puppet::Face[:node, '0.0.1'] do
         "cached_facts" => ['hostname'],
         "cached_node"  => ['hostname'],
         "reports"      => ['hostname'],
-      }.each { |k, v| subject.expects("clean_#{k}".to_sym).with(*v) }
+      }.each { |k, v| expect(subject).to receive("clean_#{k}".to_sym).with(*v) }
       subject.cleanup('hostname')
     end
   end
 
   describe 'when running #clean' do
     before :each do
-      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-      Puppet::Node::Facts.indirection.stubs(:cache_class=)
-      Puppet::Node.stubs(:terminus_class=)
-      Puppet::Node.stubs(:cache_class=)
+      allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
+      allow(Puppet::Node::Facts.indirection).to receive(:cache_class=)
+      allow(Puppet::Node).to receive(:terminus_class=)
+      allow(Puppet::Node).to receive(:cache_class=)
     end
 
     it 'should invoke #cleanup' do
-      subject.expects(:cleanup).with('hostname', nil)
+      expect(subject).to receive(:cleanup).with('hostname')
       subject.clean('hostname')
     end
   end
 
   describe "clean action" do
     before :each do
-      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-      Puppet::Node::Facts.indirection.stubs(:cache_class=)
-      Puppet::Node.stubs(:terminus_class=)
-      Puppet::Node.stubs(:cache_class=)
-      subject.stubs(:cleanup)
+      allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
+      allow(Puppet::Node::Facts.indirection).to receive(:cache_class=)
+      allow(Puppet::Node).to receive(:terminus_class=)
+      allow(Puppet::Node).to receive(:cache_class=)
+      allow(subject).to receive(:cleanup)
     end
 
     it "should have a clean action" do
@@ -66,14 +66,14 @@ describe Puppet::Face[:node, '0.0.1'] do
     context "clean action" do
       subject { Puppet::Face[:node, :current] }
       before :each do
-        Puppet::Util::Log.stubs(:newdestination)
-        Puppet::Util::Log.stubs(:level=)
+        allow(Puppet::Util::Log).to receive(:newdestination)
+        allow(Puppet::Util::Log).to receive(:level=)
       end
 
       describe "during setup" do
         it "should set facts terminus and cache class to yaml" do
-          Puppet::Node::Facts.indirection.expects(:terminus_class=).with(:yaml)
-          Puppet::Node::Facts.indirection.expects(:cache_class=).with(:yaml)
+          expect(Puppet::Node::Facts.indirection).to receive(:terminus_class=).with(:yaml)
+          expect(Puppet::Node::Facts.indirection).to receive(:cache_class=).with(:yaml)
 
           subject.clean('hostname')
         end
@@ -84,43 +84,43 @@ describe Puppet::Face[:node, '0.0.1'] do
         end
 
         it "should set node cache as yaml" do
-          Puppet::Node.indirection.expects(:terminus_class=).with(:yaml)
-          Puppet::Node.indirection.expects(:cache_class=).with(:yaml)
+          expect(Puppet::Node.indirection).to receive(:terminus_class=).with(:yaml)
+          expect(Puppet::Node.indirection).to receive(:cache_class=).with(:yaml)
 
           subject.clean('hostname')
         end
 
         it "should manage the certs if the host is a CA" do
-          Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(true)
-          Puppet::SSL::Host.expects(:ca_location=).with(:local)
+          allow(Puppet::SSL::CertificateAuthority).to receive(:ca?).and_return(true)
+          expect(Puppet::SSL::Host).to receive(:ca_location=).with(:local)
           subject.clean('hostname')
         end
 
         it "should not manage the certs if the host is not a CA" do
-          Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
-          Puppet::SSL::Host.expects(:ca_location=).with(:none)
+          allow(Puppet::SSL::CertificateAuthority).to receive(:ca?).and_return(false)
+          expect(Puppet::SSL::Host).to receive(:ca_location=).with(:none)
           subject.clean('hostname')
         end
       end
 
       describe "when cleaning certificate" do
         before :each do
-          Puppet::SSL::Host.stubs(:destroy)
-          @ca = mock()
-          Puppet::SSL::CertificateAuthority.stubs(:instance).returns(@ca)
+          allow(Puppet::SSL::Host).to receive(:destroy)
+          @ca = double()
+          allow(Puppet::SSL::CertificateAuthority).to receive(:instance).and_return(@ca)
         end
 
         it "should send the :destroy order to the ca if we are a CA" do
-          Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(true)
-          @ca.expects(:revoke).with(@host)
-          @ca.expects(:destroy).with(@host)
+          allow(Puppet::SSL::CertificateAuthority).to receive(:ca?).and_return(true)
+          expect(@ca).to receive(:revoke).with(@host)
+          expect(@ca).to receive(:destroy).with(@host)
           subject.clean_cert(@host)
         end
 
         it "should not destroy the certs if we are not a CA" do
-          Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
-          @ca.expects(:revoke).never
-          @ca.expects(:destroy).never
+          allow(Puppet::SSL::CertificateAuthority).to receive(:ca?).and_return(false)
+          expect(@ca).not_to receive(:revoke)
+          expect(@ca).not_to receive(:destroy)
           subject.clean_cert(@host)
         end
       end
@@ -128,7 +128,7 @@ describe Puppet::Face[:node, '0.0.1'] do
       describe "when cleaning cached facts" do
         it "should destroy facts" do
           @host = 'node'
-          Puppet::Node::Facts.indirection.expects(:destroy).with(@host)
+          expect(Puppet::Node::Facts.indirection).to receive(:destroy).with(@host)
 
           subject.clean_cached_facts(@host)
         end
@@ -136,14 +136,14 @@ describe Puppet::Face[:node, '0.0.1'] do
 
       describe "when cleaning cached node" do
         it "should destroy the cached node" do
-          Puppet::Node.indirection.expects(:destroy).with(@host)
+          expect(Puppet::Node.indirection).to receive(:destroy).with(@host)
           subject.clean_cached_node(@host)
         end
       end
 
       describe "when cleaning archived reports" do
         it "should tell the reports to remove themselves" do
-          Puppet::Transaction::Report.indirection.stubs(:destroy).with(@host)
+          allow(Puppet::Transaction::Report.indirection).to receive(:destroy).with(@host)
 
           subject.clean_reports(@host)
         end

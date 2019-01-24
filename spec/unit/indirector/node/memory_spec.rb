@@ -7,9 +7,9 @@ describe Puppet::Node::Memory do
   before do
     @name = "me"
     @searcher = Puppet::Node::Memory.new
-    @instance = stub 'instance', :name => @name
+    @instance = double('instance', :name => @name)
 
-    @request = stub 'request', :key => @name, :instance => @instance
+    @request = double('request', :key => @name, :instance => @instance)
   end
 
   it_should_behave_like "A Memory Terminus"

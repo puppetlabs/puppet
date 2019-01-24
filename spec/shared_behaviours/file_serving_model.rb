@@ -7,7 +7,7 @@ shared_examples_for "a file_serving model" do
 
     before :each do
       # Never connect to the network, no matter what
-      described_class.indirection.terminus(:rest).class.any_instance.stubs(:find)
+      allow_any_instance_of(described_class.indirection.terminus(:rest).class).to receive(:find)
     end
 
     describe "when running the master application" do
@@ -22,7 +22,7 @@ shared_examples_for "a file_serving model" do
        "puppet://server/modules/foo/bar" => :file_server,
       }.each do |key, terminus|
         it "should use the #{terminus} terminus when requesting #{key.inspect}" do
-          described_class.indirection.terminus(terminus).class.any_instance.expects(:find)
+          expect_any_instance_of(described_class.indirection.terminus(terminus).class).to receive(:find)
 
           described_class.indirection.find(key)
         end
@@ -41,7 +41,7 @@ shared_examples_for "a file_serving model" do
        "puppet://server/modules/foo/bar" => :rest,
       }.each do |key, terminus|
         it "should use the #{terminus} terminus when requesting #{key.inspect}" do
-          described_class.indirection.terminus(terminus).class.any_instance.expects(:find)
+          expect_any_instance_of(described_class.indirection.terminus(terminus).class).to receive(:find)
 
           described_class.indirection.find(key)
         end
@@ -60,7 +60,7 @@ shared_examples_for "a file_serving model" do
        "puppet://server/modules/foo/bar" => :rest,
       }.each do |key, terminus|
         it "should use the #{terminus} terminus when requesting #{key.inspect}" do
-          described_class.indirection.terminus(terminus).class.any_instance.expects(:find)
+          expect_any_instance_of(described_class.indirection.terminus(terminus).class).to receive(:find)
 
           described_class.indirection.find(key)
         end

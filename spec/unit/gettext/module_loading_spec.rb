@@ -16,7 +16,7 @@ describe Puppet::ModuleTranslations do
       :metadata => {
         :author => 'foo'
       },
-      :environment => mock("environment"))
+      :environment => double("environment"))
     }
 
     let(:module_b) { PuppetSpec::Modules.create(
@@ -25,13 +25,13 @@ describe Puppet::ModuleTranslations do
       :metadata => {
         :author => 'foo'
       },
-      :environment => mock("environment"))
+      :environment => double("environment"))
     }
 
     it "should attempt to load translations only for modules that have them" do
-      module_a.expects(:has_translations?).returns(false)
-      module_b.expects(:has_translations?).returns(true)
-      Puppet::GettextConfig.expects(:load_translations).with("foo-mod_b", File.join(modpath, "mod_b", "locales"), :po).returns(true)
+      expect(module_a).to receive(:has_translations?).and_return(false)
+      expect(module_b).to receive(:has_translations?).and_return(true)
+      expect(Puppet::GettextConfig).to receive(:load_translations).with("foo-mod_b", File.join(modpath, "mod_b", "locales"), :po).and_return(true)
 
       Puppet::ModuleTranslations.load_from_modulepath([module_a, module_b])
     end
@@ -44,8 +44,8 @@ describe Puppet::ModuleTranslations do
     }
 
     it "should attempt to load translations for the current locale" do
-      Puppet::GettextConfig.expects(:current_locale).returns("ja")
-      Puppet::GettextConfig.expects(:load_translations).with("foo-mod_a", File.join(vardir, "locales"), :po).returns(true)
+      expect(Puppet::GettextConfig).to receive(:current_locale).and_return("ja")
+      expect(Puppet::GettextConfig).to receive(:load_translations).with("foo-mod_a", File.join(vardir, "locales"), :po).and_return(true)
 
       Puppet::ModuleTranslations.load_from_vardir(vardir)
     end

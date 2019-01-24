@@ -9,60 +9,60 @@ describe Puppet::Provider::Mount do
 
     @name = "/"
 
-    @resource = stub 'resource'
-    @resource.stubs(:[]).with(:name).returns(@name)
+    @resource = double('resource')
+    allow(@resource).to receive(:[]).with(:name).and_return(@name)
 
-    @mounter.stubs(:resource).returns(@resource)
+    allow(@mounter).to receive(:resource).and_return(@resource)
   end
 
   describe Puppet::Provider::Mount, " when mounting" do
     before :each do
-      @mounter.stubs(:get).with(:ensure).returns(:mounted)
+      allow(@mounter).to receive(:get).with(:ensure).and_return(:mounted)
     end
 
     it "should use the 'mountcmd' method to mount" do
-      @mounter.stubs(:options).returns(nil)
-      @mounter.expects(:mountcmd)
+      allow(@mounter).to receive(:options).and_return(nil)
+      expect(@mounter).to receive(:mountcmd)
 
       @mounter.mount
     end
 
     it "should add the options following '-o' on MacOS if they exist and are not set to :absent" do
-      Facter.expects(:value).with(:kernel).returns 'Darwin'
-      @mounter.stubs(:options).returns("ro")
-      @mounter.expects(:mountcmd).with '-o', 'ro', '/'
+      expect(Facter).to receive(:value).with(:kernel).and_return('Darwin')
+      allow(@mounter).to receive(:options).and_return("ro")
+      expect(@mounter).to receive(:mountcmd).with('-o', 'ro', '/')
 
       @mounter.mount
     end
 
     it "should not explicitly pass mount options on systems other than MacOS" do
-      Facter.expects(:value).with(:kernel).returns 'HP-UX'
-      @mounter.stubs(:options).returns("ro")
-      @mounter.expects(:mountcmd).with '/'
+      expect(Facter).to receive(:value).with(:kernel).and_return('HP-UX')
+      allow(@mounter).to receive(:options).and_return("ro")
+      expect(@mounter).to receive(:mountcmd).with('/')
 
       @mounter.mount
     end
 
     it "should specify the filesystem name to the mount command" do
-      @mounter.stubs(:options).returns(nil)
-      @mounter.expects(:mountcmd).with { |*ary| ary[-1] == @name }
+      allow(@mounter).to receive(:options).and_return(nil)
+      expect(@mounter).to receive(:mountcmd) { |*ary| expect(ary[-1]).to eq(@name) }
 
       @mounter.mount
     end
 
     it "should update the :ensure state to :mounted if it was :unmounted before" do
-      @mounter.expects(:mountcmd)
-      @mounter.stubs(:options).returns(nil)
-      @mounter.expects(:get).with(:ensure).returns(:unmounted)
-      @mounter.expects(:set).with(:ensure => :mounted)
+      expect(@mounter).to receive(:mountcmd)
+      allow(@mounter).to receive(:options).and_return(nil)
+      expect(@mounter).to receive(:get).with(:ensure).and_return(:unmounted)
+      expect(@mounter).to receive(:set).with(:ensure => :mounted)
       @mounter.mount
     end
 
     it "should update the :ensure state to :ghost if it was :absent before" do
-      @mounter.expects(:mountcmd)
-      @mounter.stubs(:options).returns(nil)
-      @mounter.expects(:get).with(:ensure).returns(:absent)
-      @mounter.expects(:set).with(:ensure => :ghost)
+      expect(@mounter).to receive(:mountcmd)
+      allow(@mounter).to receive(:options).and_return(nil)
+      expect(@mounter).to receive(:get).with(:ensure).and_return(:absent)
+      expect(@mounter).to receive(:set).with(:ensure => :ghost)
       @mounter.mount
     end
   end
@@ -71,98 +71,98 @@ describe Puppet::Provider::Mount do
     context "if the resource supports remounting" do
       context "given explicit options on AIX" do
         it "should combine the options with 'remount'" do
-          @mounter.stubs(:info)
-          @mounter.stubs(:options).returns('ro')
-          @resource.stubs(:[]).with(:remounts).returns(:true)
-          Facter.expects(:value).with(:operatingsystem).returns 'AIX'
-          @mounter.expects(:mountcmd).with("-o", "ro,remount", @name)
+          allow(@mounter).to receive(:info)
+          allow(@mounter).to receive(:options).and_return('ro')
+          allow(@resource).to receive(:[]).with(:remounts).and_return(:true)
+          expect(Facter).to receive(:value).with(:operatingsystem).and_return('AIX')
+          expect(@mounter).to receive(:mountcmd).with("-o", "ro,remount", @name)
           @mounter.remount
         end
       end
 
       it "should use '-o remount'" do
-        @mounter.stubs(:info)
-        @resource.stubs(:[]).with(:remounts).returns(:true)
-        @mounter.expects(:mountcmd).with("-o", "remount", @name)
+        allow(@mounter).to receive(:info)
+        allow(@resource).to receive(:[]).with(:remounts).and_return(:true)
+        expect(@mounter).to receive(:mountcmd).with("-o", "remount", @name)
         @mounter.remount
       end
     end
 
     it "should mount with '-o update' on OpenBSD" do
-      @mounter.stubs(:info)
-      @mounter.stubs(:options)
-      @resource.stubs(:[]).with(:remounts).returns(false)
-      Facter.expects(:value).with(:operatingsystem).returns 'OpenBSD'
-      @mounter.expects(:mountcmd).with("-o", "update", @name)
+      allow(@mounter).to receive(:info)
+      allow(@mounter).to receive(:options)
+      allow(@resource).to receive(:[]).with(:remounts).and_return(false)
+      expect(Facter).to receive(:value).with(:operatingsystem).and_return('OpenBSD')
+      expect(@mounter).to receive(:mountcmd).with("-o", "update", @name)
       @mounter.remount
     end
 
     it "should unmount and mount if the resource does not specify it supports remounting" do
-      @mounter.stubs(:info)
-      @mounter.stubs(:options)
-      @resource.stubs(:[]).with(:remounts).returns(false)
-      Facter.expects(:value).with(:operatingsystem).returns 'AIX'
-      @mounter.expects(:mount)
-      @mounter.expects(:unmount)
+      allow(@mounter).to receive(:info)
+      allow(@mounter).to receive(:options)
+      allow(@resource).to receive(:[]).with(:remounts).and_return(false)
+      expect(Facter).to receive(:value).with(:operatingsystem).and_return('AIX')
+      expect(@mounter).to receive(:mount)
+      expect(@mounter).to receive(:unmount)
       @mounter.remount
     end
 
     it "should log that it is remounting" do
-      @resource.stubs(:[]).with(:remounts).returns(:true)
-      @mounter.stubs(:mountcmd)
-      @mounter.expects(:info).with("Remounting")
+      allow(@resource).to receive(:[]).with(:remounts).and_return(:true)
+      allow(@mounter).to receive(:mountcmd)
+      expect(@mounter).to receive(:info).with("Remounting")
       @mounter.remount
     end
   end
 
   describe Puppet::Provider::Mount, " when unmounting" do
     before :each do
-      @mounter.stubs(:get).with(:ensure).returns(:unmounted)
+      allow(@mounter).to receive(:get).with(:ensure).and_return(:unmounted)
     end
 
     it "should call the :umount command with the resource name" do
-      @mounter.expects(:umount).with(@name)
+      expect(@mounter).to receive(:umount).with(@name)
       @mounter.unmount
     end
 
     it "should update the :ensure state to :absent if it was :ghost before" do
-      @mounter.expects(:umount).with(@name).returns true
-      @mounter.expects(:get).with(:ensure).returns(:ghost)
-      @mounter.expects(:set).with(:ensure => :absent)
+      expect(@mounter).to receive(:umount).with(@name).and_return(true)
+      expect(@mounter).to receive(:get).with(:ensure).and_return(:ghost)
+      expect(@mounter).to receive(:set).with(:ensure => :absent)
       @mounter.unmount
     end
 
     it "should update the :ensure state to :unmounted if it was :mounted before" do
-      @mounter.expects(:umount).with(@name).returns true
-      @mounter.expects(:get).with(:ensure).returns(:mounted)
-      @mounter.expects(:set).with(:ensure => :unmounted)
+      expect(@mounter).to receive(:umount).with(@name).and_return(true)
+      expect(@mounter).to receive(:get).with(:ensure).and_return(:mounted)
+      expect(@mounter).to receive(:set).with(:ensure => :unmounted)
       @mounter.unmount
     end
   end
 
   describe Puppet::Provider::Mount, " when determining if it is mounted" do
     it "should query the property_hash" do
-      @mounter.expects(:get).with(:ensure).returns(:mounted)
+      expect(@mounter).to receive(:get).with(:ensure).and_return(:mounted)
       @mounter.mounted?
     end
 
     it "should return true if prefetched value is :mounted" do
-      @mounter.stubs(:get).with(:ensure).returns(:mounted)
+      allow(@mounter).to receive(:get).with(:ensure).and_return(:mounted)
       @mounter.mounted? == true
     end
 
     it "should return true if prefetched value is :ghost" do
-      @mounter.stubs(:get).with(:ensure).returns(:ghost)
+      allow(@mounter).to receive(:get).with(:ensure).and_return(:ghost)
       @mounter.mounted? == true
     end
 
     it "should return false if prefetched value is :absent" do
-      @mounter.stubs(:get).with(:ensure).returns(:absent)
+      allow(@mounter).to receive(:get).with(:ensure).and_return(:absent)
       @mounter.mounted? == false
     end
 
     it "should return false if prefetched value is :unmounted" do
-      @mounter.stubs(:get).with(:ensure).returns(:unmounted)
+      allow(@mounter).to receive(:get).with(:ensure).and_return(:unmounted)
       @mounter.mounted? == false
     end
   end

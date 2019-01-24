@@ -30,7 +30,7 @@ describe Puppet::Transaction::Event do
 
   it "should produce the message when converted to a string" do
     event = Puppet::Transaction::Event.new
-    event.expects(:message).returns "my message"
+    expect(event).to receive(:message).and_return("my message")
     expect(event.to_s).to eq("my message")
   end
 
@@ -61,60 +61,62 @@ describe Puppet::Transaction::Event do
 
   describe "when sending logs" do
     before do
-      Puppet::Util::Log.stubs(:new)
+      allow(Puppet::Util::Log).to receive(:new)
     end
 
     it "should set the level to the resources's log level if the event status is 'success' and a resource is available" do
-      resource = stub 'resource'
-      resource.expects(:[]).with(:loglevel).returns :myloglevel
-      Puppet::Util::Log.expects(:create).with { |args| args[:level] == :myloglevel }
+      resource = double('resource')
+      expect(resource).to receive(:[]).with(:loglevel).and_return(:myloglevel)
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(level: :myloglevel))
       Puppet::Transaction::Event.new(:status => "success", :resource => resource).send_log
     end
 
     it "should set the level to 'notice' if the event status is 'success' and no resource is available" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:level] == :notice }
+      expect(Puppet::Util::Log).to receive(:new).with(hash_including(level: :notice))
       Puppet::Transaction::Event.new(:status => "success").send_log
     end
 
     it "should set the level to 'notice' if the event status is 'noop'" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:level] == :notice }
+      expect(Puppet::Util::Log).to receive(:new).with(hash_including(level: :notice))
       Puppet::Transaction::Event.new(:status => "noop").send_log
     end
 
     it "should set the level to 'err' if the event status is 'failure'" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:level] == :err }
+      expect(Puppet::Util::Log).to receive(:new).with(hash_including(level: :err))
       Puppet::Transaction::Event.new(:status => "failure").send_log
     end
 
     it "should set the 'message' to the event log" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:message] == "my message" }
+      expect(Puppet::Util::Log).to receive(:new).with(hash_including(message: "my message"))
       Puppet::Transaction::Event.new(:message => "my message").send_log
     end
 
     it "should set the tags to the event tags" do
-      Puppet::Util::Log.expects(:new).with { |args| expect(args[:tags].to_a).to match_array(%w{one two}) }
+      expect(Puppet::Util::Log).to receive(:new) do |args|
+        expect(args[:tags].to_a).to match_array(%w{one two})
+      end
       Puppet::Transaction::Event.new(:tags => %w{one two}).send_log
     end
 
     [:file, :line].each do |attr|
       it "should pass the #{attr}" do
-        Puppet::Util::Log.expects(:new).with { |args| args[attr] == "my val" }
+        expect(Puppet::Util::Log).to receive(:new).with(hash_including(attr => "my val"))
         Puppet::Transaction::Event.new(attr => "my val").send_log
       end
     end
 
     it "should use the source description as the source if one is set" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:source] == "/my/param" }
+      expect(Puppet::Util::Log).to receive(:new).with(hash_including(source: "/my/param"))
       Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => TestResource.new, :property => "foo").send_log
     end
 
     it "should use the property as the source if one is available and no source description is set" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:source] == "foo" }
+      expect(Puppet::Util::Log).to receive(:new).with(hash_including(source: "foo"))
       Puppet::Transaction::Event.new(:resource => TestResource.new, :property => "foo").send_log
     end
 
     it "should use the property as the source if one is available and no property or source description is set" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:source] == "Foo[bar]" }
+      expect(Puppet::Util::Log).to receive(:new).with(hash_including(source: "Foo[bar]"))
       Puppet::Transaction::Event.new(:resource => TestResource.new).send_log
     end
   end

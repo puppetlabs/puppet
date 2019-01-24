@@ -6,7 +6,7 @@ shared_examples_for "Puppet::FileServing::Files" do |indirection|
       it "should proxy to file terminus if the path is absolute" do
         request.key = make_absolute('/tmp/foo')
 
-        described_class.indirection.terminus(:file).class.any_instance.expects(method).with(request)
+        expect_any_instance_of(described_class.indirection.terminus(:file).class).to receive(method).with(request)
 
         subject.send(method, request)
       end
@@ -14,7 +14,7 @@ shared_examples_for "Puppet::FileServing::Files" do |indirection|
       it "should proxy to file terminus if the protocol is file" do
         request.protocol = 'file'
 
-        described_class.indirection.terminus(:file).class.any_instance.expects(method).with(request)
+        expect_any_instance_of(described_class.indirection.terminus(:file).class).to receive(method).with(request)
 
         subject.send(method, request)
       end
@@ -32,7 +32,7 @@ shared_examples_for "Puppet::FileServing::Files" do |indirection|
           it "should proxy to rest terminus if default_file_terminus is rest" do
             Puppet[:default_file_terminus] = "rest"
 
-            described_class.indirection.terminus(:rest).class.any_instance.expects(method).with(request)
+            expect_any_instance_of(described_class.indirection.terminus(:rest).class).to receive(method).with(request)
 
             subject.send(method, request)
           end
@@ -40,7 +40,7 @@ shared_examples_for "Puppet::FileServing::Files" do |indirection|
           it "should proxy to rest terminus if default_file_terminus is not rest" do
             Puppet[:default_file_terminus] = 'file_server'
 
-            described_class.indirection.terminus(:rest).class.any_instance.expects(method).with(request)
+            expect_any_instance_of(described_class.indirection.terminus(:rest).class).to receive(method).with(request)
 
             subject.send(method, request)
           end
@@ -54,7 +54,7 @@ shared_examples_for "Puppet::FileServing::Files" do |indirection|
           it "should proxy to file_server if default_file_terminus is 'file_server'" do
             Puppet[:default_file_terminus] = 'file_server'
 
-            described_class.indirection.terminus(:file_server).class.any_instance.expects(method).with(request)
+            expect_any_instance_of(described_class.indirection.terminus(:file_server).class).to receive(method).with(request)
 
             subject.send(method, request)
           end
@@ -62,7 +62,7 @@ shared_examples_for "Puppet::FileServing::Files" do |indirection|
           it "should proxy to rest if default_file_terminus is 'rest'" do
             Puppet[:default_file_terminus] = "rest"
 
-            described_class.indirection.terminus(:rest).class.any_instance.expects(method).with(request)
+            expect_any_instance_of(described_class.indirection.terminus(:rest).class).to receive(method).with(request)
 
             subject.send(method, request)
           end

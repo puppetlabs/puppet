@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'puppet/ssl/certificate_authority/autosign_command'
 
 describe Puppet::SSL::CertificateAuthority::AutosignCommand do
-  let(:csr) { stub 'csr', :name => 'host', :to_s => 'CSR PEM goes here' }
+  let(:csr) { double('csr', :name => 'host', :to_s => 'CSR PEM goes here') }
   let(:decider) { Puppet::SSL::CertificateAuthority::AutosignCommand.new('/autosign/command') }
 
   it "returns true if the command succeeded" do
@@ -19,11 +19,11 @@ describe Puppet::SSL::CertificateAuthority::AutosignCommand do
   end
 
   def executes_the_command_resulting_in(exitstatus)
-    Puppet::Util::Execution.expects(:execute).
+    expect(Puppet::Util::Execution).to receive(:execute).
       with(['/autosign/command', 'host'],
-           has_entries(:stdinfile => anything,
-                       :combine => true,
-                       :failonfail => false)).
-      returns(Puppet::Util::Execution::ProcessOutput.new('', exitstatus))
+           hash_including(:stdinfile => anything,
+                          :combine => true,
+                          :failonfail => false)).
+      and_return(Puppet::Util::Execution::ProcessOutput.new('', exitstatus))
   end
 end

@@ -8,12 +8,10 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
   end
 
   describe "when serving a request" do
-    before :all do
-      @model_class = stub('indirected model class')
-      Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@model_class)
-    end
-
     before :each do
+      @model_class = double('indirected model class')
+      allow(Puppet::Indirector::Indirection).to receive(:model).with(:foo).and_return(@model_class)
+
       @response = Rack::Response.new
       @handler = Puppet::Network::HTTP::RackREST.new(:handler => :foo)
     end
@@ -88,35 +86,35 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       end
 
       it "should set the response's content-type header when setting the content type" do
-        @header = mock 'header'
-        @response.expects(:header).returns @header
-        @header.expects(:[]=).with('Content-Type', "mytype")
+        @header = double('header')
+        expect(@response).to receive(:header).and_return(@header)
+        expect(@header).to receive(:[]=).with('Content-Type', "mytype")
 
         @handler.set_content_type(@response, "mytype")
       end
 
       it "should set the status and write the body when setting the response for a request" do
-        @response.expects(:status=).with(400)
-        @response.expects(:write).with("mybody")
+        expect(@response).to receive(:status=).with(400)
+        expect(@response).to receive(:write).with("mybody")
 
         @handler.set_response(@response, "mybody", 400)
       end
 
       describe "when result is a File" do
         before :each do
-          stat = stub 'stat', :size => 100
-          @file = stub 'file', :stat => stat, :path => "/tmp/path"
-          @file.stubs(:is_a?).with(File).returns(true)
+          stat = double('stat', :size => 100)
+          @file = double('file', :stat => stat, :path => "/tmp/path")
+          allow(@file).to receive(:is_a?).with(File).and_return(true)
         end
 
         it "should set the Content-Length header as a string" do
-          @response.expects(:[]=).with("Content-Length", '100')
+          expect(@response).to receive(:[]=).with("Content-Length", '100')
 
           @handler.set_response(@response, @file, 200)
         end
 
         it "should return a RackFile adapter as body" do
-          @response.expects(:body=).with { |val| val.is_a?(Puppet::Network::HTTP::RackREST::RackFile) }
+          expect(@response).to receive(:body=).with(be_a(Puppet::Network::HTTP::RackREST::RackFile))
 
           @handler.set_response(@response, @file, 200)
         end
@@ -124,18 +122,18 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
 
       it "should ensure the body has been read on success" do
         req = mk_req('/production/report/foo', :method => 'PUT')
-        req.body.expects(:read).at_least_once
+        expect(req.body).to receive(:read).at_least(:once)
 
-        Puppet::Transaction::Report.stubs(:save)
+        allow(Puppet::Transaction::Report).to receive(:save)
 
         @handler.process(req, @response)
       end
 
       it "should ensure the body has been partially read on failure" do
         req = mk_req('/production/report/foo')
-        req.body.expects(:read).with(1)
+        expect(req.body).to receive(:read).with(1)
 
-        @handler.stubs(:headers).raises(StandardError)
+        allow(@handler).to receive(:headers).and_raise(StandardError)
 
         @handler.process(req, @response)
       end
@@ -269,14 +267,14 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       it "should resolve the node name with an ip address look-up if no certificate is present" do
         Puppet[:ssl_client_header] = "myheader"
         req = mk_req('/', "myheader" => nil)
-        @handler.expects(:resolve_node).returns("host.domain.com")
+        expect(@handler).to receive(:resolve_node).and_return("host.domain.com")
         expect(@handler.params(req)[:node]).to eq("host.domain.com")
       end
 
       it "should resolve the node name with an ip address look-up if a certificate without a CN is present" do
         Puppet[:ssl_client_header] = "myheader"
         req = mk_req('/', "myheader" => "O=no CN")
-        @handler.expects(:resolve_node).returns("host.domain.com")
+        expect(@handler).to receive(:resolve_node).and_return("host.domain.com")
         expect(@handler.params(req)[:node]).to eq("host.domain.com")
       end
 
@@ -285,7 +283,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         Puppet[:ssl_client_verify_header] = "verify_header"
         req = mk_req('/', "dn_header" => "O=no CN", "verify_header" => 'SUCCESS')
 
-        @handler.expects(:resolve_node).returns("host.domain.com")
+        expect(@handler).to receive(:resolve_node).and_return("host.domain.com")
 
         expect(@handler.params(req)[:authenticated]).to be_falsey
       end
@@ -295,8 +293,8 @@ end
 
 describe Puppet::Network::HTTP::RackREST::RackFile do
   before(:each) do
-    stat = stub 'stat', :size => 100
-    @file = stub 'file', :stat => stat, :path => "/tmp/path"
+    stat = double('stat', :size => 100)
+    @file = double('file', :stat => stat, :path => "/tmp/path")
     @rackfile = Puppet::Network::HTTP::RackREST::RackFile.new(@file)
   end
 
@@ -305,7 +303,7 @@ describe Puppet::Network::HTTP::RackREST::RackFile do
   end
 
   it "should yield file chunks by chunks" do
-    @file.expects(:read).times(3).with(8192).returns("1", "2", nil)
+    expect(@file).to receive(:read).exactly(3).times.with(8192).and_return("1", "2", nil)
     i = 1
     @rackfile.each do |chunk|
       expect(chunk.to_i).to eq(i)
@@ -318,7 +316,7 @@ describe Puppet::Network::HTTP::RackREST::RackFile do
   end
 
   it "should delegate close to File close" do
-    @file.expects(:close)
+    expect(@file).to receive(:close)
     @rackfile.close
   end
 end

@@ -46,11 +46,11 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
     end
 
     before do
-      provider_class.stubs(:command).with(:cmd).returns("/usr/bin/#{provider_name}")
-      provider.stubs(:rpm).returns 'rpm'
-      provider.stubs(:get).with(:version).returns '1'
-      provider.stubs(:get).with(:release).returns '1'
-      provider.stubs(:get).with(:arch).returns 'i386'
+      allow(provider_class).to receive(:command).with(:cmd).and_return("/usr/bin/#{provider_name}")
+      allow(provider).to receive(:rpm).and_return('rpm')
+      allow(provider).to receive(:get).with(:version).and_return('1')
+      allow(provider).to receive(:get).with(:release).and_return('1')
+      allow(provider).to receive(:get).with(:arch).and_return('i386')
     end
 
     describe 'provider features' do
@@ -66,27 +66,27 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
     end
     describe 'when installing' do
       before(:each) do
-        Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
-        provider.stubs(:which).with("rpm").returns("/bin/rpm")
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).returns(Puppet::Util::Execution::ProcessOutput.new("4.10.1\n", 0)).at_most_once
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns('6')
+        allow(Puppet::Util).to receive(:which).with("rpm").and_return("/bin/rpm")
+        allow(provider).to receive(:which).with("rpm").and_return("/bin/rpm")
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).and_return(Puppet::Util::Execution::ProcessOutput.new("4.10.1\n", 0)).at_most(:once)
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('6')
       end
 
       it "should call #{provider_name} install for :installed" do
-        resource.stubs(:should).with(:ensure).returns :installed
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, 'mypackage'])
+        allow(resource).to receive(:should).with(:ensure).and_return(:installed)
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, 'mypackage'])
         provider.install
       end
 
       if provider_name == 'yum'
         context 'on el-5' do
           before(:each) do
-            Facter.stubs(:value).with(:operatingsystemmajrelease).returns('5')
+            allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return('5')
           end
 
           it "should catch #{provider_name} install failures when status code is wrong" do
-            resource.stubs(:should).with(:ensure).returns :installed
-            Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-e', error_level, '-y', :install, name]).returns(Puppet::Util::Execution::ProcessOutput.new("No package #{name} available.", 0))
+            allow(resource).to receive(:should).with(:ensure).and_return(:installed)
+            expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-e', error_level, '-y', :install, name]).and_return(Puppet::Util::Execution::ProcessOutput.new("No package #{name} available.", 0))
             expect {
               provider.install
             }.to raise_error(Puppet::Error, "Could not find package #{name}")
@@ -95,22 +95,22 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
       end
 
       it 'should use :install to update' do
-        provider.expects(:install)
+        expect(provider).to receive(:install)
         provider.update
       end
 
       it 'should be able to set version' do
         version = '1.2'
         resource[:ensure] = version
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, "#{name}-#{version}"])
-        provider.stubs(:query).returns :ensure => version
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, "#{name}-#{version}"])
+        allow(provider).to receive(:query).and_return(:ensure => version)
         provider.install
       end
       it 'should handle partial versions specified' do
         version = '1.3.4'
         resource[:ensure] = version
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, 'mypackage-1.3.4'])
-        provider.stubs(:query).returns :ensure => '1.3.4-1.el6'
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, 'mypackage-1.3.4'])
+        allow(provider).to receive(:query).and_return(:ensure => '1.3.4-1.el6')
         provider.install
       end
 
@@ -118,8 +118,8 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
         current_version = '1.2'
         version = '1.0'
         resource[:ensure] = '1.0'
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :downgrade, "#{name}-#{version}"])
-        provider.stubs(:query).returns(:ensure => current_version).then.returns(:ensure => version)
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :downgrade, "#{name}-#{version}"])
+        allow(provider).to receive(:query).and_return({:ensure => current_version}, {:ensure => version})
         provider.install
       end
 
@@ -127,8 +127,8 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
         current_version = '1.0'
         version = '1.2'
         resource[:ensure] = '1.2'
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', upgrade_command, "#{name}-#{version}"])
-        provider.stubs(:query).returns(:ensure => current_version).then.returns(:ensure => version)
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', upgrade_command, "#{name}-#{version}"])
+        allow(provider).to receive(:query).and_return({:ensure => current_version}, {:ensure => version})
         provider.install
       end
 
@@ -136,8 +136,8 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
         current_version = ''
         version = '1.2'
         resource[:ensure] = :latest
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, name])
-        provider.stubs(:query).returns(:ensure => current_version).then.returns(:ensure => version)
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, name])
+        allow(provider).to receive(:query).and_return({:ensure => current_version}, {:ensure => version})
         provider.install
       end
 
@@ -145,38 +145,38 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
         current_version = '1.0'
         version = '1.2'
         resource[:ensure] = :latest
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', upgrade_command, name])
-        provider.stubs(:query).returns(:ensure => current_version).then.returns(:ensure => version)
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', upgrade_command, name])
+        allow(provider).to receive(:query).and_return({:ensure => current_version}, {:ensure => version})
         provider.install
       end
 
       it 'should accept install options' do
         resource[:ensure] = :installed
         resource[:install_options] = ['-t', {'-x' => 'expackage'}]
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', ['-t', '-x=expackage'], :install, name])
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', ['-t', '-x=expackage'], :install, name])
         provider.install
       end
 
       it 'allow virtual packages' do
         resource[:ensure] = :installed
         resource[:allow_virtual] = true
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :list, name]).never
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, name])
+        expect(Puppet::Util::Execution).not_to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :list, name])
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, name])
         provider.install
       end
 
       it 'moves architecture to end of version' do
         version = '1.2.3'
         arch_resource[:ensure] = version
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, "#{name}-#{version}.#{arch}"])
-        arch_provider.stubs(:query).returns :ensure => version
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-d', '0', '-e', error_level, '-y', :install, "#{name}-#{version}.#{arch}"])
+        allow(arch_provider).to receive(:query).and_return(:ensure => version)
         arch_provider.install
       end
     end
 
     describe 'when uninstalling' do
       it 'should use erase to purge' do
-        Puppet::Util::Execution.expects(:execute).with(["/usr/bin/#{provider_name}", '-y', :erase, name])
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/usr/bin/#{provider_name}", '-y', :erase, name])
         provider.purge
       end
     end
@@ -191,8 +191,8 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
           {'--enablerepo' => 'contrib'},
           {'--enablerepo' => 'centosplus'},
         ]
-        provider.stubs(:properties).returns({:ensure => '3.4.5'})
-        described_class.expects(:latest_package_version).with(name, [], ['contrib', 'centosplus'], [])
+        allow(provider).to receive(:properties).and_return({:ensure => '3.4.5'})
+        expect(described_class).to receive(:latest_package_version).with(name, [], ['contrib', 'centosplus'], [])
         provider.latest
       end
 
@@ -201,8 +201,8 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
           {'--disablerepo' => 'updates'},
           {'--disablerepo' => 'centosplus'},
         ]
-        provider.stubs(:properties).returns({:ensure => '3.4.5'})
-        described_class.expects(:latest_package_version).with(name, ['updates', 'centosplus'], [], [])
+        allow(provider).to receive(:properties).and_return({:ensure => '3.4.5'})
+        expect(described_class).to receive(:latest_package_version).with(name, ['updates', 'centosplus'], [], [])
         provider.latest
       end
 
@@ -211,25 +211,25 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
           {'--disableexcludes' => 'main'},
           {'--disableexcludes' => 'centosplus'},
         ]
-        provider.stubs(:properties).returns({:ensure => '3.4.5'})
-        described_class.expects(:latest_package_version).with(name, [], [], ['main', 'centosplus'])
+        allow(provider).to receive(:properties).and_return({:ensure => '3.4.5'})
+        expect(described_class).to receive(:latest_package_version).with(name, [], [], ['main', 'centosplus'])
         provider.latest
       end
 
       describe 'and a newer version is not available' do
         before :each do
-          described_class.stubs(:latest_package_version).with(name, [], [], []).returns nil
+          allow(described_class).to receive(:latest_package_version).with(name, [], [], []).and_return(nil)
         end
 
         it 'raises an error the package is not installed' do
-          provider.stubs(:properties).returns({:ensure => :absent})
+          allow(provider).to receive(:properties).and_return({:ensure => :absent})
           expect {
             provider.latest
           }.to raise_error(Puppet::DevError, 'Tried to get latest on a missing package')
         end
 
         it 'returns version of the currently installed package' do
-          provider.stubs(:properties).returns({:ensure => '3.4.5'})
+          allow(provider).to receive(:properties).and_return({:ensure => '3.4.5'})
           expect(provider.latest).to eq('3.4.5')
         end
       end
@@ -246,7 +246,7 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
         end
 
         it 'includes the epoch in the version string' do
-          described_class.stubs(:latest_package_version).with(name, [], [], []).returns(latest_version)
+          allow(described_class).to receive(:latest_package_version).with(name, [], [], []).and_return(latest_version)
           expect(provider.latest).to eq('1:2.3.4-5')
         end
       end
@@ -277,19 +277,19 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
       let(:enabled_versions) { {name => [mypackage_newerversion]} }
 
       it "returns the version hash if the package was found" do
-        described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+        expect(described_class).to receive(:check_updates).with([], [], []).once.and_return(latest_versions)
         version = described_class.latest_package_version(name, [], [], [])
         expect(version).to eq(mypackage_version)
       end
 
       it "is nil if the package was not found in the query" do
-        described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+        expect(described_class).to receive(:check_updates).with([], [], []).once.and_return(latest_versions)
         version = described_class.latest_package_version('nopackage', [], [], [])
         expect(version).to be_nil
       end
 
       it "caches the package list and reuses that for subsequent queries" do
-        described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
+        expect(described_class).to receive(:check_updates).with([], [], []).once.and_return(latest_versions)
         2.times {
           version = described_class.latest_package_version(name, [], [], [])
           expect(version).to eq mypackage_version
@@ -297,8 +297,8 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
       end
 
       it "caches separate lists for each combination of 'disablerepo' and 'enablerepo' and 'disableexcludes'" do
-        described_class.expects(:check_updates).with([], [], []).once.returns(latest_versions)
-        described_class.expects(:check_updates).with(['disabled'], ['enabled'], ['disableexcludes']).once.returns(enabled_versions)
+        expect(described_class).to receive(:check_updates).with([], [], []).once.and_return(latest_versions)
+        expect(described_class).to receive(:check_updates).with(['disabled'], ['enabled'], ['disableexcludes']).once.and_return(enabled_versions)
         2.times {
           version = described_class.latest_package_version(name, [], [], [])
           expect(version).to eq mypackage_version
@@ -312,55 +312,60 @@ shared_examples "RHEL package provider" do |provider_class, provider_name|
 
     describe "executing #{provider_name} check-update" do
       it "passes repos to enable to '#{provider_name} check-update'" do
-        Puppet::Util::Execution.expects(:execute).with do |args, *rest|
-          expect(args).to eq %W[/usr/bin/#{provider_name} check-update --enablerepo=updates --enablerepo=centosplus]
-        end.returns(stub(:exitstatus => 0))
+        expect(Puppet::Util::Execution).to receive(:execute).with(
+          %W[/usr/bin/#{provider_name} check-update --enablerepo=updates --enablerepo=centosplus],
+          any_args
+        ).and_return(double(:exitstatus => 0))
         described_class.check_updates([], %W[updates centosplus], [])
       end
 
       it "passes repos to disable to '#{provider_name} check-update'" do
-        Puppet::Util::Execution.expects(:execute).with do |args, *rest|
-          expect(args).to eq %W[/usr/bin/#{provider_name} check-update --disablerepo=updates --disablerepo=centosplus]
-        end.returns(stub(:exitstatus => 0))
+        expect(Puppet::Util::Execution).to receive(:execute).with(
+          %W[/usr/bin/#{provider_name} check-update --disablerepo=updates --disablerepo=centosplus],
+          any_args
+        ).and_return(double(:exitstatus => 0))
         described_class.check_updates(%W[updates centosplus], [], [])
       end
 
       it "passes a combination of repos to enable and disable to '#{provider_name} check-update'" do
-        Puppet::Util::Execution.expects(:execute).with do |args, *rest|
-          expect(args).to eq %W[/usr/bin/#{provider_name} check-update --disablerepo=updates --disablerepo=centosplus --enablerepo=os --enablerepo=contrib ]
-        end.returns(stub(:exitstatus => 0))
+        expect(Puppet::Util::Execution).to receive(:execute).with(
+          %W[/usr/bin/#{provider_name} check-update --disablerepo=updates --disablerepo=centosplus --enablerepo=os --enablerepo=contrib ],
+          any_args
+        ).and_return(double(:exitstatus => 0))
         described_class.check_updates(%W[updates centosplus], %W[os contrib], [])
       end
 
       it "passes disableexcludes to '#{provider_name} check-update'" do
-        Puppet::Util::Execution.expects(:execute).with do |args, *rest|
-          expect(args).to eq %W[/usr/bin/#{provider_name} check-update --disableexcludes=main --disableexcludes=centosplus]
-        end.returns(stub(:exitstatus => 0))
+        expect(Puppet::Util::Execution).to receive(:execute).with(
+          %W[/usr/bin/#{provider_name} check-update --disableexcludes=main --disableexcludes=centosplus],
+          any_args
+        ).and_return(double(:exitstatus => 0))
         described_class.check_updates([], [], %W[main centosplus])
       end
 
       it "passes all options to '#{provider_name} check-update'" do
-        Puppet::Util::Execution.expects(:execute).with do |args, *rest|
-          expect(args).to eq %W[/usr/bin/#{provider_name} check-update --disablerepo=a --disablerepo=b --enablerepo=c --enablerepo=d --disableexcludes=e --disableexcludes=f]
-        end.returns(stub(:exitstatus => 0))
+        expect(Puppet::Util::Execution).to receive(:execute).with(
+          %W[/usr/bin/#{provider_name} check-update --disablerepo=a --disablerepo=b --enablerepo=c --enablerepo=d --disableexcludes=e --disableexcludes=f],
+          any_args
+        ).and_return(double(:exitstatus => 0))
         described_class.check_updates(%W[a b], %W[c d], %W[e f])
       end
 
       it "returns an empty hash if '#{provider_name} check-update' returned 0" do
-        Puppet::Util::Execution.expects(:execute).returns(stub :exitstatus => 0)
+        expect(Puppet::Util::Execution).to receive(:execute).and_return(double(:exitstatus => 0))
         expect(described_class.check_updates([], [], [])).to be_empty
       end
 
       it "returns a populated hash if '#{provider_name} check-update returned 100'" do
-        output = stub(:exitstatus => 100)
-        Puppet::Util::Execution.expects(:execute).returns(output)
-        described_class.expects(:parse_updates).with(output).returns({:has => :updates})
+        output = double(:exitstatus => 100)
+        expect(Puppet::Util::Execution).to receive(:execute).and_return(output)
+        expect(described_class).to receive(:parse_updates).with(output).and_return({:has => :updates})
         expect(described_class.check_updates([], [], [])).to eq({:has => :updates})
       end
 
       it "returns an empty hash if '#{provider_name} check-update' returned an exit code that was not 0 or 100" do
-        Puppet::Util::Execution.expects(:execute).returns(stub(:exitstatus => 1))
-        described_class.expects(:warning).with("Could not check for updates, \'/usr/bin/#{provider_name} check-update\' exited with 1")
+        expect(Puppet::Util::Execution).to receive(:execute).and_return(double(:exitstatus => 1))
+        expect(described_class).to receive(:warning).with("Could not check for updates, \'/usr/bin/#{provider_name} check-update\' exited with 1")
         expect(described_class.check_updates([], [], [])).to eq({})
       end
     end

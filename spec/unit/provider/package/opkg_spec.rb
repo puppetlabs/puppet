@@ -9,24 +9,23 @@ describe Puppet::Type.type(:package).provider(:opkg) do
   let(:provider) { described_class.new(resource) }
 
   before do
-    Puppet::Util::Execution.stubs(:execute).never
-    Puppet::Util.stubs(:which).with("opkg").returns("/bin/opkg")
-    provider.stubs(:package_lists).returns ['.', '..', 'packages']
+    allow(Puppet::Util).to receive(:which).with("opkg").and_return("/bin/opkg")
+    allow(provider).to receive(:package_lists).and_return(['.', '..', 'packages'])
   end
 
   describe "when installing" do
     before do
-      provider.stubs(:query).returns({ :ensure => '1.0' })
+      allow(provider).to receive(:query).and_return({ :ensure => '1.0' })
     end
 
     context "when the package list is absent" do
       before do
-        provider.stubs(:package_lists).returns ['.', '..']  #empty, no package list
+        allow(provider).to receive(:package_lists).and_return(['.', '..'])  #empty, no package list
       end
 
       it "fetches the package list when installing" do
-        provider.expects(:opkg).with('update')
-        provider.expects(:opkg).with("--force-overwrite", "install", resource[:name])
+        expect(provider).to receive(:opkg).with('update')
+        expect(provider).to receive(:opkg).with("--force-overwrite", "install", resource[:name])
 
         provider.install
       end
@@ -34,19 +33,19 @@ describe Puppet::Type.type(:package).provider(:opkg) do
 
     context "when the package list is present" do
       before do
-        provider.stubs(:package_lists).returns ['.', '..', 'lists']  # With a pre-downloaded package list
+        allow(provider).to receive(:package_lists).and_return(['.', '..', 'lists'])  # With a pre-downloaded package list
       end
 
       it "fetches the package list when installing" do
-        provider.expects(:opkg).with('update').never
-        provider.expects(:opkg).with("--force-overwrite", "install", resource[:name])
+        expect(provider).not_to receive(:opkg).with('update')
+        expect(provider).to receive(:opkg).with("--force-overwrite", "install", resource[:name])
 
         provider.install
       end
     end
 
     it "should call opkg install" do
-      Puppet::Util::Execution.expects(:execute).with(["/bin/opkg", "--force-overwrite", "install", resource[:name]], {:failonfail => true, :combine => true, :custom_environment => {}})
+      expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/opkg", "--force-overwrite", "install", resource[:name]], {:failonfail => true, :combine => true, :custom_environment => {}})
       provider.install
     end
 
@@ -59,7 +58,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
         }.each do |source|
           it "should install #{source} directly" do
             resource[:source] = source
-            Puppet::Util::Execution.expects(:execute).with(["/bin/opkg", "--force-overwrite", "install", resource[:source]], {:failonfail => true, :combine => true, :custom_environment => {}})
+            expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/opkg", "--force-overwrite", "install", resource[:source]], {:failonfail => true, :combine => true, :custom_environment => {}})
             provider.install
           end
         end
@@ -73,7 +72,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
         end
 
         it "should install from the path segment of the URL" do
-          Puppet::Util::Execution.expects(:execute).returns(Puppet::Util::Execution::ProcessOutput.new("", 0))
+          expect(Puppet::Util::Execution).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new("", 0))
           provider.install
         end
       end
@@ -81,7 +80,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
       context "with invalid URL for opkg" do
         before do
           # Emulate the `opkg` command returning a non-zero exit value
-          Puppet::Util::Execution.stubs(:execute).raises Puppet::ExecutionFailure, 'oops'
+          allow(Puppet::Util::Execution).to receive(:execute).and_raise(Puppet::ExecutionFailure, 'oops')
         end
 
         context "puppet://server/whatever" do
@@ -109,14 +108,14 @@ describe Puppet::Type.type(:package).provider(:opkg) do
 
   describe "when updating" do
     it "should call install" do
-      provider.expects(:install).returns("install return value")
+      expect(provider).to receive(:install).and_return("install return value")
       expect(provider.update).to eq("install return value")
     end
   end
 
   describe "when uninstalling" do
     it "should run opkg remove bla" do
-      Puppet::Util::Execution.expects(:execute).with(["/bin/opkg", "remove", resource[:name]], {:failonfail => true, :combine => true, :custom_environment => {}})
+      expect(Puppet::Util::Execution).to receive(:execute).with(["/bin/opkg", "remove", resource[:name]], {:failonfail => true, :combine => true, :custom_environment => {}})
       provider.uninstall
     end
   end
@@ -132,9 +131,9 @@ OPKG_OUTPUT
       end
 
       it "returns an array of packages" do
-        Puppet::Util.stubs(:which).with("opkg").returns("/bin/opkg")
-        described_class.stubs(:which).with("opkg").returns("/bin/opkg")
-        described_class.expects(:execpipe).with("/bin/opkg list-installed").yields(packages)
+        allow(Puppet::Util).to receive(:which).with("opkg").and_return("/bin/opkg")
+        allow(described_class).to receive(:which).with("opkg").and_return("/bin/opkg")
+        expect(described_class).to receive(:execpipe).with("/bin/opkg list-installed").and_yield(packages)
 
         installed_packages = described_class.instances
         expect(installed_packages.length).to eq(3)
@@ -164,12 +163,12 @@ OPKG_OUTPUT
     end
 
     it "should return a nil if the package isn't found" do
-      Puppet::Util::Execution.expects(:execute).returns(Puppet::Util::Execution::ProcessOutput.new("", 0))
+      expect(Puppet::Util::Execution).to receive(:execute).and_return(Puppet::Util::Execution::ProcessOutput.new("", 0))
       expect(provider.query).to be_nil
     end
 
     it "should return a hash indicating that the package is missing on error" do
-      Puppet::Util::Execution.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
+      expect(Puppet::Util::Execution).to receive(:execute).and_raise(Puppet::ExecutionFailure.new("ERROR!"))
       expect(provider.query).to eq({
         :ensure => :purged,
         :status => 'missing',
@@ -177,6 +176,5 @@ OPKG_OUTPUT
         :error => 'ok',
       })
     end
-  end #end when querying
-
-end # end describe provider
+  end
+end

@@ -294,12 +294,12 @@ describe Puppet::Util::RunMode do
   end
 
   def as_root
-    Puppet.features.stubs(:root?).returns(true)
+    allow(Puppet.features).to receive(:root?).and_return(true)
     yield
   end
 
   def as_non_root
-    Puppet.features.stubs(:root?).returns(false)
+    allow(Puppet.features).to receive(:root?).and_return(false)
     yield
   end
 

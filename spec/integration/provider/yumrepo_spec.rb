@@ -10,18 +10,18 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile), '(integration)',
 
   before :each do
     # Don't backup to filebucket
-    Puppet::FileBucket::Dipper.any_instance.stubs(:backup)
+    allow_any_instance_of(Puppet::FileBucket::Dipper).to receive(:backup)
     # We don't want to execute anything
-    described_class.stubs(:filetype).
-      returns Puppet::Util::FileType::FileTypeFlat
+    allow(described_class).to receive(:filetype).
+      and_return(Puppet::Util::FileType::FileTypeFlat)
 
     @yumrepo_dir  = tmpdir('yumrepo_integration_specs')
     @yumrepo_file = tmpfile('yumrepo_file', @yumrepo_dir)
     @yumrepo_conf_file = tmpfile('yumrepo_conf_file', @yumrepo_dir)
     # this mocks the reposdir logic in the provider and thus won't test for
     # issues like PUP-2916. Cover these types of issues in acceptance
-    described_class.stubs(:reposdir).returns [@yumrepo_dir]
-    described_class.stubs(:repofiles).returns [@yumrepo_conf_file]
+    allow(described_class).to receive(:reposdir).and_return([@yumrepo_dir])
+    allow(described_class).to receive(:repofiles).and_return([@yumrepo_conf_file])
   end
 
   after :each do
@@ -116,12 +116,10 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile), '(integration)',
     it "should fetch the yumrepo entries from resource face" do
       @resource_app = Puppet::Application[:resource]
       @resource_app.preinit
-      @resource_app.command_line.stubs(:args).
-        returns([type_under_test, super_creative])
+      allow(@resource_app.command_line).to receive(:args).
+        and_return([type_under_test, super_creative])
 
-      @resource_app.expects(:puts).with  do |args|
-        expect(args).to match(/#{super_creative}/)
-      end
+      allow(@resource_app).to receive(:puts).with(/#{super_creative}/)
       @resource_app.main
     end
   end

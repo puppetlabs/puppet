@@ -10,9 +10,9 @@ describe Puppet::Util::Diff do
       Puppet[:diff] = 'foo'
       Puppet[:diff_args] = 'bar'
 
-      Puppet::Util::Execution.expects(:execute)
+      expect(Puppet::Util::Execution).to receive(:execute)
         .with(['foo', 'bar', 'a', 'b'], {:failonfail => false, :combine => false})
-        .returns(baz_output)
+        .and_return(baz_output)
       expect(subject.diff('a', 'b')).to eq('baz')
     end
 
@@ -20,9 +20,9 @@ describe Puppet::Util::Diff do
       Puppet[:diff] = 'foo'
       Puppet[:diff_args] = 'bar qux'
 
-      Puppet::Util::Execution.expects(:execute)
+      expect(Puppet::Util::Execution).to receive(:execute)
         .with(['foo', 'bar', 'qux', 'a', 'b'], anything)
-        .returns(baz_output)
+        .and_return(baz_output)
       expect(subject.diff('a', 'b')).to eq('baz')
     end
 
@@ -30,16 +30,16 @@ describe Puppet::Util::Diff do
       Puppet[:diff] = 'foo'
       Puppet[:diff_args] = ''
 
-      Puppet::Util::Execution.expects(:execute)
+      expect(Puppet::Util::Execution).to receive(:execute)
         .with(['foo', 'a', 'b'], {:failonfail => false, :combine => false})
-        .returns(baz_output)
+        .and_return(baz_output)
       expect(subject.diff('a', 'b')).to eq('baz')
     end
 
     it "should return empty string if the diff command is empty" do
       Puppet[:diff] = ''
 
-      Puppet::Util::Execution.expects(:execute).never
+      expect(Puppet::Util::Execution).not_to receive(:execute)
       expect(subject.diff('a', 'b')).to eq('')
     end
   end

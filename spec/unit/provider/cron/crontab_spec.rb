@@ -9,7 +9,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
   def compare_crontab_text(have, want)
     # We should have four header lines, and then the text...
-    expect(have.lines.to_a[0..3]).to be_all {|x| x =~ /^# / }
+    expect(have.lines.to_a[0..3]).to(be_all {|x| x =~ /^# / })
     expect(have.lines.to_a[4..-1].join('')).to eq(want)
   end
 
@@ -126,7 +126,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
     let(:resources) { { "test" => resource } }
 
     before :each do
-      subject.stubs(:prefetch_all_targets).returns([record])
+      allow(subject).to receive(:prefetch_all_targets).and_return([record])
     end
 
 # this would be a more fitting test, but I haven't yet
@@ -142,17 +142,17 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 #    end
 
     it "should not base the new resource's provider on the existing record" do
-      subject.expects(:new).with(record).never
-      subject.stubs(:new)
+      expect(subject).not_to receive(:new).with(record)
+      allow(subject).to receive(:new)
       subject.prefetch(resources)
     end
   end
 
   context "when prefetching an entry now managed for another user" do
     let(:resource) do
-     s = stub(:resource)
-     s.stubs(:[]).with(:user).returns 'root'
-     s.stubs(:[]).with(:target).returns 'root'
+     s = double(:resource)
+     allow(s).to receive(:[]).with(:user).and_return('root')
+     allow(s).to receive(:[]).with(:target).and_return('root')
      s
     end
 
@@ -160,16 +160,16 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
     let(:resources) { { "test" => resource } }
 
     before :each do
-      subject.stubs(:prefetch_all_targets).returns([record])
+      allow(subject).to receive(:prefetch_all_targets).and_return([record])
     end
 
     it "should try and use the match method to find a more fitting record" do
-      subject.expects(:match).with(record, resources)
+      expect(subject).to receive(:match).with(record, resources)
       subject.prefetch(resources)
     end
 
     it "should not match a provider to the resource" do
-      resource.expects(:provider=).never
+      expect(resource).not_to receive(:provider=)
       subject.prefetch(resources)
     end
 

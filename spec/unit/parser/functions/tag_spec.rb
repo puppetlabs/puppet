@@ -17,7 +17,7 @@ describe "the 'tag' function" do
 
   it "should tag the resource with any provided tags" do
     resource = Puppet::Parser::Resource.new(:file, "/file", :scope => @scope)
-    @scope.expects(:resource).returns resource
+    expect(@scope).to receive(:resource).and_return(resource)
 
     @scope.function_tag ["one", "two"]
 

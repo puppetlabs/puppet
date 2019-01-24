@@ -22,7 +22,7 @@ describe Puppet::Confine::Feature do
     end
 
     it "should use the Puppet features instance to test validity" do
-      Puppet.features.expects(:myfeature?)
+      expect(Puppet.features).to receive(:myfeature?)
       @confine.valid?
     end
 
@@ -47,9 +47,12 @@ describe Puppet::Confine::Feature do
     confines << Puppet::Confine::Feature.new(%w{two})
     confines << Puppet::Confine::Feature.new(%w{three four})
 
-    features = mock 'feature'
-    features.stub_everything
-    Puppet.stubs(:features).returns features
+    features = double('feature')
+    allow(features).to receive(:one?)
+    allow(features).to receive(:two?)
+    allow(features).to receive(:three?)
+    allow(features).to receive(:four?)
+    allow(Puppet).to receive(:features).and_return(features)
 
     expect(Puppet::Confine::Feature.summarize(confines).sort).to eq(%w{one two three four}.sort)
   end

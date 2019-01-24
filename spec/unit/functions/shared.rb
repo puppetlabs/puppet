@@ -2,19 +2,19 @@ shared_examples_for 'all functions transforming relative to absolute names' do |
   before(:each) do
     # mock that the class 'myclass' exists which are needed for the 'require' functions
     # as it checks the existence of the required class
-    @klass = stub 'class', :name => "myclass"
-    @scope.environment.known_resource_types.stubs(:find_hostclass).returns(@klass)
+    @klass = double('class', :name => "myclass")
+    allow(@scope.environment.known_resource_types).to receive(:find_hostclass).and_return(@klass)
     @resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope, :source => "source")
-    @scope.stubs(:resource).returns @resource
+    allow(@scope).to receive(:resource).and_return(@resource)
   end
 
   it 'accepts a Class[name] type' do
-    @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
+    expect(@scope.compiler).to receive(:evaluate_classes).with(["::myclass"], @scope, false)
     @scope.call_function(func_name, [Puppet::Pops::Types::TypeFactory.host_class('myclass')])
   end
 
   it 'accepts a Resource[class, name] type' do
-    @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
+    expect(@scope.compiler).to receive(:evaluate_classes).with(["::myclass"], @scope, false)
     @scope.call_function(func_name, [Puppet::Pops::Types::TypeFactory.resource('class', 'myclass')])
   end
 

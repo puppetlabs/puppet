@@ -2,12 +2,12 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:bsd), :unless => Puppet.features.microsoft_windows? do
   before :each do
-    Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
-    Facter.stubs(:value).with(:operatingsystem).returns :netbsd
-    Facter.stubs(:value).with(:osfamily).returns 'NetBSD'
-    described_class.stubs(:defpath).returns('/etc/rc.conf.d')
+    allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(described_class)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:netbsd)
+    allow(Facter).to receive(:value).with(:osfamily).and_return('NetBSD')
+    allow(described_class).to receive(:defpath).and_return('/etc/rc.conf.d')
     @provider = subject()
-    @provider.stubs(:initscript)
+    allow(@provider).to receive(:initscript)
   end
 
   context "#instances" do
@@ -27,16 +27,16 @@ describe Puppet::Type.type(:service).provider(:bsd), :unless => Puppet.features.
 
     it "should remove a service file to disable" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf.d/sshd').returns(true)
-      Puppet::FileSystem.expects(:exist?).with('/etc/rc.conf.d/sshd').returns(true)
-      File.stubs(:delete).with('/etc/rc.conf.d/sshd')
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf.d/sshd').and_return(true)
+      expect(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf.d/sshd').and_return(true)
+      allow(File).to receive(:delete).with('/etc/rc.conf.d/sshd')
       provider.disable
     end
 
     it "should not remove a service file if it doesn't exist" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      File.stubs(:exist?).with('/etc/rc.conf.d/sshd').returns(false)
-      Puppet::FileSystem.expects(:exist?).with('/etc/rc.conf.d/sshd').returns(false)
+      allow(File).to receive(:exist?).with('/etc/rc.conf.d/sshd').and_return(false)
+      expect(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf.d/sshd').and_return(false)
       provider.disable
     end
   end
@@ -48,20 +48,20 @@ describe Puppet::Type.type(:service).provider(:bsd), :unless => Puppet.features.
 
     it "should set the proper contents to enable" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      Dir.stubs(:mkdir).with('/etc/rc.conf.d')
-      fh = stub 'fh'
-      File.stubs(:open).with('/etc/rc.conf.d/sshd', File::WRONLY | File::APPEND | File::CREAT, 0644).yields(fh)
-      fh.expects(:<<).with("sshd_enable=\"YES\"\n")
+      allow(Dir).to receive(:mkdir).with('/etc/rc.conf.d')
+      fh = double('fh')
+      allow(File).to receive(:open).with('/etc/rc.conf.d/sshd', File::WRONLY | File::APPEND | File::CREAT, 0644).and_yield(fh)
+      expect(fh).to receive(:<<).with("sshd_enable=\"YES\"\n")
       provider.enable
     end
 
     it "should set the proper contents to enable when disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      Dir.stubs(:mkdir).with('/etc/rc.conf.d')
-      File.stubs(:read).with('/etc/rc.conf.d/sshd').returns("sshd_enable=\"NO\"\n")
-      fh = stub 'fh'
-      File.stubs(:open).with('/etc/rc.conf.d/sshd', File::WRONLY | File::APPEND | File::CREAT, 0644).yields(fh)
-      fh.expects(:<<).with("sshd_enable=\"YES\"\n")
+      allow(Dir).to receive(:mkdir).with('/etc/rc.conf.d')
+      allow(File).to receive(:read).with('/etc/rc.conf.d/sshd').and_return("sshd_enable=\"NO\"\n")
+      fh = double('fh')
+      allow(File).to receive(:open).with('/etc/rc.conf.d/sshd', File::WRONLY | File::APPEND | File::CREAT, 0644).and_yield(fh)
+      expect(fh).to receive(:<<).with("sshd_enable=\"YES\"\n")
       provider.enable
     end
   end
@@ -73,15 +73,13 @@ describe Puppet::Type.type(:service).provider(:bsd), :unless => Puppet.features.
 
     it "should return false if the service file does not exist" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf.d/sshd').returns(false)
-      # File.stubs(:read).with('/etc/rc.conf.d/sshd').returns("sshd_enable=\"NO\"\n")
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf.d/sshd').and_return(false)
       expect(provider.enabled?).to eq(:false)
     end
 
     it "should return true if the service file exists" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf.d/sshd').returns(true)
-      # File.stubs(:read).with('/etc/rc.conf.d/sshd').returns("sshd_enable=\"YES\"\n")
+      allow(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf.d/sshd').and_return(true)
       expect(provider.enabled?).to eq(:true)
     end
   end
@@ -93,14 +91,14 @@ describe Puppet::Type.type(:service).provider(:bsd), :unless => Puppet.features.
 
     it "should use the supplied start command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :start => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
 
     it "should start the serviced directly otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :onestart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
+      expect(provider).to receive(:execute).with(['/etc/rc.d/sshd', :onestart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:search).with('sshd').and_return('/etc/rc.d/sshd')
       provider.start
     end
   end
@@ -112,14 +110,14 @@ describe Puppet::Type.type(:service).provider(:bsd), :unless => Puppet.features.
 
     it "should use the supplied stop command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :stop => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
 
     it "should stop the serviced directly otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :onestop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
+      expect(provider).to receive(:execute).with(['/etc/rc.d/sshd', :onestop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).to receive(:search).with('sshd').and_return('/etc/rc.d/sshd')
       provider.stop
     end
   end

@@ -6,7 +6,7 @@ describe Puppet::Type.type(:service).provider(:windows), '(integration)',
   require 'puppet/util/windows'
 
   before :each do
-    Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
+    allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(described_class)
   end
 
   context 'should return valid values when querying a service that does not exist' do

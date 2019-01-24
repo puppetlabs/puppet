@@ -16,7 +16,7 @@ describe augeas do
   describe "basic structure" do
     it "should be able to create an instance" do
       provider_class = Puppet::Type::Augeas.provider(Puppet::Type::Augeas.providers[0])
-      Puppet::Type::Augeas.expects(:defaultprovider).returns provider_class
+      expect(Puppet::Type::Augeas).to receive(:defaultprovider).and_return(provider_class)
       expect(augeas.new(:name => "bar")).not_to be_nil
     end
 
@@ -59,7 +59,7 @@ describe augeas do
   describe "default values" do
     before do
       provider_class = augeas.provider(augeas.providers[0])
-      augeas.expects(:defaultprovider).returns provider_class
+      expect(augeas).to receive(:defaultprovider).and_return(provider_class)
     end
 
     it "should be blank for context" do
@@ -85,15 +85,15 @@ describe augeas do
 
   describe "provider interaction" do
     it "should return 0 if it does not need to run" do
-      provider = stub("provider", :need_to_run? => false)
-      resource = stub('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)
+      provider = double("provider", :need_to_run? => false)
+      resource = double('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)
       changes = augeas.attrclass(:returns).new(:resource => resource)
       expect(changes.retrieve).to eq(0)
     end
 
     it "should return :need_to_run if it needs to run" do
-      provider = stub("provider", :need_to_run? => true)
-      resource = stub('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)
+      provider = double("provider", :need_to_run? => true)
+      resource = double('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)
       changes = augeas.attrclass(:returns).new(:resource => resource)
       expect(changes.retrieve).to eq(:need_to_run)
     end
@@ -109,8 +109,11 @@ describe augeas do
     end
 
     it "should set the context when a specific file is used" do
-      fake_provider = stub_everything "fake_provider"
-      augeas.stubs(:defaultprovider).returns fake_provider
+      fake_provider = double(
+        "fake_provider",
+        :name => nil,
+      )
+      allow(augeas).to receive(:defaultprovider).and_return(fake_provider)
       expect(augeas.new(:name => :no_incl, :lens => "Hosts.lns", :incl => "/etc/hosts")[:context]).to eq("/files/etc/hosts")
     end
   end

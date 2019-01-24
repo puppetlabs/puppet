@@ -5,14 +5,14 @@ describe Puppet::Settings::EnvironmentConf do
 
   def setup_environment_conf(config, conf_hash)
     conf_hash.each do |setting,value|
-      config.expects(:setting).with(setting).returns(
-        mock('setting', :value => value)
+      expect(config).to receive(:setting).with(setting).and_return(
+        double('setting', :value => value)
       )
     end
   end
 
   context "with config" do
-    let(:config) { stub('config') }
+    let(:config) { double('config') }
     let(:envconf) { Puppet::Settings::EnvironmentConf.new("/some/direnv", config, ["/global/modulepath"]) }
 
     it "reads a modulepath from config and does not include global_module_path" do
@@ -91,7 +91,7 @@ describe Puppet::Settings::EnvironmentConf do
   end
 
   describe "with disable_per_environment_manifest" do
-    let(:config) { stub('config') }
+    let(:config) { double('config') }
     let(:envconf) { Puppet::Settings::EnvironmentConf.new("/some/direnv", config, ["/global/modulepath"]) }
 
     context "set true" do

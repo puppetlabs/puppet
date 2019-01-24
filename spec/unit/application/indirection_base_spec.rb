@@ -31,11 +31,14 @@ describe Puppet::Application::IndirectionBase do
   it "should accept a terminus command line option" do
     # It would be nice not to have to stub this, but whatever... writing an
     # entire indirection stack would cause us more grief. --daniel 2011-03-31
-    terminus = stub_everything("test indirection terminus")
-    terminus.stubs(:name).returns(:test_indirection)
+    terminus = double("test indirection terminus")
+    allow(terminus).to receive(:name).and_return(:test_indirection)
+    allow(terminus).to receive(:terminus_class=)
+    allow(terminus).to receive(:save)
+    allow(terminus).to receive(:reset_terminus_class)
 
-    Puppet::Indirector::Indirection.expects(:instance).
-      with(:test_indirection).returns(terminus)
+    expect(Puppet::Indirector::Indirection).to receive(:instance).
+      with(:test_indirection).and_return(terminus)
 
     command_line = Puppet::Util::CommandLine.new("puppet", %w{test_indirection --terminus foo save bar})
     application = Puppet::Application::TestIndirection.new(command_line)

@@ -21,25 +21,25 @@ describe Puppet::Util::NetworkDevice do
 
   describe "when initializing the remote network device singleton" do
     it "should load the network device code" do
-      Puppet::Util::NetworkDevice.expects(:require)
+      expect(Puppet::Util::NetworkDevice).to receive(:require)
       Puppet::Util::NetworkDevice.init(@device)
     end
 
     it "should create a network device instance" do
-      Puppet::Util::NetworkDevice.stubs(:require)
-      Puppet::Util::NetworkDevice::Test::Device.expects(:new).with("telnet://admin:password@127.0.0.1", :debug => false)
+      allow(Puppet::Util::NetworkDevice).to receive(:require)
+      expect(Puppet::Util::NetworkDevice::Test::Device).to receive(:new).with("telnet://admin:password@127.0.0.1", :debug => false)
       Puppet::Util::NetworkDevice.init(@device)
     end
 
     it "should raise an error if the remote device instance can't be created" do
-      Puppet::Util::NetworkDevice.stubs(:require).raises("error")
+      allow(Puppet::Util::NetworkDevice).to receive(:require).and_raise("error")
       expect { Puppet::Util::NetworkDevice.init(@device) }.to raise_error(RuntimeError, /Can't load test for name/)
     end
 
     it "should let caller to access the singleton device" do
-      device = stub 'device'
-      Puppet::Util::NetworkDevice.stubs(:require)
-      Puppet::Util::NetworkDevice::Test::Device.expects(:new).returns(device)
+      device = double('device')
+      allow(Puppet::Util::NetworkDevice).to receive(:require)
+      expect(Puppet::Util::NetworkDevice::Test::Device).to receive(:new).and_return(device)
       Puppet::Util::NetworkDevice.init(@device)
 
       expect(Puppet::Util::NetworkDevice.current).to eq(device)

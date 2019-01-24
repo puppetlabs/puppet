@@ -66,12 +66,12 @@ describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.mic
     describe "when the command is relative" do
       describe "and a path is specified" do
         before :each do
-          provider.stubs(:which)
+          allow(provider).to receive(:which)
         end
 
         it "should search for executables with no extension" do
           provider.resource[:path] = [File.expand_path('/bogus/bin')]
-          provider.expects(:which).with('foo').returns('foo')
+          expect(provider).to receive(:which).with('foo').and_return('foo')
 
           provider.checkexe('foo')
         end

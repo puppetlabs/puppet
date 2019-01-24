@@ -111,7 +111,7 @@ describe Puppet::Node::Environment do
 
     describe "when managing known resource types" do
       before do
-        env.stubs(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
+        allow(env).to receive(:perform_initial_import).and_return(Puppet::Parser::AST::Hostclass.new(''))
       end
 
       it "creates a resource type collection if none exists" do
@@ -123,13 +123,13 @@ describe Puppet::Node::Environment do
       end
 
       it "performs the initial import when creating a new collection" do
-        env.expects(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
+        expect(env).to receive(:perform_initial_import).and_return(Puppet::Parser::AST::Hostclass.new(''))
         env.known_resource_types
       end
 
       it "generates a new TypeCollection if the current one requires reparsing" do
         old_type_collection = env.known_resource_types
-        old_type_collection.stubs(:parse_failed?).returns true
+        allow(old_type_collection).to receive(:parse_failed?).and_return(true)
 
         env.check_for_reparse
 
@@ -170,7 +170,7 @@ describe Puppet::Node::Environment do
       end
 
       context "when disable_per_environment_manifest is true" do
-        let(:config) { mock('config') }
+        let(:config) { double('config') }
         let(:global_modulepath) { ["/global/modulepath"] }
         let(:envconf) { Puppet::Settings::EnvironmentConf.new("/some/direnv", config, global_modulepath) }
 
@@ -179,12 +179,12 @@ describe Puppet::Node::Environment do
         end
 
         def assert_manifest_conflict(expectation, envconf_manifest_value)
-          config.expects(:setting).with(:manifest).returns(
-            mock('setting', :value => envconf_manifest_value)
+          expect(config).to receive(:setting).with(:manifest).and_return(
+            double('setting', :value => envconf_manifest_value)
           )
           environment = Puppet::Node::Environment.create(:directory, [], '/default/manifests/site.pp')
           loader = Puppet::Environments::Static.new(environment)
-          loader.stubs(:get_conf).returns(envconf)
+          allow(loader).to receive(:get_conf).and_return(envconf)
 
           Puppet.override(:environments => loader) do
             if expectation
@@ -418,7 +418,7 @@ describe Puppet::Node::Environment do
               }
             )
 
-            Puppet.expects(:log_exception).with(is_a(Puppet::Module::MissingMetadata))
+            expect(Puppet).to receive(:log_exception).with(be_a(Puppet::Module::MissingMetadata))
 
             env.modules
           end
@@ -429,8 +429,11 @@ describe Puppet::Node::Environment do
     describe "when performing initial import" do
       let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
+      before(:each) do
+        allow_any_instance_of(Puppet::Parser::Compiler).to receive(:loaders).and_return(loaders)
+      end
+
       around :each do |example|
-        Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
         Puppet.override(:loaders => loaders, :current_environment => env) do
           example.run
           Puppet::Pops::Loaders.clear
@@ -493,9 +496,9 @@ describe Puppet::Node::Environment do
 
   describe "managing module translations" do
     it "creates a new text domain the first time we try to use the text domain" do
-      Puppet::GettextConfig.expects(:reset_text_domain).with(env.name)
-      Puppet::ModuleTranslations.expects(:load_from_modulepath)
-      Puppet::GettextConfig.expects(:clear_text_domain)
+      expect(Puppet::GettextConfig).to receive(:reset_text_domain).with(env.name)
+      expect(Puppet::ModuleTranslations).to receive(:load_from_modulepath)
+      expect(Puppet::GettextConfig).to receive(:clear_text_domain)
 
       env.with_text_domain do; end
     end
@@ -503,7 +506,7 @@ describe Puppet::Node::Environment do
     it "uses the existing text domain once it has been created" do
       env.with_text_domain do; end
 
-      Puppet::GettextConfig.expects(:use_text_domain).with(env.name)
+      expect(Puppet::GettextConfig).to receive(:use_text_domain).with(env.name)
       env.with_text_domain do; end
     end
 

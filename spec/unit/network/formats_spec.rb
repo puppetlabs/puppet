@@ -101,14 +101,14 @@ describe "Puppet Network Format" do
     end
 
     it "should render by calling 'to_yaml' on the instance" do
-      instance = mock 'instance'
-      instance.expects(:to_yaml).returns "foo"
+      instance = double('instance')
+      expect(instance).to receive(:to_yaml).and_return("foo")
       expect(yaml.render(instance)).to eq("foo")
     end
 
     it "should render multiple instances by calling 'to_yaml' on the array" do
-      instances = [mock('instance')]
-      instances.expects(:to_yaml).returns "foo"
+      instances = [double('instance')]
+      expect(instances).to receive(:to_yaml).and_return("foo")
       expect(yaml.render_multiple(instances)).to eq("foo")
     end
 

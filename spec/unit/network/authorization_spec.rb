@@ -26,8 +26,8 @@ describe Puppet::Network::Authorization do
     end
 
     it "creates default ACL entries if no file has been read" do
-      Puppet::Network::AuthConfigParser.expects(:new_from_file).raises Errno::ENOENT
-      Puppet::Network::DefaultAuthProvider.any_instance.expects(:insert_default_acl)
+      expect(Puppet::Network::AuthConfigParser).to receive(:new_from_file).and_raise(Errno::ENOENT)
+      expect_any_instance_of(Puppet::Network::DefaultAuthProvider).to receive(:insert_default_acl)
 
       subject.authconfig
     end
@@ -51,8 +51,8 @@ describe Puppet::Network::Authorization do
     it "delegates to the authconfig object" do
       Puppet::Network::Authorization.authconfigloader_class =
           TestAuthConfigLoader
-      TestAuthConfig.any_instance.expects(:check_authorization).with(
-          :save, '/mypath', {:param1 => "value1"}).returns("yay, it worked!")
+      expect_any_instance_of(TestAuthConfig).to receive(:check_authorization).with(
+          :save, '/mypath', {:param1 => "value1"}).and_return("yay, it worked!")
       expect(subject.check_authorization(
                  :save, '/mypath',
                  {:param1 => "value1"})).to eq("yay, it worked!")

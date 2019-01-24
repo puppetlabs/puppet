@@ -12,7 +12,7 @@ describe Puppet::ModuleTool::InstallDirectory do
 
   it "(#15202) creates the install directory" do
     target_dir = the_directory('foo', :directory? => false, :exist? => false)
-    target_dir.expects(:mkpath)
+    expect(target_dir).to receive(:mkpath)
 
     install = Puppet::ModuleTool::InstallDirectory.new(target_dir)
 
@@ -21,7 +21,7 @@ describe Puppet::ModuleTool::InstallDirectory do
 
   it "(#15202) errors when the directory is not accessible" do
     target_dir = the_directory('foo', :directory? => false, :exist? => false)
-    target_dir.expects(:mkpath).raises(Errno::EACCES)
+    expect(target_dir).to receive(:mkpath).and_raise(Errno::EACCES)
 
     install = Puppet::ModuleTool::InstallDirectory.new(target_dir)
 
@@ -34,7 +34,7 @@ describe Puppet::ModuleTool::InstallDirectory do
 
   it "(#15202) errors when an entry along the path is not a directory" do
     target_dir = the_directory("foo/bar", :exist? => false, :directory? => false)
-    target_dir.expects(:mkpath).raises(Errno::EEXIST)
+    expect(target_dir).to receive(:mkpath).and_raise(Errno::EEXIST)
 
     install = Puppet::ModuleTool::InstallDirectory.new(target_dir)
 
@@ -45,7 +45,7 @@ describe Puppet::ModuleTool::InstallDirectory do
 
   it "(#15202) simply re-raises an unknown error" do
     target_dir = the_directory("foo/bar", :exist? => false, :directory? => false)
-    target_dir.expects(:mkpath).raises("unknown error")
+    expect(target_dir).to receive(:mkpath).and_raise("unknown error")
 
     install = Puppet::ModuleTool::InstallDirectory.new(target_dir)
 
@@ -54,7 +54,7 @@ describe Puppet::ModuleTool::InstallDirectory do
 
   it "(#15202) simply re-raises an unknown system call error" do
     target_dir = the_directory("foo/bar", :exist? => false, :directory? => false)
-    target_dir.expects(:mkpath).raises(SystemCallError, "unknown")
+    expect(target_dir).to receive(:mkpath).and_raise(SystemCallError, "unknown")
 
     install = Puppet::ModuleTool::InstallDirectory.new(target_dir)
 
@@ -62,9 +62,9 @@ describe Puppet::ModuleTool::InstallDirectory do
   end
 
   def the_directory(name, options)
-    dir = mock("Pathname<#{name}>")
-    dir.stubs(:exist?).returns(options.fetch(:exist?, true))
-    dir.stubs(:directory?).returns(options.fetch(:directory?, true))
+    dir = double("Pathname<#{name}>")
+    allow(dir).to receive(:exist?).and_return(options.fetch(:exist?, true))
+    allow(dir).to receive(:directory?).and_return(options.fetch(:directory?, true))
     dir
   end
 end

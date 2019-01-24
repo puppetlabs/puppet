@@ -19,7 +19,7 @@ describe Puppet::Network::HTTP::Pool do
   end
 
   let(:verify) do
-    stub('verify', :setup_connection => nil)
+    double('verify', :setup_connection => nil)
   end
 
   def create_pool
@@ -45,7 +45,7 @@ describe Puppet::Network::HTTP::Pool do
   end
 
   def create_connection(site)
-    stub(site.addr, :started? => false, :start => nil, :finish => nil, :use_ssl? => true, :verify_mode => OpenSSL::SSL::VERIFY_PEER)
+    double(site.addr, :started? => false, :start => nil, :finish => nil, :use_ssl? => true, :verify_mode => OpenSSL::SSL::VERIFY_PEER)
   end
 
   context 'when yielding a connection' do
@@ -101,7 +101,7 @@ describe Puppet::Network::HTTP::Pool do
       pool = create_pool
       pool.release(site, conn)
 
-      pool.expects(:release).with(site, conn).never
+      expect(pool).not_to receive(:release).with(site, conn)
 
       pool.with_connection(site, verify) do |c|
         raise IOError, 'connection reset'
@@ -136,33 +136,33 @@ describe Puppet::Network::HTTP::Pool do
     context 'when releasing connections' do
       it 'releases HTTP connections' do
         conn = create_connection(site)
-        conn.expects(:use_ssl?).returns(false)
+        expect(conn).to receive(:use_ssl?).and_return(false)
 
         pool = create_pool_with_connections(site, conn)
-        pool.expects(:release).with(site, conn)
+        expect(pool).to receive(:release).with(site, conn)
 
         pool.with_connection(site, verify) {|c| }
       end
 
       it 'releases secure HTTPS connections' do
         conn = create_connection(site)
-        conn.expects(:use_ssl?).returns(true)
-        conn.expects(:verify_mode).returns(OpenSSL::SSL::VERIFY_PEER)
+        expect(conn).to receive(:use_ssl?).and_return(true)
+        expect(conn).to receive(:verify_mode).and_return(OpenSSL::SSL::VERIFY_PEER)
 
         pool = create_pool_with_connections(site, conn)
-        pool.expects(:release).with(site, conn)
+        expect(pool).to receive(:release).with(site, conn)
 
         pool.with_connection(site, verify) {|c| }
       end
 
       it 'closes insecure HTTPS connections' do
         conn = create_connection(site)
-        conn.expects(:use_ssl?).returns(true)
-        conn.expects(:verify_mode).returns(OpenSSL::SSL::VERIFY_NONE)
+        expect(conn).to receive(:use_ssl?).and_return(true)
+        expect(conn).to receive(:verify_mode).and_return(OpenSSL::SSL::VERIFY_NONE)
 
         pool = create_pool_with_connections(site, conn)
 
-        pool.expects(:release).with(site, conn).never
+        expect(pool).not_to receive(:release).with(site, conn)
 
         pool.with_connection(site, verify) {|c| }
       end
@@ -173,8 +173,8 @@ describe Puppet::Network::HTTP::Pool do
     it 'returns a new connection if the pool is empty' do
       conn = create_connection(site)
       pool = create_pool
-      pool.factory.expects(:create_connection).with(site).returns(conn)
-      pool.expects(:setsockopts)
+      expect(pool.factory).to receive(:create_connection).with(site).and_return(conn)
+      expect(pool).to receive(:setsockopts)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
@@ -183,7 +183,7 @@ describe Puppet::Network::HTTP::Pool do
       conn = create_connection(site)
       pool = create_pool_with_connections(site, conn)
 
-      pool.factory.expects(:create_connection).never
+      expect(pool.factory).not_to receive(:create_connection)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
@@ -193,26 +193,26 @@ describe Puppet::Network::HTTP::Pool do
       pool = create_pool_with_connections(different_site, different_conn)
 
       conn = create_connection(site)
-      pool.factory.expects(:create_connection).with(site).returns(conn)
-      pool.expects(:setsockopts)
+      expect(pool.factory).to receive(:create_connection).with(site).and_return(conn)
+      expect(pool).to receive(:setsockopts)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
 
     it 'returns started connections' do
       conn = create_connection(site)
-      conn.expects(:start)
+      expect(conn).to receive(:start)
 
       pool = create_pool
-      pool.factory.expects(:create_connection).with(site).returns(conn)
-      pool.expects(:setsockopts)
+      expect(pool.factory).to receive(:create_connection).with(site).and_return(conn)
+      expect(pool).to receive(:setsockopts)
 
       expect(pool.borrow(site, verify)).to eq(conn)
     end
 
     it "doesn't start a cached connection" do
       conn = create_connection(site)
-      conn.expects(:start).never
+      expect(conn).not_to receive(:start)
 
       pool = create_pool_with_connections(site, conn)
       pool.borrow(site, verify)
@@ -228,24 +228,24 @@ describe Puppet::Network::HTTP::Pool do
 
     it 'finishes expired connections' do
       conn = create_connection(site)
-      conn.expects(:finish)
+      expect(conn).to receive(:finish)
 
       pool = create_pool_with_expired_connections(site, conn)
-      pool.factory.expects(:create_connection => stub('conn', :start => nil))
-      pool.expects(:setsockopts)
+      expect(pool.factory).to receive(:create_connection).and_return(double('conn', :start => nil))
+      expect(pool).to receive(:setsockopts)
 
       pool.borrow(site, verify)
     end
 
     it 'logs an exception if it fails to close an expired connection' do
-      Puppet.expects(:log_exception).with(is_a(IOError), "Failed to close connection for #{site}: read timeout")
+      expect(Puppet).to receive(:log_exception).with(be_a(IOError), "Failed to close connection for #{site}: read timeout")
 
       conn = create_connection(site)
-      conn.expects(:finish).raises(IOError, 'read timeout')
+      expect(conn).to receive(:finish).and_raise(IOError, 'read timeout')
 
       pool = create_pool_with_expired_connections(site, conn)
-      pool.factory.expects(:create_connection => stub('open_conn', :start => nil))
-      pool.expects(:setsockopts)
+      expect(pool.factory).to receive(:create_connection).and_return(double('open_conn', :start => nil))
+      expect(pool).to receive(:setsockopts)
 
       pool.borrow(site, verify)
     end
@@ -289,7 +289,7 @@ describe Puppet::Network::HTTP::Pool do
 
     it 'closes all cached connections' do
       conn = create_connection(site)
-      conn.expects(:finish)
+      expect(conn).to receive(:finish)
 
       pool = create_pool_with_connections(site, conn)
       pool.close

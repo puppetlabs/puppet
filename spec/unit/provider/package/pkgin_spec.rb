@@ -15,7 +15,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
     before { resource[:ensure] = :absent }
 
     it "uses pkgin install to install" do
-      subject.expects(:pkgin).with("-y", :install, "vim").once()
+      expect(subject).to receive(:pkgin).with("-y", :install, "vim").once()
       subject.install
     end
    end
@@ -24,7 +24,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
     before { resource[:ensure] = '7.2.446' }
 
     it "uses pkgin install to install a fixed version" do
-      subject.expects(:pkgin).with("-y", :install, "vim-7.2.446").once()
+      expect(subject).to receive(:pkgin).with("-y", :install, "vim-7.2.446").once()
       subject.install
     end
    end
@@ -32,7 +32,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
 
   describe "#uninstall" do
     it "uses pkgin remove to uninstall" do
-      subject.expects(:pkgin).with("-y", :remove, "vim").once()
+      expect(subject).to receive(:pkgin).with("-y", :remove, "vim").once()
       subject.uninstall
     end
   end
@@ -43,7 +43,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
     end
 
     before do
-      described_class.stubs(:pkgin).with(:list).returns(pkgin_ls_output)
+      allow(described_class).to receive(:pkgin).with(:list).and_return(pkgin_ls_output)
     end
 
     it "returns an array of providers for each package" do
@@ -65,7 +65,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
 
   describe "#latest" do
     before do
-      described_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
+      allow(described_class).to receive(:pkgin).with(:search, "vim").and_return(pkgin_search_output)
     end
 
     context "when the package is installed" do
@@ -74,7 +74,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
       end
 
       it "returns installed version" do
-        subject.expects(:properties).returns( { :ensure => "7.2.446" } )
+        expect(subject).to receive(:properties).and_return({ :ensure => "7.2.446" })
         expect(subject.latest).to eq("7.2.446")
       end
     end
@@ -95,7 +95,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
       end
 
       it "returns current version" do
-        subject.expects(:properties).returns( { :ensure => "7.2.446" } )
+        expect(subject).to receive(:properties).and_return({ :ensure => "7.2.446" })
         expect(subject.latest).to eq("7.2.446")
       end
     end
@@ -117,7 +117,7 @@ SEARCH
       end
 
       it "returns the newest available version" do
-        described_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
+        allow(described_class).to receive(:pkgin).with(:search, "vim").and_return(pkgin_search_output)
         expect(subject.latest).to eq("7.3")
       end
     end

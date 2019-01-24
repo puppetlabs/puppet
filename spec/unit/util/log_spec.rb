@@ -63,7 +63,7 @@ describe Puppet::Util::Log do
     win_31j_msg = [130, 187].pack('C*').force_encoding(Encoding::Windows_31J)
     utf_8_msg = "\u305d"
 
-    $stdout.expects(:puts).with("\e[mNotice: #{mixed_utf8}: #{utf_8_msg}\e[0m")
+    expect($stdout).to receive(:puts).with("\e[mNotice: #{mixed_utf8}: #{utf_8_msg}\e[0m")
 
     # most handlers do special things with a :source => 'Puppet', so use something else
     Puppet::Util::Log.new(:level => :notice, :message => win_31j_msg, :source => mixed_utf8)
@@ -81,7 +81,7 @@ describe Puppet::Util::Log do
     win_31j_msg = [130, 187].pack('C*').force_encoding(Encoding::Windows_31J)
     utf_8_msg = "\u305d"
 
-    $stdout.expects(:puts).with("\e[mNotice: #{utf_8_msg}: #{mixed_utf8}\e[0m")
+    expect($stdout).to receive(:puts).with("\e[mNotice: #{utf_8_msg}: #{mixed_utf8}\e[0m")
 
     Puppet::Util::Log.new(:level => :notice, :message => mixed_utf8, :source => win_31j_msg)
     expect(logs.last.source).to eq(utf_8_msg)
@@ -93,10 +93,10 @@ describe Puppet::Util::Log do
     # spec_helper.rb redirects log output away from the console,
     # so we have to stop that here, or else the logic we are testing
     # will not be reached.
-    Puppet::Util::Log.stubs(:destinations).returns({})
+    allow(Puppet::Util::Log).to receive(:destinations).and_return({})
 
     our_exception = Puppet::DevError.new("test exception")
-    Puppet::FileSystem.expects(:dir).raises(our_exception)
+    expect(Puppet::FileSystem).to receive(:dir).and_raise(our_exception)
     bad_file = tmpfile("bad_file")
 
     expect { Puppet::Util::Log.newdestination(bad_file) }.to raise_error(Puppet::DevError)
@@ -104,24 +104,24 @@ describe Puppet::Util::Log do
 
   describe ".setup_default" do
     it "should default to :syslog" do
-      Puppet.features.stubs(:syslog?).returns(true)
-      Puppet::Util::Log.expects(:newdestination).with(:syslog)
+      allow(Puppet.features).to receive(:syslog?).and_return(true)
+      expect(Puppet::Util::Log).to receive(:newdestination).with(:syslog)
 
       Puppet::Util::Log.setup_default
     end
 
     it "should fall back to :eventlog" do
-      Puppet.features.stubs(:syslog?).returns(false)
-      Puppet.features.stubs(:eventlog?).returns(true)
-      Puppet::Util::Log.expects(:newdestination).with(:eventlog)
+      allow(Puppet.features).to receive(:syslog?).and_return(false)
+      allow(Puppet.features).to receive(:eventlog?).and_return(true)
+      expect(Puppet::Util::Log).to receive(:newdestination).with(:eventlog)
 
       Puppet::Util::Log.setup_default
     end
 
     it "should fall back to :file" do
-      Puppet.features.stubs(:syslog?).returns(false)
-      Puppet.features.stubs(:eventlog?).returns(false)
-      Puppet::Util::Log.expects(:newdestination).with(Puppet[:puppetdlog])
+      allow(Puppet.features).to receive(:syslog?).and_return(false)
+      allow(Puppet.features).to receive(:eventlog?).and_return(false)
+      expect(Puppet::Util::Log).to receive(:newdestination).with(Puppet[:puppetdlog])
 
       Puppet::Util::Log.setup_default
     end
@@ -335,28 +335,28 @@ describe Puppet::Util::Log do
 
   describe Puppet::Util::Log::DestEventlog, :if => Puppet.features.eventlog? do
     before :each do
-      Puppet::Util::Windows::EventLog.stubs(:open).returns(stub 'mylog')
-      Puppet::Util::Windows::EventLog.stubs(:report_event)
-      Puppet::Util::Windows::EventLog.stubs(:close)
-      Puppet.features.stubs(:eventlog?).returns(true)
+      allow(Puppet::Util::Windows::EventLog).to receive(:open).and_return(double('mylog', :close => nil))
+      allow(Puppet::Util::Windows::EventLog).to receive(:report_event)
+      allow(Puppet::Util::Windows::EventLog).to receive(:close)
+      allow(Puppet.features).to receive(:eventlog?).and_return(true)
     end
 
     it "should restrict its suitability to Windows" do
-      Puppet.features.expects(:microsoft_windows?).returns(false)
+      expect(Puppet.features).to receive(:microsoft_windows?).and_return(false)
 
       expect(Puppet::Util::Log::DestEventlog.suitable?('whatever')).to eq(false)
     end
 
     it "should open the 'Puppet' event log" do
-      Puppet::Util::Windows::EventLog.expects(:open).with('Puppet')
+      expect(Puppet::Util::Windows::EventLog).to receive(:open).with('Puppet')
 
       Puppet::Util::Log.newdestination(:eventlog)
     end
 
     it "should close the event log" do
-      log = stub('myeventlog')
-      log.expects(:close)
-      Puppet::Util::Windows::EventLog.expects(:open).returns(log)
+      log = double('myeventlog')
+      expect(log).to receive(:close)
+      expect(Puppet::Util::Windows::EventLog).to receive(:open).and_return(log)
 
       Puppet::Util::Log.newdestination(:eventlog)
       Puppet::Util::Log.close(:eventlog)
@@ -373,7 +373,7 @@ describe Puppet::Util::Log do
 
   describe "instances" do
     before do
-      Puppet::Util::Log.stubs(:newmessage)
+      allow(Puppet::Util::Log).to receive(:newmessage)
     end
 
     [:level, :message, :time, :remote].each do |attr|
@@ -408,7 +408,7 @@ describe Puppet::Util::Log do
 
     it "should flush the log queue when the first destination is specified" do
       Puppet::Util::Log.close_all
-      Puppet::Util::Log.expects(:flushqueue)
+      expect(Puppet::Util::Log).to receive(:flushqueue)
       Puppet::Util::Log.newdestination(:console)
     end
 
@@ -421,13 +421,13 @@ describe Puppet::Util::Log do
     end
 
     it "should fail if the provided level is not valid" do
-      Puppet::Util::Log.expects(:validlevel?).with(:notice).returns false
+      expect(Puppet::Util::Log).to receive(:validlevel?).with(:notice).and_return(false)
       expect { Puppet::Util::Log.new(:level => :notice, :message => :foo) }.to raise_error(ArgumentError)
     end
 
     it "should set its time to the initialization time" do
-      time = mock 'time'
-      Time.expects(:now).returns time
+      time = double('time')
+      expect(Time).to receive(:now).and_return(time)
       expect(Puppet::Util::Log.new(:level => "notice", :message => :foo).time).to equal(time)
     end
 
@@ -438,13 +438,13 @@ describe Puppet::Util::Log do
     end
 
     it "should use a passed-in source" do
-      Puppet::Util::Log.any_instance.expects(:source=).with "foo"
+      expect_any_instance_of(Puppet::Util::Log).to receive(:source=).with("foo")
       Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => "foo")
     end
 
     [:file, :line].each do |attr|
       it "should use #{attr} if provided" do
-        Puppet::Util::Log.any_instance.expects(attr.to_s + "=").with "foo"
+        expect_any_instance_of(Puppet::Util::Log).to receive(attr.to_s + "=").with("foo")
         Puppet::Util::Log.new(:level => "notice", :message => :foo, attr => "foo")
       end
     end
@@ -454,12 +454,12 @@ describe Puppet::Util::Log do
     end
 
     it "should register itself with Log" do
-      Puppet::Util::Log.expects(:newmessage)
+      expect(Puppet::Util::Log).to receive(:newmessage)
       Puppet::Util::Log.new(:level => "notice", :message => :foo)
     end
 
     it "should update Log autoflush when Puppet[:autoflush] is set" do
-      Puppet::Util::Log.expects(:autoflush=).once.with(true)
+      expect(Puppet::Util::Log).to receive(:autoflush=).once.with(true)
       Puppet[:autoflush] = true
     end
 
@@ -489,10 +489,10 @@ describe Puppet::Util::Log do
     end
 
     it "should not create unsuitable log destinations" do
-      Puppet.features.stubs(:syslog?).returns(false)
+      allow(Puppet.features).to receive(:syslog?).and_return(false)
 
-      Puppet::Util::Log::DestSyslog.expects(:suitable?)
-      Puppet::Util::Log::DestSyslog.expects(:new).never
+      expect(Puppet::Util::Log::DestSyslog).to receive(:suitable?)
+      expect(Puppet::Util::Log::DestSyslog).not_to receive(:new)
 
       Puppet::Util::Log.newdestination(:syslog)
     end
@@ -545,8 +545,8 @@ describe Puppet::Util::Log do
 
     describe "when setting the source as a non-RAL object" do
       it "should not try to copy over file, version, line, or tag information" do
-        source = mock
-        source.expects(:file).never
+        source = double('source')
+        expect(source).not_to receive(:file)
         Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
       end
     end

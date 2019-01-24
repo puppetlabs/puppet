@@ -12,44 +12,75 @@ describe Puppet::Util::Watcher do
 
     let(:filename) { "fake" }
 
-    def after_reading_the_sequence(initial, *results)
-      expectation = Puppet::FileSystem.expects(:stat).with(filename).at_least(1)
-      ([initial] + results).each do |result|
-        expectation = if result.is_a? Class
-                        expectation.raises(result)
-                      else
-                        expectation.returns(result)
-                      end.then
-      end
+    it "is initially unchanged" do
+      expect(Puppet::FileSystem).to receive(:stat).with(filename).and_return(ctime(20)).at_least(:once)
 
       watcher = Puppet::Util::Watcher::Common.file_ctime_change_watcher(filename)
-      results.size.times { watcher = watcher.next_reading }
 
-      watcher
-    end
-
-    it "is initially unchanged" do
-      expect(after_reading_the_sequence(ctime(20))).to_not be_changed
+      expect(watcher).to_not be_changed
     end
 
     it "has not changed if a section of the file path continues to not exist" do
-      expect(after_reading_the_sequence(Errno::ENOTDIR, Errno::ENOTDIR)).to_not be_changed
+      expect(Puppet::FileSystem).to receive(:stat).with(filename).and_raise(Errno::ENOTDIR).at_least(:once)
+
+      watcher = Puppet::Util::Watcher::Common.file_ctime_change_watcher(filename)
+      watcher = watcher.next_reading
+
+      expect(watcher).to_not be_changed
     end
 
     it "has not changed if the file continues to not exist" do
-      expect(after_reading_the_sequence(Errno::ENOENT, Errno::ENOENT)).to_not be_changed
+      expect(Puppet::FileSystem).to receive(:stat).with(filename).and_raise(Errno::ENOENT).at_least(:once)
+
+      watcher = Puppet::Util::Watcher::Common.file_ctime_change_watcher(filename)
+      watcher = watcher.next_reading
+
+      expect(watcher).to_not be_changed
     end
 
     it "has changed if the file is created" do
-      expect(after_reading_the_sequence(Errno::ENOENT, ctime(20))).to be_changed
+      times_stat_called = 0
+      expect(Puppet::FileSystem).to receive(:stat).with(filename) do
+        times_stat_called += 1
+        raise Errno::ENOENT if times_stat_called == 1
+        ctime(20)
+      end.at_least(:once)
+
+      watcher = Puppet::Util::Watcher::Common.file_ctime_change_watcher(filename)
+      watcher = watcher.next_reading
+
+      expect(watcher).to be_changed
     end
 
     it "is marked as changed if the file is deleted" do
-      expect(after_reading_the_sequence(ctime(20), Errno::ENOENT)).to be_changed
+      times_stat_called = 0
+      expect(Puppet::FileSystem).to receive(:stat).with(filename) do
+        times_stat_called += 1
+        raise Errno::ENOENT if times_stat_called > 1
+        ctime(20)
+      end.at_least(:once)
+
+      watcher = Puppet::Util::Watcher::Common.file_ctime_change_watcher(filename)
+      watcher = watcher.next_reading
+
+      expect(watcher).to be_changed
     end
 
     it "is marked as changed if the file modified" do
-      expect(after_reading_the_sequence(ctime(20), ctime(21))).to be_changed
+      times_stat_called = 0
+      expect(Puppet::FileSystem).to receive(:stat).with(filename) do
+        times_stat_called += 1
+        if times_stat_called == 1
+          ctime(20)
+        else
+          ctime(21)
+        end
+      end.at_least(:once)
+
+      watcher = Puppet::Util::Watcher::Common.file_ctime_change_watcher(filename)
+      watcher = watcher.next_reading
+
+      expect(watcher).to be_changed
     end
   end
 end

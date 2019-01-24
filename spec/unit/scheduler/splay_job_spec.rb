@@ -28,7 +28,7 @@ describe Puppet::Scheduler::SplayJob do
 
   it "is not immediately ready if splayed" do
     job.start_time = start_time
-    job.expects(:splay).returns(6)
+    expect(job).to receive(:splay).and_return(6)
     expect(job.ready?(start_time)).not_to be
   end
 end

@@ -29,19 +29,19 @@ describe Puppet::Util::JsonLockfile do
 
     it "returns nil if the file read returned nil" do
       @lock.lock
-      File.stubs(:read).returns nil
+      allow(File).to receive(:read).and_return(nil)
       expect(@lock.lock_data).to be_nil
     end
 
     it "returns nil if the file was empty" do
       @lock.lock
-      File.stubs(:read).returns ''
+      allow(File).to receive(:read).and_return('')
       expect(@lock.lock_data).to be_nil
     end
 
     it "returns nil if the file was not in PSON" do
       @lock.lock
-      File.stubs(:read).returns ']['
+      allow(File).to receive(:read).and_return('][')
       expect(@lock.lock_data).to be_nil
     end
   end

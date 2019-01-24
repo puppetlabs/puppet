@@ -9,7 +9,7 @@ describe "the 'fail' parser function" do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
     scope    = Puppet::Parser::Scope.new(compiler)
-    scope.stubs(:environment).returns(nil)
+    allow(scope).to receive(:environment).and_return(nil)
     scope
   end
 

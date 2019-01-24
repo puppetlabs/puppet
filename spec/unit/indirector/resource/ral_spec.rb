@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'puppet/type/user'
 
 describe "Puppet::Resource::Ral" do
   it "disallows remote requests" do
@@ -7,34 +8,32 @@ describe "Puppet::Resource::Ral" do
 
   describe "find" do
     before do
-      @request = stub 'request', :key => "user/root"
+      @request = double('request', :key => "user/root")
     end
 
     it "should find an existing instance" do
-      my_resource    = stub "my user resource"
+      my_resource    = double("my user resource")
 
-      wrong_instance = stub "wrong user", :name => "bob"
-      my_instance    = stub "my user",    :name => "root", :to_resource => my_resource
+      wrong_instance = double("wrong user", :name => "bob")
+      my_instance    = double("my user",    :name => "root", :to_resource => my_resource)
 
-      require 'puppet/type/user'
-      Puppet::Type::User.expects(:instances).returns([ wrong_instance, my_instance, wrong_instance ])
+      expect(Puppet::Type::User).to receive(:instances).and_return([ wrong_instance, my_instance, wrong_instance ])
       expect(Puppet::Resource::Ral.new.find(@request)).to eq(my_resource)
     end
 
     it "should produce Puppet::Error instead of ArgumentError" do
-      @bad_request = stub 'thiswillcauseanerror', :key => "thiswill/causeanerror"
+      @bad_request = double('thiswillcauseanerror', :key => "thiswill/causeanerror")
       expect{Puppet::Resource::Ral.new.find(@bad_request)}.to raise_error(Puppet::Error)
     end
 
     it "if there is no instance, it should create one" do
-      wrong_instance = stub "wrong user", :name => "bob"
-      root = mock "Root User"
-      root_resource = mock "Root Resource"
+      wrong_instance = double("wrong user", :name => "bob")
+      root = double("Root User")
+      root_resource = double("Root Resource")
 
-      require 'puppet/type/user'
-      Puppet::Type::User.expects(:instances).returns([ wrong_instance, wrong_instance ])
-      Puppet::Type::User.expects(:new).with(has_entry(:name => "root")).returns(root)
-      root.expects(:to_resource).returns(root_resource)
+      expect(Puppet::Type::User).to receive(:instances).and_return([ wrong_instance, wrong_instance ])
+      expect(Puppet::Type::User).to receive(:new).with(hash_including(name: "root")).and_return(root)
+      expect(root).to receive(:to_resource).and_return(root_resource)
 
       result = Puppet::Resource::Ral.new.find(@request)
 
@@ -44,72 +43,68 @@ describe "Puppet::Resource::Ral" do
 
   describe "search" do
     before do
-      @request = stub 'request', :key => "user/", :options => {}
+      @request = double('request', :key => "user/", :options => {})
     end
 
     it "should convert ral resources into regular resources" do
-      my_resource = stub "my user resource"
-      my_instance = stub "my user", :name => "root", :to_resource => my_resource
+      my_resource = double("my user resource")
+      my_instance = double("my user", :name => "root", :to_resource => my_resource)
 
-      require 'puppet/type/user'
-      Puppet::Type::User.expects(:instances).returns([ my_instance ])
+      expect(Puppet::Type::User).to receive(:instances).and_return([ my_instance ])
       expect(Puppet::Resource::Ral.new.search(@request)).to eq([my_resource])
     end
 
     it "should filter results by name if there's a name in the key" do
-      my_resource    = stub "my user resource"
-      my_resource.stubs(:to_resource).returns(my_resource)
-      my_resource.stubs(:[]).with(:name).returns("root")
+      my_resource = double("my user resource")
+      allow(my_resource).to receive(:to_resource).and_return(my_resource)
+      allow(my_resource).to receive(:[]).with(:name).and_return("root")
 
-      wrong_resource = stub "wrong resource"
-      wrong_resource.stubs(:to_resource).returns(wrong_resource)
-      wrong_resource.stubs(:[]).with(:name).returns("bad")
+      wrong_resource = double("wrong resource")
+      allow(wrong_resource).to receive(:to_resource).and_return(wrong_resource)
+      allow(wrong_resource).to receive(:[]).with(:name).and_return("bad")
 
-      my_instance    = stub "my user",    :to_resource => my_resource
-      wrong_instance = stub "wrong user", :to_resource => wrong_resource
+      my_instance    = double("my user",    :to_resource => my_resource)
+      wrong_instance = double("wrong user", :to_resource => wrong_resource)
 
-      @request = stub 'request', :key => "user/root", :options => {}
+      @request = double('request', :key => "user/root", :options => {})
 
-      require 'puppet/type/user'
-      Puppet::Type::User.expects(:instances).returns([ my_instance, wrong_instance ])
+      expect(Puppet::Type::User).to receive(:instances).and_return([ my_instance, wrong_instance ])
       expect(Puppet::Resource::Ral.new.search(@request)).to eq([my_resource])
     end
 
     it "should filter results by query parameters" do
-      wrong_resource = stub "my user resource"
-      wrong_resource.stubs(:to_resource).returns(wrong_resource)
-      wrong_resource.stubs(:[]).with(:name).returns("root")
+      wrong_resource = double("my user resource")
+      allow(wrong_resource).to receive(:to_resource).and_return(wrong_resource)
+      allow(wrong_resource).to receive(:[]).with(:name).and_return("root")
 
-      my_resource = stub "wrong resource"
-      my_resource.stubs(:to_resource).returns(my_resource)
-      my_resource.stubs(:[]).with(:name).returns("bob")
+      my_resource = double("wrong resource")
+      allow(my_resource).to receive(:to_resource).and_return(my_resource)
+      allow(my_resource).to receive(:[]).with(:name).and_return("bob")
 
-      my_instance    = stub "my user",    :to_resource => my_resource
-      wrong_instance = stub "wrong user", :to_resource => wrong_resource
+      my_instance    = double("my user",    :to_resource => my_resource)
+      wrong_instance = double("wrong user", :to_resource => wrong_resource)
 
-      @request = stub 'request', :key => "user/", :options => {:name => "bob"}
+      @request = double('request', :key => "user/", :options => {:name => "bob"})
 
-      require 'puppet/type/user'
-      Puppet::Type::User.expects(:instances).returns([ my_instance, wrong_instance ])
+      expect(Puppet::Type::User).to receive(:instances).and_return([ my_instance, wrong_instance ])
       expect(Puppet::Resource::Ral.new.search(@request)).to eq([my_resource])
     end
 
     it "should return sorted results" do
-      a_resource = stub "alice resource"
-      a_resource.stubs(:to_resource).returns(a_resource)
-      a_resource.stubs(:title).returns("alice")
+      a_resource = double("alice resource")
+      allow(a_resource).to receive(:to_resource).and_return(a_resource)
+      allow(a_resource).to receive(:title).and_return("alice")
 
-      b_resource = stub "bob resource"
-      b_resource.stubs(:to_resource).returns(b_resource)
-      b_resource.stubs(:title).returns("bob")
+      b_resource = double("bob resource")
+      allow(b_resource).to receive(:to_resource).and_return(b_resource)
+      allow(b_resource).to receive(:title).and_return("bob")
 
-      a_instance = stub "alice user", :to_resource => a_resource
-      b_instance = stub "bob user",   :to_resource => b_resource
+      a_instance = double("alice user", :to_resource => a_resource)
+      b_instance = double("bob user",   :to_resource => b_resource)
 
-      @request = stub 'request', :key => "user/", :options => {}
+      @request = double('request', :key => "user/", :options => {})
 
-      require 'puppet/type/user'
-      Puppet::Type::User.expects(:instances).returns([ b_instance, a_instance ])
+      expect(Puppet::Type::User).to receive(:instances).and_return([ b_instance, a_instance ])
       expect(Puppet::Resource::Ral.new.search(@request)).to eq([a_resource, b_resource])
     end
   end

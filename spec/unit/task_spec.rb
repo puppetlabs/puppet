@@ -26,7 +26,7 @@ describe Puppet::Module::Task do
   end
 
   it "constructs tasks as expected when every task has a metadata file with the same name (besides extension)" do
-    Dir.expects(:glob).with(tasks_glob).returns(%w{task1.json task1 task2.json task2.exe task3.json task3.sh})
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.json task1 task2.json task2.exe task3.json task3.sh})
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
     expect(tasks.count).to eq(3)
@@ -49,7 +49,7 @@ describe Puppet::Module::Task do
   end
 
   it "constructs tasks as expected when some tasks don't have a metadata file" do
-    Dir.expects(:glob).with(tasks_glob).returns(%w{task1 task2.exe task3.json task3.sh})
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1 task2.exe task3.json task3.sh})
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
     expect(tasks.count).to eq(3)
@@ -61,7 +61,7 @@ describe Puppet::Module::Task do
   end
 
   it "constructs tasks as expected when a task has multiple executable files" do
-    Dir.expects(:glob).with(tasks_glob).returns(%w{task1.elf task1.exe task1.json task2.ps1 task2.sh})
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task1.elf task1.exe task1.json task2.ps1 task2.sh})
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
     expect(tasks.count).to eq(2)
@@ -72,7 +72,7 @@ describe Puppet::Module::Task do
   end
 
   it "finds files whose names (besides extensions) are valid task names" do
-    Dir.expects(:glob).with(tasks_glob).returns(%w{task task_1 xx_t_a_s_k_2_xx})
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{task task_1 xx_t_a_s_k_2_xx})
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
     expect(tasks.count).to eq(3)
@@ -80,7 +80,7 @@ describe Puppet::Module::Task do
   end
 
   it "ignores files that have names (besides extensions) that are not valid task names" do
-    Dir.expects(:glob).with(tasks_glob).returns(%w{.nottask.exe .wat !runme _task 2task2furious def_a_task_PSYCH Fake_task not-a-task realtask})
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{.nottask.exe .wat !runme _task 2task2furious def_a_task_PSYCH Fake_task not-a-task realtask})
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
     expect(tasks.count).to eq(1)
@@ -88,7 +88,7 @@ describe Puppet::Module::Task do
   end
 
   it "ignores files that have names ending in .conf and .md" do
-    Dir.expects(:glob).with(tasks_glob).returns(%w{ginuwine_task task.conf readme.md other_task.md})
+    expect(Dir).to receive(:glob).with(tasks_glob).and_return(%w{ginuwine_task task.conf readme.md other_task.md})
     tasks = Puppet::Module::Task.tasks_in_module(mymod)
 
     expect(tasks.count).to eq(1)

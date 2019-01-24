@@ -7,103 +7,99 @@ describe Puppet::FileServing::TerminusHelper do
     @helper = Object.new
     @helper.extend(Puppet::FileServing::TerminusHelper)
 
-    @model = mock 'model'
-    @helper.stubs(:model).returns(@model)
+    @model = double('model')
+    allow(@helper).to receive(:model).and_return(@model)
 
-    @request = stub 'request', :key => "url", :options => {}
+    @request = double('request', :key => "url", :options => {})
 
-    @fileset = stub 'fileset', :files => [], :path => "/my/file"
-    Puppet::FileServing::Fileset.stubs(:new).with("/my/file", {}).returns(@fileset)
+    @fileset = double('fileset', :files => [], :path => "/my/file")
+    allow(Puppet::FileServing::Fileset).to receive(:new).with("/my/file", {}).and_return(@fileset)
   end
 
   it "should find a file with absolute path" do
-    file = stub 'file', :collect => nil
-    file.expects(:collect).with(nil)
-    @model.expects(:new).with("/my/file", {:relative_path => nil}).returns(file)
+    file = double('file', :collect => nil)
+    expect(file).to receive(:collect).with(no_args)
+    expect(@model).to receive(:new).with("/my/file", {:relative_path => nil}).and_return(file)
     @helper.path2instance(@request, "/my/file")
   end
 
   it "should pass through links, checksum_type, and source_permissions" do
-    file = stub 'file', :checksum_type= => nil, :links= => nil, :collect => nil
+    file = double('file', :checksum_type= => nil, :links= => nil, :collect => nil)
     [[:checksum_type, :sha256], [:links, true], [:source_permissions, :use]].each {|k, v|
-      file.expects(k.to_s+'=').with(v)
+      expect(file).to receive(k.to_s+'=').with(v)
       @request.options[k] = v
     }
-    file.expects(:collect)
-    @model.expects(:new).with("/my/file", {:relative_path => :file}).returns(file)
+    expect(file).to receive(:collect)
+    expect(@model).to receive(:new).with("/my/file", {:relative_path => :file}).and_return(file)
     @helper.path2instance(@request, "/my/file", {:relative_path => :file})
   end
 
   it "should use a fileset to find paths" do
-    @fileset = stub 'fileset', :files => [], :path => "/my/files"
-    Puppet::FileServing::Fileset.expects(:new).with { |key, options| key == "/my/file" }.returns(@fileset)
+    @fileset = double('fileset', :files => [], :path => "/my/files")
+    expect(Puppet::FileServing::Fileset).to receive(:new).with("/my/file", anything).and_return(@fileset)
     @helper.path2instances(@request, "/my/file")
   end
 
   it "should support finding across multiple paths by merging the filesets" do
-    first = stub 'fileset', :files => [], :path => "/first/file"
-    Puppet::FileServing::Fileset.expects(:new).with { |path, options| path == "/first/file" }.returns(first)
-    second = stub 'fileset', :files => [], :path => "/second/file"
-    Puppet::FileServing::Fileset.expects(:new).with { |path, options| path == "/second/file" }.returns(second)
+    first = double('fileset', :files => [], :path => "/first/file")
+    expect(Puppet::FileServing::Fileset).to receive(:new).with("/first/file", anything).and_return(first)
+    second = double('fileset', :files => [], :path => "/second/file")
+    expect(Puppet::FileServing::Fileset).to receive(:new).with("/second/file", anything).and_return(second)
 
-    Puppet::FileServing::Fileset.expects(:merge).with(first, second).returns({})
+    expect(Puppet::FileServing::Fileset).to receive(:merge).with(first, second).and_return({})
 
     @helper.path2instances(@request, "/first/file", "/second/file")
   end
 
   it "should pass the indirection request to the Fileset at initialization" do
-    Puppet::FileServing::Fileset.expects(:new).with { |path, options| options == @request }.returns @fileset
+    expect(Puppet::FileServing::Fileset).to receive(:new).with(anything, @request).and_return(@fileset)
     @helper.path2instances(@request, "/my/file")
   end
 
   describe "when creating instances" do
     before do
-      @request.stubs(:key).returns "puppet://host/mount/dir"
+      allow(@request).to receive(:key).and_return("puppet://host/mount/dir")
 
-      @one = stub 'one', :links= => nil, :collect => nil
-      @two = stub 'two', :links= => nil, :collect => nil
+      @one = double('one', :links= => nil, :collect => nil)
+      @two = double('two', :links= => nil, :collect => nil)
 
-      @fileset = stub 'fileset', :files => %w{one two}, :path => "/my/file"
-      Puppet::FileServing::Fileset.stubs(:new).returns(@fileset)
+      @fileset = double('fileset', :files => %w{one two}, :path => "/my/file")
+      allow(Puppet::FileServing::Fileset).to receive(:new).and_return(@fileset)
     end
 
     it "should set each returned instance's path to the original path" do
-      @model.expects(:new).with { |key, options| key == "/my/file" }.returns(@one)
-      @model.expects(:new).with { |key, options| key == "/my/file" }.returns(@two)
+      expect(@model).to receive(:new).with("/my/file", anything).and_return(@one, @two)
       @helper.path2instances(@request, "/my/file")
     end
 
     it "should set each returned instance's relative path to the file-specific path" do
-      @model.expects(:new).with { |key, options| options[:relative_path] == "one" }.returns(@one)
-      @model.expects(:new).with { |key, options| options[:relative_path] == "two" }.returns(@two)
+      expect(@model).to receive(:new).with(anything, hash_including(relative_path: "one")).and_return(@one)
+      expect(@model).to receive(:new).with(anything, hash_including(relative_path: "two")).and_return(@two)
       @helper.path2instances(@request, "/my/file")
     end
 
     it "should set the links value on each instance if one is provided" do
-      @one.expects(:links=).with :manage
-      @two.expects(:links=).with :manage
-      @model.expects(:new).returns(@one)
-      @model.expects(:new).returns(@two)
+      expect(@one).to receive(:links=).with(:manage)
+      expect(@two).to receive(:links=).with(:manage)
+      expect(@model).to receive(:new).and_return(@one, @two)
 
       @request.options[:links] = :manage
       @helper.path2instances(@request, "/my/file")
     end
 
     it "should set the request checksum_type if one is provided" do
-      @one.expects(:checksum_type=).with :test
-      @two.expects(:checksum_type=).with :test
-      @model.expects(:new).returns(@one)
-      @model.expects(:new).returns(@two)
+      expect(@one).to receive(:checksum_type=).with(:test)
+      expect(@two).to receive(:checksum_type=).with(:test)
+      expect(@model).to receive(:new).and_return(@one, @two)
 
       @request.options[:checksum_type] = :test
       @helper.path2instances(@request, "/my/file")
     end
 
     it "should collect the instance's attributes" do
-      @one.expects(:collect)
-      @two.expects(:collect)
-      @model.expects(:new).returns(@one)
-      @model.expects(:new).returns(@two)
+      expect(@one).to receive(:collect)
+      expect(@two).to receive(:collect)
+      expect(@model).to receive(:new).and_return(@one, @two)
 
       @helper.path2instances(@request, "/my/file")
     end

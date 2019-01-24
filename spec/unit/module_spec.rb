@@ -6,7 +6,7 @@ require 'puppet/module_tool/checksums'
 describe Puppet::Module do
   include PuppetSpec::Files
 
-  let(:env) { mock("environment") }
+  let(:env) { double("environment") }
   let(:path) { "/path" }
   let(:name) { "mymod" }
   let(:mod) { Puppet::Module.new(name, path, env) }
@@ -14,12 +14,12 @@ describe Puppet::Module do
   before do
     # This is necessary because of the extra checks we have for the deprecated
     # 'plugins' directory
-    Puppet::FileSystem.stubs(:exist?).returns false
+    allow(Puppet::FileSystem).to receive(:exist?).and_return(false)
   end
 
   it "should have a class method that returns a named module from a given environment" do
     env = Puppet::Node::Environment.create(:myenv, [])
-    env.expects(:module).with(name).returns "yep"
+    expect(env).to receive(:module).with(name).and_return("yep")
     Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
       expect(Puppet::Module.find(name, "myenv")).to eq("yep")
     end
@@ -27,7 +27,7 @@ describe Puppet::Module do
 
   it "should return nil if asked for a named module that doesn't exist" do
     env = Puppet::Node::Environment.create(:myenv, [])
-    env.expects(:module).with(name).returns nil
+    expect(env).to receive(:module).with(name).and_return(nil)
     Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
       expect(Puppet::Module.find(name, "myenv")).to be_nil
     end
@@ -135,7 +135,7 @@ describe Puppet::Module do
 
   describe "when finding unmet dependencies" do
     before do
-      Puppet::FileSystem.unstub(:exist?)
+      allow(Puppet::FileSystem).to receive(:exist?).and_call_original
       @modpath = tmpdir('modpath')
       Puppet.settings[:modulepath] = @modpath
     end
@@ -162,7 +162,7 @@ describe Puppet::Module do
         :environment => env
       )
 
-      env.expects(:module_by_forge_name).with('foo/child').returns(child)
+      expect(env).to receive(:module_by_forge_name).with('foo/child').and_return(child)
 
       expect(parent.unmet_dependencies).to eq([])
     end
@@ -180,7 +180,7 @@ describe Puppet::Module do
         :environment => env
       )
 
-      env.expects(:module_by_forge_name).with('baz/foobar').returns(nil)
+      expect(env).to receive(:module_by_forge_name).with('baz/foobar').and_return(nil)
 
       expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
@@ -204,7 +204,7 @@ describe Puppet::Module do
         :environment => env
       )
 
-      env.expects(:module_by_forge_name).with('baz/foobar=bar').returns(nil)
+      expect(env).to receive(:module_by_forge_name).with('baz/foobar=bar').and_return(nil)
 
       expect(mod.unmet_dependencies).to eq([{
         :reason => :missing,
@@ -221,7 +221,7 @@ describe Puppet::Module do
       ['test_gte_req', 'test_specific_req', 'foobar'].each do |mod_name|
         mod_dir = "#{@modpath}/#{mod_name}"
         metadata_file = "#{mod_dir}/metadata.json"
-        Puppet::FileSystem.stubs(:exist?).with(metadata_file).returns true
+        allow(Puppet::FileSystem).to receive(:exist?).with(metadata_file).and_return(true)
       end
       mod = PuppetSpec::Modules.create(
         'test_gte_req',
@@ -490,31 +490,31 @@ describe Puppet::Module do
 
     it "should be able to return individual #{filetype}" do
       module_file = File.join(path, dirname, "my/file")
-      Puppet::FileSystem.expects(:exist?).with(module_file).returns true
+      expect(Puppet::FileSystem).to receive(:exist?).with(module_file).and_return(true)
       expect(mod.send(filetype.to_s.sub(/s$/, ''), "my/file")).to eq(module_file)
     end
 
     it "should consider #{filetype} to be present if their base directory exists" do
       module_file = File.join(path, dirname)
-      Puppet::FileSystem.expects(:exist?).with(module_file).returns true
+      expect(Puppet::FileSystem).to receive(:exist?).with(module_file).and_return(true)
       expect(mod.send(filetype.to_s + "?")).to be_truthy
     end
 
     it "should consider #{filetype} to be absent if their base directory does not exist" do
       module_file = File.join(path, dirname)
-      Puppet::FileSystem.expects(:exist?).with(module_file).returns false
+      expect(Puppet::FileSystem).to receive(:exist?).with(module_file).and_return(false)
       expect(mod.send(filetype.to_s + "?")).to be_falsey
     end
 
     it "should return nil if asked to return individual #{filetype} that don't exist" do
       module_file = File.join(path, dirname, "my/file")
-      Puppet::FileSystem.expects(:exist?).with(module_file).returns false
+      expect(Puppet::FileSystem).to receive(:exist?).with(module_file).and_return(false)
       expect(mod.send(filetype.to_s.sub(/s$/, ''), "my/file")).to be_nil
     end
 
     it "should return the base directory if asked for a nil path" do
       base = File.join(path, dirname)
-      Puppet::FileSystem.expects(:exist?).with(base).returns true
+      expect(Puppet::FileSystem).to receive(:exist?).with(base).and_return(true)
       expect(mod.send(filetype.to_s.sub(/s$/, ''), nil)).to eq(base)
     end
   end
@@ -529,7 +529,7 @@ describe Puppet::Module do
 
   describe "when finding tasks" do
     before do
-      Puppet::FileSystem.unstub(:exist?)
+      allow(Puppet::FileSystem).to receive(:exist?).and_call_original
       @modpath = tmpdir('modpath')
       Puppet.settings[:modulepath] = @modpath
     end
@@ -570,29 +570,24 @@ describe Puppet::Module do
     end
 
     describe "does the task finding" do
-      before :each do
-        Puppet::FileSystem.unstub(:exist?)
-        Puppet::Module::Task.unstub(:tasks_in_module)
-      end
-
       let(:mod_name) { 'tasks_test_lazy' }
       let(:mod_tasks_dir) { File.join(@modpath, mod_name, 'tasks') }
 
       it "after the module is initialized" do
-        Puppet::FileSystem.expects(:exist?).with(mod_tasks_dir).never
-        Puppet::Module::Task.expects(:tasks_in_module).never
+        expect(Puppet::FileSystem).not_to receive(:exist?).with(mod_tasks_dir)
+        expect(Puppet::Module::Task).not_to receive(:tasks_in_module)
         Puppet::Module.new(mod_name, @modpath, env)
       end
 
       it "when the tasks method is called" do
-        Puppet::Module::Task.expects(:tasks_in_module)
+        expect(Puppet::Module::Task).to receive(:tasks_in_module)
         mod = PuppetSpec::Modules.create(mod_name, @modpath, {:environment => env,
                                                               :tasks => [['itascanstaccatotask']]})
         mod.tasks
       end
 
       it "only once for the lifetime of the module object" do
-        Dir.expects(:glob).with("#{mod_tasks_dir}/*").once.returns ['allalaskataskattacktactics']
+        expect(Dir).to receive(:glob).with("#{mod_tasks_dir}/*").once.and_return(['allalaskataskattacktactics'])
         mod = PuppetSpec::Modules.create(mod_name, @modpath, {:environment => env,
                                                               :tasks => []})
         mod.tasks
@@ -604,46 +599,46 @@ end
 
 describe Puppet::Module, "when finding matching manifests" do
   before do
-    @mod = Puppet::Module.new("mymod", "/a", mock("environment"))
+    @mod = Puppet::Module.new("mymod", "/a", double("environment"))
     @pq_glob_with_extension = "yay/*.xx"
     @fq_glob_with_extension = "/a/manifests/#{@pq_glob_with_extension}"
   end
 
   it "should return all manifests matching the glob pattern" do
-    Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{foo bar})
-    FileTest.stubs(:directory?).returns false
+    expect(Dir).to receive(:glob).with(@fq_glob_with_extension).and_return(%w{foo bar})
+    allow(FileTest).to receive(:directory?).and_return(false)
 
     expect(@mod.match_manifests(@pq_glob_with_extension)).to eq(%w{foo bar})
   end
 
   it "should not return directories" do
-    Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{foo bar})
+    expect(Dir).to receive(:glob).with(@fq_glob_with_extension).and_return(%w{foo bar})
 
-    FileTest.expects(:directory?).with("foo").returns false
-    FileTest.expects(:directory?).with("bar").returns true
+    expect(FileTest).to receive(:directory?).with("foo").and_return(false)
+    expect(FileTest).to receive(:directory?).with("bar").and_return(true)
     expect(@mod.match_manifests(@pq_glob_with_extension)).to eq(%w{foo})
   end
 
   it "should default to the 'init' file if no glob pattern is specified" do
-    Puppet::FileSystem.expects(:exist?).with("/a/manifests/init.pp").returns(true)
+    expect(Puppet::FileSystem).to receive(:exist?).with("/a/manifests/init.pp").and_return(true)
 
     expect(@mod.match_manifests(nil)).to eq(%w{/a/manifests/init.pp})
   end
 
   it "should return all manifests matching the glob pattern in all existing paths" do
-    Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{a b})
+    expect(Dir).to receive(:glob).with(@fq_glob_with_extension).and_return(%w{a b})
 
     expect(@mod.match_manifests(@pq_glob_with_extension)).to eq(%w{a b})
   end
 
   it "should match the glob pattern plus '.pp' if no extension is specified" do
-    Dir.expects(:glob).with("/a/manifests/yay/foo.pp").returns(%w{yay})
+    expect(Dir).to receive(:glob).with("/a/manifests/yay/foo.pp").and_return(%w{yay})
 
     expect(@mod.match_manifests("yay/foo")).to eq(%w{yay})
   end
 
   it "should return an empty array if no manifests matched" do
-    Dir.expects(:glob).with(@fq_glob_with_extension).returns([])
+    expect(Dir).to receive(:glob).with(@fq_glob_with_extension).and_return([])
 
     expect(@mod.match_manifests(@pq_glob_with_extension)).to eq([])
   end
@@ -675,7 +670,7 @@ describe Puppet::Module do
   end
 
   it "should cache the license file" do
-    mymod.expects(:path).once.returns nil
+    expect(mymod).to receive(:path).once.and_return(nil)
     mymod.license_file
     mymod.license_file
   end
@@ -685,24 +680,24 @@ describe Puppet::Module do
   end
 
   it "should not have metadata if it has a metadata file and its data is valid but empty json hash" do
-    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns "{}"
+    allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return("{}")
 
     expect(mymod).not_to be_has_metadata
   end
 
   it "should not have metadata if it has a metadata file and its data is empty" do
-    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns ""
+    allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return("")
 
     expect(mymod).not_to be_has_metadata
   end
 
   it "should not have metadata if has a metadata file and its data is invalid" do
-    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns "This is some invalid json.\n"
+    allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return("This is some invalid json.\n")
     expect(mymod).not_to be_has_metadata
   end
 
   it "should know if it is missing a metadata file" do
-    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).raises(Errno::ENOENT)
+    allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
 
     expect(mymod).not_to be_has_metadata
   end
@@ -712,13 +707,13 @@ describe Puppet::Module do
   end
 
   it "should parse its metadata file on initialization if it is present" do
-    Puppet::Module.any_instance.expects(:load_metadata)
+    expect_any_instance_of(Puppet::Module).to receive(:load_metadata)
 
-    Puppet::Module.new("yay", "/path", mock("env"))
+    Puppet::Module.new("yay", "/path", double("env"))
   end
 
   it "should tolerate failure to parse" do
-    File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+    allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return(my_fixture('trailing-comma.json'))
 
     expect(mymod.has_metadata?).to be_falsey
   end
@@ -729,7 +724,7 @@ describe Puppet::Module do
     end
 
     it "should warn about a failure to parse" do
-      File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+      allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return(my_fixture('trailing-comma.json'))
 
       expect(mymod.has_metadata?).to be_falsey
       expect(@logs).to have_matching_log(/mymod has an invalid and unparsable metadata\.json file/)
@@ -742,7 +737,7 @@ describe Puppet::Module do
       end
 
       it "should not warn about a failure to parse" do
-        File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+        allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return(my_fixture('trailing-comma.json'))
 
         expect(mymod.has_metadata?).to be_falsey
         expect(@logs).to_not have_matching_log(/mymod has an invalid and unparsable metadata\.json file.*/)
@@ -750,7 +745,7 @@ describe Puppet::Module do
 
       it "should log debug output about a failure to parse when --debug is on" do
         Puppet[:log_level] = :debug
-        File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+        allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return(my_fixture('trailing-comma.json'))
 
         expect(mymod.has_metadata?).to be_falsey
         expect(@logs).to have_matching_log(/mymod has an invalid and unparsable metadata\.json file.*/)
@@ -763,7 +758,7 @@ describe Puppet::Module do
       end
 
       it "should fail on a failure to parse" do
-        File.stubs(:read).with(mymod_metadata, {:encoding => 'utf-8'}).returns(my_fixture('trailing-comma.json'))
+        allow(File).to receive(:read).with(mymod_metadata, {:encoding => 'utf-8'}).and_return(my_fixture('trailing-comma.json'))
 
         expect do
         expect(mymod.has_metadata?).to be_falsey
@@ -772,8 +767,8 @@ describe Puppet::Module do
     end
 
   def a_module_with_metadata(data)
-    File.stubs(:read).with("/path/metadata.json", {:encoding => 'utf-8'}).returns data.to_json
-    Puppet::Module.new("foo", "/path", mock("env"))
+    allow(File).to receive(:read).with("/path/metadata.json", {:encoding => 'utf-8'}).and_return(data.to_json)
+    Puppet::Module.new("foo", "/path", double("env"))
   end
 
   describe "when loading the metadata file" do
@@ -819,8 +814,8 @@ describe Puppet::Module do
         EOF
       end
 
-      Puppet::Module.any_instance.stubs(:metadata_file).returns metadata_json
-      mod = Puppet::Module.new('foo', '/path', mock('env'))
+      allow_any_instance_of(Puppet::Module).to receive(:metadata_file).and_return(metadata_json)
+      mod = Puppet::Module.new('foo', '/path', double('env'))
 
       mod.load_metadata
       expect(mod.author).to eq(rune_utf8)

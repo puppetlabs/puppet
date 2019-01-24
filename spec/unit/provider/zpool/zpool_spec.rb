@@ -11,13 +11,13 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
   let(:provider) { resource.provider }
 
   before do
-    provider.class.stubs(:which).with('zpool').returns(zpool)
+    allow(provider.class).to receive(:which).with('zpool').and_return(zpool)
   end
 
   context '#current_pool' do
     it "should call process_zpool_data with the result of get_pool_data only once" do
-      provider.stubs(:get_pool_data).returns(["foo", "disk"])
-      provider.expects(:process_zpool_data).with(["foo", "disk"]).returns("stuff").once
+      allow(provider).to receive(:get_pool_data).and_return(["foo", "disk"])
+      expect(provider).to receive(:process_zpool_data).with(["foo", "disk"]).and_return("stuff").once
 
       provider.current_pool
       provider.current_pool
@@ -30,7 +30,7 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
     end
 
     it "should list instances" do
-      provider.class.expects(:zpool).with(:list,'-H').returns File.read(my_fixture('zpool-list.out'))
+      expect(provider.class).to receive(:zpool).with(:list,'-H').and_return(File.read(my_fixture('zpool-list.out')))
       instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
       expect(instances.size).to eq(2)
       expect(instances[0]).to eq({:name => 'rpool', :ensure => :present})
@@ -40,8 +40,8 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
 
   context '#flush' do
     it "should reload the pool" do
-      provider.stubs(:get_pool_data)
-      provider.expects(:process_zpool_data).returns("stuff").times(2)
+      allow(provider).to receive(:get_pool_data)
+      expect(provider).to receive(:process_zpool_data).and_return("stuff").twice
       provider.current_pool
       provider.flush
       provider.current_pool
@@ -152,7 +152,7 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
         it "should get the #{field} value from the current_pool hash" do
           pool_hash = {}
           pool_hash[field] = 'value'
-          provider.stubs(:current_pool).returns(pool_hash)
+          allow(provider).to receive(:current_pool).and_return(pool_hash)
 
           expect(provider.send(field)).to eq('value')
         end
@@ -160,7 +160,7 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
 
       describe "when setting the #{field}" do
         it "should fail if readonly #{field} values change" do
-          provider.stubs(:current_pool).returns(Hash.new("currentvalue"))
+          allow(provider).to receive(:current_pool).and_return(Hash.new("currentvalue"))
           expect {
             provider.send((field.to_s + "=").intern, "shouldvalue")
           }.to raise_error(Puppet::Error, /can\'t be changed/)
@@ -176,14 +176,14 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
       end
 
       it "should call create with the build_vdevs value" do
-        provider.expects(:zpool).with(:create, name, 'disk1')
+        expect(provider).to receive(:zpool).with(:create, name, 'disk1')
         provider.create
       end
 
       it "should call create with the 'spares' and 'log' values" do
         resource[:spare] = ['value1']
         resource[:log] = ['value2']
-        provider.expects(:zpool).with(:create, name, 'disk1', 'spare', 'value1', 'log', 'value2')
+        expect(provider).to receive(:zpool).with(:create, name, 'disk1', 'spare', 'value1', 'log', 'value2')
         provider.create
       end
     end
@@ -191,13 +191,13 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
     context "when creating mirrors for a zpool" do
       it "executes 'create' for a single group of mirrored devices" do
         resource[:mirror] = ["disk1 disk2"]
-        provider.expects(:zpool).with(:create, name, 'mirror', 'disk1', 'disk2')
+        expect(provider).to receive(:zpool).with(:create, name, 'mirror', 'disk1', 'disk2')
         provider.create
       end
 
       it "repeats the 'mirror' keyword between groups of mirrored devices" do
         resource[:mirror] = ["disk1 disk2", "disk3 disk4"]
-        provider.expects(:zpool).with(:create, name, 'mirror', 'disk1', 'disk2', 'mirror', 'disk3', 'disk4')
+        expect(provider).to receive(:zpool).with(:create, name, 'mirror', 'disk1', 'disk2', 'mirror', 'disk3', 'disk4')
         provider.create
       end
     end
@@ -205,20 +205,20 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
     describe "when creating raidz for a zpool" do
       it "executes 'create' for a single raidz group" do
         resource[:raidz] = ["disk1 disk2"]
-        provider.expects(:zpool).with(:create, name, 'raidz1', 'disk1', 'disk2')
+        expect(provider).to receive(:zpool).with(:create, name, 'raidz1', 'disk1', 'disk2')
         provider.create
       end
 
       it "execute 'create' for a single raidz2 group" do
         resource[:raidz] = ["disk1 disk2"]
         resource[:raid_parity] = 'raidz2'
-        provider.expects(:zpool).with(:create, name, 'raidz2', 'disk1', 'disk2')
+        expect(provider).to receive(:zpool).with(:create, name, 'raidz2', 'disk1', 'disk2')
         provider.create
       end
 
       it "repeats the 'raidz1' keyword between each group of raidz devices" do
         resource[:raidz] = ["disk1 disk2", "disk3 disk4"]
-        provider.expects(:zpool).with(:create, name, 'raidz1', 'disk1', 'disk2', 'raidz1', 'disk3', 'disk4')
+        expect(provider).to receive(:zpool).with(:create, name, 'raidz1', 'disk1', 'disk2', 'raidz1', 'disk3', 'disk4')
         provider.create
       end
     end
@@ -226,24 +226,24 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
 
   context '#delete' do
     it "should call zpool with destroy and the pool name" do
-      provider.expects(:zpool).with(:destroy, name)
+      expect(provider).to receive(:zpool).with(:destroy, name)
       provider.destroy
     end
   end
 
   context '#exists?' do
     it "should get the current pool" do
-      provider.expects(:current_pool).returns({:pool => 'somepool'})
+      expect(provider).to receive(:current_pool).and_return({:pool => 'somepool'})
       provider.exists?
     end
 
     it "should return false if the current_pool is absent" do
-      provider.expects(:current_pool).returns({:pool => :absent})
+      expect(provider).to receive(:current_pool).and_return({:pool => :absent})
       expect(provider).not_to be_exists
     end
 
     it "should return true if the current_pool has values" do
-      provider.expects(:current_pool).returns({:pool => name})
+      expect(provider).to receive(:current_pool).and_return({:pool => name})
       expect(provider).to be_exists
     end
   end

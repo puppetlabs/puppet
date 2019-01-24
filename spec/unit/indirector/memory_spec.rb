@@ -7,10 +7,10 @@ describe Puppet::Indirector::Memory do
   it_should_behave_like "A Memory Terminus"
 
   before do
-    Puppet::Indirector::Terminus.stubs(:register_terminus_class)
-    @model = mock 'model'
-    @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
-    Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
+    allow(Puppet::Indirector::Terminus).to receive(:register_terminus_class)
+    @model = double('model')
+    @indirection = double('indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model)
+    allow(Puppet::Indirector::Indirection).to receive(:instance).and_return(@indirection)
 
     module Testing; end
     @memory_class = class Testing::MyMemory < Puppet::Indirector::Memory
@@ -19,8 +19,8 @@ describe Puppet::Indirector::Memory do
 
     @searcher = @memory_class.new
     @name = "me"
-    @instance = stub 'instance', :name => @name
+    @instance = double('instance', :name => @name)
 
-    @request = stub 'request', :key => @name, :instance => @instance
+    @request = double('request', :key => @name, :instance => @instance)
   end
 end

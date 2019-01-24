@@ -11,8 +11,11 @@ describe "A catalog" do
     let(:node) { Puppet::Node.new('test', :environment => env) }
     let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
+    before(:each) do
+      allow_any_instance_of(Puppet::Parser::Compiler).to receive(:loaders).and_return(loaders)
+    end
+
     around :each do |example|
-      Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
       Puppet.override(:loaders => loaders, :current_environment => env) do
         example.run
         Puppet::Pops::Loaders.clear

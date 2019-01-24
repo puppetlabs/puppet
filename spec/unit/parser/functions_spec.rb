@@ -26,7 +26,7 @@ describe Puppet::Parser::Functions do
 
     it "should warn if the function already exists" do
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
-      Puppet.expects(:warning)
+      expect(Puppet).to receive(:warning)
 
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
     end
@@ -48,7 +48,7 @@ describe Puppet::Parser::Functions do
 
   describe "when calling function to test function existence" do
     it "should return false if the function doesn't exist" do
-      Puppet::Parser::Functions.autoloader.stubs(:load)
+      allow(Puppet::Parser::Functions.autoloader).to receive(:load)
 
       expect(Puppet::Parser::Functions.function("name")).to be_falsey
     end
@@ -60,7 +60,7 @@ describe Puppet::Parser::Functions do
     end
 
     it "should try to autoload the function if it doesn't exist yet" do
-      Puppet::Parser::Functions.autoloader.expects(:load)
+      expect(Puppet::Parser::Functions.autoloader).to receive(:load)
 
       Puppet::Parser::Functions.function("name")
     end

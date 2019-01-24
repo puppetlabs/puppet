@@ -44,7 +44,7 @@ describe Puppet::Confine::False do
     it "should use the 'pass?' method to test validity" do
       @confine = Puppet::Confine::False.new("foo")
       @confine.label = "eh"
-      @confine.expects(:pass?).with("foo")
+      expect(@confine).to receive(:pass?).with("foo")
       @confine.valid?
     end
 
@@ -64,14 +64,14 @@ describe Puppet::Confine::False do
 
   it "should be able to produce a summary with the number of incorrectly true values" do
     confine = Puppet::Confine::False.new %w{one two three four}
-    confine.expects(:pass?).times(4).returns(true).returns(false).returns(true).returns(false)
+    expect(confine).to receive(:pass?).exactly(4).times.and_return(true, false, true, false)
     expect(confine.summary).to eq(2)
   end
 
   it "should summarize multiple instances by summing their summaries" do
-    c1 = mock '1', :summary => 1
-    c2 = mock '2', :summary => 2
-    c3 = mock '3', :summary => 3
+    c1 = double('1', :summary => 1)
+    c2 = double('2', :summary => 2)
+    c3 = double('3', :summary => 3)
 
     expect(Puppet::Confine::False.summarize([c1, c2, c3])).to eq(6)
   end

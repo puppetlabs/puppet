@@ -5,12 +5,12 @@ describe "Defaults" do
   describe ".default_diffargs" do
     describe "on AIX" do
       before(:each) do
-        Facter.stubs(:value).with(:kernel).returns("AIX")
+        allow(Facter).to receive(:value).with(:kernel).and_return("AIX")
       end
 
       describe "on 5.3" do
         before(:each) do
-          Facter.stubs(:value).with(:kernelmajversion).returns("5300")
+          allow(Facter).to receive(:value).with(:kernelmajversion).and_return("5300")
         end
 
         it "should be empty" do
@@ -25,7 +25,7 @@ describe "Defaults" do
       ].each do |kernel_version|
         describe "on kernel version #{kernel_version.inspect}" do
           before(:each) do
-            Facter.stubs(:value).with(:kernelmajversion).returns(kernel_version)
+            allow(Facter).to receive(:value).with(:kernelmajversion).and_return(kernel_version)
           end
 
           it "should be '-u'" do
@@ -37,7 +37,7 @@ describe "Defaults" do
 
     describe "on everything else" do
       before(:each) do
-        Facter.stubs(:value).with(:kernel).returns("NOT_AIX")
+        allow(Facter).to receive(:value).with(:kernel).and_return("NOT_AIX")
       end
 
       it "should be '-u'" do
@@ -66,24 +66,24 @@ describe "Defaults" do
 
   describe '.default_digest_algorithm' do
     it 'defaults to md5 when FIPS is not enabled' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns false
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(false)
       expect(Puppet.default_digest_algorithm).to eq('md5')
     end
 
     it 'defaults to sha256 when FIPS is enabled' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
       expect(Puppet.default_digest_algorithm).to eq('sha256')
     end
   end
 
   describe '.supported_checksum_types' do
     it 'defaults to md5, sha256, sha384, sha512, sha224 when FIPS is not enabled' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns false
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(false)
       expect(Puppet.default_file_checksum_types).to eq(%w[md5 sha256 sha384 sha512 sha224])
     end
 
     it 'defaults to sha256, sha384, sha512, sha224 when FIPS is enabled' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
       expect(Puppet.default_file_checksum_types).to eq(%w[sha256 sha384 sha512 sha224])
     end
   end
@@ -106,7 +106,7 @@ describe "Defaults" do
     end
 
     it 'raises when setting md5 in FIPS mode' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
       expect {
         Puppet.settings[:supported_checksum_types] = %w[md5]
       }.to raise_error(ArgumentError,
@@ -144,19 +144,19 @@ describe "Defaults" do
 
   describe 'ordering' do
     it 'issues a deprecation warning when set to title-hash' do
-      Puppet.expects(:deprecation_warning).with('Setting ordering is deprecated.', 'setting-ordering')
+      expect(Puppet).to receive(:deprecation_warning).with('Setting ordering is deprecated.', 'setting-ordering')
 
       Puppet.settings[:ordering] = 'title-hash'
     end
 
     it 'issues a deprecation warning when set to random' do
-      Puppet.expects(:deprecation_warning).with('Setting ordering is deprecated.', 'setting-ordering')
+      expect(Puppet).to receive(:deprecation_warning).with('Setting ordering is deprecated.', 'setting-ordering')
 
       Puppet.settings[:ordering] = 'random'
     end
 
     it 'does not issue a deprecation warning when set to manifest' do
-      Puppet.expects(:deprecation_warning).with('Setting ordering is deprecated.', 'setting-ordering').never
+      expect(Puppet).not_to receive(:deprecation_warning).with('Setting ordering is deprecated.', 'setting-ordering')
 
       Puppet.settings[:ordering] = 'manifest'
     end

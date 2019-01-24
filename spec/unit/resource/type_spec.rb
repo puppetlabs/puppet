@@ -196,7 +196,7 @@ describe Puppet::Resource::Type do
 
     before(:each) do
       compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
-      @scope = Puppet::Parser::Scope.new(compiler, :source => stub("source"))
+      @scope = Puppet::Parser::Scope.new(compiler, :source => double("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
       @type = Puppet::Resource::Type.new(:definition, "foo")
       @resource.environment.known_resource_types.add @type
@@ -432,7 +432,7 @@ describe Puppet::Resource::Type do
     end
 
     it "should set its caller module name in the scope if available" do
-      @scope.expects(:parent_module_name).returns "mycaller"
+      expect(@scope).to receive(:parent_module_name).and_return("mycaller")
 
       @type.set_resource_parameters(@resource, @scope)
 
@@ -471,8 +471,8 @@ describe Puppet::Resource::Type do
     end
 
     it "should cache a reference to the parent type" do
-      @krt.stubs(:hostclass).with("foo::bar").returns nil
-      @krt.expects(:hostclass).with("bar").once.returns @parent
+      allow(@krt).to receive(:hostclass).with("foo::bar").and_return(nil)
+      expect(@krt).to receive(:hostclass).with("bar").once.and_return(@parent)
       @child.parent_type(@scope)
       @child.parent_type
     end
@@ -517,18 +517,18 @@ describe Puppet::Resource::Type do
       @type = Puppet::Resource::Type.new(:node, /f(\w)o(.*)$/)
       match = @type.match('foo')
 
-      code = stub 'code'
-      @type.stubs(:code).returns code
+      code = double('code')
+      allow(@type).to receive(:code).and_return(code)
 
-      subscope = stub 'subscope', :compiler => @compiler
-      @scope.expects(:newscope).with(:source => @type, :resource => @resource).returns subscope
+      subscope = double('subscope', :compiler => @compiler)
+      expect(@scope).to receive(:newscope).with(:source => @type, :resource => @resource).and_return(subscope)
 
-      subscope.expects(:with_guarded_scope).yields
-      subscope.expects(:ephemeral_from).with(match, nil, nil).returns subscope
-      code.expects(:safeevaluate).with(subscope)
+      expect(subscope).to receive(:with_guarded_scope).and_yield
+      expect(subscope).to receive(:ephemeral_from).with(match, nil, nil).and_return(subscope)
+      expect(code).to receive(:safeevaluate).with(subscope)
 
       # Just to keep the stub quiet about intermediate calls
-      @type.expects(:set_resource_parameters).with(@resource, subscope)
+      expect(@type).to receive(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)
     end
@@ -545,17 +545,17 @@ describe Puppet::Resource::Type do
     end
 
     it "should set all of its parameters in a subscope" do
-      subscope = stub 'subscope', :compiler => @compiler
-      @scope.expects(:newscope).with(:source => @type, :resource => @resource).returns subscope
-      @type.expects(:set_resource_parameters).with(@resource, subscope)
+      subscope = double('subscope', :compiler => @compiler)
+      expect(@scope).to receive(:newscope).with(:source => @type, :resource => @resource).and_return(subscope)
+      expect(@type).to receive(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)
     end
 
     it "should not create a subscope for the :main class" do
-      @resource.stubs(:title).returns(:main)
-      @type.expects(:subscope).never
-      @type.expects(:set_resource_parameters).with(@resource, @scope)
+      allow(@resource).to receive(:title).and_return(:main)
+      expect(@type).not_to receive(:subscope)
+      expect(@type).to receive(:set_resource_parameters).with(@resource, @scope)
 
       @type.evaluate_code(@resource)
     end
@@ -572,15 +572,15 @@ describe Puppet::Resource::Type do
     end
 
     it "should evaluate the AST code if any is provided" do
-      code = stub 'code'
-      @type.stubs(:code).returns code
-      code.expects(:safeevaluate).with kind_of(Puppet::Parser::Scope)
+      code = double('code')
+      allow(@type).to receive(:code).and_return(code)
+      expect(code).to receive(:safeevaluate).with(kind_of(Puppet::Parser::Scope))
 
       @type.evaluate_code(@resource)
     end
 
     it "should noop if there is no code" do
-      @type.expects(:code).returns nil
+      expect(@type).to receive(:code).and_return(nil)
 
       @type.evaluate_code(@resource)
     end
@@ -610,7 +610,7 @@ describe Puppet::Resource::Type do
 
         @type.parent_type(@scope)
 
-        @parent_resource.expects(:evaluate).never
+        expect(@parent_resource).not_to receive(:evaluate)
 
         @type.evaluate_code(@resource)
       end
@@ -650,7 +650,7 @@ describe Puppet::Resource::Type do
 
         @type.parent_type(@scope)
 
-        @parent_resource.expects(:evaluate).never
+        expect(@parent_resource).not_to receive(:evaluate)
 
         @type.evaluate_code(@resource)
       end
@@ -739,14 +739,14 @@ describe Puppet::Resource::Type do
     end
 
     it "should not create a new resource if one already exists" do
-      @compiler.catalog.expects(:resource).with(:class, "top").returns("something")
-      @compiler.catalog.expects(:add_resource).never
+      expect(@compiler.catalog).to receive(:resource).with(:class, "top").and_return("something")
+      expect(@compiler.catalog).not_to receive(:add_resource)
       @top.ensure_in_catalog(@scope)
     end
 
     it "should return the existing resource when not creating a new one" do
-      @compiler.catalog.expects(:resource).with(:class, "top").returns("something")
-      @compiler.catalog.expects(:add_resource).never
+      expect(@compiler.catalog).to receive(:resource).with(:class, "top").and_return("something")
+      expect(@compiler.catalog).not_to receive(:add_resource)
       expect(@top.ensure_in_catalog(@scope)).to eq("something")
     end
 
@@ -804,9 +804,9 @@ describe Puppet::Resource::Type do
         code = Puppet::Resource::TypeCollection.new("env")
         code.add Puppet::Resource::Type.new(:hostclass, "")
         other = Puppet::Resource::Type.new(:hostclass, "")
-        mock = stub
-        mock.expects(:is_definitions_only?).returns(false)
-        other.expects(:code).returns(mock)
+        mock = double()
+        expect(mock).to receive(:is_definitions_only?).and_return(false)
+        expect(other).to receive(:code).and_return(mock)
         expect { code.hostclass("").merge(other) }.to raise_error(Puppet::Error)
       end
 
@@ -815,9 +815,9 @@ describe Puppet::Resource::Type do
         code = Puppet::Resource::TypeCollection.new("env")
         code.add Puppet::Resource::Type.new(:hostclass, "")
         other = Puppet::Resource::Type.new(:hostclass, "")
-        mock = stub
-        mock.expects(:is_definitions_only?).returns(true)
-        other.expects(:code).at_least_once.returns(mock)
+        mock = double()
+        expect(mock).to receive(:is_definitions_only?).and_return(true)
+        expect(other).to receive(:code).at_least(:once).and_return(mock)
         expect { code.hostclass("").merge(other) }.not_to raise_error
       end
     end

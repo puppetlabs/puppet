@@ -14,14 +14,14 @@ describe Puppet::Type::File::Ensure do
 
   describe "when retrieving the current state" do
     it "should return :absent if the file does not exist" do
-      resource.expects(:stat).returns nil
+      expect(resource).to receive(:stat).and_return(nil)
 
       expect(property.retrieve).to eq(:absent)
     end
 
     it "should return the current file type if the file exists" do
-      stat = mock 'stat', :ftype => "directory"
-      resource.expects(:stat).returns stat
+      stat = double('stat', :ftype => "directory")
+      expect(resource).to receive(:stat).and_return(stat)
 
       expect(property.retrieve).to eq(:directory)
     end
@@ -30,7 +30,7 @@ describe Puppet::Type::File::Ensure do
   describe "when testing whether :ensure is in sync" do
     it "should always be in sync if replace is 'false' unless the file is missing" do
       property.should = :file
-      resource.expects(:replace?).returns false
+      expect(resource).to receive(:replace?).and_return(false)
       expect(property.safe_insync?(:link)).to be_truthy
     end
 
@@ -88,32 +88,32 @@ describe Puppet::Type::File::Ensure do
 
       it "should accept octal mode as fixnum" do
         resource[:mode] = '0700'
-        resource.expects(:property_fix)
-        Dir.expects(:mkdir).with(path, 0700)
+        expect(resource).to receive(:property_fix)
+        expect(Dir).to receive(:mkdir).with(path, 0700)
 
         property.sync
       end
 
       it "should accept octal mode as string" do
         resource[:mode] = "700"
-        resource.expects(:property_fix)
-        Dir.expects(:mkdir).with(path, 0700)
+        expect(resource).to receive(:property_fix)
+        expect(Dir).to receive(:mkdir).with(path, 0700)
 
         property.sync
       end
 
       it "should accept octal mode as string with leading zero" do
         resource[:mode] = "0700"
-        resource.expects(:property_fix)
-        Dir.expects(:mkdir).with(path, 0700)
+        expect(resource).to receive(:property_fix)
+        expect(Dir).to receive(:mkdir).with(path, 0700)
 
         property.sync
       end
 
       it "should accept symbolic mode" do
         resource[:mode] = "u=rwx,go=x"
-        resource.expects(:property_fix)
-        Dir.expects(:mkdir).with(path, 0711)
+        expect(resource).to receive(:property_fix)
+        expect(Dir).to receive(:mkdir).with(path, 0711)
 
         property.sync
       end

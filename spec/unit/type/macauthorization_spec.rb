@@ -11,8 +11,8 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
     authplist["rules"] = { "foorule" => "foo" }
     authplist["rights"] = { "fooright" => "foo" }
     provider_class = macauth_type.provider(macauth_type.providers[0])
-    Puppet::Util::Plist.stubs(:parse_plist).with("/etc/authorization").returns(authplist)
-    macauth_type.stubs(:defaultprovider).returns provider_class
+    allow(Puppet::Util::Plist).to receive(:parse_plist).with("/etc/authorization").and_return(authplist)
+    allow(macauth_type).to receive(:defaultprovider).and_return(provider_class)
     @resource = macauth_type.new(:name => 'foo')
   end
 

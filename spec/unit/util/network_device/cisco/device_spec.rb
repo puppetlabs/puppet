@@ -6,7 +6,19 @@ require 'puppet/util/network_device/transport/telnet'
 if Puppet.features.telnet?
   describe Puppet::Util::NetworkDevice::Cisco::Device do
     before(:each) do
-      @transport = stub_everything 'transport', :is_a? => true, :command => ""
+      @transport = double(
+        'transport',
+        :is_a? => true,
+        :command => "",
+        :host= => nil,
+        :port= => nil,
+        :user= => nil,
+        :password= => nil,
+        :default_prompt= => nil,
+        :handles_login? => nil,
+        :connect => nil,
+        :close => nil,
+      )
       @cisco = Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23/")
       @cisco.transport = @transport
     end
@@ -49,83 +61,84 @@ if Puppet.features.telnet?
       end
 
       it "should find the debug mode from the options" do
-        Puppet::Util::NetworkDevice::Transport::Telnet.expects(:new).with(true).returns(@transport)
+        expect(Puppet::Util::NetworkDevice::Transport::Telnet).to receive(:new).with(true).and_return(@transport)
         Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23", :debug => true)
       end
 
       it "should set the debug mode to nil by default" do
-        Puppet::Util::NetworkDevice::Transport::Telnet.expects(:new).with(nil).returns(@transport)
+        expect(Puppet::Util::NetworkDevice::Transport::Telnet).to receive(:new).with(nil).and_return(@transport)
         Puppet::Util::NetworkDevice::Cisco::Device.new("telnet://user:password@localhost:23")
       end
     end
 
     describe "when connecting to the physical device" do
       it "should connect to the transport" do
-        @transport.expects(:connect)
+        expect(@transport).to receive(:connect)
         @cisco.command
       end
 
       it "should attempt to login" do
-        @cisco.expects(:login)
+        expect(@cisco).to receive(:login)
         @cisco.command
       end
 
       it "should tell the device to not page" do
-        @transport.expects(:command).with("terminal length 0")
+        expect(@transport).to receive(:command).with("terminal length 0")
         @cisco.command
       end
 
       it "should enter the enable password if returned prompt is not privileged" do
-        @transport.stubs(:command).yields("Switch>").returns("")
-        @cisco.expects(:enable)
+        allow(@transport).to receive(:command).and_return("")
+        allow(@transport).to receive(:command).with("terminal length 0").and_yield("Switch>").and_return("")
+        expect(@cisco).to receive(:enable)
         @cisco.command
       end
 
       it "should find device capabilities" do
-        @cisco.expects(:find_capabilities)
+        expect(@cisco).to receive(:find_capabilities)
         @cisco.command
       end
 
       it "should execute given command" do
-        @transport.expects(:command).with("mycommand")
+        expect(@transport).to receive(:command).with("mycommand")
         @cisco.command("mycommand")
       end
 
       it "should yield to the command block if one is provided" do
-        @transport.expects(:command).with("mycommand")
+        expect(@transport).to receive(:command).with("mycommand")
         @cisco.command do |c|
           c.command("mycommand")
         end
       end
 
       it "should close the device transport" do
-        @transport.expects(:close)
+        expect(@transport).to receive(:close)
         @cisco.command
       end
 
       describe "when login in" do
         it "should not login if transport handles login" do
-          @transport.expects(:handles_login?).returns(true)
-          @transport.expects(:command).never
-          @transport.expects(:expect).never
+          expect(@transport).to receive(:handles_login?).and_return(true)
+          expect(@transport).not_to receive(:command)
+          expect(@transport).not_to receive(:expect)
           @cisco.login
         end
 
         it "should send username if one has been provided" do
-          @transport.expects(:command).with("user", :prompt => /^Password:/)
+          expect(@transport).to receive(:command).with("user", :prompt => /^Password:/)
           @cisco.login
         end
 
         it "should send password after the username" do
-          @transport.expects(:command).with("user", :prompt => /^Password:/)
-          @transport.expects(:command).with("password")
+          expect(@transport).to receive(:command).with("user", :prompt => /^Password:/)
+          expect(@transport).to receive(:command).with("password")
           @cisco.login
         end
 
         it "should expect the Password: prompt if no user was sent" do
           @cisco.url.user = ''
-          @transport.expects(:expect).with(/^Password:/)
-          @transport.expects(:command).with("password")
+          expect(@transport).to receive(:expect).with(/^Password:/)
+          expect(@transport).to receive(:command).with("password")
           @cisco.login
         end
       end
@@ -138,14 +151,14 @@ if Puppet.features.telnet?
 
         it "should send the enable command and expect an enable prompt" do
           @cisco.enable_password = 'mypass'
-          @transport.expects(:command).with("enable", :prompt => /^Password:/)
+          expect(@transport).to receive(:command).with("enable", :prompt => /^Password:/)
           @cisco.enable
         end
 
         it "should send the enable password" do
           @cisco.enable_password = 'mypass'
-          @transport.stubs(:command).with("enable", :prompt => /^Password:/)
-          @transport.expects(:command).with("mypass")
+          allow(@transport).to receive(:command).with("enable", :prompt => /^Password:/)
+          expect(@transport).to receive(:command).with("mypass")
           @cisco.enable
         end
       end
@@ -153,12 +166,12 @@ if Puppet.features.telnet?
 
     describe "when finding network device capabilities" do
       it "should try to execute sh vlan brief" do
-        @transport.expects(:command).with("sh vlan brief").returns("")
+        expect(@transport).to receive(:command).with("sh vlan brief").and_return("")
         @cisco.find_capabilities
       end
 
       it "should detect errors" do
-        @transport.stubs(:command).with("sh vlan brief").returns(<<eos)
+        allow(@transport).to receive(:command).with("sh vlan brief").and_return(<<eos)
 Switch#sh vlan brief  
 % Ambiguous command:  "sh vlan brief"
 Switch#
@@ -189,19 +202,19 @@ eos
     describe "when updating device vlans" do
       describe "when removing a vlan" do
         it "should issue the no vlan command" do
-          @transport.expects(:command).with("no vlan 200")
+          expect(@transport).to receive(:command).with("no vlan 200")
           @cisco.update_vlan("200", {:ensure => :present, :name => "200"}, { :ensure=> :absent})
         end
       end
 
       describe "when updating a vlan" do
         it "should issue the vlan command to enter global vlan modifications" do
-          @transport.expects(:command).with("vlan 200")
+          expect(@transport).to receive(:command).with("vlan 200")
           @cisco.update_vlan("200", {:ensure => :present, :name => "200"}, { :ensure=> :present, :name => "200"})
         end
 
         it "should issue the name command to modify the vlan description" do
-          @transport.expects(:command).with("name myvlan")
+          expect(@transport).to receive(:command).with("name myvlan")
           @cisco.update_vlan("200", {:ensure => :present, :name => "200"}, { :ensure=> :present, :name => "200", :description => "myvlan"})
         end
       end
@@ -209,33 +222,33 @@ eos
 
     describe "when parsing interface" do
       it "should parse interface output" do
-        @cisco.expects(:parse_interface).returns({ :ensure => :present })
+        expect(@cisco).to receive(:parse_interface).and_return({ :ensure => :present })
 
         expect(@cisco.interface("FastEthernet0/1")).to eq({ :ensure => :present })
       end
 
       it "should parse trunking and merge results" do
-        @cisco.stubs(:parse_interface).returns({ :ensure => :present })
-        @cisco.expects(:parse_trunking).returns({ :native_vlan => "100" })
+        allow(@cisco).to receive(:parse_interface).and_return({ :ensure => :present })
+        expect(@cisco).to receive(:parse_trunking).and_return({ :native_vlan => "100" })
 
         expect(@cisco.interface("FastEthernet0/1")).to eq({ :ensure => :present, :native_vlan => "100" })
       end
 
       it "should return an absent interface if parse_interface returns nothing" do
-        @cisco.stubs(:parse_interface).returns({})
+        allow(@cisco).to receive(:parse_interface).and_return({})
 
         expect(@cisco.interface("FastEthernet0/1")).to eq({ :ensure => :absent })
       end
 
       it "should parse ip address information and merge results" do
-        @cisco.stubs(:parse_interface).returns({ :ensure => :present })
-        @cisco.expects(:parse_interface_config).returns({ :ipaddress => [24,IPAddr.new('192.168.0.24'), nil] })
+        allow(@cisco).to receive(:parse_interface).and_return({ :ensure => :present })
+        expect(@cisco).to receive(:parse_interface_config).and_return({ :ipaddress => [24,IPAddr.new('192.168.0.24'), nil] })
 
         expect(@cisco.interface("FastEthernet0/1")).to eq({ :ensure => :present, :ipaddress => [24,IPAddr.new('192.168.0.24'), nil] })
       end
 
       it "should parse the sh interface command" do
-        @transport.stubs(:command).with("sh interface FastEthernet0/1").returns(<<eos)
+        allow(@transport).to receive(:command).with("sh interface FastEthernet0/1").and_return(<<eos)
 Switch#sh interfaces FastEthernet 0/1
 FastEthernet0/1 is down, line protocol is down 
   Hardware is Fast Ethernet, address is 00d0.bbe2.19c1 (bia 00d0.bbe2.19c1)
@@ -268,8 +281,8 @@ eos
       end
 
       it "should be able to parse the sh vlan brief command output" do
-        @cisco.stubs(:support_vlan_brief?).returns(true)
-        @transport.stubs(:command).with("sh vlan brief").returns(<<eos)
+        allow(@cisco).to receive(:support_vlan_brief?).and_return(true)
+        allow(@transport).to receive(:command).with("sh vlan brief").and_return(<<eos)
 Switch#sh vlan brief
 VLAN Name                             Status    Ports
 ---- -------------------------------- --------- -------------------------------
@@ -287,7 +300,7 @@ eos
       end
 
       it "should parse trunk switchport information" do
-        @transport.stubs(:command).with("sh interface FastEthernet0/21 switchport").returns(<<eos)
+        allow(@transport).to receive(:command).with("sh interface FastEthernet0/21 switchport").and_return(<<eos)
 Switch#sh interfaces FastEthernet 0/21 switchport
 Name: Fa0/21
 Switchport: Enabled
@@ -314,7 +327,7 @@ eos
       end
 
       it "should parse dynamic desirable switchport information with native and allowed vlans" do
-        @transport.stubs(:command).with("sh interface GigabitEthernet 0/1 switchport").returns(<<eos)
+        allow(@transport).to receive(:command).with("sh interface GigabitEthernet 0/1 switchport").and_return(<<eos)
 c2960#sh interfaces GigabitEthernet 0/1 switchport 
 Name: Gi0/1
 Switchport: Enabled
@@ -352,7 +365,7 @@ eos
       end
 
       it "should parse access switchport information" do
-        @transport.stubs(:command).with("sh interface FastEthernet0/1 switchport").returns(<<eos)
+        allow(@transport).to receive(:command).with("sh interface FastEthernet0/1 switchport").and_return(<<eos)
 Switch#sh interfaces FastEthernet 0/1 switchport  
 Name: Fa0/1
 Switchport: Enabled
@@ -378,7 +391,7 @@ eos
       end
 
       it "should parse auto/negotiate switchport information" do
-        @transport.stubs(:command).with("sh interface FastEthernet0/24 switchport").returns(<<eos)
+        allow(@transport).to receive(:command).with("sh interface FastEthernet0/24 switchport").and_return(<<eos)
 Switch#sh interfaces FastEthernet 0/24 switchport
 Name: Fa0/24
 Switchport: Enabled
@@ -414,7 +427,7 @@ eos
       end
 
       it "should parse ip addresses" do
-        @transport.stubs(:command).with("sh running-config interface Vlan 1 | begin interface").returns(<<eos)
+        allow(@transport).to receive(:command).with("sh running-config interface Vlan 1 | begin interface").and_return(<<eos)
 router#sh running-config interface Vlan 1 | begin interface
 interface Vlan1
  description $ETH-SW-LAUNCH$$INTF-INFO-HWIC 4ESW$$FW_INSIDE$
@@ -447,7 +460,7 @@ eos
       end
 
       it "should parse etherchannel membership" do
-        @transport.stubs(:command).with("sh running-config interface Gi0/17 | begin interface").returns(<<eos)
+        allow(@transport).to receive(:command).with("sh running-config interface Gi0/17 | begin interface").and_return(<<eos)
 c2960#sh running-config interface Gi0/17 | begin interface
 interface GigabitEthernet0/17
  description member of Po1
@@ -466,10 +479,10 @@ eos
 
     describe "when finding device facts" do
       it "should delegate to the cisco facts entity" do
-        facts = stub 'facts'
-        Puppet::Util::NetworkDevice::Cisco::Facts.expects(:new).returns(facts)
+        facts = double('facts')
+        expect(Puppet::Util::NetworkDevice::Cisco::Facts).to receive(:new).and_return(facts)
 
-        facts.expects(:retrieve).returns(:facts)
+        expect(facts).to receive(:retrieve).and_return(:facts)
 
         expect(@cisco.facts).to eq(:facts)
       end

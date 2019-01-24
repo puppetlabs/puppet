@@ -105,7 +105,7 @@ describe Puppet::Type.type(:scheduled_task), :if => Puppet.features.microsoft_wi
 
   describe 'when setting the trigger' do
     it 'should delegate to the provider to validate the trigger' do
-      described_class.defaultprovider.any_instance.expects(:validate_trigger).returns(true)
+      expect_any_instance_of(described_class.defaultprovider).to receive(:validate_trigger).and_return(true)
 
       described_class.new(
         :name    => 'Test Task',

@@ -27,28 +27,28 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
   end
 
   let(:agent) { Puppet::Agent.new(TestClient.new, false) }
-  let(:server) { stub("Server", :start => nil, :wait_for_shutdown => nil) }
+  let(:server) { double("Server", :start => nil, :wait_for_shutdown => nil) }
 
-  let(:pidfile) { stub("PidFile", :lock => true, :unlock => true, :file_path => 'fake.pid') }
+  let(:pidfile) { double("PidFile", :lock => true, :unlock => true, :file_path => 'fake.pid') }
   let(:scheduler) { RecordingScheduler.new }
 
   let(:daemon) { Puppet::Daemon.new(pidfile, scheduler) }
 
   before do
-    daemon.stubs(:close_streams).returns nil
+    allow(daemon).to receive(:close_streams).and_return(nil)
   end
 
   it "should reopen the Log logs when told to reopen logs" do
-    Puppet::Util::Log.expects(:reopen)
+    expect(Puppet::Util::Log).to receive(:reopen)
     daemon.reopen_logs
   end
 
   describe "when setting signal traps" do
     [:INT, :TERM].each do |signal|
       it "logs a notice and exits when sent #{signal}" do
-        Signal.stubs(:trap).with(signal).yields
-        Puppet.expects(:notice).with("Caught #{signal}; exiting")
-        daemon.expects(:stop)
+        allow(Signal).to receive(:trap).with(signal).and_yield
+        expect(Puppet).to receive(:notice).with("Caught #{signal}; exiting")
+        expect(daemon).to receive(:stop)
 
         daemon.set_signal_traps
       end
@@ -56,8 +56,8 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
     {:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}.each do |signal, method|
       it "logs a notice and remembers to call #{method} when it receives #{signal}" do
-        Signal.stubs(:trap).with(signal).yields
-        Puppet.expects(:notice).with("Caught #{signal}; storing #{method}")
+        allow(Signal).to receive(:trap).with(signal).and_yield
+        expect(Puppet).to receive(:notice).with("Caught #{signal}; storing #{method}")
 
         daemon.set_signal_traps
 
@@ -68,7 +68,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
   describe "when starting" do
     before do
-      daemon.stubs(:set_signal_traps)
+      allow(daemon).to receive(:set_signal_traps)
     end
 
     it "should fail if it has neither agent nor server" do
@@ -76,14 +76,14 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should create its pidfile" do
-      pidfile.expects(:lock).returns(true)
+      expect(pidfile).to receive(:lock).and_return(true)
 
       daemon.agent = agent
       daemon.start
     end
 
     it "should fail if it cannot lock" do
-      pidfile.expects(:lock).returns(false)
+      expect(pidfile).to receive(:lock).and_return(false)
       daemon.agent = agent
 
       expect { daemon.start }.to raise_error(RuntimeError, "Could not create PID file: #{pidfile.file_path}")
@@ -92,7 +92,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     it "should start its server if one is configured" do
       daemon.server = server
 
-      server.expects(:start)
+      expect(server).to receive(:start)
 
       daemon.start
     end
@@ -118,7 +118,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     it "waits for the server to shutdown when there is one" do
       daemon.server = server
 
-      server.expects(:wait_for_shutdown)
+      expect(server).to receive(:wait_for_shutdown)
 
       daemon.start
     end
@@ -126,7 +126,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     it "waits for the server to shutdown when there is one" do
       daemon.server = server
 
-      server.expects(:wait_for_shutdown)
+      expect(server).to receive(:wait_for_shutdown)
 
       daemon.start
     end
@@ -134,7 +134,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
   describe "when stopping" do
     before do
-      Puppet::Util::Log.stubs(:close_all)
+      allow(Puppet::Util::Log).to receive(:close_all)
       # to make the global safe to mock, set it to a subclass of itself,
       # then restore it in an after pass
       without_warnings { Puppet::Application = Class.new(Puppet::Application) }
@@ -146,7 +146,7 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should stop its server if one is configured" do
-      server.expects(:stop)
+      expect(server).to receive(:stop)
 
       daemon.server = server
 
@@ -154,18 +154,18 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it 'should request a stop from Puppet::Application' do
-      Puppet::Application.expects(:stop!)
+      expect(Puppet::Application).to receive(:stop!)
       expect { daemon.stop }.to exit_with 0
     end
 
     it "should remove its pidfile" do
-      pidfile.expects(:unlock)
+      expect(pidfile).to receive(:unlock)
 
       expect { daemon.stop }.to exit_with 0
     end
 
     it "should close all logs" do
-      Puppet::Util::Log.expects(:close_all)
+      expect(Puppet::Util::Log).to receive(:close_all)
       expect { daemon.stop }.to exit_with 0
     end
 
@@ -184,8 +184,8 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should do nothing if the agent is running" do
-      agent.expects(:run).with({:splay => false}).raises Puppet::LockError, 'Failed to aquire lock'
-      Puppet.expects(:notice).with('Not triggering already-running agent')
+      expect(agent).to receive(:run).with({:splay => false}).and_raise(Puppet::LockError, 'Failed to aquire lock')
+      expect(Puppet).to receive(:notice).with('Not triggering already-running agent')
 
       daemon.agent = agent
 
@@ -193,8 +193,8 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should run the agent if one is available and it is not running" do
-      agent.expects(:run).with({:splay => false})
-      Puppet.expects(:notice).with('Not triggering already-running agent').never
+      expect(agent).to receive(:run).with({:splay => false})
+      expect(Puppet).not_to receive(:notice).with('Not triggering already-running agent')
 
       daemon.agent = agent
 
@@ -212,21 +212,21 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
 
     it 'should set Puppet::Application.restart!' do
-      Puppet::Application.expects(:restart!)
-      daemon.stubs(:reexec)
+      expect(Puppet::Application).to receive(:restart!)
+      allow(daemon).to receive(:reexec)
       daemon.restart
     end
 
     it "should reexec itself if no agent is available" do
-      daemon.expects(:reexec)
+      expect(daemon).to receive(:reexec)
 
       daemon.restart
     end
 
     it "should reexec itself if the agent is not running" do
-      agent.expects(:running?).returns false
+      expect(agent).to receive(:running?).and_return(false)
       daemon.agent = agent
-      daemon.expects(:reexec)
+      expect(daemon).to receive(:reexec)
 
       daemon.restart
     end
@@ -234,25 +234,25 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
   describe "when reexecing it self" do
     before do
-      daemon.stubs(:exec)
-      daemon.stubs(:stop)
+      allow(daemon).to receive(:exec)
+      allow(daemon).to receive(:stop)
     end
 
     it "should fail if no argv values are available" do
-      daemon.expects(:argv).returns nil
+      expect(daemon).to receive(:argv).and_return(nil)
       expect { daemon.reexec }.to raise_error(Puppet::DevError)
     end
 
     it "should shut down without exiting" do
       daemon.argv = %w{foo}
-      daemon.expects(:stop).with(:exit => false)
+      expect(daemon).to receive(:stop).with(:exit => false)
 
       daemon.reexec
     end
 
     it "should call 'exec' with the original executable and arguments" do
       daemon.argv = %w{foo}
-      daemon.expects(:exec).with($0 + " foo")
+      expect(daemon).to receive(:exec).with($0 + " foo")
 
       daemon.reexec
     end

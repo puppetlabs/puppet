@@ -32,10 +32,10 @@ describe Puppet::Transaction::Report::Rest do
   end
 
   def mock_response(code, body, content_type='text/plain', encoding=nil)
-    obj = stub('http 200 ok', :code => code.to_s, :body => body)
-    obj.stubs(:[]).with('content-type').returns(content_type)
-    obj.stubs(:[]).with('content-encoding').returns(encoding)
-    obj.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns(Puppet.version)
+    obj = double('http 200 ok', :code => code.to_s, :body => body)
+    allow(obj).to receive(:[]).with('content-type').and_return(content_type)
+    allow(obj).to receive(:[]).with('content-encoding').and_return(encoding)
+    allow(obj).to receive(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).and_return(Puppet.version)
     obj
   end
 
@@ -45,18 +45,18 @@ describe Puppet::Transaction::Report::Rest do
 
   describe "#save" do
     let(:response) { mock_response(200, 'body') }
-    let(:connection) { stub('mock http connection', :put => response, :verify_callback= => nil) }
+    let(:connection) { double('mock http connection', :put => response, :verify_callback= => nil) }
     let(:instance) { model.new('the thing', 'some contents') }
     let(:request) { save_request(instance.name, instance) }
     let(:body) { ["store", "http"].to_pson }
 
     before :each do
-      terminus.stubs(:network).returns(connection)
+      allow(terminus).to receive(:network).and_return(connection)
     end
 
     it "deserializes the response as an array of report processor names" do
       response = mock_response('200', body, 'text/pson')
-      connection.expects(:put).returns response
+      expect(connection).to receive(:put).and_return(response)
 
       expect(terminus.save(request)).to eq(["store", "http"])
     end
@@ -67,8 +67,8 @@ describe Puppet::Transaction::Report::Rest do
           Puppet[:preferred_serialization_format] = "json"
 
           response = mock_response('500', '{}', 'text/pson')
-          response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("4.10.1")
-          connection.expects(:put).returns response
+          allow(response).to receive(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).and_return("4.10.1")
+          expect(connection).to receive(:put).and_return(response)
 
           expect {
             terminus.save(request)
@@ -79,8 +79,8 @@ describe Puppet::Transaction::Report::Rest do
           Puppet[:preferred_serialization_format] = "pson"
 
           response = mock_response('500', '{}', 'text/pson')
-          response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns("4.10.1")
-          connection.expects(:put).returns response
+          allow(response).to receive(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).and_return("4.10.1")
+          expect(connection).to receive(:put).and_return(response)
 
           expect {
             terminus.save(request)

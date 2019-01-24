@@ -19,7 +19,7 @@ describe Puppet::Network::HTTP::API::Master::V3::Authorization do
       :params => { :authenticated => true, :node => "testing", :ip => "127.0.0.1" }
     })
 
-    authz.stubs(:authconfig).returns(Puppet::Network::AuthConfigParser.new(<<-AUTH).parse)
+    allow(authz).to receive(:authconfig).and_return(Puppet::Network::AuthConfigParser.new(<<-AUTH).parse)
 path /v3/environments
 method find
 allow *
@@ -41,7 +41,7 @@ allow *
       :params => { :authenticated => true, :node => "testing", :ip => "127.0.0.1" }
     })
 
-    authz.stubs(:authconfig).returns(Puppet::Network::AuthConfigParser.new(<<-AUTH).parse)
+    allow(authz).to receive(:authconfig).and_return(Puppet::Network::AuthConfigParser.new(<<-AUTH).parse)
 path /v3/environments
 method find
 auth any

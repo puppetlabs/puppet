@@ -156,9 +156,9 @@ describe 'loaders' do
     end
 
     it 'loader allows loading a function more than once' do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns ''
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return('')
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
 
       env = environment_for(File.join(dependent_modules_with_metadata, 'modules'))
       loaders = Puppet::Pops::Loaders.new(env)
@@ -217,9 +217,9 @@ describe 'loaders' do
     end
 
     it 'all dependent modules are visible' do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       loaders = Puppet::Pops::Loaders.new(env)
 
       moduleb_loader = loaders.private_loader_for_module('user')
@@ -248,9 +248,9 @@ describe 'loaders' do
         case_number = from_idx * 3 + called_idx + 1
 
         it "can call #{desc[:called]} from #{desc[:from]} when dependency is present in metadata.json" do
-          File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-          File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-          File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+          allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+          allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+          allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
@@ -259,18 +259,20 @@ describe 'loaders' do
         end
 
         it "can call #{desc[:called]} from #{desc[:from]} when no metadata is present" do
-          Puppet::Module.any_instance.expects('has_metadata?').at_least_once.returns(false)
+          times_has_metadata_called = 0
+          allow_any_instance_of(Puppet::Module).to receive('has_metadata?') { times_has_metadata_called += 1 }.and_return(false)
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
           expect(resource).not_to be_nil
           expect(resource['message']).to eq(desc[:expects])
+          expect(times_has_metadata_called).to be >= 1
         end
 
         it "can not call #{desc[:called]} from #{desc[:from]} if dependency is missing in existing metadata.json" do
-          File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => []).to_pson
-          File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-          File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+          allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => []).to_pson)
+          allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+          allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           expect { compiler.compile }.to raise_error(Puppet::Error, /Unknown function/)
         end
@@ -278,9 +280,9 @@ describe 'loaders' do
     end
 
     it "a type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(Usee::Zero, 0)
         notice(ok)
@@ -288,7 +290,7 @@ describe 'loaders' do
     end
 
     it "a type can reference an autoloaded type alias from another module when no metadata is present" do
-      Puppet::Module.any_instance.expects('has_metadata?').at_least_once.returns(false)
+      expect_any_instance_of(Puppet::Module).to receive('has_metadata?').at_least(:once).and_return(false)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(Usee::Zero, 0)
         notice(ok)
@@ -296,9 +298,9 @@ describe 'loaders' do
     end
 
     it "a type can reference a type alias from another module when other module has it declared in init.pp" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         include 'usee'
         assert_type(Usee::One, 1)
@@ -307,9 +309,9 @@ describe 'loaders' do
     end
 
     it "an autoloaded type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(User::WithUseeZero, [0])
         notice(ok)
@@ -317,9 +319,9 @@ describe 'loaders' do
     end
 
     it "an autoloaded type can reference an autoloaded type alias from another module when other module has it declared in init.pp" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         include 'usee'
         assert_type(User::WithUseeOne, [1])
@@ -363,7 +365,7 @@ describe 'loaders' do
         catalog = compiler.compile
         expect(catalog.resource('Notify[first]')).to be_a(Puppet::Resource)
 
-        Puppet::Pops::Loader::RubyFunctionInstantiator.expects(:create).never
+        expect(Puppet::Pops::Loader::RubyFunctionInstantiator).not_to receive(:create)
         compiler = Puppet::Parser::Compiler.new(node)
         compiler.topscope['value_from_scope'] = 'second'
         catalog = compiler.compile

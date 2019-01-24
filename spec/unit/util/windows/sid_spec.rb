@@ -71,12 +71,12 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
 
     it "should return a SID for a passed user or group name" do
-      subject.expects(:name_to_principal).with('testers').returns stub(:sid => 'S-1-5-32-547')
+      expect(subject).to receive(:name_to_principal).with('testers').and_return(double(:sid => 'S-1-5-32-547'))
       expect(subject.name_to_sid('testers')).to eq('S-1-5-32-547')
     end
 
     it "should return a SID for a passed fully-qualified user or group name" do
-      subject.expects(:name_to_principal).with('MACHINE\testers').returns stub(:sid => 'S-1-5-32-547')
+      expect(subject).to receive(:name_to_principal).with('MACHINE\testers').and_return(double(:sid => 'S-1-5-32-547'))
       expect(subject.name_to_sid('MACHINE\testers')).to eq('S-1-5-32-547')
     end
 
@@ -163,20 +163,20 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
   context "#ads_to_principal" do
     it "should raise an error for non-WIN32OLE input" do
       expect {
-        subject.ads_to_principal(stub('WIN32OLE', { :Name => 'foo' }))
+        subject.ads_to_principal(double('WIN32OLE', { :Name => 'foo' }))
       }.to raise_error(Puppet::Error, /ads_object must be an IAdsUser or IAdsGroup instance/)
     end
 
     it "should raise an error for an empty byte array in the objectSID property" do
       expect {
-        subject.ads_to_principal(stub('WIN32OLE', { :objectSID => [], :Name => '', :ole_respond_to? => true }))
+        subject.ads_to_principal(double('WIN32OLE', { :objectSID => [], :Name => '', :ole_respond_to? => true }))
       }.to raise_error(Puppet::Error, /Octet string must be an array of bytes/)
     end
 
     it "should raise an error for a malformed byte array" do
       expect {
         invalid_octet = [2]
-        subject.ads_to_principal(stub('WIN32OLE', { :objectSID => invalid_octet, :Name => '', :ole_respond_to? => true }))
+        subject.ads_to_principal(double('WIN32OLE', { :objectSID => invalid_octet, :Name => '', :ole_respond_to? => true }))
       }.to raise_error do |error|
         expect(error).to be_a(Puppet::Util::Windows::Error)
         expect(error.code).to eq(87) # ERROR_INVALID_PARAMETER
@@ -187,7 +187,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       expect {
         # S-1-1-1 is a valid SID that will not resolve
         valid_octet_invalid_user = [1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0]
-        subject.ads_to_principal(stub('WIN32OLE', { :objectSID => valid_octet_invalid_user, :Name => unknown_name, :ole_respond_to? => true }))
+        subject.ads_to_principal(double('WIN32OLE', { :objectSID => valid_octet_invalid_user, :Name => unknown_name, :ole_respond_to? => true }))
       }.to raise_error do |error|
         expect(error).to be_a(Puppet::Error)
         expect(error.cause.code).to eq(1332) # ERROR_NONE_MAPPED
@@ -197,7 +197,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     it "should return a Principal object even when the SID is unresolvable, as long as the Name matches" do
       # S-1-1-1 is a valid SID that will not resolve
       valid_octet_invalid_user = [1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0]
-      unresolvable_user = stub('WIN32OLE', { :objectSID => valid_octet_invalid_user, :Name => 'S-1-1-1', :ole_respond_to? => true })
+      unresolvable_user = double('WIN32OLE', { :objectSID => valid_octet_invalid_user, :Name => 'S-1-1-1', :ole_respond_to? => true })
       principal = subject.ads_to_principal(unresolvable_user)
 
       expect(principal).to be_an_instance_of(Puppet::Util::Windows::SID::Principal)
@@ -211,13 +211,13 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
 
     it "should return a Puppet::Util::Windows::SID::Principal instance for any valid sid" do
       system_bytes = [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0]
-      adsuser = stub('WIN32OLE', { :objectSID => system_bytes, :Name => 'SYSTEM', :ole_respond_to? => true })
+      adsuser = double('WIN32OLE', { :objectSID => system_bytes, :Name => 'SYSTEM', :ole_respond_to? => true })
       expect(subject.ads_to_principal(adsuser)).to be_an_instance_of(Puppet::Util::Windows::SID::Principal)
     end
 
     it "should properly convert an array of bytes for a well-known non-localized SID, ignoring the Name from the WIN32OLE object" do
       bytes = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-      adsuser = stub('WIN32OLE', { :objectSID => bytes, :Name => unknown_name, :ole_respond_to? => true })
+      adsuser = double('WIN32OLE', { :objectSID => bytes, :Name => unknown_name, :ole_respond_to? => true })
       converted = subject.ads_to_principal(adsuser)
 
       expect(converted).to be_an_instance_of Puppet::Util::Windows::SID::Principal
@@ -286,8 +286,8 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
 
     it "should raise if the conversion fails" do
-      subject.expects(:string_to_sid_ptr).with(sid).
-        raises(Puppet::Util::Windows::Error.new("Failed to convert string SID: #{sid}", Puppet::Util::Windows::Error::ERROR_ACCESS_DENIED))
+      expect(subject).to receive(:string_to_sid_ptr).with(sid).
+        and_raise(Puppet::Util::Windows::Error.new("Failed to convert string SID: #{sid}", Puppet::Util::Windows::Error::ERROR_ACCESS_DENIED))
 
       expect {
         subject.string_to_sid_ptr(sid) {|ptr| }

@@ -9,16 +9,14 @@ describe Puppet::Indirector::Yaml do
     attr_accessor :name
   end
 
-  before :all do
-    @indirection = stub 'indirection', :name => :my_yaml, :register_terminus_type => nil
-    Puppet::Indirector::Indirection.expects(:instance).with(:my_yaml).returns(@indirection)
+  before :each do
+    @indirection = Puppet::Indirector::Indirection.new(nil, :my_yaml)
+
     module MyYaml; end
     @store_class = class MyYaml::MyType < Puppet::Indirector::Yaml
       self
     end
-  end
 
-  before :each do
     @store = @store_class.new
 
     @subject = TestSubject.new
@@ -26,9 +24,13 @@ describe Puppet::Indirector::Yaml do
 
     @dir = tmpdir("yaml_indirector")
     Puppet[:clientyamldir] = @dir
-    Puppet.run_mode.stubs(:master?).returns false
+    allow(Puppet.run_mode).to receive(:master?).and_return(false)
 
-    @request = stub 'request', :key => :me, :instance => @subject
+    @request = double('request', :key => :me, :instance => @subject)
+  end
+
+  after(:each) do
+    @indirection.delete
   end
 
   let(:serverdir) { File.expand_path("/server/yaml/dir") }
@@ -36,25 +38,25 @@ describe Puppet::Indirector::Yaml do
 
   describe "when choosing file location" do
     it "should use the server_datadir if the run_mode is master" do
-      Puppet.run_mode.stubs(:master?).returns true
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       Puppet[:yamldir] = serverdir
       expect(@store.path(:me)).to match(/^#{serverdir}/)
     end
 
     it "should use the client yamldir if the run_mode is not master" do
-      Puppet.run_mode.stubs(:master?).returns false
+      allow(Puppet.run_mode).to receive(:master?).and_return(false)
       Puppet[:clientyamldir] = clientdir
       expect(@store.path(:me)).to match(/^#{clientdir}/)
     end
 
     it "should use the extension if one is specified" do
-      Puppet.run_mode.stubs(:master?).returns true
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       Puppet[:yamldir] = serverdir
       expect(@store.path(:me,'.farfignewton')).to match(%r{\.farfignewton$})
     end
 
     it "should assume an extension of .yaml if none is specified" do
-      Puppet.run_mode.stubs(:master?).returns true
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       Puppet[:yamldir] = serverdir
       expect(@store.path(:me)).to match(%r{\.yaml$})
     end
@@ -88,7 +90,7 @@ describe Puppet::Indirector::Yaml do
 
   describe "when storing objects as YAML" do
     it "should only store objects that respond to :name" do
-      @request.stubs(:instance).returns Object.new
+      allow(@request).to receive(:instance).and_return(Object.new)
       expect { @store.save(@request) }.to raise_error(ArgumentError)
     end
   end
@@ -116,29 +118,29 @@ describe Puppet::Indirector::Yaml do
 
   describe "when searching" do
     it "should return an array of fact instances with one instance for each file when globbing *" do
-      @request = stub 'request', :key => "*", :instance => @subject
-      @one = mock 'one'
-      @two = mock 'two'
-      @store.expects(:path).with(@request.key,'').returns :glob
-      Dir.expects(:glob).with(:glob).returns(%w{one.yaml two.yaml})
-      YAML.expects(:load_file).with("one.yaml").returns @one;
-      YAML.expects(:load_file).with("two.yaml").returns @two;
+      @request = double('request', :key => "*", :instance => @subject)
+      @one = double('one')
+      @two = double('two')
+      expect(@store).to receive(:path).with(@request.key,'').and_return(:glob)
+      expect(Dir).to receive(:glob).with(:glob).and_return(%w{one.yaml two.yaml})
+      expect(YAML).to receive(:load_file).with("one.yaml").and_return(@one)
+      expect(YAML).to receive(:load_file).with("two.yaml").and_return(@two)
       expect(@store.search(@request)).to contain_exactly(@one, @two)
     end
 
     it "should return an array containing a single instance of fact when globbing 'one*'" do
-      @request = stub 'request', :key => "one*", :instance => @subject
-      @one = mock 'one'
-      @store.expects(:path).with(@request.key,'').returns :glob
-      Dir.expects(:glob).with(:glob).returns(%w{one.yaml})
-      YAML.expects(:load_file).with("one.yaml").returns @one;
+      @request = double('request', :key => "one*", :instance => @subject)
+      @one = double('one')
+      expect(@store).to receive(:path).with(@request.key,'').and_return(:glob)
+      expect(Dir).to receive(:glob).with(:glob).and_return(%w{one.yaml})
+      expect(YAML).to receive(:load_file).with("one.yaml").and_return(@one)
       expect(@store.search(@request)).to eq([@one])
     end
 
     it "should return an empty array when the glob doesn't match anything" do
-      @request = stub 'request', :key => "f*ilglobcanfail*", :instance => @subject
-      @store.expects(:path).with(@request.key,'').returns :glob
-      Dir.expects(:glob).with(:glob).returns []
+      @request = double('request', :key => "f*ilglobcanfail*", :instance => @subject)
+      expect(@store).to receive(:path).with(@request.key,'').and_return(:glob)
+      expect(Dir).to receive(:glob).with(:glob).and_return([])
       expect(@store.search(@request)).to eq([])
     end
 
@@ -148,15 +150,15 @@ describe Puppet::Indirector::Yaml do
       end
 
       it "should unlink the right yaml file if it exists" do
-        Puppet::FileSystem.expects(:exist?).with(path).returns true
-        Puppet::FileSystem.expects(:unlink).with(path)
+        expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
+        expect(Puppet::FileSystem).to receive(:unlink).with(path)
 
         @store.destroy(@request)
       end
 
       it "should not unlink the yaml file if it does not exists" do
-        Puppet::FileSystem.expects(:exist?).with(path).returns false
-        Puppet::FileSystem.expects(:unlink).with(path).never
+        expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(false)
+        expect(Puppet::FileSystem).not_to receive(:unlink).with(path)
 
         @store.destroy(@request)
       end

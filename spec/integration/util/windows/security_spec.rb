@@ -97,7 +97,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
     describe "on a volume that doesn't support ACLs" do
       [:owner, :group, :mode].each do |p|
         it "should return nil #{p}" do
-          winsec.stubs(:supports_acl?).returns false
+          allow(winsec).to receive(:supports_acl?).and_return(false)
 
           expect(winsec.send("get_#{p}", path)).to be_nil
         end
@@ -107,7 +107,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
     describe "on a volume that supports ACLs" do
       describe "for a normal user" do
         before :each do
-          Puppet.features.stubs(:root?).returns(false)
+          allow(Puppet.features).to receive(:root?).and_return(false)
         end
 
         after :each do

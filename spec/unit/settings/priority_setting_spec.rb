@@ -5,7 +5,7 @@ require 'puppet/settings/priority_setting'
 require 'puppet/util/platform'
 
 describe Puppet::Settings::PrioritySetting do
-  let(:setting) { described_class.new(:settings => mock('settings'), :desc => "test") }
+  let(:setting) { described_class.new(:settings => double('settings'), :desc => "test") }
 
   it "is of type :priority" do
     expect(setting.type).to eq(:priority)

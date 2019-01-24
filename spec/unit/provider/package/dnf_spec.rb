@@ -6,34 +6,34 @@ describe Puppet::Type.type(:package).provider(:dnf) do
   context 'default' do
     (19..21).each do |ver|
       it "should not be the default provider on fedora#{ver}" do
-        Facter.stubs(:value).with(:osfamily).returns(:redhat)
-        Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
+        allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return(:fedora)
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
         expect(described_class).to_not be_default
       end
     end
 
     (22..26).each do |ver|
       it "should be the default provider on fedora#{ver}" do
-        Facter.stubs(:value).with(:osfamily).returns(:redhat)
-        Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns("#{ver}")
+        allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return(:fedora)
+        allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("#{ver}")
         expect(described_class).to be_default
       end
     end
 
     it "should not be the default provider on rhel7" do
-        Facter.stubs(:value).with(:osfamily).returns(:redhat)
-        Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns("7")
-        expect(described_class).to_not be_default
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("7")
+      expect(described_class).to_not be_default
     end
 
     it "should be the default provider on rhel8" do
-        Facter.stubs(:value).with(:osfamily).returns(:redhat)
-        Facter.stubs(:value).with(:operatingsystem).returns(:redhat)
-        Facter.stubs(:value).with(:operatingsystemmajrelease).returns("8")
-        expect(described_class).to be_default
+      allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return(:redhat)
+      allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("8")
+      expect(described_class).to be_default
     end
   end
 

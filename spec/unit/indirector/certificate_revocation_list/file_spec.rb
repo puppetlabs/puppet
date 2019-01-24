@@ -10,7 +10,7 @@ describe Puppet::SSL::CertificateRevocationList::File do
   it "should always store the file to :hostcrl location" do
     crl = File.expand_path("/host/crl")
     Puppet[:hostcrl] = crl
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
     expect(Puppet::SSL::CertificateRevocationList::File.file_location).to eq(crl)
   end
 end

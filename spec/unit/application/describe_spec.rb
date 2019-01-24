@@ -21,7 +21,7 @@ describe Puppet::Application::Describe do
     end
 
     it "should store argument value when calling handle_#{option}" do
-      @describe.options.expects(:[]=).with("#{option}".to_sym, 'arg')
+      expect(@describe.options).to receive(:[]=).with("#{option}".to_sym, 'arg')
       @describe.send("handle_#{option}".to_sym, 'arg')
     end
   end
@@ -45,7 +45,7 @@ describe Puppet::Application::Describe do
 
   describe "during setup" do
     it "should collect arguments in options[:types]" do
-      @describe.command_line.stubs(:args).returns(['1','2'])
+      allow(@describe.command_line).to receive(:args).and_return(['1','2'])
       @describe.setup
 
       expect(@describe.options[:types]).to eq(['1','2'])
@@ -55,14 +55,14 @@ describe Puppet::Application::Describe do
   describe "when running" do
 
     before :each do
-      @typedoc = stub 'type_doc'
-      TypeDoc.stubs(:new).returns(@typedoc)
+      @typedoc = double('type_doc')
+      allow(TypeDoc).to receive(:new).and_return(@typedoc)
     end
 
     it "should call list_types if options list is set" do
       @describe.options[:list] = true
 
-      @typedoc.expects(:list_types)
+      expect(@typedoc).to receive(:list_types)
 
       @describe.run_command
     end
@@ -71,7 +71,7 @@ describe Puppet::Application::Describe do
       @describe.options[:list] = false
       @describe.options[:types] = ['type']
 
-      @typedoc.expects(:format_type).with('type', @describe.options)
+      expect(@typedoc).to receive(:format_type).with('type', @describe.options)
       @describe.run_command
     end
   end

@@ -18,7 +18,7 @@ describe "Puppet.version Public API" do
 
   context "without a VERSION file" do
     before :each do
-      Puppet.stubs(:read_version_file).returns(nil)
+      allow(Puppet).to receive(:read_version_file).and_return(nil)
     end
 
     it "is Puppet::PUPPETVERSION" do
@@ -34,10 +34,10 @@ describe "Puppet.version Public API" do
 
   context "with a VERSION file" do
     it "is the content of the file" do
-      Puppet.expects(:read_version_file).with() do |path|
+      expect(Puppet).to receive(:read_version_file) do |path|
         pathname = Pathname.new(path)
         pathname.basename.to_s == "VERSION"
-      end.returns('3.0.1-260-g9ca4e54')
+      end.and_return('3.0.1-260-g9ca4e54')
 
       expect(Puppet.version).to eq('3.0.1-260-g9ca4e54')
       expect(Puppet.minor_version).to eq('3.0')
@@ -52,7 +52,7 @@ describe "Puppet.version Public API" do
 
   context "Using version setter" do
     it "does not read VERSION file if using set version" do
-      Puppet.expects(:read_version_file).never
+      expect(Puppet).not_to receive(:read_version_file)
       Puppet.version = '1.2.3'
       expect(Puppet.version).to eq('1.2.3')
       expect(Puppet.minor_version).to eq('1.2')

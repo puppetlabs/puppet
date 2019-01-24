@@ -15,9 +15,9 @@ describe 'Puppet::Parser::AST::BlockExpression' do
     StackDepthAST.new({})
   end
 
-  def sequence_probe(name, sequence)
-    probe = mock("Sequence Probe #{name}")
-    probe.expects(:safeevaluate).in_sequence(sequence)
+  def sequence_probe(name)
+    probe = double("Sequence Probe #{name}")
+    expect(probe).to receive(:safeevaluate).ordered
     probe
   end
 
@@ -56,10 +56,9 @@ describe 'Puppet::Parser::AST::BlockExpression' do
   end
 
   it "evaluates sequenced children in order" do
-    evaluation_order = sequence("Child evaluation order")
-    expr1 = block_of([sequence_probe("Step 1", evaluation_order)])
-    expr2 = block_of([sequence_probe("Step 2", evaluation_order)])
-    expr3 = block_of([sequence_probe("Step 3", evaluation_order)])
+    expr1 = block_of([sequence_probe("Step 1")])
+    expr2 = block_of([sequence_probe("Step 2")])
+    expr3 = block_of([sequence_probe("Step 3")])
 
     expr1.sequence_with(expr2).sequence_with(expr3).evaluate(NO_SCOPE)
   end

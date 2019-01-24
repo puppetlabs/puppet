@@ -13,10 +13,10 @@ describe Puppet::SSL::Key::Ca do
   end
 
   it "should store the ca key at the :cakey location" do
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
     Puppet[:cakey] = "/ca/key"
     file = Puppet::SSL::Key::Ca.new
-    file.stubs(:ca?).returns true
+    allow(file).to receive(:ca?).and_return(true)
     expect(file.path("whatever")).to eq(Puppet[:cakey])
   end
 end

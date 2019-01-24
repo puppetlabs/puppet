@@ -11,7 +11,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
 
   before do
     File.open(filename, 'w') {|f| f.write "initial file content"}
-    described_class.stubs(:standalone?).returns(false)
+    allow(described_class).to receive(:standalone?).and_return(false)
   end
 
   around do |example|
@@ -29,9 +29,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     end
 
     it "should not use the content from the source if the source is set" do
-      source = mock 'source'
-
-      resource.expects(:parameter).never.with(:source).returns source
+      expect(resource).not_to receive(:parameter).with(:source)
 
       expect(content.actual_content).to be_nil
     end
@@ -41,8 +39,8 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     let(:content) { described_class.new(:resource => resource) }
 
     before do
-      Puppet::Type.type(:file).any_instance.stubs(:file).returns('my/file.pp')
-      Puppet::Type.type(:file).any_instance.stubs(:line).returns 5
+      allow_any_instance_of(Puppet::Type.type(:file)).to receive(:file).and_return('my/file.pp')
+      allow_any_instance_of(Puppet::Type.type(:file)).to receive(:line).and_return(5)
     end
 
     it "should make the actual content available via an attribute" do
@@ -87,21 +85,21 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     let(:content) { described_class.new(:resource => resource) }
 
     it "should return :absent if the file does not exist" do
-      resource.expects(:stat).returns nil
+      expect(resource).to receive(:stat).and_return(nil)
 
       expect(content.retrieve).to eq(:absent)
     end
 
     it "should not manage content on directories" do
-      stat = mock 'stat', :ftype => "directory"
-      resource.expects(:stat).returns stat
+      stat = double('stat', :ftype => "directory")
+      expect(resource).to receive(:stat).and_return(stat)
 
       expect(content.retrieve).to be_nil
     end
 
     it "should not manage content on links" do
-      stat = mock 'stat', :ftype => "link"
-      resource.expects(:stat).returns stat
+      stat = double('stat', :ftype => "link")
+      expect(resource).to receive(:stat).and_return(stat)
 
       expect(content.retrieve).to be_nil
     end
@@ -109,20 +107,20 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     it "should always return the checksum as a string" do
       resource[:checksum] = :mtime
 
-      stat = mock 'stat', :ftype => "file"
-      resource.expects(:stat).returns stat
+      stat = double('stat', :ftype => "file")
+      expect(resource).to receive(:stat).and_return(stat)
 
       time = Time.now
-      resource.parameter(:checksum).expects(:mtime_file).with(resource[:path]).returns time
+      expect(resource.parameter(:checksum)).to receive(:mtime_file).with(resource[:path]).and_return(time)
 
       expect(content.retrieve).to eq("{mtime}#{time}")
     end
 
     with_digest_algorithms do
       it "should return the checksum of the file if it exists and is a normal file" do
-        stat = mock 'stat', :ftype => "file"
-        resource.expects(:stat).returns stat
-        resource.parameter(:checksum).expects("#{digest_algorithm}_file".intern).with(resource[:path]).returns "mysum"
+        stat = double('stat', :ftype => "file")
+        expect(resource).to receive(:stat).and_return(stat)
+        expect(resource.parameter(:checksum)).to receive("#{digest_algorithm}_file".intern).with(resource[:path]).and_return("mysum")
 
         expect(content.retrieve).to eq("{#{digest_algorithm}}mysum")
       end
@@ -142,7 +140,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       end
 
       it "should return true if the resource shouldn't be a regular file" do
-        resource.expects(:should_be_file?).returns false
+        expect(resource).to receive(:should_be_file?).and_return(false)
         content.should = "foo"
         expect(content).to be_safe_insync("whatever")
       end
@@ -150,10 +148,10 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       it "should warn that no content will be synced to links when ensure is :present" do
         resource[:ensure] = :present
         resource[:content] = 'foo'
-        resource.stubs(:should_be_file?).returns false
-        resource.stubs(:stat).returns mock("stat", :ftype => "link")
+        allow(resource).to receive(:should_be_file?).and_return(false)
+        allow(resource).to receive(:stat).and_return(double("stat", :ftype => "link"))
 
-        resource.expects(:warning).with {|msg| msg =~ /Ensure set to :present but file type is/}
+        expect(resource).to receive(:warning).with(/Ensure set to :present but file type is/)
 
         content.insync? :present
       end
@@ -164,7 +162,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       end
 
       it "should return false if the file should be a file but is not present" do
-        resource.expects(:should_be_file?).returns true
+        expect(resource).to receive(:should_be_file?).and_return(true)
         content.should = "foo"
 
         expect(content).not_to be_safe_insync(:absent)
@@ -172,7 +170,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
 
       describe "and the file exists" do
         before do
-          resource.stubs(:stat).returns mock("stat")
+          allow(resource).to receive(:stat).and_return(double("stat"))
           content.should = "some content"
         end
 
@@ -190,27 +188,27 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
 
         describe "showing the diff" do
           it "doesn't show the diff when #show_diff? is false" do
-            content.expects(:show_diff?).returns false
-            content.expects(:diff).never
+            expect(content).to receive(:show_diff?).and_return(false)
+            expect(content).not_to receive(:diff)
             expect(content).not_to be_safe_insync("other content")
           end
 
           describe "and #show_diff? is true" do
             before do
-              content.expects(:show_diff?).returns true
+              expect(content).to receive(:show_diff?).and_return(true)
               resource[:loglevel] = "debug"
             end
 
             it "prints the diff" do
-              content.expects(:diff).returns("my diff").once
-              content.expects(:debug).with("\nmy diff").once
+              expect(content).to receive(:diff).and_return("my diff").once
+              expect(content).to receive(:debug).with("\nmy diff").once
               expect(content).not_to be_safe_insync("other content")
             end
 
             it "redacts the diff when the property is sensitive" do
               content.sensitive = true
-              content.expects(:diff).returns("my diff").never
-              content.expects(:debug).with("[diff redacted]").once
+              expect(content).not_to receive(:diff)
+              expect(content).to receive(:debug).with("[diff redacted]").once
               expect(content).not_to be_safe_insync("other content")
             end
           end
@@ -265,10 +263,10 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         it "should warn that no content will be synced to links when ensure is :present" do
           resource[:ensure] = :present
           resource[:content] = 'foo'
-          resource.stubs(:should_be_file?).returns false
-          resource.stubs(:stat).returns mock("stat", :ftype => "link")
+          allow(resource).to receive(:should_be_file?).and_return(false)
+          allow(resource).to receive(:stat).and_return(double("stat", :ftype => "link"))
 
-          resource.expects(:warning).with {|msg| msg =~ /Ensure set to :present but file type is/}
+          expect(resource).to receive(:warning).with(/Ensure set to :present but file type is/)
 
           content.insync? :present
         end
@@ -277,17 +275,17 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
 
     describe "and :replace is false" do
       before do
-        resource.stubs(:replace?).returns false
+        allow(resource).to receive(:replace?).and_return(false)
       end
 
       it "should be insync if the file exists and the content is different" do
-        resource.stubs(:stat).returns mock('stat')
+        allow(resource).to receive(:stat).and_return(double('stat'))
 
         expect(content).to be_safe_insync("whatever")
       end
 
       it "should be insync if the file exists and the content is right" do
-        resource.stubs(:stat).returns mock('stat')
+        allow(resource).to receive(:stat).and_return(double('stat'))
 
         expect(content).to be_safe_insync("something")
       end
@@ -305,7 +303,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         before do
           @new_resource = Puppet::Type.type(:file).new :ensure => :file, :path => filename, :catalog => catalog,
             :content => CHECKSUM_PLAINTEXT, :checksum => checksum_type
-          @new_resource.stubs(:stat).returns mock('stat')
+          allow(@new_resource).to receive(:stat).and_return(double('stat'))
         end
 
         it "should return false if the sum for the current contents are different from the desired content" do
@@ -350,25 +348,25 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     let(:content) { described_class.new(:resource => resource) }
 
     before do
-      resource.stubs(:[]).with(:path).returns "/boo"
-      resource.stubs(:stat).returns "eh"
+      allow(resource).to receive(:[]).with(:path).and_return("/boo")
+      allow(resource).to receive(:stat).and_return("eh")
     end
 
     it "should use the file's :write method to write the content" do
-      resource.expects(:write).with(content)
+      expect(resource).to receive(:write).with(content)
 
       content.sync
     end
 
     it "should return :file_changed if the file already existed" do
-      resource.expects(:stat).returns "something"
-      resource.stubs(:write)
+      expect(resource).to receive(:stat).and_return("something")
+      allow(resource).to receive(:write)
       expect(content.sync).to eq(:file_changed)
     end
 
     it "should return :file_created if the file did not exist" do
-      resource.expects(:stat).returns nil
-      resource.stubs(:write)
+      expect(resource).to receive(:stat).and_return(nil)
+      allow(resource).to receive(:write)
       expect(content.sync).to eq(:file_created)
     end
   end
@@ -379,30 +377,30 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     let(:fh) { File.open(filename, 'wb') }
 
     before do
-      Puppet::Type.type(:file).any_instance.stubs(:file).returns('my/file.pp')
-      Puppet::Type.type(:file).any_instance.stubs(:line).returns 5
+      allow_any_instance_of(Puppet::Type.type(:file)).to receive(:file).and_return('my/file.pp')
+      allow_any_instance_of(Puppet::Type.type(:file)).to receive(:line).and_return(5)
     end
 
     it "should attempt to read from the filebucket if no actual content nor source exists" do
       content.should = "{md5}foo"
-      content.resource.bucket.class.any_instance.stubs(:getfile).returns "foo"
+      allow_any_instance_of(content.resource.bucket.class).to receive(:getfile).and_return("foo")
       content.write(fh)
       fh.close
     end
 
     describe "from actual content" do
       before(:each) do
-        content.stubs(:actual_content).returns("this is content")
+        allow(content).to receive(:actual_content).and_return("this is content")
       end
 
       it "should write to the given file handle" do
-        fh = mock 'filehandle'
-        fh.expects(:print).with("this is content")
+        fh = double('filehandle')
+        expect(fh).to receive(:print).with("this is content")
         content.write(fh)
       end
 
       it "should return the current checksum value" do
-        resource.parameter(:checksum).expects(:sum_stream).returns "checksum"
+        expect(resource.parameter(:checksum)).to receive(:sum_stream).and_return("checksum")
         expect(content.write(fh)).to eq("checksum")
       end
     end
@@ -410,26 +408,26 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     describe "from a file bucket" do
       it "should fail if a file bucket cannot be retrieved" do
         content.should = "{md5}foo"
-        content.resource.expects(:bucket).returns nil
+        expect(content.resource).to receive(:bucket).and_return(nil)
         expect { content.write(fh) }.to raise_error(Puppet::Error)
       end
 
       it "should fail if the file bucket cannot find any content" do
         content.should = "{md5}foo"
-        bucket = stub 'bucket'
-        content.resource.expects(:bucket).returns bucket
-        bucket.expects(:getfile).with("foo").raises "foobar"
+        bucket = double('bucket')
+        expect(content.resource).to receive(:bucket).and_return(bucket)
+        expect(bucket).to receive(:getfile).with("foo").and_raise("foobar")
         expect { content.write(fh) }.to raise_error(Puppet::Error)
       end
 
       it "should write the returned content to the file" do
         content.should = "{md5}foo"
-        bucket = stub 'bucket'
-        content.resource.expects(:bucket).returns bucket
-        bucket.expects(:getfile).with("foo").returns "mycontent"
+        bucket = double('bucket')
+        expect(content.resource).to receive(:bucket).and_return(bucket)
+        expect(bucket).to receive(:getfile).with("foo").and_return("mycontent")
 
-        fh = mock 'filehandle'
-        fh.expects(:print).with("mycontent")
+        fh = double('filehandle')
+        expect(fh).to receive(:print).with("mycontent")
         content.write(fh)
       end
     end
