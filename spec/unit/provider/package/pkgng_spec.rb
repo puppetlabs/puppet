@@ -28,7 +28,6 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
     catalog = Puppet::Resource::Catalog.new
     catalog.host_config = false
     resources.each do |resource|
-      #resource.expects(:err).never
       catalog.add_resource(resource)
     end
     catalog.apply

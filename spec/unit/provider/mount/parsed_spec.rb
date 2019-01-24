@@ -50,9 +50,6 @@ FSTAB
       expect { described_class.to_line(parse[0]) }.to_not raise_error
     end
 
-#   it_should_behave_like "all parsedfile providers",
-#     provider_class, my_fixtures('*.fstab')
-
     describe "on Solaris", :if => Facter.value(:osfamily) == 'Solaris' do
       it "should extract device from the first field" do
         expect(described_class.parse_line(vfstab_sample)[:device]).to eq('/dev/dsk/c0d0s0')

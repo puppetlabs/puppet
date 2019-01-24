@@ -99,7 +99,6 @@ describe Puppet::Type.type(:service).provider(:runit) do
   context "when disabling" do
     it "should remove the '/etc/service/myservice' symlink" do
       path = File.join(@servicedir,"myservice")
-#      mocked_file = mock(path, :symlink? => true)
       FileTest.stubs(:directory?).returns(false)
       Puppet::FileSystem.expects(:symlink?).with(path).returns(true) # mocked_file)
       Puppet::FileSystem.expects(:unlink).with(path).returns(0)

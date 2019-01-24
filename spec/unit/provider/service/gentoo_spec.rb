@@ -18,7 +18,6 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     # before it even tries to execute an initscript. We use sshd in all the
     # tests so make sure it is considered present.
     sshd_path = '/etc/init.d/sshd'
-#    stub_file = stub(sshd_path, :stat => stub('stat'))
     Puppet::FileSystem.stubs(:stat).with(sshd_path).returns stub('stat')
   end
 
