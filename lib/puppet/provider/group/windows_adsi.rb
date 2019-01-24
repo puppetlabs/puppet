@@ -67,7 +67,10 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
   def members
     @members ||= Puppet::Util::Windows::ADSI::Group.name_sid_hash(group.members)
-    @members.keys
+
+    # @members.keys returns an array of SIDs. We need to convert those SIDs into
+    # names so that `puppet resource` prints the right output.
+    members_to_s(@members.keys).split(',')
   end
 
   def members=(members)
