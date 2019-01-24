@@ -231,6 +231,7 @@ describe Puppet::X509::CertProvider do
   context 'when loading' do
     context 'private keys' do
       let(:provider) { create_provider(privatekeydir: fixture_dir) }
+      let(:password) { '74695716c8b6' }
 
       it 'returns nil if it does not exist' do
         provider = create_provider(privatekeydir: '/does/not/exist')
@@ -276,11 +277,25 @@ describe Puppet::X509::CertProvider do
           expect(provider.load_private_key('signed-key')).to be_a(OpenSSL::PKey::RSA)
         end
 
-        it 'raises without a passphrase' do
+        it 'decrypts an RSA key using the password' do
+          rsa = provider.load_private_key('encrypted-key', password: password)
+          expect(rsa).to be_a(OpenSSL::PKey::RSA)
+        end
+
+        it 'raises without a password' do
           # password is 74695716c8b6
           expect {
             provider.load_private_key('encrypted-key')
           }.to raise_error(OpenSSL::PKey::PKeyError, /Could not parse PKey: no start line/)
+        end
+
+        it 'decrypts an RSA key previously saved using 3DES' do
+          key = key_fixture('signed-key.pem')
+          cipher = OpenSSL::Cipher::DES.new(:EDE3, :CBC)
+          privatekeydir = dir_containing('private_keys', {'oldkey.pem' => key.export(cipher, password)})
+          provider = create_provider(privatekeydir: privatekeydir)
+
+          expect(provider.load_private_key('oldkey', password: password).to_der).to eq(key.to_der)
         end
       end
 
@@ -289,7 +304,12 @@ describe Puppet::X509::CertProvider do
           expect(provider.load_private_key('ec-key')).to be_a(OpenSSL::PKey::EC)
         end
 
-        it 'raises without a passphrase' do
+        it 'decrypts an EC key using the password' do
+          ec = provider.load_private_key('encrypted-ec-key', password: password)
+          expect(ec).to be_a(OpenSSL::PKey::EC)
+        end
+
+        it 'raises without a password' do
           # password is 74695716c8b6
           expect {
             provider.load_private_key('encrypted-ec-key')
@@ -399,6 +419,12 @@ describe Puppet::X509::CertProvider do
         provider.save_private_key(name, private_key)
 
         expect(File.read(path)).to match(/\A-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----\Z/m)
+      end
+
+      it 'encrypts the private key using AES128-CBC' do
+        provider.save_private_key(name, private_key, password: Random.new.bytes(8))
+
+        expect(File.read(path)).to match(/Proc-Type: 4,ENCRYPTED.*DEK-Info: AES-128-CBC/m)
       end
 
       it 'sets mode to 640' do

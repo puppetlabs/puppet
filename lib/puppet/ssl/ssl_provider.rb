@@ -90,13 +90,17 @@ class Puppet::SSL::SSLProvider
   # and private key. Connections made from the returned context will be mutually
   # authenticated.
   #
+  # @param certname [String] Which cert & key to load
   # @param revocation [:chain, :leaf, false] revocation mode
+  # @param password [String, nil] If the private key is encrypted, decrypt
+  #   it using the password. If the key is encrypted, but a password is
+  #   not specified, then the key cannot be loaded.
   # @return [Puppet::SSL::SSLContext] A context to use to create connections
   # @raise [Puppet::SSL::CertVerifyError] There was an issue with
   #   one of the certs or CRLs.
   # @raise [Puppet::Error] There was an issue with one of the required components.
   # @api private
-  def load_context(certname: Puppet[:certname], revocation: Puppet[:certificate_revocation])
+  def load_context(certname: Puppet[:certname], revocation: Puppet[:certificate_revocation], password: nil)
     cert = Puppet::X509::CertProvider.new
     cacerts = cert.load_cacerts(required: true)
     crls = case revocation
@@ -105,10 +109,12 @@ class Puppet::SSL::SSLProvider
            else
              []
            end
-    private_key = cert.load_private_key(certname, required: true)
+    private_key = cert.load_private_key(certname, required: true, password: password)
     client_cert = cert.load_client_cert(certname, required: true)
 
     create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert, revocation: revocation)
+  rescue OpenSSL::PKey::PKeyError => e
+    raise Puppet::SSL::SSLError.new(_("Failed to load private key for host '%{name}': %{message}") % { name: certname, message: e.message }, e)
   end
 
   # Verify the `csr` was signed with a private key corresponding to the

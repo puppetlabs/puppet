@@ -206,7 +206,12 @@ HELP
   end
 
   def verify(certname)
-    ssl_context = @ssl_provider.load_context(certname: certname)
+    password = begin
+                 Puppet::FileSystem.read(Puppet[:passfile], :encoding => Encoding::BINARY)
+               rescue Errno::ENOENT
+                 nil
+               end
+    ssl_context = @ssl_provider.load_context(certname: certname, password: password)
 
     # print from root to client
     ssl_context.client_chain.reverse.each_with_index do |cert, i|

@@ -257,9 +257,25 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'reports when verification succeeds' do
-      allow_any_instance_of(OpenSSL::X509::Store).to receive(:verify).and_return(true)
-
       expects_command_to_pass(%r{Verified client certificate 'CN=ssl-client' fingerprint})
+    end
+
+    it 'reports when verification succeeds with a password protected private key' do
+      FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'encrypted-key.pem'), Puppet[:hostprivkey])
+      FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'signed.pem'), Puppet[:hostcert])
+
+      Puppet[:passfile] = file_containing('passfile', '74695716c8b6')
+
+      expects_command_to_pass(%r{Verified client certificate 'CN=signed' fingerprint})
+    end
+
+    it 'reports if the private key password is incorrect' do
+      FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'encrypted-key.pem'), Puppet[:hostprivkey])
+      FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'signed.pem'), Puppet[:hostcert])
+
+      Puppet[:passfile] = file_containing('passfile', 'wrongpassword')
+
+      expects_command_to_fail(/Failed to load private key for host 'ssl-client'/)
     end
   end
 
