@@ -52,6 +52,7 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
     before :each do
       @provider.class.stubs(:supports_parameter?).returns true
     end
+
     it "should support :true as a value" do
       srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :true)
       expect(srv.should(:enable)).to eq(:true)

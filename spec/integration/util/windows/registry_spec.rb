@@ -30,8 +30,8 @@ describe Puppet::Util::Windows::Registry do
     TestRegistry.new
   end
 
-  let(:name)   { 'HKEY_LOCAL_MACHINE' }
-  let(:path)   { 'Software\Microsoft' }
+  let(:name) { 'HKEY_LOCAL_MACHINE' }
+  let(:path) { 'Software\Microsoft' }
 
   context "#root" do
     it "should lookup the root hkey" do
@@ -126,11 +126,11 @@ describe Puppet::Util::Windows::Registry do
       TM_UTF_8 = [0xE2, 0x84, 0xA2]
       TM_UTF_16 = [0x2122]
 
-      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
-      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
-      let (:guid) { SecureRandom.uuid }
-      let (:regsam) { Puppet::Util::Windows::Registry::KEY32 }
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+      let(:guid) { SecureRandom.uuid }
+      let(:regsam) { Puppet::Util::Windows::Registry::KEY32 }
 
       after(:each) do
         # Ruby 2.1.5 has bugs with deleting registry keys due to using ANSI
@@ -184,10 +184,10 @@ describe Puppet::Util::Windows::Registry do
     end
 
     context "when reading values" do
-      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
-      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
-      let (:value_name) { SecureRandom.uuid }
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+      let(:value_name) { SecureRandom.uuid }
 
       after(:each) do
         hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
@@ -225,10 +225,10 @@ describe Puppet::Util::Windows::Registry do
     end
 
     context "when reading corrupt values" do
-      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
-      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
-      let (:value_name) { SecureRandom.uuid }
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+      let(:value_name) { SecureRandom.uuid }
 
       before(:each) do
         hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg_key|
@@ -262,9 +262,9 @@ describe Puppet::Util::Windows::Registry do
     end
 
     context "when reading values" do
-      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
-      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
 
       before(:each) do
         hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|

@@ -132,7 +132,6 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should return nil with an unknown SID" do
-
       bogus_sid = 'S-1-2-3-4'
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
@@ -562,7 +561,6 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should be able to confirm the existence of a group with a well-known SID" do
-
       service_group = Puppet::Util::Windows::SID::Service
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)
@@ -577,7 +575,6 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
 
     it "should return nil with an unknown SID" do
-
       bogus_sid = 'S-1-2-3-4'
       # ensure that the underlying OS is queried here
       Puppet::Util::Windows::ADSI.unstub(:connect)

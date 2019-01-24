@@ -1,5 +1,4 @@
 require 'spec_helper'
-
 require 'puppet/indirector/certificate/rest'
 
 describe Puppet::SSL::Certificate::Rest do

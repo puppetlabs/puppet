@@ -4,7 +4,6 @@ resources = Puppet::Type.type(:resources)
 
 # There are still plenty of tests to port over from test/.
 describe resources do
-
   before :each do
     described_class.reset_system_users_max_uid!
   end
@@ -253,7 +252,6 @@ describe resources do
           expect(@res.user_check(user)).to be_truthy
         end
       end
-
     end
   end
 

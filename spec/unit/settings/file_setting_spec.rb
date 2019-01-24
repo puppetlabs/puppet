@@ -236,7 +236,6 @@ describe Puppet::Settings::FileSetting do
       expect(@file.to_resource[:group]).to eq(nil)
     end
 
-
     it "should not set owner if not running as root" do
       Puppet[:manage_internal_file_permissions] = true
       Puppet.features.expects(:root?).returns false

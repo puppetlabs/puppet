@@ -24,7 +24,6 @@ describe Puppet::FileServing::Configuration do
   end
 
   describe "when initializing" do
-
     it "should work without a configuration file" do
       Puppet::FileSystem.stubs(:exist?).with(@path).returns(false)
       expect { Puppet::FileServing::Configuration.configuration }.to_not raise_error
@@ -44,7 +43,6 @@ describe Puppet::FileServing::Configuration do
   end
 
   describe "when parsing the configuration file" do
-
     before do
       Puppet::FileSystem.stubs(:exist?).with(@path).returns(true)
       @parser = mock 'parser'

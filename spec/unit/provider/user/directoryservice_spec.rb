@@ -434,7 +434,6 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     it 'should return a hash of resource attributes' do
       expect(provider.class.generate_attribute_hash(user_plist_hash.merge(pbkdf2_and_ssha512_shadowhashdata_hash))).to eq(user_plist_resource)
     end
-
   end
 
   describe 'self#generate_attribute_hash empty shadowhashdata' do
@@ -512,7 +511,6 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
                                                 ],
       }]
     end
-
 
     before :each do
       provider.class.stubs(:get_all_users).returns(testuser_hash)
@@ -596,7 +594,6 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
       provider.class.expects(:convert_binary_to_hash).with(pbkdf2_embedded_plist).returns(pbkdf2_embedded_bplist_hash)
       expect(provider.class.prefetch({}).last.password).to eq(pbkdf2_password_hash)
     end
-
   end
 
   describe '#password=' do
@@ -1147,4 +1144,3 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
   end
 end
-

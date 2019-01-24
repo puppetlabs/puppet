@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 require 'puppet/indirector/node/memory'
-
 require 'shared_behaviours/memory_terminus'
 
 describe Puppet::Node::Memory do

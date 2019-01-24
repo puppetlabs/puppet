@@ -565,7 +565,6 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
     end
 
     context "when the service can be opened" do
-
       # We need to guard this section explicitly since rspec will always
       # construct all examples, even if it isn't going to run them.
       if Puppet.features.microsoft_windows?
@@ -582,6 +581,7 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
           end
         end
       end
+
       it "raises a puppet error if the service query fails" do
         subject.expects(:QueryServiceConfigW).in_sequence(status_checks)
         subject.expects(:QueryServiceConfigW).in_sequence(status_checks).returns(FFI::WIN32_FALSE)

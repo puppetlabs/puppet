@@ -69,35 +69,43 @@ describe Puppet::Type.type(:service).provider(:smf), :if => Puppet.features.posi
       @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.status
     end
+
     it "should return stopped if svcs can't find the service" do
       @provider.stubs(:svcs).raises(Puppet::ExecutionFailure.new("no svc found"))
       expect(@provider.status).to eq(:stopped)
     end
+
     it "should return stopped for an incomplete service on Solaris 11" do
       Facter.stubs(:value).with(:operatingsystemrelease).returns('11.3')
       @provider.stubs(:complete_service?).returns(false)
       expect(@provider.status).to eq(:stopped)
     end
+
     it "should return running if online in svcs output" do
       @provider.stubs(:svcs).returns("online\t-")
       expect(@provider.status).to eq(:running)
     end
+
     it "should return stopped if disabled in svcs output" do
       @provider.stubs(:svcs).returns("disabled\t-")
       expect(@provider.status).to eq(:stopped)
     end
+
     it "should return maintenance if in maintenance in svcs output" do
       @provider.stubs(:svcs).returns("maintenance\t-")
       expect(@provider.status).to eq(:maintenance)
     end
+
     it "should return degraded if in degraded in svcs output" do
       @provider.stubs(:svcs).returns("degraded\t-")
       expect(@provider.status).to eq(:degraded)
     end
+
     it "should return target state if transitioning in svcs output" do
       @provider.stubs(:svcs).returns("online\tdisabled")
       expect(@provider.status).to eq(:stopped)
     end
+
     it "should throw error if it's a legacy service in svcs output" do
       @provider.stubs(:svcs).returns("legacy_run\t-")
       expect { @provider.status }.to raise_error(Puppet::Error, "Cannot manage legacy services through SMF")

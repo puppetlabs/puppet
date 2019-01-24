@@ -1,6 +1,5 @@
 require 'spec_helper'
 
-
 describe Puppet::Type.type(:service).provider(:upstart) do
   let(:manual) { "\nmanual" }
   let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
@@ -45,6 +44,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     end
 
     let(:initctl_version) { ['/sbin/initctl', 'version', '--quiet'] }
+
     before(:each) do
       # Stub out /sbin/initctl
       Puppet::Util.stubs(:which).with('/sbin/initctl').returns('/sbin/initctl')
@@ -281,11 +281,13 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       before(:each) do
         provider.stubs(:is_upstart?).returns(true)
       end
+
       ["start", "stop"].each do |action|
         it "should return the #{action}cmd of its parent provider" do
           expect(provider.send("#{action}cmd".to_sym)).to eq([provider.command(action.to_sym), resource.name])
         end
       end
+
       it "should return nil for the statuscmd" do
         expect(provider.statuscmd).to be_nil
       end
@@ -669,6 +671,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
             expect(provider.enabled?).to eq(:false)
           end
         end
+
         describe "with override file" do
           it "should consider 'start on ...' to be disabled if there is manual in override file" do
             given_contents_of(init_script, enabled_content)

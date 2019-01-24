@@ -254,7 +254,6 @@ describe Puppet::Resource::TypeCollection do
 
         expect(@loader.find_hostclass("::bar")).to eq(nil)
     end
-
   end
 
   it "should be able to find nodes" do

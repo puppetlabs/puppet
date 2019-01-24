@@ -11,7 +11,6 @@ describe Puppet::SSL::CertificateRequest do
     k
   }
 
-
   it "should be extended with the Indirector module" do
     expect(described_class.singleton_class).to be_include(Puppet::Indirector)
   end
@@ -424,7 +423,5 @@ describe Puppet::SSL::CertificateRequest do
         Puppet::SSL::CertificateRequest.indirection.save(csr)
       end
     end
-
-
   end
 end

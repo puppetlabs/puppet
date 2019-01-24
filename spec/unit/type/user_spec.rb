@@ -256,7 +256,6 @@ describe Puppet::Type.type(:user) do
     end
 
     describe "when testing is in sync" do
-
       before :each do
         # the useradd provider uses a single string to represent groups and so does Puppet::Property::List when converting to should values
         @provider = @provider_class.new(:name => 'foo', :groups => 'a,b,e,f')
@@ -373,6 +372,7 @@ describe Puppet::Type.type(:user) do
         let(:is) { "\u2603" }
         let(:should) { "\u06FF" }
         let(:comment_property) { @user.properties.find { |p| p.name == :comment } }
+
         context "given is and should strings with incompatible encoding" do
           it "should return a formatted string" do
             is.force_encoding(Encoding::ASCII_8BIT)
@@ -467,12 +467,15 @@ describe Puppet::Type.type(:user) do
       it "should accept true" do
         described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => true)
       end
+
       it "should accept the ~ wildcard" do
         described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "~/keys")
       end
+
       it "should accept the %h wildcard" do
         described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "%h/keys")
       end
+
       it "raises when given a relative path" do
         expect {
           described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "keys")
@@ -486,11 +489,13 @@ describe Puppet::Type.type(:user) do
           described_class.new(:name => "a", :purge_ssh_keys => true)
         }.to raise_error(Puppet::Error, /purge_ssh_keys can only be true for users with a defined home directory/)
       end
+
       it "should not accept the ~ wildcard" do
         expect {
           described_class.new(:name => "a", :purge_ssh_keys => "~/keys")
         }.to raise_error(Puppet::Error, /meta character ~ or %h only allowed for users with a defined home directory/)
       end
+
       it "should not accept the %h wildcard" do
         expect {
           described_class.new(:name => "a", :purge_ssh_keys => "%h/keys")
@@ -502,15 +507,18 @@ describe Puppet::Type.type(:user) do
       let(:paths) do
         [ "/dev/null", "/tmp/keyfile" ].map { |path| File.expand_path(path) }
       end
+
       subject do
         res = described_class.new(:name => "test", :purge_ssh_keys => paths)
         res.catalog = Puppet::Resource::Catalog.new
         res
       end
+
       it "should not just return from generate" do
         subject.expects :find_unmanaged_keys
         subject.generate
       end
+
       it "should check each keyfile for readability" do
         paths.each do |path|
           File.expects(:readable?).with(path)
@@ -525,27 +533,34 @@ describe Puppet::Type.type(:user) do
         res.catalog = Puppet::Resource::Catalog.new
         res
       end
+
       context "when purging is disabled" do
         let(:purge_param) { false }
+
         its(:generate) { should be_empty }
       end
+
       context "when purging is enabled" do
         let(:purge_param) { my_fixture('authorized_keys') }
         let(:resources) { subject.generate }
+
         it "should contain a resource for each key" do
           names = resources.collect { |res| res.name }
           expect(names).to include("key1 name")
           expect(names).to include("keyname2")
         end
+
         it "should not include keys in comment lines" do
           names = resources.collect { |res| res.name }
           expect(names).not_to include("keyname3")
         end
+
         it "should generate names for unnamed keys" do
           names = resources.collect { |res| res.name }
           fixture_path = File.join(my_fixture_dir, 'authorized_keys')
           expect(names).to include("#{fixture_path}:unnamed-1")
         end
+
         it "should each have a value for the user property" do
           expect(resources.map { |res|
             res[:user]

@@ -7,14 +7,17 @@ describe "Defaults" do
       before(:each) do
         Facter.stubs(:value).with(:kernel).returns("AIX")
       end
+
       describe "on 5.3" do
         before(:each) do
           Facter.stubs(:value).with(:kernelmajversion).returns("5300")
         end
+
         it "should be empty" do
           expect(Puppet.default_diffargs).to eq("")
         end
       end
+
       [ "",
         nil,
         "6300",
@@ -31,6 +34,7 @@ describe "Defaults" do
         end
       end
     end
+
     describe "on everything else" do
       before(:each) do
         Facter.stubs(:value).with(:kernel).returns("NOT_AIX")
@@ -116,6 +120,7 @@ describe "Defaults" do
         expect(Puppet.settings[:manage_internal_file_permissions]).to be false
       end
     end
+
     describe 'on non-windows', :if => ! Puppet::Util::Platform.windows? do
       it 'should default to true' do
         expect(Puppet.settings[:manage_internal_file_permissions]).to be true

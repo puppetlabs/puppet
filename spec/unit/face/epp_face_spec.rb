@@ -102,7 +102,6 @@ describe Puppet::Face[:epp, :current] do
     end
   end
 
-
   context "dump" do
     it "prints the AST of a template given with the -e option" do
       expect(eppface.dump({ :e => 'hello world' })).to eq("(lambda (epp (block\n  (render-s 'hello world')\n)))\n")

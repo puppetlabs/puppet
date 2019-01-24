@@ -45,7 +45,6 @@ shared_examples_for 'all functions transforming relative to absolute names' do |
 end
 
 shared_examples_for 'an inclusion function, regardless of the type of class reference,' do |function|
-
     it "and #{function} a class absolutely, even when a relative namespaced class of the same name is present" do
       catalog = compile_to_catalog(<<-MANIFEST)
         class foo {
@@ -81,7 +80,6 @@ shared_examples_for 'an inclusion function, regardless of the type of class refe
       MANIFEST
       expect(catalog.classes).to include('foo','bar')
     end
-
 end
 
 shared_examples_for 'an inclusion function, when --tasks is on,' do |function|
@@ -94,4 +92,3 @@ shared_examples_for 'an inclusion function, when --tasks is on,' do |function|
     end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
   end
 end
-

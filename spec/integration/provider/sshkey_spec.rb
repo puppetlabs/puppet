@@ -151,7 +151,5 @@ describe Puppet::Type.type(:sshkey).provider(:parsed), '(integration)',
       end
       @resource_app.main
     end
-
   end
-
 end

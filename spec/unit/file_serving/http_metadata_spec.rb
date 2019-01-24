@@ -50,6 +50,7 @@ describe Puppet::FileServing::HttpMetadata do
 
     context "with a Last-Modified header from the server" do
       let(:time) { Time.now.utc }
+
       before do
         http_response.stubs(:[]).with('content-md5').returns nil
       end
@@ -68,6 +69,7 @@ describe Puppet::FileServing::HttpMetadata do
       let(:input) { Time.now.to_s }
       let(:base64) { Digest::MD5.new.base64digest input }
       let(:hex) { Digest::MD5.new.hexdigest input }
+
       before do
         http_response.stubs(:[]).with('last-modified').returns nil
         http_response.stubs(:[]).with('content-md5').returns base64

@@ -169,5 +169,4 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       expect {application.run}.to raise_error(/Module uninstall is prohibited in FIPS mode/)
     end 
   end
-
 end

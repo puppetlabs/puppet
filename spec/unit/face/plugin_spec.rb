@@ -2,7 +2,6 @@ require 'spec_helper'
 require 'puppet/face'
 
 describe Puppet::Face[:plugin, :current] do
-
   let(:pluginface) { described_class }
   let(:action) { pluginface.get_action(:download) }
 

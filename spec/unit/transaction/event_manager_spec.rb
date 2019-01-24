@@ -277,7 +277,6 @@ describe Puppet::Transaction::EventManager do
       end
     end
 
-
     describe "and the callback fails" do
       before do
         @resource.expects(:callback1).raises "a failure"

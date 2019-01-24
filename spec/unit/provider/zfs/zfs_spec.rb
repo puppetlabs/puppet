@@ -108,11 +108,13 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
       end
     end
   end
+
   describe "zoned" do
     context "on FreeBSD" do
       before do
         Facter.stubs(:value).with(:operatingsystem).returns("FreeBSD")
       end
+
       it "should get 'jailed' property" do
         provider.expects(:zfs).with(:get, '-H', '-o', 'value', :jailed, name).returns("value\n")
         expect(provider.send("zoned")).to eq('value')
@@ -128,6 +130,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
       before do
         Facter.stubs(:value).with(:operatingsystem).returns("Solaris")
       end
+
       it "should get 'zoned' property" do
         provider.expects(:zfs).with(:get, '-H', '-o', 'value', :zoned, name).returns("value\n")
         expect(provider.send("zoned")).to eq('value')
@@ -139,12 +142,14 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
       end
     end
   end
+
   describe "acltype" do
     context "when available" do
       it "should get 'acltype' property" do
         provider.expects(:zfs).with(:get, '-H', '-o', 'value', :acltype, name).returns("value\n")
         expect(provider.send("acltype")).to eq('value')
       end
+
       it "should set acltype=value" do
         provider.expects(:zfs).with(:set, "acltype=value", name)
         provider.send("acltype=", "value")
@@ -156,6 +161,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
         provider.expects(:zfs).with(:get, '-H', '-o', 'value', :acltype, name).raises(RuntimeError, 'not valid')
         expect(provider.send("acltype")).to eq('-')
       end
+
       it "should not error out when trying to set acltype" do
         provider.expects(:zfs).with(:set, "acltype=value", name).raises(RuntimeError, 'not valid')
         expect{provider.send("acltype=", "value")}.to_not raise_error

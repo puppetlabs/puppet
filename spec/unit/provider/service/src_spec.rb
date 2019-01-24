@@ -55,7 +55,6 @@ _EOF_
         'myservice.4'
       ])
     end
-
   end
 
   context "when starting a service" do

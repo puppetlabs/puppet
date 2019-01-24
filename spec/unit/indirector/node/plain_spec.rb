@@ -31,5 +31,4 @@ describe Puppet::Node::Plain do
   it "should set the node environment from the request" do
     expect(node_indirection.find(request).environment).to eq(environment)
   end
-
 end

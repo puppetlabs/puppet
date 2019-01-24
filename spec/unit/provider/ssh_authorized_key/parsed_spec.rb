@@ -39,7 +39,6 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   it_should_behave_like "all parsedfile providers", provider_class
 
   it "should be able to generate a basic authorized_keys file" do
-
     key = mkkey(:name    => "Just_Testing",
                 :key     => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
                 :type    => "ssh-dss",
@@ -51,7 +50,6 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should be able to generate an authorized_keys file with options" do
-
     key = mkkey(:name    => "root@localhost",
                 :key     => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
                 :type    => "ssh-rsa",

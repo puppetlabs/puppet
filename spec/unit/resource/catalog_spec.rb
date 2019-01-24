@@ -673,7 +673,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     describe "host catalogs" do
-
       # super() doesn't work in the setup method for some reason
       before do
         @catalog.host_config = true
@@ -693,11 +692,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @transaction.stubs :any_failed? => false
         @catalog.apply
       end
-
     end
 
     describe "non-host catalogs" do
-
       before do
         @catalog.host_config = false
       end
@@ -713,7 +710,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
         Puppet::Util::Storage.expects(:store).never
         @catalog.apply
       end
-
     end
   end
 
@@ -744,7 +740,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       Puppet[:graph] = true
       @catalog.write_graph(@name)
     end
-
   end
 
   describe "when indirecting" do
@@ -875,7 +870,6 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
         Puppet[:rich_data] = false
         Puppet.pop_context
       end
-
 
       let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
 
@@ -1011,9 +1005,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
         expect(message['a']).to eql(nil)
         expect(message['b']).to eql(10)
       end
-
     end
-
   end
 end
 
@@ -1055,7 +1047,6 @@ describe Puppet::Resource::Catalog, "when converting to json" do
 
     # TODO this should really guarantee sort order
     expect(JSON.parse(@catalog.to_json,:create_additions => false)['resources'].sort).to eq(["one_resource", "two_resource"].sort)
-
   end
 
   it "should convert its edges to a JSON-encoded array and store it as the 'edges' data" do

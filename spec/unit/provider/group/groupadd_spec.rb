@@ -63,13 +63,13 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
         expect { provider.create }.to raise_error(Puppet::Error, "GID 505 already exists, use allowdupe to force group creation")
      end
     end
-
   end
 
   describe "#modify" do
     before do
        provider.stubs(:exists?).returns(true)
     end
+
     describe "on systems with the libuser and forcelocal=false" do
       before do
         described_class.has_feature(:libuser)
@@ -87,6 +87,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
         provider.gid = 150
       end
     end
+
     describe "on systems with the libuser and forcelocal=true" do
       before do
         described_class.has_feature(:libuser)
@@ -103,6 +104,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
         provider.expects(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'], has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.gid = 150
       end
+
       it "should raise an exception for duplicate GID if allowdupe is not set and duplicate GIDs exist" do
         resource[:gid] = 150
         resource[:allowdupe] = :false
@@ -124,6 +126,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     before do
        provider.stubs(:exists?).returns(true)
     end
+
     describe "on systems with the libuser and forcelocal=false" do
       before do
         described_class.has_feature(:libuser)
@@ -135,6 +138,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
         provider.delete
       end
     end
+
     describe "on systems with the libuser and forcelocal=true" do
       before do
         described_class.has_feature(:libuser)
@@ -148,4 +152,3 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     end
   end
 end
-

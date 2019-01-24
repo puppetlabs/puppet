@@ -64,7 +64,6 @@ shared_examples_for "Hiera indirection" do |test_klass, fixture_dir|
   end
 
   describe "the behavior of the find method", :if => Puppet.features.hiera? do
-
     let(:data_binder) { test_klass.new }
 
     it "should support looking up an integer" do

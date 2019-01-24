@@ -108,6 +108,5 @@ describe Puppet::Type.type(:package).provider(:sun) do
       instances = provider.class.instances
       expect(instances.size).to eq(0)
     end
-
   end
 end

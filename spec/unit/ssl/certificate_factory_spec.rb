@@ -95,7 +95,6 @@ describe Puppet::SSL::CertificateFactory do
       )
     end
 
-
     it "should add an extension for the authorityKeyIdentifer" do
       cert = subject.build(:server, csr, issuer, serial)
       ef = OpenSSL::X509::ExtensionFactory.new(issuer, cert)

@@ -70,7 +70,6 @@ describe Puppet::Type.type(:group) do
   end
 
   describe "should delegate :members implementation to the provider:"  do
-
     let (:provider) do
       @class.provide(:testing) do
         has_features :manages_members

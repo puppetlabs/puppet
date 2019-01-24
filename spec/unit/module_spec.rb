@@ -487,6 +487,7 @@ describe Puppet::Module do
       else
         dirname = filetype.to_s
     end
+
     it "should be able to return individual #{filetype}" do
       module_file = File.join(path, dirname, "my/file")
       Puppet::FileSystem.expects(:exist?).with(module_file).returns true

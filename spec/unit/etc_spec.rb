@@ -103,7 +103,6 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
   end
 
   shared_examples "methods that return an overridden group struct from Etc" do |params|
-
     it "should return a new Struct object with corresponding canonical_ members" do
       group = Etc::Group.new
       Etc.expects(subject).with(*params).returns(group)
@@ -252,7 +251,6 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
   end
 
   shared_examples "methods that return an overridden user struct from Etc" do |params|
-
     it "should return a new Struct object with corresponding canonical_ members" do
       user = Etc::Passwd.new
       Etc.expects(subject).with(*params).returns(user)

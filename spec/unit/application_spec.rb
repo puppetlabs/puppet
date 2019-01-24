@@ -12,7 +12,6 @@ describe Puppet::Application do
     @appclass = @app.class
 
     @app.stubs(:name).returns("test_app")
-
   end
 
   describe "application commandline" do
@@ -355,12 +354,10 @@ describe Puppet::Application do
     end
 
     describe "when using --help" do
-
       it "should call exit" do
         @app.stubs(:puts)
         expect { @app.handle_help(nil) }.to exit_with 0
       end
-
     end
 
     describe "when using --version" do
@@ -392,7 +389,6 @@ describe Puppet::Application do
         @app.expects(:handle_unknown).with("--no-option", false)
         @app.send(:handlearg, "--[no-]option", false)
       end
-
     end
   end
 
@@ -417,7 +413,7 @@ describe Puppet::Application do
 
       @app.setup
     end
-  
+
     it "sets the log destination if provided via settings" do
       @app.options.unstub(:[])
       Puppet[:logdest] = "set_via_config"
@@ -491,7 +487,6 @@ describe Puppet::Application do
   end
 
   describe "when running" do
-
     before :each do
       @app.stubs(:preinit)
       @app.stubs(:setup)
@@ -515,12 +510,10 @@ describe Puppet::Application do
     end
 
     it "should call run_command" do
-
       @app.expects(:run_command)
 
       @app.run
     end
-
 
     it "should call run_command" do
       @app.expects(:run_command)
@@ -553,7 +546,6 @@ describe Puppet::Application do
   end
 
   describe "when metaprogramming" do
-
     describe "when calling option" do
       it "should create a new method named after the option" do
         @app.class.option("--test1","-t") do
@@ -630,7 +622,6 @@ describe Puppet::Application do
         end
       end
     end
-
   end
 
   describe "#handle_logdest_arg" do

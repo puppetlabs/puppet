@@ -445,7 +445,6 @@ describe Puppet::Resource::Catalog::Compiler do
 
       expect(compiler.filter(@catalog)).to eq(catalog)
     end
-
   end
 
   describe "when inlining metadata" do

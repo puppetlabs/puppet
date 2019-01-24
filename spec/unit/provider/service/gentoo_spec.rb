@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:gentoo) do
-
   if Puppet.features.microsoft_windows?
     # Get a pid for $CHILD_STATUS to latch on to
     command = "cmd.exe /c \"exit 0\""
@@ -48,7 +47,6 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
   end
 
   describe ".instances" do
-
     it "should have an instances method" do
       expect(described_class).to respond_to(:instances)
     end
@@ -83,6 +81,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
+
     it "should start the service with <initscript> start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider.expects(:execute).with(['/etc/init.d/sshd',:start], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
@@ -97,6 +96,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
+
     it "should stop the service with <initscript> stop otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider.expects(:execute).with(['/etc/init.d/sshd',:stop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
@@ -106,7 +106,6 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
   end
 
   describe "#enabled?" do
-
     before :each do
       described_class.any_instance.stubs(:update).with(:show).returns File.read(my_fixture('rc_update_show'))
     end
@@ -157,7 +156,6 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
   end
 
   describe "#status" do
-
     describe "when a special status command is specified" do
       it "should use the status command from the resource" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
@@ -243,5 +241,4 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
       provider.restart
     end
   end
-
 end

@@ -104,7 +104,6 @@ describe 'agent logging' do
           expect(Puppet::Util::Log.level).to eq(expected[:level])
         end
       end
-
     end
   end
 

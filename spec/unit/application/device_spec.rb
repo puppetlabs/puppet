@@ -199,7 +199,6 @@ describe Puppet::Application::Device do
 
         @device.setup_logs
       end
-
     end
 
     it "should set a central log destination with --centrallogs" do

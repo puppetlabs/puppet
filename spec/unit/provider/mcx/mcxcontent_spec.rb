@@ -4,7 +4,6 @@ provider_class = Puppet::Type.type(:mcx).provider(:mcxcontent)
 
 # describe creates a new ExampleGroup object.
 describe provider_class do
-
   # :each executes before each test.
   # :all executes once for the test group and before :each.
   before :each do

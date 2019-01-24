@@ -166,7 +166,6 @@ describe Puppet::Util::SELinux do
       self.expects(:find_fs).with("/foo").returns "nfs"
       expect(get_selinux_default_context("/foo")).to be_nil
     end
-
   end
 
   describe "parse_selinux_context" do
@@ -310,5 +309,4 @@ describe Puppet::Util::SELinux do
       expect(set_selinux_default_context("/foo")).to eq("user_u:role_r:type_t")
     end
   end
-
 end

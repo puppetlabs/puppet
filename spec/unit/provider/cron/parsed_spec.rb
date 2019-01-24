@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:cron).provider(:crontab) do
-
   let :provider do
     described_class.new(:command => '/bin/true')
   end
@@ -93,15 +92,18 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
   describe ".targets" do
     let(:tabs) { [ described_class.default_target ] + %w{foo bar} }
+
     before do
       File.expects(:readable?).returns true
       File.stubs(:file?).returns true
       File.stubs(:writable?).returns true
     end
+
     after do
       File.unstub :readable?, :file?, :writable?
       Dir.unstub :foreach
     end
+
     it "should add all crontabs as targets" do
       Dir.expects(:foreach).multiple_yields(*tabs)
       expect(described_class.targets).to eq(tabs)
@@ -350,6 +352,5 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
         expect { described_class.match(record,{resource_sparse[:name] => resource_sparse}) }.to_not raise_error
       end
     end
-
   end
 end

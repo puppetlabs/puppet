@@ -3,7 +3,6 @@ require 'spec_helper'
 require 'puppet/ssl/certificate_request_attributes'
 
 describe Puppet::SSL::CertificateRequestAttributes do
-
   let(:expected) do
     {
       "custom_attributes" => {

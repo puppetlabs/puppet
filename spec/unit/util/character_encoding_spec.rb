@@ -166,6 +166,7 @@ describe Puppet::Util::CharacterEncoding do
       # Invalid in UTF-8 without transcoding
       let(:oslash) { [216].pack('C*').force_encoding(Encoding::ISO_8859_1) }
       let(:foo) { 'foo' }
+
       it "should issue a debug message" do
         Puppet.expects(:debug).with(regexp_matches(/not valid UTF-8/))
         Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(oslash)

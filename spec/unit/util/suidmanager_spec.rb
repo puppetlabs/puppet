@@ -267,7 +267,6 @@ describe 'Puppet::Util::SUIDManager#groups=' do
     Puppet::Util::SUIDManager
   end
 
-
   it "(#3419) should rescue Errno::EINVAL on OS X" do
     Process.expects(:groups=).raises(Errno::EINVAL, 'blew up')
     subject.expects(:osx_maj_ver).returns('10.7').twice

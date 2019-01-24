@@ -2,7 +2,6 @@ require 'spec_helper'
 
 # Note that much of the functionality of the dnf provider is already tested with yum provider tests,
 # as yum is the parent provider.
-
 describe Puppet::Type.type(:package).provider(:dnf) do
   context 'default' do
     (19..21).each do |ver|
@@ -36,7 +35,6 @@ describe Puppet::Type.type(:package).provider(:dnf) do
         Facter.stubs(:value).with(:operatingsystemmajrelease).returns("8")
         expect(described_class).to be_default
     end
-
   end
 
   it_behaves_like 'RHEL package provider', described_class, 'dnf'

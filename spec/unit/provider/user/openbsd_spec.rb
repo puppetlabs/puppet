@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:user).provider(:openbsd) do
-
   before :each do
     described_class.stubs(:command).with(:password).returns '/usr/sbin/passwd'
     described_class.stubs(:command).with(:add).returns '/usr/sbin/useradd'

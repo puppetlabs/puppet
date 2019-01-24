@@ -108,7 +108,6 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when initializing" do
-
     it 'should not create the settings class more than once' do
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
@@ -218,7 +217,6 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when managing scopes" do
-
     it "should create a top scope" do
       expect(@compiler.topscope).to be_instance_of(Puppet::Parser::Scope)
     end
@@ -242,7 +240,6 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when compiling" do
-
     def compile_methods
       [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_node_classes, :evaluate_generators, :fail_on_unevaluated,
         :finish, :store, :extract, :evaluate_relationships]
@@ -371,7 +368,6 @@ describe Puppet::Parser::Compiler do
       # We have to now mark the resource as evaluated
       resource.expects(:evaluate).with { |*whatever| resource.evaluated = true; @compiler.add_resource(@scope, resource2) }
       resource2.expects(:evaluate).with { |*whatever| resource2.evaluated = true }
-
 
       @compiler.compile
     end
@@ -559,7 +555,6 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when evaluating collections" do
-
     it "should evaluate each collection" do
       2.times { |i|
         coll = mock 'coll%s' % i
@@ -613,7 +608,6 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when told to evaluate missing classes" do
-
     it "should fail if there's no source listed for the scope" do
       scope = stub 'scope', :source => nil
       expect { @compiler.evaluate_classes(%w{one two}, scope) }.to raise_error(Puppet::DevError)
@@ -632,7 +626,6 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when evaluating found classes" do
-
     before do
       Puppet.settings[:data_binding_terminus] = "none"
       @class = @known_resource_types.add Puppet::Resource::Type.new(:hostclass, "myclass")
@@ -785,7 +778,6 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when evaluating AST nodes with no AST nodes present" do
-
     it "should do nothing" do
       @compiler.environment.known_resource_types.stubs(:nodes).returns(false)
       Puppet::Parser::Resource.expects(:new).never
@@ -795,7 +787,6 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when evaluating AST nodes with AST nodes present" do
-
     before do
       @compiler.environment.known_resource_types.stubs(:nodes?).returns true
 
@@ -978,7 +969,6 @@ describe Puppet::Parser::Compiler do
   end
 
   describe "when managing resource overrides" do
-
     before do
       @override = stub 'override', :ref => "File[/foo]", :type => "my"
       @resource = resource(:file, "/foo")

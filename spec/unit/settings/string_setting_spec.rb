@@ -31,40 +31,40 @@ describe Puppet::Settings::StringSetting do
       it "should return the setting default" do
         expect(@test_setting.default).to eq(@test_setting_default)
       end
-      
+
       it "should be uninterpolated" do
         expect(@test_setting.default).not_to match(/interpolate/)
       end
     end
-    
+
     describe "checking application defaults first" do
       describe "if application defaults set" do
         before(:each) do
           @settings.initialize_app_defaults @application_defaults.merge @test_setting_name => @application_setting
         end
-        
+
         it "should return the application-set default" do
           expect(@test_setting.default(true)).to eq(@application_setting)
         end
-        
+
         it "should be uninterpolated" do
           expect(@test_setting.default(true)).not_to match(/interpolate/)
         end
-        
+
       end
-      
+
       describe "if application defaults not set" do
         it "should return the regular default" do
           expect(@test_setting.default(true)).to eq(@test_setting_default)
         end
-        
+
         it "should be uninterpolated" do
           expect(@test_setting.default(true)).not_to match(/interpolate/)
         end
       end
     end
   end
-  
+
   describe "#value" do
     it "should be interpolated" do
       expect(@test_setting.value).to match(/interpolate/)

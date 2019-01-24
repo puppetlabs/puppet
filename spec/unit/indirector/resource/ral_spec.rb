@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe "Puppet::Resource::Ral" do
-
   it "disallows remote requests" do
     expect(Puppet::Resource::Ral.new.allow_remote_requests?).to eq(false)
   end

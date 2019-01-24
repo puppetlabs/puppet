@@ -4,7 +4,6 @@ require 'ostruct'
 require 'puppet/util/network_device'
 
 describe Puppet::Util::NetworkDevice do
-
   before(:each) do
     @device = OpenStruct.new(:name => "name", :provider => "test", :url => "telnet://admin:password@127.0.0.1", :options => { :debug => false })
   end

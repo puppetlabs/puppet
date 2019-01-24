@@ -39,9 +39,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
     end
   end
 
-
   describe "when validating values" do
-
     describe "ensure" do
       it "should support present as a value for ensure" do
         expect { described_class.new(:name => 'foo', :ensure => :present) }.to_not raise_error

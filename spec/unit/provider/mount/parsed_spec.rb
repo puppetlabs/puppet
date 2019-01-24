@@ -108,7 +108,6 @@ FSTAB
         expect(described_class.parse_line(fstab_sample)[:pass]).to eq("2")
       end
     end
-
   end
 
   describe "mountinstances" do
@@ -193,7 +192,6 @@ FSTAB
       described_class.stubs(:mountcmd).returns("bazinga!")
       expect { described_class.mountinstances }.to raise_error Puppet::Error, 'Could not understand line bazinga! from mount output'
     end
-
   end
 
   it "should support AIX's paragraph based /etc/filesystems" do

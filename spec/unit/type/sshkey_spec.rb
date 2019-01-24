@@ -1,6 +1,5 @@
 require 'spec_helper'
 
-
 describe Puppet::Type.type(:sshkey) do
 
   it "uses :name as its namevar" do

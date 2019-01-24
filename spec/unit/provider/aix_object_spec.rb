@@ -710,9 +710,11 @@ bin:2
     let(:property_attributes) do
       {}
     end
+
     def stub_attributes_property(attributes)
       provider.resource.stubs(:should).with(:attributes).returns(attributes)
     end
+
     def set_property(puppet_property, aix_attribute, property_to_attribute, should_value = nil)
       property_to_attribute ||= lambda { |x| x }
 

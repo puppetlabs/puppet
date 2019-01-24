@@ -1,5 +1,4 @@
 require 'spec_helper'
-
 require 'puppet'
 
 module Puppet::Util::Plist
@@ -8,7 +7,6 @@ end
 provider_class = Puppet::Type.type(:macauthorization).provider(:macauthorization)
 
 describe provider_class do
-
   before :each do
     # Create a mock resource
     @resource = stub 'resource'
@@ -146,5 +144,4 @@ describe provider_class do
       @provider.flush
     end
   end
-
 end

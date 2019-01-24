@@ -24,7 +24,6 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
   let(:provider) { described_class.new(:name => 'myuser') }
 
-
   let(:shadow_entry) {
     return unless Puppet.features.libshadow?
     entry = Struct::PasswdEntry.new
@@ -40,7 +39,6 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   }
 
   describe "#create" do
-
     before do
       provider.stubs(:exists?).returns(false)
     end
@@ -107,6 +105,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
          described_class.has_feature :libuser
          resource[:forcelocal] = true
       end
+
       it "should use luseradd instead of useradd" do
         provider.expects(:execute).with(includes('/usr/sbin/luseradd'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
@@ -163,7 +162,6 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         provider.create
       end
     end
-
   end
 
   describe '#modify' do
@@ -277,7 +275,6 @@ describe Puppet::Type.type(:user).provider(:useradd) do
   end
 
   describe "#check_allow_dup" do
-
     it "should return an array with a flag if dup is allowed" do
       resource[:allowdupe] = :true
       expect(provider.check_allow_dup).to eq(["-o"])
@@ -607,21 +604,25 @@ describe Puppet::Type.type(:user).provider(:useradd) do
        provider.stubs(:exists?).returns(true)
        resource[:ensure] = :absent
     end
+
     describe "on systems with the libuser and forcelocal=false" do
       before do
          described_class.has_feature :libuser
          resource[:forcelocal] = false
       end
+
       it "should use userdel to delete users" do
         provider.expects(:execute).with(includes('/usr/sbin/userdel'), has_entry(:custom_environment, {}))
         provider.delete
       end
     end
+
     describe "on systems with the libuser and forcelocal=true" do
       before do
          described_class.has_feature :libuser
          resource[:forcelocal] = true
       end
+
       it "should use luserdel to delete users" do
         provider.expects(:execute).with(includes('/usr/sbin/luserdel'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.delete

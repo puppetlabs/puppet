@@ -3,7 +3,6 @@ require 'spec_helper'
 require 'puppet/util/network_device/transport/ssh'
 
 describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh? do
-
   before(:each) do
     @transport = Puppet::Util::NetworkDevice::Transport::Ssh.new()
   end
@@ -213,5 +212,4 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
       end
     end
   end
-
 end

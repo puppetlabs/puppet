@@ -37,10 +37,12 @@ describe "Puppet::InfoService" do
           @result = Puppet::InfoService.task_data(env_name, mod_name, task_name)
         end
       end
+
       describe 'in the happy case' do
         it 'returns the right set of keys' do
           expect(@result.keys.sort).to eq([:files, :metadata_file])
         end
+
         it 'specifies the metadata_file correctly' do
           task = @mod.tasks[0]
           expect(@result[:metadata_file]).to eq(task.metadata_file)

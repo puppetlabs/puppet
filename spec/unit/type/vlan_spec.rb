@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:vlan) do
-
   it "should have a 'name' parameter'" do
     expect(Puppet::Type.type(:vlan).new(:name => "200")[:name]).to eq("200")
   end

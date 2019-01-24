@@ -844,6 +844,7 @@ describe Puppet::SSL::CertificateAuthority do
 
     describe "and verifying certificates" do
       let(:cacert) { File.expand_path("/ca/cert") }
+
       before do
         @store = stub 'store', :verify => true, :add_file => nil, :purpose= => nil, :add_crl => true, :flags= => nil
 
@@ -1048,7 +1049,6 @@ require 'puppet/indirector/memory'
 
 module CertificateAuthorityGenerateSpecs
 describe "CertificateAuthority.generate" do
-
   def expect_to_increment_serial_file
     Puppet.settings.setting(:serial).expects(:exclusive_open)
   end
@@ -1152,7 +1152,6 @@ describe "CertificateAuthority.generate" do
       end
 
       context "if autosign is true (Redmine #6112)" do
-
         def run_mode_must_be_master_for_autosign_to_be_attempted
           Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:master])
         end

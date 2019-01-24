@@ -74,6 +74,7 @@ describe Puppet::Interface::FaceCollection do
         subject.instance_variable_get("@faces")[:bar][SemanticPuppet::Version.parse('0.0.1')] = true
         file == 'puppet/face/bar'
       end
+
       expect(subject["bar", '0.0.1']).to be_truthy
     end
 

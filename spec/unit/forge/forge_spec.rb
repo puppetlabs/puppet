@@ -30,7 +30,6 @@ describe Puppet::Forge do
     end
 
     context "search request" do
-
       it "includes any defined module_groups, ensuring to only encode them once in the URI" do
         Puppet[:module_groups] = 'base+pe'
 

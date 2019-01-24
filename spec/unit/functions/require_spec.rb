@@ -6,7 +6,6 @@ require 'matchers/resource'
 require 'matchers/include_in_order'
 require 'unit/functions/shared'
 
-
 describe 'The "require" function' do
   include PuppetSpec::Compiler
   include ContainmentMatchers
@@ -80,5 +79,4 @@ describe 'The "require" function' do
   it_should_behave_like 'all functions transforming relative to absolute names', :require
   it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :require
   it_should_behave_like 'an inclusion function, when --tasks is on,', :require
-
 end

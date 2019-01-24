@@ -8,7 +8,6 @@ describe Puppet::Resource::Catalog do
       Facter.stubs(:value).returns("eh")
     end
 
-
     it "should be able to delegate to the :yaml terminus" do
       Puppet::Resource::Catalog.indirection.stubs(:terminus_class).returns :yaml
 

@@ -1848,7 +1848,6 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
   end
 
   describe "Win32::TaskScheduler", :if => Puppet.features.microsoft_windows? do
-
     let(:name) { SecureRandom.uuid }
 
     describe 'sets appropriate generic trigger defaults' do

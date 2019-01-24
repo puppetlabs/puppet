@@ -142,7 +142,6 @@ describe Puppet::Forge::Repository do
       proxy.expects(:cert_store=)
       proxy.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
     end
-
   end
 
   describe "making a request against an authentiated proxy" do

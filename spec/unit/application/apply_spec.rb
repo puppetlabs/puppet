@@ -39,7 +39,6 @@ describe Puppet::Application::Apply do
   end
 
   describe "when applying options" do
-
     it "should set the log destination with --logdest" do
       Puppet::Log.expects(:newdestination).with("console")
 
@@ -295,7 +294,6 @@ describe Puppet::Application::Apply do
       end
 
       it "should transform the catalog to ral" do
-
         @catalog.expects(:to_ral).returns(@catalog)
 
         expect { @apply.main }.to exit_with 0

@@ -4,7 +4,6 @@ require 'puppet/network/authconfig'
 require 'puppet/network/auth_config_parser'
 
 RSpec::Matchers.define :allow do |params|
-
   match do |auth|
     begin
       auth.check_authorization(*params)

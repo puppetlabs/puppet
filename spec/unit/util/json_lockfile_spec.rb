@@ -44,6 +44,5 @@ describe Puppet::Util::JsonLockfile do
       File.stubs(:read).returns ']['
       expect(@lock.lock_data).to be_nil
     end
-
   end
 end

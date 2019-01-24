@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 module ScheduleTesting
-
   def diff(unit, incr, method, count)
     diff = Time.now.to_i.send(method, incr * count)
     Time.at(diff)
@@ -18,11 +17,11 @@ module ScheduleTesting
   def min(method, count)
     diff(:min, 60, method, count)
   end
-
 end
 
 describe Puppet::Type.type(:schedule) do
   include ScheduleTesting
+
   before :each do
     Puppet[:ignoreschedules] = false
 

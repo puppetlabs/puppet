@@ -6,7 +6,6 @@ require 'matchers/resource'
 require 'matchers/include_in_order'
 require 'unit/functions/shared'
 
-
 describe 'The "contain" function' do
   include PuppetSpec::Compiler
   include ContainmentMatchers

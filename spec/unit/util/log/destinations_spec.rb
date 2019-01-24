@@ -22,7 +22,6 @@ describe Puppet::Util::Log.desttypes[:report] do
   end
 end
 
-
 describe Puppet::Util::Log.desttypes[:file] do
   include PuppetSpec::Files
 
@@ -148,7 +147,6 @@ describe Puppet::Util::Log.desttypes[:syslog] do
 end
 
 describe Puppet::Util::Log.desttypes[:logstash_event] do
-
   describe "when using structured log format with logstash_event schema" do
     before :each do
       @msg = Puppet::Util::Log.new(:level => :info, :message => "So long, and thanks for all the fish.", :source => "a dolphin")

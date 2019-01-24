@@ -91,12 +91,10 @@ describe Puppet::Settings::EnvironmentConf do
   end
 
   describe "with disable_per_environment_manifest" do
-
     let(:config) { stub('config') }
     let(:envconf) { Puppet::Settings::EnvironmentConf.new("/some/direnv", config, ["/global/modulepath"]) }
 
     context "set true" do
-
       before(:each) do
         Puppet[:default_manifest] = File.expand_path('/default/manifest')
         Puppet[:disable_per_environment_manifest] = true

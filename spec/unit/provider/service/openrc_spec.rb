@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:openrc) do
-
   if Puppet.features.microsoft_windows?
     # Get a pid for $CHILD_STATUS to latch on to
     cmd = "cmd.exe /c \"exit 0\""
@@ -19,7 +18,6 @@ describe Puppet::Type.type(:service).provider(:openrc) do
   end
 
   describe ".instances" do
-
     it "should have an instances method" do
       expect(described_class).to respond_to :instances
     end
@@ -45,6 +43,7 @@ describe Puppet::Type.type(:service).provider(:openrc) do
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
+
     it "should start the service with rc-service start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider.expects(:execute).with(['/sbin/rc-service','sshd',:start], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
@@ -58,6 +57,7 @@ describe Puppet::Type.type(:service).provider(:openrc) do
       provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
+
     it "should stop the service with rc-service stop otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       provider.expects(:execute).with(['/sbin/rc-service','sshd',:stop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
@@ -67,6 +67,7 @@ describe Puppet::Type.type(:service).provider(:openrc) do
 
   describe 'when invoking `rc-status`' do
     subject { described_class.new(Puppet::Type.type(:service).new(:name => 'urandom')) }
+
     it "clears the RC_SVCNAME environment variable" do
       Puppet::Util.withenv(:RC_SVCNAME => 'puppet') do
         Puppet::Util::Execution.expects(:execute).with(
@@ -79,7 +80,6 @@ describe Puppet::Type.type(:service).provider(:openrc) do
   end
 
   describe "#enabled?" do
-
     before :each do
       described_class.any_instance.stubs(:rcstatus).with('-C','-a').returns File.read(my_fixture('rcstatus'))
     end
@@ -144,7 +144,6 @@ describe Puppet::Type.type(:service).provider(:openrc) do
   end
 
   describe "#status" do
-
     describe "when a special status command if specified" do
       it "should use the status command from the resource" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
@@ -226,5 +225,4 @@ describe Puppet::Type.type(:service).provider(:openrc) do
       provider.restart
     end
   end
-
 end

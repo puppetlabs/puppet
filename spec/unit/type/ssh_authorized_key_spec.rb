@@ -1,6 +1,5 @@
 require 'spec_helper'
 
-
 describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
@@ -18,7 +17,6 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
   end
 
   describe "when validating attributes" do
-
     [:name, :provider].each do |param|
       it "has a #{param} parameter" do
         expect(described_class.attrtype(param)).to eq :param
@@ -30,13 +28,10 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
         expect(described_class.attrtype(property)).to eq :property
       end
     end
-
   end
 
   describe "when validating values" do
-
     describe "for name" do
-
       it "supports valid names" do
         described_class.new(:name => "username", :ensure => :present, :user => "nobody")
         described_class.new(:name => "username@hostname", :ensure => :present, :user => "nobody")
@@ -45,11 +40,9 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       it "supports whitespace" do
         described_class.new(:name => "my test", :ensure => :present, :user => "nobody")
       end
-
     end
 
     describe "for ensure" do
-
       it "supports :present" do
         described_class.new(:name => "whev", :ensure => :present, :user => "nobody")
       end
@@ -61,11 +54,9 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       it "nots support other values" do
         expect { described_class.new(:name => "whev", :ensure => :foo, :user => "nobody") }.to raise_error(Puppet::Error, /Invalid value/)
       end
-
     end
 
     describe "for type" do
-
       [
         :'ssh-dss', :dsa,
         :'ssh-rsa', :rsa,
@@ -92,11 +83,9 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       it "doesn't support values other than ssh-dss, ssh-rsa, dsa, rsa" do
         expect { described_class.new(:name => "whev", :type => :something) }.to raise_error(Puppet::Error,/Invalid value/)
       end
-
     end
 
     describe "for key" do
-
       it "supports a valid key like a 1024 bit rsa key" do
         expect { described_class.new(:name => "whev", :type => :rsa, :user => "nobody", :key => 'AAAAB3NzaC1yc2EAAAADAQABAAAAgQDCPfzW2ry7XvMc6E5Kj2e5fF/YofhKEvsNMUogR3PGL/HCIcBlsEjKisrY0aYgD8Ikp7ZidpXLbz5dBsmPy8hJiBWs5px9ZQrB/EOQAwXljvj69EyhEoGawmxQMtYw+OAIKHLJYRuk1QiHAMHLp5piqem8ZCV2mLb9AsJ6f7zUVw==')}.to_not raise_error
       end
@@ -112,11 +101,9 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       it "doesn't support whitespaces" do
         expect { described_class.new(:name => "whev", :type => :rsa, :user => "nobody", :key => 'AAA FA==')}.to raise_error(Puppet::Error,/Key must not contain whitespace/)
       end
-
     end
 
     describe "for options" do
-
       it "supports flags as options" do
         expect { described_class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => 'cert-authority')}.to_not raise_error
         expect { described_class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => 'no-port-forwarding')}.to_not raise_error
@@ -155,11 +142,9 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
         resource = described_class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
         expect(resource.property(:options).should_to_s(["a","b","c"])).to eq "['a', 'b', 'c']"
       end
-
     end
 
     describe "for user" do
-
       it "supports present users" do
         described_class.new(:name => "whev", :type => :rsa, :user => "root")
       end
@@ -167,11 +152,9 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       it "supports absent users" do
         described_class.new(:name => "whev", :type => :rsa, :user => "ihopeimabsent")
       end
-
     end
 
     describe "for target" do
-
       it "supports absolute paths" do
         described_class.new(:name => "whev", :type => :rsa, :target => "/tmp/here")
       end
@@ -189,13 +172,10 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
         described_class.new(:name => "whev", :user => 'idontexist').should(:target)
         expect(@logs.map(&:message)).to include("The required user is not yet present on the system")
       end
-
     end
-
   end
 
   describe "when neither user nor target is specified" do
-
     it "raises an error" do
       expect do
         described_class.new(
@@ -205,11 +185,9 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
           :ensure => :present)
       end.to raise_error(Puppet::Error,/user.*or.*target.*mandatory/)
     end
-
   end
 
   describe "when both target and user are specified" do
-
     it "uses target" do
       resource = described_class.new(
         :name => "Test",
@@ -218,12 +196,9 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       )
       expect(resource.should(:target)).to eq "/tmp/blah"
     end
-
   end
 
-
   describe "when user is specified" do
-
     it "determines target" do
       resource = described_class.new(
         :name   => "Test",
@@ -239,11 +214,9 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       target = File.expand_path("~root/.ssh/authorized_keys")
       expect(resource.property(:target).safe_insync?(target)).to eq true
     end
-
   end
 
   describe "when calling validate" do
-
     it "doesn't crash on a non-existent user" do
       resource = described_class.new(
         :name   => "Test",
@@ -251,7 +224,5 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       )
       resource.validate
     end
-
   end
-
 end

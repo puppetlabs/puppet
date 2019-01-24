@@ -4,7 +4,6 @@ require 'puppet/indirector/file_server'
 require 'puppet/file_serving/configuration'
 
 describe Puppet::Indirector::FileServer do
-
   before :all do
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
     @model = mock 'model'

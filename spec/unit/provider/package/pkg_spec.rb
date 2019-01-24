@@ -103,6 +103,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       before do
         described_class.expects(:pkg).with(:refresh)
       end
+
       it "should work correctly for ensure latest on solaris 11 (UFOXI) when there are no further packages to install" do
         described_class.expects(:pkg).with(:list,'-Hvn','dummy').returns File.read(my_fixture('dummy_solaris11.installed'))
         expect(provider.latest).to eq('1.0.6,5.11-0.175.0.0.0.2.537:20131230T130000Z')
@@ -248,6 +249,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
           before :each do
             Facter.stubs(:value).with(:operatingsystemrelease).returns hash[:osrel]
           end
+
           it "should accept all licenses" do
             provider.expects(:query).with().returns({:ensure => :absent})
             Puppet::Util::Execution.expects(:execute)

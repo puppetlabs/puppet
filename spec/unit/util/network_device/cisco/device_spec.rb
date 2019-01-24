@@ -169,7 +169,6 @@ eos
       end
     end
 
-
     {
       "Fa 0/1" => "FastEthernet0/1",
       "Fa0/1" => "FastEthernet0/1",
@@ -209,7 +208,6 @@ eos
     end
 
     describe "when parsing interface" do
-
       it "should parse interface output" do
         @cisco.expects(:parse_interface).returns({ :ensure => :present })
 
@@ -476,6 +474,5 @@ eos
         expect(@cisco.facts).to eq(:facts)
       end
     end
-
   end
 end

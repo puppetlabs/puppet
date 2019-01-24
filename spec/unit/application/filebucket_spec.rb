@@ -40,14 +40,12 @@ describe Puppet::Application::Filebucket do
   end
 
   describe "during setup" do
-
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
       Puppet::FileBucket::Dipper.stubs(:new)
       @filebucket.options.stubs(:[]).with(any_parameters)
     end
-
 
     it "should set console as the log destination" do
       Puppet::Log.expects(:newdestination).with(:console)
@@ -107,7 +105,6 @@ describe Puppet::Application::Filebucket do
 
         @filebucket.setup
       end
-
     end
 
     describe "with remote bucket" do
@@ -138,7 +135,6 @@ describe Puppet::Application::Filebucket do
   end
 
   describe "when running" do
-
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
@@ -160,7 +156,6 @@ describe Puppet::Application::Filebucket do
     end
 
     describe "the command get" do
-
       before :each do
         @filebucket.stubs(:print)
         @filebucket.stubs(:args).returns([])
@@ -188,7 +183,6 @@ describe Puppet::Application::Filebucket do
 
         @filebucket.get
       end
-
     end
 
     describe "the command backup" do
@@ -277,12 +271,14 @@ describe Puppet::Application::Filebucket do
         expect { @filebucket.diff }.to raise_error Puppet::Error
       end
     end
+
     describe "the command list" do
       it "should call the client list method with nil dates" do
         @client.expects(:list).with(nil, nil)
 
         @filebucket.list
       end
+
       it "should call the client list method with the given dates" do
         # 3 Hours ago
         threehours = 60*60*3
@@ -299,8 +295,5 @@ describe Puppet::Application::Filebucket do
         @filebucket.list
       end
     end
-
   end
-
-
 end

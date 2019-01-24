@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:urpmi) do
-
   before do
     Puppet::Util::Execution.expects(:execute).never
     %w[rpm urpmi urpme urpmq].each do |executable|

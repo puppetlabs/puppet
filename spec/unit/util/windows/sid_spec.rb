@@ -99,7 +99,6 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
     end
 
     describe "with non-US languages" do
-
       UMLAUT = [195, 164].pack('c*').force_encoding(Encoding::UTF_8)
       let(:username) { SecureRandom.uuid.to_s.gsub(/\-/, '')[0..13] + UMLAUT }
 

@@ -136,7 +136,6 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
 end
 
 describe Puppet::Type.type(:package), 'logging package state transitions' do
-
   let(:catalog) { Puppet::Resource::Catalog.new }
   let(:provider) { stub('provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil, :validate_source => nil) }
 
@@ -178,7 +177,6 @@ describe Puppet::Type.type(:package), 'logging package state transitions' do
 
   states.each do |old, new_states|
     describe "#{old} package" do
-
       before :each do
         provider.stubs(:properties).returns(:ensure => old)
       end
@@ -200,4 +198,3 @@ describe Puppet::Type.type(:package), 'logging package state transitions' do
     end
   end
 end
-

@@ -86,7 +86,6 @@ describe Puppet::Util::Windows::EventLog, :if => Puppet.features.microsoft_windo
   end
 
   describe "self.to_native" do
-
     it "raises an exception if the log level is not supported" do
       expect { Puppet::Util::Windows::EventLog.to_native(:foo) }.to raise_error(ArgumentError)
     end

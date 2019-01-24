@@ -10,7 +10,6 @@ describe Puppet::Node do
   let(:env_loader) { Puppet::Environments::Static.new(environment) }
 
   describe "when managing its environment" do
-
     it "provides an environment instance" do
       expect(Puppet::Node.new("foo", :environment => environment).environment.name).to eq(:bar)
     end
@@ -131,7 +130,6 @@ describe Puppet::Node do
     it "errors if name is nil" do
       expect { Puppet::Node.from_data_hash({ })}.to raise_error(ArgumentError, /No name provided in serialized data/)
     end
-
   end
 
   describe "when converting to json" do
@@ -373,9 +371,7 @@ describe Puppet::Node, "when merging facts" do
     end
 
     context "when a node is initialized from new" do
-
       context "when a node is initialzed with an environment" do
-
         it "adds the environment to the list of parameters" do
           Puppet[:environment] = "one"
           @node = Puppet::Node.new("testnode", :environment => "one")
@@ -397,7 +393,6 @@ describe Puppet::Node, "when merging facts" do
       end
 
       context "when a node is initialized without an environment" do
-
         it "it perfers an environment name to an environment fact" do
           @node = Puppet::Node.new("testnode")
           @node.environment_name = "one"

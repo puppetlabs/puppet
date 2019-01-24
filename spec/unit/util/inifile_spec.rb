@@ -156,7 +156,6 @@ describe Puppet::Util::IniConfig::PhysicalFile do
         }.to raise_error(Puppet::Util::IniConfig::IniParseError,
                          /Section "mysect" is already defined, cannot redefine/)
       end
-
     end
 
     describe 'parsing properties' do
@@ -211,7 +210,6 @@ INIFILE
     end
 
     describe "parsing line continuations" do
-
       it "adds the continued line to the last parsed property" do
         text = "[main]\nkey=val\n moreval"
 
@@ -283,7 +281,6 @@ INIFILE
   end
 
   describe "formatting" do
-
     it "concatenates each formatted section in order" do
       subject.contents << first_sect << second_sect
 
@@ -385,7 +382,6 @@ INIFILE
 end
 
 describe Puppet::Util::IniConfig::FileCollection do
-
   let(:path_a) { '/some/nonexistent/file/a' }
   let(:path_b) { '/some/nonexistent/file/b' }
 

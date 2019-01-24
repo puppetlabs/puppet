@@ -9,8 +9,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
   end
 
   let(:provider) { resource.provider }
-
-  let(:connection) { stub 'connection' }
+  let(:connection) { double('connection') }
 
   before :each do
     Puppet::Util::Windows::ADSI.stubs(:computer_name).returns('testcomputername')
@@ -210,19 +209,24 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
           expect(provider.members_to_s(input)).to be_empty
         end
       end
+
       it "should return an empty string on empty or nil users" do
         expect(provider.members_to_s([])).to be_empty
         expect(provider.members_to_s(nil)).to be_empty
       end
+
       it "should return a user string like DOMAIN\\USER" do
         expect(provider.members_to_s(['user1'])).to eq('.\user1')
       end
+
       it "should return a user string like DOMAIN\\USER,DOMAIN2\\USER2" do
         expect(provider.members_to_s(['user1', 'user2'])).to eq('.\user1,.\user2')
       end
+
       it "should return the username when it cannot be resolved to a SID (for the sake of resource_harness error messages)" do
         expect(provider.members_to_s([invalid_user])).to eq("#{invalid_user}")
       end
+
       it "should return the username when it cannot be resolved to a SID (for the sake of resource_harness error messages)" do
         expect(provider.members_to_s([invalid_user])).to eq("#{invalid_user}")
       end

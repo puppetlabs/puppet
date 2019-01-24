@@ -1,5 +1,4 @@
 require 'spec_helper'
-
 require 'win32/service' if Puppet.features.microsoft_windows?
 
 describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.microsoft_windows? do

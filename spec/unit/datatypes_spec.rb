@@ -283,7 +283,7 @@ describe "Puppet::DataTypes" do
         'position.rb' => <<-RUBY
             module PuppetX; module Mytest; class Position
               attr_reader :x, :y
-  
+
               def initialize(x, y)
                 @x = x
                 @y = y
@@ -310,7 +310,7 @@ describe "Puppet::DataTypes" do
                 PUPPET
 
               load_file('puppetx/mytest/position')
-  
+
               implementation_class PuppetX::Mytest::Position
             end
             RUBY
@@ -336,7 +336,7 @@ describe "Puppet::DataTypes" do
                 PUPPET
 
               load_file('puppetx/mytest/position')
-  
+
               implementation_class PuppetX::Mytest::Position
             end
         RUBY

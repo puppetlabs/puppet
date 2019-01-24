@@ -230,5 +230,4 @@ Not in catalog"
       expect(provider.instances).to eq([testpkg])
     end
   end
-
 end

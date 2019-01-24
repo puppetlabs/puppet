@@ -945,10 +945,8 @@ describe Puppet::Transaction do
         } ->
         notify { ['notify1', 'notify2', 'notify3']: }
       MANIFEST
-
     end
   end
-
 end
 
 describe Puppet::Transaction, " when determining tags" do

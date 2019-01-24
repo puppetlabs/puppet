@@ -311,7 +311,6 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
 
     it "sets resources_failed_to_generate to true if resource#eval_generate raises an exception" do
-
       catalog = compile_to_ral(<<-MANIFEST)
         notify { 'hello': }
       MANIFEST
@@ -485,7 +484,6 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
 
     it "sets resources_failed_to_generate to true if resource#generate raises an exception" do
-
       catalog = compile_to_ral(<<-MANIFEST)
         user { 'foo':
           ensure => present,

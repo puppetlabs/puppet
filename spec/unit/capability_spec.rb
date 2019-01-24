@@ -128,6 +128,7 @@ describe 'Capability types' do
       expect(cns[:mappings]).to be_instance_of(Hash)
       expect(cns[:mappings]['host']).to be_instance_of(Puppet::Parser::AST::PopsBridge::Expression)
     end
+
     it "does not allow operator '+>' in a mapping" do
       expect do
       compile_to_catalog(<<-MANIFEST, node)

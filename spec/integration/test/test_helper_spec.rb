@@ -15,7 +15,7 @@ describe "Windows UTF8 environment variables", :if => Puppet.features.microsoft_
     # Need to cleanup this environment variable otherwise it contaminates any subsequent tests
     Puppet::Util::Windows::Process.set_environment_variable(@varname, nil)
   }
-  
+
   it "#after_each_test should preserve UTF8 environment variables" do
     envhash = Puppet::Util::Windows::Process.get_environment_strings
     expect(envhash[@varname]).to eq(@rune_utf8)

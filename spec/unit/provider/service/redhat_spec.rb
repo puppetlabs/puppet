@@ -109,8 +109,8 @@ describe Puppet::Type.type(:service).provider(:redhat), :if => Puppet.features.p
     it "should have a #{method} method" do
       expect(@provider).to respond_to(method)
     end
-    describe "when running #{method}" do
 
+    describe "when running #{method}" do
       it "should use any provided explicit command" do
         @resource.stubs(:[]).with(method).returns "/user/specified/command"
         @provider.expects(:execute).with { |command, *args| command == ["/user/specified/command"] }

@@ -1,5 +1,4 @@
 require 'spec_helper'
-
 require 'puppet/resource/status'
 
 describe Puppet::Resource::Status do

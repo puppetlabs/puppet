@@ -250,7 +250,6 @@ trace = true
   end
 
   shared_examples_for :config_printing_a_section do |section|
-
     def add_section_option(args, section)
       args << { :section => section } if section
       args
@@ -336,7 +335,6 @@ modulepath =
     end
 
     context "from master section" do
-
       before(:each) do
         Puppet.settings.parse_config(<<-CONF)
         [master]

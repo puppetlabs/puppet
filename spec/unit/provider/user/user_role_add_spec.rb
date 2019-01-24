@@ -13,7 +13,6 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
     resource.stubs(:[]).returns "fakeval"
   end
 
-
   describe "#command" do
     before do
       klass = stub("provider")

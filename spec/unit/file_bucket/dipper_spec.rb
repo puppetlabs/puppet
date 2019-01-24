@@ -117,9 +117,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
           expect(@dipper.diff(checksum2, nil, nil, file1)).to include(diff21)
           expect(@dipper.diff(nil, checksum1, file2, nil)).to include(diff21)
           expect(@dipper.diff(nil, nil, file2, file1)).to include(diff21)
-
         end
       end
+
       describe "in windows environment", :if => Puppet.features.microsoft_windows? do
         it "should fail in an informative way when trying to diff" do
           @dipper = Puppet::FileBucket::Dipper.new(:Path => tmpdir("bucket"))
@@ -134,6 +134,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
       end
     end
   end
+
   it "should fail in an informative way when there are failures listing files on the server" do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => "/unexistent/bucket")
     Puppet::FileBucket::File.indirection.expects(:find).returns nil
@@ -376,7 +377,6 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   end
 
   describe "#restore" do
-
     describe "when restoring from a remote server" do
       let(:klass) { Puppet::FileBucketFile::Rest }
       let(:server) { "puppetmaster" }

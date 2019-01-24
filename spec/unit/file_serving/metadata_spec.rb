@@ -477,7 +477,6 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
           expect(metadata.mode).to eq(0644)
         end
       end
-
     end
 
     def set_mode(mode, path)
@@ -485,7 +484,6 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
     end
   end
 end
-
 
 describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppet.features.manages_symlinks?, :uses_checksums => true do
   with_digest_algorithms do
@@ -503,18 +501,19 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
             :ftype => 'link', :mode => 0755)
           Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
         end
-
       end
 
       it "should store the destination of the link in :destination if links are :manage" do
         @file.collect
         expect(@file.destination).to eq("/some/other/path")
       end
+
       pending "should not collect the checksum if links are :manage" do
         # We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow.
         @file.collect
         expect(@file.checksum).to be_nil
       end
+
       it "should collect the checksum if links are :manage" do # see pending note above
         @file.collect
         expect(@file.checksum).to eq("{#{digest_algorithm}}#{checksum}")
@@ -537,10 +536,12 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
 
         @file.stubs("#{digest_algorithm}_file".intern).returns(checksum)
       end
+
       it "should not store the destination of the link in :destination if links are :follow" do
         @file.collect
         expect(@file.destination).to be_nil
       end
+
       it "should collect the checksum if links are :follow" do
         @file.collect
         expect(@file.checksum).to eq("{#{digest_algorithm}}#{checksum}")

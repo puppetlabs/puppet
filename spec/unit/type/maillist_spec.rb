@@ -34,7 +34,5 @@ describe maillist do
     generated = @maillist.generate
     expect(generated.map{ |x| x.name  }.sort).to eq(['test1', 'test3'])
     expect(generated.map{ |x| x.class }).to      eq([Puppet::Type::Mailalias, Puppet::Type::Mailalias])
-
   end
-
 end

@@ -643,7 +643,6 @@ describe 'the 4x function api' do
     end
   end
 
-
   def create_noargs_function_class
     Puppet::Functions.create_function('test') do
       def test()

@@ -97,6 +97,5 @@ describe processor do
         end
       end
     end
-
   end
 end

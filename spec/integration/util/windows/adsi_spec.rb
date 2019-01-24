@@ -69,7 +69,6 @@ describe Puppet::Util::Windows::ADSI::Group,
         original_codepage = Encoding.default_external
         Encoding.default_external = Encoding::CP850 # Western Europe
 
-
         Puppet::Util::Windows::ADSI::Group.each do |group|
           expect(group.name.encoding).to be(Encoding::UTF_8)
         end

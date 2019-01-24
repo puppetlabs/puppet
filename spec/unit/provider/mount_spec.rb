@@ -16,7 +16,6 @@ describe Puppet::Provider::Mount do
   end
 
   describe Puppet::Provider::Mount, " when mounting" do
-
     before :each do
       @mounter.stubs(:get).with(:ensure).returns(:mounted)
     end
@@ -66,11 +65,9 @@ describe Puppet::Provider::Mount do
       @mounter.expects(:set).with(:ensure => :ghost)
       @mounter.mount
     end
-
   end
 
   describe Puppet::Provider::Mount, " when remounting" do
-
     context "if the resource supports remounting" do
       context "given explicit options on AIX" do
         it "should combine the options with 'remount'" do
@@ -119,7 +116,6 @@ describe Puppet::Provider::Mount do
   end
 
   describe Puppet::Provider::Mount, " when unmounting" do
-
     before :each do
       @mounter.stubs(:get).with(:ensure).returns(:unmounted)
     end
@@ -142,11 +138,9 @@ describe Puppet::Provider::Mount do
       @mounter.expects(:set).with(:ensure => :unmounted)
       @mounter.unmount
     end
-
   end
 
   describe Puppet::Provider::Mount, " when determining if it is mounted" do
-
     it "should query the property_hash" do
       @mounter.expects(:get).with(:ensure).returns(:mounted)
       @mounter.mounted?
@@ -171,7 +165,5 @@ describe Puppet::Provider::Mount do
       @mounter.stubs(:get).with(:ensure).returns(:unmounted)
       @mounter.mounted? == false
     end
-
   end
-
 end

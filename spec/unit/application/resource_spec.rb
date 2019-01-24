@@ -5,6 +5,7 @@ require 'puppet_spec/character_encoding'
 
 describe Puppet::Application::Resource do
   include PuppetSpec::Files
+
   before :each do
     @resource_app = Puppet::Application[:resource]
     Puppet::Util::Log.stubs(:newdestination)
@@ -77,7 +78,6 @@ describe Puppet::Application::Resource do
       @resource_app.setup
       expect(Puppet::Log.level).to eq(:info)
     end
-
   end
 
   describe "when running" do

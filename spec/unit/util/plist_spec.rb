@@ -74,11 +74,13 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
       subject.expects(:convert_cfpropertylist_to_native_types).with('plist_object').returns('plist_hash')
       expect(subject.read_plist_file(plist_path)).to eq('plist_hash')
     end
+
     it "returns a valid hash when a valid XML plist is read" do
       subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(valid_xml_plist)
       expect(subject.read_plist_file(plist_path)).to eq(valid_xml_plist_hash)
     end
+
     it "raises a debug message and replaces a bad XML plist doctype should one be encountered" do
       subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(bad_xml_doctype)
@@ -87,6 +89,7 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
       Puppet.expects(:debug).with("Had to fix plist with incorrect DOCTYPE declaration: #{plist_path}")
       expect(subject.read_plist_file(plist_path)).to eq('plist_hash')
     end
+
     it "attempts to read pure xml using plutil when reading an improperly formatted service plist" do
       subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(invalid_xml_plist)
@@ -98,6 +101,7 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
         .returns(Puppet::Util::Execution::ProcessOutput.new(valid_xml_plist, 0))
       expect(subject.read_plist_file(plist_path)).to eq(valid_xml_plist_hash)
     end
+
     it "returns nil when direct parsing and plutil conversion both fail" do
       subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(non_plist_data)
@@ -109,6 +113,7 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
         .raises(Puppet::ExecutionFailure, 'boom')
       expect(subject.read_plist_file(plist_path)).to eq(nil)
     end
+
     it "returns nil when file is a non-plist binary blob" do
       subject.stubs(:read_file_with_offset).with(plist_path, 8).returns('notbinary')
       subject.stubs(:open_file_with_args).with(plist_path, 'r:UTF-8').returns(binary_data)
@@ -126,12 +131,14 @@ describe Puppet::Util::Plist, :if => Puppet.features.cfpropertylist? do
     it "returns a valid hash when a valid XML plist is provided" do
       expect(subject.parse_plist(valid_xml_plist)).to eq(valid_xml_plist_hash)
     end
+
     it "raises a debug message and replaces a bad XML plist doctype should one be encountered" do
       subject.expects(:new_cfpropertylist).with({:data => good_xml_doctype}).returns('plist_object')
       subject.stubs(:convert_cfpropertylist_to_native_types).with('plist_object')
       Puppet.expects(:debug).with("Had to fix plist with incorrect DOCTYPE declaration: #{plist_path}")
       subject.parse_plist(bad_xml_doctype, plist_path)
     end
+
     it "raises a debug message with malformed plist" do
       subject.stubs(:convert_cfpropertylist_to_native_types).with('plist_object')
       Puppet.expects(:debug).with(regexp_matches(/^Failed with CFFormatError/))

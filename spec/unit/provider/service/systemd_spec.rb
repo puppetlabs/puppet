@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:systemd) do
-
   if Puppet.features.microsoft_windows?
     # Get a pid for $CHILD_STATUS to latch on to
     command = "cmd.exe /c \"exit 0\""

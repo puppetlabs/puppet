@@ -478,6 +478,7 @@ class amod::bad_type {
           cat.resource(:notify, 'tspan')['message'].is_a?(String)
           cat.resource(:notify, 'tstamp')['message'].is_a?(String)
         end
+
         apply.run
       end
 
@@ -488,6 +489,7 @@ class amod::bad_type {
         apply.expects(:apply_catalog).with do |catalog|
           catalog.resource(:notify, 'bogus')['message'].is_a?(String)
         end
+
         apply.run
       end
 
@@ -517,9 +519,9 @@ class amod::bad_type {
           cat.resource(:notify, 'tspan')['message'].is_a?(Puppet::Pops::Time::Timespan)
           cat.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
         end
+
         apply.run
       end
     end
-
   end
 end

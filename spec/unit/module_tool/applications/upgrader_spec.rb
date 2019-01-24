@@ -327,6 +327,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
         end
       end
     end
+
     context 'when in FIPS mode...' do
       it 'module unpgrader refuses to run' do
         Facter.stubs(:value).with(:fips_enabled).returns(true)

@@ -3,7 +3,6 @@ require 'puppet/pops'
 require 'puppet/loaders'
 
 describe "the versioncmp function" do
-
   before(:all) do
     loaders = Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))
     Puppet.push_context({:loaders => loaders}, "test-examples")

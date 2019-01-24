@@ -2,7 +2,6 @@ require 'spec_helper'
 
 require 'puppet/util/monkey_patches'
 
-
 describe Symbol do
   after :all do
     $unique_warnings.delete('symbol_comparison') if $unique_warnings

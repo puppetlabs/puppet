@@ -127,5 +127,4 @@ describe Puppet::Util do
       end
     end
   end
-
 end

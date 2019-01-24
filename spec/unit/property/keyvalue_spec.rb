@@ -2,7 +2,6 @@ require 'spec_helper'
 
 require 'puppet/property/keyvalue'
 
-
 describe 'Puppet::Property::KeyValue' do 
   let(:klass) { Puppet::Property::KeyValue }
 

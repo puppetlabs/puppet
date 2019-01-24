@@ -13,6 +13,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
   describe "#install" do
    describe "a package not installed" do
     before { resource[:ensure] = :absent }
+
     it "uses pkgin install to install" do
       subject.expects(:pkgin).with("-y", :install, "vim").once()
       subject.install
@@ -21,6 +22,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
 
    describe "a package with a fixed version" do
     before { resource[:ensure] = '7.2.446' }
+
     it "uses pkgin install to install a fixed version" do
       subject.expects(:pkgin).with("-y", :install, "vim-7.2.446").once()
       subject.install

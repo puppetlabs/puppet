@@ -283,7 +283,7 @@ describe Puppet::Resource do
 
     it "should fail when asked to set default values and it is not a parser resource" do
       environment.known_resource_types.add(
-      Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("default")})
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_leaf("default")})
       )
       resource = Puppet::Resource.new("default_param", "name", :environment => environment)
       expect { resource.set_default_parameters(scope) }.to raise_error(Puppet::DevError)

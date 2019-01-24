@@ -74,7 +74,6 @@ describe Puppet::Util::NetworkDevice::Cisco::Interface do
       @transport.expects(:command).with("ipv6 address fe08::/76 link-local")
       @interface.execute(:ipaddress, [[76, IPAddr.new('fe08::'), 'link-local']])
     end
-
   end
 
   describe "when sending commands to the device" do

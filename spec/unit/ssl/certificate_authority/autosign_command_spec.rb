@@ -3,7 +3,6 @@ require 'spec_helper'
 require 'puppet/ssl/certificate_authority/autosign_command'
 
 describe Puppet::SSL::CertificateAuthority::AutosignCommand do
-
   let(:csr) { stub 'csr', :name => 'host', :to_s => 'CSR PEM goes here' }
   let(:decider) { Puppet::SSL::CertificateAuthority::AutosignCommand.new('/autosign/command') }
 

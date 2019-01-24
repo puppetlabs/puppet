@@ -61,7 +61,6 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
     end
 
     describe "and adding a certificate" do
-
       it "should use the Settings to write to the file" do
         Puppet.settings.setting(:cert_inventory).expects(:open).with('a:UTF-8')
 

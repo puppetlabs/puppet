@@ -1,11 +1,8 @@
 require 'spec_helper'
 
 require 'puppet_spec/handler'
-
 require 'puppet/indirector_testing'
-
 require 'puppet/network/authorization'
-
 require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::Handler do

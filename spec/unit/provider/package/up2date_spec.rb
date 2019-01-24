@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe 'up2date package provider' do
-
   # This sets the class itself as the subject rather than
   # an instance of the class.
   subject do

@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:init) do
-
   if Puppet.features.microsoft_windows?
     # Get a pid for $CHILD_STATUS to latch on to
     cmd = "cmd.exe /c \"exit 0\""
@@ -158,6 +157,7 @@ describe Puppet::Type.type(:service).provider(:init) do
       it "should have a #{method} method" do
         expect(provider).to respond_to(method)
       end
+
       describe "when running #{method}" do
         before :each do
           $CHILD_STATUS.stubs(:exitstatus).returns(0)
@@ -185,16 +185,19 @@ describe Puppet::Type.type(:service).provider(:init) do
         before :each do
           resource[:hasstatus] = :true
         end
+
         it "should execute the command" do
           provider.expects(:texecute).with(:status, ['/service/path/myservice', :status], false).returns("")
           $CHILD_STATUS.stubs(:exitstatus).returns(0)
           provider.status
         end
+
         it "should consider the process running if the command returns 0" do
           provider.expects(:texecute).with(:status, ['/service/path/myservice', :status], false).returns("")
           $CHILD_STATUS.stubs(:exitstatus).returns(0)
           expect(provider.status).to eq(:running)
         end
+
         [-10,-1,1,10].each { |ec|
           it "should consider the process stopped if the command returns something non-0" do
             provider.expects(:texecute).with(:status, ['/service/path/myservice', :status], false).returns("")
@@ -203,6 +206,7 @@ describe Puppet::Type.type(:service).provider(:init) do
           end
         }
       end
+
       describe "when hasstatus is not :true" do
         before :each do
           resource[:hasstatus] = :false
@@ -212,6 +216,7 @@ describe Puppet::Type.type(:service).provider(:init) do
           provider.expects(:getpid).returns "1234"
           expect(provider.status).to eq(:running)
         end
+
         it "should consider the service :stopped if it doesn't have a pid" do
           provider.expects(:getpid).returns nil
           expect(provider.status).to eq(:stopped)

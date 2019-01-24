@@ -1,4 +1,3 @@
-
 shared_examples_for 'all iterative functions hash handling' do |func|
   it 'passes a hash entry as an array of the key and value' do
     catalog = compile_to_catalog(<<-MANIFEST)

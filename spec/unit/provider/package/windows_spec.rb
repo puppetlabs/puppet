@@ -1,11 +1,11 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:windows), :if => Puppet.features.microsoft_windows? do
-  let (:name)        { 'mysql-5.1.58-win-x64' }
-  let (:source)      { 'E:\Rando\Directory\mysql-5.1.58-win-x64.msi' }
-  let (:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :windows, :source => source) }
-  let (:provider)    { resource.provider }
-  let (:execute_options) do {:failonfail => false, :combine => true, :suppress_window => true} end
+  let(:name)        { 'mysql-5.1.58-win-x64' }
+  let(:source)      { 'E:\Rando\Directory\mysql-5.1.58-win-x64.msi' }
+  let(:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :windows, :source => source) }
+  let(:provider)    { resource.provider }
+  let(:execute_options) do {:failonfail => false, :combine => true, :suppress_window => true} end
 
   before :each do
     # make sure we never try to execute anything

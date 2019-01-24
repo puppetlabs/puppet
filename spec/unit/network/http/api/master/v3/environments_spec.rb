@@ -59,5 +59,4 @@ describe Puppet::Network::HTTP::API::Master::V3::Environments do
 
     expect(response.body).to validate_against('api/schemas/environments.json')
   end
-
 end

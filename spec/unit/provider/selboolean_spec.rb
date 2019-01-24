@@ -31,5 +31,4 @@ describe provider_class do
     @provider.expects(:execpipe).with("/usr/sbin/setsebool -P foo off")
     @provider.value = :off
   end
-
 end

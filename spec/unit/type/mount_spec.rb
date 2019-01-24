@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows? do
-
   before :each do
     Puppet::Type.type(:mount).stubs(:defaultprovider).returns providerclass
   end
@@ -63,7 +62,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   describe "when validating values" do
-
     describe "for name" do
       it "should allow full qualified paths" do
         expect(described_class.new(:name => "/mnt/foo")[:name]).to eq('/mnt/foo')
@@ -300,7 +298,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
     end
   end
 
-
   describe "when changing the host" do
     def test_ensure_change(options)
       provider.set(:ensure => options[:from])
@@ -358,7 +355,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       test_ensure_change(:from => :unmounted, :to => :mounted, :mount => 1)
     end
 
-
     it "should be in sync if it is :absent and should be :absent" do
       ensureprop.should = :absent
       expect(ensureprop.safe_insync?(:absent)).to eq(true)
@@ -399,7 +395,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       expect(ensureprop.safe_insync?(:mounted)).to eq(false)
     end
 
-
     it "should be out of sync if it is :unmounted and should be :absent" do
       ensureprop.should = :absent
       expect(ensureprop.safe_insync?(:unmounted)).to eq(false)
@@ -419,7 +414,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       ensureprop.should = :unmounted
       expect(ensureprop.safe_insync?(:unmounted)).to eq(true)
     end
-
 
     it "should be out of sync if it is :ghost and should be :absent" do
       ensureprop.should = :absent
@@ -490,7 +484,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   describe "when modifying an existing mount entry" do
-
     let :initial_values do
       {
         :ensure      => :mounted,
@@ -504,7 +497,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
         :atboot      => :no,
       }
     end
-
 
     let :resource do
       described_class.new(initial_values.merge(:provider => provider))
@@ -545,7 +537,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   describe "establishing autorequires and autobefores" do
-
     def create_mount_resource(path)
       described_class.new(
         :name => path,

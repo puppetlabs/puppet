@@ -138,7 +138,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
         end
 
         it "should log to syslog when the master is daemonized" do
-
           Puppet::Util::Log.expects(:newdestination).with(:console).never
           Puppet::Util::Log.expects(:newdestination).with(:syslog)
           Puppet[:daemonize] = true
@@ -181,7 +180,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
     end
 
     describe "with no ca" do
-
       it "should set the ca_location to none" do
         Puppet::SSL::Host.expects(:ca_location=).with(:none)
 
@@ -191,7 +189,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
     end
 
     describe "with a ca configured" do
-
       before :each do
         Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(true)
       end

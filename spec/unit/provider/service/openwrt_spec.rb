@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.posix? do
-
   let(:resource) do
     resource = stub 'resource'
     resource.stubs(:[]).returns(nil)
@@ -17,7 +16,6 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
 
     provider
   end
-
 
   before :each do
     resource.stubs(:provider).returns provider
@@ -42,7 +40,6 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
 
   # test self.instances
   describe "when getting all service instances" do
-
     let(:services) {['dnsmasq', 'dropbear', 'firewall', 'led', 'puppet', 'uhttpd' ]}
 
     before :each do
@@ -50,6 +47,7 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
       FileTest.stubs(:directory?).returns(true)
       FileTest.stubs(:executable?).returns(true)
     end
+
     it "should return instances for all services" do
       services.each do |inst|
         described_class.expects(:new).with{|hash| hash[:name] == inst && hash[:path] == '/etc/init.d'}.returns("#{inst}_instance")
@@ -75,8 +73,8 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
     it "should have a #{method} method" do
       expect(provider).to respond_to(method)
     end
-    describe "when running #{method}" do
 
+    describe "when running #{method}" do
       it "should use any provided explicit command" do
         resource.stubs(:[]).with(method).returns "/user/specified/command"
         provider.expects(:execute).with { |command, *args| command == ["/user/specified/command"] }
@@ -96,10 +94,10 @@ describe Puppet::Type.type(:service).provider(:openwrt), :if => Puppet.features.
       provider.expects(:getpid).returns "1234"
       expect(provider.status).to eq(:running)
     end
+
     it "should consider the service :stopped if it doesn't have a pid" do
       provider.expects(:getpid).returns nil
       expect(provider.status).to eq(:stopped)
     end
   end
-
 end

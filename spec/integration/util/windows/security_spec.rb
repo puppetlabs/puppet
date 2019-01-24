@@ -11,7 +11,6 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   include PuppetSpec::Files
 
   before :all do
-
     # necessary for localized name of guests
     guests_name = Puppet::Util::Windows::SID.sid_to_name('S-1-5-32-546')
     guests = Puppet::Util::Windows::ADSI::Group.new(guests_name)

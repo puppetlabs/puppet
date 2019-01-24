@@ -112,7 +112,6 @@ describe Puppet::Application::Doc do
   end
 
   describe "during setup" do
-
     before :each do
       Puppet::Log.stubs(:newdestination)
       @doc.command_line.stubs(:args).returns([])

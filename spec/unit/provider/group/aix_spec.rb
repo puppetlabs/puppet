@@ -9,6 +9,7 @@ describe 'Puppet::Type::Group::Provider::Aix' do
       :ensure => :present
     )
   end
+
   let(:provider) do
     provider_class.new(resource)
   end

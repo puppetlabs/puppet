@@ -228,6 +228,7 @@ describe Puppet::Indirector::Indirection do
 
         @indirection.find("/my/key")
       end
+
       describe "when caching is enabled" do
         before do
           @indirection.cache_class = :cache_terminus

@@ -82,7 +82,6 @@ describe Puppet::SSL::Certificate do
   end
 
   describe "when managing instances" do
-
     def build_cert(opts)
       key = Puppet::SSL::Key.new('quux')
       key.generate
@@ -141,7 +140,6 @@ describe Puppet::SSL::Certificate do
         cert = build_cert(:dns_alt_names => 'foo')
         expect(cert.custom_extensions).to be_empty
       end
-
     end
 
     it "should return a nil expiration if there is no actual certificate" do
@@ -184,6 +182,5 @@ describe Puppet::SSL::Certificate do
       expect(exts.find { |ext| ext['oid'] == 'pp_instance_id'}['value']).to eq('i_am_an_id')
       expect(exts.find { |ext| ext['oid'] == 'pp_image_name'}['value']).to eq('i_am_an_image_name')
     end
-
   end
 end

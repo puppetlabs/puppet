@@ -226,5 +226,4 @@ describe Puppet::Face[:generate, :current] do
   def from_an_interactive_terminal
     STDIN.stubs(:tty?).returns(true)
   end
-
 end

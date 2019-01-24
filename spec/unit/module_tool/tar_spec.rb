@@ -2,7 +2,6 @@ require 'spec_helper'
 require 'puppet/module_tool/tar'
 
 describe Puppet::ModuleTool::Tar do
-
   [
     { :name => 'ObscureLinuxDistro', :win => false }, 
     { :name => 'Windows', :win => true }

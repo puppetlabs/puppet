@@ -27,16 +27,19 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       provider.expects(:jobsearch).with(nil).returns({joblabel => "/Library/LaunchDaemons/#{joblabel}"})
       provider.prefetch({})
     end
+
     it "should return stopped if not listed in launchctl list output" do
       provider.expects(:launchctl).with(:list).returns('com.bar.is_running')
       provider.expects(:jobsearch).with(nil).returns({'com.bar.is_not_running' => "/Library/LaunchDaemons/com.bar.is_not_running"})
       expect(provider.prefetch({}).last.status).to eq :stopped
     end
+
     it "should return running if listed in launchctl list output" do
       provider.expects(:launchctl).with(:list).returns('com.bar.is_running')
       provider.expects(:jobsearch).with(nil).returns({'com.bar.is_running' => "/Library/LaunchDaemons/com.bar.is_running"})
       expect(provider.prefetch({}).last.status).to eq :running
     end
+
     after :each do
       provider.instance_variable_set(:@job_list, nil)
     end
@@ -76,6 +79,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
         expect(subject.enabled?).to eq(:true)
       end
+
       it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
         provider.expects(:get_os_version).returns(kernel).at_least_once
         subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => false}])
@@ -83,6 +87,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         FileTest.expects(:file?).with(launchd_overrides_6_9).returns(true)
         expect(subject.enabled?).to eq(:false)
       end
+
       it "should return true if the job plist and the global overrides have no disabled keys" do
         provider.expects(:get_os_version).returns(kernel).at_least_once
         subject.expects(:plist_from_label).returns([joblabel, {}])
@@ -101,6 +106,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       FileTest.expects(:file?).with(launchd_overrides_10_).returns(true)
       expect(subject.enabled?).to eq(:true)
     end
+
     it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
       provider.expects(:get_os_version).returns(14).at_least_once
       subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => false}])
@@ -108,6 +114,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       FileTest.expects(:file?).with(launchd_overrides_10_).returns(true)
       expect(subject.enabled?).to eq(:false)
     end
+
     it "should return true if the job plist and the global overrides have no disabled keys" do
       provider.expects(:get_os_version).returns(14).at_least_once
       subject.expects(:plist_from_label).returns([joblabel, {}])
@@ -130,18 +137,21 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:execute).with([:launchctl, :load, "-w", joblabel])
       subject.start
     end
+
     it "should execute 'launchctl load' once without writing to the plist if the job is enabled" do
       subject.expects(:plist_from_label).returns([joblabel, {}])
       subject.expects(:enabled?).returns :true
       subject.expects(:execute).with([:launchctl, :load, "-w", joblabel]).once
       subject.start
     end
+
     it "should execute 'launchctl load' with writing to the plist once if the job is disabled" do
       subject.expects(:plist_from_label).returns([joblabel, {}])
       subject.expects(:enabled?).returns(:false)
       subject.expects(:execute).with([:launchctl, :load, "-w", joblabel]).once
       subject.start
     end
+
     it "should disable the job once if the job is disabled and should be disabled at boot" do
       resource[:enable] = false
       subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => true}])
@@ -150,6 +160,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:disable).once
       subject.start
     end
+
     it "(#2773) should execute 'launchctl load -w' if the job is enabled but stopped" do
       subject.expects(:plist_from_label).returns([joblabel, {}])
       subject.expects(:enabled?).returns(:true)
@@ -208,6 +219,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:execute).with([:launchctl, :unload, joblabel])
       subject.stop
     end
+
     it "should check if the job is enabled once" do
       resource[:enable] = true
       subject.expects(:plist_from_label).returns([joblabel, {}]).once
@@ -276,6 +288,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         provider.send(:remove_instance_variable, :@label_to_path_map)
       end
     end
+
     describe "when encountering malformed plists" do
       let(:plist_without_label) do
         {
@@ -294,23 +307,28 @@ describe Puppet::Type.type(:service).provider(:launchd) do
         provider.make_label_to_path_map
       end
     end
+
     it "should return the cached value when available" do
       provider.instance_variable_set(:@label_to_path_map, {'xx'=>'yy'})
       expect(provider.make_label_to_path_map).to eq({'xx'=>'yy'})
     end
+
     describe "when successful" do
       let(:launchd_dir) { '/Library/LaunchAgents' }
       let(:plist) { launchd_dir + '/foo.bar.service.plist' }
       let(:label) { 'foo.bar.service' }
+
       before do
         provider.instance_variable_set(:@label_to_path_map, nil)
         provider.expects(:launchd_paths).returns([launchd_dir])
         provider.expects(:return_globbed_list_of_file_paths).with(launchd_dir).returns([plist])
         plistlib.expects(:read_plist_file).with(plist).returns({'Label'=>'foo.bar.service'})
       end
+
       it "should read the plists and return their contents" do
         expect(provider.make_label_to_path_map).to eq({label=>plist})
       end
+
       it "should re-read the plists and return their contents when refreshed" do
         provider.instance_variable_set(:@label_to_path_map, {'xx'=>'yy'})
         expect(provider.make_label_to_path_map(true)).to eq({label=>plist})
@@ -325,15 +343,18 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       provider.expects(:make_label_to_path_map).returns(map)
       expect(provider.jobsearch).to eq(map)
     end
+
     it "returns a singleton hash when given a label" do
       provider.expects(:make_label_to_path_map).returns(map)
       expect(provider.jobsearch("org.mozilla.puppet")).to eq({ "org.mozilla.puppet" => "/path/to/puppet.plist" })
     end
+
     it "refreshes the label_to_path_map when label is not found" do
       provider.expects(:make_label_to_path_map).with().returns({})
       provider.expects(:make_label_to_path_map).with(true).returns(map)
       expect(provider.jobsearch("org.mozilla.puppet")).to eq({ "org.mozilla.puppet" => "/path/to/puppet.plist" })
     end
+
     it "raises Puppet::Error when the label is still not found" do
       provider.expects(:make_label_to_path_map).with().returns(map)
       provider.expects(:make_label_to_path_map).with(true).returns(map)
@@ -345,18 +366,21 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     before do
       Kernel.stubs(:sleep)
     end
+
     it "should read overrides" do
       provider.expects(:read_plist).once.returns({})
       expect(provider.read_overrides).to eq({})
     end
+
     it "should retry if read_plist fails" do
       provider.expects(:read_plist).once.returns({})
       provider.expects(:read_plist).once.returns(nil)
       expect(provider.read_overrides).to eq({})
     end
+
     it "raises Puppet::Error after 20 attempts" do
       provider.expects(:read_plist).times(20).returns(nil)
       expect { provider.read_overrides }.to raise_error(Puppet::Error)
     end
- end
+  end
 end

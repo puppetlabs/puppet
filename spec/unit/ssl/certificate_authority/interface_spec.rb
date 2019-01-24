@@ -55,6 +55,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
   before do
     @class = Puppet::SSL::CertificateAuthority::Interface
   end
+
   describe "when initializing" do
     it "should set its method using its settor" do
       instance = @class.new(:generate, :to => :all)

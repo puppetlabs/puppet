@@ -266,7 +266,6 @@ describe Puppet::Application::Agent do
 
         @puppetd.setup_logs
       end
-
     end
 
     it "should print puppet config if asked to in Puppet config" do
@@ -469,7 +468,6 @@ describe Puppet::Application::Agent do
     end
   end
 
-
   describe "when running" do
     before :each do
       @puppetd.options[:fingerprint] = false
@@ -500,7 +498,6 @@ describe Puppet::Application::Agent do
     end
 
     describe "with --onetime" do
-
       before :each do
         @agent.stubs(:run).returns(:report)
         Puppet[:onetime] = true

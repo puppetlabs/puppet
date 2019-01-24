@@ -2,7 +2,6 @@ require 'spec_helper'
 require 'puppet/pops'
 
 describe Puppet::Pops::Parser::Locator do
-
   it "multi byte characters in a comment does not interfere with AST node text extraction" do
     parser = Puppet::Pops::Parser::Parser.new()
     model = parser.parse_string("# \u{0400}comment\nabcdef#XXXXXXXXXX").model

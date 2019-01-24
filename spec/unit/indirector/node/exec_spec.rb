@@ -26,6 +26,7 @@ describe Puppet::Node::Exec do
     let(:testing_env) { Puppet::Node::Environment.create(:testing, []) }
     let(:other_env) { Puppet::Node::Environment.create(:other, []) }
     let(:request) { Puppet::Indirector::Request.new(:node, :find, @name, nil) }
+
     before do
       @name = "yay"
       @node = Puppet::Node.new(@name)

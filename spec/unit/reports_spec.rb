@@ -28,7 +28,6 @@ describe Puppet::Reports do
   end
 end
 
-
 describe Puppet::Reports, " when loading report types" do
   it "should use the instance loader to retrieve report types" do
     Puppet::Reports.expects(:loaded_instance).with(:report, :myreporttype)

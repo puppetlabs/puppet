@@ -122,7 +122,6 @@ describe Puppet::Type.type(:package).provider(:opkg) do
   end
 
   describe "when querying" do
-
     describe "self.instances" do
       let (:packages) do
         <<-OPKG_OUTPUT
@@ -131,6 +130,7 @@ kernel - 3.3.8-1-ba5cdb2523b4fc7722698b4a7ece6702
 uhttpd - 2012-10-30-e57bf6d8bfa465a50eea2c30269acdfe751a46fd
 OPKG_OUTPUT
       end
+
       it "returns an array of packages" do
         Puppet::Util.stubs(:which).with("opkg").returns("/bin/opkg")
         described_class.stubs(:which).with("opkg").returns("/bin/opkg")

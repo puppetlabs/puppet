@@ -33,7 +33,6 @@ describe provider_class do
       @device.expects(:parse_vlans).returns({"200" => { :description => "thisone" }, "1" => { :description => "nothisone" }})
       expect(provider_class.lookup(@device, "200")).to eq({:description => "thisone" })
     end
-
   end
 
   describe "when an instance is being flushed" do

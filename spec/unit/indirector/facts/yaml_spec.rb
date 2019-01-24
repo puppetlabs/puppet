@@ -67,7 +67,6 @@ describe Puppet::Node::Facts::Yaml do
       )
     end
 
-
     it "should return node names that match the search query options with the greater than operator" do
       assert_search_matches({
           '/path/to/matching.yaml'  => Puppet::Node::Facts.new("matchingnode",  "architecture" => "i386",    'processor_count' => '5'),

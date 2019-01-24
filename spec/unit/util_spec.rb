@@ -97,7 +97,6 @@ describe Puppet::Util do
   end
 
   describe "#withenv on Windows", :if => Puppet.features.microsoft_windows? do
-
     let(:process) { Puppet::Util::Windows::Process }
 
     it "should ignore case" do
@@ -120,7 +119,6 @@ describe Puppet::Util do
         ENV.delete(env_key)
       end
     end
-
 
     def withenv_utf8(&block)
       env_var_name = SecureRandom.uuid
@@ -147,8 +145,6 @@ describe Puppet::Util do
     # document buggy Ruby behavior here for https://bugs.ruby-lang.org/issues/8822
     # Ruby retrieves / stores ENV names in the current codepage
     # when these tests no longer pass, Ruby has fixed its bugs and workarounds can be removed
-
-
     # interestingly we would expect some of these tests to fail when codepage is 65001
     # but instead the env values are in Encoding::ASCII_8BIT!
     it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby <= 2.1) ",
@@ -823,6 +819,7 @@ describe Puppet::Util do
 
   context "#replace_file" do
     subject { Puppet::Util }
+
     it { is_expected.to respond_to :replace_file }
 
     let :target do
@@ -893,7 +890,7 @@ describe Puppet::Util do
       subject.replace_file(temp_path, 0440) do |fh|
         fh.puts('some text in there')
       end
-      
+
       expect(File.read(temp_path)).to eq("some text in there\n")
       expect(get_mode(temp_path)).to eq(0440)
     end
@@ -970,7 +967,6 @@ describe Puppet::Util do
   end
 
   describe "#deterministic_rand" do
-
     it "should not fiddle with future rand calls" do
       Puppet::Util.deterministic_rand(123,20)
       rand_one = rand()

@@ -20,7 +20,6 @@ describe "A catalog" do
     end
 
     context "when transmitted to the agent" do
-
       it "preserves the order in which the resources are added to the catalog" do
         resources_in_declaration_order = ["Class[First]",
                                           "Second[position]",

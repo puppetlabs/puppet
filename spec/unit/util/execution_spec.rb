@@ -5,10 +5,12 @@ require 'puppet_spec/character_encoding'
 
 describe Puppet::Util::Execution do
   include Puppet::Util::Execution
+
   # utility methods to help us test some private methods without being quite so verbose
   def call_exec_posix(command, arguments, stdin, stdout, stderr)
     Puppet::Util::Execution.send(:execute_posix, command, arguments, stdin, stdout, stderr)
   end
+
   def call_exec_windows(command, arguments, stdin, stdout, stderr)
     Puppet::Util::Execution.send(:execute_windows, command, arguments, stdin, stdout, stderr)
   end
@@ -30,7 +32,6 @@ describe Puppet::Util::Execution do
         Process.stubs(:waitpid2).with(pid).returns([pid, stub('child_status', :exitstatus => exitstatus)])
       end
     end
-
 
     describe "#execute_posix (stubs)", :unless => Puppet.features.microsoft_windows? do
       before :each do
@@ -229,6 +230,7 @@ describe Puppet::Util::Execution do
 
       describe "when setting up input and output files" do
         include PuppetSpec::Files
+
         let(:executor) { Puppet.features.microsoft_windows? ? 'execute_windows' : 'execute_posix' }
         let(:rval) { Puppet.features.microsoft_windows? ? proc_info_stub : pid }
 
@@ -453,7 +455,6 @@ describe Puppet::Util::Execution do
     end
 
     describe "#execute (posix locale)", :unless => Puppet.features.microsoft_windows?  do
-
       before :each do
         # there is a danger here that ENV will be modified by exec_posix.  Normally it would only affect the ENV
         #  of a forked process, but, in some of the previous tests in this file we're stubbing Kernel.fork., which could
@@ -471,7 +472,6 @@ describe Puppet::Util::Execution do
         @saved_env.each_pair { |key,val| expect(cur_env[key]).to eq(val) }
         expect(cur_env.keys - @saved_env.keys).to eq([])
       end
-
 
       # build up a printf-style string that contains a command to get the value of an environment variable
       # from the operating system.  We can substitute into this with the names of the desired environment variables later.
@@ -573,7 +573,6 @@ describe Puppet::Util::Execution do
             # ensure that after the exec, our temporary env is still intact
             expect(ENV[var]).to eq(user_sentinel_env[var])
           end
-
         end
       end
 
@@ -599,7 +598,6 @@ describe Puppet::Util::Execution do
             expect(ENV[var]).to eq(user_sentinel_env[var])
           end
         end
-
       end
     end
 
@@ -618,34 +616,42 @@ describe Puppet::Util::Execution do
         Puppet::Util::Execution.expects(:debug).with("Executing: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello')
       end
+
       it "should log numeric uid if specified" do
         Puppet::Util::Execution.expects(:debug).with("Executing with uid=100: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 100})
       end
+
       it "should log numeric gid if specified" do
         Puppet::Util::Execution.expects(:debug).with("Executing with gid=500: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:gid => 500})
       end
+
       it "should log numeric uid and gid if specified" do
         Puppet::Util::Execution.expects(:debug).with("Executing with uid=100 gid=500: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 100, :gid => 500})
       end
+
       it "should log string uid if specified" do
         Puppet::Util::Execution.expects(:debug).with("Executing with uid=myuser: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 'myuser'})
       end
+
       it "should log string gid if specified" do
         Puppet::Util::Execution.expects(:debug).with("Executing with gid=mygroup: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:gid => 'mygroup'})
       end
+
       it "should log string uid and gid if specified" do
         Puppet::Util::Execution.expects(:debug).with("Executing with uid=myuser gid=mygroup: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 'myuser', :gid => 'mygroup'})
       end
+
       it "should log numeric uid and string gid if specified" do
         Puppet::Util::Execution.expects(:debug).with("Executing with uid=100 gid=mygroup: 'echo hello'")
         Puppet::Util::Execution.execute('echo hello', {:uid => 100, :gid => 'mygroup'})
       end
+
       it 'should redact commands in debug output when passed sensitive option' do
         Puppet::Util::Execution.expects(:debug).with("Executing: '[redacted]'")
         Puppet::Util::Execution.execute('echo hello', {:sensitive => true})
@@ -741,6 +747,7 @@ describe Puppet::Util::Execution do
           expect(w.closed?)
         end
       end
+
       describe "on Windows", :if => Puppet.features.microsoft_windows? do
         context "reading the output" do
           before :each do

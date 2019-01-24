@@ -84,7 +84,6 @@ describe augeas do
   end
 
   describe "provider interaction" do
-
     it "should return 0 if it does not need to run" do
       provider = stub("provider", :need_to_run? => false)
       resource = stub('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)

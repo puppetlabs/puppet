@@ -2,7 +2,6 @@ require 'spec_helper'
 require 'puppet_spec/files'
 
 describe Puppet::Type.type(:yumrepo).provider(:inifile) do
-
   include PuppetSpec::Files
 
   after(:each) do
@@ -103,9 +102,7 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
   end
 
   describe "retrieving a section from the inifile" do
-
     let(:collection) { stub('ini file collection') }
-
     let(:ini_section) { stub('ini file section') }
 
     before do
@@ -147,7 +144,6 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
   end
 
   describe "setting and getting properties" do
-
     let(:type_instance) do
       Puppet::Type.type(:yumrepo).new(
         :name     => 'puppetlabs-products',

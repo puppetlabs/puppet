@@ -98,9 +98,9 @@ describe 'Puppet::Type::User::Provider::Aix' do
 
   describe '#gid=' do
     let(:value) { 'new_pgrp' }
-
     let(:old_pgrp) { 'old_pgrp' }
     let(:cur_groups) { 'system,adm' }
+
     before(:each) do
       provider.stubs(:gid).returns(old_pgrp)
       provider.stubs(:groups).returns(cur_groups)

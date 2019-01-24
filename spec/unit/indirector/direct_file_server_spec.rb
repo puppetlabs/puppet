@@ -39,7 +39,6 @@ describe Puppet::Indirector::DirectFileServer do
   end
 
   describe Puppet::Indirector::DirectFileServer, "when creating the instance for a single found file" do
-
     before do
       @data = mock 'content'
       @data.stubs(:collect)

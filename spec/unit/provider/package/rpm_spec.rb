@@ -66,6 +66,7 @@ describe provider_class do
 
     describe "with a version of RPM < 4.1" do
       let(:rpm_version) { "RPM version 4.0.2\n" }
+
       it "excludes the --nosignature flag" do
         Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa  --nodigest --qf '#{nevra_format}'").yields(packages)
 
@@ -75,6 +76,7 @@ describe provider_class do
 
     describe "with a version of RPM < 4.0.2" do
       let(:rpm_version) { "RPM version 3.0.5\n" }
+
       it "excludes the --nodigest flag" do
         Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa   --qf '#{nevra_format}'").yields(packages)
 
@@ -312,7 +314,6 @@ describe provider_class do
     let(:line) { 'name epoch version release arch' }
 
     ['name', 'epoch', 'version', 'release', 'arch'].each do |field|
-
       it "still parses if #{field} is replaced by delimiter" do
         parser_test(
           line.gsub(field, delimiter),
@@ -322,7 +323,6 @@ describe provider_class do
           )
         )
       end
-
     end
 
     it "does not fail if line is unparseable, but issues a debug log" do
@@ -453,7 +453,6 @@ describe provider_class do
   end
 
   describe 'version comparison' do
-
     # test cases munged directly from rpm's own
     # tests/rpmvercmp.at
     it { expect(provider.rpmvercmp("1.0", "1.0")).to eq(0) }
@@ -537,7 +536,6 @@ describe provider_class do
   end
 
   describe 'package evr parsing' do
-
     it 'should parse full simple evr' do
       v = provider.rpm_parse_evr('0:1.2.3-4.el5')
       expect(v[:epoch]).to eq('0')
@@ -594,11 +592,9 @@ describe provider_class do
       expect(v[:version]).to eq('2.2')
       expect(v[:release]).to eq('SNAPSHOT20121119105647')
     end
-
   end
 
   describe 'rpm evr comparison' do
-
     # currently passing tests
     it 'should evaluate identical version-release as equal' do
       v = provider.rpm_compareEVR({:epoch => '0', :version => '1.2.3', :release => '1.el5'},
@@ -642,11 +638,9 @@ describe provider_class do
       expect(provider.rpm_compareEVR({:epoch => '0', :version => '2.2', :release => '405'},
                                {:epoch => '0', :version => '2.2', :release => '406'})).to eq(-1)
     end
-
   end
 
   describe 'version segment comparison' do
-
     it 'should treat two nil values as equal' do
       v = provider.compare_values(nil, nil)
       expect(v).to eq(0)
@@ -667,7 +661,5 @@ describe provider_class do
       provider.expects(:rpmvercmp).with('s1', 's2')
       provider.compare_values('s1', 's2')
     end
-
   end
-
 end

@@ -516,7 +516,7 @@ describe 'Puppet Pal' do
 
     # TODO: there is something amiss with the metadata wrt dependencies - when metadata is present there is an error
     #       that dependencies could not be resolved. Metadata is therefore commented out.
-    #       Dependency based visibility is probably something that we should remove... 
+    #       Dependency based visibility is probably something that we should remove...
     let(:modules) {
       {
         'a' => {
