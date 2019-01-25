@@ -41,6 +41,12 @@ task(:gen_cert_fixtures) do
   save(dir, 'signed.pem', signed[:cert])
   save(dir, 'signed-key.pem', signed[:private_key])
 
+  # encrypted key for 'signed'
+  save(dir, 'encrypted-key.pem', signed[:private_key]) do |x509|
+    # private key password was chosen at random
+    x509.to_pem(OpenSSL::Cipher::AES.new(128, :CBC), '74695716c8b6')
+  end
+
   # pending request, we don't need its private key
   request = ca.create_request('pending')
   save(dir, 'request.pem', request[:csr])

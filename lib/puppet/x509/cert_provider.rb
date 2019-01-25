@@ -114,7 +114,8 @@ class Puppet::X509::CertProvider
   # @raise [OpenSSL::PKey::RSAError] The `pem` text does not contain a valid key
   # @api private
   def load_private_key_from_pem(pem)
-    OpenSSL::PKey::RSA.new(pem)
+    # set a non-nil passphrase to ensure openssl doesn't prompt
+    OpenSSL::PKey::RSA.new(pem, '')
   end
 
   # Save a named client cert to the configured `certdir`.
