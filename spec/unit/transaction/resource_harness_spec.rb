@@ -601,4 +601,30 @@ describe Puppet::Transaction::ResourceHarness do
     Puppet::Util::Storage.expects(:cache).with(@resource).returns data
     expect(@harness.cached(@resource, :foo)).to eq("other")
   end
+
+  describe "successful event message" do
+    let(:test_file) do
+      tmpfile('foo').tap do |path|
+        File.open(path, 'w') { |fh| fh.write("old contents") }
+      end
+    end
+
+    let(:resource) do
+      Puppet::Type.type(:file).new(:path => test_file, :backup => false, :content => "hello world")
+    end
+
+    it "contains (corrective) when corrective change" do
+      Puppet::Transaction::Event.any_instance.stubs(:corrective_change).returns(true)
+      status = @harness.evaluate(resource)
+      sync_event = status.events[0]
+      expect(sync_event.message).to match(/content changed '{md5}[0-9a-f]+' to '{md5}[0-9a-f]+' \(corrective\)/)
+    end
+
+    it "contains no modifier when intentional change" do
+      Puppet::Transaction::Event.any_instance.stubs(:corrective_change).returns(false)
+      status = @harness.evaluate(resource)
+      sync_event = status.events[0]
+      expect(sync_event.message).to match(/content changed '{md5}[0-9a-f]+' to '{md5}[0-9a-f]+'$/)
+    end
+  end
 end

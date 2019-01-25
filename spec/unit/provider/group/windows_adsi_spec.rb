@@ -251,7 +251,13 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet::Util:
         'user3',
       ]
 
-      expect(provider.members).to match_array([user1.sid, user2.sid, user3.sid])
+      expected_member_sids = [user1.sid, user2.sid, user3.sid]
+      expected_members = ['user1', 'user2', 'user3']
+      provider.stubs(:members_to_s)
+        .with(expected_member_sids)
+        .returns(expected_members.join(','))
+
+      expect(provider.members).to match_array(expected_members)
     end
 
     it "should be able to set group members" do

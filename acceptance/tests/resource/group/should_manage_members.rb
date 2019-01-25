@@ -150,6 +150,8 @@ RUBY
     # we should consider placing them in a separate file.
     case agent['platform']
     when /windows/
+      domain = on(agent, 'hostname').stdout.chomp.upcase
+
       step "(Windows) Verify that Puppet prints each group member as DOMAIN\\<user>" do
         new_members = [users[3]]
 
@@ -159,9 +161,18 @@ RUBY
 
           stdout = result.stdout.chomp
 
-          domain = on(agent, 'hostname').stdout.chomp.upcase
           group_members.each do |user|
             assert_match(/#{domain}\\#{user}/, stdout, "Puppet fails to print the group member #{user} as #{domain}\\#{user}")
+          end
+        end
+      end
+
+      step "(Windows) Verify that `puppet resource` prints each group member as DOMAIN\\<user>" do
+        on(agent, puppet('resource', 'group', group)) do |result|
+          stdout = result.stdout.chomp
+
+          group_members.each do |user|
+            assert_match(/#{domain}\\#{user}/, stdout, "`puppet resource` fails to print the group member #{user} as #{domain}\\#{user}")
           end
         end
       end
