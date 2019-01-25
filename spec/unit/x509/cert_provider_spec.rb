@@ -143,6 +143,15 @@ describe Puppet::X509::CertProvider do
 
         expect(provider.load_private_key('foo')).to be_nil
       end
+
+      context 'that are encrypted' do
+        it 'raises without a passphrase' do
+          # password is 74695716c8b6
+          expect {
+            provider.load_private_key('encrypted-key')
+          }.to raise_error(OpenSSL::PKey::RSAError, /Neither PUB key nor PRIV key/)
+        end
+      end
     end
 
     context 'certs' do
