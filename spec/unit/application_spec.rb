@@ -640,8 +640,15 @@ describe Puppet::Application do
     it "should log an exception that is raised" do
       our_exception = Puppet::DevError.new("test exception")
       Puppet::Util::Log.expects(:newdestination).with(test_arg).raises(our_exception)
-      Puppet.expects(:log_exception).with(our_exception)
+      Puppet.expects(:log_and_raise).with(our_exception, anything)
       @app.handle_logdest_arg(test_arg)
+    end
+
+    it "should exit when an exception is raised" do
+      our_exception = Puppet::DevError.new("test exception")
+      Puppet::Util::Log.expects(:newdestination).with(test_arg).raises(our_exception)
+      Puppet.expects(:log_and_raise).with(our_exception, anything).raises(our_exception)
+      expect { @app.handle_logdest_arg(test_arg) }.to raise_error(Puppet::DevError)
     end
 
     it "should set the new log destination" do
