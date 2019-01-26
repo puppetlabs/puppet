@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/util/pidlock'
 
-describe Puppet::Util::Pidlock do
+describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
   require 'puppet_spec/files'
   include PuppetSpec::Files
 
@@ -23,6 +23,11 @@ describe Puppet::Util::Pidlock do
 
     it "should become locked" do
       @lock.lock
+      if Puppet::Util::Platform.windows?
+        Puppet::Util::Windows::Process.stubs(:get_process_image_name_by_pid).with(@lock.lock_pid).returns('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+      else
+        Puppet::Util::Execution.stubs(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).returns('puppet')
+      end
       expect(@lock).to be_locked
     end
 
@@ -101,6 +106,11 @@ describe Puppet::Util::Pidlock do
   describe "#locked?" do
     it "should return true if locked" do
       @lock.lock
+      if Puppet::Util::Platform.windows?
+        Puppet::Util::Windows::Process.stubs(:get_process_image_name_by_pid).with(@lock.lock_pid).returns('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+      else
+        Puppet::Util::Execution.stubs(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).returns('puppet')
+      end
       expect(@lock).to be_locked
     end
 
@@ -146,6 +156,11 @@ describe Puppet::Util::Pidlock do
       end
 
       it "should replace with new locks" do
+        if Puppet::Util::Platform.windows?
+          Puppet::Util::Windows::Process.stubs(:get_process_image_name_by_pid).with(6789).returns('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+        else
+          Puppet::Util::Execution.stubs(:execute).with(['ps', '-p', 6789, '-o', 'comm=']).returns('puppet')
+        end
         @lock.lock
         expect(Puppet::FileSystem.exist?(@lockfile)).to be_truthy
         expect(@lock.lock_pid).to eq(6789)
@@ -170,6 +185,11 @@ describe Puppet::Util::Pidlock do
     before(:each) do
       # fake our pid to be 1234
       Process.stubs(:pid).returns(1234)
+      if Puppet::Util::Platform.windows?
+        Puppet::Util::Windows::Process.stubs(:get_process_image_name_by_pid).with(1234).returns('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+      else
+        Puppet::Util::Execution.stubs(:execute).with(['ps', '-p', 1234, '-o', 'comm=']).returns('puppet')
+      end
       # lock the file
       @lock.lock
       # fake our pid to be a different pid, to simulate someone else
