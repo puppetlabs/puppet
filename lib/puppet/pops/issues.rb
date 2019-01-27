@@ -265,7 +265,7 @@ module Issues
   end
 
   MATCH_NOT_REGEXP = hard_issue :MATCH_NOT_REGEXP, :detail do
-    _("Can not convert right match operand to a regular expression. Caused by '%{detail}'.") % { detail: detail }
+    _("Cannot convert right match operand to a regular expression. Caused by '%{detail}'.") % { detail: detail }
   end
 
   MATCH_NOT_STRING = hard_issue :MATCH_NOT_STRING, :left_value do
@@ -276,13 +276,13 @@ module Issues
   # This may vary between puppet versions.
   #
   NOT_RVALUE = issue :NOT_RVALUE do
-    _("Invalid use of expression. An expression of type %{expression_type} does not produce a value.") % { expression_type: label(semantic) }
+    _("Invalid use of expression. An expression of type %{expression_type} does not produce a value") % { expression_type: label(semantic) }
   end
 
   # Appending to attributes is only allowed in certain types of resource expressions.
   #
   ILLEGAL_ATTRIBUTE_APPEND = hard_issue :ILLEGAL_ATTRIBUTE_APPEND, :name, :parent do
-    _("Illegal +> operation on attribute %{attr}. This operator can not be used in an expression of type %{expression}.") % { attr: name, expression: label(parent) }
+    _("Illegal +> operation on attribute %{attr}. This operator cannot be used in an expression of type %{expression}") % { attr: name, expression: label(parent) }
   end
 
   ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
@@ -387,11 +387,11 @@ module Issues
   end
 
   ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
-    _("Illegal relationship operand. Can not form a relationship with an expression of type %{expression}. A Catalog type is required.") % { expression: label(operand) }
+    _("Illegal relationship operand. Cannot form a relationship with an expression of type %{expression}. A Catalog type is required.") % { expression: label(operand) }
   end
 
   NOT_CATALOG_TYPE = issue :NOT_CATALOG_TYPE, :type do
-    _("Illegal relationship operand. Can not form a relationship with something of type %{expression_type}. A Catalog type is required.") % { expression_type: type }
+    _("Illegal relationship operand. Cannot form a relationship with something of type %{expression_type}. A Catalog type is required.") % { expression_type: type }
   end
 
   BAD_STRING_SLICE_ARITY = issue :BAD_STRING_SLICE_ARITY, :actual do
@@ -432,9 +432,9 @@ module Issues
 
   BAD_SLICE_KEY_TYPE = issue :BAD_SLICE_KEY_TYPE, :left_value, :expected_classes, :actual do
     if expected_classes.size > 1
-      _("%{expression}[] cannot use %{actual} where one of the following is expected: %{expected}") % { expression: label(left_value), actual: actual, expected: expected_classes.join(', ') }
+      _("%{expression}[] cannot use %{actual} where one of the following is expected: %{expected}") % { expression: label.a_an_uc(left_value), actual: actual, expected: expected_classes.join(', ') }
     else
-      _("%{expression}[] cannot use %{actual} where %{expected} is expected.") % { expression: label(left_value), actual: actual, expected: expected_classes[0] }
+      _("%{expression}[] cannot use %{actual} where %{expected} is expected.") % { expression: label.a_an_uc(left_value), actual: actual, expected: expected_classes[0] }
     end
   end
 
@@ -604,7 +604,7 @@ module Issues
   end
 
   IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
-    _("This expression of type %{expression_type} has no effect. The container of type %{container_type} can not end with a value-producing expression without side effects.") % { expression_type: label(semantic), container_type: label(container) }
+    _("This expression of type %{expression_type} has no effect. The container of type %{container_type} cannot end with a value-producing expression without side effects.") % { expression_type: label(semantic), container_type: label(container) }
   end
 
   RESERVED_WORD = hard_issue :RESERVED_WORD, :word do
@@ -616,7 +616,7 @@ module Issues
   end
 
   RESERVED_TYPE_NAME = hard_issue :RESERVED_TYPE_NAME, :name do
-    _("The name: '%{name}' is already defined by Puppet and can not be used as the name of this expression of type %{expression}.") % { name: name, expression: label(semantic) }
+    _("The name: '%{name}' is already defined by Puppet and cannot be used as the name of this expression of type %{expression}.") % { name: name, expression: label(semantic) }
   end
 
   UNMATCHED_SELECTOR = hard_issue :UNMATCHED_SELECTOR, :param_value do
@@ -785,9 +785,9 @@ module Issues
 
   HIERA_VERSION_3_NOT_GLOBAL = hard_issue :HIERA_VERSION_3_NOT_GLOBAL, :where do
     case where
-    when 'environment':
+    when 'environment'
       _("hiera.yaml version 3 cannot be used in an environment.")
-    when 'module':
+    when 'module'
       _("hiera.yaml version 3 cannot be used in a module.")
     else
       _("hiera.yaml version 3 cannot be used here.")
@@ -885,11 +885,11 @@ module Issues
   end
 
   SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path, :klass, :value do
-    _("%{path} contains a value of data type %{klass}. It will be converted to the String '%{value}'.") % { path: path, klass: label(klass), value: value }
+    _("%{path} contains a value of data type %{klass}. It will be converted to the String '%{value}'") % { path: path, klass: label(klass), value: value }
   end
 
   SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path, :klass, :value do
-    _("%{path} contains a hash with a key of data type %{klass}. It will be converted to the String '%{value}'.") % { path: path, klass: label(klass), value: value }
+    _("%{path} contains a hash with a key of data type %{klass}. It will be converted to the String '%{value}'") % { path: path, klass: label(klass), value: value }
   end
 
   FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = issue :NOT_SUPPORTED_WHEN_SCRIPTING, :feature do
