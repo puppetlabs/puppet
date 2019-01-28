@@ -31,7 +31,12 @@ Puppet::Type.newtype(:file) do
 
     **Autorequires:** If Puppet is managing the user or group that owns a
     file, the file resource will autorequire them. If Puppet is managing any
-    parent directories of a file, the file resource will autorequire them."
+    parent directories of a file, the file resource autorequires them.
+    
+    Warning: Enabling `recurse` on directories containing large numbers of 
+    files slows agent runs. To manage file attributes for many files, 
+    consider using alternative methods such as the `chmod_r`, `chown_r`,
+     or `recursive_file_permissions` modules from the Forge."
 
   feature :manages_symlinks,
     "The provider can manage symbolic links."
