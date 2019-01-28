@@ -153,7 +153,7 @@ module Issues
   # @todo configuration if this is error or warning
   #
   VAR_WITH_HYPHEN = issue :VAR_WITH_HYPHEN, :name do
-    _("A variable name may not contain a hyphen. The name '%{name}' is not legal") % { name: name }
+    _("A variable name may not contain a hyphen. The name '%{name}' is not legal.") % { name: name }
   end
 
   # A class, definition, or node may only appear at top level or inside other classes
@@ -161,15 +161,15 @@ module Issues
   # @api public
   #
   NOT_TOP_LEVEL = hard_issue :NOT_TOP_LEVEL do
-    _("Classes, definitions, and nodes may only appear at toplevel or inside other classes")
+    _("Classes, definitions, and nodes may only appear at the top level or inside other classes.")
   end
 
   NOT_ABSOLUTE_TOP_LEVEL = hard_issue :NOT_ABSOLUTE_TOP_LEVEL do
-    _("An expression of type %{expression_type} may only appear at top level.") % { expression_type: label(semantic) }
+    _("An expression of type %{expression_type} may only appear at the top level.") % { expression_type: label(semantic) }
   end
 
   CROSS_SCOPE_ASSIGNMENT = hard_issue :CROSS_SCOPE_ASSIGNMENT, :name do
-    _("Illegal attempt to assign to '%{name}'. Cannot assign to variables in other namespaces") % { name: name }
+    _("Illegal attempt to assign to '%{name}'. Cannot assign to variables in other namespaces.") % { name: name }
   end
 
   # Assignment can only be made to certain types of left hand expressions such as variables.
@@ -193,7 +193,7 @@ module Issues
 
   # Assignment cannot be made to numeric match result variables
   ILLEGAL_NUMERIC_ASSIGNMENT = issue :ILLEGAL_NUMERIC_ASSIGNMENT, :varname do
-    _("Illegal attempt to assign to the numeric match result variable '$%{var}'. Numeric variables are not assignable") % { var: varname }
+    _("Illegal attempt to assign to the numeric match result variable '$%{var}'. Numeric variables are not assignable.") % { var: varname }
   end
 
   # Assignment can only be made to certain types of left hand expressions such as variables.
@@ -211,7 +211,7 @@ module Issues
   # mutation.
   #
   ILLEGAL_INDEXED_ASSIGNMENT = issue :ILLEGAL_INDEXED_ASSIGNMENT do
-    _("Illegal attempt to assign via [index/key]. Not an assignable reference.")
+    _("Illegal attempt to assign via [index/key]. Not an assignable reference")
   end
 
   # When indexed assignment ($x[]=) is allowed, the leftmost expression must be
@@ -276,7 +276,7 @@ module Issues
   # This may vary between puppet versions.
   #
   NOT_RVALUE = issue :NOT_RVALUE do
-    _("Invalid use of expression. An expression of type %{expression_type} does not produce a value") % { expression_type: label(semantic) }
+    _("Invalid use of expression. An expression of type %{expression_type} does not produce a value.") % { expression_type: label(semantic) }
   end
 
   # Appending to attributes is only allowed in certain types of resource expressions.
@@ -312,7 +312,7 @@ module Issues
   # In case a model is constructed programmatically, it must create valid type references.
   #
   ILLEGAL_CLASSREF = hard_issue :ILLEGAL_CLASSREF, :name do
-    _("Illegal type reference. The given name '%{name}' does not conform to the naming rule") % { name: name }
+    _("Illegal type reference. The given name '%{name}' does not conform to the naming rule.") % { name: name }
   end
 
   # This is a runtime issue - storeconfigs must be on in order to collect exported. This issue should be
@@ -347,7 +347,7 @@ module Issues
   # E.g. an arithmetic expression where a hostname is expected.
   #
   ILLEGAL_EXPRESSION = hard_issue :ILLEGAL_EXPRESSION, :feature, :container do
-    _("Illegal expression: %{expression}. It is unacceptable as %{feature} in an expression of type %{container}") % { expression: label(semantic), feature: feature, container: label(container) }
+    _("Illegal expression: %{expression}. It is unacceptable as %{feature} in an expression of type %{container}.") % { expression: label(semantic), feature: feature, container: label(container) }
   end
 
   # Issues when a variable is not a NAME
@@ -399,7 +399,7 @@ module Issues
   end
 
   BAD_STRING_SLICE_TYPE = issue :BAD_STRING_SLICE_TYPE, :actual do
-    _("String-Type [] requires all arguments to be integers (or default). Instead, got a value of type %{actual}") % { actual: label(actual) }
+    _("String-Type [] requires all arguments to be integers (or default). Instead, got a value of type %{actual}.") % { actual: label(actual) }
   end
 
   BAD_ARRAY_SLICE_ARITY = issue :BAD_ARRAY_SLICE_ARITY, :actual do
@@ -542,11 +542,11 @@ module Issues
   end
 
   DUPLICATE_TITLE = issue :DUPLICATE_TITLE, :title  do
-    _("The title '%{title}' has already been used in this resource expression") % { title: title }
+    _("The title '%{title}' has already been used in this resource expression.") % { title: title }
   end
 
   DUPLICATE_ATTRIBUTE = issue :DUPLICATE_ATTRIBUE, :attribute  do
-    _("The attribute '%{attribute}' has already been set") % { attribute: attribute }
+    _("The attribute '%{attribute}' has already been set.") % { attribute: attribute }
   end
 
   MISSING_TITLE = hard_issue :MISSING_TITLE do
@@ -578,7 +578,7 @@ module Issues
   end
 
   RESULT_IS_INFINITY = hard_issue :RESULT_IS_INFINITY, :operator do
-    _("The result of the %{operator} expression is Infinity") % { operator: operator }
+    _("The result of the %{operator} expression is Infinity.") % { operator: operator }
   end
 
   # TODO_HEREDOC

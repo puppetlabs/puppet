@@ -269,34 +269,34 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     # Timespan Type
     #
-    it 'produdes a Timespan type with a lower bound' do
+    it 'produces a Timespan type with a lower bound' do
       expr = fqr('Timespan').access_at({fqn('hours') => literal(3)})
       expect(evaluate(expr)).to be_the_type(types.timespan({'hours' => 3}))
     end
 
-    it 'produdes a Timespan type with an upper bound' do
+    it 'produces a Timespan type with an upper bound' do
       expr = fqr('Timespan').access_at(literal(:default), {fqn('hours') => literal(9)})
       expect(evaluate(expr)).to be_the_type(types.timespan(nil, {'hours' => 9}))
     end
 
-    it 'produdes a Timespan type with both lower and upper bounds' do
+    it 'produces a Timespan type with both lower and upper bounds' do
       expr = fqr('Timespan').access_at({fqn('hours') => literal(3)}, {fqn('hours') => literal(9)})
       expect(evaluate(expr)).to be_the_type(types.timespan({'hours' => 3}, {'hours' => 9}))
     end
 
     # Timestamp Type
     #
-    it 'produdes a Timestamp type with a lower bound' do
+    it 'produces a Timestamp type with a lower bound' do
       expr = fqr('Timestamp').access_at(literal('2014-12-12T13:14:15 CET'))
       expect(evaluate(expr)).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET'))
     end
 
-    it 'produdes a Timestamp type with an upper bound' do
+    it 'produces a Timestamp type with an upper bound' do
       expr = fqr('Timestamp').access_at(literal(:default), literal('2016-08-23T17:50:00 CET'))
       expect(evaluate(expr)).to be_the_type(types.timestamp(nil, '2016-08-23T17:50:00 CET'))
     end
 
-    it 'produdes a Timestamp type with both lower and upper bounds' do
+    it 'produces a Timestamp type with both lower and upper bounds' do
       expr = fqr('Timestamp').access_at(literal('2014-12-12T13:14:15 CET'), literal('2016-08-23T17:50:00 CET'))
       expect(evaluate(expr)).to be_the_type(types.timestamp('2014-12-12T13:14:15 CET', '2016-08-23T17:50:00 CET'))
     end
@@ -314,7 +314,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it "Tuple parameterization gives an error if parameter is not a type" do
       expr = fqr('Tuple').access_at('String')
-      expect { evaluate(expr)}.to raise_error(/Tuple-Type, Cannot use String where Any-Type is expected/)
+      expect { evaluate(expr)}.to raise_error(/Tuple-Type. Cannot use String where Any-Type is expected/)
     end
 
     it 'produces a varargs Tuple when the last two arguments specify size constraint' do

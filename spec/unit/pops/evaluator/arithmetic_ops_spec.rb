@@ -36,43 +36,43 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "MAX + 1 => error" do
         expect{
           evaluate(literal(MAX_INTEGER) + literal(1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "MAX - -1 => error" do
         expect{
           evaluate(literal(MAX_INTEGER) - literal(-1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "MAX * 2 => error" do
         expect{
           evaluate(literal(MAX_INTEGER) * literal(2))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "(MAX+1)*2 / 2 => error" do
         expect{
           evaluate(literal((MAX_INTEGER+1)*2) / literal(2))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "MAX << 1 => error" do
         expect{
           evaluate(literal(MAX_INTEGER) << literal(1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "((MAX+1)*2)  << 1 => error" do
         expect{
           evaluate(literal((MAX_INTEGER+1)*2) >> literal(1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "MIN - 1 => error" do
         expect{
           evaluate(literal(MIN_INTEGER) - literal(1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer min range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer min range/)
       end
 
       it "does not error on the border values" do
@@ -263,47 +263,47 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Numeric - Timestamp = Timestamp' do
         code = "notice(assert_type(Timestamp, 123 - Timestamp('2016-10-10')))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '-' is not applicable.*when right side is a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '-' is not applicable.*when right side is of type Timestamp/)
       end
 
       it 'Timestamp / Timestamp is an error' do
         code = "notice(Timestamp('2016-10-10') / Timestamp())"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Timestamp / Timespan is an error' do
         code = "notice(Timestamp('2016-10-10') / Timespan('0-12:00:00'))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Timestamp / Numeric is an error' do
         code = "notice(Timestamp('2016-10-10') / 3600.123)"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Numeric / Timestamp is an error' do
         code = "notice(3600.123 / Timestamp('2016-10-10'))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable.*when right side is a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable.*when right side is of type Timestamp/)
       end
 
       it 'Timestamp * Timestamp is an error' do
         code = "notice(Timestamp('2016-10-10') * Timestamp())"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Timestamp * Timespan is an error' do
         code = "notice(Timestamp('2016-10-10') * Timespan('0-12:00:00'))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Timestamp * Numeric is an error' do
         code = "notice(Timestamp('2016-10-10') * 3600.123)"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Numeric * Timestamp is an error' do
         code = "notice(3600.123 * Timestamp('2016-10-10'))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable.*when right side is a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable.*when right side is of type Timestamp/)
       end
     end
   end
