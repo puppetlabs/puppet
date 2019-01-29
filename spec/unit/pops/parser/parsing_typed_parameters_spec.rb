@@ -50,7 +50,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       CODE
       expect do
         parser.parse_string(source, __FILE__)
-      end.to raise_error(Puppet::ParseError, /Parameter \$a has 'captures rest' which is not supported in an expression of type 'define'/)
+      end.to raise_error(Puppet::ParseError, /Parameter \$a has 'captures rest', which is not supported in an expression of type 'define'/)
     end
 
     it 'is not allowed in class' do
@@ -59,7 +59,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       CODE
       expect do
         parser.parse_string(source, __FILE__)
-      end.to raise_error(Puppet::ParseError, /Parameter \$a has 'captures rest' which is not supported in an expression of type Host Class Definition/)
+      end.to raise_error(Puppet::ParseError, /Parameter \$a has 'captures rest', which is not supported in an expression of type Host Class Definition/)
     end
   end
 end

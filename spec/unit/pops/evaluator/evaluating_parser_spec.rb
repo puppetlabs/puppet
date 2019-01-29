@@ -1490,13 +1490,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     it 'for non r-value producing define' do
       Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => "Invalid use of expression. An expression of type 'define' expression does not produce a value.", :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at the top level or inside other classes.', :line => 1, :pos => 6))
+      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may appear only at the top level or inside other classes.', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = define foo { }", nil) }.to raise_error(/2 errors/)
     end
 
     it 'for non r-value producing class' do
       Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => "Invalid use of expression. An expression of type Host Class Definition does not produce a value.", :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at the top level or inside other classes.', :line => 1, :pos => 6))
+      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may appear only at the top level or inside other classes.', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = class foo { }", nil) }.to raise_error(/2 errors/)
     end
 
@@ -1511,7 +1511,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     it 'for multiple errors with a summary exception' do
       Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => "Invalid use of expression. An expression of type Node Definition does not produce a value.", :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at the top level or inside other classes.', :line => 1, :pos => 6))
+      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may appear only at the top level or inside other classes.', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = node x { }",nil) }.to raise_error(/2 errors/)
     end
 

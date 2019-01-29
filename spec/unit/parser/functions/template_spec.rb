@@ -81,7 +81,7 @@ describe "the template function" do
     Puppet[:tasks] = true
     expect {
       eval_template("<%= lookupvar('myvar') %>")
-    }.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+    }.to raise_error(Puppet::ParseError, /is available only when compiling a catalog/)
 
   end
 

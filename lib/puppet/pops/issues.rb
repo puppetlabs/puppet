@@ -143,7 +143,7 @@ module Issues
   # @todo configuration
   #
   NAME_WITH_HYPHEN = issue :NAME_WITH_HYPHEN, :name do
-    _("The name '%{name}' contains a hyphen which is illegal in an expression of type %{type}.") % { type: label(semantic), name: name }
+    _("The name '%{name}' contains a hyphen, which is illegal in an expression of type %{type}.") % { type: label(semantic), name: name }
   end
 
   # When a variable name contains a hyphen and these are illegal.
@@ -161,7 +161,7 @@ module Issues
   # @api public
   #
   NOT_TOP_LEVEL = hard_issue :NOT_TOP_LEVEL do
-    _("Classes, definitions, and nodes may only appear at the top level or inside other classes.")
+    _("Classes, definitions, and nodes may appear only at the top level or inside other classes.")
   end
 
   NOT_ABSOLUTE_TOP_LEVEL = hard_issue :NOT_ABSOLUTE_TOP_LEVEL do
@@ -347,7 +347,7 @@ module Issues
   # E.g. an arithmetic expression where a hostname is expected.
   #
   ILLEGAL_EXPRESSION = hard_issue :ILLEGAL_EXPRESSION, :feature, :container do
-    _("Illegal expression: %{expression}. It is unacceptable as %{feature} in an expression of type %{container}.") % { expression: label(semantic), feature: feature, container: label(container) }
+    _("Illegal expression: %{expression} is unacceptable as %{feature} in an expression of type %{container}.") % { expression: label(semantic), feature: feature, container: label(container) }
   end
 
   # Issues when a variable is not a NAME
@@ -502,7 +502,7 @@ module Issues
   end
 
   CAPTURES_REST_NOT_SUPPORTED = hard_issue :CAPTURES_REST_NOT_SUPPORTED, :container, :param_name do
-    _("Parameter $%{param} has 'captures rest' which is not supported in an expression of type %{container}.") % { param: param_name, container: label(container) }
+    _("Parameter $%{param} has 'captures rest', which is not supported in an expression of type %{container}.") % { param: param_name, container: label(container) }
   end
 
   REQUIRED_PARAMETER_AFTER_OPTIONAL = hard_issue :REQUIRED_PARAMETER_AFTER_OPTIONAL, :param_name do
@@ -893,15 +893,15 @@ module Issues
   end
 
   FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = issue :NOT_SUPPORTED_WHEN_SCRIPTING, :feature do
-    _("The feature '%{feature}' is only available when compiling a catalog") % { feature: feature }
+    _("The feature '%{feature}' is available only when compiling a catalog") % { feature: feature }
   end
 
   CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING = issue :CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, :operation do
-    _("The catalog operation '%{operation}' is only available when compiling a catalog") % { operation: operation }
+    _("The catalog operation '%{operation}' is available only when compiling a catalog") % { operation: operation }
   end
 
   EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING = issue :EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING, :klass do
-    _("An expression of type %{expression_type} is only available when compiling a catalog.") % { expression_type: label(klass) }
+    _("An expression of type %{expression_type} is available only when compiling a catalog.") % { expression_type: label(klass) }
   end
 
   TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = issue :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, :operation do

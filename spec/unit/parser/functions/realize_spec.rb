@@ -65,6 +65,6 @@ describe "the realize function" do
       compile_to_catalog(<<-MANIFEST)
         realize([])
       MANIFEST
-    end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+    end.to raise_error(Puppet::ParseError, /is available only when compiling a catalog/)
   end
 end
