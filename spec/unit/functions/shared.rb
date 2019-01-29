@@ -91,7 +91,7 @@ shared_examples_for 'an inclusion function, when --tasks is on,' do |function|
       compile_to_catalog(<<-MANIFEST)
         #{function}(bar)
       MANIFEST
-    end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+    end.to raise_error(Puppet::ParseError, /is available only when compiling a catalog/)
   end
 end
 

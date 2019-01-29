@@ -466,7 +466,7 @@ describe Puppet::Parser::Compiler do
               notify { decoy: }
             }
           PP
-        end.to raise_error(Puppet::Error, /Classes, definitions, and nodes may only appear at the top level/)
+        end.to raise_error(Puppet::Error, /Classes, definitions, and nodes may appear only at the top level/)
       end
 
       it "'#{thing}' is not allowed inside un-evaluated conditional constructs" do
@@ -478,7 +478,7 @@ describe Puppet::Parser::Compiler do
               notify { decoy: }
             }
           PP
-        end.to raise_error(Puppet::Error, /Classes, definitions, and nodes may only appear at the top level/)
+        end.to raise_error(Puppet::Error, /Classes, definitions, and nodes may appear only at the top level/)
       end
     end
 

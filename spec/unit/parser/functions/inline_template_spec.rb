@@ -28,7 +28,7 @@ describe "the inline_template function" do
     Puppet[:tasks] = true
     expect {
       inline_template("<%= lookupvar('myvar') %>")
-    }.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+    }.to raise_error(Puppet::ParseError, /is available only when compiling a catalog/)
   end
 
   def inline_template(*templates)
