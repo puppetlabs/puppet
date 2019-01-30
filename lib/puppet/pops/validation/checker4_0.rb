@@ -330,8 +330,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def check_HeredocExpression(o)
-    # Only check static text in heredoc
-    expr = o.text_expr.expr # Always a SublocatedExpression with an expression
+    # Only syntax check static text in heredoc during validation - dynamic text is validated by the evaluator.
+    expr = o.text_expr
     if expr.is_a?(Model::LiteralString)
       assert_external_syntax(nil, expr.value, o.syntax, o.text_expr)
     end
