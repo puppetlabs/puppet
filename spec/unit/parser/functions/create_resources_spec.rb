@@ -331,7 +331,7 @@ describe 'function for dynamically creating resources' do
         compile_to_catalog(<<-MANIFEST)
           create_resources('class', {'bar'=>{}}, {'one' => 'two'})
         MANIFEST
-      end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+      end.to raise_error(Puppet::ParseError, /is available only when compiling a catalog/)
     end
   end
 

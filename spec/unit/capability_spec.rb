@@ -142,7 +142,7 @@ describe 'Capability types' do
           host +> $hostname
         }
       MANIFEST
-      end.to raise_error(Puppet::ParseErrorWithIssue, /Illegal \+> operation.*This operator can not be used in a Capability Mapping/)
+      end.to raise_error(Puppet::ParseErrorWithIssue, /Illegal \+> operation.*This operator cannot be used in an expression of type Capability Mapping/)
     end
 
     it "does not allow operator '*=>' in a mapping" do
@@ -156,7 +156,7 @@ describe 'Capability types' do
           *=> { host => $hostname }
         }
         MANIFEST
-      end.to raise_error(Puppet::ParseError, /The operator '\* =>' in a Capability Mapping is not supported/)
+      end.to raise_error(Puppet::ParseError, /The operator '\* =>' is not supported in an expression of type Capability Mapping/)
     end
 
     it "does not allow 'before' relationship to capability mapping" do

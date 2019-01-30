@@ -822,7 +822,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "Hash[0]"                     => "Hash-Type[] arguments must be types. Got #{int_class_name}",
       "Hash[Integer, 0]"            => "Hash-Type[] arguments must be types. Got #{int_class_name}",
       "Array[Integer,1,2,3]"        => 'Array-Type[] accepts 1 to 3 arguments. Got 4',
-      "Array[Integer,String]"       => "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got a String-Type",
+      "Array[Integer,String]"       => "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Instead, got a value of type String-Type",
       "Hash[Integer,String, 1,2,3]" => 'Hash-Type[] accepts 2 to 4 arguments. Got 5',
       "'abc'[x]"                    => "A substring operation does not accept a String as a character index. Expected an Integer",
       "'abc'[1.0]"                  => "A substring operation does not accept a Float as a character index. Expected an Integer",
@@ -831,16 +831,18 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "NotUndef[0]"                 => "NotUndef-Type[] argument must be a Type or a String. Got #{int_class_name}",
       "NotUndef[a,b]"               => 'NotUndef-Type[] accepts 0 to 1 arguments. Got 2',
       "Resource[0]"                 => 'First argument to Resource[] must be a resource type or a String. Got Integer',
-      "Resource[a, 0]"              => 'Error creating type specialization of a Resource-Type, Cannot use Integer where a resource title String is expected',
-      "File[0]"                     => 'Error creating type specialization of a File-Type, Cannot use Integer where a resource title String is expected',
-      "String[a]"                   => "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got a String",
-      "Pattern[0]"                  => 'Error creating type specialization of a Pattern-Type, Cannot use Integer where String or Regexp or Pattern-Type or Regexp-Type is expected',
-      "Regexp[0]"                   => 'Error creating type specialization of a Regexp-Type, Cannot use Integer where String or Regexp is expected',
-      "Regexp[a,b]"                 => 'A Regexp-Type[] accepts 1 argument. Got 2',
-      "true[0]"                     => "Operator '[]' is not applicable to a Boolean",
-      "1[0]"                        => "Operator '[]' is not applicable to an Integer",
-      "3.14[0]"                     => "Operator '[]' is not applicable to a Float",
-      "/.*/[0]"                     => "Operator '[]' is not applicable to a Regexp",
+      "Resource[a, 0]"              => 'Error creating type specialization of data type Resource-Type. Cannot use Integer where a resource title String is expected',
+      "File[0]"                     => 'Error creating type specialization of data type File-Type. Cannot use Integer where a resource title String is expected',
+      "String[a]"                   => "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Instead, got a value of type String",
+      # "Pattern[0]"                => 'Error creating type specialization of data type Pattern-Type, Cannot use Integer where one of the following is expected: String or Regexp or Pattern-Type or Regexp-Type',
+      "Pattern[0]"                  => 'Error creating type specialization of data type Pattern-Type. Cannot use Integer where',
+       # "Regexp[0]"                => 'Error creating type specialization of data type Regexp-Type, Cannot use Integer where one of the following is expected: String or Regexp',
+      "Regexp[0]"                   => 'Error creating type specialization of data type Regexp-Type. Cannot use Integer where',
+      "Regexp[a,b]"                 => 'Regexp-Type[] accepts 1 argument. Got 2',
+      "true[0]"                     => "Operator '[]' is not applicable to an expression of type Boolean",
+      "1[0]"                        => "Operator '[]' is not applicable to an expression of type Integer",
+      "3.14[0]"                     => "Operator '[]' is not applicable to an expression of type Float",
+      "/.*/[0]"                     => "Operator '[]' is not applicable to an expression of type Regexp",
       "[1][a]"                      => "The value 'a' cannot be converted to Numeric",
       "[1][0.0]"                    => "An Array[] cannot use Float where Integer is expected",
       "[1]['0.0']"                  => "An Array[] cannot use Float where Integer is expected",
@@ -963,11 +965,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       context 'with errors' do
         { "Class['fail-whale']" => /Illegal name/,
-          "Class[0]"            => /An Integer cannot be used where a String is expected/,
-          "Class[/.*/]"         => /A Regexp cannot be used where a String is expected/,
-          "Class[4.1415]"       => /A Float cannot be used where a String is expected/,
-          "Class[Integer]"      => /An Integer-Type cannot be used where a String is expected/,
-          "Class[File['tmp']]"   => /A File\['tmp'\] Resource-Reference cannot be used where a String is expected/,
+          "Class[0]"            => /An expression of type Integer cannot be used where a String is expected/,
+          "Class[/.*/]"         => /An expression of type Regexp cannot be used where a String is expected/,
+          "Class[4.1415]"       => /An expression of type Float cannot be used where a String is expected/,
+          "Class[Integer]"      => /An expression of type Integer-Type cannot be used where a String is expected/,
+          "Class[File['tmp']]"  => /An expression of type File\['tmp'\] Resource-Reference cannot be used where a String is expected/,
         }.each do | source, error_pattern|
           it "an error is flagged for '#{source}'" do
             expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(error_pattern)
@@ -1479,22 +1481,22 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'for non r-value producing <| |>' do
-      expect { parser.parse_string("$a = File <| |>", nil) }.to raise_error(/A Virtual Query does not produce a value \(line: 1, column: 6\)/)
+      expect { parser.parse_string("$a = File <| |>", nil) }.to raise_error(/An expression of type Virtual Query does not produce a value. \(line: 1, column: 6\)/)
     end
 
     it 'for non r-value producing <<| |>>' do
-      expect { parser.parse_string("$a = File <<| |>>", nil) }.to raise_error(/An Exported Query does not produce a value \(line: 1, column: 6\)/)
+      expect { parser.parse_string("$a = File <<| |>>", nil) }.to raise_error(/An expression of type Exported Query does not produce a value. \(line: 1, column: 6\)/)
     end
 
     it 'for non r-value producing define' do
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => "Invalid use of expression. A 'define' expression does not produce a value", :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
+      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => "Invalid use of expression. An expression of type 'define' expression does not produce a value.", :line => 1, :pos => 6))
+      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may appear only at the top level or inside other classes.', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = define foo { }", nil) }.to raise_error(/2 errors/)
     end
 
     it 'for non r-value producing class' do
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Invalid use of expression. A Host Class Definition does not produce a value', :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
+      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => "Invalid use of expression. An expression of type Host Class Definition does not produce a value.", :line => 1, :pos => 6))
+      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may appear only at the top level or inside other classes.', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = class foo { }", nil) }.to raise_error(/2 errors/)
     end
 
@@ -1508,8 +1510,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'for multiple errors with a summary exception' do
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Invalid use of expression. A Node Definition does not produce a value', :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
+      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => "Invalid use of expression. An expression of type Node Definition does not produce a value.", :line => 1, :pos => 6))
+      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may appear only at the top level or inside other classes.', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = node x { }",nil) }.to raise_error(/2 errors/)
     end
 

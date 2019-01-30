@@ -504,7 +504,7 @@ class amod::bad_type {
         end
         logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
         expect(logs.empty?).to be_falsey
-        expect(logs[0]).to eql("Notify[bogus]['message'] contains a Time value. It will be converted to the String '2016-10-06 23:51:14 +0200'")
+        expect(logs[0]).to eql("Notify[bogus]['message'] contains a value of data type Time. It will be converted to the String '2016-10-06 23:51:14 +0200'")
       end
     end
 

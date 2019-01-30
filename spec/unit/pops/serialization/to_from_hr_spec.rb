@@ -501,8 +501,8 @@ module Serialization
         expect(val2).to eql({ 'one' => 'one', 'two' => 'two' })
       end
       expect(warnings).to eql([
-        "Test Hash contains a hash with a Symbol key. It will be converted to the String 'one'",
-        "Test Hash contains a hash with a Symbol key. It will be converted to the String 'two'"])
+        "Test Hash contains a hash with a key of data type Symbol. It will be converted to the String 'one'",
+        "Test Hash contains a hash with a key of data type Symbol. It will be converted to the String 'two'"])
     end
 
     it 'A Hash with Version keys is converted to hash with String keys with warning' do
@@ -514,8 +514,8 @@ module Serialization
         expect(val2).to eql({ '1.0.0' => 'one', '2.0.0' => 'two' })
       end
       expect(warnings).to eql([
-        "Test Hash contains a hash with a SemanticPuppet::Version key. It will be converted to the String '1.0.0'",
-        "Test Hash contains a hash with a SemanticPuppet::Version key. It will be converted to the String '2.0.0'"])
+        "Test Hash contains a hash with a key of data type SemanticPuppet::Version. It will be converted to the String '1.0.0'",
+        "Test Hash contains a hash with a key of data type SemanticPuppet::Version. It will be converted to the String '2.0.0'"])
     end
 
     context 'and symbol_as_string is set to true' do

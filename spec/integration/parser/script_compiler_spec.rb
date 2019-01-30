@@ -80,7 +80,7 @@ describe 'the script compiler' do
             CODE
             Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
 
-        end.to raise_error(/The catalog operation 'multi var assignment from class' is only available when compiling a catalog/)
+        end.to raise_error(/The catalog operation 'multi var assignment from class' is available only when compiling a catalog/)
       end
     end
 

@@ -376,7 +376,7 @@ describe Puppet::Parser::Compiler do
             compile_to_catalog(<<-PP)
               notice Class[ToothFairy]
             PP
-          }.to raise_error(/Illegal Class name in class reference. A TypeReference\['ToothFairy'\]-Type cannot be used where a String is expected/)
+          }.to raise_error(/Illegal Class name in class reference. An expression of type TypeReference\['ToothFairy'\]-Type cannot be used where a String is expected/)
         end
       end
 
@@ -466,7 +466,7 @@ describe Puppet::Parser::Compiler do
               notify { decoy: }
             }
           PP
-        end.to raise_error(Puppet::Error, /Classes, definitions, and nodes may only appear at toplevel/)
+        end.to raise_error(Puppet::Error, /Classes, definitions, and nodes may appear only at the top level/)
       end
 
       it "'#{thing}' is not allowed inside un-evaluated conditional constructs" do
@@ -478,7 +478,7 @@ describe Puppet::Parser::Compiler do
               notify { decoy: }
             }
           PP
-        end.to raise_error(Puppet::Error, /Classes, definitions, and nodes may only appear at toplevel/)
+        end.to raise_error(Puppet::Error, /Classes, definitions, and nodes may appear only at the top level/)
       end
     end
 
