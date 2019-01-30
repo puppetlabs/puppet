@@ -110,20 +110,6 @@ describe "Defaults" do
     end
   end
 
-  describe 'server vs server_list' do
-    it 'should warn when both settings are set in code' do
-      Puppet.expects(:deprecation_warning).with('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
-      Puppet.settings[:server] = 'test_server'
-      Puppet.settings[:server_list] = ['one', 'two']
-    end
-
-    it 'should warn when both settings are set by command line' do
-      Puppet.expects(:deprecation_warning).with('Attempted to set both server and server_list. Server setting will not be used.', :SERVER_DUPLICATION)
-      Puppet.settings.handlearg("--server_list", "one,two")
-      Puppet.settings.handlearg("--server", "test_server")
-    end
-  end
-
   describe 'manage_internal_file_permissions' do
     describe 'on windows', :if => Puppet::Util::Platform.windows? do
       it 'should default to false' do
