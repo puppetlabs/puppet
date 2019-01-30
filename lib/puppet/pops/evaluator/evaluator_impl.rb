@@ -1028,7 +1028,7 @@ class EvaluatorImpl
 
   # Evaluates Puppet DSL Heredoc
   def eval_HeredocExpression o, scope
-    expr = o.text_expr.expr # Always a SublocatedExpression with an expression
+    expr = o.text_expr
     result = evaluate(o.text_expr, scope)
     unless expr.is_a?(Model::LiteralString)
       # When expr is a LiteralString, validation has already validated this
