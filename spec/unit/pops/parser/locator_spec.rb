@@ -41,4 +41,49 @@ describe Puppet::Pops::Parser::Locator do
     expect(model.body.locator.line_for_offset(2)).to eq(:third_value)
   end
 
+  it 'A heredoc without margin and interpolated expression location has offset and length relative the source' do
+    parser = Puppet::Pops::Parser::Parser.new()
+    src = <<-CODE
+    # line one
+    # line two
+    @("END"/L)
+        Line four\\
+        Line five ${1 +
+        1}
+    END
+    CODE
+
+    model = parser.parse_string(src).model
+    interpolated_expr = model.body.text_expr.segments[1].expr
+    expect(interpolated_expr.left_expr.offset).to eq(84)
+    expect(interpolated_expr.left_expr.length).to eq(1)
+    expect(interpolated_expr.right_expr.offset).to eq(96)
+    expect(interpolated_expr.right_expr.length).to eq(1)
+    expect(interpolated_expr.offset).to eq(86) # the + sign
+    expect(interpolated_expr.length).to eq(1) # the + sign
+    expect(interpolated_expr.locator.extract_tree_text(interpolated_expr)).to eq("1 +\n        1")
+  end
+
+  it 'A heredoc with margin and interpolated expression location has offset and length relative the source' do
+    parser = Puppet::Pops::Parser::Parser.new()
+    src = <<-CODE
+    # line one
+    # line two
+    @("END"/L)
+        Line four\\
+        Line five ${1 +
+        1}
+    |- END
+    CODE
+
+    model = parser.parse_string(src).model
+    interpolated_expr = model.body.text_expr.segments[1].expr
+    expect(interpolated_expr.left_expr.offset).to eq(84)
+    expect(interpolated_expr.left_expr.length).to eq(1)
+    expect(interpolated_expr.right_expr.offset).to eq(96)
+    expect(interpolated_expr.right_expr.length).to eq(1)
+    expect(interpolated_expr.offset).to eq(86) # the + sign
+    expect(interpolated_expr.length).to eq(1) # the + sign
+    expect(interpolated_expr.locator.extract_tree_text(interpolated_expr)).to eq("1 +\n        1")
+  end
 end
