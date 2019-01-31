@@ -169,7 +169,7 @@ module Issues
   end
 
   CROSS_SCOPE_ASSIGNMENT = hard_issue :CROSS_SCOPE_ASSIGNMENT, :name do
-    _("Illegal attempt to assign to '%{name}'. Cannot assign to variables in other namespaces") % { name: name }
+    _("Illegal attempt to assign to '%{name}'. Cannot assign to variables in other namespaces.") % { name: name }
   end
 
   # Assignment can only be made to certain types of left hand expressions such as variables.
