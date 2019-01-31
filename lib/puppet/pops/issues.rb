@@ -282,8 +282,7 @@ module Issues
   # Appending to attributes is only allowed in certain types of resource expressions.
   #
   ILLEGAL_ATTRIBUTE_APPEND = hard_issue :ILLEGAL_ATTRIBUTE_APPEND, :name, :parent do
-    _("Illegal +> operation on attribute %{attr}. This operator can not be used in %{expression}") % { attr: name, expression: label.a_an(parent) }
-  end
+    _("Illegal +> operation on attribute %{attr}. This operator cannot be used in an expression of type %{expression}.") % { attr: name, expression: label(parent) }  end
 
   ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
     _("Illegal name. The given name '%{name}' does not conform to the naming rule /^((::)?[a-z_]\\w*)(::[a-z]\\w*)*$/") % { name: name }
