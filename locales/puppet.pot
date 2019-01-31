@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.2.0-30-gaaebc6c\n"
+"Project-Id-Version: Puppet automation framework 6.2.0-37-g1e4143e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-01-30 21:48+0000\n"
-"PO-Revision-Date: 2019-01-30 21:48+0000\n"
+"POT-Creation-Date: 2019-01-31 09:48+0000\n"
+"PO-Revision-Date: 2019-01-31 09:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -158,6 +158,10 @@ msgstr ""
 
 #: ../lib/puppet/application.rb:386
 msgid "No valid command or main"
+msgstr ""
+
+#: ../lib/puppet/application.rb:428
+msgid "Could not set logdest to %{dest}."
 msgstr ""
 
 #: ../lib/puppet/application.rb:504
@@ -9015,7 +9019,7 @@ msgstr ""
 msgid "Logs require a level"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:87 ../lib/puppet/util/log.rb:370 ../lib/puppet/util/windows/eventlog.rb:99
+#: ../lib/puppet/util/log.rb:87 ../lib/puppet/util/log.rb:375 ../lib/puppet/util/windows/eventlog.rb:99
 msgid "Invalid log level %{level}"
 msgstr ""
 
@@ -9027,40 +9031,40 @@ msgstr ""
 msgid "Unknown destination type %{dest}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:171
+#: ../lib/puppet/util/log.rb:176
 msgid "Received a Log attribute with invalid encoding:%{log_message}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:173
+#: ../lib/puppet/util/log.rb:178
 msgid ""
 "Backtrace:\n"
 "%{backtrace}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:227
+#: ../lib/puppet/util/log.rb:232
 msgid "Reopening log files"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
-#: ../lib/puppet/util/log.rb:360
+#: ../lib/puppet/util/log.rb:365
 msgid "Puppet::Util::Log requires a message"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
-#: ../lib/puppet/util/log.rb:366
+#: ../lib/puppet/util/log.rb:371
 msgid "Puppet::Util::Log requires a log level"
 msgstr ""
 
 #. TRANSLATORS 'Puppet::Util::Log' refers to a Puppet source code class
-#: ../lib/puppet/util/log.rb:368
+#: ../lib/puppet/util/log.rb:373
 msgid "Puppet::Util::Log requires a symbol or string"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:399
+#: ../lib/puppet/util/log.rb:404
 msgid "Could not parse for environment %{environment}: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/util/log.rb:401
+#: ../lib/puppet/util/log.rb:406
 msgid "%{msg} on node %{node}"
 msgstr ""
 
