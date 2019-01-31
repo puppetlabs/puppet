@@ -31,6 +31,33 @@ describe Puppet::Type.type(:exec) do
     return exec
   end
 
+  def exec_stub(options = {})
+    command = options.delete(:command) || @command
+    #unless_val = options.delete(:unless) || :true
+    type_args = {
+      :name   => command,
+      #:unless => unless_val,
+    }.merge(options)
+
+    # Chicken, meet egg:
+    # Provider methods have to be stubbed before resource init or checks fail
+    # We have to set 'unless' in resource init or it can not be marked sensitive correctly.
+    # So: we create a dummy ahead of time and use 'any_instance' to stub out provider methods.
+    dummy = Puppet::Type.type(:exec).new(:name => @command)
+    dummy.provider.class.any_instance.stubs(:validatecmd)
+    dummy.provider.class.any_instance.stubs(:checkexe).returns(true)
+    pass_status = stub('status', :exitstatus => 0)
+    fail_status = stub('status', :exitstatus => 1)
+    dummy.provider.class.any_instance.stubs(:run).with(:true, true).returns(['test output pass', pass_status])
+    dummy.provider.class.any_instance.stubs(:run).with(:false, true).returns(['test output fail', fail_status])
+
+    test = Puppet::Type.type(:exec).new(type_args)
+
+    Puppet::Util::Log.level = :debug
+
+    return test
+  end
+
   before do
     @command = make_absolute('/bin/true whatever')
     @executable = make_absolute('/bin/true')
@@ -174,6 +201,25 @@ describe Puppet::Type.type(:exec) do
     it "shouldn't log the output on success when non-zero exit status is in a returns array" do
       exec_tester("true", 100, :output => "a\n", :logoutput => :on_failure, :returns => [1, 100]).refresh
       expect(@logs).to eq([])
+    end
+
+    describe "when checks stop execution when debugging" do
+      [[:unless, :true], [:onlyif, :false]].each do |check, result|
+        it "should log a message with the command when #{check} is #{result}" do
+          output = "'#{@command}' won't be executed because of failed check '#{check}'"
+          test = exec_stub({:command => @command, check => result})
+          expect(test.check_all_attributes).to eq(false)
+          expect(@logs).to include(an_object_having_attributes(level: :debug, message: output))
+        end
+
+        it "should log a message with a redacted command if command or #{check} is sensitive" do
+          output = "'[command redacted]' won't be executed because of failed check '#{check}'"
+          test = exec_stub({:command => @command, check => result, :sensitive_parameters => [:command, check]})
+          expect(test.check_all_attributes).to eq(false)
+
+          expect(@logs).to include(an_object_having_attributes(level: :debug, message: output))
+        end
+      end
     end
 
     describe " when multiple tries are set," do
