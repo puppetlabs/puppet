@@ -174,7 +174,7 @@ module Issues
 
   # Assignment can only be made to certain types of left hand expressions such as variables.
   ILLEGAL_ASSIGNMENT = hard_issue :ILLEGAL_ASSIGNMENT do
-    _("Illegal attempt to assign to '%{value}'. Not an assignable reference") % { value: label.a_an(semantic) }
+    _("Illegal attempt to assign to the type %{type}. Not an assignable reference.") % { type: label(semantic) }
   end
 
   # Variables are immutable, cannot reassign in the same assignment scope
