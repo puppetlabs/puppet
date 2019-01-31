@@ -60,7 +60,7 @@ class Puppet::Util::Log
   end
 
   def self.close_all
-    destinations.keys.each { |dest|
+    @destinations.keys.each { |dest|
       close(dest)
     }
     #TRANSLATORS "Log.close_all" is a method name and should not be translated
@@ -147,7 +147,12 @@ class Puppet::Util::Log
       Puppet.log_exception(detail)
 
       # If this was our only destination, then add the console back in.
-      newdestination(:console) if @destinations.empty? and (dest != :console and dest != "console")
+      if destinations.empty? && dest.intern != :console
+        newdestination(:console)
+      end
+
+      # Re-raise (end exit Puppet) because we could not set up logging correctly.
+      raise detail
     end
   end
 
