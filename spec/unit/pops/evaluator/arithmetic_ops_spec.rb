@@ -263,7 +263,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Numeric - Timestamp = Timestamp' do
         code = "notice(assert_type(Timestamp, 123 - Timestamp('2016-10-10')))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '-' is not applicable.*when right side is a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '-' is not applicable.*when right side is of type Timestamp/)
       end
 
       it 'Timestamp / Timestamp is an error' do
@@ -283,7 +283,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Numeric / Timestamp is an error' do
         code = "notice(3600.123 / Timestamp('2016-10-10'))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable.*when right side is a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable.*when right side is of type Timestamp/)
       end
 
       it 'Timestamp * Timestamp is an error' do
@@ -303,7 +303,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Numeric * Timestamp is an error' do
         code = "notice(3600.123 * Timestamp('2016-10-10'))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable.*when right side is a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable.*when right side is of type Timestamp/)
       end
     end
   end

@@ -257,7 +257,7 @@ module Issues
   end
 
   OPERATOR_NOT_APPLICABLE_WHEN = hard_issue :OPERATOR_NOT_APPLICABLE_WHEN, :operator, :left_value, :right_value do
-    _("Operator '%{operator}' is not applicable to %{left} when right side is %{right}.") % { operator: operator, left: label.a_an(left_value), right: label.a_an(right_value) }
+    _("Operator '%{operator}' is not applicable to an expression of type %{left} when right side is of type %{right}.") % { operator: operator, left: label(left_value), right: label(right_value) }
   end
 
   COMPARISON_NOT_POSSIBLE = hard_issue :COMPARISON_NOT_POSSIBLE, :operator, :left_value, :right_value, :detail do
