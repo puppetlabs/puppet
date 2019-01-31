@@ -161,7 +161,7 @@ module Issues
   # @api public
   #
   NOT_TOP_LEVEL = hard_issue :NOT_TOP_LEVEL do
-    _("Classes, definitions, and nodes may only appear at toplevel or inside other classes")
+    _("Classes, definitions, and nodes may appear only at the top level or inside other classes.")
   end
 
   NOT_ABSOLUTE_TOP_LEVEL = hard_issue :NOT_ABSOLUTE_TOP_LEVEL do
