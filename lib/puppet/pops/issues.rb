@@ -276,7 +276,7 @@ module Issues
   # This may vary between puppet versions.
   #
   NOT_RVALUE = issue :NOT_RVALUE do
-    _("Invalid use of expression. %{value} does not produce a value") % { value: label.a_an_uc(semantic) }
+    _("Invalid use of expression. An expression of type %{expression_type} does not produce a value.") % { expression_type: label(semantic) }
   end
 
   # Appending to attributes is only allowed in certain types of resource expressions.
