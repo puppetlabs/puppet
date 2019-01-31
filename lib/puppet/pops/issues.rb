@@ -312,7 +312,7 @@ module Issues
   # In case a model is constructed programmatically, it must create valid type references.
   #
   ILLEGAL_CLASSREF = hard_issue :ILLEGAL_CLASSREF, :name do
-    _("Illegal type reference. The given name '%{name}' does not conform to the naming rule") % { name: name }
+    _("Illegal type reference. The given name '%{name}' does not conform to the naming rule.") % { name: name }
   end
 
   # This is a runtime issue - storeconfigs must be on in order to collect exported. This issue should be
