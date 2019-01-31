@@ -143,7 +143,7 @@ module Issues
   # @todo configuration
   #
   NAME_WITH_HYPHEN = issue :NAME_WITH_HYPHEN, :name do
-    _("%{issue} may not have a name containing a hyphen. The name '%{name}' is not legal") % { issue: label.a_an_uc(semantic), name: name }
+    _("The name '%{name}' contains a hyphen, which is illegal in an expression of type %{type}.") % { type: label(semantic), name: name }
   end
 
   # When a variable name contains a hyphen and these are illegal.
