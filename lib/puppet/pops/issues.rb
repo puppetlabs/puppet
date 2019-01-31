@@ -193,7 +193,7 @@ module Issues
 
   # Assignment cannot be made to numeric match result variables
   ILLEGAL_NUMERIC_ASSIGNMENT = issue :ILLEGAL_NUMERIC_ASSIGNMENT, :varname do
-    _("Illegal attempt to assign to the numeric match result variable '$%{var}'. Numeric variables are not assignable") % { var: varname }
+    _("Illegal attempt to assign to the numeric match result variable '$%{var}'. Numeric variables are not assignable.") % { var: varname }
   end
 
   # Assignment can only be made to certain types of left hand expressions such as variables.
