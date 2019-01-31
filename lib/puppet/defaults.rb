@@ -1452,30 +1452,12 @@ EOT
     :server => {
       :default => "puppet",
       :desc => "The puppet master server to which the puppet agent should connect.",
-      :call_hook => :on_initialize_and_write,
-      :hook => proc { |value|
-        if Puppet.settings.set_by_config?(:server) && Puppet.settings.set_by_config?(:server_list)
-          #TRANSLATOR 'server' and 'server_list' are setting names and should not be translated
-          message = _('Attempted to set both server and server_list.')
-          message += ' ' + _('Server setting will not be used.')
-          Puppet.deprecation_warning(message, :SERVER_DUPLICATION)
-        end
-      }
     },
     :server_list => {
       :default => [],
       :type => :server_list,
       :desc => "The list of puppet master servers to which the puppet agent should connect,
         in the order that they will be tried.",
-      :call_hook => :on_initialize_and_write,
-      :hook => proc { |value|
-        if Puppet.settings.set_by_config?(:server) && Puppet.settings.set_by_config?(:server_list)
-          #TRANSLATOR 'server' and 'server_list' are setting names and should not be translated
-          message = _('Attempted to set both server and server_list.')
-          message += ' ' + _('Server setting will not be used.')
-          Puppet.deprecation_warning(message, :SERVER_DUPLICATION)
-        end
-      }
     },
     :use_srv_records => {
       :default    => false,
