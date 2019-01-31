@@ -347,7 +347,7 @@ module Issues
   # E.g. an arithmetic expression where a hostname is expected.
   #
   ILLEGAL_EXPRESSION = hard_issue :ILLEGAL_EXPRESSION, :feature, :container do
-    _("Illegal expression. %{expression} is unacceptable as %{feature} in %{container}") % { expression: label.a_an_uc(semantic), feature: feature, container: label.a_an(container) }
+    _("Illegal expression: %{expression} is unacceptable as %{feature} in an expression of type %{container}.") % { expression: label(semantic), feature: feature, container: label(container) }
   end
 
   # Issues when a variable is not a NAME
