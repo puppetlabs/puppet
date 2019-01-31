@@ -253,7 +253,7 @@ module Issues
   # For non applicable operators (e.g. << on Hash).
   #
   OPERATOR_NOT_APPLICABLE = hard_issue :OPERATOR_NOT_APPLICABLE, :operator, :left_value do
-    _("Operator '%{operator}' is not applicable to %{left}.") % { operator: operator, left: label.a_an(left_value) }
+    _("Operator '%{operator}' is not applicable to an expression of type %{left}.") % { operator: operator, left: label(left_value) }
   end
 
   OPERATOR_NOT_APPLICABLE_WHEN = hard_issue :OPERATOR_NOT_APPLICABLE_WHEN, :operator, :left_value, :right_value do
