@@ -360,7 +360,7 @@ module Issues
   # query only supports == and !=, and not <, > etc.
   #
   ILLEGAL_QUERY_EXPRESSION = hard_issue :ILLEGAL_QUERY_EXPRESSION do
-    _("Illegal query expression. %{expression} cannot be used in a query") % { expression: label.a_an_uc(semantic) }
+    _("Illegal query expression. An expression of type %{expression_type} cannot be used in a query.") % { expression_type: label(semantic) }
   end
 
   # If an attempt is made to make a resource default virtual or exported.
