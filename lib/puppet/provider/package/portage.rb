@@ -5,8 +5,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   desc "Provides packaging support for Gentoo's portage system.
 
     This provider supports the `install_options` and `uninstall_options` attributes, which allows command-line
-    flags to be passed to emerge.  These options should be specified as a string (e.g. '--flag'), a hash
-    (e.g. {'--flag' => 'value'}), or an array where each element is either a string or a hash."
+    flags to be passed to emerge. These options should be specified as an array where each element is either a string or a hash."
 
   has_features :install_options, :purgeable, :reinstallable, :uninstall_options, :versionable, :virtual_packages
 

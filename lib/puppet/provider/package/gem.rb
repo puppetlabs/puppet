@@ -12,8 +12,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     This provider supports the `install_options` and `uninstall_options` attributes,
     which allow command-line flags to be passed to the gem command.
-    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-    or an array where each element is either a string or a hash."
+    These options should be specified as an array where each element is either a 
+    string or a hash."
 
   has_feature :versionable, :install_options, :uninstall_options
 

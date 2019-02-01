@@ -6,8 +6,8 @@ Puppet::Type.type(:package).provide :dnf, :parent => :yum do
   feature is destructive and should be used with the utmost care.
 
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to dnf.
-  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-  or an array where each element is either a string or a hash."
+  These options should be specified as an array where each element is either
+   a string or a hash."
 
   has_feature :install_options, :versionable, :virtual_packages
 

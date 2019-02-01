@@ -7,8 +7,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     This provider supports the `install_options` and `uninstall_options`
     attributes, which allow command-line flags to be passed to rpm.
-    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-    or an array where each element is either a string or a hash."
+These options should be specified as an array where each element is either a string or a hash."
 
   has_feature :versionable
   has_feature :install_options

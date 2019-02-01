@@ -6,8 +6,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     This provider supports the `install_options` and `uninstall_options`
     attributes, which allow command-line flags to be passed to pkg_add and pkg_delete.
-    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-    or an array where each element is either a string or a hash."
+    These options should be specified as an array where each element is either a
+     string or a hash."
 
   commands :pkginfo   => "pkg_info",
            :pkgadd    => "pkg_add",
