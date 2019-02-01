@@ -244,6 +244,15 @@ describe 'the type mismatch describer' do
     expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
       /Class\[Test\]: parameter 'opts' expects size to be 1, got 0/))
   end
+
+  it "treats Optional as Optional[Any]" do
+    code = <<-PUPPET
+      class test(Optional $var=undef) {}
+      class { 'test': var => 'hello' }
+    PUPPET
+    expect { eval_and_collect_notices(code) }.not_to raise_error
+  end
+
 end
 end
 end
