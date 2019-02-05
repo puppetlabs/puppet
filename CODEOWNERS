@@ -1,0 +1,30 @@
+# default to platform-core
+* @puppetlabs/platform-core
+
+# platform-os
+/lib/puppet/type/group @puppetlabs/platform-os
+/lib/puppet/type/package @puppetlabs/platform-os
+/lib/puppet/type/service @puppetlabs/platform-os
+/lib/puppet/type/user @puppetlabs/platform-os
+/lib/puppet/provider/group @puppetlabs/platform-os
+/lib/puppet/provider/package @puppetlabs/platform-os
+/lib/puppet/provider/service @puppetlabs/platform-os
+/lib/puppet/provider/user @puppetlabs/platform-os
+
+# language
+/lib/puppet/datatypes @puppetlabs/language
+/lib/puppet/functions @puppetlabs/language
+/lib/puppet/pal @puppetlabs/language
+/lib/puppet/parser @puppetlabs/language
+/lib/puppet/pops @puppetlabs/language
+/lib/puppet/syntax_checkers @puppetlabs/language
+
+# puppet device
+/lib/puppet/application/device.rb @puppetlabs/networking
+/lib/puppet/util/network_device @puppetlabs/networking
+
+# puppet module
+/lib/puppet/application/module.rb @puppetlabs/pdk
+/lib/puppet/face/module @puppetlabs/pdk
+/lib/puppet/forge @puppetlabs/pdk
+/lib/puppet/module_tool @puppetlabs/pdk
