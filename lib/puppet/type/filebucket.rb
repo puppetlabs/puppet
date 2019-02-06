@@ -47,14 +47,11 @@ module Puppet
         puppet master server).
 
         This setting is _only_ consulted if the `path` attribute is set to `false`."
-      defaultto { Puppet[:server] }
     end
 
     newparam(:port) do
       desc "The port on which the remote server is listening. Defaults to the
         value of the `masterport` setting, which is usually %s." % Puppet[:masterport]
-
-      defaultto { Puppet[:masterport] }
     end
 
     newparam(:path) do
