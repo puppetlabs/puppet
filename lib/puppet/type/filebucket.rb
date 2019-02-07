@@ -42,16 +42,23 @@ module Puppet
     end
 
     newparam(:server) do
-      desc "The server providing the remote filebucket service. Defaults to the
-        value of the `server` setting (that is, the currently configured
-        puppet master server).
+      desc "The server providing the remote filebucket service.
 
-        This setting is _only_ consulted if the `path` attribute is set to `false`."
+        This setting is _only_ consulted if the `path` attribute is set to `false`.
+
+        If this attribute is not specified, the first entry in the `server_list`
+        configuration setting is used, followed by the value of the `server` setting
+        if `server_list` is not set."
     end
 
     newparam(:port) do
-      desc "The port on which the remote server is listening. Defaults to the
-        value of the `masterport` setting, which is usually %s." % Puppet[:masterport]
+      desc "The port on which the remote server is listening.
+
+        This setting is _only_ consulted if the `path` attribute is set to `false`.
+
+        If this attribute is not specified, the first entry in the `server_list`
+        configuration setting is used, followed by the value of the `masterport`
+        setting if `server_list` is not set."
     end
 
     newparam(:path) do
