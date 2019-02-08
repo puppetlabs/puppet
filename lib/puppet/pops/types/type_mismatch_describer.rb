@@ -753,7 +753,7 @@ module Types
     end
 
     def describe_POptionalType(expected, original, actual, path)
-      return EMPTY_ARRAY if actual.is_a?(PUndefType)
+      return EMPTY_ARRAY if actual.is_a?(PUndefType) || expected.optional_type.nil?
       internal_describe(expected.optional_type, original.is_a?(PTypeAliasType) ? original : expected, actual, path)
     end
 
