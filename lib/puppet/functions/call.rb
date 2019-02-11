@@ -37,6 +37,7 @@ Puppet::Functions.create_function(:call, Puppet::Functions::InternalFunction) do
   end
 
   def call_impl_block(scope, function_name, *args, &block)
-    call_function_with_scope(scope, function_name, *args, &block)
+    # The call function must be able to call functions loaded by any loader visible from the calling scope.
+    Puppet::Pops::Parser::EvaluatingParser.new.evaluator.external_call_function(function_name, args, scope, &block)
   end
 end
