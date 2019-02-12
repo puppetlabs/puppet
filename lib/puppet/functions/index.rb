@@ -32,7 +32,7 @@
 #
 # ```puppet
 # $data = {types => ["routers", "servers", "workstations"], colors => ['red', 'blue', 'green']}
-# notice $data.index |$value| { 'servers' in $value}  # notices 'types'
+# notice $data.index |$value| { 'servers' in $value } # notices 'types'
 # notice $data.index |$value| { 'red' in $value }     # notices 'colors'
 # ```
 # Note that the lambda gets the value and not an array with `[key, value]` as in other

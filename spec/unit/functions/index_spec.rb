@@ -39,7 +39,7 @@ describe 'the index function' do
   context "should be callable on Hash with" do
     it 'a lambda to compute match' do
       catalog = compile_to_catalog(<<-MANIFEST)
-        $h = {1 => 10, 2 =>20, 3 => 30}
+        $h = {1 => 10, 2 => 20, 3 => 30 }
         $n = $h.index |$v| { $v == 20 }
         file { "$n": ensure => present }
       MANIFEST
@@ -48,7 +48,7 @@ describe 'the index function' do
 
     it 'a lambda taking two arguments to compute match' do
       catalog = compile_to_catalog(<<-MANIFEST)
-        $h = {1 => 10, 2 =>20, 3 => 30}
+        $h = {1 => 10, 2 => 20, 3 => 30 }
         $n = $h.index |$k, $v| { $k == 3 }
         file { "$n": ensure => present }
       MANIFEST
@@ -57,7 +57,7 @@ describe 'the index function' do
 
     it 'a given value' do
       catalog = compile_to_catalog(<<-MANIFEST)
-        $h = {1 => 10, 2 =>20, 3 => 30}
+        $h = {1 => 10, 2 => 20, 3 => 30 }
         $n = $h.index(20)
         file { "$n": ensure => present }
       MANIFEST
