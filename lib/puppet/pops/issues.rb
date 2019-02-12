@@ -788,7 +788,14 @@ module Issues
   end
 
   HIERA_VERSION_3_NOT_GLOBAL = hard_issue :HIERA_VERSION_3_NOT_GLOBAL, :where do
-    _("hiera.yaml version 3 cannot be used in %{location}") % { location: label.a_an(where) }
+    case where
+    when 'environment'
+      _("hiera.yaml version 3 cannot be used in an environment.")
+    when 'module'
+      _("hiera.yaml version 3 cannot be used in a module.")
+    else
+      _("hiera.yaml version 3 cannot be used here.")
+    end
   end
 
   HIERA_UNSUPPORTED_VERSION_IN_GLOBAL = hard_issue :HIERA_UNSUPPORTED_VERSION_IN_GLOBAL do
