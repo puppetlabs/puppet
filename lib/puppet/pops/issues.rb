@@ -377,7 +377,7 @@ module Issues
   # This is not supported in 3x, but it allowed in 4x.
   #
   UNSUPPORTED_RANGE = issue :UNSUPPORTED_RANGE, :count do
-    _("Attempt to use unsupported range in %{expression}, %{count} values given for max 1") % { expression: label.a_an(semantic), count: count }
+    _("Attempt to use unsupported range in an expression of type %{expression_type}. Was given %{count} where max 1 was accepted.") % { expression_type: label(semantic), count: count }
   end
 
   # Issues when expressions that are not implemented or activated in the current version are used.
