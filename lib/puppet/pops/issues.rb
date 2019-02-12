@@ -383,7 +383,7 @@ module Issues
   # Issues when expressions that are not implemented or activated in the current version are used.
   #
   UNSUPPORTED_EXPRESSION = issue :UNSUPPORTED_EXPRESSION do
-    _("Expressions of type %{expression} are not supported in this version of Puppet") % { expression: label.a_an(semantic) }
+    _("Expressions of type %{expression_type} are not supported in this version of Puppet.") % { expression_type: label(semantic) }
   end
 
   ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
