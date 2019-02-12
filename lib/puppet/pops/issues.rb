@@ -269,7 +269,7 @@ module Issues
   end
 
   MATCH_NOT_STRING = hard_issue :MATCH_NOT_STRING, :left_value do
-    _("Left match operand must result in a String value. Got %{left}.") % { left: label.a_an(left_value) }
+    _("Left match operand must result in a String value. Instead, got a value of type %{left}.") % { left: label(left_value) }
   end
 
   # Some expressions/statements may not produce a value (known as right-value, or rvalue).
