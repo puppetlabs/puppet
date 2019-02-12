@@ -16,7 +16,7 @@ describe "Puppet::Pops::Issues" do
     expect(x.format(:name => 'Boo-Hoo',
       :label => Puppet::Pops::Model::ModelLabelProvider.new,
       :semantic => "dummy"
-      )).to eq("A String may not have a name containing a hyphen. The name 'Boo-Hoo' is not legal")
+      )).to eq("The name 'Boo-Hoo' contains a hyphen, which is illegal in an expression of type String.")
   end
 
   it "should should format a message that does not require an argument" do
