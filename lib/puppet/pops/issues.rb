@@ -777,9 +777,9 @@ module Issues
 
   NUMERIC_OVERFLOW = hard_issue :NUMERIC_OVERFLOW, :value do
     if value > 0
-      _("%{expression} resulted in a value outside of Puppet Integer max range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
+      _("An expression of type %{expression_type} resulted in the value of '%{value}' outside of Puppet Integer max range.") % { expression_type: label(semantic), value: ("%#+x" % value) }
     else
-      _("%{expression} resulted in a value outside of Puppet Integer min range, got '%{value}'") % { expression: label.a_an_uc(semantic), value: ("%#+x" % value) }
+      _("An expression of type %{expression_type} resulted in the value of '%{value}' outside of Puppet Integer min range.") % { expression_type: label(semantic), value: ("%#+x" % value) }
     end
   end
 

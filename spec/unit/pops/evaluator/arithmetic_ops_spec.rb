@@ -36,43 +36,43 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "MAX + 1 => error" do
         expect{
           evaluate(literal(MAX_INTEGER) + literal(1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "MAX - -1 => error" do
         expect{
           evaluate(literal(MAX_INTEGER) - literal(-1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "MAX * 2 => error" do
         expect{
           evaluate(literal(MAX_INTEGER) * literal(2))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "(MAX+1)*2 / 2 => error" do
         expect{
           evaluate(literal((MAX_INTEGER+1)*2) / literal(2))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "MAX << 1 => error" do
         expect{
           evaluate(literal(MAX_INTEGER) << literal(1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "((MAX+1)*2)  << 1 => error" do
         expect{
           evaluate(literal((MAX_INTEGER+1)*2) >> literal(1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer max range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer max range/)
       end
 
       it "MIN - 1 => error" do
         expect{
           evaluate(literal(MIN_INTEGER) - literal(1))
-        }.to raise_error(/resulted in a value outside of Puppet Integer min range/)
+        }.to raise_error(/resulted in the value.*outside of Puppet Integer min range/)
       end
 
       it "does not error on the border values" do
