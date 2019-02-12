@@ -421,6 +421,11 @@ describe 'loaders' do
       expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'passed in scope'")
     end
 
+    it 'calls can be made to a non core function via the call() function' do
+      call_function = loader.load_typed(typed_name(:function, 'call')).value
+      expect(call_function.call(scope, 'user::puppetcaller4')).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
+    end
+
   end
 
   context 'when a 3x load takes place' do
