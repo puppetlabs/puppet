@@ -165,7 +165,7 @@ module Issues
   end
 
   NOT_ABSOLUTE_TOP_LEVEL = hard_issue :NOT_ABSOLUTE_TOP_LEVEL do
-    _("%{value} may only appear at toplevel") % { value: label.a_an_uc(semantic) }
+    _("An expression of type %{expression_type} may appear only at the top level.") % { expression_type: label(semantic) }
   end
 
   CROSS_SCOPE_ASSIGNMENT = hard_issue :CROSS_SCOPE_ASSIGNMENT, :name do
