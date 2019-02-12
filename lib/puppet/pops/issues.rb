@@ -419,7 +419,7 @@ module Issues
   end
 
   BAD_COLLECTION_SLICE_TYPE = issue :BAD_COLLECTION_SLICE_TYPE, :actual do
-    _("A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got %{actual}") % { actual: label.a_an(actual) }
+    _("A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Instead, got a value of type %{actual}.") % { actual: label(actual) }  
   end
 
   BAD_FLOAT_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do
