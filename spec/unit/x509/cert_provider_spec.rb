@@ -54,6 +54,16 @@ describe Puppet::X509::CertProvider do
           create_provider(capath: ca_path).load_cacerts
         }.to raise_error(OpenSSL::X509::CertificateError)
       end
+
+      it 'raises if the cacerts are unreadable' do
+        capath = my_fixture('ca.pem')
+        provider = create_provider(capath: capath)
+        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.load_cacerts
+        }.to raise_error(Puppet::Error, "Failed to load CA certificates from '#{capath}'")
+      end
     end
 
     context 'crls' do
@@ -82,6 +92,16 @@ describe Puppet::X509::CertProvider do
           create_provider(crlpath: crl_path).load_crls
         }.to raise_error(OpenSSL::X509::CRLError, 'nested asn1 error')
       end
+
+      it 'raises if the CRLs are unreadable' do
+        crlpath = my_fixture('crl.pem')
+        provider = create_provider(crlpath: crlpath)
+        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.load_crls
+        }.to raise_error(Puppet::Error, "Failed to load CRLs from '#{crlpath}'")
+      end
     end
   end
 
@@ -97,6 +117,15 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'sets mode to 644 in PUP-9463'
+
+      it 'raises if the CA certs are unwritable' do
+        provider = create_provider(capath: ca_path)
+        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.save_cacerts([ca_cert])
+        }.to raise_error(Puppet::Error, "Failed to save CA certificates to '#{ca_path}'")
+      end
     end
 
     context 'crls' do
@@ -110,6 +139,15 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'sets mode to 644 in PUP-9463'
+
+      it 'raises if the CRLs are unwritable' do
+        provider = create_provider(crlpath: crl_path)
+        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.save_crls([ca_crl])
+        }.to raise_error(Puppet::Error, "Failed to save CRLs to '#{crl_path}'")
+      end
     end
   end
 
@@ -142,6 +180,14 @@ describe Puppet::X509::CertProvider do
         Puppet[:hostprivkey] = File.join(my_fixture_dir, "signed-key.pem")
 
         expect(provider.load_private_key('foo')).to be_nil
+      end
+
+      it 'raises if the private key is unreadable' do
+        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.load_private_key('signed')
+        }.to raise_error(Puppet::Error, "Failed to load private key for 'signed'")
       end
 
       context 'that are encrypted' do
@@ -185,6 +231,14 @@ describe Puppet::X509::CertProvider do
 
         expect(provider.load_client_cert('foo')).to be_nil
       end
+
+      it 'raises if the certificate is unreadable' do
+        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.load_client_cert('signed')
+        }.to raise_error(Puppet::Error, "Failed to load client certificate for 'signed'")
+      end
     end
 
     context 'requests' do
@@ -214,6 +268,14 @@ describe Puppet::X509::CertProvider do
         Puppet[:hostcsr] = File.join(my_fixture_dir, "doesnotexist.pem")
 
         expect(provider.load_request('request')).to be_a(OpenSSL::X509::Request)
+      end
+
+      it 'raises if the certificate is unreadable' do
+        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.load_request('pending')
+        }.to raise_error(Puppet::Error, "Failed to load certificate request for 'pending'")
       end
     end
   end
@@ -246,6 +308,14 @@ describe Puppet::X509::CertProvider do
           provider.save_private_key('tom/../key', private_key)
         }.to raise_error(RuntimeError, 'Certname "tom/../key" must not contain unprintable or non-ASCII characters')
       end
+
+      it 'raises if the private key is unwritable' do
+        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.save_private_key(name, private_key)
+        }.to raise_error(Puppet::Error, "Failed to save private key for '#{name}'")
+      end
     end
 
     context 'certs' do
@@ -273,6 +343,14 @@ describe Puppet::X509::CertProvider do
           provider.save_client_cert('tom/../key', client_cert)
         }.to raise_error(RuntimeError, 'Certname "tom/../key" must not contain unprintable or non-ASCII characters')
       end
+
+      it 'raises if the cert is unwritable' do
+        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.save_client_cert(name, client_cert)
+        }.to raise_error(Puppet::Error, "Failed to save client certificate for '#{name}'")
+      end
     end
 
     context 'requests' do
@@ -299,6 +377,14 @@ describe Puppet::X509::CertProvider do
         expect {
           provider.save_request('tom/../key', csr)
         }.to raise_error(RuntimeError, 'Certname "tom/../key" must not contain unprintable or non-ASCII characters')
+      end
+
+      it 'raises if the request is unwritable' do
+        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.save_request(name, csr)
+        }.to raise_error(Puppet::Error, "Failed to save certificate request for '#{name}'")
       end
     end
   end

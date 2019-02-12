@@ -26,19 +26,25 @@ class Puppet::X509::CertProvider
   # Save `certs` to the configured `capath`.
   #
   # @param certs [Array<OpenSSL::X509::Certificate>] Array of CA certs to save
+  # @raise [Puppet::Error] if the certs cannot be saved
   # @api private
   def save_cacerts(certs)
     save_pem(certs.map(&:to_pem).join, @capath)
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to save CA certificates to '%{capath}'") % {capath: @capath}, e)
   end
 
   # Load CA certs from the configured `capath`.
   #
   # @return (see #load_cacerts_from_pem)
   # @raise (see #load_cacerts_from_pem)
+  # @raise [Puppet::Error] if the certs cannot be loaded
   # @api private
   def load_cacerts
     pem = load_pem(@capath)
     pem ? load_cacerts_from_pem(pem) : nil
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to load CA certificates from '%{capath}'") % {capath: @capath}, e)
   end
 
   # Load PEM encoded CA certificates.
@@ -56,19 +62,25 @@ class Puppet::X509::CertProvider
   # Save `crls` to the configured `crlpath`.
   #
   # @param crls [Array<OpenSSL::X509::CRL>] Array of CRLs to save
+  # @raise [Puppet::Error] if the CRLs cannot be saved
   # @api private
   def save_crls(crls)
     save_pem(crls.map(&:to_pem).join, @crlpath)
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to save CRLs to '%{crlpath}'") % {crlpath: @crlpath}, e)
   end
 
   # Load CRLs from the configured `crlpath` path.
   #
   # @return (see #load_crls_from_pem)
   # @raise (see #load_crls_from_pem)
+  # @raise [Puppet::Error] if the CRLs cannot be loaded
   # @api private
   def load_crls
     pem = load_pem(@crlpath)
     pem ? load_crls_from_pem(pem) : nil
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to load CRLs from '%{crlpath}'") % {crlpath: @crlpath}, e)
   end
 
   # Load PEM encoded CRL(s).
@@ -88,10 +100,13 @@ class Puppet::X509::CertProvider
   #
   # @param name [String] The private key identity
   # @param key [OpenSSL::PKey::RSA] private key
+  # @raise [Puppet::Error] if the private key cannot be saved
   # @api private
   def save_private_key(name, key)
     path = to_path(@privatekeydir, name)
     save_pem(key.to_pem, path)
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to save private key for '%{name}'") % {name: name}, e)
   end
 
   # Load a private key from the configured `privatekeydir`. For
@@ -100,11 +115,14 @@ class Puppet::X509::CertProvider
   # @param name [String] The private key identity
   # @return (see #load_private_key_from_pem)
   # @raise (see #load_private_key_from_pem)
+  # @raise [Puppet::Error] if the private key cannot be loaded
   # @api private
   def load_private_key(name)
     path = to_path(@privatekeydir, name)
     pem = load_pem(path)
     pem ? load_private_key_from_pem(pem) : nil
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to load private key for '%{name}'") % {name: name}, e)
   end
 
   # Load a PEM encoded private key.
@@ -122,10 +140,13 @@ class Puppet::X509::CertProvider
   #
   # @param name [String] The client cert identity
   # @param cert [OpenSSL::X509::Certificate] The cert to save
+  # @raise [Puppet::Error] if the client cert cannot be saved
   # @api private
   def save_client_cert(name, cert)
     path = to_path(@certdir, name)
     save_pem(cert.to_pem, path)
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to save client certificate for '%{name}'") % {name: name}, e)
   end
 
   # Load a named client cert from the configured `certdir`.
@@ -133,11 +154,14 @@ class Puppet::X509::CertProvider
   # @param name [String] The client cert identity
   # @return (see #load_request_from_pem)
   # @raise (see #load_client_cert_from_pem)
+  # @raise [Puppet::Error] if the client cert cannot be loaded
   # @api private
   def load_client_cert(name)
     path = to_path(@certdir, name)
     pem = load_pem(path)
     pem ? load_client_cert_from_pem(pem) : nil
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to load client certificate for '%{name}'") % {name: name}, e)
   end
 
   # Load a PEM encoded certificate.
@@ -154,9 +178,13 @@ class Puppet::X509::CertProvider
   #
   # @param name [String] the request identity
   # @param csr [OpenSSL::X509::Request] the request
+  # @raise [Puppet::Error] if the cert request cannot be saved
+  # @api private
   def save_request(name, csr)
     path = to_path(@requestdir, name)
     save_pem(csr.to_pem, path)
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to save certificate request for '%{name}'") % {name: name}, e)
   end
 
   # Load a named certificate signing request (CSR) from the configured `requestdir`.
@@ -164,10 +192,14 @@ class Puppet::X509::CertProvider
   # @param name [String] The request identity
   # @return (see #load_request_from_pem)
   # @raise (see #load_request_from_pem)
+  # @raise [Puppet::Error] if the cert request cannot be saved
+  # @api private
   def load_request(name)
     path = to_path(@requestdir, name)
     pem = load_pem(path)
     pem ? load_request_from_pem(pem) : nil
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to load certificate request for '%{name}'") % {name: name}, e)
   end
 
   # Load a PEM encoded certificate signing request (CSR).
