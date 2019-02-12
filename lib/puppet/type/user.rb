@@ -618,7 +618,20 @@ module Puppet
     end
 
     newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
-      desc "Specify AIX attributes for the user in an array of attribute = value pairs."
+      desc "Specify AIX attributes for the user in an array or hash of attribute = value pairs. 
+      
+      For example:
+      
+      ```
+      ['minage=0', 'maxage=5', 'SYSTEM=compat']
+      ```
+      
+      or 
+    
+     ```
+     attributes => { 'minage' => '0', 'maxage' => '5', 'SYSTEM' => 'compat' }
+     ```
+     "
 
       self.log_only_changed_or_new_keys = true
 
