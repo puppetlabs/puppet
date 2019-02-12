@@ -27,11 +27,13 @@ module Puppet::X509::PemStore
   # @param pem [String] The PEM encoded object to write
   # @param path [String] The file path to write to
   # @raise [Errno::EACCES] if permission is denied
+  # @raise [Errno::EPERM] if the operation cannot be completed
   # @api private
   def save_pem(pem, path)
-    Puppet::Util.replace_file(path, 0644) do |f|
-      f.set_encoding('UTF-8')
-      f.write(pem.encode('UTF-8'))
+    if Puppet::Util::Platform.windows?
+      save_pem_win32(pem, path)
+    else
+      save_pem_posix(pem, path)
     end
   end
 
@@ -46,5 +48,32 @@ module Puppet::X509::PemStore
     true
   rescue Errno::ENOENT
     false
+  end
+
+  private
+
+  def save_pem_posix(pem, path)
+    Puppet::Util.replace_file(path, 0644) do |f|
+      f.set_encoding('UTF-8')
+      f.write(pem.encode('UTF-8'))
+    end
+  end
+
+  # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--0-499-
+  ACCESS_DENIED = 5
+  SHARING_VIOLATION = 32
+  LOCK_VIOLATION = 33
+
+  def save_pem_win32(pem, path)
+    # Puppet::Util.replace_file should be implemented in Puppet::FileSystem
+    # and raise Errno-based exceptions
+    save_pem_posix(pem, path)
+  rescue Puppet::Util::Windows::Error => e
+    case e.code
+    when ACCESS_DENIED, SHARING_VIOLATION, LOCK_VIOLATION
+      raise Errno::EACCES.new(path, e)
+    else
+      raise SystemCallError.new(e.message, e)
+    end
   end
 end

@@ -20,14 +20,34 @@ describe Puppet::X509::PemStore do
     Puppet::FileSystem.chmod(0600, path)
   end
 
-  def with_unwritable_file
+  def with_unwritable_file(&block)
+    if Puppet::Util::Platform.windows?
+      with_unwritable_file_win32(&block)
+    else
+      with_unwritable_file_posix(&block)
+    end
+  end
+
+  def with_unwritable_file_win32
+    dir = tmpdir('pem_store')
+    path = File.join(dir, 'unwritable')
+
+    # if file handle is open, then file can't be written by other processes
+    File.open(path, 'w') do |f|
+      yield path
+    end
+  end
+
+  def with_unwritable_file_posix
     dir = tmpdir('pem_store')
     path = File.join(dir, 'unwritable')
     # if directory is not executable/traverseable, then file can't be written to
     Puppet::FileSystem.chmod(0, dir)
-    yield path
-  ensure
-    Puppet::FileSystem.chmod(0700, dir)
+    begin
+      yield path
+    ensure
+      Puppet::FileSystem.chmod(0700, dir)
+    end
   end
 
   context 'loading' do
