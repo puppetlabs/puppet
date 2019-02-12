@@ -399,7 +399,7 @@ module Issues
   end
 
   BAD_STRING_SLICE_TYPE = issue :BAD_STRING_SLICE_TYPE, :actual do
-    _("String-Type [] requires all arguments to be integers (or default). Got %{actual}") % { actual: actual }
+    _("String-Type [] requires all arguments to be integers (or default). Instead, got a value of type %{actual}.") % { actual: label(actual) }
   end
 
   BAD_ARRAY_SLICE_ARITY = issue :BAD_ARRAY_SLICE_ARITY, :actual do
