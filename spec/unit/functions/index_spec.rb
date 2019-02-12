@@ -163,6 +163,15 @@ describe 'the index function' do
       expect(catalog.resource(:file, "test")['ensure']).to eq('present')
     end
 
+    it 'when using a String and a lambda' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $s = "foobarfuub"
+        $n = $s.index() |$v| { false }
+        file { "test": ensure => if $n =~ Undef { present } else {absent} }
+      MANIFEST
+      expect(catalog.resource(:file, "test")['ensure']).to eq('present')
+    end
+
     it 'when using a String and a value' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $s = "foobarfuub"
