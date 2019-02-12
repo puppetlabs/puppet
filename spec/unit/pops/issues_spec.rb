@@ -11,7 +11,7 @@ describe "Puppet::Pops::Issues" do
     expect(x.issue_code).to eq(:NAME_WITH_HYPHEN)
   end
 
-  it "should should format a message that requires an argument" do
+  it "should format a message that requires an argument" do
     x = Puppet::Pops::Issues::NAME_WITH_HYPHEN
     expect(x.format(:name => 'Boo-Hoo',
       :label => Puppet::Pops::Model::ModelLabelProvider.new,
@@ -19,9 +19,9 @@ describe "Puppet::Pops::Issues" do
       )).to eq("The name 'Boo-Hoo' contains a hyphen, which is illegal in an expression of type String.")
   end
 
-  it "should should format a message that does not require an argument" do
+  it "should format a message that does not require an argument" do
     x = Puppet::Pops::Issues::NOT_TOP_LEVEL
-    expect(x.format()).to eq("Classes, definitions, and nodes may only appear at toplevel or inside other classes")
+    expect(x.format()).to eq("Classes, definitions, and nodes may appear only at the top level or inside other classes.")
   end
 
 end
