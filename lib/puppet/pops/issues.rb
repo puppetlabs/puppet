@@ -247,7 +247,7 @@ module Issues
   # resource defaults)
   #
   UNSUPPORTED_OPERATOR_IN_CONTEXT = hard_issue :UNSUPPORTED_OPERATOR_IN_CONTEXT, :operator do
-    _("The operator '%{operator}' in %{value} is not supported.") % { operator: operator, value: label.a_an(semantic) }
+    _("The operator '%{operator}' is not supported in an expression of type %{type}.") % { operator: operator, type: label(semantic) }
   end
 
   # For non applicable operators (e.g. << on Hash).
