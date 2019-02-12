@@ -218,7 +218,7 @@ module Issues
   # a variable expression.
   #
   ILLEGAL_ASSIGNMENT_VIA_INDEX = hard_issue :ILLEGAL_ASSIGNMENT_VIA_INDEX do
-    _("Illegal attempt to assign to %{value} via [index/key]. Not an assignable reference") % { value: label.a_an(semantic) }
+    _("Illegal attempt to assign to the type %{type} via [index/key]. Not an assignable reference.") % { type: label(semantic) }
   end
 
   ILLEGAL_MULTI_ASSIGNMENT_SIZE = hard_issue :ILLEGAL_MULTI_ASSIGNMENT_SIZE, :expected, :actual do
