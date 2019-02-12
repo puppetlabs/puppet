@@ -265,7 +265,7 @@ module Issues
   end
 
   MATCH_NOT_REGEXP = hard_issue :MATCH_NOT_REGEXP, :detail do
-    _("Can not convert right match operand to a regular expression. Caused by '%{detail}'.") % { detail: detail }
+    _("Cannot convert right match operand to a regular expression. Caused by '%{detail}'.") % { detail: detail }
   end
 
   MATCH_NOT_STRING = hard_issue :MATCH_NOT_STRING, :left_value do
