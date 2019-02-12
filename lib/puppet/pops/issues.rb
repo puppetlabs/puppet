@@ -153,7 +153,7 @@ module Issues
   # @todo configuration if this is error or warning
   #
   VAR_WITH_HYPHEN = issue :VAR_WITH_HYPHEN, :name do
-    _("A variable name may not contain a hyphen. The name '%{name}' is not legal") % { name: name }
+    _("A variable name may not contain a hyphen. The name '%{name}' is not legal.") % { name: name }
   end
 
   # A class, definition, or node may only appear at top level or inside other classes
