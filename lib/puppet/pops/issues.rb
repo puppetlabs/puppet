@@ -451,7 +451,7 @@ module Issues
   end
 
   BAD_TYPE_SLICE_ARITY = issue :BAD_TYPE_SLICE_ARITY, :base_type, :min, :max, :actual do
-    base_type_label = base_type.is_a?(String) ? base_type : label.a_an_uc(base_type)
+    base_type_label = base_type.is_a?(String) ? base_type : label(base_type)
     if max == -1 || max == Float::INFINITY
       _("%{base_type_label}[] accepts %{min} or more arguments. Got %{actual}") % { base_type_label: base_type_label, min: min, actual: actual }
     elsif max && max != min

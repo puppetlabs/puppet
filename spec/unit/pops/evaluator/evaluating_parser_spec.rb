@@ -836,7 +836,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "String[a]"                   => "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Instead, got a value of type String",
       "Pattern[0]"                  => 'Error creating type specialization of a Pattern-Type, Cannot use Integer where String or Regexp or Pattern-Type or Regexp-Type is expected',
       "Regexp[0]"                   => 'Error creating type specialization of a Regexp-Type, Cannot use Integer where String or Regexp is expected',
-      "Regexp[a,b]"                 => 'A Regexp-Type[] accepts 1 argument. Got 2',
+      "Regexp[a,b]"                 => 'Regexp-Type[] accepts 1 argument. Got 2',
       "true[0]"                     => "Operator '[]' is not applicable to a Boolean",
       "1[0]"                        => "Operator '[]' is not applicable to an Integer",
       "3.14[0]"                     => "Operator '[]' is not applicable to a Float",
