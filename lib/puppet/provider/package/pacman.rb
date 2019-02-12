@@ -6,8 +6,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   desc "Support for the Package Manager Utility (pacman) used in Archlinux.
 
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to pacman.
-  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-  or an array where each element is either a string or a hash."
+  These options should be specified as an array where each element is either a string or a hash."
 
   # If yaourt is installed, we can make use of it
   def self.yaourt?
