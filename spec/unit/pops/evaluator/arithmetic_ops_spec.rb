@@ -268,17 +268,17 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timestamp / Timestamp is an error' do
         code = "notice(Timestamp('2016-10-10') / Timestamp())"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Timestamp / Timespan is an error' do
         code = "notice(Timestamp('2016-10-10') / Timespan('0-12:00:00'))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Timestamp / Numeric is an error' do
         code = "notice(Timestamp('2016-10-10') / 3600.123)"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\/' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Numeric / Timestamp is an error' do
@@ -288,17 +288,17 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'Timestamp * Timestamp is an error' do
         code = "notice(Timestamp('2016-10-10') * Timestamp())"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Timestamp * Timespan is an error' do
         code = "notice(Timestamp('2016-10-10') * Timespan('0-12:00:00'))"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Timestamp * Numeric is an error' do
         code = "notice(Timestamp('2016-10-10') * 3600.123)"
-        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to a Timestamp/)
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /Operator '\*' is not applicable to an expression of type Timestamp/)
       end
 
       it 'Numeric * Timestamp is an error' do

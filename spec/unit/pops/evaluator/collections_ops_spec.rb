@@ -72,7 +72,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/Concat/Delete' do
     it 'raises and error when LHS of << is a hash' do
     expect {
        evaluate(literal({'a' => 1, 'b'=>2}) << literal(1))
-    }.to raise_error(/Operator '<<' is not applicable to a Hash/)
+    }.to raise_error(/Operator '<<' is not applicable to an expression of type Hash/)
     end
   end
 
