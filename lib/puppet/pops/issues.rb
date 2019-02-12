@@ -502,8 +502,8 @@ module Issues
   end
 
   CAPTURES_REST_NOT_SUPPORTED = hard_issue :CAPTURES_REST_NOT_SUPPORTED, :container, :param_name do
-    _("Parameter $%{param} has 'captures rest' - not supported in %{container}") % { param: param_name, container: label.a_an(container) }
-  end
+    _("Parameter $%{param} has 'captures rest', which is not supported in an expression of type %{container}.") % { param: param_name, container: label(container) }
+    end
 
   REQUIRED_PARAMETER_AFTER_OPTIONAL = hard_issue :REQUIRED_PARAMETER_AFTER_OPTIONAL, :param_name do
     _("Parameter $%{param} is required but appears after optional parameters") % { param: param_name }
