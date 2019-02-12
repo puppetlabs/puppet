@@ -604,7 +604,7 @@ module Issues
   end
 
   IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
-    _("This %{expression} has no effect. %{container} can not end with a value-producing expression without other effect") % { expression: label.label(semantic), container: label.a_an_uc(container) }
+    _("This expression of type %{expression_type} has no effect. The container of type %{container_type} cannot end with a value-producing expression without side effects.") % { expression_type: label(semantic), container_type: label(container) }
   end
 
   RESERVED_WORD = hard_issue :RESERVED_WORD, :word do
