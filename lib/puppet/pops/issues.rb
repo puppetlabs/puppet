@@ -387,7 +387,7 @@ module Issues
   end
 
   ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
-    _("Illegal relationship operand, can not form a relationship with %{expression}. A Catalog type is required.") % { expression: label.a_an(operand) }
+    _("Illegal relationship operand. Cannot form a relationship with an expression of type %{expression}. A Catalog type is required.") % { expression: label(operand) }
   end
 
   NOT_CATALOG_TYPE = issue :NOT_CATALOG_TYPE, :type do
