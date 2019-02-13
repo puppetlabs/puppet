@@ -893,7 +893,7 @@ module Issues
   end
 
   SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path, :klass, :value do
-    _("%{path} contains a hash with %{klass} key. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
+    _("%{path} contains a hash with a key of data type %{klass}. It will be converted to the String '%{value}'") % { path: path, klass: label(klass), value: value }
   end
 
   FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING = issue :NOT_SUPPORTED_WHEN_SCRIPTING, :feature do
