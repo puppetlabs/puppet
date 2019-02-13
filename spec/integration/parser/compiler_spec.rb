@@ -376,7 +376,7 @@ describe Puppet::Parser::Compiler do
             compile_to_catalog(<<-PP)
               notice Class[ToothFairy]
             PP
-          }.to raise_error(/Illegal Class name in class reference. A TypeReference\['ToothFairy'\]-Type cannot be used where a String is expected/)
+          }.to raise_error(/Illegal Class name in class reference. An expression of type TypeReference\['ToothFairy'\]-Type cannot be used where a String is expected/)
         end
       end
 

@@ -478,7 +478,7 @@ module Issues
   end
 
   ILLEGAL_HOSTCLASS_NAME = hard_issue :ILLEGAL_HOSTCLASS_NAME, :name do
-    _("Illegal Class name in class reference. %{expression} cannot be used where a String is expected") % { expression: label.a_an_uc(name) }
+    _("Illegal Class name in class reference. An expression of type %{expression_type} cannot be used where a String is expected.") % { expression_type: label(name) }
   end
 
   ILLEGAL_DEFINITION_NAME = hard_issue :ILLEGAL_DEFINITION_NAME, :name do

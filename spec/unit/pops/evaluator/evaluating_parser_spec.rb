@@ -963,11 +963,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       context 'with errors' do
         { "Class['fail-whale']" => /Illegal name/,
-          "Class[0]"            => /An Integer cannot be used where a String is expected/,
-          "Class[/.*/]"         => /A Regexp cannot be used where a String is expected/,
-          "Class[4.1415]"       => /A Float cannot be used where a String is expected/,
-          "Class[Integer]"      => /An Integer-Type cannot be used where a String is expected/,
-          "Class[File['tmp']]"   => /A File\['tmp'\] Resource-Reference cannot be used where a String is expected/,
+          "Class[0]"            => /Integer cannot be used where a String is expected/,
+          "Class[/.*/]"         => /Regexp cannot be used where a String is expected/,
+          "Class[4.1415]"       => /Float cannot be used where a String is expected/,
+          "Class[Integer]"      => /Integer-Type cannot be used where a String is expected/,
+          "Class[File['tmp']]"   => /File\['tmp'\] Resource-Reference cannot be used where a String is expected/,
         }.each do | source, error_pattern|
           it "an error is flagged for '#{source}'" do
             expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(error_pattern)
