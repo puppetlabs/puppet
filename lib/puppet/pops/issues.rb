@@ -530,7 +530,7 @@ module Issues
   end
 
   RUNTIME_ERROR = issue :RUNTIME_ERROR, :detail do
-    _("Error while evaluating %{expression}, %{detail}") % { expression: label.a_an(semantic), detail: detail }
+    _("Error while evaluating an expression of type %{expression_type}. %{detail}") % { expression_type: label(semantic), detail: detail }
   end
 
   UNKNOWN_RESOURCE_TYPE = issue :UNKNOWN_RESOURCE_TYPE, :type_name do
