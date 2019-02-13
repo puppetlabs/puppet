@@ -391,7 +391,7 @@ module Issues
   end
 
   NOT_CATALOG_TYPE = issue :NOT_CATALOG_TYPE, :type do
-    _("Illegal relationship operand, can not form a relationship with something of type %{expression_type}. A Catalog type is required.") % { expression_type: type }
+    _("Illegal relationship operand. Cannot form a relationship with something of type %{expression_type}. A Catalog type is required.") % { expression_type: type }
   end
 
   BAD_STRING_SLICE_ARITY = issue :BAD_STRING_SLICE_ARITY, :actual do
