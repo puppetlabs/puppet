@@ -616,7 +616,7 @@ module Issues
   end
 
   RESERVED_TYPE_NAME = hard_issue :RESERVED_TYPE_NAME, :name do
-    _("The name: '%{name}' is already defined by Puppet and can not be used as the name of %{expression}.") % { name: name, expression: label.a_an(semantic) }
+    _("The name: '%{name}' is already defined by Puppet and cannot be used as the name of this expression of type %{expression}.") % { name: name, expression: label(semantic) }
   end
 
   UNMATCHED_SELECTOR = hard_issue :UNMATCHED_SELECTOR, :param_value do
