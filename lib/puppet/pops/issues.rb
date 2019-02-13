@@ -889,7 +889,7 @@ module Issues
   end
 
   SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path, :klass, :value do
-    _("%{path} contains %{klass} value. It will be converted to the String '%{value}'") % { path: path, klass: label.a_an(klass), value: value }
+    _("%{path} contains a value of data type %{klass}. It will be converted to the String '%{value}'.") % { path: path, klass: label(klass), value: value }
   end
 
   SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING = issue :SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path, :klass, :value do
