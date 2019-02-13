@@ -482,7 +482,7 @@ module Issues
   end
 
   ILLEGAL_DEFINITION_NAME = hard_issue :ILLEGAL_DEFINITION_NAME, :name do
-    _("Unacceptable name. The name '%{name}' is unacceptable as the name of %{value}") % { name: name, value: label.a_an(semantic) }
+    _("Unacceptable name. The name '%{name}' is unacceptable as the name of a definition of type %{type}.") % { name: name, type: label(semantic) }
   end
 
   ILLEGAL_DEFINITION_LOCATION = issue :ILLEGAL_DEFINITION_LOCATION, :name, :file do
