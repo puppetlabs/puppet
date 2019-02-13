@@ -462,7 +462,7 @@ module Issues
   end
 
   BAD_TYPE_SPECIALIZATION = hard_issue :BAD_TYPE_SPECIALIZATION, :type, :message do
-    _("Error creating type specialization of %{base_type}, %{message}") % { base_type: label.a_an(type), message: message }
+    _("Error creating type specialization of data type %{data_type}. %{message}") % { data_type: label(type), message: message }
   end
 
   ILLEGAL_TYPE_SPECIALIZATION = issue :ILLEGAL_TYPE_SPECIALIZATION, :kind do
