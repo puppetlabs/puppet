@@ -909,7 +909,7 @@ module Issues
   end
 
   TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = issue :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, :operation do
-    _("The task operation '%{operation}' is not available when compiling a catalog") % { operation: operation }
+    _("The task operation '%{operation}' is not available when compiling a catalog.") % { operation: operation }
   end
 
   EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING = issue :EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, :klass do
