@@ -913,7 +913,7 @@ module Issues
   end
 
   EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING = issue :EXPRESSION_NOT_SUPPORTED_WHEN_COMPILING, :klass do
-    _("%{expr} is not available when compiling a catalog") % { expr: label.a_an_uc(klass) }
+    _("An expression of type %{expression_type} is not available when compiling a catalog.") % { expression_type: label(klass) }
   end
 
   TASK_MISSING_BOLT = issue :TASK_MISSING_BOLT, :action do
