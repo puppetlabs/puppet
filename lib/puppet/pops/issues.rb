@@ -905,7 +905,7 @@ module Issues
   end
 
   EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING = issue :EXPRESSION_NOT_SUPPORTED_WHEN_SCRIPTING, :klass do
-    _("%{expr} is only available when compiling a catalog") % { expr: label.a_an_uc(klass) }
+    _("An expression of type %{expression_type} is available only when compiling a catalog.") % { expression_type: label(klass) }
   end
 
   TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING = issue :TASK_OPERATION_NOT_SUPPORTED_WHEN_COMPILING, :operation do
