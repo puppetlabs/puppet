@@ -63,7 +63,11 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     installer = Puppet::Provider::Package::Windows::Package.installer_class(resource)
 
     command = [installer.install_command(resource), install_options].flatten.compact.join(' ')
-    output = execute(command, :failonfail => false, :combine => true, :cwd => File.dirname(resource[:source]), :suppress_window => true)
+    working_dir = File.dirname(resource[:source])
+    if !Puppet::FileSystem.exist?(working_dir) && resource[:source] =~ /\.msi"?\Z/i
+      working_dir = nil
+    end
+    output = execute(command, :failonfail => false, :combine => true, :cwd => working_dir, :suppress_window => true)
 
     check_result(output.exitstatus)
   end
