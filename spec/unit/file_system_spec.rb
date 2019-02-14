@@ -770,6 +770,20 @@ describe "Puppet::FileSystem" do
 
         expect(Puppet::FileSystem.exist?(dir)).to be_truthy
       end
+
+      it "should raise Errno::EACCESS when trying to delete a file whose parent directory does not allow execute/traverse", unless: Puppet::Util::Platform.windows? do
+        dir = tmpdir('file_system_unlink')
+        path = File.join(dir, 'deleteme')
+        mode = Puppet::FileSystem.stat(dir).mode
+        Puppet::FileSystem.chmod(0, dir)
+        begin
+          expect {
+            Puppet::FileSystem.unlink(path)
+          }.to raise_error(Errno::EACCES, /^Permission denied .* #{path}/)
+        ensure
+          Puppet::FileSystem.chmod(mode, dir)
+        end
+      end
     end
 
     describe "exclusive_create" do
