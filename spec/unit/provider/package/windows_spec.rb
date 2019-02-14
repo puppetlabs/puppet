@@ -86,7 +86,7 @@ describe Puppet::Type.type(:package).provider(:windows), :if => Puppet.features.
   context '#install' do
     let(:command) { 'blarg.exe /S' }
     let(:klass) { mock('installer', :install_command => ['blarg.exe', '/S'] ) }
-    let(:execute_options) do {:failonfail => false, :combine => true, :cwd => 'E:\Rando\Directory', :suppress_window => true} end
+    let(:execute_options) do {:failonfail => false, :combine => true, :cwd => nil, :suppress_window => true} end
     before :each do
       Puppet::Provider::Package::Windows::Package.expects(:installer_class).returns(klass)
     end
@@ -134,6 +134,17 @@ describe Puppet::Type.type(:package).provider(:windows), :if => Puppet.features.
       end.to raise_error do |error|
         expect(error).to be_a(Puppet::Util::Windows::Error)
         expect(error.code).to eq(5) # ERROR_ACCESS_DENIED
+      end
+    end
+
+    context 'With a real working dir' do
+      let(:execute_options) do {:failonfail => false, :combine => true, :cwd => 'E:\Rando\Directory', :suppress_window => true} end
+
+      it 'should not try to set the working directory' do
+        Puppet::FileSystem.expects(:exist?).with('E:\Rando\Directory').returns(true)
+        expect_execute(command, 0)
+
+        provider.install
       end
     end
   end
