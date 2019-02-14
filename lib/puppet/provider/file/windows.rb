@@ -71,7 +71,9 @@ Puppet::Type.type(:file).provide :windows do
 
   def mode=(value)
     begin
-      set_mode(value.to_i(8), resource[:path])
+      managing_owner = !resource[:owner].nil?
+      managing_group = !resource[:group].nil?
+      set_mode(value.to_i(8), resource[:path], true, managing_owner, managing_group)
     rescue => detail
       error = Puppet::Error.new(_("failed to set mode %{mode} on %{path}: %{message}") % { mode: mode, path: resource[:path], message: detail.message })
       error.set_backtrace detail.backtrace
