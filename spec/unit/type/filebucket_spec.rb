@@ -21,14 +21,14 @@ describe Puppet::Type.type(:filebucket) do
     expect(Puppet::Type.type(:filebucket).new(:name => "main")[:path]).to eq(Puppet[:clientbucketdir])
   end
 
-  it "should use the masterport as the path by default port" do
+  it "should not have a default port" do
     Puppet.settings[:masterport] = 50
-    expect(Puppet::Type.type(:filebucket).new(:name => "main")[:port]).to eq(Puppet[:masterport])
+    expect(Puppet::Type.type(:filebucket).new(:name => "main")[:port]).to eq(nil)
   end
 
-  it "should use the server as the path by default server" do
+  it "should not have a default server" do
     Puppet.settings[:server] = "myserver"
-    expect(Puppet::Type.type(:filebucket).new(:name => "main")[:server]).to eq(Puppet[:server])
+    expect(Puppet::Type.type(:filebucket).new(:name => "main")[:server]).to eq(nil)
   end
 
   it "be local by default" do
@@ -93,10 +93,12 @@ describe Puppet::Type.type(:filebucket) do
       bucket.bucket
     end
 
-    it "should use the default server if the path is unset and no server is provided" do
+    it "should not try to guess server or port if the path is unset and no server is provided" do
       Puppet.settings[:server] = "myserv"
+      Puppet.settings[:server_list] = ['server_list_0', 'server_list_1']
+      Puppet::FileBucket::Dipper.expects(:new).with(:Server => nil, :Port => nil).returns @bucket
+
       bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => false
-      Puppet::FileBucket::Dipper.expects(:new).with { |args| args[:Server] == "myserv" }.returns @bucket
       bucket.bucket
     end
   end
