@@ -10,10 +10,13 @@ module Puppet::FileSystem
   @impl = if Puppet::Util::Platform.windows?
            require 'puppet/file_system/windows'
            Puppet::FileSystem::Windows
-         else
-           require 'puppet/file_system/posix'
-           Puppet::FileSystem::Posix
-         end.new()
+          elsif Puppet::Util::Platform.jruby?
+            require 'puppet/file_system/jruby'
+            Puppet::FileSystem::JRuby
+          else
+            require 'puppet/file_system/posix'
+            Puppet::FileSystem::Posix
+          end.new()
 
   # Allows overriding the filesystem for the duration of the given block.
   # The filesystem will only contain the given file(s).
