@@ -62,7 +62,7 @@ class Puppet::Util::Pidlock
     # POSIX and Windows platforms (PUP-9247).
     if Puppet.features.posix?
       procname = Puppet::Util::Execution.execute(["ps", "-p", lock_pid, "-o", "comm="]).strip
-      @lockfile.unlock unless procname =~ /puppet$/
+      @lockfile.unlock unless procname =~ /puppet(-.*)?$/
     elsif Puppet.features.microsoft_windows?
       # On Windows, we're checking if the filesystem path name of the running
       # process is our vendored ruby:
