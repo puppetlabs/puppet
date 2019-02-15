@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.2.0-46-gd0b3885\n"
+"Project-Id-Version: Puppet automation framework 6.2.0-86-gf570178\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-02-02 21:03+0000\n"
-"PO-Revision-Date: 2019-02-02 21:03+0000\n"
+"POT-Creation-Date: 2019-02-15 20:33+0000\n"
+"PO-Revision-Date: 2019-02-15 20:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -6514,7 +6514,7 @@ msgstr ""
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:139 ../lib/puppet/provider/package/yum.rb:248
+#: ../lib/puppet/provider/package/aix.rb:139 ../lib/puppet/provider/package/yum.rb:247
 msgid "Tried to get latest on a missing package"
 msgstr ""
 
@@ -6546,7 +6546,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:229 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:228 ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -6680,75 +6680,75 @@ msgstr ""
 msgid "%{version} is not available for this package"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:49
+#: ../lib/puppet/provider/package/pacman.rb:48
 msgid "Could not find package '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:85
+#: ../lib/puppet/provider/package/pacman.rb:84
 msgid "Failed to match line '%{line}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:91
+#: ../lib/puppet/provider/package/pacman.rb:90
 msgid "Error getting installed packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:176
+#: ../lib/puppet/provider/package/pacman.rb:175
 msgid "%{resource_name} is a group, but allow_virtual is false."
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:203
+#: ../lib/puppet/provider/package/pacman.rb:202
 msgid "Refusing to uninstall package group %{resource_name}, because allow_virtual is false."
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:233
+#: ../lib/puppet/provider/package/pacman.rb:232
 msgid "Invalid source '%{source}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:242
+#: ../lib/puppet/provider/package/pacman.rb:241
 msgid "puppet:// URL is not supported by pacman"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:244
+#: ../lib/puppet/provider/package/pacman.rb:243
 msgid "Source %{source} is not supported by pacman"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pacman.rb:254
+#: ../lib/puppet/provider/package/pacman.rb:253
 msgid "Refusing to install package group %{resource_name}, because allow_virtual is false."
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:55 ../lib/puppet/provider/package/pkg.rb:65
+#: ../lib/puppet/provider/package/pkg.rb:53 ../lib/puppet/provider/package/pkg.rb:63
 msgid "Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:96
+#: ../lib/puppet/provider/package/pkg.rb:94
 msgid "Unknown format %{resource_name}: %{state}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:115
+#: ../lib/puppet/provider/package/pkg.rb:113
 msgid "Unknown line format %{resource_name}: %{parse_line}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:125
+#: ../lib/puppet/provider/package/pkg.rb:123
 msgid "Unable to unfreeze %{package}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:160
+#: ../lib/puppet/provider/package/pkg.rb:158
 msgid "Implicit version %{should} has %{n} possible matches"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:172
+#: ../lib/puppet/provider/package/pkg.rb:170
 msgid "Selecting version '%{version}' for implicit '%{should}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:177
+#: ../lib/puppet/provider/package/pkg.rb:175
 msgid "No version of %{name} matching %{should} is installable, even though the package is currently installed"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:196
+#: ../lib/puppet/provider/package/pkg.rb:194
 msgid "pkg warning: %{warnings}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/pkg.rb:237 ../lib/puppet/provider/package/pkg.rb:257
+#: ../lib/puppet/provider/package/pkg.rb:235 ../lib/puppet/provider/package/pkg.rb:255
 msgid "Unable to update %{package}"
 msgstr ""
 
@@ -6784,11 +6784,11 @@ msgstr ""
 msgid "Package not in pkgutil catalog: %{package}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/portage.rb:226
+#: ../lib/puppet/provider/package/portage.rb:225
 msgid "No package found with the specified name [%{name}]"
 msgstr ""
 
-#: ../lib/puppet/provider/package/portage.rb:230
+#: ../lib/puppet/provider/package/portage.rb:229
 msgid "More than one package with the specified name [%{search_value}], please use the category parameter to disambiguate"
 msgstr ""
 
@@ -6808,11 +6808,11 @@ msgstr ""
 msgid "portversion.latest() - fatal error with portversion: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/rpm.rb:91
+#: ../lib/puppet/provider/package/rpm.rb:90
 msgid "Failed to list packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/rpm.rb:131 ../lib/puppet/provider/package/rpm.rb:143
+#: ../lib/puppet/provider/package/rpm.rb:130 ../lib/puppet/provider/package/rpm.rb:142
 msgid "RPMs must specify a package source"
 msgstr ""
 
@@ -6857,23 +6857,23 @@ msgstr ""
 msgid "Don't know how to install '%{source}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:29
+#: ../lib/puppet/provider/package/yum.rb:28
 msgid "The yum provider can only be used as root"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:83
+#: ../lib/puppet/provider/package/yum.rb:82
 msgid "Could not check for updates, '%{cmd} check-update' exited with %{status}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:117
+#: ../lib/puppet/provider/package/yum.rb:116
 msgid "Failed to parse package name and architecture from '%{pkgname}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:223
+#: ../lib/puppet/provider/package/yum.rb:222
 msgid "Could not find package %{wanted}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:234
+#: ../lib/puppet/provider/package/yum.rb:233
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
@@ -7531,7 +7531,7 @@ msgstr ""
 msgid "%{name} has not declared what class it wraps"
 msgstr ""
 
-#: ../lib/puppet/ssl/base.rb:32
+#: ../lib/puppet/ssl/base.rb:32 ../lib/puppet/x509/cert_provider.rb:218
 msgid "Certname %{name} must not contain unprintable or non-ASCII characters"
 msgstr ""
 
@@ -8441,31 +8441,31 @@ msgstr ""
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:675
+#: ../lib/puppet/type/user.rb:688
 msgid "Ssh_authorized_key type is not available. Cannot purge SSH keys."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:713
+#: ../lib/puppet/type/user.rb:726
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:716
+#: ../lib/puppet/type/user.rb:729
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:720
+#: ../lib/puppet/type/user.rb:733
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:732
+#: ../lib/puppet/type/user.rb:745
 msgid "purge_ssh_keys can only be true for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:739
+#: ../lib/puppet/type/user.rb:752
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:754
+#: ../lib/puppet/type/user.rb:767
 msgid "Class name must be provided."
 msgstr ""
 
@@ -9713,4 +9713,44 @@ msgstr ""
 
 #: ../lib/puppet/util/yaml.rb:47
 msgid "Puppet::Util::Yaml.load_file is deprecated. Use safe_load_file instead."
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:34
+msgid "Failed to save CA certificates to '%{capath}'"
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:47
+msgid "Failed to load CA certificates from '%{capath}'"
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:70
+msgid "Failed to save CRLs to '%{crlpath}'"
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:83
+msgid "Failed to load CRLs from '%{crlpath}'"
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:109
+msgid "Failed to save private key for '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:125
+msgid "Failed to load private key for '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:149
+msgid "Failed to save client certificate for '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:164
+msgid "Failed to load client certificate for '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:187
+msgid "Failed to save certificate request for '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/x509/cert_provider.rb:202
+msgid "Failed to load certificate request for '%{name}'"
 msgstr ""
