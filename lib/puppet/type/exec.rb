@@ -581,7 +581,15 @@ module Puppet
           val = @parameters[check].value
           val = [val] unless val.is_a? Array
           val.each do |value|
-            return false unless @parameters[check].check(value)
+            if !@parameters[check].check(value)
+              # Give a debug message so users can figure out what command would have been
+              # but don't print sensitive commands or parameters in the clear
+              cmdstring = @parameters[:command].sensitive ? "[command redacted]" : @parameters[:command].value
+
+              debug(_("'%{cmd}' won't be executed because of failed check '%{check}'") % { cmd: cmdstring, check: check })
+
+              return false 
+            end
           end
         end
       }
@@ -615,11 +623,17 @@ module Puppet
     private
     def set_sensitive_parameters(sensitive_parameters)
       # Respect sensitive commands
-      if sensitive_parameters.include?(:command)
-        sensitive_parameters.delete(:command)
-        parameter(:command).sensitive = true
-      end
+      set_one_sensitive_parameter(:command, sensitive_parameters)
+      set_one_sensitive_parameter(:unless, sensitive_parameters)
+      set_one_sensitive_parameter(:onlyif, sensitive_parameters)
       super(sensitive_parameters)
+    end
+
+    def set_one_sensitive_parameter(parameter, sensitive_parameters)
+      if sensitive_parameters.include?(parameter)
+        sensitive_parameters.delete(parameter)
+        parameter(parameter).sensitive = true
+      end
     end
   end
 end
