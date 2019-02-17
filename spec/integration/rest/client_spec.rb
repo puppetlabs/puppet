@@ -65,7 +65,7 @@ describe Puppet::Rest::Client, unless: Puppet::Util::Platform.jruby? do
       }.to raise_error do |error|
         pending("PUP-8213") if RUBY_VERSION.to_f >= 2.4 && !Puppet::Util::Platform.jruby?
 
-        expect(error).to be_instance_of(Puppet::Error)
+        expect(error).to be_instance_of(Puppet::SSL::CertMismatchError)
         expect(error.message).to match(/\AServer hostname '#{wrong_hostname}' did not match server certificate; expected one of (.+)/)
 
         md = error.message.match(/expected one of (.+)/)

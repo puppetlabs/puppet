@@ -52,7 +52,7 @@ class Puppet::SSL::Verifier
     # ruby can pass SSL validation but fail post_connection_check
     peer_cert = http.peer_cert
     if peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert, @hostname)
-      raise cert_mismatch_error(peer_cert, @hostname)
+      raise Puppet::SSL::CertMismatchError.new(peer_cert, @hostname)
     else
       raise error
     end
@@ -98,7 +98,7 @@ class Puppet::SSL::Verifier
 
       # ruby 2.4 doesn't compare certs based on value, so force to DER byte array
       if peer_cert && chain_cert && peer_cert.to_der == chain_cert.to_der && !OpenSSL::SSL.verify_certificate_identity(peer_cert, @hostname)
-        @last_error = cert_mismatch_error(peer_cert, @hostname)
+        @last_error = Puppet::SSL::CertMismatchError.new(peer_cert, @hostname)
         return false
       end
 
@@ -112,20 +112,5 @@ class Puppet::SSL::Verifier
 
     @last_error = Puppet::SSL::CertVerifyError.new("certificate verify failed [#{store_context.error_string} for #{peer_cert.subject}]", store_context.error, peer_cert)
     false
-  end
-
-  private
-
-  def cert_mismatch_error(peer_cert, host)
-    valid_certnames = [peer_cert.subject.to_s.sub(/.*=/, ''),
-                       *Puppet::SSL::Certificate.subject_alt_names_for(peer_cert)].uniq
-    if valid_certnames.size > 1
-      expected_certnames = _("expected one of %{certnames}") % { certnames: valid_certnames.join(', ') }
-    else
-      expected_certnames = _("expected %{certname}") % { certname: valid_certnames.first }
-    end
-
-    msg = _("Server hostname '%{host}' did not match server certificate; %{expected_certnames}") % { host: host, expected_certnames: expected_certnames }
-    Puppet::Error.new(msg)
   end
 end

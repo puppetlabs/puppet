@@ -74,7 +74,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
           }.to raise_error { |err|
             pending("PUP-8213") if RUBY_VERSION.to_f >= 2.4
 
-            expect(err).to be_instance_of(Puppet::Error)
+            expect(err).to be_instance_of(Puppet::SSL::CertMismatchError)
             expect(err.message).to match(/\AServer hostname '#{wrong_hostname}' did not match server certificate; expected one of (.+)/)
 
             md = err.message.match(/expected one of (.+)/)
@@ -142,7 +142,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
         expect {
           http.get('/')
         }.to raise_error { |err|
-          expect(err).to be_instance_of(Puppet::Error)
+          expect(err).to be_instance_of(Puppet::SSL::CertMismatchError)
           expect(err.message).to match(/\AServer hostname '#{wrong_hostname}' did not match server certificate; expected one of (.+)/)
 
           md = err.message.match(/expected one of (.+)/)
