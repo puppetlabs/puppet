@@ -113,4 +113,48 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
 
     include_examples 'HTTPS client'
   end
+
+  context "when calling HttpPool.connection method" do
+    let(:ssl) { Puppet::SSL::SSLProvider.new }
+    let(:ssl_context) { ssl.create_root_context(cacerts: [server.ca_cert], crls: [server.ca_crl]) }
+
+    def connection(host, port)
+      Puppet::Network::HttpPool.connection(URI("https://#{host}:#{port}"), ssl_context: ssl_context)
+    end
+
+    it "connects over SSL" do
+      server.start_server do |port|
+        http = connection(hostname, port)
+        res = http.get('/')
+        expect(res.code).to eq('200')
+      end
+    end
+
+    it "raises if the server's cert doesn't match the hostname we connected to" do
+      server.start_server do |port|
+        http = connection(wrong_hostname, port)
+        expect {
+          http.get('/')
+        }.to raise_error { |err|
+          expect(err).to be_instance_of(Puppet::Error)
+          expect(err.message).to match(/\AServer hostname '#{wrong_hostname}' did not match server certificate; expected one of (.+)/)
+
+          md = err.message.match(/expected one of (.+)/)
+          expect(md[1].split(', ')).to contain_exactly('127.0.0.1', 'DNS:127.0.0.1', 'DNS:127.0.0.2')
+        }
+      end
+    end
+
+    it "raises if the server's CA is unknown" do
+      server.start_server do |port|
+        ssl_context = ssl.create_root_context(cacerts: [OpenSSL::X509::Certificate.new(PuppetSpec::HTTPSServer::UNKNOWN_CA)],
+                                              crls: [server.ca_crl])
+        http = Puppet::Network::HttpPool.connection(URI("https://#{hostname}:#{port}"), ssl_context: ssl_context)
+        expect {
+          http.get('/')
+        }.to raise_error(Puppet::Error,
+                         %r{certificate verify failed.* .self signed certificate in certificate chain for /CN=Test CA.})
+      end
+    end
+  end
 end

@@ -46,6 +46,42 @@ describe Puppet::Network::HttpPool do
       expect(Puppet::Network::HttpPool.http_instance("me", 54321, true)).to be_use_ssl
     end
 
+    it 'has an http_ssl_instance method' do
+      expect(Puppet::Network::HttpPool.http_ssl_instance("me", 54321)).to be_use_ssl
+    end
+
+    context "when calling 'connection'" do
+      it 'requires an ssl_context for HTTPS' do
+        expect {
+          Puppet::Network::HttpPool.connection(URI('https://me'))
+        }.to raise_error(ArgumentError, %r{An ssl_context is required for HTTPS connections: https://me})
+      end
+
+      it 'creates a verifier from the context' do
+        ssl_context = Puppet::SSL::SSLContext.new
+        expect(
+          Puppet::Network::HttpPool.connection(URI('https://me'), ssl_context: ssl_context).verifier
+        ).to be_a_kind_of(Puppet::SSL::Verifier)
+      end
+
+      it 'does not use SSL for http schemes' do
+        expect(Puppet::Network::HttpPool.connection(URI('http://me'))).to_not be_use_ssl
+      end
+
+      it 'warns if an ssl_context is used for http connections' do
+        Puppet.expects(:warning).with('An ssl_context is unnecessary for HTTP connections and will be ignored: http://me')
+
+        ssl_context = Puppet::SSL::SSLContext.new
+        Puppet::Network::HttpPool.connection(URI('http://me'), ssl_context: ssl_context)
+      end
+
+      it 'raises when given a file scheme' do
+        expect {
+          Puppet::Network::HttpPool.connection(URI('file:///foo'))
+        }.to raise_error(ArgumentError, "Unsupported scheme 'file'")
+      end
+    end
+
     describe 'peer verification' do
       def setup_standard_ssl_configuration
         ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')

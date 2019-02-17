@@ -129,4 +129,12 @@ task(:gen_cert_fixtures) do
   tampered_cert = ca.create_cert('signed', inter[:cert], inter[:private_key])[:cert]
   tampered_cert.public_key = OpenSSL::PKey::RSA.new(1024).public_key
   save(dir, 'tampered-cert.pem', tampered_cert)
+
+  # Verifier fixtures
+  ca = Puppet::TestCa.new
+  dir = File.join(RAKE_ROOT, 'spec/fixtures/unit/ssl/verifier')
+  FileUtils.mkdir_p(dir)
+
+  cert = ca.create_cert('foo', ca.ca_cert, ca.key, subject_alt_names: 'DNS:foo,DNS:bar,DNS:baz')[:cert]
+  save(dir, 'foobarbaz.pem', cert)
 end
