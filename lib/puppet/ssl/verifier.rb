@@ -51,12 +51,12 @@ class Puppet::SSL::Verifier
 
     if peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert, host)
       # if `SSLSocket#post_connection_check` raises (ruby < 2.4), then peer_cert will be valid
-      raise cert_mismatch_error(peer_cert, host)
+      raise Puppet::SSL::CertMismatchError.new(peer_cert, host)
     elsif !@errors.empty?
       err = @errors.first
       if err.cert && !OpenSSL::SSL.verify_certificate_identity(err.cert, host)
         # if `SSLSocket#connect` raises error, then peer_cert will be nil
-        raise cert_mismatch_error(err.cert, host)
+        raise Puppet::SSL::CertMismatchError.new(err.cert, host)
       else
         raise err
       end
@@ -113,20 +113,5 @@ class Puppet::SSL::Verifier
     end
 
     preverify_ok
-  end
-
-  private
-
-  def cert_mismatch_error(peer_cert, host)
-    valid_certnames = [peer_cert.subject.to_s.sub(/.*=/, ''),
-                       *Puppet::SSL::Certificate.subject_alt_names_for(peer_cert)].uniq
-    if valid_certnames.size > 1
-      expected_certnames = _("expected one of %{certnames}") % { certnames: valid_certnames.join(', ') }
-    else
-      expected_certnames = _("expected %{certname}") % { certname: valid_certnames.first }
-    end
-
-    msg = _("Server hostname '%{host}' did not match server certificate; %{expected_certnames}") % { host: host, expected_certnames: expected_certnames }
-    raise Puppet::Error, msg
   end
 end
