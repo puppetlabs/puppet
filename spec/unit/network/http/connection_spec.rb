@@ -26,8 +26,8 @@ describe Puppet::Network::HTTP::Connection do
         expect(conn).to be_use_ssl
       end
 
-      it "can disable ssl using an option" do
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
+      it "can disable ssl using an option and ignore the verify" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false)
 
         expect(conn).to_not be_use_ssl
       end
@@ -38,8 +38,27 @@ describe Puppet::Network::HTTP::Connection do
         expect(conn).to be_use_ssl
       end
 
+      it "ignores the ':verify' option when ssl is disabled" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
+
+        expect(conn.verifier).to be_nil
+      end
+
+      it "wraps the validator in an adapter" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+
+        expect(conn.verifier).to be_a_kind_of(Puppet::SSL::VerifierAdapter)
+      end
+
       it "should raise Puppet::Error when invalid options are specified" do
         expect { Puppet::Network::HTTP::Connection.new(host, port, :invalid_option => nil) }.to raise_error(Puppet::Error, 'Unrecognized option(s): :invalid_option')
+      end
+
+      it "accepts a verifier" do
+        verifier = Puppet::SSL::Verifier.new(stub('conn'))
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verifier => verifier)
+
+        expect(conn.verifier).to eq(verifier)
       end
     end
   end

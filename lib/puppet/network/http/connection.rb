@@ -25,7 +25,8 @@ module Puppet::Network::HTTP
 
     OPTION_DEFAULTS = {
       :use_ssl => true,
-      :verify => nil,
+      :verify => nil, # Puppet::SSL::Validator is deprecated
+      :verifier => nil,
       :redirect_limit => 10,
     }
 
@@ -56,7 +57,13 @@ module Puppet::Network::HTTP
 
       options = OPTION_DEFAULTS.merge(options)
       @use_ssl = options[:use_ssl]
-      @verifier = Puppet::SSL::VerifierAdapter.new(options[:verify])
+      if @use_ssl
+        if options[:verifier]
+          @verifier = options[:verifier]
+        else
+          @verifier = Puppet::SSL::VerifierAdapter.new(options[:verify])
+        end
+      end
       @redirect_limit = options[:redirect_limit]
       @site = Puppet::Network::HTTP::Site.new(@use_ssl ? 'https' : 'http', host, port)
       @pool = Puppet.lookup(:http_pool)
@@ -161,6 +168,11 @@ module Puppet::Network::HTTP
     # Whether to use ssl
     def use_ssl?
       @site.use_ssl?
+    end
+
+    # @api private
+    def verifier
+      @verifier
     end
 
     private

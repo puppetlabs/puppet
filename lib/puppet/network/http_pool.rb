@@ -58,4 +58,24 @@ module Puppet::Network::HttpPool
                             :use_ssl => true,
                             :verify => verifier)
   end
+
+  # Retrieve a connection for the given uri.
+  #
+  # @param uri [URI] The URI to connect to
+  # @param ssl_context [Puppet::SSL:SSLContext, nil] The ssl context to use
+  #   when making HTTPS connections.
+  # @return [Puppet::Network::HTTP::Connection]
+  #
+  # @api public
+  #
+  def self.connection(uri, ssl_context: nil)
+    if uri.scheme == 'https'
+      raise ArgumentError, "An ssl_context is required for HTTPS connections: #{uri}" unless ssl_context
+
+      verifier = Puppet::SSL::Verifier.new(ssl_context)
+      http_client_class.new(uri.host, uri.port, use_ssl: true, verifier: verifier)
+    else
+      http_client_class.new(uri.host, uri.port, use_ssl: false)
+    end
+  end
 end
