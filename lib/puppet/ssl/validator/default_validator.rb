@@ -4,6 +4,7 @@ require 'puppet/ssl'
 # Perform peer certificate verification against the known CA.
 # If there is no CA information known, then no verification is performed
 #
+# @deprecated
 # @api private
 #
 class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator

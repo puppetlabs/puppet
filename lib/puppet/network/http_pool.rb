@@ -28,6 +28,7 @@ module Puppet::Network::HttpPool
   # @param verify_peer [Boolean] Whether to verify the peer credentials, if possible. Verification will not take place if the CA certificate is missing.
   # @return [Puppet::Network::HTTP::Connection]
   #
+  # @deprecated Use {#http_connection} instead.
   # @api public
   #
   def self.http_instance(host, port, use_ssl = true, verify_peer = true)
@@ -51,6 +52,7 @@ module Puppet::Network::HttpPool
   #   verification on a Net::HTTP instance and report any errors and the certificates used.
   # @return [Puppet::Network::HTTP::Connection]
   #
+  # @deprecated Use {#http_connection} instead.
   # @api public
   #
   def self.http_ssl_instance(host, port, verifier = Puppet::SSL::Validator.default_validator())
