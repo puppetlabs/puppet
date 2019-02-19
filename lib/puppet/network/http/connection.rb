@@ -312,8 +312,6 @@ module Puppet::Network::HTTP
         response = yield conn
       end
       response
-    rescue OpenSSL::SSL::SSLError => error
-      Puppet::Util::SSL.handle_connection_error(error, @verify, site.host)
     end
   end
 end

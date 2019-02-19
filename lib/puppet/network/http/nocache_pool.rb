@@ -1,7 +1,7 @@
 # A pool that does not cache HTTP connections.
 #
 # @api private
-class Puppet::Network::HTTP::NoCachePool
+class Puppet::Network::HTTP::NoCachePool < Puppet::Network::HTTP::BasePool
   def initialize(factory = Puppet::Network::HTTP::Factory.new)
     @factory = factory
   end
@@ -11,9 +11,7 @@ class Puppet::Network::HTTP::NoCachePool
   # @yieldparam http [Net::HTTP] An HTTP connection
   def with_connection(site, verify, &block)
     http = @factory.create_connection(site)
-    verify.setup_connection(http)
-    Puppet.debug("Starting connection for #{site}")
-    http.start
+    start(site, verify, http)
     begin
       yield http
     ensure

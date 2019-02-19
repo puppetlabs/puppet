@@ -8,7 +8,7 @@
 #
 # @api private
 #
-class Puppet::Network::HTTP::Pool
+class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   FIFTEEN_SECONDS = 15
 
   attr_reader :factory
@@ -77,10 +77,8 @@ class Puppet::Network::HTTP::Pool
       session.connection
     else
       http = @factory.create_connection(site)
-      verify.setup_connection(http)
 
-      Puppet.debug("Starting connection for #{site}")
-      http.start
+      start(site, verify, http)
       setsockopts(http.instance_variable_get(:@socket))
       http
     end
