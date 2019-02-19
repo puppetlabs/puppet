@@ -56,7 +56,7 @@ module Puppet::Network::HTTP
 
       options = OPTION_DEFAULTS.merge(options)
       @use_ssl = options[:use_ssl]
-      @verify = options[:verify]
+      @verifier = Puppet::SSL::VerifierAdapter.new(options[:verify])
       @redirect_limit = options[:redirect_limit]
       @site = Puppet::Network::HTTP::Site.new(@use_ssl ? 'https' : 'http', host, port)
       @pool = Puppet.lookup(:http_pool)
@@ -308,7 +308,7 @@ module Puppet::Network::HTTP
 
     def with_connection(site, &block)
       response = nil
-      @pool.with_connection(site, @verify) do |conn|
+      @pool.with_connection(site, @verifier) do |conn|
         response = yield conn
       end
       response

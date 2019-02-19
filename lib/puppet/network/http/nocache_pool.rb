@@ -9,9 +9,9 @@ class Puppet::Network::HTTP::NoCachePool < Puppet::Network::HTTP::BasePool
   # Yields a <tt>Net::HTTP</tt> connection.
   #
   # @yieldparam http [Net::HTTP] An HTTP connection
-  def with_connection(site, verify, &block)
+  def with_connection(site, verifier, &block)
     http = @factory.create_connection(site)
-    start(site, verify, http)
+    start(site, verifier, http)
     begin
       yield http
     ensure

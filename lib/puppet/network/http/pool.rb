@@ -19,10 +19,10 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
     @keepalive_timeout = keepalive_timeout
   end
 
-  def with_connection(site, verify, &block)
+  def with_connection(site, verifier, &block)
     reuse = true
 
-    http = borrow(site, verify)
+    http = borrow(site, verifier)
     begin
       if http.use_ssl? && http.verify_mode != OpenSSL::SSL::VERIFY_PEER
         reuse = false
@@ -69,7 +69,7 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   # connection is created, it will be started prior to being returned.
   #
   # @api private
-  def borrow(site, verify)
+  def borrow(site, verifier)
     @pool[site] = active_sessions(site)
     session = @pool[site].shift
     if session
@@ -78,7 +78,7 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
     else
       http = @factory.create_connection(site)
 
-      start(site, verify, http)
+      start(site, verifier, http)
       setsockopts(http.instance_variable_get(:@socket))
       http
     end
