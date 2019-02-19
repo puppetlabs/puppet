@@ -67,8 +67,12 @@ Use the local filebucket\. This uses the default configuration information and t
 Use a remote filebucket\. This uses the default configuration information and the bucket located at the \'$bucketdir\' setting by default\.
 .
 .TP
+\-\-server_list
+A list of comma seperated servers; only the first entry is used for file storage\. This setting takes precidence over \fBserver\fR\.
+.
+.TP
 \-\-server
-The server to send the file to, instead of locally\.
+The server to use for file storage\. This setting is only used if \fBserver_list\fR is not set\.
 .
 .TP
 \-\-todate
