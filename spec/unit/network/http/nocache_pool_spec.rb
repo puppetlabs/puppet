@@ -6,7 +6,7 @@ require 'puppet/network/http/connection'
 
 describe Puppet::Network::HTTP::NoCachePool do
   let(:site) { Puppet::Network::HTTP::Site.new('https', 'rubygems.org', 443) }
-  let(:verify) { stub('verify', :setup_connection => nil) }
+  let(:verifier) { stub('verifier', :setup_connection => nil) }
 
   it 'yields a started connection' do
     http  = stub('http', start: nil, finish: nil)
@@ -16,7 +16,7 @@ describe Puppet::Network::HTTP::NoCachePool do
     pool = Puppet::Network::HTTP::NoCachePool.new(factory)
 
     expect { |b|
-      pool.with_connection(site, verify, &b)
+      pool.with_connection(site, verifier, &b)
     }.to yield_with_args(http)
   end
 
@@ -29,11 +29,11 @@ describe Puppet::Network::HTTP::NoCachePool do
     pool = Puppet::Network::HTTP::NoCachePool.new(factory)
 
     expect { |b|
-      pool.with_connection(site, verify, &b)
+      pool.with_connection(site, verifier, &b)
     }.to yield_with_args(http1)
 
     expect { |b|
-      pool.with_connection(site, verify, &b)
+      pool.with_connection(site, verifier, &b)
     }.to yield_with_args(http2)
   end
 
