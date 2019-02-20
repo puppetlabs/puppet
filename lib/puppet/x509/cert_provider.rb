@@ -133,7 +133,9 @@ class Puppet::X509::CertProvider
   # @api private
   def load_private_key_from_pem(pem)
     # set a non-nil passphrase to ensure openssl doesn't prompt
-    OpenSSL::PKey::RSA.new(pem, '')
+    # but ruby 2.4.0 & 2.4.1 require at least 4 bytes, see
+    # https://github.com/ruby/ruby/commit/f012932218fd609f75f9268812df61fb26e2d0f1#diff-40e4270ec386990ac60d7ab5ff8045a4
+    OpenSSL::PKey::RSA.new(pem, '    ')
   end
 
   # Save a named client cert to the configured `certdir`.
