@@ -1525,15 +1525,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               catalog.apply
             end
 
-            it "should not allow the user to explicitly set the mode to 4 ,and correct to 7" do
-              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-              expect(system_aces).not_to be_empty
-
-              system_aces.each do |ace|
-                expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_ALL_ACCESS)
-              end
-            end
-
             it "prepends SYSTEM ace when changing group from system to power users" do
               @file[:group] = @sids[:power_users]
               catalog.apply
@@ -1610,16 +1601,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 @directory[:mode] = '0644'
 
                 catalog.apply
-              end
-
-              it "should not allow the user to explicitly set the mode to 4, and correct to 7" do
-                system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-                expect(system_aces).not_to be_empty
-
-                system_aces.each do |ace|
-                  # unlike files, Puppet sets execute bit on directories that are readable
-                  expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_ALL_ACCESS)
-                end
               end
 
               it "prepends SYSTEM ace when changing group from system to power users" do
