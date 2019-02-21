@@ -1027,17 +1027,15 @@ describe Puppet::Configurer do
       @agent.run
     end
 
-    it "should fallback to an empty server when failover fails" do
+    it "should error when no servers in 'server_list' are reachable" do
       Puppet.settings[:server_list] = ["myserver:123"]
       pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
       Puppet::Network::HTTP::Pool.expects(:new).returns(pool)
       Puppet.expects(:override).with({:http_pool => pool}).yields
       Puppet.expects(:override).with({:server => "myserver", :serverport => '123'}).yields
-      Puppet.expects(:override).with({:server => nil, :serverport => nil}).yields
       error = Net::HTTPError.new(400, 'dummy server communication error')
       Puppet::Node.indirection.expects(:find).raises(error)
-      @agent.expects(:run_internal).returns(nil)
-      @agent.run
+      expect{ @agent.run }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list/)
     end
 
     it "should not make multiple node requets when the server is found" do

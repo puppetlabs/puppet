@@ -222,8 +222,7 @@ class Puppet::Configurer
           found = find_functional_server()
           server = found[:server]
           if server.nil?
-            Puppet.warning _("Could not select a functional puppet master")
-            server = [nil, nil]
+            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings[:server_list] }
           end
           Puppet.override(:server => server[0], :serverport => server[1]) do
             if !server.first.nil?
