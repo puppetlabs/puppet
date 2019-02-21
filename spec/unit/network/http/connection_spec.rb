@@ -113,7 +113,7 @@ describe Puppet::Network::HTTP::Connection do
       WebMock.enable!
     end
 
-    it "should provide a useful error message when one is available and certificate validation fails in ruby 2.4 and up", :unless => Puppet.features.microsoft_windows? do
+    it "should provide a useful error message when one is available and certificate validation fails in ruby 2.4 and up" do
       connection = Puppet::Network::HTTP::Connection.new(
         host, port,
         :verify => ConstantErrorValidator.new(:fails_with => 'certificate verify failed',
@@ -124,7 +124,7 @@ describe Puppet::Network::HTTP::Connection do
       end.to raise_error(Puppet::Error, "certificate verify failed: [shady looking signature]")
     end
 
-    it "should provide a helpful error message when hostname does not match server certificate before ruby 2.4", :unless => Puppet.features.microsoft_windows? do
+    it "should provide a helpful error message when hostname does not match server certificate before ruby 2.4" do
       Puppet[:confdir] = tmpdir('conf')
 
       connection = Puppet::Network::HTTP::Connection.new(
@@ -142,7 +142,7 @@ describe Puppet::Network::HTTP::Connection do
       end
     end
 
-    it "should provide a helpful error message when hostname does not match server certificate in ruby 2.4 or greater", :unless => Puppet.features.microsoft_windows? do
+    it "should provide a helpful error message when hostname does not match server certificate in ruby 2.4 or greater" do
       Puppet[:confdir] = tmpdir('conf')
 
       connection = Puppet::Network::HTTP::Connection.new(
@@ -170,7 +170,7 @@ describe Puppet::Network::HTTP::Connection do
       end.to raise_error(/some other message/)
     end
 
-    it "should check all peer certificates for upcoming expiration", :unless => Puppet.features.microsoft_windows? do
+    it "should check all peer certificates for upcoming expiration" do
       Puppet[:confdir] = tmpdir('conf')
       cert = Puppet::SSL::CertificateAuthority.new.generate(
         'server', :dns_alt_names => 'foo,bar,baz')
