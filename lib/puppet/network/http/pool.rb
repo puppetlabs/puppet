@@ -34,7 +34,7 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
       raise detail
     ensure
       if reuse
-        release(site, http)
+        release(site, verifier, http)
       else
         close_connection(site, http)
       end
@@ -71,7 +71,8 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   # @api private
   def borrow(site, verifier)
     @pool[site] = active_sessions(site)
-    session = @pool[site].shift
+    index = @pool[site].index { |session| verifier.reusable?(session.verifier) }
+    session = index ? @pool[site].delete_at(index) : nil
     if session
       Puppet.debug("Using cached connection for #{site}")
       session.connection
@@ -95,9 +96,9 @@ class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   # Release a connection back into the pool.
   #
   # @api private
-  def release(site, http)
+  def release(site, verifier, http)
     expiration = Time.now + @keepalive_timeout
-    session = Puppet::Network::HTTP::Session.new(http, expiration)
+    session = Puppet::Network::HTTP::Session.new(http, verifier, expiration)
     Puppet.debug("Caching connection for #{site}")
 
     sessions = @pool[site]
