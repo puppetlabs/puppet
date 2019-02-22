@@ -1,6 +1,9 @@
 require 'puppet'
+require 'puppet/util/warnings'
 
 class Puppet::Util::Feature
+  include Puppet::Util::Warnings
+
   attr_reader :path
 
   # Create a new feature test. You have to pass the feature name, and it must be
@@ -109,8 +112,14 @@ class Puppet::Util::Feature
     begin
       require lib
       true
-    rescue ScriptError => detail
-      Puppet.debug _("Failed to load library '%{lib}' for feature '%{name}': %{detail}") % { lib: lib, name: name, detail: detail }
+    rescue LoadError
+      # Expected case. Required library insn't installed.
+      debug_once(_("Could not find library '%{lib}' required to enable feature '%{name}'") %
+        {lib: lib, name: name})
+      false
+    rescue StandardError, ScriptError => detail
+      debug_once(_("Exception occurred while loading library '%{lib}' required to enable feature '%{name}': %{detail}") %
+        {lib: lib, name: name, detail: detail})
       false
     end
   end
