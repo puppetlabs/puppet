@@ -6,8 +6,23 @@
 #   loaded above.
 #
 class Puppet::SSL::VerifierAdapter
+  attr_reader :validator
+
   def initialize(validator)
     @validator = validator
+  end
+
+  # Return true if `self` is reusable with `verifier` meaning they
+  # are both using the same class of `Puppet::SSL::Validator`. In this
+  # case we only care the Validator class is the same. We can't require
+  # the same instances, because a new instance is created each time
+  # HttpPool.http_instance is called.
+  #
+  # @param verifier [Puppet::SSL::Verifier] the verifier to compare against
+  # @return [Boolean] return true if a cached connection can be used, false otherwise
+  def reusable?(verifier)
+    verifier.instance_of?(self.class) &&
+      verifier.validator.instance_of?(@validator.class)
   end
 
   # Configure the `http` connection based on the current `ssl_context`.

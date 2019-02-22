@@ -5,17 +5,24 @@ require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::Session do
   let(:connection) { stub('connection') }
+  let(:verifier) { stub('verifier') }
 
   def create_session(connection, expiration_time = nil)
     expiration_time ||= Time.now + 60 * 60
 
-    Puppet::Network::HTTP::Session.new(connection, expiration_time)
+    Puppet::Network::HTTP::Session.new(connection, verifier, expiration_time)
   end
 
   it 'provides access to its connection' do
     session = create_session(connection)
 
     expect(session.connection).to eq(connection)
+  end
+
+  it 'provides access to its verifier' do
+    session = create_session(connection)
+
+    expect(session.verifier).to eq(verifier)
   end
 
   it 'expires a connection whose expiration time is in the past' do

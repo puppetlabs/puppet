@@ -7,6 +7,8 @@ class Puppet::SSL::Verifier
 
   FIVE_MINUTES_AS_SECONDS = 5 * 60
 
+  attr_reader :ssl_context
+
   # Create a verifier using an `ssl_context`.
   #
   # @param [Puppet::SSL::SSLContext] ssl_context containing CA certs,
@@ -14,6 +16,17 @@ class Puppet::SSL::Verifier
   def initialize(ssl_context)
     @ssl_context = ssl_context
     @errors = []
+  end
+
+  # Return true if `self` is reusable with `verifier` meaning they
+  # are using the same `ssl_context`, so there's no loss of security
+  # when using a cached connection.
+  #
+  # @param verifier [Puppet::SSL::Verifier] the verifier to compare against
+  # @return [Boolean] return true if a cached connection can be used, false otherwise
+  def reusable?(verifier)
+    verifier.instance_of?(self.class) &&
+      verifier.ssl_context.object_id == @ssl_context.object_id
   end
 
   # Configure the `http` connection based on the current `ssl_context`.

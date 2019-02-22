@@ -7,6 +7,37 @@ describe Puppet::SSL::Verifier do
   let(:host) { 'example.com' }
   let(:http) { Net::HTTP.new(host) }
   let(:verifier) { described_class.new(ssl_context) }
+  let(:adapter) { Puppet::SSL::VerifierAdapter.new(Puppet::SSL::Validator::DefaultValidator.new) }
+
+  context '#reusable?' do
+    it 'Verifiers with the same ssl_context are reusable' do
+      expect(verifier).to be_reusable(described_class.new(ssl_context))
+    end
+
+    it 'Verifiers with different ssl_contexts are not reusable' do
+      expect(verifier).to_not be_reusable(described_class.new(Puppet::SSL::SSLContext.new))
+    end
+
+    it 'Verifier is not reusable with VerifierAdapter' do
+      expect(verifier).to_not be_reusable(adapter)
+    end
+
+    it 'VerifierAdapter is not reusable with Verifier' do
+      expect(adapter).to_not be_reusable(verifier)
+    end
+
+    it 'VerifierAdapters with the same class of Validator are reusable' do
+      expect(
+        adapter
+      ).to be_reusable(Puppet::SSL::VerifierAdapter.new(Puppet::SSL::Validator::DefaultValidator.new))
+    end
+
+    it 'VerifierAdapters with different classes of Validators are not reusable' do
+      expect(
+        adapter
+      ).to_not be_reusable(Puppet::SSL::VerifierAdapter.new(Puppet::SSL::Validator::NoValidator.new))
+    end
+  end
 
   context '#setup_connection' do
     it 'copies parameters from the ssl_context to the connection' do
