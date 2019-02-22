@@ -100,6 +100,13 @@ describe 'loaders' do
     expect(loaders.puppet_cache_loader()).to be_a(Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased)
   end
 
+  it 'creates a cached_puppet loader that can load version 3 functions, version 4 functions, and data types' do
+    loaders = Puppet::Pops::Loaders.new(empty_test_env, true)
+    expect(loaders.puppet_cache_loader.loadables).to include(:func_3x)
+    expect(loaders.puppet_cache_loader.loadables).to include(:func_4x)
+    expect(loaders.puppet_cache_loader.loadables).to include(:datatype)
+  end
+
   it 'does not create a cached_puppet loader when for_agent is the default false value' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env)
     expect(loaders.puppet_cache_loader()).to be(nil)
@@ -487,7 +494,7 @@ describe 'loaders' do
     end
 
     it "to self inside function body is reported as an error" do
-      expect { 
+      expect {
         f = loader.load_typed(typed_name(:function, 'bad_func_load4')).value
         f.call(scope)
       }.to raise_error(/Illegal method definition.*'bad_func_load4_illegal_method'/)

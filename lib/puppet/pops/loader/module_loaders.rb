@@ -33,7 +33,7 @@ module ModuleLoaders
       NAMESPACE_WILDCARD,
       Puppet[:libdir],
       'cached_puppet_lib',
-      [:func_4x, :datatype]
+      [:func_4x, :func_3x, :datatype]
     )
   end
 
