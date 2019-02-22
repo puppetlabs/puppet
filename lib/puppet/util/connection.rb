@@ -1,7 +1,10 @@
 require 'puppet'
+require 'puppet/util/warnings'
 
 module Puppet::Util
   module Connection
+    extend Puppet::Util::Warnings
+
     # The logic for server and port is kind of gross. In summary:
     # IF an endpoint-specific setting is requested AND that setting has been set by the user
     #    Use that setting.
@@ -26,11 +29,12 @@ module Puppet::Util
       else
         server = Puppet.lookup(:server) do
           if primary_server = Puppet.settings[:server_list][0]
-            Puppet.debug "Dynamically-bound server lookup failed; using first entry"
+            debug_once('Dynamically-bound server lookup failed; using first entry')
             primary_server[0]
           else
             setting ||= :server
-            Puppet.debug "Dynamically-bound server lookup failed, falling back to #{setting} setting"
+            debug_once('Dynamically-bound server lookup failed, falling back to %{setting} setting' %
+                       {setting: setting})
             Puppet.settings[setting]
           end
         end
@@ -55,7 +59,7 @@ module Puppet::Util
       else
         port = Puppet.lookup(:serverport) do
           if primary_server = Puppet.settings[:server_list][0]
-            Puppet.debug "Dynamically-bound port lookup failed; using first entry"
+            debug_once('Dynamically-bound port lookup failed; using first entry')
 
             # Port might not be set, so we want to fallback in that
             # case. We know we don't need to use `setting` here, since
@@ -63,7 +67,8 @@ module Puppet::Util
             (primary_server[1] || Puppet.settings[:masterport])
           else
             port_setting ||= :masterport
-            Puppet.debug "Dynamically-bound port lookup failed; falling back to #{port_setting} setting"
+            debug_once('Dynamically-bound port lookup failed; falling back to %{port_setting} setting' %
+                       {port_setting: port_setting})
             Puppet.settings[port_setting]
           end
         end
