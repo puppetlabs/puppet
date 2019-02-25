@@ -208,19 +208,36 @@ module Puppet
         Puppet::Network::HTTP::NoCachePool.new
       },
       :ssl_context => proc {
-        cert = Puppet::X509::CertProvider.new
-        ssl = Puppet::SSL::SSLProvider.new
-        ssl.create_context(
-          cacerts: cert.load_cacerts,
-          crls: cert.load_crls,
-          private_key: cert.load_private_key(Puppet[:certname]),
-          client_cert: cert.load_client_cert(Puppet[:certname])
-        )
+        begin
+          build_ssl_context
+        rescue => e
+          Puppet.log_exception(e, "Failed to initialize SSL: #{e.message}")
+          Puppet.err("Run `puppet agent -t`")
+          raise e
+        end
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
       :rich_data => false
     }
+  end
+
+  def self.build_ssl_context
+    cert = Puppet::X509::CertProvider.new
+    cacerts = cert.load_cacerts
+    raise Puppet::Error, "The CA certificate is missing from '#{Puppet[:localcacert]}'" unless cacerts
+
+    crls = cert.load_crls
+    raise Puppet::Error, "The CRL is missing from '#{Puppet[:hostcrl]}'" unless crls
+
+    private_key = cert.load_private_key(Puppet[:certname])
+    raise Puppet::Error, "The private key is missing from '#{Puppet[:hostprivkey]}'" unless private_key
+
+    client_cert = cert.load_client_cert(Puppet[:certname])
+    raise Puppet::Error, "The client certificate is missing from '#{Puppet[:hostcert]}'" unless client_cert
+
+    ssl = Puppet::SSL::SSLProvider.new
+    ssl.create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert)
   end
 
   # A simple set of bindings that is just enough to limp along to

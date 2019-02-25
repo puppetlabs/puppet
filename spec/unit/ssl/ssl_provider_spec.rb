@@ -113,6 +113,30 @@ describe Puppet::SSL::SSLProvider do
     let(:private_key) { key('signed-key.pem') }
     let(:config) { { cacerts: global_cacerts, crls: global_crls, client_cert: client_cert, private_key: private_key } }
 
+    it 'raises if CA certs are missing' do
+      expect {
+        subject.create_context(config.merge(cacerts: nil))
+      }.to raise_error(ArgumentError, /CA certs are missing/)
+    end
+
+    it 'raises if CRLs are are missing' do
+      expect {
+        subject.create_context(config.merge(crls: nil))
+      }.to raise_error(ArgumentError, /CRLs are missing/)
+    end
+
+    it 'raises if private key is missing' do
+      expect {
+        subject.create_context(config.merge(private_key: nil))
+      }.to raise_error(ArgumentError, /Private key is missing/)
+    end
+
+    it 'raises if client cert is missing' do
+      expect {
+        subject.create_context(config.merge(client_cert: nil))
+      }.to raise_error(ArgumentError, /Client cert is missing/)
+    end
+
     it 'accepts RSA keys' do
       sslctx = subject.create_context(config)
       expect(sslctx.private_key).to eq(private_key)
