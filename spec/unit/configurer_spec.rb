@@ -1011,7 +1011,7 @@ describe Puppet::Configurer do
     it "should select a server when provided" do
       Puppet.settings[:server_list] = ["myserver:123"]
       response = Net::HTTPOK.new(nil, 200, 'OK')
-      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', '123').returns(mock('request', get: response))
+      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', 123).returns(mock('request', get: response))
       @agent.stubs(:run_internal)
 
       options = {}
@@ -1024,7 +1024,7 @@ describe Puppet::Configurer do
       response = Net::HTTPOK.new(nil, 200, 'OK')
       http = mock('request')
       http.expects(:get).with('/status/v1/simple/master').returns(response)
-      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', '123').returns(http)
+      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', 123).returns(http)
       @agent.stubs(:run_internal)
 
       @agent.run
@@ -1033,7 +1033,7 @@ describe Puppet::Configurer do
     it "should report when a server is unavailable" do
       Puppet.settings[:server_list] = ["myserver:123"]
       response = Net::HTTPInternalServerError.new(nil, 500, 'Internal Server Error')
-      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', '123').returns(mock('request', get: response))
+      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', 123).returns(mock('request', get: response))
 
       Puppet.expects(:debug).with("Puppet server myserver:123 is unavailable: 500 Internal Server Error")
       expect{ @agent.run }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list/)
@@ -1042,17 +1042,17 @@ describe Puppet::Configurer do
     it "should error when no servers in 'server_list' are reachable" do
       Puppet.settings[:server_list] = ["myserver:123"]
       error = Net::HTTPError.new(400, 'dummy server communication error')
-      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', '123').returns(mock('request', get: error))
+      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', 123).returns(mock('request', get: error))
 
       options = {}
       expect{ @agent.run(options) }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list/)
       expect(options[:report].master_used).to be_nil
     end
 
-    it "should not make multiple node requets when the server is found" do
+    it "should not make multiple node requests when the server is found" do
       Puppet.settings[:server_list] = ["myserver:123"]
       response = Net::HTTPOK.new(nil, 200, 'OK')
-      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', '123').returns(mock('request', get: response))
+      Puppet::Network::HttpPool.stubs(:http_ssl_instance).with('myserver', 123).returns(mock('request', get: response))
       @agent.stubs(:run_internal)
 
       @agent.run

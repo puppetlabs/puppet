@@ -47,7 +47,7 @@ module Puppet::Util
     # failover-selected port.
     # @param [Symbol] port_setting The preferred port setting to use
     # @param [Symbol] server_setting The server setting assoicated with this route.
-    # @return [String] the port to use for use in the request
+    # @return [Integer] the port to use for use in the request
     def self.determine_port(port_setting, server_setting)
       if (port_setting && port_setting != :masterport && Puppet.settings.set_by_config?(port_setting)) ||
          (server_setting && server_setting != :server && Puppet.settings.set_by_config?(server_setting))
