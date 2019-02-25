@@ -73,8 +73,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def network(request)
-    Puppet::Network::HttpPool.http_instance(request.server || self.class.server,
-                                            request.port || self.class.port)
+    ssl_context = Puppet.lookup(:ssl_context)
+    Puppet::Network::HttpPool.connection(request.server || self.class.server,
+                                         request.port || self.class.port,
+                                         ssl_context: ssl_context)
   end
 
   def http_get(request, path, headers = nil, *args)

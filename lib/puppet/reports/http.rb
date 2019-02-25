@@ -28,7 +28,8 @@ Puppet::Reports.register_report(:http) do
       }
     end
     use_ssl = url.scheme == 'https'
-    conn = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl)
+    ssl_context = use_ssl ? Puppet.lookup(:ssl_context) : nil
+    conn = Puppet::Network::HttpPool.connection(url.host, url.port, use_ssl: use_ssl, ssl_context: ssl_context)
     response = conn.post(url.path, self.to_yaml, headers, options)
     unless response.kind_of?(Net::HTTPSuccess)
       Puppet.err _("Unable to submit report to %{url} [%{code}] %{message}") % { url: Puppet[:reporturl].to_s, code: response.code, message: response.msg }

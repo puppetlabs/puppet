@@ -207,6 +207,16 @@ module Puppet
         require 'puppet/network/http'
         Puppet::Network::HTTP::NoCachePool.new
       },
+      :ssl_context => proc {
+        cert = Puppet::X509::CertProvider.new
+        ssl = Puppet::SSL::SSLProvider.new
+        ssl.create_context(
+          cacerts: cert.load_cacerts,
+          crls: cert.load_crls,
+          private_key: cert.load_private_key(Puppet[:certname]),
+          client_cert: cert.load_client_cert(Puppet[:certname])
+        )
+      },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
       :rich_data => false

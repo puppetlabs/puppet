@@ -395,7 +395,8 @@ class Puppet::Configurer
       host = server[0]
       port = server[1] || Puppet[:masterport]
       begin
-        http = Puppet::Network::HttpPool.http_ssl_instance(host, port.to_i)
+        ssl_context = Puppet.lookup(:ssl_context)
+        http = Puppet::Network::HttpPool.connection(host, port.to_i, ssl_context: ssl_context)
         response = http.get('/status/v1/simple/master')
         return [host, port] if response.is_a?(Net::HTTPOK)
 
