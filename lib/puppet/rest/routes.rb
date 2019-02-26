@@ -88,7 +88,7 @@ module Puppet::Rest
           raise Puppet::Rest::ResponseError.new(response.message, response)
         end
 
-        Puppet.debug _("Downloaded certificate revocation list for %{name} from %{server}") % { name: name, server: ca.server }
+        Puppet.info _("Downloaded certificate revocation list for %{name} from %{server}") % { name: name, server: ca.server }
 
         uncompress_body(response)
       end
