@@ -429,6 +429,7 @@ ERROR_STRING
   # @raise [Puppet::Error] if text form of found certificate bundle is invalid
   #                        and cannot be loaded into cert objects
   # @return [Boolean] true if the CA certificate was found, false otherwise
+  # @deprecated Use Puppet::SSL::StateMachine instead.
   def ensure_ca_certificate
     file_path = certificate_location(CA_NAME)
     if Puppet::FileSystem.exist?(file_path)
