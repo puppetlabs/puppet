@@ -18,7 +18,7 @@ module Puppet::Rest
 
     # Make an HTTP request to fetch the named certificate
     # @param [String] name the name of the certificate to fetch
-    # @param [Puppet::Rest::SSLContext] ssl_context the ssl content to use when making the request
+    # @param [Puppet::SSL::SSLContext] ssl_context the ssl content to use when making the request
     # @raise [Puppet::Rest::ResponseError] if the response status is not OK
     # @return [String] the PEM-encoded certificate or certificate bundle
     def self.get_certificate(name, ssl_context)
@@ -57,7 +57,7 @@ module Puppet::Rest
 
     # Make an HTTP request to fetch the named crl
     # @param [String] name the crl to fetch
-    # @param [Puppet::Rest::SSLContext] ssl_context the ssl content to use when making the request
+    # @param [Puppet::SSL::SSLContext] ssl_context the ssl content to use when making the request
     # @raise [Puppet::Rest::ResponseError] if the response status is not OK
     # @return [String] the PEM-encoded crl
     def self.get_crls(name, ssl_context)
@@ -97,7 +97,7 @@ module Puppet::Rest
     # Make an HTTP request to send the named CSR
     # @param [String] csr_pem the contents of the CSR to sent to the CA
     # @param [String] name the name of the host whose CSR is being submitted
-    # @param [Puppet::Rest::SSLContext] ssl_context the ssl content to use when making the request
+    # @param [Puppet::SSL::SSLContext] ssl_context the ssl content to use when making the request
     # @rasies [Puppet::Rest::ResponseError] if the response status is not OK
     def self.put_certificate_request(csr_pem, name, ssl_context)
       ca.with_base_url(Puppet::Network::Resolver.new) do |url|
@@ -124,7 +124,7 @@ module Puppet::Rest
 
     # Make an HTTP request to get the named CSR
     # @param [String] name the name of the host whose CSR is being queried
-    # @param [Puppet::Rest::SSLContext] ssl_context the ssl content to use when making the request
+    # @param [Puppet::SSL::SSLContext] ssl_context the ssl content to use when making the request
     # @rasies [Puppet::Rest::ResponseError] if the response status is not OK
     # @return [String] the PEM encoded certificate request
     def self.get_certificate_request(name, ssl_context)

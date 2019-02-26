@@ -5,7 +5,7 @@ require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_request_attributes'
 require 'puppet/rest/errors'
 require 'puppet/rest/routes'
-require 'puppet/rest/ssl_context'
+
 begin
   # This may fail when being loaded from Puppet Server. However loading the
   # client monkey patches the SSL Store and we need to have those monkey
@@ -372,7 +372,7 @@ ERROR_STRING
   def download_csr_from_ca
     begin
       body = Puppet::Rest::Routes.get_certificate_request(
-                    name, Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store))
+                    name, Puppet::SSL::SSLContext.new(store: ssl_store))
       begin
         Puppet::SSL::CertificateRequest.from_s(body)
       rescue OpenSSL::X509::RequestError => e
@@ -390,7 +390,7 @@ ERROR_STRING
   # @param [Puppet::SSL::CertificateRequest] csr the request to submit
   def submit_certificate_request(csr)
     Puppet::Rest::Routes.put_certificate_request(
-                  csr.render, name, Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store))
+                  csr.render, name, Puppet::SSL::SSLContext.new(store: ssl_store))
   end
 
   def save_certificate_request(csr)
@@ -487,7 +487,7 @@ ERROR_STRING
       # If no SSL store was supplied, use this host's SSL store
       store ||= ssl_store
       Puppet::Util.replace_file(crl_path, 0644) do |file|
-        result = Puppet::Rest::Routes.get_crls(CA_NAME, Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, store))
+        result = Puppet::Rest::Routes.get_crls(CA_NAME, Puppet::SSL::SSLContext.new(store: store))
         file.write(result)
       end
     rescue Puppet::Rest::ResponseError => e
@@ -503,7 +503,7 @@ ERROR_STRING
     begin
       cert_bundle = Puppet::Rest::Routes.get_certificate(
         CA_NAME,
-        Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE)
+        Puppet::SSL::SSLContext.new(verify_peer: false)
       )
       # This load ensures that the response body is a valid cert bundle.
       # If the text is malformed, load_certificate_bundle will raise.
@@ -569,7 +569,7 @@ ERROR_STRING
     begin
       cert = Puppet::Rest::Routes.get_certificate(
         cert_name,
-        Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store)
+        Puppet::SSL::SSLContext.new(store: ssl_store)
       )
       begin
         Puppet::SSL::Certificate.from_s(cert)

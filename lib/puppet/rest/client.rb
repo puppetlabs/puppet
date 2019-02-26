@@ -10,7 +10,7 @@ module Puppet::Rest
     attr_reader :dns_resolver
 
     # Create a new HTTP client for querying the given API.
-    # @param [Puppet::Rest::SSLContext] ssl_context the SSL configuration for this client
+    # @param [Puppet::SSL::SSLContext] ssl_context the SSL configuration for this client
     # @param [Integer] receive_timeout how long in seconds this client will wait
     #                  for a response after making a request
     # @param [HTTPClient] client the third-party HTTP client wrapped by this
@@ -76,8 +76,12 @@ module Puppet::Rest
 
     def configure_verify_mode(ssl_context)
       @client.ssl_config.verify_callback = @verifier
-      @client.ssl_config.cert_store = ssl_context.cert_store
-      @client.ssl_config.verify_mode = ssl_context.verify_mode
+      @client.ssl_config.cert_store = ssl_context[:store]
+      @client.ssl_config.verify_mode = if !ssl_context[:verify_peer]
+                                         OpenSSL::SSL::VERIFY_NONE
+                                       else
+                                         OpenSSL::SSL::VERIFY_PEER
+                                       end
     end
   end
 end
