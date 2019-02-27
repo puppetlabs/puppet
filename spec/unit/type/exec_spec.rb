@@ -46,10 +46,10 @@ describe Puppet::Type.type(:exec) do
     dummy = Puppet::Type.type(:exec).new(:name => @command)
     dummy.provider.class.any_instance.stubs(:validatecmd)
     dummy.provider.class.any_instance.stubs(:checkexe).returns(true)
-    pass_status = stub('status', :exitstatus => 0)
-    fail_status = stub('status', :exitstatus => 1)
-    dummy.provider.class.any_instance.stubs(:run).with(:true, true).returns(['test output pass', pass_status])
-    dummy.provider.class.any_instance.stubs(:run).with(:false, true).returns(['test output fail', fail_status])
+    pass_status = stub('status', :exitstatus => 0, :split => ["pass output"])
+    fail_status = stub('status', :exitstatus => 1, :split => ["fail output"])
+    Puppet::Util::Execution.stubs(:execute).with(:true, anything).returns(pass_status)
+    Puppet::Util::Execution.stubs(:execute).with(:false, anything).returns(fail_status)
 
     test = Puppet::Type.type(:exec).new(type_args)
 
@@ -212,12 +212,13 @@ describe Puppet::Type.type(:exec) do
           expect(@logs).to include(an_object_having_attributes(level: :debug, message: output))
         end
 
-        it "should log a message with a redacted command if command or #{check} is sensitive" do
-          output = "'[command redacted]' won't be executed because of failed check '#{check}'"
-          test = exec_stub({:command => @command, check => result, :sensitive_parameters => [:command, check]})
+        it "should log a message with a redacted command and check if #{check} is sensitive" do
+          output1 = "Executing check '[redacted]'"
+          output2 = "'[command redacted]' won't be executed because of failed check '#{check}'"
+          test = exec_stub({:command => @command, check => result, :sensitive_parameters => [check]})
           expect(test.check_all_attributes).to eq(false)
-
-          expect(@logs).to include(an_object_having_attributes(level: :debug, message: output))
+          expect(@logs).to include(an_object_having_attributes(level: :debug, message: output1))
+          expect(@logs).to include(an_object_having_attributes(level: :debug, message: output2))
         end
       end
     end
