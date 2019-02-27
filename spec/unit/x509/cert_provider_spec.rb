@@ -28,6 +28,12 @@ describe Puppet::X509::CertProvider do
     described_class.new(options)
   end
 
+  def as_pem_file(pem)
+    path = tmpfile('cert_provider_pem')
+    File.write(path, pem)
+    path
+  end
+
   context 'when loading' do
     context 'cacerts' do
       it 'returns nil if it does not exist' do
@@ -44,12 +50,11 @@ describe Puppet::X509::CertProvider do
 
       context 'and input is invalid' do
         it 'raises when invalid input is inside BEGIN-END block' do
-          ca_path = tmpfile('invalid_cacerts')
-          File.open(ca_path, 'w') do |f|
-            f.write '-----BEGIN CERTIFICATE-----'
-            f.write 'whoops'
-            f.write '-----END CERTIFICATE-----'
-          end
+          ca_path = as_pem_file(<<~END)
+            -----BEGIN CERTIFICATE-----
+            whoops
+            -----END CERTIFICATE-----
+          END
 
           expect {
             create_provider(capath: ca_path).load_cacerts
@@ -57,22 +62,16 @@ describe Puppet::X509::CertProvider do
         end
 
         it 'raises if the input is empty' do
-          ca_path = tmpfile('empty_cacerts')
-          FileUtils.touch(ca_path)
-
           expect {
-            create_provider(capath: ca_path).load_cacerts
+            create_provider(capath: as_pem_file('')).load_cacerts
           }.to raise_error(OpenSSL::X509::CertificateError)
         end
 
         it 'raises if the input is malformed' do
-          ca_path = tmpfile('malformed_cacerts')
-          File.open(ca_path, 'w') do |f|
-            f.write(<<~END)
-              -----BEGIN CERTIFICATE-----
-              MIIBpDCCAQ2gAwIBAgIBAjANBgkqhkiG9w0BAQsFADAfMR0wGwYDVQQDDBRUZXN0
-            END
-          end
+          ca_path = as_pem_file(<<~END)
+            -----BEGIN CERTIFICATE-----
+            MIIBpDCCAQ2gAwIBAgIBAjANBgkqhkiG9w0BAQsFADAfMR0wGwYDVQQDDBRUZXN0
+          END
 
           expect {
             create_provider(capath: ca_path).load_cacerts
@@ -107,12 +106,11 @@ describe Puppet::X509::CertProvider do
         it 'raises when invalid input is inside BEGIN-END block' do
           pending('jruby bug: https://github.com/jruby/jruby/issues/5619') if Puppet::Util::Platform.jruby?
 
-          crl_path = tmpfile('invalid_crls')
-          File.open(crl_path, 'w') do |f|
-            f.write '-----BEGIN X509 CRL-----'
-            f.write 'whoops'
-            f.write '-----END X509 CRL-----'
-          end
+          crl_path = as_pem_file(<<~END)
+            -----BEGIN X509 CRL-----
+            whoops
+            -----END X509 CRL-----
+          END
 
           expect {
             create_provider(crlpath: crl_path).load_crls
@@ -120,22 +118,16 @@ describe Puppet::X509::CertProvider do
         end
 
         it 'raises if the input is empty' do
-          crl_path = tmpfile('empty_crls')
-          FileUtils.touch(crl_path)
-
           expect {
-            create_provider(crlpath: crl_path).load_crls
+            create_provider(crlpath: as_pem_file('')).load_crls
           }.to raise_error(OpenSSL::X509::CRLError, 'Failed to parse CRLs as PEM')
         end
 
         it 'raises if the input is malformed' do
-          crl_path = tmpfile('malformed_crls')
-          File.open(crl_path, 'w') do |f|
-            f.write(<<~END)
-              -----BEGIN X509 CRL-----
-              MIIBCjB1AgEBMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNVBAMMB1Rlc3QgQ0EXDTcw
-            END
-          end
+          crl_path = as_pem_file(<<~END)
+            -----BEGIN X509 CRL-----
+            MIIBCjB1AgEBMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNVBAMMB1Rlc3QgQ0EXDTcw
+          END
 
           expect {
             create_provider(crlpath: crl_path).load_crls
