@@ -622,18 +622,26 @@ module Puppet
 
     private
     def set_sensitive_parameters(sensitive_parameters)
-      # Respect sensitive commands
-      set_one_sensitive_parameter(:command, sensitive_parameters)
-      set_one_sensitive_parameter(:unless, sensitive_parameters)
-      set_one_sensitive_parameter(:onlyif, sensitive_parameters)
-      super(sensitive_parameters)
-    end
+      # If any are sensitive, mark all as sensitive
+      sensitive = false
+      parameters_to_check = [:command, :unless, :onlyif]
 
-    def set_one_sensitive_parameter(parameter, sensitive_parameters)
-      if sensitive_parameters.include?(parameter)
-        sensitive_parameters.delete(parameter)
-        parameter(parameter).sensitive = true
+      parameters_to_check.each do |p| 
+        if sensitive_parameters.include?(p)
+          sensitive_parameters.delete(p)
+          sensitive = true
+        end
       end
+
+      if sensitive
+        parameters_to_check.each do |p|
+          if parameters.include?(p)
+            parameter(p).sensitive = true
+          end
+        end
+      end
+
+      super(sensitive_parameters)
     end
   end
 end

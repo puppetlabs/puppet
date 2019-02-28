@@ -298,12 +298,22 @@ module Puppet::Network::HTTP
     def execute_request(connection, request)
       start = Time.now
       connection.request(request)
-    rescue EOFError => e
+    rescue => exception
       elapsed = (Time.now - start).to_f.round(3)
-      uri = @site.addr + request.path.split('?')[0]
-      eof = EOFError.new(_('request %{uri} interrupted after %{elapsed} seconds') % {uri: uri, elapsed: elapsed})
-      eof.set_backtrace(e.backtrace) unless e.backtrace.empty?
-      raise eof
+      uri = [@site.addr, request.path.split('?')[0]].join('/')
+      eclass = exception.class
+
+      err = case exception
+            when EOFError
+              eclass.new(_('request %{uri} interrupted after %{elapsed} seconds') % {uri: uri, elapsed: elapsed})
+            when Timeout::Error
+              eclass.new(_('request %{uri} timed out after %{elapsed} seconds') % {uri: uri, elapsed: elapsed})
+            else
+              eclass.new(_('request %{uri} failed: %{msg}') % {uri: uri, msg: exception.message})
+            end
+
+      err.set_backtrace(exception.backtrace) unless exception.backtrace.empty?
+      raise err
     end
 
     def with_connection(site, &block)
