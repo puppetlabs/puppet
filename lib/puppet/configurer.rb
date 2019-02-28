@@ -222,14 +222,12 @@ class Puppet::Configurer
           found = find_functional_server()
           server = found[:server]
           if server.nil?
-            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings[:server_list] }
+            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet[:server_list] }
+          else
+            Puppet.debug "Selected master: #{server[0]}:#{server[1]}"
+            report.master_used = "#{server[0]}:#{server[1]}"
           end
           Puppet.override(:server => server[0], :serverport => server[1]) do
-            if !server.first.nil?
-              Puppet.debug "Selected master: #{server[0]}:#{server[1]}"
-              report.master_used = "#{server[0]}:#{server[1]}"
-            end
-
             completed = run_internal(options.merge(:node => found[:node]))
           end
         else
