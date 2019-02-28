@@ -30,6 +30,7 @@ module LoaderPaths
         end
     when :plan
       result << PlanPathPP.new(loader)
+      result << PlanPathYaml.new(loader)
     when :task
       result << TaskPath.new(loader) if Puppet[:tasks] && loader.loadables.include?(:task)
     when :type
@@ -324,7 +325,7 @@ module LoaderPaths
     end
 
     def typed_name(type, name_authority, relative_path, module_name)
-      if relative_path == 'init.pp' && !(module_name.nil? || module_name.empty?)
+      if relative_path == "init#{extension}" && !(module_name.nil? || module_name.empty?)
         TypedName.new(type, module_name, name_authority)
       else
         n = ''
@@ -339,6 +340,18 @@ module LoaderPaths
         end
         TypedName.new(type, n, name_authority)
       end
+    end
+  end
+
+  class PlanPathYaml < PlanPathPP
+    EXTENSION = '.yaml'.freeze
+
+    def instantiator()
+      Puppet.lookup(:yaml_plan_instantiator)
+    end
+
+    def extension
+      EXTENSION
     end
   end
 
