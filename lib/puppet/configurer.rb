@@ -226,13 +226,13 @@ class Puppet::Configurer
         # mode. We shouldn't try to do any failover in that case.
         if options[:catalog].nil? && do_failover
           server, port = find_functional_server
+          if server.nil?
+            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet[:server_list] }
+          else
+            Puppet.debug _("Selected puppet server: %{server}:%{port}") % { server: server, port: port }
+            report.master_used = "#{server}:#{port}"
+          end
           Puppet.override(server: server, serverport: port) do
-            if server
-              Puppet.debug _("Selected puppet server: %{server}:%{port}") % { server: server, port: port }
-              report.master_used = "#{server}:#{port}"
-            else
-              Puppet.warning _("Could not select a functional puppet server")
-            end
             completed = run_internal(options)
           end
         else
