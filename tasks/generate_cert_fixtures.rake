@@ -44,6 +44,11 @@ task(:gen_cert_fixtures) do
     x509.to_pem(OpenSSL::Cipher::AES.new(128, :CBC), '74695716c8b6')
   end
 
+  # Create an SSL cert for 127.0.0.1 and dns_alt_names
+  signed = ca.create_cert('127.0.0.1', ca.ca_cert, ca.key, subject_alt_names: 'DNS:127.0.0.1,DNS:127.0.0.2')
+  save(dir, 'localhost.pem', signed[:cert])
+  save(dir, 'localhost-key.pem', signed[:private_key])
+
   # Create a pending request (CSR), we don't need to save its private key
   request = ca.create_request('pending')
   save(dir, 'request.pem', request[:csr])
