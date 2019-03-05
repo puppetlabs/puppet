@@ -211,8 +211,10 @@ module Puppet
         begin
           build_ssl_context
         rescue => e
-          Puppet.log_exception(e, "Failed to initialize SSL: #{e.message}")
-          Puppet.err("Run `puppet agent -t`")
+          # TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
+          Puppet.log_exception(e, _("Failed to initialize SSL: %{message}") % { message: e.message })
+          # TRANSLATORS: `puppet agent -t` is a command and should not be translated
+          Puppet.err(_("Run `puppet agent -t`"))
           raise e
         end
       },
@@ -225,16 +227,20 @@ module Puppet
   def self.build_ssl_context
     cert = Puppet::X509::CertProvider.new
     cacerts = cert.load_cacerts
-    raise Puppet::Error, "The CA certificate is missing from '#{Puppet[:localcacert]}'" unless cacerts
+    # TRANSLATORS: localcacert is the path to the CA certificate file
+    raise Puppet::Error, _("The CA certificate is missing from '%{localcacert}'") % { localcacert: Puppet[:localcacert] } unless cacerts
 
     crls = cert.load_crls
-    raise Puppet::Error, "The CRL is missing from '#{Puppet[:hostcrl]}'" unless crls
+    # TRANSLATORS: hostcrl is the path to the CRL file
+    raise Puppet::Error, _("The CRL is missing from '%{hostcrl}'") % { hostcrl: Puppet[:hostcrl] } unless crls
 
     private_key = cert.load_private_key(Puppet[:certname])
-    raise Puppet::Error, "The private key is missing from '#{Puppet[:hostprivkey]}'" unless private_key
+    # TRANSLATORS: hostprivkey is the path to the host's private key
+    raise Puppet::Error, _("The private key is missing from '%{hostprivkey}'") % { hostprivkey: Puppet[:hostprivkey] } unless private_key
 
     client_cert = cert.load_client_cert(Puppet[:certname])
-    raise Puppet::Error, "The client certificate is missing from '#{Puppet[:hostcert]}'" unless client_cert
+    # TRANSLATORS: hostcert is the path to the host's certificate
+    raise Puppet::Error, _("The client certificate is missing from '%{hostcert}'") % { hostcert: Puppet[:hostcert] } unless client_cert
 
     ssl = Puppet::SSL::SSLProvider.new
     ssl.create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert)

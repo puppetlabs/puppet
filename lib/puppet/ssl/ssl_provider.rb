@@ -62,10 +62,10 @@ class Puppet::SSL::SSLProvider
   #   `private_key`.
   # @api private
   def create_context(cacerts:, crls:, private_key:, client_cert:, revocation: Puppet[:certificate_revocation])
-    raise ArgumentError, "CA certs are missing" unless cacerts
-    raise ArgumentError, "CRLs are missing" unless crls
-    raise ArgumentError, "Private key is missing" unless private_key
-    raise ArgumentError, "Client cert is missing" unless client_cert
+    raise ArgumentError, _("CA certs are missing") unless cacerts
+    raise ArgumentError, _("CRLs are missing") unless crls
+    raise ArgumentError, _("Private key is missing") unless private_key
+    raise ArgumentError, _("Client cert is missing") unless client_cert
 
     store = create_x509_store(cacerts, crls, revocation)
     client_chain = verify_cert_with_store(store, client_cert)
