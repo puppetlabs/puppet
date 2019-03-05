@@ -169,6 +169,8 @@ describe Puppet::Util::Storage do
   end
 
   describe "when storing to the state file" do
+    A_SMALL_AMOUNT_OF_TIME = 0.001 #Seconds
+
     before(:each) do
       @state_file = tmpfile('storage_test')
       @saved_statefile = Puppet[:statefile]
@@ -220,13 +222,13 @@ describe Puppet::Util::Storage do
       stale_checked = Time.now - (Puppet[:statettl] + 1)
       Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
       Puppet::Util::Storage.cache(:stale)[:checked] = stale_checked
-      expect(Puppet::Util::Storage.state).to eq(
+      expect(Puppet::Util::Storage.state).to match(
         {
           :yayness => {
-            :checked => recent_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
           },
           :stale => {
-            :checked => stale_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(stale_checked)
           }
         }
       )
@@ -238,15 +240,14 @@ describe Puppet::Util::Storage do
 
       Puppet::Util::Storage.load
 
-      expect(Puppet::Util::Storage.state).to eq(
+      expect(Puppet::Util::Storage.state).to match(
         {
           :yayness => {
-            :checked => recent_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
           }
         }
       )
     end
-
 
     it "does not expire entries when statettl is 0" do
       Puppet[:statettl] = '0'
@@ -254,13 +255,13 @@ describe Puppet::Util::Storage do
       older_checked = Time.now - 10_000_000
       Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
       Puppet::Util::Storage.cache(:older)[:checked] = older_checked
-      expect(Puppet::Util::Storage.state).to eq(
+      expect(Puppet::Util::Storage.state).to match(
         {
           :yayness => {
-            :checked => recent_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
           },
           :older => {
-            :checked => older_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(older_checked)
           }
         }
       )
@@ -272,18 +273,17 @@ describe Puppet::Util::Storage do
 
       Puppet::Util::Storage.load
 
-      expect(Puppet::Util::Storage.state).to eq(
+      expect(Puppet::Util::Storage.state).to match(
         {
           :yayness => {
-            :checked => recent_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
           },
           :older => {
-            :checked => older_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(older_checked)
           }
         }
       )
     end
-
 
     it "does not expire entries when statettl is 'unlimited'" do
       Puppet[:statettl] = 'unlimited'
@@ -291,13 +291,13 @@ describe Puppet::Util::Storage do
       older_checked = Time.now - 10_000_000
       Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
       Puppet::Util::Storage.cache(:older)[:checked] = older_checked
-      expect(Puppet::Util::Storage.state).to eq(
+      expect(Puppet::Util::Storage.state).to match(
         {
           :yayness => {
-            :checked => recent_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
           },
           :older => {
-            :checked => older_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(older_checked)
           }
         }
       )
@@ -309,13 +309,13 @@ describe Puppet::Util::Storage do
 
       Puppet::Util::Storage.load
 
-      expect(Puppet::Util::Storage.state).to eq(
+      expect(Puppet::Util::Storage.state).to match(
         {
           :yayness => {
-            :checked => recent_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
           },
           :older => {
-            :checked => older_checked
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(older_checked)
           }
         }
       )
