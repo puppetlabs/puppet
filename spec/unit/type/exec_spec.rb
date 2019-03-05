@@ -682,6 +682,22 @@ describe Puppet::Type.type(:exec) do
           @test[:creates] = [@exist] * 3
         end
       end
+
+      context "when creates is being checked" do
+        it "should be logged to debug when the path does exist" do
+          Puppet::Util::Log.level = :debug
+          @test[:creates] = @exist
+          expect(@test.check_all_attributes).to eq(false)
+          expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Checking that 'creates' path '#{@exist}' exists"))
+        end
+
+        it "should be logged to debug when the path does not exist" do
+          Puppet::Util::Log.level = :debug
+          @test[:creates] = @unexist
+          expect(@test.check_all_attributes).to eq(true)
+          expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Checking that 'creates' path '#{@unexist}' exists"))
+        end
+      end
     end
 
     { :onlyif => { :pass => false, :fail => true  },

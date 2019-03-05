@@ -198,7 +198,7 @@ module Puppet
 
     newparam(:user) do
       desc "The user to run the command as.
-      
+
         > **Note:** Puppet cannot execute commands as other users on Windows.
 
         Note that if you use this attribute, any error output is not captured
@@ -407,6 +407,8 @@ module Puppet
       # If the file exists, return false (i.e., don't run the command),
       # else return true
       def check(value)
+        #TRANSLATORS 'creates' is a parameter name and should not be translated
+        debug(_("Checking that 'creates' path '%{creates_path}' exists") % { creates_path: value })
         ! Puppet::FileSystem.exist?(value)
       end
     end
@@ -588,7 +590,7 @@ module Puppet
 
               debug(_("'%{cmd}' won't be executed because of failed check '%{check}'") % { cmd: cmdstring, check: check })
 
-              return false 
+              return false
             end
           end
         end
