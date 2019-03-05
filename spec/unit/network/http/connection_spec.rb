@@ -86,7 +86,7 @@ describe Puppet::Network::HTTP::Connection do
 
       expect do
         connection.get('request')
-      end.to raise_error(Puppet::Error, "certificate verify failed: [shady looking signature]")
+      end.to raise_error(Puppet::Error, /certificate verify failed: \[shady looking signature\]/)
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
