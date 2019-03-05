@@ -9,16 +9,26 @@ class PuppetPlanInstantiator
   #
   # @param loader [Loader] The loader the function is associated with
   # @param typed_name [TypedName] the type / name of the function to load
-  # @param source_ref [URI, String] a reference to the source / origin of the puppet code to evaluate
-  # @param pp_code_string [String] puppet code in a string
+  # @param source_ref [Array] a references to the source / origin of the puppet code to evaluate
   #
   # @return [Functions::Function] - an instantiated function with global scope closure associated with the given loader
   #
-  def self.create(loader, typed_name, source_ref, pp_code_string)
+  def self.create(loader, typed_name, source_refs)
+    if source_refs.length > 1
+      raise ArgumentError, _("Found both a .pp and .yaml version of plan '%{plan_name}' - only one is allowed") % { plan_name: typed_name.name }
+    end
+
+    source_ref = source_refs[0]
+    code_string = Puppet::FileSystem.read(source_ref, :encoding => 'utf-8')
+
+    if source_ref.end_with?('.yaml')
+      return Puppet.lookup(:yaml_plan_instantiator).create(loader, typed_name, source_ref, code_string)
+    end
+
     parser = Parser::EvaluatingParser.new()
 
     # parse and validate
-    result = parser.parse_string(pp_code_string, source_ref)
+    result = parser.parse_string(code_string, source_ref)
     # Only one function is allowed (and no other definitions)
     case result.definitions.size
     when 0

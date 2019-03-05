@@ -29,8 +29,7 @@ module LoaderPaths
           result << FunctionPath3x.new(loader)
         end
     when :plan
-      result << PlanPathPP.new(loader)
-      result << PlanPathYaml.new(loader)
+      result << PlanPath.new(loader)
     when :task
       result << TaskPath.new(loader) if Puppet[:tasks] && loader.loadables.include?(:task)
     when :type
@@ -313,27 +312,44 @@ module LoaderPaths
     end
   end
 
-  class PlanPathPP < PuppetSmartPath
-    PLAN_PATH_PP = File.join('plans')
+  class PlanPath < PuppetSmartPath
+    PLAN_PATH = File.join('plans')
+    PP_EXT = '.pp'.freeze
+    YAML_EXT = '.yaml'.freeze
+    INIT_FILENAMES = %w[init.pp init.yaml].freeze
+
+    def extension
+      EMPTY_STRING
+    end
 
     def relative_path
-      PLAN_PATH_PP
+      PLAN_PATH
     end
 
     def instantiator()
       Puppet::Pops::Loader::PuppetPlanInstantiator
     end
 
+    def fuzzy_matching?
+      true
+    end
+
+    def valid_path?(path)
+      (path.end_with?(PP_EXT) || path.end_with?(YAML_EXT)) && path.start_with?(generic_path)
+    end
+
     def typed_name(type, name_authority, relative_path, module_name)
-      if relative_path == "init#{extension}" && !(module_name.nil? || module_name.empty?)
+      if INIT_FILENAMES.include?(relative_path) && !(module_name.nil? || module_name.empty?)
         TypedName.new(type, module_name, name_authority)
       else
         n = ''
         n << module_name unless module_name.nil?
-        unless extension.empty?
-          # Remove extension
-          relative_path = relative_path[0..-(extension.length+1)]
+        if relative_path.end_with?(PP_EXT)
+          relative_path = relative_path[0..-(PP_EXT.length+1)]
+        else
+          relative_path = relative_path[0..-(YAML_EXT.length+1)]
         end
+
         relative_path.split('/').each do |segment|
           n << '::' if n.size > 0
           n << segment
@@ -341,17 +357,17 @@ module LoaderPaths
         TypedName.new(type, n, name_authority)
       end
     end
-  end
 
-  class PlanPathYaml < PlanPathPP
-    EXTENSION = '.yaml'.freeze
-
-    def instantiator()
-      Puppet.lookup(:yaml_plan_instantiator)
-    end
-
-    def extension
-      EXTENSION
+    def effective_path(typed_name, start_index_in_name)
+      # Puppet name to path always skips the name-space as that is part of the generic path
+      # i.e. <module>/mymodule/functions/foo.pp is the function mymodule::foo
+      parts = typed_name.name_parts
+      if start_index_in_name > 0
+        return nil if start_index_in_name >= parts.size
+        parts = parts[start_index_in_name..-1]
+      end
+      basename = File.join(generic_path, parts)
+      ["#{basename}#{PP_EXT}", "#{basename}#{YAML_EXT}"]
     end
   end
 
