@@ -375,7 +375,8 @@ module Pal
 
     # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
     # pickup the new $LOAD_PATH.
-    Facter.reset
+    # This fails under JRuby, where Facter does not make `reset` available.
+    Facter.reset unless RUBY_PLATFORM == 'java'
 
     node = Puppet.lookup(:pal_current_node)
     pal_facts = Puppet.lookup(:pal_facts)
