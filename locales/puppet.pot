@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.3.0-72-g35311da\n"
+"Project-Id-Version: Puppet automation framework 6.3.0-85-gec56c73\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-03-05 22:18+0000\n"
-"PO-Revision-Date: 2019-03-05 22:18+0000\n"
+"POT-Creation-Date: 2019-03-06 00:18+0000\n"
+"PO-Revision-Date: 2019-03-06 00:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3786,37 +3786,41 @@ msgstr ""
 msgid "Unknown content encoding - %{encoding}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:55
+#: ../lib/puppet/network/http/connection.rb:56
 msgid "Unrecognized option(s): %{opts}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:203
+#: ../lib/puppet/network/http/connection.rb:63
+msgid "Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}"
+msgstr ""
+
+#: ../lib/puppet/network/http/connection.rb:219
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr ""
 
 #. TRANSLATORS: Used in the phrase:
 #. "Received a response from the remote server."
-#: ../lib/puppet/network/http/connection.rb:233
+#: ../lib/puppet/network/http/connection.rb:249
 msgid "the remote server"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:237
+#: ../lib/puppet/network/http/connection.rb:253
 msgid "Received a %{status_code} response from %{server_hostname}, but the Retry-After header value of \"%{retry_after}\" could not be converted to an integer or RFC 2822 date."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:248
+#: ../lib/puppet/network/http/connection.rb:264
 msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:308
+#: ../lib/puppet/network/http/connection.rb:324
 msgid "request %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:310
+#: ../lib/puppet/network/http/connection.rb:326
 msgid "request %{uri} timed out after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:312
+#: ../lib/puppet/network/http/connection.rb:328
 msgid "request %{uri} failed: %{msg}"
 msgstr ""
 
@@ -7627,6 +7631,18 @@ msgstr ""
 msgid "unexpected attributes %{keys} in %{path}"
 msgstr ""
 
+#: ../lib/puppet/ssl/error.rb:18
+msgid "expected one of %{certnames}"
+msgstr ""
+
+#: ../lib/puppet/ssl/error.rb:20
+msgid "expected %{certname}"
+msgstr ""
+
+#: ../lib/puppet/ssl/error.rb:23
+msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
+msgstr ""
+
 #: ../lib/puppet/ssl/host.rb:165
 msgid "No certificate to validate."
 msgstr ""
@@ -9296,18 +9312,6 @@ msgstr ""
 
 #: ../lib/puppet/util/splayer.rb:14
 msgid "Sleeping for %{time} seconds (splay is enabled)"
-msgstr ""
-
-#: ../lib/puppet/util/ssl.rb:81
-msgid "expected one of %{certnames}"
-msgstr ""
-
-#: ../lib/puppet/util/ssl.rb:83
-msgid "expected %{certname}"
-msgstr ""
-
-#: ../lib/puppet/util/ssl.rb:86
-msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
 #: ../lib/puppet/util/storage.rb:53
