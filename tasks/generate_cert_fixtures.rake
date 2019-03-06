@@ -11,16 +11,50 @@ task(:gen_cert_fixtures) do
     path = File.join(dir, name)
     puts "Generating #{path}"
     File.open(path, 'w') do |f|
+      f.write(x509.to_text)
       text = if block_given?
                yield x509
              else
                x509.to_pem
              end
+
       f.write(text)
     end
   end
 
-  # SSL fixtures
+  # This task generates a PKI consisting of a root CA, intermediate CA and
+  # several leaf certs. A CRL is generated for each CA. The root CA CRL is
+  # empty, while the intermediate CA CRL contains the revoked cert's serial
+  # number. A textual representation of each X509 object is included in the
+  # fixture as a comment.
+  #
+  # Certs
+  # =====
+  #
+  # ca.pem                           /CN=Test CA
+  #                                   |
+  # intermediate.pem                  +- /CN=Test CA Subauthority
+  #                                   |   |
+  # signed.pem                        |   +- /CN=signed
+  # revoked.pem                       |   +- /CN=revoked
+  # 127.0.0.1.pem                     |   +- /CN=127.0.0.1 (with dns alt names)
+  # tampered.pem                      |   +- /CN=signed (with different public key)
+  #                                   |
+  # bad-int-basic-constraints.pem     +- /CN=Test CA Subauthority (bad isCA constraint)
+  #
+  # bad-basic-constraints.pem        /CN=Test CA (bad isCA constraint)
+  #
+  # Keys
+  # ====
+  #
+  # The RSA private key for each leaf cert is also generated. In addition,
+  # `encrypted-key.pem` contains the private key for the `signed` cert.
+  #
+  # Requests
+  # ========
+  #
+  # `request.pem` contains a valid CSR for /CN=pending, while `tampered_csr.pem`
+  # is the same as `request.pem`, but it's public key has been replaced.
   #
   ca = Puppet::TestCa.new
   dir = File.join(RAKE_ROOT, 'spec/fixtures/ssl')
