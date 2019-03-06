@@ -25,6 +25,9 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
   before do
     WebMock.disable_net_connect!
 
+    Net::HTTP.any_instance.stubs(:start)
+    Net::HTTP.any_instance.stubs(:finish)
+
     Puppet.settings.use(:main)
     Puppet[:certname] = name
     Puppet[:vardir] = tmpdir("ssl_testing")

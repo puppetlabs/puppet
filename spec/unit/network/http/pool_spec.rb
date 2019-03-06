@@ -19,8 +19,11 @@ describe Puppet::Network::HTTP::Pool do
     Puppet::Network::HTTP::Site.new('https', 'github.com', 443)
   end
 
-  let(:verify) do
-    stub('verify', :setup_connection => nil)
+  let(:ssl_context) { Puppet::SSL::SSLContext.new }
+  let(:verifier) do
+    v = Puppet::SSL::Verifier.new(site.host, ssl_context)
+    v.stubs(:setup_connection => nil)
+    v
   end
 
   def create_pool
@@ -30,7 +33,7 @@ describe Puppet::Network::HTTP::Pool do
   def create_pool_with_connections(site, *connections)
     pool = Puppet::Network::HTTP::Pool.new
     connections.each do |conn|
-      pool.release(site, conn)
+      pool.release(site, verifier, conn)
     end
     pool
   end
@@ -40,7 +43,7 @@ describe Puppet::Network::HTTP::Pool do
     # connections have already expired
     pool = Puppet::Network::HTTP::Pool.new(-1)
     connections.each do |conn|
-      pool.release(site, conn)
+      pool.release(site, verifier, conn)
     end
     pool
   end
@@ -55,16 +58,16 @@ describe Puppet::Network::HTTP::Pool do
       pool = create_pool_with_connections(site, conn)
 
       expect { |b|
-        pool.with_connection(site, verify, &b)
+        pool.with_connection(site, verifier, &b)
       }.to yield_with_args(conn)
     end
 
     it 'returns the connection to the pool' do
       conn = create_connection(site)
       pool = create_pool
-      pool.release(site, conn)
+      pool.release(site, verifier, conn)
 
-      pool.with_connection(site, verify) { |c| }
+      pool.with_connection(site, verifier) { |c| }
 
       expect(pool.pool[site].first.connection).to eq(conn)
     end
@@ -74,10 +77,10 @@ describe Puppet::Network::HTTP::Pool do
       mru_conn = create_connection(site)
       pool = create_pool_with_connections(site, lru_conn, mru_conn)
 
-      pool.with_connection(site, verify) do |a|
+      pool.with_connection(site, verifier) do |a|
         expect(a).to eq(mru_conn)
 
-        pool.with_connection(site, verify) do |b|
+        pool.with_connection(site, verifier) do |b|
           expect(b).to eq(lru_conn)
         end
       end
@@ -86,10 +89,10 @@ describe Puppet::Network::HTTP::Pool do
     it 'propagates exceptions' do
       conn = create_connection(site)
       pool = create_pool
-      pool.release(site, conn)
+      pool.release(site, verifier, conn)
 
       expect {
-        pool.with_connection(site, verify) do |c|
+        pool.with_connection(site, verifier) do |c|
           raise IOError, 'connection reset'
         end
       }.to raise_error(IOError, 'connection reset')
@@ -100,11 +103,11 @@ describe Puppet::Network::HTTP::Pool do
       # suggest we close the socket, and other errors
       conn = create_connection(site)
       pool = create_pool
-      pool.release(site, conn)
+      pool.release(site, verifier, conn)
 
-      pool.expects(:release).with(site, conn).never
+      pool.expects(:release).with(site, verifier, conn).never
 
-      pool.with_connection(site, verify) do |c|
+      pool.with_connection(site, verifier) do |c|
         raise IOError, 'connection reset'
       end rescue nil
     end
@@ -140,9 +143,9 @@ describe Puppet::Network::HTTP::Pool do
         conn.expects(:use_ssl?).returns(false)
 
         pool = create_pool_with_connections(site, conn)
-        pool.expects(:release).with(site, conn)
+        pool.expects(:release).with(site, verifier, conn)
 
-        pool.with_connection(site, verify) {|c| }
+        pool.with_connection(site, verifier) {|c| }
       end
 
       it 'releases secure HTTPS connections' do
@@ -151,9 +154,9 @@ describe Puppet::Network::HTTP::Pool do
         conn.expects(:verify_mode).returns(OpenSSL::SSL::VERIFY_PEER)
 
         pool = create_pool_with_connections(site, conn)
-        pool.expects(:release).with(site, conn)
+        pool.expects(:release).with(site, verifier, conn)
 
-        pool.with_connection(site, verify) {|c| }
+        pool.with_connection(site, verifier) {|c| }
       end
 
       it 'closes insecure HTTPS connections' do
@@ -163,9 +166,9 @@ describe Puppet::Network::HTTP::Pool do
 
         pool = create_pool_with_connections(site, conn)
 
-        pool.expects(:release).with(site, conn).never
+        pool.expects(:release).with(site, verifier, conn).never
 
-        pool.with_connection(site, verify) {|c| }
+        pool.with_connection(site, verifier) {|c| }
       end
     end
   end
@@ -177,7 +180,7 @@ describe Puppet::Network::HTTP::Pool do
       pool.factory.expects(:create_connection).with(site).returns(conn)
       pool.expects(:setsockopts)
 
-      expect(pool.borrow(site, verify)).to eq(conn)
+      expect(pool.borrow(site, verifier)).to eq(conn)
     end
 
     it 'returns a matching connection' do
@@ -186,7 +189,7 @@ describe Puppet::Network::HTTP::Pool do
 
       pool.factory.expects(:create_connection).never
 
-      expect(pool.borrow(site, verify)).to eq(conn)
+      expect(pool.borrow(site, verifier)).to eq(conn)
     end
 
     it 'returns a new connection if there are no matching sites' do
@@ -197,7 +200,34 @@ describe Puppet::Network::HTTP::Pool do
       pool.factory.expects(:create_connection).with(site).returns(conn)
       pool.expects(:setsockopts)
 
-      expect(pool.borrow(site, verify)).to eq(conn)
+      expect(pool.borrow(site, verifier)).to eq(conn)
+    end
+
+    it 'returns a new connection if the ssl contexts are different' do
+      old_conn = create_connection(site)
+      pool = create_pool_with_connections(site, old_conn)
+      pool.stubs(:setsockopts)
+
+      new_conn = create_connection(site)
+      pool.factory.stubs(:create_connection).with(site).returns(new_conn)
+
+      new_verifier = Puppet::SSL::Verifier.new(site.host, Puppet::SSL::SSLContext.new)
+      new_verifier.stubs(:setup_connection)
+
+      # 'equal' tests that it's the same object
+      expect(pool.borrow(site, new_verifier)).to eq(new_conn)
+    end
+
+    it 'returns a cached connection if the ssl contexts are the same' do
+      old_conn = create_connection(site)
+      pool = create_pool_with_connections(site, old_conn)
+      pool.stubs(:setsockopts)
+
+      pool.factory.expects(:create_connection).never
+
+      # 'equal' tests that it's the same object
+      new_verifier = Puppet::SSL::Verifier.new(site.host, ssl_context)
+      expect(pool.borrow(site, new_verifier)).to equal(old_conn)
     end
 
     it 'returns started connections' do
@@ -208,7 +238,7 @@ describe Puppet::Network::HTTP::Pool do
       pool.factory.expects(:create_connection).with(site).returns(conn)
       pool.expects(:setsockopts)
 
-      expect(pool.borrow(site, verify)).to eq(conn)
+      expect(pool.borrow(site, verifier)).to eq(conn)
     end
 
     it "doesn't start a cached connection" do
@@ -216,7 +246,7 @@ describe Puppet::Network::HTTP::Pool do
       conn.expects(:start).never
 
       pool = create_pool_with_connections(site, conn)
-      pool.borrow(site, verify)
+      pool.borrow(site, verifier)
     end
 
     it 'returns the most recently used connection from the pool' do
@@ -224,7 +254,7 @@ describe Puppet::Network::HTTP::Pool do
       most_recently_used = create_connection(site)
 
       pool = create_pool_with_connections(site, least_recently_used, most_recently_used)
-      expect(pool.borrow(site, verify)).to eq(most_recently_used)
+      expect(pool.borrow(site, verifier)).to eq(most_recently_used)
     end
 
     it 'finishes expired connections' do
@@ -235,7 +265,7 @@ describe Puppet::Network::HTTP::Pool do
       pool.factory.expects(:create_connection => stub('conn', :start => nil))
       pool.expects(:setsockopts)
 
-      pool.borrow(site, verify)
+      pool.borrow(site, verifier)
     end
 
     it 'logs an exception if it fails to close an expired connection' do
@@ -248,7 +278,7 @@ describe Puppet::Network::HTTP::Pool do
       pool.factory.expects(:create_connection => stub('open_conn', :start => nil))
       pool.expects(:setsockopts)
 
-      pool.borrow(site, verify)
+      pool.borrow(site, verifier)
     end
   end
 
@@ -257,23 +287,23 @@ describe Puppet::Network::HTTP::Pool do
       conn = create_connection(site)
 
       pool = create_pool
-      pool.release(site, conn)
+      pool.release(site, verifier, conn)
 
       expect(pool.pool[site].first.connection).to eq(conn)
     end
 
     it 'adds the connection to a pool with a connection for the same site' do
       pool = create_pool
-      pool.release(site, create_connection(site))
-      pool.release(site, create_connection(site))
+      pool.release(site, verifier, create_connection(site))
+      pool.release(site, verifier, create_connection(site))
 
       expect(pool.pool[site].count).to eq(2)
     end
 
     it 'adds the connection to a pool with a connection for a different site' do
       pool = create_pool
-      pool.release(site, create_connection(site))
-      pool.release(different_site, create_connection(different_site))
+      pool.release(site, verifier, create_connection(site))
+      pool.release(different_site, verifier, create_connection(different_site))
 
       expect(pool.pool[site].count).to eq(1)
       expect(pool.pool[different_site].count).to eq(1)

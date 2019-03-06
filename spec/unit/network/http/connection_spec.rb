@@ -26,8 +26,8 @@ describe Puppet::Network::HTTP::Connection do
         expect(conn).to be_use_ssl
       end
 
-      it "can disable ssl using an option" do
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
+      it "can disable ssl using an option and ignore the verify" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false)
 
         expect(conn).to_not be_use_ssl
       end
@@ -38,8 +38,34 @@ describe Puppet::Network::HTTP::Connection do
         expect(conn).to be_use_ssl
       end
 
+      it "ignores the ':verify' option when ssl is disabled" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
+
+        expect(conn.verifier).to be_nil
+      end
+
+      it "wraps the validator in an adapter" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+
+        expect(conn.verifier).to be_a_kind_of(Puppet::SSL::VerifierAdapter)
+      end
+
       it "should raise Puppet::Error when invalid options are specified" do
         expect { Puppet::Network::HTTP::Connection.new(host, port, :invalid_option => nil) }.to raise_error(Puppet::Error, 'Unrecognized option(s): :invalid_option')
+      end
+
+      it "accepts a verifier" do
+        verifier = Puppet::SSL::Verifier.new('fqdn', stub('ssl_context'))
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verifier => verifier)
+
+        expect(conn.verifier).to eq(verifier)
+      end
+
+      it "raises if the wrong verifier class is specified" do
+        expect {
+          Puppet::Network::HTTP::Connection.new(host, port, :verifier => Puppet::SSL::Validator.default_validator)
+        }.to raise_error(ArgumentError,
+                         "Expected an instance of Puppet::SSL::Verifier but was passed a Puppet::SSL::Validator::DefaultValidator")
       end
     end
   end
@@ -54,6 +80,8 @@ describe Puppet::Network::HTTP::Connection do
       :request_post => "param: value" }.each do |method,body|
       context "##{method}" do
         it "should yield to the block" do
+          Net::HTTP.any_instance.stubs(method).yields.returns(httpok)
+
           block_executed = false
           subject.send(method, "/foo", body) do |response|
             block_executed = true
@@ -61,94 +89,6 @@ describe Puppet::Network::HTTP::Connection do
           expect(block_executed).to eq(true)
         end
       end
-    end
-  end
-
-  shared_examples_for 'ssl verifier' do
-    include PuppetSpec::Files
-
-    let (:host) { "my_server" }
-    let (:port) { 8140 }
-
-    before :all do
-      WebMock.disable!
-    end
-
-    after :all do
-      WebMock.enable!
-    end
-
-    it "should provide a useful error message when one is available and certificate validation fails", :unless => Puppet::Util::Platform.windows? do
-      connection = Puppet::Network::HTTP::Connection.new(
-        host, port,
-        :verify => ConstantErrorValidator.new(:fails_with => 'certificate verify failed',
-                                              :error_string => 'shady looking signature'))
-
-      expect do
-        connection.get('request')
-      end.to raise_error(Puppet::Error, /certificate verify failed: \[shady looking signature\]/)
-    end
-
-    it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
-      Puppet[:confdir] = tmpdir('conf')
-
-      connection = Puppet::Network::HTTP::Connection.new(
-      host, port,
-      :verify => ConstantErrorValidator.new(
-        :fails_with => 'hostname was not match with server certificate',
-        :peer_certs => [Puppet::TestCa.new.generate('not_my_server',
-                                                    :subject_alt_names => 'DNS:foo,DNS:bar,DNS:baz,DNS:not_my_server')[:cert]]))
-
-      expect do
-        connection.get('request')
-      end.to raise_error(Puppet::Error) do |error|
-        error.message =~ /\AServer hostname 'my_server' did not match server certificate; expected one of (.+)/
-        expect($1.split(', ')).to match_array(%w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server])
-      end
-    end
-
-    it "should pass along the error message otherwise" do
-      connection = Puppet::Network::HTTP::Connection.new(
-        host, port,
-        :verify => ConstantErrorValidator.new(:fails_with => 'some other message'))
-
-      expect do
-        connection.get('request')
-      end.to raise_error(/some other message/)
-    end
-
-    it "should check all peer certificates for upcoming expiration", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
-      Puppet[:confdir] = tmpdir('conf')
-      cert = Puppet::TestCa.new.generate('server',
-                                         :subject_alt_names => 'DNS:foo,DNS:bar,DNS:baz,DNS:server')[:cert]
-
-      connection = Puppet::Network::HTTP::Connection.new(
-        host, port,
-        :verify => NoProblemsValidator.new(cert))
-
-      Net::HTTP.any_instance.stubs(:start)
-      Net::HTTP.any_instance.stubs(:request).returns(httpok)
-      Puppet::Network::HTTP::Pool.any_instance.stubs(:setsockopts)
-
-      connection.get('request')
-    end
-  end
-
-  context "when using single use HTTPS connections", :unless => RUBY_PLATFORM == 'java' do
-    it_behaves_like 'ssl verifier' do
-    end
-  end
-
-  context "when using persistent HTTPS connections", :unless => RUBY_PLATFORM == 'java' do
-    around :each do |example|
-      pool = Puppet::Network::HTTP::Pool.new
-      Puppet.override(:http_pool => pool) do
-        example.run
-      end
-      pool.close
-    end
-
-    it_behaves_like 'ssl verifier' do
     end
   end
 

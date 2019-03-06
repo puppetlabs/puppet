@@ -14,6 +14,7 @@ describe Puppet::Network::HTTP::Factory do
   end
 
   let(:site) { Puppet::Network::HTTP::Site.new('https', 'www.example.com', 443) }
+
   def create_connection(site)
     factory = Puppet::Network::HTTP::Factory.new
 

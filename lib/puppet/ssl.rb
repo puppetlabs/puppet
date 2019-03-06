@@ -11,5 +11,7 @@ module Puppet::SSL # :nodoc:
   require 'puppet/ssl/validator/default_validator'
   require 'puppet/ssl/error'
   require 'puppet/ssl/ssl_context'
+  require 'puppet/ssl/verifier'
+  require 'puppet/ssl/verifier_adapter'
   require 'puppet/ssl/ssl_provider'
 end

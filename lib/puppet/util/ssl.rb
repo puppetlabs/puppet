@@ -75,16 +75,7 @@ module Puppet::Util::SSL
       msg << ": [" + verifier.verify_errors.join('; ') + "]"
       raise Puppet::Error, msg, error.backtrace
     elsif peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert, host)
-      valid_certnames = [peer_cert.subject.to_s.sub(/.*=/, ''),
-                         *Puppet::SSL::Certificate.subject_alt_names_for(peer_cert)].uniq
-      if valid_certnames.size > 1
-        expected_certnames = _("expected one of %{certnames}") % { certnames: valid_certnames.join(', ') }
-      else
-        expected_certnames = _("expected %{certname}") % { certname: valid_certnames.first }
-      end
-
-      msg = _("Server hostname '%{host}' did not match server certificate; %{expected_certnames}") % { host: host, expected_certnames: expected_certnames }
-      raise Puppet::Error, msg, error.backtrace
+      raise Puppet::SSL::CertMismatchError.new(peer_cert, host)
     else
       raise error
     end

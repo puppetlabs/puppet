@@ -25,7 +25,8 @@ module Puppet::Network::HTTP
 
     OPTION_DEFAULTS = {
       :use_ssl => true,
-      :verify => nil,
+      :verify => nil, # Puppet::SSL::Validator is deprecated
+      :verifier => nil,
       :redirect_limit => 10,
     }
 
@@ -56,7 +57,17 @@ module Puppet::Network::HTTP
 
       options = OPTION_DEFAULTS.merge(options)
       @use_ssl = options[:use_ssl]
-      @verify = options[:verify]
+      if @use_ssl
+        if options[:verifier]
+          unless options[:verifier].is_a?(Puppet::SSL::Verifier)
+            raise ArgumentError, _("Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}") % { klass: options[:verifier].class }
+          end
+
+          @verifier = options[:verifier]
+        else
+          @verifier = Puppet::SSL::VerifierAdapter.new(options[:verify])
+        end
+      end
       @redirect_limit = options[:redirect_limit]
       @site = Puppet::Network::HTTP::Site.new(@use_ssl ? 'https' : 'http', host, port)
       @pool = Puppet.lookup(:http_pool)
@@ -161,6 +172,11 @@ module Puppet::Network::HTTP
     # Whether to use ssl
     def use_ssl?
       @site.use_ssl?
+    end
+
+    # @api private
+    def verifier
+      @verifier
     end
 
     private
@@ -318,12 +334,10 @@ module Puppet::Network::HTTP
 
     def with_connection(site, &block)
       response = nil
-      @pool.with_connection(site, @verify) do |conn|
+      @pool.with_connection(site, @verifier) do |conn|
         response = yield conn
       end
       response
-    rescue OpenSSL::SSL::SSLError => error
-      Puppet::Util::SSL.handle_connection_error(error, @verify, site.host)
     end
   end
 end

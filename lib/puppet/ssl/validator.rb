@@ -2,6 +2,7 @@ require 'openssl'
 
 # API for certificate verification
 #
+# @deprecated
 # @api public
 class Puppet::SSL::Validator
 
