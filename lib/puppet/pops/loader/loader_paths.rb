@@ -316,7 +316,17 @@ module LoaderPaths
     PLAN_PATH = File.join('plans')
     PP_EXT = '.pp'.freeze
     YAML_EXT = '.yaml'.freeze
-    INIT_FILENAMES = %w[init.pp init.yaml].freeze
+
+    def initialize(loader)
+      super
+
+      if Puppet.lookup(:yaml_plan_instantiator) { nil }
+        @extensions = [PP_EXT, YAML_EXT]
+      else
+        @extensions = [PP_EXT]
+      end
+      @init_filenames = @extensions.map { |ext| "init#{ext}" }
+    end
 
     def extension
       EMPTY_STRING
@@ -327,7 +337,7 @@ module LoaderPaths
     end
 
     def instantiator()
-      Puppet::Pops::Loader::PuppetPlanInstantiator
+      Puppet::Pops::Loader::GenericPlanInstantiator
     end
 
     def fuzzy_matching?
@@ -335,20 +345,17 @@ module LoaderPaths
     end
 
     def valid_path?(path)
-      (path.end_with?(PP_EXT) || path.end_with?(YAML_EXT)) && path.start_with?(generic_path)
+      @extensions.any? { |ext| path.end_with?(ext) } && path.start_with?(generic_path)
     end
 
     def typed_name(type, name_authority, relative_path, module_name)
-      if INIT_FILENAMES.include?(relative_path) && !(module_name.nil? || module_name.empty?)
+      if @init_filenames.include?(relative_path) && !(module_name.nil? || module_name.empty?)
         TypedName.new(type, module_name, name_authority)
       else
         n = ''
         n << module_name unless module_name.nil?
-        if relative_path.end_with?(PP_EXT)
-          relative_path = relative_path[0..-(PP_EXT.length+1)]
-        else
-          relative_path = relative_path[0..-(YAML_EXT.length+1)]
-        end
+        ext = @extensions.find { |extension| relative_path.end_with?(extension) }
+        relative_path = relative_path[0..-(ext.length+1)]
 
         relative_path.split('/').each do |segment|
           n << '::' if n.size > 0
@@ -367,7 +374,7 @@ module LoaderPaths
         parts = parts[start_index_in_name..-1]
       end
       basename = File.join(generic_path, parts)
-      ["#{basename}#{PP_EXT}", "#{basename}#{YAML_EXT}"]
+      @extensions.map { |ext| "#{basename}#{ext}" }
     end
   end
 
