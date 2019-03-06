@@ -69,7 +69,7 @@ describe Puppet::SSL::Verifier do
   end
 
   context '#handle_connection_error' do
-    let(:peer_cert) { OpenSSL::X509::Certificate.new(File.read(my_fixture('foobarbaz.pem'))) }
+    let(:peer_cert) { cert_fixture('127.0.0.1.pem') }
     let(:chain) { [peer_cert] }
     let(:ssl_error) { OpenSSL::SSL::SSLError.new("certificate verify failed") }
 
@@ -79,7 +79,7 @@ describe Puppet::SSL::Verifier do
 
       expect {
         verifier.handle_connection_error(http, ssl_error)
-      }.to raise_error(Puppet::SSL::CertVerifyError, "certificate verify failed [unable to get local issuer certificate for /CN=foo]")
+      }.to raise_error(Puppet::SSL::CertVerifyError, "certificate verify failed [unable to get local issuer certificate for /CN=127.0.0.1]")
     end
 
     it "raises a verification error for the server cert" do
@@ -88,7 +88,7 @@ describe Puppet::SSL::Verifier do
 
       expect {
         verifier.handle_connection_error(http, ssl_error)
-      }.to raise_error(Puppet::SSL::CertVerifyError, "certificate verify failed [certificate rejected for /CN=foo]")
+      }.to raise_error(Puppet::SSL::CertVerifyError, "certificate verify failed [certificate rejected for /CN=127.0.0.1]")
     end
 
     it "raises cert mismatch error on ruby < 2.4" do
@@ -101,7 +101,7 @@ describe Puppet::SSL::Verifier do
 
       expect {
         verifier.handle_connection_error(http, ssl_error)
-      }.to raise_error(Puppet::Error, "Server hostname 'example.com' did not match server certificate; expected one of foo, DNS:foo, DNS:bar, DNS:baz")
+      }.to raise_error(Puppet::Error, "Server hostname 'example.com' did not match server certificate; expected one of 127.0.0.1, DNS:127.0.0.1, DNS:127.0.0.2")
     end
 
     it "raises cert mismatch error on ruby >= 2.4" do
@@ -110,7 +110,7 @@ describe Puppet::SSL::Verifier do
 
       expect {
         verifier.handle_connection_error(http, ssl_error)
-      }.to raise_error(Puppet::Error, "Server hostname 'example.com' did not match server certificate; expected one of foo, DNS:foo, DNS:bar, DNS:baz")
+      }.to raise_error(Puppet::Error, "Server hostname 'example.com' did not match server certificate; expected one of 127.0.0.1, DNS:127.0.0.1, DNS:127.0.0.2")
     end
 
     it 're-raises other ssl connection errors' do

@@ -4,26 +4,6 @@ require 'puppet/x509'
 describe Puppet::X509::CertProvider do
   include PuppetSpec::Files
 
-  def pem(name)
-    File.read(my_fixture(name))
-  end
-
-  def cert(name)
-    OpenSSL::X509::Certificate.new(pem(name))
-  end
-
-  def crl(name)
-    OpenSSL::X509::CRL.new(pem(name))
-  end
-
-  def key(name)
-    OpenSSL::PKey::RSA.new(pem(name))
-  end
-
-  def request(name)
-    OpenSSL::X509::Request.new(pem(name))
-  end
-
   def create_provider(options)
     described_class.new(options)
   end
@@ -33,6 +13,8 @@ describe Puppet::X509::CertProvider do
     File.write(path, pem)
     path
   end
+
+  let(:fixture_dir) { File.join(PuppetSpec::FIXTURE_DIR, 'ssl') }
 
   context 'when loading' do
     context 'cacerts' do
@@ -44,7 +26,7 @@ describe Puppet::X509::CertProvider do
 
       it 'returns an array of certificates' do
         subject = OpenSSL::X509::Name.new([['CN', 'Test CA']])
-        certs = create_provider(capath: my_fixture('ca.pem')).load_cacerts
+        certs = create_provider(capath: File.join(fixture_dir, 'ca.pem')).load_cacerts
         expect(certs).to contain_exactly(an_object_having_attributes(subject: subject))
       end
 
@@ -80,7 +62,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'raises if the cacerts are unreadable' do
-        capath = my_fixture('ca.pem')
+        capath = File.join(fixture_dir, 'ca.pem')
         provider = create_provider(capath: capath)
         provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
 
@@ -98,7 +80,7 @@ describe Puppet::X509::CertProvider do
 
       it 'returns an array of CRLs' do
         issuer = OpenSSL::X509::Name.new([['CN', 'Test CA']])
-        crls = create_provider(crlpath: my_fixture('crl.pem')).load_crls
+        crls = create_provider(crlpath: File.join(fixture_dir, 'crl.pem')).load_crls
         expect(crls).to contain_exactly(an_object_having_attributes(issuer: issuer))
       end
 
@@ -136,7 +118,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'raises if the CRLs are unreadable' do
-        crlpath = my_fixture('crl.pem')
+        crlpath = File.join(fixture_dir, 'crl.pem')
         provider = create_provider(crlpath: crlpath)
         provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
 
@@ -150,7 +132,7 @@ describe Puppet::X509::CertProvider do
   context 'when saving' do
     context 'cacerts' do
       let(:ca_path) { tmpfile('pem_cacerts') }
-      let(:ca_cert) { cert('ca.pem') }
+      let(:ca_cert) { cert_fixture('ca.pem') }
 
       it 'writes PEM encoded certs' do
         create_provider(capath: ca_path).save_cacerts([ca_cert])
@@ -172,7 +154,7 @@ describe Puppet::X509::CertProvider do
 
     context 'crls' do
       let(:crl_path) { tmpfile('pem_crls') }
-      let(:ca_crl) { crl('crl.pem') }
+      let(:ca_crl) { crl_fixture('crl.pem') }
 
       it 'writes PEM encoded CRLs' do
         create_provider(crlpath: crl_path).save_crls([ca_crl])
@@ -195,7 +177,7 @@ describe Puppet::X509::CertProvider do
 
   context 'when loading' do
     context 'private keys' do
-      let(:provider) { create_provider(privatekeydir: my_fixture_dir) }
+      let(:provider) { create_provider(privatekeydir: fixture_dir) }
 
       it 'returns nil if it does not exist' do
         provider = create_provider(privatekeydir: '/does/not/exist')
@@ -219,7 +201,7 @@ describe Puppet::X509::CertProvider do
 
       it 'returns nil if `hostprivkey` is overridden' do
         Puppet[:certname] = 'foo'
-        Puppet[:hostprivkey] = File.join(my_fixture_dir, "signed-key.pem")
+        Puppet[:hostprivkey] = File.join(fixture_dir, "signed-key.pem")
 
         expect(provider.load_private_key('foo')).to be_nil
       end
@@ -243,7 +225,7 @@ describe Puppet::X509::CertProvider do
     end
 
     context 'certs' do
-      let(:provider) { create_provider(certdir: my_fixture_dir) }
+      let(:provider) { create_provider(certdir: fixture_dir) }
 
       it 'returns nil if it does not exist' do
         provider = create_provider(certdir: '/does/not/exist')
@@ -269,7 +251,7 @@ describe Puppet::X509::CertProvider do
 
       it 'returns nil if `hostcert` is overridden' do
         Puppet[:certname] = 'foo'
-        Puppet[:hostcert] = File.join(my_fixture_dir, "signed.pem")
+        Puppet[:hostcert] = File.join(fixture_dir, "signed.pem")
 
         expect(provider.load_client_cert('foo')).to be_nil
       end
@@ -284,8 +266,8 @@ describe Puppet::X509::CertProvider do
     end
 
     context 'requests' do
-      let(:request) { request('request.pem') }
-      let(:provider) { create_provider(requestdir: my_fixture_dir) }
+      let(:request) { request_fixture('request.pem') }
+      let(:provider) { create_provider(requestdir: fixture_dir) }
 
       it 'returns nil if it does not exist' do
         expect(provider.load_request('whatever')).to be_nil
@@ -307,7 +289,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'ignores `hostcsr`' do
-        Puppet[:hostcsr] = File.join(my_fixture_dir, "doesnotexist.pem")
+        Puppet[:hostcsr] = File.join(fixture_dir, "doesnotexist.pem")
 
         expect(provider.load_request('request')).to be_a(OpenSSL::X509::Request)
       end
@@ -327,7 +309,7 @@ describe Puppet::X509::CertProvider do
 
     context 'private keys' do
       let(:privatekeydir) { tmpdir('privatekeydir') }
-      let(:private_key) { key('signed-key.pem') }
+      let(:private_key) { key_fixture('signed-key.pem') }
       let(:path) { File.join(privatekeydir, 'tom.pem') }
       let(:provider) { create_provider(privatekeydir: privatekeydir) }
 
@@ -362,7 +344,7 @@ describe Puppet::X509::CertProvider do
 
     context 'certs' do
       let(:certdir) { tmpdir('certdir') }
-      let(:client_cert) { cert('signed.pem') }
+      let(:client_cert) { cert_fixture('signed.pem') }
       let(:path) { File.join(certdir, 'tom.pem') }
       let(:provider) { create_provider(certdir: certdir) }
 
@@ -397,7 +379,7 @@ describe Puppet::X509::CertProvider do
 
     context 'requests' do
       let(:requestdir) { tmpdir('requestdir') }
-      let(:csr) { request('request.pem') }
+      let(:csr) { request_fixture('request.pem') }
       let(:path) { File.join(requestdir, 'tom.pem') }
       let(:provider) { create_provider(requestdir: requestdir) }
 

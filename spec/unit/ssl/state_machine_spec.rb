@@ -7,12 +7,12 @@ describe Puppet::SSL::StateMachine do
   include PuppetSpec::Files
 
   let(:machine) { described_class.new }
-  let(:cacert_pem) { File.read(fixtures('unit/ssl/ssl_provider/ca.pem')) }
-  let(:cacert) { OpenSSL::X509::Certificate.new(cacert_pem) }
+  let(:cacert_pem) { cacert.to_pem }
+  let(:cacert) { cert_fixture('ca.pem') }
   let(:cacerts) { [cacert] }
 
-  let(:crl_pem) { File.read(fixtures('unit/ssl/ssl_provider/crl.pem')) }
-  let(:crl) { OpenSSL::X509::CRL.new(crl_pem) }
+  let(:crl_pem) { crl.to_pem }
+  let(:crl) { crl_fixture('crl.pem') }
   let(:crls) { [crl] }
 
   context 'when ensuring CA certs and CRLs' do

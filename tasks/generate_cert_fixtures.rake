@@ -20,44 +20,10 @@ task(:gen_cert_fixtures) do
     end
   end
 
-  # CertProvider fixtures
+  # SSL fixtures
   #
   ca = Puppet::TestCa.new
-  dir = File.join(RAKE_ROOT, 'spec/fixtures/unit/x509/cert_provider')
-  FileUtils.mkdir_p(dir)
-
-  # Create Test CA & CRL
-  save(dir, 'ca.pem', ca.ca_cert)
-  save(dir, 'crl.pem', ca.ca_crl)
-
-  # Create intermediate CA "Test CA Subauthority" issued by "Test CA"
-  inter = ca.create_intermediate_cert('Test CA Subauthority', ca.ca_cert, ca.key)
-
-  # Create a leaf/entity key and cert for host "signed" and issued by "Test CA Subauthority"
-  signed = ca.create_cert('signed', inter[:cert], inter[:private_key])
-  save(dir, 'signed.pem', signed[:cert])
-  save(dir, 'signed-key.pem', signed[:private_key])
-
-  # Create an encrypted version of the above private key for host "signed"
-  save(dir, 'encrypted-key.pem', signed[:private_key]) do |x509|
-    # private key password was chosen at random
-    x509.to_pem(OpenSSL::Cipher::AES.new(128, :CBC), '74695716c8b6')
-  end
-
-  # Create an SSL cert for 127.0.0.1 and dns_alt_names
-  signed = ca.create_cert('127.0.0.1', ca.ca_cert, ca.key, subject_alt_names: 'DNS:127.0.0.1,DNS:127.0.0.2')
-  save(dir, 'localhost.pem', signed[:cert])
-  save(dir, 'localhost-key.pem', signed[:private_key])
-
-  # Create a pending request (CSR), we don't need to save its private key
-  request = ca.create_request('pending')
-  save(dir, 'request.pem', request[:csr])
-
-  # SSLProvider fixtures
-  #
-  ca = Puppet::TestCa.new
-  dir = File.join(RAKE_ROOT, 'spec/fixtures/unit/ssl/ssl_provider')
-  FileUtils.mkdir_p(dir)
+  dir = File.join(RAKE_ROOT, 'spec/fixtures/ssl')
 
   # Create Test CA & CRL
   save(dir, 'ca.pem', ca.ca_cert)
@@ -72,6 +38,17 @@ task(:gen_cert_fixtures) do
   signed = ca.create_cert('signed', inter[:cert], inter[:private_key])
   save(dir, 'signed.pem', signed[:cert])
   save(dir, 'signed-key.pem', signed[:private_key])
+
+  # Create an encrypted version of the above private key for host "signed"
+  save(dir, 'encrypted-key.pem', signed[:private_key]) do |x509|
+    # private key password was chosen at random
+    x509.to_pem(OpenSSL::Cipher::AES.new(128, :CBC), '74695716c8b6')
+  end
+
+  # Create an SSL cert for 127.0.0.1 with dns_alt_names
+  signed = ca.create_cert('127.0.0.1', ca.ca_cert, ca.key, subject_alt_names: 'DNS:127.0.0.1,DNS:127.0.0.2')
+  save(dir, '127.0.0.1.pem', signed[:cert])
+  save(dir, '127.0.0.1-key.pem', signed[:private_key])
 
   # Create a leaf/entity key and cert for host "revoked", issued by "Test CA Subauthority"
   # and revoke the cert
@@ -129,12 +106,4 @@ task(:gen_cert_fixtures) do
   tampered_cert = ca.create_cert('signed', inter[:cert], inter[:private_key])[:cert]
   tampered_cert.public_key = OpenSSL::PKey::RSA.new(1024).public_key
   save(dir, 'tampered-cert.pem', tampered_cert)
-
-  # Verifier fixtures
-  ca = Puppet::TestCa.new
-  dir = File.join(RAKE_ROOT, 'spec/fixtures/unit/ssl/verifier')
-  FileUtils.mkdir_p(dir)
-
-  cert = ca.create_cert('foo', ca.ca_cert, ca.key, subject_alt_names: 'DNS:foo,DNS:bar,DNS:baz')[:cert]
-  save(dir, 'foobarbaz.pem', cert)
 end

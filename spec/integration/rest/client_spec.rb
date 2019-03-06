@@ -41,7 +41,7 @@ describe Puppet::Rest::Client, unless: Puppet::Util::Platform.jruby? do
 
   it 'provides a meaningful error message when cert validation fails' do
     ssl_context = ssl.create_root_context(
-      cacerts: [OpenSSL::X509::Certificate.new(PuppetSpec::HTTPSServer::UNKNOWN_CA)],
+      cacerts: [cert_fixture('netlock-arany-utf8.pem')]
     )
     client = Puppet::Rest::Client.new(ssl_context: ssl_context)
 

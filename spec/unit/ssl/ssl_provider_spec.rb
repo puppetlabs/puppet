@@ -3,28 +3,8 @@ require 'spec_helper'
 describe Puppet::SSL::SSLProvider do
   include PuppetSpec::Files
 
-  def pem_content(name)
-    File.read(my_fixture(name))
-  end
-
-  def cert(name)
-    OpenSSL::X509::Certificate.new(pem_content(name))
-  end
-
-  def crl(name)
-    OpenSSL::X509::CRL.new(pem_content(name))
-  end
-
-  def key(name)
-    OpenSSL::PKey::RSA.new(pem_content(name))
-  end
-
-  def request(name)
-    OpenSSL::X509::Request.new(pem_content(name))
-  end
-
-  let(:global_cacerts) { [ cert('ca.pem'), cert('intermediate.pem') ] }
-  let(:global_crls) { [ crl('crl.pem'), crl('intermediate-crl.pem') ] }
+  let(:global_cacerts) { [ cert_fixture('ca.pem'), cert_fixture('intermediate.pem') ] }
+  let(:global_crls) { [ crl_fixture('crl.pem'), crl_fixture('intermediate-crl.pem') ] }
   let(:wrong_key) { OpenSSL::PKey::RSA.new(512) }
 
   context 'when creating an insecure context' do
@@ -68,19 +48,19 @@ describe Puppet::SSL::SSLProvider do
     end
 
     it 'accepts valid root certs' do
-      certs = [cert('ca.pem')]
+      certs = [cert_fixture('ca.pem')]
       sslctx = subject.create_root_context(config.merge(cacerts: certs))
       expect(sslctx.cacerts).to eq(certs)
     end
 
     it 'accepts valid intermediate certs' do
-      certs = [cert('ca.pem'), cert('intermediate.pem')]
+      certs = [cert_fixture('ca.pem'), cert_fixture('intermediate.pem')]
       sslctx = subject.create_root_context(config.merge(cacerts: certs))
       expect(sslctx.cacerts).to eq(certs)
     end
 
     it 'accepts expired CA certs' do
-      expired = [cert('ca.pem'), cert('intermediate.pem')]
+      expired = [cert_fixture('ca.pem'), cert_fixture('intermediate.pem')]
       expired.each { |x509| x509.not_after = Time.at(0) }
 
       sslctx = subject.create_root_context(config.merge(cacerts: expired))
@@ -99,21 +79,21 @@ describe Puppet::SSL::SSLProvider do
     let(:config) { { cacerts: global_cacerts, crls: global_crls} }
 
     it 'accepts valid CRLs' do
-      certs = [cert('ca.pem')]
-      crls = [crl('crl.pem')]
+      certs = [cert_fixture('ca.pem')]
+      crls = [crl_fixture('crl.pem')]
       sslctx = subject.create_root_context(config.merge(cacerts: certs, crls: crls))
       expect(sslctx.crls).to eq(crls)
     end
 
     it 'accepts valid CRLs for intermediate certs' do
-      certs = [cert('ca.pem'), cert('intermediate.pem')]
-      crls = [crl('crl.pem'), crl('intermediate-crl.pem')]
+      certs = [cert_fixture('ca.pem'), cert_fixture('intermediate.pem')]
+      crls = [crl_fixture('crl.pem'), crl_fixture('intermediate-crl.pem')]
       sslctx = subject.create_root_context(config.merge(cacerts: certs, crls: crls))
       expect(sslctx.crls).to eq(crls)
     end
 
     it 'accepts expired CRLs' do
-      expired = [crl('crl.pem'), crl('intermediate-crl.pem')]
+      expired = [crl_fixture('crl.pem'), crl_fixture('intermediate-crl.pem')]
       expired.each { |x509| x509.last_update = Time.at(0) }
 
       sslctx = subject.create_root_context(config.merge(crls: expired))
@@ -122,8 +102,8 @@ describe Puppet::SSL::SSLProvider do
   end
 
   context 'when creating an ssl context with client certs' do
-    let(:client_cert) { cert('signed.pem') }
-    let(:private_key) { key('signed-key.pem') }
+    let(:client_cert) { cert_fixture('signed.pem') }
+    let(:private_key) { key_fixture('signed-key.pem') }
     let(:config) { { cacerts: global_cacerts, crls: global_crls, client_cert: client_cert, private_key: private_key } }
 
     it 'raises if CA certs are missing' do
@@ -186,7 +166,7 @@ describe Puppet::SSL::SSLProvider do
 
     it "raises if client cert's public key has been replaced" do
       expect {
-        subject.create_context(config.merge(client_cert: cert('tampered-cert.pem')))
+        subject.create_context(config.merge(client_cert: cert_fixture('tampered-cert.pem')))
       }.to raise_error(Puppet::SSL::CertVerifyError,
                        "Invalid signature for certificate '/CN=signed'")
     end
@@ -234,21 +214,21 @@ describe Puppet::SSL::SSLProvider do
 
     it 'raises if client cert is revoked' do
       expect {
-        subject.create_context(config.merge(private_key: key('revoked-key.pem'), client_cert: cert('revoked.pem')))
+        subject.create_context(config.merge(private_key: key_fixture('revoked-key.pem'), client_cert: cert_fixture('revoked.pem')))
       }.to raise_error(Puppet::SSL::CertVerifyError,
                        "Certificate '/CN=revoked' is revoked")
     end
 
     it 'raises if intermediate issuer is missing' do
       expect {
-        subject.create_context(config.merge(cacerts: [cert('ca.pem')]))
+        subject.create_context(config.merge(cacerts: [cert_fixture('ca.pem')]))
       }.to raise_error(Puppet::SSL::CertVerifyError,
                        "The issuer '/CN=Test CA Subauthority' of certificate '/CN=signed' cannot be found locally")
     end
 
     it 'raises if root issuer is missing' do
       expect {
-        subject.create_context(config.merge(cacerts: [cert('intermediate.pem')]))
+        subject.create_context(config.merge(cacerts: [cert_fixture('intermediate.pem')]))
       }.to raise_error(Puppet::SSL::CertVerifyError,
                        "The issuer '/CN=Test CA' of certificate '/CN=Test CA Subauthority' is missing")
     end
@@ -292,7 +272,7 @@ describe Puppet::SSL::SSLProvider do
     end
 
     it 'raises if the root CRL is missing' do
-      crls = [crl('intermediate-crl.pem')]
+      crls = [crl_fixture('intermediate-crl.pem')]
       expect {
         subject.create_context(config.merge(crls: crls, revocation: :chain))
       }.to raise_error(Puppet::SSL::CertVerifyError,
@@ -300,7 +280,7 @@ describe Puppet::SSL::SSLProvider do
     end
 
     it 'raises if the intermediate CRL is missing' do
-      crls = [crl('crl.pem')]
+      crls = [crl_fixture('crl.pem')]
       expect {
         subject.create_context(config.merge(crls: crls))
       }.to raise_error(Puppet::SSL::CertVerifyError,
@@ -308,12 +288,12 @@ describe Puppet::SSL::SSLProvider do
     end
 
     it "doesn't raise if the root CRL is missing and we're just checking the leaf" do
-      crls = [crl('intermediate-crl.pem')]
+      crls = [crl_fixture('intermediate-crl.pem')]
       subject.create_context(config.merge(crls: crls, revocation: :leaf))
     end
 
     it "doesn't raise if the intermediate CRL is missing and revocation checking is disabled" do
-      crls = [crl('crl.pem')]
+      crls = [crl_fixture('crl.pem')]
       subject.create_context(config.merge(crls: crls, revocation: false))
     end
 
@@ -323,7 +303,7 @@ describe Puppet::SSL::SSLProvider do
 
     # OpenSSL < 1.1 does not verify basicConstraints
     it "raises if root CA's isCA basic constraint is false", unless: Puppet::Util::Platform.jruby? || OpenSSL::OPENSSL_VERSION_NUMBER < 0x10100000 do
-      certs = [cert('bad-basic-constraints.pem'), cert('intermediate.pem')]
+      certs = [cert_fixture('bad-basic-constraints.pem'), cert_fixture('intermediate.pem')]
 
       expect {
         subject.create_context(config.merge(cacerts: certs, crls: [], revocation: false))
@@ -333,7 +313,7 @@ describe Puppet::SSL::SSLProvider do
 
     # OpenSSL < 1.1 does not verify basicConstraints
     it "raises if intermediate CA's isCA basic constraint is false", unless: Puppet::Util::Platform.jruby? || OpenSSL::OPENSSL_VERSION_NUMBER < 0x10100000 do
-      certs = [cert('ca.pem'), cert('bad-int-basic-constraints.pem')]
+      certs = [cert_fixture('ca.pem'), cert_fixture('bad-int-basic-constraints.pem')]
 
       expect {
         subject.create_context(config.merge(cacerts: certs, crls: [], revocation: false))
@@ -362,10 +342,10 @@ describe Puppet::SSL::SSLProvider do
   end
 
   context 'when verifying requests' do
-    let(:csr) { request('request.pem') }
+    let(:csr) { request_fixture('request.pem') }
 
     it 'accepts valid requests' do
-      private_key = key('request-key.pem')
+      private_key = key_fixture('request-key.pem')
       expect(subject.verify_request(csr, private_key.public_key)).to eq(csr)
     end
 
@@ -377,7 +357,7 @@ describe Puppet::SSL::SSLProvider do
     end
 
     it "raises if the CSR was tampered with" do
-      csr = request('tampered-csr.pem')
+      csr = request_fixture('tampered-csr.pem')
       expect {
         subject.verify_request(csr, csr.public_key)
       }.to raise_error(Puppet::SSL::SSLError,

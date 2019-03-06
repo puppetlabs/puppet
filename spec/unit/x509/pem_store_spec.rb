@@ -50,6 +50,8 @@ describe Puppet::X509::PemStore do
     end
   end
 
+  let(:cert_path) { File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'netlock-arany-utf8.pem') }
+
   context 'loading' do
     it 'returns nil if it does not exist' do
       expect(subject.load_pem('/does/not/exist')).to be_nil
@@ -57,7 +59,7 @@ describe Puppet::X509::PemStore do
 
     it 'returns the file content as UTF-8' do
       expect(
-        subject.load_pem(my_fixture('utf8-comment.pem'))
+        subject.load_pem(cert_path)
       ).to match(/\ANetLock Arany \(Class Gold\) Főtanúsítvány/)
     end
 
@@ -73,7 +75,8 @@ describe Puppet::X509::PemStore do
   context 'saving' do
     it 'writes the file content as UTF-8' do
       path = tmpfile('pem_store')
-      utf8 = File.read(my_fixture('utf8-comment.pem'), :encoding => 'UTF-8')
+      # read the file directly to preserve the comments
+      utf8 = File.read(cert_path, encoding: 'UTF-8')
 
       subject.save_pem(utf8, path)
 
