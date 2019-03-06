@@ -52,13 +52,13 @@ class Puppet::SSL::StateMachine
 
       crls = @cert_provider.load_crls
       if crls
-        next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:trusted_certs], crls: crls)
+        next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
       else
         fetcher = Puppet::SSL::Fetcher.new(@ssl_context)
         pem = fetcher.fetch_crls
         crls = @cert_provider.load_crls_from_pem(pem)
         # verify crls before saving
-        next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:trusted_certs], crls: crls)
+        next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
         @cert_provider.save_crls(crls)
       end
 

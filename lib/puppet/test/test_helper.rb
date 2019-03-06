@@ -136,7 +136,7 @@ module Puppet::Test
         {
           trusted_information:
             Puppet::Context::TrustedInformation.new('local', 'testing', {}),
-          ssl_context: Puppet::SSL::SSLContext.new(trusted_certs: []).freeze
+          ssl_context: Puppet::SSL::SSLContext.new(cacerts: []).freeze
         },
         "Context for specs")
 

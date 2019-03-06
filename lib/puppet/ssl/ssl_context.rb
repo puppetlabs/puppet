@@ -3,7 +3,7 @@ require 'puppet/ssl'
 module Puppet::SSL
   SSLContext = Struct.new(
     :store,
-    :trusted_certs,
+    :cacerts,
     :crls,
     :private_key,
     :client_cert,
@@ -12,7 +12,7 @@ module Puppet::SSL
     :verify_peer
   ) do
     DEFAULTS = {
-      trusted_certs: [],
+      cacerts: [],
       crls: [],
       client_chain: [],
       revocation: true,

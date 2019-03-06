@@ -31,7 +31,7 @@ describe Puppet::SSL::SSLProvider do
     let(:sslctx) { subject.create_insecure_context }
 
     it 'has an empty list of trusted certs' do
-      expect(sslctx.trusted_certs).to eq([])
+      expect(sslctx.cacerts).to eq([])
     end
 
     it 'has an empty list of crls' do
@@ -53,7 +53,7 @@ describe Puppet::SSL::SSLProvider do
 
     it 'raises if the frozen context is modified' do
       expect {
-        sslctx.trusted_certs = []
+        sslctx.cacerts = []
       }.to raise_error(/can't modify frozen/)
     end
   end
@@ -63,20 +63,20 @@ describe Puppet::SSL::SSLProvider do
 
     it 'accepts empty list of certs and crls' do
       sslctx = subject.create_root_context(config)
-      expect(sslctx.trusted_certs).to eq([])
+      expect(sslctx.cacerts).to eq([])
       expect(sslctx.crls).to eq([])
     end
 
     it 'accepts valid root certs' do
       certs = [cert('ca.pem')]
       sslctx = subject.create_root_context(config.merge(cacerts: certs))
-      expect(sslctx.trusted_certs).to eq(certs)
+      expect(sslctx.cacerts).to eq(certs)
     end
 
     it 'accepts valid intermediate certs' do
       certs = [cert('ca.pem'), cert('intermediate.pem')]
       sslctx = subject.create_root_context(config.merge(cacerts: certs))
-      expect(sslctx.trusted_certs).to eq(certs)
+      expect(sslctx.cacerts).to eq(certs)
     end
 
     it 'accepts expired CA certs' do
@@ -84,7 +84,7 @@ describe Puppet::SSL::SSLProvider do
       expired.each { |x509| x509.not_after = Time.at(0) }
 
       sslctx = subject.create_root_context(config.merge(cacerts: expired))
-      expect(sslctx.trusted_certs).to eq(expired)
+      expect(sslctx.cacerts).to eq(expired)
     end
 
     it 'raises if the frozen context is modified' do

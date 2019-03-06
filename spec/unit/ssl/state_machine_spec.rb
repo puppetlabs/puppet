@@ -22,7 +22,7 @@ describe Puppet::SSL::StateMachine do
 
       ssl_context = machine.ensure_ca_certificates
 
-      expect(ssl_context[:trusted_certs]).to eq(cacerts)
+      expect(ssl_context[:cacerts]).to eq(cacerts)
       expect(ssl_context[:crls]).to eq(crls)
       expect(ssl_context[:verify_peer]).to eq(true)
     end
@@ -45,7 +45,7 @@ describe Puppet::SSL::StateMachine do
       Puppet::X509::CertProvider.any_instance.stubs(:load_cacerts).returns(cacerts)
 
       st = state.next_state
-      expect(st.ssl_context[:trusted_certs]).to eq(cacerts)
+      expect(st.ssl_context[:cacerts]).to eq(cacerts)
     end
 
     it 'fetches and saves CA certs' do
@@ -53,7 +53,7 @@ describe Puppet::SSL::StateMachine do
       Puppet::SSL::Fetcher.any_instance.stubs(:fetch_cacerts).returns(cacert_pem)
 
       st = state.next_state
-      expect(st.ssl_context[:trusted_certs].map(&:to_pem)).to eq(cacerts.map(&:to_pem))
+      expect(st.ssl_context[:cacerts].map(&:to_pem)).to eq(cacerts.map(&:to_pem))
       expect(File).to be_exist(Puppet[:localcacert])
     end
 
@@ -89,7 +89,7 @@ describe Puppet::SSL::StateMachine do
   end
 
   context 'NeedCRLs' do
-    let(:ssl_context) { Puppet::SSL::SSLContext.new(trusted_certs: cacerts)}
+    let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts)}
     let(:state) { Puppet::SSL::StateMachine::NeedCRLs.new(ssl_context) }
 
     before :each do
