@@ -54,6 +54,9 @@ class Puppet::X509::CertProvider
   # @raise [OpenSSL::X509::CertificateError] The `pem` text does not contain a valid cert
   # @api private
   def load_cacerts_from_pem(pem)
+    # TRANSLATORS 'PEM' is an acronym and shouldn't be translated
+    raise OpenSSL::X509::CertificateError, _("Failed to parse CA certificates as PEM") if pem !~ CERT_DELIMITERS
+
     pem.scan(CERT_DELIMITERS).map do |text|
       OpenSSL::X509::Certificate.new(text)
     end
@@ -90,6 +93,9 @@ class Puppet::X509::CertProvider
   # @raise [OpenSSL::X509::CRLError] The `pem` text does not contain a valid CRL
   # @api private
   def load_crls_from_pem(pem)
+    # TRANSLATORS 'PEM' is an acronym and shouldn't be translated
+    raise OpenSSL::X509::CRLError, _("Failed to parse CRLs as PEM") if pem !~ CRL_DELIMITERS
+
     pem.scan(CRL_DELIMITERS).map do |text|
       OpenSSL::X509::CRL.new(text)
     end

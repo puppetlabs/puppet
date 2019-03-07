@@ -125,7 +125,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
     let(:ssl_context) { ssl.create_root_context(cacerts: [server.ca_cert], crls: [server.ca_crl]) }
 
     def connection(host, port)
-      Puppet::Network::HttpPool.connection(URI("https://#{host}:#{port}"), ssl_context: ssl_context)
+      Puppet::Network::HttpPool.connection(host, port, ssl_context: ssl_context)
     end
 
     it "connects over SSL" do
@@ -155,7 +155,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
       server.start_server do |port|
         ssl_context = ssl.create_root_context(cacerts: [OpenSSL::X509::Certificate.new(PuppetSpec::HTTPSServer::UNKNOWN_CA)],
                                               crls: [server.ca_crl])
-        http = Puppet::Network::HttpPool.connection(URI("https://#{hostname}:#{port}"), ssl_context: ssl_context)
+        http = Puppet::Network::HttpPool.connection(hostname, port, ssl_context: ssl_context)
         expect {
           http.get('/')
         }.to raise_error(Puppet::Error,

@@ -18,18 +18,18 @@ describe processor do
     it "configures the connection for ssl when using https" do
       Puppet[:reporturl] = 'https://testing:8080/the/path'
 
-      Puppet::Network::HttpPool.expects(:http_instance).with(
-        'testing', 8080, true
+      Puppet::Network::HttpPool.expects(:connection).with(
+        'testing', 8080, has_entry(ssl_context: instance_of(Puppet::SSL::SSLContext))
       ).returns http
 
       subject.process
     end
 
-    it "does not configure the connectino for ssl when using http" do
-      Puppet[:reporturl] = "http://testing:8080/the/path"
+    it "does not configure the connection for ssl when using http" do
+      Puppet[:reporturl] = 'http://testing:8080/the/path'
 
-      Puppet::Network::HttpPool.expects(:http_instance).with(
-        'testing', 8080, false
+      Puppet::Network::HttpPool.expects(:connection).with(
+        'testing', 8080, use_ssl: false, ssl_context: nil
       ).returns http
 
       subject.process
@@ -42,7 +42,7 @@ describe processor do
     let(:options) { {:metric_id => [:puppet, :report, :http]} }
 
     before :each do
-      Puppet::Network::HttpPool.expects(:http_instance).returns(connection)
+      Puppet::Network::HttpPool.expects(:connection).returns(connection)
     end
 
     it "should use the path specified by the 'reporturl' setting" do

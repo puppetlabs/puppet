@@ -594,7 +594,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       it 'should use an explicit fileserver if source starts with puppet://' do
         response.stubs(:code).returns('200')
         source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet://somehostname/test/foo', :ftype => 'file')
-        Puppet::Network::HttpPool.expects(:http_instance).with('somehostname', anything).returns(conn)
+        Puppet::Network::HttpPool.expects(:connection).with('somehostname', 8140, anything).returns(conn)
 
         resource.write(source)
       end
@@ -602,14 +602,14 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
       it 'should use the default fileserver if source starts with puppet:///' do
         response.stubs(:code).returns('200')
         source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo', :ftype => 'file')
-        Puppet::Network::HttpPool.expects(:http_instance).with(Puppet.settings[:server], anything).returns(conn)
+        Puppet::Network::HttpPool.expects(:connection).with(Puppet[:server], 8140, anything).returns(conn)
 
         resource.write(source)
       end
 
       it 'should percent encode reserved characters' do
         response.stubs(:code).returns('200')
-        Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
+        Puppet::Network::HttpPool.stubs(:connection).returns(conn)
         source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
 
         conn.unstub(:request_get)
@@ -620,7 +620,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
 
       it 'should request binary content' do
         response.stubs(:code).returns('200')
-        Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
+        Puppet::Network::HttpPool.stubs(:connection).returns(conn)
         source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
 
         conn.unstub(:request_get)
@@ -637,7 +637,7 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
         end
 
         before(:each) do
-          Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
+          Puppet::Network::HttpPool.stubs(:connection).returns(conn)
           source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo', :ftype => 'file')
         end
 

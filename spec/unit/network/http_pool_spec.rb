@@ -51,34 +51,34 @@ describe Puppet::Network::HttpPool do
     end
 
     context "when calling 'connection'" do
-      it 'requires an ssl_context for HTTPS' do
+      it 'requires an ssl_context' do
         expect {
-          Puppet::Network::HttpPool.connection(URI('https://me'))
-        }.to raise_error(ArgumentError, %r{An ssl_context is required for HTTPS connections: https://me})
+          Puppet::Network::HttpPool.connection('me', 8140)
+        }.to raise_error(ArgumentError, "An ssl_context is required when connecting to 'https://me:8140'")
       end
 
       it 'creates a verifier from the context' do
         ssl_context = Puppet::SSL::SSLContext.new
         expect(
-          Puppet::Network::HttpPool.connection(URI('https://me'), ssl_context: ssl_context).verifier
+          Puppet::Network::HttpPool.connection('me', 8140, ssl_context: ssl_context).verifier
         ).to be_a_kind_of(Puppet::SSL::Verifier)
       end
 
-      it 'does not use SSL for http schemes' do
-        expect(Puppet::Network::HttpPool.connection(URI('http://me'))).to_not be_use_ssl
+      it 'does not use SSL when specified' do
+        expect(Puppet::Network::HttpPool.connection('me', 8140, use_ssl: false)).to_not be_use_ssl
       end
 
-      it 'warns if an ssl_context is used for http connections' do
-        Puppet.expects(:warning).with('An ssl_context is unnecessary for HTTP connections and will be ignored: http://me')
+      it 'defaults to SSL' do
+        ssl_context = Puppet::SSL::SSLContext.new
+        conn = Puppet::Network::HttpPool.connection('me', 8140, ssl_context: ssl_context)
+        expect(conn).to be_use_ssl
+      end
+
+      it 'warns if an ssl_context is used for an http connection' do
+        Puppet.expects(:warning).with("An ssl_context is unnecessary when connecting to 'http://me:8140' and will be ignored")
 
         ssl_context = Puppet::SSL::SSLContext.new
-        Puppet::Network::HttpPool.connection(URI('http://me'), ssl_context: ssl_context)
-      end
-
-      it 'raises when given a file scheme' do
-        expect {
-          Puppet::Network::HttpPool.connection(URI('file:///foo'))
-        }.to raise_error(ArgumentError, "Unsupported scheme 'file'")
+        Puppet::Network::HttpPool.connection('me', 8140, use_ssl: false, ssl_context: ssl_context)
       end
     end
 
