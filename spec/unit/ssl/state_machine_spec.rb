@@ -384,5 +384,43 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         expect(File).to_not exist(Puppet[:hostcert])
       end
     end
+
+    context 'in state Wait' do
+      let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts, crls: crls)}
+      let(:state) { Puppet::SSL::StateMachine::Wait.new(ssl_context) }
+
+      before :each do
+        # make sure we don't sleep
+        state.stubs(:sleep)
+      end
+
+      it 'exits with 1 if only running once' do
+        Puppet[:onetime] = true
+
+        expect {
+          expect {
+            state.next_state
+          }.to output("Exiting; no certificate found and waitforcert is disabled").to_stdout
+        }.to exit_with(1)
+      end
+
+      it 'exits with 1 if waitforcert is 0' do
+        Puppet[:waitforcert] = 0
+
+        expect {
+          expect {
+            state.next_state
+          }.to output("Exiting; no certificate found and waitforcert is disabled").to_stdout
+        }.to exit_with(1)
+      end
+
+      it 'sleeps and transitions to NeedCACerts' do
+        Puppet[:waitforcert] = 15
+
+        state.expects(:sleep).with(15)
+
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
+      end
+    end
   end
 end

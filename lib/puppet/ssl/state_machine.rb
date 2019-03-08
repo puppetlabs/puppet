@@ -185,7 +185,21 @@ class Puppet::SSL::StateMachine
 
   # We cannot make progress, so wait if allowed to do so, or error.
   #
-  class Wait < SSLState; end
+  class Wait < SSLState
+    def next_state
+      time = Puppet[:onetime] ? 0 : Puppet[:waitforcert]
+      if time < 1
+        puts _("Exiting; no certificate found and waitforcert is disabled")
+        exit(1)
+      else
+        sleep(time)
+
+        # our ssl directory may have been cleaned while we were
+        # sleeping, start over from the top
+        NeedCACerts.new
+      end
+    end
+  end
 
   # We have a CA bundle, optional CRL bundle, a private key and matching cert
   # that chains to one of the root certs in our bundle.
