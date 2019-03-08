@@ -50,6 +50,12 @@ describe Puppet::SSL::SSLProvider do
     it 'does not authenticate the server' do
       expect(sslctx.verify_peer).to eq(false)
     end
+
+    it 'raises if the frozen context is modified' do
+      expect {
+        sslctx.trusted_certs = []
+      }.to raise_error(/can't modify frozen/)
+    end
   end
 
   context 'when creating an root ssl context with CA certs' do
@@ -79,6 +85,13 @@ describe Puppet::SSL::SSLProvider do
 
       sslctx = subject.create_root_context(config.merge(cacerts: expired))
       expect(sslctx.trusted_certs).to eq(expired)
+    end
+
+    it 'raises if the frozen context is modified' do
+      sslctx = subject.create_root_context(config)
+      expect {
+        sslctx.verify_peer = false
+      }.to raise_error(/can't modify frozen/)
     end
   end
 
@@ -338,6 +351,13 @@ describe Puppet::SSL::SSLProvider do
       sslctx = subject.create_context(config.merge(crls: global_crls.reverse))
       # certs in ruby+openssl 1.0.x are not comparable, so compare subjects
       expect(sslctx.client_chain.map(&:subject).map(&:to_s)).to contain_exactly('/CN=Test CA', '/CN=Test CA Subauthority', '/CN=signed')
+    end
+
+    it 'raises if the frozen context is modified' do
+      sslctx = subject.create_context(config)
+      expect {
+        sslctx.verify_peer = false
+      }.to raise_error(/can't modify frozen/)
     end
   end
 

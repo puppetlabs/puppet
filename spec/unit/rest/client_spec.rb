@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 require 'puppet/rest/client'
-require 'puppet/rest/ssl_context'
 require 'puppet_spec/validators'
 require 'puppet_spec/ssl'
 
@@ -57,7 +56,6 @@ describe Puppet::Rest::Client do
 
     it 'initializes itself with basic defaults' do
       HTTPClient.expects(:new).returns(http)
-      OpenSSL::X509::Store.stubs(:new).returns(ssl_store)
       # Configure connection with HTTP settings
       Puppet[:http_read_timeout] = 120
       Puppet[:http_connect_timeout] = 10
@@ -73,18 +71,18 @@ describe Puppet::Rest::Client do
       Puppet[:hostcert] = '/fake/cert/path'
       ssl_config.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
-      Puppet::Rest::Client.new(ssl_context: Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE))
+      Puppet::Rest::Client.new(ssl_context: Puppet::SSL::SSLContext.new(verify_peer: false, store: ssl_store))
     end
 
     it 'uses a given client and SSL store when provided' do
       ssl_config.expects(:cert_store=).with(ssl_store)
       Puppet::Rest::Client.new(client: http,
-                               ssl_context: Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store))
+                               ssl_context: Puppet::SSL::SSLContext.new(verify_peer: true, store: ssl_store))
     end
 
     it 'configures a receive timeout when provided' do
       http.expects(:receive_timeout=).with(10)
-      Puppet::Rest::Client.new(ssl_context: Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE),
+      Puppet::Rest::Client.new(ssl_context: Puppet::SSL::SSLContext.new(verify_peer: false),
                                client: http, receive_timeout: 10)
     end
   end
@@ -92,7 +90,7 @@ describe Puppet::Rest::Client do
   context 'when making requests' do
     let(:ssl_config) { stub_everything('ssl config') }
     let(:http) { stub_everything('http', :ssl_config => ssl_config) }
-    let(:client) { Puppet::Rest::Client.new(ssl_context: Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE), client: http) }
+    let(:client) { Puppet::Rest::Client.new(ssl_context: Puppet::SSL::SSLContext.new(verify_peer: false), client: http) }
     let(:url) { 'https://myserver.com:555/data' }
 
     describe "#get" do

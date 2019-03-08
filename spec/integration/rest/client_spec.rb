@@ -17,11 +17,8 @@ describe Puppet::Rest::Client, unless: Puppet::Util::Platform.jruby? do
   let(:hostname) { '127.0.0.1' }
   let(:wrong_hostname) { 'localhost' }
   let(:server) { PuppetSpec::HTTPSServer.new }
-  let(:ssl_context) {
-    cert_store = OpenSSL::X509::Store.new
-    cert_store.add_cert(server.ca_cert)
-    Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, cert_store)
-  }
+  let(:ssl) { Puppet::SSL::SSLProvider.new }
+  let(:ssl_context) { ssl.create_root_context(cacerts: [server.ca_cert], crls: [server.ca_crl]) }
   let(:client) { Puppet::Rest::Client.new(ssl_context: ssl_context) }
 
   before(:each) do
@@ -43,9 +40,9 @@ describe Puppet::Rest::Client, unless: Puppet::Util::Platform.jruby? do
   end
 
   it 'provides a meaningful error message when cert validation fails' do
-    cert_store = OpenSSL::X509::Store.new
-    cert_store.add_cert(OpenSSL::X509::Certificate.new(PuppetSpec::HTTPSServer::UNKNOWN_CA))
-    ssl_context = Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, cert_store)
+    ssl_context = ssl.create_root_context(
+      cacerts: [OpenSSL::X509::Certificate.new(PuppetSpec::HTTPSServer::UNKNOWN_CA)],
+    )
     client = Puppet::Rest::Client.new(ssl_context: ssl_context)
 
     server.start_server do |port|

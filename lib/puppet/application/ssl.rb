@@ -121,7 +121,7 @@ HELP
   end
 
   def submit_request(host)
-    host.ensure_ca_certificate
+    ensure_ca_certificates
 
     host.submit_request
     Puppet.notice _("Submitted certificate request for '%{name}' to https://%{server}:%{port}") % {
@@ -132,7 +132,7 @@ HELP
   end
 
   def download_cert(host)
-    host.ensure_ca_certificate
+    ensure_ca_certificates
 
     Puppet.info _("Downloading certificate '%{name}' from https://%{server}:%{port}") % {
       name: host.name, server: Puppet[:ca_server], port: Puppet[:ca_port]
@@ -149,7 +149,7 @@ HELP
   end
 
   def verify(host)
-    host.ensure_ca_certificate
+    ensure_ca_certificates
 
     key = host.key
     raise _("The host's private key is missing") unless key
@@ -213,5 +213,12 @@ END
         Puppet.notice _("Removed %{label} %{path}") % { label: label, path: path }
       end
     end
+  end
+
+  private
+
+  def ensure_ca_certificates
+    sm = Puppet::SSL::StateMachine.new
+    sm.ensure_ca_certificates
   end
 end
