@@ -45,6 +45,14 @@ OPTIONS
 ACTIONS
 -------
 
+* bootstrap:
+  Perform all of the steps necessary to request and download a client
+  certificate. If autosigning is disabled, then puppet will wait every
+  `waitforcert` seconds for its certificate to be signed. To only attempt
+  once and never wait, specify a time of 0. Since `waitforcert` is a
+  Puppet setting, it can be specified as a time interval, such as 30s,
+  5m, 1h.
+
 * submit_request:
   Generate a certificate signing request (CSR) and submit it to the CA. If
   a private and public key pair already exist, they will be used to generate
@@ -119,6 +127,13 @@ HELP
       verify(certname)
     when 'clean'
       clean(certname)
+    when 'bootstrap'
+      if !Puppet::Util::Log.sendlevel?(:info)
+        Puppet::Util::Log.level = :info
+      end
+      sm = Puppet::SSL::StateMachine.new
+      sm.ensure_client_certificate
+      Puppet.notice(_("Completed SSL initialization"))
     else
       raise Puppet::Error, _("Unknown action '%{action}'") % { action: action }
     end
@@ -128,6 +143,7 @@ HELP
     cert_provider = Puppet::X509::CertProvider.new
     key = cert_provider.load_private_key(Puppet[:certname])
     unless key
+      Puppet.info _("Creating a new SSL key for %{name}") % { name: Puppet[:certname] }
       key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
       cert_provider.save_private_key(Puppet[:certname], key)
     end
