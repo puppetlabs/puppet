@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.3.0-96-gf99db59\n"
+"Project-Id-Version: Puppet automation framework 6.3.0-106-g7bb7651\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-03-07 17:33+0000\n"
-"PO-Revision-Date: 2019-03-07 17:33+0000\n"
+"POT-Creation-Date: 2019-03-08 00:18+0000\n"
+"PO-Revision-Date: 2019-03-08 00:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -7683,6 +7683,22 @@ msgstr ""
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
+#: ../lib/puppet/ssl/fetcher.rb:14
+msgid "CA certificate is missing from the server"
+msgstr ""
+
+#: ../lib/puppet/ssl/fetcher.rb:16 ../lib/puppet/ssl/host.rb:517
+msgid "Could not download CA certificate: %{message}"
+msgstr ""
+
+#: ../lib/puppet/ssl/fetcher.rb:24
+msgid "CRL is missing from the server"
+msgstr ""
+
+#: ../lib/puppet/ssl/fetcher.rb:26 ../lib/puppet/ssl/host.rb:495
+msgid "Could not download CRLs: %{message}"
+msgstr ""
+
 #: ../lib/puppet/ssl/host.rb:165
 msgid "No certificate to validate."
 msgstr ""
@@ -7759,43 +7775,35 @@ msgid ""
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:440
+#: ../lib/puppet/ssl/host.rb:441
 msgid "The CA certificate at %{file_path} is invalid: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:464
+#: ../lib/puppet/ssl/host.rb:465
 msgid "No valid PEM-encoded certificates."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:471
+#: ../lib/puppet/ssl/host.rb:472
 msgid "Could not parse certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:494
-msgid "Could not download CRLs: %{message}"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:513
+#: ../lib/puppet/ssl/host.rb:514
 msgid "Response from the CA did not contain a valid CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:516
-msgid "Could not download CA certificate: %{message}"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:556
+#: ../lib/puppet/ssl/host.rb:557
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:577
+#: ../lib/puppet/ssl/host.rb:578
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:581
+#: ../lib/puppet/ssl/host.rb:582
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:584
+#: ../lib/puppet/ssl/host.rb:585
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
