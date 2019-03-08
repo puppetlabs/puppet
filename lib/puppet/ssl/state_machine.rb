@@ -114,9 +114,51 @@ class Puppet::SSL::StateMachine
   end
 
   # Generate and submit a CSR using the CA cert bundle and optional CRL bundle
-  # from earlier states.
+  # from earlier states. If the request is submitted, proceed to NeedCert,
+  # otherwise Wait. This could be due to the server already having a CSR
+  # for this host (either the same or different CSR content), having a
+  # signed certificate, or a revoked certificate.
   #
-  class NeedSubmitCSR < KeySSLState; end
+  class NeedSubmitCSR < KeySSLState
+    def next_state
+      csr = generate_csr
+      Puppet::Rest::Routes.put_certificate_request(csr.to_pem, Puppet[:certname], @ssl_context)
+      NeedCert.new(@ssl_context, @private_key)
+    rescue Puppet::Rest::ResponseError => e
+      if e.response.code.to_i != 400
+        raise Puppet::SSL::SSLError.new(_("Failed to submit the CSR, HTTP response was %{code}") % { code: e.response.code }, e)
+      end
+
+      NeedCert.new(@ssl_context, @private_key)
+    end
+
+    private
+
+    def generate_csr
+      options = {}
+
+      if Puppet[:dns_alt_names] && Puppet[:dns_alt_names] != ''
+        options[:dns_alt_names] = Puppet[:dns_alt_names]
+      end
+
+      csr_attributes = Puppet::SSL::CertificateRequestAttributes.new(Puppet[:csr_attributes])
+      if csr_attributes.load
+        options[:csr_attributes] = csr_attributes.custom_attributes
+        options[:extension_requests] = csr_attributes.extension_requests
+      end
+
+      csr = Puppet::SSL::CertificateRequest.new(Puppet[:certname])
+      csr.generate(@private_key, options)
+    end
+  end
+
+  # Attempt to load or retrieve our signed cert.
+  #
+  class NeedCert < KeySSLState; end
+
+  # We cannot make progress, so wait if allowed to do so, or error.
+  #
+  class Wait < SSLState; end
 
   # We have a CA bundle, optional CRL bundle, a private key and matching cert
   # that chains to one of the root certs in our bundle.

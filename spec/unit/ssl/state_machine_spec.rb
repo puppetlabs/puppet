@@ -4,8 +4,15 @@ require 'puppet_spec/files'
 
 require 'puppet/ssl'
 
-describe Puppet::SSL::StateMachine do
+describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
+
+  before(:each) do
+    WebMock.disable_net_connect!
+
+    Net::HTTP.any_instance.stubs(:start)
+    Net::HTTP.any_instance.stubs(:finish)
+  end
 
   let(:machine) { described_class.new }
   let(:cacert_pem) { cacert.to_pem }
@@ -217,6 +224,115 @@ describe Puppet::SSL::StateMachine do
         expect {
           state.next_state
         }.to raise_error(OpenSSL::PKey::RSAError)
+      end
+    end
+
+    context 'in state NeedSubmitCSR' do
+      let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts, crls: crls)}
+      let(:state) { Puppet::SSL::StateMachine::NeedSubmitCSR.new(ssl_context, private_key) }
+
+      def write_csr_attributes(data)
+        csr_yaml = tmpfile('state_machine_csr')
+        File.write(csr_yaml, YAML.dump(data))
+        csr_yaml
+      end
+
+      it 'submits the CSR and transitions to NeedCert' do
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
+
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCert)
+      end
+
+      it 'includes DNS alt names' do
+        Puppet[:dns_alt_names] = "one,IP:192.168.0.1,DNS:two.com"
+
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).with do |request|
+          csr = Puppet::SSL::CertificateRequest.from_instance(OpenSSL::X509::Request.new(request.body))
+          expect(
+            csr.subject_alt_names
+          ).to contain_exactly('DNS:one', 'IP Address:192.168.0.1', 'DNS:two.com', "DNS:#{Puppet[:certname]}")
+        end.to_return(status: 200)
+
+        state.next_state
+      end
+
+      it 'includes CSR attributes' do
+        Puppet[:csr_attributes] = write_csr_attributes(
+          'custom_attributes' => {
+              '1.3.6.1.4.1.34380.1.2.1' => 'CSR specific info',
+              '1.3.6.1.4.1.34380.1.2.2' => 'more CSR specific info'
+            }
+        )
+
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).with do |request|
+          csr = Puppet::SSL::CertificateRequest.from_instance(OpenSSL::X509::Request.new(request.body))
+          expect(
+            csr.custom_attributes
+          ).to contain_exactly(
+                 {'oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'CSR specific info'},
+                 {'oid' => '1.3.6.1.4.1.34380.1.2.2', 'value' => 'more CSR specific info'}
+               )
+        end.to_return(status: 200)
+
+        state.next_state
+      end
+
+      it 'includes CSR extension requests' do
+        Puppet[:csr_attributes] = write_csr_attributes(
+          {
+            'extension_requests' => {
+              '1.3.6.1.4.1.34380.1.1.31415' => 'pi',
+              '1.3.6.1.4.1.34380.1.1.2718'  => 'e',
+            }
+          }
+        )
+
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).with do |request|
+          csr = Puppet::SSL::CertificateRequest.from_instance(OpenSSL::X509::Request.new(request.body))
+          expect(
+            csr.request_extensions
+          ).to contain_exactly(
+                 {'oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi'},
+                 {'oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e'}
+               )
+        end.to_return(status: 200)
+
+        state.next_state
+      end
+
+      it 'transitions to NeedCert if the server has a requested certificate' do
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 400, body: "#{Puppet[:certname]} already has a requested certificate")
+
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCert)
+      end
+
+      it 'transitions to NeedCert if the server has a signed certificate' do
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 400, body: "#{Puppet[:certname]} already has a signed certificate")
+
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCert)
+      end
+
+      it 'transitions to NeedCert if the server has a revoked certificate' do
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 400, body: "#{Puppet[:certname]} already has a revoked certificate")
+
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCert)
+      end
+
+      it 'raises if the server errors' do
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 500)
+
+        expect {
+          state.next_state
+        }.to raise_error(Puppet::SSL::SSLError, /Failed to submit the CSR, HTTP response was 500/)
+      end
+
+      it "verifies the server's certificate when submitting the CSR" do
+        pending("CRL download")
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
+
+        Net::HTTP.any_instance.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+
+        state.next_state
       end
     end
   end
