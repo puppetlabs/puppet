@@ -88,7 +88,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
         # downgrade to VERIFY_NONE, so use a different CA that didn't
         # issue the server's cert
         capath = tmpfile('empty')
-        File.write(capath, PuppetSpec::HTTPSServer::UNKNOWN_CA)
+        File.write(capath, cert_fixture('netlock-arany-utf8.pem'))
         Puppet[:localcacert] = capath
         Puppet[:certificate_revocation] = false
 
@@ -153,7 +153,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
 
     it "raises if the server's CA is unknown" do
       server.start_server do |port|
-        ssl_context = ssl.create_root_context(cacerts: [OpenSSL::X509::Certificate.new(PuppetSpec::HTTPSServer::UNKNOWN_CA)],
+        ssl_context = ssl.create_root_context(cacerts: [cert_fixture('netlock-arany-utf8.pem')],
                                               crls: [server.ca_crl])
         http = Puppet::Network::HttpPool.connection(hostname, port, ssl_context: ssl_context)
         expect {

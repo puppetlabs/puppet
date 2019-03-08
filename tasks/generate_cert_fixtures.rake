@@ -11,53 +11,53 @@ task(:gen_cert_fixtures) do
     path = File.join(dir, name)
     puts "Generating #{path}"
     File.open(path, 'w') do |f|
+      f.write(x509.to_text)
       text = if block_given?
                yield x509
              else
                x509.to_pem
              end
+
       f.write(text)
     end
   end
 
-  # CertProvider fixtures
+  # This task generates a PKI consisting of a root CA, intermediate CA and
+  # several leaf certs. A CRL is generated for each CA. The root CA CRL is
+  # empty, while the intermediate CA CRL contains the revoked cert's serial
+  # number. A textual representation of each X509 object is included in the
+  # fixture as a comment.
+  #
+  # Certs
+  # =====
+  #
+  # ca.pem                           /CN=Test CA
+  #                                   |
+  # intermediate.pem                  +- /CN=Test CA Subauthority
+  #                                   |   |
+  # signed.pem                        |   +- /CN=signed
+  # revoked.pem                       |   +- /CN=revoked
+  # 127.0.0.1.pem                     |   +- /CN=127.0.0.1 (with dns alt names)
+  # tampered.pem                      |   +- /CN=signed (with different public key)
+  #                                   |
+  # bad-int-basic-constraints.pem     +- /CN=Test CA Subauthority (bad isCA constraint)
+  #
+  # bad-basic-constraints.pem        /CN=Test CA (bad isCA constraint)
+  #
+  # Keys
+  # ====
+  #
+  # The RSA private key for each leaf cert is also generated. In addition,
+  # `encrypted-key.pem` contains the private key for the `signed` cert.
+  #
+  # Requests
+  # ========
+  #
+  # `request.pem` contains a valid CSR for /CN=pending, while `tampered_csr.pem`
+  # is the same as `request.pem`, but it's public key has been replaced.
   #
   ca = Puppet::TestCa.new
-  dir = File.join(RAKE_ROOT, 'spec/fixtures/unit/x509/cert_provider')
-  FileUtils.mkdir_p(dir)
-
-  # Create Test CA & CRL
-  save(dir, 'ca.pem', ca.ca_cert)
-  save(dir, 'crl.pem', ca.ca_crl)
-
-  # Create intermediate CA "Test CA Subauthority" issued by "Test CA"
-  inter = ca.create_intermediate_cert('Test CA Subauthority', ca.ca_cert, ca.key)
-
-  # Create a leaf/entity key and cert for host "signed" and issued by "Test CA Subauthority"
-  signed = ca.create_cert('signed', inter[:cert], inter[:private_key])
-  save(dir, 'signed.pem', signed[:cert])
-  save(dir, 'signed-key.pem', signed[:private_key])
-
-  # Create an encrypted version of the above private key for host "signed"
-  save(dir, 'encrypted-key.pem', signed[:private_key]) do |x509|
-    # private key password was chosen at random
-    x509.to_pem(OpenSSL::Cipher::AES.new(128, :CBC), '74695716c8b6')
-  end
-
-  # Create an SSL cert for 127.0.0.1 and dns_alt_names
-  signed = ca.create_cert('127.0.0.1', ca.ca_cert, ca.key, subject_alt_names: 'DNS:127.0.0.1,DNS:127.0.0.2')
-  save(dir, 'localhost.pem', signed[:cert])
-  save(dir, 'localhost-key.pem', signed[:private_key])
-
-  # Create a pending request (CSR), we don't need to save its private key
-  request = ca.create_request('pending')
-  save(dir, 'request.pem', request[:csr])
-
-  # SSLProvider fixtures
-  #
-  ca = Puppet::TestCa.new
-  dir = File.join(RAKE_ROOT, 'spec/fixtures/unit/ssl/ssl_provider')
-  FileUtils.mkdir_p(dir)
+  dir = File.join(RAKE_ROOT, 'spec/fixtures/ssl')
 
   # Create Test CA & CRL
   save(dir, 'ca.pem', ca.ca_cert)
@@ -72,6 +72,17 @@ task(:gen_cert_fixtures) do
   signed = ca.create_cert('signed', inter[:cert], inter[:private_key])
   save(dir, 'signed.pem', signed[:cert])
   save(dir, 'signed-key.pem', signed[:private_key])
+
+  # Create an encrypted version of the above private key for host "signed"
+  save(dir, 'encrypted-key.pem', signed[:private_key]) do |x509|
+    # private key password was chosen at random
+    x509.to_pem(OpenSSL::Cipher::AES.new(128, :CBC), '74695716c8b6')
+  end
+
+  # Create an SSL cert for 127.0.0.1 with dns_alt_names
+  signed = ca.create_cert('127.0.0.1', ca.ca_cert, ca.key, subject_alt_names: 'DNS:127.0.0.1,DNS:127.0.0.2')
+  save(dir, '127.0.0.1.pem', signed[:cert])
+  save(dir, '127.0.0.1-key.pem', signed[:private_key])
 
   # Create a leaf/entity key and cert for host "revoked", issued by "Test CA Subauthority"
   # and revoke the cert
@@ -129,12 +140,4 @@ task(:gen_cert_fixtures) do
   tampered_cert = ca.create_cert('signed', inter[:cert], inter[:private_key])[:cert]
   tampered_cert.public_key = OpenSSL::PKey::RSA.new(1024).public_key
   save(dir, 'tampered-cert.pem', tampered_cert)
-
-  # Verifier fixtures
-  ca = Puppet::TestCa.new
-  dir = File.join(RAKE_ROOT, 'spec/fixtures/unit/ssl/verifier')
-  FileUtils.mkdir_p(dir)
-
-  cert = ca.create_cert('foo', ca.ca_cert, ca.key, subject_alt_names: 'DNS:foo,DNS:bar,DNS:baz')[:cert]
-  save(dir, 'foobarbaz.pem', cert)
 end
