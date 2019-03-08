@@ -46,6 +46,23 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
   end
 
+  context 'when ensuring a client cert' do
+    it 'returns an SSLContext with the loaded CA certs, CRLs, private key and client cert' do
+      Puppet::X509::CertProvider.any_instance.stubs(:load_cacerts).returns(cacerts)
+      Puppet::X509::CertProvider.any_instance.stubs(:load_crls).returns(crls)
+      Puppet::X509::CertProvider.any_instance.stubs(:load_private_key).returns(private_key)
+      Puppet::X509::CertProvider.any_instance.stubs(:load_client_cert).returns(client_cert)
+
+      ssl_context = machine.ensure_client_certificate
+
+      expect(ssl_context[:cacerts]).to eq(cacerts)
+      expect(ssl_context[:crls]).to eq(crls)
+      expect(ssl_context[:verify_peer]).to eq(true)
+      expect(ssl_context[:private_key]).to eq(private_key)
+      expect(ssl_context[:client_cert]).to eq(client_cert)
+    end
+  end
+
   context 'NeedCACerts' do
     let(:state) { Puppet::SSL::StateMachine::NeedCACerts.new }
 

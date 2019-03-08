@@ -214,6 +214,14 @@ class Puppet::SSL::StateMachine
     final_state.ssl_context
   end
 
+  # Run the state machine for CA certs and CRLs
+  #
+  # @return [Puppet::SSL::SSLContext] initialized SSLContext
+  def ensure_client_certificate
+    final_state = run_machine(NeedCACerts.new, Done)
+    final_state.ssl_context
+  end
+
   private
 
   def run_machine(state, stop)
