@@ -320,7 +320,6 @@ module Puppet
       end
     end
 
-
     def chunk_file_from_source
       get_from_source do |response|
         case response.code
