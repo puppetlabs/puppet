@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'webmock/rspec'
 require 'puppet_spec/files'
 
 require 'puppet/ssl'
@@ -14,6 +15,13 @@ describe Puppet::SSL::StateMachine do
   let(:crl_pem) { crl.to_pem }
   let(:crl) { crl_fixture('crl.pem') }
   let(:crls) { [crl] }
+
+  before(:each) do
+    WebMock.disable_net_connect!
+
+    Net::HTTP.any_instance.stubs(:start)
+    Net::HTTP.any_instance.stubs(:finish)
+  end
 
   context 'when ensuring CA certs and CRLs' do
     it 'returns an SSLContext with the loaded CA certs and CRLs' do
@@ -57,12 +65,12 @@ describe Puppet::SSL::StateMachine do
       expect(File).to be_exist(Puppet[:localcacert])
     end
 
-    it 'does not verify the peer cert if there are no local CA certs' do
+    it "does not verify the server's cert if there are no local CA certs" do
       Puppet::X509::CertProvider.any_instance.stubs(:load_cacerts).returns(nil)
+      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: cacert_pem)
+      Puppet::X509::CertProvider.any_instance.stubs(:save_cacerts)
 
-      Puppet::Rest::Routes.expects(:get_certificate).with do |_, ssl_context|
-        expect(ssl_context[:verify_peer]).to eq(false)
-      end.returns(cacert_pem)
+      Net::HTTP.any_instance.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
       state.next_state
     end
@@ -82,7 +90,7 @@ describe Puppet::SSL::StateMachine do
         MIIBpDCCAQ2gAwIBAgIBAjANBgkqhkiG9w0BAQsFADAfMR0wGwYDVQQDDBRUZXN0
       END
 
-      state.next_state rescue nil
+      state.next_state rescue OpenSSL::X509::CertificateError
 
       expect(File).to_not exist(Puppet[:localcacert])
     end
@@ -118,12 +126,13 @@ describe Puppet::SSL::StateMachine do
       expect(File).to be_exist(Puppet[:hostcrl])
     end
 
-    it 'verifies the peer certificate when fetching the CRL' do
+    it "verifies the server's certificate when fetching the CRL" do
+      pending("CRL download")
       Puppet::X509::CertProvider.any_instance.stubs(:load_crls).returns(nil)
+      stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: crl_pem)
+      Puppet::X509::CertProvider.any_instance.stubs(:save_crls)
 
-      Puppet::Rest::Routes.expects(:get_crls).with do |_, ssl_context|
-        expect(ssl_context[:verify_peer]).to eq(true)
-      end.returns(crl_pem)
+      Net::HTTP.any_instance.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
 
       state.next_state
     end
@@ -143,7 +152,7 @@ describe Puppet::SSL::StateMachine do
         MIIBCjB1AgEBMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNVBAMMB1Rlc3QgQ0EXDTcw
       END
 
-      state.next_state rescue nil
+      state.next_state rescue OpenSSL::X509::CRLError
 
       expect(File).to_not exist(Puppet[:hostcrl])
     end
