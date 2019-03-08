@@ -85,7 +85,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
     it 'fetches and saves CA certs' do
       Puppet::X509::CertProvider.any_instance.stubs(:load_cacerts).returns(nil)
-      Puppet::SSL::Fetcher.any_instance.stubs(:fetch_cacerts).returns(cacert_pem)
+      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: cacert_pem)
 
       st = state.next_state
       expect(st.ssl_context[:cacerts].map(&:to_pem)).to eq(cacerts.map(&:to_pem))
@@ -102,9 +102,25 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       state.next_state
     end
 
+    it 'raises if the server returns 404' do
+      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 404)
+
+      expect {
+        state.next_state
+      }.to raise_error(Puppet::Error, /CA certificate is missing from the server/)
+    end
+
+    it 'raises if there is a different error' do
+      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: [500, 'Internal Server Error'])
+
+      expect {
+        state.next_state
+      }.to raise_error(Puppet::Error, /Could not download CA certificate: Internal Server Error/)
+    end
+
     it 'raises if CA certs are invalid' do
       Puppet::X509::CertProvider.any_instance.stubs(:load_cacerts).returns(nil)
-      Puppet::SSL::Fetcher.any_instance.stubs(:fetch_cacerts).returns('')
+      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: '')
 
       expect {
         state.next_state
@@ -112,7 +128,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'does not save invalid CA certs' do
-      Puppet::SSL::Fetcher.any_instance.stubs(:fetch_cacerts).returns(<<~END)
+      stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: <<~END)
         -----BEGIN CERTIFICATE-----
         MIIBpDCCAQ2gAwIBAgIBAjANBgkqhkiG9w0BAQsFADAfMR0wGwYDVQQDDBRUZXN0
       END
@@ -146,7 +162,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
     it 'fetches and saves CRLs' do
       Puppet::X509::CertProvider.any_instance.stubs(:load_crls).returns(nil)
-      Puppet::SSL::Fetcher.any_instance.stubs(:fetch_crls).returns(crl_pem)
+      stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: crl_pem)
 
       st = state.next_state
       expect(st.ssl_context[:crls].map(&:to_pem)).to eq(crls.map(&:to_pem))
@@ -164,9 +180,25 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       state.next_state
     end
 
+    it 'raises if the server returns 404' do
+      stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 404)
+
+      expect {
+        state.next_state
+      }.to raise_error(Puppet::Error, /CRL is missing from the server/)
+    end
+
+    it 'raises if there is a different error' do
+      stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: [500, 'Internal Server Error'])
+
+      expect {
+        state.next_state
+      }.to raise_error(Puppet::Error, /Could not download CRLs: Internal Server Error/)
+    end
+
     it 'raises if CRLs are invalid' do
       Puppet::X509::CertProvider.any_instance.stubs(:load_crls).returns(nil)
-      Puppet::SSL::Fetcher.any_instance.stubs(:fetch_crls).returns('')
+      stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: '')
 
       expect {
         state.next_state
@@ -174,7 +206,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'does not save invalid CRLs' do
-      Puppet::SSL::Fetcher.any_instance.stubs(:fetch_crls).returns(<<~END)
+      stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: <<~END)
         -----BEGIN X509 CRL-----
         MIIBCjB1AgEBMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNVBAMMB1Rlc3QgQ0EXDTcw
       END

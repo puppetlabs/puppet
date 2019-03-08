@@ -11,6 +11,8 @@ require 'puppet/ssl'
 #
 # @private
 class Puppet::SSL::StateMachine
+  CA_NAME = 'ca'.freeze
+
   class SSLState
     attr_reader :ssl_context
 
@@ -36,15 +38,19 @@ class Puppet::SSL::StateMachine
       if cacerts
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts)
       else
-        fetcher = Puppet::SSL::Fetcher.new(@ssl_context)
-        pem = fetcher.fetch_cacerts
+        pem = Puppet::Rest::Routes.get_certificate(CA_NAME, @ssl_context)
         cacerts = @cert_provider.load_cacerts_from_pem(pem)
         # verify cacerts before saving
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts)
         @cert_provider.save_cacerts(cacerts)
       end
-
       NeedCRLs.new(next_ctx)
+    rescue Puppet::Rest::ResponseError => e
+      if e.response.code.to_i == 404
+        raise Puppet::Error.new(_('CA certificate is missing from the server'))
+      else
+        raise Puppet::Error.new(_('Could not download CA certificate: %{message}') % { message: e.message }, e)
+      end
     end
   end
 
@@ -61,8 +67,7 @@ class Puppet::SSL::StateMachine
         if crls
           next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
         else
-          fetcher = Puppet::SSL::Fetcher.new(@ssl_context)
-          pem = fetcher.fetch_crls
+          pem = Puppet::Rest::Routes.get_crls(CA_NAME, @ssl_context)
           crls = @cert_provider.load_crls_from_pem(pem)
           # verify crls before saving
           next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
@@ -74,6 +79,12 @@ class Puppet::SSL::StateMachine
       end
 
       NeedKey.new(next_ctx)
+    rescue Puppet::Rest::ResponseError => e
+      if e.response.code.to_i == 404
+        raise Puppet::Error.new(_('CRL is missing from the server'))
+      else
+        raise Puppet::Error.new(_('Could not download CRLs: %{message}') % { message: e.message }, e)
+      end
     end
   end
 
