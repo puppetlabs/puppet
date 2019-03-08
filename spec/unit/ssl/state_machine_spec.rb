@@ -16,6 +16,9 @@ describe Puppet::SSL::StateMachine do
   let(:crl) { crl_fixture('crl.pem') }
   let(:crls) { [crl] }
 
+  let(:private_key) { key_fixture('signed-key.pem') }
+  let(:client_cert) { cert_fixture('signed.pem') }
+
   before(:each) do
     WebMock.disable_net_connect!
 
@@ -166,6 +169,55 @@ describe Puppet::SSL::StateMachine do
       state.next_state
 
       expect(File).to_not exist(Puppet[:hostcrl])
+    end
+  end
+
+  context 'when ensuring a client cert' do
+    context 'in state NeedKey' do
+      let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts, crls: crls)}
+      let(:state) { Puppet::SSL::StateMachine::NeedKey.new(ssl_context) }
+
+      it 'loads an existing private key and passes it to the next state' do
+        Puppet::X509::CertProvider.any_instance.stubs(:load_private_key).returns(private_key)
+
+        st = state.next_state
+        expect(st).to be_instance_of(Puppet::SSL::StateMachine::NeedSubmitCSR)
+        expect(st.private_key).to eq(private_key)
+      end
+
+      it 'loads a matching private key and cert' do
+        Puppet::X509::CertProvider.any_instance.stubs(:load_private_key).returns(private_key)
+        Puppet::X509::CertProvider.any_instance.stubs(:load_client_cert).returns(client_cert)
+
+        st = state.next_state
+        expect(st).to be_instance_of(Puppet::SSL::StateMachine::Done)
+      end
+
+      it 'raises if the client cert is mismatched' do
+        Puppet::X509::CertProvider.any_instance.stubs(:load_private_key).returns(private_key)
+        Puppet::X509::CertProvider.any_instance.stubs(:load_client_cert).returns(cert_fixture('tampered-cert.pem'))
+
+        expect {
+          state.next_state
+        }.to raise_error(Puppet::SSL::SSLError, %r{The certificate for '/CN=signed' does not match its private key})
+      end
+
+      it 'generates a new private key, saves it and passes it to the next state' do
+        Puppet::X509::CertProvider.any_instance.stubs(:load_private_key).returns(nil)
+        Puppet::X509::CertProvider.any_instance.expects(:save_private_key)
+
+        st = state.next_state
+        expect(st).to be_instance_of(Puppet::SSL::StateMachine::NeedSubmitCSR)
+        expect(st.private_key).to be_instance_of(OpenSSL::PKey::RSA)
+      end
+
+      it 'raises an error if it fails to load the key' do
+        Puppet::X509::CertProvider.any_instance.stubs(:load_private_key).raises(OpenSSL::PKey::RSAError)
+
+        expect {
+          state.next_state
+        }.to raise_error(OpenSSL::PKey::RSAError)
+      end
     end
   end
 end

@@ -1,13 +1,13 @@
 require 'puppet/ssl'
 
-#
-# States
-#
-#  * NeedCACerts: Need CA certs
-#  * NeedCRLs: Need CRLs
-#  * NeedKey: Need a private key
-#  * Done: Have CA & CRL
-#  * Error: We failed
+# This class implements a state machine for bootstrapping a host's CA and CRL
+# bundles, private key and signed client certificate. Each state has a frozen
+# SSLContext that it uses to make network connections. If a state makes progress
+# bootstrapping the host, then the state will generate a new frozen SSLContext
+# and pass that to the next state. For example, the NeedCACerts state will load
+# or download a CA bundle, and generate a new SSLContext containing those CA
+# certs. This way we're sure about which SSLContext is being used during any
+# phase of the bootstrapping process.
 #
 # @private
 class Puppet::SSL::StateMachine
@@ -21,6 +21,8 @@ class Puppet::SSL::StateMachine
     end
   end
 
+  # Load existing CA certs or download them. Transition to NeedCRLs.
+  #
   class NeedCACerts < SSLState
     def initialize
       super(nil)
@@ -46,6 +48,9 @@ class Puppet::SSL::StateMachine
     end
   end
 
+  # If revocation is enabled, load CRLs or download them, using the CA bundle
+  # from the previous state. Transition to NeedKey.
+  #
   class NeedCRLs < SSLState
     def next_state
       Puppet.debug("Loading CRLs")
@@ -72,7 +77,51 @@ class Puppet::SSL::StateMachine
     end
   end
 
-  class NeedKey < SSLState; end
+  # Load or generate a private key. If the key exists, try to load the client cert
+  # and transition to Done. If the cert is mismatched or otherwise fails valiation,
+  # raise an error. If the key doesn't exist yet, generate one, and save it. If the
+  # cert doesn't exist yet, transition to NeedSubmitCSR.
+  #
+  class NeedKey < SSLState
+    def next_state
+      key = @cert_provider.load_private_key(Puppet[:certname])
+      if key
+        cert = @cert_provider.load_client_cert(Puppet[:certname])
+        if cert
+          next_ctx = @ssl_provider.create_context(
+            cacerts: @ssl_context.cacerts, crls: @ssl_context.crls, private_key: key, client_cert: cert
+          )
+          return Done.new(next_ctx)
+        end
+      else
+        key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
+        @cert_provider.save_private_key(Puppet[:certname], key)
+      end
+
+      NeedSubmitCSR.new(@ssl_context, key)
+    end
+  end
+
+  # Base class for states with a private key.
+  #
+  class KeySSLState < SSLState
+    attr_reader :private_key
+
+    def initialize(ssl_context, private_key)
+      super(ssl_context)
+      @private_key = private_key
+    end
+  end
+
+  # Generate and submit a CSR using the CA cert bundle and optional CRL bundle
+  # from earlier states.
+  #
+  class NeedSubmitCSR < KeySSLState; end
+
+  # We have a CA bundle, optional CRL bundle, a private key and matching cert
+  # that chains to one of the root certs in our bundle.
+  #
+  class Done < SSLState; end
 
   # Run the state machine for CA certs and CRLs
   #
