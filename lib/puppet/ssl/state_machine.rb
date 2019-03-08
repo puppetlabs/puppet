@@ -154,7 +154,34 @@ class Puppet::SSL::StateMachine
 
   # Attempt to load or retrieve our signed cert.
   #
-  class NeedCert < KeySSLState; end
+  class NeedCert < KeySSLState
+    def next_state
+      cert = OpenSSL::X509::Certificate.new(
+        Puppet::Rest::Routes.get_certificate(Puppet[:certname], @ssl_context)
+      )
+      # verify client cert before saving
+      next_ctx = @ssl_provider.create_context(
+        cacerts: @ssl_context.cacerts, crls: @ssl_context.crls, private_key: @private_key, client_cert: cert
+      )
+      @cert_provider.save_client_cert(Puppet[:certname], cert)
+      Done.new(next_ctx)
+    rescue Puppet::SSL::SSLError => e
+      Puppet.log_exception(e, _("Failed to verify downloaded client certificate"))
+      Wait.new(@ssl_context)
+    rescue OpenSSL::X509::CertificateError => e
+      Puppet.log_exception(e, _("Failed to parse downloaded client certificate"))
+      Wait.new(@ssl_context)
+    rescue Puppet::Rest::ResponseError => e
+      if e.response.code.to_i == 404
+        Puppet.info(_("Certificate for %{certname} has not been signed yet") % {certname: Puppet[:certname]})
+      else
+        Puppet.log_exception(e, _("Failed to retrieve certificate for %{certname}: %{message}") %
+                             {certname: Puppet[:certname], message: e.response.message})
+      end
+
+      Wait.new(@ssl_context)
+    end
+  end
 
   # We cannot make progress, so wait if allowed to do so, or error.
   #

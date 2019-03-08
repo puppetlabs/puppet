@@ -335,5 +335,54 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         state.next_state
       end
     end
+
+    context 'in state NeedCert' do
+      let(:ca_chain) { [cert_fixture('ca.pem'), cert_fixture('intermediate.pem')] }
+      let(:crl_chain) { [crl_fixture('crl.pem'), crl_fixture('intermediate-crl.pem')] }
+      let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: ca_chain, crls: crl_chain)}
+      let(:state) { Puppet::SSL::StateMachine::NeedCert.new(ssl_context, private_key) }
+
+      it 'transitions to Done if the cert is signed and matches our private key' do
+        Puppet::X509::CertProvider.any_instance.stubs(:save_client_cert)
+
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: client_cert.to_pem)
+
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::Done)
+      end
+
+      it 'transitions to Wait if the cert does not match our private key' do
+        wrong_cert = cert_fixture('127.0.0.1.pem')
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: wrong_cert.to_pem)
+
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::Wait)
+      end
+
+      it 'transitions to Wait if the server returns non-200' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 404)
+
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::Wait)
+      end
+
+      it "verifies the server's certificate when getting the client cert" do
+        pending("Cert download")
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: client_cert.to_pem)
+        Puppet::X509::CertProvider.any_instance.stubs(:save_client_cert)
+
+        Net::HTTP.any_instance.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+
+        state.next_state
+      end
+
+      it 'does not save an invalid client cert' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: <<~END)
+          -----BEGIN CERTIFICATE-----
+          MIIBpDCCAQ2gAwIBAgIBAjANBgkqhkiG9w0BAQsFADAfMR0wGwYDVQQDDBRUZXN0
+        END
+
+        state.next_state
+
+        expect(File).to_not exist(Puppet[:hostcert])
+      end
+    end
   end
 end
