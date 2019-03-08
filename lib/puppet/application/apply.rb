@@ -257,7 +257,9 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
             catalog.write_resource_file
           end
 
-          apply_catalog(catalog)
+          result = apply_catalog(catalog)
+          apply_environment.on_expiration()
+          result
         end
         if not exit_status
           exit(1)

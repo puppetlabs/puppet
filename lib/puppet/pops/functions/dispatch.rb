@@ -81,6 +81,8 @@ class Dispatch < Evaluator::CallableSignature
               Puppet.lookup(:pal_script_compiler)
             when :cache
               Puppet::Pops::Adapters::ObjectIdCacheAdapter.adapt(scope.compiler)
+            when :env_cache
+              Puppet::Pops::Adapters::ObjectIdCacheAdapter.adapt(scope.environment)
             when :pal_catalog_compiler
               Puppet.lookup(:pal_catalog_compiler)
             when :pal_compiler

@@ -319,7 +319,9 @@ module Pal
       pal_facts: facts                # common set of facts across several inner contexts (or nil)
     ) do
       # DELAY: prepare_node_facts(node, facts)
-      return block.call(self)
+      result = block.call(self)
+      env.on_expiration()
+      result
     end
   end
   private_class_method :in_environment_context

@@ -197,6 +197,23 @@ class Puppet::Parser::Compiler
         @catalog
       end
     end
+    ensure
+      # Perform callback that compilation has ended. This requires that context is the same as when
+      # compiling
+      with_context_overrides("for compilation end callback") {
+        on_compilation_end
+      }
+  end
+
+  # Register a codeblock that will be called when the compilation has ended.
+  #
+  def register_listener(&block)
+    @registered_listeners << block
+  end
+
+  # Perform callback to all registered listeners
+  def on_compilation_end()
+    @registered_listeners.each {|p| p.call() }
   end
 
   def validate_catalog(validation_stage)
@@ -738,6 +755,7 @@ class Puppet::Parser::Compiler
     end
 
     @catalog_validators = []
+    @registered_listeners = []
   end
 
   def sanitize_node(node)

@@ -170,6 +170,18 @@ class Puppet::Node::Environment
   # @api private
   attr_accessor :loaders
 
+  # This method is called by the environments cache when an environment instance is removed from the cache.
+  #
+  def on_expiration
+    return if @eviction_listeners.nil?
+    @eviction_listeners.each {|p| p.call() }
+  end
+
+  def register_eviction_listener(&proc)
+    @eviction_listeners ||= []
+    @eviction_listeners << proc
+  end
+
   # Checks to make sure that this environment did not have a manifest set in
   # its original environment.conf if Puppet is configured with
   # +disable_per_environment_manifest+ set true.  If it did, the environment's

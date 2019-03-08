@@ -660,9 +660,64 @@ module Puppet::Functions
   #
   # @api private
   class InternalFunction < Function
+    def initialize(closure_scope, loader)
+      super
+      if self.class.when_environment_expires
+        self.closure_scope.environment.register_eviction_listener() { self.send(self.class.when_environment_expires) }
+      end
+      if self.class.when_compilation_ends
+        self.closure_scope.compiler.register_listener() { self.send(self.class.when_compilation_ends) }
+      end
+    end
+
     # @api private
     def self.builder
       InternalDispatchBuilder.new(dispatcher, Puppet::Pops::Types::PCallableType::DEFAULT, loader)
+    end
+
+    # Sets or gets the method to call when the environment expires. Can only be called once to set a value for a function.
+    # When called without argument this method returns the set value (or nil).
+    #
+    # @param [Symbol] method_sym - the name of the method to call
+    # @api public 
+    def self.when_environment_expires(method_sym = nil)
+      return @when_environment_expires if method_sym.nil?
+      # TRANSLATORS: when_environment_expires is a name and should not be translated
+      raise ArgumentError, _("'when_environment_expires' already set - can only be set once!") unless @when_environment_expires.nil?
+      unless method_sym.is_a?(Symbol)
+        raise ArgumentError, _("'when_environment_expires' expects a method name Symbol but got '%{type}'") % {type: method_sym.class}
+      end
+      @when_environment_expires = method_sym
+    end
+
+    # Sets or gets the method to call when the current compilation ends. Can only be called once to set a value for a function.
+    # When called without argument this method returns the set value (or nil).
+    #
+    # @param [Symbol] method_sym - the name of the method to call
+    # @api public 
+    def self.when_compilation_ends(method_sym=nil)
+      return @when_compilation_ends if method_sym.nil?
+      # TRANSLATORS: when_compilation_ends is a name and should not be translated
+      raise ArgumentError, _("'when_compilation_ends' already set - can only be set once!") unless @when_compilation_ends.nil?
+      unless method_sym.is_a?(Symbol)
+        raise ArgumentError, _("'when_compilation_ends' expects a method name Symbol but got '%{type}'") % {type: method_sym.class}
+      end
+      @when_compilation_ends = method_sym
+    end
+
+    # Returns the cache adapter that is injected for a `cache_param` parameter in a dispatcher.
+    # @api public
+    #
+    def cache_adapter()
+      scope = Puppet.lookup(:global_scope)
+      Puppet::Pops::Adapters::ObjectIdCacheAdapter.adapt(scope.compiler)
+    end
+
+    # Returns the environment cache adapter that is injected for a `env_cache_param` parameter in a dispatcher.
+    # @api public
+    #
+    def env_cache_adapter()
+      Puppet::Pops::Adapters::ObjectIdCacheAdapter.adapt(Puppet.lookup(:current_environment))
     end
 
     # Allows the implementation of a function to call other functions by name and pass the caller
@@ -840,6 +895,11 @@ module Puppet::Functions
     # Inject a parameter getting a cached hash for this function
     def cache_param
       inject(:cache)
+    end
+
+    # Inject a parameter getting an environment life cycle cached hash for this function
+    def env_cache_param
+      inject(:env_cache)
     end
 
     # Inject parameter for `Puppet::Pal::CatalogCompiler`

@@ -4,15 +4,98 @@ module Puppet::Pops
 module Adapters
 
   class ObjectIdCacheAdapter < Puppet::Pops::Adaptable::Adapter
-    attr_accessor :cache
+    attr_reader :cache
 
     def initialize
       @cache = {}
     end
 
     # Retrieves a mutable hash with all stored values
-    def retrieve(o)
-      @cache[o.__id__] ||= {}
+    def retrieve(cache_id)
+      @cache[cache_id.__id__] ||= {}
+    end
+
+    # Adds a value to the cache for a given cache_id and key unless the value is already set.
+    # If not already set, the given block is called to produce the value.
+    # @param cache_id [Object] an object acting as cache identifier
+    # @param key [Object] the key for an entry in the cache
+    # @yield [] calls the block without parameters to produce the value for the key unless key already bound
+    # @api public
+    # 
+    def add(cache_id, key, &block)
+      the_cache = retrieve(cache_id)
+      val = the_cache[key]
+      if val.nil? && !the_cache.has_key?(key)
+        val = the_cache[key] = yield
+      end
+      val
+    end
+
+    # Inserts a value for key into the cache identified by the given cache_id overwriting any
+    # earlier value stored in the cache for that key. If the stored value needs some kind of
+    # "close" operation that must have already been taken care of by the caller.
+    # @api public
+    #
+    def insert(cache_id, key, value)
+      retrieve(cache_id)[key] = value
+    end
+
+    # Gets a value from the cache hash and optionally calls a given block with this value.
+    # The given block is only called if the key is bound in the hash.
+    #
+    # The intended use of this method is to process a cached object that needs some kind
+    # of close - for example `adapter.get(self, :connection) {|c| c.close }`
+    #
+    # @param cache_id [Object] an object acting as cache identifier
+    # @param key [Object] the key to get
+    # @param block [Proc] an optional block called with the bound value if the key was bound
+    # @yield [val] calls a given optional block with the bound value val 
+    # @return [Object] the bound value for the key, or nil
+    # @api public
+    #
+    def get(cache_id, key)
+      the_cache = retrieve(cache_id)
+      val = the_cache[key]
+      return val unless block_given?
+      if !val.nil? || the_cache.has_key?(key)
+        yield(val)
+      end
+      val
+    end
+
+    # Clears the cache for the given cache_id after optionally feeding each key/value pair to a given block.
+    # @example close and clear all
+    #   adapter.clear(cache_id) {|k, v| v.close }
+    #
+    # @example simply forget all
+    #   adapter.clear(cache_id)
+    #
+    # @param cache_id [Object] an object acting as cache identifier
+    # @yield [k, v] yields each key/value before clearing the cache if a block is given
+    # @api public
+    #
+    def clear(cache_id)
+      the_cache = retrieve(cache_id)
+      if block_given?
+        the_cache.each_pair {|k,v| yield(k,v) }
+      end
+      @cache.delete(cache_id.__id__)
+    end
+
+    # Replaces a value bound to key in the cache identified by cache_id with returned value from the given block.
+    # The given block gets a bound value (or nil if nothing was bound). The returned value from the block is bound (it may be
+    # the same as the old value).
+    # This is useful to replace (close old, create new) or refresh values in the cache.
+    #
+    # @param cache_id [Object] an object acting as cache identifier
+    # @param key [Object] the key to replace
+    # @return the value returned by the block (the new value)
+    # @yield [bound_value] yields the bound value to the block
+    # @api public
+    #
+    def replace(cache_id, key, &block)
+      the_cache = retrieve(cache_id)
+      the_cache[key] = yield(the_cache[:key])
     end
   end
 
