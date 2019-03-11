@@ -407,9 +407,16 @@ module ModuleLoaders
         origin = sp.effective_path(typed_name, is_global ? 0 : 1)
         unless origin.nil?
           if sp.fuzzy_matching?
-            # Find all paths that might be related to origin
-            origins = candidate_paths(origin)
-            return [origins, sp] unless origins.empty?
+            # If there are multiple *specific* paths for the file, find
+            # whichever ones exist. Otherwise, find all paths that *might* be
+            # related to origin
+            if origin.is_a?(Array)
+              origins = origin.map { |ori| existing_path(ori) }.compact
+              return [origins, sp] unless origins.empty?
+            else
+              origins = candidate_paths(origin)
+              return [origins, sp] unless origins.empty?
+            end
           else
             existing = existing_path(origin)
             return [origin, sp] unless existing.nil?

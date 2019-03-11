@@ -250,6 +250,11 @@ describe 'The Loader' do
               'aplan.pp' => <<-PUPPET.unindent,
                 plan b::aplan() {}
                 PUPPET
+              'yamlplan.yaml' => '{}',
+              'conflict.yaml' => '{}',
+              'conflict.pp' => <<-PUPPET.unindent,
+                plan b::conflict() {}
+                PUPPET
             }
           }
 
@@ -368,12 +373,32 @@ describe 'The Loader' do
 
             it 'private loader finds plans in all modules' do
               expect(loader.private_loader.discover(:plan) { |t| t.name =~ /^.(?:::.*)?\z/ }).to(
-                contain_exactly(tn(:plan, 'b'), tn(:plan, 'a::aplan'), tn(:plan, 'b::aplan')))
+                contain_exactly(tn(:plan, 'b'), tn(:plan, 'a::aplan'), tn(:plan, 'b::aplan'), tn(:plan, 'b::conflict')))
             end
 
             it 'module loader finds plans only in itself' do
               expect(Loaders.find_loader('a').discover(:plan)).to(
                 contain_exactly(tn(:plan, 'a::aplan')))
+            end
+
+            context 'with a yaml plan instantiator defined' do
+              before :each do
+                Puppet.push_context(:yaml_plan_instantiator => mock(:create => mock('plan')))
+              end
+
+              after :each do
+                Puppet.pop_context
+              end
+
+              it 'module loader finds yaml plans' do
+                expect(Loaders.find_loader('b').discover(:plan)).to(
+                  include(tn(:plan, 'b::yamlplan')))
+              end
+
+              it 'module loader excludes plans with both .pp and .yaml versions' do
+                expect(Loaders.find_loader('b').discover(:plan)).not_to(
+                  include(tn(:plan, 'b::conflict')))
+              end
             end
 
             it 'private loader finds types in all modules' do
