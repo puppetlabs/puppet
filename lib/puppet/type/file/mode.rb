@@ -116,8 +116,13 @@ module Puppet
     # If we're not following links and we're a link, then we just turn
     # off mode management entirely.
     def insync?(currentvalue)
+      if provider.respond_to?(:munge_windows_system_group)
+        munged_mode = provider.munge_windows_system_group(currentvalue, @should)
+        return false if munged_mode.nil?
+        currentvalue = munged_mode
+      end
       if stat = @resource.stat and stat.ftype == "link" and @resource[:links] != :follow
-        self.debug "Not managing symlink mode"
+        self.debug _("Not managing symlink mode")
         return true
       else
         return super(currentvalue)
