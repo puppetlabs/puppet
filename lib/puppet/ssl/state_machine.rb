@@ -86,23 +86,12 @@ class Puppet::SSL::StateMachine
 
   def run_machine(state, stop)
     loop do
-      Puppet.debug("In state #{state_name(state)}")
+      Puppet.debug("Current SSL state #{state_name(state)}")
 
-      next_state = state.next_state
-      print_transition(state, next_state) if Puppet::Util::Log.sendlevel?(:info)
-      state = next_state
+      state = state.next_state
 
-      case state
-      when stop
-        return state
-      else
-        # continue
-      end
+      return state if state.is_a?(stop)
     end
-  end
-
-  def print_transition(current_state, next_state)
-    puts "state #{state_name(current_state)} -> #{state_name(next_state)}"
   end
 
   def state_name(state)
