@@ -50,16 +50,22 @@ class Puppet::SSL::StateMachine
     def next_state
       Puppet.debug("Loading CRLs")
 
-      crls = @cert_provider.load_crls
-      if crls
-        next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
+      case Puppet[:certificate_revocation]
+      when :chain, :leaf
+        crls = @cert_provider.load_crls
+        if crls
+          next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
+        else
+          fetcher = Puppet::SSL::Fetcher.new(@ssl_context)
+          pem = fetcher.fetch_crls
+          crls = @cert_provider.load_crls_from_pem(pem)
+          # verify crls before saving
+          next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
+          @cert_provider.save_crls(crls)
+        end
       else
-        fetcher = Puppet::SSL::Fetcher.new(@ssl_context)
-        pem = fetcher.fetch_crls
-        crls = @cert_provider.load_crls_from_pem(pem)
-        # verify crls before saving
-        next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
-        @cert_provider.save_crls(crls)
+        Puppet.info("Certificate revocation is disabled, skipping CRL download")
+        next_ctx = @ssl_context
       end
 
       NeedKey.new(next_ctx)
