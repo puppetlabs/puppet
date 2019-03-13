@@ -196,26 +196,37 @@ class Puppet::Indirector::Request
       end
     end
 
-    # ... Fall back onto the default server.
-     bound_server = Puppet.lookup(:server) do
-      if primary_server = Puppet.settings[:server_list][0]
-        primary_server[0]
-      else
-        Puppet.settings[:server]
+    if default_server
+      self.server = default_server
+    else
+      self.server = Puppet.lookup(:server) do
+        if primary_server = Puppet.settings[:server_list][0]
+          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+          Puppet.debug _("Selected server from first entry of the `server_list` setting: %{server}") % {server: primary_server[0]}
+          primary_server[0]
+        else
+          #TRANSLATORS 'server' is the name of a setting and should not be translated
+          Puppet.debug _("Selected server from the `server` setting: %{server}") % {server: Puppet.settings[:server]}
+          Puppet.settings[:server]
+        end
       end
     end
 
-    bound_port = Puppet.lookup(:serverport) do
-      if primary_server = Puppet.settings[:server_list][0]
-        primary_server[1]
-      else
-        Puppet.settings[:masterport]
+    if default_port
+      self.port = default_port
+    else
+      self.port = Puppet.lookup(:serverport) do
+        if primary_server = Puppet.settings[:server_list][0]
+          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+          Puppet.debug _("Selected port from the first entry of the `server_list` setting: %{port}") % {port: primary_server[1]}
+          primary_server[1]
+        else
+          #TRANSLATORS 'masterport' is the name of a setting and should not be translated
+          Puppet.debug _("Selected port from the `masterport` setting: %{port}") % {port: Puppet.settings[:masterport]}
+          Puppet.settings[:masterport]
+        end
       end
     end
-    self.server = default_server || bound_server
-    self.port   = default_port || bound_port
-
-    Puppet.debug "No more servers left, falling back to #{self.server}:#{self.port}" if Puppet.settings[:use_srv_records]
 
     return yield(self)
   end

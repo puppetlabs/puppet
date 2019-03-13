@@ -16,7 +16,7 @@ test_name "Priority of server_list setting over server setting" do
           on(agent, puppet("agent", "-t", "--config #{tmpconf}", "--server notvalid", "--server_list #{master}:#{master_port}", "--debug"),
              :acceptable_exit_codes => [0, 2]) do |result|
             unless agent['locale'] == 'ja'
-              assert_match(/Selected master: #{master}:#{master_port}/,
+              assert_match(/Selected server from the `server_list` setting: #{master}:#{master_port}/,
                            result.stdout, "should have selected the working master")
             end
           end

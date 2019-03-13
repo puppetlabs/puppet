@@ -55,15 +55,17 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def self.server
     setting = server_setting()
     if setting && setting != :server && Puppet.settings.set_by_config?(setting)
+      Puppet.debug _("Selected server from the %{setting} setting: %{server}") % {setting: setting, server: Puppet.settings[setting]}
       Puppet.settings[setting]
     else
       server = Puppet.lookup(:server) do
         if primary_server = Puppet.settings[:server_list][0]
-          Puppet.debug "Dynamically-bound server lookup failed; using first entry"
+          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+          Puppet.debug _("Dynamically-bound server lookup failed; using first entry from the `server_list` setting: %{server}") % {server: primary_server[0]}
           primary_server[0]
         else
           setting ||= :server
-          Puppet.debug "Dynamically-bound server lookup failed, falling back to #{setting} setting"
+          Puppet.debug _("Dynamically-bound server lookup failed, falling back to %{setting} setting: %{server}") % {setting: setting, server: Puppet.settings[setting]}
           Puppet.settings[setting]
         end
       end
@@ -80,20 +82,27 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     setting = port_setting()
     srv_setting = server_setting()
     if (setting && setting != :masterport && Puppet.settings.set_by_config?(setting)) ||
-       (srv_setting && srv_setting != :server && Puppet.settings.set_by_config?(srv_setting))
+        (srv_setting && srv_setting != :server && Puppet.settings.set_by_config?(srv_setting))
+      Puppet.debug _("Selected port from the %{setting} setting: %{port}") % {setting: setting, port: Puppet.settings[setting].to_i}
       Puppet.settings[setting].to_i
     else
       port = Puppet.lookup(:serverport) do
         if primary_server = Puppet.settings[:server_list][0]
-          Puppet.debug "Dynamically-bound port lookup failed; using first entry"
-
           # Port might not be set, so we want to fallback in that
           # case. We know we don't need to use `setting` here, since
           # the default value of every port setting is `masterport`
-          (primary_server[1] || Puppet.settings[:masterport])
+          if primary_server[1]
+            #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+            Puppet.debug _("Dynamically-bound port lookup failed; using first entry from the `server_list` setting: %{port}") % {port: primary_server[1]}
+            primary_server[1]
+          else
+            #TRANSLATORS 'masterport' is the name of a setting and should not be translated
+            Puppet.debug _("Dynamically-bound port lookup failed; falling back to `masterport` setting: %{port}") % {port: Puppet.settings[:masterport]}
+            Puppet.settings[:masterport]
+          end
         else
           setting ||= :masterport
-          Puppet.debug "Dynamically-bound port lookup failed; falling back to #{setting} setting"
+          Puppet.debug _("Dynamically-bound port lookup failed; falling back to %{setting} setting: %{port}") % {setting: setting, port: Puppet.settings[setting]}
           Puppet.settings[setting]
         end
       end

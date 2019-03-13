@@ -224,7 +224,8 @@ class Puppet::Configurer
           if server.nil?
             raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet[:server_list] }
           else
-            Puppet.debug "Selected master: #{server[0]}:#{server[1]}"
+            #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+            Puppet.debug _("Selected server from the `server_list` setting: %{server}:%{port}") % {server: server[0], port: server[1]}
             report.master_used = "#{server[0]}:#{server[1]}"
           end
           Puppet.override(:server => server[0], :serverport => server[1]) do
@@ -405,6 +406,10 @@ class Puppet::Configurer
         end
       end
       found
+    end
+    unless selected_server.nil?
+      #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+      Puppet.debug _("Selected functional server from the `server_list` setting: %{server}") % {server: selected_server}
     end
     { :node => node,
       :server => selected_server }
