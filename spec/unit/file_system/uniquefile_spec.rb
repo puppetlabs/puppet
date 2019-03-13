@@ -7,6 +7,12 @@ describe Puppet::FileSystem::Uniquefile do
     end
   end
 
+  it "ensures the file has permissions 0600", unless: Puppet::Util::Platform.windows? do
+    Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
+      expect(Puppet::FileSystem.stat(file.path).mode & 07777).to eq(0600)
+    end
+  end
+
   it "provides a writeable file" do
     Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
       file.write("stuff")
