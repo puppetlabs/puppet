@@ -889,4 +889,119 @@ describe "Puppet::FileSystem" do
       end
     end
   end
+
+  describe '#replace_file' do
+    let(:dest) { tmpfile('replace_file') }
+    let(:content) { "some data" }
+
+    context 'when creating' do
+      it 'writes the data' do
+        Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+        expect(Puppet::FileSystem.binread(dest)).to eq(content)
+      end
+
+      it 'writes in binary mode' do
+        Puppet::FileSystem.replace_file(dest) { |f| f.write("\x00\x01\x02") }
+
+        expect(Puppet::FileSystem.binread(dest)).to eq("\x00\x01\x02")
+      end
+
+      context 'on posix', unless: Puppet::Util::Platform.windows? do
+        it 'applies the default mode 0640' do
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0640)
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0777) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0777)
+        end
+
+        it 'raises EACCES if we do not have permission' do
+          dir = tmpdir('file_system')
+          dest = File.join(dir, 'unwritable')
+
+          Puppet::FileSystem.chmod(0600, dir)
+
+          expect {
+            Puppet::FileSystem.replace_file(dest) { |_| }
+          }.to raise_error(Errno::EACCES, /Permission denied/)
+        end
+
+        it 'creates a read-only file' do
+          Puppet::FileSystem.replace_file(dest, 0400) { |f| f.write(content) }
+
+          expect(Puppet::FileSystem.binread(dest)).to eq(content)
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0400)
+        end
+      end
+    end
+
+    context "when overwriting" do
+      before :each do
+        FileUtils.touch(dest)
+      end
+
+      it 'overwrites the content' do
+        Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+        expect(Puppet::FileSystem.binread(dest)).to eq(content)
+      end
+
+      it 'raises ISDIR if the destination is a directory' do
+        pending("Need windows filesystem impl") if Puppet::Util::Platform.windows?
+        dir = tmpdir('file_system')
+
+        expect {
+          Puppet::FileSystem.replace_file(dir) { |f| f.write(content) }
+        }.to raise_error(Errno::EISDIR, /Is a directory/)
+      end
+
+      it 'preserves the existing content if an error is raised' do
+        File.write(dest, 'existing content')
+
+        Puppet::FileSystem.replace_file(dest) { |f| raise 'whoops' } rescue nil
+
+        expect(Puppet::FileSystem.binread(dest)).to eq('existing content')
+      end
+
+      context 'on posix', unless: Puppet::Util::Platform.windows? do
+        it 'preserves the existing mode' do
+          Puppet::FileSystem.chmod(0600, dest)
+
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0600)
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.chmod(0600, dest)
+
+          Puppet::FileSystem.replace_file(dest, 0777) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0777)
+        end
+
+        it 'updates a read-only file' do
+          Puppet::FileSystem.chmod(0400, dest)
+
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          expect(Puppet::FileSystem.binread(dest)).to eq(content)
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0400)
+        end
+      end
+    end
+  end
 end

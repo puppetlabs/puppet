@@ -10,4 +10,14 @@ class Puppet::FileSystem::JRuby < Puppet::FileSystem::Posix
     # See https://github.com/jruby/jruby/issues/5617
     stat(*paths)
   end
+
+  def replace_file(path, mode = nil, &block)
+    # MRI Ruby rename checks if destination is a directory and raises, while
+    # JRuby removes the directory and replaces the file.
+    if Puppet::FileSystem.directory?(path)
+      raise Errno::EISDIR, _("Is a directory: %{directory}") % { directory: path }
+    end
+
+    super
+  end
 end
