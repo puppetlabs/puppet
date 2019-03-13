@@ -219,11 +219,10 @@ describe Puppet::SSL::SSLProvider do
                        "Certificate '/CN=revoked' is revoked")
     end
 
-    it 'raises if intermediate issuer is missing' do
-      expect {
-        subject.create_context(config.merge(cacerts: [cert_fixture('ca.pem')]))
-      }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "The issuer '/CN=Test CA Subauthority' of certificate '/CN=signed' cannot be found locally")
+    it 'warns if intermediate issuer is missing' do
+      Puppet.expects(:warning).with("The issuer '/CN=Test CA Subauthority' of certificate '/CN=signed' cannot be found locally")
+
+      subject.create_context(config.merge(cacerts: [cert_fixture('ca.pem')]))
     end
 
     it 'raises if root issuer is missing' do

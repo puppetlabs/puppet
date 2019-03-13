@@ -40,6 +40,10 @@ task(:gen_cert_fixtures) do
   # 127.0.0.1.pem                     |   +- /CN=127.0.0.1 (with dns alt names)
   # tampered.pem                      |   +- /CN=signed (with different public key)
   #                                   |
+  #                                   + /CN=Test CA Agent Subauthority
+  #                                   |  |
+  # pluto.pem                         |  +- /CN=pluto
+  #                                   |
   # bad-int-basic-constraints.pem     +- /CN=Test CA Subauthority (bad isCA constraint)
   #
   # bad-basic-constraints.pem        /CN=Test CA (bad isCA constraint)
@@ -98,6 +102,17 @@ task(:gen_cert_fixtures) do
   request = ca.create_request('pending')
   save(dir, 'request.pem', request[:csr])
   save(dir, 'request-key.pem', request[:private_key])
+
+  # Create an intermediate for agent certs
+  inter_agent = ca.create_intermediate_cert('Test CA Agent Subauthority', ca.ca_cert, ca.key)
+  save(dir, 'intermediate-agent.pem', inter_agent[:cert])
+  inter_agent_crl = ca.create_crl(inter_agent[:cert], inter_agent[:private_key])
+  save(dir, 'intermediate-agent-crl.pem', inter_agent_crl)
+
+  # Create a leaf/entity key and cert for host "pluto" and issued by "Test CA Agent Subauthority"
+  pluto = ca.create_cert('pluto', inter_agent[:cert], inter_agent[:private_key])
+  save(dir, 'pluto.pem', pluto[:cert])
+  save(dir, 'pluto-key.pem', pluto[:private_key])
 
   # Create a new root CA cert, but change the "isCA" basic constraint.
   # It should not be trusted to act as a CA.

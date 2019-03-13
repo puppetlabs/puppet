@@ -124,13 +124,20 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
     let(:ssl) { Puppet::SSL::SSLProvider.new }
     let(:ssl_context) { ssl.create_root_context(cacerts: [server.ca_cert], crls: [server.ca_crl]) }
 
-    def connection(host, port)
+    def connection(host, port, ssl_context:)
       Puppet::Network::HttpPool.connection(host, port, ssl_context: ssl_context)
+    end
+
+    # Configure the server's SSLContext to require a client certificate. The `client_ca`
+    # setting allows the server to advertise which client CAs it will accept.
+    def require_client_certs(ctx)
+      ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER|OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT
+      ctx.client_ca = [cert_fixture('ca.pem')]
     end
 
     it "connects over SSL" do
       server.start_server do |port|
-        http = connection(hostname, port)
+        http = connection(hostname, port, ssl_context: ssl_context)
         res = http.get('/')
         expect(res.code).to eq('200')
       end
@@ -138,7 +145,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
 
     it "raises if the server's cert doesn't match the hostname we connected to" do
       server.start_server do |port|
-        http = connection(wrong_hostname, port)
+        http = connection(wrong_hostname, port, ssl_context: ssl_context)
         expect {
           http.get('/')
         }.to raise_error { |err|
@@ -160,6 +167,55 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
           http.get('/')
         }.to raise_error(Puppet::Error,
                          %r{certificate verify failed.* .self signed certificate in certificate chain for /CN=Test CA.})
+      end
+    end
+
+    it "warns when client has an incomplete client cert chain" do
+      Puppet.expects(:warning).with("The issuer '/CN=Test CA Agent Subauthority' of certificate '/CN=pluto' cannot be found locally")
+
+      pluto = cert_fixture('pluto.pem')
+
+      ssl_context = ssl.create_context(
+        cacerts: [server.ca_cert], crls: [server.ca_crl],
+        client_cert: pluto, private_key: key_fixture('pluto-key.pem')
+      )
+
+      # verify client has incomplete chain
+      expect(ssl_context.client_chain.map(&:to_der)).to eq([pluto.to_der])
+
+      # force server to require (not request) client certs
+      ctx_proc = -> (ctx) {
+        require_client_certs(ctx)
+
+        # server needs to trust the client's intermediate CA to complete the client's chain
+        ctx.cert_store.add_cert(cert_fixture('intermediate-agent.pem'))
+      }
+
+      server.start_server(ctx_proc: ctx_proc) do |port|
+        http = Puppet::Network::HttpPool.connection(hostname, port, ssl_context: ssl_context)
+        res = http.get('/')
+        expect(res.code).to eq('200')
+      end
+    end
+
+    it "sends a complete client cert chain" do
+      pluto = cert_fixture('pluto.pem')
+      client_ca = cert_fixture('intermediate-agent.pem')
+
+      ssl_context = ssl.create_context(
+        cacerts: [server.ca_cert, client_ca],
+        crls: [server.ca_crl, crl_fixture('intermediate-agent-crl.pem')],
+        client_cert: pluto,
+        private_key: key_fixture('pluto-key.pem')
+      )
+
+      # verify client has complete chain from leaf to root
+      expect(ssl_context.client_chain.map(&:to_der)).to eq([pluto, client_ca, server.ca_cert].map(&:to_der))
+
+      server.start_server(ctx_proc: method(:require_client_certs)) do |port|
+        http = Puppet::Network::HttpPool.connection(hostname, port, ssl_context: ssl_context)
+        res = http.get('/')
+        expect(res.code).to eq('200')
       end
     end
   end
