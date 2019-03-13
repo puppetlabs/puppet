@@ -147,5 +147,16 @@ describe Puppet::SSL::StateMachine do
 
       expect(File).to_not exist(Puppet[:hostcrl])
     end
+
+    it 'skips CRL download when revocation is disabled' do
+      Puppet[:certificate_revocation] = false
+
+      Puppet::X509::CertProvider.any_instance.expects(:load_crls).never
+      Puppet::Rest::Routes.expects(:get_crls).never
+
+      state.next_state
+
+      expect(File).to_not exist(Puppet[:hostcrl])
+    end
   end
 end

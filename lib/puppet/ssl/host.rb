@@ -3,6 +3,7 @@ require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_request_attributes'
+require 'puppet/ssl/state_machine'
 require 'puppet/rest/errors'
 require 'puppet/rest/routes'
 
@@ -131,11 +132,9 @@ class Puppet::SSL::Host
     unless @certificate
       generate_key unless key
 
-      # get the CA cert first, since it's required for the normal cert
-      # to be of any use. If we can't get it, quit.
-      if !ensure_ca_certificate
-        return nil
-      end
+      # get CA and optional CRL
+      sm = Puppet::SSL::StateMachine.new
+      sm.ensure_ca_certificates
 
       cert = get_host_certificate
       return nil unless cert
@@ -423,57 +422,6 @@ ERROR_STRING
     process_crl_string(crls_pems)
   end
 
-  # Ensures that the CA certificate is available for either generating or
-  # validating the host's cert.
-  # It will first check on disk, then try to download it.
-  # @raise [Puppet::Error] if text form of found certificate bundle is invalid
-  #                        and cannot be loaded into cert objects
-  # @return [Boolean] true if the CA certificate was found, false otherwise
-  # @deprecated Use Puppet::SSL::StateMachine instead.
-  def ensure_ca_certificate
-    file_path = certificate_location(CA_NAME)
-    if Puppet::FileSystem.exist?(file_path)
-      begin
-        # This load ensures that the file contents is a valid cert bundle.
-        # If the text is malformed, load_certificate_bundle will raise.
-        load_certificate_bundle(Puppet::FileSystem.read(file_path))
-      rescue Puppet::Error => e
-        raise Puppet::Error, _("The CA certificate at %{file_path} is invalid: %{message}") % { file_path: file_path, message: e.message }
-      end
-    else
-      bundle = download_ca_certificate_bundle
-      if bundle
-        save_bundle(bundle, certificate_location(CA_NAME))
-        true
-      else
-        false
-      end
-    end
-  end
-  public :ensure_ca_certificate
-
-  # Creates an arry of SSL Certificate objects from a PEM-encoding string
-  # of one or more certs.
-  # @param [String] bundle_string PEM-encoded string of certs
-  # @return [[OpenSSL::X509::Certificate], nil] the certs loaded from the
-  #         input string, or nil if none could be loaded
-  def load_certificate_bundle(bundle_string)
-    delimiters = /-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m
-    certs = bundle_string.scan(delimiters)
-
-    if certs.empty?
-      raise Puppet::Error, _("No valid PEM-encoded certificates.")
-    end
-
-    certs.map do |cert|
-      begin
-        OpenSSL::X509::Certificate.new(cert)
-      rescue OpenSSL::X509::CertificateError => e
-        raise Puppet::Error, _("Could not parse certificate: %{message}") % { message: e.message }
-      end
-    end
-  end
-
   # Fetches and saves the crl bundle from the CA server without validating
   # its contents. Takes an optional store to use with the http_client,
   # necessary for initial download of the CRL because `build_ssl_store`
@@ -493,38 +441,6 @@ ERROR_STRING
       end
     rescue Puppet::Rest::ResponseError => e
       raise Puppet::Error, _('Could not download CRLs: %{message}') % { message: e.message }
-    end
-  end
-
-  # Fetches the CA certificate bundle from the CA server
-  # @raise [Puppet::Error] if response from the server is not a valid certificate
-  #                        bundle
-  # @return [[OpenSSL::X509::Certificate]] the certs loaded from the response
-  def download_ca_certificate_bundle
-    begin
-      cert_bundle = Puppet::Rest::Routes.get_certificate(
-        CA_NAME,
-        Puppet::SSL::SSLContext.new(verify_peer: false)
-      )
-      # This load ensures that the response body is a valid cert bundle.
-      # If the text is malformed, load_certificate_bundle will raise.
-      begin
-        load_certificate_bundle(cert_bundle)
-      rescue Puppet::Error => e
-        raise Puppet::Error, _("Response from the CA did not contain a valid CA certificate: %{message}") % { message: e.message }
-      end
-    rescue Puppet::Rest::ResponseError => e
-      raise Puppet::Error, _('Could not download CA certificate: %{message}') % { message: e.message }
-    end
-  end
-
-  # Saves the given bundle to disk to a specified file path.
-  # @param bundle [[OpenSSL::X509::Certificate/CRL]] the certs to save
-  # @param location [String] place on disk to save bundle
-  def save_bundle(cert_bundle, location)
-    Puppet::Util.replace_file(location, 0644) do |f|
-      bundle_string = cert_bundle.map(&:to_pem).join("\n")
-      f.write(bundle_string)
     end
   end
 

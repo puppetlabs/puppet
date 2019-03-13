@@ -24,7 +24,7 @@ class PuppetSpec::HTTPSServer
     res.send_response(ssl)
   end
 
-  def start_server(&block)
+  def start_server(ctx_proc: nil, &block)
     errors = []
 
     IO.pipe {|stop_pipe_r, stop_pipe_w|
@@ -36,6 +36,7 @@ class PuppetSpec::HTTPSServer
       ctx.cert = @server_cert
       ctx.key = @server_key
       ctx.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      ctx_proc.call(ctx) if ctx_proc
 
       Socket.do_not_reverse_lookup = true
       tcps = TCPServer.new("127.0.0.1", 0)

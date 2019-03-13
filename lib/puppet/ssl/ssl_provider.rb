@@ -146,49 +146,60 @@ class Puppet::SSL::SSLProvider
   end
 
   def verify_cert_with_store(store, cert)
-    # chain is unused because puppet requires any intermediate CA certs
-    # needed to complete the client's chain to be in the CA bundle
-    # that we downloaded from the server, and they've already been
-    # added to the store. See PUP-9500
+    # StoreContext#initialize accepts a chain argument, but it's set to [] because
+    # puppet requires any intermediate CA certs needed to complete the client's
+    # chain to be in the CA bundle that we downloaded from the server, and
+    # they've already been added to the store. See PUP-9500.
+
     store_context = OpenSSL::X509::StoreContext.new(store, cert, [])
     unless store_context.verify
       current_cert = store_context.current_cert
 
-      message =
-        case store_context.error
-        when OpenSSL::X509::V_ERR_CERT_NOT_YET_VALID
-          _("The certificate '%{subject}' is not yet valid, verify time is synchronized") % { subject: subject(current_cert) }
-        when OpenSSL::X509::V_ERR_CERT_HAS_EXPIRED
-          _("The certificate '%{subject}' has expired, verify time is synchronized") %  { subject: subject(current_cert) }
-        when OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID
-          _("The CRL issued by '%{issuer}' is not yet valid, verify time is synchronized") % { issuer: issuer(current_cert) }
-        when OpenSSL::X509::V_ERR_CRL_HAS_EXPIRED
-          _("The CRL issued by '%{issuer}' has expired, verify time is synchronized") % { issuer: issuer(current_cert) }
-        when OpenSSL::X509::V_ERR_CERT_SIGNATURE_FAILURE
-          _("Invalid signature for certificate '%{subject}'") % { subject: subject(current_cert) }
-        when OpenSSL::X509::V_ERR_CRL_SIGNATURE_FAILURE
-          _("Invalid signature for CRL issued by '%{issuer}'") % { issuer: issuer(current_cert) }
-        when OpenSSL::X509::V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
-          _("The issuer '%{issuer}' of certificate '%{subject}' cannot be found locally") % {
-            issuer: issuer(current_cert), subject: subject(current_cert) }
-        when OpenSSL::X509::V_ERR_UNABLE_TO_GET_ISSUER_CERT
-          _("The issuer '%{issuer}' of certificate '%{subject}' is missing") % {
-            issuer: issuer(current_cert), subject: subject(current_cert) }
-        when OpenSSL::X509::V_ERR_UNABLE_TO_GET_CRL
-          _("The CRL issued by '%{issuer}' is missing") % { issuer: issuer(current_cert) }
-        when OpenSSL::X509::V_ERR_CERT_REVOKED
-          _("Certificate '%{subject}' is revoked") % { subject: subject(current_cert) }
-        else
-          # error_string is labeled ASCII-8BIT, but is encoded based on Encoding.default_external
-          err_utf8 = Puppet::Util::CharacterEncoding.convert_to_utf_8(store_context.error_string)
-          _("Certificate '%{subject}' failed verification (%{err}): %{err_utf8}") % {
-            subject: subject(current_cert), err: store_context.error, err_utf8: err_utf8 }
-        end
-
-      raise Puppet::SSL::CertVerifyError.new(message, store_context.error, current_cert)
+      # If the client cert's intermediate CA is not in the CA bundle, then warn,
+      # but don't error, because SSL allows the client to send an incomplete
+      # chain, and have the server resolve it.
+      if store_context.error == OpenSSL::X509::V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
+        Puppet.warning _("The issuer '%{issuer}' of certificate '%{subject}' cannot be found locally") % {
+          issuer: issuer(current_cert), subject: subject(current_cert)
+        }
+      else
+        raise_cert_verify_error(store_context, current_cert)
+      end
     end
 
     # resolved chain from leaf to root
     store_context.chain
+  end
+
+  def raise_cert_verify_error(store_context, current_cert)
+    message =
+      case store_context.error
+      when OpenSSL::X509::V_ERR_CERT_NOT_YET_VALID
+        _("The certificate '%{subject}' is not yet valid, verify time is synchronized") % { subject: subject(current_cert) }
+      when OpenSSL::X509::V_ERR_CERT_HAS_EXPIRED
+        _("The certificate '%{subject}' has expired, verify time is synchronized") %  { subject: subject(current_cert) }
+      when OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID
+        _("The CRL issued by '%{issuer}' is not yet valid, verify time is synchronized") % { issuer: issuer(current_cert) }
+      when OpenSSL::X509::V_ERR_CRL_HAS_EXPIRED
+        _("The CRL issued by '%{issuer}' has expired, verify time is synchronized") % { issuer: issuer(current_cert) }
+      when OpenSSL::X509::V_ERR_CERT_SIGNATURE_FAILURE
+        _("Invalid signature for certificate '%{subject}'") % { subject: subject(current_cert) }
+      when OpenSSL::X509::V_ERR_CRL_SIGNATURE_FAILURE
+        _("Invalid signature for CRL issued by '%{issuer}'") % { issuer: issuer(current_cert) }
+      when OpenSSL::X509::V_ERR_UNABLE_TO_GET_ISSUER_CERT
+        _("The issuer '%{issuer}' of certificate '%{subject}' is missing") % {
+          issuer: issuer(current_cert), subject: subject(current_cert) }
+      when OpenSSL::X509::V_ERR_UNABLE_TO_GET_CRL
+        _("The CRL issued by '%{issuer}' is missing") % { issuer: issuer(current_cert) }
+      when OpenSSL::X509::V_ERR_CERT_REVOKED
+        _("Certificate '%{subject}' is revoked") % { subject: subject(current_cert) }
+      else
+        # error_string is labeled ASCII-8BIT, but is encoded based on Encoding.default_external
+        err_utf8 = Puppet::Util::CharacterEncoding.convert_to_utf_8(store_context.error_string)
+        _("Certificate '%{subject}' failed verification (%{err}): %{err_utf8}") % {
+          subject: subject(current_cert), err: store_context.error, err_utf8: err_utf8 }
+      end
+
+    raise Puppet::SSL::CertVerifyError.new(message, store_context.error, current_cert)
   end
 end

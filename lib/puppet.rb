@@ -230,9 +230,14 @@ module Puppet
     # TRANSLATORS: localcacert is the path to the CA certificate file
     raise Puppet::Error, _("The CA certificate is missing from '%{localcacert}'") % { localcacert: Puppet[:localcacert] } unless cacerts
 
-    crls = cert.load_crls
-    # TRANSLATORS: hostcrl is the path to the CRL file
-    raise Puppet::Error, _("The CRL is missing from '%{hostcrl}'") % { hostcrl: Puppet[:hostcrl] } unless crls
+    case Puppet[:certificate_revocation]
+    when :chain, :leaf
+      crls = cert.load_crls
+      # TRANSLATORS: hostcrl is the path to the CRL file
+      raise Puppet::Error, _("The CRL is missing from '%{hostcrl}'") % { hostcrl: Puppet[:hostcrl] } unless crls
+    else
+      crls = []
+    end
 
     private_key = cert.load_private_key(Puppet[:certname])
     # TRANSLATORS: hostprivkey is the path to the host's private key
