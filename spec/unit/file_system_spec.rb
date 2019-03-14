@@ -1044,6 +1044,22 @@ describe "Puppet::FileSystem" do
             an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089)
           )
         end
+
+        it 'raises Errno::EACCES if access is denied' do
+          Puppet::Util::Windows::Security.stubs(:get_security_descriptor).raises(Puppet::Util::Windows::Error.new('access denied', 5))
+
+          expect {
+            Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+          }.to raise_error(Errno::EACCES, /Access is denied/)
+        end
+
+        it 'raises SystemCallError otherwise' do
+          Puppet::Util::Windows::Security.stubs(:get_security_descriptor).raises(Puppet::Util::Windows::Error.new('arena is trashed', 7))
+
+          expect {
+            Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+          }.to raise_error(SystemCallError, /The storage control blocks were destroyed/)
+        end
       end
     end
   end

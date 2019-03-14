@@ -116,6 +116,11 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     contents
   end
 
+  # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--0-499-
+  ACCESS_DENIED = 5
+  SHARING_VIOLATION = 32
+  LOCK_VIOLATION = 33
+
   def replace_file(path, mode = nil)
     if Puppet::FileSystem.directory?(path)
       raise Errno::EISDIR, _("Is a directory: %{directory}") % { directory: path }
@@ -154,6 +159,13 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
       File.rename(tempfile.path, Puppet::FileSystem.path_string(path))
     ensure
       tempfile.close!
+    end
+  rescue Puppet::Util::Windows::Error => e
+    case e.code
+    when ACCESS_DENIED, SHARING_VIOLATION, LOCK_VIOLATION
+      raise Errno::EACCES.new(Puppet::FileSystem.path_string(path), e)
+    else
+      raise SystemCallError.new(e.message)
     end
   end
 
