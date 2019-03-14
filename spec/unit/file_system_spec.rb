@@ -889,4 +889,195 @@ describe "Puppet::FileSystem" do
       end
     end
   end
+
+  describe '#replace_file' do
+    let(:dest) { tmpfile('replace_file') }
+    let(:content) { "some data" }
+
+    context 'when creating' do
+      it 'writes the data' do
+        Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+        expect(Puppet::FileSystem.binread(dest)).to eq(content)
+      end
+
+      it 'writes in binary mode' do
+        Puppet::FileSystem.replace_file(dest) { |f| f.write("\x00\x01\x02") }
+
+        expect(Puppet::FileSystem.binread(dest)).to eq("\x00\x01\x02")
+      end
+
+      context 'on posix', unless: Puppet::Util::Platform.windows? do
+        it 'applies the default mode 0640' do
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0640)
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0777) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0777)
+        end
+
+        it 'raises EACCES if we do not have permission' do
+          dir = tmpdir('file_system')
+          dest = File.join(dir, 'unwritable')
+
+          Puppet::FileSystem.chmod(0600, dir)
+
+          expect {
+            Puppet::FileSystem.replace_file(dest) { |_| }
+          }.to raise_error(Errno::EACCES, /Permission denied/)
+        end
+
+        it 'creates a read-only file' do
+          Puppet::FileSystem.replace_file(dest, 0400) { |f| f.write(content) }
+
+          expect(Puppet::FileSystem.binread(dest)).to eq(content)
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0400)
+        end
+      end
+
+      context 'on windows', if: Puppet::Util::Platform.windows? do
+        it 'does not grant users access by default' do
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
+            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff)
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
+            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089)
+          )
+        end
+
+        it 'rejects unsupported modes' do
+          expect {
+            Puppet::FileSystem.replace_file(dest, 0755) { |_| }
+          }.to raise_error(ArgumentError, /Only modes 0644, 0640 and 0600 are allowed/)
+        end
+      end
+    end
+
+    context "when overwriting" do
+      before :each do
+        FileUtils.touch(dest)
+      end
+
+      it 'overwrites the content' do
+        Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+        expect(Puppet::FileSystem.binread(dest)).to eq(content)
+      end
+
+      it 'raises ISDIR if the destination is a directory' do
+        dir = tmpdir('file_system')
+
+        expect {
+          Puppet::FileSystem.replace_file(dir) { |f| f.write(content) }
+        }.to raise_error(Errno::EISDIR, /Is a directory/)
+      end
+
+      it 'preserves the existing content if an error is raised' do
+        File.write(dest, 'existing content')
+
+        Puppet::FileSystem.replace_file(dest) { |f| raise 'whoops' } rescue nil
+
+        expect(Puppet::FileSystem.binread(dest)).to eq('existing content')
+      end
+
+      context 'on posix', unless: Puppet::Util::Platform.windows? do
+        it 'preserves the existing mode' do
+          Puppet::FileSystem.chmod(0600, dest)
+
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0600)
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.chmod(0600, dest)
+
+          Puppet::FileSystem.replace_file(dest, 0777) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0777)
+        end
+
+        it 'updates a read-only file' do
+          Puppet::FileSystem.chmod(0400, dest)
+
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          expect(Puppet::FileSystem.binread(dest)).to eq(content)
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0400)
+        end
+      end
+
+      context 'on windows', if: Puppet::Util::Platform.windows? do
+        it 'preserves the existing mode' do
+          old_sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          new_sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(old_sd.owner).to eq(new_sd.owner)
+          expect(old_sd.group).to eq(new_sd.group)
+          old_sd.dacl.each do |ace|
+            expect(new_sd.dacl).to include(an_object_having_attributes(sid: ace.sid, mask: ace.mask))
+          end
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
+            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089)
+          )
+        end
+
+        it 'raises Errno::EACCES if access is denied' do
+          Puppet::Util::Windows::Security.stubs(:get_security_descriptor).raises(Puppet::Util::Windows::Error.new('access denied', 5))
+
+          expect {
+            Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+          }.to raise_error(Errno::EACCES, /Access is denied/)
+        end
+
+        it 'raises SystemCallError otherwise' do
+          Puppet::Util::Windows::Security.stubs(:get_security_descriptor).raises(Puppet::Util::Windows::Error.new('arena is trashed', 7))
+
+          expect {
+            Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+          }.to raise_error(SystemCallError, /The storage control blocks were destroyed/)
+        end
+      end
+    end
+  end
 end
