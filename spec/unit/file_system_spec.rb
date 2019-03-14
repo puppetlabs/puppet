@@ -925,6 +925,39 @@ describe "Puppet::FileSystem" do
           expect(mode & 07777).to eq(0400)
         end
       end
+
+      context 'on windows', if: Puppet::Util::Platform.windows? do
+        it 'does not grant users access by default' do
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
+            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff)
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
+            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089)
+          )
+        end
+
+        it 'rejects unsupported modes' do
+          expect {
+            Puppet::FileSystem.replace_file(dest, 0755) { |_| }
+          }.to raise_error(ArgumentError, /Only modes 0644, 0640 and 0600 are allowed/)
+        end
+      end
     end
 
     context "when overwriting" do
@@ -939,7 +972,6 @@ describe "Puppet::FileSystem" do
       end
 
       it 'raises ISDIR if the destination is a directory' do
-        pending("Need windows filesystem impl") if Puppet::Util::Platform.windows?
         dir = tmpdir('file_system')
 
         expect {
@@ -983,6 +1015,34 @@ describe "Puppet::FileSystem" do
 
           mode = Puppet::FileSystem.stat(dest).mode
           expect(mode & 07777).to eq(0400)
+        end
+      end
+
+      context 'on windows', if: Puppet::Util::Platform.windows? do
+        it 'preserves the existing mode' do
+          old_sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          new_sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(old_sd.owner).to eq(new_sd.owner)
+          expect(old_sd.group).to eq(new_sd.group)
+          old_sd.dacl.each do |ace|
+            expect(new_sd.dacl).to include(an_object_having_attributes(sid: ace.sid, mask: ace.mask))
+          end
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
+            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089)
+          )
         end
       end
     end
