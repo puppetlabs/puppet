@@ -29,7 +29,7 @@ class Puppet::X509::CertProvider
   # @raise [Puppet::Error] if the certs cannot be saved
   # @api private
   def save_cacerts(certs)
-    save_pem(certs.map(&:to_pem).join, @capath)
+    save_pem(certs.map(&:to_pem).join, @capath, **permissions_for_setting(:localcacert))
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to save CA certificates to '%{capath}'") % {capath: @capath}, e)
   end
@@ -68,7 +68,7 @@ class Puppet::X509::CertProvider
   # @raise [Puppet::Error] if the CRLs cannot be saved
   # @api private
   def save_crls(crls)
-    save_pem(crls.map(&:to_pem).join, @crlpath)
+    save_pem(crls.map(&:to_pem).join, @crlpath, **permissions_for_setting(:hostcrl))
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to save CRLs to '%{crlpath}'") % {crlpath: @crlpath}, e)
   end
@@ -110,7 +110,7 @@ class Puppet::X509::CertProvider
   # @api private
   def save_private_key(name, key)
     path = to_path(@privatekeydir, name)
-    save_pem(key.to_pem, path)
+    save_pem(key.to_pem, path, **permissions_for_setting(:hostprivkey))
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to save private key for '%{name}'") % {name: name}, e)
   end
@@ -152,7 +152,7 @@ class Puppet::X509::CertProvider
   # @api private
   def save_client_cert(name, cert)
     path = to_path(@certdir, name)
-    save_pem(cert.to_pem, path)
+    save_pem(cert.to_pem, path, **permissions_for_setting(:hostcert))
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to save client certificate for '%{name}'") % {name: name}, e)
   end
@@ -190,7 +190,7 @@ class Puppet::X509::CertProvider
   # @api private
   def save_request(name, csr)
     path = to_path(@requestdir, name)
-    save_pem(csr.to_pem, path)
+    save_pem(csr.to_pem, path, **permissions_for_setting(:hostcsr))
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to save certificate request for '%{name}'") % {name: name}, e)
   end
@@ -225,5 +225,12 @@ class Puppet::X509::CertProvider
   def to_path(base, name)
     raise _("Certname %{name} must not contain unprintable or non-ASCII characters") % { name: name.inspect } unless name =~ VALID_CERTNAME
     File.join(base, "#{name.downcase}.pem")
+  end
+
+  def permissions_for_setting(name)
+    setting = Puppet.settings.setting(name)
+    perm = { mode: setting.mode.to_i(8) }
+    perm.merge!(owner: setting.owner, group: setting.group) if Puppet.features.root? && !Puppet::Util::Platform.windows?
+    perm
   end
 end
