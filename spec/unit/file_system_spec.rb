@@ -30,6 +30,35 @@ describe "Puppet::FileSystem" do
     SYSTEM_SID_BYTES == Puppet::Util::Windows::ADSI::User.current_user_sid.sid_bytes
   end
 
+  def expects_public_file(path)
+    if Puppet::Util::Platform.windows?
+      current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+      sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+      expect(sd.dacl).to contain_exactly(
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::LocalSystem, mask: 0x1f01ff),
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinAdministrators, mask: 0x1f01ff),
+        an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinUsers, mask: 0x120089)
+      )
+    else
+      expect(File.stat(path).mode & 07777).to eq(0644)
+    end
+  end
+
+  def expects_private_file(path)
+    if Puppet::Util::Platform.windows?
+      current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+      sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+      expect(sd.dacl).to contain_exactly(
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::LocalSystem, mask: 0x1f01ff),
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinAdministrators, mask: 0x1f01ff),
+        an_object_having_attributes(sid: current_sid, mask: 0x1f01ff)
+      )
+    else
+      expect(File.stat(path).mode & 07777).to eq(0640)
+    end
+  end
+
   context "#open" do
     it "uses the same default mode as File.open, when specifying a nil mode (umask used on non-Windows)" do
       file = tmpfile('file_to_update')
@@ -947,26 +976,13 @@ describe "Puppet::FileSystem" do
         it 'does not grant users access by default' do
           Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
 
-          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
-          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
-          expect(sd.dacl).to contain_exactly(
-            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
-            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
-            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff)
-          )
+          expects_private_file(dest)
         end
 
         it 'applies the specified mode' do
           Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
 
-          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
-          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
-          expect(sd.dacl).to contain_exactly(
-            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
-            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
-            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
-            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089)
-          )
+          expects_public_file(dest)
         end
 
         it 'rejects unsupported modes' do
@@ -1052,14 +1068,7 @@ describe "Puppet::FileSystem" do
         it 'applies the specified mode' do
           Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
 
-          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
-          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
-          expect(sd.dacl).to contain_exactly(
-            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
-            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
-            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
-            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089)
-          )
+          expects_public_file(dest)
         end
 
         it 'raises Errno::EACCES if access is denied' do

@@ -73,8 +73,9 @@ describe Puppet::X509::PemStore do
   end
 
   context 'saving' do
+    let(:path) { tmpfile('pem_store') }
+
     it 'writes the file content as UTF-8' do
-      path = tmpfile('pem_store')
       # read the file directly to preserve the comments
       utf8 = File.read(cert_path, encoding: 'UTF-8')
 
@@ -83,6 +84,38 @@ describe Puppet::X509::PemStore do
       expect(
         File.read(path, :encoding => 'UTF-8')
       ).to match(/\ANetLock Arany \(Class Gold\) Főtanúsítvány/)
+    end
+
+    it 'never changes the owner and group on Windows', if: Puppet::Util::Platform.windows? do
+      FileUtils.expects(:chown).never
+
+      subject.save_pem('PEM', path, owner: 'Administrator', group: 'None')
+    end
+
+    it 'changes the owner and group when running as root', unless: Puppet::Util::Platform.windows? do
+      Puppet.features.stubs(:root?).returns(true)
+      FileUtils.expects(:chown).with('root', 'root', path)
+
+      subject.save_pem('PEM', path, owner: 'root', group: 'root')
+    end
+
+    it 'does not change owner and group when running not as roo', unless: Puppet::Util::Platform.windows? do
+      Puppet.features.stubs(:root?).returns(false)
+      FileUtils.expects(:chown).never
+
+      subject.save_pem('PEM', path, owner: 'root', group: 'root')
+    end
+
+    it 'allows a mode of 0600 to be specified', unless: Puppet::Util::Platform.windows? do
+      subject.save_pem('PEM', path, mode: 0600)
+
+      expect(File.stat(path).mode & 0777).to eq(0600)
+    end
+
+    it 'defaults the mode to 0644' do
+      subject.save_pem('PEM', path)
+
+      expect(File.stat(path).mode & 0777).to eq(0644)
     end
 
     it 'raises EACCES if the file is unwritable' do

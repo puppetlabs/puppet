@@ -14,6 +14,35 @@ describe Puppet::X509::CertProvider do
     path
   end
 
+  def expects_public_file(path)
+    if Puppet::Util::Platform.windows?
+      current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+      sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+      expect(sd.dacl).to contain_exactly(
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::LocalSystem, mask: 0x1f01ff),
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinAdministrators, mask: 0x1f01ff),
+        an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinUsers, mask: 0x120089)
+      )
+    else
+      expect(File.stat(path).mode & 07777).to eq(0644)
+    end
+  end
+
+  def expects_private_file(path)
+    if Puppet::Util::Platform.windows?
+      current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+      sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+      expect(sd.dacl).to contain_exactly(
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::LocalSystem, mask: 0x1f01ff),
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinAdministrators, mask: 0x1f01ff),
+        an_object_having_attributes(sid: current_sid, mask: 0x1f01ff)
+      )
+    else
+      expect(File.stat(path).mode & 07777).to eq(0640)
+    end
+  end
+
   let(:fixture_dir) { File.join(PuppetSpec::FIXTURE_DIR, 'ssl') }
 
   context 'when loading' do
@@ -140,7 +169,11 @@ describe Puppet::X509::CertProvider do
         expect(File.read(ca_path)).to match(/\A-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----\Z/m)
       end
 
-      it 'sets mode to 644 in PUP-9463'
+      it 'sets mode to 644' do
+        create_provider(capath: ca_path).save_cacerts([ca_cert])
+
+        expects_public_file(ca_path)
+      end
 
       it 'raises if the CA certs are unwritable' do
         provider = create_provider(capath: ca_path)
@@ -162,7 +195,11 @@ describe Puppet::X509::CertProvider do
         expect(File.read(crl_path)).to match(/\A-----BEGIN X509 CRL-----.*?-----END X509 CRL-----\Z/m)
       end
 
-      it 'sets mode to 644 in PUP-9463'
+      it 'sets mode to 644' do
+        create_provider(crlpath: crl_path).save_crls([ca_crl])
+
+        expects_public_file(crl_path)
+      end
 
       it 'raises if the CRLs are unwritable' do
         provider = create_provider(crlpath: crl_path)
@@ -319,7 +356,11 @@ describe Puppet::X509::CertProvider do
         expect(File.read(path)).to match(/\A-----BEGIN RSA PRIVATE KEY-----.*?-----END RSA PRIVATE KEY-----\Z/m)
       end
 
-      it 'sets mode to 640 in PUP-9463'
+      it 'sets mode to 640' do
+        provider.save_private_key(name, private_key)
+
+        expects_private_file(path)
+      end
 
       it 'downcases name' do
         provider.save_private_key('TOM', private_key)
@@ -354,7 +395,11 @@ describe Puppet::X509::CertProvider do
         expect(File.read(path)).to match(/\A-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----\Z/m)
       end
 
-      it 'sets mode to 644 in PUP-9463'
+      it 'sets mode to 644' do
+        provider.save_client_cert(name, client_cert)
+
+        expects_public_file(path)
+      end
 
       it 'downcases name' do
         provider.save_client_cert('TOM', client_cert)
@@ -389,7 +434,11 @@ describe Puppet::X509::CertProvider do
         expect(File.read(path)).to match(/\A-----BEGIN CERTIFICATE REQUEST-----.*?-----END CERTIFICATE REQUEST-----\Z/m)
       end
 
-      it 'sets mode to 644 in PUP-9463'
+      it 'sets mode to 644' do
+        provider.save_request(name, csr)
+
+        expects_public_file(path)
+      end
 
       it 'downcases name' do
         provider.save_request('TOM', csr)
