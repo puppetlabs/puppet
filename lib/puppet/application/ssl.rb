@@ -115,7 +115,7 @@ HELP
     when 'verify'
       verify(certname)
     when 'clean'
-      clean(host)
+      clean(certname)
     else
       raise Puppet::Error, _("Unknown action '%{action}'") % { action: action }
     end
@@ -164,18 +164,25 @@ HELP
     end
   end
 
-  def clean(host)
+  def clean(certname)
     # make sure cert has been removed from the CA
-    if host.name == Puppet[:ca_server]
-      cert =
-        begin
-          host.download_certificate_from_ca(host.name)
-        rescue => e
-          raise Puppet::Error.new(_("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: host.name }, e)
+    if certname == Puppet[:ca_server]
+      cert = nil
+
+      begin
+        machine = Puppet::SSL::StateMachine.new(onetime: true)
+        ssl_context = machine.ensure_ca_certificates
+        cert = Puppet::Rest::Routes.get_certificate(certname, ssl_context)
+      rescue Puppet::Rest::ResponseError => e
+        if e.response.code.to_i != 404
+          raise Puppet::Error.new(_("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: certname }, e)
         end
+      rescue => e
+        raise Puppet::Error.new(_("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: certname }, e)
+      end
 
       if cert
-        raise Puppet::Error, _(<<END) % { certname: host.name }
+        raise Puppet::Error, _(<<END) % { certname: certname }
 The certificate %{certname} must be cleaned from the CA first. To fix this,
 run the following commands on the CA:
   puppetserver ca clean --certname %{certname}
