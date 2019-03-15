@@ -98,6 +98,7 @@ HELP
       Puppet.settings.use(:main, :agent)
     end
 
+    certname = Puppet[:certname]
     action = command_line.args.first
     case action
     when 'submit_request'
@@ -112,7 +113,7 @@ HELP
         raise Puppet::Error, _("The certificate for '%{name}' has not yet been signed") % { name: host.name }
       end
     when 'verify'
-      verify(host)
+      verify(certname)
     when 'clean'
       clean(host)
     else
@@ -148,35 +149,19 @@ HELP
     raise Puppet::Error.new(_("Failed to download certificate: %{message}") % { message: e.message }, e)
   end
 
-  def verify(host)
-    ensure_ca_certificates
+  def verify(certname)
+    ssl = Puppet::SSL::SSLProvider.new
+    ssl_context = ssl.load_context(certname: certname)
 
-    key = host.key
-    raise _("The host's private key is missing") unless key
-
-    cert = host.check_for_certificate_on_disk(host.name)
-    raise _("The host's certificate is missing") unless cert
-
-    if cert.content.public_key.to_pem != key.content.public_key.to_pem
-      raise _("The host's key does not match the certificate")
+    # print from root to client
+    ssl_context.client_chain.reverse.each_with_index do |cert, i|
+      digest = Puppet::SSL::Digest.new('SHA256', cert.to_der)
+      if i == ssl_context.client_chain.length - 1
+        Puppet.notice("Verified client certificate '#{cert.subject.to_s}' fingerprint #{digest}")
+      else
+        Puppet.notice("Verified CA certificate '#{cert.subject.to_s}' fingerprint #{digest}")
+      end
     end
-
-    store = host.ssl_store
-    unless store.verify(cert.content)
-      raise _("Failed to verify certificate '%{name}': %{message} (%{error})") % {
-        name: host.name, message: store.error_string, error: store.error
-      }
-    end
-
-    Puppet.notice _("Verified certificate '%{name}'") % {
-      name: host.name
-    }
-    # store.chain.reverse.each_with_index do |issuer, i|
-    #   indent = "  " * (i+1)
-    #   Puppet.notice "#{indent}#{issuer.subject.to_s}"
-    # end
-  rescue => e
-    raise Puppet::Error.new(_("Verify failed: %{message}") % { message: e.message }, e)
   end
 
   def clean(host)

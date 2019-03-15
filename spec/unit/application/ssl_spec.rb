@@ -236,13 +236,13 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     it 'reports if the key is missing' do
       File.delete(Puppet[:hostprivkey])
 
-      expects_command_to_fail(/The host's private key is missing/)
+      expects_command_to_fail(/The private key is missing from/)
     end
 
     it 'reports if the cert is missing' do
       File.delete(Puppet[:hostcert])
 
-      expects_command_to_fail(/The host's certificate is missing/)
+      expects_command_to_fail(/The client certificate is missing from/)
     end
 
     it 'reports if the key and cert are mismatched' do
@@ -252,7 +252,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       File.open(Puppet[:hostprivkey], 'w') { |f| f.write(private_key.to_pem) }
       File.open(Puppet[:hostpubkey], 'w') { |f| f.write(public_key.to_pem) }
 
-      expects_command_to_fail(/The host's key does not match the certificate/)
+      expects_command_to_fail(%r{The certificate for '/CN=ssl-client' does not match its private key})
     end
 
     it 'reports if the cert verification fails' do
@@ -263,15 +263,13 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       # and CRL for that CA
       File.open(Puppet[:hostcrl], 'w') { |f| f.write(new_ca.ca_crl.to_pem) }
 
-      expects_command_to_fail(
-        /Failed to verify certificate '#{name}': certificate signature failure \(7\)/
-      )
+      expects_command_to_fail(%r{Invalid signature for certificate '/CN=ssl-client'})
     end
 
     it 'reports when verification succeeds' do
       OpenSSL::X509::Store.any_instance.stubs(:verify).returns(true)
 
-      expects_command_to_pass(/Verified certificate '#{name}'/)
+      expects_command_to_pass(%r{Verified client certificate '/CN=ssl-client' fingerprint})
     end
   end
 
