@@ -64,7 +64,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   end
 
   context 'NeedCACerts' do
-    let(:state) { Puppet::SSL::StateMachine::NeedCACerts.new }
+    let(:state) { Puppet::SSL::StateMachine::NeedCACerts.new(machine) }
 
     before :each do
       Puppet[:localcacert] = tmpfile('needcacerts')
@@ -141,7 +141,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
   context 'NeedCRLs' do
     let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts)}
-    let(:state) { Puppet::SSL::StateMachine::NeedCRLs.new(ssl_context) }
+    let(:state) { Puppet::SSL::StateMachine::NeedCRLs.new(machine, ssl_context) }
 
     before :each do
       Puppet[:hostcrl] = tmpfile('needcrls')
@@ -231,7 +231,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   context 'when ensuring a client cert' do
     context 'in state NeedKey' do
       let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts, crls: crls)}
-      let(:state) { Puppet::SSL::StateMachine::NeedKey.new(ssl_context) }
+      let(:state) { Puppet::SSL::StateMachine::NeedKey.new(machine, ssl_context) }
 
       it 'loads an existing private key and passes it to the next state' do
         Puppet::X509::CertProvider.any_instance.stubs(:load_private_key).returns(private_key)
@@ -278,7 +278,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
     context 'in state NeedSubmitCSR' do
       let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts, crls: crls)}
-      let(:state) { Puppet::SSL::StateMachine::NeedSubmitCSR.new(ssl_context, private_key) }
+      let(:state) { Puppet::SSL::StateMachine::NeedSubmitCSR.new(machine, ssl_context, private_key) }
 
       def write_csr_attributes(data)
         csr_yaml = tmpfile('state_machine_csr')
@@ -389,7 +389,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       let(:ca_chain) { [cert_fixture('ca.pem'), cert_fixture('intermediate.pem')] }
       let(:crl_chain) { [crl_fixture('crl.pem'), crl_fixture('intermediate-crl.pem')] }
       let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: ca_chain, crls: crl_chain)}
-      let(:state) { Puppet::SSL::StateMachine::NeedCert.new(ssl_context, private_key) }
+      let(:state) { Puppet::SSL::StateMachine::NeedCert.new(machine, ssl_context, private_key) }
 
       it 'transitions to Done if the cert is signed and matches our private key' do
         Puppet::X509::CertProvider.any_instance.stubs(:save_client_cert)
@@ -436,36 +436,31 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
     context 'in state Wait' do
       let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts, crls: crls)}
-      let(:state) { Puppet::SSL::StateMachine::Wait.new(ssl_context) }
-
-      before :each do
-        # make sure we don't sleep
-        state.stubs(:sleep)
-      end
 
       it 'exits with 1 if only running once' do
-        Puppet[:onetime] = true
+        machine = described_class.new(onetime: true)
 
         expect {
           expect {
-            state.next_state
+            Puppet::SSL::StateMachine::Wait.new(machine, ssl_context).next_state
           }.to output("Exiting; no certificate found and waitforcert is disabled").to_stdout
         }.to exit_with(1)
       end
 
       it 'exits with 1 if waitforcert is 0' do
-        Puppet[:waitforcert] = 0
+        machine = described_class.new(waitforcert: 0)
 
         expect {
           expect {
-            state.next_state
+            Puppet::SSL::StateMachine::Wait.new(machine, ssl_context).next_state
           }.to output("Exiting; no certificate found and waitforcert is disabled").to_stdout
         }.to exit_with(1)
       end
 
       it 'sleeps and transitions to NeedCACerts' do
-        Puppet[:waitforcert] = 15
+        machine = described_class.new(waitforcert: 15)
 
+        state = Puppet::SSL::StateMachine::Wait.new(machine, ssl_context)
         state.expects(:sleep).with(15)
 
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
