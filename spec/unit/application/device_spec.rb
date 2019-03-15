@@ -20,6 +20,8 @@ describe Puppet::Application::Device do
     Puppet::Node::Facts.indirection.stubs(:terminus_class=)
   end
 
+  let(:state_machine) { stub(ensure_client_certificate: nil) }
+
   it "should operate in agent run_mode" do
     expect(@device.class.run_mode.name).to eq(:agent)
   end
@@ -74,25 +76,28 @@ describe Puppet::Application::Device do
 
     it "should set waitforcert to 0 with --onetime and if --waitforcert wasn't given" do
       Puppet[:onetime] = true
-      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(0)
+      Puppet::SSL::StateMachine.expects(:new).with(has_entry(waitforcert: 0)).returns(state_machine)
+
       @device.setup_host('device.example.com')
     end
 
     it "should use supplied waitforcert when --onetime is specified" do
       Puppet[:onetime] = true
       @device.handle_waitforcert(60)
-      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(60)
+      Puppet::SSL::StateMachine.expects(:new).with(has_entry(waitforcert: 60)).returns(state_machine)
+
       @device.setup_host('device.example.com')
     end
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
-      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(120)
+      Puppet::SSL::StateMachine.expects(:new).with(has_entry(waitforcert: 120)).returns(state_machine)
+
       @device.setup_host('device.example.com')
     end
 
     it "should use the waitforcert setting when checking for a signed certificate" do
       Puppet[:waitforcert] = 10
-      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(10)
+      Puppet::SSL::StateMachine.expects(:new).with(has_entry(waitforcert: 10)).returns(state_machine)
       @device.setup_host('device.example.com')
     end
 
@@ -155,8 +160,6 @@ describe Puppet::Application::Device do
       Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
       Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
       Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-      @host = stub_everything 'host'
-      Puppet::SSL::Host.stubs(:new).returns(@host)
       Puppet.stubs(:settraps)
     end
 
@@ -264,19 +267,15 @@ describe Puppet::Application::Device do
   end
 
   describe "when initializing each devices SSL" do
-    before(:each) do
-      @host = stub_everything 'host'
-      Puppet::SSL::Host.stubs(:new).returns(@host)
-    end
-
     it "should create a new ssl host" do
-      Puppet::SSL::Host.expects(:new).returns(@host)
+      Puppet::SSL::StateMachine.expects(:new).with(has_entry(certname: 'device.example.com')).returns(state_machine)
+
       @device.setup_host('device.example.com')
     end
 
     it "should wait for a certificate" do
       @device.options.stubs(:[]).with(:waitforcert).returns(123)
-      @host.expects(:wait_for_cert).with(123)
+      Puppet::SSL::StateMachine.expects(:new).with(has_entry(waitforcert: 123)).returns(state_machine)
 
       @device.setup_host('device.example.com')
     end
@@ -584,42 +583,6 @@ describe Puppet::Application::Device do
 
           expect(found_devices).to eq(all_devices)
         end
-      end
-
-      it "should cleanup the certname setting after the run" do
-        all_devices = Set.new(@device_hash.keys)
-        found_devices = Set.new()
-
-        # a block to use in a few places later to validate the updated settings
-        p = Proc.new do |my_setting, my_value|
-          if my_setting == :certname && all_devices.include?(my_value)
-            found_devices.add(my_value)
-            true
-          else
-            false
-          end
-        end
-
-        seq = sequence("clean up certname")
-
-        all_devices.size.times do
-          ## one occurrence of set / run / set("certname") for each device
-          Puppet.expects(:[]=).with(&p).in_sequence(seq)
-          @configurer.expects(:run).in_sequence(seq)
-          Puppet.expects(:[]=).with(:certname, "certname").in_sequence(seq)
-        end
-
-
-        expect { @device.main }.to exit_with 1
-
-        # make sure that we were called with each of the defined devices
-        expect(found_devices).to eq(all_devices)
-      end
-
-      it "should expire all cached attributes" do
-        Puppet::SSL::Host.expects(:reset).twice
-
-        expect { @device.main }.to exit_with 1
       end
     end
   end

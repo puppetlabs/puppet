@@ -358,16 +358,12 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def fingerprint
-    host = Puppet::SSL::Host.new
-    unless cert = host.certificate || host.certificate_request
-      $stderr.puts _("Fingerprint asked but no certificate nor certificate request have yet been issued")
-      exit(1)
-      return
-    end
-    unless digest = cert.digest(options[:digest].to_s)
-      raise ArgumentError, _("Could not get fingerprint for digest '%{digest}'") % { digest: options[:digest] }
-    end
-    puts digest.to_s
+    sm = Puppet::SSL::StateMachine.new(onetime: true)
+    ssl_context = sm.ensure_client_certificate
+    puts Puppet::SSL::Digest.new(options[:digest].to_s, ssl_context.client_cert.to_der).to_s
+  rescue
+    $stderr.puts _("Fingerprint asked but no certificate nor certificate request have yet been issued")
+    exit(1)
   end
 
   def onetime(daemon)
@@ -465,8 +461,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def wait_for_certificates
-    host = Puppet::SSL::Host.new
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-    host.wait_for_cert(waitforcert)
+    sm = Puppet::SSL::StateMachine.new(waitforcert: waitforcert)
+    sm.ensure_client_certificate
   end
 end
