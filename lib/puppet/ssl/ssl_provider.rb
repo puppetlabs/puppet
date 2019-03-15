@@ -84,6 +84,44 @@ class Puppet::SSL::SSLProvider
     ).freeze
   end
 
+  # Load an `SSLContext` using available certs and keys. An exception is raised
+  # if any component is missing or is invalid, such as a mismatched client cert
+  # and private key. Connections made from the returned context will be mutually
+  # authenticated.
+  #
+  # @param revocation [:chain, :leaf, false] revocation mode
+  # @return [Puppet::SSL::SSLContext] A context to use to create connections
+  # @raise [Puppet::SSL::CertVerifyError] There was an issue with
+  #   one of the certs or CRLs.
+  # @raise [Puppet::SSL::SSLError] There was an issue with one of the required
+  #   components.
+  # @api private
+  def load_context(certname: Puppet[:certname], revocation: Puppet[:certificate_revocation])
+    cert = Puppet::X509::CertProvider.new
+    cacerts = cert.load_cacerts
+    # TRANSLATORS: localcacert is the path to the CA certificate file
+    raise Puppet::SSL::SSLError, _("The CA certificate is missing from '%{localcacert}'") % { localcacert: Puppet[:localcacert] } unless cacerts
+
+    case revocation
+    when :chain, :leaf
+      crls = cert.load_crls
+      # TRANSLATORS: hostcrl is the path to the CRL file
+      raise Puppet::SSL::SSLError, _("The CRL is missing from '%{hostcrl}'") % { hostcrl: Puppet[:hostcrl] } unless crls
+    else
+      crls = []
+    end
+
+    private_key = cert.load_private_key(certname)
+    # TRANSLATORS: hostprivkey is the path to the host's private key
+    raise Puppet::SSL::SSLError, _("The private key is missing from '%{hostprivkey}'") % { hostprivkey: Puppet[:hostprivkey] } unless private_key
+
+    client_cert = cert.load_client_cert(certname)
+    # TRANSLATORS: hostcert is the path to the host's certificate
+    raise Puppet::SSL::SSLError, _("The client certificate is missing from '%{hostcert}'") % { hostcert: Puppet[:hostcert] } unless client_cert
+
+    create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert)
+  end
+
   # Verify the `csr` was signed with a private key corresponding to the
   # `public_key`. This ensures the CSR was signed by someone in possession
   # of the private key, and that it hasn't been tampered with since.

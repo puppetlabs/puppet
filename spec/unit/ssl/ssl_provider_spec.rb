@@ -7,6 +7,12 @@ describe Puppet::SSL::SSLProvider do
   let(:global_crls) { [ crl_fixture('crl.pem'), crl_fixture('intermediate-crl.pem') ] }
   let(:wrong_key) { OpenSSL::PKey::RSA.new(512) }
 
+  def as_pem_file(x509)
+    path = tmpfile('ssl_provider_pem')
+    File.write(path, x509.to_pem)
+    path
+  end
+
   context 'when creating an insecure context' do
     let(:sslctx) { subject.create_insecure_context }
 
@@ -337,6 +343,62 @@ describe Puppet::SSL::SSLProvider do
       expect {
         sslctx.verify_peer = false
       }.to raise_error(/can't modify frozen/)
+    end
+  end
+
+  context 'when loading an ssl context' do
+    let(:client_cert) { cert_fixture('signed.pem') }
+    let(:private_key) { key_fixture('signed-key.pem') }
+    let(:doesnt_exist) { '/does/not/exist' }
+
+    before :each do
+      Puppet[:localcacert] = as_pem_file(global_cacerts.first)
+      Puppet[:hostcrl] = as_pem_file(global_crls.first)
+
+      Puppet[:certname] = 'signed'
+      Puppet[:privatekeydir] = tmpdir('privatekeydir')
+      File.write(File.join(Puppet[:privatekeydir], 'signed.pem'), private_key.to_pem)
+
+      Puppet[:certdir] = tmpdir('privatekeydir')
+      File.write(File.join(Puppet[:certdir], 'signed.pem'), client_cert.to_pem)
+    end
+
+    it 'raises if CA certs are missing' do
+      Puppet[:localcacert] = doesnt_exist
+
+      expect {
+        subject.load_context
+      }.to raise_error(Puppet::SSL::SSLError, /The CA certificate is missing from/)
+    end
+
+    it 'raises if the CRL is missing' do
+      Puppet[:hostcrl] = doesnt_exist
+
+      expect {
+        subject.load_context
+      }.to raise_error(Puppet::SSL::SSLError, /The CRL is missing from/)
+    end
+
+    it 'does not raise if the CRL is missing and revocation is disabled' do
+      Puppet[:hostcrl] = doesnt_exist
+
+      subject.load_context(revocation: false)
+    end
+
+    it 'raises if the private key is missing' do
+      Puppet[:privatekeydir] = doesnt_exist
+
+      expect {
+        subject.load_context
+      }.to raise_error(Puppet::SSL::SSLError, /The private key is missing from/)
+    end
+
+    it 'raises if the client cert is missing' do
+      Puppet[:certdir] = doesnt_exist
+
+      expect {
+        subject.load_context
+      }.to raise_error(Puppet::SSL::SSLError, /The client certificate is missing from/)
     end
   end
 
