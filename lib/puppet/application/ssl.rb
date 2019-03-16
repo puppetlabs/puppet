@@ -91,10 +91,8 @@ HELP
       Puppet[:certname] = options[:target]
       Puppet[:confdir]  = File.join(Puppet[:devicedir], Puppet[:certname])
       Puppet[:vardir]   = File.join(Puppet[:devicedir], Puppet[:certname])
-      host = Puppet::SSL::Host.new(Puppet[:certname], true)
       Puppet.settings.use(:main, :agent, :device)
     else
-      host = Puppet::SSL::Host.new(Puppet[:certname])
       Puppet.settings.use(:main, :agent)
     end
 
@@ -102,15 +100,20 @@ HELP
     action = command_line.args.first
     case action
     when 'submit_request'
-      submit_request(host)
-      cert = download_cert(host)
-      unless cert
-        Puppet.info _("The certificate for '%{name}' has not yet been signed") % { name: host.name }
+      machine = Puppet::SSL::StateMachine.new
+      ssl_context = machine.ensure_ca_certificates
+      if submit_request(ssl_context)
+        cert = download_cert(ssl_context)
+        unless cert
+          Puppet.info(_("The certificate for '%{name}' has not yet been signed") % { name: certname })
+        end
       end
     when 'download_cert'
-      cert = download_cert(host)
+      machine = Puppet::SSL::StateMachine.new
+      ssl_context = machine.ensure_ca_certificates
+      cert = download_cert(ssl_context)
       unless cert
-        raise Puppet::Error, _("The certificate for '%{name}' has not yet been signed") % { name: host.name }
+        raise Puppet::Error, _("The certificate for '%{name}' has not yet been signed") % { name: certname }
       end
     when 'verify'
       verify(certname)
@@ -121,30 +124,58 @@ HELP
     end
   end
 
-  def submit_request(host)
-    ensure_ca_certificates
+  def submit_request(ssl_context)
+    cert_provider = Puppet::X509::CertProvider.new
+    key = cert_provider.load_private_key(Puppet[:certname])
+    unless key
+      key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
+      cert_provider.save_private_key(Puppet[:certname], key)
+    end
 
-    host.submit_request
+    csr = cert_provider.create_request(Puppet[:certname], key)
+    Puppet::Rest::Routes.put_certificate_request(csr.to_pem, Puppet[:certname], ssl_context)
     Puppet.notice _("Submitted certificate request for '%{name}' to https://%{server}:%{port}") % {
-      name: host.name, server: Puppet[:ca_server], port: Puppet[:ca_port]
+      name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port]
     }
+  rescue Puppet::Rest::ResponseError => e
+    if e.response.code.to_i == 400
+      raise Puppet::Error.new(_("Could not submit certificate request for '%{name}' to https://%{server}:%{port} due to a conflict on the server") % { name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port] })
+    else
+      raise Puppet::Error.new(_("Failed to submit certificate request: %{message}") % { message: e.message }, e)
+    end
   rescue => e
     raise Puppet::Error.new(_("Failed to submit certificate request: %{message}") % { message: e.message }, e)
   end
 
-  def download_cert(host)
-    ensure_ca_certificates
+  def download_cert(ssl_context)
+    ssl_provider = Puppet::SSL::SSLProvider.new
+    cert_provider = Puppet::X509::CertProvider.new
+    key = cert_provider.load_private_key(Puppet[:certname])
 
     Puppet.info _("Downloading certificate '%{name}' from https://%{server}:%{port}") % {
-      name: host.name, server: Puppet[:ca_server], port: Puppet[:ca_port]
+      name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port]
     }
-    cert = host.download_host_certificate
-    return unless cert
+
+    # try to download cert
+    x509 = Puppet::Rest::Routes.get_certificate(Puppet[:certname], ssl_context)
+    cert = OpenSSL::X509::Certificate.new(x509)
+    Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % { name: Puppet[:certname], fingerprint: fingerprint(cert) }
+    # verify client cert before saving
+    ssl_provider.create_context(
+      cacerts: ssl_context.cacerts, crls: ssl_context.crls, private_key: key, client_cert: cert
+    )
+    cert_provider.save_client_cert(Puppet[:certname], cert)
 
     Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % {
-      name: host.name, fingerprint: cert.fingerprint
+      name: Puppet[:certname], fingerprint: fingerprint(cert)
     }
     cert
+  rescue Puppet::Rest::ResponseError => e
+    if e.response.code.to_i == 404
+      return nil
+    else
+      raise Puppet::Error.new(_("Failed to download certificate: %{message}") % { message: e.message }, e)
+    end
   rescue => e
     raise Puppet::Error.new(_("Failed to download certificate: %{message}") % { message: e.message }, e)
   end
@@ -209,8 +240,7 @@ END
 
   private
 
-  def ensure_ca_certificates
-    sm = Puppet::SSL::StateMachine.new
-    sm.ensure_ca_certificates
+  def fingerprint(cert)
+    Puppet::SSL::Digest.new(nil, cert.to_der)
   end
 end

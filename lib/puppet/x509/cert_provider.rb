@@ -182,6 +182,29 @@ class Puppet::X509::CertProvider
     OpenSSL::X509::Certificate.new(pem)
   end
 
+  # Create a certificate signing request (CSR).
+  #
+  # @param name [String] the request identity
+  # @param private_key [OpenSSL::PKey::RSA] private key
+  # @return [Puppet::X509::Request] The request
+  #
+  def create_request(name, private_key)
+    options = {}
+
+    if Puppet[:dns_alt_names] && Puppet[:dns_alt_names] != ''
+      options[:dns_alt_names] = Puppet[:dns_alt_names]
+    end
+
+    csr_attributes = Puppet::SSL::CertificateRequestAttributes.new(Puppet[:csr_attributes])
+    if csr_attributes.load
+      options[:csr_attributes] = csr_attributes.custom_attributes
+      options[:extension_requests] = csr_attributes.extension_requests
+    end
+
+    csr = Puppet::SSL::CertificateRequest.new(name)
+    csr.generate(private_key, options)
+  end
+
   # Save a certificate signing request (CSR) to the configured `requestdir`.
   #
   # @param name [String] the request identity

@@ -133,7 +133,7 @@ class Puppet::SSL::StateMachine
   #
   class NeedSubmitCSR < KeySSLState
     def next_state
-      csr = generate_csr
+      csr = @cert_provider.create_request(Puppet[:certname], @private_key)
       Puppet::Rest::Routes.put_certificate_request(csr.to_pem, Puppet[:certname], @ssl_context)
       NeedCert.new(@machine, @ssl_context, @private_key)
     rescue Puppet::Rest::ResponseError => e
@@ -142,25 +142,6 @@ class Puppet::SSL::StateMachine
       end
 
       NeedCert.new(@machine, @ssl_context, @private_key)
-    end
-
-    private
-
-    def generate_csr
-      options = {}
-
-      if Puppet[:dns_alt_names] && Puppet[:dns_alt_names] != ''
-        options[:dns_alt_names] = Puppet[:dns_alt_names]
-      end
-
-      csr_attributes = Puppet::SSL::CertificateRequestAttributes.new(Puppet[:csr_attributes])
-      if csr_attributes.load
-        options[:csr_attributes] = csr_attributes.custom_attributes
-        options[:extension_requests] = csr_attributes.extension_requests
-      end
-
-      csr = Puppet::SSL::CertificateRequest.new(Puppet[:certname])
-      csr.generate(@private_key, options)
     end
   end
 
@@ -190,7 +171,6 @@ class Puppet::SSL::StateMachine
         Puppet.log_exception(e, _("Failed to retrieve certificate for %{certname}: %{message}") %
                              {certname: Puppet[:certname], message: e.response.message})
       end
-
       Wait.new(@machine, @ssl_context)
     end
   end
