@@ -170,7 +170,6 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it "verifies the server's certificate when fetching the CRL" do
-      pending("CRL download")
       Puppet::X509::CertProvider.any_instance.stubs(:load_crls).returns(nil)
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: crl_pem)
       Puppet::X509::CertProvider.any_instance.stubs(:save_crls)
@@ -376,7 +375,6 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       end
 
       it "verifies the server's certificate when submitting the CSR" do
-        pending("CRL download")
         stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
 
         Net::HTTP.any_instance.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
@@ -413,7 +411,6 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       end
 
       it "verifies the server's certificate when getting the client cert" do
-        pending("Cert download")
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: client_cert.to_pem)
         Puppet::X509::CertProvider.any_instance.stubs(:save_client_cert)
 
