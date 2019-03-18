@@ -182,6 +182,7 @@ module Puppet::Util::HttpProxy
       end
 
       response = proxy.send(:head, current_uri.path, headers)
+      Puppet.debug("HTTP HEAD request to #{current_uri} returned #{response.code} #{response.message}")
 
       if [301, 302, 307].include?(response.code.to_i)
         # handle the redirection
@@ -195,9 +196,9 @@ module Puppet::Util::HttpProxy
         else
           response = proxy.send(method, current_uri.path, headers)
         end
-      end
 
-      Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
+        Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
+      end
 
       return response
     end
