@@ -111,14 +111,12 @@ module Puppet
       end
 
       def sync
-        event = super()
-
         if property = @resource.property(:enable)
           val = property.retrieve
           property.sync unless property.safe_insync?(val)
         end
 
-        event
+        super
       end
     end
 
