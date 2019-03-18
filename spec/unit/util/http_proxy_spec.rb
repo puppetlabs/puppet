@@ -232,6 +232,33 @@ describe Puppet::Util::HttpProxy do
       subject.request_with_redirects(dest, :get, 0)
     end
 
+    it 'add extra headers specified in http_extra_headers' do
+      Puppet[:http_extra_headers] = ["foo:bar", "baz:qux"]
+
+      Net::HTTP.any_instance.stubs(:head).returns(http_ok)
+      Net::HTTP.any_instance.expects(:get).with do |_, headers|
+        expect(headers)
+          .to include({'foo' => 'bar',
+                     'baz' => 'qux'})
+      end.returns(http_ok)
+
+      subject.request_with_redirects(dest, :get, 0)
+    end
+
+    it "doesn't change headers already specified" do
+      Puppet[:http_extra_headers] = ["User-Agent:foo"]
+
+      Net::HTTP.any_instance.stubs(:head).returns(http_ok)
+      Net::HTTP.any_instance.expects(:get).with do |_, headers|
+        expect(headers)
+          .to include({'Accept' => '*/*',
+                     'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+                     'User-Agent' => /Puppet/})
+      end.returns(http_ok)
+
+      subject.request_with_redirects(dest, :get, 0)
+    end
+
     it 'can return a compressed response body' do
       Net::HTTP.any_instance.stubs(:head).returns(http_ok)
 

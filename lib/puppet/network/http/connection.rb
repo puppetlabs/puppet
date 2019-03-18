@@ -2,6 +2,7 @@ require 'net/https'
 require 'puppet/ssl/host'
 require 'puppet/ssl/validator'
 require 'puppet/network/http'
+require 'puppet/util/connection'
 require 'uri'
 require 'date'
 require 'time'
@@ -197,6 +198,7 @@ module Puppet::Network::HTTP
 
         with_connection(current_site) do |connection|
           apply_options_to(current_request, options)
+          Puppet::Util::Connection.add_extra_headers(current_request)
 
           current_response = execute_request(connection, current_request)
 

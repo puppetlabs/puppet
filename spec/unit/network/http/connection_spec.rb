@@ -298,4 +298,25 @@ describe Puppet::Network::HTTP::Connection do
 
     subject.get('/path')
   end
+
+  it "sets extra headers specified in http_extra_headers" do
+    Puppet[:http_extra_headers] = ["foo:bar"]
+
+    Net::HTTP.any_instance.expects(:request).with do |request|
+      expect(request['foo']).to eq("bar")
+    end.returns(httpok)
+
+    subject.get('/path')
+  end
+
+  it "doesn't change headers already specified" do
+    puppet_ua = "Puppet/#{Puppet.version} Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_PLATFORM})"
+    Puppet[:http_extra_headers] = ["User-Agent:foo"]
+
+    Net::HTTP.any_instance.expects(:request).with do |request|
+      expect(request['User-Agent']).to eq(puppet_ua)
+    end.returns(httpok)
+
+    subject.get('/path')
+  end
 end
