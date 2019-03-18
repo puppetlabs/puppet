@@ -53,6 +53,14 @@ describe Puppet::X509::CertProvider do
         expect(provider.load_cacerts).to be_nil
       end
 
+      it 'raises if cacerts are required' do
+        provider = create_provider(capath: '/does/not/exist')
+
+        expect {
+          provider.load_cacerts(required: true)
+        }.to raise_error(Puppet::Error, %r{The CA certificates are missing from '/does/not/exist'})
+      end
+
       it 'returns an array of certificates' do
         subject = OpenSSL::X509::Name.new([['CN', 'Test CA']])
         certs = create_provider(capath: File.join(fixture_dir, 'ca.pem')).load_cacerts
@@ -105,6 +113,14 @@ describe Puppet::X509::CertProvider do
       it 'returns nil if it does not exist' do
         provider = create_provider(crlpath: '/does/not/exist')
         expect(provider.load_crls).to be_nil
+      end
+
+      it 'raises if CRLs are required' do
+        provider = create_provider(crlpath: '/does/not/exist')
+
+        expect {
+          provider.load_crls(required: true)
+        }.to raise_error(Puppet::Error, %r{The CRL is missing from '/does/not/exist'})
       end
 
       it 'returns an array of CRLs' do
@@ -222,6 +238,14 @@ describe Puppet::X509::CertProvider do
         expect(provider.load_private_key('whatever')).to be_nil
       end
 
+      it 'raises if it is required' do
+        provider = create_provider(privatekeydir: '/does/not/exist')
+
+        expect {
+          provider.load_private_key('whatever', required: true)
+        }.to raise_error(Puppet::Error, %r{The private key is missing from '/does/not/exist/whatever.pem'})
+      end
+
       it 'returns an RSA key' do
         expect(provider.load_private_key('signed-key')).to be_a(OpenSSL::PKey::RSA)
       end
@@ -268,6 +292,14 @@ describe Puppet::X509::CertProvider do
         provider = create_provider(certdir: '/does/not/exist')
 
         expect(provider.load_client_cert('nonexistent')).to be_nil
+      end
+
+      it 'raises if it is required' do
+        provider = create_provider(certdir: '/does/not/exist')
+
+        expect {
+          provider.load_client_cert('nonexistent', required: true)
+        }.to raise_error(Puppet::Error, %r{The client certificate is missing from '/does/not/exist/nonexistent.pem'})
       end
 
       it 'returns a certificate' do

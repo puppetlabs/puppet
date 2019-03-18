@@ -368,7 +368,7 @@ describe Puppet::SSL::SSLProvider do
 
       expect {
         subject.load_context
-      }.to raise_error(Puppet::SSL::SSLError, /The CA certificate is missing from/)
+      }.to raise_error(Puppet::Error, /The CA certificates are missing from/)
     end
 
     it 'raises if the CRL is missing' do
@@ -376,7 +376,7 @@ describe Puppet::SSL::SSLProvider do
 
       expect {
         subject.load_context
-      }.to raise_error(Puppet::SSL::SSLError, /The CRL is missing from/)
+      }.to raise_error(Puppet::Error, /The CRL is missing from/)
     end
 
     it 'does not raise if the CRL is missing and revocation is disabled' do
@@ -390,7 +390,7 @@ describe Puppet::SSL::SSLProvider do
 
       expect {
         subject.load_context
-      }.to raise_error(Puppet::SSL::SSLError, /The private key is missing from/)
+      }.to raise_error(Puppet::Error, /The private key is missing from/)
     end
 
     it 'raises if the client cert is missing' do
@@ -398,7 +398,7 @@ describe Puppet::SSL::SSLProvider do
 
       expect {
         subject.load_context
-      }.to raise_error(Puppet::SSL::SSLError, /The client certificate is missing from/)
+      }.to raise_error(Puppet::Error, /The client certificate is missing from/)
     end
   end
 
