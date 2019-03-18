@@ -134,6 +134,7 @@ HELP
 
     csr = cert_provider.create_request(Puppet[:certname], key)
     Puppet::Rest::Routes.put_certificate_request(csr.to_pem, Puppet[:certname], ssl_context)
+    cert_provider.save_request(Puppet[:certname], csr)
     Puppet.notice _("Submitted certificate request for '%{name}' to https://%{server}:%{port}") % {
       name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port]
     }
@@ -165,6 +166,7 @@ HELP
       cacerts: ssl_context.cacerts, crls: ssl_context.crls, private_key: key, client_cert: cert
     )
     cert_provider.save_client_cert(Puppet[:certname], cert)
+    cert_provider.delete_request(Puppet[:certname])
 
     Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % {
       name: Puppet[:certname], fingerprint: fingerprint(cert)

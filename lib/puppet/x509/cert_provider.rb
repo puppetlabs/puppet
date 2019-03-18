@@ -233,6 +233,17 @@ class Puppet::X509::CertProvider
     raise Puppet::Error.new(_("Failed to load certificate request for '%{name}'") % {name: name}, e)
   end
 
+  # Delete a named certificate signing request (CSR) from the configured `requestdir`.
+  #
+  # @param name [String] The request identity
+  # @return [Boolean] true if the CSR was deleted
+  def delete_request(name)
+    path = to_path(@requestdir, name)
+    delete_pem(path)
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to delete certificate request for '%{name}'") % {name: name}, e)
+  end
+
   # Load a PEM encoded certificate signing request (CSR).
   #
   # @param pem [String] PEM encoded request

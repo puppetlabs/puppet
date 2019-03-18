@@ -461,4 +461,35 @@ describe Puppet::X509::CertProvider do
       end
     end
   end
+
+  context 'when deleting' do
+    context 'requests' do
+      let(:name) { 'jerry' }
+      let(:requestdir) { tmpdir('cert_provider') }
+      let(:provider) { create_provider(requestdir: requestdir) }
+
+      it 'returns true if request was deleted' do
+        path = File.join(requestdir, "#{name}.pem")
+        File.write(path, "PEM")
+
+        expect(provider.delete_request(name)).to eq(true)
+        expect(File).not_to be_exist(path)
+      end
+
+      it 'returns false if the request is non-existent' do
+        path = File.join(requestdir, "#{name}.pem")
+
+        expect(provider.delete_request(name)).to eq(false)
+        expect(File).to_not be_exist(path)
+      end
+
+      it 'raises if the file is undeletable' do
+        provider.stubs(:delete_pem).raises(Errno::EACCES, 'Permission denied')
+
+        expect {
+          provider.delete_request(name)
+        }.to raise_error(Puppet::Error, "Failed to delete certificate request for '#{name}'")
+      end
+    end
+  end
 end

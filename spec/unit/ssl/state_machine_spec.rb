@@ -285,10 +285,22 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         csr_yaml
       end
 
+      before :each do
+        Puppet::X509::CertProvider.any_instance.stubs(:save_request)
+      end
+
       it 'submits the CSR and transitions to NeedCert' do
         stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
 
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCert)
+      end
+
+      it 'saves the CSR and transitions to NeedCert' do
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
+
+        Puppet::X509::CertProvider.any_instance.expects(:save_request).with(Puppet[:certname], instance_of(OpenSSL::X509::Request))
+
+        state.next_state
       end
 
       it 'includes DNS alt names' do
@@ -391,6 +403,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
       it 'transitions to Done if the cert is signed and matches our private key' do
         Puppet::X509::CertProvider.any_instance.stubs(:save_client_cert)
+        Puppet::X509::CertProvider.any_instance.stubs(:save_request)
 
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: client_cert.to_pem)
 
@@ -413,6 +426,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it "verifies the server's certificate when getting the client cert" do
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: client_cert.to_pem)
         Puppet::X509::CertProvider.any_instance.stubs(:save_client_cert)
+        Puppet::X509::CertProvider.any_instance.stubs(:save_request)
 
         Net::HTTP.any_instance.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
 

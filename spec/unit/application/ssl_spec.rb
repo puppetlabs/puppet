@@ -112,7 +112,6 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
 
       expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
 
-      pending("Need to save CSR")
       expect(Puppet::FileSystem).to be_exist(csr_path)
     end
 
@@ -134,7 +133,6 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
 
       expect(Puppet::FileSystem).to be_exist(Puppet[:hostcert])
-      # REMIND pending("Need to delete request")
       expect(Puppet::FileSystem).to_not be_exist(csr_path)
     end
 
@@ -146,7 +144,6 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
 
       expects_command_to_pass
 
-      pending("We're not saving CSR")
       csr = Puppet::SSL::CertificateRequest.new(name)
       csr.read(csr_path)
       expect(csr.subject_alt_names).to include('DNS:majortom')

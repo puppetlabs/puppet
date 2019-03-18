@@ -139,6 +139,7 @@ class Puppet::SSL::StateMachine
     def next_state
       csr = @cert_provider.create_request(Puppet[:certname], @private_key)
       Puppet::Rest::Routes.put_certificate_request(csr.to_pem, Puppet[:certname], @ssl_context)
+      @cert_provider.save_request(Puppet[:certname], csr)
       NeedCert.new(@machine, @ssl_context, @private_key)
     rescue Puppet::Rest::ResponseError => e
       if e.response.code.to_i != 400
@@ -161,6 +162,7 @@ class Puppet::SSL::StateMachine
         cacerts: @ssl_context.cacerts, crls: @ssl_context.crls, private_key: @private_key, client_cert: cert
       )
       @cert_provider.save_client_cert(Puppet[:certname], cert)
+      @cert_provider.delete_request(Puppet[:certname])
       Done.new(@machine, next_ctx)
     rescue Puppet::SSL::SSLError => e
       Puppet.log_exception(e, _("Failed to verify downloaded client certificate"))
