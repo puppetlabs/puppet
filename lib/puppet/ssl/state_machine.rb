@@ -37,14 +37,15 @@ class Puppet::SSL::StateMachine
 
       cacerts = @cert_provider.load_cacerts
       if cacerts
-        next_ctx = @ssl_provider.create_root_context(cacerts: cacerts)
+        next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
       else
         pem = Puppet::Rest::Routes.get_certificate(CA_NAME, @ssl_context)
         cacerts = @cert_provider.load_cacerts_from_pem(pem)
         # verify cacerts before saving
-        next_ctx = @ssl_provider.create_root_context(cacerts: cacerts)
+        next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
         @cert_provider.save_cacerts(cacerts)
       end
+
       NeedCRLs.new(@machine, next_ctx)
     rescue Puppet::Rest::ResponseError => e
       if e.response.code.to_i == 404
@@ -56,7 +57,10 @@ class Puppet::SSL::StateMachine
   end
 
   # If revocation is enabled, load CRLs or download them, using the CA bundle
-  # from the previous state. Transition to NeedKey.
+  # from the previous state. Transition to NeedKey. Even if Puppet[:certificate_revocation]
+  # is leaf or chain, disable revocation when downloading the CRL, since 1) we may
+  # not have one yet or 2) the connection will fail if NeedCACerts downloaded a new CA
+  # for which we don't have a CRL
   #
   class NeedCRLs < SSLState
     def next_state
@@ -76,7 +80,7 @@ class Puppet::SSL::StateMachine
         end
       else
         Puppet.info("Certificate revocation is disabled, skipping CRL download")
-        next_ctx = @ssl_context
+        next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: [])
       end
 
       NeedKey.new(@machine, next_ctx)

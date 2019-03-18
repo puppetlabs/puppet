@@ -33,7 +33,7 @@ class Puppet::SSL::SSLProvider
   def create_root_context(cacerts:, crls: [], revocation: Puppet[:certificate_revocation])
     store = create_x509_store(cacerts, crls, revocation)
 
-    Puppet::SSL::SSLContext.new(store: store, cacerts: cacerts, crls: crls).freeze
+    Puppet::SSL::SSLContext.new(store: store, cacerts: cacerts, crls: crls, revocation: revocation).freeze
   end
 
   # Create an `SSLContext` using the trusted `cacerts`, `crls`, `private_key`,
@@ -80,7 +80,8 @@ class Puppet::SSL::SSLProvider
 
     Puppet::SSL::SSLContext.new(
       store: store, cacerts: cacerts, crls: crls,
-      private_key: private_key, client_cert: client_cert, client_chain: client_chain
+      private_key: private_key, client_cert: client_cert, client_chain: client_chain,
+      revocation: revocation
     ).freeze
   end
 
@@ -119,7 +120,7 @@ class Puppet::SSL::SSLProvider
     # TRANSLATORS: hostcert is the path to the host's certificate
     raise Puppet::SSL::SSLError, _("The client certificate is missing from '%{hostcert}'") % { hostcert: Puppet[:hostcert] } unless client_cert
 
-    create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert)
+    create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert, revocation: revocation)
   end
 
   # Verify the `csr` was signed with a private key corresponding to the
