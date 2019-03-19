@@ -84,6 +84,14 @@ HELP
   option('--verbose', '-v')
   option('--debug', '-d')
 
+  def initialize(command_line = Puppet::Util::CommandLine.new)
+    super(command_line)
+
+    @cert_provider = Puppet::X509::CertProvider.new
+    @ssl_provider = Puppet::SSL::SSLProvider.new
+    @machine = Puppet::SSL::StateMachine.new
+  end
+
   def setup_logs
     set_log_level(options)
     Puppet::Util::Log.newdestination(:console)
@@ -108,8 +116,7 @@ HELP
     action = command_line.args.first
     case action
     when 'submit_request'
-      machine = Puppet::SSL::StateMachine.new
-      ssl_context = machine.ensure_ca_certificates
+      ssl_context = @machine.ensure_ca_certificates
       if submit_request(ssl_context)
         cert = download_cert(ssl_context)
         unless cert
@@ -117,8 +124,7 @@ HELP
         end
       end
     when 'download_cert'
-      machine = Puppet::SSL::StateMachine.new
-      ssl_context = machine.ensure_ca_certificates
+      ssl_context = @machine.ensure_ca_certificates
       cert = download_cert(ssl_context)
       unless cert
         raise Puppet::Error, _("The certificate for '%{name}' has not yet been signed") % { name: certname }
@@ -131,8 +137,7 @@ HELP
       if !Puppet::Util::Log.sendlevel?(:info)
         Puppet::Util::Log.level = :info
       end
-      sm = Puppet::SSL::StateMachine.new
-      sm.ensure_client_certificate
+      @machine.ensure_client_certificate
       Puppet.notice(_("Completed SSL initialization"))
     else
       raise Puppet::Error, _("Unknown action '%{action}'") % { action: action }
@@ -140,17 +145,16 @@ HELP
   end
 
   def submit_request(ssl_context)
-    cert_provider = Puppet::X509::CertProvider.new
-    key = cert_provider.load_private_key(Puppet[:certname])
+    key = @cert_provider.load_private_key(Puppet[:certname])
     unless key
       Puppet.info _("Creating a new SSL key for %{name}") % { name: Puppet[:certname] }
       key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
-      cert_provider.save_private_key(Puppet[:certname], key)
+      @cert_provider.save_private_key(Puppet[:certname], key)
     end
 
-    csr = cert_provider.create_request(Puppet[:certname], key)
+    csr = @cert_provider.create_request(Puppet[:certname], key)
     Puppet::Rest::Routes.put_certificate_request(csr.to_pem, Puppet[:certname], ssl_context)
-    cert_provider.save_request(Puppet[:certname], csr)
+    @cert_provider.save_request(Puppet[:certname], csr)
     Puppet.notice _("Submitted certificate request for '%{name}' to https://%{server}:%{port}") % {
       name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port]
     }
@@ -165,9 +169,7 @@ HELP
   end
 
   def download_cert(ssl_context)
-    ssl_provider = Puppet::SSL::SSLProvider.new
-    cert_provider = Puppet::X509::CertProvider.new
-    key = cert_provider.load_private_key(Puppet[:certname])
+    key = @cert_provider.load_private_key(Puppet[:certname])
 
     Puppet.info _("Downloading certificate '%{name}' from https://%{server}:%{port}") % {
       name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port]
@@ -178,11 +180,11 @@ HELP
     cert = OpenSSL::X509::Certificate.new(x509)
     Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % { name: Puppet[:certname], fingerprint: fingerprint(cert) }
     # verify client cert before saving
-    ssl_provider.create_context(
+    @ssl_provider.create_context(
       cacerts: ssl_context.cacerts, crls: ssl_context.crls, private_key: key, client_cert: cert
     )
-    cert_provider.save_client_cert(Puppet[:certname], cert)
-    cert_provider.delete_request(Puppet[:certname])
+    @cert_provider.save_client_cert(Puppet[:certname], cert)
+    @cert_provider.delete_request(Puppet[:certname])
 
     Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % {
       name: Puppet[:certname], fingerprint: fingerprint(cert)
@@ -199,8 +201,7 @@ HELP
   end
 
   def verify(certname)
-    ssl = Puppet::SSL::SSLProvider.new
-    ssl_context = ssl.load_context(certname: certname)
+    ssl_context = @ssl_provider.load_context(certname: certname)
 
     # print from root to client
     ssl_context.client_chain.reverse.each_with_index do |cert, i|
@@ -219,8 +220,7 @@ HELP
       cert = nil
 
       begin
-        machine = Puppet::SSL::StateMachine.new(onetime: true)
-        ssl_context = machine.ensure_ca_certificates
+        ssl_context = @machine.ensure_ca_certificates
         cert = Puppet::Rest::Routes.get_certificate(certname, ssl_context)
       rescue Puppet::Rest::ResponseError => e
         if e.response.code.to_i != 404
