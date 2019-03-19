@@ -110,6 +110,7 @@ class Puppet::SSL::StateMachine
           return Done.new(@machine, next_ctx)
         end
       else
+        Puppet.info _("Creating a new SSL key for %{name}") % { name: Puppet[:certname] }
         key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
         @cert_provider.save_private_key(Puppet[:certname], key)
       end
@@ -226,15 +227,15 @@ class Puppet::SSL::StateMachine
     final_state = run_machine(NeedCACerts.new(self), Done)
     ssl_context = final_state.ssl_context
 
-    if Puppet::Util::Log.sendlevel?(:info)
+    if Puppet::Util::Log.sendlevel?(:debug)
       chain = ssl_context.client_chain
       # print from root to client
       chain.reverse.each_with_index do |cert, i|
         digest = Puppet::SSL::Digest.new('SHA256', cert.to_der)
         if i == chain.length - 1
-          Puppet.info(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_s, digest: digest})
+          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_s, digest: digest})
         else
-          Puppet.info(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_s, digest: digest})
+          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_s, digest: digest})
         end
       end
     end
