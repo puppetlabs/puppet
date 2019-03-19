@@ -130,20 +130,26 @@ module Puppet::Network::HTTP
     # future we may want to refactor these so that they are funneled through
     # that method and do inherit the error handling.
     def request_get(*args, &block)
-      with_connection(@site) do |connection|
-        connection.request_get(*args, &block)
+      with_connection(@site) do |http|
+        resp = http.request_get(*args, &block)
+        Puppet.debug("HTTP GET #{@site}#{args.first.split('?').first} returned #{resp.code} #{resp.message}")
+        resp
       end
     end
 
     def request_head(*args, &block)
-      with_connection(@site) do |connection|
-        connection.request_head(*args, &block)
+      with_connection(@site) do |http|
+        resp = http.request_head(*args, &block)
+        Puppet.debug("HTTP HEAD #{@site}#{args.first.split('?').first} returned #{resp.code} #{resp.message}")
+        resp
       end
     end
 
     def request_post(*args, &block)
-      with_connection(@site) do |connection|
-        connection.request_post(*args, &block)
+      with_connection(@site) do |http|
+        resp = http.request_post(*args, &block)
+        Puppet.debug("HTTP POST #{@site}#{args.first.split('?').first} returned #{resp.code} #{resp.message}")
+        resp
       end
     end
     # end of Net::HTTP#request_* proxies
@@ -297,7 +303,9 @@ module Puppet::Network::HTTP
 
     def execute_request(connection, request)
       start = Time.now
-      connection.request(request)
+      resp = connection.request(request)
+      Puppet.debug("HTTP #{request.method.upcase} #{@site}#{request.path.split('?').first} returned #{resp.code} #{resp.message}")
+      resp
     rescue => exception
       elapsed = (Time.now - start).to_f.round(3)
       uri = [@site.addr, request.path.split('?')[0]].join('/')
