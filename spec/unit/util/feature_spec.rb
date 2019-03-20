@@ -88,7 +88,7 @@ describe Puppet::Util::Feature do
     @features.expects(:require).with("foo").raises(LoadError)
     @features.stubs(:require).with("bar")
 
-    Puppet.expects(:debug)
+    @features.expects(:debug_once)
 
     expect(@features).not_to be_myfeature
   end
@@ -100,7 +100,7 @@ describe Puppet::Util::Feature do
     Puppet::Util::RubyGems::Source.stubs(:source).returns(Puppet::Util::RubyGems::Gems18Source)
     Puppet::Util::RubyGems::Gems18Source.any_instance.expects(:clear_paths).times(3)
 
-    Puppet.expects(:debug)
+    @features.expects(:debug_once)
 
     expect(@features).not_to be_myfeature
     expect(@features).to be_myfeature
