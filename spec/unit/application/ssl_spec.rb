@@ -358,6 +358,20 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
         File.open(device_cert_file, 'w') { |f| f.write('device.example.com') }
         expects_command_to_pass(%r{Removed certificate #{device_cert_file}})
      end
+    end
   end
+
+  context 'when bootstrapping' do
+    before do
+      ssl.command_line.args << 'bootstrap'
+    end
+
+    it 'returns an SSLContext with the loaded CA certs, CRLs, private key and client cert' do
+      Puppet::SSL::StateMachine.any_instance.expects(:ensure_client_certificate).returns(
+        stub('ssl_context')
+      )
+
+      expects_command_to_pass
+    end
   end
 end

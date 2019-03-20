@@ -441,6 +441,27 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         state.next_state
 
+        expect(@logs).to include(an_object_having_attributes(message: /Failed to parse certificate: /))
+        expect(File).to_not exist(Puppet[:hostcert])
+      end
+
+      it 'does not save a mismatched client cert' do
+        wrong_cert = cert_fixture('127.0.0.1.pem').to_pem
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: wrong_cert)
+
+        state.next_state
+
+        expect(@logs).to include(an_object_having_attributes(message: %r{The certificate for '/CN=127.0.0.1' does not match its private key}))
+        expect(File).to_not exist(Puppet[:hostcert])
+      end
+
+      it 'does not save a revoked client cert' do
+        revoked_cert = cert_fixture('revoked.pem').to_pem
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: revoked_cert)
+
+        state.next_state
+
+        expect(@logs).to include(an_object_having_attributes(message: %r{Certificate '/CN=revoked' is revoked}))
         expect(File).to_not exist(Puppet[:hostcert])
       end
     end
