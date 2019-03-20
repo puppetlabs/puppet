@@ -43,7 +43,12 @@ test_name 'C98115 compilation should get new values in variables on each compila
   create_remote_file(master, "#{fq_tmp_environmentpath}/modules/custom_time/facts.d/custom_time.sh", <<-FILE)
 #!/bin/bash
 
-echo -n "custom_time=$(date +%s%N)"
+
+if [[ `uname` == 'Darwin' ]]; then
+  echo -n "custom_time=$(date +%s)"
+else
+  echo -n "custom_time=$(date +%s%N)"
+fi
   FILE
 
   on(master, "chmod -R 0777 '#{fq_tmp_environmentpath}/'")

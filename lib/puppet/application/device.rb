@@ -338,7 +338,6 @@ Licensed under the Apache 2.0 License
           Puppet[:vardir] = vardir
           Puppet[:confdir] = confdir
           Puppet[:certname] = certname
-          Puppet::SSL::Host.reset
         end
       end
     end
@@ -374,9 +373,9 @@ Licensed under the Apache 2.0 License
   end
 
   def setup_host(name)
-    @host = Puppet::SSL::Host.new(name, true)
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-    @host.wait_for_cert(waitforcert)
+    sm = Puppet::SSL::StateMachine.new(certname: name, waitforcert: waitforcert)
+    sm.ensure_client_certificate
   end
 
   def setup

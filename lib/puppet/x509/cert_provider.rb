@@ -36,12 +36,16 @@ class Puppet::X509::CertProvider
 
   # Load CA certs from the configured `capath`.
   #
+  # @param required [Boolean] If true, raise if they are missing
   # @return (see #load_cacerts_from_pem)
   # @raise (see #load_cacerts_from_pem)
   # @raise [Puppet::Error] if the certs cannot be loaded
   # @api private
-  def load_cacerts
+  def load_cacerts(required: false)
     pem = load_pem(@capath)
+    if !pem && required
+      raise Puppet::Error, _("The CA certificates are missing from '%{path}'") % { path: @capath }
+    end
     pem ? load_cacerts_from_pem(pem) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load CA certificates from '%{capath}'") % {capath: @capath}, e)
@@ -75,12 +79,16 @@ class Puppet::X509::CertProvider
 
   # Load CRLs from the configured `crlpath` path.
   #
+  # @param required [Boolean] If true, raise if they are missing
   # @return (see #load_crls_from_pem)
   # @raise (see #load_crls_from_pem)
   # @raise [Puppet::Error] if the CRLs cannot be loaded
   # @api private
-  def load_crls
+  def load_crls(required: false)
     pem = load_pem(@crlpath)
+    if !pem && required
+      raise Puppet::Error, _("The CRL is missing from '%{path}'") % { path: @crlpath }
+    end
     pem ? load_crls_from_pem(pem) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load CRLs from '%{crlpath}'") % {crlpath: @crlpath}, e)
@@ -119,13 +127,17 @@ class Puppet::X509::CertProvider
   # historical reasons, names are case-insensitive.
   #
   # @param name [String] The private key identity
+  # @param required [Boolean] If true, raise if it is missing
   # @return (see #load_private_key_from_pem)
   # @raise (see #load_private_key_from_pem)
   # @raise [Puppet::Error] if the private key cannot be loaded
   # @api private
-  def load_private_key(name)
+  def load_private_key(name, required: false)
     path = to_path(@privatekeydir, name)
     pem = load_pem(path)
+    if !pem && required
+      raise Puppet::Error, _("The private key is missing from '%{path}'") % { path: path }
+    end
     pem ? load_private_key_from_pem(pem) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load private key for '%{name}'") % {name: name}, e)
@@ -160,13 +172,17 @@ class Puppet::X509::CertProvider
   # Load a named client cert from the configured `certdir`.
   #
   # @param name [String] The client cert identity
+  # @param required [Boolean] If true, raise it is missing
   # @return (see #load_request_from_pem)
   # @raise (see #load_client_cert_from_pem)
   # @raise [Puppet::Error] if the client cert cannot be loaded
   # @api private
-  def load_client_cert(name)
+  def load_client_cert(name, required: false)
     path = to_path(@certdir, name)
     pem = load_pem(path)
+    if !pem && required
+      raise Puppet::Error, _("The client certificate is missing from '%{path}'") % { path: path }
+    end
     pem ? load_client_cert_from_pem(pem) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load client certificate for '%{name}'") % {name: name}, e)
@@ -180,6 +196,29 @@ class Puppet::X509::CertProvider
   # @api private
   def load_client_cert_from_pem(pem)
     OpenSSL::X509::Certificate.new(pem)
+  end
+
+  # Create a certificate signing request (CSR).
+  #
+  # @param name [String] the request identity
+  # @param private_key [OpenSSL::PKey::RSA] private key
+  # @return [Puppet::X509::Request] The request
+  #
+  def create_request(name, private_key)
+    options = {}
+
+    if Puppet[:dns_alt_names] && Puppet[:dns_alt_names] != ''
+      options[:dns_alt_names] = Puppet[:dns_alt_names]
+    end
+
+    csr_attributes = Puppet::SSL::CertificateRequestAttributes.new(Puppet[:csr_attributes])
+    if csr_attributes.load
+      options[:csr_attributes] = csr_attributes.custom_attributes
+      options[:extension_requests] = csr_attributes.extension_requests
+    end
+
+    csr = Puppet::SSL::CertificateRequest.new(name)
+    csr.generate(private_key, options)
   end
 
   # Save a certificate signing request (CSR) to the configured `requestdir`.
@@ -208,6 +247,17 @@ class Puppet::X509::CertProvider
     pem ? load_request_from_pem(pem) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load certificate request for '%{name}'") % {name: name}, e)
+  end
+
+  # Delete a named certificate signing request (CSR) from the configured `requestdir`.
+  #
+  # @param name [String] The request identity
+  # @return [Boolean] true if the CSR was deleted
+  def delete_request(name)
+    path = to_path(@requestdir, name)
+    delete_pem(path)
+  rescue SystemCallError => e
+    raise Puppet::Error.new(_("Failed to delete certificate request for '%{name}'") % {name: name}, e)
   end
 
   # Load a PEM encoded certificate signing request (CSR).

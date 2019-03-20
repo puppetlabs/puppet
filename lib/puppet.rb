@@ -209,7 +209,8 @@ module Puppet
       },
       :ssl_context => proc {
         begin
-          build_ssl_context
+          ssl = Puppet::SSL::SSLProvider.new
+          ssl.load_context(certname: Puppet[:certname])
         rescue => e
           # TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
           Puppet.log_exception(e, _("Failed to initialize SSL: %{message}") % { message: e.message })
@@ -222,33 +223,6 @@ module Puppet
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
       :rich_data => false
     }
-  end
-
-  def self.build_ssl_context
-    cert = Puppet::X509::CertProvider.new
-    cacerts = cert.load_cacerts
-    # TRANSLATORS: localcacert is the path to the CA certificate file
-    raise Puppet::Error, _("The CA certificate is missing from '%{localcacert}'") % { localcacert: Puppet[:localcacert] } unless cacerts
-
-    case Puppet[:certificate_revocation]
-    when :chain, :leaf
-      crls = cert.load_crls
-      # TRANSLATORS: hostcrl is the path to the CRL file
-      raise Puppet::Error, _("The CRL is missing from '%{hostcrl}'") % { hostcrl: Puppet[:hostcrl] } unless crls
-    else
-      crls = []
-    end
-
-    private_key = cert.load_private_key(Puppet[:certname])
-    # TRANSLATORS: hostprivkey is the path to the host's private key
-    raise Puppet::Error, _("The private key is missing from '%{hostprivkey}'") % { hostprivkey: Puppet[:hostprivkey] } unless private_key
-
-    client_cert = cert.load_client_cert(Puppet[:certname])
-    # TRANSLATORS: hostcert is the path to the host's certificate
-    raise Puppet::Error, _("The client certificate is missing from '%{hostcert}'") % { hostcert: Puppet[:hostcert] } unless client_cert
-
-    ssl = Puppet::SSL::SSLProvider.new
-    ssl.create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert)
   end
 
   # A simple set of bindings that is just enough to limp along to

@@ -24,9 +24,6 @@ describe Puppet::Application::Agent do
     @puppetd.preinit
     Puppet::Util::Log.stubs(:newdestination)
 
-    @ssl_host = stub_everything 'ssl host'
-    Puppet::SSL::Host.stubs(:new).returns(@ssl_host)
-
     Puppet::Node.indirection.stubs(:terminus_class=)
     Puppet::Node.indirection.stubs(:cache_class=)
     Puppet::Node::Facts.indirection.stubs(:terminus_class=)
@@ -129,7 +126,7 @@ describe Puppet::Application::Agent do
       @agent.stubs(:run).returns(2)
       Puppet[:onetime] = true
 
-      @ssl_host.expects(:wait_for_cert).with(0)
+      Puppet::SSL::StateMachine.expects(:new).with(waitforcert: 0).returns(stub(ensure_client_certificate: nil))
 
       expect { execute_agent }.to exit_with 0
     end
@@ -139,20 +136,21 @@ describe Puppet::Application::Agent do
       Puppet[:onetime] = true
       @puppetd.handle_waitforcert(60)
 
-      @ssl_host.expects(:wait_for_cert).with(60)
+      Puppet::SSL::StateMachine.expects(:new).with(waitforcert: 60).returns(stub(ensure_client_certificate: nil))
 
       expect { execute_agent }.to exit_with 0
     end
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
-      @ssl_host.expects(:wait_for_cert).with(120)
+      Puppet::SSL::StateMachine.expects(:new).with(waitforcert: 120).returns(stub(ensure_client_certificate: nil))
 
       execute_agent
     end
 
     it "should use the waitforcert setting when checking for a signed certificate" do
       Puppet[:waitforcert] = 10
-      @ssl_host.expects(:wait_for_cert).with(10)
+
+      Puppet::SSL::StateMachine.expects(:new).with(waitforcert: 10).returns(stub(ensure_client_certificate: nil))
 
       execute_agent
     end
@@ -392,6 +390,8 @@ describe Puppet::Application::Agent do
     it "should inform the daemon about our agent if :client is set to 'true'" do
       @puppetd.options[:client] = true
 
+      Puppet::SSL::StateMachine.stubs(:new).returns(stub(ensure_client_certificate: nil))
+
       execute_agent
 
       expect(@daemon.agent).to eq(@agent)
@@ -402,6 +402,8 @@ describe Puppet::Application::Agent do
       Puppet[:daemonize] = true
       Signal.stubs(:trap)
 
+      Puppet::SSL::StateMachine.stubs(:new).returns(stub(ensure_client_certificate: nil))
+
       @daemon.expects(:daemonize)
 
       execute_agent
@@ -409,7 +411,8 @@ describe Puppet::Application::Agent do
 
     it "should wait for a certificate" do
       @puppetd.options[:waitforcert] = 123
-      @ssl_host.expects(:wait_for_cert).with(123)
+
+      Puppet::SSL::StateMachine.expects(:new).with(waitforcert: 123).returns(stub(ensure_client_certificate: nil))
 
       execute_agent
     end
@@ -420,11 +423,11 @@ describe Puppet::Application::Agent do
       @puppetd.options[:digest] = 'MD5'
 
       certificate = mock 'certificate'
-      certificate.stubs(:digest).with('MD5').returns('ABCDE')
-      @ssl_host.stubs(:certificate).returns(certificate)
+      certificate.stubs(:to_der).returns('ABCDE')
+      ssl_context = mock('ssl_context', client_cert: certificate)
+      Puppet::SSL::StateMachine.stubs(:new).with(onetime: true).returns(stub(ensure_client_certificate: ssl_context))
 
-      @ssl_host.expects(:wait_for_cert).never
-      @puppetd.expects(:puts).with('ABCDE')
+      @puppetd.expects(:puts).with('(MD5) 2E:CD:DE:39:59:05:1D:91:3F:61:B1:45:79:EA:13:6D')
 
       execute_agent
     end
@@ -473,23 +476,25 @@ describe Puppet::Application::Agent do
     it "should dispatch to fingerprint if --fingerprint is used" do
       @puppetd.options[:fingerprint] = true
 
-      @puppetd.stubs(:fingerprint)
+      @puppetd.expects(:fingerprint)
 
       execute_agent
     end
 
     it "should dispatch to onetime if --onetime is used" do
-      @puppetd.options[:onetime] = true
+      Puppet[:onetime] = true
+      Puppet::SSL::StateMachine.stubs(:new).returns(stub(ensure_client_certificate: nil))
 
-      @puppetd.stubs(:onetime)
+      @puppetd.expects(:onetime)
 
       execute_agent
     end
 
     it "should dispatch to main if --onetime and --fingerprint are not used" do
-      @puppetd.options[:onetime] = false
+      Puppet[:onetime] = false
+      Puppet::SSL::StateMachine.stubs(:new).returns(stub(ensure_client_certificate: nil))
 
-      @puppetd.stubs(:main)
+      @puppetd.expects(:main)
 
       execute_agent
     end
@@ -501,6 +506,8 @@ describe Puppet::Application::Agent do
         Puppet[:onetime] = true
         @puppetd.options[:client] = :client
         @puppetd.options[:detailed_exitcodes] = false
+
+        Puppet::SSL::StateMachine.stubs(:new).returns(stub(ensure_client_certificate: nil))
       end
 
       it "should setup traps" do
@@ -557,20 +564,11 @@ describe Puppet::Application::Agent do
       end
 
       it "should fingerprint the certificate if it exists" do
-        @ssl_host.stubs(:certificate).returns(@cert)
-        @cert.stubs(:digest).with('MD5').returns "fingerprint"
+        @cert.stubs(:to_der).returns('ABCDE')
+        ssl_context = mock('ssl_context', client_cert: @cert)
+        Puppet::SSL::StateMachine.stubs(:new).with(onetime: true).returns(stub(ensure_client_certificate: ssl_context))
 
-        @puppetd.expects(:puts).with "fingerprint"
-
-        @puppetd.fingerprint
-      end
-
-      it "should fingerprint the certificate request if no certificate have been signed" do
-        @ssl_host.stubs(:certificate).returns(nil)
-        @ssl_host.stubs(:certificate_request).returns(@cert)
-        @cert.stubs(:digest).with('MD5').returns "fingerprint"
-
-        @puppetd.expects(:puts).with "fingerprint"
+        @puppetd.expects(:puts).with('(MD5) 2E:CD:DE:39:59:05:1D:91:3F:61:B1:45:79:EA:13:6D')
 
         @puppetd.fingerprint
       end
@@ -579,6 +577,7 @@ describe Puppet::Application::Agent do
     describe "without --onetime and --fingerprint" do
       before :each do
         Puppet.stubs(:notice)
+        Puppet::SSL::StateMachine.stubs(:new).returns(stub(ensure_client_certificate: nil))
       end
 
       it "should start our daemon" do

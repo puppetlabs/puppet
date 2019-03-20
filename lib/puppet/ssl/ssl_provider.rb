@@ -33,7 +33,7 @@ class Puppet::SSL::SSLProvider
   def create_root_context(cacerts:, crls: [], revocation: Puppet[:certificate_revocation])
     store = create_x509_store(cacerts, crls, revocation)
 
-    Puppet::SSL::SSLContext.new(store: store, cacerts: cacerts, crls: crls).freeze
+    Puppet::SSL::SSLContext.new(store: store, cacerts: cacerts, crls: crls, revocation: revocation).freeze
   end
 
   # Create an `SSLContext` using the trusted `cacerts`, `crls`, `private_key`,
@@ -80,8 +80,35 @@ class Puppet::SSL::SSLProvider
 
     Puppet::SSL::SSLContext.new(
       store: store, cacerts: cacerts, crls: crls,
-      private_key: private_key, client_cert: client_cert, client_chain: client_chain
+      private_key: private_key, client_cert: client_cert, client_chain: client_chain,
+      revocation: revocation
     ).freeze
+  end
+
+  # Load an `SSLContext` using available certs and keys. An exception is raised
+  # if any component is missing or is invalid, such as a mismatched client cert
+  # and private key. Connections made from the returned context will be mutually
+  # authenticated.
+  #
+  # @param revocation [:chain, :leaf, false] revocation mode
+  # @return [Puppet::SSL::SSLContext] A context to use to create connections
+  # @raise [Puppet::SSL::CertVerifyError] There was an issue with
+  #   one of the certs or CRLs.
+  # @raise [Puppet::Error] There was an issue with one of the required components.
+  # @api private
+  def load_context(certname: Puppet[:certname], revocation: Puppet[:certificate_revocation])
+    cert = Puppet::X509::CertProvider.new
+    cacerts = cert.load_cacerts(required: true)
+    crls = case revocation
+           when :chain, :leaf
+             cert.load_crls(required: true)
+           else
+             []
+           end
+    private_key = cert.load_private_key(certname, required: true)
+    client_cert = cert.load_client_cert(certname, required: true)
+
+    create_context(cacerts: cacerts, crls: crls,  private_key: private_key, client_cert: client_cert, revocation: revocation)
   end
 
   # Verify the `csr` was signed with a private key corresponding to the

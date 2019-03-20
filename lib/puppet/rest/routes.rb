@@ -28,21 +28,7 @@ module Puppet::Rest
 
         use_ssl = url.is_a? URI::HTTPS
 
-        # Deeper levels of the code assume that if we have any number of
-        # certificate related files, we have all of the certificate related
-        # files. This assumption caused us to download the certificate twice.
-        # We have to hard code `verify_mode=false` so we don't attempt to
-        # download the certificate so that we can download the certificate.
-        #
-        # This is related to PUP-9094. We won't have so many issues with this
-        # once we are using the httpclient gem to handle this work. We were
-        # unable to get this work completed in time for Puppet 6.0.0, so we had
-        # to switch back to using Puppet::Network::HttpPool, which has
-        # unfortunate limitations (i.e., an all or nothing approach to cert
-        # verification).
-        verify_mode = false
-
-        client = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl, verify_mode)
+        client = Puppet::Network::HttpPool.connection(url.host, url.port, use_ssl: use_ssl, ssl_context: ssl_context)
 
         response = client.get(url.request_uri, header)
         unless response.code.to_i == 200
@@ -67,21 +53,7 @@ module Puppet::Rest
 
         use_ssl = url.is_a? URI::HTTPS
 
-        # Deeper levels of the code assume that if we have any number of
-        # certificate related files, we have all of the certificate related
-        # files. Unfortunately, this causes us to get stuck in an infinite loop,
-        # so we have to hard code `verify_mode=false` so we don't attempt to use
-        # files that do not exist yet in order to download those files.
-        #
-        # This is related to PUP-9094. We won't have so many issues with this
-        # once we are using the httpclient gem to handle this work. We were
-        # unable to get this work completed in time for Puppet 6.0.0, so we had
-        # to switch back to using Puppet::Network::HttpPool, which has
-        # unfortunate limitations (i.e., an all or nothing approach to cert
-        # verification).
-        verify_mode = false
-
-        client = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl, verify_mode)
+        client = Puppet::Network::HttpPool.connection(url.host, url.port, use_ssl: use_ssl, ssl_context: ssl_context)
 
         response = client.get(url.request_uri, header)
         unless response.code.to_i == 200
@@ -108,10 +80,7 @@ module Puppet::Rest
 
         use_ssl = url.is_a? URI::HTTPS
 
-        # See notes above as to why verify_mode is hardcoded to false
-        verify_mode = false
-
-        client = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl, verify_mode)
+        client = Puppet::Network::HttpPool.connection(url.host, url.port, use_ssl: use_ssl, ssl_context: ssl_context)
 
         response = client.put(url.request_uri, csr_pem, header)
         if response.code.to_i == 200
@@ -134,11 +103,7 @@ module Puppet::Rest
 
         use_ssl = url.is_a? URI::HTTPS
 
-        # See notes above as to why verify_mode is hardcoded to false
-        verify_mode = false
-
-        client = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl, verify_mode)
-
+        client = Puppet::Network::HttpPool.connection(url.host, url.port, use_ssl: use_ssl, ssl_context: ssl_context)
 
         response = client.get(url.request_uri, header)
         unless response.code.to_i == 200
