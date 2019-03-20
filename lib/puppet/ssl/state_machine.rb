@@ -166,10 +166,10 @@ class Puppet::SSL::StateMachine
       @cert_provider.delete_request(Puppet[:certname])
       Done.new(@machine, next_ctx)
     rescue Puppet::SSL::SSLError => e
-      Puppet.log_exception(e, _("Failed to verify downloaded client certificate"))
+      Puppet.log_exception(e)
       Wait.new(@machine, @ssl_context)
     rescue OpenSSL::X509::CertificateError => e
-      Puppet.log_exception(e, _("Failed to parse downloaded client certificate"))
+      Puppet.log_exception(e, _("Failed to parse certificate: %{message}") % {message: e.message})
       Wait.new(@machine, @ssl_context)
     rescue Puppet::Rest::ResponseError => e
       if e.response.code.to_i == 404
