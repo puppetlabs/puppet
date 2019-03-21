@@ -99,6 +99,39 @@ unless OpenSSL::X509::Name.instance_methods.include?(:to_utf8)
   end
 end
 
+if RUBY_VERSION =~ /^2\.3/
+  module OpenSSL::PKey
+    alias __original_read read
+    def read(*args)
+      __original_read(*args)
+    rescue ArgumentError => e
+      # ruby <= 2.3 raises ArgumentError if it can't decrypt
+      # passphrase protected private keys, fixed in 2.4.0
+      # see https://bugs.ruby-lang.org/issues/11774
+      raise OpenSSL::PKey::PKeyError, e.message
+    end
+    module_function :read
+    module_function :__original_read
+  end
+end
+
+unless OpenSSL::PKey::EC.instance_methods.include?(:private?)
+  class OpenSSL::PKey::EC
+    # Added in ruby 2.4.0 in https://github.com/ruby/ruby/commit/7c971e61f04
+    alias :private? :private_key?
+  end
+end
+
+unless OpenSSL::PKey::EC.singleton_methods.include?(:generate)
+  class OpenSSL::PKey::EC
+    # Added in ruby 2.4.0 in https://github.com/ruby/ruby/commit/85500b66342
+    def self.generate(string)
+      ec = OpenSSL::PKey::EC.new(string)
+      ec.generate_key
+    end
+  end
+end
+
 # The Enumerable#uniq method was added in Ruby 2.4.0 (https://bugs.ruby-lang.org/issues/11090)
 # This is a backport to earlier Ruby versions.
 #

@@ -40,7 +40,7 @@ module Puppet
     end
 
     def create_cert(name, issuer_cert, issuer_key, opts = {})
-      key, cert = build_cert(name, issuer_cert.subject)
+      key, cert = build_cert(name, issuer_cert.subject, opts)
       ef = extension_factory_for(issuer_cert, cert)
       if opts[:subject_alt_names]
         ext = ef.create_extension(["subjectAltName", opts[:subject_alt_names], false])
@@ -123,10 +123,23 @@ module Puppet
 
     private
 
-    def build_cert(name, issuer)
-      key = OpenSSL::PKey::RSA.new(1024)
+    def build_cert(name, issuer, opts = {})
+      key = if opts[:key_type] == :ec
+              key = OpenSSL::PKey::EC.generate('prime256v1')
+            else
+              key = OpenSSL::PKey::RSA.new(1024)
+            end
       cert = OpenSSL::X509::Certificate.new
-      cert.public_key = key.public_key
+      cert.public_key = if key.is_a?(OpenSSL::PKey::EC)
+                         # EC#public_key doesn't following the PKey API,
+                         # see https://github.com/ruby/openssl/issues/29
+                         point = key.public_key
+                         pubkey = OpenSSL::PKey::EC.new(point.group)
+                         pubkey.public_key = point
+                         pubkey
+                       else
+                         key.public_key
+                       end
       cert.subject = OpenSSL::X509::Name.new([["CN", name]])
       cert.issuer = issuer
       cert.version = 2

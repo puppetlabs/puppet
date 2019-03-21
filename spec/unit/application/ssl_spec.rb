@@ -115,6 +115,16 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
     end
 
+    it 'generates an EC private key' do
+      Puppet[:key_type] = 'ec'
+      File.unlink(Puppet[:hostprivkey])
+
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
+    end
+
     it 'submits the CSR and saves it locally' do
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
