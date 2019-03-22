@@ -3,7 +3,7 @@ require 'puppet'
 require 'openssl'
 
 module Puppet::SSL # :nodoc:
-  CA_NAME = "ca"
+  CA_NAME = "ca".freeze
   require 'puppet/ssl/host'
   require 'puppet/ssl/oids'
   require 'puppet/ssl/validator'

@@ -11,8 +11,6 @@ require 'puppet/ssl'
 #
 # @private
 class Puppet::SSL::StateMachine
-  CA_NAME = 'ca'.freeze
-
   class SSLState
     attr_reader :ssl_context
 
@@ -39,7 +37,7 @@ class Puppet::SSL::StateMachine
       if cacerts
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
       else
-        pem = Puppet::Rest::Routes.get_certificate(CA_NAME, @ssl_context)
+        pem = Puppet::Rest::Routes.get_certificate(Puppet::SSL::CA_NAME, @ssl_context)
         cacerts = @cert_provider.load_cacerts_from_pem(pem)
         # verify cacerts before saving
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
@@ -72,7 +70,7 @@ class Puppet::SSL::StateMachine
         if crls
           next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
         else
-          pem = Puppet::Rest::Routes.get_crls(CA_NAME, @ssl_context)
+          pem = Puppet::Rest::Routes.get_crls(Puppet::SSL::CA_NAME, @ssl_context)
           crls = @cert_provider.load_crls_from_pem(pem)
           # verify crls before saving
           next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
@@ -100,6 +98,8 @@ class Puppet::SSL::StateMachine
   #
   class NeedKey < SSLState
     def next_state
+      Puppet.debug(_("Loading/generating private key"))
+
       key = @cert_provider.load_private_key(Puppet[:certname])
       if key
         cert = @cert_provider.load_client_cert(Puppet[:certname])
@@ -138,6 +138,8 @@ class Puppet::SSL::StateMachine
   #
   class NeedSubmitCSR < KeySSLState
     def next_state
+      Puppet.debug(_("Generating and submitting a CSR"))
+
       csr = @cert_provider.create_request(Puppet[:certname], @private_key)
       Puppet::Rest::Routes.put_certificate_request(csr.to_pem, Puppet[:certname], @ssl_context)
       @cert_provider.save_request(Puppet[:certname], csr)
@@ -155,6 +157,8 @@ class Puppet::SSL::StateMachine
   #
   class NeedCert < KeySSLState
     def next_state
+      Puppet.debug(_("Downloading client certificate"))
+
       cert = OpenSSL::X509::Certificate.new(
         Puppet::Rest::Routes.get_certificate(Puppet[:certname], @ssl_context)
       )
@@ -191,6 +195,8 @@ class Puppet::SSL::StateMachine
         puts _("Exiting; no certificate found and waitforcert is disabled")
         exit(1)
       else
+        Puppet.debug(_("Waiting %{time} seconds for cert to be signed") % {time: time})
+
         sleep(time)
 
         # our ssl directory may have been cleaned while we were
@@ -247,15 +253,9 @@ class Puppet::SSL::StateMachine
 
   def run_machine(state, stop)
     loop do
-      Puppet.debug("Current SSL state #{state_name(state)}")
-
       state = state.next_state
 
       return state if state.is_a?(stop)
     end
-  end
-
-  def state_name(state)
-    state.class.to_s.split('::').last
   end
 end

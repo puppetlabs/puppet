@@ -213,53 +213,6 @@ ERROR_STRING
     generate_certificate_request unless existing_request
   end
 
-  # Generate a keypair, generate a CSR, and submit it. If a local key pair
-  # already exists it will be used to generate the CSR. If a local CSR already
-  # exists and matches the key then the existing CSR will be submitted. If the
-  # CSR and key do not match an exception will be raised.
-  #
-  # @return [Puppet::SSL::CertificateRequest, nil]
-  def submit_request
-    generate_key unless key
-
-    csr = load_certificate_request_from_file
-    if csr
-      if key.content.public_key.to_s != csr.content.public_key.to_s
-        Puppet.warning("The local CSR does not match the agent's public key. Generating a new CSR.")
-
-        request_path = certificate_request_location(name)
-        Puppet::FileSystem.unlink(request_path)
-        csr = nil
-      end
-    end
-
-    if csr
-      validate_csr_with_key(csr, key)
-      submit_certificate_request(csr)
-      @certificate_request = csr
-    else
-      generate_certificate_request
-    end
-
-    @certificate_request
-  end
-
-  def validate_local_csr_with_key(csr, key)
-    if key.content.public_key.to_s != csr.content.public_key.to_s
-      raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, clean_params: clean_params, puppet_params: puppet_params }
-The local CSR does not match the agent's public key.
-CSR fingerprint: %{fingerprint}
-CSR public key: %{csr_public_key}
-Agent public key: %{agent_public_key}
-To fix this, remove the CSR from the agent and then start a puppet run, which will automatically regenerate a CSR.
-On the agent:
-  1. puppet ssl clean %{clean_params}
-  2. puppet %{puppet_params}
-ERROR_STRING
-    end
-  end
-  private :validate_local_csr_with_key
-
   def validate_csr_with_key(csr, key)
     if key.content.public_key.to_s != csr.content.public_key.to_s
       raise Puppet::Error, _(<<ERROR_STRING) % { fingerprint: csr.fingerprint, csr_public_key: csr.content.public_key.to_text, agent_public_key: key.content.public_key.to_text, cert_name: Puppet[:certname], clean_params: clean_params, puppet_params: puppet_params }
