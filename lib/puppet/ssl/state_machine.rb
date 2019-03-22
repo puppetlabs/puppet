@@ -11,8 +11,6 @@ require 'puppet/ssl'
 #
 # @private
 class Puppet::SSL::StateMachine
-  CA_NAME = 'ca'.freeze
-
   class SSLState
     attr_reader :ssl_context
 
@@ -39,7 +37,7 @@ class Puppet::SSL::StateMachine
       if cacerts
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
       else
-        pem = Puppet::Rest::Routes.get_certificate(CA_NAME, @ssl_context)
+        pem = Puppet::Rest::Routes.get_certificate(Puppet::SSL::CA_NAME, @ssl_context)
         cacerts = @cert_provider.load_cacerts_from_pem(pem)
         # verify cacerts before saving
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
@@ -72,7 +70,7 @@ class Puppet::SSL::StateMachine
         if crls
           next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
         else
-          pem = Puppet::Rest::Routes.get_crls(CA_NAME, @ssl_context)
+          pem = Puppet::Rest::Routes.get_crls(Puppet::SSL::CA_NAME, @ssl_context)
           crls = @cert_provider.load_crls_from_pem(pem)
           # verify crls before saving
           next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
