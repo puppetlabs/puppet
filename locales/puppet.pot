@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.3.0-193-g0da1ea8\n"
+"Project-Id-Version: Puppet automation framework 6.3.0-202-ge4c8ca3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-03-20 21:18+0000\n"
-"PO-Revision-Date: 2019-03-20 21:18+0000\n"
+"POT-Creation-Date: 2019-03-22 23:48+0000\n"
+"PO-Revision-Date: 2019-03-22 23:48+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -7684,19 +7684,7 @@ msgid ""
 "  2. puppet %{puppet_params}\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:249
-msgid ""
-"The local CSR does not match the agent's public key.\n"
-"CSR fingerprint: %{fingerprint}\n"
-"CSR public key: %{csr_public_key}\n"
-"Agent public key: %{agent_public_key}\n"
-"To fix this, remove the CSR from the agent and then start a puppet run, which will automatically regenerate a CSR.\n"
-"On the agent:\n"
-"  1. puppet ssl clean %{clean_params}\n"
-"  2. puppet %{puppet_params}\n"
-msgstr ""
-
-#: ../lib/puppet/ssl/host.rb:265
+#: ../lib/puppet/ssl/host.rb:218
 msgid ""
 "The CSR retrieved from the master does not match the agent's public key.\n"
 "CSR fingerprint: %{fingerprint}\n"
@@ -7710,53 +7698,53 @@ msgid ""
 "  2. puppet %{puppet_params}\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:319 ../lib/puppet/ssl/host.rb:340
+#: ../lib/puppet/ssl/host.rb:272 ../lib/puppet/ssl/host.rb:293
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:321
+#: ../lib/puppet/ssl/host.rb:274
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:330 ../lib/puppet/ssl/state_machine.rb:191
+#: ../lib/puppet/ssl/host.rb:283 ../lib/puppet/ssl/state_machine.rb:195
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:338
+#: ../lib/puppet/ssl/host.rb:291
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:378
+#: ../lib/puppet/ssl/host.rb:331
 msgid "Response from the CA did not contain a valid certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:384
+#: ../lib/puppet/ssl/host.rb:337
 msgid "Could not download certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:411
+#: ../lib/puppet/ssl/host.rb:364
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:443 ../lib/puppet/ssl/state_machine.rb:91
+#: ../lib/puppet/ssl/host.rb:396 ../lib/puppet/ssl/state_machine.rb:89
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:473
+#: ../lib/puppet/ssl/host.rb:426
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:494
+#: ../lib/puppet/ssl/host.rb:447
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:498
+#: ../lib/puppet/ssl/host.rb:451
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:501
+#: ../lib/puppet/ssl/host.rb:454
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
@@ -7852,39 +7840,55 @@ msgstr ""
 msgid "Certificate '%{subject}' failed verification (%{err}): %{err_utf8}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:52
+#: ../lib/puppet/ssl/state_machine.rb:50
 msgid "CA certificate is missing from the server"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:54
+#: ../lib/puppet/ssl/state_machine.rb:52
 msgid "Could not download CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:89
+#: ../lib/puppet/ssl/state_machine.rb:87
 msgid "CRL is missing from the server"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:147
+#: ../lib/puppet/ssl/state_machine.rb:101
+msgid "Loading/generating private key"
+msgstr ""
+
+#: ../lib/puppet/ssl/state_machine.rb:141
+msgid "Generating and submitting a CSR"
+msgstr ""
+
+#: ../lib/puppet/ssl/state_machine.rb:149
 msgid "Failed to submit the CSR, HTTP response was %{code}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:172
-msgid "Failed to parse certificate: %{message}"
+#: ../lib/puppet/ssl/state_machine.rb:160
+msgid "Downloading client certificate"
 msgstr ""
 
 #: ../lib/puppet/ssl/state_machine.rb:176
+msgid "Failed to parse certificate: %{message}"
+msgstr ""
+
+#: ../lib/puppet/ssl/state_machine.rb:180
 msgid "Certificate for %{certname} has not been signed yet"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:178
+#: ../lib/puppet/ssl/state_machine.rb:182
 msgid "Failed to retrieve certificate for %{certname}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:236
+#: ../lib/puppet/ssl/state_machine.rb:198
+msgid "Waiting %{time} seconds for cert to be signed"
+msgstr ""
+
+#: ../lib/puppet/ssl/state_machine.rb:242
 msgid "Verified client certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:238
+#: ../lib/puppet/ssl/state_machine.rb:244
 msgid "Verified CA certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
