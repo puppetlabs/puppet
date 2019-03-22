@@ -59,6 +59,7 @@ describe Puppet::Application::Device do
 
   describe "when handling options" do
     before do
+      Puppet[:certname] = 'device.example.com'
       allow(@device.command_line).to receive(:args).and_return([])
     end
 
@@ -77,7 +78,7 @@ describe Puppet::Application::Device do
       Puppet[:onetime] = true
       expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 0)).and_return(state_machine)
 
-      @device.setup_host('device.example.com')
+      @device.setup_host
     end
 
     it "should use supplied waitforcert when --onetime is specified" do
@@ -85,19 +86,20 @@ describe Puppet::Application::Device do
       @device.handle_waitforcert(60)
       expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 60)).and_return(state_machine)
 
-      @device.setup_host('device.example.com')
+      @device.setup_host
     end
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
       expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 120)).and_return(state_machine)
 
-      @device.setup_host('device.example.com')
+      @device.setup_host
     end
 
     it "should use the waitforcert setting when checking for a signed certificate" do
       Puppet[:waitforcert] = 10
       expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 10)).and_return(state_machine)
-      @device.setup_host('device.example.com')
+
+      @device.setup_host
     end
 
     it "should set the log destination with --logdest" do
@@ -265,17 +267,21 @@ describe Puppet::Application::Device do
   end
 
   describe "when initializing each devices SSL" do
-    it "should create a new ssl host" do
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(certname: 'device.example.com')).and_return(state_machine)
+    before :each do
+      Puppet[:certname] = 'device.example.com'
+    end
 
-      @device.setup_host('device.example.com')
+    it "should create a new ssl host" do
+      expect(Puppet::SSL::StateMachine).to receive(:new).and_return(state_machine)
+
+      @device.setup_host
     end
 
     it "should wait for a certificate" do
       allow(@device.options).to receive(:[]).with(:waitforcert).and_return(123)
       expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(waitforcert: 123)).and_return(state_machine)
 
-      @device.setup_host('device.example.com')
+      @device.setup_host
     end
   end
 
