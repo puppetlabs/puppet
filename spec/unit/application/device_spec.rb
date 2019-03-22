@@ -417,7 +417,10 @@ describe Puppet::Application::Device do
         @configurer = double('configurer')
         allow(@configurer).to receive(:run)
         allow(Puppet::Configurer).to receive(:new).and_return(@configurer)
+        allow_any_instance_of(Puppet::SSL::StateMachine).to receive(:ensure_client_certificate).and_return(ssl_context)
       end
+
+      let(:ssl_context) { Puppet::SSL::SSLContext.new }
 
       it "should set vardir to the device vardir" do
         expect(Puppet).to receive(:[]=).with(:vardir, make_absolute("/dummy/devices/device1"))
@@ -532,8 +535,8 @@ describe Puppet::Application::Device do
         expect { @device.main }.to exit_with 0
       end
 
-      it "should make the Puppet::Pops::Loaaders available" do
-        expect(@configurer).to receive(:run).with(:network_device => true, :pluginsync => true) do
+      it "should make the Puppet::Pops::Loaders available" do
+        expect(@configurer).to receive(:run).with(:network_device => true, :pluginsync => false) do
           fail('Loaders not available') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
           true
         end.and_return(6, 2)

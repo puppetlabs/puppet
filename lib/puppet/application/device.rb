@@ -331,7 +331,7 @@ Licensed under the Apache 2.0 License
             Puppet.override(ssl_context: ssl_context) do
               require 'puppet/configurer'
               configurer = Puppet::Configurer.new
-              configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync? && !options[:libdir])
+              configurer.run(:network_device => true, :pluginsync => false)
             end
           end
         rescue => detail
