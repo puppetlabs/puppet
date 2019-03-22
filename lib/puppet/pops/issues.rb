@@ -347,7 +347,7 @@ module Issues
   # E.g. an arithmetic expression where a hostname is expected.
   #
   ILLEGAL_EXPRESSION = hard_issue :ILLEGAL_EXPRESSION, :feature, :container do
-    _("Illegal expression: %{expression} is unacceptable as %{feature} in an expression of type %{container}.") % { expression: label(semantic), feature: feature, container: label(container) }  
+    _("Illegal expression: %{expression} is unacceptable as %{feature} in an expression of type %{container}.") % { expression: label(semantic), feature: feature, container: label(container) }
   end
 
   # Issues when a variable is not a NAME
@@ -374,10 +374,10 @@ module Issues
   end
 
   # When an attempt is made to use multiple keys (to produce a range in Ruby - e.g. $arr[2,-1]).
-  # This is not supported in 3x, but it allowed in 4x.
+  # This is not supported in 3x, but it is allowed in 4x.
   #
   UNSUPPORTED_RANGE = issue :UNSUPPORTED_RANGE, :count do
-    _("Attempt to use unsupported range in an expression of type %{expression_type}. Was given %{count} where max 1 was accepted.") % { expression_type: label(semantic), count: count }
+    _("Attempt to use unsupported range in an expression of type %{expression_type}. Got %{count} where max 1 is accepted.") % { expression_type: label(semantic), count: count }
   end
 
   # Issues when expressions that are not implemented or activated in the current version are used.
