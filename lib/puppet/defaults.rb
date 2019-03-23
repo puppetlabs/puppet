@@ -1055,7 +1055,9 @@ EOT
     :allow_duplicate_certs => {
       :default    => false,
       :type       => :boolean,
-      :desc       => "Whether to allow a new certificate request to overwrite an existing certificate.",
+      :desc       => "Whether to allow a new certificate request to overwrite an existing
+        certificate request. If true, then the old certificate must be cleaned using
+        `puppetserver ca clean`, and the new request signed using `puppetserver ca sign`."
     },
     :ca_ttl => {
       :default    => "5y",
