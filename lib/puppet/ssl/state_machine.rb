@@ -192,10 +192,10 @@ class Puppet::SSL::StateMachine
     def next_state
       time = @machine.onetime ? 0 : @machine.waitforcert
       if time < 1
-        puts _("Exiting; no certificate found and waitforcert is disabled")
+        puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the waitforcert setting is set to 0.") % { name: Puppet[:certname] }
         exit(1)
       else
-        Puppet.debug(_("Waiting %{time} seconds for cert to be signed") % {time: time})
+        Puppet.info(_("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Will try again in %{time} seconds.") % {name: Puppet[:certname], time: time})
 
         sleep(time)
 
