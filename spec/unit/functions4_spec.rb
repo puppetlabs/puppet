@@ -469,12 +469,20 @@ describe 'the 4x function api' do
         end
       end
 
-      it 'supports injection of a cache' do
+      it 'supports injection of a compiler bound cache' do
         the_function = create_function_with_cache_param.new(:closure_scope, :loader)
         expect(the_function.call(scope, 'key', 10)).to eql(nil)
         expect(the_function.call(scope, 'key', 20)).to eql(10)
         expect(the_function.call(scope, 'key', 30)).to eql(20)
       end
+
+      it 'supports injection of an environment bound cache' do
+        the_function = create_function_with_env_cache_param.new(:closure_scope, :loader)
+        expect(the_function.call(scope, 'key', 10)).to eql(nil)
+        expect(the_function.call(scope, 'key', 20)).to eql(10)
+        expect(the_function.call(scope, 'key', 30)).to eql(20)
+      end
+
     end
 
     context 'reports meaningful errors' do
@@ -1005,6 +1013,22 @@ describe 'the 4x function api' do
       end
     end
   end
+
+def create_function_with_env_cache_param
+  Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+    dispatch :test do
+      env_cache_param
+      param 'String', :key
+      param 'Any', :value
+    end
+    def test(cache, k, v)
+      h = cache.retrieve(self)
+      previous = h[k]
+      h[k] = v
+      previous
+    end
+  end
+end
 
   def type_alias_t(name, type_string)
     type_expr = Puppet::Pops::Parser::EvaluatingParser.new.parse_string(type_string)
