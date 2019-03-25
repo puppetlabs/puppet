@@ -470,17 +470,45 @@ describe 'the 4x function api' do
       end
 
       it 'supports injection of a compiler bound cache' do
-        the_function = create_function_with_cache_param.new(:closure_scope, :loader)
+        the_function = create_function_with_cache_param.new(scope, :loader)
         expect(the_function.call(scope, 'key', 10)).to eql(nil)
         expect(the_function.call(scope, 'key', 20)).to eql(10)
         expect(the_function.call(scope, 'key', 30)).to eql(20)
       end
 
       it 'supports injection of an environment bound cache' do
-        the_function = create_function_with_env_cache_param.new(:closure_scope, :loader)
+        the_function = create_function_with_env_cache_param.new(scope, :loader)
         expect(the_function.call(scope, 'key', 10)).to eql(nil)
         expect(the_function.call(scope, 'key', 20)).to eql(10)
         expect(the_function.call(scope, 'key', 30)).to eql(20)
+      end
+
+      it 'gets callback when compilation ends (when having registered one)' do
+        the_function = create_function_with_env_cache_param.new(scope, :loader)
+        the_function.expects(:on_compilation_end).once
+        expect(the_function.call(scope, 'key', 10)).to eql(nil)
+        # called when actually compiling - here done manually
+        scope.compiler.on_compilation_end
+      end
+
+      it 'gets callback when environment expires (when having registered one)' do
+        the_function = create_function_with_env_cache_param.new(scope, :loader)
+        the_function.expects(:on_env_expiration).once
+        expect(the_function.call(scope, 'key', 10)).to eql(nil)
+        # called when environment cache control actually expires the environment - here done manually
+        scope.environment.on_expiration
+      end
+
+      it 'a method can call #cache_adapter to get the cache adapter' do
+        the_function = create_function_with_env_cache_param.new(scope, :loader)
+        expect(the_function.on_compilation_end).to be_a(Puppet::Pops::Adapters::ObjectIdCacheAdapter)
+      end
+
+      it 'a method can call #env_cache_adapter to get the cache adapter' do
+        Puppet.override({:global_scope => scope}, "testing") do
+          the_function = create_function_with_env_cache_param.new(scope, :loader)
+          expect(the_function.on_env_expiration).to be_a(Puppet::Pops::Adapters::ObjectIdCacheAdapter)
+        end
       end
 
     end
@@ -1016,6 +1044,8 @@ describe 'the 4x function api' do
 
 def create_function_with_env_cache_param
   Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+    when_environment_expires :on_env_expiration
+    when_compilation_ends :on_compilation_end
     dispatch :test do
       env_cache_param
       param 'String', :key
@@ -1026,6 +1056,12 @@ def create_function_with_env_cache_param
       previous = h[k]
       h[k] = v
       previous
+    end
+    def on_env_expiration
+      cache_adapter()
+    end
+    def on_compilation_end
+      env_cache_adapter()
     end
   end
 end
