@@ -36,7 +36,7 @@ throwaway systems.
 All of the acceptance tests for Puppet are kept in the acceptance/tests/
 directory. Running the acceptance tests is much more involved than running the
 spec tests. Information about how to run them can be found in the [acceptance
-testing documentation](acceptance_tests.md)
+testing documentation](https://github.com/puppetlabs/puppet/blob/master/acceptance/README.md).
 
 ## Testing dependency version requirements
 
