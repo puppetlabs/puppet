@@ -165,9 +165,8 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
 
   context 'when in FIPS mode...' do
     it 'module uninstaller refuses to run' do
-      Facter.stubs(:value).with(:fips_enabled).returns(true)
+      allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
       expect {application.run}.to raise_error(/Module uninstall is prohibited in FIPS mode/)
     end 
   end
-
 end

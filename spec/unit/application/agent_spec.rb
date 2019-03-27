@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/agent'
@@ -12,28 +11,29 @@ describe Puppet::Application::Agent do
     @puppetd = Puppet::Application[:agent]
 
     @daemon = Puppet::Daemon.new(nil)
-    @daemon.stubs(:daemonize)
-    @daemon.stubs(:start)
-    @daemon.stubs(:stop)
-    Puppet::Daemon.stubs(:new).returns(@daemon)
+    allow(@daemon).to receive(:daemonize)
+    allow(@daemon).to receive(:start)
+    allow(@daemon).to receive(:stop)
+    allow(Puppet::Daemon).to receive(:new).and_return(@daemon)
     Puppet[:daemonize] = false
 
-    @agent = stub_everything 'agent'
-    Puppet::Agent.stubs(:new).returns(@agent)
+    @agent = double('agent')
+    allow(Puppet::Agent).to receive(:new).and_return(@agent)
 
     @puppetd.preinit
-    Puppet::Util::Log.stubs(:newdestination)
+    allow(Puppet::Util::Log).to receive(:newdestination)
 
-    @ssl_host = stub_everything 'ssl host'
-    Puppet::SSL::Host.stubs(:new).returns(@ssl_host)
+    @ssl_host = double('ssl host')
+    allow(@ssl_host).to receive(:wait_for_cert)
+    allow(Puppet::SSL::Host).to receive(:new).and_return(@ssl_host)
 
-    Puppet::Node.indirection.stubs(:terminus_class=)
-    Puppet::Node.indirection.stubs(:cache_class=)
-    Puppet::Node::Facts.indirection.stubs(:terminus_class=)
+    allow(Puppet::Node.indirection).to receive(:terminus_class=)
+    allow(Puppet::Node.indirection).to receive(:cache_class=)
+    allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
 
-    $stderr.expects(:puts).never
+    expect($stderr).not_to receive(:puts)
 
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
   end
 
   it "should operate in agent run_mode" do
@@ -58,7 +58,7 @@ describe Puppet::Application::Agent do
 
   describe "in preinit" do
     it "should catch INT" do
-      Signal.expects(:trap).with { |arg,block| arg == :INT }
+      expect(Signal).to receive(:trap).with(:INT)
 
       @puppetd.preinit
     end
@@ -96,7 +96,7 @@ describe Puppet::Application::Agent do
 
   describe "when handling options" do
     before do
-      @puppetd.command_line.stubs(:args).returns([])
+      allow(@puppetd.command_line).to receive(:args).and_return([])
     end
 
     [:enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
@@ -126,39 +126,39 @@ describe Puppet::Application::Agent do
     end
 
     it "should set waitforcert to 0 with --onetime and if --waitforcert wasn't given" do
-      @agent.stubs(:run).returns(2)
+      allow(@agent).to receive(:run).and_return(2)
       Puppet[:onetime] = true
 
-      @ssl_host.expects(:wait_for_cert).with(0)
+      expect(@ssl_host).to receive(:wait_for_cert).with(0)
 
       expect { execute_agent }.to exit_with 0
     end
 
     it "should use supplied waitforcert when --onetime is specified" do
-      @agent.stubs(:run).returns(2)
+      allow(@agent).to receive(:run).and_return(2)
       Puppet[:onetime] = true
       @puppetd.handle_waitforcert(60)
 
-      @ssl_host.expects(:wait_for_cert).with(60)
+      expect(@ssl_host).to receive(:wait_for_cert).with(60)
 
       expect { execute_agent }.to exit_with 0
     end
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
-      @ssl_host.expects(:wait_for_cert).with(120)
+      expect(@ssl_host).to receive(:wait_for_cert).with(120)
 
       execute_agent
     end
 
     it "should use the waitforcert setting when checking for a signed certificate" do
       Puppet[:waitforcert] = 10
-      @ssl_host.expects(:wait_for_cert).with(10)
+      expect(@ssl_host).to receive(:wait_for_cert).with(10)
 
       execute_agent
     end
 
     it "should set the log destination with --logdest" do
-      Puppet::Log.expects(:newdestination).with("console")
+      expect(Puppet::Log).to receive(:newdestination).with("console")
 
       @puppetd.handle_logdest("console")
     end
@@ -170,9 +170,9 @@ describe Puppet::Application::Agent do
     end
 
     it "should parse the log destination from the command line" do
-      @puppetd.command_line.stubs(:args).returns(%w{--logdest /my/file})
+      allow(@puppetd.command_line).to receive(:args).and_return(%w{--logdest /my/file})
 
-      Puppet::Util::Log.expects(:newdestination).with("/my/file")
+      expect(Puppet::Util::Log).to receive(:newdestination).with("/my/file")
 
       @puppetd.parse_options
     end
@@ -186,25 +186,25 @@ describe Puppet::Application::Agent do
 
   describe "during setup" do
     before :each do
-      Puppet.stubs(:info)
+      allow(Puppet).to receive(:info)
       Puppet[:libdir] = "/dev/null/lib"
-      Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
-      Puppet::Transaction::Report.indirection.stubs(:cache_class=)
-      Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
-      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
-      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-      Puppet.stubs(:settraps)
+      allow(Puppet::Transaction::Report.indirection).to receive(:terminus_class=)
+      allow(Puppet::Transaction::Report.indirection).to receive(:cache_class=)
+      allow(Puppet::Resource::Catalog.indirection).to receive(:terminus_class=)
+      allow(Puppet::Resource::Catalog.indirection).to receive(:cache_class=)
+      allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
+      allow(Puppet).to receive(:settraps)
     end
 
     it "should not run with extra arguments" do
-      @puppetd.command_line.stubs(:args).returns(%w{disable})
+      allow(@puppetd.command_line).to receive(:args).and_return(%w{disable})
       expect{@puppetd.setup}.to raise_error ArgumentError, /does not take parameters/
     end
 
     describe "with --test" do
       it "should call setup_test" do
         @puppetd.options[:test] = true
-        @puppetd.expects(:setup_test)
+        expect(@puppetd).to receive(:setup_test)
 
         @puppetd.setup
       end
@@ -227,13 +227,13 @@ describe Puppet::Application::Agent do
     end
 
     it "should call setup_logs" do
-      @puppetd.expects(:setup_logs)
+      expect(@puppetd).to receive(:setup_logs)
       @puppetd.setup
     end
 
     describe "when setting up logs" do
       before :each do
-        Puppet::Util::Log.stubs(:newdestination)
+        allow(Puppet::Util::Log).to receive(:newdestination)
       end
 
       it "should set log level to debug if --debug was passed" do
@@ -252,8 +252,8 @@ describe Puppet::Application::Agent do
         it "should set console as the log destination with level #{level}" do
           @puppetd.options[level] = true
 
-          Puppet::Util::Log.expects(:newdestination).at_least_once
-          Puppet::Util::Log.expects(:newdestination).with(:console).once
+          allow(Puppet::Util::Log).to receive(:newdestination)
+          expect(Puppet::Util::Log).to receive(:newdestination).with(:console).exactly(:once)
 
           @puppetd.setup_logs
         end
@@ -262,16 +262,15 @@ describe Puppet::Application::Agent do
       it "should set a default log destination if no --logdest" do
         @puppetd.options[:setdest] = false
 
-        Puppet::Util::Log.expects(:setup_default)
+        expect(Puppet::Util::Log).to receive(:setup_default)
 
         @puppetd.setup_logs
       end
-
     end
 
     it "should print puppet config if asked to in Puppet config" do
       Puppet[:configprint] = "plugindest"
-      Puppet.settings.expects(:print_configs).returns true
+      expect(Puppet.settings).to receive(:print_configs).and_return(true)
       expect { execute_agent }.to exit_with 0
     end
 
@@ -279,32 +278,31 @@ describe Puppet::Application::Agent do
       path = make_absolute('/my/path')
       Puppet[:modulepath] = path
       Puppet[:configprint] = "modulepath"
-      Puppet::Settings.any_instance.expects(:puts).with(path)
+      expect_any_instance_of(Puppet::Settings).to receive(:puts).with(path)
       expect { execute_agent }.to exit_with 0
     end
 
     it "should use :main, :puppetd, and :ssl" do
-      Puppet.settings.unstub(:use)
-      Puppet.settings.expects(:use).with(:main, :agent, :ssl)
+      expect(Puppet.settings).to receive(:use).with(:main, :agent, :ssl)
 
       @puppetd.setup
     end
 
     it "should setup an agent in fingerprint mode" do
       @puppetd.options[:fingerprint] = true
-      @puppetd.expects(:setup_agent).never
+      expect(@puppetd).not_to receive(:setup_agent)
 
       @puppetd.setup
     end
 
     it "should tell the report handler to use REST" do
-      Puppet::Transaction::Report.indirection.expects(:terminus_class=).with(:rest)
+      expect(Puppet::Transaction::Report.indirection).to receive(:terminus_class=).with(:rest)
 
       @puppetd.setup
     end
 
     it "should tell the report handler to cache locally as yaml" do
-      Puppet::Transaction::Report.indirection.expects(:cache_class=).with(:yaml)
+      expect(Puppet::Transaction::Report.indirection).to receive(:cache_class=).with(:yaml)
 
       @puppetd.setup
     end
@@ -320,7 +318,7 @@ describe Puppet::Application::Agent do
     end
 
     it "has an application default :catalog_cache_terminus setting of 'json'" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:json)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:cache_class=).with(:json)
 
       @puppetd.initialize_app_defaults
       @puppetd.setup
@@ -328,7 +326,7 @@ describe Puppet::Application::Agent do
 
     it "should tell the catalog cache class based on the :catalog_cache_terminus setting" do
       Puppet[:catalog_cache_terminus] = "yaml"
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:yaml)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:cache_class=).with(:yaml)
 
       @puppetd.initialize_app_defaults
       @puppetd.setup
@@ -336,8 +334,7 @@ describe Puppet::Application::Agent do
 
     it "should not set catalog cache class if :catalog_cache_terminus is explicitly nil" do
       Puppet[:catalog_cache_terminus] = nil
-      Puppet::Resource::Catalog.indirection.unstub(:cache_class=)
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).never
+      expect(Puppet::Resource::Catalog.indirection).not_to receive(:cache_class=)
 
       @puppetd.initialize_app_defaults
       @puppetd.setup
@@ -349,7 +346,7 @@ describe Puppet::Application::Agent do
     end
 
     it "should create an agent" do
-      Puppet::Agent.stubs(:new).with(Puppet::Configurer)
+      allow(Puppet::Agent).to receive(:new).with(Puppet::Configurer)
 
       @puppetd.setup
     end
@@ -357,7 +354,7 @@ describe Puppet::Application::Agent do
     [:enable, :disable].each do |action|
       it "should delegate to enable_disable_client if we #{action} the agent" do
         @puppetd.options[action] = true
-        @puppetd.expects(:enable_disable_client).with(@agent)
+        expect(@puppetd).to receive(:enable_disable_client).with(@agent)
 
         @puppetd.setup
       end
@@ -367,7 +364,7 @@ describe Puppet::Application::Agent do
       [:enable, :disable].each do |action|
         it "should call client.#{action}" do
           @puppetd.options[action] = true
-          @agent.expects(action)
+          expect(@agent).to receive(action)
           expect { execute_agent }.to exit_with 0
         end
       end
@@ -375,7 +372,7 @@ describe Puppet::Application::Agent do
       it "should pass the disable message when disabling" do
         @puppetd.options[:disable] = true
         @puppetd.options[:disable_message] = "message"
-        @agent.expects(:disable).with("message")
+        expect(@agent).to receive(:disable).with("message")
 
         expect { execute_agent }.to exit_with 0
       end
@@ -383,7 +380,7 @@ describe Puppet::Application::Agent do
       it "should pass the default disable message when disabling without a message" do
         @puppetd.options[:disable] = true
         @puppetd.options[:disable_message] = nil
-        @agent.expects(:disable).with("reason not specified")
+        expect(@agent).to receive(:disable).with("reason not specified")
 
         expect { execute_agent }.to exit_with 0
       end
@@ -398,18 +395,18 @@ describe Puppet::Application::Agent do
     end
 
     it "should daemonize if needed" do
-      Puppet::Util::Platform.stubs(:windows?).returns false
+      allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
       Puppet[:daemonize] = true
-      Signal.stubs(:trap)
+      allow(Signal).to receive(:trap)
 
-      @daemon.expects(:daemonize)
+      expect(@daemon).to receive(:daemonize)
 
       execute_agent
     end
 
     it "should wait for a certificate" do
       @puppetd.options[:waitforcert] = 123
-      @ssl_host.expects(:wait_for_cert).with(123)
+      expect(@ssl_host).to receive(:wait_for_cert).with(123)
 
       execute_agent
     end
@@ -419,12 +416,12 @@ describe Puppet::Application::Agent do
       @puppetd.options[:waitforcert] = 123
       @puppetd.options[:digest] = 'MD5'
 
-      certificate = mock 'certificate'
-      certificate.stubs(:digest).with('MD5').returns('ABCDE')
-      @ssl_host.stubs(:certificate).returns(certificate)
+      certificate = double('certificate')
+      allow(certificate).to receive(:digest).with('MD5').and_return('ABCDE')
+      allow(@ssl_host).to receive(:certificate).and_return(certificate)
 
-      @ssl_host.expects(:wait_for_cert).never
-      @puppetd.expects(:puts).with('ABCDE')
+      expect(@ssl_host).not_to receive(:wait_for_cert)
+      expect(@puppetd).to receive(:puts).with('ABCDE')
 
       execute_agent
     end
@@ -435,35 +432,34 @@ describe Puppet::Application::Agent do
       end
 
       it "should not setup as an agent" do
-        @puppetd.expects(:setup_agent).never
+        expect(@puppetd).not_to receive(:setup_agent)
         @puppetd.setup
       end
 
       it "should not create an agent" do
-        Puppet::Agent.stubs(:new).with(Puppet::Configurer).never
+        expect(Puppet::Agent).not_to receive(:new).with(Puppet::Configurer)
         @puppetd.setup
       end
 
       it "should not daemonize" do
-        @daemon.expects(:daemonize).never
+        expect(@daemon).not_to receive(:daemonize)
         @puppetd.setup
       end
     end
 
     describe "when configuring agent for catalog run" do
       it "should set should_fork as true when running normally" do
-        Puppet::Agent.expects(:new).with(anything, true)
+        expect(Puppet::Agent).to receive(:new).with(anything, true)
         @puppetd.setup
       end
 
       it "should not set should_fork as false for --onetime" do
         Puppet[:onetime] = true
-        Puppet::Agent.expects(:new).with(anything, false)
+        expect(Puppet::Agent).to receive(:new).with(anything, false)
         @puppetd.setup
       end
     end
   end
-
 
   describe "when running" do
     before :each do
@@ -473,7 +469,7 @@ describe Puppet::Application::Agent do
     it "should dispatch to fingerprint if --fingerprint is used" do
       @puppetd.options[:fingerprint] = true
 
-      @puppetd.stubs(:fingerprint)
+      allow(@puppetd).to receive(:fingerprint)
 
       execute_agent
     end
@@ -481,7 +477,7 @@ describe Puppet::Application::Agent do
     it "should dispatch to onetime if --onetime is used" do
       @puppetd.options[:onetime] = true
 
-      @puppetd.stubs(:onetime)
+      allow(@puppetd).to receive(:onetime)
 
       execute_agent
     end
@@ -489,41 +485,40 @@ describe Puppet::Application::Agent do
     it "should dispatch to main if --onetime and --fingerprint are not used" do
       @puppetd.options[:onetime] = false
 
-      @puppetd.stubs(:main)
+      allow(@puppetd).to receive(:main)
 
       execute_agent
     end
 
     describe "with --onetime" do
-
       before :each do
-        @agent.stubs(:run).returns(:report)
+        allow(@agent).to receive(:run).and_return(:report)
         Puppet[:onetime] = true
         @puppetd.options[:client] = :client
         @puppetd.options[:detailed_exitcodes] = false
       end
 
       it "should setup traps" do
-        @daemon.expects(:set_signal_traps)
+        expect(@daemon).to receive(:set_signal_traps)
 
         expect { execute_agent }.to exit_with 0
       end
 
       it "should let the agent run" do
-        @agent.expects(:run).returns(:report)
+        expect(@agent).to receive(:run).and_return(:report)
 
         expect { execute_agent }.to exit_with 0
       end
 
       it "should run the agent with the supplied job_id" do
         @puppetd.options[:job_id] = 'special id'
-        @agent.expects(:run).with(:job_id => 'special id').returns(:report)
+        expect(@agent).to receive(:run).with(:job_id => 'special id').and_return(:report)
 
         expect { execute_agent }.to exit_with 0
       end
 
       it "should stop the daemon" do
-        @daemon.expects(:stop).with(:exit => false)
+        expect(@daemon).to receive(:stop).with(:exit => false)
 
         expect { execute_agent }.to exit_with 0
       end
@@ -535,14 +530,14 @@ describe Puppet::Application::Agent do
 
         it "should exit with agent computed exit status" do
           Puppet[:noop] = false
-          @agent.stubs(:run).returns(666)
+          allow(@agent).to receive(:run).and_return(666)
 
           expect { execute_agent }.to exit_with 666
         end
 
         it "should exit with the agent's exit status, even if --noop is set." do
           Puppet[:noop] = true
-          @agent.stubs(:run).returns(666)
+          allow(@agent).to receive(:run).and_return(666)
 
           expect { execute_agent }.to exit_with 666
         end
@@ -551,26 +546,26 @@ describe Puppet::Application::Agent do
 
     describe "with --fingerprint" do
       before :each do
-        @cert = mock 'cert'
+        @cert = double('cert')
         @puppetd.options[:fingerprint] = true
         @puppetd.options[:digest] = :MD5
       end
 
       it "should fingerprint the certificate if it exists" do
-        @ssl_host.stubs(:certificate).returns(@cert)
-        @cert.stubs(:digest).with('MD5').returns "fingerprint"
+        allow(@ssl_host).to receive(:certificate).and_return(@cert)
+        allow(@cert).to receive(:digest).with('MD5').and_return("fingerprint")
 
-        @puppetd.expects(:puts).with "fingerprint"
+        expect(@puppetd).to receive(:puts).with("fingerprint")
 
         @puppetd.fingerprint
       end
 
       it "should fingerprint the certificate request if no certificate have been signed" do
-        @ssl_host.stubs(:certificate).returns(nil)
-        @ssl_host.stubs(:certificate_request).returns(@cert)
-        @cert.stubs(:digest).with('MD5').returns "fingerprint"
+        allow(@ssl_host).to receive(:certificate).and_return(nil)
+        allow(@ssl_host).to receive(:certificate_request).and_return(@cert)
+        allow(@cert).to receive(:digest).with('MD5').and_return("fingerprint")
 
-        @puppetd.expects(:puts).with "fingerprint"
+        expect(@puppetd).to receive(:puts).with("fingerprint")
 
         @puppetd.fingerprint
       end
@@ -578,11 +573,11 @@ describe Puppet::Application::Agent do
 
     describe "without --onetime and --fingerprint" do
       before :each do
-        Puppet.stubs(:notice)
+        allow(Puppet).to receive(:notice)
       end
 
       it "should start our daemon" do
-        @daemon.expects(:start)
+        expect(@daemon).to receive(:start)
 
         execute_agent
       end

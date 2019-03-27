@@ -101,12 +101,16 @@ describe Puppet::Forge do
 
   let(:forge) { Puppet::Forge.new }
 
-  def repository_responds_with(response)
-    Puppet::Forge::Repository.any_instance.stubs(:make_http_request).returns(response)
+  def repository_responds_with(response, &block)
+    if block_given?
+      allow_any_instance_of(Puppet::Forge::Repository).to receive(:make_http_request, &block).and_return(response)
+    else
+      allow_any_instance_of(Puppet::Forge::Repository).to receive(:make_http_request).and_return(response)
+    end
   end
 
   it "returns a list of matches from the forge when there are matches for the search term" do
-    repository_responds_with(stub(:body => http_response, :code => '200'))
+    repository_responds_with(double(:body => http_response, :code => '200'))
     expect(forge.search('bacula')).to eq(search_results)
   end
 
@@ -118,7 +122,7 @@ describe Puppet::Forge do
     end
 
     before :each do
-      repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo/}
+      repository_responds_with(double(:body => release_response, :code => '200')) {|uri| uri =~ /module_groups=foo/}
       Puppet[:module_groups] = "foo"
     end
 
@@ -141,7 +145,7 @@ describe Puppet::Forge do
 
     context "with space seperator" do
       before :each do
-        repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo bar/}
+        repository_responds_with(double(:body => release_response, :code => '200')) {|uri| uri =~ /module_groups=foo bar/}
         Puppet[:module_groups] = "foo bar"
       end
 
@@ -156,7 +160,7 @@ describe Puppet::Forge do
 
     context "with plus seperator" do
       before :each do
-        repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo bar/}
+        repository_responds_with(double(:body => release_response, :code => '200')) {|uri| uri =~ /module_groups=foo bar/}
         Puppet[:module_groups] = "foo+bar"
       end
 
@@ -172,10 +176,10 @@ describe Puppet::Forge do
     # See PUP-8008
     context "when there are multiple pages of results" do
       before(:each) do
-        Puppet::Forge::Repository.any_instance.expects(:make_http_request).with {|uri| uri =~ /module_groups=foo bar/ && uri !=~ /offset/ }.returns(stub(:body => first_page, :code => '200'))
+        expect_any_instance_of(Puppet::Forge::Repository).to receive(:make_http_request) {|_, uri| uri =~ /module_groups=foo bar/ && uri !=~ /offset/ }.and_return(double(:body => first_page, :code => '200'))
 
         # Request for second page should not have module_groups already encoded
-        Puppet::Forge::Repository.any_instance.expects(:make_http_request).with {|uri| uri =~ /module_groups=foo bar/ && uri =~ /offset=1/ }.returns(stub(:body => last_page, :code => '200'))
+        expect_any_instance_of(Puppet::Forge::Repository).to receive(:make_http_request) {|_, uri| uri =~ /module_groups=foo bar/ && uri =~ /offset=1/ }.and_return(double(:body => last_page, :code => '200'))
       end
 
       context "with space seperator" do
@@ -238,7 +242,7 @@ describe Puppet::Forge do
 
   context "when the connection to the forge fails" do
     before :each do
-      repository_responds_with(stub(:body => '{}', :code => '404', :message => "not found"))
+      repository_responds_with(double(:body => '{}', :code => '404', :message => "not found"))
     end
 
     it "raises an error for search" do
@@ -252,7 +256,7 @@ describe Puppet::Forge do
 
   context "when the API responds with an error" do
     before :each do
-      repository_responds_with(stub(:body => '{"error":"invalid module"}', :code => '410', :message => "Gone"))
+      repository_responds_with(double(:body => '{"error":"invalid module"}', :code => '410', :message => "Gone"))
     end
 
     it "raises an error for fetch" do
@@ -266,7 +270,7 @@ describe Puppet::Forge do
       release = response['results'][0]['current_release']
       release['metadata']['dependencies'] = [{'name' => 'broken-garbage >= 1.0.0', 'version_requirement' => 'banana'}]
       response['results'] = [release]
-      repository_responds_with(stub(:body => JSON.dump(response), :code => '200'))
+      repository_responds_with(double(:body => JSON.dump(response), :code => '200'))
     end
 
     it "ignores modules with unparseable dependencies" do

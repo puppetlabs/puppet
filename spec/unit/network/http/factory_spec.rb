@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http'
 require 'puppet/util/http_proxy'
@@ -37,7 +36,7 @@ describe Puppet::Network::HTTP::Factory do
   it 'creates a connection supporting at least HTTP 1.1' do
     conn = create_connection(site)
 
-    expect(any_of(conn.class.version_1_1?, conn.class.version_1_1?)).to be_truthy
+    expect(conn.class.version_1_1? || conn.class.version_1_2?).to be_truthy
   end
 
   context "proxy settings" do
@@ -46,7 +45,7 @@ describe Puppet::Network::HTTP::Factory do
 
     it "should not set a proxy if the value is 'none'" do
       Puppet[:http_proxy_host] = 'none'
-      Puppet::Util::HttpProxy.expects(:no_proxy?).returns false
+      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(false)
       conn = create_connection(site)
 
       expect(conn.proxy_address).to be_nil
@@ -55,7 +54,7 @@ describe Puppet::Network::HTTP::Factory do
     it 'should not set a proxy if a no_proxy env var matches the destination' do
       Puppet[:http_proxy_host] = proxy_host
       Puppet[:http_proxy_port] = proxy_port
-      Puppet::Util::HttpProxy.expects(:no_proxy?).returns true
+      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(true)
       conn = create_connection(site)
 
       expect(conn.proxy_address).to be_nil
@@ -64,7 +63,7 @@ describe Puppet::Network::HTTP::Factory do
 
     it 'sets proxy_address' do
       Puppet[:http_proxy_host] = proxy_host
-      Puppet::Util::HttpProxy.expects(:no_proxy?).returns false
+      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(false)
       conn = create_connection(site)
 
       expect(conn.proxy_address).to eq(proxy_host)
@@ -73,7 +72,7 @@ describe Puppet::Network::HTTP::Factory do
     it 'sets proxy address and port' do
       Puppet[:http_proxy_host] = proxy_host
       Puppet[:http_proxy_port] = proxy_port
-      Puppet::Util::HttpProxy.expects(:no_proxy?).returns false
+      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(false)
       conn = create_connection(site)
 
       expect(conn.proxy_port).to eq(proxy_port)

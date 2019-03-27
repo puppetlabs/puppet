@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/indirector/envelope'
 
@@ -25,7 +24,7 @@ describe Puppet::Indirector::Envelope do
 
     it "should return false if the current date is equal to the expiration date" do
       now = Time.now
-      Time.stubs(:now).returns(now)
+      allow(Time).to receive(:now).and_return(now)
       @instance.expiration = now
       expect(@instance).not_to be_expired
     end

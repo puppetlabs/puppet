@@ -6,9 +6,9 @@ describe Puppet::Type.type(:package).provider(:yum) do
   it_behaves_like 'RHEL package provider', described_class, 'yum'
 
   it "should have lower specificity" do
-    Facter.stubs(:value).with(:osfamily).returns(:redhat)
-    Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("22")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:fedora)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("22")
     expect(described_class.specificity).to be < 200
   end
 
@@ -28,13 +28,13 @@ describe Puppet::Type.type(:package).provider(:yum) do
       provider
     end
 
-    before { described_class.stubs(:command).with(:cmd).returns("/usr/bin/yum") }
+    before { allow(described_class).to receive(:command).with(:cmd).and_return("/usr/bin/yum") }
 
     context "when installing" do
       it "should use the supplied source as the explicit path to a package to install" do
         resource[:ensure] = :present
         resource[:source] = "/foo/bar/baz-1.1.0.rpm"
-        provider.expects(:execute).with do |arr|
+        expect(provider).to receive(:execute) do |arr|
           expect(arr[-2..-1]).to eq([:install, "/foo/bar/baz-1.1.0.rpm"])
         end
         provider.install
@@ -45,10 +45,10 @@ describe Puppet::Type.type(:package).provider(:yum) do
       it "should use the suppplied source as the explicit path to the package to update" do
         # The first query response informs yum provider that package 1.1.0 is
         # already installed, and the second that it's been upgraded
-        provider.expects(:query).twice.returns({:ensure => "1.1.0"}, {:ensure => "1.2.0"})
+        expect(provider).to receive(:query).twice.and_return({:ensure => "1.1.0"}, {:ensure => "1.2.0"})
         resource[:ensure] = "1.2.0"
         resource[:source] = "http://foo.repo.com/baz-1.2.0.rpm"
-        provider.expects(:execute).with do |arr|
+        expect(provider).to receive(:execute) do |arr|
           expect(arr[-2..-1]).to eq(['update', "http://foo.repo.com/baz-1.2.0.rpm"])
         end
         provider.install

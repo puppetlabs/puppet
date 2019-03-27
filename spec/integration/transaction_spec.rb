@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
@@ -14,7 +13,7 @@ describe Puppet::Transaction do
   include PuppetSpec::Compiler
 
   before do
-    Puppet::Util::Storage.stubs(:store)
+    allow(Puppet::Util::Storage).to receive(:store)
   end
 
   def mk_catalog(*resources)
@@ -42,14 +41,14 @@ describe Puppet::Transaction do
 
     child_resource = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar/baz"), :backup => false
 
-    resource.expects(:eval_generate).returns([child_resource])
+    expect(resource).to receive(:eval_generate).and_return([child_resource])
 
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
 
-    resource.expects(:retrieve).raises "this is a failure"
-    resource.stubs(:err)
+    expect(resource).to receive(:retrieve).and_raise("this is a failure")
+    allow(resource).to receive(:err)
 
-    child_resource.expects(:retrieve).never
+    expect(child_resource).not_to receive(:retrieve)
 
     transaction.evaluate
   end
@@ -62,7 +61,7 @@ describe Puppet::Transaction do
 
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
 
-    resource.expects(:evaluate).never
+    expect(resource).not_to receive(:evaluate)
 
     transaction.evaluate
   end
@@ -87,7 +86,7 @@ describe Puppet::Transaction do
 
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
 
-    resource.expects(:evaluate).never
+    expect(resource).not_to receive(:evaluate)
 
     transaction.evaluate
   end
@@ -100,7 +99,7 @@ describe Puppet::Transaction do
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction.for_network_device = false
 
-    transaction.expects(:apply).never.with(resource, nil)
+    expect(transaction).not_to receive(:apply).with(resource, nil)
 
     transaction.evaluate
     expect(transaction.resource_status(resource)).to be_skipped
@@ -114,7 +113,7 @@ describe Puppet::Transaction do
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction.for_network_device = true
 
-    transaction.expects(:apply).never.with(resource, nil)
+    expect(transaction).not_to receive(:apply).with(resource, nil)
 
     transaction.evaluate
     expect(transaction.resource_status(resource)).to be_skipped
@@ -128,7 +127,7 @@ describe Puppet::Transaction do
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction.for_network_device = true
 
-    transaction.expects(:apply).with(resource, nil)
+    expect(transaction).to receive(:apply).with(resource, nil)
 
     transaction.evaluate
     expect(transaction.resource_status(resource)).not_to be_skipped
@@ -142,7 +141,7 @@ describe Puppet::Transaction do
     transaction = Puppet::Transaction.new(catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
     transaction.for_network_device = true
 
-    transaction.expects(:apply).with(resource, nil)
+    expect(transaction).to receive(:apply).with(resource, nil)
 
     transaction.evaluate
     expect(transaction.resource_status(resource)).not_to be_skipped
@@ -168,7 +167,7 @@ describe Puppet::Transaction do
     ecomp[:subscribe] = Puppet::Resource.new(:foo, "file")
     exec[:refreshonly] = true
 
-    exec.expects(:refresh)
+    expect(exec).to receive(:refresh)
     catalog.apply
   end
 
@@ -232,7 +231,7 @@ describe Puppet::Transaction do
     notify = Puppet::Type.type(:notify).new(
       :title => "foo"
     )
-    notify.expects(:pre_run_check).raises(Puppet::Error, "fail for testing")
+    expect(notify).to receive(:pre_run_check).and_raise(Puppet::Error, "fail for testing")
 
     catalog = mk_catalog(file, notify)
     expect { catalog.apply }.to raise_error(Puppet::Error, /Some pre-run checks failed/)
@@ -265,7 +264,7 @@ describe Puppet::Transaction do
       :title => "two"
     )
 
-    exec1.stubs(:err)
+    allow(exec1).to receive(:err)
 
     catalog = mk_catalog(file, exec1, exec2)
     catalog.apply
@@ -322,8 +321,8 @@ describe Puppet::Transaction do
           :command     => touch(file1),
         )
 
-        exec1.stubs(:eval_generate).returns(
-          [ (Puppet::Type.type(:notify).new :name => "eval1_notify")]
+        allow(exec1).to receive(:eval_generate).and_return(
+          [ Puppet::Type.type(:notify).new(:name => "eval1_notify") ]
         )
 
         exec2 = Puppet::Type.type(:exec).new(
@@ -333,8 +332,8 @@ describe Puppet::Transaction do
           :refreshonly => true,
           :subscribe   => exec1,
         )
-        exec2.stubs(:eval_generate).returns(
-          [ (Puppet::Type.type(:notify).new :name => "eval2_notify")]
+        allow(exec2).to receive(:eval_generate).and_return(
+          [ Puppet::Type.type(:notify).new(:name => "eval2_notify") ]
         )
 
         Puppet[:tags] = "exec"

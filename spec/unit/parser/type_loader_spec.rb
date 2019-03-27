@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/parser/type_loader'
@@ -37,15 +36,14 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should attempt to import each generated name" do
-      loader.expects(:import_from_modules).with("foo/bar").returns([])
-      loader.expects(:import_from_modules).with("foo").returns([])
+      expect(loader).to receive(:import_from_modules).with("foo/bar").and_return([])
+      expect(loader).to receive(:import_from_modules).with("foo").and_return([])
       loader.try_load_fqname(:hostclass, "foo::bar")
     end
 
     it "should attempt to load each possible name going from most to least specific" do
-      path_order = sequence('path')
       ['foo/bar/baz', 'foo/bar', 'foo'].each do |path|
-        Puppet::Parser::Files.expects(:find_manifests_in_modules).with(path, anything).returns([nil, []]).in_sequence(path_order)
+        expect(Puppet::Parser::Files).to receive(:find_manifests_in_modules).with(path, anything).and_return([nil, []]).ordered
       end
 
       loader.try_load_fqname(:hostclass, 'foo::bar::baz')
@@ -53,37 +51,37 @@ describe Puppet::Parser::TypeLoader do
   end
 
   describe "when importing" do
-    let(:stub_parser) { stub 'Parser', :file= => nil, :parse => empty_hostclass }
+    let(:stub_parser) { double('Parser', :file= => nil, :parse => empty_hostclass) }
 
     before(:each) do
-      Puppet::Parser::ParserFactory.stubs(:parser).with(anything).returns(stub_parser)
+      allow(Puppet::Parser::ParserFactory).to receive(:parser).and_return(stub_parser)
     end
 
     it "should find all manifests matching the file or pattern" do
-      Puppet::Parser::Files.expects(:find_manifests_in_modules).with("myfile", anything).returns ["modname", %w{one}]
+      expect(Puppet::Parser::Files).to receive(:find_manifests_in_modules).with("myfile", anything).and_return(["modname", %w{one}])
       loader.import("myfile", "/path")
     end
 
     it "should pass the environment when looking for files" do
-      Puppet::Parser::Files.expects(:find_manifests_in_modules).with(anything, loader.environment).returns ["modname", %w{one}]
+      expect(Puppet::Parser::Files).to receive(:find_manifests_in_modules).with(anything, loader.environment).and_return(["modname", %w{one}])
       loader.import("myfile", "/path")
     end
 
     it "should fail if no files are found" do
-      Puppet::Parser::Files.expects(:find_manifests_in_modules).returns [nil, []]
+      expect(Puppet::Parser::Files).to receive(:find_manifests_in_modules).and_return([nil, []])
       expect { loader.import("myfile", "/path") }.to raise_error(/No file\(s\) found for import/)
     end
 
     it "should parse each found file" do
-      Puppet::Parser::Files.expects(:find_manifests_in_modules).returns ["modname", [make_absolute("/one")]]
-      loader.expects(:parse_file).with(make_absolute("/one")).returns(Puppet::Parser::AST::Hostclass.new(''))
+      expect(Puppet::Parser::Files).to receive(:find_manifests_in_modules).and_return(["modname", [make_absolute("/one")]])
+      expect(loader).to receive(:parse_file).with(make_absolute("/one")).and_return(Puppet::Parser::AST::Hostclass.new(''))
       loader.import("myfile", "/path")
     end
 
     it "should not attempt to import files that have already been imported" do
       loader = Puppet::Parser::TypeLoader.new(:myenv)
 
-      Puppet::Parser::Files.expects(:find_manifests_in_modules).twice.returns ["modname", %w{/one}]
+      expect(Puppet::Parser::Files).to receive(:find_manifests_in_modules).twice.and_return(["modname", %w{/one}])
       expect(loader.import("myfile", "/path")).not_to be_empty
 
       expect(loader.import("myfile", "/path")).to be_empty
@@ -175,20 +173,20 @@ describe Puppet::Parser::TypeLoader do
 
   describe "when parsing a file" do
     it "requests a new parser instance for each file" do
-      parser = stub 'Parser', :file= => nil, :parse => empty_hostclass
+      parser = double('Parser', :file= => nil, :parse => empty_hostclass)
 
-      Puppet::Parser::ParserFactory.expects(:parser).twice.returns(parser)
+      expect(Puppet::Parser::ParserFactory).to receive(:parser).twice.and_return(parser)
 
       loader.parse_file("/my/file")
       loader.parse_file("/my/other_file")
     end
 
     it "assigns the parser its file and then parses" do
-      parser = mock 'parser'
+      parser = double('parser')
 
-      Puppet::Parser::ParserFactory.expects(:parser).returns(parser)
-      parser.expects(:file=).with("/my/file")
-      parser.expects(:parse).returns(empty_hostclass)
+      expect(Puppet::Parser::ParserFactory).to receive(:parser).and_return(parser)
+      expect(parser).to receive(:file=).with("/my/file")
+      expect(parser).to receive(:parse).and_return(empty_hostclass)
 
       loader.parse_file("/my/file")
     end

@@ -24,14 +24,14 @@ describe Puppet::ModuleTool::InstalledModules do
 
   it 'defaults when not given a semantic version' do
     mod = PuppetSpec::Modules.create('badsemver', @modpath, :metadata => {:version => 'banana'})
-    Puppet.expects(:warning).with(regexp_matches(/Semantic Version/))
+    expect(Puppet).to receive(:warning).with(/Semantic Version/)
     installed = described_class.new(@env)
     expect(installed.modules["puppetlabs-#{mod.name}"].version).to eq(SemanticPuppet::Version.parse('0.0.0'))
   end
 
   it 'defaults when not given a full semantic version' do
     mod = PuppetSpec::Modules.create('badsemver', @modpath, :metadata => {:version => '1.2'})
-    Puppet.expects(:warning).with(regexp_matches(/Semantic Version/))
+    expect(Puppet).to receive(:warning).with(/Semantic Version/)
     installed = described_class.new(@env)
     expect(installed.modules["puppetlabs-#{mod.name}"].version).to eq(SemanticPuppet::Version.parse('0.0.0'))
   end
@@ -40,7 +40,7 @@ describe Puppet::ModuleTool::InstalledModules do
     mod1 = PuppetSpec::Modules.create('badsemver', @modpath, :metadata => {:version => 'banana'})
     mod2 = PuppetSpec::Modules.create('goodsemver', @modpath, :metadata => {:version => '1.2.3'})
     mod3 = PuppetSpec::Modules.create('notquitesemver', @modpath, :metadata => {:version => '1.2'})
-    Puppet.expects(:warning).with(regexp_matches(/Semantic Version/)).twice
+    expect(Puppet).to receive(:warning).with(/Semantic Version/).twice
     installed = described_class.new(@env)
     expect(installed.modules["puppetlabs-#{mod1.name}"].version).to eq(SemanticPuppet::Version.parse('0.0.0'))
     expect(installed.modules["puppetlabs-#{mod2.name}"].version).to eq(SemanticPuppet::Version.parse('1.2.3'))

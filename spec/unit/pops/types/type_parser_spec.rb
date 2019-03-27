@@ -172,39 +172,39 @@ describe TypeParser do
 
   context 'with scope context and loader' do
     let!(:scope) { {} }
-    let(:loader) { mock }
+    let(:loader) { double }
 
     before :each do
-      Adapters::LoaderAdapter.expects(:loader_for_model_object).returns loader
+      expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).and_return(loader)
     end
 
     it 'interprets anything that is not found by the loader to be a type reference' do
-      loader.expects(:load).with(:type, 'nonesuch').returns nil
+      expect(loader).to receive(:load).with(:type, 'nonesuch').and_return(nil)
       expect(parser.parse('Nonesuch', scope)).to be_the_type(types.type_reference('Nonesuch'))
     end
 
     it 'interprets anything that is found by the loader to be what the loader found' do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse('File', scope)).to be_the_type(types.resource('File'))
     end
 
     it "parses a resource type with title" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("File['/tmp/foo']", scope)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
 
     it "parses a resource type using 'Resource[type]' form" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("Resource[File]", scope)).to be_the_type(types.resource('file'))
     end
 
     it "parses a resource type with title using 'Resource[type, title]'" do
-      loader.expects(:load).with(:type, 'file').returns nil
+      expect(loader).to receive(:load).with(:type, 'file').and_return(nil)
       expect(parser.parse("Resource[File, '/tmp/foo']", scope)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
 
     it "parses a resource type with title using 'Resource[Type[title]]'" do
-      loader.expects(:load).with(:type, 'nonesuch').returns nil
+      expect(loader).to receive(:load).with(:type, 'nonesuch').and_return(nil)
       expect(parser.parse("Resource[Nonesuch['fife']]", scope)).to be_the_type(types.resource('nonesuch', 'fife'))
     end
   end
@@ -213,27 +213,27 @@ describe TypeParser do
     let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "type_parser_unit_test_loader") }
 
     it 'interprets anything that is not found by the loader to be a type reference' do
-      loader.expects(:load).with(:type, 'nonesuch').returns nil
+      expect(loader).to receive(:load).with(:type, 'nonesuch').and_return(nil)
       expect(parser.parse('Nonesuch', loader)).to be_the_type(types.type_reference('Nonesuch'))
     end
 
     it 'interprets anything that is found by the loader to be what the loader found' do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse('File', loader)).to be_the_type(types.resource('file'))
     end
 
     it "parses a resource type with title" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("File['/tmp/foo']", loader)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
 
     it "parses a resource type using 'Resource[type]' form" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("Resource[File]", loader)).to be_the_type(types.resource('file'))
     end
 
     it "parses a resource type with title using 'Resource[type, title]'" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("Resource[File, '/tmp/foo']", loader)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
   end

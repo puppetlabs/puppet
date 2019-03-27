@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Util::Warnings do
@@ -22,18 +21,18 @@ describe Puppet::Util::Warnings do
       end
 
       it "should issue a warning" do
-        Puppet.expects(log).with(@msg1)
+        expect(Puppet).to receive(log).with(@msg1)
         Puppet::Util::Warnings.send(method, @msg1)
       end
 
       it "should issue a warning exactly once per unique message" do
-        Puppet.expects(log).with(@msg1).once
+        expect(Puppet).to receive(log).with(@msg1).once
         Puppet::Util::Warnings.send(method, @msg1)
         Puppet::Util::Warnings.send(method, @msg1)
       end
 
       it "should issue multiple warnings for multiple unique messages" do
-        Puppet.expects(log).times(2)
+        expect(Puppet).to receive(log).twice()
         Puppet::Util::Warnings.send(method, @msg1)
         Puppet::Util::Warnings.send(method, @msg2)
       end

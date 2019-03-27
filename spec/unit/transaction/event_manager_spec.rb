@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/transaction/event_manager'
@@ -13,10 +12,10 @@ describe Puppet::Transaction::EventManager do
   end
 
   it "should delegate its relationship graph to the transaction" do
-    transaction = stub 'transaction'
+    transaction = double('transaction')
     manager = Puppet::Transaction::EventManager.new(transaction)
 
-    transaction.expects(:relationship_graph).returns "mygraph"
+    expect(transaction).to receive(:relationship_graph).and_return("mygraph")
 
     expect(manager.relationship_graph).to eq("mygraph")
   end
@@ -27,8 +26,8 @@ describe Puppet::Transaction::EventManager do
 
       @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
 
-      @graph = stub 'graph', :matching_edges => [], :resource => @resource
-      @manager.stubs(:relationship_graph).returns @graph
+      @graph = double('graph', :matching_edges => [], :resource => @resource)
+      allow(@manager).to receive(:relationship_graph).and_return(@graph)
 
       @event = Puppet::Transaction::Event.new(:name => :foo, :resource => @resource)
     end
@@ -42,63 +41,63 @@ describe Puppet::Transaction::EventManager do
     end
 
     it "should queue events for the target and callback of any matching edges" do
-      edge1 = stub("edge1", :callback => :c1, :source => stub("s1"), :target => stub("t1", :c1 => nil))
-      edge2 = stub("edge2", :callback => :c2, :source => stub("s2"), :target => stub("t2", :c2 => nil))
+      edge1 = double("edge1", :callback => :c1, :source => double("s1"), :target => double("t1", :c1 => nil))
+      edge2 = double("edge2", :callback => :c2, :source => double("s2"), :target => double("t2", :c2 => nil))
 
-      @graph.expects(:matching_edges).with { |event, resource| event == @event }.returns [edge1, edge2]
+      expect(@graph).to receive(:matching_edges).with(@event, anything).and_return([edge1, edge2])
 
-      @manager.expects(:queue_events_for_resource).with(@resource, edge1.target, edge1.callback, [@event])
-      @manager.expects(:queue_events_for_resource).with(@resource, edge2.target, edge2.callback, [@event])
+      expect(@manager).to receive(:queue_events_for_resource).with(@resource, edge1.target, edge1.callback, [@event])
+      expect(@manager).to receive(:queue_events_for_resource).with(@resource, edge2.target, edge2.callback, [@event])
 
       @manager.queue_events(@resource, [@event])
     end
 
     it "should queue events for the changed resource if the resource is self-refreshing and not being deleted" do
-      @graph.stubs(:matching_edges).returns []
+      allow(@graph).to receive(:matching_edges).and_return([])
 
-      @resource.expects(:self_refresh?).returns true
-      @resource.expects(:deleting?).returns false
-      @manager.expects(:queue_events_for_resource).with(@resource, @resource, :refresh, [@event])
+      expect(@resource).to receive(:self_refresh?).and_return(true)
+      expect(@resource).to receive(:deleting?).and_return(false)
+      expect(@manager).to receive(:queue_events_for_resource).with(@resource, @resource, :refresh, [@event])
 
       @manager.queue_events(@resource, [@event])
     end
 
     it "should not queue events for the changed resource if the resource is not self-refreshing" do
-      @graph.stubs(:matching_edges).returns []
+      allow(@graph).to receive(:matching_edges).and_return([])
 
-      @resource.expects(:self_refresh?).returns false
-      @resource.stubs(:deleting?).returns false
-      @manager.expects(:queue_events_for_resource).never
+      expect(@resource).to receive(:self_refresh?).and_return(false)
+      allow(@resource).to receive(:deleting?).and_return(false)
+      expect(@manager).not_to receive(:queue_events_for_resource)
 
       @manager.queue_events(@resource, [@event])
     end
 
     it "should not queue events for the changed resource if the resource is being deleted" do
-      @graph.stubs(:matching_edges).returns []
+      allow(@graph).to receive(:matching_edges).and_return([])
 
-      @resource.expects(:self_refresh?).returns true
-      @resource.expects(:deleting?).returns true
-      @manager.expects(:queue_events_for_resource).never
+      expect(@resource).to receive(:self_refresh?).and_return(true)
+      expect(@resource).to receive(:deleting?).and_return(true)
+      expect(@manager).not_to receive(:queue_events_for_resource)
 
       @manager.queue_events(@resource, [@event])
     end
 
     it "should ignore edges that don't have a callback" do
-      edge1 = stub("edge1", :callback => :nil, :source => stub("s1"), :target => stub("t1", :c1 => nil))
+      edge1 = double("edge1", :callback => :nil, :source => double("s1"), :target => double("t1", :c1 => nil))
 
-      @graph.expects(:matching_edges).returns [edge1]
+      expect(@graph).to receive(:matching_edges).and_return([edge1])
 
-      @manager.expects(:queue_events_for_resource).never
+      expect(@manager).not_to receive(:queue_events_for_resource)
 
       @manager.queue_events(@resource, [@event])
     end
 
     it "should ignore targets that don't respond to the callback" do
-      edge1 = stub("edge1", :callback => :c1, :source => stub("s1"), :target => stub("t1"))
+      edge1 = double("edge1", :callback => :c1, :source => double("s1"), :target => double("t1"))
 
-      @graph.expects(:matching_edges).returns [edge1]
+      expect(@graph).to receive(:matching_edges).and_return([edge1])
 
-      @manager.expects(:queue_events_for_resource).never
+      expect(@manager).not_to receive(:queue_events_for_resource)
 
       @manager.queue_events(@resource, [@event])
     end
@@ -106,9 +105,9 @@ describe Puppet::Transaction::EventManager do
     it "should dequeue events for the changed resource if an event with invalidate_refreshes is processed" do
       @event2 = Puppet::Transaction::Event.new(:name => :foo, :resource => @resource, :invalidate_refreshes => true)
 
-      @graph.stubs(:matching_edges).returns []
+      allow(@graph).to receive(:matching_edges).and_return([])
 
-      @manager.expects(:dequeue_events_for_resource).with(@resource, :refresh)
+      expect(@manager).to receive(:dequeue_events_for_resource).with(@resource, :refresh)
 
       @manager.queue_events(@resource, [@event, @event2])
     end
@@ -116,28 +115,28 @@ describe Puppet::Transaction::EventManager do
 
   describe "when queueing events for a resource" do
     before do
-      @transaction = stub 'transaction'
+      @transaction = double('transaction')
       @manager = Puppet::Transaction::EventManager.new(@transaction)
     end
 
     it "should do nothing if no events are queued" do
-      @manager.queued_events(stub("target")) { |callback, events| raise "should never reach this" }
+      @manager.queued_events(double("target")) { |callback, events| raise "should never reach this" }
     end
 
     it "should yield the callback and events for each callback" do
-      target = stub("target")
+      target = double("target")
 
       2.times do |i|
-        @manager.queue_events_for_resource(stub("source", :info => nil), target, "callback#{i}", ["event#{i}"])
+        @manager.queue_events_for_resource(double("source", :info => nil), target, "callback#{i}", ["event#{i}"])
       end
 
       @manager.queued_events(target) { |callback, events| }
     end
 
     it "should use the source to log that it's scheduling a refresh of the target" do
-      target = stub("target")
-      source = stub 'source'
-      source.expects(:info)
+      target = double("target")
+      source = double('source')
+      expect(source).to receive(:info)
 
       @manager.queue_events_for_resource(source, target, "callback", ["event"])
 
@@ -149,25 +148,25 @@ describe Puppet::Transaction::EventManager do
     before do
       @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
       @manager = Puppet::Transaction::EventManager.new(@transaction)
-      @manager.stubs(:queue_events)
+      allow(@manager).to receive(:queue_events)
 
       @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
       @event = Puppet::Transaction::Event.new(:name => :event, :resource => @resource)
     end
 
     it "should call the required callback once for each set of associated events" do
-      @manager.expects(:queued_events).with(@resource).multiple_yields([:callback1, [@event]], [:callback2, [@event]])
+      expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event]).and_yield(:callback2, [@event])
 
-      @resource.expects(:callback1)
-      @resource.expects(:callback2)
+      expect(@resource).to receive(:callback1)
+      expect(@resource).to receive(:callback2)
 
       @manager.process_events(@resource)
     end
 
     it "should set the 'restarted' state on the resource status" do
-      @manager.expects(:queued_events).with(@resource).yields(:callback1, [@event])
+      expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event])
 
-      @resource.stubs(:callback1)
+      allow(@resource).to receive(:callback1)
 
       @manager.process_events(@resource)
 
@@ -175,9 +174,9 @@ describe Puppet::Transaction::EventManager do
     end
 
     it "should have an event on the resource status" do
-      @manager.expects(:queued_events).with(@resource).yields(:callback1, [@event])
+      expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event])
 
-      @resource.stubs(:callback1)
+      allow(@resource).to receive(:callback1)
 
       @manager.process_events(@resource) #x
 
@@ -185,37 +184,37 @@ describe Puppet::Transaction::EventManager do
     end
 
     it "should queue a 'restarted' event generated by the resource" do
-      @manager.expects(:queued_events).with(@resource).yields(:callback1, [@event])
+      expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event])
 
-      @resource.stubs(:callback1)
+      allow(@resource).to receive(:callback1)
 
-      @resource.expects(:event).with(:message => "Triggered 'callback1' from 1 event", :status => 'success', :name => 'callback1')
-      @resource.expects(:event).with(:name => :restarted, :status => "success").returns "myevent"
-      @manager.expects(:queue_events).with(@resource, ["myevent"])
+      expect(@resource).to receive(:event).with(:message => "Triggered 'callback1' from 1 event", :status => 'success', :name => 'callback1')
+      expect(@resource).to receive(:event).with(:name => :restarted, :status => "success").and_return("myevent")
+      expect(@manager).to receive(:queue_events).with(@resource, ["myevent"])
 
       @manager.process_events(@resource)
     end
 
     it "should log that it restarted" do
-      @manager.expects(:queued_events).with(@resource).yields(:callback1, [@event])
+      expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event])
 
-      @resource.stubs(:callback1)
+      allow(@resource).to receive(:callback1)
 
-      @resource.expects(:notice).with { |msg| msg.include?("Triggered 'callback1'") }
+      expect(@resource).to receive(:notice).with(/Triggered 'callback1'/)
 
       @manager.process_events(@resource)
     end
 
     describe "and the events include a noop event and at least one non-noop event" do
       before do
-        @event.stubs(:status).returns "noop"
+        allow(@event).to receive(:status).and_return("noop")
         @event2 = Puppet::Transaction::Event.new(:name => :event, :resource => @resource)
         @event2.status = "success"
-        @manager.expects(:queued_events).with(@resource).yields(:callback1, [@event, @event2])
+        expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event, @event2])
       end
 
       it "should call the callback" do
-        @resource.expects(:callback1)
+        expect(@resource).to receive(:callback1)
 
         @manager.process_events(@resource)
       end
@@ -223,27 +222,27 @@ describe Puppet::Transaction::EventManager do
 
     describe "and the events are all noop events" do
       before do
-        @event.stubs(:status).returns "noop"
-        @resource.stubs(:event).returns(Puppet::Transaction::Event.new)
-        @manager.expects(:queued_events).with(@resource).yields(:callback1, [@event])
+        allow(@event).to receive(:status).and_return("noop")
+        allow(@resource).to receive(:event).and_return(Puppet::Transaction::Event.new)
+        expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event])
       end
 
       it "should log" do
-        @resource.expects(:notice).with { |msg| msg.include?("Would have triggered 'callback1'") }
+        expect(@resource).to receive(:notice).with(/Would have triggered 'callback1'/)
 
         @manager.process_events(@resource)
       end
 
       it "should not call the callback" do
-        @resource.expects(:callback1).never
+        expect(@resource).not_to receive(:callback1)
 
         @manager.process_events(@resource)
       end
 
       it "should queue a new noop event generated from the resource" do
         event = Puppet::Transaction::Event.new
-        @resource.expects(:event).with(:status => "noop", :name => :noop_restart).returns event
-        @manager.expects(:queue_events).with(@resource, [event])
+        expect(@resource).to receive(:event).with(:status => "noop", :name => :noop_restart).and_return(event)
+        expect(@manager).to receive(:queue_events).with(@resource, [event])
 
         @manager.process_events(@resource)
       end
@@ -251,44 +250,43 @@ describe Puppet::Transaction::EventManager do
 
     describe "and the resource has noop set to true" do
       before do
-        @event.stubs(:status).returns "success"
-        @resource.stubs(:event).returns(Puppet::Transaction::Event.new)
-        @resource.stubs(:noop?).returns(true)
-        @manager.expects(:queued_events).with(@resource).yields(:callback1, [@event])
+        allow(@event).to receive(:status).and_return("success")
+        allow(@resource).to receive(:event).and_return(Puppet::Transaction::Event.new)
+        allow(@resource).to receive(:noop?).and_return(true)
+        expect(@manager).to receive(:queued_events).with(@resource).and_yield(:callback1, [@event])
       end
 
       it "should log" do
-        @resource.expects(:notice).with { |msg| msg.include?("Would have triggered 'callback1'") }
+        expect(@resource).to receive(:notice).with(/Would have triggered 'callback1'/)
 
         @manager.process_events(@resource)
       end
 
       it "should not call the callback" do
-        @resource.expects(:callback1).never
+        expect(@resource).not_to receive(:callback1)
 
         @manager.process_events(@resource)
       end
 
       it "should queue a new noop event generated from the resource" do
         event = Puppet::Transaction::Event.new
-        @resource.expects(:event).with(:status => "noop", :name => :noop_restart).returns event
-        @manager.expects(:queue_events).with(@resource, [event])
+        expect(@resource).to receive(:event).with(:status => "noop", :name => :noop_restart).and_return(event)
+        expect(@manager).to receive(:queue_events).with(@resource, [event])
 
         @manager.process_events(@resource)
       end
     end
 
-
     describe "and the callback fails" do
       before do
-        @resource.expects(:callback1).raises "a failure"
-        @resource.stubs(:err)
+        expect(@resource).to receive(:callback1).and_raise("a failure")
+        allow(@resource).to receive(:err)
 
-        @manager.expects(:queued_events).yields(:callback1, [@event])
+        expect(@manager).to receive(:queued_events).and_yield(:callback1, [@event])
       end
 
       it "should log but not fail" do
-        @resource.expects(:err)
+        expect(@resource).to receive(:err)
 
         expect { @manager.process_events(@resource) }.not_to raise_error
       end
@@ -311,7 +309,7 @@ describe Puppet::Transaction::EventManager do
       end
 
       it "should not queue a 'restarted' event" do
-        @manager.expects(:queue_events).never
+        expect(@manager).not_to receive(:queue_events)
         @manager.process_events(@resource)
       end
 
@@ -330,10 +328,10 @@ describe Puppet::Transaction::EventManager do
       @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
       @target = Puppet::Type.type(:file).new :path => make_absolute("/your/file")
 
-      @graph = stub 'graph'
-      @graph.stubs(:matching_edges).returns []
-      @graph.stubs(:matching_edges).with(anything, @resource).returns [stub('edge', :target => @target, :callback => :refresh)]
-      @manager.stubs(:relationship_graph).returns @graph
+      @graph = allow('graph')
+      allow(@graph).to receive(:matching_edges).and_return([])
+      allow(@graph).to receive(:matching_edges).with(anything, @resource).and_return([double('edge', :target => @target, :callback => :refresh)])
+      allow(@manager).to receive(:relationship_graph).and_return(@graph)
 
       @event  = Puppet::Transaction::Event.new(:name => :notify, :resource => @target)
       @event2 = Puppet::Transaction::Event.new(:name => :service_start, :resource => @target, :invalidate_refreshes => true)
@@ -345,13 +343,13 @@ describe Puppet::Transaction::EventManager do
 
     describe "and the events were dequeued/invalidated" do
       before do
-        @resource.expects(:info).with { |msg| msg.include?("Scheduling refresh") }
-        @target.expects(:info).with { |msg| msg.include?("Unscheduling") }
+        expect(@resource).to receive(:info).with(/Scheduling refresh/)
+        expect(@target).to receive(:info).with(/Unscheduling/)
       end
 
       it "should not run an event or log" do
-        @target.expects(:notice).with { |msg| msg.include?("Would have triggered 'refresh'") }.never
-        @target.expects(:refresh).never
+        expect(@target).not_to receive(:notice).with(/Would have triggered 'refresh'/)
+        expect(@target).not_to receive(:refresh)
 
         @manager.queue_events(@resource, [@event])
         @manager.queue_events(@target, [@event2])

@@ -126,7 +126,7 @@ describe Puppet::Face[:generate, :current] do
       end
 
       it 'sets pcore as the default format' do
-        Puppet::Generate::Type.expects(:find_inputs).with(:pcore).returns([])
+        expect(Puppet::Generate::Type).to receive(:find_inputs).with(:pcore).and_return([])
         genface.types()
       end
 
@@ -135,8 +135,8 @@ describe Puppet::Face[:generate, :current] do
         # (There is no way to call the original when mocking expected parameters).
         input1 = Puppet::Generate::Type::Input.new(m1, File.join(m1, 'lib', 'puppet', 'type', 'test1.rb'), :pcore)
         input2 = Puppet::Generate::Type::Input.new(m1, File.join(m2, 'lib', 'puppet', 'type', 'test2.rb'), :pcore)
-        Puppet::Generate::Type::Input.expects(:new).with(m1, File.join(m1, 'lib', 'puppet', 'type', 'test1.rb'), :pcore).returns(input1)
-        Puppet::Generate::Type::Input.expects(:new).with(m2, File.join(m2, 'lib', 'puppet', 'type', 'test2.rb'), :pcore).returns(input2)
+        expect(Puppet::Generate::Type::Input).to receive(:new).with(m1, File.join(m1, 'lib', 'puppet', 'type', 'test1.rb'), :pcore).and_return(input1)
+        expect(Puppet::Generate::Type::Input).to receive(:new).with(m2, File.join(m2, 'lib', 'puppet', 'type', 'test2.rb'), :pcore).and_return(input2)
         genface.types
       end
 
@@ -224,7 +224,6 @@ describe Puppet::Face[:generate, :current] do
   end
 
   def from_an_interactive_terminal
-    STDIN.stubs(:tty?).returns(true)
+    allow(STDIN).to receive(:tty?).and_return(true)
   end
-
 end

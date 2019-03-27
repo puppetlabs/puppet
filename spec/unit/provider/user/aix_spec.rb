@@ -16,11 +16,11 @@ describe 'Puppet::Type::User::Provider::Aix' do
 
   describe '.pgrp_to_gid' do
     it "finds the primary group's gid" do
-      provider.stubs(:ia_module_args).returns(['-R', 'module'])
+      allow(provider).to receive(:ia_module_args).and_return(['-R', 'module'])
 
-      group_provider_class.expects(:list_all)
+      expect(group_provider_class).to receive(:list_all)
         .with(provider.ia_module_args)
-        .returns([{ :name => 'group', :id => 1}])
+        .and_return([{ :name => 'group', :id => 1}])
 
       expect(provider_class.pgrp_to_gid(provider, 'group')).to eql(1)
     end
@@ -28,11 +28,11 @@ describe 'Puppet::Type::User::Provider::Aix' do
 
   describe '.gid_to_pgrp' do
     it "finds the gid's primary group" do
-      provider.stubs(:ia_module_args).returns(['-R', 'module'])
+      allow(provider).to receive(:ia_module_args).and_return(['-R', 'module'])
 
-      group_provider_class.expects(:list_all)
+      expect(group_provider_class).to receive(:list_all)
         .with(provider.ia_module_args)
-        .returns([{ :name => 'group', :id => 1}])
+        .and_return([{ :name => 'group', :id => 1}])
 
       expect(provider_class.gid_to_pgrp(provider, 1)).to eql('group')
     end
@@ -73,7 +73,7 @@ describe 'Puppet::Type::User::Provider::Aix' do
   describe '.groups_attribute_to_property' do
     it "reads the user's groups from the etc/groups file" do
       groups = ['system', 'adm']
-      Puppet::Util::POSIX.stubs(:groups_of).with(resource[:name]).returns(groups)
+      allow(Puppet::Util::POSIX).to receive(:groups_of).with(resource[:name]).and_return(groups)
 
       actual_groups = provider_class.groups_attribute_to_property(provider, 'unused_value')
       expected_groups = groups.join(',')
@@ -98,19 +98,19 @@ describe 'Puppet::Type::User::Provider::Aix' do
 
   describe '#gid=' do
     let(:value) { 'new_pgrp' }
-
     let(:old_pgrp) { 'old_pgrp' }
     let(:cur_groups) { 'system,adm' }
+
     before(:each) do
-      provider.stubs(:gid).returns(old_pgrp)
-      provider.stubs(:groups).returns(cur_groups)
-      provider.stubs(:set)
+      allow(provider).to receive(:gid).and_return(old_pgrp)
+      allow(provider).to receive(:groups).and_return(cur_groups)
+      allow(provider).to receive(:set)
     end
 
     it 'raises a Puppet::Error if it fails to set the groups property' do
-      provider.stubs(:set)
+      allow(provider).to receive(:set)
         .with(:groups, cur_groups)
-        .raises(Puppet::ExecutionFailure, 'failed to reset the groups!')
+        .and_raise(Puppet::ExecutionFailure, 'failed to reset the groups!')
 
       expect { provider.gid = value }.to raise_error do |error|
         expect(error).to be_a(Puppet::Error)
@@ -153,15 +153,15 @@ describe 'Puppet::Type::User::Provider::Aix' do
 
   describe '#password=' do
     let(:mock_tempfile) do
-      mock_tempfile_obj = mock()
-      mock_tempfile_obj.stubs(:<<)
-      mock_tempfile_obj.stubs(:close)
-      mock_tempfile_obj.stubs(:delete)
-      mock_tempfile_obj.stubs(:path).returns('tempfile_path')
+      mock_tempfile_obj = double()
+      allow(mock_tempfile_obj).to receive(:<<)
+      allow(mock_tempfile_obj).to receive(:close)
+      allow(mock_tempfile_obj).to receive(:delete)
+      allow(mock_tempfile_obj).to receive(:path).and_return('tempfile_path')
 
-      Tempfile.stubs(:new)
+      allow(Tempfile).to receive(:new)
         .with("puppet_#{provider.name}_pw", :encoding => Encoding::ASCII)
-        .returns(mock_tempfile_obj)
+        .and_return(mock_tempfile_obj)
 
       mock_tempfile_obj
     end
@@ -177,7 +177,7 @@ describe 'Puppet::Type::User::Provider::Aix' do
     end
 
     it 'raises a Puppet::Error if chpasswd fails' do
-      provider.stubs(:execute).with(cmd, execute_options).returns("failed to change passwd!")
+      allow(provider).to receive(:execute).with(cmd, execute_options).and_return("failed to change passwd!")
       expect { provider.password = 'foo' }.to raise_error do |error|
         expect(error).to be_a(Puppet::Error)
         expect(error.message).to match("failed to change passwd!")
@@ -185,15 +185,15 @@ describe 'Puppet::Type::User::Provider::Aix' do
     end
 
     it "changes the user's password" do
-      provider.expects(:execute).with(cmd, execute_options).returns("")
+      expect(provider).to receive(:execute).with(cmd, execute_options).and_return("")
       provider.password = 'foo'
     end
 
     it "closes and deletes the tempfile" do
-      provider.stubs(:execute).with(cmd, execute_options).returns("")
+      allow(provider).to receive(:execute).with(cmd, execute_options).and_return("")
 
-      mock_tempfile.expects(:close).times(2)
-      mock_tempfile.expects(:delete)
+      expect(mock_tempfile).to receive(:close).twice
+      expect(mock_tempfile).to receive(:delete)
 
       provider.password = 'foo'
     end
@@ -201,13 +201,13 @@ describe 'Puppet::Type::User::Provider::Aix' do
 
   describe '#create' do
     it 'should create the user' do
-      provider.resource.stubs(:should).with(anything).returns(nil)
-      provider.resource.stubs(:should).with(:groups).returns('g1,g2')
-      provider.resource.stubs(:should).with(:password).returns('password')
+      allow(provider.resource).to receive(:should).with(anything).and_return(nil)
+      allow(provider.resource).to receive(:should).with(:groups).and_return('g1,g2')
+      allow(provider.resource).to receive(:should).with(:password).and_return('password')
 
-      provider.expects(:execute)
-      provider.expects(:groups=).with('g1,g2')
-      provider.expects(:password=).with('password')
+      expect(provider).to receive(:execute)
+      expect(provider).to receive(:groups=).with('g1,g2')
+      expect(provider).to receive(:password=).with('password')
 
       provider.create
     end

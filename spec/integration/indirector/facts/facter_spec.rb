@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet_spec/compiler'
@@ -15,7 +14,7 @@ describe Puppet::Node::Facts::Facter do
       end
     end
 
-    Facter.stubs(:reset)
+    allow(Facter).to receive(:reset)
 
     cat = compile_to_catalog('notify { $downcase_test: }',
                              Puppet::Node.indirection.find('foo'))
@@ -38,7 +37,7 @@ describe Puppet::Node::Facts::Facter do
       EOF
 
       Puppet.initialize_settings(['--modulepath', factdir])
-      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => ['--modulepath', factdir, '-e', 'notify { $custom: }']))
+      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => ['--modulepath', factdir, '-e', 'notify { $custom: }']))
 
       expect do
         expect { apply.run }.to exit_with(0)
@@ -53,7 +52,7 @@ describe Puppet::Node::Facts::Facter do
         EOF
 
       Puppet.initialize_settings(['--pluginfactdest', factdir])
-      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => ['--pluginfactdest', factdir, '-e', 'notify { $foo: }']))
+      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => ['--pluginfactdest', factdir, '-e', 'notify { $foo: }']))
 
       expect do
         expect { apply.run }.to exit_with(0)
@@ -62,7 +61,7 @@ describe Puppet::Node::Facts::Facter do
   end
 
   it "adds the puppetversion fact" do
-    Facter.stubs(:reset)
+    allow(Facter).to receive(:reset)
 
     cat = compile_to_catalog('notify { $::puppetversion: }',
                              Puppet::Node.indirection.find('foo'))

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/reference'
@@ -15,7 +14,7 @@ describe reference do
     # on jruby. Thus, we stub it out here since we don't care to do any assertions on it.
     # This is only an issue if you're running these unit tests on a platform where upstart
     # is a default provider, like Ubuntu trusty.
-    Puppet::Util::Execution.stubs(:execute)
+    allow(Puppet::Util::Execution).to receive(:execute)
 
     reference.to_markdown
   end

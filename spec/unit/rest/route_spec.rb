@@ -4,7 +4,7 @@ require 'puppet/rest/route'
 
 describe Puppet::Rest::Route do
   describe '#with_base_url'do
-    let(:dns_resolver) { stub_everything('dns resolver') }
+    let(:dns_resolver) { double('dns resolver') }
 
     context 'when not using SRV records' do
       before :each do
@@ -81,8 +81,8 @@ describe Puppet::Rest::Route do
           Puppet.settings[:use_srv_records] = true
           Puppet.settings[:srv_domain]      = 'example.com'
 
-          @dns_mock = mock('dns')
-          Resolv::DNS.expects(:new).returns(@dns_mock)
+          @dns_mock = double('dns')
+          expect(Resolv::DNS).to receive(:new).and_return(@dns_mock)
 
           @port = 7502
           @target = 'example.com'
@@ -90,9 +90,9 @@ describe Puppet::Rest::Route do
           record.instance_variable_set(:@ttl, 10)
           @srv_records = [record]
 
-          @dns_mock.expects(:getresources).
+          expect(@dns_mock).to receive(:getresources).
             with("_x-puppet-test_service._tcp.example.com", Resolv::DNS::Resource::IN::SRV).
-            returns(@srv_records)
+            and_return(@srv_records)
         end
 
         it "yields a URL using the server and port from the SRV record" do

@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
 test_title = 'Integration Tests for Puppet::Type::Service::Provider::Systemd'

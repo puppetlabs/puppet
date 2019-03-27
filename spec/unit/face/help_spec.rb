@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/face'
 
@@ -50,7 +49,7 @@ describe Puppet::Face[:help, '0.0.1'] do
   context 'rendering has an error' do
     it 'raises an ArgumentError if the face raises a StandardError' do
       face = Puppet::Face[:module, :current]
-      face.stubs(:short_description).raises(StandardError, 'whoops')
+      allow(face).to receive(:short_description).and_raise(StandardError, 'whoops')
 
       expect {
         subject.help(:module)
@@ -59,7 +58,7 @@ describe Puppet::Face[:help, '0.0.1'] do
 
     it 'raises an ArgumentError if the face raises a LoadError' do
       face = Puppet::Face[:module, :current]
-      face.stubs(:short_description).raises(LoadError, 'cannot load such file -- yard')
+      allow(face).to receive(:short_description).and_raise(LoadError, 'cannot load such file -- yard')
 
       expect {
         subject.help(:module)
@@ -69,7 +68,7 @@ describe Puppet::Face[:help, '0.0.1'] do
     context 'with face actions' do
       it 'returns an error if we can not get an action for the module' do
         face = Puppet::Face[:module, :current]
-        face.stubs(:get_action).returns(nil)
+        allow(face).to receive(:get_action).and_return(nil)
 
         expect {subject.help('module', 'list')}.to raise_error(ArgumentError, /Unable to load action list from Puppet::Face/)
       end
@@ -135,7 +134,7 @@ describe Puppet::Face[:help, '0.0.1'] do
 
   context 'deprecated faces' do
     it 'prints a deprecation warning for deprecated faces' do
-      Puppet::Face[:module, :current].stubs(:deprecated?).returns(true)
+      allow(Puppet::Face[:module, :current]).to receive(:deprecated?).and_return(true)
       expect(Puppet::Face[:help, :current].help(:module)).to match(/Warning: 'puppet module' is deprecated/)
     end
   end
@@ -143,7 +142,7 @@ describe Puppet::Face[:help, '0.0.1'] do
   context '#all_application_summaries' do
     it 'appends a deprecation warning for deprecated faces' do
       # Stub the module face as deprecated
-      Puppet::Face[:module, :current].expects(:deprecated?).returns(true)
+      expect(Puppet::Face[:module, :current]).to receive(:deprecated?).and_return(true)
       Puppet::Face[:help, :current].all_application_summaries.each do |appname,summary|
         expect(summary).to match(/Deprecated/) if appname == 'module'
       end
@@ -190,7 +189,7 @@ describe Puppet::Face[:help, '0.0.1'] do
 
     context 'rendering has an error' do
       it 'raises an ArgumentError if a legacy application raises a StandardError' do
-        Puppet::Application[appname].class.any_instance.stubs(:help).raises(StandardError, 'whoops')
+        allow_any_instance_of(Puppet::Application[appname].class).to receive(:help).and_raise(StandardError, 'whoops')
 
         expect {
           subject.help(appname)
@@ -198,7 +197,7 @@ describe Puppet::Face[:help, '0.0.1'] do
       end
 
       it 'raises an ArgumentError if a legacy application raises a LoadError' do
-        Puppet::Application[appname].class.any_instance.stubs(:help).raises(LoadError, 'cannot load such file -- yard')
+        allow_any_instance_of(Puppet::Application[appname].class).to receive(:help).and_raise(LoadError, 'cannot load such file -- yard')
 
         expect {
           subject.help(appname)

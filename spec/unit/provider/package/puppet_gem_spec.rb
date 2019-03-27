@@ -26,38 +26,58 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
 
   context "when installing" do
     it "should use the path to the gem" do
-      described_class.expects(:which).with(puppet_gem).returns(puppet_gem)
-      provider.expects(:execute).with { |args| args[0] == puppet_gem }.returns ''
+      expect(described_class).to receive(:which).with(puppet_gem).and_return(puppet_gem)
+      expect(provider).to receive(:execute) do |args|
+        expect(args[0]).to eq(puppet_gem)
+        ''
+      end
       provider.install
     end
 
     it "should not append install_options by default" do
-      provider.expects(:execute).with { |args| args.length == 5 }.returns ''
+      expect(provider).to receive(:execute) do |args|
+        expect(args.length).to eq(5)
+        ''
+      end
       provider.install
     end
 
     it "should allow setting an install_options parameter" do
       resource[:install_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-      provider.expects(:execute).with { |args| args[2] == '--force' && args[3] == '--bindir=/usr/bin' }.returns ''
+      expect(provider).to receive(:execute) do |args|
+        expect(args[2]).to eq('--force')
+        expect(args[3]).to eq('--bindir=/usr/bin')
+        ''
+      end
       provider.install
     end
   end
 
   context "when uninstalling" do
     it "should use the path to the gem" do
-      described_class.expects(:which).with(puppet_gem).returns(puppet_gem)
-      provider.expects(:execute).with { |args| args[0] == puppet_gem }.returns ''
+      expect(described_class).to receive(:which).with(puppet_gem).and_return(puppet_gem)
+      expect(provider).to receive(:execute) do |args|
+        expect(args[0]).to eq(puppet_gem)
+        ''
+      end
       provider.install
     end
 
     it "should not append uninstall_options by default" do
-      provider.expects(:execute).with { |args| args.length == 5 }.returns ''
+      expect(provider).to receive(:execute) do |args|
+        expect(args.length).to eq(5)
+        ''
+      end
       provider.uninstall
     end
 
     it "should allow setting an uninstall_options parameter" do
       resource[:uninstall_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-      provider.expects(:execute).with { |args| args[5] == '--force' && args[6] == '--bindir=/usr/bin' }.returns ''
+      expect(provider).to receive(:execute) do |args|
+        expect(args[5]).to eq('--force')
+        expect(args[6]).to eq('--bindir=/usr/bin')
+        ''
+      end
       provider.uninstall
     end
   end

@@ -57,33 +57,33 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
   end
 
   it "packs a tar file" do
-    writer = stub('GzipWriter')
+    writer = double('GzipWriter')
 
-    Zlib::GzipWriter.expects(:open).with(destfile).yields(writer)
+    expect(Zlib::GzipWriter).to receive(:open).with(destfile).and_yield(writer)
     stats = {:mode => 0222}
-    Archive::Tar::Minitar.expects(:pack).with(sourcedir, writer).yields(:file_start, 'abc', stats)
+    expect(Archive::Tar::Minitar).to receive(:pack).with(sourcedir, writer).and_yield(:file_start, 'abc', stats)
 
     minitar.pack(sourcedir, destfile)
   end
 
   it "packs a tar file on Windows" do
-    writer = stub('GzipWriter')
+    writer = double('GzipWriter')
 
-    Zlib::GzipWriter.expects(:open).with(destfile).yields(writer)
-    Archive::Tar::Minitar.expects(:pack).with(sourcedir, writer).
-        yields(:file_start, 'abc', {:entry => MockFileStatEntry.new(nil)})
+    expect(Zlib::GzipWriter).to receive(:open).with(destfile).and_yield(writer)
+    expect(Archive::Tar::Minitar).to receive(:pack).with(sourcedir, writer).
+        and_yield(:file_start, 'abc', {:entry => MockFileStatEntry.new(nil)})
 
     minitar.pack(sourcedir, destfile)
   end
 
   def unpacks_the_entry(type, name, mode = 0100)
-    reader = stub('GzipReader')
+    reader = double('GzipReader')
 
-    Zlib::GzipReader.expects(:open).with(sourcefile).yields(reader)
-    minitar.expects(:find_valid_files).with(reader).returns([name])
+    expect(Zlib::GzipReader).to receive(:open).with(sourcefile).and_yield(reader)
+    expect(minitar).to receive(:find_valid_files).with(reader).and_return([name])
     entry = MockFileStatEntry.new(mode)
-    Archive::Tar::Minitar.expects(:unpack).with(reader, destdir, [name]).
-        yields(type, name, {:entry => entry})
+    expect(Archive::Tar::Minitar).to receive(:unpack).with(reader, destdir, [name]).
+        and_yield(type, name, {:entry => entry})
     entry
   end
 end

@@ -1,27 +1,26 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/network/authconfig'
 
 describe Puppet::Network::DefaultAuthProvider do
   before :each do
-    Puppet::FileSystem.stubs(:stat).returns stub('stat', :ctime => :now)
-    Time.stubs(:now).returns Time.now
+    allow(Puppet::FileSystem).to receive(:stat).and_return(double('stat', :ctime => :now))
+    allow(Time).to receive(:now).and_return(Time.now)
 
-    Puppet::Network::DefaultAuthProvider.any_instance.stubs(:exists?).returns(true)
+    allow_any_instance_of(Puppet::Network::DefaultAuthProvider).to receive(:exists?).and_return(true)
     # FIXME @authprovider = Puppet::Network::DefaultAuthProvider.new("dummy")
   end
 
   describe "when initializing" do
     it "inserts default ACLs after setting initial rights" do
-      Puppet::Network::DefaultAuthProvider.any_instance.expects(:insert_default_acl)
+      expect_any_instance_of(Puppet::Network::DefaultAuthProvider).to receive(:insert_default_acl)
       Puppet::Network::DefaultAuthProvider.new
     end
   end
 
   describe "when defining an acl with mk_acl" do
     before :each do
-      Puppet::Network::DefaultAuthProvider.any_instance.stubs(:insert_default_acl)
+      allow_any_instance_of(Puppet::Network::DefaultAuthProvider).to receive(:insert_default_acl)
       @authprovider = Puppet::Network::DefaultAuthProvider.new
     end
 
@@ -53,26 +52,26 @@ describe Puppet::Network::DefaultAuthProvider do
 
   describe "when adding default ACLs" do
     before :each do
-      Puppet::Network::DefaultAuthProvider.any_instance.stubs(:insert_default_acl)
+      allow_any_instance_of(Puppet::Network::DefaultAuthProvider).to receive(:insert_default_acl)
       @authprovider = Puppet::Network::DefaultAuthProvider.new
-      Puppet::Network::DefaultAuthProvider.any_instance.unstub(:insert_default_acl)
+      allow_any_instance_of(Puppet::Network::DefaultAuthProvider).to receive(:insert_default_acl).and_call_original
     end
 
     Puppet::Network::DefaultAuthProvider::default_acl.each do |acl|
       it "should create a default right for #{acl[:acl]}" do
-        @authprovider.stubs(:mk_acl)
-        @authprovider.expects(:mk_acl).with(acl)
+        allow(@authprovider).to receive(:mk_acl)
+        expect(@authprovider).to receive(:mk_acl).with(acl)
         @authprovider.insert_default_acl
       end
     end
 
     it "should log at info loglevel" do
-      Puppet.expects(:info).at_least_once
+      expect(Puppet).to receive(:info).at_least(:once)
       @authprovider.insert_default_acl
     end
 
     it "creates an empty catch-all rule for '/' for any authentication request state" do
-      @authprovider.stubs(:mk_acl)
+      allow(@authprovider).to receive(:mk_acl)
 
       @authprovider.insert_default_acl
       expect(@authprovider.rights['/']).to be_empty
@@ -86,8 +85,8 @@ describe Puppet::Network::DefaultAuthProvider do
         :allow => '$1',
         :authenticated => true
       }
-      @authprovider.stubs(:mk_acl)
-      @authprovider.expects(:mk_acl).with(acl)
+      allow(@authprovider).to receive(:mk_acl)
+      expect(@authprovider).to receive(:mk_acl).with(acl)
       @authprovider.insert_default_acl
     end
   end
@@ -101,7 +100,7 @@ describe Puppet::Network::DefaultAuthProvider do
         :authenticated => true
       }
 
-      Puppet::Network::Rights.any_instance.expects(:is_request_forbidden_and_why?).with(:save, "/path/to/resource", params)
+      expect_any_instance_of(Puppet::Network::Rights).to receive(:is_request_forbidden_and_why?).with(:save, "/path/to/resource", params)
 
       described_class.new.check_authorization(:save, "/path/to/resource", params)
     end
@@ -121,19 +120,19 @@ describe Puppet::Network::AuthConfig do
   it "instantiates authprovider_class with rights" do
     Puppet::Network::AuthConfig.authprovider_class = TestAuthProvider
     rights = Puppet::Network::Rights.new
-    TestAuthProvider.expects(:new).with(rights)
+    expect(TestAuthProvider).to receive(:new).with(rights)
     described_class.new(rights)
   end
 
   it "delegates authorization check to authprovider_class" do
     Puppet::Network::AuthConfig.authprovider_class = TestAuthProvider
-    TestAuthProvider.any_instance.expects(:check_authorization).with(:save, '/path/to/resource', {})
+    expect_any_instance_of(TestAuthProvider).to receive(:check_authorization).with(:save, '/path/to/resource', {})
     described_class.new.check_authorization(:save, '/path/to/resource', {})
   end
 
   it "uses DefaultAuthProvider by default" do
     Puppet::Network::AuthConfig.authprovider_class = nil
-    Puppet::Network::DefaultAuthProvider.any_instance.expects(:check_authorization).with(:save, '/path/to/resource', {})
+    expect_any_instance_of(Puppet::Network::DefaultAuthProvider).to receive(:check_authorization).with(:save, '/path/to/resource', {})
     described_class.new.check_authorization(:save, '/path/to/resource', {})
   end
 end

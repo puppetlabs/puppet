@@ -52,7 +52,7 @@ describe 'lookup' do
 
     def lookup(key, options = {}, explain = false)
       key = [key] unless key.is_a?(Array)
-      app.command_line.stubs(:args).returns(key)
+      allow(app.command_line).to receive(:args).and_return(key)
       if explain
         app.options[:explain] = true
         app.options[:render_as] = :s
@@ -98,15 +98,15 @@ describe 'lookup' do
 
       it ':plain without --compile' do
         Puppet.settings[:node_terminus] = 'exec'
-        Puppet::Node::Plain.any_instance.expects(:find).returns(node)
-        Puppet::Node::Exec.any_instance.expects(:find).never
+        expect_any_instance_of(Puppet::Node::Plain).to receive(:find).and_return(node)
+        expect_any_instance_of(Puppet::Node::Exec).not_to receive(:find)
         expect(lookup('a')).to eql('value a')
       end
 
       it 'configured in Puppet settings with --compile' do
         Puppet.settings[:node_terminus] = 'exec'
-        Puppet::Node::Plain.any_instance.expects(:find).never
-        Puppet::Node::Exec.any_instance.expects(:find).returns(node)
+        expect_any_instance_of(Puppet::Node::Plain).not_to receive(:find)
+        expect_any_instance_of(Puppet::Node::Exec).to receive(:find).and_return(node)
         expect(lookup('a', :compile => true)).to eql('value a')
       end
     end
