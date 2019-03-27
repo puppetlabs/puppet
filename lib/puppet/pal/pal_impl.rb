@@ -313,6 +313,7 @@ module Pal
 
     Puppet.override(
       environments: environments,     # The env being used is the only one...
+      current_environment: env,       # needed in functions to get the Cache adapter
       pal_env: env,                   # provide as convenience
       pal_current_node: node,         # to allow it to be picked up instead of created
       pal_variables: variables,       # common set of variables across several inner contexts
@@ -320,7 +321,7 @@ module Pal
     ) do
       # DELAY: prepare_node_facts(node, facts)
       result = block.call(self)
-      env.on_expiration()
+      env.on_expiration() # ensure functions that registered gets callbacks
       result
     end
   end
@@ -397,19 +398,20 @@ module Pal
 
     configured_environment = node.environment || Puppet.lookup(:current_environment)
 
-    apply_environment = manifest ?
-      configured_environment.override_with(:manifest => manifest) :
-      configured_environment
+    if manifest
+      # mutate it - a new env instance is wasteful and unwanted
+      configured_environment.manifest = manifest
+    end
 
     # Modify the node descriptor to use the special apply_environment.
     # It is based on the actual environment from the node, or the locally
     # configured environment if the node does not specify one.
     # If a manifest file is passed on the command line, it overrides
     # the :manifest setting of the apply_environment.
-    node.environment = apply_environment
+    node.environment = configured_environment
 
     # TRANSLATORS, the string "For puppet PAL" is not user facing
-    Puppet.override({:current_environment => apply_environment}, "For puppet PAL") do
+    Puppet.override({:current_environment => configured_environment}, "For puppet PAL") do
       begin
         # support the following features when evaluating puppet code
         # * $facts with facts from host running the script

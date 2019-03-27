@@ -58,6 +58,9 @@ class Puppet::Parser::ScriptCompiler
     message = "#{detail} on node #{node_name}"
     Puppet.log_exception(detail, message)
     raise Puppet::Error, message, detail.backtrace
+  ensure
+    # tell listeners that compilation ended
+    on_compilation_end
   end
 
   # Constructs the overrides for the context
@@ -93,6 +96,9 @@ class Puppet::Parser::ScriptCompiler
 
     # Resolutions of fully qualified variable names
     @qualified_variables = {}
+
+    # to be able to issue callbacks when compilation ends
+    @registered_listeners = []
   end
 
   # Having multiple named scopes hanging from top scope is not supported when scripting
@@ -112,7 +118,18 @@ class Puppet::Parser::ScriptCompiler
      raise _('having multiple named scopes is not supported when scripting')
   end
 
+  # Register a codeblock that will be called when the compilation has ended.
+  #
+  def register_listener(&block)
+    @registered_listeners << block
+  end
+
   private
+
+  # Perform callback to all registered listeners
+  def on_compilation_end()
+    @registered_listeners.each {|p| p.call() }
+  end
 
   # Find and evaluate the top level code.
   def evaluate_main

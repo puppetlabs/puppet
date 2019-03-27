@@ -158,7 +158,7 @@ class Puppet::Node::Environment
   # @!attribute [r] manifest
   #   @api public
   #   @return [String] path to the manifest file or directory.
-  attr_reader :manifest
+  attr_accessor :manifest
 
   # @!attribute [r] config_version
   #   @api public

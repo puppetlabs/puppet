@@ -660,13 +660,31 @@ module Puppet::Functions
   #
   # @api private
   class InternalFunction < Function
+
+    def call(scope, *args, &block)
+      # An InternalFunction supports callbacks for env and compilation end.
+      # The registration to listen to compilation end must take place here when the function
+      # is called since there is no event that signals that a new compiler is started.
+      # It does this by remembering the id of the current compiler. Note that there is no harm
+      # in re-registering with a compiler in case a function were to be called for different compilers in
+      # succession.
+      #
+      if self.class.when_compilation_ends
+        compiler = scope.compiler
+        if compiler.__id__ != @compiler_id
+          @compiler_id = compiler.__id__
+          compiler.register_listener() { self.send(self.class.when_compilation_ends) }
+        end
+      end
+      super
+    end
+
     def initialize(closure_scope, loader)
       super
+      # Add a listener if function class expects callback for expiring environment
+      # (Note that adding a listener for compilation end is done when function is called). 
       if self.class.when_environment_expires
         self.closure_scope.environment.register_eviction_listener() { self.send(self.class.when_environment_expires) }
-      end
-      if self.class.when_compilation_ends
-        self.closure_scope.compiler.register_listener() { self.send(self.class.when_compilation_ends) }
       end
     end
 

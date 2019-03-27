@@ -591,6 +591,34 @@ describe 'Puppet Pal' do
                 end
               end
               RUBY
+            'a_caching_func.rb' => <<-RUBY.unindent,
+              # Purpose: to test that callbacks are made to env and compilation end
+              # should be called with a guard that has expectations on being called
+              # to assert that callbacks take place.
+              #
+              Puppet::Functions.create_function(:'a::a_caching_func', Puppet::Functions::InternalFunction) do
+                when_environment_expires :on_env_expiration
+                when_compilation_ends :on_compilation_end
+                dispatch :this do
+                  env_cache_param
+                  param 'Any', :a_guard_object
+                end
+
+                def this(adapter, a_guard_object)
+                  adapter.insert(self, :guard, a_guard_object)
+                end
+
+                def on_env_expiration
+                  # make a callback to guard to allow test to assert it takes place
+                  env_cache_adapter().get(self, :guard).env_end
+                end
+
+                def on_compilation_end
+                  # make a callback to guard to allow test to assert it takes place
+                  env_cache_adapter().get(self, :guard).compiler_end
+                end
+              end
+              RUBY
           }
         }
       }
@@ -1013,6 +1041,35 @@ describe 'Puppet Pal' do
             ctx.with_script_compiler(configured_by_env: true) {|c|  c.call_function('a::myscriptcompilerfunc', 'go')}
           end
           expect(result).to eql('go')
+        end
+      end
+
+      context 'when script compiler is used callbacks are supported' do
+        it 'such that compilation and environment end callbacks are performed' do
+          guard = Object.new
+          guard.expects(:env_end).once
+          guard.expects(:compiler_end).once
+
+          testing_env_dir # creates the structure
+          Puppet[:manifest] = file_containing('noop.pp', "undef")
+          Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
+            ctx.with_script_compiler(configured_by_env: true) {|c|  c.call_function('a::a_caching_func', guard)}
+          end
+          # no additional expectations
+        end
+
+        it 'when environment is used more than once, there is only one end of env' do
+          guard = Object.new
+          guard.expects(:env_end).once
+          guard.expects(:compiler_end).twice
+
+          testing_env_dir # creates the structure
+          Puppet[:manifest] = file_containing('noop.pp', "undef")
+          Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
+            ctx.with_script_compiler(configured_by_env: true) {|c|  c.call_function('a::a_caching_func', guard)}
+            ctx.with_script_compiler(configured_by_env: true) {|c|  c.call_function('a::a_caching_func', guard)}
+          end
+          # no additional expectations
         end
       end
     end
