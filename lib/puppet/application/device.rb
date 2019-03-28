@@ -268,16 +268,19 @@ Licensed under the Apache 2.0 License
           Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
           Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:certname] = device.name
+          ssl_context = nil
 
-          unless options[:resource] || options[:facts] || options[:apply] || options[:libdir]
+          unless options[:resource] || options[:facts] || options[:apply]
             # this will reload and recompute default settings and create the devices sub vardir
             Puppet.settings.use :main, :agent, :ssl
             # ask for a ssl cert if needed, but at least
             # setup the ssl system for this device.
             ssl_context = setup_host
 
-            Puppet.override(ssl_context: ssl_context) do
-              Puppet::Configurer::PluginHandler.new.download_plugins(env)
+            unless options[:libdir]
+              Puppet.override(ssl_context: ssl_context) do
+                Puppet::Configurer::PluginHandler.new.download_plugins(env)
+              end
             end
           end
           # this init the device singleton, so that the facts terminus
@@ -328,8 +331,9 @@ Licensed under the Apache 2.0 License
           else
             Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
 
-            Puppet.override(ssl_context: ssl_context) do
-              require 'puppet/configurer'
+            overrides = {}
+            overrides.merge!(ssl_context: ssl_context) if ssl_context
+            Puppet.override(overrides) do
               configurer = Puppet::Configurer.new
               configurer.run(:network_device => true, :pluginsync => false)
             end
