@@ -87,7 +87,7 @@ describe Puppet::X509::PemStore do
     end
 
     it 'never changes the owner and group on Windows', if: Puppet::Util::Platform.windows? do
-      FileUtils.expects(:chown).never
+      expect(FileUtils).not_to receive(:chown)
 
       subject.save_pem('PEM', path, owner: 'Administrator', group: 'None')
     end

@@ -1072,7 +1072,7 @@ describe "Puppet::FileSystem" do
         end
 
         it 'raises Errno::EACCES if access is denied' do
-          Puppet::Util::Windows::Security.stubs(:get_security_descriptor).raises(Puppet::Util::Windows::Error.new('access denied', 5))
+          allow(Puppet::Util::Windows::Security).to receive(:get_security_descriptor).and_raise(Puppet::Util::Windows::Error.new('access denied', 5))
 
           expect {
             Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
@@ -1080,7 +1080,7 @@ describe "Puppet::FileSystem" do
         end
 
         it 'raises SystemCallError otherwise' do
-          Puppet::Util::Windows::Security.stubs(:get_security_descriptor).raises(Puppet::Util::Windows::Error.new('arena is trashed', 7))
+          allow(Puppet::Util::Windows::Security).to receive(:get_security_descriptor).and_raise(Puppet::Util::Windows::Error.new('arena is trashed', 7))
 
           expect {
             Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
