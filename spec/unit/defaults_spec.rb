@@ -139,7 +139,7 @@ describe "Defaults" do
       let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
 
       it 'includes user and system modules' do
-        Facter.stubs(:value).with(:env_windows_installdir).returns(installdir)
+        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(installdir)
 
         expect(
           Puppet.default_basemodulepath
@@ -147,7 +147,7 @@ describe "Defaults" do
       end
 
       it 'includes user modules if installdir fact is missing' do
-        Facter.stubs(:value).with(:env_windows_installdir).returns(nil)
+        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(nil)
 
         expect(
           Puppet.default_basemodulepath
