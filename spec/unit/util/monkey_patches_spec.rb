@@ -1,8 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/monkey_patches'
-
 
 describe Symbol do
   after :all do
@@ -54,7 +52,7 @@ describe OpenSSL::SSL::SSLContext do
   end
 
   it 'sets parameters on initialization' do
-    described_class.any_instance.expects(:set_params)
+    expect_any_instance_of(described_class).to receive(:set_params)
     subject
   end
 
@@ -73,7 +71,7 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
   let(:samecert) { cert.dup() }
 
   def with_root_certs(certs)
-    Puppet::Util::Windows::RootCerts.expects(:instance).returns(certs)
+    expect(Puppet::Util::Windows::RootCerts).to receive(:instance).and_return(certs)
   end
 
   it "adds a root cert to the store" do
@@ -84,7 +82,7 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
 
   it "doesn't warn when calling set_default_paths multiple times" do
     with_root_certs([cert])
-    store.expects(:warn).never
+    expect(store).not_to receive(:warn)
 
     store.set_default_paths
     store.set_default_paths
@@ -95,8 +93,8 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
     expect(cert.hash).to_not eq(samecert.hash)
     with_root_certs([cert, samecert])
 
-    store.expects(:add_cert).with(cert).once
-    store.expects(:add_cert).with(samecert).never
+    expect(store).to receive(:add_cert).with(cert).once
+    expect(store).not_to receive(:add_cert).with(samecert)
 
     store.set_default_paths
   end
@@ -108,7 +106,7 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
       with_root_certs([cert])
       store.add_cert(cert)
 
-      store.expects(:warn).with('Failed to add /DC=com/DC=microsoft/CN=Microsoft Root Certificate Authority')
+      expect(store).to receive(:warn).with('Failed to add /DC=com/DC=microsoft/CN=Microsoft Root Certificate Authority')
 
       store.set_default_paths
     end
@@ -117,7 +115,7 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
       with_root_certs([cert])
       store.add_cert(cert)
 
-      store.expects(:warn).never
+      expect(store).not_to receive(:warn)
 
       store.set_default_paths
     end

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/file_serving/base'
@@ -42,7 +41,7 @@ describe Puppet::FileServing::Base do
   end
 
   it "should allow specification of a relative path" do
-    Puppet::FileSystem.stubs(:exist?).returns(true)
+    allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
     expect(Puppet::FileServing::Base.new(path, :relative_path => "my/file").relative_path).to eq("my/file")
   end
 
@@ -51,19 +50,19 @@ describe Puppet::FileServing::Base do
   end
 
   it "should correctly indicate if the file is present" do
-    Puppet::FileSystem.expects(:lstat).with(file).returns stub('stat')
+    expect(Puppet::FileSystem).to receive(:lstat).with(file).and_return(double('stat'))
     expect(Puppet::FileServing::Base.new(file).exist?).to be_truthy
   end
 
   it "should correctly indicate if the file is absent" do
-    Puppet::FileSystem.expects(:lstat).with(file).raises RuntimeError
+    expect(Puppet::FileSystem).to receive(:lstat).with(file).and_raise(RuntimeError)
     expect(Puppet::FileServing::Base.new(file).exist?).to be_falsey
   end
 
   describe "when setting the relative path" do
     it "should require that the relative path be unqualified" do
       @file = Puppet::FileServing::Base.new(path)
-      Puppet::FileSystem.stubs(:exist?).returns(true)
+      allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
       expect { @file.relative_path = File.expand_path("/qualified/file") }.to raise_error(ArgumentError)
     end
   end
@@ -102,7 +101,7 @@ describe Puppet::FileServing::Base do
     let(:file) { Puppet::FileServing::Base.new(path) }
 
     before :each do
-      Puppet::Util::Platform.stubs(:windows?).returns true
+      allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
     end
 
     it "should preserve double slashes at the beginning of the path" do
@@ -119,26 +118,26 @@ describe Puppet::FileServing::Base do
   describe "when stat'ing files" do
     let(:path) { File.expand_path('/this/file') }
     let(:file) { Puppet::FileServing::Base.new(path) }
-    let(:stat) { stub('stat', :ftype => 'file' ) }
-    let(:stubbed_file) { stub(path, :stat => stat, :lstat => stat)}
+    let(:stat) { double('stat', :ftype => 'file' ) }
+    let(:stubbed_file) { double(path, :stat => stat, :lstat => stat)}
 
     it "should stat the file's full path" do
-      Puppet::FileSystem.expects(:lstat).with(path).returns stat
+      expect(Puppet::FileSystem).to receive(:lstat).with(path).and_return(stat)
       file.stat
     end
 
     it "should fail if the file does not exist" do
-      Puppet::FileSystem.expects(:lstat).with(path).raises(Errno::ENOENT)
+      expect(Puppet::FileSystem).to receive(:lstat).with(path).and_raise(Errno::ENOENT)
       expect { file.stat }.to raise_error(Errno::ENOENT)
     end
 
     it "should use :lstat if :links is set to :manage" do
-      Puppet::FileSystem.expects(:lstat).with(path).returns stubbed_file
+      expect(Puppet::FileSystem).to receive(:lstat).with(path).and_return(stubbed_file)
       file.stat
     end
 
     it "should use :stat if :links is set to :follow" do
-      Puppet::FileSystem.expects(:stat).with(path).returns stubbed_file
+      expect(Puppet::FileSystem).to receive(:stat).with(path).and_return(stubbed_file)
       file.links = :follow
       file.stat
     end
@@ -150,14 +149,14 @@ describe Puppet::FileServing::Base do
     end
 
     it "should accept Windows paths on Windows" do
-      Puppet::Util::Platform.stubs(:windows?).returns true
-      Puppet.features.stubs(:posix?).returns(false)
+      allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
+      allow(Puppet.features).to receive(:posix?).and_return(false)
 
       expect(Puppet::FileServing::Base).to be_absolute('c:/foo')
     end
 
     it "should reject Windows paths on POSIX" do
-      Puppet::Util::Platform.stubs(:windows?).returns false
+      allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
 
       expect(Puppet::FileServing::Base).not_to be_absolute('c:/foo')
     end

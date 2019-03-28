@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/character_encoding'
 require 'puppet_spec/character_encoding'
@@ -22,7 +21,7 @@ describe Puppet::Util::CharacterEncoding do
         let(:invalid_utf8_string) { "\xfd\xf1".force_encoding(Encoding::UTF_8) }
 
         it "should issue a debug message" do
-          Puppet.expects(:debug).with(regexp_matches(/encoding is invalid/))
+          expect(Puppet).to receive(:debug).with(/encoding is invalid/)
           Puppet::Util::CharacterEncoding.convert_to_utf_8(invalid_utf8_string)
         end
 
@@ -81,7 +80,7 @@ describe Puppet::Util::CharacterEncoding do
         end
 
         it "should issue a debug message that the string was not transcodable" do
-          Puppet.expects(:debug).with(regexp_matches(/cannot be transcoded/))
+          expect(Puppet).to receive(:debug).with(/cannot be transcoded/)
           PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::Windows_31J) do
             Puppet::Util::CharacterEncoding.convert_to_utf_8(invalid_win_31j)
           end
@@ -125,7 +124,7 @@ describe Puppet::Util::CharacterEncoding do
           let(:euc_kr) { [253, 241].pack('C*').force_encoding(Encoding::ASCII) }
 
           it "should issue a debug message" do
-            Puppet.expects(:debug).with(regexp_matches(/cannot be transcoded/))
+            expect(Puppet).to receive(:debug).with(/cannot be transcoded/)
             Puppet::Util::CharacterEncoding.convert_to_utf_8(euc_kr)
           end
 
@@ -167,8 +166,9 @@ describe Puppet::Util::CharacterEncoding do
       # Invalid in UTF-8 without transcoding
       let(:oslash) { [216].pack('C*').force_encoding(Encoding::ISO_8859_1) }
       let(:foo) { 'foo' }
+
       it "should issue a debug message" do
-        Puppet.expects(:debug).with(regexp_matches(/not valid UTF-8/))
+        expect(Puppet).to receive(:debug).with(/not valid UTF-8/)
         Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(oslash)
       end
 

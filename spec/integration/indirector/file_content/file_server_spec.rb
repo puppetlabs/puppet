@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/file_content/file_server'
@@ -75,8 +74,8 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
   end
 
   it "should find file content in files when node name expansions are used" do
-    Puppet::FileSystem.stubs(:exist?).returns true
-    Puppet::FileSystem.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
+    allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
+    allow(Puppet::FileSystem).to receive(:exist?).with(Puppet[:fileserverconfig]).and_return(true)
 
     path = tmpfile("file_server_testing")
 
@@ -87,14 +86,14 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     # Use a real mount, so the integration is a bit deeper.
     mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
-    mount1.stubs(:globalallow?).returns true
-    mount1.stubs(:allowed?).returns true
+    allow(mount1).to receive(:globalallow?).and_return(true)
+    allow(mount1).to receive(:allowed?).and_return(true)
     mount1.path = File.join(path, "%h")
 
-    parser = stub 'parser', :changed? => false
-    parser.stubs(:parse).returns("one" => mount1)
+    parser = double('parser', :changed? => false)
+    allow(parser).to receive(:parse).and_return("one" => mount1)
 
-    Puppet::FileServing::Configuration::Parser.stubs(:new).returns(parser)
+    allow(Puppet::FileServing::Configuration::Parser).to receive(:new).and_return(parser)
 
     path = File.join(path, "myfile")
 

@@ -25,8 +25,8 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
   before do
     WebMock.disable_net_connect!
 
-    Net::HTTP.any_instance.stubs(:start)
-    Net::HTTP.any_instance.stubs(:finish)
+    allow_any_instance_of(Net::HTTP).to receive(:start)
+    allow_any_instance_of(Net::HTTP).to receive(:finish)
 
     Puppet.settings.use(:main)
     Puppet[:certname] = name
@@ -238,7 +238,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'reports when verification succeeds' do
-      OpenSSL::X509::Store.any_instance.stubs(:verify).returns(true)
+      allow_any_instance_of(OpenSSL::X509::Store).to receive(:verify).and_return(true)
 
       expects_command_to_pass(%r{Verified client certificate '/CN=ssl-client' fingerprint})
     end
@@ -367,8 +367,8 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'returns an SSLContext with the loaded CA certs, CRLs, private key and client cert' do
-      Puppet::SSL::StateMachine.any_instance.expects(:ensure_client_certificate).returns(
-        stub('ssl_context')
+      expect_any_instance_of(Puppet::SSL::StateMachine).to receive(:ensure_client_certificate).and_return(
+        double('ssl_context')
       )
 
       expects_command_to_pass

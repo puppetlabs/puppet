@@ -28,26 +28,25 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
     catalog = Puppet::Resource::Catalog.new
     catalog.host_config = false
     resources.each do |resource|
-      #resource.expects(:err).never
       catalog.add_resource(resource)
     end
     catalog.apply
   end
 
   before do
-    described_class.stubs(:command).with(:pkg) { '/usr/local/sbin/pkg' }
+    allow(described_class).to receive(:command).with(:pkg).and_return('/usr/local/sbin/pkg')
 
     info = File.read(my_fixture('pkg.query'))
-    described_class.stubs(:get_query).returns(info)
+    allow(described_class).to receive(:get_query).and_return(info)
 
     version_list = File.read(my_fixture('pkg.version'))
-    described_class.stubs(:get_version_list).returns(version_list)
+    allow(described_class).to receive(:get_version_list).and_return(version_list)
   end
 
   context "#instances" do
     it "should return the empty set if no packages are listed" do
-      described_class.stubs(:get_query).returns('')
-      described_class.stubs(:get_version_list).returns('')
+      allow(described_class).to receive(:get_query).and_return('')
+      allow(described_class).to receive(:get_version_list).and_return('')
       expect(described_class.instances).to be_empty
     end
 
@@ -63,14 +62,14 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
     end
 
     it "should return an empty array when pkg calls raise an exception" do
-      described_class.stubs(:get_query).raises(Puppet::ExecutionFailure, 'An error occurred.')
+      allow(described_class).to receive(:get_query).and_raise(Puppet::ExecutionFailure, 'An error occurred.')
       expect(described_class.instances).to eq([])
     end
 
     describe "version" do
       it "should retrieve the correct version of the current package" do
         zsh = described_class.instances.find {|i| i.properties[:origin] == 'shells/zsh' }
-        expect( zsh.properties[:version]).to eq('5.0.2_1')
+        expect(zsh.properties[:version]).to eq('5.0.2_1')
       end
     end
   end
@@ -82,8 +81,8 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
         :provider => :pkgng,
         :ensure   => '7.33.1'
       )
-      resource.provider.expects(:pkg) do |arg|
-        arg.should include('curl-7.33.1')
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('curl-7.33.1')
       end
       resource.provider.install
     end
@@ -94,8 +93,8 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
         :provider => :pkgng,
         :ensure   => '7.33.1'
       )
-      resource.provider.expects(:pkg) do |arg|
-        arg.should include('curl-7.33.1')
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('curl-7.33.1')
       end
       resource.provider.install
     end
@@ -106,8 +105,8 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
         :provider => :pkgng,
         :source   => 'urn:freebsd:repo:FreeBSD'
       )
-      resource.provider.expects(:pkg) do |arg|
-        arg.should include('FreeBSD')
+      expect(resource.provider).to receive(:pkg) do |arg|
+        expect(arg).to include('FreeBSD')
       end
       resource.provider.install
     end
@@ -115,7 +114,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
 
   context "#prefetch" do
     it "should fail gracefully when " do
-      described_class.stubs(:instances).returns([])
+      allow(described_class).to receive(:instances).and_return([])
       expect{ described_class.prefetch({}) }.to_not raise_error
     end
   end
@@ -123,13 +122,13 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
   context "#query" do
     it "should return the installed version if present" do
       pkg_query_zsh = File.read(my_fixture('pkg.query.zsh'))
-      described_class.stubs(:get_resource_info).with('zsh').returns(pkg_query_zsh)
+      allow(described_class).to receive(:get_resource_info).with('zsh').and_return(pkg_query_zsh)
       described_class.prefetch({installed_name => installed_resource})
       expect(installed_provider.query).to be >= {:version=>'5.0.2_1'}
     end
 
     it "should return nil if not present" do
-      described_class.stubs(:get_resource_info).with('bash').raises(Puppet::ExecutionFailure, 'An error occurred')
+      allow(described_class).to receive(:get_resource_info).with('bash').and_raise(Puppet::ExecutionFailure, 'An error occurred')
 
       expect(provider.query).to equal(nil)
     end
@@ -148,7 +147,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
     end
 
     it "should call update to upgrade the version" do
-      described_class.stubs(:get_resource_info).with('ftp/curl').returns('curl 7.61.1 ftp/curl')
+      allow(described_class).to receive(:get_resource_info).with('ftp/curl').and_return('curl 7.61.1 ftp/curl')
 
       resource = Puppet::Type.type(:package).new(
         :name     => 'ftp/curl',
@@ -156,7 +155,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
         :ensure   => :latest
       )
 
-      resource.provider.expects(:update)
+      expect(resource.provider).to receive(:update)
 
       resource.property(:ensure).sync
     end
@@ -165,7 +164,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
   describe "get_latest_version" do
     it "should rereturn nil when the current package is the latest" do
       version_list = File.read(my_fixture('pkg.version'))
-      described_class.stubs(:get_version_list).returns(version_list)
+      allow(described_class).to receive(:get_version_list).and_return(version_list)
       nmap_latest_version = described_class.get_latest_version('security/nmap')
 
       expect(nmap_latest_version).to be_nil
@@ -173,7 +172,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
 
     it "should match the package name exactly" do
       version_list = File.read(my_fixture('pkg.version'))
-      described_class.stubs(:get_version_list).returns(version_list)
+      allow(described_class).to receive(:get_version_list).and_return(version_list)
       bash_comp_latest_version = described_class.get_latest_version('shells/bash-completion')
 
       expect(bash_comp_latest_version).to eq('2.1_3')
@@ -183,7 +182,7 @@ describe Puppet::Type.type(:package).provider(:pkgng) do
   describe "confine" do
     context "on FreeBSD" do
       it "should be the default provider" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :freebsd
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:freebsd)
         expect(described_class).to be_default
       end
     end

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/reports'
@@ -24,7 +23,7 @@ describe processor do
     end
 
     it "should write the report to the file in YAML" do
-      Time.stubs(:now).returns(Time.utc(2011,01,06,12,00,00))
+      allow(Time).to receive(:now).and_return(Time.utc(2011,01,06,12,00,00))
       @report.process
 
       expect(File.read(File.join(Puppet[:reportdir], @report.host, "201101061200.yaml"))).to eq(@report.to_yaml)
@@ -32,14 +31,14 @@ describe processor do
 
     it "rejects invalid hostnames" do
       @report.host = ".."
-      Puppet::FileSystem.expects(:exist?).never
+      expect(Puppet::FileSystem).not_to receive(:exist?)
       expect { @report.process }.to raise_error(ArgumentError, /Invalid node/)
     end
   end
 
   describe "::destroy" do
     it "rejects invalid hostnames" do
-      Puppet::FileSystem.expects(:unlink).never
+      expect(Puppet::FileSystem).not_to receive(:unlink)
       expect { processor.destroy("..") }.to raise_error(ArgumentError, /Invalid node/)
     end
   end

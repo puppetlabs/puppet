@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet_spec/files'
@@ -2046,7 +2045,7 @@ describe "The lookup function" do
         end
 
         it 'provides a sensible error message when the hocon library is not loaded' do
-          Puppet.features.stubs(:hocon?).returns(false)
+          allow(Puppet.features).to receive(:hocon?).and_return(false)
 
           expect { lookup('a') }.to raise_error do |e|
             expect(e.message).to match(/Lookup using Hocon data_hash function is not supported without hocon library/)

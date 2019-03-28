@@ -7,8 +7,8 @@ end
 [:group].each do |type_for_this_round|
   describe Puppet::Type.type(type_for_this_round).provider(:directoryservice) do
     before do
-      @resource = stub("resource")
-      @resource.stubs(:[]).with(:name)
+      @resource = double("resource")
+      allow(@resource).to receive(:[]).with(:name)
       @provider = described_class.new(@resource)
     end
 
@@ -17,18 +17,18 @@ end
       desired = ["foo", ["quux"], "qorp"]
       group   = 'example'
 
-      @resource.stubs(:[]).with(:name).returns(group)
-      @resource.stubs(:[]).with(:auth_membership).returns(true)
+      allow(@resource).to receive(:[]).with(:name).and_return(group)
+      allow(@resource).to receive(:[]).with(:auth_membership).and_return(true)
       @provider.instance_variable_set(:@property_value_cache_hash,
                                       { :members => current })
 
       %w{bar baz}.each do |del|
-        @provider.expects(:execute).once.
+        expect(@provider).to receive(:execute).once.
           with([:dseditgroup, '-o', 'edit', '-n', '.', '-d', del, group])
       end
 
       %w{quux qorp}.each do |add|
-        @provider.expects(:execute).once.
+        expect(@provider).to receive(:execute).once.
           with([:dseditgroup, '-o', 'edit', '-n', '.', '-a', add, group])
       end
 
@@ -40,13 +40,13 @@ end
 describe Puppet::Provider::NameService::DirectoryService do
   context '.single_report' do
     it 'should use plist data' do
-      Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
-      Puppet::Provider::NameService::DirectoryService.stubs(:list_all_present).returns(
+      allow(Puppet::Provider::NameService::DirectoryService).to receive(:get_ds_path).and_return('Users')
+      allow(Puppet::Provider::NameService::DirectoryService).to receive(:list_all_present).and_return(
         ['root', 'user1', 'user2', 'resource_name']
       )
-      Puppet::Provider::NameService::DirectoryService.stubs(:generate_attribute_hash)
-      Puppet::Provider::NameService::DirectoryService.stubs(:execute)
-      Puppet::Provider::NameService::DirectoryService.expects(:parse_dscl_plist_data)
+      allow(Puppet::Provider::NameService::DirectoryService).to receive(:generate_attribute_hash)
+      allow(Puppet::Provider::NameService::DirectoryService).to receive(:execute)
+      expect(Puppet::Provider::NameService::DirectoryService).to receive(:parse_dscl_plist_data)
 
       Puppet::Provider::NameService::DirectoryService.single_report('resource_name')
     end
@@ -54,7 +54,7 @@ describe Puppet::Provider::NameService::DirectoryService do
 
   context '.get_exec_preamble' do
     it 'should use plist data' do
-      Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
+      allow(Puppet::Provider::NameService::DirectoryService).to receive(:get_ds_path).and_return('Users')
 
       expect(Puppet::Provider::NameService::DirectoryService.get_exec_preamble('-list')).to include("-plist")
     end
@@ -85,9 +85,9 @@ describe Puppet::Provider::NameService::DirectoryService do
     end
 
     it 'should execute convert_binary_to_hash once when getting the password' do
-      described_class.expects(:convert_binary_to_hash).returns({'SALTED-SHA512' => pw_string})
-      Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
-      Puppet::Util::Plist.expects(:read_plist_file).returns(shadow_hash_data)
+      expect(described_class).to receive(:convert_binary_to_hash).and_return({'SALTED-SHA512' => pw_string})
+      expect(Puppet::FileSystem).to receive(:exist?).with(plist_path).once.and_return(true)
+      expect(Puppet::Util::Plist).to receive(:read_plist_file).and_return(shadow_hash_data)
       described_class.get_password('uid', 'jeff')
     end
 
@@ -98,19 +98,19 @@ describe Puppet::Provider::NameService::DirectoryService do
     end
 
     it 'should convert xml-to-binary and binary-to-xml when setting the pw on >= 10.7' do
-      described_class.expects(:convert_binary_to_hash).returns({'SALTED-SHA512' => pw_string})
-      described_class.expects(:convert_hash_to_binary).returns(binary_plist)
-      Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
-      Puppet::Util::Plist.expects(:read_plist_file).returns(shadow_hash_data)
-      Puppet::Util::Plist.expects(:write_plist_file).with(shadow_hash_data, plist_path, :binary)
+      expect(described_class).to receive(:convert_binary_to_hash).and_return({'SALTED-SHA512' => pw_string})
+      expect(described_class).to receive(:convert_hash_to_binary).and_return(binary_plist)
+      expect(Puppet::FileSystem).to receive(:exist?).with(plist_path).once.and_return(true)
+      expect(Puppet::Util::Plist).to receive(:read_plist_file).and_return(shadow_hash_data)
+      expect(Puppet::Util::Plist).to receive(:write_plist_file).with(shadow_hash_data, plist_path, :binary)
       described_class.set_password('jeff', 'uid', sha512_hash)
     end
 
     it '[#13686] should handle an empty ShadowHashData field in the users plist' do
-      described_class.expects(:convert_hash_to_binary).returns(binary_plist)
-      Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
-      Puppet::Util::Plist.expects(:read_plist_file).returns({'ShadowHashData' => nil})
-      Puppet::Util::Plist.expects(:write_plist_file)
+      expect(described_class).to receive(:convert_hash_to_binary).and_return(binary_plist)
+      expect(Puppet::FileSystem).to receive(:exist?).with(plist_path).once.and_return(true)
+      expect(Puppet::Util::Plist).to receive(:read_plist_file).and_return({'ShadowHashData' => nil})
+      expect(Puppet::Util::Plist).to receive(:write_plist_file)
       described_class.set_password('jeff', 'uid', sha512_hash)
     end
   end
@@ -129,7 +129,7 @@ describe Puppet::Provider::NameService::DirectoryService do
     end
 
     let :stub_resource do
-      stub('resource')
+      double('resource')
     end
 
     subject do
@@ -137,21 +137,20 @@ describe Puppet::Provider::NameService::DirectoryService do
     end
 
     before :each do
-      @resource = stub("resource")
-      @resource.stubs(:[]).with(:name)
+      @resource = double("resource")
+      allow(@resource).to receive(:[]).with(:name)
       @provider = provider_class.new(@resource)
     end
 
     it 'should delete a group member if the user does not exist' do
-      stub_resource.stubs(:[]).with(:name).returns('fake_group')
-      stub_resource.stubs(:name).returns('fake_group')
-      subject.expects(:execute).with([:dseditgroup, '-o', 'edit', '-n', '.',
-                                    '-d', 'jeff',
-                                    'fake_group']).raises(Puppet::ExecutionFailure,
-                                    'it broke')
-      subject.expects(:execute).with([:dscl, '.', '-delete',
-                                    '/Groups/fake_group', 'GroupMembership',
-                                    'jeff'])
+      allow(stub_resource).to receive(:[]).with(:name).and_return('fake_group')
+      allow(stub_resource).to receive(:name).and_return('fake_group')
+      expect(subject).to receive(:execute).with([:dseditgroup, '-o', 'edit', '-n', '.',
+                                                '-d', 'jeff',
+                                                'fake_group']).and_raise(Puppet::ExecutionFailure, 'it broke')
+      expect(subject).to receive(:execute).with([:dscl, '.', '-delete',
+                                                '/Groups/fake_group', 'GroupMembership',
+                                                'jeff'])
       subject.remove_unwanted_members(group_members, user_account)
     end
   end

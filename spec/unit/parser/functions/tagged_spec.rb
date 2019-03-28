@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "the 'tagged' function" do
@@ -21,7 +20,7 @@ describe "the 'tagged' function" do
 
   it 'should be case-insensitive' do
     resource = Puppet::Parser::Resource.new(:file, "/file", :scope => @scope)
-    @scope.stubs(:resource).returns resource
+    allow(@scope).to receive(:resource).and_return(resource)
     @scope.function_tag ["one"]
 
     expect(@scope.function_tagged(['One'])).to eq(true)
@@ -29,7 +28,7 @@ describe "the 'tagged' function" do
 
   it 'should check if all specified tags are included' do
     resource = Puppet::Parser::Resource.new(:file, "/file", :scope => @scope)
-    @scope.stubs(:resource).returns resource
+    allow(@scope).to receive(:resource).and_return(resource)
     @scope.function_tag ["one"]
 
     expect(@scope.function_tagged(['one', 'two'])).to eq(false)

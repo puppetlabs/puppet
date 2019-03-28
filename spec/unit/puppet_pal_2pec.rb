@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet_pal'
@@ -386,8 +385,8 @@ describe 'Puppet Pal' do
       end
 
       {  nil      => Puppet::Error,
-        '0xWAT'   => Puppet::ParseErrorWithIssue, 
-        '$0 = 1'  => Puppet::ParseErrorWithIssue, 
+        '0xWAT'   => Puppet::ParseErrorWithIssue,
+        '$0 = 1'  => Puppet::ParseErrorWithIssue,
         'else 32' => Puppet::ParseErrorWithIssue,
       }.each_pair do |input, error_class|
         it "'parse_string' raises an error for invalid input: '#{input}'" do
@@ -513,7 +512,7 @@ describe 'Puppet Pal' do
 
     # TODO: there is something amiss with the metadata wrt dependencies - when metadata is present there is an error
     #       that dependencies could not be resolved. Metadata is therefore commented out.
-    #       Dependency based visibility is probably something that we should remove... 
+    #       Dependency based visibility is probably something that we should remove...
     let(:modules) {
       {
         'a' => {
@@ -943,7 +942,7 @@ describe 'Puppet Pal' do
         testing_env_dir # creates the structure
         other_modules1 = File.join(environments_dir, 'other_env1/modules')
         other_modules2 = File.join(environments_dir, 'other_env2/modules')
-        result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, 
+        result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir,
           pre_modulepath: [other_modules1],
           post_modulepath: [other_modules2],
           facts: node_facts

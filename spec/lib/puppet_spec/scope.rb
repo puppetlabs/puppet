@@ -1,4 +1,3 @@
-
 module PuppetSpec::Scope
   # Initialize a new scope suitable for testing.
   #

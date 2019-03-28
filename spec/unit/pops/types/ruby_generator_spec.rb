@@ -448,7 +448,7 @@ describe 'Puppet Ruby Generator' do
 
       after(:all) do
         # Don't want generated module to leak outside this test
-        PuppetSpec.send(:remove_const, :RubyGenerator)
+        PuppetSpec.send(:remove_const, :RubyGenerator) if PuppetSpec.const_defined?(:RubyGenerator)
       end
 
       it 'the #_pcore_type class method returns a resolved Type' do
@@ -765,7 +765,7 @@ describe 'Puppet Ruby Generator' do
 
       after(:all) do
         # Don't want generated module to leak outside this test
-        PuppetSpec.send(:remove_const, :RubyGenerator)
+        PuppetSpec.send(:remove_const, :RubyGenerator) if PuppetSpec.const_defined?(:RubyGenerator)
       end
 
       it 'the #_pcore_type class method returns a resolved Type' do

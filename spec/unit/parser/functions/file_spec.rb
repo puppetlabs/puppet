@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/files'
 
@@ -31,9 +30,9 @@ describe "the 'file' function" do
 
   it "should read a file from a module path" do
     with_file_content('file content') do |name|
-      mod = mock 'module'
-      mod.stubs(:file).with('myfile').returns(name)
-      compiler.environment.stubs(:module).with('mymod').returns(mod)
+      mod = double('module')
+      allow(mod).to receive(:file).with('myfile').and_return(name)
+      allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)
 
       expect(scope.function_file(['mymod/myfile'])).to eq('file content')
     end
@@ -50,10 +49,10 @@ describe "the 'file' function" do
   it "should return the first file if given two files with module paths" do
     with_file_content('one') do |one|
       with_file_content('two') do |two|
-        mod = mock 'module'
-        compiler.environment.expects(:module).with('mymod').returns(mod)
-        mod.expects(:file).with('one').returns(one)
-        mod.stubs(:file).with('two').returns(two)
+        mod = double('module')
+        expect(compiler.environment).to receive(:module).with('mymod').and_return(mod)
+        expect(mod).to receive(:file).with('one').and_return(one)
+        allow(mod).to receive(:file).with('two').and_return(two)
 
         expect(scope.function_file(['mymod/one','mymod/two'])).to eq('one')
       end
@@ -63,9 +62,9 @@ describe "the 'file' function" do
   it "should return the first file if given two files with mixed paths, absolute first" do
     with_file_content('one') do |one|
       with_file_content('two') do |two|
-        mod = mock 'module'
-        compiler.environment.stubs(:module).with('mymod').returns(mod)
-        mod.stubs(:file).with('two').returns(two)
+        mod = double('module')
+        allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)
+        allow(mod).to receive(:file).with('two').and_return(two)
 
         expect(scope.function_file([one,'mymod/two'])).to eq('one')
       end
@@ -75,9 +74,9 @@ describe "the 'file' function" do
   it "should return the first file if given two files with mixed paths, module first" do
     with_file_content('one') do |one|
       with_file_content('two') do |two|
-        mod = mock 'module'
-        compiler.environment.expects(:module).with('mymod').returns(mod)
-        mod.stubs(:file).with('two').returns(two)
+        mod = double('module')
+        expect(compiler.environment).to receive(:module).with('mymod').and_return(mod)
+        allow(mod).to receive(:file).with('two').and_return(two)
 
         expect(scope.function_file(['mymod/two',one])).to eq('two')
       end

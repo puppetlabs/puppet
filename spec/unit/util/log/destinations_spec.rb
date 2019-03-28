@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/json'
 
@@ -14,15 +13,14 @@ describe Puppet::Util::Log.desttypes[:report] do
   end
 
   it "should send new messages to the report" do
-    report = mock 'report'
+    report = double('report')
     dest = @dest.new(report)
 
-    report.expects(:<<).with("my log")
+    expect(report).to receive(:<<).with("my log")
 
     dest.handle "my log"
   end
 end
-
 
 describe Puppet::Util::Log.desttypes[:file] do
   include PuppetSpec::Files
@@ -54,26 +52,26 @@ describe Puppet::Util::Log.desttypes[:file] do
         it_behaves_like "file destination"
 
         it "logs an error if it can't chown the file owner & group" do
-          File.expects(:exists?).with(abspath).returns(false)
-          FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).raises(Errno::EPERM)
-          Puppet.features.expects(:root?).returns(true)
-          Puppet.expects(:err).with("Unable to set ownership to #{Puppet[:user]}:#{Puppet[:group]} for log file: #{abspath}")
+          expect(File).to receive(:exists?).with(abspath).and_return(false)
+          expect(FileUtils).to receive(:chown).with(Puppet[:user], Puppet[:group], abspath).and_raise(Errno::EPERM)
+          expect(Puppet.features).to receive(:root?).and_return(true)
+          expect(Puppet).to receive(:err).with("Unable to set ownership to #{Puppet[:user]}:#{Puppet[:group]} for log file: #{abspath}")
 
           @class.new(abspath)
         end
 
         it "doesn't attempt to chown when running as non-root" do
-          File.expects(:exists?).with(abspath).returns(false)
-          FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).never
-          Puppet.features.expects(:root?).returns(false)
+          expect(File).to receive(:exists?).with(abspath).and_return(false)
+          expect(FileUtils).not_to receive(:chown).with(Puppet[:user], Puppet[:group], abspath)
+          expect(Puppet.features).to receive(:root?).and_return(false)
 
           @class.new(abspath)
         end
 
         it "doesn't attempt to chown when file already exists" do
-          File.expects(:exists?).with(abspath).returns(true)
-          FileUtils.expects(:chown).with(Puppet[:user], Puppet[:group], abspath).never
-          Puppet.features.expects(:root?).returns(true)
+          expect(File).to receive(:exists?).with(abspath).and_return(true)
+          expect(FileUtils).not_to receive(:chown).with(Puppet[:user], Puppet[:group], abspath)
+          expect(Puppet.features).to receive(:root?).and_return(true)
 
           @class.new(abspath)
         end
@@ -128,28 +126,28 @@ describe Puppet::Util::Log.desttypes[:syslog] do
   # we can't stub the top-level Syslog module
   describe "when syslog is available", :if => Puppet.features.syslog? do
     before :each do
-      Syslog.stubs(:opened?).returns(false)
-      Syslog.stubs(:const_get).returns("LOG_KERN").returns(0)
-      Syslog.stubs(:open)
+      allow(Syslog).to receive(:opened?).and_return(false)
+      allow(Syslog).to receive(:const_get).and_return("LOG_KERN", 0)
+      allow(Syslog).to receive(:open)
     end
 
     it "should open syslog" do
-      Syslog.expects(:open)
+      expect(Syslog).to receive(:open)
 
       klass.new
     end
 
     it "should close syslog" do
-      Syslog.expects(:close)
+      expect(Syslog).to receive(:close)
 
       dest = klass.new
       dest.close
     end
 
     it "should send messages to syslog" do
-      syslog = mock 'syslog'
-      syslog.expects(:info).with("don't panic")
-      Syslog.stubs(:open).returns(syslog)
+      syslog = double('syslog')
+      expect(syslog).to receive(:info).with("don't panic")
+      allow(Syslog).to receive(:open).and_return(syslog)
 
       msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic")
       dest = klass.new
@@ -159,7 +157,7 @@ describe Puppet::Util::Log.desttypes[:syslog] do
 
   describe "when syslog is unavailable" do
     it "should not be a suitable log destination" do
-      Puppet.features.stubs(:syslog?).returns(false)
+      allow(Puppet.features).to receive(:syslog?).and_return(false)
 
       expect(klass.suitable?(:syslog)).to be_falsey
     end
@@ -167,7 +165,6 @@ describe Puppet::Util::Log.desttypes[:syslog] do
 end
 
 describe Puppet::Util::Log.desttypes[:logstash_event] do
-
   describe "when using structured log format with logstash_event schema" do
     before :each do
       @msg = Puppet::Util::Log.new(:level => :info, :message => "So long, and thanks for all the fish.", :source => "a dolphin")
@@ -191,7 +188,7 @@ describe Puppet::Util::Log.desttypes[:logstash_event] do
     end
 
     it "handle should send the output to stdout" do
-      $stdout.expects(:puts).once
+      expect($stdout).to receive(:puts).once
       dest = described_class.new
       dest.handle(@msg)
     end
@@ -225,7 +222,7 @@ describe Puppet::Util::Log.desttypes[:console] do
 
   it "should include the log message's source/context in the output when available" do
     Puppet[:color] = false
-    $stdout.expects(:puts).with("Info: a hitchhiker: don't panic")
+    expect($stdout).to receive(:puts).with("Info: a hitchhiker: don't panic")
 
     msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic", :source => "a hitchhiker")
     dest = klass.new
@@ -238,9 +235,9 @@ describe ":eventlog", :if => Puppet::Util::Platform.windows? do
   let(:klass) { Puppet::Util::Log.desttypes[:eventlog] }
 
   def expects_message_with_type(klass, level, eventlog_type, eventlog_id)
-    eventlog = stub('eventlog')
-    eventlog.expects(:report_event).with(has_entries(:event_type => eventlog_type, :event_id => eventlog_id, :data => "a hitchhiker: don't panic"))
-    Puppet::Util::Windows::EventLog.stubs(:open).returns(eventlog)
+    eventlog = double('eventlog')
+    expect(eventlog).to receive(:report_event).with(hash_including(:event_type => eventlog_type, :event_id => eventlog_id, :data => "a hitchhiker: don't panic"))
+    allow(Puppet::Util::Windows::EventLog).to receive(:open).and_return(eventlog)
 
     msg = Puppet::Util::Log.new(:level => level, :message => "don't panic", :source => "a hitchhiker")
     dest = klass.new
@@ -256,17 +253,17 @@ describe ":eventlog", :if => Puppet::Util::Platform.windows? do
     expected_truncated_msg = "#{'x' * 31785}...Message exceeds character length limit, truncating."
     expected_data = "a vogon ship: " + expected_truncated_msg
 
-    eventlog = stub('eventlog')
-    eventlog.expects(:report_event).with(has_entries(:event_type => 2, :event_id => 2, :data => expected_data))
+    eventlog = double('eventlog')
+    expect(eventlog).to receive(:report_event).with(hash_including(:event_type => 2, :event_id => 2, :data => expected_data))
     msg = Puppet::Util::Log.new(:level => :warning, :message => long_msg, :source => "a vogon ship")
-    Puppet::Util::Windows::EventLog.stubs(:open).returns(eventlog)
+    allow(Puppet::Util::Windows::EventLog).to receive(:open).and_return(eventlog)
 
     dest = klass.new
     dest.handle(msg)
   end
   
   it "logs to the Puppet Application event log" do
-    Puppet::Util::Windows::EventLog.expects(:open).with('Puppet').returns(stub('eventlog'))
+    expect(Puppet::Util::Windows::EventLog).to receive(:open).with('Puppet').and_return(double('eventlog'))
 
     klass.new
   end

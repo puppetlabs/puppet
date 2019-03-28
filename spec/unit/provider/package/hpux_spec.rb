@@ -3,18 +3,18 @@ require 'spec_helper'
 describe Puppet::Type.type(:package).provider(:hpux) do
   before(:each) do
     # Create a mock resource
-    @resource = stub 'resource'
+    @resource = double('resource')
 
     # A catch all; no parameters set
-    @resource.stubs(:[]).returns(nil)
+    allow(@resource).to receive(:[]).and_return(nil)
 
     # But set name and source
-    @resource.stubs(:[]).with(:name).returns "mypackage"
-    @resource.stubs(:[]).with(:source).returns "mysource"
-    @resource.stubs(:[]).with(:ensure).returns :installed
+    allow(@resource).to receive(:[]).with(:name).and_return("mypackage")
+    allow(@resource).to receive(:[]).with(:source).and_return("mysource")
+    allow(@resource).to receive(:[]).with(:ensure).and_return(:installed)
 
     @provider = subject()
-    @provider.stubs(:resource).returns @resource
+    allow(@provider).to receive(:resource).and_return(@resource)
   end
 
   it "should have an install method" do
@@ -34,14 +34,14 @@ describe Puppet::Type.type(:package).provider(:hpux) do
 
   context "when installing" do
     it "should use a command-line like 'swinstall -x mount_all_filesystems=false -s SOURCE PACKAGE-NAME'" do
-      @provider.expects(:swinstall).with('-x', 'mount_all_filesystems=false', '-s', 'mysource', 'mypackage')
+      expect(@provider).to receive(:swinstall).with('-x', 'mount_all_filesystems=false', '-s', 'mysource', 'mypackage')
       @provider.install
     end
   end
 
   context "when uninstalling" do
     it "should use a command-line like 'swremove -x mount_all_filesystems=false PACKAGE-NAME'" do
-      @provider.expects(:swremove).with('-x', 'mount_all_filesystems=false', 'mypackage')
+      expect(@provider).to receive(:swremove).with('-x', 'mount_all_filesystems=false', 'mypackage')
       @provider.uninstall
     end
   end

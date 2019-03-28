@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/face'
 
@@ -65,7 +64,7 @@ rando_key=foobar
     end
 
     before :each do
-      subject.stubs(:report_section_and_environment)
+      allow(subject).to receive(:report_section_and_environment)
     end
 
     # key must be a defined setting
@@ -74,13 +73,13 @@ rando_key=foobar
         value = "value#{key.reverse}value"
 
         # needed for the subject.set to write to correct file
-        Puppet.settings.stubs(:which_configuration_file).returns(tmp_config)
+        allow(Puppet.settings).to receive(:which_configuration_file).and_return(tmp_config)
         subject.set(key, value)
 
         # make sure subject.print looks at the newly modified settings
         test_settings = load_settings(tmp_config)
         # instead of the default Puppet.settings (implementation detail)
-        Puppet.stubs(:settings).returns(test_settings)
+        allow(Puppet).to receive(:settings).and_return(test_settings)
 
         result = subject.print()
         expect(render(:print, result)).to match(/^#{key} = #{value}$/)

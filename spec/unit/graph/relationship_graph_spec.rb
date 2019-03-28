@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/graph'
 
@@ -397,6 +396,6 @@ describe Puppet::Graph::RelationshipGraph do
   end
 
   def stub_vertex(name)
-    stub "vertex #{name}", :ref => name
+    double("vertex #{name}", :ref => name)
   end
 end

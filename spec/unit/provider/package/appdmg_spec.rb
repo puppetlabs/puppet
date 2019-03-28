@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:appdmg) do
@@ -10,12 +9,11 @@ describe Puppet::Type.type(:package).provider(:appdmg) do
     let(:fake_hdiutil_plist) { {"system-entities" => [{"mount-point" => fake_mountpoint}]} }
 
     before do
-      fh = mock 'filehandle'
-      fh.stubs(:path).yields "/tmp/foo"
+      fh = double('filehandle', path: '/tmp/foo')
       resource[:source] = "foo.dmg"
-      described_class.stubs(:open).yields fh
-      Dir.stubs(:mktmpdir).returns "/tmp/testtmp123"
-      FileUtils.stubs(:remove_entry_secure)
+      allow(described_class).to receive(:open).and_yield(fh)
+      allow(Dir).to receive(:mktmpdir).and_return("/tmp/testtmp123")
+      allow(FileUtils).to receive(:remove_entry_secure)
     end
 
     describe "from a remote source" do
@@ -26,14 +24,16 @@ describe Puppet::Type.type(:package).provider(:appdmg) do
       end
 
       it "should call tmpdir and use the returned directory" do
-        Dir.expects(:mktmpdir).returns tmpdir
-        Dir.stubs(:entries).returns ["foo.app"]
-        described_class.expects(:curl).with do |*args|
-          args[0] == "-o" && args[1].include?(tmpdir) && ! args.include?("-k")
+        expect(Dir).to receive(:mktmpdir).and_return(tmpdir)
+        allow(Dir).to receive(:entries).and_return(["foo.app"])
+        expect(described_class).to receive(:curl) do |*args|
+          expect(args[0]).to eq("-o")
+          expect(args[1]).to include(tmpdir)
+          expect(args).not_to include("-k")
         end
-        described_class.stubs(:hdiutil).returns 'a plist'
-        Puppet::Util::Plist.expects(:parse_plist).with('a plist').returns fake_hdiutil_plist
-        described_class.expects(:installapp)
+        allow(described_class).to receive(:hdiutil).and_return('a plist')
+        expect(Puppet::Util::Plist).to receive(:parse_plist).with('a plist').and_return(fake_hdiutil_plist)
+        expect(described_class).to receive(:installapp)
 
         provider.install
       end

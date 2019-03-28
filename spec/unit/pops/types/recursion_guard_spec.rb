@@ -61,32 +61,32 @@ describe 'the RecursionGuard' do
   end
 
   it "should not call 'hash' on an added instance" do
-    x = mock
-    x.expects(:hash).never
+    x = double()
+    expect(x).not_to receive(:hash)
     expect(guard.add_that(x)).to eq(RecursionGuard::NO_SELF_RECURSION)
   end
 
   it "should not call '==' on an added instance" do
-    x = mock
-    x.expects(:==).never
+    x = double()
+    expect(x).not_to receive(:==)
     expect(guard.add_that(x)).to eq(RecursionGuard::NO_SELF_RECURSION)
   end
 
   it "should not call 'eq?' on an added instance" do
-    x = mock
-    x.expects(:eq?).never
+    x = double()
+    expect(x).not_to receive(:eq?)
     expect(guard.add_that(x)).to eq(RecursionGuard::NO_SELF_RECURSION)
   end
 
   it "should not call 'eql?' on an added instance" do
-    x = mock
-    x.expects(:eql?).never
+    x = double()
+    expect(x).not_to receive(:eql?)
     expect(guard.add_that(x)).to eq(RecursionGuard::NO_SELF_RECURSION)
   end
 
   it "should not call 'equal?' on an added instance" do
-    x = mock
-    x.expects(:equal?).never
+    x = double()
+    expect(x).not_to receive(:equal?)
     expect(guard.add_that(x)).to eq(RecursionGuard::NO_SELF_RECURSION)
   end
 end

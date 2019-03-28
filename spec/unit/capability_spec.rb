@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
@@ -9,7 +8,7 @@ describe 'Capability types' do
   let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
   before(:each) do
-    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
+    allow_any_instance_of(Puppet::Parser::Compiler).to receive(:loaders).and_return(loaders)
     Puppet.push_context({:loaders => loaders, :current_environment => env})
     Puppet::Type.newtype :cap, :is_capability => true do
       newparam :name
@@ -86,7 +85,7 @@ describe 'Capability types' do
       parse_results << parser.parse
 
       main = Puppet::Parser::AST::Hostclass.new('', :code => Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results))
-      Puppet::Node::Environment.any_instance.stubs(:perform_initial_import).returns main
+      allow_any_instance_of(Puppet::Node::Environment).to receive(:perform_initial_import).and_return(main)
 
       type = compile_to_catalog(nil).environment_instance.known_resource_types.definition(:test)
       expect(type.produces).to be_instance_of(Array)
@@ -120,7 +119,7 @@ describe 'Capability types' do
       parse_results << parser.parse
 
       main = Puppet::Parser::AST::Hostclass.new('', :code => Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results))
-      Puppet::Node::Environment.any_instance.stubs(:perform_initial_import).returns main
+     allow_any_instance_of(Puppet::Node::Environment).to receive(:perform_initial_import).and_return(main)
 
       type = compile_to_catalog(nil).environment_instance.known_resource_types.definition('Mod::Test')
       expect(type.produces).to be_instance_of(Array)
@@ -131,6 +130,7 @@ describe 'Capability types' do
       expect(cns[:mappings]).to be_instance_of(Hash)
       expect(cns[:mappings]['host']).to be_instance_of(Puppet::Parser::AST::PopsBridge::Expression)
     end
+
     it "does not allow operator '+>' in a mapping" do
       expect do
       compile_to_catalog(<<-MANIFEST, node)
@@ -256,12 +256,12 @@ test { one: hostname => "ahost", export => Cap[two] }
     def mock_cap_finding
       cap = Puppet::Resource.new("Cap", "two")
       cap["host"] = "ahost"
-      Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+      expect(Puppet::Resource::CapabilityFinder).to receive(:find).and_return(cap)
       cap
     end
 
     it "does not fetch a consumed resource when consume metaparam not set" do
-      Puppet::Resource::CapabilityFinder.expects(:find).never
+      expect(Puppet::Resource::CapabilityFinder).not_to receive(:find)
       catalog = make_catalog("test { one: }")
       expect(catalog.resource_keys.find { |type, _| type == "Cap" }).to be_nil
       expect(catalog.resource("Test", "one")["hostname"]).to eq("nohost")

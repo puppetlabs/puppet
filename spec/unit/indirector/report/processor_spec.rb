@@ -1,11 +1,10 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/report/processor'
 
 describe Puppet::Transaction::Report::Processor do
   before do
-    Puppet.settings.stubs(:use).returns(true)
+    allow(Puppet.settings).to receive(:use).and_return(true)
   end
 
   it "should provide a method for saving reports" do
@@ -20,13 +19,13 @@ end
 
 describe Puppet::Transaction::Report::Processor, " when processing a report" do
   before do
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
     @reporter = Puppet::Transaction::Report::Processor.new
-    @request = stub 'request', :instance => stub("report", :host => 'hostname'), :key => 'node'
+    @request = double('request', :instance => double("report", :host => 'hostname'), :key => 'node')
   end
 
   it "should not save the report if reports are set to 'none'" do
-    Puppet::Reports.expects(:report).never
+    expect(Puppet::Reports).not_to receive(:report)
     Puppet[:reports] = 'none'
 
     request = Puppet::Indirector::Request.new(:indirection_name, :head, "key", nil)
@@ -40,19 +39,19 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
     Puppet[:reports] = "one,two"
     expect(@reporter.send(:reports)).to eq(%w{one two})
 
-    Puppet::Reports.expects(:report).with('one')
-    Puppet::Reports.expects(:report).with('two')
+    expect(Puppet::Reports).to receive(:report).with('one')
+    expect(Puppet::Reports).to receive(:report).with('two')
 
     @reporter.save(@request)
   end
 
   it "should destroy reports for each processor that responds to destroy" do
     Puppet[:reports] = "http,store"
-    http_report = mock()
-    store_report = mock()
-    store_report.expects(:destroy).with(@request.key)
-    Puppet::Reports.expects(:report).with('http').returns(http_report)
-    Puppet::Reports.expects(:report).with('store').returns(store_report)
+    http_report = double()
+    store_report = double()
+    expect(store_report).to receive(:destroy).with(@request.key)
+    expect(Puppet::Reports).to receive(:report).with('http').and_return(http_report)
+    expect(Puppet::Reports).to receive(:report).with('store').and_return(store_report)
     @reporter.destroy(@request)
   end
 end
@@ -60,20 +59,20 @@ end
 describe Puppet::Transaction::Report::Processor, " when processing a report" do
   before do
     Puppet[:reports] = "one"
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
     @reporter = Puppet::Transaction::Report::Processor.new
 
-    @report_type = mock 'one'
-    @dup_report = mock 'dupe report'
-    @dup_report.stubs(:process)
+    @report_type = double('one')
+    @dup_report = double('dupe report')
+    allow(@dup_report).to receive(:process)
     @report = Puppet::Transaction::Report.new
-    @report.expects(:dup).returns(@dup_report)
+    expect(@report).to receive(:dup).and_return(@dup_report)
 
-    @request = stub 'request', :instance => @report
+    @request = double('request', :instance => @report)
 
-    Puppet::Reports.expects(:report).with("one").returns(@report_type)
+    expect(Puppet::Reports).to receive(:report).with("one").and_return(@report_type)
 
-    @dup_report.expects(:extend).with(@report_type)
+    expect(@dup_report).to receive(:extend).with(@report_type)
   end
 
   # LAK:NOTE This is stupid, because the code is so short it doesn't
@@ -88,13 +87,13 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
   end
 
   it "should call the report type's :process method" do
-    @dup_report.expects(:process)
+    expect(@dup_report).to receive(:process)
     @reporter.save(@request)
   end
 
   it "should not raise exceptions" do
     Puppet[:trace] = false
-    @dup_report.expects(:process).raises(ArgumentError)
+    expect(@dup_report).to receive(:process).and_raise(ArgumentError)
     expect { @reporter.save(@request) }.not_to raise_error
   end
 end

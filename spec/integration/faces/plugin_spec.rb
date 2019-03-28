@@ -46,7 +46,7 @@ describe "Puppet plugin face" do
   end
 
   def init_cli_args_and_apply_app(args = ["download"])
-    Puppet::Application.find(:plugin).new(stub('command_line', :subcommand_name => :plugin, :args => args))
+    Puppet::Application.find(:plugin).new(double('command_line', :subcommand_name => :plugin, :args => args))
   end
 
   it "processes a download request" do

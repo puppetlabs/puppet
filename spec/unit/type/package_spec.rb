@@ -1,10 +1,9 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:package) do
   before do
-    Process.stubs(:euid).returns 0
-    Puppet::Util::Storage.stubs(:store)
+    allow(Process).to receive(:euid).and_return(0)
+    allow(Puppet::Util::Storage).to receive(:store)
   end
 
   it "should have a :reinstallable feature that requires the :reinstall method" do
@@ -58,13 +57,13 @@ describe Puppet::Type.type(:package) do
 
   describe "when validating attribute values" do
     before :each do
-      @provider = stub(
+      @provider = double(
         'provider',
         :class           => Puppet::Type.type(:package).defaultprovider,
         :clear           => nil,
         :validate_source => nil
       )
-      Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
+      allow(Puppet::Type.type(:package).defaultprovider).to receive(:new).and_return(@provider)
     end
 
     after :each do
@@ -85,32 +84,32 @@ describe Puppet::Type.type(:package) do
     end
 
     it "should support :purged as a value to :ensure if the provider has the :purgeable feature" do
-      @provider.expects(:satisfies?).with([:purgeable]).returns(true)
+      expect(@provider).to receive(:satisfies?).with([:purgeable]).and_return(true)
       Puppet::Type.type(:package).new(:name => "yay", :ensure => :purged)
     end
 
     it "should not support :purged as a value to :ensure if the provider does not have the :purgeable feature" do
-      @provider.expects(:satisfies?).with([:purgeable]).returns(false)
+      expect(@provider).to receive(:satisfies?).with([:purgeable]).and_return(false)
       expect { Puppet::Type.type(:package).new(:name => "yay", :ensure => :purged) }.to raise_error(Puppet::Error)
     end
 
     it "should support :latest as a value to :ensure if the provider has the :upgradeable feature" do
-      @provider.expects(:satisfies?).with([:upgradeable]).returns(true)
+      expect(@provider).to receive(:satisfies?).with([:upgradeable]).and_return(true)
       Puppet::Type.type(:package).new(:name => "yay", :ensure => :latest)
     end
 
     it "should not support :latest as a value to :ensure if the provider does not have the :upgradeable feature" do
-      @provider.expects(:satisfies?).with([:upgradeable]).returns(false)
+      expect(@provider).to receive(:satisfies?).with([:upgradeable]).and_return(false)
       expect { Puppet::Type.type(:package).new(:name => "yay", :ensure => :latest) }.to raise_error(Puppet::Error)
     end
 
     it "should support version numbers as a value to :ensure if the provider has the :versionable feature" do
-      @provider.expects(:satisfies?).with([:versionable]).returns(true)
+      expect(@provider).to receive(:satisfies?).with([:versionable]).and_return(true)
       Puppet::Type.type(:package).new(:name => "yay", :ensure => "1.0")
     end
 
     it "should not support version numbers as a value to :ensure if the provider does not have the :versionable feature" do
-      @provider.expects(:satisfies?).with([:versionable]).returns(false)
+      expect(@provider).to receive(:satisfies?).with([:versionable]).and_return(false)
       expect { Puppet::Type.type(:package).new(:name => "yay", :ensure => "1.0") }.to raise_error(Puppet::Error)
     end
 
@@ -127,13 +126,13 @@ describe Puppet::Type.type(:package) do
 
   module PackageEvaluationTesting
     def setprops(properties)
-      @provider.stubs(:properties).returns(properties)
+      allow(@provider).to receive(:properties).and_return(properties)
     end
   end
 
   describe Puppet::Type.type(:package) do
     before :each do
-      @provider = stub(
+      @provider = double(
         'provider',
         :class           => Puppet::Type.type(:package).defaultprovider,
         :clear           => nil,
@@ -141,8 +140,8 @@ describe Puppet::Type.type(:package) do
         :name            => :mock,
         :validate_source => nil
       )
-      Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
-      Puppet::Type.type(:package).defaultprovider.stubs(:instances).returns([])
+      allow(Puppet::Type.type(:package).defaultprovider).to receive(:new).and_return(@provider)
+      allow(Puppet::Type.type(:package).defaultprovider).to receive(:instances).and_return([])
       @package = Puppet::Type.type(:package).new(:name => "yay")
 
       @catalog = Puppet::Resource::Catalog.new
@@ -155,14 +154,14 @@ describe Puppet::Type.type(:package) do
       before { @package[:ensure] = :purged }
 
       it "should do nothing if it is :purged" do
-        @provider.expects(:properties).returns(:ensure => :purged).at_least_once
+        expect(@provider).to receive(:properties).and_return(:ensure => :purged).at_least(:once)
         @catalog.apply
       end
 
       [:absent, :installed, :present, :latest].each do |state|
         it "should purge if it is #{state.to_s}" do
-          @provider.stubs(:properties).returns(:ensure => state)
-          @provider.expects(:purge)
+          allow(@provider).to receive(:properties).and_return(:ensure => state)
+          expect(@provider).to receive(:purge)
           @catalog.apply
         end
       end
@@ -175,15 +174,15 @@ describe Puppet::Type.type(:package) do
 
       [:purged, :absent].each do |state|
         it "should do nothing if it is #{state.to_s}" do
-          @provider.expects(:properties).returns(:ensure => state).at_least_once
+          expect(@provider).to receive(:properties).and_return(:ensure => state).at_least(:once)
           @catalog.apply
         end
       end
 
       [:installed, :present, :latest].each do |state|
         it "should uninstall if it is #{state.to_s}" do
-          @provider.stubs(:properties).returns(:ensure => state)
-          @provider.expects(:uninstall)
+          allow(@provider).to receive(:properties).and_return(:ensure => state)
+          expect(@provider).to receive(:uninstall)
           @catalog.apply
         end
       end
@@ -196,15 +195,15 @@ describe Puppet::Type.type(:package) do
 
       [:present, :latest, "1.0"].each do |state|
         it "should do nothing if it is #{state.to_s}" do
-          @provider.expects(:properties).returns(:ensure => state).at_least_once
+          expect(@provider).to receive(:properties).and_return(:ensure => state).at_least(:once)
           @catalog.apply
         end
       end
 
       [:purged, :absent].each do |state|
         it "should install if it is #{state.to_s}" do
-          @provider.stubs(:properties).returns(:ensure => state)
-          @provider.expects(:install)
+          allow(@provider).to receive(:properties).and_return(:ensure => state)
+          expect(@provider).to receive(:install)
           @catalog.apply
         end
       end
@@ -217,30 +216,30 @@ describe Puppet::Type.type(:package) do
 
       [:purged, :absent].each do |state|
         it "should upgrade if it is #{state.to_s}" do
-          @provider.stubs(:properties).returns(:ensure => state)
-          @provider.expects(:update)
+          allow(@provider).to receive(:properties).and_return(:ensure => state)
+          expect(@provider).to receive(:update)
           @catalog.apply
         end
       end
 
       it "should upgrade if the current version is not equal to the latest version" do
-        @provider.stubs(:properties).returns(:ensure => "1.0")
-        @provider.stubs(:latest).returns("2.0")
-        @provider.expects(:update)
+        allow(@provider).to receive(:properties).and_return(:ensure => "1.0")
+        allow(@provider).to receive(:latest).and_return("2.0")
+        expect(@provider).to receive(:update)
         @catalog.apply
       end
 
       it "should do nothing if it is equal to the latest version" do
-        @provider.stubs(:properties).returns(:ensure => "1.0")
-        @provider.stubs(:latest).returns("1.0")
-        @provider.expects(:update).never
+        allow(@provider).to receive(:properties).and_return(:ensure => "1.0")
+        allow(@provider).to receive(:latest).and_return("1.0")
+        expect(@provider).not_to receive(:update)
         @catalog.apply
       end
 
       it "should do nothing if the provider returns :present as the latest version" do
-        @provider.stubs(:properties).returns(:ensure => :present)
-        @provider.stubs(:latest).returns("1.0")
-        @provider.expects(:update).never
+        allow(@provider).to receive(:properties).and_return(:ensure => :present)
+        allow(@provider).to receive(:latest).and_return("1.0")
+        expect(@provider).not_to receive(:update)
         @catalog.apply
       end
     end
@@ -252,24 +251,24 @@ describe Puppet::Type.type(:package) do
 
       [:purged, :absent].each do |state|
         it "should install if it is #{state.to_s}" do
-          @provider.stubs(:properties).returns(:ensure => state)
+          allow(@provider).to receive(:properties).and_return(:ensure => state)
           expect(@package.property(:ensure).insync?(state)).to be_falsey
-          @provider.expects(:install)
+          expect(@provider).to receive(:install)
           @catalog.apply
         end
       end
 
       it "should do nothing if the current version is equal to the desired version" do
-        @provider.stubs(:properties).returns(:ensure => "1.0")
+        allow(@provider).to receive(:properties).and_return(:ensure => "1.0")
         expect(@package.property(:ensure).insync?('1.0')).to be_truthy
-        @provider.expects(:install).never
+        expect(@provider).not_to receive(:install)
         @catalog.apply
       end
 
       it "should install if the current version is not equal to the specified version" do
-        @provider.stubs(:properties).returns(:ensure => "2.0")
+        allow(@provider).to receive(:properties).and_return(:ensure => "2.0")
         expect(@package.property(:ensure).insync?('2.0')).to be_falsey
-        @provider.expects(:install)
+        expect(@provider).to receive(:install)
         @catalog.apply
       end
 
@@ -277,29 +276,29 @@ describe Puppet::Type.type(:package) do
         let(:installed_versions) { ["1.0", "2.0", "3.0"] }
 
         before (:each) do
-          @provider.stubs(:properties).returns(:ensure => installed_versions)
+          allow(@provider).to receive(:properties).and_return(:ensure => installed_versions)
         end
 
         it "should install if value not in the array" do
           @package[:ensure] = "1.5"
           expect(@package.property(:ensure).insync?(installed_versions)).to be_falsey
-          @provider.expects(:install)
+          expect(@provider).to receive(:install)
           @catalog.apply
         end
 
         it "should not install if value is in the array" do
           @package[:ensure] = "2.0"
           expect(@package.property(:ensure).insync?(installed_versions)).to be_truthy
-          @provider.expects(:install).never
+          expect(@provider).not_to receive(:install)
           @catalog.apply
         end
 
         describe "when ensure is set to 'latest'" do
           it "should not install if the value is in the array" do
-            @provider.expects(:latest).returns("3.0")
+            expect(@provider).to receive(:latest).and_return("3.0")
             @package[:ensure] = "latest"
             expect(@package.property(:ensure).insync?(installed_versions)).to be_truthy
-            @provider.expects(:install).never
+            expect(@provider).not_to receive(:install)
             @catalog.apply
           end
         end
@@ -328,16 +327,16 @@ describe Puppet::Type.type(:package) do
         it "should reinstall if it should be #{state.to_s} and reinstall_on_refresh is true" do
           @package[:ensure] = state
           @package[:reinstall_on_refresh] = :true
-          @provider.stubs(:reinstallable?).returns(true)
-          @provider.expects(:reinstall).once
+          allow(@provider).to receive(:reinstallable?).and_return(true)
+          expect(@provider).to receive(:reinstall).once
           @package.refresh
         end
 
         it "should reinstall if it should be #{state.to_s} and reinstall_on_refresh is false" do
           @package[:ensure] = state
           @package[:reinstall_on_refresh] = :false
-          @provider.stubs(:reinstallable?).returns(true)
-          @provider.expects(:reinstall).never
+          allow(@provider).to receive(:reinstallable?).and_return(true)
+          expect(@provider).not_to receive(:reinstall)
           @package.refresh
         end
       end
@@ -345,15 +344,15 @@ describe Puppet::Type.type(:package) do
       [:purged, :absent, :held].each do |state|
         it "should not reinstall if it should be #{state.to_s} and reinstall_on_refresh is true" do
           @package[:ensure] = state
-          @provider.stubs(:reinstallable?).returns(true)
-          @provider.expects(:reinstall).never
+          allow(@provider).to receive(:reinstallable?).and_return(true)
+          expect(@provider).not_to receive(:reinstall)
           @package.refresh
         end
 
         it "should not reinstall if it should be #{state.to_s} and reinstall_on_refresh is false" do
           @package[:ensure] = state
-          @provider.stubs(:reinstallable?).returns(true)
-          @provider.expects(:reinstall).never
+          allow(@provider).to receive(:reinstallable?).and_return(true)
+          expect(@provider).not_to receive(:reinstall)
           @package.refresh
         end
       end
@@ -363,9 +362,9 @@ describe Puppet::Type.type(:package) do
   it "should select dnf over yum for dnf supported fedora versions" do
     dnf = Puppet::Type.type(:package).provider(:dnf)
     yum = Puppet::Type.type(:package).provider(:yum)
-    Facter.stubs(:value).with(:osfamily).returns(:redhat)
-    Facter.stubs(:value).with(:operatingsystem).returns(:fedora)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("22")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:redhat)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:fedora)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("22")
 
     expect(dnf.specificity).to be > yum.specificity
   end

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 test_title = 'Integration Tests for Puppet::Type::Service::Provider::Windows'
@@ -9,7 +8,7 @@ describe test_title, '(integration)', :if => Puppet::Util::Platform.windows? do
   require 'puppet/util/windows'
 
   before :each do
-    Puppet::Type.type(:service).stubs(:defaultprovider).returns provider_class
+    allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
   end
 
   context 'should return valid values when querying a service that does not exist' do

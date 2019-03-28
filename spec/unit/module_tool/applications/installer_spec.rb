@@ -21,22 +21,21 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
   let(:remote_source) { PuppetSpec::ModuleTool::StubSource.new }
 
   let(:install_dir) do
-    mock("Puppet::ModuleTool::InstallDirectory").tap do |dir|
-      dir.stubs(:prepare)
-      dir.stubs(:target).returns(primary_dir)
-    end
+    dir = double("Puppet::ModuleTool::InstallDirectory")
+    allow(dir).to receive(:prepare)
+    allow(dir).to receive(:target).and_return(primary_dir)
+    dir
   end
 
   before do
     SemanticPuppet::Dependency.clear_sources
-    installer = Puppet::ModuleTool::Applications::Installer.any_instance
-    installer.stubs(:module_repository).returns(remote_source)
+    allow_any_instance_of(Puppet::ModuleTool::Applications::Installer).to receive(:module_repository).and_return(remote_source)
   end
 
   if Puppet::Util::Platform.windows?
     before :each do
-      Puppet.settings.stubs(:[])
-      Puppet.settings.stubs(:[]).with(:module_working_dir).returns(Dir.mktmpdir('installertmp'))
+      allow(Puppet.settings).to receive(:[])
+      allow(Puppet.settings).to receive(:[]).with(:module_working_dir).and_return(Dir.mktmpdir('installertmp'))
     end
   end
 
@@ -81,7 +80,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
         end
 
         it 'installs the specified tarball' do
-          remote_source.expects(:fetch).never
+          expect(remote_source).not_to receive(:fetch)
           expect(subject).to include :result => :success
           graph_should_include 'puppetlabs-stdlib', nil => v('3.2.0')
         end
@@ -102,7 +101,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
           end
 
           it 'installs the specified tarball without dependencies' do
-            remote_source.expects(:fetch).never
+            expect(remote_source).not_to receive(:fetch)
             expect(subject).to include :result => :success
             graph_should_include 'puppetlabs-java', nil => v('1.0.0')
             graph_should_include 'puppetlabs-stdlib', nil
@@ -369,7 +368,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
 
     context 'when in FIPS mode...' do
       it 'module installer refuses to run' do
-        Facter.stubs(:value).with(:fips_enabled).returns(true)
+        allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
         expect {application.run}.to raise_error(/Module install is prohibited in FIPS mode./)
       end 
     end

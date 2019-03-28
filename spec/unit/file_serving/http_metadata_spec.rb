@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/file_serving/http_metadata'
 require 'matchers/json'
@@ -32,8 +31,8 @@ describe Puppet::FileServing::HttpMetadata do
 
     context "with no Last-Modified or Content-MD5 header from the server" do
       before do
-        http_response.stubs(:[]).with('last-modified').returns nil
-        http_response.stubs(:[]).with('content-md5').returns nil
+        allow(http_response).to receive(:[]).with('last-modified').and_return(nil)
+        allow(http_response).to receive(:[]).with('content-md5').and_return(nil)
       end
 
       it "should use :mtime as the checksum type, based on current time" do
@@ -51,13 +50,14 @@ describe Puppet::FileServing::HttpMetadata do
 
     context "with a Last-Modified header from the server" do
       let(:time) { Time.now.utc }
+
       before do
-        http_response.stubs(:[]).with('content-md5').returns nil
+        allow(http_response).to receive(:[]).with('content-md5').and_return(nil)
       end
 
       it "should use :mtime as the checksum type, based on Last-Modified" do
         # HTTP uses "GMT" not "UTC"
-        http_response.stubs(:[]).with('last-modified').returns(time.strftime("%a, %d %b %Y %T GMT"))
+        allow(http_response).to receive(:[]).with('last-modified').and_return(time.strftime("%a, %d %b %Y %T GMT"))
         metadata = described_class.new(http_response)
         metadata.collect
         expect( metadata.checksum_type ).to eq :mtime
@@ -69,9 +69,10 @@ describe Puppet::FileServing::HttpMetadata do
       let(:input) { Time.now.to_s }
       let(:base64) { Digest::MD5.new.base64digest input }
       let(:hex) { Digest::MD5.new.hexdigest input }
+
       before do
-        http_response.stubs(:[]).with('last-modified').returns nil
-        http_response.stubs(:[]).with('content-md5').returns base64
+        allow(http_response).to receive(:[]).with('last-modified').and_return(nil)
+        allow(http_response).to receive(:[]).with('content-md5').and_return(base64)
       end
 
       it "should use the md5 checksum" do
