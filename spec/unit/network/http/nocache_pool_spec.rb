@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/network/http'
@@ -6,13 +5,13 @@ require 'puppet/network/http/connection'
 
 describe Puppet::Network::HTTP::NoCachePool do
   let(:site) { Puppet::Network::HTTP::Site.new('https', 'rubygems.org', 443) }
-  let(:verifier) { stub('verifier', :setup_connection => nil) }
+  let(:verifier) { double('verifier', :setup_connection => nil) }
 
   it 'yields a started connection' do
-    http  = stub('http', start: nil, finish: nil)
+    http  = double('http', start: nil, finish: nil)
 
     factory = Puppet::Network::HTTP::Factory.new
-    factory.stubs(:create_connection).returns(http)
+    allow(factory).to receive(:create_connection).and_return(http)
     pool = Puppet::Network::HTTP::NoCachePool.new(factory)
 
     expect { |b|
@@ -21,11 +20,11 @@ describe Puppet::Network::HTTP::NoCachePool do
   end
 
   it 'yields a new connection each time' do
-    http1  = stub('http1', start: nil, finish: nil)
-    http2  = stub('http2', start: nil, finish: nil)
+    http1  = double('http1', start: nil, finish: nil)
+    http2  = double('http2', start: nil, finish: nil)
 
     factory = Puppet::Network::HTTP::Factory.new
-    factory.stubs(:create_connection).returns(http1).then.returns(http2)
+    allow(factory).to receive(:create_connection).and_return(http1, http2)
     pool = Puppet::Network::HTTP::NoCachePool.new(factory)
 
     expect { |b|

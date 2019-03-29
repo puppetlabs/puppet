@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/node/plain'
@@ -14,7 +13,7 @@ describe Puppet::Node::Plain do
   let(:node_indirection) { Puppet::Node::Plain.new }
 
   it "should merge facts from the request if supplied" do
-    Puppet::Node::Facts.indirection.expects(:find).never
+    expect(Puppet::Node::Facts.indirection).not_to receive(:find)
     request.options[:facts] = request_facts
     node = node_indirection.find(request)
     expect(node.parameters).to include(request_fact_values)
@@ -22,7 +21,7 @@ describe Puppet::Node::Plain do
   end
 
   it "should find facts if none are supplied" do
-    Puppet::Node::Facts.indirection.expects(:find).with(nodename, :environment => environment).returns(indirection_facts)
+    expect(Puppet::Node::Facts.indirection).to receive(:find).with(nodename, :environment => environment).and_return(indirection_facts)
     request.options.delete(:facts)
     node = node_indirection.find(request)
     expect(node.parameters).to include(indirection_fact_values)
@@ -32,5 +31,4 @@ describe Puppet::Node::Plain do
   it "should set the node environment from the request" do
     expect(node_indirection.find(request).environment).to eq(environment)
   end
-
 end

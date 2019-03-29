@@ -19,7 +19,7 @@ describe Puppet::GettextConfig do
   end
 
   before(:each) do
-    Puppet::GettextConfig.stubs(:gettext_loaded?).returns true
+    allow(Puppet::GettextConfig).to receive(:gettext_loaded?).and_return(true)
   end
 
   after(:each) do
@@ -29,7 +29,7 @@ describe Puppet::GettextConfig do
 
   describe 'setting and getting the locale' do
     it 'should return "en" when gettext is unavailable' do
-      Puppet::GettextConfig.stubs(:gettext_loaded?).returns(false)
+      allow(Puppet::GettextConfig).to receive(:gettext_loaded?).and_return(false)
 
       expect(Puppet::GettextConfig.current_locale).to eq('en')
     end
@@ -67,7 +67,7 @@ describe Puppet::GettextConfig do
 
     context 'when given a valid locale file location' do
       it 'should return true' do
-        Puppet::GettextConfig.expects(:add_repository_to_domain).with('puppet', local_path, :po, anything)
+        expect(Puppet::GettextConfig).to receive(:add_repository_to_domain).with('puppet', local_path, :po, anything)
 
         expect(Puppet::GettextConfig.load_translations('puppet', local_path, :po)).to be true
       end
@@ -88,7 +88,7 @@ describe Puppet::GettextConfig do
     end
 
     it 'should add puppet translations to the default text domain' do
-      Puppet::GettextConfig.expects(:load_translations).with('puppet', local_path, :po, Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN).returns(true)
+      expect(Puppet::GettextConfig).to receive(:load_translations).with('puppet', local_path, :po, Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN).and_return(true)
 
       Puppet::GettextConfig.create_default_text_domain
       expect(Puppet::GettextConfig.loaded_text_domains).to include(Puppet::GettextConfig::DEFAULT_TEXT_DOMAIN)

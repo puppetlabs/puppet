@@ -14,7 +14,7 @@ describe "Two step scoping for variables" do
   end
 
   before :each do
-    Puppet.expects(:deprecation_warning).never
+    expect(Puppet).not_to receive(:deprecation_warning)
   end
 
   describe "using unsupported operators" do

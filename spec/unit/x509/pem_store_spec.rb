@@ -87,21 +87,21 @@ describe Puppet::X509::PemStore do
     end
 
     it 'never changes the owner and group on Windows', if: Puppet::Util::Platform.windows? do
-      FileUtils.expects(:chown).never
+      expect(FileUtils).not_to receive(:chown)
 
       subject.save_pem('PEM', path, owner: 'Administrator', group: 'None')
     end
 
     it 'changes the owner and group when running as root', unless: Puppet::Util::Platform.windows? do
-      Puppet.features.stubs(:root?).returns(true)
-      FileUtils.expects(:chown).with('root', 'root', path)
+      allow(Puppet.features).to receive(:root?).and_return(true)
+      expect(FileUtils).to receive(:chown).with('root', 'root', path)
 
       subject.save_pem('PEM', path, owner: 'root', group: 'root')
     end
 
     it 'does not change owner and group when running not as roo', unless: Puppet::Util::Platform.windows? do
-      Puppet.features.stubs(:root?).returns(false)
-      FileUtils.expects(:chown).never
+      allow(Puppet.features).to receive(:root?).and_return(false)
+      expect(FileUtils).not_to receive(:chown)
 
       subject.save_pem('PEM', path, owner: 'root', group: 'root')
     end

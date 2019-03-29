@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/file_metadata/file'
@@ -17,17 +16,17 @@ describe Puppet::Indirector::FileMetadata::File do
       @metadata = Puppet::Indirector::FileMetadata::File.new
       @path = File.expand_path('/my/local')
       @uri = Puppet::Util.path_to_uri(@path).to_s
-      @data = mock 'metadata'
-      @data.stubs(:collect)
-      Puppet::FileSystem.expects(:exist?).with(@path).returns true
+      @data = double('metadata')
+      allow(@data).to receive(:collect)
+      expect(Puppet::FileSystem).to receive(:exist?).with(@path).and_return(true)
 
       @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri, nil)
     end
 
     it "should collect its attributes when a file is found" do
-      @data.expects(:collect)
+      expect(@data).to receive(:collect)
 
-      Puppet::FileServing::Metadata.expects(:new).returns(@data)
+      expect(Puppet::FileServing::Metadata).to receive(:new).and_return(@data)
       expect(@metadata.find(@request)).to eq(@data)
     end
   end
@@ -42,15 +41,15 @@ describe Puppet::Indirector::FileMetadata::File do
     end
 
     it "should collect the attributes of the instances returned" do
-      Puppet::FileSystem.expects(:exist?).with(@path).returns true
-      Puppet::FileServing::Fileset.expects(:new).with(@path, @request).returns mock("fileset")
-      Puppet::FileServing::Fileset.expects(:merge).returns [["one", @path], ["two", @path]]
+      expect(Puppet::FileSystem).to receive(:exist?).with(@path).and_return(true)
+      expect(Puppet::FileServing::Fileset).to receive(:new).with(@path, @request).and_return(double("fileset"))
+      expect(Puppet::FileServing::Fileset).to receive(:merge).and_return([["one", @path], ["two", @path]])
 
-      one = mock("one", :collect => nil)
-      Puppet::FileServing::Metadata.expects(:new).with(@path, {:relative_path => "one"}).returns one
+      one = double("one", :collect => nil)
+      expect(Puppet::FileServing::Metadata).to receive(:new).with(@path, {:relative_path => "one"}).and_return(one)
 
-      two = mock("two", :collect => nil)
-      Puppet::FileServing::Metadata.expects(:new).with(@path, {:relative_path => "two"}).returns two
+      two = double("two", :collect => nil)
+      expect(Puppet::FileServing::Metadata).to receive(:new).with(@path, {:relative_path => "two"}).and_return(two)
 
       expect(@metadata.search(@request)).to eq([one, two])
     end

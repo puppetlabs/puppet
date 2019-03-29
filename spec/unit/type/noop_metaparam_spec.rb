@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/type'
@@ -7,7 +6,7 @@ describe Puppet::Type.type(:file).attrclass(:noop) do
   include PuppetSpec::Files
 
   before do
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
     @file = Puppet::Type.newfile :path => make_absolute("/what/ever")
   end
 

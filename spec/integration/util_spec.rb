@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Util do
@@ -115,11 +113,11 @@ describe Puppet::Util do
     let (:filepath) { File.expand_path('C:\\' + rune_utf8 + '\\' + filename) }
 
     before :each do
-      FileTest.stubs(:file?).returns false
-      FileTest.stubs(:file?).with(filepath).returns true
+      allow(FileTest).to receive(:file?).and_return(false)
+      allow(FileTest).to receive(:file?).with(filepath).and_return(true)
 
-      FileTest.stubs(:executable?).returns false
-      FileTest.stubs(:executable?).with(filepath).returns true
+      allow(FileTest).to receive(:executable?).and_return(false)
+      allow(FileTest).to receive(:executable?).with(filepath).and_return(true)
     end
 
     it "should be able to use UTF8 characters in the path" do
@@ -129,5 +127,4 @@ describe Puppet::Util do
       end
     end
   end
-
 end

@@ -32,38 +32,38 @@ describe Puppet::Type.type(:group).provider(:ldap) do
   describe "when being created" do
     before do
       # So we don't try to actually talk to ldap
-      @connection = mock 'connection'
-      described_class.manager.stubs(:connect).yields @connection
+      @connection = double('connection')
+      allow(described_class.manager).to receive(:connect).and_yield(@connection)
     end
 
     describe "with no gid specified" do
       it "should pick the first available GID after the largest existing GID" do
         low = {:name=>["luke"], :gid=>["600"]}
         high = {:name=>["testing"], :gid=>["640"]}
-        described_class.manager.expects(:search).returns([low, high])
+        expect(described_class.manager).to receive(:search).and_return([low, high])
 
-        resource = stub 'resource', :should => %w{whatever}
-        resource.stubs(:should).with(:gid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
+        resource = double('resource', :should => %w{whatever})
+        allow(resource).to receive(:should).with(:gid).and_return(nil)
+        allow(resource).to receive(:should).with(:ensure).and_return(:present)
         instance = described_class.new(:name => "luke", :ensure => :absent)
-        instance.stubs(:resource).returns resource
+        allow(instance).to receive(:resource).and_return(resource)
 
-        @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["641"] }
+        expect(@connection).to receive(:add).with(anything, hash_including("gidNumber" => ["641"]))
 
         instance.create
         instance.flush
       end
 
       it "should pick '501' as its GID if no groups are found" do
-        described_class.manager.expects(:search).returns nil
+        expect(described_class.manager).to receive(:search).and_return(nil)
 
-        resource = stub 'resource', :should => %w{whatever}
-        resource.stubs(:should).with(:gid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
+        resource = double('resource', :should => %w{whatever})
+        allow(resource).to receive(:should).with(:gid).and_return(nil)
+        allow(resource).to receive(:should).with(:ensure).and_return(:present)
         instance = described_class.new(:name => "luke", :ensure => :absent)
-        instance.stubs(:resource).returns resource
+        allow(instance).to receive(:resource).and_return(resource)
 
-        @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["501"] }
+        expect(@connection).to receive(:add).with(anything, hash_including("gidNumber" => ["501"]))
 
         instance.create
         instance.flush
@@ -77,21 +77,21 @@ describe Puppet::Type.type(:group).provider(:ldap) do
 
   describe "when converting from a group name to GID" do
     it "should use the ldap manager to look up the GID" do
-      described_class.manager.expects(:search).with("cn=foo")
+      expect(described_class.manager).to receive(:search).with("cn=foo")
       described_class.name2id("foo")
     end
 
     it "should return nil if no group is found" do
-      described_class.manager.expects(:search).with("cn=foo").returns nil
+      expect(described_class.manager).to receive(:search).with("cn=foo").and_return(nil)
       expect(described_class.name2id("foo")).to be_nil
-      described_class.manager.expects(:search).with("cn=bar").returns []
+      expect(described_class.manager).to receive(:search).with("cn=bar").and_return([])
       expect(described_class.name2id("bar")).to be_nil
     end
 
     # We shouldn't ever actually have more than one gid, but it doesn't hurt
     # to test for the possibility.
     it "should return the first gid from the first returned group" do
-      described_class.manager.expects(:search).with("cn=foo").returns [{:name => "foo", :gid => [10, 11]}, {:name => :bar, :gid => [20, 21]}]
+      expect(described_class.manager).to receive(:search).with("cn=foo").and_return([{:name => "foo", :gid => [10, 11]}, {:name => :bar, :gid => [20, 21]}])
       expect(described_class.name2id("foo")).to eq(10)
     end
   end

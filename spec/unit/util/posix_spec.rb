@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/posix'
@@ -21,16 +20,20 @@ describe Puppet::Util::POSIX do
         ['group3', ['user1']],
         ['group4', ['user2']]
       ].map do |(name, members)|
-        group_struct = stub("Group #{name}")
-        group_struct.stubs(:name).returns(name)
-        group_struct.stubs(:mem).returns(members)
+        group_struct = double("Group #{name}")
+        allow(group_struct).to receive(:name).and_return(name)
+        allow(group_struct).to receive(:mem).and_return(members)
 
         group_struct
       end
     end
 
     before(:each) do
-      Puppet::Etc.stubs(:group).multiple_yields(*mock_groups)
+      etc_stub = receive(:group)
+      mock_groups.each do |mock_group|
+        etc_stub = etc_stub.and_yield(mock_group)
+      end
+      allow(Puppet::Etc).to etc_stub
     end
 
     it 'returns the groups of the given user' do
@@ -70,7 +73,7 @@ describe Puppet::Util::POSIX do
 
   describe "when retrieving a posix field" do
     before do
-      @thing = stub 'thing', :field => "asdf"
+      @thing = double('thing', :field => "asdf")
     end
 
     it "should fail if no id was passed" do
@@ -80,23 +83,23 @@ describe Puppet::Util::POSIX do
     describe "and the id is an integer" do
       it "should log an error and return nil if the specified id is greater than the maximum allowed ID" do
         Puppet[:maximum_uid] = 100
-        Puppet.expects(:err)
+        expect(Puppet).to receive(:err)
 
         expect(@posix.get_posix_field("asdf", "bar", 200)).to be_nil
       end
 
       it "should use the method return by :methodbyid and return the specified field" do
-        Etc.expects(:getgrgid).returns @thing
+        expect(Etc).to receive(:getgrgid).and_return(@thing)
 
-        @thing.expects(:field).returns "myval"
+        expect(@thing).to receive(:field).and_return("myval")
 
         expect(@posix.get_posix_field(:gr, :field, 200)).to eq("myval")
       end
 
       it "should return nil if the method throws an exception" do
-        Etc.expects(:getgrgid).raises ArgumentError
+        expect(Etc).to receive(:getgrgid).and_raise(ArgumentError)
 
-        @thing.expects(:field).never
+        expect(@thing).not_to receive(:field)
 
         expect(@posix.get_posix_field(:gr, :field, 200)).to be_nil
       end
@@ -104,17 +107,17 @@ describe Puppet::Util::POSIX do
 
     describe "and the id is not an integer" do
       it "should use the method return by :methodbyid and return the specified field" do
-        Etc.expects(:getgrnam).returns @thing
+        expect(Etc).to receive(:getgrnam).and_return(@thing)
 
-        @thing.expects(:field).returns "myval"
+        expect(@thing).to receive(:field).and_return("myval")
 
         expect(@posix.get_posix_field(:gr, :field, "asdf")).to eq("myval")
       end
 
       it "should return nil if the method throws an exception" do
-        Etc.expects(:getgrnam).raises ArgumentError
+        expect(Etc).to receive(:getgrnam).and_raise(ArgumentError)
 
-        @thing.expects(:field).never
+        expect(@thing).not_to receive(:field)
 
         expect(@posix.get_posix_field(:gr, :field, "asdf")).to be_nil
       end
@@ -123,32 +126,32 @@ describe Puppet::Util::POSIX do
 
   describe "when returning the gid" do
     before do
-      @posix.stubs(:get_posix_field)
+      allow(@posix).to receive(:get_posix_field)
     end
 
     describe "and the group is an integer" do
       it "should convert integers specified as a string into an integer" do
-        @posix.expects(:get_posix_field).with(:group, :name, 100)
+        expect(@posix).to receive(:get_posix_field).with(:group, :name, 100)
 
         @posix.gid("100")
       end
 
       it "should look up the name for the group" do
-        @posix.expects(:get_posix_field).with(:group, :name, 100)
+        expect(@posix).to receive(:get_posix_field).with(:group, :name, 100)
 
         @posix.gid(100)
       end
 
       it "should return nil if the group cannot be found" do
-        @posix.expects(:get_posix_field).once.returns nil
-        @posix.expects(:search_posix_field).never
+        expect(@posix).to receive(:get_posix_field).once.and_return(nil)
+        expect(@posix).not_to receive(:search_posix_field)
 
         expect(@posix.gid(100)).to be_nil
       end
 
       it "should use the found name to look up the id" do
-        @posix.expects(:get_posix_field).with(:group, :name, 100).returns "asdf"
-        @posix.expects(:get_posix_field).with(:group, :gid, "asdf").returns 100
+        expect(@posix).to receive(:get_posix_field).with(:group, :name, 100).and_return("asdf")
+        expect(@posix).to receive(:get_posix_field).with(:group, :gid, "asdf").and_return(100)
 
         expect(@posix.gid(100)).to eq(100)
       end
@@ -156,10 +159,10 @@ describe Puppet::Util::POSIX do
       # LAK: This is because some platforms have a broken Etc module that always return
       # the same group.
       it "should use :search_posix_field if the discovered id does not match the passed-in id" do
-        @posix.expects(:get_posix_field).with(:group, :name, 100).returns "asdf"
-        @posix.expects(:get_posix_field).with(:group, :gid, "asdf").returns 50
+        expect(@posix).to receive(:get_posix_field).with(:group, :name, 100).and_return("asdf")
+        expect(@posix).to receive(:get_posix_field).with(:group, :gid, "asdf").and_return(50)
 
-        @posix.expects(:search_posix_field).with(:group, :gid, 100).returns "asdf"
+        expect(@posix).to receive(:search_posix_field).with(:group, :gid, 100).and_return("asdf")
 
         expect(@posix.gid(100)).to eq("asdf")
       end
@@ -167,30 +170,30 @@ describe Puppet::Util::POSIX do
 
     describe "and the group is a string" do
       it "should look up the gid for the group" do
-        @posix.expects(:get_posix_field).with(:group, :gid, "asdf")
+        expect(@posix).to receive(:get_posix_field).with(:group, :gid, "asdf")
 
         @posix.gid("asdf")
       end
 
       it "should return nil if the group cannot be found" do
-        @posix.expects(:get_posix_field).once.returns nil
-        @posix.expects(:search_posix_field).never
+        expect(@posix).to receive(:get_posix_field).once.and_return(nil)
+        expect(@posix).not_to receive(:search_posix_field)
 
         expect(@posix.gid("asdf")).to be_nil
       end
 
       it "should use the found gid to look up the nam" do
-        @posix.expects(:get_posix_field).with(:group, :gid, "asdf").returns 100
-        @posix.expects(:get_posix_field).with(:group, :name, 100).returns "asdf"
+        expect(@posix).to receive(:get_posix_field).with(:group, :gid, "asdf").and_return(100)
+        expect(@posix).to receive(:get_posix_field).with(:group, :name, 100).and_return("asdf")
 
         expect(@posix.gid("asdf")).to eq(100)
       end
 
       it "should use :search_posix_field if the discovered name does not match the passed-in name" do
-        @posix.expects(:get_posix_field).with(:group, :gid, "asdf").returns 100
-        @posix.expects(:get_posix_field).with(:group, :name, 100).returns "boo"
+        expect(@posix).to receive(:get_posix_field).with(:group, :gid, "asdf").and_return(100)
+        expect(@posix).to receive(:get_posix_field).with(:group, :name, 100).and_return("boo")
 
-        @posix.expects(:search_posix_field).with(:group, :gid, "asdf").returns "asdf"
+        expect(@posix).to receive(:search_posix_field).with(:group, :gid, "asdf").and_return("asdf")
 
         expect(@posix.gid("asdf")).to eq("asdf")
       end
@@ -199,32 +202,32 @@ describe Puppet::Util::POSIX do
 
   describe "when returning the uid" do
     before do
-      @posix.stubs(:get_posix_field)
+      allow(@posix).to receive(:get_posix_field)
     end
 
     describe "and the group is an integer" do
       it "should convert integers specified as a string into an integer" do
-        @posix.expects(:get_posix_field).with(:passwd, :name, 100)
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :name, 100)
 
         @posix.uid("100")
       end
 
       it "should look up the name for the group" do
-        @posix.expects(:get_posix_field).with(:passwd, :name, 100)
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :name, 100)
 
         @posix.uid(100)
       end
 
       it "should return nil if the group cannot be found" do
-        @posix.expects(:get_posix_field).once.returns nil
-        @posix.expects(:search_posix_field).never
+        expect(@posix).to receive(:get_posix_field).once.and_return(nil)
+        expect(@posix).not_to receive(:search_posix_field)
 
         expect(@posix.uid(100)).to be_nil
       end
 
       it "should use the found name to look up the id" do
-        @posix.expects(:get_posix_field).with(:passwd, :name, 100).returns "asdf"
-        @posix.expects(:get_posix_field).with(:passwd, :uid, "asdf").returns 100
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :name, 100).and_return("asdf")
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :uid, "asdf").and_return(100)
 
         expect(@posix.uid(100)).to eq(100)
       end
@@ -232,10 +235,10 @@ describe Puppet::Util::POSIX do
       # LAK: This is because some platforms have a broken Etc module that always return
       # the same group.
       it "should use :search_posix_field if the discovered id does not match the passed-in id" do
-        @posix.expects(:get_posix_field).with(:passwd, :name, 100).returns "asdf"
-        @posix.expects(:get_posix_field).with(:passwd, :uid, "asdf").returns 50
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :name, 100).and_return("asdf")
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :uid, "asdf").and_return(50)
 
-        @posix.expects(:search_posix_field).with(:passwd, :uid, 100).returns "asdf"
+        expect(@posix).to receive(:search_posix_field).with(:passwd, :uid, 100).and_return("asdf")
 
         expect(@posix.uid(100)).to eq("asdf")
       end
@@ -243,30 +246,30 @@ describe Puppet::Util::POSIX do
 
     describe "and the group is a string" do
       it "should look up the uid for the group" do
-        @posix.expects(:get_posix_field).with(:passwd, :uid, "asdf")
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :uid, "asdf")
 
         @posix.uid("asdf")
       end
 
       it "should return nil if the group cannot be found" do
-        @posix.expects(:get_posix_field).once.returns nil
-        @posix.expects(:search_posix_field).never
+        expect(@posix).to receive(:get_posix_field).once.and_return(nil)
+        expect(@posix).not_to receive(:search_posix_field)
 
         expect(@posix.uid("asdf")).to be_nil
       end
 
       it "should use the found uid to look up the nam" do
-        @posix.expects(:get_posix_field).with(:passwd, :uid, "asdf").returns 100
-        @posix.expects(:get_posix_field).with(:passwd, :name, 100).returns "asdf"
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :uid, "asdf").and_return(100)
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :name, 100).and_return("asdf")
 
         expect(@posix.uid("asdf")).to eq(100)
       end
 
       it "should use :search_posix_field if the discovered name does not match the passed-in name" do
-        @posix.expects(:get_posix_field).with(:passwd, :uid, "asdf").returns 100
-        @posix.expects(:get_posix_field).with(:passwd, :name, 100).returns "boo"
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :uid, "asdf").and_return(100)
+        expect(@posix).to receive(:get_posix_field).with(:passwd, :name, 100).and_return("boo")
 
-        @posix.expects(:search_posix_field).with(:passwd, :uid, "asdf").returns "asdf"
+        expect(@posix).to receive(:search_posix_field).with(:passwd, :uid, "asdf").and_return("asdf")
 
         expect(@posix.uid("asdf")).to eq("asdf")
       end

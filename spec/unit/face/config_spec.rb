@@ -1,8 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/face'
 
-module PuppetFaceSpecs
 describe Puppet::Face[:config, '0.0.1'] do
 
   let(:config) { described_class }
@@ -65,7 +63,7 @@ trace = true
     #This has to be after the settings above, which resets the value
     Puppet[:log_level] = 'info'
 
-    Puppet.expects(:warning).never
+    expect(Puppet).not_to receive(:warning)
     expect {
       result = subject.print("syslogfacility", :section => "user")
       expect(render(:print, result)).to eq("file\n")
@@ -76,7 +74,7 @@ trace = true
     Puppet[:log_level] = 'info'
     Puppet[:trace] = true
 
-    Puppet.expects(:warning).with("No section specified; defaulting to 'main'.\nSet the config section " +
+    expect(Puppet).to receive(:warning).with("No section specified; defaulting to 'main'.\nSet the config section " +
       "by using the `--section` flag.\nFor example, `puppet config --section user print foo`.\nFor more " +
       "information, see https://puppet.com/docs/puppet/latest/configuration.html")
     expect {
@@ -89,7 +87,7 @@ trace = true
     Puppet[:log_level] = 'notice'
     Puppet[:trace] = true
 
-    Puppet.expects(:warning).never
+    expect(Puppet).not_to receive(:warning)
     expect {
       result = subject.print("trace")
       expect(render(:print, result)).to eq("true\n")
@@ -132,13 +130,13 @@ trace = true
     let(:path) { Pathname.new(config_file).expand_path }
     before(:each) do
       Puppet[:config] = config_file
-      Puppet::FileSystem.stubs(:pathname).with(path.to_s).returns(path)
-      Puppet::FileSystem.stubs(:touch)
+      allow(Puppet::FileSystem).to receive(:pathname).with(path.to_s).and_return(path)
+      allow(Puppet::FileSystem).to receive(:touch)
     end
 
     it "prints the section and environment when no section is given and verbose is set" do
       Puppet[:log_level] = 'info'
-      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
       expect {
         subject.set('foo', 'bar')
       }.to output("\e[1;33mResolving settings from section 'main' in environment 'production'\e[0m\n").to_stderr
@@ -146,40 +144,40 @@ trace = true
 
     it "prints the section and environment when a section is given and verbose is set" do
       Puppet[:log_level] = 'info'
-      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
       expect {
         subject.set('foo', 'bar', {:section => "baz"})
       }.to output("\e[1;33mResolving settings from section 'baz' in environment 'production'\e[0m\n").to_stderr
     end
 
     it "writes to the correct puppet config file" do
-      Puppet::FileSystem.expects(:open).with(path, anything, anything)
+      expect(Puppet::FileSystem).to receive(:open).with(path, anything, anything)
       subject.set('foo', 'bar')
     end
 
     it "creates a config file if one does not exist" do
-      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
-      Puppet::FileSystem.expects(:touch).with(path)
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
+      expect(Puppet::FileSystem).to receive(:touch).with(path)
       subject.set('foo', 'bar')
     end
 
     it "sets the supplied config/value in the default section (main)" do
-      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
       config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
       manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
-      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+      allow(Puppet::Settings::IniFile::Manipulator).to receive(:new).and_return(manipulator)
 
-      manipulator.expects(:set).with("main", "foo", "bar")
+      expect(manipulator).to receive(:set).with("main", "foo", "bar")
       subject.set('foo', 'bar')
     end
 
     it "sets the value in the supplied section" do
-      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
       config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
       manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
-      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+      allow(Puppet::Settings::IniFile::Manipulator).to receive(:new).and_return(manipulator)
 
-      manipulator.expects(:set).with("baz", "foo", "bar")
+      expect(manipulator).to receive(:set).with("baz", "foo", "bar")
       subject.set('foo', 'bar', {:section => "baz"})
     end
 
@@ -190,7 +188,7 @@ trace = true
       CONF
 
       myfile = StringIO.new(contents)
-      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(myfile)
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(myfile)
 
       subject.set('foo', 'bar')
 
@@ -199,7 +197,7 @@ trace = true
     end
 
     it "opens the file with UTF-8 encoding" do
-      Puppet::FileSystem.expects(:open).with(path, nil, 'r+:UTF-8')
+      expect(Puppet::FileSystem).to receive(:open).with(path, nil, 'r+:UTF-8')
       subject.set('foo', 'bar')
     end
   end
@@ -207,14 +205,15 @@ trace = true
   context 'when the puppet.conf file does not exist' do
     let(:config_file) { '/foo/puppet.conf' }
     let(:path) { Pathname.new(config_file).expand_path }
+
     before(:each) do
       Puppet[:config] = config_file
-      Puppet::FileSystem.stubs(:pathname).with(path.to_s).returns(path)
+      allow(Puppet::FileSystem).to receive(:pathname).with(path.to_s).and_return(path)
     end
 
     it 'prints a message when the puppet.conf file does not exist' do
-      Puppet::FileSystem.stubs(:exist?).with(path).returns(false)
-      Puppet.expects(:warning).with("The puppet.conf file does not exist #{path.to_s}")
+      allow(Puppet::FileSystem).to receive(:exist?).with(path).and_return(false)
+      expect(Puppet).to receive(:warning).with("The puppet.conf file does not exist #{path.to_s}")
       subject.delete('setting', {:section => 'main'})
     end
   end
@@ -224,34 +223,33 @@ trace = true
     let(:path) { Pathname.new(config_file).expand_path }
     before(:each) do
       Puppet[:config] = config_file
-      Puppet::FileSystem.stubs(:pathname).with(path.to_s).returns(path)
-      Puppet::FileSystem.stubs(:exist?).with(path).returns(true)
+      allow(Puppet::FileSystem).to receive(:pathname).with(path.to_s).and_return(path)
+      allow(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
     end
 
     it 'prints a message about what was deleted' do
-      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
       config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
       manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
-      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+      allow(Puppet::Settings::IniFile::Manipulator).to receive(:new).and_return(manipulator)
 
-      manipulator.expects(:delete).with('main', 'setting').returns('    setting=value')
+      expect(manipulator).to receive(:delete).with('main', 'setting').and_return('    setting=value')
       expect { subject.delete('setting', {:section => 'main'}) }.to have_printed("Deleted setting from 'main': 'setting=value'")
     end
 
     it 'prints a warning when a setting is not found to delete' do
-      Puppet::FileSystem.stubs(:open).with(path, anything, anything).yields(StringIO.new)
+      allow(Puppet::FileSystem).to receive(:open).with(path, anything, anything).and_yield(StringIO.new)
       config = Puppet::Settings::IniFile.new([Puppet::Settings::IniFile::DefaultSection.new])
       manipulator = Puppet::Settings::IniFile::Manipulator.new(config)
-      Puppet::Settings::IniFile::Manipulator.stubs(:new).returns(manipulator)
+      allow(Puppet::Settings::IniFile::Manipulator).to receive(:new).and_return(manipulator)
 
-      manipulator.expects(:delete).with('main', 'setting').returns(nil)
-      Puppet.expects(:warning).with("No setting found in configuration file for section 'main' setting name 'setting'")
+      expect(manipulator).to receive(:delete).with('main', 'setting').and_return(nil)
+      expect(Puppet).to receive(:warning).with("No setting found in configuration file for section 'main' setting name 'setting'")
       subject.delete('setting', {:section => 'main'})
     end
   end
 
   shared_examples_for :config_printing_a_section do |section|
-
     def add_section_option(args, section)
       args << { :section => section } if section
       args
@@ -337,7 +335,6 @@ modulepath =
     end
 
     context "from master section" do
-
       before(:each) do
         Puppet.settings.parse_config(<<-CONF)
         [master]
@@ -349,5 +346,4 @@ modulepath =
       it_behaves_like :config_printing_a_section, :master
     end
   end
-end
 end

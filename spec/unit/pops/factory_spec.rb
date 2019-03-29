@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
 require File.join(File.dirname(__FILE__), '/factory_rspec_helper')
@@ -45,9 +44,9 @@ describe Puppet::Pops::Model::Factory do
     end
 
     it "Multiple expressions should produce a block expression" do
-      braces = mock 'braces'
-      braces.stubs(:offset).returns(0)
-      braces.stubs(:length).returns(0)
+      braces = double('braces')
+      allow(braces).to receive(:offset).and_return(0)
+      allow(braces).to receive(:length).and_return(0)
 
       model = block_or_expression([literal(1) + literal(2), literal(2) + literal(3)], braces, braces).model
       expect(model.is_a?(Puppet::Pops::Model::BlockExpression)).to eq(true)

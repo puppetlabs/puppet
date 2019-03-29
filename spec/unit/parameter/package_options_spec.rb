@@ -1,10 +1,9 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/parameter/package_options'
 
 describe Puppet::Parameter::PackageOptions do
-  let (:resource) { mock('resource') }
+  let (:resource) { double('resource') }
   let (:param)    { described_class.new(:resource => resource) }
   let (:arg)      { '/S' }
   let (:key)      { 'INSTALLDIR' }

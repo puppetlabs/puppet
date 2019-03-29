@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/pidlock'
@@ -24,9 +23,9 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
     it "should become locked" do
       @lock.lock
       if Puppet::Util::Platform.windows?
-        Puppet::Util::Windows::Process.stubs(:get_process_image_name_by_pid).with(@lock.lock_pid).returns('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
       else
-        Puppet::Util::Execution.stubs(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).returns('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
       end
       expect(@lock).to be_locked
     end
@@ -56,7 +55,7 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
     end
 
     it 'should create an empty lock file even when pid is missing' do
-      Process.stubs(:pid).returns('')
+      allow(Process).to receive(:pid).and_return('')
       @lock.lock
       expect(Puppet::FileSystem.exist?(@lock.file_path)).to be_truthy
       expect(Puppet::FileSystem.read(@lock.file_path)).to be_empty
@@ -64,12 +63,12 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
 
     it 'should replace an existing empty lockfile with a pid, given a subsequent lock call made against a valid pid' do
       # empty pid results in empty lockfile
-      Process.stubs(:pid).returns('')
+      allow(Process).to receive(:pid).and_return('')
       @lock.lock
       expect(Puppet::FileSystem.exist?(@lock.file_path)).to be_truthy
 
       # next lock call with valid pid kills existing empty lockfile
-      Process.stubs(:pid).returns(1234)
+      allow(Process).to receive(:pid).and_return(1234)
       @lock.lock
       expect(Puppet::FileSystem.exist?(@lock.file_path)).to be_truthy
       expect(Puppet::FileSystem.read(@lock.file_path)).to eq('1234')
@@ -107,15 +106,15 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
     it "should return true if locked" do
       @lock.lock
       if Puppet::Util::Platform.windows?
-        Puppet::Util::Windows::Process.stubs(:get_process_image_name_by_pid).with(@lock.lock_pid).returns('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
       else
-        Puppet::Util::Execution.stubs(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).returns('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
       end
       expect(@lock).to be_locked
     end
 
     it "should remove the lockfile when pid is missing" do
-      Process.stubs(:pid).returns('')
+      allow(Process).to receive(:pid).and_return('')
       @lock.lock
       expect(@lock.locked?).to be_falsey
       expect(Puppet::FileSystem.exist?(@lock.file_path)).to be_falsey
@@ -125,7 +124,7 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
   describe '#lock_pid' do
     it 'should return nil if the pid is empty' do
       # fake pid to get empty lockfile
-      Process.stubs(:pid).returns('')
+      allow(Process).to receive(:pid).and_return('')
       @lock.lock
       expect(@lock.lock_pid).to eq(nil)
     end
@@ -134,15 +133,15 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
   describe "with a stale lock" do
     before(:each) do
       # fake our pid to be 1234
-      Process.stubs(:pid).returns(1234)
+      allow(Process).to receive(:pid).and_return(1234)
       # lock the file
       @lock.lock
       # fake our pid to be a different pid, to simulate someone else
       #  holding the lock
-      Process.stubs(:pid).returns(6789)
+      allow(Process).to receive(:pid).and_return(6789)
 
-      Process.stubs(:kill).with(0, 6789)
-      Process.stubs(:kill).with(0, 1234).raises(Errno::ESRCH)
+      allow(Process).to receive(:kill).with(0, 6789)
+      allow(Process).to receive(:kill).with(0, 1234).and_raise(Errno::ESRCH)
     end
 
     it "should not be locked" do
@@ -157,9 +156,9 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
 
       it "should replace with new locks" do
         if Puppet::Util::Platform.windows?
-          Puppet::Util::Windows::Process.stubs(:get_process_image_name_by_pid).with(6789).returns('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+          allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(6789).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
         else
-          Puppet::Util::Execution.stubs(:execute).with(['ps', '-p', 6789, '-o', 'comm=']).returns('puppet')
+          allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 6789, '-o', 'comm=']).and_return('puppet')
         end
         @lock.lock
         expect(Puppet::FileSystem.exist?(@lockfile)).to be_truthy
@@ -184,20 +183,20 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
   describe "with another process lock" do
     before(:each) do
       # fake our pid to be 1234
-      Process.stubs(:pid).returns(1234)
+      allow(Process).to receive(:pid).and_return(1234)
       if Puppet::Util::Platform.windows?
-        Puppet::Util::Windows::Process.stubs(:get_process_image_name_by_pid).with(1234).returns('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
+        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(1234).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
       else
-        Puppet::Util::Execution.stubs(:execute).with(['ps', '-p', 1234, '-o', 'comm=']).returns('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 1234, '-o', 'comm=']).and_return('puppet')
       end
       # lock the file
       @lock.lock
       # fake our pid to be a different pid, to simulate someone else
       #  holding the lock
-      Process.stubs(:pid).returns(6789)
+      allow(Process).to receive(:pid).and_return(6789)
 
-      Process.stubs(:kill).with(0, 6789)
-      Process.stubs(:kill).with(0, 1234)
+      allow(Process).to receive(:kill).with(0, 6789)
+      allow(Process).to receive(:kill).with(0, 1234)
     end
 
     it "should be locked" do

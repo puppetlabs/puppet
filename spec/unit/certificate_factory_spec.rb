@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/test_ca'
 
@@ -20,7 +19,7 @@ describe Puppet::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
     it "should return a new X509 certificate" do
       a = subject.build(:server, csr, issuer, serial)
       b = subject.build(:server, csr, issuer, serial)
-      # The two instances are equal in every aspect except that they are 
+      # The two instances are equal in every aspect except that they are
       # different instances - they are `==`, but not hash `eql?`
       expect(a).not_to eql(b)
     end
@@ -63,7 +62,7 @@ describe Puppet::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
 
     it "should respect a custom TTL for the CA" do
       now = Time.now.utc
-      Time.expects(:now).at_least_once.returns(now)
+      expect(Time).to receive(:now).at_least(:once).and_return(now)
       cert = subject.build(:server, csr, issuer, serial, 12)
       expect(cert.not_after.to_i).to eq(now.to_i + 12)
     end
@@ -86,7 +85,6 @@ describe Puppet::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
         ef.create_extension("subjectKeyIdentifier", "hash", false).to_h
       )
     end
-
 
     it "should add an extension for the authorityKeyIdentifer" do
       cert = subject.build(:server, csr, issuer, serial)
@@ -131,7 +129,7 @@ describe Puppet::CertificateFactory, :unless => RUBY_PLATFORM == 'java' do
       csr = Puppet::SSL::CertificateRequest.new(name)
       csr.generate(key)
 
-      csr.stubs(:request_extensions).returns([
+      allow(csr).to receive(:request_extensions).and_return([
         {'oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'some-value'},
         {'oid' => 'pp_uuid', 'value' => 'some-uuid'},
       ])

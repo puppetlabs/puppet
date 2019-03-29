@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet_spec/handler'
@@ -17,14 +15,14 @@ describe Puppet::Network::HTTP::Response do
 
   context "when passed a response body" do
     it "passes the status code and body to the handler" do
-      handler.expects(:set_response).with(response, body_utf8, 200)
+      expect(handler).to receive(:set_response).with(response, body_utf8, 200)
 
       subject.respond_with(200, 'application/json', body_utf8)
     end
 
     it "accepts a File body" do
       file = tmpfile('response_spec')
-      handler.expects(:set_response).with(response, file, 200)
+      expect(handler).to receive(:set_response).with(response, file, 200)
 
       subject.respond_with(200, 'application/octet-stream', file)
     end
@@ -32,14 +30,14 @@ describe Puppet::Network::HTTP::Response do
 
   context "when passed a content type" do
     it "accepts a mime string" do
-      handler.expects(:set_content_type).with(response, 'application/json; charset=utf-8')
+      expect(handler).to receive(:set_content_type).with(response, 'application/json; charset=utf-8')
 
       subject.respond_with(200, 'application/json', body_utf8)
     end
 
     it "accepts a format object" do
       formatter = Puppet::Network::FormatHandler.format(:json)
-      handler.expects(:set_content_type).with(response, 'application/json; charset=utf-8')
+      expect(handler).to receive(:set_content_type).with(response, 'application/json; charset=utf-8')
 
       subject.respond_with(200, formatter, body_utf8)
     end
@@ -51,7 +49,7 @@ describe Puppet::Network::HTTP::Response do
         body_binary = [0xDEADCAFE].pack('L')
 
         formatter = Puppet::Network::FormatHandler.format(:binary)
-        handler.expects(:set_content_type).with(response, 'application/octet-stream')
+        expect(handler).to receive(:set_content_type).with(response, 'application/octet-stream')
 
         subject.respond_with(200, formatter, body_binary)
       end
@@ -63,14 +61,14 @@ describe Puppet::Network::HTTP::Response do
       it "sets the charset to UTF-8 for content already in that format" do
         body_pem = "BEGIN CERTIFICATE".encode('UTF-8')
 
-        handler.expects(:set_content_type).with(response, 'text/plain; charset=utf-8')
+        expect(handler).to receive(:set_content_type).with(response, 'text/plain; charset=utf-8')
 
         subject.respond_with(200, formatter, body_pem)
       end
 
       it "encodes the content to UTF-8 for content not already in UTF-8" do
-        handler.expects(:set_content_type).with(response, 'text/plain; charset=utf-8')
-        handler.expects(:set_response).with(response, body_shift_jis.encode('utf-8'), 200)
+        expect(handler).to receive(:set_content_type).with(response, 'text/plain; charset=utf-8')
+        expect(handler).to receive(:set_response).with(response, body_shift_jis.encode('utf-8'), 200)
 
         subject.respond_with(200, formatter, body_shift_jis)
       end
@@ -86,14 +84,14 @@ describe Puppet::Network::HTTP::Response do
       let(:formatter) { Puppet::Network::FormatHandler.format(:json) }
 
       it "sets the charset to UTF-8 for content already in that format" do
-        handler.expects(:set_content_type).with(response, 'application/json; charset=utf-8')
+        expect(handler).to receive(:set_content_type).with(response, 'application/json; charset=utf-8')
 
         subject.respond_with(200, formatter, body_utf8)
       end
 
       it "encodes the content to UTF-8 for content not already in UTF-8" do
-        handler.expects(:set_content_type).with(response, 'application/json; charset=utf-8')
-        handler.expects(:set_response).with(response, body_shift_jis.encode('utf-8'), 200)
+        expect(handler).to receive(:set_content_type).with(response, 'application/json; charset=utf-8')
+        expect(handler).to receive(:set_response).with(response, body_shift_jis.encode('utf-8'), 200)
 
         subject.respond_with(200, formatter, body_shift_jis)
       end

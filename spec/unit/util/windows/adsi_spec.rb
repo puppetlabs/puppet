@@ -1,11 +1,9 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
 require 'puppet/util/windows'
 
 describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
-  let(:connection) { stub 'connection' }
+  let(:connection) { double('connection') }
   let(:builtin_localized) { Puppet::Util::Windows::SID.sid_to_name('S-1-5-32') }
   # SYSTEM is special as English can retrieve it via Windows API
   # but will return localized names
@@ -13,7 +11,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
 
   before(:each) do
     Puppet::Util::Windows::ADSI.instance_variable_set(:@computer_name, 'testcomputername')
-    Puppet::Util::Windows::ADSI.stubs(:connect).returns connection
+    allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_return(connection)
   end
 
   after(:each) do
@@ -94,10 +92,10 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
     end
 
     it "should be able to create a user" do
-      adsi_user = stub('adsi')
+      adsi_user = double('adsi')
 
-      connection.expects(:Create).with('user', username).returns(adsi_user)
-      Puppet::Util::Windows::ADSI::Group.expects(:exists?).with(username).returns(false)
+      expect(connection).to receive(:Create).with('user', username).and_return(adsi_user)
+      expect(Puppet::Util::Windows::ADSI::Group).to receive(:exists?).with(username).and_return(false)
 
       user = Puppet::Util::Windows::ADSI::User.create(username)
 
@@ -106,56 +104,55 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
     end
 
     it "should be able to check the existence of a user" do
-      Puppet::Util::Windows::SID.expects(:name_to_principal).with(username).returns nil
-      Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{username},user").returns connection
-      connection.expects(:Class).returns('User')
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with(username).and_return(nil)
+      expect(Puppet::Util::Windows::ADSI).to receive(:connect).with("WinNT://./#{username},user").and_return(connection)
+      expect(connection).to receive(:Class).and_return('User')
       expect(Puppet::Util::Windows::ADSI::User.exists?(username)).to be_truthy
     end
 
     it "should be able to check the existence of a domain user" do
-      Puppet::Util::Windows::SID.expects(:name_to_principal).with("#{domain}\\#{username}").returns nil
-      Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://#{domain}/#{username},user").returns connection
-      connection.expects(:Class).returns('User')
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with("#{domain}\\#{username}").and_return(nil)
+      expect(Puppet::Util::Windows::ADSI).to receive(:connect).with("WinNT://#{domain}/#{username},user").and_return(connection)
+      expect(connection).to receive(:Class).and_return('User')
       expect(Puppet::Util::Windows::ADSI::User.exists?(domain_username)).to be_truthy
     end
 
     it "should be able to confirm the existence of a user with a well-known SID" do
       system_user = Puppet::Util::Windows::SID::LocalSystem
       # ensure that the underlying OS is queried here
-      Puppet::Util::Windows::ADSI.unstub(:connect)
+      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original()
       expect(Puppet::Util::Windows::ADSI::User.exists?(system_user)).to be_truthy
     end
 
     it "should return false with a well-known Group SID" do
       group = Puppet::Util::Windows::SID::BuiltinAdministrators
       # ensure that the underlying OS is queried here
-      Puppet::Util::Windows::ADSI.unstub(:connect)
+      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original()
       expect(Puppet::Util::Windows::ADSI::User.exists?(group)).to be_falsey
     end
 
     it "should return nil with an unknown SID" do
-
       bogus_sid = 'S-1-2-3-4'
       # ensure that the underlying OS is queried here
-      Puppet::Util::Windows::ADSI.unstub(:connect)
+      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original()
       expect(Puppet::Util::Windows::ADSI::User.exists?(bogus_sid)).to be_falsey
     end
 
     it "should be able to delete a user" do
-      connection.expects(:Delete).with('user', username)
+      expect(connection).to receive(:Delete).with('user', username)
 
       Puppet::Util::Windows::ADSI::User.delete(username)
     end
 
     it "should return an enumeration of IADsUser wrapped objects" do
       name = 'Administrator'
-      wmi_users = [stub('WMI', :name => name)]
-      Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').returns(wmi_users)
+      wmi_users = [double('WMI', :name => name)]
+      expect(Puppet::Util::Windows::ADSI).to receive(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').and_return(wmi_users)
 
-      native_object = stub('IADsUser')
+      native_object = double('IADsUser')
       homedir = "C:\\Users\\#{name}"
-      native_object.expects(:Get).with('HomeDirectory').returns(homedir)
-      Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},user").returns(native_object)
+      expect(native_object).to receive(:Get).with('HomeDirectory').and_return(homedir)
+      expect(Puppet::Util::Windows::ADSI).to receive(:connect).with("WinNT://./#{name},user").and_return(native_object)
 
       users = Puppet::Util::Windows::ADSI::User.to_a
       expect(users.length).to eq(1)
@@ -164,83 +161,86 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
     end
 
     describe "an instance" do
-      let(:adsi_user) { stub('user', :objectSID => []) }
-      let(:sid)       { stub(:account => username, :domain => 'testcomputername') }
+      let(:adsi_user) { double('user', :objectSID => []) }
+      let(:sid)       { double(:account => username, :domain => 'testcomputername') }
       let(:user)      { Puppet::Util::Windows::ADSI::User.new(username, adsi_user) }
 
       it "should provide its groups as a list of names" do
         names = ["group1", "group2"]
 
-        groups = names.map { |name| stub('group', :Name => name) }
+        groups = names.map { |name| double('group', :Name => name) }
 
-        adsi_user.expects(:Groups).returns(groups)
+        expect(adsi_user).to receive(:Groups).and_return(groups)
 
         expect(user.groups).to match(names)
       end
 
       it "should be able to test whether a given password is correct" do
-        Puppet::Util::Windows::ADSI::User.expects(:logon).with(username, 'pwdwrong').returns(false)
-        Puppet::Util::Windows::ADSI::User.expects(:logon).with(username, 'pwdright').returns(true)
+        expect(Puppet::Util::Windows::ADSI::User).to receive(:logon).with(username, 'pwdwrong').and_return(false)
+        expect(Puppet::Util::Windows::ADSI::User).to receive(:logon).with(username, 'pwdright').and_return(true)
 
         expect(user.password_is?('pwdwrong')).to be_falsey
         expect(user.password_is?('pwdright')).to be_truthy
       end
 
       it "should be able to set a password" do
-        adsi_user.expects(:SetPassword).with('pwd')
-        adsi_user.expects(:SetInfo).at_least_once
+        expect(adsi_user).to receive(:SetPassword).with('pwd')
+        expect(adsi_user).to receive(:SetInfo).at_least(:once)
 
         flagname = "UserFlags"
         fADS_UF_DONT_EXPIRE_PASSWD = 0x10000
 
-        adsi_user.expects(:Get).with(flagname).returns(0)
-        adsi_user.expects(:Put).with(flagname, fADS_UF_DONT_EXPIRE_PASSWD)
+        expect(adsi_user).to receive(:Get).with(flagname).and_return(0)
+        expect(adsi_user).to receive(:Put).with(flagname, fADS_UF_DONT_EXPIRE_PASSWD)
 
         user.password = 'pwd'
       end
 
        it "should be able manage a user without a password" do
-        adsi_user.expects(:SetPassword).with('pwd').never
-        adsi_user.expects(:SetInfo).at_least_once
+        expect(adsi_user).not_to receive(:SetPassword).with('pwd')
+        expect(adsi_user).to receive(:SetInfo).at_least(:once)
 
         flagname = "UserFlags"
         fADS_UF_DONT_EXPIRE_PASSWD = 0x10000
 
-        adsi_user.expects(:Get).with(flagname).returns(0)
-        adsi_user.expects(:Put).with(flagname, fADS_UF_DONT_EXPIRE_PASSWD)
+        expect(adsi_user).to receive(:Get).with(flagname).and_return(0)
+        expect(adsi_user).to receive(:Put).with(flagname, fADS_UF_DONT_EXPIRE_PASSWD)
 
         user.password = nil
       end
 
       it "should generate the correct URI" do
-        Puppet::Util::Windows::SID.stubs(:octet_string_to_principal).returns(sid)
+        allow(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).and_return(sid)
         expect(user.uri).to eq("WinNT://testcomputername/#{username},user")
       end
 
       describe "when given a set of groups to which to add the user" do
         let(:existing_groups) { ['group2','group3'] }
-        let(:group_sids) { existing_groups.each_with_index.map{|n,i| stub(:Name => n, :objectSID => stub(:sid => i))} }
+        let(:group_sids) { existing_groups.each_with_index.map{|n,i| double(:Name => n, :objectSID => double(:sid => i))} }
 
         let(:groups_to_set) { 'group1,group2' }
-        let(:desired_sids) { groups_to_set.split(',').each_with_index.map{|n,i| stub(:Name => n, :objectSID => stub(:sid => i-1))} }
+        let(:desired_sids) { groups_to_set.split(',').each_with_index.map{|n,i| double(:Name => n, :objectSID => double(:sid => i-1))} }
 
         before(:each) do
-          user.expects(:group_sids).returns(group_sids.map {|s| s.objectSID })
+          expect(user).to receive(:group_sids).and_return(group_sids.map {|s| s.objectSID })
         end
 
         describe "if membership is specified as inclusive" do
           it "should add the user to those groups, and remove it from groups not in the list" do
-            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.sid, s.objectSID] }])
-            user.expects(:add_group_sids).with { |value| value.sid == -1 }
-            user.expects(:remove_group_sids).with { |value| value.sid == 1 }
+            expect(Puppet::Util::Windows::ADSI::User).to receive(:name_sid_hash).and_return(Hash[ desired_sids.map { |s| [s.objectSID.sid, s.objectSID] }])
+            expect(user).to receive(:add_group_sids) { |value| expect(value.sid).to eq(-1) }
+            expect(user).to receive(:remove_group_sids) { |value| expect(value.sid).to eq(1) }
 
             user.set_groups(groups_to_set, false)
           end
 
           it "should remove all users from a group if desired is empty" do
-            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns({})
-            user.expects(:add_group_sids).never
-            user.expects(:remove_group_sids).with { |user1, user2| user1.sid == 0 && user2.sid == 1 }
+            expect(Puppet::Util::Windows::ADSI::User).to receive(:name_sid_hash).and_return({})
+            expect(user).not_to receive(:add_group_sids)
+            expect(user).to receive(:remove_group_sids) do |user1, user2|
+              expect(user1.sid).to eq(0)
+              expect(user2.sid).to eq(1)
+            end
 
             user.set_groups('', false)
           end
@@ -248,17 +248,17 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
 
         describe "if membership is specified as minimum" do
           it "should add the user to the specified groups without affecting its other memberships" do
-            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns(Hash[ desired_sids.map { |s| [s.objectSID.sid, s.objectSID] }])
-            user.expects(:add_group_sids).with { |value| value.sid == -1 }
-            user.expects(:remove_group_sids).never
+            expect(Puppet::Util::Windows::ADSI::User).to receive(:name_sid_hash).and_return(Hash[ desired_sids.map { |s| [s.objectSID.sid, s.objectSID] }])
+            expect(user).to receive(:add_group_sids) { |value| expect(value.sid).to eq(-1) }
+            expect(user).not_to receive(:remove_group_sids)
 
             user.set_groups(groups_to_set, true)
           end
 
           it "should do nothing if desired is empty" do
-            Puppet::Util::Windows::ADSI::User.expects(:name_sid_hash).returns({})
-            user.expects(:remove_group_sids).never
-            user.expects(:add_group_sids).never
+            expect(Puppet::Util::Windows::ADSI::User).to receive(:name_sid_hash).and_return({})
+            expect(user).not_to receive(:remove_group_sids)
+            expect(user).not_to receive(:add_group_sids)
 
             user.set_groups('', true)
           end
@@ -282,7 +282,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
             flags | ads_userflags(flag)
           end
 
-          user.stubs(:[]).with('UserFlags').returns(userflags)
+          allow(user).to receive(:[]).with('UserFlags').and_return(userflags)
         end
 
         describe '#userflag_set?' do
@@ -316,8 +316,8 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
           end
 
           it 'noops if no userflags are passed-in' do
-            user.expects(:[]=).never
-            user.expects(:commit).never
+            expect(user).not_to receive(:[]=)
+            expect(user).not_to receive(:commit)
 
             user.send(method)
           end
@@ -335,7 +335,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
             userflags = user['UserFlags']
             expected_userflags = userflags | ads_userflags(input_flags[0]) | ads_userflags(input_flags[1])
 
-            user.expects(:[]=).with('UserFlags', expected_userflags)
+            expect(user).to receive(:[]=).with('UserFlags', expected_userflags)
 
             user.set_userflags(*input_flags)
           end
@@ -353,7 +353,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
             # ADS_UF_HOMEDIR_REQUIRED and ADS_UF_LOCKOUT should be the only flags set.
             expected_userflags = 0 | ads_userflags(:ADS_UF_HOMEDIR_REQUIRED) | ads_userflags(:ADS_UF_LOCKOUT)
 
-            user.expects(:[]=).with('UserFlags', expected_userflags)
+            expect(user).to receive(:[]=).with('UserFlags', expected_userflags)
 
             user.unset_userflags(*input_flags)
           end
@@ -366,16 +366,16 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
     let(:groupname)  { 'testgroup' }
 
     describe "an instance" do
-      let(:adsi_group) { stub 'group' }
+      let(:adsi_group) { double('group') }
       let(:group)      { Puppet::Util::Windows::ADSI::Group.new(groupname, adsi_group) }
-      let(:someone_sid){ stub(:account => 'someone', :domain => 'testcomputername')}
+      let(:someone_sid){ double(:account => 'someone', :domain => 'testcomputername')}
 
       describe "should be able to use SID objects" do
         let(:system)     { Puppet::Util::Windows::SID.name_to_principal('SYSTEM') }
         let(:invalid)    { Puppet::Util::Windows::SID.name_to_principal('foobar') }
 
         it "to add a member" do
-          adsi_group.expects(:Add).with("WinNT://S-1-5-18")
+          expect(adsi_group).to receive(:Add).with("WinNT://S-1-5-18")
 
           group.add_member_sids(system)
         end
@@ -385,7 +385,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
         end
 
         it "to remove a member" do
-          adsi_group.expects(:Remove).with("WinNT://S-1-5-18")
+          expect(adsi_group).to receive(:Remove).with("WinNT://S-1-5-18")
 
           group.remove_member_sids(system)
         end
@@ -398,12 +398,12 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
       it "should provide its groups as a list of names" do
         names = ['user1', 'user2']
 
-        users = names.map { |name| stub('user', :Name => name, :objectSID => name, :ole_respond_to? => true) }
+        users = names.map { |name| double('user', :Name => name, :objectSID => name, :ole_respond_to? => true) }
 
-        adsi_group.expects(:Members).returns(users)
+        expect(adsi_group).to receive(:Members).and_return(users)
 
-        Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with('user1').returns(stub(:domain_account => 'HOSTNAME\user1'))
-        Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with('user2').returns(stub(:domain_account => 'HOSTNAME\user2'))
+        expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with('user1').and_return(double(:domain_account => 'HOSTNAME\user1'))
+        expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with('user2').and_return(double(:domain_account => 'HOSTNAME\user2'))
 
         expect(group.members.map(&:domain_account)).to match(['HOSTNAME\user1', 'HOSTNAME\user2'])
       end
@@ -412,26 +412,26 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
         it "should set the members of a group to only desired_members when inclusive" do
           names = ['DOMAIN\user1', 'user2']
           sids = [
-              stub(:account => 'user1', :domain => 'DOMAIN', :sid => 1),
-              stub(:account => 'user2', :domain => 'testcomputername', :sid => 2),
-              stub(:account => 'user3', :domain => 'DOMAIN2', :sid => 3),
+            double(:account => 'user1', :domain => 'DOMAIN', :sid => 1),
+            double(:account => 'user2', :domain => 'testcomputername', :sid => 2),
+            double(:account => 'user3', :domain => 'DOMAIN2', :sid => 3),
           ]
 
           # use stubbed objectSid on member to return stubbed SID
-          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(sids[0])
-          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([1]).returns(sids[1])
+          expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([0]).and_return(sids[0])
+          expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([1]).and_return(sids[1])
 
-          Puppet::Util::Windows::SID.expects(:name_to_principal).with('user2').returns(sids[1])
-          Puppet::Util::Windows::SID.expects(:name_to_principal).with('DOMAIN2\user3').returns(sids[2])
+          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2').and_return(sids[1])
+          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('DOMAIN2\user3').and_return(sids[2])
 
-          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
-          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")
+          expect(Puppet::Util::Windows::ADSI).to receive(:sid_uri).with(sids[0]).and_return("WinNT://DOMAIN/user1,user")
+          expect(Puppet::Util::Windows::ADSI).to receive(:sid_uri).with(sids[2]).and_return("WinNT://DOMAIN2/user3,user")
 
-          members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i], :ole_respond_to? => true)}
-          adsi_group.expects(:Members).returns members
+          members = names.each_with_index.map{|n,i| double(:Name => n, :objectSID => [i], :ole_respond_to? => true)}
+          expect(adsi_group).to receive(:Members).and_return(members)
 
-          adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user')
-          adsi_group.expects(:Add).with('WinNT://DOMAIN2/user3,user')
+          expect(adsi_group).to receive(:Remove).with('WinNT://DOMAIN/user1,user')
+          expect(adsi_group).to receive(:Add).with('WinNT://DOMAIN2/user3,user')
 
           group.set_members(['user2', 'DOMAIN2\user3'])
         end
@@ -439,35 +439,35 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
         it "should add the desired_members to an existing group when not inclusive" do
           names = ['DOMAIN\user1', 'user2']
           sids = [
-              stub(:account => 'user1', :domain => 'DOMAIN', :sid => 1),
-              stub(:account => 'user2', :domain => 'testcomputername', :sid => 2),
-              stub(:account => 'user3', :domain => 'DOMAIN2', :sid => 3),
+            double(:account => 'user1', :domain => 'DOMAIN', :sid => 1),
+            double(:account => 'user2', :domain => 'testcomputername', :sid => 2),
+            double(:account => 'user3', :domain => 'DOMAIN2', :sid => 3),
           ]
 
           # use stubbed objectSid on member to return stubbed SID
-          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(sids[0])
-          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([1]).returns(sids[1])
+          expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([0]).and_return(sids[0])
+          expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([1]).and_return(sids[1])
 
-          Puppet::Util::Windows::SID.expects(:name_to_principal).with('user2').returns(sids[1])
-          Puppet::Util::Windows::SID.expects(:name_to_principal).with('DOMAIN2\user3').returns(sids[2])
+          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('user2').and_return(sids[1])
+          expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with('DOMAIN2\user3').and_return(sids[2])
 
-          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")
+          expect(Puppet::Util::Windows::ADSI).to receive(:sid_uri).with(sids[2]).and_return("WinNT://DOMAIN2/user3,user")
 
-          members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i], :ole_respond_to? => true)}
-          adsi_group.expects(:Members).returns members
+          members = names.each_with_index.map {|n,i| double(:Name => n, :objectSID => [i], :ole_respond_to? => true)}
+          expect(adsi_group).to receive(:Members).and_return(members)
 
-          adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user').never
+          expect(adsi_group).not_to receive(:Remove).with('WinNT://DOMAIN/user1,user')
 
-          adsi_group.expects(:Add).with('WinNT://DOMAIN2/user3,user')
+          expect(adsi_group).to receive(:Add).with('WinNT://DOMAIN2/user3,user')
 
           group.set_members(['user2', 'DOMAIN2\user3'],false)
         end
 
         it "should return immediately when desired_members is nil" do
-          adsi_group.expects(:Members).never
+          expect(adsi_group).not_to receive(:Members)
 
-          adsi_group.expects(:Remove).never
-          adsi_group.expects(:Add).never
+          expect(adsi_group).not_to receive(:Remove)
+          expect(adsi_group).not_to receive(:Add)
 
           group.set_members(nil)
         end
@@ -475,22 +475,22 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
         it "should remove all members when desired_members is empty and inclusive" do
           names = ['DOMAIN\user1', 'user2']
           sids = [
-              stub(:account => 'user1', :domain => 'DOMAIN', :sid => 1 ),
-              stub(:account => 'user2', :domain => 'testcomputername', :sid => 2 ),
+            double(:account => 'user1', :domain => 'DOMAIN', :sid => 1 ),
+            double(:account => 'user2', :domain => 'testcomputername', :sid => 2 ),
           ]
 
           # use stubbed objectSid on member to return stubbed SID
-          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(sids[0])
-          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([1]).returns(sids[1])
+          expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([0]).and_return(sids[0])
+          expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([1]).and_return(sids[1])
 
-          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
-          Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[1]).returns("WinNT://testcomputername/user2,user")
+          expect(Puppet::Util::Windows::ADSI).to receive(:sid_uri).with(sids[0]).and_return("WinNT://DOMAIN/user1,user")
+          expect(Puppet::Util::Windows::ADSI).to receive(:sid_uri).with(sids[1]).and_return("WinNT://testcomputername/user2,user")
 
-          members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i], :ole_respond_to? => true)}
-          adsi_group.expects(:Members).returns members
+          members = names.each_with_index.map{|n,i| double(:Name => n, :objectSID => [i], :ole_respond_to? => true)}
+          expect(adsi_group).to receive(:Members).and_return(members)
 
-          adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user')
-          adsi_group.expects(:Remove).with('WinNT://testcomputername/user2,user')
+          expect(adsi_group).to receive(:Remove).with('WinNT://DOMAIN/user1,user')
+          expect(adsi_group).to receive(:Remove).with('WinNT://testcomputername/user2,user')
 
           group.set_members([])
         end
@@ -498,35 +498,35 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
         it "should do nothing when desired_members is empty and not inclusive" do
           names = ['DOMAIN\user1', 'user2']
           sids = [
-              stub(:account => 'user1', :domain => 'DOMAIN', :sid => 1 ),
-              stub(:account => 'user2', :domain => 'testcomputername', :sid => 2 ),
+            double(:account => 'user1', :domain => 'DOMAIN', :sid => 1 ),
+            double(:account => 'user2', :domain => 'testcomputername', :sid => 2 ),
           ]
           # use stubbed objectSid on member to return stubbed SID
-          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(sids[0])
-          Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([1]).returns(sids[1])
+          expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([0]).and_return(sids[0])
+          expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([1]).and_return(sids[1])
 
-          members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i], :ole_respond_to? => true)}
-          adsi_group.expects(:Members).returns members
+          members = names.each_with_index.map{|n,i| double(:Name => n, :objectSID => [i], :ole_respond_to? => true)}
+          expect(adsi_group).to receive(:Members).and_return(members)
 
-          adsi_group.expects(:Remove).never
-          adsi_group.expects(:Add).never
+          expect(adsi_group).not_to receive(:Remove)
+          expect(adsi_group).not_to receive(:Add)
 
           group.set_members([],false)
         end
 
         it "should raise an error when a username does not resolve to a SID" do
           expect {
-            adsi_group.expects(:Members).returns []
+            expect(adsi_group).to receive(:Members).and_return([])
             group.set_members(['foobar'])
           }.to raise_error(Puppet::Error, /Could not resolve name: foobar/)
         end
       end
 
       it "should generate the correct URI" do
-        adsi_group.expects(:objectSID).returns([0])
-        Socket.expects(:gethostname).returns('TESTcomputerNAME')
-        computer_sid = stub(:account => groupname,:domain => 'testcomputername')
-        Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([0]).returns(computer_sid)
+        expect(adsi_group).to receive(:objectSID).and_return([0])
+        expect(Socket).to receive(:gethostname).and_return('TESTcomputerNAME')
+        computer_sid = double(:account => groupname,:domain => 'testcomputername')
+        expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([0]).and_return(computer_sid)
         expect(group.uri).to eq("WinNT://./#{groupname},group")
       end
     end
@@ -544,10 +544,10 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
     end
 
     it "should be able to create a group" do
-      adsi_group = stub("adsi")
+      adsi_group = double("adsi")
 
-      connection.expects(:Create).with('group', groupname).returns(adsi_group)
-      Puppet::Util::Windows::ADSI::User.expects(:exists?).with(groupname).returns(false)
+      expect(connection).to receive(:Create).with('group', groupname).and_return(adsi_group)
+      expect(Puppet::Util::Windows::ADSI::User).to receive(:exists?).with(groupname).and_return(false)
 
       group = Puppet::Util::Windows::ADSI::Group.create(groupname)
 
@@ -556,51 +556,49 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
     end
 
     it "should be able to confirm the existence of a group" do
-      Puppet::Util::Windows::SID.expects(:name_to_principal).with(groupname).returns nil
-      Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{groupname},group").returns connection
-      connection.expects(:Class).returns('Group')
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_principal).with(groupname).and_return(nil)
+      expect(Puppet::Util::Windows::ADSI).to receive(:connect).with("WinNT://./#{groupname},group").and_return(connection)
+      expect(connection).to receive(:Class).and_return('Group')
 
       expect(Puppet::Util::Windows::ADSI::Group.exists?(groupname)).to be_truthy
     end
 
     it "should be able to confirm the existence of a group with a well-known SID" do
-
       service_group = Puppet::Util::Windows::SID::Service
       # ensure that the underlying OS is queried here
-      Puppet::Util::Windows::ADSI.unstub(:connect)
+      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original()
       expect(Puppet::Util::Windows::ADSI::Group.exists?(service_group)).to be_truthy
     end
 
     it "will return true with a well-known User SID, as there is no way to resolve it with a WinNT:// style moniker" do
       user = Puppet::Util::Windows::SID::NtLocal
       # ensure that the underlying OS is queried here
-      Puppet::Util::Windows::ADSI.unstub(:connect)
+      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original()
       expect(Puppet::Util::Windows::ADSI::Group.exists?(user)).to be_truthy
     end
 
     it "should return nil with an unknown SID" do
-
       bogus_sid = 'S-1-2-3-4'
       # ensure that the underlying OS is queried here
-      Puppet::Util::Windows::ADSI.unstub(:connect)
+      allow(Puppet::Util::Windows::ADSI).to receive(:connect).and_call_original()
       expect(Puppet::Util::Windows::ADSI::Group.exists?(bogus_sid)).to be_falsey
     end
 
     it "should be able to delete a group" do
-      connection.expects(:Delete).with('group', groupname)
+      expect(connection).to receive(:Delete).with('group', groupname)
 
       Puppet::Util::Windows::ADSI::Group.delete(groupname)
     end
 
     it "should return an enumeration of IADsGroup wrapped objects" do
       name = 'Administrators'
-      wmi_groups = [stub('WMI', :name => name)]
-      Puppet::Util::Windows::ADSI.expects(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns(wmi_groups)
+      wmi_groups = [double('WMI', :name => name)]
+      expect(Puppet::Util::Windows::ADSI).to receive(:execquery).with('select name from win32_group where localaccount = "TRUE"').and_return(wmi_groups)
 
-      native_object = stub('IADsGroup')
-      Puppet::Util::Windows::SID.expects(:octet_string_to_principal).with([]).returns(stub(:domain_account => '.\Administrator'))
-      native_object.expects(:Members).returns([stub(:Name => 'Administrator', :objectSID => [], :ole_respond_to? => true)])
-      Puppet::Util::Windows::ADSI.expects(:connect).with("WinNT://./#{name},group").returns(native_object)
+      native_object = double('IADsGroup')
+      expect(Puppet::Util::Windows::SID).to receive(:octet_string_to_principal).with([]).and_return(double(:domain_account => '.\Administrator'))
+      expect(native_object).to receive(:Members).and_return([double(:Name => 'Administrator', :objectSID => [], :ole_respond_to? => true)])
+      expect(Puppet::Util::Windows::ADSI).to receive(:connect).with("WinNT://./#{name},group").and_return(native_object)
 
       groups = Puppet::Util::Windows::ADSI::Group.to_a
       expect(groups.length).to eq(1)
@@ -611,19 +609,19 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet::Util::Platform.windows? do
 
   describe Puppet::Util::Windows::ADSI::UserProfile do
     it "should be able to delete a user profile" do
-      connection.expects(:Delete).with("Win32_UserProfile.SID='S-A-B-C'")
+      expect(connection).to receive(:Delete).with("Win32_UserProfile.SID='S-A-B-C'")
       Puppet::Util::Windows::ADSI::UserProfile.delete('S-A-B-C')
     end
 
     it "should warn on 2003" do
-      connection.expects(:Delete).raises(WIN32OLERuntimeError,
+      expect(connection).to receive(:Delete).and_raise(WIN32OLERuntimeError,
  "Delete (WIN32OLERuntimeError)
     OLE error code:80041010 in SWbemServicesEx
       Invalid class
     HRESULT error code:0x80020009
       Exception occurred.")
 
-      Puppet.expects(:warning).with("Cannot delete user profile for 'S-A-B-C' prior to Vista SP1")
+      expect(Puppet).to receive(:warning).with("Cannot delete user profile for 'S-A-B-C' prior to Vista SP1")
       Puppet::Util::Windows::ADSI::UserProfile.delete('S-A-B-C')
     end
   end

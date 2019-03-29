@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix? do
@@ -51,7 +50,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
 
       it "should fail if the command isn't executable" do
         FileUtils.touch(command)
-        File.stubs(:executable?).with(command).returns(false)
+        allow(File).to receive(:executable?).with(command).and_return(false)
 
         expect { provider.run(command) }.to raise_error(ArgumentError, "'#{command}' is not executable")
       end
@@ -63,7 +62,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
         provider.resource[:path] = [File.dirname(command)]
         filename = File.basename(command)
 
-        Puppet::Util::Execution.expects(:execute).with(filename, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+        expect(Puppet::Util::Execution).to receive(:execute).with(filename, instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
         provider.run(filename)
       end
@@ -77,7 +76,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       it "should fail if the command is in the path but not executable" do
         command = make_exe
         File.chmod(0644, command)
-        FileTest.stubs(:executable?).with(command).returns(false)
+        allow(FileTest).to receive(:executable?).with(command).and_return(false)
         resource[:path] = [File.dirname(command)]
         filename = File.basename(command)
 
@@ -94,7 +93,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       provider.resource[:path] = ['/bogus/bin']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with("#{command} bar --sillyarg=true --blah", instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      expect(Puppet::Util::Execution).to receive(:execute).with("#{command} bar --sillyarg=true --blah", instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
       provider.run("#{command} bar --sillyarg=true --blah")
     end
@@ -110,7 +109,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       provider.resource[:environment] = ['WHATEVER=/something/else', 'WHATEVER=/foo']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with(command, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      expect(Puppet::Util::Execution).to receive(:execute).with(command, instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
       provider.run(command)
 
@@ -121,7 +120,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       provider.resource[:environment] = ['WHATEVER=']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with(command, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      expect(Puppet::Util::Execution).to receive(:execute).with(command, instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
       provider.run(command)
 
@@ -134,7 +133,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       provider.resource.line = 42
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with(command, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      expect(Puppet::Util::Execution).to receive(:execute).with(command, instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
       provider.run(command)
 
@@ -143,7 +142,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
 
     it "should set umask before execution if umask parameter is in use" do
       provider.resource[:umask] = '0027'
-      Puppet::Util.expects(:withumask).with(0027)
+      expect(Puppet::Util).to receive(:withumask).with(0027)
       provider.run(provider.resource[:command])
     end
 

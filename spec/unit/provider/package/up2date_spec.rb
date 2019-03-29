@@ -1,8 +1,6 @@
-# spec/unit/provider/package/up2date_spec.rb
 require 'spec_helper'
 
 describe 'up2date package provider' do
-
   # This sets the class itself as the subject rather than
   # an instance of the class.
   subject do
@@ -15,8 +13,8 @@ describe 'up2date package provider' do
   osfamilies.each do |osfamily|
     releases.each do |release|
       it "should be the default provider on #{osfamily} #{release}" do
-        Facter.expects(:value).with(:osfamily).returns(osfamily)
-        Facter.expects(:value).with(:lsbdistrelease).returns(release)
+        allow(Facter).to receive(:value).with(:osfamily).and_return(osfamily)
+        allow(Facter).to receive(:value).with(:lsbdistrelease).and_return(release)
         expect(subject.default?).to be_truthy
       end
     end

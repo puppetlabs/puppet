@@ -1,28 +1,23 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/files'
 
 describe Puppet::Transaction::Report do
   before :each do
     # Enable persistence during tests
-    Puppet::Transaction::Persistence.any_instance.stubs(:enabled?).returns(true)
+    allow_any_instance_of(Puppet::Transaction::Persistence).to receive(:enabled?).and_return(true)
   end
 
   describe "when using the indirector" do
-    after do
-      Puppet.settings.stubs(:use)
-    end
-
     it "should be able to delegate to the :processor terminus" do
-      Puppet::Transaction::Report.indirection.stubs(:terminus_class).returns :processor
+      allow(Puppet::Transaction::Report.indirection).to receive(:terminus_class).and_return(:processor)
 
       terminus = Puppet::Transaction::Report.indirection.terminus(:processor)
 
-      Facter.stubs(:value).returns "host.domain.com"
+      allow(Facter).to receive(:value).and_return("host.domain.com")
 
       report = Puppet::Transaction::Report.new
 
-      terminus.expects(:process).with(report)
+      expect(terminus).to receive(:process).with(report)
 
       Puppet::Transaction::Report.indirection.save(report)
     end
@@ -50,10 +45,10 @@ describe Puppet::Transaction::Report do
 
     def run_catalogs(resources1, resources2, noop1 = false, noop2 = false, &block)
       last_run_report = nil
-      Puppet::Transaction::Report.indirection.expects(:save).twice.with do |report, x|
+      expect(Puppet::Transaction::Report.indirection).to receive(:save) do |report, x|
         last_run_report = report
         true
-      end
+      end.twice
 
       Puppet[:report] = true
       Puppet[:noop] = noop1

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/test_ca'
 
@@ -16,7 +15,7 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     Puppet.settings.use :main, :ssl
 
     @host = Puppet::SSL::Host.new("luke.madstop.com")
-    @host.stubs(:submit_certificate_request)
+    allow(@host).to receive(:submit_certificate_request)
 
     @ca = Puppet::TestCa.new
     Puppet::Util.replace_file(Puppet[:localcacert], 0644) do |f|

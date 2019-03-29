@@ -226,7 +226,7 @@ describe Puppet::SSL::SSLProvider do
     end
 
     it 'warns if intermediate issuer is missing' do
-      Puppet.expects(:warning).with("The issuer '/CN=Test CA Subauthority' of certificate '/CN=signed' cannot be found locally")
+      expect(Puppet).to receive(:warning).with("The issuer '/CN=Test CA Subauthority' of certificate '/CN=signed' cannot be found locally")
 
       subject.create_context(config.merge(cacerts: [cert_fixture('ca.pem')]))
     end

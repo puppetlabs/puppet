@@ -4,7 +4,7 @@ require 'puppet/settings'
 require 'puppet/settings/certificate_revocation_setting'
 
 describe Puppet::Settings::CertificateRevocationSetting do
-  subject { described_class.new(:settings => stub('settings'), :desc => "test") }
+  subject { described_class.new(:settings => double('settings'), :desc => "test") }
 
   it "is of type :certificate_revocation" do
     expect(subject.type).to eq :certificate_revocation

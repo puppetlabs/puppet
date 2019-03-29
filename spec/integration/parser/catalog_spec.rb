@@ -13,18 +13,14 @@ describe "A catalog" do
 
     before(:each) do
       Puppet.push_context({:loaders => loaders, :current_environment => env})
+      allow_any_instance_of(Puppet::Parser::Compiler).to receive(:loaders).and_return(loaders)
     end
 
     after(:each) do
       Puppet.pop_context()
     end
 
-    before(:each) do
-      Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
-    end
-
     context "when transmitted to the agent" do
-
       it "preserves the order in which the resources are added to the catalog" do
         resources_in_declaration_order = ["Class[First]",
                                           "Second[position]",

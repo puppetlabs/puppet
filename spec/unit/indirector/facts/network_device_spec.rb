@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/network_device'
@@ -25,11 +24,11 @@ end
 
 describe Puppet::Node::Facts::NetworkDevice do
   before :each do
-    @remote_device = stub 'remote_device', :facts => {}
-    Puppet::Util::NetworkDevice.stubs(:current).returns(@remote_device)
+    @remote_device = double('remote_device', :facts => {})
+    allow(Puppet::Util::NetworkDevice).to receive(:current).and_return(@remote_device)
     @device = Puppet::Node::Facts::NetworkDevice.new
     @name = "me"
-    @request = stub 'request', :key => @name
+    @request = double('request', :key => @name)
   end
 
   describe Puppet::Node::Facts::NetworkDevice, " when finding facts" do
@@ -42,23 +41,23 @@ describe Puppet::Node::Facts::NetworkDevice do
     end
 
     it "should return the device facts as the values in the Facts instance" do
-      @remote_device.expects(:facts).returns("one" => "two")
+      expect(@remote_device).to receive(:facts).and_return("one" => "two")
       facts = @device.find(@request)
       expect(facts.values["one"]).to eq("two")
     end
 
     it "should add local facts" do
       facts = Puppet::Node::Facts.new("foo")
-      Puppet::Node::Facts.expects(:new).returns facts
-      facts.expects(:add_local_facts)
+      expect(Puppet::Node::Facts).to receive(:new).and_return(facts)
+      expect(facts).to receive(:add_local_facts)
 
       @device.find(@request)
     end
 
     it "should sanitize facts" do
       facts = Puppet::Node::Facts.new("foo")
-      Puppet::Node::Facts.expects(:new).returns facts
-      facts.expects(:sanitize)
+      expect(Puppet::Node::Facts).to receive(:new).and_return(facts)
+      expect(facts).to receive(:sanitize)
 
       @device.find(@request)
     end
