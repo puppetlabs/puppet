@@ -872,19 +872,12 @@ describe Puppet::Util do
     end
 
     it "should use a temporary staging location if provided" do
-      new_target = target.path + '.baz'
-      expect(Puppet::FileSystem.exist?(new_target)).to be_falsey
+      new_target = File.join(tmpdir('new_file'), 'new_file.baz')
+      staging_target = tmpdir('staging_file')
 
-      temp_target = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(new_target), Dir.tmpdir())
-
-      begin
-        Puppet::FileSystem::Uniquefile.expects(:new)
-          .with(Puppet::FileSystem.basename_string(new_target), Dir.tmpdir())
-          .returns(temp_target)
-        subject.replace_file(new_target, 0555, Dir.tmpdir()) {|fh| fh.puts "foo" }
-      ensure
-        Puppet::FileSystem.unlink(new_target) if Puppet::FileSystem.exist?(new_target)
-        Puppet::FileSystem.unlink(temp_target) if Puppet::FileSystem.exist?(temp_target.to_s)
+      subject.replace_file(new_target, 0555, staging_target) do |fh|
+        expect(File.dirname(fh.path)).to eq(staging_target)
+          fh.puts "foo"
       end
     end
 

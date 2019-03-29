@@ -1259,7 +1259,7 @@ describe Puppet::Type.type(:file) do
       it "should write the file first to the staging location" do
         file[:content] = 'some content'
         file[:staging_location] = Dir.tmpdir()
-        Puppet::Util.expects(:replace_file).with(file[:path], nil, Dir.tmpdir())
+        expect(Puppet::Util).to receive(:replace_file).with(file[:path], nil, Dir.tmpdir())
         file.write
       end
     end
