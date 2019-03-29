@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.3.0-202-ge4c8ca3\n"
+"Project-Id-Version: Puppet automation framework 6.4.0-19-g2defc2e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-03-22 23:48+0000\n"
-"PO-Revision-Date: 2019-03-22 23:48+0000\n"
+"POT-Creation-Date: 2019-03-29 22:02+0000\n"
+"PO-Revision-Date: 2019-03-29 22:02+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -7706,7 +7706,7 @@ msgstr ""
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:283 ../lib/puppet/ssl/state_machine.rb:195
+#: ../lib/puppet/ssl/host.rb:283
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
@@ -7880,8 +7880,12 @@ msgstr ""
 msgid "Failed to retrieve certificate for %{certname}: %{message}"
 msgstr ""
 
+#: ../lib/puppet/ssl/state_machine.rb:195
+msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the waitforcert setting is set to 0."
+msgstr ""
+
 #: ../lib/puppet/ssl/state_machine.rb:198
-msgid "Waiting %{time} seconds for cert to be signed"
+msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Will try again in %{time} seconds."
 msgstr ""
 
 #: ../lib/puppet/ssl/state_machine.rb:242
