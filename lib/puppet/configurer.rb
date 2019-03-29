@@ -399,8 +399,9 @@ class Puppet::Configurer
               :transaction_uuid => @transaction_uuid,
               :fail_on_404 => false)
           found = true
-        rescue
-          # Nothing to see here
+        rescue  => detail
+          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+          Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
         end
       end
       found
