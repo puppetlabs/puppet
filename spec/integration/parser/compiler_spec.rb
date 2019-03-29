@@ -72,14 +72,14 @@ describe Puppet::Parser::Compiler do
     # hidden away in the implementation and we keep losing the race.)
     # --daniel 2011-04-21
     now = Time.now
-    Time.stubs(:now).returns(now)
+    allow(Time).to receive(:now).and_return(now)
 
     @node = Puppet::Node.new("testnode",
                              :facts => Puppet::Node::Facts.new("facts", {}),
                              :environment => environment)
     @known_resource_types = environment.known_resource_types
     @compiler = Puppet::Parser::Compiler.new(@node)
-    @scope = Puppet::Parser::Scope.new(@compiler, :source => stub('source'))
+    @scope = Puppet::Parser::Scope.new(@compiler, :source => double('source'))
     @scope_resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope)
     @scope.resource = @scope_resource
   end
@@ -145,8 +145,8 @@ describe Puppet::Parser::Compiler do
           }
         MANIFEST
 
-      Puppet::Parser::Resource::Catalog.any_instance.expects(:to_resource).with do |catalog|
-        Puppet.lookup(:current_environment).name == :production
+      expect_any_instance_of(Puppet::Parser::Resource::Catalog).to receive(:to_resource) do |catalog|
+        expect(Puppet.lookup(:current_environment).name).to eq(:production)
       end
 
       Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
@@ -447,10 +447,10 @@ describe Puppet::Parser::Compiler do
       Puppet[:code] = 'class foo { }'
       first_time = Time.at(1)
       second_time = Time.at(200)
-      Time.stubs(:now).returns(first_time)
+      allow(Time).to receive(:now).and_return(first_time)
       node = Puppet::Node.new('mynode')
       expect(Puppet::Parser::Compiler.compile(node).version).to eq(first_time.to_i)
-      Time.stubs(:now).returns(second_time)
+      allow(Time).to receive(:now).and_return(second_time)
       expect(Puppet::Parser::Compiler.compile(node).version).to eq(first_time.to_i) # no change because files didn't change
       Puppet[:code] = nil
       expect(Puppet::Parser::Compiler.compile(node).version).to eq(second_time.to_i)

@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/test_ca'
 
@@ -37,19 +36,19 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
   end
 
   it "should retrieve its public key from its private key" do
-    realkey = mock 'realkey'
-    key = stub 'key', :content => realkey
-    Puppet::SSL::Key.indirection.stubs(:find).returns(key)
-    pubkey = mock 'public_key'
-    realkey.expects(:public_key).returns pubkey
+    realkey = double('realkey')
+    key = double('key', :content => realkey)
+    allow(Puppet::SSL::Key.indirection).to receive(:find).and_return(key)
+    pubkey = double('public_key')
+    expect(realkey).to receive(:public_key).and_return(pubkey)
 
     expect(@host.public_key).to equal(pubkey)
   end
 
   describe 'localhost' do
     before(:each) do
-      Puppet::SSL::Host.any_instance.stubs(:certificate).returns nil
-      Puppet::SSL::Host.any_instance.stubs(:generate)
+      allow_any_instance_of(Puppet::SSL::Host).to receive(:certificate).and_return(nil)
+      allow_any_instance_of(Puppet::SSL::Host).to receive(:generate)
     end
 
     it "should have a method for producing an instance to manage the local host's keys" do
@@ -63,40 +62,40 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     end
 
     it "should generate the certificate for the localhost instance if no certificate is available" do
-      host = stub 'host', :key => nil
-      Puppet::SSL::Host.expects(:new).returns host
+      host = double('host', :key => nil)
+      expect(Puppet::SSL::Host).to receive(:new).and_return(host)
 
-      host.expects(:certificate).returns nil
-      host.expects(:generate)
+      expect(host).to receive(:certificate).and_return(nil)
+      expect(host).to receive(:generate)
 
       expect(Puppet::SSL::Host.localhost).to equal(host)
     end
 
     it "should always read the key for the localhost instance in from disk" do
-      host = stub 'host', :certificate => "eh"
-      host.expects(:key)
-      Puppet::SSL::Host.expects(:new).returns host
+      host = double('host', :certificate => "eh")
+      expect(host).to receive(:key)
+      expect(Puppet::SSL::Host).to receive(:new).and_return(host)
 
       Puppet::SSL::Host.localhost
     end
 
     it "should cache the localhost instance" do
-      host = stub 'host', :certificate => "eh", :key => 'foo'
-      Puppet::SSL::Host.expects(:new).once.returns host
+      host = double('host', :certificate => "eh", :key => 'foo')
+      expect(Puppet::SSL::Host).to receive(:new).once.and_return(host)
       expect(Puppet::SSL::Host.localhost).to eq(Puppet::SSL::Host.localhost)
     end
   end
 
   context "with dns_alt_names" do
     before :each do
-      @key = stub('key content')
-      key = stub('key', :generate => true, :content => @key)
-      Puppet::SSL::Key.stubs(:new).returns key
-      Puppet::SSL::Key.indirection.stubs(:save).with(key)
+      @key = double('key content')
+      key = double('key', :generate => true, :content => @key)
+      allow(Puppet::SSL::Key).to receive(:new).and_return(key)
+      allow(Puppet::SSL::Key.indirection).to receive(:save).with(key)
 
-      @cr = stub('certificate request', :render => "csr pem")
-      Puppet::SSL::CertificateRequest.stubs(:new).returns @cr
-      Puppet::SSL::Host.any_instance.stubs(:submit_certificate_request)
+      @cr = double('certificate request', :render => "csr pem")
+      allow(Puppet::SSL::CertificateRequest).to receive(:new).and_return(@cr)
+      allow_any_instance_of(Puppet::SSL::Host).to receive(:submit_certificate_request)
     end
 
     describe "explicitly specified" do
@@ -105,13 +104,13 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       end
 
       it "should not include subjectAltName if not the local node" do
-        @cr.expects(:generate).with(@key, {})
+        expect(@cr).to receive(:generate).with(@key, {})
 
         Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate_certificate_request
       end
 
       it "should include subjectAltName if the local node" do
-        @cr.expects(:generate).with(@key, { :dns_alt_names => 'one, two' })
+        expect(@cr).to receive(:generate).with(@key, { :dns_alt_names => 'one, two' })
 
         Puppet::SSL::Host.new(Puppet[:certname]).generate_certificate_request
       end
@@ -124,55 +123,55 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
   it "should consider the certificate invalid if it cannot find a key" do
     host = Puppet::SSL::Host.new("foo")
-    certificate = mock('cert', :fingerprint => 'DEADBEEF')
-    host.expects(:key).returns nil
+    certificate = double('cert', :fingerprint => 'DEADBEEF')
+    expect(host).to receive(:key).and_return(nil)
     expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, "No private key with which to validate certificate with fingerprint: DEADBEEF")
   end
 
   it "should consider the certificate invalid if it cannot find a certificate" do
     host = Puppet::SSL::Host.new("foo")
-    host.expects(:key).never
+    expect(host).not_to receive(:key)
     expect { host.validate_certificate_with_key(nil) }.to raise_error(Puppet::Error, "No certificate to validate.")
   end
 
   it "should consider the certificate invalid if the SSL certificate's key verification fails" do
     host = Puppet::SSL::Host.new("foo")
-    key = mock 'key', :content => "private_key"
-    sslcert = mock 'sslcert'
-    certificate = mock 'cert', {:content => sslcert, :fingerprint => 'DEADBEEF'}
-    host.stubs(:key).returns key
-    sslcert.expects(:check_private_key).with("private_key").returns false
+    key = double('key', :content => "private_key")
+    sslcert = double('sslcert')
+    certificate = double('cert', {:content => sslcert, :fingerprint => 'DEADBEEF'})
+    allow(host).to receive(:key).and_return(key)
+    expect(sslcert).to receive(:check_private_key).with("private_key").and_return(false)
     expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, /DEADBEEF/)
   end
 
   it "should consider the certificate valid if the SSL certificate's key verification succeeds" do
     host = Puppet::SSL::Host.new("foo")
-    key = mock 'key', :content => "private_key"
-    sslcert = mock 'sslcert'
-    certificate = mock 'cert', :content => sslcert
-    host.stubs(:key).returns key
-    sslcert.expects(:check_private_key).with("private_key").returns true
+    key = double('key', :content => "private_key")
+    sslcert = double('sslcert')
+    certificate = double('cert', :content => sslcert)
+    allow(host).to receive(:key).and_return(key)
+    expect(sslcert).to receive(:check_private_key).with("private_key").and_return(true)
     expect{ host.validate_certificate_with_key(certificate) }.not_to raise_error
   end
 
   it "should output agent-specific commands when validation fails" do
     host = Puppet::SSL::Host.new("foo")
-    key = mock 'key', :content => "private_key"
-    sslcert = mock 'sslcert'
-    certificate = mock 'cert', {:content => sslcert, :fingerprint => 'DEADBEEF'}
-    host.stubs(:key).returns key
-    sslcert.expects(:check_private_key).with("private_key").returns false
+    key = double('key', :content => "private_key")
+    sslcert = double('sslcert')
+    certificate = double('cert', {:content => sslcert, :fingerprint => 'DEADBEEF'})
+    allow(host).to receive(:key).and_return(key)
+    expect(sslcert).to receive(:check_private_key).with("private_key").and_return(false)
     expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, /puppet ssl clean \n/)
   end
 
   it "should output device-specific commands when validation fails" do
     Puppet[:certname] = "device.example.com"
     host = Puppet::SSL::Host.new("device.example.com", true)
-    key = mock 'key', :content => "private_key"
-    sslcert = mock 'sslcert'
-    certificate = mock 'cert', {:content => sslcert, :fingerprint => 'DEADBEEF'}
-    host.stubs(:key).returns key
-    sslcert.expects(:check_private_key).with("private_key").returns false
+    key = double('key', :content => "private_key")
+    sslcert = double('sslcert')
+    certificate = double('cert', {:content => sslcert, :fingerprint => 'DEADBEEF'})
+    allow(host).to receive(:key).and_return(key)
+    expect(sslcert).to receive(:check_private_key).with("private_key").and_return(false)
     expect { host.validate_certificate_with_key(certificate) }.to raise_error(Puppet::Error, /puppet ssl clean --target device.example.com/)
   end
 
@@ -196,37 +195,37 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     end
 
     it "should return nil if the key is not set and cannot be found" do
-      Puppet::SSL::Key.indirection.expects(:find).with("myname").returns(nil)
+      expect(Puppet::SSL::Key.indirection).to receive(:find).with("myname").and_return(nil)
       expect(@host.key).to be_nil
     end
 
     it "should find the key in the Key class and return the Puppet instance" do
-      Puppet::SSL::Key.indirection.expects(:find).with("myname").returns(@key)
+      expect(Puppet::SSL::Key.indirection).to receive(:find).with("myname").and_return(@key)
       expect(@host.key).to equal(@key)
     end
 
     it "should be able to generate and save a new key" do
-      Puppet::SSL::Key.expects(:new).with("myname").returns(@key)
+      expect(Puppet::SSL::Key).to receive(:new).with("myname").and_return(@key)
 
-      @key.expects(:generate)
-      Puppet::SSL::Key.indirection.expects(:save)
+      expect(@key).to receive(:generate)
+      expect(Puppet::SSL::Key.indirection).to receive(:save)
 
       expect(@host.generate_key).to be_truthy
       expect(@host.key).to equal(@key)
     end
 
     it "should not retain keys that could not be saved" do
-      Puppet::SSL::Key.expects(:new).with("myname").returns(@key)
+      expect(Puppet::SSL::Key).to receive(:new).with("myname").and_return(@key)
 
-      @key.stubs(:generate)
-      Puppet::SSL::Key.indirection.expects(:save).raises "eh"
+      expect(@key).to receive(:generate)
+      expect(Puppet::SSL::Key.indirection).to receive(:save).and_raise("eh")
 
       expect { @host.generate_key }.to raise_error(RuntimeError)
       expect(@host.key).to be_nil
     end
 
     it "should return any previously found key without requerying" do
-      Puppet::SSL::Key.indirection.expects(:find).with("myname").returns(@key).once
+      expect(Puppet::SSL::Key.indirection).to receive(:find).with("myname").and_return(@key).once
       expect(@host.key).to equal(@key)
       expect(@host.key).to equal(@key)
     end
@@ -244,52 +243,52 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     let(:key) { Puppet::SSL::Key.from_s(@pki[:leaf_key].to_s, @host.name) }
 
     it "should generate a new key when generating the cert request if no key exists" do
-      @host.expects(:key).times(2).returns(nil).then.returns(key)
-      @host.expects(:generate_key).returns(key)
+      expect(@host).to receive(:key).exactly(2).times.and_return(nil, key)
+      expect(@host).to receive(:generate_key).and_return(key)
 
-      @host.stubs(:submit_certificate_request)
+      allow(@host).to receive(:submit_certificate_request)
 
       @host.generate_certificate_request
       expect(Puppet::FileSystem.exist?(File.join(Puppet[:requestdir], "#{@host.name}.pem"))).to be true
     end
 
     it "should be able to generate and save a new request using the private key" do
-      @host.stubs(:key).returns(key)
-      @host.stubs(:submit_certificate_request)
+      allow(@host).to receive(:key).and_return(key)
+      allow(@host).to receive(:submit_certificate_request)
 
       expect(@host.generate_certificate_request).to be_truthy
       expect(Puppet::FileSystem.exist?(File.join(Puppet[:requestdir], "#{@host.name}.pem"))).to be true
     end
 
     it "should send a new request to the CA for signing" do
-      @http = mock("http")
-      @host.stubs(:http_client).returns(@http)
-      @host.stubs(:ssl_store).returns(mock("ssl store"))
-      @host.stubs(:key).returns(key)
-      request = mock("request")
-      request.stubs(:generate)
-      request.expects(:render).returns("my request").twice
-      Puppet::SSL::CertificateRequest.expects(:new).returns(request)
+      @http = double("http")
+      allow(@host).to receive(:http_client).and_return(@http)
+      allow(@host).to receive(:ssl_store).and_return(double("ssl store"))
+      allow(@host).to receive(:key).and_return(key)
+      request = double("request")
+      allow(request).to receive(:generate)
+      expect(request).to receive(:render).and_return("my request").twice
+      expect(Puppet::SSL::CertificateRequest).to receive(:new).and_return(request)
 
-      Puppet::Rest::Routes.expects(:put_certificate_request)
+      expect(Puppet::Rest::Routes).to receive(:put_certificate_request)
         .with("my request", @host.name, anything)
-        .returns(nil)
+        .and_return(nil)
 
       expect(@host.generate_certificate_request).to be true
     end
 
     it "should return any previously found request without requerying" do
-      request = mock("request")
-      @host.expects(:load_certificate_request_from_file).returns(request).once
+      request = double("request")
+      expect(@host).to receive(:load_certificate_request_from_file).and_return(request).once
 
       expect(@host.certificate_request).to equal(request)
       expect(@host.certificate_request).to equal(request)
     end
 
     it "should not keep its certificate request in memory if the request cannot be saved" do
-      @host.stubs(:key).returns(key)
-      @host.stubs(:submit_certificate_request)
-      Puppet::Util.expects(:replace_file).raises(RuntimeError)
+      allow(@host).to receive(:key).and_return(key)
+      allow(@host).to receive(:submit_certificate_request)
+      expect(Puppet::Util).to receive(:replace_file).and_raise(RuntimeError)
 
       expect { @host.generate_certificate_request }.to raise_error(RuntimeError)
 
@@ -304,57 +303,57 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
     before(:each) do
       Puppet[:certdir] = tmpdir('certs')
-      @host.stubs(:key).returns mock("key")
-      @host.stubs(:validate_certificate_with_key)
-      @host.stubs(:http_client).returns(@http)
-      @host.stubs(:ssl_store).returns(mock("ssl store"))
+      allow(@host).to receive(:key).and_return(double("key"))
+      allow(@host).to receive(:validate_certificate_with_key)
+      allow(@host).to receive(:http_client).and_return(@http)
+      allow(@host).to receive(:ssl_store).and_return(double("ssl store"))
     end
 
     let(:ca_cert_response) { @pki[:ca_bundle] }
     let(:host_cert_response) { @pki[:unrevoked_leaf_node_cert] }
 
     it "should find the CA certificate and save it to disk" do
-      Puppet::Rest::Routes.expects(:get_certificate)
+      expect(Puppet::Rest::Routes).to receive(:get_certificate)
                           .with(Puppet::SSL::CA_NAME, anything)
-                          .returns(ca_cert_response)
-      Puppet::Rest::Routes.expects(:get_certificate)
+                          .and_return(ca_cert_response)
+      expect(Puppet::Rest::Routes).to receive(:get_certificate)
                           .with(@host.name, anything)
-                          .raises(Puppet::Rest::ResponseError.new('no client cert',
-                                                                  mock('response', code: '404')))
+                          .and_raise(Puppet::Rest::ResponseError.new('no client cert',
+                                                                     double('response', code: '404')))
       @host.certificate
       actual_ca_bundle = Puppet::FileSystem.read(Puppet[:localcacert])
       expect(actual_ca_bundle).to match(/BEGIN CERTIFICATE.*END CERTIFICATE.*BEGIN CERTIFICATE/m)
     end
 
     it "should return nil if it cannot find a CA certificate" do
-      @host.expects(:ensure_ca_certificate).returns(false)
-      @host.expects(:get_host_certificate).never
+      expect(@host).to receive(:ensure_ca_certificate).and_return(false)
+      expect(@host).not_to receive(:get_host_certificate)
 
       expect(@host.certificate).to be_nil
     end
 
     it "should find the key if it does not have one" do
-      @host.expects(:ensure_ca_certificate).returns(true)
-      @host.expects(:get_host_certificate).returns(nil)
-      @host.expects(:key).returns mock("key")
+      expect(@host).to receive(:ensure_ca_certificate).and_return(true)
+      expect(@host).to receive(:get_host_certificate).and_return(nil)
+      expect(@host).to receive(:key).and_return(double("key"))
       @host.certificate
     end
 
     it "should generate the key if one cannot be found" do
-      @host.expects(:ensure_ca_certificate).returns(true)
-      @host.expects(:get_host_certificate).returns(nil)
-      @host.expects(:key).returns nil
-      @host.expects(:generate_key)
+      expect(@host).to receive(:ensure_ca_certificate).and_return(true)
+      expect(@host).to receive(:get_host_certificate).and_return(nil)
+      expect(@host).to receive(:key).and_return(nil)
+      expect(@host).to receive(:generate_key)
       @host.certificate
     end
 
     it "should find the host certificate, write it to file, and return the Puppet certificate instance" do
-      Puppet::Rest::Routes.expects(:get_certificate)
+      expect(Puppet::Rest::Routes).to receive(:get_certificate)
                           .with(Puppet::SSL::CA_NAME, anything)
-                          .returns(ca_cert_response)
-      Puppet::Rest::Routes.expects(:get_certificate)
+                          .and_return(ca_cert_response)
+      expect(Puppet::Rest::Routes).to receive(:get_certificate)
                           .with(@host.name, anything)
-                          .returns(host_cert_response)
+                          .and_return(host_cert_response)
       expected_cert = Puppet::SSL::Certificate.from_s(@pki[:unrevoked_leaf_node_cert])
       actual_cert = @host.certificate
       expect(actual_cert).to be_a(Puppet::SSL::Certificate)
@@ -364,9 +363,9 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     end
 
     it "should return any previously found certificate" do
-      cert = mock 'cert'
-      @host.expects(:ensure_ca_certificate).returns(true).once
-      @host.expects(:get_host_certificate).returns(cert).once
+      cert = double('cert')
+      expect(@host).to receive(:ensure_ca_certificate).and_return(true).once
+      expect(@host).to receive(:get_host_certificate).and_return(cert).once
 
       expect(@host.certificate).to equal(cert)
       expect(@host.certificate).to equal(cert)
@@ -374,19 +373,19 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
 
     context 'invalid certificates' do
       it "should raise if the CA certificate downloaded from CA is invalid" do
-        Puppet::Rest::Routes.expects(:get_certificate)
+        expect(Puppet::Rest::Routes).to receive(:get_certificate)
                             .with(Puppet::SSL::CA_NAME, anything)
-                            .returns('garbage')
+                            .and_return('garbage')
         expect { @host.certificate }.to raise_error(Puppet::Error, /did not contain a valid CA certificate/)
       end
 
       it "should warn if the host certificate downloaded from CA is invalid" do
-        Puppet::Rest::Routes.expects(:get_certificate)
+        expect(Puppet::Rest::Routes).to receive(:get_certificate)
                             .with(Puppet::SSL::CA_NAME, anything)
-                            .returns(ca_cert_response)
-        Puppet::Rest::Routes.expects(:get_certificate)
+                            .and_return(ca_cert_response)
+        expect(Puppet::Rest::Routes).to receive(:get_certificate)
                             .with(@host.name, anything)
-                            .returns('garbage')
+                            .and_return('garbage')
         expect { @host.certificate }.to raise_error(Puppet::Error, /did not contain a valid certificate for #{@host.name}/)
       end
 
@@ -398,9 +397,9 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       end
 
       it 'should warn if the host certificate loaded from disk in invalid' do
-        Puppet::Rest::Routes.expects(:get_certificate)
+        expect(Puppet::Rest::Routes).to receive(:get_certificate)
                             .with(Puppet::SSL::CA_NAME, anything)
-                            .returns(ca_cert_response)
+                            .and_return(ca_cert_response)
         Puppet::FileSystem.open(File.join(Puppet[:certdir], "#{@host.name}.pem"), nil, "w:ASCII") do |f|
           f.puts 'garbage'
         end
@@ -416,22 +415,22 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
   describe "when generating files" do
     before do
       @host = Puppet::SSL::Host.new("me")
-      @host.stubs(:generate_key)
-      @host.stubs(:generate_certificate_request)
-      @host.stubs(:certificate_request)
-      @host.stubs(:certificate)
+      allow(@host).to receive(:generate_key)
+      allow(@host).to receive(:generate_certificate_request)
+      allow(@host).to receive(:certificate_request)
+      allow(@host).to receive(:certificate)
     end
 
     it "should generate a key if one is not present" do
-      @host.stubs(:key).returns nil
-      @host.expects(:generate_key)
+      allow(@host).to receive(:key).and_return nil
+      expect(@host).to receive(:generate_key)
 
       @host.generate
     end
 
     it "should generate a certificate request if one is not present" do
-      @host.expects(:certificate_request).returns nil
-      @host.expects(:generate_certificate_request)
+      expect(@host).to receive(:certificate_request).and_return nil
+      expect(@host).to receive(:generate_certificate_request)
 
       @host.generate
     end
@@ -447,10 +446,9 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     end
 
     it "should accept a purpose" do
-      store = mock 'store'
-      store.stub_everything
-      OpenSSL::X509::Store.expects(:new).returns store
-      store.expects(:purpose=).with(OpenSSL::X509::PURPOSE_SSL_SERVER)
+      store = double('store', :add_file => nil)
+      expect(OpenSSL::X509::Store).to receive(:new).and_return(store)
+      expect(store).to receive(:purpose=).with(OpenSSL::X509::PURPOSE_SSL_SERVER)
       host = Puppet::SSL::Host.new("me")
       host.crl_usage = false
 
@@ -463,8 +461,8 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
         @revoked_cert = @pki[:revoked_root_node_cert]
         localcacert = Puppet.settings[:localcacert]
         Puppet::Util.replace_file(localcacert, 0644) {|f| f.write @pki[:ca_bundle] }
-        @http = mock 'http'
-        @host.stubs(:http_client).returns(@http)
+        @http = double('http')
+        allow(@host).to receive(:http_client).and_return(@http)
       end
 
       after do
@@ -473,9 +471,9 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       end
 
       it "retrieves it from the server" do
-        Puppet::Rest::Routes.expects(:get_crls)
+        expect(Puppet::Rest::Routes).to receive(:get_crls)
           .with(Puppet::SSL::CA_NAME, anything)
-          .returns(@pki[:crl_chain])
+          .and_return(@pki[:crl_chain])
 
         @host.ssl_store
         expect(Puppet::FileSystem.read(Puppet.settings[:hostcrl], :encoding => Encoding::UTF_8)).to eq(@pki[:crl_chain])
@@ -575,54 +573,73 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
     end
 
     it "should generate its certificate request and attempt to read the certificate again if no certificate is found" do
-      @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
-      @host.expects(:generate)
+      expect(@host).to receive(:certificate).twice.and_return(nil, "foo")
+      expect(@host).to receive(:generate)
       @host.wait_for_cert(1)
     end
 
     it "should catch and log errors during CSR saving" do
-      @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
-      @host.expects(:generate).raises(RuntimeError).then.returns nil
-      @host.stubs(:sleep)
+      expect(@host).to receive(:certificate).twice.and_return(nil, "foo")
+      times_generate_called = 0
+      expect(@host).to receive(:generate) do
+        times_generate_called += 1
+        raise RuntimeError if times_generate_called == 1
+        nil
+      end
+      allow(@host).to receive(:sleep)
       @host.wait_for_cert(1)
     end
 
     it "should sleep and retry after failures saving the CSR if waitforcert is enabled" do
-      @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
-      @host.expects(:generate).raises(RuntimeError).then.returns nil
-      @host.expects(:sleep).with(1)
+      expect(@host).to receive(:certificate).twice.and_return(nil, "foo")
+      times_generate_called = 0
+      expect(@host).to receive(:generate) do
+        times_generate_called += 1
+        raise RuntimeError if times_generate_called == 1
+        nil
+      end
+      expect(@host).to receive(:sleep).with(1)
       @host.wait_for_cert(1)
     end
 
     it "should exit after failures saving the CSR of waitforcert is disabled" do
-      @host.expects(:certificate).returns(nil)
-      @host.expects(:generate).raises(RuntimeError)
-      @host.expects(:puts)
+      expect(@host).to receive(:certificate).and_return(nil)
+      expect(@host).to receive(:generate).and_raise(RuntimeError)
+      expect(@host).to receive(:puts)
       expect { @host.wait_for_cert(0) }.to exit_with 1
     end
 
     it "should exit if the wait time is 0 and it can neither find nor retrieve a certificate" do
-      @host.stubs(:certificate).returns nil
-      @host.expects(:generate)
-      @host.expects(:puts)
+      allow(@host).to receive(:certificate).and_return(nil)
+      expect(@host).to receive(:generate)
+      expect(@host).to receive(:puts)
       expect { @host.wait_for_cert(0) }.to exit_with 1
     end
 
     it "should sleep for the specified amount of time if no certificate is found after generating its certificate request" do
-      @host.expects(:certificate).times(3).returns(nil).then.returns(nil).then.returns "foo"
-      @host.expects(:generate)
+      expect(@host).to receive(:certificate).exactly(3).times().and_return(nil, nil, "foo")
+      expect(@host).to receive(:generate)
 
-      @host.expects(:sleep).with(1)
+      expect(@host).to receive(:sleep).with(1)
 
       @host.wait_for_cert(1)
     end
 
     it "should catch and log exceptions during certificate retrieval" do
-      @host.expects(:certificate).times(3).returns(nil).then.raises(RuntimeError).then.returns("foo")
-      @host.stubs(:generate)
-      @host.stubs(:sleep)
+      times_certificate_called = 0
+      expect(@host).to receive(:certificate) do
+        times_certificate_called += 1
+        if times_certificate_called == 1
+          return nil
+        elsif times_certificate_called == 2
+          raise RuntimeError
+        end
+        "foo"
+      end.exactly(3).times()
+      allow(@host).to receive(:generate)
+      allow(@host).to receive(:sleep)
 
-      Puppet.expects(:log_exception)
+      expect(Puppet).to receive(:log_exception).at_least(:once)
 
       @host.wait_for_cert(1)
     end

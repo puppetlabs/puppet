@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/yaml'
@@ -39,30 +38,30 @@ describe Puppet::Indirector::Yaml do
 
   before :each do
     Puppet[:clientyamldir] = dir
-    Puppet.run_mode.stubs(:master?).returns false
+    allow(Puppet.run_mode).to receive(:master?).and_return(false)
   end
 
   describe "when choosing file location" do
     it "should use the server_datadir if the run_mode is master" do
-      Puppet.run_mode.stubs(:master?).returns true
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       Puppet[:yamldir] = serverdir
       expect(terminus.path(:me)).to match(/^#{serverdir}/)
     end
 
     it "should use the client yamldir if the run_mode is not master" do
-      Puppet.run_mode.stubs(:master?).returns false
+      allow(Puppet.run_mode).to receive(:master?).and_return(false)
       Puppet[:clientyamldir] = clientdir
       expect(terminus.path(:me)).to match(/^#{clientdir}/)
     end
 
     it "should use the extension if one is specified" do
-      Puppet.run_mode.stubs(:master?).returns true
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       Puppet[:yamldir] = serverdir
       expect(terminus.path(:me,'.farfignewton')).to match(%r{\.farfignewton$})
     end
 
     it "should assume an extension of .yaml if none is specified" do
-      Puppet.run_mode.stubs(:master?).returns true
+      allow(Puppet.run_mode).to receive(:master?).and_return(true)
       Puppet[:yamldir] = serverdir
       expect(terminus.path(:me)).to match(%r{\.yaml$})
     end

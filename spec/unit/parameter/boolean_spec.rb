@@ -1,10 +1,9 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet'
 require 'puppet/parameter/boolean'
 
 describe Puppet::Parameter::Boolean do
-  let (:resource) { mock('resource') }
+  let (:resource) { double('resource') }
   describe "after initvars" do
     before { described_class.initvars }
     it "should have the correct value_collection" do

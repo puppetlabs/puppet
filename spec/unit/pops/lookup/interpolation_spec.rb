@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet'
 
@@ -39,11 +38,11 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
   let(:lookup_invocation) { Lookup::Invocation.new(scope, {}, {}, nil) }
 
   before(:each) do
-    Lookup::Invocation.any_instance.stubs(:lookup_adapter).returns(adapter)
+    allow_any_instance_of(Lookup::Invocation).to receive(:lookup_adapter).and_return(adapter)
   end
 
   def expect_lookup(*keys)
-    keys.each { |key| adapter.expects(:track).with(key) }
+    keys.each { |key| expect(adapter).to receive(:track).with(key) }
   end
 
   context 'when interpolating nested data' do

@@ -17,7 +17,7 @@ describe Puppet::Type.type(:package).provider(:apt) do
   end
 
   it "should be the default provider on :osfamily => Debian" do
-    Facter.expects(:value).with(:osfamily).returns("Debian")
+    expect(Facter).to receive(:value).with(:osfamily).and_return("Debian")
     expect(described_class.default?).to be_truthy
   end
 
@@ -26,38 +26,40 @@ describe Puppet::Type.type(:package).provider(:apt) do
   end
 
   it "should use :install to update" do
-    provider.expects(:install)
+    expect(provider).to receive(:install)
     provider.update
   end
 
   it "should use 'apt-get remove' to uninstall" do
-    provider.expects(:aptget).with("-y", "-q", :remove, name)
+    expect(provider).to receive(:aptget).with("-y", "-q", :remove, name)
     provider.uninstall
   end
 
   it "should use 'apt-get purge' and 'dpkg purge' to purge" do
-    provider.expects(:aptget).with("-y", "-q", :remove, "--purge", name)
-    provider.expects(:dpkg).with("--purge", name)
+    expect(provider).to receive(:aptget).with("-y", "-q", :remove, "--purge", name)
+    expect(provider).to receive(:dpkg).with("--purge", name)
     provider.purge
   end
 
   it "should use 'apt-cache policy' to determine the latest version of a package" do
-    provider.expects(:aptcache).with(:policy, name).returns "#{name}:
+    expect(provider).to receive(:aptcache).with(:policy, name).and_return(<<-HERE)
+#{name}:
 Installed: 1:1.0
 Candidate: 1:1.1
 Version table:
 1:1.0
   650 http://ftp.osuosl.org testing/main Packages
 *** 1:1.1
-  100 /var/lib/dpkg/status"
+  100 /var/lib/dpkg/status
+    HERE
 
     expect(provider.latest).to eq("1:1.1")
   end
 
   it "should print and error and return nil if no policy is found" do
-    provider.expects(:aptcache).with(:policy, name).returns "#{name}:"
+    expect(provider).to receive(:aptcache).with(:policy, name).and_return("#{name}:")
 
-    provider.expects(:err)
+    expect(provider).to receive(:err)
     expect(provider.latest).to be_nil
   end
 
@@ -67,17 +69,17 @@ Version table:
 
   it "should preseed with the provided responsefile when preseeding is called for" do
     resource[:responsefile] = '/my/file'
-    Puppet::FileSystem.expects(:exist?).with('/my/file').returns true
+    expect(Puppet::FileSystem).to receive(:exist?).with('/my/file').and_return(true)
 
-    provider.expects(:info)
-    provider.expects(:preseed).with('/my/file')
+    expect(provider).to receive(:info)
+    expect(provider).to receive(:preseed).with('/my/file')
 
     provider.run_preseed
   end
 
   it "should not preseed if no responsefile is provided" do
-    provider.expects(:info)
-    provider.expects(:preseed).never
+    expect(provider).to receive(:info)
+    expect(provider).not_to receive(:preseed)
 
     provider.run_preseed
   end
@@ -85,76 +87,91 @@ Version table:
   describe "when installing" do
     it "should preseed if a responsefile is provided" do
       resource[:responsefile] = "/my/file"
-      provider.expects(:run_preseed)
+      expect(provider).to receive(:run_preseed)
 
-      provider.stubs(:aptget)
+      allow(provider).to receive(:aptget)
       provider.install
     end
 
     it "should check for a cdrom" do
-      provider.expects(:checkforcdrom)
+      expect(provider).to receive(:checkforcdrom)
 
-      provider.stubs(:aptget)
+      allow(provider).to receive(:aptget)
       provider.install
     end
 
     it "should use 'apt-get install' with the package name if no version is asked for" do
       resource[:ensure] = :installed
-      provider.expects(:aptget).with { |*command| command[-1] == name and command[-2] == :install }
+      expect(provider).to receive(:aptget) do |*command|
+        expect(command[-1]).to eq(name)
+        expect(command[-2]).to eq(:install)
+      end
 
       provider.install
     end
 
     it "should specify the package version if one is asked for" do
       resource[:ensure] = '1.0'
-      provider.expects(:aptget).with { |*command| command[-1] == "#{name}=1.0" }
+      expect(provider).to receive(:aptget) do |*command|
+        expect(command[-1]).to eq("#{name}=1.0")
+      end
 
       provider.install
     end
 
     it "should use --force-yes if a package version is specified" do
       resource[:ensure] = '1.0'
-      provider.expects(:aptget).with { |*command| command.include?("--force-yes") }
+      expect(provider).to receive(:aptget) do |*command|
+        expect(command).to include("--force-yes")
+      end
 
       provider.install
     end
 
     it "should do a quiet install" do
-      provider.expects(:aptget).with { |*command| command.include?("-q") }
+      expect(provider).to receive(:aptget) do |*command|
+        expect(command).to include("-q")
+      end
 
       provider.install
     end
 
     it "should default to 'yes' for all questions" do
-      provider.expects(:aptget).with { |*command| command.include?("-y") }
+      expect(provider).to receive(:aptget) do |*command|
+        expect(command).to include("-y")
+      end
 
       provider.install
     end
 
     it "should keep config files if asked" do
       resource[:configfiles] = :keep
-      provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confold") }
+      expect(provider).to receive(:aptget) do |*command|
+        expect(command).to include("DPkg::Options::=--force-confold")
+      end
 
       provider.install
     end
 
     it "should replace config files if asked" do
       resource[:configfiles] = :replace
-      provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confnew") }
+      expect(provider).to receive(:aptget) do |*command|
+        expect(command).to include("DPkg::Options::=--force-confnew")
+      end
 
       provider.install
     end
 
     it 'should support string install options' do
       resource[:install_options] = ['--foo', '--bar']
-      provider.expects(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar', :install, name)
+      expect(provider).to receive(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar', :install, name)
 
       provider.install
     end
 
     it 'should support hash install options' do
       resource[:install_options] = ['--foo', { '--bar' => 'baz', '--baz' => 'foo' }]
-      provider.expects(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar=baz', '--baz=foo', :install, name)
+      expect(provider).to receive(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar=baz', '--baz=foo', :install, name)
 
       provider.install
     end

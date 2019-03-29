@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/file_bucket_file/selector'
@@ -9,17 +8,17 @@ describe Puppet::FileBucketFile::Selector do
   %w[head find save search destroy].each do |method|
     describe "##{method}" do
       it "should proxy to rest terminus for https requests" do
-        request = stub 'request', :protocol => 'https'
+        request = double('request', :protocol => 'https')
 
-        Puppet::FileBucketFile::Rest.any_instance.expects(method).with(request)
+        expect_any_instance_of(Puppet::FileBucketFile::Rest).to receive(method).with(request)
 
         subject.send(method, request)
       end
 
       it "should proxy to file terminus for other requests" do
-        request = stub 'request', :protocol => 'file'
+        request = double('request', :protocol => 'file')
 
-        Puppet::FileBucketFile::File.any_instance.expects(method).with(request)
+        expect_any_instance_of(Puppet::FileBucketFile::File).to receive(method).with(request)
 
         subject.send(method, request)
       end

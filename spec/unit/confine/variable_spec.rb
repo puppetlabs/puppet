@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/confine/variable'
@@ -27,37 +26,37 @@ describe Puppet::Confine::Variable do
     end
 
     it "should use settings if the variable name is a valid setting" do
-      Puppet.settings.expects(:valid?).with(:myvar).returns true
-      Puppet.settings.expects(:value).with(:myvar).returns "foo"
+      expect(Puppet.settings).to receive(:valid?).with(:myvar).and_return(true)
+      expect(Puppet.settings).to receive(:value).with(:myvar).and_return("foo")
       @confine.valid?
     end
 
     it "should use Facter if the variable name is not a valid setting" do
-      Puppet.settings.expects(:valid?).with(:myvar).returns false
-      Facter.expects(:value).with(:myvar).returns "foo"
+      expect(Puppet.settings).to receive(:valid?).with(:myvar).and_return(false)
+      expect(Facter).to receive(:value).with(:myvar).and_return("foo")
       @confine.valid?
     end
 
     it "should be valid if the value matches the facter value" do
-      @confine.expects(:test_value).returns "foo"
+      expect(@confine).to receive(:test_value).and_return("foo")
 
       expect(@confine).to be_valid
     end
 
     it "should return false if the value does not match the facter value" do
-      @confine.expects(:test_value).returns "fee"
+      expect(@confine).to receive(:test_value).and_return("fee")
 
       expect(@confine).not_to be_valid
     end
 
     it "should be case insensitive" do
-      @confine.expects(:test_value).returns "FOO"
+      expect(@confine).to receive(:test_value).and_return("FOO")
 
       expect(@confine).to be_valid
     end
 
     it "should not care whether the value is a string or symbol" do
-      @confine.expects(:test_value).returns "FOO"
+      expect(@confine).to receive(:test_value).and_return("FOO")
 
       expect(@confine).to be_valid
     end
@@ -72,7 +71,7 @@ describe Puppet::Confine::Variable do
 
     it "should be valid if the test value matches any of the provided values" do
       @confine = Puppet::Confine::Variable.new(%w{bar bee})
-      @confine.expects(:test_value).returns "bee"
+      expect(@confine).to receive(:test_value).and_return("bee")
       expect(@confine).to be_valid
     end
   end
@@ -81,13 +80,13 @@ describe Puppet::Confine::Variable do
     it "should return a hash of failing variables and their values" do
       c1 = Puppet::Confine::Variable.new("one")
       c1.name = "uno"
-      c1.expects(:valid?).returns false
+      expect(c1).to receive(:valid?).and_return(false)
       c2 = Puppet::Confine::Variable.new("two")
       c2.name = "dos"
-      c2.expects(:valid?).returns true
+      expect(c2).to receive(:valid?).and_return(true)
       c3 = Puppet::Confine::Variable.new("three")
       c3.name = "tres"
-      c3.expects(:valid?).returns false
+      expect(c3).to receive(:valid?).and_return(false)
 
       expect(Puppet::Confine::Variable.summarize([c1, c2, c3])).to eq({"uno" => %w{one}, "tres" => %w{three}})
     end
@@ -95,10 +94,10 @@ describe Puppet::Confine::Variable do
     it "should combine the values of multiple confines with the same fact" do
       c1 = Puppet::Confine::Variable.new("one")
       c1.name = "uno"
-      c1.expects(:valid?).returns false
+      expect(c1).to receive(:valid?).and_return(false)
       c2 = Puppet::Confine::Variable.new("two")
       c2.name = "uno"
-      c2.expects(:valid?).returns false
+      expect(c2).to receive(:valid?).and_return(false)
 
       expect(Puppet::Confine::Variable.summarize([c1, c2])).to eq({"uno" => %w{one two}})
     end

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet/parser/functions'
@@ -6,7 +5,6 @@ require 'matchers/containment_matchers'
 require 'matchers/resource'
 require 'matchers/include_in_order'
 require 'unit/functions/shared'
-
 
 describe 'The "contain" function' do
   include PuppetSpec::Compiler

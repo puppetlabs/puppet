@@ -16,8 +16,8 @@ describe Puppet::Rest::Client do
                                    ConstantErrorValidator.new(
                                      error_string: 'foo'))
 
-      http.expects(:get_content).with(uri.to_s, query: nil, header: nil)
-        .raises(OpenSSL::OpenSSLError.new('certificate verify failed'))
+      expect(http).to receive(:get_content).with(uri.to_s, query: nil, header: nil)
+        .and_raise(OpenSSL::OpenSSLError.new('certificate verify failed'))
       expect{ client.get(uri) }.to raise_error do |error|
         expect(error).to be_a(Puppet::Error)
         expect(error.message).to include('foo')
@@ -30,8 +30,8 @@ describe Puppet::Rest::Client do
       client.instance_variable_set(:@verifier,
                                    ConstantErrorValidator.new(
                                      peer_certs: [cert]))
-      http.expects(:get_content).with(uri.to_s, query: nil, header: nil)
-        .raises(OpenSSL::OpenSSLError.new('hostname does not match with server certificate'))
+      expect(http).to receive(:get_content).with(uri.to_s, query: nil, header: nil)
+        .and_raise(OpenSSL::OpenSSLError.new('hostname does not match with server certificate'))
       expect { client.get(uri) }.to raise_error do |error|
         expect(error).to be_a(Puppet::Error)
         expect(error.message).to include("Server hostname 'foo.com' did not match")
@@ -40,58 +40,89 @@ describe Puppet::Rest::Client do
     end
 
     it 're-raises errors it does not understand' do
-      http.expects(:get_content).with(uri.to_s, query: nil, header: nil)
-        .raises(OpenSSL::OpenSSLError.new('other ssl error'))
+      expect(http).to receive(:get_content).with(uri.to_s, query: nil, header: nil)
+        .and_raise(OpenSSL::OpenSSLError.new('other ssl error'))
       expect{ client.get(uri) }.to raise_error do |error|
         expect(error).to be_a(OpenSSL::OpenSSLError)
         expect(error.message).to include('other ssl error')
       end
-
     end
   end
 
   context 'when creating a new client' do
-    let(:ssl_store) { mock('store') }
-    let(:ssl_config) { stub_everything('ssl config') }
-    let(:http) { stub_everything('http', :ssl_config => ssl_config) }
+    let(:ssl_store) { double('store') }
+    let(:ssl_config) do
+      double(
+        'ssl config',
+        :cert_store= => nil,
+        :verify_callback= => nil,
+        :verify_mode= => nil,
+      )
+    end
+    let(:http) do
+      double(
+        'http',
+        :connect_timeout= => nil,
+        :receive_timeout= => nil,
+        :ssl_config => ssl_config,
+        :tcp_keepalive= => nil,
+        :transparent_gzip_decompression= => nil,
+      )
+    end
 
     it 'initializes itself with basic defaults' do
-      HTTPClient.expects(:new).returns(http)
-      OpenSSL::X509::Store.stubs(:new).returns(ssl_store)
+      expect(HTTPClient).to receive(:new).and_return(http)
+      allow(OpenSSL::X509::Store).to receive(:new).and_return(ssl_store)
       # Configure connection with HTTP settings
       Puppet[:http_read_timeout] = 120
       Puppet[:http_connect_timeout] = 10
       Puppet[:http_debug] = true
 
-      http.expects(:connect_timeout=).with(10)
-      http.expects(:receive_timeout=).with(120)
-      http.expects(:debug_dev=).with($stderr)
+      expect(http).to receive(:connect_timeout=).with(10)
+      expect(http).to receive(:receive_timeout=).with(120)
+      expect(http).to receive(:debug_dev=).with($stderr)
 
       # Configure verify mode with SSL settings
-      ssl_config.expects(:cert_store=).with(ssl_store)
+      expect(ssl_config).to receive(:cert_store=).with(ssl_store)
       Puppet[:ssl_client_ca_auth] = '/fake/path'
       Puppet[:hostcert] = '/fake/cert/path'
-      ssl_config.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+      expect(ssl_config).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
       Puppet::Rest::Client.new(ssl_context: Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE))
     end
 
     it 'uses a given client and SSL store when provided' do
-      ssl_config.expects(:cert_store=).with(ssl_store)
+      expect(ssl_config).to receive(:cert_store=).with(ssl_store)
       Puppet::Rest::Client.new(client: http,
                                ssl_context: Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_PEER, ssl_store))
     end
 
     it 'configures a receive timeout when provided' do
-      http.expects(:receive_timeout=).with(10)
+      expect(http).to receive(:receive_timeout=).with(10)
       Puppet::Rest::Client.new(ssl_context: Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE),
                                client: http, receive_timeout: 10)
     end
   end
 
-  context 'when making requests' do
-    let(:ssl_config) { stub_everything('ssl config') }
-    let(:http) { stub_everything('http', :ssl_config => ssl_config) }
+  context 'when making requests', focus: true do
+    let(:ssl_config) do
+      double(
+        'ssl config',
+        :cert_store= => nil,
+        :verify_callback= => nil,
+        :verify_mode= => nil,
+      )
+    end
+    let(:http) do
+      double(
+        'http',
+        :connect_timeout= => nil,
+        :receive_timeout= => nil,
+        :ssl_config => ssl_config,
+        :tcp_keepalive= => nil,
+        :transparent_gzip_decompression= => nil,
+      )
+    end
     let(:client) { Puppet::Rest::Client.new(ssl_context: Puppet::Rest::SSLContext.new(OpenSSL::SSL::VERIFY_NONE), client: http) }
     let(:url) { 'https://myserver.com:555/data' }
 
@@ -101,15 +132,15 @@ describe Puppet::Rest::Client do
         header = { 'Accept' => 'text/plain' }
         response_string = ''
         chunk_processing = lambda { |chunk| response_string = chunk }
-        http.expects(:get_content).with(url, { query: query, header: header }).yields('response')
+        expect(http).to receive(:get_content).with(url, { query: query, header: header }).and_yield('response')
         client.get(url, query: query, header: header, &chunk_processing)
         expect(response_string).to eq('response')
       end
 
       it 'throws an exception when the response to the GET is not OK' do
-        fake_response = mock('resp', :status => HTTP::Status::BAD_REQUEST)
-        http.expects(:get_content).with(url, query: nil, header: nil)
-            .raises(HTTPClient::BadResponseError.new('failed request', fake_response))
+        fake_response = double('resp', :status => HTTP::Status::BAD_REQUEST)
+        expect(http).to receive(:get_content).with(url, query: nil, header: nil)
+            .and_raise(HTTPClient::BadResponseError.new('failed request', fake_response))
         expect { client.get(url) }.to raise_error do |error|
           expect(error.message).to eq('failed request')
           expect(error.response).to be_a(Puppet::Rest::Response)
@@ -125,7 +156,7 @@ describe Puppet::Rest::Client do
         body = 'send to server'
         query = { 'environment' => 'production' }
         header = { 'Accept' => 'text/plain' }
-        http.expects(:put).with(url, { body: body, query: query, header: header })
+        expect(http).to receive(:put).with(url, { body: body, query: query, header: header })
         client.put(url, body: body, query: query, header: header)
       end
 

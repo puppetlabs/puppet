@@ -1,5 +1,4 @@
 # encoding: UTF-8
-#!/usr/bin/env ruby
 
 require 'spec_helper'
 require 'puppet/util/windows'

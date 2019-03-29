@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/node/exec'
@@ -20,7 +19,7 @@ describe Puppet::Node::Exec do
 
     it "should throw an exception if no external node command is set" do
       Puppet[:external_nodes] = "none"
-      expect { searcher.find(stub('request', :key => "foo")) }.to raise_error(ArgumentError)
+      expect { searcher.find(double('request', :key => "foo")) }.to raise_error(ArgumentError)
     end
   end
 
@@ -32,7 +31,7 @@ describe Puppet::Node::Exec do
     let(:facts) { Puppet::Node::Facts.new(name, {}) }
 
     before do
-      Puppet::Node::Facts.indirection.stubs(:find).returns(facts)
+      allow(Puppet::Node::Facts.indirection).to receive(:find).and_return(facts)
 
       @result = {}
       # Use a local variable so the reference is usable in the execute definition.

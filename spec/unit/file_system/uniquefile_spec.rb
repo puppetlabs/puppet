@@ -49,8 +49,8 @@ describe Puppet::FileSystem::Uniquefile do
   it "propagates lock creation failures" do
     # use an arbitrary exception so as not accidentally collide
     # with the ENOENT that occurs when trying to call rmdir
-    Puppet::FileSystem::Uniquefile.stubs(:mkdir).raises 'arbitrary failure'
-    Puppet::FileSystem::Uniquefile.expects(:rmdir).never
+    allow(Puppet::FileSystem::Uniquefile).to receive(:mkdir).and_raise('arbitrary failure')
+    expect(Puppet::FileSystem::Uniquefile).not_to receive(:rmdir)
 
     expect {
       Puppet::FileSystem::Uniquefile.open_tmp('foo') { |tmp| }
@@ -59,10 +59,10 @@ describe Puppet::FileSystem::Uniquefile do
 
   it "only removes lock files that exist" do
     # prevent the .lock directory from being created
-    Puppet::FileSystem::Uniquefile.stubs(:mkdir) { }
+    allow(Puppet::FileSystem::Uniquefile).to receive(:mkdir)
 
     # and expect cleanup to be skipped
-    Puppet::FileSystem::Uniquefile.expects(:rmdir).never
+    expect(Puppet::FileSystem::Uniquefile).not_to receive(:rmdir)
 
     Puppet::FileSystem::Uniquefile.open_tmp('foo') { |tmp| }
   end

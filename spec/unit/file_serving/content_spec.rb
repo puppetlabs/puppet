@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/file_serving/content'
@@ -25,7 +24,7 @@ describe Puppet::FileServing::Content do
   it "should not retrieve and store its contents when its attributes are collected" do
     content = Puppet::FileServing::Content.new(path)
 
-    File.expects(:read).with(path).never
+    expect(File).not_to receive(:read).with(path)
     content.collect
 
     expect(content.instance_variable_get("@content")).to be_nil
@@ -47,10 +46,10 @@ describe Puppet::FileServing::Content do
   end
 
   it "should create an instance with a fake file name and correct content when converting from binary" do
-    instance = mock 'instance'
-    Puppet::FileServing::Content.expects(:new).with("/this/is/a/fake/path").returns instance
+    instance = double('instance')
+    expect(Puppet::FileServing::Content).to receive(:new).with("/this/is/a/fake/path").and_return(instance)
 
-    instance.expects(:content=).with "foo/bar"
+    expect(instance).to receive(:content=).with("foo/bar")
 
     expect(Puppet::FileServing::Content.from_binary("foo/bar")).to equal(instance)
   end
@@ -58,7 +57,7 @@ describe Puppet::FileServing::Content do
   it "should return an opened File when converted to binary" do
     content = Puppet::FileServing::Content.new(path)
 
-    File.expects(:new).with(path, "rb").returns :file
+    expect(File).to receive(:new).with(path, "rb").and_return(:file)
 
     expect(content.to_binary).to eq(:file)
   end
@@ -70,7 +69,7 @@ describe Puppet::FileServing::Content, "when returning the contents" do
 
   it "should fail if the file is a symlink and links are set to :manage" do
     content.links = :manage
-    Puppet::FileSystem.expects(:lstat).with(path).returns stub("stat", :ftype => "symlink")
+    expect(Puppet::FileSystem).to receive(:lstat).with(path).and_return(double("stat", :ftype => "symlink"))
     expect { content.content }.to raise_error(ArgumentError)
   end
 
@@ -84,14 +83,14 @@ describe Puppet::FileServing::Content, "when returning the contents" do
   end
 
   it "should return the contents of the path if the file exists" do
-    Puppet::FileSystem.expects(:stat).with(path).returns(stub('stat', :ftype => 'file'))
-    Puppet::FileSystem.expects(:binread).with(path).returns(:mycontent)
+    expect(Puppet::FileSystem).to receive(:stat).with(path).and_return(double('stat', :ftype => 'file'))
+    expect(Puppet::FileSystem).to receive(:binread).with(path).and_return(:mycontent)
     expect(content.content).to eq(:mycontent)
   end
 
   it "should cache the returned contents" do
-    Puppet::FileSystem.expects(:stat).with(path).returns(stub('stat', :ftype => 'file'))
-    Puppet::FileSystem.expects(:binread).with(path).returns(:mycontent)
+    expect(Puppet::FileSystem).to receive(:stat).with(path).and_return(double('stat', :ftype => 'file'))
+    expect(Puppet::FileSystem).to receive(:binread).with(path).and_return(:mycontent)
     content.content
     # The second run would throw a failure if the content weren't being cached.
     content.content

@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet_spec/network'
 require 'puppet/network/http'

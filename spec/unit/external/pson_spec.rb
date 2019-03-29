@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 # Encoding: UTF-8
 require 'spec_helper'
 

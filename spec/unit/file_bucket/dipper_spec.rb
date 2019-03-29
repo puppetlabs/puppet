@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'pathname'
@@ -16,7 +15,12 @@ shared_examples_for "a restorable file" do
       it "should restore the file" do
         request = nil
 
-        klass.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new(plaintext))
+        # With the *_any_instance_of form of using a block on receive, the
+        # first argument to the block is which instance is currently being
+        # dealt with, and the remaining arguments are the arguments to the
+        # method, instead of the block only getting the arguments to the
+        # method.
+        expect_any_instance_of(klass).to receive(:find) { |_,r| request = r }.and_return(Puppet::FileBucket::File.new(plaintext))
 
         expect(dipper.restore(dest, checksum)).to eq(checksum)
         expect(digest(Puppet::FileSystem.binread(dest))).to eq(checksum)
@@ -29,12 +33,12 @@ shared_examples_for "a restorable file" do
       it "should skip restoring if existing file has the same checksum" do
         File.open(dest, 'wb') {|f| f.print(plaintext) }
 
-        dipper.expects(:getfile).never
+        expect(dipper).not_to receive(:getfile)
         expect(dipper.restore(dest, checksum)).to be_nil
       end
 
       it "should overwrite existing file if it has different checksum" do
-        klass.any_instance.expects(:find).returns(Puppet::FileBucket::File.new(plaintext))
+        expect_any_instance_of(klass).to receive(:find).and_return(Puppet::FileBucket::File.new(plaintext))
 
         File.open(dest, 'wb') {|f| f.print('other contents') }
 
@@ -57,7 +61,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => make_absolute("/my/bucket"))
 
     file = make_tmp_file('contents')
-    Puppet::FileBucket::File.indirection.expects(:head).raises ArgumentError
+    expect(Puppet::FileBucket::File.indirection).to receive(:head).and_raise(ArgumentError)
 
     expect { @dipper.backup(file) }.to raise_error(Puppet::Error)
   end
@@ -66,8 +70,8 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => make_absolute("/my/bucket"))
 
     file = make_tmp_file('contents')
-    Puppet::FileBucket::File.indirection.expects(:head).returns false
-    Puppet::FileBucket::File.indirection.expects(:save).raises ArgumentError
+    expect(Puppet::FileBucket::File.indirection).to receive(:head).and_return(false)
+    expect(Puppet::FileBucket::File.indirection).to receive(:save).and_raise(ArgumentError)
 
     expect { @dipper.backup(file) }.to raise_error(Puppet::Error)
   end
@@ -118,9 +122,9 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
           expect(@dipper.diff(checksum2, nil, nil, file1)).to include(diff21)
           expect(@dipper.diff(nil, checksum1, file2, nil)).to include(diff21)
           expect(@dipper.diff(nil, nil, file2, file1)).to include(diff21)
-
         end
       end
+
       describe "in windows environment", :if => Puppet::Util::Platform.windows? do
         it "should fail in an informative way when trying to diff" do
           @dipper = Puppet::FileBucket::Dipper.new(:Path => tmpdir("bucket"))
@@ -135,9 +139,10 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
       end
     end
   end
+
   it "should fail in an informative way when there are failures listing files on the server" do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => "/unexistent/bucket")
-    Puppet::FileBucket::File.indirection.expects(:find).returns nil
+    expect(Puppet::FileBucket::File.indirection).to receive(:find).and_return(nil)
 
     expect { @dipper.list(nil, nil) }.to raise_error(Puppet::Error)
   end
@@ -256,7 +261,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
           @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
           wrong_checksum = "DEADBEEF"
 
-          Puppet::FileBucketFile::Rest.any_instance.expects(:find).returns(nil)
+          expect_any_instance_of(Puppet::FileBucketFile::Rest).to receive(:find).and_return(nil)
           expect { @dipper.diff(wrong_checksum, "WEIRDCKSM", nil, nil) }.to raise_error(Puppet::Error, "Failed to diff files")
 
         end
@@ -264,7 +269,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         it "should properly diff files on the filebucket" do
           @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
 
-          Puppet::FileBucketFile::Rest.any_instance.expects(:find).returns("Probably valid diff")
+          expect_any_instance_of(Puppet::FileBucketFile::Rest).to receive(:find).and_return("Probably valid diff")
 
           expect(@dipper.diff("checksum1", "checksum2", nil, nil)).to eq("Probably valid diff")
         end
@@ -316,10 +321,10 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         file = make_tmp_file(plaintext)
 
-        Puppet::FileBucket::File.indirection.expects(:head).with(
-          regexp_matches(%r{#{digest_algorithm}/#{checksum}}), :bucket_path => "/my/bucket"
-        ).returns true
-        Puppet::FileBucket::File.indirection.expects(:save).never
+        expect(Puppet::FileBucket::File.indirection).to receive(:head).with(
+          %r{#{digest_algorithm}/#{checksum}}, :bucket_path => "/my/bucket"
+        ).and_return(true)
+        expect(Puppet::FileBucket::File.indirection).not_to receive(:save)
         expect(@dipper.backup(file)).to eq(checksum)
       end
 
@@ -328,7 +333,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         request = nil
 
-        Puppet::FileBucketFile::File.any_instance.expects(:find).with{ |r| request = r }.once.returns(Puppet::FileBucket::File.new(plaintext))
+        expect_any_instance_of(Puppet::FileBucketFile::File).to receive(:find) { |_,r| request = r }.once.and_return(Puppet::FileBucket::File.new(plaintext))
 
         expect(@dipper.getfile(checksum)).to eq(plaintext)
 
@@ -349,8 +354,8 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
         request1 = nil
         request2 = nil
 
-        Puppet::FileBucketFile::Rest.any_instance.expects(:head).with { |r| request1 = r }.once.returns(nil)
-        Puppet::FileBucketFile::Rest.any_instance.expects(:save).with { |r| request2 = r }.once
+        expect_any_instance_of(Puppet::FileBucketFile::Rest).to receive(:head) { |_,r| request1 = r }.once.and_return(nil)
+        expect_any_instance_of(Puppet::FileBucketFile::Rest).to receive(:save) { |_,r| request2 = r }.once
 
         expect(@dipper.backup(file)).to eq(checksum)
         [request1, request2].each do |r|
@@ -365,7 +370,7 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
 
         request = nil
 
-        Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new(plaintext))
+        expect_any_instance_of(Puppet::FileBucketFile::Rest).to receive(:find) { |_,r| request = r }.and_return(Puppet::FileBucket::File.new(plaintext))
 
         expect(@dipper.getfile(checksum)).to eq(plaintext)
 
@@ -377,7 +382,6 @@ describe Puppet::FileBucket::Dipper, :uses_checksums => true do
   end
 
   describe "#restore" do
-
     describe "when restoring from a remote server" do
       let(:klass) { Puppet::FileBucketFile::Rest }
       let(:server) { "puppetmaster" }

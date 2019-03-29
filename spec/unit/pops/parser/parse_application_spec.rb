@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
 require_relative 'parser_rspec_helper'

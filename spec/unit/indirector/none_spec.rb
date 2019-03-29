@@ -3,8 +3,8 @@ require 'puppet/indirector/none'
 
 describe Puppet::Indirector::None do
   before do
-    Puppet::Indirector::Terminus.stubs(:register_terminus_class)
-    Puppet::Indirector::Indirection.stubs(:instance).returns(indirection)
+    allow(Puppet::Indirector::Terminus).to receive(:register_terminus_class)
+    allow(Puppet::Indirector::Indirection).to receive(:instance).and_return(indirection)
 
     module Testing; end
     @none_class = class Testing::None < Puppet::Indirector::None
@@ -14,10 +14,10 @@ describe Puppet::Indirector::None do
     @data_binder = @none_class.new
   end
 
-  let(:model)   { mock('model') }
-  let(:request) { stub('request', :key => "port") }
+  let(:model)   { double('model') }
+  let(:request) { double('request', :key => "port") }
   let(:indirection) do
-    stub('indirection', :name => :none, :register_terminus_type => nil,
+    double('indirection', :name => :none, :register_terminus_type => nil,
       :model => model)
   end
 

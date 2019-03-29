@@ -1451,14 +1451,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'for non r-value producing define' do
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => "Invalid use of expression. A 'define' expression does not produce a value", :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => "Invalid use of expression. A 'define' expression does not produce a value", :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = define foo { }", nil) }.to raise_error(/2 errors/)
     end
 
     it 'for non r-value producing class' do
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Invalid use of expression. A Host Class Definition does not produce a value', :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Invalid use of expression. A Host Class Definition does not produce a value', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = class foo { }", nil) }.to raise_error(/2 errors/)
     end
 
@@ -1472,8 +1472,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'for multiple errors with a summary exception' do
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Invalid use of expression. A Node Definition does not produce a value', :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Invalid use of expression. A Node Definition does not produce a value', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = node x { }",nil) }.to raise_error(/2 errors/)
     end
 
@@ -1534,10 +1534,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     context 'when evaluating apply' do
-      let(:applicator) { mock('apply_executor') }
+      let(:applicator) { double('apply_executor') }
 
       it 'invokes an apply_executor' do
-        applicator.expects(:apply).with(['arg1', 'arg2'], nil, scope).returns(:result)
+        expect(applicator).to receive(:apply).with(['arg1', 'arg2'], nil, scope).and_return(:result)
         src = "apply('arg1', 'arg2') { }"
         Puppet.override(apply_executor: applicator) do
           expect(parser.evaluate_string(scope, src)).to eq(:result)
@@ -1545,10 +1545,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
 
       it 'passes the declared ast' do
-        applicator.expects(:apply).with(
+        expect(applicator).to receive(:apply).with(
           [['arg1']],
           instance_of(Puppet::Pops::Model::ResourceExpression),
-          scope).returns(:result)
+          scope).and_return(:result)
         src = "apply(['arg1']) { notify { 'hello': } }"
         Puppet.override(apply_executor: applicator) do
           expect(parser.evaluate_string(scope, src)).to eq(:result)
@@ -1579,5 +1579,4 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       parser.evaluate_string(scope, code, __FILE__)
     end
   end
-
 end

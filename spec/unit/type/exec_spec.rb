@@ -1,11 +1,10 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec) do
+RSpec.describe Puppet::Type.type(:exec) do
   include PuppetSpec::Files
 
   def exec_tester(command, exitstatus = 0, rest = {})
-    Puppet.features.stubs(:root?).returns(true)
+    allow(Puppet.features).to receive(:root?).and_return(true)
 
     output = rest.delete(:output) || ''
 
@@ -21,12 +20,13 @@ describe Puppet::Type.type(:exec) do
     }.merge(rest)
 
     exec = Puppet::Type.type(:exec).new(type_args)
+    expect(Puppet::Util::Execution).to receive(:execute) do |cmd, options|
+      expect(cmd).to eq(command)
+      expect(options[:override_locale]).to eq(false)
+      expect(options).to have_key(:custom_environment)
 
-    Puppet::Util::Execution.expects(:execute).times(tries).with() do |*args|
-      args[0] == command &&
-      args[1][:override_locale] == false &&
-      args[1].has_key?(:custom_environment)
-    end.returns(output)
+      output
+    end.exactly(tries).times
 
     return exec
   end
@@ -44,12 +44,12 @@ describe Puppet::Type.type(:exec) do
     # We have to set 'unless' in resource init or it can not be marked sensitive correctly.
     # So: we create a dummy ahead of time and use 'any_instance' to stub out provider methods.
     dummy = Puppet::Type.type(:exec).new(:name => @command)
-    dummy.provider.class.any_instance.stubs(:validatecmd)
-    dummy.provider.class.any_instance.stubs(:checkexe).returns(true)
-    pass_status = stub('status', :exitstatus => 0, :split => ["pass output"])
-    fail_status = stub('status', :exitstatus => 1, :split => ["fail output"])
-    Puppet::Util::Execution.stubs(:execute).with(:true, anything).returns(pass_status)
-    Puppet::Util::Execution.stubs(:execute).with(:false, anything).returns(fail_status)
+    allow_any_instance_of(dummy.provider.class).to receive(:validatecmd)
+    allow_any_instance_of(dummy.provider.class).to receive(:checkexe).and_return(true)
+    pass_status = double('status', :exitstatus => 0, :split => ["pass output"])
+    fail_status = double('status', :exitstatus => 1, :split => ["fail output"])
+    allow(Puppet::Util::Execution).to receive(:execute).with(:true, anything).and_return(pass_status)
+    allow(Puppet::Util::Execution).to receive(:execute).with(:false, anything).and_return(fail_status)
 
     test = Puppet::Type.type(:exec).new(type_args)
 
@@ -280,15 +280,15 @@ describe Puppet::Type.type(:exec) do
   describe "when setting user" do
     describe "on POSIX systems", :if => Puppet.features.posix? do
       it "should fail if we are not root" do
-        Puppet.features.stubs(:root?).returns(false)
+        allow(Puppet.features).to receive(:root?).and_return(false)
         expect {
           Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input')
         }.to raise_error Puppet::Error, /Parameter user failed/
       end
 
       it "accepts the current user" do
-        Puppet.features.stubs(:root?).returns(false)
-        Etc.stubs(:getpwuid).returns(Struct::Passwd.new('input'))
+        allow(Puppet.features).to receive(:root?).and_return(false)
+        allow(Etc).to receive(:getpwuid).and_return(Struct::Passwd.new('input'))
 
         type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input')
 
@@ -297,7 +297,7 @@ describe Puppet::Type.type(:exec) do
 
       ['one', 2, 'root', 4294967295, 4294967296].each do |value|
         it "should accept '#{value}' as user if we are root" do
-          Puppet.features.stubs(:root?).returns(true)
+          allow(Puppet.features).to receive(:root?).and_return(true)
           type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => value)
           expect(type[:user]).to eq(value)
         end
@@ -306,7 +306,7 @@ describe Puppet::Type.type(:exec) do
 
     describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
       before :each do
-        Puppet.features.stubs(:root?).returns(true)
+        allow(Puppet.features).to receive(:root?).and_return(true)
       end
 
       it "should reject user parameter" do
@@ -328,12 +328,16 @@ describe Puppet::Type.type(:exec) do
     end
 
     describe "when running as root" do
-      before :each do Puppet.features.stubs(:root?).returns(true) end
+      before(:each) do
+        allow(Puppet.features).to receive(:root?).and_return(true)
+      end
       it_behaves_like "exec[:group]"
     end
 
     describe "when not running as root" do
-      before :each do Puppet.features.stubs(:root?).returns(false) end
+      before(:each) do
+        allow(Puppet.features).to receive(:root?).and_return(false)
+      end
       it_behaves_like "exec[:group]"
     end
   end
@@ -361,9 +365,9 @@ describe Puppet::Type.type(:exec) do
             instance = Puppet::Type.type(:exec).new(:name => @executable)
           end
           if valid then
-            instance.provider.expects(:validatecmd).returns(true)
+            expect(instance.provider).to receive(:validatecmd).and_return(true)
           else
-            instance.provider.expects(:validatecmd).raises(Puppet::Error, "from a stub")
+            expect(instance.provider).to receive(:validatecmd).and_raise(Puppet::Error, "from a stub")
           end
           instance[@param] = command
         end
@@ -388,16 +392,16 @@ describe Puppet::Type.type(:exec) do
 
       it "should accept the array when all commands return valid" do
         input = %w{one two three}
-        @test.provider.expects(:validatecmd).times(input.length).returns(true)
+        expect(@test.provider).to receive(:validatecmd).exactly(input.length).times.and_return(true)
         @test[param] = input
         expect(@test[param]).to eq(input)
       end
 
       it "should reject the array when any commands return invalid" do
         input = %w{one two three}
-        @test.provider.expects(:validatecmd).with(input.first).returns(false)
+        expect(@test.provider).to receive(:validatecmd).with(input.first).and_return(false)
         input[1..-1].each do |cmd|
-          @test.provider.expects(:validatecmd).with(cmd).returns(true)
+          expect(@test.provider).to receive(:validatecmd).with(cmd).and_return(true)
         end
         @test[param] = input
         expect(@test[param]).to eq(input)
@@ -405,7 +409,7 @@ describe Puppet::Type.type(:exec) do
 
       it "should reject the array when all commands return invalid" do
         input = %w{one two three}
-        @test.provider.expects(:validatecmd).times(input.length).returns(false)
+        expect(@test.provider).to receive(:validatecmd).exactly(input.length).times.and_return(false)
         @test[param] = input
         expect(@test[param]).to eq(input)
       end
@@ -486,7 +490,7 @@ describe Puppet::Type.type(:exec) do
 
         context 'on POSIX', :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
           it 'sends a SIGTERM and raises a Puppet::Error' do
-            Process.expects(:kill).at_least_once
+            expect(Process).to receive(:kill).at_least(:once)
             expect { subject.refresh }.to raise_error Puppet::Error, "Command exceeded timeout"
           end
         end
@@ -692,15 +696,15 @@ describe Puppet::Type.type(:exec) do
           @pass = make_absolute("/magic/pass")
           @fail = make_absolute("/magic/fail")
 
-          @pass_status = stub('status', :exitstatus => sense[:pass] ? 0 : 1)
-          @fail_status = stub('status', :exitstatus => sense[:fail] ? 0 : 1)
+          @pass_status = double('status', :exitstatus => sense[:pass] ? 0 : 1)
+          @fail_status = double('status', :exitstatus => sense[:fail] ? 0 : 1)
 
-          @test.provider.stubs(:checkexe).returns(true)
+          allow(@test.provider).to receive(:checkexe).and_return(true)
           [true, false].each do |check|
-            @test.provider.stubs(:run).with(@pass, check).
-              returns(['test output', @pass_status])
-            @test.provider.stubs(:run).with(@fail, check).
-              returns(['test output', @fail_status])
+            allow(@test.provider).to receive(:run).with(@pass, check).
+              and_return(['test output', @pass_status])
+            allow(@test.provider).to receive(:run).with(@fail, check).
+              and_return(['test output', @fail_status])
           end
         end
 
@@ -761,17 +765,17 @@ describe Puppet::Type.type(:exec) do
     end
 
     it "should return :notrun when check_all_attributes returns true" do
-      @exec_resource.stubs(:check_all_attributes).returns true
+      allow(@exec_resource).to receive(:check_all_attributes).and_return(true)
       expect(@exec_resource.retrieve[:returns]).to eq(:notrun)
     end
 
     it "should return default exit code 0 when check_all_attributes returns false" do
-      @exec_resource.stubs(:check_all_attributes).returns false
+      allow(@exec_resource).to receive(:check_all_attributes).and_return(false)
       expect(@exec_resource.retrieve[:returns]).to eq(['0'])
     end
 
     it "should return the specified exit code when check_all_attributes returns false" do
-      @exec_resource.stubs(:check_all_attributes).returns false
+      allow(@exec_resource).to receive(:check_all_attributes).and_return(false)
       @exec_resource[:returns] = 42
       expect(@exec_resource.retrieve[:returns]).to eq(["42"])
     end
@@ -783,11 +787,11 @@ describe Puppet::Type.type(:exec) do
     end
 
     it "should return the provider's run output" do
-      provider = stub 'provider'
-      status = stubs "process_status"
-      status.stubs(:exitstatus).returns("0")
-      provider.expects(:run).returns(["silly output", status])
-      @exec_resource.stubs(:provider).returns(provider)
+      provider = double('provider')
+      status = double('process_status')
+      allow(status).to receive(:exitstatus).and_return("0")
+      expect(provider).to receive(:run).and_return(["silly output", status])
+      allow(@exec_resource).to receive(:provider).and_return(provider)
 
       @exec_resource.refresh
       expect(@exec_resource.output).to eq('silly output')
@@ -801,29 +805,29 @@ describe Puppet::Type.type(:exec) do
 
     it "should call provider run with the refresh parameter if it is set" do
       myother_bogus_cmd = make_absolute('/myother/bogus/cmd')
-      provider = stub 'provider'
-      @exec_resource.stubs(:provider).returns(provider)
-      @exec_resource.stubs(:[]).with(:refresh).returns(myother_bogus_cmd)
-      provider.expects(:run).with(myother_bogus_cmd)
+      provider = double('provider')
+      allow(@exec_resource).to receive(:provider).and_return(provider)
+      allow(@exec_resource).to receive(:[]).with(:refresh).and_return(myother_bogus_cmd)
+      expect(provider).to receive(:run).with(myother_bogus_cmd)
 
       @exec_resource.refresh
     end
 
     it "should call provider run with the specified command if the refresh parameter is not set" do
-      provider = stub 'provider'
-      status = stubs "process_status"
-      status.stubs(:exitstatus).returns("0")
-      provider.expects(:run).with(@bogus_cmd).returns(["silly output", status])
-      @exec_resource.stubs(:provider).returns(provider)
+      provider = double('provider')
+      status = double('process_status')
+      allow(status).to receive(:exitstatus).and_return("0")
+      expect(provider).to receive(:run).with(@bogus_cmd).and_return(["silly output", status])
+      allow(@exec_resource).to receive(:provider).and_return(provider)
 
       @exec_resource.refresh
     end
 
     it "should not run the provider if check_all_attributes is false" do
-      @exec_resource.stubs(:check_all_attributes).returns false
-      provider = stub 'provider'
-      provider.expects(:run).never
-      @exec_resource.stubs(:provider).returns(provider)
+      allow(@exec_resource).to receive(:check_all_attributes).and_return(false)
+      provider = double('provider')
+      expect(provider).not_to receive(:run)
+      allow(@exec_resource).to receive(:provider).and_return(provider)
 
       @exec_resource.refresh
     end

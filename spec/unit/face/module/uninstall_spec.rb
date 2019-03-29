@@ -10,10 +10,8 @@ describe "puppet module uninstall" do
     let(:options) { Hash.new }
 
     it 'should invoke the Uninstaller app' do
-      args = [ name, options ]
-
-      Puppet::ModuleTool.expects(:set_option_defaults).with(options)
-      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with(*args)
+      expect(Puppet::ModuleTool).to receive(:set_option_defaults).with(options)
+      expect(Puppet::ModuleTool::Applications::Uninstaller).to receive(:run).with(name, options)
 
       Puppet::Face[:module, :current].uninstall(name, options)
     end
@@ -22,10 +20,8 @@ describe "puppet module uninstall" do
       let(:name) { 'module/name' }
 
       it 'should invoke the Uninstaller app' do
-        args = [ 'module-name', options ]
-
-        Puppet::ModuleTool.expects(:set_option_defaults).with(options)
-        Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with(*args)
+        expect(Puppet::ModuleTool).to receive(:set_option_defaults).with(options)
+        expect(Puppet::ModuleTool::Applications::Uninstaller).to receive(:run).with('module-name', options)
 
         Puppet::Face[:module, :current].uninstall(name, options)
       end

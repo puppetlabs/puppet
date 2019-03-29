@@ -156,7 +156,7 @@ describe 'Puppet::Provider::AixObject' do
       provider.instance_variable_set(:@object_info, { :foo => 'foo', :baz => 'baz' })
 
       (provider.class.mappings[:aix_attribute].keys + [:attributes]).each do |property|
-        provider.expects(:get).with(property).returns('value')
+        expect(provider).to receive(:get).with(property).and_return('value')
 
         expect(provider.send(property)).to eql('value')
       end
@@ -167,7 +167,7 @@ describe 'Puppet::Provider::AixObject' do
 
       value = '15'
       provider.class.mappings[:aix_attribute].keys.each do |property|
-        provider.expects(:set).with(property, value)
+        expect(provider).to receive(:set).with(property, value)
 
         provider.send("#{property}=".to_sym, value)
       end
@@ -295,8 +295,8 @@ bin:2
 
     it 'lists all of the objects' do
       lscmd = 'lsgroups'
-      provider.class.stubs(:command).with(:list).returns(lscmd)
-      provider.class.stubs(:execute).with([lscmd, '-c', '-a', 'id', 'ALL']).returns(output)
+      allow(provider.class).to receive(:command).with(:list).and_return(lscmd)
+      allow(provider.class).to receive(:execute).with([lscmd, '-c', '-a', 'id', 'ALL']).and_return(output)
 
       expected_objects = [
         { :name => 'system', :id => '0' },
@@ -316,7 +316,7 @@ bin:2
     end
 
     it 'returns all of the available instances' do
-      provider.class.stubs(:list_all).returns(objects)
+      allow(provider.class).to receive(:list_all).and_return(objects)
 
       expect(provider.class.instances.map(&:name)).to eql(['group1', 'group2'])
     end
@@ -419,20 +419,20 @@ bin:2
 
   describe '#ia_module_args' do
     it 'returns no arguments if the ia_load_module parameter is not specified' do
-      provider.resource.stubs(:[]).with(:ia_load_module).returns(nil)
+      allow(provider.resource).to receive(:[]).with(:ia_load_module).and_return(nil)
       expect(provider.ia_module_args).to eql([])
     end
 
     it 'returns the ia_load_module as a CLI argument' do
-      provider.resource.stubs(:[]).with(:ia_load_module).returns('module')
+      allow(provider.resource).to receive(:[]).with(:ia_load_module).and_return('module')
       expect(provider.ia_module_args).to eql(['-R', 'module'])
     end
   end
 
   describe '#lscmd' do
     it 'returns the lscmd' do
-      provider.class.stubs(:command).with(:list).returns('list')
-      provider.stubs(:ia_module_args).returns(['ia_module_args'])
+      allow(provider.class).to receive(:command).with(:list).and_return('list')
+      allow(provider).to receive(:ia_module_args).and_return(['ia_module_args'])
 
       expect(provider.lscmd).to eql(
         ['list', '-c', 'ia_module_args', provider.resource.name]
@@ -449,8 +449,8 @@ bin:2
     end
 
     it 'returns the addcmd passing in the attributes as CLI arguments' do
-      provider.class.stubs(:command).with(:add).returns('add')
-      provider.stubs(:ia_module_args).returns(['ia_module_args'])
+      allow(provider.class).to receive(:command).with(:add).and_return('add')
+      allow(provider).to receive(:ia_module_args).and_return(['ia_module_args'])
 
       expect(provider.addcmd(attributes)).to eql(
         ['add', 'ia_module_args', 'attribute1=value1', 'attribute2=value2', provider.resource.name]
@@ -460,8 +460,8 @@ bin:2
 
   describe '#deletecmd' do
     it 'returns the lscmd' do
-      provider.class.stubs(:command).with(:delete).returns('delete')
-      provider.stubs(:ia_module_args).returns(['ia_module_args'])
+      allow(provider.class).to receive(:command).with(:delete).and_return('delete')
+      allow(provider).to receive(:ia_module_args).and_return(['ia_module_args'])
 
       expect(provider.deletecmd).to eql(
         ['delete', 'ia_module_args', provider.resource.name]
@@ -478,8 +478,8 @@ bin:2
     end
 
     it 'returns the addcmd passing in the attributes as CLI arguments' do
-      provider.class.stubs(:command).with(:modify).returns('modify')
-      provider.stubs(:ia_module_args).returns(['ia_module_args'])
+      allow(provider.class).to receive(:command).with(:modify).and_return('modify')
+      allow(provider).to receive(:ia_module_args).and_return(['ia_module_args'])
 
       expect(provider.modifycmd(attributes)).to eql(
         ['modify', 'ia_module_args', 'attribute1=value1', 'attribute2=value2', provider.resource.name]
@@ -496,9 +496,9 @@ bin:2
     end
 
     it 'modifies the AIX object with the new attributes' do
-      provider.stubs(:modifycmd).with(new_attributes).returns('modify_cmd')
-      provider.expects(:execute).with('modify_cmd')
-      provider.expects(:object_info).with(true)
+      allow(provider).to receive(:modifycmd).with(new_attributes).and_return('modify_cmd')
+      expect(provider).to receive(:execute).with('modify_cmd')
+      expect(provider).to receive(:object_info).with(true)
 
       provider.modify_object(new_attributes)
     end
@@ -516,20 +516,20 @@ bin:2
     end
 
     it 'returns :absent if the AIX object does not exist' do
-      provider.stubs(:exists?).returns(false)
+      allow(provider).to receive(:exists?).and_return(false)
       object_info[property] = 15
       
       expect(provider.get(property)).to eql(:absent)
     end
 
     it 'returns :absent if the property is not present on the system' do
-      provider.stubs(:exists?).returns(true)
+      allow(provider).to receive(:exists?).and_return(true)
 
       expect(provider.get(property)).to eql(:absent)
     end
 
     it "returns the property's value" do
-      provider.stubs(:exists?).returns(true)
+      allow(provider).to receive(:exists?).and_return(true)
       object_info[property] = 15
 
       expect(provider.get(property)).to eql(15)
@@ -557,9 +557,9 @@ bin:2
     end
 
     it "raises a Puppet::Error if it fails to set the property's value" do
-      provider.stubs(:modify_object)
+      allow(provider).to receive(:modify_object)
         .with({ :id => value.to_s })
-        .raises(Puppet::ExecutionFailure, 'failed to modify the AIX object!')
+        .and_raise(Puppet::ExecutionFailure, 'failed to modify the AIX object!')
 
       expect { provider.set(property, value) }.to raise_error do |error|
         expect(error).to be_a(Puppet::Error)
@@ -567,7 +567,7 @@ bin:2
     end
 
     it "sets the given property's value to the passed-in value" do
-      provider.expects(:modify_object).with({ :id => value.to_s })
+      expect(provider).to receive(:modify_object).with({ :id => value.to_s })
 
       provider.set(property, value)
     end
@@ -618,9 +618,9 @@ bin:2
     end
 
     it 'raises a Puppet::Error if it fails to set the new AIX attributes' do
-      provider.stubs(:modify_object)
+      allow(provider).to receive(:modify_object)
         .with(new_attributes)
-        .raises(Puppet::ExecutionFailure, 'failed to modify the AIX object!')
+        .and_raise(Puppet::ExecutionFailure, 'failed to modify the AIX object!')
       
       expect { provider.attributes = new_attributes }.to raise_error do |error|
         expect(error).to be_a(Puppet::Error)
@@ -630,7 +630,7 @@ bin:2
     end
 
     it 'sets the new AIX attributes' do
-      provider.expects(:modify_object).with(new_attributes)
+      expect(provider).to receive(:modify_object).with(new_attributes)
 
       provider.attributes = new_attributes
     end
@@ -650,7 +650,7 @@ bin:2
       )
 
       # Mock out our lscmd
-      provider.stubs(:lscmd).returns("lsuser #{resource[:name]}")
+      allow(provider).to receive(:lscmd).and_return("lsuser #{resource[:name]}")
     end
 
     it 'memoizes the result' do
@@ -659,7 +659,7 @@ bin:2
     end
 
     it 'returns nil if the AIX object does not exist' do
-      provider.stubs(:execute).with(provider.lscmd).raises(
+      allow(provider).to receive(:execute).with(provider.lscmd).and_raise(
         Puppet::ExecutionFailure, 'lscmd failed!'
       )
 
@@ -668,7 +668,7 @@ bin:2
 
     it 'collects the Puppet properties' do
       output = 'mock_output'
-      provider.stubs(:execute).with(provider.lscmd).returns(output)
+      allow(provider).to receive(:execute).with(provider.lscmd).and_return(output)
 
       # Mock the AIX attributes on the system
       mock_attributes = {
@@ -677,9 +677,9 @@ bin:2
         :attribute1 => 'value1',
         :attribute2 => 'value2'
       }
-      provider.class.stubs(:parse_aix_objects)
+      allow(provider.class).to receive(:parse_aix_objects)
         .with(output)
-        .returns([{ :name => resource.name, :attributes => mock_attributes }])
+        .and_return([{ :name => resource.name, :attributes => mock_attributes }])
 
       expected_property_values = {
         :uid        => 1,
@@ -696,12 +696,12 @@ bin:2
 
   describe '#exists?' do
     it 'should return true if the AIX object exists' do
-      provider.stubs(:object_info).returns({})
+      allow(provider).to receive(:object_info).and_return({})
       expect(provider.exists?).to be(true)
     end
 
     it 'should return false if the AIX object does not exist' do
-      provider.stubs(:object_info).returns(nil)
+      allow(provider).to receive(:object_info).and_return(nil)
       expect(provider.exists?).to be(false)
     end
   end
@@ -710,9 +710,11 @@ bin:2
     let(:property_attributes) do
       {}
     end
+
     def stub_attributes_property(attributes)
-      provider.resource.stubs(:should).with(:attributes).returns(attributes)
+      allow(provider.resource).to receive(:should).with(:attributes).and_return(attributes)
     end
+
     def set_property(puppet_property, aix_attribute, property_to_attribute, should_value = nil)
       property_to_attribute ||= lambda { |x| x }
 
@@ -721,7 +723,7 @@ bin:2
         aix_attribute: aix_attribute,
         property_to_attribute: property_to_attribute
       )
-      provider.resource.stubs(:should).with(puppet_property).returns(should_value)
+      allow(provider.resource).to receive(:should).with(puppet_property).and_return(should_value)
 
       if should_value
         property_attributes[aix_attribute] = property_to_attribute.call(should_value)
@@ -753,8 +755,8 @@ bin:2
     end
 
     it "raises a Puppet::Error if it fails to create the AIX object" do
-      provider.stubs(:addcmd)
-      provider.stubs(:execute).raises(
+      allow(provider).to receive(:addcmd)
+      allow(provider).to receive(:execute).and_raise(
         Puppet::ExecutionFailure, "addcmd failed!"
       )
 
@@ -769,10 +771,10 @@ bin:2
       attributes = { :fsize => 1000 }
       stub_attributes_property(attributes)
 
-      provider.expects(:addcmd)
+      expect(provider).to receive(:addcmd)
         .with(attributes.merge(property_attributes))
-        .returns('addcmd')
-      provider.expects(:execute).with('addcmd')
+        .and_return('addcmd')
+      expect(provider).to receive(:execute).with('addcmd')
 
       provider.create
     end
@@ -780,11 +782,11 @@ bin:2
  
   describe "#delete" do
     before(:each) do
-      provider.stubs(:deletecmd).returns('deletecmd')
+      allow(provider).to receive(:deletecmd).and_return('deletecmd')
     end
 
     it "raises a Puppet::Error if it fails to delete the AIX object" do
-      provider.stubs(:execute).with(provider.deletecmd).raises(
+      allow(provider).to receive(:execute).with(provider.deletecmd).and_raise(
         Puppet::ExecutionFailure, "deletecmd failed!"
       )
 
@@ -796,8 +798,8 @@ bin:2
     end
 
     it "deletes the AIX object" do
-      provider.expects(:execute).with(provider.deletecmd)
-      provider.expects(:object_info).with(true)
+      expect(provider).to receive(:execute).with(provider.deletecmd)
+      expect(provider).to receive(:object_info).with(true)
 
       provider.delete
     end

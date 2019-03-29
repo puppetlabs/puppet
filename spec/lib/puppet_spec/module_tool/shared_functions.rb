@@ -21,7 +21,7 @@ module PuppetSpec
 
       def mark_changed(path)
         app = Puppet::ModuleTool::Applications::Checksummer
-        app.stubs(:run).with(path).returns(['README'])
+        allow(app).to receive(:run).with(path).and_return(['README'])
       end
 
       def graph_should_include(name, options)

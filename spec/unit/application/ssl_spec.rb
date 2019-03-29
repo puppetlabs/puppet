@@ -146,8 +146,8 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       end.to_return(status: 200)
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
 
-      Puppet.stubs(:warning) # ignore unrelated warnings
-      Puppet.expects(:warning).with("The local CSR does not match the agent's public key. Generating a new CSR.")
+      allow(Puppet).to receive(:warning) # ignore unrelated warnings
+      expect(Puppet).to receive(:warning).with("The local CSR does not match the agent's public key. Generating a new CSR.")
       expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
     end
 
@@ -266,7 +266,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'reports when verification succeeds' do
-      OpenSSL::X509::Store.any_instance.stubs(:verify).returns(true)
+      allow_any_instance_of(OpenSSL::X509::Store).to receive(:verify).and_return(true)
 
       expects_command_to_pass(/Verified certificate '#{name}'/)
     end
