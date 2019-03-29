@@ -55,7 +55,7 @@ A lock file to indicate that puppet agent runs have been administratively disabl
 .IP "" 0
 .
 .SS "allow_duplicate_certs"
-Whether to allow a new certificate request to overwrite an existing certificate\.
+Whether to allow a new certificate request to overwrite an existing certificate request\. If true, then the old certificate must be cleaned using \fBpuppetserver ca clean\fR, and the new request signed using \fBpuppetserver ca sign\fR\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: false
