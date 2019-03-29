@@ -6,32 +6,32 @@ describe 'Puppet::Type::Service::Provider::Redhat',
 
   before :each do
     @class = Puppet::Type.type(:service).provider(:redhat)
-    @resource = stub 'resource'
-    @resource.stubs(:[]).returns(nil)
-    @resource.stubs(:[]).with(:name).returns "myservice"
+    @resource = double('resource')
+    allow(@resource).to receive(:[]).and_return(nil)
+    allow(@resource).to receive(:[]).with(:name).and_return("myservice")
     @provider = provider_class.new
-    @resource.stubs(:provider).returns @provider
+    allow(@resource).to receive(:provider).and_return(@provider)
     @provider.resource = @resource
-    @provider.stubs(:get).with(:hasstatus).returns false
-    FileTest.stubs(:file?).with('/sbin/service').returns true
-    FileTest.stubs(:executable?).with('/sbin/service').returns true
-    Facter.stubs(:value).with(:operatingsystem).returns('CentOS')
-    Facter.stubs(:value).with(:osfamily).returns 'RedHat'
+    allow(@provider).to receive(:get).with(:hasstatus).and_return(false)
+    allow(FileTest).to receive(:file?).with('/sbin/service').and_return(true)
+    allow(FileTest).to receive(:executable?).with('/sbin/service').and_return(true)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return('CentOS')
+    allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
   end
 
   osfamilies = [ 'RedHat' ]
 
   osfamilies.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
-      Facter.expects(:value).with(:osfamily).returns(osfamily)
+      expect(Facter).to receive(:value).with(:osfamily).and_return(osfamily)
       expect(provider_class.default?).to be_truthy
     end
   end
 
   it "should be the default provider on sles11" do
-    Facter.stubs(:value).with(:osfamily).returns(:suse)
-    Facter.stubs(:value).with(:operatingsystem).returns(:suse)
-    Facter.stubs(:value).with(:operatingsystemmajrelease).returns("11")
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:suse)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:suse)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("11")
     expect(provider_class.default?).to be_truthy
   end
 
@@ -40,33 +40,35 @@ describe 'Puppet::Type::Service::Provider::Redhat',
     before :each do
       @services = ['one', 'two', 'three', 'four', 'kudzu', 'functions', 'halt', 'killall', 'single', 'linuxconf', 'boot', 'reboot']
       @not_services = ['functions', 'halt', 'killall', 'single', 'linuxconf', 'reboot', 'boot']
-      Dir.stubs(:entries).returns @services
-      FileTest.stubs(:directory?).returns(true)
-      FileTest.stubs(:executable?).returns(true)
+      allow(Dir).to receive(:entries).and_return(@services)
+      allow(FileTest).to receive(:directory?).and_return(true)
+      allow(FileTest).to receive(:executable?).and_return(true)
     end
+
     it "should return instances for all services" do
       (@services-@not_services).each do |inst|
-        @class.expects(:new).with{|hash| hash[:name] == inst && hash[:path] == '/etc/init.d'}.returns("#{inst}_instance")
+        expect(@class).to receive(:new).with(hash_including(name: inst, path: '/etc/init.d')).and_return("#{inst}_instance")
       end
       results = (@services-@not_services).collect {|x| "#{x}_instance"}
       expect(@class.instances).to eq(results)
     end
+
     it "should call service status when initialized from provider" do
-      @resource.stubs(:[]).with(:status).returns nil
-      @provider.stubs(:get).with(:hasstatus).returns true
-      @provider.expects(:execute).with{|command, *args| command == ['/sbin/service', 'myservice', 'status']}
+      allow(@resource).to receive(:[]).with(:status).and_return(nil)
+      allow(@provider).to receive(:get).with(:hasstatus).and_return(true)
+      expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', 'status'], any_args)
       @provider.send(:status)
     end
   end
 
   it "should use '--add' and 'on' when calling enable" do
-    provider_class.expects(:chkconfig).with("--add", @resource[:name])
-    provider_class.expects(:chkconfig).with(@resource[:name], :on)
+    expect(provider_class).to receive(:chkconfig).with("--add", @resource[:name])
+    expect(provider_class).to receive(:chkconfig).with(@resource[:name], :on)
     @provider.enable
   end
 
   it "(#15797) should explicitly turn off the service in all run levels" do
-    provider_class.expects(:chkconfig).with("--level", "0123456", @resource[:name], :off)
+    expect(provider_class).to receive(:chkconfig).with("--level", "0123456", @resource[:name], :off)
     @provider.disable
   end
 
@@ -76,26 +78,26 @@ describe 'Puppet::Type::Service::Provider::Redhat',
 
   context "when checking enabled? on Suse" do
     before :each do
-      Facter.expects(:value).with(:osfamily).returns 'Suse'
+      expect(Facter).to receive(:value).with(:osfamily).and_return('Suse')
     end
 
     it "should check for on" do
-      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  on"
+      allow(provider_class).to receive(:chkconfig).with(@resource[:name]).and_return("#{@resource[:name]}  on")
       expect(@provider.enabled?).to eq(:true)
     end
 
     it "should check for B" do
-      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  B"
+      allow(provider_class).to receive(:chkconfig).with(@resource[:name]).and_return("#{@resource[:name]}  B")
       expect(@provider.enabled?).to eq(:true)
     end
 
     it "should check for off" do
-      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  off"
+      allow(provider_class).to receive(:chkconfig).with(@resource[:name]).and_return("#{@resource[:name]}  off")
       expect(@provider.enabled?).to eq(:false)
     end
 
     it "should check for unknown service" do
-      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}: unknown service"
+      allow(provider_class).to receive(:chkconfig).with(@resource[:name]).and_return("#{@resource[:name]}: unknown service")
       expect(@provider.enabled?).to eq(:false)
     end
   end
@@ -112,17 +114,17 @@ describe 'Puppet::Type::Service::Provider::Redhat',
     it "should have a #{method} method" do
       expect(@provider).to respond_to(method)
     end
-    describe "when running #{method}" do
 
+    describe "when running #{method}" do
       it "should use any provided explicit command" do
-        @resource.stubs(:[]).with(method).returns "/user/specified/command"
-        @provider.expects(:execute).with { |command, *args| command == ["/user/specified/command"] }
+        allow(@resource).to receive(:[]).with(method).and_return("/user/specified/command")
+        expect(@provider).to receive(:execute).with(["/user/specified/command"], any_args)
         @provider.send(method)
       end
 
       it "should execute the service script with #{method} when no explicit command is provided" do
-        @resource.stubs(:[]).with("has#{method}".intern).returns :true
-        @provider.expects(:execute).with { |command, *args| command ==  ['/sbin/service', 'myservice', method.to_s]}
+        allow(@resource).to receive(:[]).with("has#{method}".intern).and_return(:true)
+        expect(@provider).to receive(:execute).with(['/sbin/service', 'myservice', method.to_s], any_args)
         @provider.send(method)
       end
     end
@@ -131,24 +133,24 @@ describe 'Puppet::Type::Service::Provider::Redhat',
   context "when checking status" do
     context "when hasstatus is :true" do
       before :each do
-        @resource.stubs(:[]).with(:hasstatus).returns :true
+        allow(@resource).to receive(:[]).with(:hasstatus).and_return(:true)
       end
 
       it "should execute the service script with fail_on_failure false" do
-        @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
+        expect(@provider).to receive(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
         @provider.status
       end
 
       it "should consider the process running if the command returns 0" do
-        @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
-        $CHILD_STATUS.stubs(:exitstatus).returns(0)
+        expect(@provider).to receive(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
+        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect(@provider.status).to eq(:running)
       end
 
       [-10,-1,1,10].each { |ec|
         it "should consider the process stopped if the command returns something non-0" do
-          @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
-          $CHILD_STATUS.stubs(:exitstatus).returns(ec)
+          expect(@provider).to receive(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
+          allow($CHILD_STATUS).to receive(:exitstatus).and_return(ec)
           expect(@provider.status).to eq(:stopped)
         end
       }
@@ -156,12 +158,12 @@ describe 'Puppet::Type::Service::Provider::Redhat',
 
     context "when hasstatus is not :true" do
       it "should consider the service :running if it has a pid" do
-        @provider.expects(:getpid).returns "1234"
+        expect(@provider).to receive(:getpid).and_return("1234")
         expect(@provider.status).to eq(:running)
       end
 
       it "should consider the service :stopped if it doesn't have a pid" do
-        @provider.expects(:getpid).returns nil
+        expect(@provider).to receive(:getpid).and_return(nil)
         expect(@provider.status).to eq(:stopped)
       end
     end
@@ -169,8 +171,8 @@ describe 'Puppet::Type::Service::Provider::Redhat',
 
   context "when restarting and hasrestart is not :true" do
     it "should stop and restart the process with the server script" do
-      @provider.expects(:texecute).with(:stop,  ['/sbin/service', 'myservice', 'stop'],  true)
-      @provider.expects(:texecute).with(:start, ['/sbin/service', 'myservice', 'start'], true)
+      expect(@provider).to receive(:texecute).with(:stop,  ['/sbin/service', 'myservice', 'stop'],  true)
+      expect(@provider).to receive(:texecute).with(:start, ['/sbin/service', 'myservice', 'start'], true)
       @provider.restart
     end
   end

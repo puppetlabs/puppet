@@ -6,14 +6,14 @@ describe Puppet::ModuleTool::Applications::Searcher do
   include PuppetSpec::Files
 
   describe "when searching" do
-    let(:forge) { mock 'forge', :host => 'http://nowhe.re' }
+    let(:forge) { double('forge', :host => 'http://nowhe.re') }
     let(:searcher) do
       described_class.new('search_term', forge)
     end
 
     it "should return results from a forge query when successful" do
       results = 'mock results'
-      forge.expects(:search).with('search_term').returns(results)
+      expect(forge).to receive(:search).with('search_term').and_return(results)
 
       search_result = searcher.run
       expect(search_result).to eq({
@@ -23,7 +23,7 @@ describe Puppet::ModuleTool::Applications::Searcher do
     end
 
     it "should return an error when the forge query throws an exception" do
-      forge.expects(:search).with('search_term').raises Puppet::Forge::Errors::ForgeError.new("something went wrong")
+      expect(forge).to receive(:search).with('search_term').and_raise(Puppet::Forge::Errors::ForgeError.new("something went wrong"))
 
       search_result = searcher.run
       expect(search_result).to eq({

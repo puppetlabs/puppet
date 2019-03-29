@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/file_serving/configuration/parser'
@@ -34,10 +33,10 @@ describe Puppet::FileServing::Configuration::Parser do
     end
 
     it "should return a hash of the created mounts" do
-      mount1 = mock 'one', :validate => true
-      mount2 = mock 'two', :validate => true
-      Puppet::FileServing::Mount::File.expects(:new).with("one").returns(mount1)
-      Puppet::FileServing::Mount::File.expects(:new).with("two").returns(mount2)
+      mount1 = double('one', :validate => true)
+      mount2 = double('two', :validate => true)
+      expect(Puppet::FileServing::Mount::File).to receive(:new).with("one").and_return(mount1)
+      expect(Puppet::FileServing::Mount::File).to receive(:new).with("two").and_return(mount2)
       write_config_file "[one]\n[two]\n"
 
       result = @parser.parse
@@ -56,21 +55,21 @@ describe Puppet::FileServing::Configuration::Parser do
     end
 
     it "should validate each created mount" do
-      mount1 = mock 'one'
-      Puppet::FileServing::Mount::File.expects(:new).with("one").returns(mount1)
+      mount1 = double('one')
+      expect(Puppet::FileServing::Mount::File).to receive(:new).with("one").and_return(mount1)
       write_config_file "[one]\n"
 
-      mount1.expects(:validate)
+      expect(mount1).to receive(:validate)
 
       @parser.parse
     end
 
     it "should fail if any mount does not pass validation" do
-      mount1 = mock 'one'
-      Puppet::FileServing::Mount::File.expects(:new).with("one").returns(mount1)
+      mount1 = double('one')
+      expect(Puppet::FileServing::Mount::File).to receive(:new).with("one").and_return(mount1)
       write_config_file "[one]\n"
 
-      mount1.expects(:validate).raises RuntimeError
+      expect(mount1).to receive(:validate).and_raise(RuntimeError)
 
       expect { @parser.parse }.to raise_error(RuntimeError)
     end
@@ -86,15 +85,15 @@ describe Puppet::FileServing::Configuration::Parser do
     include FSConfigurationParserTesting
 
     before do
-      @mount = stub 'testmount', :name => "one", :validate => true
-      Puppet::FileServing::Mount::File.expects(:new).with("one").returns(@mount)
-      @parser.stubs(:add_modules_mount)
+      @mount = double('testmount', :name => "one", :validate => true)
+      expect(Puppet::FileServing::Mount::File).to receive(:new).with("one").and_return(@mount)
+      allow(@parser).to receive(:add_modules_mount)
     end
 
     it "should set the mount path to the path attribute from that section" do
       write_config_file "[one]\npath /some/path\n"
 
-      @mount.expects(:path=).with("/some/path")
+      expect(@mount).to receive(:path=).with("/some/path")
       @parser.parse
     end
 
@@ -102,16 +101,16 @@ describe Puppet::FileServing::Configuration::Parser do
       it "should support inline comments in #{acl_type}" do
         write_config_file "[one]\n#{acl_type} something \# will it work?\n"
 
-      @mount.expects(:info)
-      @mount.expects(acl_type).with("something")
+      expect(@mount).to receive(:info)
+      expect(@mount).to receive(acl_type).with("something")
       @parser.parse
       end
 
       it "should tell the mount to #{acl_type} from ACLs with varying spacing around commas" do
         write_config_file "[one]\n#{acl_type} someone,sometwo, somethree , somefour ,somefive\n"
 
-        @mount.expects(:info).times(5)
-        @mount.expects(acl_type).times(5).with(any_of('someone','sometwo','somethree','somefour','somefive'))
+        expect(@mount).to receive(:info).exactly(5).times
+        expect(@mount).to receive(acl_type).exactly(5).times.with(eq('someone').or eq('sometwo').or eq('somethree').or eq('somefour').or eq('somefive'))
         @parser.parse
       end
 
@@ -120,8 +119,8 @@ describe Puppet::FileServing::Configuration::Parser do
         it "should tell the mount to #{acl_type} from ACLs with glob at #{ip_pattern}" do
           write_config_file "[one]\n#{acl_type} #{ip_pattern}\n"
 
-          @mount.expects(:info)
-          @mount.expects(acl_type).with(ip_pattern)
+          expect(@mount).to receive(:info)
+          expect(@mount).to receive(acl_type).with(ip_pattern)
           @parser.parse
         end
       }
@@ -138,21 +137,21 @@ describe Puppet::FileServing::Configuration::Parser do
     include FSConfigurationParserTesting
 
     before do
-      @mount = stub 'modulesmount', :name => "modules", :validate => true
+      @mount = double('modulesmount', :name => "modules", :validate => true)
     end
 
     it "should create an instance of the Modules Mount class" do
       write_config_file "[modules]\n"
 
-      Puppet::FileServing::Mount::Modules.expects(:new).with("modules").returns @mount
+      expect(Puppet::FileServing::Mount::Modules).to receive(:new).with("modules").and_return(@mount)
       @parser.parse
     end
 
     it "should warn if a path is set" do
       write_config_file "[modules]\npath /some/path\n"
-      Puppet::FileServing::Mount::Modules.expects(:new).with("modules").returns(@mount)
+      expect(Puppet::FileServing::Mount::Modules).to receive(:new).with("modules").and_return(@mount)
 
-      Puppet.expects(:warning)
+      expect(Puppet).to receive(:warning)
       @parser.parse
     end
   end
@@ -161,20 +160,20 @@ describe Puppet::FileServing::Configuration::Parser do
     include FSConfigurationParserTesting
 
     before do
-      @mount = stub 'pluginsmount', :name => "plugins", :validate => true
+      @mount = double('pluginsmount', :name => "plugins", :validate => true)
     end
 
     it "should create an instance of the Plugins Mount class" do
       write_config_file "[plugins]\n"
 
-      Puppet::FileServing::Mount::Plugins.expects(:new).with("plugins").returns @mount
+      expect(Puppet::FileServing::Mount::Plugins).to receive(:new).with("plugins").and_return(@mount)
       @parser.parse
     end
 
     it "should warn if a path is set" do
       write_config_file "[plugins]\npath /some/path\n"
 
-      Puppet.expects(:warning)
+      expect(Puppet).to receive(:warning)
       @parser.parse
     end
   end

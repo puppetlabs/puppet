@@ -77,7 +77,7 @@ describe 'function for dynamically creating resources' do
     it 'should pick up and pass on file and line information' do
       # mock location as the compile_to_catalog sets Puppet[:code} which does not
       # have file/line support.
-      Puppet::Pops::PuppetStack.expects(:top_of_stack).once.returns(['test.pp', 1234])
+      expect(Puppet::Pops::PuppetStack).to receive(:top_of_stack).once.and_return(['test.pp', 1234])
       catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
       r = catalog.resource(:file, "/etc/foo")
       expect(r.file).to eq('test.pp')

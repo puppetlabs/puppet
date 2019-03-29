@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:file).attrclass(:mode) do
@@ -121,8 +119,8 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     it "should retrieve the directory mode from the provider" do
       Dir.mkdir(path)
 
-      mode.expects(:dirmask).with('644').returns '755'
-      resource.provider.expects(:mode).returns '755'
+      expect(mode).to receive(:dirmask).with('644').and_return('755')
+      expect(resource.provider).to receive(:mode).and_return('755')
 
       expect(mode.retrieve).to eq('755')
     end
@@ -130,8 +128,8 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     it "should retrieve the file mode from the provider" do
       FileUtils.touch(path)
 
-      mode.expects(:dirmask).with('644').returns '644'
-      resource.provider.expects(:mode).returns '644'
+      expect(mode).to receive(:dirmask).with('644').and_return('644')
+      expect(resource.provider).to receive(:mode).and_return('644')
 
       expect(mode.retrieve).to eq('644')
     end

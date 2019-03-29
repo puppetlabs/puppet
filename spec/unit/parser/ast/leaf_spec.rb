@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Parser::AST::Leaf do
@@ -6,14 +5,14 @@ describe Puppet::Parser::AST::Leaf do
     node     = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
     @scope   = Puppet::Parser::Scope.new(compiler)
-    @value = stub 'value'
+    @value = double('value')
     @leaf = Puppet::Parser::AST::Leaf.new(:value => @value)
   end
 
   describe "when converting to string" do
     it "should transform its value to string" do
-      value = stub 'value', :is_a? => true
-      value.expects(:to_s)
+      value = double('value', :is_a? => true)
+      expect(value).to receive(:to_s)
       Puppet::Parser::AST::Leaf.new( :value => value ).to_s
     end
   end
@@ -23,7 +22,7 @@ describe Puppet::Parser::AST::Leaf do
   end
 
   it "should delegate match to ==" do
-    @value.expects(:==).with("value")
+    expect(@value).to receive(:==).with("value")
 
     @leaf.match("value")
   end
@@ -39,14 +38,14 @@ describe Puppet::Parser::AST::Regex do
 
   describe "when initializing" do
     it "should create a Regexp with its content when value is not a Regexp" do
-      Regexp.expects(:new).with("/ab/")
+      expect(Regexp).to receive(:new).with("/ab/")
 
       Puppet::Parser::AST::Regex.new :value => "/ab/"
     end
 
     it "should not create a Regexp with its content when value is a Regexp" do
       value = Regexp.new("/ab/")
-      Regexp.expects(:new).with("/ab/").never
+      expect(Regexp).not_to receive(:new).with("/ab/")
 
       Puppet::Parser::AST::Regex.new :value => value
     end
@@ -61,11 +60,11 @@ describe Puppet::Parser::AST::Regex do
   end
 
   it 'should return the PRegexpType#regexp_to_s_with_delimiters with to_s' do
-    regex = stub 'regex'
-    Regexp.stubs(:new).returns(regex)
+    regex = double('regex')
+    allow(Regexp).to receive(:new).and_return(regex)
 
     val = Puppet::Parser::AST::Regex.new :value => '/ab/'
-    Puppet::Pops::Types::PRegexpType.expects(:regexp_to_s_with_delimiters)
+    expect(Puppet::Pops::Types::PRegexpType).to receive(:regexp_to_s_with_delimiters)
 
     val.to_s
   end
@@ -74,7 +73,7 @@ describe Puppet::Parser::AST::Regex do
     regex = Regexp.new("/ab/")
     val = Puppet::Parser::AST::Regex.new :value => regex
 
-    regex.expects(:match).with("value")
+    expect(regex).to receive(:match).with("value")
 
     val.match("value")
   end
@@ -86,8 +85,8 @@ describe Puppet::Parser::AST::HostName do
     compiler = Puppet::Parser::Compiler.new(node)
     @scope   = Puppet::Parser::Scope.new(compiler)
     @value   = 'value'
-    @value.stubs(:to_s).returns(@value)
-    @value.stubs(:downcase).returns(@value)
+    allow(@value).to receive(:to_s).and_return(@value)
+    allow(@value).to receive(:downcase).and_return(@value)
     @host = Puppet::Parser::AST::HostName.new(:value => @value)
   end
 
@@ -100,16 +99,16 @@ describe Puppet::Parser::AST::HostName do
   end
 
   it "should stringify the value" do
-    value = stub 'value', :=~ => false
+    value = double('value', :=~ => false)
 
-    value.expects(:to_s).returns("test")
+    expect(value).to receive(:to_s).and_return("test")
 
     Puppet::Parser::AST::HostName.new(:value => value)
   end
 
   it "should downcase the value" do
-    value = stub 'value', :=~ => false
-    value.stubs(:to_s).returns("UPCASED")
+    value = double('value', :=~ => false)
+    allow(value).to receive(:to_s).and_return("UPCASED")
     host = Puppet::Parser::AST::HostName.new(:value => value)
 
     host.value == "upcased"
@@ -120,18 +119,18 @@ describe Puppet::Parser::AST::HostName do
   end
 
   it "should delegate eql? to the underlying value if it is an HostName" do
-    @value.expects(:eql?).with("value")
+    expect(@value).to receive(:eql?).with("value")
     @host.eql?("value")
   end
 
   it "should delegate eql? to the underlying value if it is not an HostName" do
-    value = stub 'compared', :is_a? => true, :value => "value"
-    @value.expects(:eql?).with("value")
+    value = double('compared', :is_a? => true, :value => "value")
+    expect(@value).to receive(:eql?).with("value")
     @host.eql?(value)
   end
 
   it "should delegate hash to the underlying value" do
-    @value.expects(:hash)
+    expect(@value).to receive(:hash)
     @host.hash
   end
 end

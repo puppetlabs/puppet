@@ -1,6 +1,4 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/indirector/certificate/rest'
 
 describe Puppet::SSL::Certificate::Rest do
@@ -45,15 +43,15 @@ rn/G
 -----END CERTIFICATE-----
 "
 
-    network = stub 'network'
-    terminus.stubs(:network).returns network
+    network = double('network')
+    allow(terminus).to receive(:network).and_return(network)
 
-    response = stub 'response', :code => "200", :body => cert_string
-    response.stubs(:[]).with('content-type').returns "text/plain"
-    response.stubs(:[]).with('content-encoding')
-    response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns(Puppet.version)
-    network.stubs(:verify_callback=)
-    network.expects(:get).returns response
+    response = double('response', :code => "200", :body => cert_string)
+    allow(response).to receive(:[]).with('content-type').and_return("text/plain")
+    allow(response).to receive(:[]).with('content-encoding')
+    allow(response).to receive(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).and_return(Puppet.version)
+    allow(network).to receive(:verify_callback=)
+    expect(network).to receive(:get).and_return(response)
 
     request = Puppet::Indirector::Request.new(:certificate, :find, "foo.com", nil)
     result = terminus.find(request)

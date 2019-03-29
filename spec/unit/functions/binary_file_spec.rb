@@ -33,12 +33,12 @@ describe 'the binary_file function' do
 
   it 'reads an existing file in a module' do
     with_file_content('binary_data') do |name|
-      mod = mock 'module'
-      mod.stubs(:file).with('myfile').returns(name)
+      mod = double('module')
+      allow(mod).to receive(:file).with('myfile').and_return(name)
       Puppet[:code] = "notify { String(binary_file('mymod/myfile')):}"
       node = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
-      compiler.environment.stubs(:module).with('mymod').returns(mod)
+      allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)
       # Note that the Binary to string produces Base64 encoded version of 'binary_data' which is 'YmluYXJ5X2RhdGE='
       expect(compiler.compile().filter { |r| r.virtual? }).to have_resource("Notify[YmluYXJ5X2RhdGE=]")
     end

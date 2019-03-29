@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:file).attrclass(:owner) do
@@ -10,19 +8,19 @@ describe Puppet::Type.type(:file).attrclass(:owner) do
   let(:owner) { resource.property(:owner) }
 
   before :each do
-    Puppet.features.stubs(:root?).returns(true)
+    allow(Puppet.features).to receive(:root?).and_return(true)
   end
 
   describe "#insync?" do
     before :each do
       resource[:owner] = ['foo', 'bar']
 
-      resource.provider.stubs(:name2uid).with('foo').returns 1001
-      resource.provider.stubs(:name2uid).with('bar').returns 1002
+      allow(resource.provider).to receive(:name2uid).with('foo').and_return(1001)
+      allow(resource.provider).to receive(:name2uid).with('bar').and_return(1002)
     end
 
     it "should fail if an owner's id can't be found by name" do
-      resource.provider.stubs(:name2uid).returns nil
+      allow(resource.provider).to receive(:name2uid).and_return(nil)
 
       expect { owner.insync?(5) }.to raise_error(/Could not find user foo/)
     end
@@ -43,13 +41,13 @@ describe Puppet::Type.type(:file).attrclass(:owner) do
   %w[is_to_s should_to_s].each do |prop_to_s|
     describe "##{prop_to_s}" do
       it "should use the name of the user if it can find it" do
-        resource.provider.stubs(:uid2name).with(1001).returns 'foo'
+        allow(resource.provider).to receive(:uid2name).with(1001).and_return('foo')
 
         expect(owner.send(prop_to_s, 1001)).to eq("'foo'")
       end
 
       it "should use the id of the user if it can't" do
-        resource.provider.stubs(:uid2name).with(1001).returns nil
+        allow(resource.provider).to receive(:uid2name).with(1001).and_return(nil)
 
         expect(owner.send(prop_to_s, 1001)).to eq('1001')
       end

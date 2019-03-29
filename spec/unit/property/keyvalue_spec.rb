@@ -1,8 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/property/keyvalue'
-
 
 describe 'Puppet::Property::KeyValue' do 
   let(:klass) { Puppet::Property::KeyValue }
@@ -15,7 +13,7 @@ describe 'Puppet::Property::KeyValue' do
     before do
       # Wow that's a messy interface to the resource.
       klass.initvars
-      @resource = stub 'resource', :[]= => nil, :property => nil
+      @resource = double('resource', :[]= => nil, :property => nil)
       @property = klass.new(:resource => @resource)
       klass.log_only_changed_or_new_keys = false
     end
@@ -65,20 +63,20 @@ describe 'Puppet::Property::KeyValue' do
 
     describe "when calling inclusive?" do
       it "should use the membership method to look up on the @resource" do
-        @property.expects(:membership).returns(:key_value_membership)
-        @resource.expects(:[]).with(:key_value_membership)
+        expect(@property).to receive(:membership).and_return(:key_value_membership)
+        expect(@resource).to receive(:[]).with(:key_value_membership)
         @property.inclusive?
       end
 
       it "should return true when @resource[membership] == inclusive" do
-        @property.stubs(:membership).returns(:key_value_membership)
-        @resource.stubs(:[]).with(:key_value_membership).returns(:inclusive)
+        allow(@property).to receive(:membership).and_return(:key_value_membership)
+        allow(@resource).to receive(:[]).with(:key_value_membership).and_return(:inclusive)
         expect(@property.inclusive?).to eq(true)
       end
 
       it "should return false when @resource[membership] != inclusive" do
-        @property.stubs(:membership).returns(:key_value_membership)
-        @resource.stubs(:[]).with(:key_value_membership).returns(:minimum)
+        allow(@property).to receive(:membership).and_return(:key_value_membership)
+        allow(@resource).to receive(:[]).with(:key_value_membership).and_return(:minimum)
         expect(@property.inclusive?).to eq(false)
       end
     end
@@ -89,12 +87,12 @@ describe 'Puppet::Property::KeyValue' do
       end
 
       it "should set every key to nil if inclusive?" do
-        @property.stubs(:inclusive?).returns(true)
+        allow(@property).to receive(:inclusive?).and_return(true)
         expect(@property.process_current_hash({:foo => "bar", :do => "re"})).to eq({ :foo => nil, :do => nil })
       end
 
       it "should return the hash if !inclusive?" do
-        @property.stubs(:inclusive?).returns(false)
+        allow(@property).to receive(:inclusive?).and_return(false)
         expect(@property.process_current_hash({:foo => "bar", :do => "re"})).to eq({:foo => "bar", :do => "re"})
       end
     end
@@ -106,22 +104,22 @@ describe 'Puppet::Property::KeyValue' do
 
       it "should call process_current_hash" do
         @property.should = ["foo=baz", "bar=boo"]
-        @property.stubs(:retrieve).returns({:do => "re", :mi => "fa" })
-        @property.expects(:process_current_hash).returns({})
+        allow(@property).to receive(:retrieve).and_return({:do => "re", :mi => "fa" })
+        expect(@property).to receive(:process_current_hash).and_return({})
         @property.should
       end
 
       it "should return the hashed values of @should and the nilled values of retrieve if inclusive" do
         @property.should = ["foo=baz", "bar=boo"]
-        @property.expects(:retrieve).returns({:do => "re", :mi => "fa" })
-        @property.expects(:inclusive?).returns(true)
+        expect(@property).to receive(:retrieve).and_return({:do => "re", :mi => "fa" })
+        expect(@property).to receive(:inclusive?).and_return(true)
         expect(@property.should).to eq({ :foo => "baz", :bar => "boo", :do => nil, :mi => nil })
       end
 
       it "should return the hashed @should + the unique values of retrieve if !inclusive" do
         @property.should = ["foo=baz", "bar=boo"]
-        @property.expects(:retrieve).returns({:foo => "diff", :do => "re", :mi => "fa"})
-        @property.expects(:inclusive?).returns(false)
+        expect(@property).to receive(:retrieve).and_return({:foo => "diff", :do => "re", :mi => "fa"})
+        expect(@property).to receive(:inclusive?).and_return(false)
         expect(@property.should).to eq({ :foo => "baz", :bar => "boo", :do => "re", :mi => "fa" })
       end
 
@@ -132,14 +130,14 @@ describe 'Puppet::Property::KeyValue' do
           :key3 => "new_value3",
           :key4 => "value4"
         }
-        @property.stubs(:retrieve).returns(
+        allow(@property).to receive(:retrieve).and_return(
           {
             :key1 => "value1",
             :key2 => "value2",
             :key3 => "value3"
           }
         )
-        @property.stubs(:inclusive?).returns(false)
+        allow(@property).to receive(:inclusive?).and_return(false)
 
         @property.should
         expect(@property.instance_variable_get(:@changed_or_new_keys)).to eql([:key1, :key3, :key4])
@@ -148,25 +146,25 @@ describe 'Puppet::Property::KeyValue' do
 
     describe "when calling retrieve" do
       before do
-        @provider = mock("provider")
-        @property.stubs(:provider).returns(@provider)
+        @provider = double("provider")
+        allow(@property).to receive(:provider).and_return(@provider)
       end
 
       it "should send 'name' to the provider" do
-        @provider.expects(:send).with(:keys)
-        @property.expects(:name).returns(:keys)
+        expect(@provider).to receive(:send).with(:keys)
+        expect(@property).to receive(:name).and_return(:keys)
         @property.retrieve
       end
 
       it "should return a hash with the provider returned info" do
-        @provider.stubs(:send).with(:keys).returns({"do" => "re", "mi" => "fa" })
-        @property.stubs(:name).returns(:keys)
+        allow(@provider).to receive(:send).with(:keys).and_return({"do" => "re", "mi" => "fa" })
+        allow(@property).to receive(:name).and_return(:keys)
         @property.retrieve == {"do" => "re", "mi" => "fa" }
       end
 
       it "should return :absent when the provider returns :absent" do
-        @provider.stubs(:send).with(:keys).returns(:absent)
-        @property.stubs(:name).returns(:keys)
+        allow(@provider).to receive(:send).with(:keys).and_return(:absent)
+        allow(@property).to receive(:name).and_return(:keys)
         @property.retrieve == :absent
       end
     end
@@ -185,9 +183,9 @@ describe 'Puppet::Property::KeyValue' do
 
     describe "when calling safe_insync?" do
       before do
-        @provider = mock("provider")
-        @property.stubs(:provider).returns(@provider)
-        @property.stubs(:name).returns(:prop_name)
+        @provider = double("provider")
+        allow(@property).to receive(:provider).and_return(@provider)
+        allow(@property).to receive(:name).and_return(:prop_name)
       end
 
       it "should return true unless @should is defined and not nil" do
@@ -199,16 +197,16 @@ describe 'Puppet::Property::KeyValue' do
       end
 
       it "should return true if hashified should value == (retrieved) value passed in" do
-        @provider.stubs(:prop_name).returns({ :foo => "baz", :bar => "boo" })
+        allow(@provider).to receive(:prop_name).and_return({ :foo => "baz", :bar => "boo" })
         @property.should = ["foo=baz", "bar=boo"]
-        @property.expects(:inclusive?).returns(true)
+        expect(@property).to receive(:inclusive?).and_return(true)
         expect(@property.safe_insync?({ :foo => "baz", :bar => "boo" })).to eq(true)
       end
 
       it "should return false if prepared value != should value" do
-        @provider.stubs(:prop_name).returns({ "foo" => "bee", "bar" => "boo" })
+        allow(@provider).to receive(:prop_name).and_return({ "foo" => "bee", "bar" => "boo" })
         @property.should = ["foo=baz", "bar=boo"]
-        @property.expects(:inclusive?).returns(true)
+        expect(@property).to receive(:inclusive?).and_return(true)
         expect(@property.safe_insync?({ "foo" => "bee", "bar" => "boo" })).to eq(false)
       end
     end

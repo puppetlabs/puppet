@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/face'
 require 'puppet/indirector/facts/facter'
@@ -28,26 +27,26 @@ CONF
       # Faces start in :user run mode
       Puppet.settings.preferred_run_mode = :user
 
-      facter_terminus.stubs(:find).with(instance_of(Puppet::Indirector::Request)).returns(test_data)
-      rest_terminus.stubs(:save).with(instance_of(Puppet::Indirector::Request)).returns(nil)
+      allow(facter_terminus).to receive(:find).with(instance_of(Puppet::Indirector::Request)).and_return(test_data)
+      allow(rest_terminus).to receive(:save).with(instance_of(Puppet::Indirector::Request)).and_return(nil)
     end
 
     it { is_expected.to be_action :upload }
 
     it "finds facts from terminus_class :facter" do
-      facter_terminus.expects(:find).with(instance_of(Puppet::Indirector::Request)).returns(test_data)
+      expect(facter_terminus).to receive(:find).with(instance_of(Puppet::Indirector::Request)).and_return(test_data)
 
       subject.upload
     end
 
     it "saves facts to terminus_class :rest" do
-      rest_terminus.expects(:save).with(instance_of(Puppet::Indirector::Request)).returns(nil)
+      expect(rest_terminus).to receive(:save).with(instance_of(Puppet::Indirector::Request)).and_return(nil)
 
       subject.upload
     end
 
     it "uses settings from the agent section of puppet.conf" do
-      facter_terminus.expects(:find).with(responds_with(:key, 'puppet.node.test')).returns(test_data)
+      expect(facter_terminus).to receive(:find).with(have_attributes(key: 'puppet.node.test')).and_return(test_data)
 
       subject.upload
     end

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/settings'
@@ -15,18 +14,14 @@ describe Puppet::Settings::DirectorySetting do
 
   describe "when being converted to a resource" do
     before do
-      @settings = mock 'settings'
+      @settings = double('settings')
       @dir = Puppet::Settings::DirectorySetting.new(
           :settings => @settings, :desc => "eh", :name => :mydir, :section => "mysect")
-      @settings.stubs(:value).with(:mydir).returns @basepath
+      allow(@settings).to receive(:value).with(:mydir).and_return(@basepath)
     end
 
     it "should return :directory as its type" do
       expect(@dir.type).to eq(:directory)
     end
-
-
-
   end
 end
-

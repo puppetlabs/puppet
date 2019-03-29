@@ -1,11 +1,10 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::Session do
-  let(:connection) { stub('connection') }
-  let(:verifier) { stub('verifier') }
+  let(:connection) { double('connection') }
+  let(:verifier) { double('verifier') }
 
   def create_session(connection, expiration_time = nil)
     expiration_time ||= Time.now + 60 * 60

@@ -1,7 +1,5 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/file_bucket/file'
-
 
 describe Puppet::FileBucket::File, :uses_checksums => true do
   include PuppetSpec::Files

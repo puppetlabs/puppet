@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_request'
@@ -11,7 +10,6 @@ describe Puppet::SSL::CertificateRequest do
     k.generate
     k
   }
-
 
   it "should be extended with the Indirector module" do
     expect(described_class.singleton_class).to be_include(Puppet::Indirector)
@@ -31,15 +29,15 @@ describe Puppet::SSL::CertificateRequest do
 
   describe "when converting from a string" do
     it "should create a CSR instance with its name set to the CSR subject and its content set to the extracted CSR" do
-      csr = stub 'csr',
+      csr = double('csr',
         :subject => OpenSSL::X509::Name.parse("/CN=Foo.madstop.com"),
-        :is_a? => true
-      OpenSSL::X509::Request.expects(:new).with("my csr").returns(csr)
+        :is_a? => true)
+      expect(OpenSSL::X509::Request).to receive(:new).with("my csr").and_return(csr)
 
-      mycsr = stub 'sslcsr'
-      mycsr.expects(:content=).with(csr)
+      mycsr = double('sslcsr')
+      expect(mycsr).to receive(:content=).with(csr)
 
-      described_class.expects(:new).with("Foo.madstop.com").returns mycsr
+      expect(described_class).to receive(:new).with("Foo.madstop.com").and_return(mycsr)
 
       described_class.from_s("my csr")
     end
@@ -60,9 +58,9 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should be able to read requests from disk" do
       path = "/my/path"
-      Puppet::FileSystem.expects(:read).with(path, :encoding => Encoding::ASCII).returns("my request")
-      my_req = mock 'request'
-      OpenSSL::X509::Request.expects(:new).with("my request").returns(my_req)
+      expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding::ASCII).and_return("my request")
+      my_req = double('request')
+      expect(OpenSSL::X509::Request).to receive(:new).with("my request").and_return(my_req)
       expect(request.read(path)).to equal(my_req)
       expect(request.content).to equal(my_req)
     end
@@ -77,8 +75,8 @@ describe Puppet::SSL::CertificateRequest do
     end
 
     it "should have a :to_text method that it delegates to the actual key" do
-      real_request = mock 'request'
-      real_request.expects(:to_text).returns "requesttext"
+      real_request = double('request')
+      expect(real_request).to receive(:to_text).and_return("requesttext")
       request.content = real_request
       expect(request.to_text).to eq("requesttext")
     end
@@ -302,26 +300,26 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should verify the generated request using the public key" do
       # Stupid keys don't have a competent == method.
-      OpenSSL::X509::Request.any_instance.expects(:verify).with { |public_key|
+      expect_any_instance_of(OpenSSL::X509::Request).to receive(:verify) do |public_key|
         public_key.to_s == key.content.public_key.to_s
-      }.returns true
+      end.and_return(true)
       request.generate(key)
     end
 
     it "should fail if verification fails" do
-      OpenSSL::X509::Request.any_instance.expects(:verify).with { |public_key|
+      expect_any_instance_of(OpenSSL::X509::Request).to receive(:verify) do |public_key|
         public_key.to_s == key.content.public_key.to_s
-      }.returns false
+      end.and_return(false)
 
-      expect {
+      expect do
         request.generate(key)
-      }.to raise_error(Puppet::Error, /CSR sign verification failed/)
+      end.to raise_error(Puppet::Error, /CSR sign verification failed/)
     end
 
     it "should log the fingerprint" do
-      Puppet::SSL::Digest.any_instance.stubs(:to_hex).returns("FINGERPRINT")
-      Puppet.stubs(:info)
-      Puppet.expects(:info).with { |s| s =~ /FINGERPRINT/ }
+      allow_any_instance_of(Puppet::SSL::Digest).to receive(:to_hex).and_return("FINGERPRINT")
+      allow(Puppet).to receive(:info)
+      expect(Puppet).to receive(:info).with(/FINGERPRINT/)
       request.generate(key)
     end
 
@@ -333,8 +331,8 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should use SHA1 to sign the csr when SHA256 isn't available" do
       csr = OpenSSL::X509::Request.new
-      OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
-      OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(true)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(true)
       signer = Puppet::SSL::CertificateSigner.new
       signer.sign(csr, key.content)
       expect(csr.verify(key.content)).to be_truthy
@@ -344,46 +342,49 @@ describe Puppet::SSL::CertificateRequest do
     # So commenting it out till it is sorted out
     # The problem seems to be with the ability to sign a CSR when using either of
     # these hash algorithms
+    pending "should use SHA512 to sign the csr when SHA256 and SHA1 aren't available" do
+      csr = OpenSSL::X509::Request.new
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA512").and_return(true)
+      signer = Puppet::SSL::CertificateSigner.new
+      signer.sign(csr, key.content)
+      expect(csr.verify(key.content)).to be_truthy
+    end
 
-#    it "should use SHA512 to sign the csr when SHA256 and SHA1 aren't available" do
-#      csr = OpenSSL::X509::Request.new
-#      OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
-#      OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(false)
-#      OpenSSL::Digest.expects(:const_defined?).with("SHA512").returns(true)
-#      signer = Puppet::SSL::CertificateSigner.new
-#      signer.sign(csr, key.content)
-#      expect(csr.verify(key.content)).to be_truthy
-#    end
-
-#    it "should use SHA384 to sign the csr when SHA256/SHA1/SHA512 aren't available" do
-#      csr = OpenSSL::X509::Request.new
-#      OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
-#      OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(false)
-#      OpenSSL::Digest.expects(:const_defined?).with("SHA512").returns(false)
-#      OpenSSL::Digest.expects(:const_defined?).with("SHA384").returns(true)
-#      signer = Puppet::SSL::CertificateSigner.new
-#      signer.sign(csr, key.content)
-#      expect(csr.verify(key.content)).to be_truthy
-#    end
+    # Attempts to use SHA512 and SHA384 for signing certificates don't seem to work
+    # So commenting it out till it is sorted out
+    # The problem seems to be with the ability to sign a CSR when using either of
+    # these hash algorithms
+    pending "should use SHA384 to sign the csr when SHA256/SHA1/SHA512 aren't available" do
+      csr = OpenSSL::X509::Request.new
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA512").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA384").and_return(true)
+      signer = Puppet::SSL::CertificateSigner.new
+      signer.sign(csr, key.content)
+      expect(csr.verify(key.content)).to be_truthy
+    end
 
     it "should use SHA224 to sign the csr when SHA256/SHA1/SHA512/SHA384 aren't available" do
       csr = OpenSSL::X509::Request.new
-      OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
-      OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(false)
-      OpenSSL::Digest.expects(:const_defined?).with("SHA512").returns(false)
-      OpenSSL::Digest.expects(:const_defined?).with("SHA384").returns(false)
-      OpenSSL::Digest.expects(:const_defined?).with("SHA224").returns(true)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA512").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA384").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA224").and_return(true)
       signer = Puppet::SSL::CertificateSigner.new
       signer.sign(csr, key.content)
       expect(csr.verify(key.content)).to be_truthy
     end
 
     it "should raise an error if neither SHA256/SHA1/SHA512/SHA384/SHA224 are available" do
-      OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
-      OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(false)
-      OpenSSL::Digest.expects(:const_defined?).with("SHA512").returns(false)
-      OpenSSL::Digest.expects(:const_defined?).with("SHA384").returns(false)
-      OpenSSL::Digest.expects(:const_defined?).with("SHA224").returns(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA256").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA1").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA512").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA384").and_return(false)
+      expect(OpenSSL::Digest).to receive(:const_defined?).with("SHA224").and_return(false)
       expect {
         Puppet::SSL::CertificateSigner.new
       }.to raise_error(Puppet::Error)
@@ -392,10 +393,13 @@ describe Puppet::SSL::CertificateRequest do
 
   it "should save the CSR" do
     csr = Puppet::SSL::CertificateRequest.new("me")
-    terminus = mock 'terminus'
-    terminus.stubs(:validate)
-    Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
-    terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
+    terminus = double('terminus')
+    allow(terminus).to receive(:validate)
+    expect(Puppet::SSL::CertificateRequest.indirection).to receive(:prepare).and_return(terminus)
+    expect(terminus).to receive(:save) do |request|
+      expect(request.instance).to eq(csr)
+      expect(request.key).to eq("me")
+    end
     Puppet::SSL::CertificateRequest.indirection.save(csr)
   end
 end

@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
 require 'puppet/file_bucket/file'
@@ -8,7 +6,7 @@ describe Puppet::FileBucket::File do
   describe "#indirection" do
     before :each do
       # Never connect to the network, no matter what
-      described_class.indirection.terminus(:rest).class.any_instance.stubs(:find)
+      allow_any_instance_of(described_class.indirection.terminus(:rest).class).to receive(:find)
     end
 
     describe "when running another application" do
@@ -17,7 +15,7 @@ describe Puppet::FileBucket::File do
         "filebucket://puppetmaster:8140/md5/d41d8cd98f00b204e9800998ecf8427e" => :rest,
       }.each do |key, terminus|
         it "should use the #{terminus} terminus when requesting #{key.inspect}" do
-          described_class.indirection.terminus(terminus).class.any_instance.expects(:find)
+          expect_any_instance_of(described_class.indirection.terminus(terminus).class).to receive(:find)
 
           described_class.indirection.find(key)
         end

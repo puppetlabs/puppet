@@ -13,15 +13,15 @@ describe Puppet::Type.type(:user).provider(:hpuxuseradd),
   let(:provider) { resource.provider }
 
   it "should add -F when modifying a user" do
-    resource.stubs(:allowdupe?).returns true
-    provider.stubs(:trusted).returns true
-    provider.expects(:execute).with { |args| args.include?("-F") }
+    allow(resource).to receive(:allowdupe?).and_return(true)
+    allow(provider).to receive(:trusted).and_return(true)
+    expect(provider).to receive(:execute).with(include("-F"), anything)
     provider.uid = 1000
   end
 
   it "should add -F when deleting a user" do
-    provider.stubs(:exists?).returns(true)
-    provider.expects(:execute).with { |args| args.include?("-F") }
+    allow(provider).to receive(:exists?).and_return(true)
+    expect(provider).to receive(:execute).with(include("-F"), anything)
     provider.delete
   end
 
@@ -31,9 +31,9 @@ describe Puppet::Type.type(:user).provider(:hpuxuseradd),
     end
 
     before :each do
-      Etc.stubs(:getpwent).returns(pwent)
-      Etc.stubs(:getpwnam).returns(pwent)
-      resource.stubs(:command).with(:modify).returns '/usr/sam/lbin/usermod.sam'
+      allow(Etc).to receive(:getpwent).and_return(pwent)
+      allow(Etc).to receive(:getpwnam).and_return(pwent)
+      allow(resource).to receive(:command).with(:modify).and_return('/usr/sam/lbin/usermod.sam')
     end
 
     it "should have feature manages_passwords" do
@@ -41,7 +41,7 @@ describe Puppet::Type.type(:user).provider(:hpuxuseradd),
     end
 
     it "should return nil if user does not exist" do
-      Etc.stubs(:getpwent).returns(nil)
+      allow(Etc).to receive(:getpwent).and_return(nil)
       expect(provider.password).to be_nil
     end
 
@@ -52,20 +52,20 @@ describe Puppet::Type.type(:user).provider(:hpuxuseradd),
 
   context "check for trusted computing" do
     before :each do
-      provider.stubs(:command).with(:modify).returns '/usr/sam/lbin/usermod.sam'
+      allow(provider).to receive(:command).with(:modify).and_return('/usr/sam/lbin/usermod.sam')
     end
 
     it "should add modprpw to modifycmd if Trusted System" do
-      resource.stubs(:allowdupe?).returns true
-      provider.expects(:exec_getprpw).with('root','-m uid').returns('uid=0')
-      provider.expects(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F', ';', '/usr/lbin/modprpw', '-v', '-l', 'testuser'], has_entry(:custom_environment, {}))
+      allow(resource).to receive(:allowdupe?).and_return(true)
+      expect(provider).to receive(:exec_getprpw).with('root','-m uid').and_return('uid=0')
+      expect(provider).to receive(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F', ';', '/usr/lbin/modprpw', '-v', '-l', 'testuser'], hash_including(custom_environment: {}))
       provider.uid = 1000
     end
 
     it "should not add modprpw if not Trusted System" do
-      resource.stubs(:allowdupe?).returns true
-      provider.expects(:exec_getprpw).with('root','-m uid').returns('System is not trusted')
-      provider.expects(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F'], has_entry(:custom_environment, {}))
+      allow(resource).to receive(:allowdupe?).and_return(true)
+      expect(provider).to receive(:exec_getprpw).with('root','-m uid').and_return('System is not trusted')
+      expect(provider).to receive(:execute).with(['/usr/sam/lbin/usermod.sam', '-u', 1000, '-o', 'testuser', '-F'], hash_including(custom_environment: {}))
       provider.uid = 1000
     end
   end

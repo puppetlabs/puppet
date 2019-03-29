@@ -16,8 +16,8 @@ describe 'HieraPuppet' do
 
     context "when the hiera_config_file exists" do
       before do
-        Hiera::Config.expects(:load).returns(hiera_config_data)
-        HieraPuppet.expects(:hiera_config_file).returns(true)
+        expect(Hiera::Config).to receive(:load).and_return(hiera_config_data)
+        expect(HieraPuppet).to receive(:hiera_config_file).and_return(true)
       end
 
       it "should return a configuration hash" do
@@ -31,8 +31,8 @@ describe 'HieraPuppet' do
 
     context "when the hiera_config_file does not exist" do
       before do
-        Hiera::Config.expects(:load).never
-        HieraPuppet.expects(:hiera_config_file).returns(nil)
+        expect(Hiera::Config).not_to receive(:load)
+        expect(HieraPuppet).to receive(:hiera_config_file).and_return(nil)
       end
 
       it "should return a configuration hash" do
@@ -59,7 +59,7 @@ describe 'HieraPuppet' do
         pending("This example does not apply to Puppet #{Puppet.version} because it does not have this setting")
       end
 
-      Puppet::FileSystem.stubs(:exist?).with(Puppet[:hiera_config]).returns(true)
+      allow(Puppet::FileSystem).to receive(:exist?).with(Puppet[:hiera_config]).and_return(true)
       expect(HieraPuppet.send(:hiera_config_file)).to eq(Puppet[:hiera_config])
     end
 
@@ -75,29 +75,29 @@ describe 'HieraPuppet' do
       end
 
       it "should use Puppet.settings[:codedir]/hiera.yaml when '$codedir/hiera.yaml' exists and '$confdir/hiera.yaml' does not exist" do
-        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(true)
-        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(false)
+        allow(Puppet::FileSystem).to receive(:exist?).with(code_hiera_config).and_return(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(conf_hiera_config).and_return(false)
 
         expect(HieraPuppet.send(:hiera_config_file)).to eq(code_hiera_config)
       end
 
       it "should use Puppet.settings[:confdir]/hiera.yaml when '$codedir/hiera.yaml' does not exist and '$confdir/hiera.yaml' exists" do
-        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(false)
-        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(code_hiera_config).and_return(false)
+        allow(Puppet::FileSystem).to receive(:exist?).with(conf_hiera_config).and_return(true)
 
         expect(HieraPuppet.send(:hiera_config_file)).to eq(conf_hiera_config)
       end
 
       it "should use Puppet.settings[:codedir]/hiera.yaml when '$codedir/hiera.yaml' exists and '$confdir/hiera.yaml' exists" do
-        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(true)
-        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(code_hiera_config).and_return(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(conf_hiera_config).and_return(true)
 
         expect(HieraPuppet.send(:hiera_config_file)).to eq(code_hiera_config)
       end
 
       it "should return nil when neither '$codedir/hiera.yaml' nor '$confdir/hiera.yaml' exists" do
-        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(false)
-        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(false)
+        allow(Puppet::FileSystem).to receive(:exist?).with(code_hiera_config).and_return(false)
+        allow(Puppet::FileSystem).to receive(:exist?).with(conf_hiera_config).and_return(false)
 
         expect(HieraPuppet.send(:hiera_config_file)).to eq(nil)
       end
@@ -109,9 +109,9 @@ describe 'HieraPuppet' do
           explicit_hiera_config = '/an/explicit/hiera.yaml'
         end
         Puppet.settings[:hiera_config] = explicit_hiera_config
-        Puppet::FileSystem.stubs(:exist?).with(explicit_hiera_config).returns(true)
-        Puppet::FileSystem.stubs(:exist?).with(code_hiera_config).returns(true)
-        Puppet::FileSystem.stubs(:exist?).with(conf_hiera_config).returns(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(explicit_hiera_config).and_return(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(code_hiera_config).and_return(true)
+        allow(Puppet::FileSystem).to receive(:exist?).with(conf_hiera_config).and_return(true)
 
         expect(HieraPuppet.send(:hiera_config_file)).to eq(explicit_hiera_config)
       end
@@ -126,18 +126,18 @@ describe 'HieraPuppet' do
     end
 
     it "should return the value from Hiera" do
-      Hiera.any_instance.stubs(:lookup).returns('8080')
+      allow_any_instance_of(Hiera).to receive(:lookup).and_return('8080')
       expect(HieraPuppet.lookup('port', nil, scope, nil, :priority)).to eq('8080')
 
-      Hiera.any_instance.stubs(:lookup).returns(['foo', 'bar'])
+      allow_any_instance_of(Hiera).to receive(:lookup).and_return(['foo', 'bar'])
       expect(HieraPuppet.lookup('ntpservers', nil, scope, nil, :array)).to eq(['foo', 'bar'])
 
-      Hiera.any_instance.stubs(:lookup).returns({'uid' => '1000'})
+      allow_any_instance_of(Hiera).to receive(:lookup).and_return({'uid' => '1000'})
       expect(HieraPuppet.lookup('user', nil, scope, nil, :hash)).to eq({'uid' => '1000'})
     end
 
     it "should raise a useful error when the answer is nil" do
-      Hiera.any_instance.stubs(:lookup).returns(nil)
+      allow_any_instance_of(Hiera).to receive(:lookup).and_return(nil)
       expect do
         HieraPuppet.lookup('port', nil, scope, nil, :priority)
       end.to raise_error(Puppet::ParseError,

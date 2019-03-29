@@ -40,7 +40,7 @@ describe Puppet::SSL::Verifier do
 
   context '#setup_connection' do
     it 'copies parameters from the ssl_context to the connection' do
-      store = stub('store')
+      store = double('store')
       options.merge!(store: store)
       verifier.setup_connection(http)
 
@@ -48,7 +48,7 @@ describe Puppet::SSL::Verifier do
     end
 
     it 'defaults to VERIFY_PEER' do
-      http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+      expect(http).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
 
       verifier.setup_connection(http)
     end
@@ -56,7 +56,7 @@ describe Puppet::SSL::Verifier do
     it 'only uses VERIFY_NONE if explicitly disabled' do
       options.merge!(verify_peer: false)
 
-      http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+      expect(http).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
       verifier.setup_connection(http)
     end
@@ -74,7 +74,7 @@ describe Puppet::SSL::Verifier do
     let(:ssl_error) { OpenSSL::SSL::SSLError.new("certificate verify failed") }
 
     it "raises a verification error for a CA cert" do
-      store_context = stub('store_context', current_cert: peer_cert, chain: [peer_cert], error: OpenSSL::X509::V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY, error_string: "unable to get local issuer certificate")
+      store_context = double('store_context', current_cert: peer_cert, chain: [peer_cert], error: OpenSSL::X509::V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY, error_string: "unable to get local issuer certificate")
       verifier.call(false, store_context)
 
       expect {
@@ -83,7 +83,7 @@ describe Puppet::SSL::Verifier do
     end
 
     it "raises a verification error for the server cert" do
-      store_context = stub('store_context', current_cert: peer_cert, chain: chain, error: OpenSSL::X509::V_ERR_CERT_REJECTED, error_string: "certificate rejected")
+      store_context = double('store_context', current_cert: peer_cert, chain: chain, error: OpenSSL::X509::V_ERR_CERT_REJECTED, error_string: "certificate rejected")
       verifier.call(false, store_context)
 
       expect {
@@ -92,9 +92,9 @@ describe Puppet::SSL::Verifier do
     end
 
     it "raises cert mismatch error on ruby < 2.4" do
-      http.expects(:peer_cert).returns(peer_cert)
+      expect(http).to receive(:peer_cert).and_return(peer_cert)
 
-      store_context = stub('store_context')
+      store_context = double('store_context')
       verifier.call(true, store_context)
 
       ssl_error = OpenSSL::SSL::SSLError.new("hostname 'example'com' does not match the server certificate")
@@ -105,7 +105,7 @@ describe Puppet::SSL::Verifier do
     end
 
     it "raises cert mismatch error on ruby >= 2.4" do
-      store_context = stub('store_context', current_cert: peer_cert, chain: chain, error: OpenSSL::X509::V_OK, error_string: "ok")
+      store_context = double('store_context', current_cert: peer_cert, chain: chain, error: OpenSSL::X509::V_OK, error_string: "ok")
       verifier.call(false, store_context)
 
       expect {

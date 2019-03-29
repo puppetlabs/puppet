@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 # encoding: UTF-8
 
 require 'spec_helper'
@@ -7,15 +6,13 @@ require 'puppet/module_tool'
 describe Puppet::ModuleTool do
   describe '.is_module_root?' do
     it 'should return true if directory has a metadata.json file' do
-      FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/metadata.json')).
-        returns(true)
+      expect(FileTest).to receive(:file?).with(have_attributes(to_s: '/a/b/c/metadata.json')).and_return(true)
 
       expect(subject.is_module_root?(Pathname.new('/a/b/c'))).to be_truthy
     end
 
     it 'should return false if directory does not have a metadata.json file' do
-      FileTest.expects(:file?).with(responds_with(:to_s, '/a/b/c/metadata.json')).
-        returns(false)
+      expect(FileTest).to receive(:file?).with(have_attributes(to_s: '/a/b/c/metadata.json')).and_return(false)
 
       expect(subject.is_module_root?(Pathname.new('/a/b/c'))).to be_falsey
     end
@@ -25,23 +22,21 @@ describe Puppet::ModuleTool do
     let(:sample_path) { Pathname.new('/a/b/c').expand_path }
 
     it 'should return the first path as a pathname when it contains a module file' do
-      Puppet::ModuleTool.expects(:is_module_root?).with(sample_path).
-        returns(true)
+      expect(Puppet::ModuleTool).to receive(:is_module_root?).with(sample_path).
+        and_return(true)
 
       expect(subject.find_module_root(sample_path)).to eq(sample_path)
     end
 
     it 'should return a parent path as a pathname when it contains a module file' do
-      Puppet::ModuleTool.expects(:is_module_root?).
-        with(responds_with(:to_s, File.expand_path('/a/b/c'))).returns(false)
-      Puppet::ModuleTool.expects(:is_module_root?).
-        with(responds_with(:to_s, File.expand_path('/a/b'))).returns(true)
+      expect(Puppet::ModuleTool).to receive(:is_module_root?).with(have_attributes(to_s: File.expand_path('/a/b/c'))).and_return(false)
+      expect(Puppet::ModuleTool).to receive(:is_module_root?).with(have_attributes(to_s: File.expand_path('/a/b'))).and_return(true)
 
       expect(subject.find_module_root(sample_path)).to eq(Pathname.new('/a/b').expand_path)
     end
 
     it 'should return nil when no module root can be found' do
-      Puppet::ModuleTool.expects(:is_module_root?).at_least_once.returns(false)
+      expect(Puppet::ModuleTool).to receive(:is_module_root?).at_least(:once).and_return(false)
       expect(subject.find_module_root(sample_path)).to be_nil
     end
   end

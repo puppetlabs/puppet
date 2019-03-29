@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:file) do
@@ -10,7 +9,7 @@ describe Puppet::Type.type(:file) do
   let(:catalog) { Puppet::Resource::Catalog.new }
 
   before do
-    Puppet.features.stubs("posix?").returns(true)
+    allow(Puppet.features).to receive("posix?").and_return(true)
   end
 
   describe "the path parameter" do
@@ -211,8 +210,8 @@ describe Puppet::Type.type(:file) do
 
     it "should return the default filebucket if using the 'puppet' filebucket" do
       file[:backup] = 'puppet'
-      bucket = stub('bucket')
-      file.stubs(:default_bucket).returns bucket
+      bucket = double('bucket')
+      allow(file).to receive(:default_bucket).and_return(bucket)
 
       expect(file.bucket).to eq(bucket)
     end
@@ -243,19 +242,19 @@ describe Puppet::Type.type(:file) do
     before :each do
       # Mocha won't let me just stub SUIDManager.asuser to yield and return,
       # but it will do exactly that if we're not root.
-      Puppet::Util::SUIDManager.stubs(:root?).returns false
+      allow(Puppet::Util::SUIDManager).to receive(:root?).and_return(false)
     end
 
     it "should return the desired owner if they can write to the parent directory" do
       file[:owner] = 1001
-      FileTest.stubs(:writable?).with(File.dirname file[:path]).returns true
+      allow(FileTest).to receive(:writable?).with(File.dirname file[:path]).and_return(true)
 
       expect(file.asuser).to eq(1001)
     end
 
     it "should return nil if the desired owner can't write to the parent directory" do
       file[:owner] = 1001
-      FileTest.stubs(:writable?).with(File.dirname file[:path]).returns false
+      allow(FileTest).to receive(:writable?).with(File.dirname file[:path]).and_return(false)
 
       expect(file.asuser).to eq(nil)
     end
@@ -267,25 +266,25 @@ describe Puppet::Type.type(:file) do
 
   describe "#exist?" do
     it "should be considered existent if it can be stat'ed" do
-      file.expects(:stat).returns mock('stat')
+      expect(file).to receive(:stat).and_return(double('stat'))
       expect(file).to be_exist
     end
 
     it "should be considered nonexistent if it can not be stat'ed" do
-      file.expects(:stat).returns nil
+      expect(file).to receive(:stat).and_return(nil)
       expect(file).to_not be_exist
     end
   end
 
   describe "#eval_generate" do
     before do
-      @graph = stub 'graph', :add_edge => nil
-      catalog.stubs(:relationship_graph).returns @graph
+      @graph = double('graph', :add_edge => nil)
+      allow(catalog).to receive(:relationship_graph).and_return(@graph)
     end
 
     it "should recurse if recursion is enabled" do
-      resource = stub('resource', :[] => 'resource')
-      file.expects(:recurse).returns [resource]
+      resource = double('resource', :[] => 'resource')
+      expect(file).to receive(:recurse).and_return([resource])
 
       file[:recurse] = true
 
@@ -293,7 +292,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should not recurse if recursion is disabled" do
-      file.expects(:recurse).never
+      expect(file).not_to receive(:recurse)
 
       file[:recurse] = false
 
@@ -319,7 +318,7 @@ describe Puppet::Type.type(:file) do
   describe "#flush" do
     it "should flush all properties that respond to :flush" do
       file[:source] = File.expand_path(__FILE__)
-      file.parameter(:source).expects(:flush)
+      expect(file.parameter(:source)).to receive(:flush)
       file.flush
     end
 
@@ -447,12 +446,14 @@ describe Puppet::Type.type(:file) do
     it "should not copy values to the child which were set by the source" do
       source = File.expand_path(__FILE__)
       file[:source] = source
-      metadata = stub 'metadata', :owner => "root", :group => "root", :mode => '0755', :ftype => "file", :checksum => "{md5}whatever", :checksum_type => "md5", :source => source
-      file.parameter(:source).stubs(:metadata).returns metadata
+      metadata = double('metadata', :owner => "root", :group => "root", :mode => '0755', :ftype => "file", :checksum => "{md5}whatever", :checksum_type => "md5", :source => source)
+      allow(file.parameter(:source)).to receive(:metadata).and_return(metadata)
 
       file.parameter(:source).copy_source_values
 
-      file.class.expects(:new).with { |params| params[:group].nil? }
+      expect(file.class).to receive(:new) do |arg|
+        expect(arg[:group]).to be_nil
+      end
       file.newchild("my/path")
     end
   end
@@ -484,8 +485,8 @@ describe Puppet::Type.type(:file) do
     describe "and a source is set" do
       it "should pass the already-discovered resources to recurse_remote" do
         file[:source] = File.expand_path(__FILE__)
-        file.stubs(:recurse_local).returns(:foo => "bar")
-        file.expects(:recurse_remote).with(:foo => "bar").returns []
+        allow(file).to receive(:recurse_local).and_return(:foo => "bar")
+        expect(file).to receive(:recurse_remote).with(:foo => "bar").and_return([])
         file.recurse
       end
     end
@@ -493,28 +494,28 @@ describe Puppet::Type.type(:file) do
     describe "and a target is set" do
       it "should use recurse_link" do
         file[:target] = File.expand_path(__FILE__)
-        file.stubs(:recurse_local).returns(:foo => "bar")
-        file.expects(:recurse_link).with(:foo => "bar").returns []
+        allow(file).to receive(:recurse_local).and_return(:foo => "bar")
+        expect(file).to receive(:recurse_link).with(:foo => "bar").and_return([])
         file.recurse
       end
     end
 
     it "should use recurse_local if recurse is not remote" do
-      file.expects(:recurse_local).returns({})
+      expect(file).to receive(:recurse_local).and_return({})
       file.recurse
     end
 
     it "should not use recurse_local if recurse is remote" do
       file[:recurse] = :remote
-      file.expects(:recurse_local).never
+      expect(file).not_to receive(:recurse_local)
       file.recurse
     end
 
     it "should return the generated resources as an array sorted by file path" do
-      one = stub 'one', :[] => "/one"
-      two = stub 'two', :[] => "/one/two"
-      three = stub 'three', :[] => "/three"
-      file.expects(:recurse_local).returns(:one => one, :two => two, :three => three)
+      one = double('one', :[] => "/one")
+      two = double('two', :[] => "/one/two")
+      three = double('three', :[] => "/three")
+      expect(file).to receive(:recurse_local).and_return(:one => one, :two => two, :three => three)
       expect(file.recurse).to eq([one, two, three])
     end
 
@@ -525,19 +526,20 @@ describe Puppet::Type.type(:file) do
 
       it "should mark each file for removal" do
         local = described_class.new(:path => path, :ensure => :present)
-        file.expects(:recurse_local).returns("local" => local)
+        expect(file).to receive(:recurse_local).and_return("local" => local)
 
         file.recurse
         expect(local[:ensure]).to eq(:absent)
       end
 
       it "should not remove files that exist in the remote repository" do
+        pending("FIXME: This test has been broken since it was introduced in c189b46e3f1 because of = vs ==")
         file[:source] = File.expand_path(__FILE__)
-        file.expects(:recurse_local).returns({})
+        expect(file).to receive(:recurse_local).and_return({})
 
         remote = described_class.new(:path => path, :source => File.expand_path(__FILE__), :ensure => :present)
 
-        file.expects(:recurse_remote).with { |hash| hash["remote"] = remote }
+        expect(file).to receive(:recurse_remote).with(hash_including("remote" => remote))
 
         file.recurse
 
@@ -580,42 +582,42 @@ describe Puppet::Type.type(:file) do
 
   describe "#recurse_link" do
     before do
-      @first = stub 'first', :relative_path => "first", :full_path => "/my/first", :ftype => "directory"
-      @second = stub 'second', :relative_path => "second", :full_path => "/my/second", :ftype => "file"
+      @first = double('first', :relative_path => "first", :full_path => "/my/first", :ftype => "directory")
+      @second = double('second', :relative_path => "second", :full_path => "/my/second", :ftype => "file")
 
-      @resource = stub 'file', :[]= => nil
+      @resource = double('file', :[]= => nil)
     end
 
     it "should pass its target to the :perform_recursion method" do
       file[:target] = "mylinks"
-      file.expects(:perform_recursion).with("mylinks").returns [@first]
-      file.stubs(:newchild).returns @resource
+      expect(file).to receive(:perform_recursion).with("mylinks").and_return([@first])
+      allow(file).to receive(:newchild).and_return(@resource)
       file.recurse_link({})
     end
 
     it "should ignore the recursively-found '.' file and configure the top-level file to create a directory" do
-      @first.stubs(:relative_path).returns "."
+      allow(@first).to receive(:relative_path).and_return(".")
       file[:target] = "mylinks"
-      file.expects(:perform_recursion).with("mylinks").returns [@first]
-      file.stubs(:newchild).never
-      file.expects(:[]=).with(:ensure, :directory)
+      expect(file).to receive(:perform_recursion).with("mylinks").and_return([@first])
+      expect(file).not_to receive(:newchild)
+      expect(file).to receive(:[]=).with(:ensure, :directory)
       file.recurse_link({})
     end
 
     it "should create a new child resource for each generated metadata instance's relative path that doesn't already exist in the children hash" do
-      file.expects(:perform_recursion).returns [@first, @second]
-      file.expects(:newchild).with(@first.relative_path).returns @resource
+      expect(file).to receive(:perform_recursion).and_return([@first, @second])
+      expect(file).to receive(:newchild).with(@first.relative_path).and_return(@resource)
       file.recurse_link("second" => @resource)
     end
 
     it "should not create a new child resource for paths that already exist in the children hash" do
-      file.expects(:perform_recursion).returns [@first]
-      file.expects(:newchild).never
+      expect(file).to receive(:perform_recursion).and_return([@first])
+      expect(file).not_to receive(:newchild)
       file.recurse_link("first" => @resource)
     end
 
     it "should set the target to the full path of discovered file and set :ensure to :link if the file is not a directory", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
-      file.stubs(:perform_recursion).returns [@first, @second]
+      allow(file).to receive(:perform_recursion).and_return([@first, @second])
       file.recurse_link("first" => @resource, "second" => file)
 
       expect(file[:ensure]).to eq(:link)
@@ -623,59 +625,59 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should :ensure to :directory if the file is a directory" do
-      file.stubs(:perform_recursion).returns [@first, @second]
+      allow(file).to receive(:perform_recursion).and_return([@first, @second])
       file.recurse_link("first" => file, "second" => @resource)
 
       expect(file[:ensure]).to eq(:directory)
     end
 
     it "should return a hash with both created and existing resources with the relative paths as the hash keys" do
-      file.expects(:perform_recursion).returns [@first, @second]
-      file.stubs(:newchild).returns file
+      expect(file).to receive(:perform_recursion).and_return([@first, @second])
+      allow(file).to receive(:newchild).and_return(file)
       expect(file.recurse_link("second" => @resource)).to eq({"second" => @resource, "first" => file})
     end
   end
 
   describe "#recurse_local" do
     before do
-      @metadata = stub 'metadata', :relative_path => "my/file"
+      @metadata = double('metadata', :relative_path => "my/file")
     end
 
     it "should pass its path to the :perform_recursion method" do
-      file.expects(:perform_recursion).with(file[:path]).returns [@metadata]
-      file.stubs(:newchild)
+      expect(file).to receive(:perform_recursion).with(file[:path]).and_return([@metadata])
+      allow(file).to receive(:newchild)
       file.recurse_local
     end
 
     it "should return an empty hash if the recursion returns nothing" do
-      file.expects(:perform_recursion).returns nil
+      expect(file).to receive(:perform_recursion).and_return(nil)
       expect(file.recurse_local).to eq({})
     end
 
     it "should create a new child resource with each generated metadata instance's relative path" do
-      file.expects(:perform_recursion).returns [@metadata]
-      file.expects(:newchild).with(@metadata.relative_path).returns "fiebar"
+      expect(file).to receive(:perform_recursion).and_return([@metadata])
+      expect(file).to receive(:newchild).with(@metadata.relative_path).and_return("fiebar")
       file.recurse_local
     end
 
     it "should not create a new child resource for the '.' directory" do
-      @metadata.stubs(:relative_path).returns "."
+      allow(@metadata).to receive(:relative_path).and_return(".")
 
-      file.expects(:perform_recursion).returns [@metadata]
-      file.expects(:newchild).never
+      expect(file).to receive(:perform_recursion).and_return([@metadata])
+      expect(file).not_to receive(:newchild)
       file.recurse_local
     end
 
     it "should return a hash of the created resources with the relative paths as the hash keys" do
-      file.expects(:perform_recursion).returns [@metadata]
-      file.expects(:newchild).with("my/file").returns "fiebar"
+      expect(file).to receive(:perform_recursion).and_return([@metadata])
+      expect(file).to receive(:newchild).with("my/file").and_return("fiebar")
       expect(file.recurse_local).to eq({"my/file" => "fiebar"})
     end
 
     it "should set checksum_type to none if this file checksum is none" do
       file[:checksum] = :none
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |path,params| params[:checksum_type] == :none }.returns [@metadata]
-      file.expects(:newchild).with("my/file").returns "fiebar"
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(anything, hash_including(checksum_type: :none)).and_return([@metadata])
+      expect(file).to receive(:newchild).with("my/file").and_return("fiebar")
       file.recurse_local
     end
   end
@@ -688,94 +690,94 @@ describe Puppet::Type.type(:file) do
 
       @first = Puppet::FileServing::Metadata.new(my, :relative_path => "first")
       @second = Puppet::FileServing::Metadata.new(my, :relative_path => "second")
-      @first.stubs(:ftype).returns "directory"
-      @second.stubs(:ftype).returns "directory"
+      allow(@first).to receive(:ftype).and_return("directory")
+      allow(@second).to receive(:ftype).and_return("directory")
 
-      @parameter = stub 'property', :metadata= => nil
-      @resource = stub 'file', :[]= => nil, :parameter => @parameter
+      @parameter = double('property', :metadata= => nil)
+      @resource = double('file', :[]= => nil, :parameter => @parameter)
     end
 
     it "should pass its source to the :perform_recursion method" do
       data = Puppet::FileServing::Metadata.new(File.expand_path("/whatever"), :relative_path => "foobar")
-      file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
-      file.stubs(:newchild).returns @resource
+      expect(file).to receive(:perform_recursion).with("puppet://foo/bar").and_return([data])
+      allow(file).to receive(:newchild).and_return(@resource)
       file.recurse_remote({})
     end
 
     it "should not recurse when the remote file is not a directory" do
       data = Puppet::FileServing::Metadata.new(File.expand_path("/whatever"), :relative_path => ".")
-      data.stubs(:ftype).returns "file"
-      file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
-      file.expects(:newchild).never
+      allow(data).to receive(:ftype).and_return("file")
+      expect(file).to receive(:perform_recursion).with("puppet://foo/bar").and_return([data])
+      expect(file).not_to receive(:newchild)
       file.recurse_remote({})
     end
 
     it "should set the source of each returned file to the searched-for URI plus the found relative path" do
-      @first.expects(:source=).with File.join("puppet://foo/bar", @first.relative_path)
-      file.expects(:perform_recursion).returns [@first]
-      file.stubs(:newchild).returns @resource
+      expect(@first).to receive(:source=).with(File.join("puppet://foo/bar", @first.relative_path))
+      expect(file).to receive(:perform_recursion).and_return([@first])
+      allow(file).to receive(:newchild).and_return(@resource)
       file.recurse_remote({})
     end
 
     it "should create a new resource for any relative file paths that do not already have a resource" do
-      file.stubs(:perform_recursion).returns [@first]
-      file.expects(:newchild).with("first").returns @resource
+      allow(file).to receive(:perform_recursion).and_return([@first])
+      expect(file).to receive(:newchild).with("first").and_return(@resource)
       expect(file.recurse_remote({})).to eq({"first" => @resource})
     end
 
     it "should not create a new resource for any relative file paths that do already have a resource" do
-      file.stubs(:perform_recursion).returns [@first]
-      file.expects(:newchild).never
+      allow(file).to receive(:perform_recursion).and_return([@first])
+      expect(file).not_to receive(:newchild)
       file.recurse_remote("first" => @resource)
     end
 
     it "should set the source of each resource to the source of the metadata" do
-      file.stubs(:perform_recursion).returns [@first]
-      @resource.stubs(:[]=)
-      @resource.expects(:[]=).with(:source, File.join("puppet://foo/bar", @first.relative_path))
+      allow(file).to receive(:perform_recursion).and_return([@first])
+      allow(@resource).to receive(:[]=)
+      expect(@resource).to receive(:[]=).with(:source, File.join("puppet://foo/bar", @first.relative_path))
       file.recurse_remote("first" => @resource)
     end
 
     it "should set the checksum parameter based on the metadata" do
-      file.stubs(:perform_recursion).returns [@first]
-      @resource.stubs(:[]=)
-      @resource.expects(:[]=).with(:checksum, "md5")
+      allow(file).to receive(:perform_recursion).and_return([@first])
+      allow(@resource).to receive(:[]=)
+      expect(@resource).to receive(:[]=).with(:checksum, "md5")
       file.recurse_remote("first" => @resource)
     end
 
     it "should store the metadata in the source property for each resource so the source does not have to requery the metadata" do
-      file.stubs(:perform_recursion).returns [@first]
-      @resource.expects(:parameter).with(:source).returns @parameter
+      allow(file).to receive(:perform_recursion).and_return([@first])
+      expect(@resource).to receive(:parameter).with(:source).and_return(@parameter)
 
-      @parameter.expects(:metadata=).with(@first)
+      expect(@parameter).to receive(:metadata=).with(@first)
 
       file.recurse_remote("first" => @resource)
     end
 
     it "should not create a new resource for the '.' file" do
-      @first.stubs(:relative_path).returns "."
-      file.stubs(:perform_recursion).returns [@first]
+      allow(@first).to receive(:relative_path).and_return(".")
+      allow(file).to receive(:perform_recursion).and_return([@first])
 
-      file.expects(:newchild).never
+      expect(file).not_to receive(:newchild)
 
       file.recurse_remote({})
     end
 
     it "should store the metadata in the main file's source property if the relative path is '.'" do
-      @first.stubs(:relative_path).returns "."
-      file.stubs(:perform_recursion).returns [@first]
+      allow(@first).to receive(:relative_path).and_return(".")
+      allow(file).to receive(:perform_recursion).and_return([@first])
 
-      file.parameter(:source).expects(:metadata=).with @first
+      expect(file.parameter(:source)).to receive(:metadata=).with(@first)
 
       file.recurse_remote("first" => @resource)
     end
 
     it "should update the main file's checksum parameter if the relative path is '.'" do
-      @first.stubs(:relative_path).returns "."
-      file.stubs(:perform_recursion).returns [@first]
+      allow(@first).to receive(:relative_path).and_return(".")
+      allow(file).to receive(:perform_recursion).and_return([@first])
 
-      file.stubs(:[]=)
-      file.expects(:[]=).with(:checksum, "md5")
+      allow(file).to receive(:[]=)
+      expect(file). to receive(:[]=).with(:checksum, "md5")
 
       file.recurse_remote("first" => @resource)
     end
@@ -793,11 +795,11 @@ describe Puppet::Type.type(:file) do
         it "should create file instances for the results for the first source to return any values" do
           data = Puppet::FileServing::Metadata.new(File.expand_path("/whatever"), :relative_path => "foobar")
           file[:source] = sources.keys.sort.map { |key| File.expand_path(key) }
-          file.expects(:perform_recursion).with(sources['/a']).returns nil
-          file.expects(:perform_recursion).with(sources['/b']).returns []
-          file.expects(:perform_recursion).with(sources['/c']).returns [data]
-          file.expects(:perform_recursion).with(sources['/d']).never
-          file.expects(:newchild).with("foobar").returns @resource
+          expect(file).to receive(:perform_recursion).with(sources['/a']).and_return(nil)
+          expect(file).to receive(:perform_recursion).with(sources['/b']).and_return([])
+          expect(file).to receive(:perform_recursion).with(sources['/c']).and_return([data])
+          expect(file).not_to receive(:perform_recursion).with(sources['/d'])
+          expect(file).to receive(:newchild).with("foobar").and_return(@resource)
           file.recurse_remote({})
         end
       end
@@ -811,21 +813,20 @@ describe Puppet::Type.type(:file) do
           klass = Puppet::FileServing::Metadata
 
           file[:source] = abs_path = %w{/a /b /c /d}.map {|f| File.expand_path(f) }
-          file.stubs(:newchild).returns @resource
+          allow(file).to receive(:newchild).and_return(@resource)
 
           one = [klass.new(abs_path[0], :relative_path => "a")]
-          file.expects(:perform_recursion).with(sources['/a']).returns one
-          file.expects(:newchild).with("a").returns @resource
+          expect(file).to receive(:perform_recursion).with(sources['/a']).and_return(one)
+          expect(file).to receive(:newchild).with("a").and_return(@resource)
 
           two = [klass.new(abs_path[1], :relative_path => "a"), klass.new(abs_path[1], :relative_path => "b")]
-          file.expects(:perform_recursion).with(sources['/b']).returns two
-          file.expects(:newchild).with("b").returns @resource
+          expect(file).to receive(:perform_recursion).with(sources['/b']).and_return(two)
+          expect(file).to receive(:newchild).with("b").and_return(@resource)
 
           three = [klass.new(abs_path[2], :relative_path => "a"), klass.new(abs_path[2], :relative_path => "c")]
-          file.expects(:perform_recursion).with(sources['/c']).returns three
-          file.expects(:newchild).with("c").returns @resource
-
-          file.expects(:perform_recursion).with(sources['/d']).returns []
+          expect(file).to receive(:perform_recursion).with(sources['/c']).and_return(three)
+          expect(file).to receive(:newchild).with("c").and_return(@resource)
+          expect(file).to receive(:perform_recursion).with(sources['/d']).and_return([])
 
           file.recurse_remote({})
         end
@@ -835,54 +836,54 @@ describe Puppet::Type.type(:file) do
 
   describe "#perform_recursion", :uses_checksums => true do
     it "should use Metadata to do its recursion" do
-      Puppet::FileServing::Metadata.indirection.expects(:search)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:search)
       file.perform_recursion(file[:path])
     end
 
     it "should use the provided path as the key to the search" do
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| key == "/foo" }
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with("/foo", anything)
       file.perform_recursion("/foo")
     end
 
     it "should return the results of the metadata search" do
-      Puppet::FileServing::Metadata.indirection.expects(:search).returns "foobar"
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:search).and_return("foobar")
       expect(file.perform_recursion(file[:path])).to eq("foobar")
     end
 
     it "should pass its recursion value to the search" do
       file[:recurse] = true
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:recurse] == true }
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(anything, hash_including(recurse: true))
       file.perform_recursion(file[:path])
     end
 
     it "should pass true if recursion is remote" do
       file[:recurse] = :remote
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:recurse] == true }
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(anything, hash_including(recurse: true))
       file.perform_recursion(file[:path])
     end
 
     it "should pass its recursion limit value to the search" do
       file[:recurselimit] = 10
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:recurselimit] == 10 }
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(anything, hash_including(recurselimit: 10))
       file.perform_recursion(file[:path])
     end
 
     it "should configure the search to ignore or manage links" do
       file[:links] = :manage
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:links] == :manage }
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(anything, hash_including(links: :manage))
       file.perform_recursion(file[:path])
     end
 
     it "should pass its 'ignore' setting to the search if it has one" do
       file[:ignore] = %w{.svn CVS}
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:ignore] == %w{.svn CVS} }
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(anything, hash_including(ignore: %w{.svn CVS}))
       file.perform_recursion(file[:path])
     end
 
     with_digest_algorithms do
       it "it should pass its 'checksum' setting #{metadata[:digest_algorithm]} to the search" do
         file[:source] = File.expand_path('/foo')
-        Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:checksum_type] == digest_algorithm.intern }
+        expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(anything, hash_including(checksum_type: digest_algorithm.intern))
         file.perform_recursion(file[:path])
       end
     end
@@ -895,8 +896,8 @@ describe Puppet::Type.type(:file) do
 
     it "should fail if it can't backup the file" do
       # Default: file[:backup] = true
-      file.stubs(:stat).returns stub('stat', :ftype => 'file')
-      file.stubs(:perform_backup).returns false
+      allow(file).to receive(:stat).and_return(double('stat', :ftype => 'file'))
+      allow(file).to receive(:perform_backup).and_return(false)
 
       expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up; will not remove/)
     end
@@ -905,27 +906,27 @@ describe Puppet::Type.type(:file) do
       it "should not backup directories if backup is true and force is false" do
         # Default: file[:backup] = true
         file[:force] = false
-        file.stubs(:stat).returns stub('stat', :ftype => 'directory')
+        allow(file).to receive(:stat).and_return(double('stat', :ftype => 'directory'))
 
-        file.expects(:perform_backup).never
-        file.expects(:warning).with("Could not back up file of type directory")
+        expect(file).not_to receive(:perform_backup)
+        expect(file).to receive(:warning).with("Could not back up file of type directory")
         expect(file.remove_existing(:file)).to eq(false)
       end
 
       it "should backup directories if backup is true and force is true" do
         # Default: file[:backup] = true
         file[:force] = true
-        file.stubs(:stat).returns stub('stat', :ftype => 'directory')
+        allow(file).to receive(:stat).and_return(double('stat', :ftype => 'directory'))
 
-        FileUtils.expects(:rmtree).with(file[:path])
-        file.expects(:perform_backup).returns(true)
+        expect(FileUtils).to receive(:rmtree).with(file[:path])
+        expect(file).to receive(:perform_backup).and_return(true)
 
         expect(file.remove_existing(:file)).to eq(true)
       end
     end
 
     it "should not do anything if the file is already the right type and not a link" do
-      file.stubs(:stat).returns stub('stat', :ftype => 'file')
+      allow(file).to receive(:stat).and_return(double('stat', :ftype => 'file'))
 
       expect(file.remove_existing(:file)).to eq(false)
     end
@@ -934,7 +935,7 @@ describe Puppet::Type.type(:file) do
       file[:force] = false
       # Actually call stat to set @needs_stat to nil
       file.stat
-      file.stubs(:stat).returns stub('stat', :ftype => 'directory')
+      allow(file).to receive(:stat).and_return(double('stat', :ftype => 'directory'))
 
       expect(file.instance_variable_get(:@stat)).to eq(nil)
     end
@@ -942,15 +943,15 @@ describe Puppet::Type.type(:file) do
     it "should remove a directory if backup is true and force is true" do
       # Default: file[:backup] = true
       file[:force] = true
-      file.stubs(:stat).returns stub('stat', :ftype => 'directory')
+      allow(file).to receive(:stat).and_return(double('stat', :ftype => 'directory'))
 
-      FileUtils.expects(:rmtree).with(file[:path])
+      expect(FileUtils).to receive(:rmtree).with(file[:path])
 
       expect(file.remove_existing(:file)).to eq(true)
     end
 
     it "should remove an existing file" do
-      file.stubs(:perform_backup).returns true
+      allow(file).to receive(:perform_backup).and_return(true)
       FileUtils.touch(path)
 
       expect(file.remove_existing(:directory)).to eq(true)
@@ -959,7 +960,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should remove an existing link", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
-      file.stubs(:perform_backup).returns true
+      allow(file).to receive(:perform_backup).and_return(true)
 
       target = tmpfile('link_target')
       FileUtils.touch(target)
@@ -972,18 +973,18 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should fail if the file is not a directory, link, file, fifo, socket, or is unknown" do
-      file.stubs(:stat).returns stub('stat', :ftype => 'blockSpecial')
+      allow(file).to receive(:stat).and_return(double('stat', :ftype => 'blockSpecial'))
 
-      file.expects(:warning).with("Could not back up file of type blockSpecial")
+      expect(file).to receive(:warning).with("Could not back up file of type blockSpecial")
       expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not remove files of type blockSpecial/)
     end
 
     it "should invalidate the existing stat of the file" do
       # Actually call stat to set @needs_stat to nil
       file.stat
-      file.stubs(:stat).returns stub('stat', :ftype => 'file')
+      allow(file).to receive(:stat).and_return(double('stat', :ftype => 'file'))
 
-      Puppet::FileSystem.stubs(:unlink)
+      allow(Puppet::FileSystem).to receive(:unlink)
 
       expect(file.remove_existing(:directory)).to eq(true)
       expect(file.instance_variable_get(:@stat)).to eq(:needs_stat)
@@ -993,7 +994,7 @@ describe Puppet::Type.type(:file) do
   describe "#retrieve" do
     it "should copy the source values if the 'source' parameter is set" do
       file[:source] = File.expand_path('/foo/bar')
-      file.parameter(:source).expects(:copy_source_values)
+      expect(file.parameter(:source)).to receive(:copy_source_values)
       file.retrieve
     end
   end
@@ -1009,7 +1010,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should be a file if :ensure is set to :present and the file exists as a normal file" do
-      file.stubs(:stat).returns(mock('stat', :ftype => "file"))
+      allow(file).to receive(:stat).and_return(double('stat', :ftype => "file"))
       file[:ensure] = :present
       expect(file).to be_should_be_file
     end
@@ -1020,7 +1021,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should not be a file if :ensure is set to :present and the file exists but is not a normal file" do
-      file.stubs(:stat).returns(mock('stat', :ftype => "directory"))
+      allow(file).to receive(:stat).and_return(double('stat', :ftype => "directory"))
       file[:ensure] = :present
       expect(file).to_not be_should_be_file
     end
@@ -1031,12 +1032,12 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should be a file if neither :ensure nor :content is set but the file exists as a normal file" do
-      file.stubs(:stat).returns(mock("stat", :ftype => "file"))
+      allow(file).to receive(:stat).and_return(double("stat", :ftype => "file"))
       expect(file).to be_should_be_file
     end
 
     it "should not be a file if neither :ensure nor :content is set but the file exists but not as a normal file" do
-      file.stubs(:stat).returns(mock("stat", :ftype => "directory"))
+      allow(file).to receive(:stat).and_return(double("stat", :ftype => "directory"))
       expect(file).to_not be_should_be_file
     end
   end
@@ -1103,73 +1104,80 @@ describe Puppet::Type.type(:file) do
 
   describe "#write" do
     describe "when validating the checksum" do
-      before { file.stubs(:validate_checksum?).returns(true) }
+      before { allow(file).to receive(:validate_checksum?).and_return(true) }
 
       it "should fail if the checksum parameter and content checksums do not match" do
-        checksum = stub('checksum_parameter',  :sum => 'checksum_b', :sum_file => 'checksum_b')
-        file.stubs(:parameter).with(:checksum).returns(checksum)
-        file.stubs(:parameter).with(:source).returns(nil)
+        checksum = double('checksum_parameter',  :sum => 'checksum_b', :sum_file => 'checksum_b')
+        allow(file).to receive(:parameter).with(:checksum).and_return(checksum)
+        allow(file).to receive(:parameter).with(:source).and_return(nil)
 
 
-        property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
-        file.stubs(:property).with(:content).returns(property)
+        property = double('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
+        allow(file).to receive(:property).with(:content).and_return(property)
 
-        expect { file.write property }.to raise_error(Puppet::Error)
-      end
+        expect { file.write property }.to raise_error(Puppet::Error) end
     end
 
     describe "when not validating the checksum" do
-      before { file.stubs(:validate_checksum?).returns(false) }
+      before do
+        allow(file).to receive(:validate_checksum?).and_return(false)
+      end
 
       it "should not fail if the checksum property and content checksums do not match" do
-        checksum = stub('checksum_parameter',  :sum => 'checksum_b')
-        file.stubs(:parameter).with(:checksum).returns(checksum)
-        file.stubs(:parameter).with(:source).returns(nil)
+        checksum = double('checksum_parameter',  :sum => 'checksum_b')
+        allow(file).to receive(:parameter).with(:checksum).and_return(checksum)
+        allow(file).to receive(:parameter).with(:source).and_return(nil)
 
-        property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
-        file.stubs(:property).with(:content).returns(property)
+        property = double('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
+        allow(file).to receive(:property).with(:content).and_return(property)
 
         expect { file.write property }.to_not raise_error
       end
     end
 
     describe "when resource mode is supplied" do
-      before { file.stubs(:property_fix) }
+      before do
+        allow(file).to receive(:property_fix)
+      end
 
       context "and writing temporary files" do
-        before { file.stubs(:write_temporary_file?).returns(true) }
+        before do
+          allow(file).to receive(:write_temporary_file?).and_return(true)
+        end
 
         it "should convert symbolic mode to int" do
           file[:mode] = 'oga=r'
-          Puppet::Util.expects(:replace_file).with(file[:path], 0444, nil)
+          expect(Puppet::Util).to receive(:replace_file).with(file[:path], 0444, nil)
           file.write
         end
 
         it "should support int modes" do
           file[:mode] = '0444'
-          Puppet::Util.expects(:replace_file).with(file[:path], 0444, nil)
+          expect(Puppet::Util).to receive(:replace_file).with(file[:path], 0444, nil)
           file.write
         end
       end
 
       context "and not writing temporary files" do
-        before { file.stubs(:write_temporary_file?).returns(false) }
+        before do
+          allow(file).to receive(:write_temporary_file?).and_return(false)
+        end
 
         it "should set a umask of 0" do
           file[:mode] = 'oga=r'
-          Puppet::Util.expects(:withumask).with(0)
+          expect(Puppet::Util).to receive(:withumask).with(0)
           file.write
         end
 
         it "should convert symbolic mode to int" do
           file[:mode] = 'oga=r'
-          File.expects(:open).with(file[:path], anything, 0444)
+          expect(File).to receive(:open).with(file[:path], anything, 0444)
           file.write
         end
 
         it "should support int modes" do
           file[:mode] = '0444'
-          File.expects(:open).with(file[:path], anything, 0444)
+          expect(File).to receive(:open).with(file[:path], anything, 0444)
           file.write
         end
       end
@@ -1204,8 +1212,8 @@ describe Puppet::Type.type(:file) do
   describe "#fail_if_checksum_is_wrong" do
     it "should fail if the checksum of the file doesn't match the expected one" do
       expect do
+        allow(file.parameter(:checksum)).to receive(:sum_file).and_return('wrong!!')
         file.instance_eval do
-          parameter(:checksum).stubs(:sum_file).returns('wrong!!')
           fail_if_checksum_is_wrong(self[:path], 'anything!')
         end
       end.to raise_error(Puppet::Error, /File written to disk did not match checksum/)
@@ -1213,8 +1221,8 @@ describe Puppet::Type.type(:file) do
 
     it "should not fail if the checksum is correct" do
       expect do
+        allow(file.parameter(:checksum)).to receive(:sum_file).and_return('anything!')
         file.instance_eval do
-          parameter(:checksum).stubs(:sum_file).returns('anything!')
           fail_if_checksum_is_wrong(self[:path], 'anything!')
         end
       end.not_to raise_error
@@ -1222,8 +1230,8 @@ describe Puppet::Type.type(:file) do
 
     it "should not fail if the checksum is absent" do
       expect do
+        allow(file.parameter(:checksum)).to receive(:sum_file).and_return(nil)
         file.instance_eval do
-          parameter(:checksum).stubs(:sum_file).returns(nil)
           fail_if_checksum_is_wrong(self[:path], 'anything!')
         end
       end.not_to raise_error
@@ -1271,9 +1279,9 @@ describe Puppet::Type.type(:file) do
         file[name] = value
 
         prop = file.property(name)
-        prop.expects(:retrieve)
-        prop.expects(:safe_insync?).returns false
-        prop.expects(:sync)
+        expect(prop).to receive(:retrieve)
+        expect(prop).to receive(:safe_insync?).and_return(false)
+        expect(prop).to receive(:sync)
 
         file.send(:property_fix)
       end
@@ -1407,7 +1415,7 @@ describe Puppet::Type.type(:file) do
       catalog.add_resource @link_resource
 
       # to prevent the catalog from trying to write state.yaml
-      Puppet::Util::Storage.stubs(:store)
+      allow(Puppet::Util::Storage).to receive(:store)
     end
 
     it "should preserve the original file mode and ignore the one set by the link" do
@@ -1444,15 +1452,19 @@ describe Puppet::Type.type(:file) do
       file[:source] = source
 
       # intercept the indirector call to provide back mocked metadata for the given URI
-      metadata = stub 'metadata', :source => source
-      metadata.expects(:source=)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with do |path, opts|
-        path == source
-      end.returns metadata
+      metadata = double('metadata', :source => source)
+      expect(metadata).to receive(:source=)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       uri = file.parameters[:source].uri
       expect(URI.unescape(uri.path)).to eq(filename)
       expect(uri.path.encoding).to eq(Encoding::UTF_8)
+    end
+
+    matcher :request_key do |expected|
+      match do |actual|
+        values_match? expected, actual.key
+      end
     end
 
     it 'should allow UTF-8 characters inside the indirector / terminus code' do
@@ -1463,12 +1475,10 @@ describe Puppet::Type.type(:file) do
       # for this test to properly trigger previously errant behavior, the code for
       # Puppet::FileServing::Metadata.indirection.find must run and produce an
       # instance of Puppet::Indirector::FileMetadata::Rest that can be amended
-      metadata = stub 'metadata', :source => source
-      metadata.expects(:source=)
+      metadata = double('metadata', :source => source)
+      expect(metadata).to receive(:source=)
       require 'puppet/indirector/file_metadata/rest'
-      Puppet::Indirector::FileMetadata::Rest.any_instance.expects(:find).with do |req|
-        req.key == filename[1..-1]
-      end.returns(metadata)
+      expect_any_instance_of(Puppet::Indirector::FileMetadata::Rest).to receive(:find).with(request_key(filename[1..-1])).and_return(metadata)
 
       uri = file.parameters[:source].uri
       expect(URI.unescape(uri.path)).to eq(filename)
@@ -1520,7 +1530,7 @@ describe Puppet::Type.type(:file) do
 
     describe "on Windows when source_permissions is `use`" do
       before :each do
-        Puppet::Util::Platform.stubs(:windows?).returns true
+        allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
 
         file[:source_permissions] = "use"
       end
@@ -1558,8 +1568,8 @@ describe Puppet::Type.type(:file) do
         file[:group] = 2
         file[:mode] = "0003"
 
-        file.parameter(:source).expects(:copy_source_values)
-        file.expects(:warning).with(err_message)
+        expect(file.parameter(:source)).to receive(:copy_source_values)
+        expect(file).to receive(:warning).with(err_message)
         expect { file.retrieve }.not_to raise_error
       end
     end
@@ -1647,7 +1657,7 @@ describe Puppet::Type.type(:file) do
   describe "when auditing" do
     before :each do
       # to prevent the catalog from trying to write state.yaml
-      Puppet::Util::Storage.stubs(:store)
+      allow(Puppet::Util::Storage).to receive(:store)
     end
 
     it "should not fail if creating a new file if group is not set" do

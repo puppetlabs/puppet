@@ -13,12 +13,14 @@ describe "puppet module search" do
   describe Puppet::Application::Module do
     subject do
       app = Puppet::Application::Module.new
-      app.stubs(:action).returns(Puppet::Face.find_action(:module, :search))
+      allow(app).to receive(:action).and_return(Puppet::Face.find_action(:module, :search))
       app
     end
 
-    before { subject.render_as = :console }
-    before { Puppet::Util::Terminal.stubs(:width).returns(100) }
+    before do
+      subject.render_as = :console
+      allow(Puppet::Util::Terminal).to receive(:width).and_return(100)
+    end
 
     it 'should output nothing when receiving an empty dataset' do
       expect(subject.render({:answers => [], :result => :success}, ['apache', {}])).to eq("No results found for 'apache'.")
@@ -166,7 +168,7 @@ describe "puppet module search" do
           ]
         }
 
-        Puppet::Util::Terminal.expects(:width).returns(width)
+        expect(Puppet::Util::Terminal).to receive(:width).and_return(width)
         result = subject.render(results, ['apache', {}])
         expect(result.lines.sort_by(&:length).last.chomp.length).to be <= width
         expect(result).to eq(expectation)
@@ -183,13 +185,13 @@ describe "puppet module search" do
     end
 
     it "should accept the --module_repository option" do
-      forge = mock("Puppet::Forge")
-      searcher = mock("Searcher")
+      forge = double("Puppet::Forge")
+      searcher = double("Searcher")
       options[:module_repository] = "http://forge.example.com"
 
-      Puppet::Forge.expects(:new).with("http://forge.example.com").returns(forge)
-      Puppet::ModuleTool::Applications::Searcher.expects(:new).with("puppetlabs-apache", forge, has_entries(options)).returns(searcher)
-      searcher.expects(:run)
+      expect(Puppet::Forge).to receive(:new).with("http://forge.example.com").and_return(forge)
+      expect(Puppet::ModuleTool::Applications::Searcher).to receive(:new).with("puppetlabs-apache", forge, hash_including(options)).and_return(searcher)
+      expect(searcher).to receive(:run)
 
       subject.search("puppetlabs-apache", options)
     end

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "the generate function" do
@@ -14,7 +13,7 @@ describe "the generate function" do
 
   it "accept a fully-qualified path as a command" do
     command = File.expand_path('/command/foo')
-    Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
+    expect(Dir).to receive(:chdir).with(File.dirname(command)).and_return("yay")
     expect(scope.function_generate([command])).to eq("yay")
   end
 
@@ -37,32 +36,32 @@ describe "the generate function" do
 
   it "should execute the generate script with the correct working directory" do
     command = File.expand_path("/command")
-    Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
+    expect(Dir).to receive(:chdir).with(File.dirname(command)).and_return("yay")
     expect(scope.function_generate([command])).to eq('yay')
   end
 
   describe "on Windows", :if => Puppet::Util::Platform.windows? do
     it "should accept the tilde in the path" do
       command = "C:/DOCUME~1/ADMINI~1/foo.bat"
-      Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
+      expect(Dir).to receive(:chdir).with(File.dirname(command)).and_return("yay")
       expect(scope.function_generate([command])).to eq('yay')
     end
 
     it "should accept lower-case drive letters" do
       command = 'd:/command/foo'
-      Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
+      expect(Dir).to receive(:chdir).with(File.dirname(command)).and_return("yay")
       expect(scope.function_generate([command])).to eq('yay')
     end
 
     it "should accept upper-case drive letters" do
       command = 'D:/command/foo'
-      Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
+      expect(Dir).to receive(:chdir).with(File.dirname(command)).and_return("yay")
       expect(scope.function_generate([command])).to eq('yay')
     end
 
     it "should accept forward and backslashes in the path" do
       command = 'D:\command/foo\bar'
-      Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
+      expect(Dir).to receive(:chdir).with(File.dirname(command)).and_return("yay")
       expect(scope.function_generate([command])).to eq('yay')
     end
 
@@ -82,7 +81,7 @@ describe "the generate function" do
 
     it "should accept plus and dash" do
       command = "/var/folders/9z/9zXImgchH8CZJh6SgiqS2U+++TM/-Tmp-/foo"
-      Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
+      expect(Dir).to receive(:chdir).with(File.dirname(command)).and_return("yay")
       expect(scope.function_generate([command])).to eq('yay')
     end
   end

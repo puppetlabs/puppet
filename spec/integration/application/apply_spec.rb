@@ -8,7 +8,7 @@ describe "apply" do
   before :each do
     Puppet[:reports] = "none"
     # Let exceptions be raised instead of exiting
-    Puppet::Application.any_instance.stubs(:exit_on_fail).yields
+    allow_any_instance_of(Puppet::Application).to receive(:exit_on_fail).and_yield
   end
 
   describe "when applying provided catalogs" do
@@ -99,7 +99,7 @@ end
         apply.options[:catalog] = file_containing('manifest', catalog.to_json)
 
         Puppet[:environmentpath] = envdir
-        Puppet::Pops::Loader::Runtime3TypeLoader.any_instance.expects(:find).never
+        expect_any_instance_of(Puppet::Pops::Loader::Runtime3TypeLoader).not_to receive(:find)
         expect { apply.run }.to have_printed(/the Puppet::Type says hello.*applytest was here/m)
       end
 
@@ -110,8 +110,8 @@ end
         tn = Puppet::Pops::Loader::TypedName.new(:resource_type_pp, 'applytest')
         rt = Puppet::Pops::Resource::ResourceTypeImpl.new('applytest', [Puppet::Pops::Resource::Param.new(String, 'message')], [Puppet::Pops::Resource::Param.new(String, 'name', true)])
 
-        compiler.loaders.runtime3_type_loader.instance_variable_get(:@resource_3x_loader).expects(:set_entry).once.with(tn, rt, is_a(String))
-          .returns(Puppet::Pops::Loader::Loader::NamedEntry.new(tn, rt, nil))
+        expect(compiler.loaders.runtime3_type_loader.instance_variable_get(:@resource_3x_loader)).to receive(:set_entry).once.with(tn, rt, instance_of(String))
+          .and_return(Puppet::Pops::Loader::Loader::NamedEntry.new(tn, rt, nil))
         expect { compiler.compile }.not_to have_printed(/the Puppet::Type says hello/)
       end
 
@@ -165,7 +165,7 @@ end
                     'street' => String,
                     'zipcode' => String,
                     'city' => String,
-                  } 
+                  }
                 }]
               PUPPET
               'address.pp' => <<-PUPPET,
@@ -173,7 +173,7 @@ end
                   parent => Mod::StreetAddress,
                   attributes => {
                     'state' => String
-                  } 
+                  }
                 }]
               PUPPET
               'contact.pp' => <<-PUPPET,
@@ -239,7 +239,7 @@ end
     Puppet.override(:current_environment => special) do
       Puppet[:environment] = 'special'
       puppet = Puppet::Application[:apply]
-      puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
+      allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
       expect { puppet.run_command }.to exit_with(0)
     end
 
@@ -250,7 +250,7 @@ end
     manifest = file_containing("manifest.pp", "notice(\"$server_facts\")")
 
     puppet = Puppet::Application[:apply]
-    puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
+    allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
 
     expect { puppet.run_command }.to exit_with(0)
 
@@ -271,7 +271,7 @@ end
       Puppet[:node_terminus] = 'exec'
       Puppet[:external_nodes] = enc
       puppet = Puppet::Application[:apply]
-      puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
+      allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
       expect { puppet.run_command }.to exit_with(0)
     end
 
@@ -281,7 +281,7 @@ end
   context "handles errors" do
     it "logs compile errors once" do
       Puppet.initialize_settings([])
-      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => []))
+      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => []))
       apply.options[:code] = '08'
 
       msg = 'valid octal'
@@ -296,7 +296,7 @@ end
 
     it "logs compile post processing errors once" do
       Puppet.initialize_settings([])
-      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => []))
+      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => []))
       path = File.expand_path('/tmp/content_file_test.Q634Dlmtime')
       apply.options[:code] = "file { '#{path}':
         content => 'This is the test file content',
@@ -338,7 +338,7 @@ end
 
     def init_cli_args_and_apply_app(args, execute)
       Puppet.initialize_settings(args)
-      puppet = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => args))
+      puppet = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => args))
       puppet.options[:code] = execute
       return puppet
     end
@@ -476,7 +476,7 @@ class amod::bad_type {
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', catalog.to_json)
-        apply.expects(:apply_catalog).with do |cat|
+        expect(apply).to receive(:apply_catalog) do |cat|
           expect(cat.resource(:notify, 'rx')['message']).to be_a(String)
           expect(cat.resource(:notify, 'bin')['message']).to be_a(String)
           expect(cat.resource(:notify, 'ver')['message']).to be_a(String)
@@ -484,6 +484,7 @@ class amod::bad_type {
           expect(cat.resource(:notify, 'tspan')['message']).to be_a(String)
           expect(cat.resource(:notify, 'tstamp')['message']).to be_a(String)
         end
+
         apply.run
       end
 
@@ -491,9 +492,10 @@ class amod::bad_type {
         json = compile_to_catalog('include amod::bad_type', node).to_json
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', json)
-        apply.expects(:apply_catalog).with do |catalog|
+        expect(apply).to receive(:apply_catalog) do |catalog|
           expect(catalog.resource(:notify, 'bogus')['message']).to be_a(String)
         end
+
         apply.run
       end
 
@@ -516,7 +518,7 @@ class amod::bad_type {
           catalog.to_json
         end
         apply.options[:catalog] = file_containing('manifest', serialized_catalog)
-        apply.expects(:apply_catalog).with do |cat|
+        expect(apply).to receive(:apply_catalog) do |cat|
           expect(cat.resource(:notify, 'rx')['message']).to be_a(Regexp)
           # The resource return in this expect is a String, but since it was a Binary type that
           # was converted with `resolve_and_replace`, we want to make sure that the encoding
@@ -527,9 +529,9 @@ class amod::bad_type {
           expect(cat.resource(:notify, 'tspan')['message']).to be_a(Puppet::Pops::Time::Timespan)
           expect(cat.resource(:notify, 'tstamp')['message']).to be_a(Puppet::Pops::Time::Timestamp)
         end
+
         apply.run
       end
     end
-
   end
 end

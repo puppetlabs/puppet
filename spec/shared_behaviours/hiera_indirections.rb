@@ -32,7 +32,7 @@ shared_examples_for "Hiera indirection" do |test_klass, fixture_dir|
   end
 
   it "should raise an error if we don't have the hiera feature" do
-    Puppet.features.expects(:hiera?).returns(false)
+    expect(Puppet.features).to receive(:hiera?).and_return(false)
     expect { test_klass.new }.to raise_error RuntimeError,
       "Hiera terminus not supported without hiera library"
   end
@@ -50,13 +50,13 @@ shared_examples_for "Hiera indirection" do |test_klass, fixture_dir|
       end
 
       it "should log a warning" do
-        Puppet.expects(:warning).with(
+        expect(Puppet).to receive(:warning).with(
          "Config file #{path} not found, using Hiera defaults")
         test_klass.hiera_config
       end
 
       it "should only configure the logger and set it to puppet" do
-        Puppet.expects(:warning).with(
+        expect(Puppet).to receive(:warning).with(
          "Config file #{path} not found, using Hiera defaults")
         expect(test_klass.hiera_config).to eq({ :logger => 'puppet' })
       end
@@ -64,7 +64,6 @@ shared_examples_for "Hiera indirection" do |test_klass, fixture_dir|
   end
 
   describe "the behavior of the find method", :if => Puppet.features.hiera? do
-
     let(:data_binder) { test_klass.new }
 
     it "should support looking up an integer" do

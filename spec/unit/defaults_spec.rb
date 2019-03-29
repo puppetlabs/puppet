@@ -5,16 +5,19 @@ describe "Defaults" do
   describe ".default_diffargs" do
     describe "on AIX" do
       before(:each) do
-        Facter.stubs(:value).with(:kernel).returns("AIX")
+        allow(Facter).to receive(:value).with(:kernel).and_return("AIX")
       end
+
       describe "on 5.3" do
         before(:each) do
-          Facter.stubs(:value).with(:kernelmajversion).returns("5300")
+          allow(Facter).to receive(:value).with(:kernelmajversion).and_return("5300")
         end
+
         it "should be empty" do
           expect(Puppet.default_diffargs).to eq("")
         end
       end
+
       [ "",
         nil,
         "6300",
@@ -22,7 +25,7 @@ describe "Defaults" do
       ].each do |kernel_version|
         describe "on kernel version #{kernel_version.inspect}" do
           before(:each) do
-            Facter.stubs(:value).with(:kernelmajversion).returns(kernel_version)
+            allow(Facter).to receive(:value).with(:kernelmajversion).and_return(kernel_version)
           end
 
           it "should be '-u'" do
@@ -31,9 +34,10 @@ describe "Defaults" do
         end
       end
     end
+
     describe "on everything else" do
       before(:each) do
-        Facter.stubs(:value).with(:kernel).returns("NOT_AIX")
+        allow(Facter).to receive(:value).with(:kernel).and_return("NOT_AIX")
       end
 
       it "should be '-u'" do
@@ -62,24 +66,24 @@ describe "Defaults" do
 
   describe '.default_digest_algorithm' do
     it 'defaults to md5 when FIPS is not enabled' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns false
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(false)
       expect(Puppet.default_digest_algorithm).to eq('md5')
     end
 
     it 'defaults to sha256 when FIPS is enabled' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
       expect(Puppet.default_digest_algorithm).to eq('sha256')
     end
   end
 
   describe '.supported_checksum_types' do
     it 'defaults to md5, sha256, sha384, sha512, sha224 when FIPS is not enabled' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns false
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(false)
       expect(Puppet.default_file_checksum_types).to eq(%w[md5 sha256 sha384 sha512 sha224])
     end
 
     it 'defaults to sha256, sha384, sha512, sha224 when FIPS is enabled' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
       expect(Puppet.default_file_checksum_types).to eq(%w[sha256 sha384 sha512 sha224])
     end
   end
@@ -102,7 +106,7 @@ describe "Defaults" do
     end
 
     it 'raises when setting md5 in FIPS mode' do
-      Puppet::Util::Platform.stubs(:fips_enabled?).returns true
+      allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
       expect {
         Puppet.settings[:supported_checksum_types] = %w[md5]
       }.to raise_error(ArgumentError,
@@ -116,6 +120,7 @@ describe "Defaults" do
         expect(Puppet.settings[:manage_internal_file_permissions]).to be false
       end
     end
+
     describe 'on non-windows', :if => ! Puppet::Util::Platform.windows? do
       it 'should default to true' do
         expect(Puppet.settings[:manage_internal_file_permissions]).to be true
@@ -134,7 +139,7 @@ describe "Defaults" do
       let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
 
       it 'includes user and system modules' do
-        Facter.stubs(:value).with(:env_windows_installdir).returns(installdir)
+        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(installdir)
 
         expect(
           Puppet.default_basemodulepath
@@ -142,7 +147,7 @@ describe "Defaults" do
       end
 
       it 'includes user modules if installdir fact is missing' do
-        Facter.stubs(:value).with(:env_windows_installdir).returns(nil)
+        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(nil)
 
         expect(
           Puppet.default_basemodulepath
@@ -162,7 +167,7 @@ describe "Defaults" do
       let(:installdir) { 'C:\Program Files\Puppet Labs\Puppet' }
 
       it 'includes the default vendormoduledir' do
-        Facter.stubs(:value).with(:env_windows_installdir).returns(installdir)
+        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(installdir)
 
         expect(
           Puppet.default_vendormoduledir
@@ -170,7 +175,7 @@ describe "Defaults" do
       end
 
       it 'is nil if installdir fact is missing' do
-        Facter.stubs(:value).with(:env_windows_installdir).returns(nil)
+        allow(Facter).to receive(:value).with(:env_windows_installdir).and_return(nil)
 
         expect(Puppet.default_vendormoduledir).to be_nil
       end

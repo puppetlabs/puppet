@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet'
 require 'puppet_spec/files'
@@ -25,8 +24,8 @@ describe Puppet do
   end
 
   it 'should propagate --modulepath to base environment' do
-    Puppet::Node::Environment.expects(:create).with(
-      is_a(Symbol), ['/my/modules'], Puppet::Node::Environment::NO_MANIFEST)
+    expect(Puppet::Node::Environment).to receive(:create).with(
+      be_a(Symbol), ['/my/modules'], Puppet::Node::Environment::NO_MANIFEST)
 
     Puppet.base_context({
       :environmentpath => '/envs',
@@ -36,8 +35,8 @@ describe Puppet do
   end
 
   it 'empty modulepath does not override basemodulepath' do
-    Puppet::Node::Environment.expects(:create).with(
-      is_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
+    expect(Puppet::Node::Environment).to receive(:create).with(
+      be_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
 
     Puppet.base_context({
       :environmentpath => '/envs',
@@ -47,8 +46,8 @@ describe Puppet do
   end
 
   it 'nil modulepath does not override basemodulepath' do
-    Puppet::Node::Environment.expects(:create).with(
-      is_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
+    expect(Puppet::Node::Environment).to receive(:create).with(
+      be_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
 
     Puppet.base_context({
       :environmentpath => '/envs',

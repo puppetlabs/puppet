@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/exec'
@@ -41,22 +40,22 @@ describe Puppet::Indirector::Exec do
   end
 
   it "should execute the command with the object name as the only argument" do
-    terminus.expects(:execute).with([path, 'foo'], arguments)
+    expect(terminus).to receive(:execute).with([path, 'foo'], arguments)
     indirection.find('foo')
   end
 
   it "should return the output of the script" do
-    terminus.expects(:execute).with([path, 'foo'], arguments).returns("whatever")
+    expect(terminus).to receive(:execute).with([path, 'foo'], arguments).and_return("whatever")
     expect(indirection.find('foo')).to eq("whatever")
   end
 
   it "should return nil when the command produces no output" do
-    terminus.expects(:execute).with([path, 'foo'], arguments).returns(nil)
+    expect(terminus).to receive(:execute).with([path, 'foo'], arguments).and_return(nil)
     expect(indirection.find('foo')).to be_nil
   end
 
   it "should raise an exception if there's an execution failure" do
-    terminus.expects(:execute).with([path, 'foo'], arguments).raises(Puppet::ExecutionFailure.new("message"))
+    expect(terminus).to receive(:execute).with([path, 'foo'], arguments).and_raise(Puppet::ExecutionFailure.new("message"))
     expect {
       indirection.find('foo')
     }.to raise_exception(Puppet::Error, 'Failed to find foo via exec: message')

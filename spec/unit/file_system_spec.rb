@@ -362,7 +362,7 @@ describe "Puppet::FileSystem" do
     end
 
     it "should fall back to stat when trying to lstat a file" do
-      Puppet::Util::Windows::File.expects(:stat).with(Puppet::FileSystem.assert_path(file))
+      expect(Puppet::Util::Windows::File).to receive(:stat).with(Puppet::FileSystem.assert_path(file))
 
       Puppet::FileSystem.lstat(file)
     end
@@ -855,7 +855,7 @@ describe "Puppet::FileSystem" do
       describe 'on non-Windows', :unless => Puppet::Util::Platform.windows? do
         it 'should produce the same results as the Ruby File.expand_path' do
           # on Windows this may be 8.3 style, but not so on other platforms
-          # only done since ::File.expects(:expand_path).with(path).at_least_once
+          # only done since expect(::File).to receive(:expand_path).with(path).at_least(:once)
           # cannot be used since it will cause a stack overflow
           path = tmpdir('foobar')
 
@@ -1072,7 +1072,7 @@ describe "Puppet::FileSystem" do
         end
 
         it 'raises Errno::EACCES if access is denied' do
-          Puppet::Util::Windows::Security.stubs(:get_security_descriptor).raises(Puppet::Util::Windows::Error.new('access denied', 5))
+          allow(Puppet::Util::Windows::Security).to receive(:get_security_descriptor).and_raise(Puppet::Util::Windows::Error.new('access denied', 5))
 
           expect {
             Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
@@ -1080,7 +1080,7 @@ describe "Puppet::FileSystem" do
         end
 
         it 'raises SystemCallError otherwise' do
-          Puppet::Util::Windows::Security.stubs(:get_security_descriptor).raises(Puppet::Util::Windows::Error.new('arena is trashed', 7))
+          allow(Puppet::Util::Windows::Security).to receive(:get_security_descriptor).and_raise(Puppet::Util::Windows::Error.new('arena is trashed', 7))
 
           expect {
             Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }

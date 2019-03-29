@@ -6,12 +6,12 @@ describe 'Puppet::Type::Service::Provider::Freebsd',
 
   before :each do
     @provider = provider_class.new
-    @provider.stubs(:initscript)
-    Facter.stubs(:value).with(:osfamily).returns 'FreeBSD'
+    allow(@provider).to receive(:initscript)
+    allow(Facter).to receive(:value).with(:osfamily).and_return('FreeBSD')
   end
 
   it "should correctly parse rcvar for FreeBSD < 7" do
-    @provider.stubs(:execute).returns <<OUTPUT
+    allow(@provider).to receive(:execute).and_return(<<OUTPUT)
 # ntpd
 $ntpd_enable=YES
 OUTPUT
@@ -19,7 +19,7 @@ OUTPUT
   end
 
   it "should correctly parse rcvar for FreeBSD 7 to 8" do
-    @provider.stubs(:execute).returns <<OUTPUT
+    allow(@provider).to receive(:execute).and_return(<<OUTPUT)
 # ntpd
 ntpd_enable=YES
 OUTPUT
@@ -27,7 +27,7 @@ OUTPUT
   end
 
   it "should correctly parse rcvar for FreeBSD >= 8.1" do
-    @provider.stubs(:execute).returns <<OUTPUT
+    allow(@provider).to receive(:execute).and_return(<<OUTPUT)
 # ntpd
 #
 ntpd_enable="YES"
@@ -37,7 +37,7 @@ OUTPUT
   end
 
   it "should correctly parse rcvar for DragonFly BSD" do
-    @provider.stubs(:execute).returns <<OUTPUT
+    allow(@provider).to receive(:execute).and_return(<<OUTPUT)
 # ntpd
 $ntpd=YES
 OUTPUT
@@ -45,7 +45,7 @@ OUTPUT
   end
 
   it 'should parse service names with a description' do
-    @provider.stubs(:execute).returns <<OUTPUT
+    allow(@provider).to receive(:execute).and_return(<<OUTPUT)
 # local_unbound : local caching forwarding resolver
 local_unbound_enable="YES"
 OUTPUT
@@ -53,7 +53,7 @@ OUTPUT
   end
 
   it 'should parse service names without a description' do
-    @provider.stubs(:execute).returns <<OUTPUT
+    allow(@provider).to receive(:execute).and_return(<<OUTPUT)
 # local_unbound
 local_unbound="YES"
 OUTPUT
@@ -61,31 +61,31 @@ OUTPUT
   end
 
   it "should find the right rcvar_value for FreeBSD < 7" do
-    @provider.stubs(:rcvar).returns(['# ntpd', 'ntpd_enable=YES'])
+    allow(@provider).to receive(:rcvar).and_return(['# ntpd', 'ntpd_enable=YES'])
 
     expect(@provider.rcvar_value).to eq("YES")
   end
 
   it "should find the right rcvar_value for FreeBSD >= 7" do
-    @provider.stubs(:rcvar).returns(['# ntpd', 'ntpd_enable="YES"', '#   (default: "")'])
+    allow(@provider).to receive(:rcvar).and_return(['# ntpd', 'ntpd_enable="YES"', '#   (default: "")'])
 
     expect(@provider.rcvar_value).to eq("YES")
   end
 
   it "should find the right rcvar_name" do
-    @provider.stubs(:rcvar).returns(['# ntpd', 'ntpd_enable="YES"'])
+    allow(@provider).to receive(:rcvar).and_return(['# ntpd', 'ntpd_enable="YES"'])
 
     expect(@provider.rcvar_name).to eq("ntpd")
   end
 
   it "should enable only the selected service" do
-    Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf').returns(true)
-    File.stubs(:read).with('/etc/rc.conf').returns("openntpd_enable=\"NO\"\nntpd_enable=\"NO\"\n")
-    fh = stub 'fh'
-    File.stubs(:open).with('/etc/rc.conf', File::WRONLY).yields(fh)
-    fh.expects(:<<).with("openntpd_enable=\"NO\"\nntpd_enable=\"YES\"\n")
-    Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf.local').returns(false)
-    Puppet::FileSystem.stubs(:exist?).with('/etc/rc.conf.d/ntpd').returns(false)
+    allow(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf').and_return(true)
+    allow(File).to receive(:read).with('/etc/rc.conf').and_return("openntpd_enable=\"NO\"\nntpd_enable=\"NO\"\n")
+    fh = double('fh')
+    allow(File).to receive(:open).with('/etc/rc.conf', File::WRONLY).and_yield(fh)
+    expect(fh).to receive(:<<).with("openntpd_enable=\"NO\"\nntpd_enable=\"YES\"\n")
+    allow(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf.local').and_return(false)
+    allow(Puppet::FileSystem).to receive(:exist?).with('/etc/rc.conf.d/ntpd').and_return(false)
 
     @provider.rc_replace('ntpd', 'ntpd', 'YES')
   end

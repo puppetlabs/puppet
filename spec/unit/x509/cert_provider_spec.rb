@@ -101,7 +101,7 @@ describe Puppet::X509::CertProvider do
       it 'raises if the cacerts are unreadable' do
         capath = File.join(fixture_dir, 'ca.pem')
         provider = create_provider(capath: capath)
-        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:load_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.load_cacerts
@@ -165,7 +165,7 @@ describe Puppet::X509::CertProvider do
       it 'raises if the CRLs are unreadable' do
         crlpath = File.join(fixture_dir, 'crl.pem')
         provider = create_provider(crlpath: crlpath)
-        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:load_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.load_crls
@@ -193,7 +193,7 @@ describe Puppet::X509::CertProvider do
 
       it 'raises if the CA certs are unwritable' do
         provider = create_provider(capath: ca_path)
-        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:save_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.save_cacerts([ca_cert])
@@ -219,7 +219,7 @@ describe Puppet::X509::CertProvider do
 
       it 'raises if the CRLs are unwritable' do
         provider = create_provider(crlpath: crl_path)
-        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:save_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.save_crls([ca_crl])
@@ -268,7 +268,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'raises if the private key is unreadable' do
-        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:load_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.load_private_key('signed')
@@ -326,7 +326,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'raises if the certificate is unreadable' do
-        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:load_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.load_client_cert('signed')
@@ -364,7 +364,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'raises if the certificate is unreadable' do
-        provider.stubs(:load_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:load_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.load_request('pending')
@@ -407,7 +407,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'raises if the private key is unwritable' do
-        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:save_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.save_private_key(name, private_key)
@@ -446,7 +446,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'raises if the cert is unwritable' do
-        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:save_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.save_client_cert(name, client_cert)
@@ -485,7 +485,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'raises if the request is unwritable' do
-        provider.stubs(:save_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:save_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.save_request(name, csr)
@@ -516,7 +516,7 @@ describe Puppet::X509::CertProvider do
       end
 
       it 'raises if the file is undeletable' do
-        provider.stubs(:delete_pem).raises(Errno::EACCES, 'Permission denied')
+        allow(provider).to receive(:delete_pem).and_raise(Errno::EACCES, 'Permission denied')
 
         expect {
           provider.delete_request(name)

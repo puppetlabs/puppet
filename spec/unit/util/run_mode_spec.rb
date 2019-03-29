@@ -1,8 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Util::RunMode do
-
   # Discriminator for tests that attempts to unset HOME since that, for reasons currently unknown,
   # doesn't work in Ruby >= 2.4.0
   def self.gte_ruby_2_4
@@ -31,6 +29,7 @@ describe Puppet::Util::RunMode do
         before do
           @run_mode = Puppet::Util::UnixRunMode.new('master')
         end
+
         it "has confdir ~/.puppetlabs/etc/puppet when run as non-root and master run mode" do
           as_non_root { expect(@run_mode.conf_dir).to eq(File.expand_path('~/.puppetlabs/etc/puppet')) }
         end
@@ -295,12 +294,12 @@ describe Puppet::Util::RunMode do
   end
 
   def as_root
-    Puppet.features.stubs(:root?).returns(true)
+    allow(Puppet.features).to receive(:root?).and_return(true)
     yield
   end
 
   def as_non_root
-    Puppet.features.stubs(:root?).returns(false)
+    allow(Puppet.features).to receive(:root?).and_return(false)
     yield
   end
 

@@ -33,11 +33,11 @@ describe Puppet::Network::HTTP::API::Master::V3::Environments do
   end
 
   it "the response conforms to the environments schema for unlimited timeout" do
-    conf_stub = stub 'conf_stub'
-    conf_stub.expects(:environment_timeout).returns(Float::INFINITY)
+    conf_stub = double('conf_stub')
+    expect(conf_stub).to receive(:environment_timeout).and_return(Float::INFINITY)
     environment = Puppet::Node::Environment.create(:production, [])
     env_loader = Puppet::Environments::Static.new(environment)
-    env_loader.expects(:get_conf).with(:production).returns(conf_stub)
+    expect(env_loader).to receive(:get_conf).with(:production).and_return(conf_stub)
     handler = Puppet::Network::HTTP::API::Master::V3::Environments.new(env_loader)
     response = Puppet::Network::HTTP::MemoryResponse.new
 
@@ -47,11 +47,11 @@ describe Puppet::Network::HTTP::API::Master::V3::Environments do
   end
 
   it "the response conforms to the environments schema for integer timeout" do
-    conf_stub = stub 'conf_stub'
-    conf_stub.expects(:environment_timeout).returns(1)
+    conf_stub = double('conf_stub')
+    expect(conf_stub).to receive(:environment_timeout).and_return(1)
     environment = Puppet::Node::Environment.create(:production, [])
     env_loader = Puppet::Environments::Static.new(environment)
-    env_loader.expects(:get_conf).with(:production).returns(conf_stub)
+    expect(env_loader).to receive(:get_conf).with(:production).and_return(conf_stub)
     handler = Puppet::Network::HTTP::API::Master::V3::Environments.new(env_loader)
     response = Puppet::Network::HTTP::MemoryResponse.new
 
@@ -59,5 +59,4 @@ describe Puppet::Network::HTTP::API::Master::V3::Environments do
 
     expect(response.body).to validate_against('api/schemas/environments.json')
   end
-
 end

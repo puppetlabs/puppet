@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
@@ -15,7 +14,7 @@ describe 'collectors' do
   def warnings
     @logs.select { |log| log.level == :warning }.map { |log| log.message }
   end
-  
+
   context "virtual resource collection" do
     it "matches everything when no query given" do
       expect_the_message_to_be(["the other message", "the message"], <<-MANIFEST)

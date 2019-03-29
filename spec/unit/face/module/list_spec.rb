@@ -207,12 +207,7 @@ describe "puppet module list" do
         }]
       })
 
-      warning_expectations = [
-        regexp_matches(/Missing dependency 'puppetlabs-dependable'/),
-        regexp_matches(/'puppetlabs-depender' \(v1\.0\.0\) requires 'puppetlabs-dependable' \(>= 0\.0\.5\)/)
-      ]
-
-      Puppet.expects(:warning).with(all_of(*warning_expectations))
+      expect(Puppet).to receive(:warning).with(match(/Missing dependency 'puppetlabs-dependable'/).and match(/'puppetlabs-depender' \(v1\.0\.0\) requires 'puppetlabs-dependable' \(>= 0\.0\.5\)/))
 
       console_output(:tree => true)
     end
@@ -227,12 +222,7 @@ describe "puppet module list" do
         }]
       })
 
-      warning_expectations = [
-        regexp_matches(/Module 'puppetlabs-dependable' \(v0\.0\.1\) fails to meet some dependencies/),
-        regexp_matches(/'puppetlabs-depender' \(v1\.0\.0\) requires 'puppetlabs-dependable' \(>= 0\.0\.5\)/)
-      ]
-
-      Puppet.expects(:warning).with(all_of(*warning_expectations))
+      expect(Puppet).to receive(:warning).with(match(/Module 'puppetlabs-dependable' \(v0\.0\.1\) fails to meet some dependencies/).and match(/'puppetlabs-depender' \(v1\.0\.0\) requires 'puppetlabs-dependable' \(>= 0\.0\.5\)/))
 
       console_output(:tree => true)
     end

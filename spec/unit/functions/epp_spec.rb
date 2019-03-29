@@ -153,7 +153,7 @@ describe "the epp function" do
     filename = File.join(file_path, "template.epp")
     File.open(filename, "wb+") { |f| f.write(content) }
 
-    Puppet::Parser::Files.stubs(:find_template).returns(filename)
+    allow(Puppet::Parser::Files).to receive(:find_template).and_return(filename)
     epp_function.call(scope, 'template', args_hash)
   end
 
@@ -162,7 +162,7 @@ describe "the epp function" do
     filename = File.join(file_path, "template.epp")
     File.open(filename, "wb+") { |f| f.write(content) }
 
-    Puppet::Parser::Files.stubs(:find_template).returns(filename)
+    allow(Puppet::Parser::Files).to receive(:find_template).and_return(filename)
     epp_function.call(scope, 'template')
   end
 

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/user_attr'
@@ -6,7 +5,7 @@ require 'puppet/util/user_attr'
 describe UserAttr do
   before do
     user_attr = ["foo::::type=role", "bar::::type=normal;profile=foobar"]
-    File.stubs(:readlines).returns(user_attr)
+    allow(File).to receive(:readlines).and_return(user_attr)
   end
 
   describe "when getting attributes by name" do

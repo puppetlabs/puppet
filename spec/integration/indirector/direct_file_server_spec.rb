@@ -14,7 +14,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
 
   it "should return an instance of the model" do
     filepath = make_absolute("/path/to/my/file")
-    Puppet::FileSystem.expects(:exist?).with(filepath).returns(true)
+    expect(Puppet::FileSystem).to receive(:exist?).with(filepath).and_return(true)
 
     expect(@terminus.find(@terminus.indirection.request(:find, Puppet::Util.path_to_uri(filepath).to_s, nil))).to be_instance_of(Puppet::FileServing::Content)
   end
