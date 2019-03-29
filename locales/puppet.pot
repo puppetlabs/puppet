@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.9-83-g3fc951a\n"
+"Project-Id-Version: Puppet automation framework 5.5.12-9-gf7aa00c\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-03-08 19:30+0000\n"
-"PO-Revision-Date: 2019-03-08 19:30+0000\n"
+"POT-Creation-Date: 2019-03-29 20:01+0000\n"
+"PO-Revision-Date: 2019-03-29 20:01+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -561,23 +561,28 @@ msgstr ""
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:418 ../lib/puppet/face/report.rb:47
+#. TRANSLATORS 'server_list' is the name of a setting and should not be translated
+#: ../lib/puppet/configurer.rb:404
+msgid "Unable to connect to server from server_list setting: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:419 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:427
+#: ../lib/puppet/configurer.rb:428
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:439
+#: ../lib/puppet/configurer.rb:440
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:457
+#: ../lib/puppet/configurer.rb:458
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:477
+#: ../lib/puppet/configurer.rb:478
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -4043,45 +4048,45 @@ msgstr ""
 msgid "Unrecognized option(s): %{opts}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:204
+#: ../lib/puppet/network/http/connection.rb:210
 msgid "Too many HTTP redirections for %{host}:%{port}"
 msgstr ""
 
 #. TRANSLATORS: Used in the phrase:
 #. "Received a response from the remote server."
-#: ../lib/puppet/network/http/connection.rb:235
+#: ../lib/puppet/network/http/connection.rb:241
 msgid "the remote server"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:239
+#: ../lib/puppet/network/http/connection.rb:245
 msgid "Received a %{status_code} response from %{server_hostname}, but the Retry-After header value of \"%{retry_after}\" could not be converted to an integer or RFC 2822 date."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:250
+#: ../lib/puppet/network/http/connection.rb:256
 msgid "Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request."
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:310
+#: ../lib/puppet/network/http/connection.rb:318
 msgid "request %{uri} interrupted after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:312
+#: ../lib/puppet/network/http/connection.rb:320
 msgid "request %{uri} timed out after %{elapsed} seconds"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:314
+#: ../lib/puppet/network/http/connection.rb:322
 msgid "request %{uri} failed: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:338
+#: ../lib/puppet/network/http/connection.rb:346
 msgid "expected one of %{certnames}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:340
+#: ../lib/puppet/network/http/connection.rb:348
 msgid "expected %{certname}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:343
+#: ../lib/puppet/network/http/connection.rb:351
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
@@ -8727,7 +8732,7 @@ msgid "No source for content was stored with the metadata"
 msgstr ""
 
 #. TRANSLATORS "source_permissions" is a parameter name and should not be translated
-#: ../lib/puppet/type/file/source.rb:363
+#: ../lib/puppet/type/file/source.rb:362
 msgid "The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`."
 msgstr ""
 
@@ -9592,7 +9597,7 @@ msgstr ""
 msgid "Could not write crontab for %{path}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/http_proxy.rb:205
+#: ../lib/puppet/util/http_proxy.rb:206
 msgid "Too many HTTP redirections for %{uri}"
 msgstr ""
 
