@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:zone) do
@@ -27,7 +26,7 @@ describe Puppet::Type.type(:zone) do
   describe  "when trying to set a property that is empty" do
     it "should verify that property.insync? of nil or :absent is true" do
       [inherit, ip, dataset].each do |prop|
-        prop.stubs(:should).returns []
+        allow(prop).to receive(:should).and_return([])
       end
       [inherit, ip, dataset].each do |prop|
         expect(prop.insync?(nil)).to be_truthy
@@ -37,10 +36,11 @@ describe Puppet::Type.type(:zone) do
       end
     end
   end
+
   describe  "when trying to set a property that is non empty" do
     it "should verify that property.insync? of nil or :absent is false" do
       [inherit, ip, dataset].each do |prop|
-        prop.stubs(:should).returns ['a','b']
+        allow(prop).to receive(:should).and_return(['a','b'])
       end
       [inherit, ip, dataset].each do |prop|
         expect(prop.insync?(nil)).to be_falsey
@@ -50,10 +50,11 @@ describe Puppet::Type.type(:zone) do
       end
     end
   end
+
   describe  "when trying to set a property that is non empty" do
     it "insync? should return true or false depending on the current value, and new value" do
       [inherit, ip, dataset].each do |prop|
-        prop.stubs(:should).returns ['a','b']
+        allow(prop).to receive(:should).and_return(['a','b'])
       end
       [inherit, ip, dataset].each do |prop|
         expect(prop.insync?(['b', 'a'])).to be_truthy
@@ -117,8 +118,10 @@ describe Puppet::Type.type(:zone) do
     relationship_graph.populate_from(catalog)
     expect(relationship_graph.dependencies(zone)).to eq([zfs])
   end
+
   describe Puppet::Zone::StateMachine do
     let (:sm) { Puppet::Zone::StateMachine.new }
+
     before :each do
       sm.insert_state :absent, :down => :destroy
       sm.insert_state :configured, :up => :configure, :down => :uninstall
@@ -132,35 +135,42 @@ describe Puppet::Type.type(:zone) do
         expect(sm.index(:dummy)).to eq(4)
       end
     end
+
     context ":alias_state" do
       it "should alias state" do
         sm.alias_state :dummy, :running
         expect(sm.name(:dummy)).to eq(:running)
       end
     end
+
     context ":name" do
       it "should get an aliased state correctly" do
         sm.alias_state :dummy, :running
         expect(sm.name(:dummy)).to eq(:running)
       end
+
       it "should get an un aliased state correctly" do
         expect(sm.name(:dummy)).to eq(:dummy)
       end
     end
+
     context ":index" do
       it "should return the state index correctly" do
         sm.insert_state :dummy, :left => :right
         expect(sm.index(:dummy)).to eq(4)
       end
     end
+
     context ":sequence" do
       it "should correctly return the actions to reach state specified" do
         expect(sm.sequence(:absent, :running).map{|p|p[:up]}).to eq([:configure,:install,:start])
       end
+
       it "should correctly return the actions to reach state specified(2)" do
         expect(sm.sequence(:running, :absent).map{|p|p[:down]}).to eq([:stop, :uninstall, :destroy])
       end
     end
+
     context ":cmp" do
       it "should correctly compare state sequence values" do
         expect(sm.cmp?(:absent, :running)).to eq(true)

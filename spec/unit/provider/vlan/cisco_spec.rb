@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/provider/vlan/cisco'
@@ -7,8 +6,8 @@ provider_class = Puppet::Type.type(:vlan).provider(:cisco)
 
 describe provider_class do
   before do
-    @device = stub_everything 'device'
-    @resource = stub("resource", :name => "200")
+    @device = double('device')
+    @resource = double("resource", :name => "200")
     @provider = provider_class.new(@device, @resource)
   end
 
@@ -22,19 +21,18 @@ describe provider_class do
 
   describe "when looking up instances at prefetch" do
     before do
-      @device.stubs(:command).yields(@device)
+      allow(@device).to receive(:command).and_yield(@device)
     end
 
     it "should delegate to the device vlans" do
-      @device.expects(:parse_vlans)
+      expect(@device).to receive(:parse_vlans)
       provider_class.lookup(@device, "200")
     end
 
     it "should return only the given vlan" do
-      @device.expects(:parse_vlans).returns({"200" => { :description => "thisone" }, "1" => { :description => "nothisone" }})
+      expect(@device).to receive(:parse_vlans).and_return({"200" => { :description => "thisone" }, "1" => { :description => "nothisone" }})
       expect(provider_class.lookup(@device, "200")).to eq({:description => "thisone" })
     end
-
   end
 
   describe "when an instance is being flushed" do
@@ -42,11 +40,11 @@ describe provider_class do
       @instance = provider_class.new(@device, :ensure => :present, :name => "200", :description => "myvlan")
       @instance.description = "myvlan2"
       @instance.resource = @resource
-      @resource.stubs(:[]).with(:name).returns("200")
-      device = stub_everything 'device'
-      @instance.stubs(:device).returns(device)
-      device.expects(:command).yields(device)
-      device.expects(:update_vlan).with(@instance.name, {:ensure => :present, :name => "200", :description => "myvlan"},
+      allow(@resource).to receive(:[]).with(:name).and_return("200")
+      device = double('device')
+      allow(@instance).to receive(:device).and_return(device)
+      expect(device).to receive(:command).and_yield(device)
+      expect(device).to receive(:update_vlan).with(@instance.name, {:ensure => :present, :name => "200", :description => "myvlan"},
                                                    {:ensure => :present, :name => "200", :description => "myvlan2"})
 
       @instance.flush

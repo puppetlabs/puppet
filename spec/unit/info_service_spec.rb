@@ -37,10 +37,12 @@ describe "Puppet::InfoService" do
           @result = Puppet::InfoService.task_data(env_name, mod_name, task_name)
         end
       end
+
       describe 'in the happy case' do
         it 'returns the right set of keys' do
           expect(@result.keys.sort).to eq([:files, :metadata_file])
         end
+
         it 'specifies the metadata_file correctly' do
           task = @mod.tasks[0]
           expect(@result[:metadata_file]).to eq(task.metadata_file)
@@ -248,7 +250,7 @@ describe "Puppet::InfoService" do
     it "avoids parsing file more than once when environments have same feature flag set" do
       # in this version of puppet, all environments are equal in this respect
       result = Puppet::Pops::Parser::EvaluatingParser.new.parse_file("#{code_dir}/fum.pp")
-      Puppet::Pops::Parser::EvaluatingParser.any_instance.expects(:parse_file).with("#{code_dir}/fum.pp").returns(result).once
+      expect_any_instance_of(Puppet::Pops::Parser::EvaluatingParser).to receive(:parse_file).with("#{code_dir}/fum.pp").once.and_return(result)
       files_production = ['fum.pp'].map {|f| File.join(code_dir, f) }
       files_test       = files_production
 

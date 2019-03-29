@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/node/ldap'
@@ -11,34 +10,34 @@ describe Puppet::Node::Ldap do
   let(:facts) { Puppet::Node::Facts.new(nodename, fact_values) }
 
   before do
-    Puppet::Node::Facts.indirection.stubs(:find).with(nodename, :environment => environment).returns(facts)
+    allow(Puppet::Node::Facts.indirection).to receive(:find).with(nodename, :environment => environment).and_return(facts)
   end
 
   describe "when searching for a single node" do
     let(:request) { Puppet::Indirector::Request.new(:node, :find, nodename, nil, :environment => environment) }
 
     it "should convert the hostname into a search filter" do
-      node_indirection.stubs(:ldap_entry_to_hash).returns({})
-      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}
-      node_indirection.expects(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{nodename}))").yields entry
+      allow(node_indirection).to receive(:ldap_entry_to_hash).and_return({})
+      entry = double('entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{})
+      expect(node_indirection).to receive(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{nodename}))").and_yield(entry)
       node_indirection.name2hash(nodename)
     end
 
     it "should convert any found entry into a hash" do
-      node_indirection.stubs(:ldap_entry_to_hash).returns({})
-      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}
-      node_indirection.expects(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{nodename}))").yields entry
+      allow(node_indirection).to receive(:ldap_entry_to_hash).and_return({})
+      entry = double('entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{})
+      expect(node_indirection).to receive(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{nodename}))").and_yield(entry)
       myhash = {"myhash" => true}
-      node_indirection.expects(:entry2hash).with(entry).returns myhash
+      expect(node_indirection).to receive(:entry2hash).with(entry).and_return(myhash)
       expect(node_indirection.name2hash(nodename)).to eq(myhash)
     end
 
     # This heavily tests our entry2hash method, so we don't have to stub out the stupid entry information any more.
     describe "when an ldap entry is found" do
       before do
-        @entry = stub 'entry', :dn => 'cn=mynode,ou=hosts,dc=madstop,dc=com', :vals => %w{}
-        node_indirection.stubs(:ldap_entry_to_hash).returns({})
-        node_indirection.stubs(:ldapsearch).yields @entry
+        @entry = double('entry', :dn => 'cn=mynode,ou=hosts,dc=madstop,dc=com', :vals => %w{})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return({})
+        allow(node_indirection).to receive(:ldapsearch).and_yield(@entry)
       end
 
       it "should convert the entry to a hash" do
@@ -54,114 +53,114 @@ describe Puppet::Node::Ldap do
       end
 
       it "should add all of the entry's classes to the hash" do
-        @entry.stubs(:vals).with("puppetclass").returns %w{one two}
+        allow(@entry).to receive(:vals).with("puppetclass").and_return(%w{one two})
         expect(node_indirection.entry2hash(@entry)[:classes]).to eq(%w{one two})
       end
 
       it "should deduplicate class values" do
-        node_indirection.stubs(:ldap_entry_to_hash).returns({})
-        node_indirection.stubs(:class_attributes).returns(%w{one two})
-        @entry.stubs(:vals).with("one").returns(%w{a b})
-        @entry.stubs(:vals).with("two").returns(%w{b c})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return({})
+        allow(node_indirection).to receive(:class_attributes).and_return(%w{one two})
+        allow(@entry).to receive(:vals).with("one").and_return(%w{a b})
+        allow(@entry).to receive(:vals).with("two").and_return(%w{b c})
         expect(node_indirection.entry2hash(@entry)[:classes]).to eq(%w{a b c})
       end
 
       it "should add the entry's environment to the hash" do
-        node_indirection.stubs(:ldap_entry_to_hash).returns(:environment => %w{production})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return(:environment => %w{production})
         expect(node_indirection.entry2hash(@entry)[:environment]).to eq("production")
       end
 
       it "should add all stacked parameters as parameters in the hash" do
-        @entry.stubs(:vals).with("puppetvar").returns(%w{one=two three=four})
+        allow(@entry).to receive(:vals).with("puppetvar").and_return(%w{one=two three=four})
         result = node_indirection.entry2hash(@entry)
         expect(result[:parameters]["one"]).to eq("two")
         expect(result[:parameters]["three"]).to eq("four")
       end
 
       it "should not add the stacked parameter as a normal parameter" do
-        @entry.stubs(:vals).with("puppetvar").returns(%w{one=two three=four})
-        node_indirection.stubs(:ldap_entry_to_hash).returns("puppetvar" => %w{one=two three=four})
+        allow(@entry).to receive(:vals).with("puppetvar").and_return(%w{one=two three=four})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return("puppetvar" => %w{one=two three=four})
         expect(node_indirection.entry2hash(@entry)[:parameters]["puppetvar"]).to be_nil
       end
 
       it "should add all other attributes as parameters in the hash" do
-        node_indirection.stubs(:ldap_entry_to_hash).returns("foo" => %w{one two})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return("foo" => %w{one two})
         expect(node_indirection.entry2hash(@entry)[:parameters]["foo"]).to eq(%w{one two})
       end
 
       it "should return single-value parameters as strings, not arrays" do
-        node_indirection.stubs(:ldap_entry_to_hash).returns("foo" => %w{one})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return("foo" => %w{one})
         expect(node_indirection.entry2hash(@entry)[:parameters]["foo"]).to eq("one")
       end
 
       it "should convert 'true' values to the boolean 'true'" do
-        node_indirection.stubs(:ldap_entry_to_hash).returns({"one" => ["true"]})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return({"one" => ["true"]})
         expect(node_indirection.entry2hash(@entry)[:parameters]["one"]).to eq(true)
       end
 
       it "should convert 'false' values to the boolean 'false'" do
-        node_indirection.stubs(:ldap_entry_to_hash).returns({"one" => ["false"]})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return({"one" => ["false"]})
         expect(node_indirection.entry2hash(@entry)[:parameters]["one"]).to eq(false)
       end
 
       it "should convert 'true' values to the boolean 'true' inside an array" do
-        node_indirection.stubs(:ldap_entry_to_hash).returns({"one" => ["true", "other"]})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return({"one" => ["true", "other"]})
         expect(node_indirection.entry2hash(@entry)[:parameters]["one"]).to eq([true, "other"])
       end
 
       it "should convert 'false' values to the boolean 'false' inside an array" do
-        node_indirection.stubs(:ldap_entry_to_hash).returns({"one" => ["false", "other"]})
+        allow(node_indirection).to receive(:ldap_entry_to_hash).and_return({"one" => ["false", "other"]})
         expect(node_indirection.entry2hash(@entry)[:parameters]["one"]).to eq([false, "other"])
       end
 
       it "should add the parent's name if present" do
-        @entry.stubs(:vals).with("parentnode").returns(%w{foo})
+        allow(@entry).to receive(:vals).with("parentnode").and_return(%w{foo})
         expect(node_indirection.entry2hash(@entry)[:parent]).to eq("foo")
       end
 
       it "should fail if more than one parent is specified" do
-        @entry.stubs(:vals).with("parentnode").returns(%w{foo})
+        allow(@entry).to receive(:vals).with("parentnode").and_return(%w{foo})
         expect(node_indirection.entry2hash(@entry)[:parent]).to eq("foo")
       end
     end
 
     it "should search first for the provided key" do
-      node_indirection.expects(:name2hash).with("mynode.domain.com").returns({})
+      expect(node_indirection).to receive(:name2hash).with("mynode.domain.com").and_return({})
       node_indirection.find(request)
     end
 
     it "should search for the short version of the provided key if the key looks like a hostname and no results are found for the key itself" do
-      node_indirection.expects(:name2hash).with("mynode.domain.com").returns(nil)
-      node_indirection.expects(:name2hash).with("mynode").returns({})
+      expect(node_indirection).to receive(:name2hash).with("mynode.domain.com").and_return(nil)
+      expect(node_indirection).to receive(:name2hash).with("mynode").and_return({})
       node_indirection.find(request)
     end
 
     it "should search for default information if no information can be found for the key" do
-      node_indirection.expects(:name2hash).with("mynode.domain.com").returns(nil)
-      node_indirection.expects(:name2hash).with("mynode").returns(nil)
-      node_indirection.expects(:name2hash).with("default").returns({})
+      expect(node_indirection).to receive(:name2hash).with("mynode.domain.com").and_return(nil)
+      expect(node_indirection).to receive(:name2hash).with("mynode").and_return(nil)
+      expect(node_indirection).to receive(:name2hash).with("default").and_return({})
       node_indirection.find(request)
     end
 
     it "should return nil if no results are found in ldap" do
-      node_indirection.stubs(:name2hash).returns nil
+      allow(node_indirection).to receive(:name2hash).and_return(nil)
       expect(node_indirection.find(request)).to be_nil
     end
 
     it "should return a node object if results are found in ldap" do
-      node_indirection.stubs(:name2hash).returns({})
+      allow(node_indirection).to receive(:name2hash).and_return({})
       expect(node_indirection.find(request)).to be
     end
 
     describe "and node information is found in LDAP" do
       before do
         @result = {}
-        node_indirection.stubs(:name2hash).returns @result
+        allow(node_indirection).to receive(:name2hash).and_return(@result)
       end
 
       it "should create the node with the correct name, even if it was found by a different name" do
-        node_indirection.expects(:name2hash).with(nodename).returns nil
-        node_indirection.expects(:name2hash).with("mynode").returns @result
+        expect(node_indirection).to receive(:name2hash).with(nodename).and_return(nil)
+        expect(node_indirection).to receive(:name2hash).with("mynode").and_return(@result)
 
         expect(node_indirection.find(request).name).to eq(nodename)
       end
@@ -180,7 +179,7 @@ describe Puppet::Node::Ldap do
 
       it "should set the node's environment to the environment of the results" do
         result_env = Puppet::Node::Environment.create(:local_test, [])
-        Puppet::Node::Facts.indirection.stubs(:find).with(nodename, :environment => result_env).returns(facts)
+        allow(Puppet::Node::Facts.indirection).to receive(:find).with(nodename, :environment => result_env).and_return(facts)
         @result[:environment] = "local_test"
 
         Puppet.override(:environments => Puppet::Environments::Static.new(result_env)) do
@@ -200,14 +199,14 @@ describe Puppet::Node::Ldap do
 
         it "should merge facts from the request if supplied" do
           request.options[:facts] = request_facts
-          Puppet::Node::Facts.stubs(:find) { indirection_facts }
+          allow(Puppet::Node::Facts).to receive(:find).and_return(indirection_facts)
 
           expect(node_indirection.find(request).parameters).to include(request_facts.values)
           expect(node_indirection.find(request).facts).to eq(request_facts)
         end
 
         it "should find facts if none are supplied" do
-          Puppet::Node::Facts.indirection.stubs(:find).with(nodename, :environment => environment).returns(indirection_facts)
+          allow(Puppet::Node::Facts.indirection).to receive(:find).with(nodename, :environment => environment).and_return(indirection_facts)
           request.options.delete(:facts)
 
           expect(node_indirection.find(request).parameters).to include(indirection_facts.values)
@@ -232,17 +231,17 @@ describe Puppet::Node::Ldap do
           @parent = {:classes => [], :parameters => {}}
           @parent_parent = {:classes => [], :parameters => {}}
 
-          node_indirection.stubs(:name2hash).with(nodename).returns(@entry)
-          node_indirection.stubs(:name2hash).with('parent').returns(@parent)
-          node_indirection.stubs(:name2hash).with('parent_parent').returns(@parent_parent)
+          allow(node_indirection).to receive(:name2hash).with(nodename).and_return(@entry)
+          allow(node_indirection).to receive(:name2hash).with('parent').and_return(@parent)
+          allow(node_indirection).to receive(:name2hash).with('parent_parent').and_return(@parent_parent)
 
-          node_indirection.stubs(:parent_attribute).returns(:parent)
+          allow(node_indirection).to receive(:parent_attribute).and_return(:parent)
         end
 
         it "should search for the parent node" do
           @entry[:parent] = "parent"
-          node_indirection.expects(:name2hash).with(nodename).returns @entry
-          node_indirection.expects(:name2hash).with('parent').returns @parent
+          expect(node_indirection).to receive(:name2hash).with(nodename).and_return(@entry)
+          expect(node_indirection).to receive(:name2hash).with('parent').and_return(@parent)
 
           node_indirection.find(request)
         end
@@ -250,7 +249,7 @@ describe Puppet::Node::Ldap do
         it "should fail if the parent cannot be found" do
           @entry[:parent] = "parent"
 
-          node_indirection.expects(:name2hash).with('parent').returns nil
+          expect(node_indirection).to receive(:name2hash).with('parent').and_return(nil)
 
           expect { node_indirection.find(request) }.to raise_error(Puppet::Error, /Could not find parent node/)
         end
@@ -288,7 +287,7 @@ describe Puppet::Node::Ldap do
 
           @parent[:environment] = "parent"
 
-          Puppet::Node::Facts.indirection.stubs(:find).with(nodename, :environment => env).returns(facts)
+          allow(Puppet::Node::Facts.indirection).to receive(:find).with(nodename, :environment => env).and_return(facts)
 
           Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
             expect(node_indirection.find(request).environment).to eq(env)
@@ -302,7 +301,7 @@ describe Puppet::Node::Ldap do
 
           @parent[:environment] = "parent"
 
-          Puppet::Node::Facts.indirection.stubs(:find).with(nodename, :environment => child_env).returns(facts)
+          allow(Puppet::Node::Facts.indirection).to receive(:find).with(nodename, :environment => child_env).and_return(facts)
 
           Puppet.override(:environments => Puppet::Environments::Static.new(child_env)) do
 
@@ -336,11 +335,11 @@ describe Puppet::Node::Ldap do
     let(:request) { Puppet::Indirector::Request.new(:node, :find, nodename, nil, options) }
 
     before :each do
-      Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
+      allow(Puppet::Node::Facts.indirection).to receive(:terminus_class).and_return(:yaml)
     end
 
     it "should find all nodes if no arguments are provided" do
-      node_indirection.expects(:ldapsearch).with("(objectclass=puppetClient)")
+      expect(node_indirection).to receive(:ldapsearch).with("(objectclass=puppetClient)")
       # LAK:NOTE The search method requires an essentially bogus key.  It's
       # an API problem that I don't really know how to fix.
       node_indirection.search request
@@ -348,7 +347,7 @@ describe Puppet::Node::Ldap do
 
     describe "and a class is specified" do
       it "should find all nodes that are members of that class" do
-        node_indirection.expects(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=one))")
+        expect(node_indirection).to receive(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=one))")
 
         options[:class] = "one"
         node_indirection.search request
@@ -357,37 +356,36 @@ describe Puppet::Node::Ldap do
 
     describe "multiple classes are specified" do
       it "should find all nodes that are members of all classes" do
-        node_indirection.expects(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=one)(puppetclass=two))")
+        expect(node_indirection).to receive(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=one)(puppetclass=two))")
         options[:class] = %w{one two}
         node_indirection.search request
       end
     end
 
     it "should process each found entry" do
-      # .yields can't be used to yield multiple values :/
-      node_indirection.expects(:ldapsearch).yields("one")
-      node_indirection.expects(:entry2hash).with("one",nil).returns(:name => nodename)
+      expect(node_indirection).to receive(:ldapsearch).and_yield("one")
+      expect(node_indirection).to receive(:entry2hash).with("one",nil).and_return(:name => nodename)
       node_indirection.search request
     end
 
     it "should return a node for each processed entry with the name from the entry" do
-      node_indirection.expects(:ldapsearch).yields("whatever")
-      node_indirection.expects(:entry2hash).with("whatever",nil).returns(:name => nodename)
+      expect(node_indirection).to receive(:ldapsearch).and_yield("whatever")
+      expect(node_indirection).to receive(:entry2hash).with("whatever",nil).and_return(:name => nodename)
       result = node_indirection.search(request)
       expect(result[0]).to be_instance_of(Puppet::Node)
       expect(result[0].name).to eq(nodename)
     end
 
     it "should merge each node's facts" do
-      node_indirection.stubs(:ldapsearch).yields("one")
-      node_indirection.stubs(:entry2hash).with("one",nil).returns(:name => nodename)
+      allow(node_indirection).to receive(:ldapsearch).and_yield("one")
+      allow(node_indirection).to receive(:entry2hash).with("one",nil).and_return(:name => nodename)
       expect(node_indirection.search(request)[0].parameters).to include(fact_values)
     end
 
     it "should pass the request's fqdn option to entry2hash" do
       options[:fqdn] = :hello
-      node_indirection.stubs(:ldapsearch).yields("one")
-      node_indirection.expects(:entry2hash).with("one",:hello).returns(:name => nodename)
+      allow(node_indirection).to receive(:ldapsearch).and_yield("one")
+      expect(node_indirection).to receive(:entry2hash).with("one",:hello).and_return(:name => nodename)
       node_indirection.search(request)
     end
   end
@@ -419,9 +417,9 @@ describe Puppet::Node::Ldap do
     end
 
     it "should not modify the global :ldapstring when replacing '%s' in the search filter" do
-      filter = mock 'filter'
-      filter.expects(:include?).with("%s").returns(true)
-      filter.expects(:gsub).with("%s", "testing").returns("mynewstring")
+      filter = double('filter')
+      expect(filter).to receive(:include?).with("%s").and_return(true)
+      expect(filter).to receive(:gsub).with("%s", "testing").and_return("mynewstring")
       Puppet[:ldapstring] = filter
       expect(node_indirection.search_filter("testing")).to eq("mynewstring")
     end
@@ -435,30 +433,30 @@ describe Puppet::Node::Ldap do
 
     it "should split the value of :ldapattrs on commas and use the result as the attribute list" do
       Puppet[:ldapattrs] = "one,two"
-      node_indirection.stubs(:class_attributes).returns([])
-      node_indirection.stubs(:parent_attribute).returns(nil)
+      allow(node_indirection).to receive(:class_attributes).and_return([])
+      allow(node_indirection).to receive(:parent_attribute).and_return(nil)
       expect(node_indirection.search_attributes).to eq(%w{one two})
     end
 
     it "should add the class attributes to the search attributes if not returning all attributes" do
       Puppet[:ldapattrs] = "one,two"
-      node_indirection.stubs(:class_attributes).returns(%w{three four})
-      node_indirection.stubs(:parent_attribute).returns(nil)
+      allow(node_indirection).to receive(:class_attributes).and_return(%w{three four})
+      allow(node_indirection).to receive(:parent_attribute).and_return(nil)
       # Sort them so i don't have to care about return order
       expect(node_indirection.search_attributes.sort).to eq(%w{one two three four}.sort)
     end
 
     it "should add the parent attribute to the search attributes if not returning all attributes" do
       Puppet[:ldapattrs] = "one,two"
-      node_indirection.stubs(:class_attributes).returns([])
-      node_indirection.stubs(:parent_attribute).returns("parent")
+      allow(node_indirection).to receive(:class_attributes).and_return([])
+      allow(node_indirection).to receive(:parent_attribute).and_return("parent")
       expect(node_indirection.search_attributes.sort).to eq(%w{one two parent}.sort)
     end
 
     it "should not add nil parent attributes to the search attributes" do
       Puppet[:ldapattrs] = "one,two"
-      node_indirection.stubs(:class_attributes).returns([])
-      node_indirection.stubs(:parent_attribute).returns(nil)
+      allow(node_indirection).to receive(:class_attributes).and_return([])
+      allow(node_indirection).to receive(:parent_attribute).and_return(nil)
       expect(node_indirection.search_attributes).to eq(%w{one two})
     end
   end

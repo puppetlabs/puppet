@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:selboolean), "when validating attributes" do
@@ -17,12 +16,12 @@ describe Puppet::Type.type(:selboolean), "when validating values" do
   before do
     @class = Puppet::Type.type(:selboolean)
 
-    @provider_class = stub 'provider_class', :name => "fake", :suitable? => true, :supports_parameter? => true
-    @class.stubs(:defaultprovider).returns(@provider_class)
-    @class.stubs(:provider).returns(@provider_class)
+    @provider_class = double('provider_class', :name => "fake", :suitable? => true, :supports_parameter? => true)
+    allow(@class).to receive(:defaultprovider).and_return(@provider_class)
+    allow(@class).to receive(:provider).and_return(@provider_class)
 
-    @provider = stub 'provider', :class => @provider_class, :clear => nil
-    @provider_class.stubs(:new).returns(@provider)
+    @provider = double('provider', :class => @provider_class, :clear => nil)
+    allow(@provider_class).to receive(:new).and_return(@provider)
   end
 
   it "should support :on as a value to :value" do

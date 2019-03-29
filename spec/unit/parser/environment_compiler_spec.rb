@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet/parser/environment_compiler'
@@ -24,9 +23,12 @@ describe "Application instantiation" do
     Puppet::Parser::EnvironmentCompiler.compile(env, code_id).filter { |r| r.virtual? }
   end
 
-  around :each do |example|
-    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
-    Puppet::Parser::EnvironmentCompiler.any_instance.stubs(:loaders).returns(loaders)
+  before(:each) do
+    l = loaders
+    allow(Puppet::Pops::Loaders).to receive(:new).and_return(l)
+  end
+
+  around(:each) do |example|
     Puppet.override(:loaders => loaders, :current_environment => env) do
       Puppet::Type.newtype :cap, :is_capability => true do
         newparam :name
@@ -400,14 +402,14 @@ EOS
       }.each do |k,v|
         it "contains the #{v} (#{k})" do
             # Mock the connection to Puppet DB
-            Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+            expect(Puppet::Resource::CapabilityFinder).to receive(:find).and_return(cap)
             expect(compiled_catalog.resource(k)).not_to be_nil
         end
       end
 
       it "does not contain the produced resource (Prod[one])" do
         # Mock the connection to Puppet DB
-        Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+        expect(Puppet::Resource::CapabilityFinder).to receive(:find).and_return(cap)
         expect(compiled_catalog.resource("Prod[one]")).to be_nil
       end
     end
@@ -448,14 +450,14 @@ EOS
       }.each do |k,v|
         it "contains the #{v} (#{k})" do
           # Mock the connection to Puppet DB
-          Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+          expect(Puppet::Resource::CapabilityFinder).to receive(:find).and_return(cap)
           expect(compiled_catalog.resource(k)).not_to be_nil
         end
       end
 
       it "does not contain the produced resource (Class[prod])" do
         # Mock the connection to Puppet DB
-        Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+        expect(Puppet::Resource::CapabilityFinder).to receive(:find).and_return(cap)
         expect(compiled_catalog.resource("Class[prod]")).to be_nil
       end
     end
@@ -497,7 +499,7 @@ EOS
     end
 
     it "ignores usage of hiera_include() at topscope for classification" do
-      Puppet.expects(:debug).with(regexp_matches(/Ignoring hiera_include/))
+      expect(Puppet).to receive(:debug).with(/Ignoring hiera_include/)
 
       expect {
         compile_to_env_catalog(<<-EOC).to_resource

@@ -1,11 +1,10 @@
-#!/usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/resolver'
 
 describe Puppet::Network::Resolver do
   before do
-    @dns_mock_object = mock('dns')
-    Resolv::DNS.stubs(:new).returns(@dns_mock_object)
+    @dns_mock_object = double('dns')
+    allow(Resolv::DNS).to receive(:new).and_return(@dns_mock_object)
 
     @rr_type         = Resolv::DNS::Resource::IN::SRV
     @test_srv_domain = "domain.com"
@@ -24,7 +23,7 @@ describe Puppet::Network::Resolver do
 
   describe 'when the domain is not known' do
     before :each do
-      @dns_mock_object.stubs(:getresources).returns(@test_records)
+      allow(@dns_mock_object).to receive(:getresources).and_return(@test_records)
     end
 
     describe 'because domain is nil' do
@@ -47,10 +46,10 @@ describe Puppet::Network::Resolver do
   describe "when resolving a host without SRV records" do
     it "should not yield anything" do
       # No records returned for a DNS entry without any SRV records
-      @dns_mock_object.expects(:getresources).with(
+      expect(@dns_mock_object).to receive(:getresources).with(
         "_x-puppet._tcp.#{@test_a_hostname}",
         @rr_type
-      ).returns([])
+      ).and_return([])
 
       Puppet::Network::Resolver.each_srv_record(@test_a_hostname) do |hostname, port, remaining|
         raise Exception.new("host with no records passed block")
@@ -68,10 +67,10 @@ describe Puppet::Network::Resolver do
         2 => ["puppet4.domain.com"]
       }
 
-      @dns_mock_object.expects(:getresources).with(
+      expect(@dns_mock_object).to receive(:getresources).with(
         "_x-puppet._tcp.#{@test_srv_domain}",
         @rr_type
-      ).returns(@test_records)
+      ).and_return(@test_records)
 
       Puppet::Network::Resolver.each_srv_record(@test_srv_domain) do |hostname, port|
         expected_priority = order.keys.min
@@ -96,15 +95,15 @@ describe Puppet::Network::Resolver do
         2 => ["puppet4.domain.com"]
       }
 
-      @dns_mock_object.expects(:getresources).with(
+      expect(@dns_mock_object).to receive(:getresources).with(
         "_x-puppet-report._tcp.#{@test_srv_domain}",
         @rr_type
-      ).returns([])
+      ).and_return([])
 
-      @dns_mock_object.expects(:getresources).with(
+      expect(@dns_mock_object).to receive(:getresources).with(
         "_x-puppet._tcp.#{@test_srv_domain}",
         @rr_type
-      ).returns(@test_records)
+      ).and_return(@test_records)
 
       Puppet::Network::Resolver.each_srv_record(@test_srv_domain, :report) do |hostname, port|
         expected_priority = order.keys.min
@@ -137,15 +136,15 @@ describe Puppet::Network::Resolver do
         Resolv::DNS::Resource::IN::SRV.new(4,         1,      8140, "puppet4.bad.domain.com")
       ]
 
-      @dns_mock_object.expects(:getresources).with(
+      expect(@dns_mock_object).to receive(:getresources).with(
         "_x-puppet-report._tcp.#{@test_srv_domain}",
         @rr_type
-      ).returns(@test_records)
+      ).and_return(@test_records)
 
-      @dns_mock_object.stubs(:getresources).with(
+      allow(@dns_mock_object).to receive(:getresources).with(
         "_x-puppet._tcp.#{@test_srv_domain}",
         @rr_type
-      ).returns(bad_records)
+      ).and_return(bad_records)
 
       Puppet::Network::Resolver.each_srv_record(@test_srv_domain, :report) do |hostname, port|
         expected_priority = order.keys.min
@@ -192,7 +191,7 @@ describe Puppet::Network::Resolver do
         end
 
         total_weight.times do |n|
-          Kernel.expects(:rand).once.with(total_weight).returns(n)
+          expect(Kernel).to receive(:rand).once.with(total_weight).and_return(n)
           server = Puppet::Network::Resolver.find_weighted_server(records)
           seen[server] += 1
         end

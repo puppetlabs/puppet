@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application'
@@ -12,8 +11,7 @@ describe Puppet::Application do
     @app = Class.new(Puppet::Application).new
     @appclass = @app.class
 
-    @app.stubs(:name).returns("test_app")
-
+    allow(@app).to receive(:name).and_return("test_app")
   end
 
   describe "application commandline" do
@@ -32,8 +30,8 @@ describe Puppet::Application do
 
   describe "application defaults" do
     it "should fail if required app default values are missing" do
-      @app.stubs(:app_defaults).returns({ :foo => 'bar' })
-      Puppet.expects(:err).with(regexp_matches(/missing required app default setting/))
+      allow(@app).to receive(:app_defaults).and_return({ :foo => 'bar' })
+      expect(Puppet).to receive(:err).with(/missing required app default setting/)
       expect {
         @app.run
       }.to exit_with(1)
@@ -43,7 +41,7 @@ describe Puppet::Application do
   describe "finding" do
     before do
       @klass = Puppet::Application
-      @klass.stubs(:puts)
+      allow(@klass).to receive(:puts)
     end
 
     it "should find classes in the namespace" do
@@ -55,10 +53,10 @@ describe Puppet::Application do
     end
 
     it "should error if it can't find a class" do
-      Puppet.expects(:err).with do |value|
-        value =~ /Unable to find application 'ThisShallNeverEverEverExist'/ and
-          value =~ /puppet\/application\/thisshallneverevereverexist/ and
-          value =~ /no such file to load|cannot load such file/
+      expect(Puppet).to receive(:err) do |value|
+        expect(value).to match(/Unable to find application 'ThisShallNeverEverEverExist'/)
+        expect(value).to match(/puppet\/application\/thisshallneverevereverexist/)
+        expect(value).to match(/no such file to load|cannot load such file/)
       end
 
       expect {
@@ -70,19 +68,19 @@ describe Puppet::Application do
   describe "#available_application_names" do
     it 'should be able to find available application names' do
       apps =  %w{describe filebucket kick queue resource agent cert apply doc master}
-      Puppet::Util::Autoload.expects(:files_to_load).returns(apps)
+      expect(Puppet::Util::Autoload).to receive(:files_to_load).and_return(apps)
 
       expect(Puppet::Application.available_application_names).to match_array(apps)
     end
 
     it 'should find applications from multiple paths' do
-      Puppet::Util::Autoload.expects(:files_to_load).with('puppet/application').returns(%w{ /a/foo.rb /b/bar.rb })
+      expect(Puppet::Util::Autoload).to receive(:files_to_load).with('puppet/application').and_return(%w{ /a/foo.rb /b/bar.rb })
 
       expect(Puppet::Application.available_application_names).to match_array(%w{ foo bar })
     end
 
     it 'should return unique application names' do
-      Puppet::Util::Autoload.expects(:files_to_load).with('puppet/application').returns(%w{ /a/foo.rb /b/foo.rb })
+      expect(Puppet::Util::Autoload).to receive(:files_to_load).with('puppet/application').and_return(%w{ /a/foo.rb /b/foo.rb })
 
       expect(Puppet::Application.available_application_names).to eq(%w{ foo })
     end
@@ -133,7 +131,7 @@ describe Puppet::Application do
     end
 
     it "should sadly and frighteningly allow run_mode to change at runtime via #initialize_app_defaults" do
-      Puppet.features.stubs(:syslog?).returns(true)
+      allow(Puppet.features).to receive(:syslog?).and_return(true)
 
       app = TestApp.new
       app.initialize_app_defaults
@@ -183,7 +181,7 @@ describe Puppet::Application do
   end
 
   it "should invoke main as the default" do
-    @app.expects( :main )
+    expect(@app).to receive(:main)
     @app.run_command
   end
 
@@ -279,8 +277,8 @@ describe Puppet::Application do
   describe 'when performing a controlled_run' do
     it 'should not execute block if not :clear?' do
       Puppet::Application.run_status = :stop_requested
-      target = mock 'target'
-      target.expects(:some_method).never
+      target = double('target')
+      expect(target).not_to receive(:some_method)
       Puppet::Application.controlled_run do
         target.some_method
       end
@@ -288,8 +286,8 @@ describe Puppet::Application do
 
     it 'should execute block if :clear?' do
       Puppet::Application.run_status = nil
-      target = mock 'target'
-      target.expects(:some_method).once
+      target = double('target')
+      expect(target).to receive(:some_method).once
       Puppet::Application.controlled_run do
         target.some_method
       end
@@ -330,38 +328,36 @@ describe Puppet::Application do
   describe "when parsing command-line options" do
 
     before :each do
-      @app.command_line.stubs(:args).returns([])
+      allow(@app.command_line).to receive(:args).and_return([])
 
-      Puppet.settings.stubs(:optparse_addargs).returns([])
+      allow(Puppet.settings).to receive(:optparse_addargs).and_return([])
     end
 
     it "should pass the banner to the option parser" do
-      option_parser = stub "option parser"
-      option_parser.stubs(:on)
-      option_parser.stubs(:parse!)
+      option_parser = double("option parser")
+      allow(option_parser).to receive(:on)
+      allow(option_parser).to receive(:parse!)
       @app.class.instance_eval do
         banner "banner"
       end
 
-      OptionParser.expects(:new).with("banner").returns(option_parser)
+      expect(OptionParser).to receive(:new).with("banner").and_return(option_parser)
 
       @app.parse_options
     end
 
     it "should ask OptionParser to parse the command-line argument" do
-      @app.command_line.stubs(:args).returns(%w{ fake args })
-      OptionParser.any_instance.expects(:parse!).with(%w{ fake args })
+      allow(@app.command_line).to receive(:args).and_return(%w{ fake args })
+      expect_any_instance_of(OptionParser).to receive(:parse!).with(%w{ fake args })
 
       @app.parse_options
     end
 
     describe "when using --help" do
-
       it "should call exit" do
-        @app.stubs(:puts)
+        allow(@app).to receive(:puts)
         expect { @app.handle_help(nil) }.to exit_with 0
       end
-
     end
 
     describe "when using --version" do
@@ -370,66 +366,65 @@ describe Puppet::Application do
       end
 
       it "should exit after printing the version" do
-        @app.stubs(:puts)
+        allow(@app).to receive(:puts)
         expect { @app.handle_version(nil) }.to exit_with 0
       end
     end
 
     describe "when dealing with an argument not declared directly by the application" do
       it "should pass it to handle_unknown if this method exists" do
-        Puppet.settings.stubs(:optparse_addargs).returns([["--not-handled", :REQUIRED]])
+        allow(Puppet.settings).to receive(:optparse_addargs).and_return([["--not-handled", :REQUIRED]])
 
-        @app.expects(:handle_unknown).with("--not-handled", "value").returns(true)
-        @app.command_line.stubs(:args).returns(["--not-handled", "value"])
+        expect(@app).to receive(:handle_unknown).with("--not-handled", "value").and_return(true)
+        allow(@app.command_line).to receive(:args).and_return(["--not-handled", "value"])
         @app.parse_options
       end
 
       it "should transform boolean option to normal form for Puppet.settings" do
-        @app.expects(:handle_unknown).with("--option", true)
+        expect(@app).to receive(:handle_unknown).with("--option", true)
         @app.send(:handlearg, "--[no-]option", true)
       end
 
       it "should transform boolean option to no- form for Puppet.settings" do
-        @app.expects(:handle_unknown).with("--no-option", false)
+        expect(@app).to receive(:handle_unknown).with("--no-option", false)
         @app.send(:handlearg, "--[no-]option", false)
       end
-
     end
   end
 
   describe "when calling default setup" do
     before :each do
-      @app.options.stubs(:[])
+      allow(@app.options).to receive(:[])
     end
 
     [ :debug, :verbose ].each do |level|
       it "should honor option #{level}" do
-        @app.options.stubs(:[]).with(level).returns(true)
-        Puppet::Util::Log.stubs(:newdestination)
+        allow(@app.options).to receive(:[]).with(level).and_return(true)
+        allow(Puppet::Util::Log).to receive(:newdestination)
         @app.setup
         expect(Puppet::Util::Log.level).to eq(level == :verbose ? :info : :debug)
       end
     end
 
     it "should honor setdest option" do
-      @app.options.stubs(:[]).with(:setdest).returns(false)
+      allow(@app.options).to receive(:[]).with(:setdest).and_return(false)
 
-      Puppet::Util::Log.expects(:setup_default)
+      expect(Puppet::Util::Log).to receive(:setup_default)
 
       @app.setup
     end
-  
+
     it "sets the log destination if provided via settings" do
-      @app.options.unstub(:[])
+      allow(@app.options).to receive(:[]).and_call_original
       Puppet[:logdest] = "set_via_config"
-      Puppet::Util::Log.expects(:newdestination).with("set_via_config")
+      expect(Puppet::Util::Log).to receive(:newdestination).with("set_via_config")
 
       @app.setup
     end
 
     it "does not downgrade the loglevel when --verbose is specified" do
       Puppet[:log_level] = :debug
-      @app.options.stubs(:[]).with(:verbose).returns(true)
+      allow(@app.options).to receive(:[]).with(:verbose).and_return(true)
       @app.setup_logs
 
       expect(Puppet::Util::Log.level).to eq(:debug)
@@ -492,69 +487,65 @@ describe Puppet::Application do
   end
 
   describe "when running" do
-
     before :each do
-      @app.stubs(:preinit)
-      @app.stubs(:setup)
-      @app.stubs(:parse_options)
+      allow(@app).to receive(:preinit)
+      allow(@app).to receive(:setup)
+      allow(@app).to receive(:parse_options)
     end
 
     it "should call preinit" do
-      @app.stubs(:run_command)
+      allow(@app).to receive(:run_command)
 
-      @app.expects(:preinit)
+      expect(@app).to receive(:preinit)
 
       @app.run
     end
 
     it "should call parse_options" do
-      @app.stubs(:run_command)
+      allow(@app).to receive(:run_command)
 
-      @app.expects(:parse_options)
+      expect(@app).to receive(:parse_options)
 
       @app.run
     end
 
     it "should call run_command" do
-
-      @app.expects(:run_command)
+      expect(@app).to receive(:run_command)
 
       @app.run
     end
 
-
     it "should call run_command" do
-      @app.expects(:run_command)
+      expect(@app).to receive(:run_command)
 
       @app.run
     end
 
     it "should call main as the default command" do
-      @app.expects(:main)
+      expect(@app).to receive(:main)
 
       @app.run
     end
 
     it "should warn and exit if no command can be called" do
-      Puppet.expects(:err)
+      expect(Puppet).to receive(:err)
       expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns no command" do
-      @app.stubs(:get_command).returns(nil)
-      Puppet.expects(:err)
+      allow(@app).to receive(:get_command).and_return(nil)
+      expect(Puppet).to receive(:err)
       expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns an invalid command" do
-      @app.stubs(:get_command).returns(:this_function_doesnt_exist)
-      Puppet.expects(:err)
+      allow(@app).to receive(:get_command).and_return(:this_function_doesnt_exist)
+      expect(Puppet).to receive(:err)
       expect { @app.run }.to exit_with 1
     end
   end
 
   describe "when metaprogramming" do
-
     describe "when calling option" do
       it "should create a new method named after the option" do
         @app.class.option("--test1","-t") do
@@ -587,8 +578,8 @@ describe Puppet::Application do
         end
 
         it "should declare the option to OptionParser" do
-          OptionParser.any_instance.stubs(:on)
-          OptionParser.any_instance.expects(:on).with { |*arg| arg[0] == "--[no-]test3" }
+          allow_any_instance_of(OptionParser).to receive(:on)
+          expect_any_instance_of(OptionParser).to receive(:on).with("--[no-]test3", anything)
 
           @app.class.option("--[no-]test3","-t") do
           end
@@ -597,10 +588,10 @@ describe Puppet::Application do
         end
 
         it "should pass a block that calls our defined method" do
-          OptionParser.any_instance.stubs(:on)
-          OptionParser.any_instance.stubs(:on).with('--test4','-t').yields(nil)
+          allow_any_instance_of(OptionParser).to receive(:on)
+          allow_any_instance_of(OptionParser).to receive(:on).with('--test4', '-t').and_yield(nil)
 
-          @app.expects(:send).with(:handle_test4, nil)
+          expect(@app).to receive(:send).with(:handle_test4, nil)
 
           @app.class.option("--test4","-t") do
           end
@@ -611,8 +602,8 @@ describe Puppet::Application do
 
       describe "when no block is given" do
         it "should declare the option to OptionParser" do
-          OptionParser.any_instance.stubs(:on)
-          OptionParser.any_instance.expects(:on).with("--test4","-t")
+          allow_any_instance_of(OptionParser).to receive(:on)
+          expect_any_instance_of(OptionParser).to receive(:on).with("--test4", "-t")
 
           @app.class.option("--test4","-t")
 
@@ -620,10 +611,10 @@ describe Puppet::Application do
         end
 
         it "should give to OptionParser a block that adds the value to the options array" do
-          OptionParser.any_instance.stubs(:on)
-          OptionParser.any_instance.stubs(:on).with("--test4","-t").yields(nil)
+          allow_any_instance_of(OptionParser).to receive(:on)
+          allow_any_instance_of(OptionParser).to receive(:on).with("--test4", "-t").and_yield(nil)
 
-          @app.options.expects(:[]=).with(:test4,nil)
+          expect(@app.options).to receive(:[]=).with(:test4, nil)
 
           @app.class.option("--test4","-t")
 
@@ -631,7 +622,6 @@ describe Puppet::Application do
         end
       end
     end
-
   end
 
   describe "#handle_logdest_arg" do
@@ -639,38 +629,38 @@ describe Puppet::Application do
 
     it "should log an exception that is raised" do
       our_exception = Puppet::DevError.new("test exception")
-      Puppet::Util::Log.expects(:newdestination).with(test_arg).raises(our_exception)
-      Puppet.expects(:log_and_raise).with(our_exception, anything)
+      expect(Puppet::Util::Log).to receive(:newdestination).with(test_arg).and_raise(our_exception)
+      expect(Puppet).to receive(:log_and_raise).with(our_exception, anything)
       @app.handle_logdest_arg(test_arg)
     end
 
     it "should exit when an exception is raised" do
       our_exception = Puppet::DevError.new("test exception")
-      Puppet::Util::Log.expects(:newdestination).with(test_arg).raises(our_exception)
-      Puppet.expects(:log_and_raise).with(our_exception, anything).raises(our_exception)
+      expect(Puppet::Util::Log).to receive(:newdestination).with(test_arg).and_raise(our_exception)
+      expect(Puppet).to receive(:log_and_raise).with(our_exception, anything).and_raise(our_exception)
       expect { @app.handle_logdest_arg(test_arg) }.to raise_error(Puppet::DevError)
     end
 
     it "should set the new log destination" do
-      Puppet::Util::Log.expects(:newdestination).with(test_arg)
+      expect(Puppet::Util::Log).to receive(:newdestination).with(test_arg)
       @app.handle_logdest_arg(test_arg)
     end
 
     it "should set the flag that a destination is set in the options hash" do
-      Puppet::Util::Log.stubs(:newdestination).with(test_arg)
+      allow(Puppet::Util::Log).to receive(:newdestination).with(test_arg)
       @app.handle_logdest_arg(test_arg)
       expect(@app.options[:setdest]).to be_truthy
     end
 
     it "does not set the log destination if setdest is true" do
-      Puppet::Util::Log.expects(:newdestination).never
+      expect(Puppet::Util::Log).not_to receive(:newdestination)
       @app.options[:setdest] = true
 
       @app.handle_logdest_arg(test_arg)
     end
 
     it "does not set the log destination if arg is nil" do
-      Puppet::Util::Log.expects(:newdestination).never
+      expect(Puppet::Util::Log).not_to receive(:newdestination)
 
       @app.handle_logdest_arg(nil)
     end

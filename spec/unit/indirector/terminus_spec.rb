@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/defaults'
 require 'puppet/indirector'
@@ -21,7 +20,7 @@ describe Puppet::Indirector::Terminus do
 
   after :all do
     # Remove the class, unlinking it from the rest of the system.
-    Puppet.send(:remove_const, :AbstractConcept)
+    Puppet.send(:remove_const, :AbstractConcept) if Puppet.const_defined?(:AbstractConcept)
   end
 
   let :terminus_class do Puppet::AbstractConcept::Freedom end
@@ -94,13 +93,13 @@ describe Puppet::Indirector::Terminus do
     end
 
     it "should provide a method for returning terminus classes by name and type" do
-      terminus = stub 'terminus_type', :name => :abstract, :indirection_name => :whatever
+      terminus = double('terminus_type', :name => :abstract, :indirection_name => :whatever)
       Puppet::Indirector::Terminus.register_terminus_class(terminus)
       expect(Puppet::Indirector::Terminus.terminus_class(:whatever, :abstract)).to equal(terminus)
     end
 
     it "should set up autoloading for any terminus class types requested" do
-      Puppet::Indirector::Terminus.expects(:instance_load).with(:test2, "puppet/indirector/test2")
+      expect(Puppet::Indirector::Terminus).to receive(:instance_load).with(:test2, "puppet/indirector/test2")
       Puppet::Indirector::Terminus.terminus_class(:test2, :whatever)
     end
 
@@ -108,12 +107,12 @@ describe Puppet::Indirector::Terminus do
       # Set up instance loading; it would normally happen automatically
       Puppet::Indirector::Terminus.instance_load :test1, "puppet/indirector/test1"
 
-      Puppet::Indirector::Terminus.instance_loader(:test1).expects(:load).with(:yay)
+      expect(Puppet::Indirector::Terminus.instance_loader(:test1)).to receive(:load).with(:yay)
       Puppet::Indirector::Terminus.terminus_class(:test1, :yay)
     end
 
     it "should fail when no indirection can be found" do
-      Puppet::Indirector::Indirection.expects(:instance).with(:abstract_concept).returns(nil)
+      expect(Puppet::Indirector::Indirection).to receive(:instance).with(:abstract_concept).and_return(nil)
       expect {
         class Puppet::AbstractConcept::Physics < Puppet::Indirector::Code
         end
@@ -121,8 +120,9 @@ describe Puppet::Indirector::Terminus do
     end
 
     it "should register the terminus class with the terminus base class" do
-      Puppet::Indirector::Terminus.expects(:register_terminus_class).with do |type|
-        type.indirection_name == :abstract_concept and type.name == :intellect
+      expect(Puppet::Indirector::Terminus).to receive(:register_terminus_class) do |type|
+        expect(type.indirection_name).to eq(:abstract_concept)
+        expect(type.name).to eq(:intellect)
       end
 
       begin
@@ -136,13 +136,13 @@ describe Puppet::Indirector::Terminus do
 
   describe "when parsing class constants for indirection and terminus names" do
     before :each do
-      Puppet::Indirector::Terminus.stubs(:register_terminus_class)
+      allow(Puppet::Indirector::Terminus).to receive(:register_terminus_class)
     end
 
     let :subclass do
-      subclass = mock 'subclass'
-      subclass.stubs(:to_s).returns("TestInd::OneTwo")
-      subclass.stubs(:mark_as_abstract_terminus)
+      subclass = double('subclass')
+      allow(subclass).to receive(:to_s).and_return("TestInd::OneTwo")
+      allow(subclass).to receive(:mark_as_abstract_terminus)
       subclass
     end
 
@@ -153,49 +153,51 @@ describe Puppet::Indirector::Terminus do
     end
 
     it "should use the last term in the constant for the terminus class name" do
-      subclass.expects(:name=).with(:one_two)
-      subclass.stubs(:indirection=)
+      expect(subclass).to receive(:name=).with(:one_two)
+      allow(subclass).to receive(:indirection=)
       Puppet::Indirector::Terminus.inherited(subclass)
     end
 
     it "should convert the terminus name to a downcased symbol" do
-      subclass.expects(:name=).with(:one_two)
-      subclass.stubs(:indirection=)
+      expect(subclass).to receive(:name=).with(:one_two)
+      allow(subclass).to receive(:indirection=)
       Puppet::Indirector::Terminus.inherited(subclass)
     end
 
     it "should use the second to last term in the constant for the indirection name" do
-      subclass.expects(:indirection=).with(:test_ind)
-      subclass.stubs(:name=)
-      subclass.stubs(:terminus_type=)
+      expect(subclass).to receive(:indirection=).with(:test_ind)
+      allow(subclass).to receive(:name=)
+      allow(subclass).to receive(:terminus_type=)
       Puppet::Indirector::Memory.inherited(subclass)
     end
 
     it "should convert the indirection name to a downcased symbol" do
-      subclass.expects(:indirection=).with(:test_ind)
-      subclass.stubs(:name=)
-      subclass.stubs(:terminus_type=)
+      expect(subclass).to receive(:indirection=).with(:test_ind)
+      allow(subclass).to receive(:name=)
+      allow(subclass).to receive(:terminus_type=)
       Puppet::Indirector::Memory.inherited(subclass)
     end
 
     it "should convert camel case to lower case with underscores as word separators" do
-      subclass.expects(:name=).with(:one_two)
-      subclass.stubs(:indirection=)
+      expect(subclass).to receive(:name=).with(:one_two)
+      allow(subclass).to receive(:indirection=)
 
       Puppet::Indirector::Terminus.inherited(subclass)
     end
   end
 
   describe "when creating terminus class types" do
-    before :all do
-      Puppet::Indirector::Terminus.stubs(:register_terminus_class)
+    before(:each) do
+      allow(Puppet::Indirector::Terminus).to receive(:register_terminus_class)
+    end
 
+    before :all do
       class Puppet::Indirector::Terminus::TestTerminusType < Puppet::Indirector::Terminus
       end
     end
 
     after :all do
-      Puppet::Indirector::Terminus.send(:remove_const, :TestTerminusType)
+      Puppet::Indirector::Terminus.send(:remove_const, :TestTerminusType) if Puppet::Indirector::Terminus.const_defined?(:TestTerminusType)
     end
 
     let :subclass do
@@ -217,7 +219,7 @@ describe Puppet::Indirector::Terminus do
 
   describe "when listing terminus classes" do
     it "should list the terminus files available to load" do
-      Puppet::Util::Autoload.any_instance.stubs(:files_to_load).returns ["/foo/bar/baz", "/max/runs/marathon"]
+      allow_any_instance_of(Puppet::Util::Autoload).to receive(:files_to_load).and_return(["/foo/bar/baz", "/max/runs/marathon"])
       expect(Puppet::Indirector::Terminus.terminus_classes('my_stuff')).to eq([:baz, :marathon])
     end
   end
@@ -241,7 +243,7 @@ describe Puppet::Indirector::Terminus do
     end
 
     describe "`instance` is not an instance of the model class" do
-      let(:instance) { mock "instance" }
+      let(:instance) { double("instance") }
 
       it "raises an error" do
         expect {

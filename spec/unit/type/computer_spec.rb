@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 computer = Puppet::Type.type(:computer)
@@ -6,21 +5,19 @@ computer = Puppet::Type.type(:computer)
 describe Puppet::Type.type(:computer), " when checking computer objects" do
   before do
     provider_class = Puppet::Type::Computer.provider(Puppet::Type::Computer.providers[0])
-    Puppet::Type::Computer.expects(:defaultprovider).returns provider_class
+    expect(Puppet::Type::Computer).to receive(:defaultprovider).and_return(provider_class)
 
-          @resource = Puppet::Type::Computer.new(
-                
-            :name => "puppetcomputertest",
-            :en_address => "aa:bb:cc:dd:ee:ff",
-        
-            :ip_address => "1.2.3.4")
+    @resource = Puppet::Type::Computer.new(
+      :name => "puppetcomputertest",
+      :en_address => "aa:bb:cc:dd:ee:ff",
+      :ip_address => "1.2.3.4")
     @properties = {}
     @ensure = Puppet::Type::Computer.attrclass(:ensure).new(:resource => @resource)
   end
 
   it "should be able to create an instance" do
     provider_class = Puppet::Type::Computer.provider(Puppet::Type::Computer.providers[0])
-    Puppet::Type::Computer.expects(:defaultprovider).returns provider_class
+    expect(Puppet::Type::Computer).to receive(:defaultprovider).and_return(provider_class)
     expect(computer.new(:name => "bar")).not_to be_nil
   end
 
@@ -56,7 +53,7 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
   describe "default values" do
     before do
       provider_class = computer.provider(computer.providers[0])
-      computer.expects(:defaultprovider).returns provider_class
+      expect(computer).to receive(:defaultprovider).and_return(provider_class)
     end
 
     it "should be nil for en_address" do

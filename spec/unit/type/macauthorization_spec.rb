@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 module Puppet::Util::Plist
@@ -7,19 +6,17 @@ end
 macauth_type = Puppet::Type.type(:macauthorization)
 
 describe Puppet::Type.type(:macauthorization), "when checking macauthorization objects" do
-
   before do
     authplist = {}
     authplist["rules"] = { "foorule" => "foo" }
     authplist["rights"] = { "fooright" => "foo" }
     provider_class = macauth_type.provider(macauth_type.providers[0])
-    Puppet::Util::Plist.stubs(:parse_plist).with("/etc/authorization").returns(authplist)
-    macauth_type.stubs(:defaultprovider).returns provider_class
+    allow(Puppet::Util::Plist).to receive(:parse_plist).with("/etc/authorization").and_return(authplist)
+    allow(macauth_type).to receive(:defaultprovider).and_return(provider_class)
     @resource = macauth_type.new(:name => 'foo')
   end
 
   describe "when validating attributes" do
-
     parameters = [:name,]
     properties = [:auth_type, :allow_root, :authenticate_user, :auth_class,
       :comment, :group, :k_of_n, :mechanisms, :rule,
@@ -44,11 +41,9 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
         expect(macauth_type.attrclass(property).doc).to be_instance_of(String)
       end
     end
-
   end
 
   describe "when validating properties" do
-
     it "should have a default provider inheriting from Puppet::Provider" do
       expect(macauth_type.defaultprovider.ancestors).to be_include(Puppet::Provider)
     end
@@ -70,7 +65,6 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
         macauth_type.new(:name => "foo", :ensure => :absent)
       }.not_to raise_error
     end
-
   end
 
   [:k_of_n, :timeout, :tries].each do |property|
@@ -80,11 +74,13 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
         prop.should = "300"
         expect(prop.should).to eq(300)
       end
+
       it "should support integers as a value" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = 300
         expect(prop.should).to eq(300)
       end
+
       it "should raise an error for non-integer values" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         expect { prop.should = "foo" }.to raise_error(Puppet::Error)
@@ -99,11 +95,13 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
         prop.should = "false"
         expect(prop.should).to eq(:false)
       end
+
       it "should convert boolean-looking true strings into actual booleans" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         prop.should = "true"
         expect(prop.should).to eq(:true)
       end
+
       it "should raise an error for non-boolean values" do
         prop = macauth_type.attrclass(property).new(:resource => @resource)
         expect { prop.should = "foo" }.to raise_error(Puppet::Error)

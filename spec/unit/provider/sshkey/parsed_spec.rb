@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "sshkey parsed provider" do
@@ -41,7 +40,7 @@ describe "sshkey parsed provider" do
   context "with the sample file" do
     ['sample', 'sample_with_blank_lines'].each do |sample_file|
       let :fixture do my_fixture(sample_file) end
-      before :each do subject.stubs(:default_target).returns(fixture) end
+      before :each do allow(subject).to receive(:default_target).and_return(fixture) end
 
       it "should parse to records on prefetch" do
         expect(subject.target_records(fixture)).to be_empty
@@ -49,7 +48,7 @@ describe "sshkey parsed provider" do
 
         records = subject.target_records(fixture)
         expect(records).to be_an Array
-        expect(records).to be_all {|x| expect(x).to be_an Hash }
+        expect(records).to(be_all {|x| expect(x).to be_an Hash })
       end
 
       it "should reconstitute the file from records" do
@@ -71,22 +70,22 @@ describe "sshkey parsed provider" do
   context 'default ssh_known_hosts target path' do
     ['9.10', '9.11', '10.10'].each do |version|
       it 'should be `/etc/ssh_known_hosts` when OSX version 10.10 or older`' do
-        Facter.expects(:value).with(:operatingsystem).returns('Darwin')
-        Facter.expects(:value).with(:macosx_productversion_major).returns(version)
+        expect(Facter).to receive(:value).with(:operatingsystem).and_return('Darwin')
+        expect(Facter).to receive(:value).with(:macosx_productversion_major).and_return(version)
         expect(subject.default_target).to eq('/etc/ssh_known_hosts')
       end
     end
 
     ['10.11', '10.13', '11.0', '11.11'].each do |version|
       it 'should be `/etc/ssh/ssh_known_hosts` when OSX version 10.11 or newer`' do
-        Facter.expects(:value).with(:operatingsystem).returns('Darwin')
-        Facter.expects(:value).with(:macosx_productversion_major).returns(version)
+        expect(Facter).to receive(:value).with(:operatingsystem).and_return('Darwin')
+        expect(Facter).to receive(:value).with(:macosx_productversion_major).and_return(version)
         expect(subject.default_target).to eq('/etc/ssh/ssh_known_hosts')
       end
     end
 
     it 'should be `/etc/ssh/ssh_known_hosts` on other operating systems' do
-      Facter.expects(:value).with(:operatingsystem).returns('RedHat')
+      expect(Facter).to receive(:value).with(:operatingsystem).and_return('RedHat')
       expect(subject.default_target).to eq('/etc/ssh/ssh_known_hosts')
     end
   end

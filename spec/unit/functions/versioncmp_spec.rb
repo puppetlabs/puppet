@@ -3,7 +3,6 @@ require 'puppet/pops'
 require 'puppet/loaders'
 
 describe "the versioncmp function" do
-
   before(:all) do
     loaders = Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))
     Puppet.push_context({:loaders => loaders}, "test-examples")
@@ -29,7 +28,7 @@ describe "the versioncmp function" do
   end
 
   it "should call Puppet::Util::Package.versioncmp (included in scope)" do
-    Puppet::Util::Package.expects(:versioncmp).with('1.2', '1.3').returns(-1)
+    expect(Puppet::Util::Package).to receive(:versioncmp).with('1.2', '1.3').and_return(-1)
 
     expect(versioncmp('1.2', '1.3')).to eq(-1)
   end

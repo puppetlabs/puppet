@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet/node/facts'
 require 'matchers/json'
@@ -85,14 +83,14 @@ describe Puppet::Node::Facts, "when indirecting" do
 
   describe "when indirecting" do
     before do
-      @indirection = stub 'indirection', :request => mock('request'), :name => :facts
+      @indirection = double('indirection', :request => double('request'), :name => :facts)
 
       @facts = Puppet::Node::Facts.new("me", "one" => "two")
     end
 
     it "should redirect to the specified fact store for storage" do
-      Puppet::Node::Facts.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:save)
+      allow(Puppet::Node::Facts).to receive(:indirection).and_return(@indirection)
+      expect(@indirection).to receive(:save)
       Puppet::Node::Facts.indirection.save(@facts)
     end
 
@@ -177,7 +175,7 @@ describe Puppet::Node::Facts, "when indirecting" do
       end
 
       it "should generate properly formatted json" do
-        Time.stubs(:now).returns(@timestamp)
+        allow(Time).to receive(:now).and_return(@timestamp)
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
         result = JSON.parse(facts.to_json)
@@ -188,7 +186,7 @@ describe Puppet::Node::Facts, "when indirecting" do
       end
 
       it "should generate valid facts data against the facts schema" do
-        Time.stubs(:now).returns(@timestamp)
+        allow(Time).to receive(:now).and_return(@timestamp)
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
 

@@ -9,6 +9,7 @@ describe 'Puppet::Type::Group::Provider::Aix' do
       :ensure => :present
     )
   end
+
   let(:provider) do
     provider_class.new(resource)
   end
@@ -33,7 +34,7 @@ describe 'Puppet::Type::Group::Provider::Aix' do
     end
 
     before(:each) do
-      provider_class.stubs(:list_all).with(ia_module_args).returns(groups)
+      allow(provider_class).to receive(:list_all).with(ia_module_args).and_return(groups)
     end
 
     it 'raises an ArgumentError if the group does not exist' do
@@ -78,7 +79,7 @@ describe 'Puppet::Type::Group::Provider::Aix' do
       before(:each) do
         resource[:auth_membership] = false
 
-        provider.stubs(:members).returns(['user3', 'user1'])
+        allow(provider).to receive(:members).and_return(['user3', 'user1'])
       end
 
       it 'adds the passed-in members to the current list of members, filtering out any duplicates' do

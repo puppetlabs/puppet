@@ -2,7 +2,6 @@ require 'spec_helper'
 require 'puppet/pops'
 
 describe Puppet::Pops::Parser::Locator do
-
   it "multi byte characters in a comment does not interfere with AST node text extraction" do
     parser = Puppet::Pops::Parser::Parser.new()
     model = parser.parse_string("# \u{0400}comment\nabcdef#XXXXXXXXXX").model
@@ -22,20 +21,18 @@ describe Puppet::Pops::Parser::Locator do
   end
 
   it 'Locator caches last offset / line' do
-    #Puppet::Pops::Parser::Locator::AbstractLocator.expects(:ary_bsearch_i).once
     parser = Puppet::Pops::Parser::Parser.new()
     model = parser.parse_string("$a\n = 1\n + 1\n").model
-    model.body.locator.expects(:ary_bsearch_i).with(anything, 2).once.returns(:special_value)
+    expect(model.body.locator).to receive(:ary_bsearch_i).with(anything, 2).once.and_return(:special_value)
     expect(model.body.locator.line_for_offset(2)).to eq(:special_value)
     expect(model.body.locator.line_for_offset(2)).to eq(:special_value)
   end
 
   it 'Locator invalidates last offset / line cache if asked for different offset' do
-    #Puppet::Pops::Parser::Locator::AbstractLocator.expects(:ary_bsearch_i).once
     parser = Puppet::Pops::Parser::Parser.new()
     model = parser.parse_string("$a\n = 1\n + 1\n").model
-    model.body.locator.expects(:ary_bsearch_i).with(anything, 2).twice.returns(:first_value, :third_value)
-    model.body.locator.expects(:ary_bsearch_i).with(anything, 3).once.returns(:second_value)
+    expect(model.body.locator).to receive(:ary_bsearch_i).with(anything, 2).twice.and_return(:first_value, :third_value)
+    expect(model.body.locator).to receive(:ary_bsearch_i).with(anything, 3).once.and_return(:second_value)
     expect(model.body.locator.line_for_offset(2)).to eq(:first_value)
     expect(model.body.locator.line_for_offset(3)).to eq(:second_value) # invalidates cache as side effect
     expect(model.body.locator.line_for_offset(2)).to eq(:third_value)

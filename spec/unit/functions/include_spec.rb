@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet/parser/functions'
@@ -6,7 +5,6 @@ require 'matchers/containment_matchers'
 require 'matchers/resource'
 require 'matchers/include_in_order'
 require 'unit/functions/shared'
-
 
 describe 'The "include" function' do
   include PuppetSpec::Compiler
@@ -128,7 +126,6 @@ describe 'The "include" function' do
     expect(catalog).to_not contain_class("not_contained").in("container")
   end
 
-
   it 'produces an array with a single class references given a single argument' do
     catalog = compile_to_catalog(<<-MANIFEST)
       class a {
@@ -186,5 +183,4 @@ describe 'The "include" function' do
   it_should_behave_like 'all functions transforming relative to absolute names', :include
   it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :include
   it_should_behave_like 'an inclusion function, when --tasks is on,', :include
-
 end

@@ -1,16 +1,14 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows? do
   let(:simple_provider) do
     @provider_class = described_class.provide(:simple) { mk_resource_methods }
-    @provider_class.stubs(:suitable?).returns true
+    allow(@provider_class).to receive(:suitable?).and_return(true)
     @provider_class
   end
 
   before :each do
-    described_class.stubs(:defaultprovider).returns @provider_class
+    allow(described_class).to receive(:defaultprovider).and_return(@provider_class)
   end
 
   after :each do
@@ -41,9 +39,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
     end
   end
 
-
   describe "when validating values" do
-
     describe "ensure" do
       it "should support present as a value for ensure" do
         expect { described_class.new(:name => 'foo', :ensure => :present) }.to_not raise_error
@@ -536,7 +532,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
   end
 
   it "should default to user => root if Etc.getpwuid(Process.uid) returns nil (#12357)" do
-    Etc.expects(:getpwuid).returns(nil)
+    expect(Etc).to receive(:getpwuid).and_return(nil)
     entry = described_class.new(:name => "test_entry", :ensure => :present)
     expect(entry.value(:user)).to eql "root"
   end

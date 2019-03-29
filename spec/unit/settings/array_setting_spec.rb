@@ -4,7 +4,7 @@ require 'puppet/settings'
 require 'puppet/settings/array_setting'
 
 describe Puppet::Settings::ArraySetting do
-  subject { described_class.new(:settings => stub('settings'), :desc => "test") }
+  subject { described_class.new(:settings => double('settings'), :desc => "test") }
 
   it "is of type :array" do
     expect(subject.type).to eq :array

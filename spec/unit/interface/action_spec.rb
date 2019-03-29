@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/interface'
 
@@ -138,7 +137,7 @@ describe Puppet::Interface::Action do
       end
 
       it "should call #validate_and_clean on the action when invoked" do
-        face.get_action(:bar).expects(:validate_and_clean).with({}).returns({})
+        expect(face.get_action(:bar)).to receive(:validate_and_clean).with({}).and_return({})
         face.bar 1, :two, 'three'
       end
     end
@@ -397,7 +396,7 @@ describe Puppet::Interface::Action do
 
       it "should not invoke a decorator if the options are empty" do
         face.option("--foo FOO") { before_action { |_,_,_| report :before_action } }
-        face.expects(:report).never
+        expect(face).not_to receive(:report)
         face.bar
       end
 

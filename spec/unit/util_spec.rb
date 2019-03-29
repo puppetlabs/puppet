@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Util do
@@ -99,7 +97,6 @@ describe Puppet::Util do
   end
 
   describe "#withenv on Windows", :if => Puppet.features.microsoft_windows? do
-
     let(:process) { Puppet::Util::Windows::Process }
 
     it "should ignore case" do
@@ -122,7 +119,6 @@ describe Puppet::Util do
         ENV.delete(env_key)
       end
     end
-
 
     def withenv_utf8(&block)
       env_var_name = SecureRandom.uuid
@@ -149,8 +145,6 @@ describe Puppet::Util do
     # document buggy Ruby behavior here for https://bugs.ruby-lang.org/issues/8822
     # Ruby retrieves / stores ENV names in the current codepage
     # when these tests no longer pass, Ruby has fixed its bugs and workarounds can be removed
-
-
     # interestingly we would expect some of these tests to fail when codepage is 65001
     # but instead the env values are in Encoding::ASCII_8BIT!
     it "works around Ruby bug 8822 (which fails to preserve UTF-8 properly when accessing ENV) (Ruby <= 2.1) ",
@@ -359,8 +353,8 @@ describe Puppet::Util do
 
     describe "when using platform :posix" do
       before :each do
-        Puppet.features.stubs(:posix).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        allow(Puppet.features).to receive(:posix).and_return(true)
+        allow(Puppet.features).to receive(:microsoft_windows?).and_return(false)
       end
 
       %w[/ /foo /foo/../bar].each do |path|
@@ -372,8 +366,8 @@ describe Puppet::Util do
 
     describe "when using platform :windows" do
       before :each do
-        Puppet.features.stubs(:posix).returns false
-        Puppet.features.stubs(:microsoft_windows?).returns true
+        allow(Puppet.features).to receive(:posix).and_return(false)
+        allow(Puppet.features).to receive(:microsoft_windows?).and_return(true)
       end
 
       it "should normalize backslashes" do
@@ -506,8 +500,8 @@ describe Puppet::Util do
 
     describe "when using platform :posix" do
       before :each do
-        Puppet.features.stubs(:posix).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        allow(Puppet.features).to receive(:posix).and_return(true)
+        allow(Puppet.features).to receive(:microsoft_windows?).and_return(false)
       end
 
       %w[/ /foo /foo/../bar].each do |path|
@@ -545,8 +539,8 @@ describe Puppet::Util do
 
     describe "when using platform :windows" do
       before :each do
-        Puppet.features.stubs(:posix).returns false
-        Puppet.features.stubs(:microsoft_windows?).returns true
+        allow(Puppet.features).to receive(:posix).and_return(false)
+        allow(Puppet.features).to receive(:microsoft_windows?).and_return(true)
       end
 
       it "should url encode \\ as %5C, but not replace : as %3F" do
@@ -638,14 +632,14 @@ describe Puppet::Util do
 
     before :each do
       # Most of the things this method does are bad to do during specs. :/
-      Kernel.stubs(:fork).returns(pid).yields
+      allow(Kernel).to receive(:fork).and_return(pid).and_yield
 
-      $stdin.stubs(:reopen)
-      $stdout.stubs(:reopen)
-      $stderr.stubs(:reopen)
+      allow($stdin).to receive(:reopen)
+      allow($stdout).to receive(:reopen)
+      allow($stderr).to receive(:reopen)
 
       # ensure that we don't really close anything!
-      (0..256).each {|n| IO.stubs(:new) }
+      allow(IO).to receive(:new)
     end
 
     it "should close all open file descriptors except stdin/stdout/stderr when /proc/self/fd exists" do
@@ -656,28 +650,32 @@ describe Puppet::Util do
         if fd == '.' || fd == '..'
           next
         elsif ['0', '1', '2'].include? fd
-          IO.expects(:new).with(fd.to_i).never
+          expect(IO).not_to receive(:new).with(fd.to_i)
         else
-          IO.expects(:new).with(fd.to_i).returns mock('io', :close)
+          expect(IO).to receive(:new).with(fd.to_i).and_return(double('io', close: nil))
         end
       end
 
-      Dir.stubs(:foreach).with('/proc/self/fd').multiple_yields(*fds)
+      dir_expectation = receive(:foreach).with('/proc/self/fd')
+      fds.each do |fd|
+        dir_expectation = dir_expectation.and_yield(fd)
+      end
+      allow(Dir).to dir_expectation
       Puppet::Util.safe_posix_fork
     end
 
     it "should close all open file descriptors except stdin/stdout/stderr when /proc/self/fd doesn't exists" do
       # This is ugly, but I can't really think of a better way to do it without
       # letting it actually close fds, which seems risky
-      (0..2).each {|n| IO.expects(:new).with(n).never}
-      (3..256).each { |n| IO.expects(:new).with(n).returns mock('io', :close)  }
-      Dir.stubs(:foreach).with('/proc/self/fd') { raise Errno::ENOENT }
+      (0..2).each {|n| expect(IO).not_to receive(:new).with(n)}
+      (3..256).each {|n| expect(IO).to receive(:new).with(n).and_return(double('io', close: nil))  }
+      allow(Dir).to receive(:foreach).with('/proc/self/fd').and_raise(Errno::ENOENT)
 
       Puppet::Util.safe_posix_fork
     end
 
     it "should fork a child process to execute the block" do
-      Kernel.expects(:fork).returns(pid).yields
+      expect(Kernel).to receive(:fork).and_return(pid).and_yield
 
       Puppet::Util.safe_posix_fork do
         "Fork this!"
@@ -694,11 +692,11 @@ describe Puppet::Util do
     let(:path) { File.join(base, 'foo') }
 
     before :each do
-      FileTest.stubs(:file?).returns false
-      FileTest.stubs(:file?).with(path).returns true
+      allow(FileTest).to receive(:file?).and_return(false)
+      allow(FileTest).to receive(:file?).with(path).and_return(true)
 
-      FileTest.stubs(:executable?).returns false
-      FileTest.stubs(:executable?).with(path).returns true
+      allow(FileTest).to receive(:executable?).and_return(false)
+      allow(FileTest).to receive(:executable?).with(path).and_return(true)
     end
 
     it "should accept absolute paths" do
@@ -715,8 +713,8 @@ describe Puppet::Util do
       env = {:HOME => nil, :PATH => env_path}
       env.merge!({:HOMEDRIVE => nil, :USERPROFILE => nil}) if Puppet.features.microsoft_windows?
 
+      expect(Puppet::Util::Warnings).to receive(:warnonce).once
       Puppet::Util.withenv(env) do
-        Puppet::Util::Warnings.expects(:warnonce).once
         Puppet::Util.which('foo')
       end
     end
@@ -738,13 +736,13 @@ describe Puppet::Util do
 
     describe "on POSIX systems" do
       before :each do
-        Puppet.features.stubs(:posix?).returns true
-        Puppet.features.stubs(:microsoft_windows?).returns false
+        allow(Puppet.features).to receive(:posix?).and_return(true)
+        allow(Puppet.features).to receive(:microsoft_windows?).and_return(false)
       end
 
       it "should walk the search PATH returning the first executable" do
-        Puppet::Util.stubs(:get_env).with('PATH').returns(File.expand_path('/bin'))
-        Puppet::Util.stubs(:get_env).with('PATHEXT').returns(nil)
+        allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(File.expand_path('/bin'))
+        allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return(nil)
 
         expect(Puppet::Util.which('foo')).to eq(path)
       end
@@ -754,16 +752,16 @@ describe Puppet::Util do
       let(:path) { File.expand_path(File.join(base, 'foo.CMD')) }
 
       before :each do
-        Puppet.features.stubs(:posix?).returns false
-        Puppet.features.stubs(:microsoft_windows?).returns true
+        allow(Puppet.features).to receive(:posix?).and_return(false)
+        allow(Puppet.features).to receive(:microsoft_windows?).and_return(true)
       end
 
       describe "when a file extension is specified" do
         it "should walk each directory in PATH ignoring PATHEXT" do
-          Puppet::Util.stubs(:get_env).with('PATH').returns(%w[/bar /bin].map{|dir| File.expand_path(dir)}.join(File::PATH_SEPARATOR))
-          Puppet::Util.stubs(:get_env).with('PATHEXT').returns('.FOOBAR')
+          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(%w[/bar /bin].map{|dir| File.expand_path(dir)}.join(File::PATH_SEPARATOR))
+          allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return('.FOOBAR')
 
-          FileTest.expects(:file?).with(File.join(File.expand_path('/bar'), 'foo.CMD')).returns false
+          expect(FileTest).to receive(:file?).with(File.join(File.expand_path('/bar'), 'foo.CMD')).and_return(false)
 
           expect(Puppet::Util.which('foo.CMD')).to eq(path)
         end
@@ -772,38 +770,36 @@ describe Puppet::Util do
       describe "when a file extension is not specified" do
         it "should walk each extension in PATHEXT until an executable is found" do
           bar = File.expand_path('/bar')
-          Puppet::Util.stubs(:get_env).with('PATH').returns("#{bar}#{File::PATH_SEPARATOR}#{base}")
-          Puppet::Util.stubs(:get_env).with('PATHEXT').returns(".EXE#{File::PATH_SEPARATOR}.CMD")
+          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return("#{bar}#{File::PATH_SEPARATOR}#{base}")
+          allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return(".EXE#{File::PATH_SEPARATOR}.CMD")
 
-          exts = sequence('extensions')
-          FileTest.expects(:file?).in_sequence(exts).with(File.join(bar, 'foo.EXE')).returns false
-          FileTest.expects(:file?).in_sequence(exts).with(File.join(bar, 'foo.CMD')).returns false
-          FileTest.expects(:file?).in_sequence(exts).with(File.join(base, 'foo.EXE')).returns false
-          FileTest.expects(:file?).in_sequence(exts).with(path).returns true
+          expect(FileTest).to receive(:file?).ordered().with(File.join(bar, 'foo.EXE')).and_return(false)
+          expect(FileTest).to receive(:file?).ordered().with(File.join(bar, 'foo.CMD')).and_return(false)
+          expect(FileTest).to receive(:file?).ordered().with(File.join(base, 'foo.EXE')).and_return(false)
+          expect(FileTest).to receive(:file?).ordered().with(path).and_return(true)
 
           expect(Puppet::Util.which('foo')).to eq(path)
         end
 
         it "should walk the default extension path if the environment variable is not defined" do
-          Puppet::Util.stubs(:get_env).with('PATH').returns(base)
-          Puppet::Util.stubs(:get_env).with('PATHEXT').returns(nil)
+          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(base)
+          allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return(nil)
 
-          exts = sequence('extensions')
           %w[.COM .EXE .BAT].each do |ext|
-            FileTest.expects(:file?).in_sequence(exts).with(File.join(base, "foo#{ext}")).returns false
+            expect(FileTest).to receive(:file?).ordered().with(File.join(base, "foo#{ext}")).and_return(false)
           end
-          FileTest.expects(:file?).in_sequence(exts).with(path).returns true
+          expect(FileTest).to receive(:file?).ordered().with(path).and_return(true)
 
           expect(Puppet::Util.which('foo')).to eq(path)
         end
 
         it "should fall back if no extension matches" do
-          Puppet::Util.stubs(:get_env).with('PATH').returns(base)
-          Puppet::Util.stubs(:get_env).with('PATHEXT').returns(".EXE")
+          allow(Puppet::Util).to receive(:get_env).with('PATH').and_return(base)
+          allow(Puppet::Util).to receive(:get_env).with('PATHEXT').and_return(".EXE")
 
-          FileTest.stubs(:file?).with(File.join(base, 'foo.EXE')).returns false
-          FileTest.stubs(:file?).with(File.join(base, 'foo')).returns true
-          FileTest.stubs(:executable?).with(File.join(base, 'foo')).returns true
+          allow(FileTest).to receive(:file?).with(File.join(base, 'foo.EXE')).and_return(false)
+          allow(FileTest).to receive(:file?).with(File.join(base, 'foo')).and_return(true)
+          allow(FileTest).to receive(:executable?).with(File.join(base, 'foo')).and_return(true)
 
           expect(Puppet::Util.which('foo')).to eq(File.join(base, 'foo'))
         end
@@ -825,6 +821,7 @@ describe Puppet::Util do
 
   context "#replace_file" do
     subject { Puppet::Util }
+
     it { is_expected.to respond_to :replace_file }
 
     let :target do
@@ -895,7 +892,7 @@ describe Puppet::Util do
       subject.replace_file(temp_path, 0440) do |fh|
         fh.puts('some text in there')
       end
-      
+
       expect(File.read(temp_path)).to eq("some text in there\n")
       expect(get_mode(temp_path)).to eq(0440)
     end
@@ -972,7 +969,6 @@ describe Puppet::Util do
   end
 
   describe "#deterministic_rand" do
-
     it "should not fiddle with future rand calls" do
       Puppet::Util.deterministic_rand(123,20)
       rand_one = rand()

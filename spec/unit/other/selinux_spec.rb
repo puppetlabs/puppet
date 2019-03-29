@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/type/selboolean'
@@ -33,7 +32,7 @@ end
 describe Puppet::Type.type(:selboolean), " when manipulating booleans" do
   before :each do
     provider_class = Puppet::Type::Selboolean.provider(Puppet::Type::Selboolean.providers[0])
-    Puppet::Type::Selboolean.stubs(:defaultprovider).returns provider_class
+    allow(Puppet::Type::Selboolean).to receive(:defaultprovider).and_return(provider_class)
 
     @bool = Puppet::Type::Selboolean.new(
       :name => "foo",
@@ -67,7 +66,7 @@ end
 describe Puppet::Type.type(:selmodule), " when checking policy modules" do
   before :each do
     provider_class = Puppet::Type::Selmodule.provider(Puppet::Type::Selmodule.providers[0])
-    Puppet::Type::Selmodule.stubs(:defaultprovider).returns provider_class
+    allow(Puppet::Type::Selmodule).to receive(:defaultprovider).and_return(provider_class)
 
     @module = Puppet::Type::Selmodule.new(
       :name => "foo",

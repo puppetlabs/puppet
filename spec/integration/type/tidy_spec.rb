@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet_spec/compiler'
@@ -10,7 +9,7 @@ describe Puppet::Type.type(:tidy) do
   include PuppetSpec::Compiler
 
   before do
-    Puppet::Util::Storage.stubs(:store)
+    allow(Puppet::Util::Storage).to receive(:store)
   end
 
   it "should be able to recursively remove directories" do

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Puppet::Type.type(:service).provider(:runit) do
   before(:each) do
     # Create a mock resource
-    @resource = stub 'resource'
+    @resource = double('resource')
 
     @provider = subject()
     @servicedir = "/etc/service"
@@ -12,18 +12,18 @@ describe Puppet::Type.type(:service).provider(:runit) do
     @provider.class.defpath=@daemondir
 
     # A catch all; no parameters set
-    @resource.stubs(:[]).returns(nil)
+    allow(@resource).to receive(:[]).and_return(nil)
 
     # But set name, source and path (because we won't run
     # the thing that will fetch the resource path from the provider)
-    @resource.stubs(:[]).with(:name).returns "myservice"
-    @resource.stubs(:[]).with(:ensure).returns :enabled
-    @resource.stubs(:[]).with(:path).returns @daemondir
-    @resource.stubs(:ref).returns "Service[myservice]"
+    allow(@resource).to receive(:[]).with(:name).and_return("myservice")
+    allow(@resource).to receive(:[]).with(:ensure).and_return(:enabled)
+    allow(@resource).to receive(:[]).with(:path).and_return(@daemondir)
+    allow(@resource).to receive(:ref).and_return("Service[myservice]")
 
-    @provider.stubs(:sv)
+    allow(@provider).to receive(:sv)
 
-    @provider.stubs(:resource).returns @resource
+    allow(@provider).to receive(:resource).and_return(@resource)
   end
 
   it "should have a restart method" do
@@ -56,32 +56,32 @@ describe Puppet::Type.type(:service).provider(:runit) do
 
   context "when starting" do
     it "should enable the service if it is not enabled" do
-      @provider.stubs(:sv)
+      allow(@provider).to receive(:sv)
 
-      @provider.expects(:enabled?).returns :false
-      @provider.expects(:enable)
-      @provider.stubs(:sleep)
+      expect(@provider).to receive(:enabled?).and_return(:false)
+      expect(@provider).to receive(:enable)
+      allow(@provider).to receive(:sleep)
 
       @provider.start
     end
 
     it "should execute external command 'sv start /etc/service/myservice'" do
-      @provider.stubs(:enabled?).returns :true
-      @provider.expects(:sv).with("start", "/etc/service/myservice")
+      allow(@provider).to receive(:enabled?).and_return(:true)
+      expect(@provider).to receive(:sv).with("start", "/etc/service/myservice")
       @provider.start
     end
   end
 
   context "when stopping" do
     it "should execute external command 'sv stop /etc/service/myservice'" do
-      @provider.expects(:sv).with("stop", "/etc/service/myservice")
+      expect(@provider).to receive(:sv).with("stop", "/etc/service/myservice")
       @provider.stop
     end
   end
 
   context "when restarting" do
     it "should call 'sv restart /etc/service/myservice'" do
-      @provider.expects(:sv).with("restart","/etc/service/myservice")
+      expect(@provider).to receive(:sv).with("restart","/etc/service/myservice")
       @provider.restart
     end
   end
@@ -90,8 +90,8 @@ describe Puppet::Type.type(:service).provider(:runit) do
     it "should create a symlink between daemon dir and service dir", :if => Puppet.features.manages_symlinks? do
       daemon_path = File.join(@daemondir,"myservice")
       service_path = File.join(@servicedir,"myservice")
-      Puppet::FileSystem.expects(:symlink?).with(service_path).returns(false)
-      Puppet::FileSystem.expects(:symlink).with(daemon_path, File.join(@servicedir,"myservice")).returns(0)
+      expect(Puppet::FileSystem).to receive(:symlink?).with(service_path).and_return(false)
+      expect(Puppet::FileSystem).to receive(:symlink).with(daemon_path, File.join(@servicedir,"myservice")).and_return(0)
       @provider.enable
     end
   end
@@ -99,36 +99,38 @@ describe Puppet::Type.type(:service).provider(:runit) do
   context "when disabling" do
     it "should remove the '/etc/service/myservice' symlink" do
       path = File.join(@servicedir,"myservice")
-#      mocked_file = mock(path, :symlink? => true)
-      FileTest.stubs(:directory?).returns(false)
-      Puppet::FileSystem.expects(:symlink?).with(path).returns(true) # mocked_file)
-      Puppet::FileSystem.expects(:unlink).with(path).returns(0)
+      allow(FileTest).to receive(:directory?).and_return(false)
+      expect(Puppet::FileSystem).to receive(:symlink?).with(path).and_return(true)
+      expect(Puppet::FileSystem).to receive(:unlink).with(path).and_return(0)
       @provider.disable
     end
   end
 
   context "when checking status" do
     it "should call the external command 'sv status /etc/sv/myservice'" do
-      @provider.expects(:sv).with('status',File.join(@daemondir,"myservice"))
+      expect(@provider).to receive(:sv).with('status',File.join(@daemondir,"myservice"))
       @provider.status
     end
   end
 
   context "when checking status" do
     it "and sv status fails, properly raise a Puppet::Error" do
-      @provider.expects(:sv).with('status',File.join(@daemondir,"myservice")).raises(Puppet::ExecutionFailure, "fail: /etc/sv/myservice: file not found")
+      expect(@provider).to receive(:sv).with('status',File.join(@daemondir,"myservice")).and_raise(Puppet::ExecutionFailure, "fail: /etc/sv/myservice: file not found")
       expect { @provider.status }.to raise_error(Puppet::Error, 'Could not get status for service Service[myservice]: fail: /etc/sv/myservice: file not found')
     end
+
     it "and sv status returns up, then return :running" do
-      @provider.expects(:sv).with('status',File.join(@daemondir,"myservice")).returns("run: /etc/sv/myservice: (pid 9029) 6s")
+      expect(@provider).to receive(:sv).with('status',File.join(@daemondir,"myservice")).and_return("run: /etc/sv/myservice: (pid 9029) 6s")
       expect(@provider.status).to eq(:running)
     end
+
     it "and sv status returns not running, then return :stopped" do
-      @provider.expects(:sv).with('status',File.join(@daemondir,"myservice")).returns("fail: /etc/sv/myservice: runsv not running")
+      expect(@provider).to receive(:sv).with('status',File.join(@daemondir,"myservice")).and_return("fail: /etc/sv/myservice: runsv not running")
       expect(@provider.status).to eq(:stopped)
     end
+
     it "and sv status returns a warning, then return :stopped" do
-      @provider.expects(:sv).with('status',File.join(@daemondir,"myservice")).returns("warning: /etc/sv/myservice: unable to open supervise/ok: file does not exist")
+      expect(@provider).to receive(:sv).with('status',File.join(@daemondir,"myservice")).and_return("warning: /etc/sv/myservice: unable to open supervise/ok: file does not exist")
       expect(@provider.status).to eq(:stopped)
     end
   end

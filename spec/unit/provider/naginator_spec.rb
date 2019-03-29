@@ -1,44 +1,43 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/provider/naginator'
 
 describe Puppet::Provider::Naginator do
   before do
-    @resource_type = stub 'resource_type', :name => :nagios_test
+    @resource_type = double('resource_type', :name => :nagios_test)
     @class = Class.new(Puppet::Provider::Naginator)
 
-    @class.stubs(:resource_type).returns @resource_type
+    allow(@class).to receive(:resource_type).and_return(@resource_type)
   end
 
   it "should be able to look up the associated Nagios type" do
-    nagios_type = mock "nagios_type"
-    nagios_type.stubs :attr_accessor
-    Nagios::Base.expects(:type).with(:test).returns nagios_type
+    nagios_type = double("nagios_type")
+    allow(nagios_type).to receive(:attr_accessor)
+    expect(Nagios::Base).to receive(:type).with(:test).and_return(nagios_type)
 
     expect(@class.nagios_type).to equal(nagios_type)
   end
 
   it "should use the Nagios type to determine whether an attribute is valid" do
-    nagios_type = mock "nagios_type"
-    nagios_type.stubs :attr_accessor
-    Nagios::Base.expects(:type).with(:test).returns nagios_type
+    nagios_type = double("nagios_type")
+    allow(nagios_type).to receive(:attr_accessor)
+    expect(Nagios::Base).to receive(:type).with(:test).and_return(nagios_type)
 
-    nagios_type.expects(:parameters).returns [:foo, :bar]
+    expect(nagios_type).to receive(:parameters).and_return([:foo, :bar])
 
     expect(@class.valid_attr?(:test, :foo)).to be_truthy
   end
 
   it "should use Naginator to parse configuration snippets" do
-    parser = mock 'parser'
-    parser.expects(:parse).with("my text").returns "my instances"
-    Nagios::Parser.expects(:new).returns(parser)
+    parser = double('parser')
+    expect(parser).to receive(:parse).with("my text").and_return("my instances")
+    expect(Nagios::Parser).to receive(:new).and_return(parser)
 
     expect(@class.parse("my text")).to eq("my instances")
   end
 
   it "should join Nagios::Base records with '\\n' when asked to convert them to text" do
-    @class.expects(:header).returns "myheader\n"
+    expect(@class).to receive(:header).and_return("myheader\n")
 
     expect(@class.to_file([:one, :two])).to eq("myheader\none\ntwo")
   end

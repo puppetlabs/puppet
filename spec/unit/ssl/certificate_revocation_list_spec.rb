@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_revocation_list'
@@ -136,7 +135,7 @@ describe Puppet::SSL::CertificateRevocationList do
       @crl = @class.new("crl")
       @crl.generate(@cert, @key)
 
-      Puppet::SSL::CertificateRevocationList.indirection.stubs :save
+      allow(Puppet::SSL::CertificateRevocationList.indirection).to receive(:save)
     end
 
     it "should require a serial number and the CA's private key" do
@@ -157,12 +156,12 @@ describe Puppet::SSL::CertificateRevocationList do
 
     it "should sign the CRL with the CA's private key and a digest instance" do
       digest = Puppet::SSL::CertificateSigner.new.digest
-      @crl.content.expects(:sign).with { |key, signer| key == @key and signer.is_a?(digest) }
+      expect(@crl.content).to receive(:sign).with(@key, be_a(digest))
       @crl.revoke(1, @key)
     end
 
     it "should save the CRL" do
-      Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(@crl, nil)
+      expect(Puppet::SSL::CertificateRevocationList.indirection).to receive(:save).with(@crl, any_args)
       @crl.revoke(1, @key)
     end
 

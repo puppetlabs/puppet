@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/indirector/certificate_request/disabled_ca'
 
@@ -25,7 +24,7 @@ describe Puppet::SSL::CertificateRequest::DisabledCa do
       end
 
       it "should forward local #{name} requests" do
-        Puppet::SSL::CertificateRequest.indirection.terminus(:file).expects(name)
+        expect(Puppet::SSL::CertificateRequest.indirection.terminus(:file)).to receive(name)
         subject.send(name, request(name, false))
       end
     end

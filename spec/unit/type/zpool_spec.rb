@@ -1,12 +1,11 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 zpool = Puppet::Type.type(:zpool)
 
 describe zpool do
   before do
-    @provider = stub 'provider'
-    @resource = stub 'resource', :resource => nil, :provider => @provider, :line => nil, :file => nil
+    @provider = double('provider')
+    @resource = double('resource', :resource => nil, :provider => @provider, :line => nil, :file => nil)
   end
 
   properties = [:ensure, :disk, :mirror, :raidz, :spare, :log]
@@ -31,7 +30,7 @@ vdev_property = Puppet::Property::VDev
 describe vdev_property do
   before do
     vdev_property.initvars
-    @resource = stub 'resource', :[]= => nil, :property => nil
+    @resource = double('resource', :[]= => nil, :property => nil)
     @property = vdev_property.new(:resource => @resource)
   end
 
@@ -66,7 +65,7 @@ multi_vdev_property = Puppet::Property::MultiVDev
 describe multi_vdev_property do
   before do
     multi_vdev_property.initvars
-    @resource = stub 'resource', :[]= => nil, :property => nil
+    @resource = double('resource', :[]= => nil, :property => nil)
     @property = multi_vdev_property.new(:resource => @resource)
   end
 

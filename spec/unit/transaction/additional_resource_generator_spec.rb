@@ -16,8 +16,11 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
   let(:node) { Puppet::Node.new('test', :environment => env) }
   let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
+  before(:each) do
+    allow_any_instance_of(Puppet::Parser::Compiler).to receive(:loaders).and_return(loaders)
+  end
+
   around :each do |example|
-    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
     Puppet.override(:loaders => loaders, :current_environment => env) do
       Puppet::Type.newtype(:generator) do
         include PuppetSpec::Compiler
@@ -311,12 +314,11 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
 
     it "sets resources_failed_to_generate to true if resource#eval_generate raises an exception" do
-
       catalog = compile_to_ral(<<-MANIFEST)
         notify { 'hello': }
       MANIFEST
 
-      catalog.resource("Notify[hello]").stubs(:eval_generate).raises(RuntimeError)
+      allow(catalog.resource("Notify[hello]")).to receive(:eval_generate).and_raise(RuntimeError)
       relationship_graph = relationship_graph_for(catalog)
       generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
       generator.eval_generate(catalog.resource("Notify[hello]"))
@@ -485,14 +487,13 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
 
     it "sets resources_failed_to_generate to true if resource#generate raises an exception" do
-
       catalog = compile_to_ral(<<-MANIFEST)
         user { 'foo':
           ensure => present,
         }
       MANIFEST
 
-      catalog.resource("User[foo]").stubs(:generate).raises(RuntimeError)
+      allow(catalog.resource("User[foo]")).to receive(:generate).and_raise(RuntimeError)
       relationship_graph = relationship_graph_for(catalog)
       generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
       generator.generate_additional_resources(catalog.resource("User[foo]"))

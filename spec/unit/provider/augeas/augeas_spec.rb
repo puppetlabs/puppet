@@ -174,8 +174,8 @@ describe provider_class do
 
   describe "get filters" do
     before do
-      augeas = stub("augeas", :get => "value")
-      augeas.stubs("close")
+      augeas = double("augeas", :get => "value")
+      allow(augeas).to receive("close")
       @provider.aug = augeas
     end
 
@@ -202,9 +202,9 @@ describe provider_class do
 
   describe "values filters" do
     before do
-      augeas = stub("augeas", :match => ["set", "of", "values"])
-      augeas.stubs(:get).returns('set').then.returns('of').then.returns('values')
-      augeas.stubs("close")
+      augeas = double("augeas", :match => ["set", "of", "values"])
+      allow(augeas).to receive(:get).and_return('set', 'of', 'values')
+      allow(augeas).to receive("close")
       @provider = provider_class.new(@resource)
       @provider.aug = augeas
     end
@@ -240,8 +240,8 @@ describe provider_class do
     end
 
     it "should return true for an array match with internally escaped single quotes" do
-      @provider.aug.stubs(:match).returns(["set", "o'values", "here"])
-      @provider.aug.stubs(:get).returns('set').then.returns("o'values").then.returns('here')
+      allow(@provider.aug).to receive(:match).and_return(["set", "o'values", "here"])
+      allow(@provider.aug).to receive(:get).and_return('set', "o'values", 'here')
       command = ["values", "fake value", "== [ 'set', 'o\\'values', 'here']"]
       expect(@provider.process_values(command)).to eq(true)
     end
@@ -272,8 +272,8 @@ describe provider_class do
     end
 
     it "should return true for an array match with literal backslashes" do
-      @provider.aug.stubs(:match).returns(["set", "o\\values", "here"])
-      @provider.aug.stubs(:get).returns('set').then.returns("o\\values").then.returns('here')
+      allow(@provider.aug).to receive(:match).and_return(["set", "o\\values", "here"])
+      allow(@provider.aug).to receive(:get).and_return('set', "o\\values", 'here')
       command = ["values", "fake value", "== [ 'set', 'o\\\\values', 'here']"]
       expect(@provider.process_values(command)).to eq(true)
     end
@@ -299,8 +299,8 @@ describe provider_class do
     end
 
     it "should return true for an empty array match" do
-      @provider.aug.stubs(:match).returns([])
-      @provider.aug.stubs(:get)
+      allow(@provider.aug).to receive(:match).and_return([])
+      allow(@provider.aug).to receive(:get)
       command = ["values", "fake value", "== []"]
       expect(@provider.process_values(command)).to eq(true)
     end
@@ -308,8 +308,8 @@ describe provider_class do
 
   describe "match filters" do
     before do
-      augeas = stub("augeas", :match => ["set", "of", "values"])
-      augeas.stubs("close")
+      augeas = double("augeas", :match => ["set", "of", "values"])
+      allow(augeas).to receive("close")
       @provider = provider_class.new(@resource)
       @provider.aug = augeas
     end
@@ -377,60 +377,60 @@ describe provider_class do
 
   describe "need to run" do
     before(:each) do
-      @augeas = stub("augeas")
-      @augeas.stubs("close")
+      @augeas = double("augeas")
+      allow(@augeas).to receive("close")
       @provider.aug = @augeas
 
       # These tests pretend to be an earlier version so the provider doesn't
       # attempt to make the change in the need_to_run? method
-      @provider.stubs(:get_augeas_version).returns("0.3.5")
+      allow(@provider).to receive(:get_augeas_version).and_return("0.3.5")
     end
 
     it "should handle no filters" do
-      @augeas.stubs("match").returns(["set", "of", "values"])
+      allow(@augeas).to receive("match").and_return(["set", "of", "values"])
       expect(@provider.need_to_run?).to eq(true)
     end
 
     it "should return true when a get filter matches" do
       @resource[:onlyif] = "get path == value"
-      @augeas.stubs("get").returns("value")
+      allow(@augeas).to receive("get").and_return("value")
       expect(@provider.need_to_run?).to eq(true)
     end
 
     describe "performing numeric comparisons (#22617)" do
       it "should return true when a get string compare is true" do
         @resource[:onlyif] = "get bpath > a"
-        @augeas.stubs("get").returns("b")
+        allow(@augeas).to receive("get").and_return("b")
         expect(@provider.need_to_run?).to eq(true)
       end
 
       it "should return false when a get string compare is false" do
         @resource[:onlyif] = "get a19path > a2"
-        @augeas.stubs("get").returns("a19")
+        allow(@augeas).to receive("get").and_return("a19")
         expect(@provider.need_to_run?).to eq(false)
       end
 
       it "should return true when a get int gt compare is true" do
         @resource[:onlyif] = "get path19 > 2"
-        @augeas.stubs("get").returns("19")
+        allow(@augeas).to receive("get").and_return("19")
         expect(@provider.need_to_run?).to eq(true)
       end
 
       it "should return true when a get int ge compare is true" do
         @resource[:onlyif] = "get path19 >= 2"
-        @augeas.stubs("get").returns("19")
+        allow(@augeas).to receive("get").and_return("19")
         expect(@provider.need_to_run?).to eq(true)
       end
 
       it "should return true when a get int lt compare is true" do
         @resource[:onlyif] = "get path2 < 19"
-        @augeas.stubs("get").returns("2")
+        allow(@augeas).to receive("get").and_return("2")
         expect(@provider.need_to_run?).to eq(true)
       end
 
       it "should return false when a get int le compare is false" do
         @resource[:onlyif] = "get path39 <= 4"
-        @augeas.stubs("get").returns("39")
+        allow(@augeas).to receive("get").and_return("39")
         expect(@provider.need_to_run?).to eq(false)
       end
     end
@@ -454,19 +454,19 @@ describe provider_class do
 
     it "should return false when a get filter does not match" do
       @resource[:onlyif] = "get path == another value"
-      @augeas.stubs("get").returns("value")
+      allow(@augeas).to receive("get").and_return("value")
       expect(@provider.need_to_run?).to eq(false)
     end
 
     it "should return true when a match filter matches" do
       @resource[:onlyif] = "match path size == 3"
-      @augeas.stubs("match").returns(["set", "of", "values"])
+      allow(@augeas).to receive("match").and_return(["set", "of", "values"])
       expect(@provider.need_to_run?).to eq(true)
     end
 
     it "should return false when a match filter does not match" do
       @resource[:onlyif] = "match path size == 2"
-      @augeas.stubs("match").returns(["set", "of", "values"])
+      allow(@augeas).to receive("match").and_return(["set", "of", "values"])
       expect(@provider.need_to_run?).to eq(false)
     end
 
@@ -474,21 +474,21 @@ describe provider_class do
     it "setting force should not change the above logic" do
       @resource[:force] = true
       @resource[:onlyif] = "match path size == 2"
-      @augeas.stubs("match").returns(["set", "of", "values"])
+      allow(@augeas).to receive("match").and_return(["set", "of", "values"])
       expect(@provider.need_to_run?).to eq(false)
     end
 
     #Ticket 5211 testing
     it "should return true when a size != the provided value" do
       @resource[:onlyif] = "match path size != 17"
-      @augeas.stubs("match").returns(["set", "of", "values"])
+      allow(@augeas).to receive("match").and_return(["set", "of", "values"])
       expect(@provider.need_to_run?).to eq(true)
     end
 
     #Ticket 5211 testing
     it "should return false when a size does equal the provided value" do
       @resource[:onlyif] = "match path size != 3"
-      @augeas.stubs("match").returns(["set", "of", "values"])
+      allow(@augeas).to receive("match").and_return(["set", "of", "values"])
       expect(@provider.need_to_run?).to eq(false)
     end
 
@@ -504,15 +504,15 @@ describe provider_class do
           @resource[:context] = "/files"
           @resource[:changes] = ["set #{file}/foo bar"]
 
-          File.stubs(:delete)
-          @provider.stubs(:get_augeas_version).returns("0.10.0")
-          @provider.stubs("diff").with("#{file}", "#{file}.augnew").returns("diff")
+          allow(File).to receive(:delete)
+          allow(@provider).to receive(:get_augeas_version).and_return("0.10.0")
+          allow(@provider).to receive("diff").with("#{file}", "#{file}.augnew").and_return("diff")
 
-          @augeas.stubs(:set).returns(true)
-          @augeas.stubs(:save).returns(true)
-          @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
-          @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
-          @augeas.stubs(:set).with("/augeas/save", "newfile")
+          allow(@augeas).to receive(:set).and_return(true)
+          allow(@augeas).to receive(:save).and_return(true)
+          allow(@augeas).to receive(:match).with("/augeas/events/saved").and_return(["/augeas/events/saved"])
+          allow(@augeas).to receive(:get).with("/augeas/events/saved").and_return("/files#{file}")
+          allow(@augeas).to receive(:set).with("/augeas/save", "newfile")
         end
 
         if cfg && param
@@ -538,23 +538,23 @@ describe provider_class do
         @resource[:show_diff] = true
 
         @resource[:root] = ""
-        @provider.stubs(:get_augeas_version).returns("0.10.0")
-        @augeas.stubs(:set).returns(true)
-        @augeas.stubs(:save).returns(true)
+        allow(@provider).to receive(:get_augeas_version).and_return("0.10.0")
+        allow(@augeas).to receive(:set).and_return(true)
+        allow(@augeas).to receive(:save).and_return(true)
       end
 
       it "should display a diff when a single file is shown to have been changed" do
         file = "/etc/hosts"
-        File.stubs(:delete)
+        allow(File).to receive(:delete)
 
         @resource[:loglevel] = "crit"
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
-        @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
-        @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
-        @augeas.expects(:set).with("/augeas/save", "newfile")
-        @provider.expects("diff").with("#{file}", "#{file}.augnew").returns("diff")
+        allow(@augeas).to receive(:match).with("/augeas/events/saved").and_return(["/augeas/events/saved"])
+        allow(@augeas).to receive(:get).with("/augeas/events/saved").and_return("/files#{file}")
+        expect(@augeas).to receive(:set).with("/augeas/save", "newfile")
+        expect(@provider).to receive("diff").with("#{file}", "#{file}.augnew").and_return("diff")
 
         expect(@provider).to be_need_to_run
 
@@ -565,17 +565,17 @@ describe provider_class do
       it "should display a diff for each file that is changed when changing many files" do
         file1 = "/etc/hosts"
         file2 = "/etc/resolv.conf"
-        File.stubs(:delete)
+        allow(File).to receive(:delete)
 
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file1}/foo bar", "set #{file2}/baz biz"]
 
-        @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved[1]", "/augeas/events/saved[2]"])
-        @augeas.stubs(:get).with("/augeas/events/saved[1]").returns("/files#{file1}")
-        @augeas.stubs(:get).with("/augeas/events/saved[2]").returns("/files#{file2}")
-        @augeas.expects(:set).with("/augeas/save", "newfile")
-        @provider.expects(:diff).with("#{file1}", "#{file1}.augnew").returns("diff #{file1}")
-        @provider.expects(:diff).with("#{file2}", "#{file2}.augnew").returns("diff #{file2}")
+        allow(@augeas).to receive(:match).with("/augeas/events/saved").and_return(["/augeas/events/saved[1]", "/augeas/events/saved[2]"])
+        allow(@augeas).to receive(:get).with("/augeas/events/saved[1]").and_return("/files#{file1}")
+        allow(@augeas).to receive(:get).with("/augeas/events/saved[2]").and_return("/files#{file2}")
+        expect(@augeas).to receive(:set).with("/augeas/save", "newfile")
+        expect(@provider).to receive(:diff).with("#{file1}", "#{file1}.augnew").and_return("diff #{file1}")
+        expect(@provider).to receive(:diff).with("#{file2}", "#{file2}.augnew").and_return("diff #{file2}")
 
         expect(@provider).to be_need_to_run
 
@@ -587,16 +587,16 @@ describe provider_class do
         it "should call diff when a file is shown to have been changed" do
           root = "/tmp/foo"
           file = "/etc/hosts"
-          File.stubs(:delete)
+          allow(File).to receive(:delete)
 
           @resource[:context] = "/files"
           @resource[:changes] = ["set #{file}/foo bar"]
           @resource[:root] = root
 
-          @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
-          @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
-          @augeas.expects(:set).with("/augeas/save", "newfile")
-          @provider.expects(:diff).with("#{root}#{file}", "#{root}#{file}.augnew").returns("diff")
+          allow(@augeas).to receive(:match).with("/augeas/events/saved").and_return(["/augeas/events/saved"])
+          allow(@augeas).to receive(:get).with("/augeas/events/saved").and_return("/files#{file}")
+          expect(@augeas).to receive(:set).with("/augeas/save", "newfile")
+          expect(@provider).to receive(:diff).with("#{root}#{file}", "#{root}#{file}.augnew").and_return("diff")
 
           expect(@provider).to be_need_to_run
 
@@ -611,12 +611,12 @@ describe provider_class do
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
-        @augeas.stubs(:match).with("/augeas/events/saved").returns([])
-        @augeas.expects(:set).with("/augeas/save", "newfile")
-        @augeas.expects(:get).with("/augeas/events/saved").never()
-        @augeas.expects(:close)
+        allow(@augeas).to receive(:match).with("/augeas/events/saved").and_return([])
+        expect(@augeas).to receive(:set).with("/augeas/save", "newfile")
+        expect(@augeas).not_to receive(:get).with("/augeas/events/saved")
+        expect(@augeas).to receive(:close)
 
-        @provider.expects(:diff).never()
+        expect(@provider).not_to receive(:diff)
         expect(@provider).not_to be_need_to_run
       end
 
@@ -626,14 +626,14 @@ describe provider_class do
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
-        @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
-        @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
-        @augeas.expects(:set).with("/augeas/save", "newfile")
-        @augeas.expects(:close)
+        allow(@augeas).to receive(:match).with("/augeas/events/saved").and_return(["/augeas/events/saved"])
+        allow(@augeas).to receive(:get).with("/augeas/events/saved").and_return("/files#{file}")
+        expect(@augeas).to receive(:set).with("/augeas/save", "newfile")
+        expect(@augeas).to receive(:close)
 
-        File.expects(:delete).with(file + ".augnew")
+        expect(File).to receive(:delete).with(file + ".augnew")
 
-        @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("")
+        expect(@provider).to receive(:diff).with("#{file}", "#{file}.augnew").and_return("")
         expect(@provider).to be_need_to_run
       end
 
@@ -644,15 +644,15 @@ describe provider_class do
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
-        @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved[1]", "/augeas/events/saved[2]"])
-        @augeas.stubs(:get).with("/augeas/events/saved[1]").returns("/files#{file}")
-        @augeas.stubs(:get).with("/augeas/events/saved[2]").returns("/files#{file}")
-        @augeas.expects(:set).with("/augeas/save", "newfile")
-        @augeas.expects(:close)
+        allow(@augeas).to receive(:match).with("/augeas/events/saved").and_return(["/augeas/events/saved[1]", "/augeas/events/saved[2]"])
+        allow(@augeas).to receive(:get).with("/augeas/events/saved[1]").and_return("/files#{file}")
+        allow(@augeas).to receive(:get).with("/augeas/events/saved[2]").and_return("/files#{file}")
+        expect(@augeas).to receive(:set).with("/augeas/save", "newfile")
+        expect(@augeas).to receive(:close)
 
-        File.expects(:delete).with(file + ".augnew").once()
+        expect(File).to receive(:delete).with(file + ".augnew").once()
 
-        @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("").once()
+        expect(@provider).to receive(:diff).with("#{file}", "#{file}.augnew").and_return("").once()
         expect(@provider).to be_need_to_run
       end
 
@@ -662,12 +662,12 @@ describe provider_class do
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
-        @augeas.stubs(:save).returns(false)
-        @augeas.stubs(:match).with("/augeas/events/saved").returns([])
-        @augeas.expects(:close)
+        allow(@augeas).to receive(:save).and_return(false)
+        allow(@augeas).to receive(:match).with("/augeas/events/saved").and_return([])
+        expect(@augeas).to receive(:close)
 
-        @provider.expects(:diff).never()
-        @provider.expects(:print_put_errors)
+        expect(@provider).not_to receive(:diff)
+        expect(@provider).to receive(:print_put_errors)
         expect { @provider.need_to_run? }.to raise_error(Puppet::Error)
       end
     end
@@ -675,45 +675,45 @@ describe provider_class do
 
   describe "augeas execution integration" do
     before do
-      @augeas = stub("augeas", :load)
-      @augeas.stubs("close")
-      @augeas.stubs(:match).with("/augeas/events/saved").returns([])
+      @augeas = double("augeas", load: nil)
+      allow(@augeas).to receive("close")
+      allow(@augeas).to receive(:match).with("/augeas/events/saved").and_return([])
 
       @provider.aug = @augeas
-      @provider.stubs(:get_augeas_version).returns("0.3.5")
+      allow(@provider).to receive(:get_augeas_version).and_return("0.3.5")
     end
 
     it "should handle set commands" do
       @resource[:changes] = "set JarJar Binks"
       @resource[:context] = "/some/path/"
-      @augeas.expects(:set).with("/some/path/JarJar", "Binks").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:set).with("/some/path/JarJar", "Binks").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle rm commands" do
       @resource[:changes] = "rm /Jar/Jar"
-      @augeas.expects(:rm).with("/Jar/Jar")
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:rm).with("/Jar/Jar")
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle remove commands" do
       @resource[:changes] = "remove /Jar/Jar"
-      @augeas.expects(:rm).with("/Jar/Jar")
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:rm).with("/Jar/Jar")
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle clear commands" do
       @resource[:changes] = "clear Jar/Jar"
       @resource[:context] = "/foo/"
-      @augeas.expects(:clear).with("/foo/Jar/Jar").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:clear).with("/foo/Jar/Jar").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
@@ -721,20 +721,20 @@ describe provider_class do
       it "should clear missing path" do
         @resource[:changes] = "touch Jar/Jar"
         @resource[:context] = "/foo/"
-        @augeas.expects(:match).with("/foo/Jar/Jar").returns([])
-        @augeas.expects(:clear).with("/foo/Jar/Jar").returns(true)
-        @augeas.expects(:save).returns(true)
-        @augeas.expects(:close)
+        expect(@augeas).to receive(:match).with("/foo/Jar/Jar").and_return([])
+        expect(@augeas).to receive(:clear).with("/foo/Jar/Jar").and_return(true)
+        expect(@augeas).to receive(:save).and_return(true)
+        expect(@augeas).to receive(:close)
         expect(@provider.execute_changes).to eq(:executed)
       end
 
       it "should not change on existing path" do
         @resource[:changes] = "touch Jar/Jar"
         @resource[:context] = "/foo/"
-        @augeas.expects(:match).with("/foo/Jar/Jar").returns(["/foo/Jar/Jar"])
-        @augeas.expects(:clear).never
-        @augeas.expects(:save).returns(true)
-        @augeas.expects(:close)
+        expect(@augeas).to receive(:match).with("/foo/Jar/Jar").and_return(["/foo/Jar/Jar"])
+        expect(@augeas).not_to receive(:clear)
+        expect(@augeas).to receive(:save).and_return(true)
+        expect(@augeas).to receive(:close)
         expect(@provider.execute_changes).to eq(:executed)
       end
     end
@@ -742,138 +742,138 @@ describe provider_class do
     it "should handle ins commands with before" do
       @resource[:changes] = "ins Binks before Jar/Jar"
       @resource[:context] = "/foo"
-      @augeas.expects(:insert).with("/foo/Jar/Jar", "Binks", true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:insert).with("/foo/Jar/Jar", "Binks", true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle ins commands with after" do
       @resource[:changes] = "ins Binks after /Jar/Jar"
       @resource[:context] = "/foo"
-      @augeas.expects(:insert).with("/Jar/Jar", "Binks", false)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:insert).with("/Jar/Jar", "Binks", false)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle ins with no context" do
       @resource[:changes] = "ins Binks after /Jar/Jar"
-      @augeas.expects(:insert).with("/Jar/Jar", "Binks", false)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:insert).with("/Jar/Jar", "Binks", false)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle multiple commands" do
       @resource[:changes] = ["ins Binks after /Jar/Jar", "clear Jar/Jar"]
       @resource[:context] = "/foo/"
-      @augeas.expects(:insert).with("/Jar/Jar", "Binks", false)
-      @augeas.expects(:clear).with("/foo/Jar/Jar").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:insert).with("/Jar/Jar", "Binks", false)
+      expect(@augeas).to receive(:clear).with("/foo/Jar/Jar").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle defvar commands" do
       @resource[:changes] = "defvar myjar Jar/Jar"
       @resource[:context] = "/foo/"
-      @augeas.expects(:defvar).with("myjar", "/foo/Jar/Jar").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:defvar).with("myjar", "/foo/Jar/Jar").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should pass through augeas variables without context" do
       @resource[:changes] = ["defvar myjar Jar/Jar","set $myjar/Binks 1"]
       @resource[:context] = "/foo/"
-      @augeas.expects(:defvar).with("myjar", "/foo/Jar/Jar").returns(true)
+      expect(@augeas).to receive(:defvar).with("myjar", "/foo/Jar/Jar").and_return(true)
       # this is the important bit, shouldn't be /foo/$myjar/Binks
-      @augeas.expects(:set).with("$myjar/Binks", "1").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:set).with("$myjar/Binks", "1").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle defnode commands" do
       @resource[:changes] = "defnode newjar Jar/Jar[last()+1] Binks"
       @resource[:context] = "/foo/"
-      @augeas.expects(:defnode).with("newjar", "/foo/Jar/Jar[last()+1]", "Binks").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:defnode).with("newjar", "/foo/Jar/Jar[last()+1]", "Binks").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle mv commands" do
       @resource[:changes] = "mv Jar/Jar Binks"
       @resource[:context] = "/foo/"
-      @augeas.expects(:mv).with("/foo/Jar/Jar", "/foo/Binks").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:mv).with("/foo/Jar/Jar", "/foo/Binks").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle rename commands" do
       @resource[:changes] = "rename Jar/Jar Binks"
       @resource[:context] = "/foo/"
-      @augeas.expects(:rename).with("/foo/Jar/Jar", "Binks").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:rename).with("/foo/Jar/Jar", "Binks").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should handle setm commands" do
       @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","setm test Jar/Jar Binks"]
       @resource[:context] = "/foo/"
-      @augeas.expects(:respond_to?).with("setm").returns(true)
-      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
-      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
-      @augeas.expects(:setm).with("/foo/test", "Jar/Jar", "Binks").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:respond_to?).with("setm").and_return(true)
+      expect(@augeas).to receive(:set).with("/foo/test[1]/Jar/Jar", "Foo").and_return(true)
+      expect(@augeas).to receive(:set).with("/foo/test[2]/Jar/Jar", "Bar").and_return(true)
+      expect(@augeas).to receive(:setm).with("/foo/test", "Jar/Jar", "Binks").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should throw error if setm command not supported" do
       @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","setm test Jar/Jar Binks"]
       @resource[:context] = "/foo/"
-      @augeas.expects(:respond_to?).with("setm").returns(false)
-      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
-      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
+      expect(@augeas).to receive(:respond_to?).with("setm").and_return(false)
+      expect(@augeas).to receive(:set).with("/foo/test[1]/Jar/Jar", "Foo").and_return(true)
+      expect(@augeas).to receive(:set).with("/foo/test[2]/Jar/Jar", "Bar").and_return(true)
       expect { @provider.execute_changes }.to raise_error RuntimeError, /command 'setm' not supported/
     end
 
     it "should handle clearm commands" do
       @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","clearm test Jar/Jar"]
       @resource[:context] = "/foo/"
-      @augeas.expects(:respond_to?).with("clearm").returns(true)
-      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
-      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
-      @augeas.expects(:clearm).with("/foo/test", "Jar/Jar").returns(true)
-      @augeas.expects(:save).returns(true)
-      @augeas.expects(:close)
+      expect(@augeas).to receive(:respond_to?).with("clearm").and_return(true)
+      expect(@augeas).to receive(:set).with("/foo/test[1]/Jar/Jar", "Foo").and_return(true)
+      expect(@augeas).to receive(:set).with("/foo/test[2]/Jar/Jar", "Bar").and_return(true)
+      expect(@augeas).to receive(:clearm).with("/foo/test", "Jar/Jar").and_return(true)
+      expect(@augeas).to receive(:save).and_return(true)
+      expect(@augeas).to receive(:close)
       expect(@provider.execute_changes).to eq(:executed)
     end
 
     it "should throw error if clearm command not supported" do
       @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","clearm test Jar/Jar"]
       @resource[:context] = "/foo/"
-      @augeas.expects(:respond_to?).with("clearm").returns(false)
-      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
-      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
+      expect(@augeas).to receive(:respond_to?).with("clearm").and_return(false)
+      expect(@augeas).to receive(:set).with("/foo/test[1]/Jar/Jar", "Foo").and_return(true)
+      expect(@augeas).to receive(:set).with("/foo/test[2]/Jar/Jar", "Bar").and_return(true)
       expect { @provider.execute_changes }.to raise_error(RuntimeError, /command 'clearm' not supported/)
     end
 
     it "should throw error if saving failed" do
       @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","clearm test Jar/Jar"]
       @resource[:context] = "/foo/"
-      @augeas.expects(:respond_to?).with("clearm").returns(true)
-      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
-      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
-      @augeas.expects(:clearm).with("/foo/test", "Jar/Jar").returns(true)
-      @augeas.expects(:save).returns(false)
-      @provider.expects(:print_put_errors)
-      @augeas.expects(:match).returns([])
+      expect(@augeas).to receive(:respond_to?).with("clearm").and_return(true)
+      expect(@augeas).to receive(:set).with("/foo/test[1]/Jar/Jar", "Foo").and_return(true)
+      expect(@augeas).to receive(:set).with("/foo/test[2]/Jar/Jar", "Bar").and_return(true)
+      expect(@augeas).to receive(:clearm).with("/foo/test", "Jar/Jar").and_return(true)
+      expect(@augeas).to receive(:save).and_return(false)
+      expect(@provider).to receive(:print_put_errors)
+      expect(@augeas).to receive(:match).and_return([])
       expect { @provider.execute_changes }.to raise_error(Puppet::Error)
     end
   end
@@ -882,7 +882,7 @@ describe provider_class do
     include PuppetSpec::Files
 
     it "should not clobber the file if it's a symlink" do
-      Puppet::Util::Storage.stubs(:store)
+      allow(Puppet::Util::Storage).to receive(:store)
 
       link = tmpfile('link')
       target = tmpfile('target')
@@ -909,57 +909,57 @@ describe provider_class do
 
   describe "load/save failure reporting" do
     before do
-      @augeas = stub("augeas")
-      @augeas.stubs("close")
+      @augeas = double("augeas")
+      allow(@augeas).to receive("close")
       @provider.aug = @augeas
     end
 
     describe "should find load errors" do
       before do
-        @augeas.expects(:match).with("/augeas//error").returns(["/augeas/files/foo/error"])
-        @augeas.expects(:match).with("/augeas/files/foo/error/*").returns(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
-        @augeas.expects(:get).with("/augeas/files/foo/error").returns("some_failure")
-        @augeas.expects(:get).with("/augeas/files/foo/error/path").returns("/foo")
-        @augeas.expects(:get).with("/augeas/files/foo/error/message").returns("Failed to...")
+        expect(@augeas).to receive(:match).with("/augeas//error").and_return(["/augeas/files/foo/error"])
+        expect(@augeas).to receive(:match).with("/augeas/files/foo/error/*").and_return(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
+        expect(@augeas).to receive(:get).with("/augeas/files/foo/error").and_return("some_failure")
+        expect(@augeas).to receive(:get).with("/augeas/files/foo/error/path").and_return("/foo")
+        expect(@augeas).to receive(:get).with("/augeas/files/foo/error/message").and_return("Failed to...")
       end
 
       it "and output only to debug when no path supplied" do
-        @provider.expects(:debug).times(5)
-        @provider.expects(:warning).never()
+        expect(@provider).to receive(:debug).exactly(5).times()
+        expect(@provider).not_to receive(:warning)
         @provider.print_load_errors(nil)
       end
 
       it "and output a warning and to debug when path supplied" do
-        @augeas.expects(:match).with("/augeas/files/foo//error").returns(["/augeas/files/foo/error"])
-        @provider.expects(:warning).once()
-        @provider.expects(:debug).times(4)
+        expect(@augeas).to receive(:match).with("/augeas/files/foo//error").and_return(["/augeas/files/foo/error"])
+        expect(@provider).to receive(:warning).once()
+        expect(@provider).to receive(:debug).exactly(4).times()
         @provider.print_load_errors('/augeas/files/foo//error')
       end
 
       it "and output only to debug when path doesn't match" do
-        @augeas.expects(:match).with("/augeas/files/foo//error").returns([])
-        @provider.expects(:warning).never()
-        @provider.expects(:debug).times(5)
+        expect(@augeas).to receive(:match).with("/augeas/files/foo//error").and_return([])
+        expect(@provider).not_to receive(:warning)
+        expect(@provider).to receive(:debug).exactly(5).times()
         @provider.print_load_errors('/augeas/files/foo//error')
       end
     end
 
     it "should find load errors from lenses" do
-      @augeas.expects(:match).with("/augeas//error").twice.returns(["/augeas/load/Xfm/error"])
-      @augeas.expects(:match).with("/augeas/load/Xfm/error/*").returns([])
-      @augeas.expects(:get).with("/augeas/load/Xfm/error").returns(["Could not find lens php.aug"])
-      @provider.expects(:warning).once()
-      @provider.expects(:debug).twice()
+      expect(@augeas).to receive(:match).with("/augeas//error").twice.and_return(["/augeas/load/Xfm/error"])
+      expect(@augeas).to receive(:match).with("/augeas/load/Xfm/error/*").and_return([])
+      expect(@augeas).to receive(:get).with("/augeas/load/Xfm/error").and_return(["Could not find lens php.aug"])
+      expect(@provider).to receive(:warning).once()
+      expect(@provider).to receive(:debug).twice()
       @provider.print_load_errors('/augeas//error')
     end
 
     it "should find save errors and output to debug" do
-      @augeas.expects(:match).with("/augeas//error[. = 'put_failed']").returns(["/augeas/files/foo/error"])
-      @augeas.expects(:match).with("/augeas/files/foo/error/*").returns(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
-      @augeas.expects(:get).with("/augeas/files/foo/error").returns("some_failure")
-      @augeas.expects(:get).with("/augeas/files/foo/error/path").returns("/foo")
-      @augeas.expects(:get).with("/augeas/files/foo/error/message").returns("Failed to...")
-      @provider.expects(:debug).times(5)
+      expect(@augeas).to receive(:match).with("/augeas//error[. = 'put_failed']").and_return(["/augeas/files/foo/error"])
+      expect(@augeas).to receive(:match).with("/augeas/files/foo/error/*").and_return(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
+      expect(@augeas).to receive(:get).with("/augeas/files/foo/error").and_return("some_failure")
+      expect(@augeas).to receive(:get).with("/augeas/files/foo/error/path").and_return("/foo")
+      expect(@augeas).to receive(:get).with("/augeas/files/foo/error/message").and_return("Failed to...")
+      expect(@provider).to receive(:debug).exactly(5).times()
       @provider.print_put_errors
     end
   end
@@ -978,7 +978,7 @@ describe provider_class do
     end
 
     it "should report load errors to debug only" do
-      @provider.expects(:print_load_errors).with(nil)
+      expect(@provider).to receive(:print_load_errors).with(nil)
       aug = @provider.open_augeas
       expect(aug).not_to eq(nil)
     end
@@ -988,7 +988,7 @@ describe provider_class do
       @resource[:incl] = "/etc/hosts"
       @resource[:lens] = "Hosts.lns"
 
-      @provider.expects(:print_load_errors).with('/augeas//error')
+      expect(@provider).to receive(:print_load_errors).with('/augeas//error')
       aug = @provider.open_augeas
       expect(aug).not_to eq(nil)
       expect(aug.match("/files/etc/fstab")).to eq([])
@@ -1021,7 +1021,7 @@ describe provider_class do
       it "should only load one file if relevant context given" do
         @resource[:context] = "/files/etc/fstab"
 
-        @provider.expects(:print_load_errors).with('/augeas/files/etc/fstab//error')
+        expect(@provider).to receive(:print_load_errors).with('/augeas/files/etc/fstab//error')
         aug = @provider.open_augeas
         expect(aug).not_to eq(nil)
         expect(aug.match("/files/etc/fstab")).to eq(["/files/etc/fstab"])
@@ -1032,7 +1032,7 @@ describe provider_class do
         @resource[:context] = "/files/etc/test"
         @resource[:load_path] = my_fixture_dir
 
-        @provider.expects(:print_load_errors).with('/augeas/files/etc/test//error')
+        expect(@provider).to receive(:print_load_errors).with('/augeas/files/etc/test//error')
         aug = @provider.open_augeas
         expect(aug).not_to eq(nil)
         expect(aug.match("/files/etc/fstab")).to eq([])
@@ -1043,7 +1043,7 @@ describe provider_class do
       it "should load standard files if context isn't specific" do
         @resource[:context] = "/files/etc"
 
-        @provider.expects(:print_load_errors).with(nil)
+        expect(@provider).to receive(:print_load_errors).with(nil)
         aug = @provider.open_augeas
         expect(aug).not_to eq(nil)
         expect(aug.match("/files/etc/fstab")).to eq(["/files/etc/fstab"])
@@ -1053,7 +1053,7 @@ describe provider_class do
       it "should not optimise if the context is a complex path" do
         @resource[:context] = "/files/*[label()='etc']"
 
-        @provider.expects(:print_load_errors).with(nil)
+        expect(@provider).to receive(:print_load_errors).with(nil)
         aug = @provider.open_augeas
         expect(aug).not_to eq(nil)
         expect(aug.match("/files/etc/fstab")).to eq(["/files/etc/fstab"])

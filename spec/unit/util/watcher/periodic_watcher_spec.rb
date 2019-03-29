@@ -8,7 +8,7 @@ describe Puppet::Util::Watcher::PeriodicWatcher do
   let(:a_value) { 15 }
   let(:a_different_value) { 16 }
 
-  let(:unused_watcher) { mock('unused watcher') }
+  let(:unused_watcher) { double('unused watcher') }
   let(:unchanged_watcher) { a_watcher_reporting(a_value) }
   let(:changed_watcher) { a_watcher_reporting(a_value, a_different_value) }
 
@@ -46,7 +46,7 @@ describe Puppet::Util::Watcher::PeriodicWatcher do
 
   def a_time_that_reports_expired_as(expired, timeout)
     timer = Puppet::Util::Watcher::Timer.new(timeout)
-    timer.stubs(:expired?).returns(expired)
+    allow(timer).to receive(:expired?).and_return(expired)
     timer
   end
 end

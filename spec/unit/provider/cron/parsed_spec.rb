@@ -1,9 +1,6 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Type.type(:cron).provider(:crontab) do
-
   let :provider do
     described_class.new(:command => '/bin/true')
   end
@@ -66,17 +63,17 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
   describe "when determining the correct filetype" do
     it "should use the suntab filetype on Solaris" do
-      Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+      allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
       expect(described_class.filetype).to eq(Puppet::Util::FileType::FileTypeSuntab)
     end
 
     it "should use the aixtab filetype on AIX" do
-      Facter.stubs(:value).with(:osfamily).returns 'AIX'
+      allow(Facter).to receive(:value).with(:osfamily).and_return('AIX')
       expect(described_class.filetype).to eq(Puppet::Util::FileType::FileTypeAixtab)
     end
 
     it "should use the crontab filetype on other platforms" do
-      Facter.stubs(:value).with(:osfamily).returns 'Not a real operating system family'
+      allow(Facter).to receive(:value).with(:osfamily).and_return('Not a real operating system family')
       expect(described_class.filetype).to eq(Puppet::Util::FileType::FileTypeCrontab)
     end
   end
@@ -95,17 +92,19 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
   describe ".targets" do
     let(:tabs) { [ described_class.default_target ] + %w{foo bar} }
+
     before do
-      File.expects(:readable?).returns true
-      File.stubs(:file?).returns true
-      File.stubs(:writable?).returns true
+      expect(File).to receive(:readable?).and_return(true)
+      allow(File).to receive(:file?).and_return(true)
+      allow(File).to receive(:writable?).and_return(true)
     end
-    after do
-      File.unstub :readable?, :file?, :writable?
-      Dir.unstub :foreach
-    end
+
     it "should add all crontabs as targets" do
-      Dir.expects(:foreach).multiple_yields(*tabs)
+      dir_expectation = receive(:foreach)
+      tabs.each do |tab|
+        dir_expectation = dir_expectation.and_yield(tab)
+      end
+      expect(Dir).to dir_expectation
       expect(described_class.targets).to eq(tabs)
     end
   end
@@ -199,28 +198,28 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
   describe ".instances" do
     before :each do
-      described_class.stubs(:default_target).returns 'foobar'
+      allow(described_class).to receive(:default_target).and_return('foobar')
     end
 
     describe "on linux" do
       before do
-        Facter.stubs(:value).with(:osfamily).returns 'Linux'
-        Facter.stubs(:value).with(:operatingsystem)
+        allow(Facter).to receive(:value).with(:osfamily).and_return('Linux')
+        allow(Facter).to receive(:value).with(:operatingsystem)
       end
 
       it "should contain no resources for a user who has no crontab" do
-        Puppet::Util.stubs(:uid).returns(10)
+        allow(Puppet::Util).to receive(:uid).and_return(10)
 
-        Puppet::Util::Execution.expects(:execute)
+        expect(Puppet::Util::Execution).to receive(:execute)
           .with('crontab -u foobar -l', { failonfail: true, combine: true })
-          .returns("")
+          .and_return("")
         expect(described_class.instances.select { |resource|
           resource.get('target') == 'foobar'
         }).to be_empty
       end
 
       it "should contain no resources for a user who is absent" do
-        Puppet::Util.stubs(:uid).returns(nil)
+        allow(Puppet::Util).to receive(:uid).and_return(nil)
 
         expect(described_class.instances.select { |resource|
           resource.get('target') == 'foobar'
@@ -228,7 +227,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       end
 
       it "should be able to create records from not-managed records" do
-        described_class.stubs(:target_object).returns File.new(my_fixture('simple'))
+        allow(described_class).to receive(:target_object).and_return(File.new(my_fixture('simple')))
         parameters = described_class.instances.map do |p|
           h = {:name => p.get(:name)}
           Puppet::Type.type(:cron).validproperties.each do |property|
@@ -264,7 +263,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       end
 
       it "should be able to parse puppet managed cronjobs" do
-        described_class.stubs(:target_object).returns File.new(my_fixture('managed'))
+        allow(described_class).to receive(:target_object).and_return(File.new(my_fixture('managed')))
         expect(described_class.instances.map do |p|
           h = {:name => p.get(:name)}
           Puppet::Type.type(:cron).validproperties.each do |property|
@@ -352,6 +351,5 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
         expect { described_class.match(record,{resource_sparse[:name] => resource_sparse}) }.to_not raise_error
       end
     end
-
   end
 end

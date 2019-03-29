@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/provider/network_device'
@@ -18,7 +17,7 @@ provider_class = Puppet::Type.type(:vlan).provider(:test)
 
 describe provider_class do
   before do
-    @resource = stub("resource", :name => "test")
+    @resource = double("resource", :name => "test")
     @provider = provider_class.new(@resource)
   end
 
@@ -32,34 +31,35 @@ describe provider_class do
 
   describe "when prefetching" do
     before do
-      @resource = stub_everything 'resource'
+      @resource = double('resource')
+      allow(@resource).to receive(:[])
       @resources = {"200" => @resource}
-      provider_class.stubs(:lookup)
+      allow(provider_class).to receive(:lookup)
     end
 
     it "should lookup an entry for each passed resource" do
-      provider_class.expects(:lookup).with{ |device,value| value ==  "200" }.returns nil
+      expect(provider_class).to receive(:lookup).with(anything, "200").and_return(nil)
 
-      provider_class.stubs(:new)
-      @resource.stubs(:provider=)
+      allow(provider_class).to receive(:new)
+      allow(@resource).to receive(:provider=)
       provider_class.prefetch(@resources)
     end
 
     describe "resources that do not exist" do
       it "should create a provider with :ensure => :absent" do
-        provider_class.stubs(:lookup).returns(nil)
-        provider_class.expects(:new).with(:device, :ensure => :absent).returns "myprovider"
-        @resource.expects(:provider=).with("myprovider")
+        allow(provider_class).to receive(:lookup).and_return(nil)
+        expect(provider_class).to receive(:new).with(:device, :ensure => :absent).and_return("myprovider")
+        expect(@resource).to receive(:provider=).with("myprovider")
         provider_class.prefetch(@resources)
       end
     end
 
     describe "resources that exist" do
       it "should create a provider with the results of the find and ensure at present" do
-        provider_class.stubs(:lookup).returns({ :name => "200", :description => "myvlan"})
+        allow(provider_class).to receive(:lookup).and_return({ :name => "200", :description => "myvlan"})
 
-        provider_class.expects(:new).with(:device, :name => "200", :description => "myvlan", :ensure => :present).returns "myprovider"
-        @resource.expects(:provider=).with("myprovider")
+        expect(provider_class).to receive(:new).with(:device, :name => "200", :description => "myvlan", :ensure => :present).and_return("myprovider")
+        expect(@resource).to receive(:provider=).with("myprovider")
 
         provider_class.prefetch(@resources)
       end
@@ -69,12 +69,12 @@ describe provider_class do
   describe "when being initialized" do
     describe "with a hash" do
       before do
-        @resource_class = mock 'resource_class'
-        provider_class.stubs(:resource_type).returns @resource_class
+        @resource_class = double('resource_class')
+        allow(provider_class).to receive(:resource_type).and_return(@resource_class)
 
-        @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
-        @resource_class.stubs(:attrclass).with(:one).returns(@property_class)
-        @resource_class.stubs(:valid_parameter?).returns true
+        @property_class = double('property_class', :array_matching => :all, :superclass => Puppet::Property)
+        allow(@resource_class).to receive(:attrclass).with(:one).and_return(@property_class)
+        allow(@resource_class).to receive(:valid_parameter?).and_return(true)
       end
 
       it "should store a copy of the hash as its vlan_properties" do
@@ -88,9 +88,9 @@ describe provider_class do
     before do
       @instance = provider_class.new(:device)
 
-      @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
-      @resource_class = stub 'resource_class', :attrclass => @property_class, :valid_parameter? => true, :validproperties => [:description]
-      provider_class.stubs(:resource_type).returns @resource_class
+      @property_class = double('property_class', :array_matching => :all, :superclass => Puppet::Property)
+      @resource_class = double('resource_class', :attrclass => @property_class, :valid_parameter? => true, :validproperties => [:description])
+      allow(provider_class).to receive(:resource_type).and_return(@resource_class)
     end
 
     it "should have a method for creating the instance" do
@@ -121,12 +121,12 @@ describe provider_class do
 
     describe "is being created" do
       before do
-        @rclass = mock 'resource_class'
-        @rclass.stubs(:validproperties).returns([:description])
-        @resource = stub_everything 'resource'
-        @resource.stubs(:class).returns @rclass
-        @resource.stubs(:should).returns nil
-        @instance.stubs(:resource).returns @resource
+        @rclass = double('resource_class')
+        allow(@rclass).to receive(:validproperties).and_return([:description])
+        @resource = double('resource')
+        allow(@resource).to receive(:class).and_return(@rclass)
+        allow(@resource).to receive(:should).and_return(nil)
+        allow(@instance).to receive(:resource).and_return(@resource)
       end
 
       it "should set its :ensure value to :present" do
@@ -135,7 +135,7 @@ describe provider_class do
       end
 
       it "should set all of the other attributes from the resource" do
-        @resource.expects(:should).with(:description).returns "myvlan"
+        expect(@resource).to receive(:should).with(:description).and_return("myvlan")
 
         @instance.create
         expect(@instance.properties[:description]).to eq("myvlan")

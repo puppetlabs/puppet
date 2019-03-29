@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/server'
 
@@ -8,9 +7,9 @@ describe Puppet::Network::Server do
   let(:server) { Puppet::Network::Server.new(address, port) }
 
   before do
-    @mock_http_server = mock('http server')
-    Puppet.settings.stubs(:use)
-    Puppet::Network::HTTP::WEBrick.stubs(:new).returns(@mock_http_server)
+    @mock_http_server = double('http server')
+    allow(Puppet.settings).to receive(:use)
+    allow(Puppet::Network::HTTP::WEBrick).to receive(:new).and_return(@mock_http_server)
   end
 
   describe "when initializing" do
@@ -23,12 +22,12 @@ describe Puppet::Network::Server do
     end
 
     it "should use the :main setting section" do
-      Puppet.settings.expects(:use).with { |*args| args.include?(:main) }
+      expect(Puppet.settings).to receive(:use) { |*sections| expect(sections).to include(:main) }
       Puppet::Network::Server.new(address, port)
     end
 
     it "should use the :application setting section" do
-      Puppet.settings.expects(:use).with { |*args| args.include?(:application) }
+      expect(Puppet.settings).to receive(:use) { |*sections| expect(sections).to include(:application) }
 
       Puppet::Network::Server.new(address, port)
     end
@@ -36,7 +35,7 @@ describe Puppet::Network::Server do
 
   describe "when not yet started" do
     before do
-      @mock_http_server.stubs(:listen)
+      allow(@mock_http_server).to receive(:listen)
     end
 
     it "should indicate that it is not listening" do
@@ -54,8 +53,8 @@ describe Puppet::Network::Server do
 
   describe "when server is on" do
     before do
-      @mock_http_server.stubs(:listen)
-      @mock_http_server.stubs(:unlisten)
+      allow(@mock_http_server).to receive(:listen)
+      allow(@mock_http_server).to receive(:unlisten)
       server.start
     end
 
@@ -75,20 +74,20 @@ describe Puppet::Network::Server do
   describe "when server is being started" do
     it "should cause the HTTP server to listen" do
       server = Puppet::Network::Server.new(address, port)
-      @mock_http_server.expects(:listen).with(address, port)
+      expect(@mock_http_server).to receive(:listen).with(address, port)
       server.start
     end
   end
 
   describe "when server is being stopped" do
     before do
-      @mock_http_server.stubs(:listen)
-      server.stubs(:http_server).returns(@mock_http_server)
+      allow(@mock_http_server).to receive(:listen)
+      allow(server).to receive(:http_server).and_return(@mock_http_server)
       server.start
     end
 
     it "should cause the HTTP server to stop listening" do
-      @mock_http_server.expects(:unlisten)
+      expect(@mock_http_server).to receive(:unlisten)
       server.stop
     end
   end

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "the template function" do
@@ -11,21 +10,22 @@ describe "the template function" do
   let :scope    do Puppet::Parser::Scope.new(compiler) end
 
   it "concatenates outputs for multiple templates" do
-    tw1 = stub_everything "template_wrapper1"
-    tw2 = stub_everything "template_wrapper2"
-    Puppet::Parser::TemplateWrapper.stubs(:new).returns(tw1,tw2)
-    tw1.stubs(:file=).with("1")
-    tw2.stubs(:file=).with("2")
-    tw1.stubs(:result).returns("result1")
-    tw2.stubs(:result).returns("result2")
+    tw1 = double("template_wrapper1")
+    tw2 = double("template_wrapper2")
+    allow(Puppet::Parser::TemplateWrapper).to receive(:new).and_return(tw1,tw2)
+    allow(tw1).to receive(:file=).with("1")
+    allow(tw2).to receive(:file=).with("2")
+    allow(tw1).to receive(:result).and_return("result1")
+    allow(tw2).to receive(:result).and_return("result2")
 
     expect(scope.function_template(["1","2"])).to eq("result1result2")
   end
 
   it "raises an error if the template raises an error" do
-    tw = stub_everything 'template_wrapper'
-    Puppet::Parser::TemplateWrapper.stubs(:new).returns(tw)
-    tw.stubs(:result).raises
+    tw = double('template_wrapper')
+    allow(tw).to receive(:file=).with("1")
+    allow(Puppet::Parser::TemplateWrapper).to receive(:new).and_return(tw)
+    allow(tw).to receive(:result).and_raise
 
     expect {
       scope.function_template(["1"])
@@ -90,8 +90,8 @@ describe "the template function" do
   end
 
   def eval_template(content)
-    Puppet::FileSystem.stubs(:read_preserve_line_endings).with("template").returns(content)
-    Puppet::Parser::Files.stubs(:find_template).returns("template")
+    allow(Puppet::FileSystem).to receive(:read_preserve_line_endings).with("template").and_return(content)
+    allow(Puppet::Parser::Files).to receive(:find_template).and_return("template")
     scope.function_template(['template'])
   end
 end

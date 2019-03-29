@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:service) do
@@ -27,8 +26,8 @@ end
 
 describe Puppet::Type.type(:service), "when validating attribute values" do
   before do
-    @provider = stub 'provider', :class => Puppet::Type.type(:service).defaultprovider, :clear => nil, :controllable? => false
-    Puppet::Type.type(:service).defaultprovider.stubs(:new).returns(@provider)
+    @provider = double('provider', :class => Puppet::Type.type(:service).defaultprovider, :clear => nil, :controllable? => false)
+    allow(Puppet::Type.type(:service).defaultprovider).to receive(:new).and_return(@provider)
   end
 
   it "should support :running as a value to :ensure" do
@@ -51,8 +50,9 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
 
   describe "the enable property" do
     before :each do
-      @provider.class.stubs(:supports_parameter?).returns true
+      allow(@provider.class).to receive(:supports_parameter?).and_return(true)
     end
+
     it "should support :true as a value" do
       srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :true)
       expect(srv.should(:enable)).to eq(:true)
@@ -69,14 +69,14 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
     end
 
     it "should support :manual as a value on Windows" do
-      Puppet.features.stubs(:microsoft_windows?).returns true
+      allow(Puppet.features).to receive(:microsoft_windows?).and_return(true)
 
       srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :manual)
       expect(srv.should(:enable)).to eq(:manual)
     end
 
     it "should not support :manual as a value when not on Windows" do
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      allow(Puppet.features).to receive(:microsoft_windows?).and_return(false)
 
       expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :manual) }.to raise_error(
         Puppet::Error,
@@ -111,29 +111,29 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
   end
 
   it "should allow setting the :enable parameter if the provider has the :enableable feature" do
-    Puppet::Type.type(:service).defaultprovider.stubs(:supports_parameter?).returns(true)
-    Puppet::Type.type(:service).defaultprovider.expects(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).returns(true)
+    allow(Puppet::Type.type(:service).defaultprovider).to receive(:supports_parameter?).and_return(true)
+    expect(Puppet::Type.type(:service).defaultprovider).to receive(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).and_return(true)
     svc = Puppet::Type.type(:service).new(:name => "yay", :enable => true)
     expect(svc.should(:enable)).to eq(:true)
   end
 
   it "should not allow setting the :enable parameter if the provider is missing the :enableable feature" do
-    Puppet::Type.type(:service).defaultprovider.stubs(:supports_parameter?).returns(true)
-    Puppet::Type.type(:service).defaultprovider.expects(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).returns(false)
+    allow(Puppet::Type.type(:service).defaultprovider).to receive(:supports_parameter?).and_return(true)
+    expect(Puppet::Type.type(:service).defaultprovider).to receive(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).and_return(false)
     svc = Puppet::Type.type(:service).new(:name => "yay", :enable => true)
     expect(svc.should(:enable)).to be_nil
   end
 
   it "should split paths on '#{File::PATH_SEPARATOR}'" do
-    Puppet::FileSystem.stubs(:exist?).returns(true)
-    FileTest.stubs(:directory?).returns(true)
+    allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
+    allow(FileTest).to receive(:directory?).and_return(true)
     svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two#{File::PATH_SEPARATOR}/three/four")
     expect(svc[:path]).to eq(%w{/one/two /three/four})
   end
 
   it "should accept arrays of paths joined by '#{File::PATH_SEPARATOR}'" do
-    Puppet::FileSystem.stubs(:exist?).returns(true)
-    FileTest.stubs(:directory?).returns(true)
+    allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
+    allow(FileTest).to receive(:directory?).and_return(true)
     svc = Puppet::Type.type(:service).new(:name => "yay", :path => ["/one#{File::PATH_SEPARATOR}/two", "/three#{File::PATH_SEPARATOR}/four"])
     expect(svc[:path]).to eq(%w{/one /two /three /four})
   end
@@ -141,11 +141,11 @@ end
 
 describe Puppet::Type.type(:service), "when setting default attribute values" do
   it "should default to the provider's default path if one is available" do
-    FileTest.stubs(:directory?).returns(true)
-    Puppet::FileSystem.stubs(:exist?).returns(true)
+    allow(FileTest).to receive(:directory?).and_return(true)
+    allow(Puppet::FileSystem).to receive(:exist?).and_return(true)
 
-    Puppet::Type.type(:service).defaultprovider.stubs(:respond_to?).returns(true)
-    Puppet::Type.type(:service).defaultprovider.stubs(:defpath).returns("testing")
+    allow(Puppet::Type.type(:service).defaultprovider).to receive(:respond_to?).and_return(true)
+    allow(Puppet::Type.type(:service).defaultprovider).to receive(:defpath).and_return("testing")
     svc = Puppet::Type.type(:service).new(:name => "other")
     expect(svc[:path]).to eq(["testing"])
   end
@@ -161,8 +161,8 @@ describe Puppet::Type.type(:service), "when setting default attribute values" do
   end
 
   it "should default 'control' to the upcased service name with periods replaced by underscores if the provider supports the 'controllable' feature" do
-    provider = stub 'provider', :controllable? => true, :class => Puppet::Type.type(:service).defaultprovider, :clear => nil
-    Puppet::Type.type(:service).defaultprovider.stubs(:new).returns(provider)
+    provider = double('provider', :controllable? => true, :class => Puppet::Type.type(:service).defaultprovider, :clear => nil)
+    allow(Puppet::Type.type(:service).defaultprovider).to receive(:new).and_return(provider)
     svc = Puppet::Type.type(:service).new(:name => "nfs.client")
     expect(svc[:control]).to eq("NFS_CLIENT_START")
   end
@@ -174,14 +174,14 @@ describe Puppet::Type.type(:service), "when retrieving the host's current state"
   end
 
   it "should use the provider's status to determine whether the service is running" do
-    @service.provider.expects(:status).returns(:yepper)
+    expect(@service.provider).to receive(:status).and_return(:yepper)
     @service[:ensure] = :running
     expect(@service.property(:ensure).retrieve).to eq(:yepper)
   end
 
   it "should ask the provider whether it is enabled" do
-    @service.provider.class.stubs(:supports_parameter?).returns(true)
-    @service.provider.expects(:enabled?).returns(:yepper)
+    allow(@service.provider.class).to receive(:supports_parameter?).and_return(true)
+    expect(@service.provider).to receive(:enabled?).and_return(:yepper)
     @service[:enable] = true
     expect(@service.property(:enable).retrieve).to eq(:yepper)
   end
@@ -194,56 +194,56 @@ describe Puppet::Type.type(:service), "when changing the host" do
 
   it "should start the service if it is supposed to be running" do
     @service[:ensure] = :running
-    @service.provider.expects(:start)
+    expect(@service.provider).to receive(:start)
     @service.property(:ensure).sync
   end
 
   it "should stop the service if it is supposed to be stopped" do
     @service[:ensure] = :stopped
-    @service.provider.expects(:stop)
+    expect(@service.provider).to receive(:stop)
     @service.property(:ensure).sync
   end
 
   it "should enable the service if it is supposed to be enabled" do
-    @service.provider.class.stubs(:supports_parameter?).returns(true)
+    allow(@service.provider.class).to receive(:supports_parameter?).and_return(true)
     @service[:enable] = true
-    @service.provider.expects(:enable)
+    expect(@service.provider).to receive(:enable)
     @service.property(:enable).sync
   end
 
   it "should disable the service if it is supposed to be disabled" do
-    @service.provider.class.stubs(:supports_parameter?).returns(true)
+    allow(@service.provider.class).to receive(:supports_parameter?).and_return(true)
     @service[:enable] = false
-    @service.provider.expects(:disable)
+    expect(@service.provider).to receive(:disable)
     @service.property(:enable).sync
   end
 
   it "should always consider the enable state of a static service to be in sync" do
-    @service.provider.class.stubs(:supports_parameter?).returns(true)
-    @service.provider.expects(:cached_enabled?).returns('static')
+    allow(@service.provider.class).to receive(:supports_parameter?).and_return(true)
+    expect(@service.provider).to receive(:cached_enabled?).and_return('static')
     @service[:enable] = false
-    Puppet.expects(:debug).with("Unable to enable or disable static service yay")
+    expect(Puppet).to receive(:debug).with("Unable to enable or disable static service yay")
     expect(@service.property(:enable).insync?(:true)).to eq(true)
   end
 
   it "should determine insyncness normally when the service is not static" do
-    @service.provider.class.stubs(:supports_parameter?).returns(true)
-    @service.provider.expects(:cached_enabled?).returns('true')
+    allow(@service.provider.class).to receive(:supports_parameter?).and_return(true)
+    expect(@service.provider).to receive(:cached_enabled?).and_return('true')
     @service[:enable] = true
-    Puppet.expects(:debug).never
+    expect(Puppet).not_to receive(:debug)
     expect(@service.property(:enable).insync?(:true)).to eq(true)
   end
 
   it "should sync the service's enable state when changing the state of :ensure if :enable is being managed" do
-    @service.provider.class.stubs(:supports_parameter?).returns(true)
+    allow(@service.provider.class).to receive(:supports_parameter?).and_return(true)
     @service[:enable] = false
     @service[:ensure] = :stopped
 
-    @service.property(:enable).expects(:retrieve).returns("whatever")
-    @service.property(:enable).expects(:insync?).returns(false)
-    @service.property(:enable).expects(:sync)
+    expect(@service.property(:enable)).to receive(:retrieve).and_return("whatever")
+    expect(@service.property(:enable)).to receive(:insync?).and_return(false)
+    expect(@service.property(:enable)).to receive(:sync)
 
-    @service.provider.stubs(:stop)
+    allow(@service.provider).to receive(:stop)
 
     @service.property(:ensure).sync
   end
@@ -256,27 +256,27 @@ describe Puppet::Type.type(:service), "when refreshing the service" do
 
   it "should restart the service if it is running" do
     @service[:ensure] = :running
-    @service.provider.expects(:status).returns(:running)
-    @service.provider.expects(:restart)
+    expect(@service.provider).to receive(:status).and_return(:running)
+    expect(@service.provider).to receive(:restart)
     @service.refresh
   end
 
   it "should restart the service if it is running, even if it is supposed to stopped" do
     @service[:ensure] = :stopped
-    @service.provider.expects(:status).returns(:running)
-    @service.provider.expects(:restart)
+    expect(@service.provider).to receive(:status).and_return(:running)
+    expect(@service.provider).to receive(:restart)
     @service.refresh
   end
 
   it "should not restart the service if it is not running" do
     @service[:ensure] = :running
-    @service.provider.expects(:status).returns(:stopped)
+    expect(@service.provider).to receive(:status).and_return(:stopped)
     @service.refresh
   end
 
   it "should add :ensure as a property if it is not being managed" do
-    @service.provider.expects(:status).returns(:running)
-    @service.provider.expects(:restart)
+    expect(@service.provider).to receive(:status).and_return(:running)
+    expect(@service.provider).to receive(:restart)
     @service.refresh
   end
 end

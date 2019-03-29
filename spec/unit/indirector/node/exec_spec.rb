@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/node/exec'
@@ -6,7 +5,7 @@ require 'puppet/indirector/request'
 
 describe Puppet::Node::Exec do
   before do
-    @indirection = mock 'indirection'
+    @indirection = double('indirection')
     Puppet.settings[:external_nodes] = File.expand_path("/echo")
     @searcher = Puppet::Node::Exec.new
   end
@@ -19,7 +18,7 @@ describe Puppet::Node::Exec do
 
     it "should throw an exception if no external node command is set" do
       Puppet[:external_nodes] = "none"
-      expect { @searcher.find(stub('request', :key => "foo")) }.to raise_error(ArgumentError)
+      expect { @searcher.find(double('request', :key => "foo")) }.to raise_error(ArgumentError)
     end
   end
 
@@ -27,11 +26,12 @@ describe Puppet::Node::Exec do
     let(:testing_env) { Puppet::Node::Environment.create(:testing, []) }
     let(:other_env) { Puppet::Node::Environment.create(:other, []) }
     let(:request) { Puppet::Indirector::Request.new(:node, :find, @name, nil) }
+
     before do
       @name = "yay"
       @node = Puppet::Node.new(@name)
-      @node.stubs(:fact_merge)
-      Puppet::Node.expects(:new).with(@name).returns(@node)
+      allow(@node).to receive(:fact_merge)
+      expect(Puppet::Node).to receive(:new).with(@name).and_return(@node)
       @result = {}
       # Use a local variable so the reference is usable in the execute definition.
       result = @result
@@ -68,7 +68,7 @@ describe Puppet::Node::Exec do
     it "should merge facts from the request if supplied" do
       facts = Puppet::Node::Facts.new('test', 'foo' => 'bar')
       request.options[:facts] = facts
-      @node.expects(:fact_merge).with(facts)
+      expect(@node).to receive(:fact_merge).with(facts)
       @searcher.find(request)
     end
 

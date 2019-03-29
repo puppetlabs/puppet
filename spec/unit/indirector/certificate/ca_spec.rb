@@ -1,6 +1,4 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/indirector/certificate/ca'
 
 describe Puppet::SSL::Certificate::Ca do
@@ -14,10 +12,10 @@ describe Puppet::SSL::Certificate::Ca do
   end
 
   it "should store the ca certificate at the :cacert location" do
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
     Puppet[:cacert] = File.expand_path("/ca/cert")
     file = Puppet::SSL::Certificate::Ca.new
-    file.stubs(:ca?).returns true
+    allow(file).to receive(:ca?).and_return(true)
     expect(file.path("whatever")).to eq(Puppet[:cacert])
   end
 end

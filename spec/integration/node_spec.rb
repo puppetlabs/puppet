@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/node'
@@ -14,14 +13,14 @@ describe Puppet::Node do
     end
 
     it "should be able to use the yaml terminus" do
-      Puppet::Node.indirection.stubs(:terminus_class).returns :yaml
+      allow(Puppet::Node.indirection).to receive(:terminus_class).and_return(:yaml)
 
       # Load now, before we stub the exists? method.
       terminus = Puppet::Node.indirection.terminus(:yaml)
 
-      terminus.expects(:path).with(@name).returns "/my/yaml/file"
+      expect(terminus).to receive(:path).with(@name).and_return("/my/yaml/file")
 
-      Puppet::FileSystem.expects(:exist?).with("/my/yaml/file").returns false
+      expect(Puppet::FileSystem).to receive(:exist?).with("/my/yaml/file").and_return(false)
       expect(Puppet::Node.indirection.find(@name)).to be_nil
     end
 
@@ -30,12 +29,12 @@ describe Puppet::Node do
     end
 
     it "should be able to use the plain terminus" do
-      Puppet::Node.indirection.stubs(:terminus_class).returns :plain
+      allow(Puppet::Node.indirection).to receive(:terminus_class).and_return(:plain)
 
       # Load now, before we stub the exists? method.
       Puppet::Node.indirection.terminus(:plain)
 
-      Puppet::Node.expects(:new).with(@name).returns @node
+      expect(Puppet::Node).to receive(:new).with(@name).and_return(@node)
 
       expect(Puppet::Node.indirection.find(@name)).to equal(@node)
     end
@@ -44,7 +43,7 @@ describe Puppet::Node do
       before do
         @name = "me"
         @terminus = Puppet::Node.indirection.terminus(:memory)
-        Puppet::Node.indirection.stubs(:terminus).returns @terminus
+        allow(Puppet::Node.indirection).to receive(:terminus).and_return(@terminus)
         @node = Puppet::Node.new(@name)
       end
 

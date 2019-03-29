@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'shared_behaviours/all_parsedfile_providers'
 require 'puppet_spec/files'
@@ -12,9 +11,9 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     @keyfile = tmpfile('authorized_keys')
     @provider_class = provider_class
     @provider_class.initvars
-    @provider_class.any_instance.stubs(:target).returns @keyfile
+    allow_any_instance_of(@provider_class).to receive(:target).and_return(@keyfile)
     @user = 'random_bob'
-    Puppet::Util.stubs(:uid).with(@user).returns 12345
+    allow(Puppet::Util).to receive(:uid).with(@user).and_return(12345)
   end
 
   def mkkey(args)
@@ -29,10 +28,10 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   end
 
   def genkey(key)
-    @provider_class.stubs(:filetype).returns(Puppet::Util::FileType::FileTypeRam)
-    File.stubs(:chown)
-    File.stubs(:chmod)
-    Puppet::Util::SUIDManager.stubs(:asuser).yields
+    allow(@provider_class).to receive(:filetype).and_return(Puppet::Util::FileType::FileTypeRam)
+    allow(File).to receive(:chown)
+    allow(File).to receive(:chmod)
+    allow(Puppet::Util::SUIDManager).to receive(:asuser).and_yield
     key.flush
     @provider_class.target_object(@keyfile).read
   end
@@ -40,7 +39,6 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   it_should_behave_like "all parsedfile providers", provider_class
 
   it "should be able to generate a basic authorized_keys file" do
-
     key = mkkey(:name    => "Just_Testing",
                 :key     => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
                 :type    => "ssh-dss",
@@ -52,7 +50,6 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should be able to generate an authorized_keys file with options" do
-
     key = mkkey(:name    => "root@localhost",
                 :key     => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
                 :type    => "ssh-rsa",
@@ -155,12 +152,12 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
 end
 
 describe provider_class, :unless => Puppet.features.microsoft_windows? do
-  before :each do
-    @resource = Puppet::Type.type(:ssh_authorized_key).new(:name => "foo", :user => "random_bob")
+  let(:resource) { Puppet::Type.type(:ssh_authorized_key).new(:name => "foo", :user => "random_bob") }
+  let(:provider) { provider_class.new(resource) }
 
-    @provider = provider_class.new(@resource)
-    provider_class.stubs(:filetype).returns(Puppet::Util::FileType::FileTypeRam)
-    Puppet::Util::SUIDManager.stubs(:asuser).yields
+  before(:each) do
+    allow(provider_class).to receive(:filetype).and_return(Puppet::Util::FileType::FileTypeRam)
+    allow(Puppet::Util::SUIDManager).to receive(:asuser).and_yield
 
     provider_class.initvars
   end
@@ -168,105 +165,94 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
   describe "when flushing" do
     before :each do
       # Stub file and directory operations
-      Dir.stubs(:mkdir)
-      File.stubs(:chmod)
-      File.stubs(:chown)
+      allow(Dir).to receive(:mkdir)
+      allow(File).to receive(:chmod)
+      allow(File).to receive(:chown)
     end
 
     describe "and both a user and a target have been specified" do
       before :each do
-        Puppet::Util.stubs(:uid).with("random_bob").returns 12345
-        @resource[:user] = "random_bob"
+        allow(Puppet::Util).to receive(:uid).with("random_bob").and_return(12345)
+        resource[:user] = "random_bob"
         target = "/tmp/.ssh_dir/place_to_put_authorized_keys"
-        @resource[:target] = target
+        resource[:target] = target
       end
 
       it "should create the directory" do
-        Puppet::FileSystem.stubs(:exist?).with("/tmp/.ssh_dir").returns false
-        Dir.expects(:mkdir).with("/tmp/.ssh_dir", 0700)
-        @provider.flush
+        allow(Puppet::FileSystem).to receive(:exist?).with("/tmp/.ssh_dir").and_return(false)
+        expect(Dir).to receive(:mkdir).with("/tmp/.ssh_dir", 0700)
+        provider.flush
       end
 
       it "should absolutely not chown the directory to the user" do
-        File.expects(:chown).never
-        @provider.flush
-      end
-
-      it "should absolutely not chown the key file to the user" do
-        File.expects(:chown).never
-        @provider.flush
+        expect(File).not_to receive(:chown)
+        provider.flush
       end
 
       it "should chmod the key file to 0600" do
-        File.expects(:chmod).with(0600, "/tmp/.ssh_dir/place_to_put_authorized_keys")
-        @provider.flush
+        expect(File).to receive(:chmod).with(0600, "/tmp/.ssh_dir/place_to_put_authorized_keys")
+        provider.flush
       end
     end
 
     describe "and a user has been specified with no target" do
+      #
+      # I'd like to use random_bob here and something like
+      #
+      #    File.stubs(:expand_path).with("~random_bob/.ssh").returns "/users/r/random_bob/.ssh"
+      #
+      # but mocha objects strenuously to stubbing File.expand_path
+      # so I'm left with using nobody.
+      let(:dir) { File.expand_path("~nobody/.ssh") }
       before :each do
-        @resource[:user] = "nobody"
-        #
-        # I'd like to use random_bob here and something like
-        #
-        #    File.stubs(:expand_path).with("~random_bob/.ssh").returns "/users/r/random_bob/.ssh"
-        #
-        # but mocha objects strenuously to stubbing File.expand_path
-        # so I'm left with using nobody.
-        @dir = File.expand_path("~nobody/.ssh")
+        resource[:user] = "nobody"
       end
 
       it "should create the directory if it doesn't exist" do
-        Puppet::FileSystem.stubs(:exist?).with(@dir).returns false
-        Dir.expects(:mkdir).with(@dir,0700)
-        @provider.flush
-      end
-
-      it "should not create or chown the directory if it already exist" do
-        Puppet::FileSystem.stubs(:exist?).with(@dir).returns false
-        Dir.expects(:mkdir).never
-        @provider.flush
+        allow(Puppet::FileSystem).to receive(:exist?).with(dir).and_return(false)
+        expect(Dir).to receive(:mkdir).with(dir, 0700)
+        provider.flush
       end
 
       it "should absolutely not chown the directory to the user if it creates it" do
-        Puppet::FileSystem.stubs(:exist?).with(@dir).returns false
-        Dir.stubs(:mkdir).with(@dir,0700)
-        File.expects(:chown).never
-        @provider.flush
+        allow(Puppet::FileSystem).to receive(:exist?).with(dir).and_return(false)
+        allow(Dir).to receive(:mkdir).with(dir, 0700)
+        expect(File).not_to receive(:chown)
+        provider.flush
       end
 
-      it "should not create or chown the directory if it already exist" do
-        Puppet::FileSystem.stubs(:exist?).with(@dir).returns false
-        Dir.expects(:mkdir).never
-        File.expects(:chown).never
-        @provider.flush
+      it "should not create or chown the directory if it already exists" do
+        allow(Puppet::FileSystem).to receive(:exist?).with(dir).and_return(true)
+        expect(Dir).not_to receive(:mkdir)
+        expect(File).not_to receive(:chown)
+        provider.flush
       end
 
       it "should absolutely not chown the key file to the user" do
-        File.expects(:chown).never
-        @provider.flush
+        expect(File).not_to receive(:chown)
+        provider.flush
       end
 
       it "should chmod the key file to 0600" do
-        File.expects(:chmod).with(0600, File.expand_path("~nobody/.ssh/authorized_keys"))
-        @provider.flush
+        expect(File).to receive(:chmod).with(0600, File.expand_path("~nobody/.ssh/authorized_keys"))
+        provider.flush
       end
     end
 
     describe "and a target has been specified with no user" do
       it "should raise an error" do
-        @resource = Puppet::Type.type(:ssh_authorized_key).new(:name => "foo", :target => "/tmp/.ssh_dir/place_to_put_authorized_keys")
-        @provider = provider_class.new(@resource)
+        resource = Puppet::Type.type(:ssh_authorized_key).new(:name => "foo", :target => "/tmp/.ssh_dir/place_to_put_authorized_keys")
+        provider = provider_class.new(resource)
 
-        expect { @provider.flush }.to raise_error(Puppet::Error, /Cannot write SSH authorized keys without user/)
+        expect { provider.flush }.to raise_error(Puppet::Error, /Cannot write SSH authorized keys without user/)
       end
     end
 
     describe "and an invalid user has been specified with no target" do
       it "should catch an exception and raise a Puppet error" do
-        @resource[:user] = "thisusershouldnotexist"
+        resource[:user] = "thisusershouldnotexist"
 
-        expect { @provider.flush }.to raise_error(Puppet::Error)
+        expect { provider.flush }.to raise_error(Puppet::Error)
       end
     end
   end

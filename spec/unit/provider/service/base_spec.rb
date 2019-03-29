@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'rbconfig'
 require 'fileutils'
@@ -41,7 +40,7 @@ describe "base service provider" do
         return 'started'
       when status_command
         expect(options[:failonfail]).to eq(false)
-        $CHILD_STATUS.expects(:exitstatus).at_least(1).returns(@running ? 0 : 1)
+        allow($CHILD_STATUS).to receive(:exitstatus) {@running ? 0 : 1}
         return @running ? 'running' : 'not running'
       when stop_command
         expect(options[:failonfail]).to eq(true)
@@ -55,7 +54,7 @@ describe "base service provider" do
 
     before :each do
       @running = false
-      executor.expects(:execute).at_least(1).with { |command, options| execute_command(command, options) }
+      expect(executor).to receive(:execute).at_least(:once) { |command, options| execute_command(command, options) }
     end
 
     it "should invoke the start command if not running" do
@@ -101,10 +100,10 @@ describe "base service provider" do
     end
 
     it "retrieves a PID from the process table" do
-      Facter.stubs(:value).with(:operatingsystem).returns("CentOS")
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return("CentOS")
       ps_output = File.binread(my_fixture("ps_ef.mixed_encoding")).force_encoding(Encoding::UTF_8)
 
-      executor.expects(:execute).with("ps -ef").returns(ps_output)
+      expect(executor).to receive(:execute).with("ps -ef").and_return(ps_output)
 
       expect(subject.status).to eq(:running)
     end

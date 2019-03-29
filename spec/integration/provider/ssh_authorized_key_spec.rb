@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 
@@ -47,9 +45,9 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
   end
 
   before :each do
-    File.stubs(:chown)
-    File.stubs(:chmod)
-    Puppet::Util::SUIDManager.stubs(:asuser).yields
+    allow(File).to receive(:chown)
+    allow(File).to receive(:chmod)
+    allow(Puppet::Util::SUIDManager).to receive(:asuser).and_yield
   end
 
   after :each do
@@ -72,18 +70,18 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
   end
 
   def run_in_catalog(*resources)
-    Puppet::FileBucket::Dipper.any_instance.stubs(:backup) # Don't backup to the filebucket
+    allow_any_instance_of(Puppet::FileBucket::Dipper).to receive(:backup) # Don't backup to the filebucket
     catalog = Puppet::Resource::Catalog.new
     catalog.host_config = false
     resources.each do |resource|
-      resource.expects(:err).never
+      expect(resource).not_to receive(:err)
       catalog.add_resource(resource)
     end
     catalog.apply
   end
 
   it "should not complain about empty lines and comments" do
-    described_class.expects(:flush).never
+    expect(described_class).not_to receive(:flush)
     sample = ['',sample_lines[0],'   ',sample_lines[1],'# just a comment','#and another']
     create_fake_key(:user,sample)
     run_in_catalog(dummy)

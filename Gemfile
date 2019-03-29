@@ -47,11 +47,6 @@ group(:development, :test) do
   gem "rspec-collection_matchers", "~> 1.1", :require => false
   gem "rspec-legacy_formatters", "~> 1.0", :require => false
 
-  # Mocha is not compatible across minor version changes; because of this only
-  # versions matching ~> 0.10.5 are supported. All other versions are unsupported
-  # and can be expected to fail.
-  gem "mocha", "~> 0.10.5", :require => false
-
   gem "yarjuf", "~> 2.0"
 
   # json-schema does not support windows, so omit it from the platforms list

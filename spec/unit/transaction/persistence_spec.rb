@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'yaml'
@@ -14,7 +13,7 @@ describe Puppet::Transaction::Persistence do
 
   describe "when loading from file" do
     before do
-      Puppet.settings.stubs(:use).returns(true)
+      allow(Puppet.settings).to receive(:use).and_return(true)
     end
 
     describe "when the file/directory does not exist" do
@@ -48,7 +47,7 @@ describe Puppet::Transaction::Persistence do
         property = "my"
         value = "something"
 
-        Puppet.expects(:err).never
+        expect(Puppet).not_to receive(:err)
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.set_system_value(resource, property, value)
@@ -62,7 +61,7 @@ describe Puppet::Transaction::Persistence do
         test_yaml = {"resources"=>{"a"=>"b"}}
         write_state_file(test_yaml.to_yaml)
 
-        Puppet.expects(:err).never
+        expect(Puppet).not_to receive(:err)
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
@@ -73,7 +72,7 @@ describe Puppet::Transaction::Persistence do
       it "should initialize with a clear internal state if the file does not contain valid YAML" do
         write_state_file('{ invalid')
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
+        expect(Puppet).to receive(:err).with(/Transaction store file .* is corrupt/)
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
@@ -84,7 +83,7 @@ describe Puppet::Transaction::Persistence do
       it "should initialize with a clear internal state if the file does not contain a hash of data" do
         write_state_file("not_a_hash")
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is valid YAML but not returning a hash/))
+        expect(Puppet).to receive(:err).with(/Transaction store file .* is valid YAML but not returning a hash/)
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
@@ -95,10 +94,10 @@ describe Puppet::Transaction::Persistence do
       it "should raise an error if the file does not contain valid YAML and cannot be renamed" do
         write_state_file('{ invalid')
 
-        File.expects(:rename).raises(SystemCallError)
+        expect(File).to receive(:rename).and_raise(SystemCallError)
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
-        Puppet.expects(:err).with(regexp_matches(/Unable to rename/))
+        expect(Puppet).to receive(:err).with(/Transaction store file .* is corrupt/)
+        expect(Puppet).to receive(:err).with(/Unable to rename/)
 
         persistence = Puppet::Transaction::Persistence.new
         expect { persistence.load }.to raise_error(Puppet::Error, /Could not rename/)
@@ -107,9 +106,9 @@ describe Puppet::Transaction::Persistence do
       it "should attempt to rename the file if the file is corrupted" do
         write_state_file('{ invalid')
 
-        File.expects(:rename).at_least_once
+        expect(File).to receive(:rename).at_least(:once)
 
-        Puppet.expects(:err).with(regexp_matches(/Transaction store file .* is corrupt/))
+        expect(Puppet).to receive(:err).with(/Transaction store file .* is corrupt/)
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
@@ -119,7 +118,7 @@ describe Puppet::Transaction::Persistence do
         FileUtils.rm_f(@tmpfile)
         Dir.mkdir(@tmpfile)
 
-        Puppet.expects(:warning).with(regexp_matches(/Transaction store file .* is not a file/))
+        expect(Puppet).to receive(:warning).with(/Transaction store file .* is not a file/)
 
         persistence = Puppet::Transaction::Persistence.new
         persistence.load
@@ -178,7 +177,7 @@ describe Puppet::Transaction::Persistence do
 
   describe "when checking if persistence is enabled" do
     let(:mock_catalog) do
-      mock
+      double()
     end
 
     let (:persistence) do
@@ -195,25 +194,25 @@ describe Puppet::Transaction::Persistence do
 
     it "should not be enabled when not running in agent mode" do
       Puppet.settings.preferred_run_mode = :user
-      mock_catalog.stubs(:host_config?).returns(true)
+      allow(mock_catalog).to receive(:host_config?).and_return(true)
       expect(persistence.enabled?(mock_catalog)).to be false
     end
 
     it "should not be enabled when the catalog is not the host catalog" do
       Puppet.settings.preferred_run_mode = :agent
-      mock_catalog.stubs(:host_config?).returns(false)
+      allow(mock_catalog).to receive(:host_config?).and_return(false)
       expect(persistence.enabled?(mock_catalog)).to be false
     end
 
     it "should not be enabled outside of agent mode and the catalog is not the host catalog" do
       Puppet.settings.preferred_run_mode = :user
-      mock_catalog.stubs(:host_config?).returns(false)
+      allow(mock_catalog).to receive(:host_config?).and_return(false)
       expect(persistence.enabled?(mock_catalog)).to be false
     end
 
     it "should be enabled in agent mode and when the catalog is the host catalog" do
       Puppet.settings.preferred_run_mode = :agent
-      mock_catalog.stubs(:host_config?).returns(true)
+      allow(mock_catalog).to receive(:host_config?).and_return(true)
       expect(persistence.enabled?(mock_catalog)).to be true
     end
   end

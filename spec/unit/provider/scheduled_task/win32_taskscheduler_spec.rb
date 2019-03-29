@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/windows/taskscheduler' if Puppet.features.microsoft_windows?
@@ -12,7 +11,7 @@ shared_examples_for "a trigger that handles start_date and start_time" do
   end
 
   before :each do
-    Win32::TaskScheduler.any_instance.stubs(:save)
+    allow_any_instance_of(Win32::TaskScheduler).to receive(:save)
   end
 
   describe 'the given start_date' do
@@ -111,27 +110,27 @@ end
 
 describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if => Puppet.features.microsoft_windows? do
   before :each do
-    Puppet::Type.type(:scheduled_task).stubs(:defaultprovider).returns(described_class)
+    allow(Puppet::Type.type(:scheduled_task)).to receive(:defaultprovider).and_return(described_class)
   end
 
   describe 'when retrieving' do
     before :each do
-      @mock_task = stub
-      @mock_task.responds_like(Win32::TaskScheduler.new)
-      described_class.any_instance.stubs(:task).returns(@mock_task)
+      @mock_task = double()
+      allow_any_instance_of(described_class).to receive(:task).and_return(@mock_task)
 
-      Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+      allow(Win32::TaskScheduler).to receive(:new).and_return(@mock_task)
     end
+
     let(:resource) { Puppet::Type.type(:scheduled_task).new(:name => 'Test Task', :command => 'C:\Windows\System32\notepad.exe') }
 
     describe 'the triggers for a task' do
       describe 'with only one trigger' do
         before :each do
-          @mock_task.expects(:trigger_count).returns(1)
+          expect(@mock_task).to receive(:trigger_count).and_return(1)
         end
 
         it 'should handle a single daily trigger' do
-          @mock_task.expects(:trigger).with(0).returns({
+          expect(@mock_task).to receive(:trigger).with(0).and_return({
             'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_DAILY,
             'start_year'   => 2011,
             'start_month'  => 9,
@@ -155,7 +154,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
         end
 
         it 'should handle a single daily with repeat trigger' do
-          @mock_task.expects(:trigger).with(0).returns({
+          expect(@mock_task).to receive(:trigger).with(0).and_return({
             'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_DAILY,
             'start_year'       => 2011,
             'start_month'      => 9,
@@ -185,7 +184,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
                                    Win32::TaskScheduler::WEDNESDAY |
                                    Win32::TaskScheduler::FRIDAY |
                                    Win32::TaskScheduler::SUNDAY
-          @mock_task.expects(:trigger).with(0).returns({
+          expect(@mock_task).to receive(:trigger).with(0).and_return({
             'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_WEEKLY,
             'start_year'   => 2011,
             'start_month'  => 9,
@@ -220,7 +219,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
                              Win32::TaskScheduler::DECEMBER
           #                1   3        5        15        'last'
           scheduled_days = 1 | 1 << 2 | 1 << 4 | 1 << 14 | 1 << 31
-          @mock_task.expects(:trigger).with(0).returns({
+          expect(@mock_task).to receive(:trigger).with(0).and_return({
             'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_MONTHLYDATE,
             'start_year'   => 2011,
             'start_month'  => 9,
@@ -257,7 +256,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
                                    Win32::TaskScheduler::WEDNESDAY |
                                    Win32::TaskScheduler::FRIDAY |
                                    Win32::TaskScheduler::SUNDAY
-          @mock_task.expects(:trigger).with(0).returns({
+          expect(@mock_task).to receive(:trigger).with(0).and_return({
             'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_MONTHLYDOW,
             'start_year'   => 2011,
             'start_month'  => 9,
@@ -287,7 +286,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
         end
 
         it 'should handle a single one-time trigger' do
-          @mock_task.expects(:trigger).with(0).returns({
+          expect(@mock_task).to receive(:trigger).with(0).and_return({
             'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
             'start_year'   => 2011,
             'start_month'  => 9,
@@ -310,8 +309,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       it 'should handle multiple triggers' do
-        @mock_task.expects(:trigger_count).returns(3)
-        @mock_task.expects(:trigger).with(0).returns({
+        expect(@mock_task).to receive(:trigger_count).and_return(3)
+        expect(@mock_task).to receive(:trigger).with(0).and_return({
           'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'   => 2011,
           'start_month'  => 10,
@@ -320,7 +319,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           'start_minute' => 21,
           'flags'        => 0,
         })
-        @mock_task.expects(:trigger).with(1).returns({
+        expect(@mock_task).to receive(:trigger).with(1).and_return({
           'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'   => 2012,
           'start_month'  => 11,
@@ -329,7 +328,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           'start_minute' => 22,
           'flags'        => 0,
         })
-        @mock_task.expects(:trigger).with(2).returns({
+        expect(@mock_task).to receive(:trigger).with(2).and_return({
           'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'   => 2013,
           'start_month'  => 12,
@@ -371,8 +370,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       it 'should handle multiple triggers with repeat triggers' do
-        @mock_task.expects(:trigger_count).returns(3)
-        @mock_task.expects(:trigger).with(0).returns({
+        expect(@mock_task).to receive(:trigger_count).and_return(3)
+        expect(@mock_task).to receive(:trigger).with(0).and_return({
           'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'       => 2011,
           'start_month'      => 10,
@@ -383,7 +382,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           'minutes_duration' => 60,
           'flags'            => 0,
         })
-        @mock_task.expects(:trigger).with(1).returns({
+        expect(@mock_task).to receive(:trigger).with(1).and_return({
           'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'       => 2012,
           'start_month'      => 11,
@@ -394,7 +393,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           'minutes_duration' => 120,
           'flags'            => 0,
         })
-        @mock_task.expects(:trigger).with(2).returns({
+        expect(@mock_task).to receive(:trigger).with(2).and_return({
           'trigger_type'     => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'       => 2013,
           'start_month'      => 12,
@@ -438,8 +437,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       it 'should skip triggers Win32::TaskScheduler cannot handle' do
-        @mock_task.expects(:trigger_count).returns(3)
-        @mock_task.expects(:trigger).with(0).returns({
+        expect(@mock_task).to receive(:trigger_count).and_return(3)
+        expect(@mock_task).to receive(:trigger).with(0).and_return({
           'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'   => 2011,
           'start_month'  => 10,
@@ -448,10 +447,10 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           'start_minute' => 21,
           'flags'        => 0,
         })
-        @mock_task.expects(:trigger).with(1).raises(
+        expect(@mock_task).to receive(:trigger).with(1).and_raise(
           Win32::TaskScheduler::Error.new('Unhandled trigger type!')
         )
-        @mock_task.expects(:trigger).with(2).returns({
+        expect(@mock_task).to receive(:trigger).with(2).and_return({
           'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'   => 2013,
           'start_month'  => 12,
@@ -484,8 +483,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       it 'should skip trigger types Puppet does not handle' do
-        @mock_task.expects(:trigger_count).returns(3)
-        @mock_task.expects(:trigger).with(0).returns({
+        expect(@mock_task).to receive(:trigger_count).and_return(3)
+        expect(@mock_task).to receive(:trigger).with(0).and_return({
           'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'   => 2011,
           'start_month'  => 10,
@@ -494,10 +493,10 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           'start_minute' => 21,
           'flags'        => 0,
         })
-        @mock_task.expects(:trigger).with(1).returns({
+        expect(@mock_task).to receive(:trigger).with(1).and_return({
           'trigger_type' => Win32::TaskScheduler::TASK_EVENT_TRIGGER_AT_LOGON,
         })
-        @mock_task.expects(:trigger).with(2).returns({
+        expect(@mock_task).to receive(:trigger).with(2).and_return({
           'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'   => 2013,
           'start_month'  => 12,
@@ -531,46 +530,46 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
 
     it 'should get the working directory from the working_directory on the task' do
-      @mock_task.expects(:working_directory).returns('C:\Windows\System32')
+      expect(@mock_task).to receive(:working_directory).and_return('C:\Windows\System32')
 
       expect(resource.provider.working_dir).to eq('C:\Windows\System32')
     end
 
     it 'should get the command from the application_name on the task' do
-      @mock_task.expects(:application_name).returns('C:\Windows\System32\notepad.exe')
+      expect(@mock_task).to receive(:application_name).and_return('C:\Windows\System32\notepad.exe')
 
       expect(resource.provider.command).to eq('C:\Windows\System32\notepad.exe')
     end
 
     it 'should get the command arguments from the parameters on the task' do
-      @mock_task.expects(:parameters).returns('these are my arguments')
+      expect(@mock_task).to receive(:parameters).and_return('these are my arguments')
 
       expect(resource.provider.arguments).to eq('these are my arguments')
     end
 
     it 'should get the user from the account_information on the task' do
-      @mock_task.expects(:account_information).returns('this is my user')
+      expect(@mock_task).to receive(:account_information).and_return('this is my user')
 
       expect(resource.provider.user).to eq('this is my user')
     end
 
     describe 'whether the task is enabled' do
       it 'should report tasks with the disabled bit set as disabled' do
-        @mock_task.stubs(:flags).returns(Win32::TaskScheduler::DISABLED)
+        allow(@mock_task).to receive(:flags).and_return(Win32::TaskScheduler::DISABLED)
 
         expect(resource.provider.enabled).to eq(:false)
       end
 
       it 'should report tasks without the disabled bit set as enabled' do
-        @mock_task.stubs(:flags).returns(~Win32::TaskScheduler::DISABLED)
+        allow(@mock_task).to receive(:flags).and_return(~Win32::TaskScheduler::DISABLED)
 
         expect(resource.provider.enabled).to eq(:true)
       end
 
       it 'should not consider triggers for determining if the task is enabled' do
-        @mock_task.stubs(:flags).returns(~Win32::TaskScheduler::DISABLED)
-        @mock_task.stubs(:trigger_count).returns(1)
-        @mock_task.stubs(:trigger).with(0).returns({
+        allow(@mock_task).to receive(:flags).and_return(~Win32::TaskScheduler::DISABLED)
+        allow(@mock_task).to receive(:trigger_count).and_return(1)
+        allow(@mock_task).to receive(:trigger).with(0).and_return({
           'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
           'start_year'   => 2011,
           'start_month'  => 10,
@@ -587,16 +586,15 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
   describe '#exists?' do
     before :each do
-      @mock_task = stub
-      @mock_task.responds_like(Win32::TaskScheduler.new)
-      described_class.any_instance.stubs(:task).returns(@mock_task)
+      @mock_task = instance_double(Win32::TaskScheduler)
+      allow_any_instance_of(described_class).to receive(:task).and_return(@mock_task)
 
-      Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+      allow(Win32::TaskScheduler).to receive(:new).and_return(@mock_task)
     end
     let(:resource) { Puppet::Type.type(:scheduled_task).new(:name => 'Test Task', :command => 'C:\Windows\System32\notepad.exe') }
 
     it "should delegate to Win32::TaskScheduler using the resource's name" do
-      @mock_task.expects(:exists?).with('Test Task').returns(true)
+      expect(@mock_task).to receive(:exists?).with('Test Task').and_return(true)
 
       expect(resource.provider.exists?).to eq(true)
     end
@@ -604,13 +602,11 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
   describe '#clear_task' do
     before :each do
-      @mock_task     = stub
-      @new_mock_task = stub
-      @mock_task.responds_like(Win32::TaskScheduler.new)
-      @new_mock_task.responds_like(Win32::TaskScheduler.new)
-      Win32::TaskScheduler.stubs(:new).returns(@mock_task, @new_mock_task)
+      @mock_task     = instance_double(Win32::TaskScheduler)
+      @new_mock_task = instance_double(Win32::TaskScheduler)
+      allow(Win32::TaskScheduler).to receive(:new).and_return(@mock_task, @new_mock_task)
 
-      described_class.any_instance.stubs(:exists?).returns(false)
+      allow_any_instance_of(described_class).to receive(:exists?).and_return(false)
     end
     let(:resource) { Puppet::Type.type(:scheduled_task).new(:name => 'Test Task', :command => 'C:\Windows\System32\notepad.exe') }
 
@@ -624,8 +620,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
 
     it 'should clear the cached list of triggers for the task' do
-      @mock_task.stubs(:trigger_count).returns(1)
-      @mock_task.stubs(:trigger).with(0).returns({
+      allow(@mock_task).to receive(:trigger_count).and_return(1)
+      allow(@mock_task).to receive(:trigger).with(0).and_return({
         'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
         'start_year'   => 2011,
         'start_month'  => 10,
@@ -634,8 +630,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
         'start_minute' => 21,
         'flags'        => 0,
       })
-      @new_mock_task.stubs(:trigger_count).returns(1)
-      @new_mock_task.stubs(:trigger).with(0).returns({
+      allow(@new_mock_task).to receive(:trigger_count).and_return(1)
+      allow(@new_mock_task).to receive(:trigger).with(0).and_return({
         'trigger_type' => Win32::TaskScheduler::TASK_TIME_TRIGGER_ONCE,
         'start_year'   => 2012,
         'start_month'  => 11,
@@ -675,11 +671,11 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
   describe '.instances' do
     it 'should use the list of .job files to construct the list of scheduled_tasks' do
       job_files = ['foo.job', 'bar.job', 'baz.job']
-      Win32::TaskScheduler.any_instance.stubs(:tasks).returns(job_files)
+      allow_any_instance_of(Win32::TaskScheduler).to receive(:tasks).and_return(job_files)
       job_files.each do |job|
         job = File.basename(job, '.job')
 
-        described_class.expects(:new).with(:provider => :win32_taskscheduler, :name => job)
+        expect(described_class).to receive(:new).with(:provider => :win32_taskscheduler, :name => job)
       end
 
       described_class.instances
@@ -690,27 +686,27 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     let(:resource) { described_class.new(:name => 'foobar', :command => 'C:\Windows\System32\notepad.exe') }
 
     it 'should consider the user as in sync if the name matches' do
-      Puppet::Util::Windows::SID.expects(:name_to_sid).with('joe').twice.returns('SID A')
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('joe').twice.and_return('SID A')
 
       expect(resource).to be_user_insync('joe', ['joe'])
     end
 
     it 'should consider the user as in sync if the current user is fully qualified' do
-      Puppet::Util::Windows::SID.expects(:name_to_sid).with('joe').returns('SID A')
-      Puppet::Util::Windows::SID.expects(:name_to_sid).with('MACHINE\joe').returns('SID A')
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('joe').and_return('SID A')
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('MACHINE\joe').and_return('SID A')
 
       expect(resource).to be_user_insync('MACHINE\joe', ['joe'])
     end
 
     it 'should consider a current user of the empty string to be the same as the system user' do
-      Puppet::Util::Windows::SID.expects(:name_to_sid).with('system').twice.returns('SYSTEM SID')
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('system').twice.and_return('SYSTEM SID')
 
       expect(resource).to be_user_insync('', ['system'])
     end
 
     it 'should consider different users as being different' do
-      Puppet::Util::Windows::SID.expects(:name_to_sid).with('joe').returns('SID A')
-      Puppet::Util::Windows::SID.expects(:name_to_sid).with('bob').returns('SID B')
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('joe').and_return('SID A')
+      expect(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('bob').and_return('SID B')
 
       expect(resource).not_to be_user_insync('joe', ['bob'])
     end
@@ -1558,11 +1554,10 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
 
     before :each do
-      @mock_task = stub
-      @mock_task.responds_like(Win32::TaskScheduler.new)
-      @mock_task.stubs(:exists?).returns(true)
-      @mock_task.stubs(:activate)
-      Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+      @mock_task = instance_double(Win32::TaskScheduler)
+      allow(@mock_task).to receive(:exists?).and_return(true)
+      allow(@mock_task).to receive(:activate)
+      allow(Win32::TaskScheduler).to receive(:new).and_return(@mock_task)
 
       @command = 'C:\Windows\System32\notepad.exe'
     end
@@ -1573,8 +1568,8 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       it 'should save the task' do
-        @mock_task.expects(:set_account_information).with(nil, nil)
-        @mock_task.expects(:save)
+        expect(@mock_task).to receive(:set_account_information).with(nil, nil)
+        expect(@mock_task).to receive(:save)
 
         resource.provider.flush
       end
@@ -1595,17 +1590,17 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     describe 'when :ensure is :absent' do
       before :each do
         @ensure = :absent
-        @mock_task.stubs(:activate)
+        allow(@mock_task).to receive(:activate)
       end
 
       it 'should not save the task if :ensure is :absent' do
-        @mock_task.expects(:save).never
+        expect(@mock_task).not_to receive(:save)
 
         resource.provider.flush
       end
 
       it 'should not fail if the command is not specified' do
-        @mock_task.stubs(:save)
+        allow(@mock_task).to receive(:save)
 
         resource = Puppet::Type.type(:scheduled_task).new(
           :name    => 'Test Task',
@@ -1626,16 +1621,15 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
     end
 
     before :each do
-        @mock_task = stub
-        @mock_task.responds_like(Win32::TaskScheduler.new)
-        @mock_task.stubs(:exists?).returns(true)
-        @mock_task.stubs(:activate)
-        Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+        @mock_task = instance_double(Win32::TaskScheduler)
+        allow(@mock_task).to receive(:exists?).and_return(true)
+        allow(@mock_task).to receive(:activate)
+        allow(Win32::TaskScheduler).to receive(:new).and_return(@mock_task)
     end
 
     describe '#command=' do
       it 'should set the application_name on the task' do
-        @mock_task.expects(:application_name=).with('C:\Windows\System32\notepad.exe')
+        expect(@mock_task).to receive(:application_name=).with('C:\Windows\System32\notepad.exe')
 
         resource.provider.command = 'C:\Windows\System32\notepad.exe'
       end
@@ -1643,7 +1637,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
     describe '#arguments=' do
       it 'should set the parameters on the task' do
-        @mock_task.expects(:parameters=).with(['/some /arguments /here'])
+        expect(@mock_task).to receive(:parameters=).with(['/some /arguments /here'])
 
         resource.provider.arguments = ['/some /arguments /here']
       end
@@ -1651,7 +1645,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
     describe '#working_dir=' do
       it 'should set the working_directory on the task' do
-        @mock_task.expects(:working_directory=).with('C:\Windows\System32')
+        expect(@mock_task).to receive(:working_directory=).with('C:\Windows\System32')
 
         resource.provider.working_dir = 'C:\Windows\System32'
       end
@@ -1659,15 +1653,15 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
     describe '#enabled=' do
       it 'should set the disabled flag if the task should be disabled' do
-        @mock_task.stubs(:flags).returns(0)
-        @mock_task.expects(:flags=).with(Win32::TaskScheduler::DISABLED)
+        allow(@mock_task).to receive(:flags).and_return(0)
+        expect(@mock_task).to receive(:flags=).with(Win32::TaskScheduler::DISABLED)
 
         resource.provider.enabled = :false
       end
 
       it 'should clear the disabled flag if the task should be enabled' do
-        @mock_task.stubs(:flags).returns(Win32::TaskScheduler::DISABLED)
-        @mock_task.expects(:flags=).with(0)
+        allow(@mock_task).to receive(:flags).and_return(Win32::TaskScheduler::DISABLED)
+        expect(@mock_task).to receive(:flags=).with(0)
 
         resource.provider.enabled = :true
       end
@@ -1683,11 +1677,10 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
 
       before :each do
-        @mock_task = stub
-        @mock_task.responds_like(Win32::TaskScheduler.new)
-        @mock_task.stubs(:exists?).returns(true)
-        @mock_task.stubs(:activate)
-        Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+        @mock_task = instance_double(Win32::TaskScheduler)
+        allow(@mock_task).to receive(:exists?).and_return(true)
+        allow(@mock_task).to receive(:activate)
+        allow(Win32::TaskScheduler).to receive(:new).and_return(@mock_task)
       end
 
       it 'should not consider all duplicate current triggers in sync with a single desired trigger' do
@@ -1697,9 +1690,9 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           {'schedule' => 'once', 'start_date' => '2011-09-15', 'start_time' => '15:10', 'index' => 1},
           {'schedule' => 'once', 'start_date' => '2011-09-15', 'start_time' => '15:10', 'index' => 2},
         ]
-        resource.provider.stubs(:trigger).returns(current_triggers)
-        @mock_task.expects(:delete_trigger).with(1)
-        @mock_task.expects(:delete_trigger).with(2)
+        allow(resource.provider).to receive(:trigger).and_return(current_triggers)
+        expect(@mock_task).to receive(:delete_trigger).with(1)
+        expect(@mock_task).to receive(:delete_trigger).with(2)
 
         resource.provider.trigger = @trigger
       end
@@ -1711,9 +1704,9 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           {'schedule' => 'once', 'start_date' => '2012-09-15', 'start_time' => '15:10', 'index' => 1},
           {'schedule' => 'once', 'start_date' => '2013-09-15', 'start_time' => '15:10', 'index' => 2},
         ]
-        resource.provider.stubs(:trigger).returns(current_triggers)
-        @mock_task.expects(:delete_trigger).with(1)
-        @mock_task.expects(:delete_trigger).with(2)
+        allow(resource.provider).to receive(:trigger).and_return(current_triggers)
+        expect(@mock_task).to receive(:delete_trigger).with(1)
+        expect(@mock_task).to receive(:delete_trigger).with(2)
 
         resource.provider.trigger = @trigger
       end
@@ -1727,9 +1720,9 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
         current_triggers = [
           {'schedule' => 'once', 'start_date' => '2011-09-15', 'start_time' => '15:10', 'index' => 0},
         ]
-        resource.provider.stubs(:trigger).returns(current_triggers)
-        @mock_task.expects(:trigger=).with(resource.provider.translate_hash_to_trigger(@trigger[1]))
-        @mock_task.expects(:trigger=).with(resource.provider.translate_hash_to_trigger(@trigger[2]))
+        allow(resource.provider).to receive(:trigger).and_return(current_triggers)
+        expect(@mock_task).to receive(:trigger=).with(resource.provider.translate_hash_to_trigger(@trigger[1]))
+        expect(@mock_task).to receive(:trigger=).with(resource.provider.translate_hash_to_trigger(@trigger[2]))
 
         resource.provider.trigger = @trigger
       end
@@ -1737,15 +1730,14 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
     describe '#user=', :if => Puppet.features.microsoft_windows? do
       before :each do
-        @mock_task = stub
-        @mock_task.responds_like(Win32::TaskScheduler.new)
-        @mock_task.stubs(:exists?).returns(true)
-        @mock_task.stubs(:activate)
-        Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+        @mock_task = instance_double(Win32::TaskScheduler)
+        allow(@mock_task).to receive(:exists?).and_return(true)
+        allow(@mock_task).to receive(:activate)
+        allow(Win32::TaskScheduler).to receive(:new).and_return(@mock_task)
       end
 
       it 'should use nil for user and password when setting the user to the SYSTEM account' do
-        Puppet::Util::Windows::SID.stubs(:name_to_sid).with('system').returns('SYSTEM SID')
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('system').and_return('SYSTEM SID')
 
         resource = Puppet::Type.type(:scheduled_task).new(
           :name    => 'Test Task',
@@ -1753,13 +1745,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           :user    => 'system'
         )
 
-        @mock_task.expects(:set_account_information).with(nil, nil)
+        expect(@mock_task).to receive(:set_account_information).with(nil, nil)
 
         resource.provider.user = 'system'
       end
 
       it 'should use the specified user and password when setting the user to anything other than SYSTEM' do
-        Puppet::Util::Windows::SID.stubs(:name_to_sid).with('my_user_name').returns('SID A')
+        allow(Puppet::Util::Windows::SID).to receive(:name_to_sid).with('my_user_name').and_return('SID A')
 
         resource = Puppet::Type.type(:scheduled_task).new(
           :name     => 'Test Task',
@@ -1768,7 +1760,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
           :password => 'my password'
         )
 
-        @mock_task.expects(:set_account_information).with('my_user_name', 'my password')
+        expect(@mock_task).to receive(:set_account_information).with('my_user_name', 'my password')
 
         resource.provider.user = 'my_user_name'
       end
@@ -1793,69 +1785,67 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       @arguments   = '/a /list /of /arguments'
       @working_dir = 'C:\Windows\Some\Directory'
 
-      @mock_task = stub
-      @mock_task.responds_like(Win32::TaskScheduler.new)
-      @mock_task.stubs(:exists?).returns(true)
-      @mock_task.stubs(:activate)
-      @mock_task.stubs(:application_name=)
-      @mock_task.stubs(:parameters=)
-      @mock_task.stubs(:working_directory=)
-      @mock_task.stubs(:set_account_information)
-      @mock_task.stubs(:flags)
-      @mock_task.stubs(:flags=)
-      @mock_task.stubs(:trigger_count).returns(0)
-      @mock_task.stubs(:trigger=)
-      @mock_task.stubs(:save)
-      Win32::TaskScheduler.stubs(:new).returns(@mock_task)
+      @mock_task = instance_double(Win32::TaskScheduler)
+      allow(@mock_task).to receive(:exists?).and_return(true)
+      allow(@mock_task).to receive(:activate)
+      allow(@mock_task).to receive(:application_name=)
+      allow(@mock_task).to receive(:parameters=)
+      allow(@mock_task).to receive(:working_directory=)
+      allow(@mock_task).to receive(:set_account_information)
+      allow(@mock_task).to receive(:flags)
+      allow(@mock_task).to receive(:flags=)
+      allow(@mock_task).to receive(:trigger_count).and_return(0)
+      allow(@mock_task).to receive(:trigger=)
+      allow(@mock_task).to receive(:save)
+      allow(Win32::TaskScheduler).to receive(:new).and_return(@mock_task)
 
-      described_class.any_instance.stubs(:sync_triggers)
+      allow_any_instance_of(described_class).to receive(:sync_triggers)
     end
 
     it 'should set the command' do
-      resource.provider.expects(:command=).with(@command)
+      expect(resource.provider).to receive(:command=).with(@command)
 
       resource.provider.create
     end
 
     it 'should set the arguments' do
-      resource.provider.expects(:arguments=).with(@arguments)
+      expect(resource.provider).to receive(:arguments=).with(@arguments)
 
       resource.provider.create
     end
 
     it 'should set the working_dir' do
-      resource.provider.expects(:working_dir=).with(@working_dir)
+      expect(resource.provider).to receive(:working_dir=).with(@working_dir)
 
       resource.provider.create
     end
 
     it "should set the user" do
-      resource.provider.expects(:user=).with(:system)
+      expect(resource.provider).to receive(:user=).with(:system)
 
       resource.provider.create
     end
 
     it 'should set the enabled property' do
-      resource.provider.expects(:enabled=)
+      expect(resource.provider).to receive(:enabled=)
 
       resource.provider.create
     end
 
     it 'should sync triggers' do
-      resource.provider.expects(:trigger=)
+      expect(resource.provider).to receive(:trigger=)
 
       resource.provider.create
     end
   end
 
   describe "Win32::TaskScheduler", :if => Puppet.features.microsoft_windows? do
-
     let(:name) { SecureRandom.uuid }
 
     describe 'sets appropriate generic trigger defaults' do
       before(:each) do
         @now = Time.now
-        Time.stubs(:now).returns(@now)
+        allow(Time).to receive(:now).and_return(@now)
       end
 
       it 'for a ONCE schedule' do

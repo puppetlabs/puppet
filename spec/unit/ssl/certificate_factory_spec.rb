@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_factory'
@@ -59,7 +58,7 @@ describe Puppet::SSL::CertificateFactory do
     it "should set the default TTL of the certificate to the `ca_ttl` setting" do
       Puppet[:ca_ttl] = 12
       now = Time.now.utc
-      Time.expects(:now).at_least_once.returns(now)
+      expect(Time).to receive(:now).at_least(:once).and_return(now)
       cert = subject.build(:server, csr, issuer, serial)
       expect(cert.not_after.to_i).to eq(now.to_i + 12)
     end
@@ -72,7 +71,7 @@ describe Puppet::SSL::CertificateFactory do
 
     it "should respect a custom TTL for the CA" do
       now = Time.now.utc
-      Time.expects(:now).at_least_once.returns(now)
+      expect(Time).to receive(:now).at_least(:once).and_return(now)
       cert = subject.build(:server, csr, issuer, serial, 12)
       expect(cert.not_after.to_i).to eq(now.to_i + 12)
     end
@@ -95,7 +94,6 @@ describe Puppet::SSL::CertificateFactory do
         ef.create_extension("subjectKeyIdentifier", "hash", false).to_h
       )
     end
-
 
     it "should add an extension for the authorityKeyIdentifer" do
       cert = subject.build(:server, csr, issuer, serial)
@@ -140,7 +138,7 @@ describe Puppet::SSL::CertificateFactory do
       csr = Puppet::SSL::CertificateRequest.new(name)
       csr.generate(key)
 
-      csr.stubs(:request_extensions).returns([
+      allow(csr).to receive(:request_extensions).and_return([
         {'oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'some-value'},
         {'oid' => 'pp_uuid', 'value' => 'some-uuid'},
       ])

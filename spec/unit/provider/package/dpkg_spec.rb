@@ -12,7 +12,7 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
     {:failonfail => true, :combine => true, :custom_environment => {}}
   end
   let(:resource_name) { 'package' }
-  let(:resource) { stub 'resource', :[] => resource_name }
+  let(:resource) { double('resource', :[] => resource_name) }
   let(:provider) { described_class.new(resource) }
 
   it "has documentation" do
@@ -23,35 +23,35 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
     let(:execpipe_args) { args.unshift('myquery') }
 
     before do
-      described_class.stubs(:command).with(:dpkgquery).returns 'myquery'
+      allow(described_class).to receive(:command).with(:dpkgquery).and_return('myquery')
     end
 
     it "creates and return an instance for a single dpkg-query entry" do
-      Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields bash_installed_io
+      expect(Puppet::Util::Execution).to receive(:execpipe).with(execpipe_args).and_yield(bash_installed_io)
 
-      installed = mock 'bash'
-      described_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns installed
+      installed = double('bash')
+      expect(described_class).to receive(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).and_return(installed)
 
       expect(described_class.instances).to eq([installed])
     end
 
     it "parses multiple dpkg-query multi-line entries in the output" do
-      Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields all_installed_io
+      expect(Puppet::Util::Execution).to receive(:execpipe).with(execpipe_args).and_yield(all_installed_io)
 
-      bash = mock 'bash'
-      described_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns bash
-      vim = mock 'vim'
-      described_class.expects(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg).returns vim
+      bash = double('bash')
+      expect(described_class).to receive(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).and_return(bash)
+      vim = double('vim')
+      expect(described_class).to receive(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg).and_return(vim)
 
       expect(described_class.instances).to eq([bash, vim])
     end
 
     it "continues without failing if it encounters bad lines between good entries" do
-      Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields StringIO.new([bash_installed_output, "foobar\n", vim_installed_output].join)
+      expect(Puppet::Util::Execution).to receive(:execpipe).with(execpipe_args).and_yield(StringIO.new([bash_installed_output, "foobar\n", vim_installed_output].join))
 
-      bash = mock 'bash'
-      vim = mock 'vim'
-      described_class.expects(:new).twice.returns(bash, vim)
+      bash = double('bash')
+      vim = double('vim')
+      expect(described_class).to receive(:new).twice.and_return(bash, vim)
 
       expect(described_class.instances).to eq([bash, vim])
     end
@@ -65,15 +65,15 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
     end
 
     def dpkg_query_execution_returns(output)
-      Puppet::Util::Execution.expects(:execute).with(query_args, execute_options).returns(Puppet::Util::Execution::ProcessOutput.new(output, 0))
+      expect(Puppet::Util::Execution).to receive(:execute).with(query_args, execute_options).and_return(Puppet::Util::Execution::ProcessOutput.new(output, 0))
     end
 
     before do
-      Puppet::Util.stubs(:which).with('/usr/bin/dpkg-query').returns(dpkgquery_path)
+      allow(Puppet::Util).to receive(:which).with('/usr/bin/dpkg-query').and_return(dpkgquery_path)
     end
 
     it "considers the package purged if dpkg-query fails" do
-      Puppet::Util::Execution.expects(:execute).with(query_args, execute_options).raises Puppet::ExecutionFailure.new("eh")
+      allow(Puppet::Util::Execution).to receive(:execute).with(query_args, execute_options).and_raise(Puppet::ExecutionFailure.new("eh"))
 
       expect(provider.query[:ensure]).to eq(:purged)
     end
@@ -147,8 +147,8 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
 
       def parser_test(dpkg_output_string, gold_hash, number_of_debug_logs = 0)
         dpkg_query_execution_returns(dpkg_output_string)
-        Puppet.expects(:warning).never
-        Puppet.expects(:debug).times(number_of_debug_logs)
+        expect(Puppet).not_to receive(:warning)
+        expect(Puppet).to receive(:debug).exactly(number_of_debug_logs).times
 
         expect(provider.query).to eq(gold_hash)
       end
@@ -163,8 +163,8 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
       end
 
       it "does not log if execution returns with non-zero exit code" do
-        Puppet::Util::Execution.expects(:execute).with(query_args, execute_options).raises Puppet::ExecutionFailure.new("failed")
-        Puppet::expects(:debug).never
+        expect(Puppet::Util::Execution).to receive(:execute).with(query_args, execute_options).and_raise(Puppet::ExecutionFailure.new("failed"))
+        expect(Puppet).not_to receive(:debug)
 
         expect(provider.query).to eq(package_not_found_hash)
       end
@@ -173,106 +173,106 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
 
   context "when installing" do
     before do
-      resource.stubs(:[]).with(:source).returns "mypkg"
+      allow(resource).to receive(:[]).with(:source).and_return("mypkg")
     end
 
     it "fails to install if no source is specified in the resource" do
-      resource.expects(:[]).with(:source).returns nil
+      expect(resource).to receive(:[]).with(:source).and_return(nil)
 
       expect { provider.install }.to raise_error(ArgumentError)
     end
 
     it "uses 'dpkg -i' to install the package" do
-      resource.expects(:[]).with(:source).returns "mypackagefile"
-      provider.expects(:unhold)
-      provider.expects(:dpkg).with { |*command| command[-1] == "mypackagefile"  and command[-2] == "-i" }
+      expect(resource).to receive(:[]).with(:source).and_return("mypackagefile")
+      expect(provider).to receive(:unhold)
+      expect(provider).to receive(:dpkg).with(any_args, "-i", "mypackagefile")
 
       provider.install
     end
 
     it "keeps old config files if told to do so" do
-      resource.expects(:[]).with(:configfiles).returns :keep
-      provider.expects(:unhold)
-      provider.expects(:dpkg).with { |*command| command[0] == "--force-confold" }
+      expect(resource).to receive(:[]).with(:configfiles).and_return(:keep)
+      expect(provider).to receive(:unhold)
+      expect(provider).to receive(:dpkg).with("--force-confold", any_args)
 
       provider.install
     end
 
     it "replaces old config files if told to do so" do
-      resource.expects(:[]).with(:configfiles).returns :replace
-      provider.expects(:unhold)
-      provider.expects(:dpkg).with { |*command| command[0] == "--force-confnew" }
+      expect(resource).to receive(:[]).with(:configfiles).and_return(:replace)
+      expect(provider).to receive(:unhold)
+      expect(provider).to receive(:dpkg).with("--force-confnew", any_args)
 
       provider.install
     end
 
     it "ensures any hold is removed" do
-      provider.expects(:unhold).once
-      provider.expects(:dpkg)
+      expect(provider).to receive(:unhold).once
+      expect(provider).to receive(:dpkg)
       provider.install
     end
   end
 
   context "when holding or unholding" do
-    let(:tempfile) { stub 'tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file" }
+    let(:tempfile) { double('tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file") }
 
     before do
-      tempfile.stubs(:write)
-      Tempfile.stubs(:new).returns tempfile
+      allow(tempfile).to receive(:write)
+      allow(Tempfile).to receive(:new).and_return(tempfile)
     end
 
     it "installs first if holding" do
-      provider.stubs(:execute)
-      provider.expects(:install).once
+      allow(provider).to receive(:execute)
+      expect(provider).to receive(:install).once
       provider.hold
     end
 
     it "executes dpkg --set-selections when holding" do
-      provider.stubs(:install)
-      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
+      allow(provider).to receive(:install)
+      expect(provider).to receive(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
       provider.hold
     end
 
     it "executes dpkg --set-selections when unholding" do
-      provider.stubs(:install)
-      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
+      allow(provider).to receive(:install)
+      expect(provider).to receive(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
       provider.hold
     end
   end
 
   it "uses :install to update" do
-    provider.expects(:install)
+    expect(provider).to receive(:install)
     provider.update
   end
 
   context "when determining latest available version" do
     it "returns the version found by dpkg-deb" do
-      resource.expects(:[]).with(:source).returns "myfile"
-      provider.expects(:dpkg_deb).with { |*command| command[-1] == "myfile" }.returns "package\t1.0"
+      expect(resource).to receive(:[]).with(:source).and_return("myfile")
+      expect(provider).to receive(:dpkg_deb).with(any_args, "myfile").and_return("package\t1.0")
       expect(provider.latest).to eq("1.0")
     end
 
     it "warns if the package file contains a different package" do
-      provider.expects(:dpkg_deb).returns("foo\tversion")
-      provider.expects(:warning)
+      expect(provider).to receive(:dpkg_deb).and_return("foo\tversion")
+      expect(provider).to receive(:warning)
       provider.latest
     end
 
     it "copes with names containing ++" do
-      resource = stub 'resource', :[] => "package++"
+      resource = double('resource', :[] => "package++")
       provider = described_class.new(resource)
-      provider.expects(:dpkg_deb).returns "package++\t1.0"
+      expect(provider).to receive(:dpkg_deb).and_return("package++\t1.0")
       expect(provider.latest).to eq("1.0")
     end
   end
 
   it "uses 'dpkg -r' to uninstall" do
-    provider.expects(:dpkg).with("-r", resource_name)
+    expect(provider).to receive(:dpkg).with("-r", resource_name)
     provider.uninstall
   end
 
   it "uses 'dpkg --purge' to purge" do
-    provider.expects(:dpkg).with("--purge", resource_name)
+    expect(provider).to receive(:dpkg).with("--purge", resource_name)
     provider.purge
   end
 end

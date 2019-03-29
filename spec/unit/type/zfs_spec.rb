@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 zfs = Puppet::Type.type(:zfs)
@@ -21,13 +20,13 @@ describe zfs do
   end
 
   it "should autorequire the containing zfs and the zpool" do
-    zfs_provider = mock "provider"
-    zfs_provider.stubs(:name).returns(:zfs)
-    zfs.stubs(:defaultprovider).returns(zfs_provider)
+    zfs_provider = double("zfs provider")
+    allow(zfs_provider).to receive(:name).and_return(:zfs)
+    allow(zfs).to receive(:defaultprovider).and_return(zfs_provider)
 
-    zpool_provider = mock "provider"
-    zpool_provider.stubs(:name).returns(:zpool)
-    Puppet::Type.type(:zpool).stubs(:defaultprovider).returns(zpool_provider)
+    zpool_provider = double("zpool provider")
+    allow(zpool_provider).to receive(:name).and_return(:zpool)
+    allow(Puppet::Type.type(:zpool)).to receive(:defaultprovider).and_return(zpool_provider)
 
     foo_pool = Puppet::Type.type(:zpool).new(:name => "foo")
 

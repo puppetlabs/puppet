@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/transaction/resource_harness'
@@ -15,7 +14,7 @@ describe Puppet::Transaction::ResourceHarness do
     @resource = Puppet::Type.type(:file).new :path => path
     @harness = Puppet::Transaction::ResourceHarness.new(@transaction)
     @current_state = Puppet::Resource.new(:file, path)
-    @resource.stubs(:retrieve).returns @current_state
+    allow(@resource).to receive(:retrieve).and_return(@current_state)
   end
 
   it "should accept a transaction at initialization" do
@@ -24,7 +23,7 @@ describe Puppet::Transaction::ResourceHarness do
   end
 
   it "should delegate to the transaction for its relationship graph" do
-    @transaction.expects(:relationship_graph).returns "relgraph"
+    expect(@transaction).to receive(:relationship_graph).and_return("relgraph")
     expect(Puppet::Transaction::ResourceHarness.new(@transaction).relationship_graph).to eq("relgraph")
   end
 
@@ -38,14 +37,14 @@ describe Puppet::Transaction::ResourceHarness do
     end
 
     it "retrieves the current state of the resource" do
-      @resource.expects(:retrieve).returns @current_state
+      expect(@resource).to receive(:retrieve).and_return(@current_state)
 
       @harness.evaluate(@resource)
     end
 
     it "produces a failure status for the resource when an error occurs" do
       the_message = "retrieve failed in testing"
-      @resource.expects(:retrieve).raises(ArgumentError.new(the_message))
+      expect(@resource).to receive(:retrieve).and_raise(ArgumentError.new(the_message))
 
       status = @harness.evaluate(@resource)
 
@@ -290,7 +289,7 @@ describe Puppet::Transaction::ResourceHarness do
     before :each do
       stub_provider = make_stub_provider
       resource = stub_provider.new :name => 'name', :foo => 1, :bar => 2
-      resource.expects(:err).never
+      expect(resource).not_to receive(:err)
       @status = @harness.evaluate(resource)
     end
 
@@ -309,7 +308,7 @@ describe Puppet::Transaction::ResourceHarness do
     before :each do
       stub_provider = make_stub_provider
       @resource = stub_provider.new :name => 'name', :baz => 1
-      @resource.expects(:err).never
+      expect(@resource).not_to receive(:err)
     end
 
     it "should log and pass the exception through" do
@@ -323,7 +322,7 @@ describe Puppet::Transaction::ResourceHarness do
     before :each do
       stub_provider = make_stub_provider
       @resource = stub_provider.new :name => 'name', :brillig => 1
-      @resource.expects(:err).never
+      expect(@resource).not_to receive(:err)
     end
 
     it "should record a failure event" do
@@ -338,7 +337,7 @@ describe Puppet::Transaction::ResourceHarness do
     before :each do
       stub_provider = make_stub_provider
       @resource = stub_provider.new :name => 'name', :slithy => 1
-      @resource.expects(:err).never
+      expect(@resource).not_to receive(:err)
     end
 
     it "should log and pass the exception through" do
@@ -352,7 +351,7 @@ describe Puppet::Transaction::ResourceHarness do
     it "should not call insync? on parameters that are merely audited" do
       stub_provider = make_stub_provider
       resource = stub_provider.new :name => 'name', :audit => ['foo']
-      resource.property(:foo).expects(:insync?).never
+      expect(resource.property(:foo)).not_to receive(:insync?)
       status = @harness.evaluate(resource)
 
       expect(status.events).to be_empty
@@ -362,7 +361,7 @@ describe Puppet::Transaction::ResourceHarness do
       test_file = tmpfile('foo')
       File.open(test_file, 'w').close
       resource = Puppet::Type.type(:file).new :path => test_file, :audit => ['group'], :backup => false
-      resource.expects(:err).never # make sure no exceptions get swallowed
+      expect(resource).not_to receive(:err) # make sure no exceptions get swallowed
 
       status = @harness.evaluate(resource)
 
@@ -388,11 +387,9 @@ describe Puppet::Transaction::ResourceHarness do
       # set up the sequence of stubs; yeah, this is pretty
       # brittle, so this might need to be adjusted if the
       # resource_harness logic changes
-      resource.expects(:retrieve).returns(current_from_filesystem)
-      Puppet::Util::Storage.stubs(:cache).with(resource).
-        returns(historical_from_state_yaml).then.
-        returns(current_from_filesystem).then.
-        returns(current_from_filesystem)
+      expect(resource).to receive(:retrieve).and_return(current_from_filesystem)
+      allow(Puppet::Util::Storage).to receive(:cache).with(resource).
+        and_return(historical_from_state_yaml, current_from_filesystem, current_from_filesystem)
 
       # there should be an audit change recorded, since the two
       # timestamps differ by at least 1 microsecond
@@ -421,11 +418,9 @@ describe Puppet::Transaction::ResourceHarness do
       # set up the sequence of stubs; yeah, this is pretty
       # brittle, so this might need to be adjusted if the
       # resource_harness logic changes
-      resource.expects(:retrieve).returns(current_from_filesystem)
-      Puppet::Util::Storage.stubs(:cache).with(resource).
-        returns(historical_from_state_yaml).then.
-        returns(current_from_filesystem).then.
-        returns(current_from_filesystem)
+      expect(resource).to receive(:retrieve).and_return(current_from_filesystem)
+      allow(Puppet::Util::Storage).to receive(:cache).with(resource).
+        and_return(historical_from_state_yaml, current_from_filesystem, current_from_filesystem)
 
       # there should be no audit change recorded, despite the
       # slight difference in the two timestamps
@@ -476,19 +471,19 @@ describe Puppet::Transaction::ResourceHarness do
         end
 
         it "redacts notices when a parameter is newly audited" do
-          resource.property(:content).expects(:notice).with("audit change: newly-recorded value [redacted]")
+          expect(resource.property(:content)).to receive(:notice).with("audit change: newly-recorded value [redacted]")
           @harness.evaluate(resource)
         end
 
         it "redacts event messages for sensitive properties" do
-          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
+          allow(Puppet::Util::Storage).to receive(:cache).with(resource).and_return({:content => "historical world"})
           status = @harness.evaluate(resource)
           sync_event = status.events[0]
           expect(sync_event.message).to eq 'changed [redacted] to [redacted] (previously recorded value was [redacted])'
         end
 
         it "redacts audit event messages for sensitive properties when simulating noop changes" do
-          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
+          allow(Puppet::Util::Storage).to receive(:cache).with(resource).and_return({:content => "historical world"})
           resource[:noop] = true
           status = @harness.evaluate(resource)
           sync_event = status.events[0]
@@ -496,7 +491,7 @@ describe Puppet::Transaction::ResourceHarness do
         end
 
         it "redacts event contents for sensitive properties" do
-          Puppet::Util::Storage.stubs(:cache).with(resource).returns({:content => "historical world"})
+          allow(Puppet::Util::Storage).to receive(:cache).with(resource).and_return({:content => "historical world"})
           status = @harness.evaluate(resource)
           sync_event = status.events[0]
           expect(sync_event.historical_value).to eq '[redacted]'
@@ -535,7 +530,7 @@ describe Puppet::Transaction::ResourceHarness do
 
     it "should warn and return nil if the resource has no catalog" do
       @resource.catalog = nil
-      @resource.expects(:warning)
+      expect(@resource).to receive(:warning)
 
       expect(@harness.schedule(@resource)).to be_nil
     end
@@ -546,7 +541,7 @@ describe Puppet::Transaction::ResourceHarness do
 
     it "should fail if the named schedule cannot be found" do
       @resource[:schedule] = "whatever"
-      @resource.expects(:fail)
+      expect(@resource).to receive(:fail)
       @harness.schedule(@resource)
     end
 
@@ -576,13 +571,13 @@ describe Puppet::Transaction::ResourceHarness do
 
     it "should return the result of matching the schedule with the cached 'checked' time if a schedule is set" do
       t = Time.now
-      @harness.expects(:cached).with(@resource, :checked).returns(t)
+      expect(@harness).to receive(:cached).with(@resource, :checked).and_return(t)
 
       sched = Puppet::Type.type(:schedule).new(:name => "sched")
       @catalog.add_resource(sched)
       @resource[:schedule] = "sched"
 
-      sched.expects(:match?).with(t.to_i).returns "feh"
+      expect(sched).to receive(:match?).with(t.to_i).and_return("feh")
 
       expect(@harness.scheduled?(@resource)).to eq("feh")
     end
@@ -590,7 +585,7 @@ describe Puppet::Transaction::ResourceHarness do
 
   it "should be able to cache data in the Storage module" do
     data = {}
-    Puppet::Util::Storage.expects(:cache).with(@resource).returns data
+    expect(Puppet::Util::Storage).to receive(:cache).with(@resource).and_return(data)
     @harness.cache(@resource, :foo, "something")
 
     expect(data[:foo]).to eq("something")
@@ -598,7 +593,7 @@ describe Puppet::Transaction::ResourceHarness do
 
   it "should be able to retrieve data from the cache" do
     data = {:foo => "other"}
-    Puppet::Util::Storage.expects(:cache).with(@resource).returns data
+    expect(Puppet::Util::Storage).to receive(:cache).with(@resource).and_return(data)
     expect(@harness.cached(@resource, :foo)).to eq("other")
   end
 
@@ -614,14 +609,14 @@ describe Puppet::Transaction::ResourceHarness do
     end
 
     it "contains (corrective) when corrective change" do
-      Puppet::Transaction::Event.any_instance.stubs(:corrective_change).returns(true)
+      allow_any_instance_of(Puppet::Transaction::Event).to receive(:corrective_change).and_return(true)
       status = @harness.evaluate(resource)
       sync_event = status.events[0]
       expect(sync_event.message).to match(/content changed '{md5}[0-9a-f]+' to '{md5}[0-9a-f]+' \(corrective\)/)
     end
 
     it "contains no modifier when intentional change" do
-      Puppet::Transaction::Event.any_instance.stubs(:corrective_change).returns(false)
+      allow_any_instance_of(Puppet::Transaction::Event).to receive(:corrective_change).and_return(false)
       status = @harness.evaluate(resource)
       sync_event = status.events[0]
       expect(sync_event.message).to match(/content changed '{md5}[0-9a-f]+' to '{md5}[0-9a-f]+'$/)

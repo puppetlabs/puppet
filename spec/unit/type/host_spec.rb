@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 host = Puppet::Type.type(:host)
@@ -9,7 +8,7 @@ describe host do
     @class = host
     @catalog = Puppet::Resource::Catalog.new
     @provider = FakeHostProvider.new
-    @resource = stub 'resource', :resource => nil, :provider => @provider
+    @resource = double('resource', :resource => nil, :provider => @provider)
   end
 
   it "should have :name be its namevar" do
@@ -659,7 +658,7 @@ describe host do
 
     it "should also use the specified delimiter for joining" do
       @host_aliases = @class.attrclass(:host_aliases).new(:resource => @resource, :should => %w{foo bar})
-      @host_aliases.stubs(:delimiter).returns "\t"
+      allow(@host_aliases).to receive(:delimiter).and_return("\t")
 
       @host_aliases.sync
 

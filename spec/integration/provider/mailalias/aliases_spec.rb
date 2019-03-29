@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'shared_behaviours/all_parsedfile_providers'
 

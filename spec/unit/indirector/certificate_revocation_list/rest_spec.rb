@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/certificate_revocation_list/rest'
@@ -25,9 +24,9 @@ describe Puppet::SSL::CertificateRevocationList::Rest do
   end
 
   it "temporarily disables revocation checking when finding a CRL and no CRL is available" do
-    Puppet::FileSystem.expects(:exist?).with(Puppet[:hostcrl]).returns false
+    expect(Puppet::FileSystem).to receive(:exist?).with(Puppet[:hostcrl]).and_return(false)
     Puppet.override({:certificate_revocation => :chain}) do
-      Puppet.expects(:override).with({:certificate_revocation => false}, anything)
+      expect(Puppet).to receive(:override).with({:certificate_revocation => false}, anything)
       subject.find(nil)
     end
   end

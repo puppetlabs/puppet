@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet/provider/nameservice'
 require 'puppet/etc'
@@ -134,7 +132,7 @@ describe Puppet::Provider::NameService do
 
   describe "#section" do
     it "should raise an error if resource_type has not been set" do
-      described_class.expects(:resource_type).returns nil
+      expect(described_class).to receive(:resource_type).and_return(nil)
       expect { described_class.section }.to raise_error Puppet::Error, 'Cannot determine Etc section without a resource type'
     end
 
@@ -153,15 +151,15 @@ describe Puppet::Provider::NameService do
 
   describe "#listbyname" do
     it "should be deprecated" do
-      Puppet.expects(:deprecation_warning).with(regexp_matches(/listbyname is deprecated/))
+      expect(Puppet).to receive(:deprecation_warning).with(/listbyname is deprecated/)
       described_class.listbyname
     end
 
     it "should return a list of users if resource_type is user" do
       described_class.resource_type = Puppet::Type.type(:user)
-      Puppet::Etc.expects(:setpwent)
-      Puppet::Etc.stubs(:getpwent).returns(*users)
-      Puppet::Etc.expects(:endpwent)
+      expect(Puppet::Etc).to receive(:setpwent)
+      allow(Puppet::Etc).to receive(:getpwent).and_return(*users)
+      expect(Puppet::Etc).to receive(:endpwent)
       expect(described_class.listbyname).to eq(%w{root foo})
     end
 
@@ -172,7 +170,7 @@ describe Puppet::Provider::NameService do
       # the same name on disk, but each name is stored on disk in a different
       # encoding
       it "should return names with invalid byte sequences replaced with '?'" do
-        Etc.stubs(:getpwent).returns(*utf_8_mixed_users)
+        allow(Etc).to receive(:getpwent).and_return(*utf_8_mixed_users)
         expect(invalid_utf_8_jose).to_not be_valid_encoding
         result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::UTF_8) do
           described_class.listbyname
@@ -181,7 +179,7 @@ describe Puppet::Provider::NameService do
       end
 
       it "should return names in their original encoding/bytes if they would not be valid UTF-8" do
-        Etc.stubs(:getpwent).returns(*latin_1_mixed_users)
+        allow(Etc).to receive(:getpwent).and_return(*latin_1_mixed_users)
         result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ISO_8859_1) do
           described_class.listbyname
         end
@@ -191,18 +189,18 @@ describe Puppet::Provider::NameService do
 
     it "should return a list of groups if resource_type is group", :unless => Puppet.features.microsoft_windows? do
       described_class.resource_type = Puppet::Type.type(:group)
-      Puppet::Etc.expects(:setgrent)
-      Puppet::Etc.stubs(:getgrent).returns(*groups)
-      Puppet::Etc.expects(:endgrent)
+      expect(Puppet::Etc).to receive(:setgrent)
+      allow(Puppet::Etc).to receive(:getgrent).and_return(*groups)
+      expect(Puppet::Etc).to receive(:endgrent)
       expect(described_class.listbyname).to eq(%w{root bin})
     end
 
     it "should yield if a block given" do
       yield_results = []
       described_class.resource_type = Puppet::Type.type(:user)
-      Puppet::Etc.expects(:setpwent)
-      Puppet::Etc.stubs(:getpwent).returns(*users)
-      Puppet::Etc.expects(:endpwent)
+      expect(Puppet::Etc).to receive(:setpwent)
+      allow(Puppet::Etc).to receive(:getpwent).and_return(*users)
+      expect(Puppet::Etc).to receive(:endpwent)
       described_class.listbyname {|x| yield_results << x }
       expect(yield_results).to eq(%w{root foo})
     end
@@ -213,7 +211,7 @@ describe Puppet::Provider::NameService do
       # These two tests simulate an environment where there are two users with
       # the same name on disk, but each name is stored on disk in a different
       # encoding
-      Etc.stubs(:getpwent).returns(*utf_8_mixed_users)
+      allow(Etc).to receive(:getpwent).and_return(*utf_8_mixed_users)
       result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::UTF_8) do
         described_class.instances
       end
@@ -228,7 +226,7 @@ describe Puppet::Provider::NameService do
     end
 
     it "should have object names in their original encoding/bytes if they would not be valid UTF-8" do
-      Etc.stubs(:getpwent).returns(*latin_1_mixed_users)
+      allow(Etc).to receive(:getpwent).and_return(*latin_1_mixed_users)
       result = PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ISO_8859_1) do
         described_class.instances
       end
@@ -244,8 +242,8 @@ describe Puppet::Provider::NameService do
 
     it "should pass the Puppet::Etc :canonical_name Struct member to the constructor" do
       users = [ Struct::Passwd.new(invalid_utf_8_jose, invalid_utf_8_jose, 1002, 2000), nil ]
-      Etc.stubs(:getpwent).returns(*users)
-      described_class.expects(:new).with(:name => escaped_utf_8_jose, :canonical_name => invalid_utf_8_jose, :ensure => :present)
+      allow(Etc).to receive(:getpwent).and_return(*users)
+      expect(described_class).to receive(:new).with(:name => escaped_utf_8_jose, :canonical_name => invalid_utf_8_jose, :ensure => :present)
       described_class.instances
     end
   end
@@ -278,19 +276,19 @@ describe Puppet::Provider::NameService do
   describe "getinfo" do
     before :each do
       # with section=foo we'll call Etc.getfoonam instead of getpwnam or getgrnam
-      described_class.stubs(:section).returns 'foo'
+      allow(described_class).to receive(:section).and_return('foo')
       resource # initialize the resource so our provider has a @resource instance variable
     end
 
     it "should return a hash if we can retrieve something" do
-      Puppet::Etc.expects(:send).with(:getfoonam, 'bob').returns fakeetcobject
-      provider.expects(:info2hash).with(fakeetcobject).returns(:foo => 'fooval', :bar => 'barval')
+      expect(Puppet::Etc).to receive(:send).with(:getfoonam, 'bob').and_return(fakeetcobject)
+      expect(provider).to receive(:info2hash).with(fakeetcobject).and_return(:foo => 'fooval', :bar => 'barval')
       expect(provider.getinfo(true)).to eq({:foo => 'fooval', :bar => 'barval'})
     end
 
     it "should return nil if we cannot retrieve anything" do
-      Puppet::Etc.expects(:send).with(:getfoonam, 'bob').raises(ArgumentError, "can't find bob")
-      provider.expects(:info2hash).never
+      expect(Puppet::Etc).to receive(:send).with(:getfoonam, 'bob').and_raise(ArgumentError, "can't find bob")
+      expect(provider).not_to receive(:info2hash)
       expect(provider.getinfo(true)).to be_nil
     end
 
@@ -299,13 +297,13 @@ describe Puppet::Provider::NameService do
     # again if needed
     it "should use the instance's @canonical_name to query the system" do
       provider_instance = described_class.new(:name => 'foo', :canonical_name => 'original_foo', :ensure => :present)
-      Puppet::Etc.expects(:send).with(:getfoonam, 'original_foo')
+      expect(Puppet::Etc).to receive(:send).with(:getfoonam, 'original_foo')
       provider_instance.getinfo(true)
     end
 
     it "should use the instance's name instead of canonical_name if not supplied during instantiation" do
       provider_instance = described_class.new(:name => 'foo', :ensure => :present)
-      Puppet::Etc.expects(:send).with(:getfoonam, 'foo')
+      expect(Puppet::Etc).to receive(:send).with(:getfoonam, 'foo')
       provider_instance.getinfo(true)
     end
   end
@@ -319,9 +317,9 @@ describe Puppet::Provider::NameService do
       # expect two method invocations because info2hash calls the method
       # twice if the Struct responds to the propertyname (our fake Struct
       # provides values for :foo and :bar) TODO: Fix that
-      provider.expects(:posixmethod).with(:foo).returns(:foo).twice
-      provider.expects(:posixmethod).with(:bar).returns(:bar).twice
-      provider.expects(:posixmethod).with(:ensure).returns :ensure
+      expect(provider).to receive(:posixmethod).with(:foo).and_return(:foo).twice
+      expect(provider).to receive(:posixmethod).with(:bar).and_return(:bar).twice
+      expect(provider).to receive(:posixmethod).with(:ensure).and_return(:ensure)
       expect(provider.info2hash(fakeetcobject)).to eq({ :foo => 'fooval', :bar => 'barval' })
     end
   end
@@ -351,11 +349,11 @@ describe Puppet::Provider::NameService do
 
   describe "exists?" do
     it "should return true if we can retrieve anything" do
-      provider.expects(:getinfo).with(true).returns(:foo => 'fooval', :bar => 'barval')
+      expect(provider).to receive(:getinfo).with(true).and_return(:foo => 'fooval', :bar => 'barval')
       expect(provider).to be_exists
     end
     it "should return false if we cannot retrieve anything" do
-      provider.expects(:getinfo).with(true).returns nil
+      expect(provider).to receive(:getinfo).with(true).and_return(nil)
       expect(provider).not_to be_exists
     end
   end
@@ -364,18 +362,18 @@ describe Puppet::Provider::NameService do
     before(:each) {described_class.resource_type = faketype }
 
     it "should return the correct getinfo value" do
-      provider.expects(:getinfo).with(false).returns(:foo => 'fooval', :bar => 'barval')
+      expect(provider).to receive(:getinfo).with(false).and_return(:foo => 'fooval', :bar => 'barval')
       expect(provider.get(:bar)).to eq('barval')
     end
 
     it "should unmunge the value first" do
       described_class.options(:bar, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
-      provider.expects(:getinfo).with(false).returns(:foo => 200, :bar => 500)
+      expect(provider).to receive(:getinfo).with(false).and_return(:foo => 200, :bar => 500)
       expect(provider.get(:bar)).to eq(250)
     end
 
     it "should return nil if getinfo cannot retrieve the value" do
-      provider.expects(:getinfo).with(false).returns(:foo => 'fooval', :bar => 'barval')
+      expect(provider).to receive(:getinfo).with(false).and_return(:foo => 'fooval', :bar => 'barval')
       expect(provider.get(:no_such_key)).to be_nil
     end
 
@@ -392,21 +390,21 @@ describe Puppet::Provider::NameService do
     end
 
     it "should execute the modify command on valid values" do
-      provider.expects(:modifycmd).with(:foo, 100).returns ['/bin/modify', '-f', '100' ]
-      provider.expects(:execute).with(['/bin/modify', '-f', '100'], has_entry(:custom_environment, {}))
+      expect(provider).to receive(:modifycmd).with(:foo, 100).and_return(['/bin/modify', '-f', '100' ])
+      expect(provider).to receive(:execute).with(['/bin/modify', '-f', '100'], hash_including(custom_environment: {}))
       provider.set(:foo, 100)
     end
 
     it "should munge the value first" do
       described_class.options(:foo, :munge => proc { |x| x*2}, :unmunge => proc {|x| x/2})
-      provider.expects(:modifycmd).with(:foo, 200).returns(['/bin/modify', '-f', '200' ])
-      provider.expects(:execute).with(['/bin/modify', '-f', '200'], has_entry(:custom_environment, {}))
+      expect(provider).to receive(:modifycmd).with(:foo, 200).and_return(['/bin/modify', '-f', '200' ])
+      expect(provider).to receive(:execute).with(['/bin/modify', '-f', '200'], hash_including(custom_environment: {}))
       provider.set(:foo, 100)
     end
 
     it "should fail if the modify command fails" do
-      provider.expects(:modifycmd).with(:foo, 100).returns(['/bin/modify', '-f', '100' ])
-      provider.expects(:execute).with(['/bin/modify', '-f', '100'], kind_of(Hash)).raises(Puppet::ExecutionFailure, "Execution of '/bin/modify' returned 1: some_failure")
+      expect(provider).to receive(:modifycmd).with(:foo, 100).and_return(['/bin/modify', '-f', '100' ])
+      expect(provider).to receive(:execute).with(['/bin/modify', '-f', '100'], kind_of(Hash)).and_raise(Puppet::ExecutionFailure, "Execution of '/bin/modify' returned 1: some_failure")
       expect { provider.set(:foo, 100) }.to raise_error Puppet::Error, /Could not set foo/
     end
   end

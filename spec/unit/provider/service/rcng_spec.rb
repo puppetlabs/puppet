@@ -2,12 +2,12 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:service).provider(:rcng), :unless => Puppet.features.microsoft_windows? do
   before :each do
-    Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
-    Facter.stubs(:value).with(:operatingsystem).returns :netbsd
-    Facter.stubs(:value).with(:osfamily).returns 'NetBSD'
-    described_class.stubs(:defpath).returns('/etc/rc.d')
+    allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(described_class)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:netbsd)
+    allow(Facter).to receive(:value).with(:osfamily).and_return('NetBSD')
+    allow(described_class).to receive(:defpath).and_return('/etc/rc.d')
     @provider = subject()
-    @provider.stubs(:initscript)
+    allow(@provider).to receive(:initscript)
   end
 
   context "#enable" do
@@ -17,20 +17,20 @@ describe Puppet::Type.type(:service).provider(:rcng), :unless => Puppet.features
 
     it "should set the proper contents to enable" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      Dir.stubs(:mkdir).with('/etc/rc.conf.d')
-      fh = stub 'fh'
-      Puppet::Util.expects(:replace_file).with('/etc/rc.conf.d/sshd', 0644).yields(fh)
-      fh.expects(:puts).with("sshd=${sshd:=YES}\n")
+      allow(Dir).to receive(:mkdir).with('/etc/rc.conf.d')
+      fh = double('fh')
+      expect(Puppet::Util).to receive(:replace_file).with('/etc/rc.conf.d/sshd', 0644).and_yield(fh)
+      expect(fh).to receive(:puts).with("sshd=${sshd:=YES}\n")
       provider.enable
     end
 
     it "should set the proper contents to enable when disabled" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      Dir.stubs(:mkdir).with('/etc/rc.conf.d')
-      File.stubs(:read).with('/etc/rc.conf.d/sshd').returns("sshd_enable=\"NO\"\n")
-      fh = stub 'fh'
-      Puppet::Util.expects(:replace_file).with('/etc/rc.conf.d/sshd', 0644).yields(fh)
-      fh.expects(:puts).with("sshd=${sshd:=YES}\n")
+      allow(Dir).to receive(:mkdir).with('/etc/rc.conf.d')
+      allow(File).to receive(:read).with('/etc/rc.conf.d/sshd').and_return("sshd_enable=\"NO\"\n")
+      fh = double('fh')
+      expect(Puppet::Util).to receive(:replace_file).with('/etc/rc.conf.d/sshd', 0644).and_yield(fh)
+      expect(fh).to receive(:puts).with("sshd=${sshd:=YES}\n")
       provider.enable
     end
   end

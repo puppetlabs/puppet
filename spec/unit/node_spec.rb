@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet_spec/files'
@@ -11,7 +10,6 @@ describe Puppet::Node do
   let(:env_loader) { Puppet::Environments::Static.new(environment) }
 
   describe "when managing its environment" do
-
     it "provides an environment instance" do
       expect(Puppet::Node.new("foo", :environment => environment).environment.name).to eq(:bar)
     end
@@ -132,7 +130,6 @@ describe Puppet::Node do
     it "errors if name is nil" do
       expect { Puppet::Node.from_data_hash({ })}.to raise_error(ArgumentError, /No name provided in serialized data/)
     end
-
   end
 
   describe "when converting to json" do
@@ -271,18 +268,18 @@ describe Puppet::Node, "when merging facts" do
     let(:facts) { Puppet::Node::Facts.new(@node.name, "foo" => "bar") }
 
     it "accepts facts to merge with the node" do
-      @node.expects(:merge).with({ 'foo' => 'bar' })
+      expect(@node).to receive(:merge).with({ 'foo' => 'bar' })
       @node.fact_merge(facts)
     end
 
     it "will not query the facts indirection if facts are supplied" do
-      Puppet::Node::Facts.indirection.expects(:find).never
+      expect(Puppet::Node::Facts.indirection).not_to receive(:find)
       @node.fact_merge(facts)
     end
   end
 
   it "recovers with a Puppet::Error if something is thrown from the facts indirection" do
-    Puppet::Node::Facts.indirection.expects(:find).raises "something bad happened in the indirector"
+    expect(Puppet::Node::Facts.indirection).to receive(:find).and_raise("something bad happened in the indirector")
     expect { @node.fact_merge }.to raise_error(Puppet::Error, /Could not retrieve facts for testnode: something bad happened in the indirector/)
   end
 
@@ -300,7 +297,7 @@ describe Puppet::Node, "when merging facts" do
 
   it "warns when a parameter value is not updated" do
     @node = Puppet::Node.new("testnode", :parameters => {"one" => "a"})
-    Puppet.expects(:warning).with('The node parameter \'one\' for node \'testnode\' was already set to \'a\'. It could not be set to \'b\'')
+    expect(Puppet).to receive(:warning).with('The node parameter \'one\' for node \'testnode\' was already set to \'a\'. It could not be set to \'b\'')
     @node.merge "one" => "b"
   end
 
@@ -374,9 +371,7 @@ describe Puppet::Node, "when merging facts" do
     end
 
     context "when a node is initialized from new" do
-
       context "when a node is initialzed with an environment" do
-
         it "adds the environment to the list of parameters" do
           Puppet[:environment] = "one"
           @node = Puppet::Node.new("testnode", :environment => "one")
@@ -398,7 +393,6 @@ describe Puppet::Node, "when merging facts" do
       end
 
       context "when a node is initialized without an environment" do
-
         it "it perfers an environment name to an environment fact" do
           @node = Puppet::Node.new("testnode")
           @node.environment_name = "one"

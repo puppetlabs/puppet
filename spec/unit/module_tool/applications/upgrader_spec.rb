@@ -27,14 +27,13 @@ describe Puppet::ModuleTool::Applications::Upgrader do
 
   before do
     SemanticPuppet::Dependency.clear_sources
-    installer = Puppet::ModuleTool::Applications::Upgrader.any_instance
-    installer.stubs(:module_repository).returns(remote_source)
+    allow_any_instance_of(Puppet::ModuleTool::Applications::Upgrader).to receive(:module_repository).and_return(remote_source)
   end
 
   if Puppet.features.microsoft_windows?
     before :each do
-      Puppet.settings.stubs(:[])
-      Puppet.settings.stubs(:[]).with(:module_working_dir).returns(Dir.mktmpdir('upgradertmp'))
+      allow(Puppet.settings).to receive(:[])
+      allow(Puppet.settings).to receive(:[]).with(:module_working_dir).and_return(Dir.mktmpdir('upgradertmp'))
     end
   end
 
@@ -327,9 +326,10 @@ describe Puppet::ModuleTool::Applications::Upgrader do
         end
       end
     end
+
     context 'when in FIPS mode...' do
       it 'module unpgrader refuses to run' do
-        Facter.stubs(:value).with(:fips_enabled).returns(true)
+        allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
         expect { application.run }.to raise_error(/Module upgrade is prohibited in FIPS mode/)
       end 
     end

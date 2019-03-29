@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/apply'
@@ -11,7 +10,7 @@ describe Puppet::Application::Apply do
 
   before :each do
     @apply = Puppet::Application[:apply]
-    Puppet::Util::Log.stubs(:newdestination)
+    allow(Puppet::Util::Log).to receive(:newdestination)
     Puppet[:reports] = "none"
   end
 
@@ -29,26 +28,25 @@ describe Puppet::Application::Apply do
     end
 
     it "should store argument value when calling handle_#{option}" do
-      @apply.options.expects(:[]=).with(option, 'arg')
+      expect(@apply.options).to receive(:[]=).with(option, 'arg')
       @apply.send("handle_#{option}".to_sym, 'arg')
     end
   end
 
   it "should set the code to the provided code when :execute is used" do
-    @apply.options.expects(:[]=).with(:code, 'arg')
+    expect(@apply.options).to receive(:[]=).with(:code, 'arg')
     @apply.send("handle_execute".to_sym, 'arg')
   end
 
   describe "when applying options" do
-
     it "should set the log destination with --logdest" do
-      Puppet::Log.expects(:newdestination).with("console")
+      expect(Puppet::Log).to receive(:newdestination).with("console")
 
       @apply.handle_logdest("console")
     end
 
     it "should set the setdest options to true" do
-      @apply.options.expects(:[]=).with(:setdest,true)
+      expect(@apply.options).to receive(:[]=).with(:setdest,true)
 
       @apply.handle_logdest("console")
     end
@@ -56,16 +54,16 @@ describe Puppet::Application::Apply do
 
   describe "during setup" do
     before :each do
-      Puppet::Log.stubs(:newdestination)
-      Puppet::FileBucket::Dipper.stubs(:new)
-      STDIN.stubs(:read)
-      Puppet::Transaction::Report.indirection.stubs(:cache_class=)
+      allow(Puppet::Log).to receive(:newdestination)
+      allow(Puppet::FileBucket::Dipper).to receive(:new)
+      allow(STDIN).to receive(:read)
+      allow(Puppet::Transaction::Report.indirection).to receive(:cache_class=)
     end
 
     describe "with --test" do
       it "should call setup_test" do
         @apply.options[:test] = true
-        @apply.expects(:setup_test)
+        expect(@apply).to receive(:setup_test)
 
         @apply.setup
       end
@@ -88,20 +86,20 @@ describe Puppet::Application::Apply do
     end
 
     it "should set console as the log destination if logdest option wasn't provided" do
-      Puppet::Log.expects(:newdestination).with(:console)
+      expect(Puppet::Log).to receive(:newdestination).with(:console)
 
       @apply.setup
     end
 
     it "sets the log destination if logdest is provided via settings" do
-      Puppet::Log.expects(:newdestination).with("set_via_config")
+      expect(Puppet::Log).to receive(:newdestination).with("set_via_config")
       Puppet[:logdest] = "set_via_config"
 
       @apply.setup
     end
 
     it "should set INT trap" do
-      Signal.expects(:trap).with(:INT)
+      expect(Signal).to receive(:trap).with(:INT)
 
       @apply.setup
     end
@@ -119,25 +117,24 @@ describe Puppet::Application::Apply do
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      Puppet.settings.stubs(:print_configs?).returns  true
-      Puppet.settings.expects(:print_configs).returns true
+      allow(Puppet.settings).to receive(:print_configs?).and_return(true)
+      expect(Puppet.settings).to receive(:print_configs).and_return(true)
       expect { @apply.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
-      Puppet.settings.stubs(:print_configs?).returns(true)
+      allow(Puppet.settings).to receive(:print_configs?).and_return(true)
       expect { @apply.setup }.to exit_with 1
     end
 
     it "should use :main, :puppetd, and :ssl" do
-      Puppet.settings.unstub(:use)
-      Puppet.settings.expects(:use).with(:main, :agent, :ssl)
+      expect(Puppet.settings).to receive(:use).with(:main, :agent, :ssl)
 
       @apply.setup
     end
 
     it "should tell the report handler to cache locally as yaml" do
-      Puppet::Transaction::Report.indirection.expects(:cache_class=).with(:yaml)
+      expect(Puppet::Transaction::Report.indirection).to receive(:cache_class=).with(:yaml)
 
       @apply.setup
     end
@@ -169,14 +166,14 @@ describe Puppet::Application::Apply do
     it "should dispatch to 'apply' if it was called with 'apply'" do
       @apply.options[:catalog] = "foo"
 
-      @apply.expects(:apply)
+      expect(@apply).to receive(:apply)
       @apply.run_command
     end
 
     it "should dispatch to main otherwise" do
-      @apply.stubs(:options).returns({})
+      allow(@apply).to receive(:options).and_return({})
 
-      @apply.expects(:main)
+      expect(@apply).to receive(:main)
       @apply.run_command
     end
 
@@ -197,17 +194,17 @@ describe Puppet::Application::Apply do
         Puppet::Node.indirection.save(@node)
 
         @catalog = Puppet::Resource::Catalog.new("testing", Puppet.lookup(:environments).get(Puppet[:environment]))
-        @catalog.stubs(:to_ral).returns(@catalog)
+        allow(@catalog).to receive(:to_ral).and_return(@catalog)
 
-        Puppet::Resource::Catalog.indirection.stubs(:find).returns(@catalog)
+        allow(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(@catalog)
 
-        STDIN.stubs(:read)
+        allow(STDIN).to receive(:read)
 
-        @transaction = stub('transaction')
-        @catalog.stubs(:apply).returns(@transaction)
+        @transaction = double('transaction')
+        allow(@catalog).to receive(:apply).and_return(@transaction)
 
-        Puppet::Util::Storage.stubs(:load)
-        Puppet::Configurer.any_instance.stubs(:save_last_run_summary) # to prevent it from trying to write files
+        allow(Puppet::Util::Storage).to receive(:load)
+        allow_any_instance_of(Puppet::Configurer).to receive(:save_last_run_summary) # to prevent it from trying to write files
       end
 
       after :each do
@@ -224,23 +221,23 @@ describe Puppet::Application::Apply do
 
       it "should set the code to run from --code" do
         @apply.options[:code] = "code to run"
-        Puppet.expects(:[]=).with(:code,"code to run")
+        expect(Puppet).to receive(:[]=).with(:code,"code to run")
 
         expect { @apply.main }.to exit_with 0
       end
 
       it "should set the code to run from STDIN if no arguments" do
-        @apply.command_line.stubs(:args).returns([])
-        STDIN.stubs(:read).returns("code to run")
+        allow(@apply.command_line).to receive(:args).and_return([])
+        allow(STDIN).to receive(:read).and_return("code to run")
 
-        Puppet.expects(:[]=).with(:code,"code to run")
+        expect(Puppet).to receive(:[]=).with(:code,"code to run")
 
         expect { @apply.main }.to exit_with 0
       end
 
       it "should raise an error if a file is passed on command line and the file does not exist" do
         noexist = tmpfile('noexist.pp')
-        @apply.command_line.stubs(:args).returns([noexist])
+        allow(@apply.command_line).to receive(:args).and_return([noexist])
         expect { @apply.main }.to raise_error(RuntimeError, "Could not find file #{noexist}")
       end
 
@@ -248,7 +245,7 @@ describe Puppet::Application::Apply do
         manifest = tmpfile('starwarsIV')
         FileUtils.touch(manifest)
 
-        @apply.command_line.stubs(:args).returns([manifest, 'starwarsI', 'starwarsII'])
+        allow(@apply.command_line).to receive(:args).and_return([manifest, 'starwarsI', 'starwarsII'])
 
         expect { @apply.main }.to exit_with 0
 
@@ -258,13 +255,13 @@ describe Puppet::Application::Apply do
       end
 
       it "should splay" do
-        @apply.expects(:splay)
+        expect(@apply).to receive(:splay)
 
         expect { @apply.main }.to exit_with 0
       end
 
       it "should raise an error if we can't find the node" do
-        Puppet::Node.indirection.expects(:find).returns(nil)
+        expect(Puppet::Node.indirection).to receive(:find).and_return(nil)
 
         expect { @apply.main }.to raise_error(RuntimeError, /Could not find node/)
       end
@@ -275,63 +272,63 @@ describe Puppet::Application::Apply do
         File.open(classfile, 'w') { |c| c.puts 'class' }
         Puppet[:classfile] = classfile
 
-        @node.expects(:classes=).with(['class'])
+        expect(@node).to receive(:classes=).with(['class'])
 
         expect { @apply.main }.to exit_with 0
       end
 
       it "should compile the catalog" do
-        Puppet::Resource::Catalog.indirection.expects(:find).returns(@catalog)
+        expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(@catalog)
 
         expect { @apply.main }.to exit_with 0
       end
 
       it 'should make the Puppet::Pops::Loaders available when applying the compiled catalog' do
-        Puppet::Resource::Catalog.indirection.expects(:find).returns(@catalog)
-        @apply.expects(:apply_catalog).with(@catalog) do
+        expect(Puppet::Resource::Catalog.indirection).to receive(:find).and_return(@catalog)
+        expect(@apply).to receive(:apply_catalog) do |catalog|
+          expect(@catalog).to eq(@catalog)
           fail('Loaders not found') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
           true
-        end.returns(0)
+        end.and_return(0)
         expect { @apply.main }.to exit_with 0
       end
 
       it "should transform the catalog to ral" do
-
-        @catalog.expects(:to_ral).returns(@catalog)
+        expect(@catalog).to receive(:to_ral).and_return(@catalog)
 
         expect { @apply.main }.to exit_with 0
       end
 
       it "should finalize the catalog" do
-        @catalog.expects(:finalize)
+        expect(@catalog).to receive(:finalize)
 
         expect { @apply.main }.to exit_with 0
       end
 
       it "should not save the classes or resource file by default" do
-        @catalog.expects(:write_class_file).never
-        @catalog.expects(:write_resource_file).never
+        expect(@catalog).not_to receive(:write_class_file)
+        expect(@catalog).not_to receive(:write_resource_file)
         expect { @apply.main }.to exit_with 0
       end
 
       it "should save the classes and resources files when requested" do
         @apply.options[:write_catalog_summary] = true
 
-        @catalog.expects(:write_class_file).once
-        @catalog.expects(:write_resource_file).once
+        expect(@catalog).to receive(:write_class_file).once
+        expect(@catalog).to receive(:write_resource_file).once
 
         expect { @apply.main }.to exit_with 0
       end
 
       it "should call the prerun and postrun commands on a Configurer instance" do
-        Puppet::Configurer.any_instance.expects(:execute_prerun_command).returns(true)
-        Puppet::Configurer.any_instance.expects(:execute_postrun_command).returns(true)
+        expect_any_instance_of(Puppet::Configurer).to receive(:execute_prerun_command).and_return(true)
+        expect_any_instance_of(Puppet::Configurer).to receive(:execute_postrun_command).and_return(true)
 
         expect { @apply.main }.to exit_with 0
       end
 
       it "should apply the catalog" do
-        @catalog.expects(:apply).returns(stub_everything('transaction'))
+        expect(@catalog).to receive(:apply).and_return(double('transaction'))
 
         expect { @apply.main }.to exit_with 0
       end
@@ -339,9 +336,9 @@ describe Puppet::Application::Apply do
       it "should save the last run summary" do
         Puppet[:noop] = false
         report = Puppet::Transaction::Report.new
-        Puppet::Transaction::Report.stubs(:new).returns(report)
+        allow(Puppet::Transaction::Report).to receive(:new).and_return(report)
 
-        Puppet::Configurer.any_instance.expects(:save_last_run_summary).with(report)
+        expect_any_instance_of(Puppet::Configurer).to receive(:save_last_run_summary).with(report)
         expect { @apply.main }.to exit_with 0
       end
 
@@ -373,7 +370,7 @@ describe Puppet::Application::Apply do
         end
 
         it "should raise an error if we can't find the facts" do
-          Puppet::Node::Facts.indirection.expects(:find).returns(nil)
+          expect(Puppet::Node::Facts.indirection).to receive(:find).and_return(nil)
 
           expect { @apply.main }.to raise_error(RuntimeError, /Could not find facts/)
         end
@@ -386,30 +383,30 @@ describe Puppet::Application::Apply do
 
         it "should exit with report's computed exit status" do
           Puppet[:noop] = false
-          Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
+          allow_any_instance_of(Puppet::Transaction::Report).to receive(:exit_status).and_return(666)
 
           expect { @apply.main }.to exit_with 666
         end
 
         it "should exit with report's computed exit status, even if --noop is set" do
           Puppet[:noop] = true
-          Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
+          allow_any_instance_of(Puppet::Transaction::Report).to receive(:exit_status).and_return(666)
 
           expect { @apply.main }.to exit_with 666
         end
 
         it "should always exit with 0 if option is disabled" do
           Puppet[:noop] = false
-          report = stub 'report', :exit_status => 666
-          @transaction.stubs(:report).returns(report)
+          report = double('report', :exit_status => 666)
+          allow(@transaction).to receive(:report).and_return(report)
 
           expect { @apply.main }.to exit_with 0
         end
 
         it "should always exit with 0 if --noop" do
           Puppet[:noop] = true
-          report = stub 'report', :exit_status => 666
-          @transaction.stubs(:report).returns(report)
+          report = double('report', :exit_status => 666)
+          allow(@transaction).to receive(:report).and_return(report)
 
           expect { @apply.main }.to exit_with 0
         end
@@ -429,23 +426,23 @@ describe Puppet::Application::Apply do
       it "should read the catalog in from disk if a file name is provided" do
         @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:json,'"something"').returns(catalog)
+        allow(Puppet::Resource::Catalog).to receive(:convert_from).with(:json,'"something"').and_return(catalog)
         @apply.apply
       end
 
       it "should read the catalog in from stdin if '-' is provided" do
         @apply.options[:catalog] = "-"
-        $stdin.expects(:read).returns '"something"'
+        expect($stdin).to receive(:read).and_return('"something"')
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:json,'"something"').returns(catalog)
+        allow(Puppet::Resource::Catalog).to receive(:convert_from).with(:json,'"something"').and_return(catalog)
         @apply.apply
       end
 
       it "should deserialize the catalog from the default format" do
         @apply.options[:catalog] = temporary_catalog
-        Puppet::Resource::Catalog.stubs(:default_format).returns :rot13_piglatin
+        allow(Puppet::Resource::Catalog).to receive(:default_format).and_return(:rot13_piglatin)
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:rot13_piglatin,'"something"').returns(catalog)
+        allow(Puppet::Resource::Catalog).to receive(:convert_from).with(:rot13_piglatin,'"something"').and_return(catalog)
         @apply.apply
       end
 
@@ -457,12 +454,12 @@ describe Puppet::Application::Apply do
       it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
         @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        Puppet::Resource::Catalog.stubs(:convert_from).with(:json,'"something"').returns catalog
-        catalog.expects(:to_ral).returns "mycatalog"
+        allow(Puppet::Resource::Catalog).to receive(:convert_from).with(:json,'"something"').and_return(catalog)
+        expect(catalog).to receive(:to_ral).and_return("mycatalog")
 
-        configurer = stub 'configurer'
-        Puppet::Configurer.expects(:new).returns configurer
-        configurer.expects(:run).
+        configurer = double('configurer')
+        expect(Puppet::Configurer).to receive(:new).and_return(configurer)
+        expect(configurer).to receive(:run).
           with(:catalog => "mycatalog", :pluginsync => false)
 
         @apply.apply
@@ -471,11 +468,13 @@ describe Puppet::Application::Apply do
       it 'should make the Puppet::Pops::Loaders available when applying a catalog' do
         @apply.options[:catalog] = temporary_catalog
         catalog = Puppet::Resource::Catalog.new("testing", Puppet::Node::Environment::NONE)
-        @apply.expects(:read_catalog).with('something') do
+        expect(@apply).to receive(:read_catalog) do |arg|
+          expect(arg).to eq('"something"')
           fail('Loaders not found') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
           true
-        end.returns(catalog)
-        @apply.expects(:apply_catalog).with(catalog) do
+        end.and_return(catalog)
+        expect(@apply).to receive(:apply_catalog) do |cat|
+          expect(cat).to eq(catalog)
           fail('Loaders not found') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
           true
         end
@@ -505,7 +504,7 @@ describe Puppet::Application::Apply do
       Puppet.settings[:classfile] = classfile
 
       #We don't actually need the resource to do anything, we are using it's properties in other parts of the workflow.
-      Puppet::Util::Execution.stubs(:execute)
+      allow(Puppet::Util::Execution).to receive(:execute)
 
       expect { @apply.main }.to exit_with 0
 
@@ -519,7 +518,7 @@ describe Puppet::Application::Apply do
   describe "apply_catalog" do
     it "should call the configurer with the catalog" do
       catalog = "I am a catalog"
-      Puppet::Configurer.any_instance.expects(:run).
+      expect_any_instance_of(Puppet::Configurer).to receive(:run).
         with(:catalog => catalog, :pluginsync => false)
       @apply.send(:apply_catalog, catalog)
     end
@@ -527,7 +526,7 @@ describe Puppet::Application::Apply do
 
   it "should honor the catalog_cache_terminus setting" do
     Puppet.settings[:catalog_cache_terminus] = "json"
-    Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:json)
+    expect(Puppet::Resource::Catalog.indirection).to receive(:cache_class=).with(:json)
 
     @apply.initialize_app_defaults
     @apply.setup

@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 
@@ -11,7 +9,7 @@ describe "Nagios file creation" do
   before :each do
     FileUtils.touch(target_file)
     Puppet::FileSystem.chmod(initial_mode, target_file)
-    Puppet::FileBucket::Dipper.any_instance.stubs(:backup) # Don't backup to filebucket
+    allow_any_instance_of(Puppet::FileBucket::Dipper).to receive(:backup) # Don't backup to filebucket
   end
 
   let :target_file do
@@ -25,13 +23,13 @@ describe "Nagios file creation" do
     catalog = Puppet::Resource::Catalog.new
     catalog.host_config = false
     resources.each do |resource|
-      resource.expects(:err).never
+      expect(resource).not_to receive(:err)
       catalog.add_resource(resource)
     end
 
     # the resources are not properly contained and generated resources
     # will end up with dangling edges without this stubbing:
-    catalog.stubs(:container_of).returns resources[0]
+    allow(catalog).to receive(:container_of).and_return(resources[0])
     catalog.apply
   end
 

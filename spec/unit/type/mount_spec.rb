@@ -1,10 +1,8 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows? do
-
   before :each do
-    Puppet::Type.type(:mount).stubs(:defaultprovider).returns providerclass
+    allow(Puppet::Type.type(:mount)).to receive(:defaultprovider).and_return(providerclass)
   end
 
   let :providerclass do
@@ -64,7 +62,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   describe "when validating values" do
-
     describe "for name" do
       it "should allow full qualified paths" do
         expect(described_class.new(:name => "/mnt/foo")[:name]).to eq('/mnt/foo')
@@ -145,8 +142,8 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
     describe "for blockdevice" do
       before :each do
         # blockdevice is only used on Solaris
-        Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
-        Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return('Solaris')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
       end
 
       it "should support normal /dev/rdsk paths for blockdevice" do
@@ -229,20 +226,20 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       end
 
       it "should support - on Solaris" do
-        Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
-        Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return('Solaris')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
         expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '-') }.to_not raise_error
       end
 
       it "should default to 0 on non Solaris" do
-        Facter.stubs(:value).with(:osfamily).returns nil
-        Facter.stubs(:value).with(:operatingsystem).returns 'HP-UX'
+        allow(Facter).to receive(:value).with(:osfamily).and_return(nil)
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return('HP-UX')
         expect(described_class.new(:name => "/foo", :ensure => :present)[:pass]).to eq(0)
       end
 
       it "should default to - on Solaris" do
-        Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
-        Facter.stubs(:value).with(:osfamily).returns 'Solaris'
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return('Solaris')
+        allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
         expect(described_class.new(:name => "/foo", :ensure => :present)[:pass]).to eq('-')
       end
     end
@@ -301,15 +298,14 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
     end
   end
 
-
   describe "when changing the host" do
     def test_ensure_change(options)
       provider.set(:ensure => options[:from])
-      provider.expects(:create).times(options[:create] || 0)
-      provider.expects(:destroy).times(options[:destroy] || 0)
-      provider.expects(:mount).never
-      provider.expects(:unmount).times(options[:unmount] || 0)
-      ensureprop.stubs(:syncothers)
+      expect(provider).to receive(:create).exactly(options[:create] || 0).times()
+      expect(provider).to receive(:destroy).exactly((options[:destroy] || 0)).times()
+      expect(provider).not_to receive(:mount)
+      expect(provider).to receive(:unmount).exactly(options[:unmount] || 0).times()
+      allow(ensureprop).to receive(:syncothers)
       ensureprop.should = options[:to]
       ensureprop.sync
       expect(!!provider.property_hash[:needs_mount]).to eq(!!options[:mount])
@@ -359,7 +355,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       test_ensure_change(:from => :unmounted, :to => :mounted, :mount => 1)
     end
 
-
     it "should be in sync if it is :absent and should be :absent" do
       ensureprop.should = :absent
       expect(ensureprop.safe_insync?(:absent)).to eq(true)
@@ -400,7 +395,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       expect(ensureprop.safe_insync?(:mounted)).to eq(false)
     end
 
-
     it "should be out of sync if it is :unmounted and should be :absent" do
       ensureprop.should = :absent
       expect(ensureprop.safe_insync?(:unmounted)).to eq(false)
@@ -420,7 +414,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       ensureprop.should = :unmounted
       expect(ensureprop.safe_insync?(:unmounted)).to eq(true)
     end
-
 
     it "should be out of sync if it is :ghost and should be :absent" do
       ensureprop.should = :absent
@@ -447,35 +440,35 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
     pending "2.6.x specifies slightly different behavior and the desired behavior needs to be clarified and revisited.  See ticket #4904" do
       it "should remount if it is supposed to be mounted" do
         resource[:ensure] = "mounted"
-        provider.expects(:remount)
+        expect(provider).to receive(:remount)
 
         resource.refresh
       end
 
       it "should not remount if it is supposed to be present" do
         resource[:ensure] = "present"
-        provider.expects(:remount).never
+        expect(provider).not_to receive(:remount)
 
         resource.refresh
       end
 
       it "should not remount if it is supposed to be absent" do
         resource[:ensure] = "absent"
-        provider.expects(:remount).never
+        expect(provider).not_to receive(:remount)
 
         resource.refresh
       end
 
       it "should not remount if it is supposed to be defined" do
         resource[:ensure] = "defined"
-        provider.expects(:remount).never
+        expect(provider).not_to receive(:remount)
 
         resource.refresh
       end
 
       it "should not remount if it is supposed to be unmounted" do
         resource[:ensure] = "unmounted"
-        provider.expects(:remount).never
+        expect(provider).not_to receive(:remount)
 
         resource.refresh
       end
@@ -483,7 +476,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       it "should not remount swap filesystems" do
         resource[:ensure] = "mounted"
         resource[:fstype] = "swap"
-        provider.expects(:remount).never
+        expect(provider).not_to receive(:remount)
 
         resource.refresh
       end
@@ -491,7 +484,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   describe "when modifying an existing mount entry" do
-
     let :initial_values do
       {
         :ensure      => :mounted,
@@ -506,7 +498,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       }
     end
 
-
     let :resource do
       described_class.new(initial_values.merge(:provider => provider))
     end
@@ -516,14 +507,14 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
     end
 
     def run_in_catalog(*resources)
-      Puppet::Util::Storage.stubs(:store)
+      allow(Puppet::Util::Storage).to receive(:store)
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource(*resources)
       catalog.apply
     end
 
     it "should use the provider to change the dump value" do
-      provider.expects(:dump=).with(1)
+      expect(provider).to receive(:dump=).with(1)
 
       resource[:dump] = 1
 
@@ -531,12 +522,10 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
     end
 
     it "should umount before flushing changes to disk" do
-      syncorder = sequence('syncorder')
-
-      provider.expects(:unmount).in_sequence(syncorder)
-      provider.expects(:options=).in_sequence(syncorder).with 'hard'
-      resource.expects(:flush).in_sequence(syncorder) # Call inside syncothers
-      resource.expects(:flush).in_sequence(syncorder) # I guess transaction or anything calls flush again
+      expect(provider).to receive(:unmount).ordered()
+      expect(provider).to receive(:options=).ordered().with('hard')
+      expect(resource).to receive(:flush).ordered() # Call inside syncothers
+      expect(resource).to receive(:flush).ordered() # I guess transaction or anything calls flush again
 
       resource[:ensure] = :unmounted
       resource[:options] = 'hard'
@@ -546,7 +535,6 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   describe "establishing autorequires and autobefores" do
-
     def create_mount_resource(path)
       described_class.new(
         :name => path,

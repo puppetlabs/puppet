@@ -3,7 +3,7 @@ require 'puppet/ssl'
 
 describe Puppet::SSL::Validator::DefaultValidator do
   let(:ssl_context) do
-    mock('OpenSSL::X509::StoreContext')
+    double('OpenSSL::X509::StoreContext')
   end
 
   let(:ssl_configuration) do
@@ -13,10 +13,10 @@ describe Puppet::SSL::Validator::DefaultValidator do
   end
 
   let(:ssl_host) do
-    stub('ssl_host',
-         :ssl_store => nil,
-         :certificate => stub('cert', :content => nil),
-         :key => stub('key', :content => nil))
+    double('ssl_host',
+           :ssl_store => nil,
+           :certificate => double('cert', :content => nil),
+           :key => double('key', :content => nil))
   end
 
   subject do
@@ -25,15 +25,15 @@ describe Puppet::SSL::Validator::DefaultValidator do
   end
 
   before :each do
-    ssl_configuration.stubs(:read_file).
+    allow(ssl_configuration).to receive(:read_file).
       with(Puppet[:localcacert]).
-      returns(root_ca)
+      and_return(root_ca)
   end
 
   describe '#call' do
     before :each do
-      ssl_context.stubs(:current_cert).returns(*cert_chain_in_callback_order)
-      ssl_context.stubs(:chain).returns(cert_chain)
+      allow(ssl_context).to receive(:current_cert).and_return(*cert_chain_in_callback_order)
+      allow(ssl_context).to receive(:chain).and_return(cert_chain)
     end
 
     context 'When pre-verification is not OK' do
@@ -42,31 +42,31 @@ describe Puppet::SSL::Validator::DefaultValidator do
         let(:code) { OpenSSL::X509::V_ERR_INVALID_CA }
 
         it 'rejects the connection' do
-          ssl_context.stubs(:error_string).returns("Something went wrong")
-          ssl_context.stubs(:error).returns(code)
+          allow(ssl_context).to receive(:error_string).and_return("Something went wrong")
+          allow(ssl_context).to receive(:error).and_return(code)
 
           expect(subject.call(false, ssl_context)).to eq(false)
         end
 
         it 'makes the error available via #verify_errors' do
-          ssl_context.stubs(:error_string).returns("Something went wrong")
-          ssl_context.stubs(:error).returns(code)
+          allow(ssl_context).to receive(:error_string).and_return("Something went wrong")
+          allow(ssl_context).to receive(:error).and_return(code)
 
           subject.call(false, ssl_context)
           expect(subject.verify_errors).to eq(["Something went wrong for #{root_subject}"])
         end
 
         it 'uses a generic message if error_string is nil' do
-          ssl_context.stubs(:error_string).returns(nil)
-          ssl_context.stubs(:error).returns(code)
+          allow(ssl_context).to receive(:error_string).and_return(nil)
+          allow(ssl_context).to receive(:error).and_return(code)
 
           subject.call(false, ssl_context)
           expect(subject.verify_errors).to eq(["OpenSSL error #{code} for #{root_subject}"])
         end
 
         it 'uses 0 for nil error codes' do
-          ssl_context.stubs(:error_string).returns("Something went wrong")
-          ssl_context.stubs(:error).returns(nil)
+          allow(ssl_context).to receive(:error_string).and_return("Something went wrong")
+          allow(ssl_context).to receive(:error).and_return(nil)
 
           subject.call(false, ssl_context)
           expect(subject.verify_errors).to eq(["Something went wrong for #{root_subject}"])
@@ -74,12 +74,12 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
         context "when CRL is not yet valid" do
           before :each do
-            ssl_context.stubs(:error_string).returns("CRL is not yet valid")
-            ssl_context.stubs(:error).returns(OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID)
+            allow(ssl_context).to receive(:error_string).and_return("CRL is not yet valid")
+            allow(ssl_context).to receive(:error).and_return(OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID)
           end
 
           it 'rejects nil CRL' do
-            ssl_context.stubs(:current_crl).returns(nil)
+            allow(ssl_context).to receive(:current_crl).and_return(nil)
 
             expect(subject.call(false, ssl_context)).to eq(false)
             expect(subject.verify_errors).to eq(["CRL is not yet valid"])
@@ -89,7 +89,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
             crl = OpenSSL::X509::CRL.new
             crl.issuer = OpenSSL::X509::Name.new([['CN','Puppet CA: puppetmaster.example.com']])
             crl.last_update = Time.now + 24 * 60 * 60
-            ssl_context.stubs(:current_crl).returns(crl)
+            allow(ssl_context).to receive(:current_crl).and_return(crl)
 
             subject.call(false, ssl_context)
             expect(subject.verify_errors).to eq(["CRL is not yet valid for /CN=Puppet CA: puppetmaster.example.com"])
@@ -99,7 +99,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
             crl = OpenSSL::X509::CRL.new
             crl.issuer = OpenSSL::X509::Name.new([['CN','Puppet CA: puppetmaster.example.com']])
             crl.last_update = Time.now + 24 * 60 * 60
-            ssl_context.stubs(:current_crl).returns(crl)
+            allow(ssl_context).to receive(:current_crl).and_return(crl)
 
             expect(subject.call(false, ssl_context)).to eq(false)
           end
@@ -108,7 +108,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
             crl = OpenSSL::X509::CRL.new
             crl.issuer = OpenSSL::X509::Name.new([['CN','Puppet CA: puppetmaster.example.com']])
             crl.last_update = Time.now + 10
-            ssl_context.stubs(:current_crl).returns(crl)
+            allow(ssl_context).to receive(:current_crl).and_return(crl)
 
             expect(subject.call(false, ssl_context)).to eq(true)
           end
@@ -119,7 +119,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
     context 'When pre-verification is OK' do
       context 'and the ssl_context is in an error state' do
         before :each do
-          ssl_context.stubs(:error_string).returns("Something went wrong")
+          allow(ssl_context).to receive(:error_string).and_return("Something went wrong")
         end
 
         it 'does not make the error available via #verify_errors' do
@@ -145,9 +145,9 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
       context 'and the chain is invalid' do
         before :each do
-          ssl_configuration.stubs(:read_file).
+          allow(ssl_configuration).to receive(:read_file).
             with(Puppet[:localcacert]).
-            returns(agent_ca)
+            and_return(agent_ca)
         end
 
         it 'is true for each CA certificate in the chain' do
@@ -166,7 +166,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
       context 'an error is raised inside of #call' do
         before :each do
-          ssl_context.expects(:current_cert).raises(StandardError, "BOOM!")
+          expect(ssl_context).to receive(:current_cert).and_raise(StandardError, "BOOM!")
         end
 
         it 'is false' do
@@ -183,24 +183,24 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
   describe '#setup_connection' do
     it 'updates the connection for verification' do
-      subject.stubs(:ssl_certificates_are_present?).returns(true)
-      connection = mock('Net::HTTP')
+      allow(subject).to receive(:ssl_certificates_are_present?).and_return(true)
+      connection = double('Net::HTTP')
 
-      connection.expects(:cert_store=).with(ssl_host.ssl_store)
-      connection.expects(:ca_file=).with(ssl_configuration.ca_auth_file)
-      connection.expects(:cert=).with(ssl_host.certificate.content)
-      connection.expects(:key=).with(ssl_host.key.content)
-      connection.expects(:verify_callback=).with(subject)
-      connection.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+      expect(connection).to receive(:cert_store=).with(ssl_host.ssl_store)
+      expect(connection).to receive(:ca_file=).with(ssl_configuration.ca_auth_file)
+      expect(connection).to receive(:cert=).with(ssl_host.certificate.content)
+      expect(connection).to receive(:key=).with(ssl_host.key.content)
+      expect(connection).to receive(:verify_callback=).with(subject)
+      expect(connection).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
 
       subject.setup_connection(connection)
     end
 
     it 'does not perform verification if certificate files are missing' do
-      subject.stubs(:ssl_certificates_are_present?).returns(false)
-      connection = mock('Net::HTTP')
+      allow(subject).to receive(:ssl_certificates_are_present?).and_return(false)
+      connection = double('Net::HTTP')
 
-      connection.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+      expect(connection).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
       subject.setup_connection(connection)
     end
@@ -216,7 +216,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
     context 'when the peer presents a valid chain' do
       before :each do
-        subject.stubs(:has_authz_peer_cert).returns(true)
+        allow(subject).to receive(:has_authz_peer_cert).and_return(true)
       end
 
       it 'is true' do
@@ -226,7 +226,7 @@ describe Puppet::SSL::Validator::DefaultValidator do
 
     context 'when the peer presents an invalid chain' do
       before :each do
-        subject.stubs(:has_authz_peer_cert).returns(false)
+        allow(subject).to receive(:has_authz_peer_cert).and_return(false)
       end
 
       it 'is false' do

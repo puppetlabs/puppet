@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/property'
 
@@ -52,73 +51,73 @@ describe Puppet::Property do
 
   describe "when returning the default event name" do
     it "should use the current 'should' value to pick the event name" do
-      property.expects(:should).returns "myvalue"
-      subclass.expects(:value_option).with('myvalue', :event).returns :event_name
+      expect(property).to receive(:should).and_return("myvalue")
+      expect(subclass).to receive(:value_option).with('myvalue', :event).and_return(:event_name)
 
       property.event_name
     end
 
     it "should return any event defined with the specified value" do
-      property.expects(:should).returns :myval
-      subclass.expects(:value_option).with(:myval, :event).returns :event_name
+      expect(property).to receive(:should).and_return(:myval)
+      expect(subclass).to receive(:value_option).with(:myval, :event).and_return(:event_name)
 
       expect(property.event_name).to eq(:event_name)
     end
 
     describe "and the property is 'ensure'" do
       before :each do
-        property.stubs(:name).returns :ensure
-        resource.expects(:type).returns :mytype
+        allow(property).to receive(:name).and_return(:ensure)
+        expect(resource).to receive(:type).and_return(:mytype)
       end
 
       it "should use <type>_created if the 'should' value is 'present'" do
-        property.expects(:should).returns :present
+        expect(property).to receive(:should).and_return(:present)
         expect(property.event_name).to eq(:mytype_created)
       end
 
       it "should use <type>_removed if the 'should' value is 'absent'" do
-        property.expects(:should).returns :absent
+        expect(property).to receive(:should).and_return(:absent)
         expect(property.event_name).to eq(:mytype_removed)
       end
 
       it "should use <type>_changed if the 'should' value is not 'absent' or 'present'" do
-        property.expects(:should).returns :foo
+        expect(property).to receive(:should).and_return(:foo)
         expect(property.event_name).to eq(:mytype_changed)
       end
 
       it "should use <type>_changed if the 'should value is nil" do
-        property.expects(:should).returns nil
+        expect(property).to receive(:should).and_return(nil)
         expect(property.event_name).to eq(:mytype_changed)
       end
     end
 
     it "should use <property>_changed if the property is not 'ensure'" do
-      property.stubs(:name).returns :myparam
-      property.expects(:should).returns :foo
+      allow(property).to receive(:name).and_return(:myparam)
+      expect(property).to receive(:should).and_return(:foo)
       expect(property.event_name).to eq(:myparam_changed)
     end
 
     it "should use <property>_changed if no 'should' value is set" do
-      property.stubs(:name).returns :myparam
-      property.expects(:should).returns nil
+      allow(property).to receive(:name).and_return(:myparam)
+      expect(property).to receive(:should).and_return(nil)
       expect(property.event_name).to eq(:myparam_changed)
     end
   end
 
   describe "when creating an event" do
     before :each do
-      property.stubs(:should).returns "myval"
+      allow(property).to receive(:should).and_return("myval")
     end
 
     it "should use an event from the resource as the base event" do
       event = Puppet::Transaction::Event.new
-      resource.expects(:event).returns event
+      expect(resource).to receive(:event).and_return(event)
 
       expect(property.event).to equal(event)
     end
 
     it "should have the default event name" do
-      property.expects(:event_name).returns :my_event
+      expect(property).to receive(:event_name).and_return(:my_event)
       expect(property.event.name).to eq(:my_event)
     end
 
@@ -127,23 +126,23 @@ describe Puppet::Property do
     end
 
     it "should have the 'should' value set" do
-      property.stubs(:should).returns "foo"
+      allow(property).to receive(:should).and_return("foo")
       expect(property.event.desired_value).to eq("foo")
     end
 
     it "should provide its path as the source description" do
-      property.stubs(:path).returns "/my/param"
+      allow(property).to receive(:path).and_return("/my/param")
       expect(property.event.source_description).to eq("/my/param")
     end
 
     it "should have the 'invalidate_refreshes' value set if set on a value" do
-      property.stubs(:event_name).returns :my_event
-      property.stubs(:should).returns "foo"
-      foo = mock()
-      foo.expects(:invalidate_refreshes).returns(true)
-      collection = mock()
-      collection.expects(:match?).with("foo").returns(foo)
-      property.class.stubs(:value_collection).returns(collection)
+      allow(property).to receive(:event_name).and_return(:my_event)
+      allow(property).to receive(:should).and_return("foo")
+      foo = double()
+      expect(foo).to receive(:invalidate_refreshes).and_return(true)
+      collection = double()
+      expect(collection).to receive(:match?).with("foo").and_return(foo)
+      allow(property.class).to receive(:value_collection).and_return(collection)
       expect(property.event.invalidate_refreshes).to be_truthy
     end
 
@@ -167,15 +166,15 @@ describe Puppet::Property do
     end
 
     it "should validate each value separately" do
-      property.expects(:validate).with("one")
-      property.expects(:validate).with("two")
+      expect(property).to receive(:validate).with("one")
+      expect(property).to receive(:validate).with("two")
 
       property.value = %w{one two}
     end
 
     it "should munge each value separately and use any result as the actual value" do
-      property.expects(:munge).with("one").returns :one
-      property.expects(:munge).with("two").returns :two
+      expect(property).to receive(:munge).with("one").and_return(:one)
+      expect(property).to receive(:munge).with("two").and_return(:two)
 
       # Do this so we get the whole array back.
       subclass.array_matching = :all
@@ -272,7 +271,7 @@ describe Puppet::Property do
     it "should validate that all required features are present" do
       subclass.newvalue(:foo, :required_features => [:a, :b])
 
-      resource.provider.expects(:satisfies?).with([:a, :b]).returns true
+      expect(resource.provider).to receive(:satisfies?).with([:a, :b]).and_return(true)
 
       property.should = :foo
     end
@@ -280,7 +279,7 @@ describe Puppet::Property do
     it "should fail if required features are missing" do
       subclass.newvalue(:foo, :required_features => [:a, :b])
 
-      resource.provider.expects(:satisfies?).with([:a, :b]).returns false
+      expect(resource.provider).to receive(:satisfies?).with([:a, :b]).and_return(false)
 
       expect { property.should = :foo }.to raise_error(Puppet::Error)
     end
@@ -288,7 +287,7 @@ describe Puppet::Property do
     it "should internally raise an ArgumentError if required features are missing" do
       subclass.newvalue(:foo, :required_features => [:a, :b])
 
-      resource.provider.expects(:satisfies?).with([:a, :b]).returns false
+      expect(resource.provider).to receive(:satisfies?).with([:a, :b]).and_return(false)
 
       expect { property.validate_features_per_value :foo }.to raise_error(ArgumentError)
     end
@@ -296,7 +295,7 @@ describe Puppet::Property do
     it "should validate that all required features are present for regexes" do
       subclass.newvalue(/./, :required_features => [:a, :b])
 
-      resource.provider.expects(:satisfies?).with([:a, :b]).returns true
+      expect(resource.provider).to receive(:satisfies?).with([:a, :b]).and_return(true)
 
       property.should = "foo"
     end
@@ -304,7 +303,7 @@ describe Puppet::Property do
     it "should support specifying an individual required feature" do
       subclass.newvalue(/./, :required_features => :a)
 
-      resource.provider.expects(:satisfies?).returns true
+      expect(resource.provider).to receive(:satisfies?).and_return(true)
 
       property.should = "foo"
     end
@@ -341,7 +340,7 @@ describe Puppet::Property do
     it "should set the value" do
       subclass.newvalue(:foo)
       property.should = :foo
-      property.expects(:set).with(:foo)
+      expect(property).to receive(:set).with(:foo)
       property.sync
     end
   end
@@ -370,13 +369,13 @@ describe Puppet::Property do
     describe "that was defined without a block" do
       it "should call the settor on the provider" do
         subclass.newvalue(:bar)
-        resource.provider.expects(:foo=).with :bar
+        expect(resource.provider).to receive(:foo=).with(:bar)
         property.set(:bar)
       end
 
        it "should generate setter named from :method argument and propagate call to the provider" do
         subclass.newvalue(:bar, :method => 'set_vv')
-        resource.provider.expects(:foo=).with :bar
+        expect(resource.provider).to receive(:foo=).with(:bar)
         property.set_vv(:bar)
       end
     end
@@ -384,13 +383,13 @@ describe Puppet::Property do
     describe "that was defined with a block" do
       it "should call the method created for the value if the value is not a regex" do
         subclass.newvalue(:bar) {}
-        property.expects(:set_bar)
+        expect(property).to receive(:set_bar)
         property.set(:bar)
       end
 
       it "should call the provided block if the value is a regex" do
-        subclass.newvalue(/./) { self.test }
-        property.expects(:test)
+        subclass.newvalue(/./) { test }
+        expect(property).to receive(:test)
         property.set("foo")
       end
     end
@@ -547,7 +546,7 @@ describe Puppet::Property do
 
   describe "#insync_values?" do
     it "should log an exception when insync? throws one" do
-      property.expects(:insync?).raises ArgumentError
+      expect(property).to receive(:insync?).and_raise(ArgumentError)
       expect(property.insync_values?("foo","bar")).to be nil
     end
   end

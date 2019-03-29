@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/application/device'
@@ -13,11 +12,11 @@ describe Puppet::Application::Device do
   before :each do
     @device = Puppet::Application[:device]
     @device.preinit
-    Puppet::Util::Log.stubs(:newdestination)
+    allow(Puppet::Util::Log).to receive(:newdestination)
 
-    Puppet::Node.indirection.stubs(:terminus_class=)
-    Puppet::Node.indirection.stubs(:cache_class=)
-    Puppet::Node::Facts.indirection.stubs(:terminus_class=)
+    allow(Puppet::Node.indirection).to receive(:terminus_class=)
+    allow(Puppet::Node.indirection).to receive(:cache_class=)
+    allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
   end
 
   it "should operate in agent run_mode" do
@@ -34,11 +33,11 @@ describe Puppet::Application::Device do
 
   describe "in preinit" do
     before :each do
-      @device.stubs(:trap)
+      allow(@device).to receive(:trap)
     end
 
     it "should catch INT" do
-      Signal.expects(:trap).with { |arg,block| arg == :INT }
+      expect(Signal).to receive(:trap).with(:INT)
 
       @device.preinit
     end
@@ -58,7 +57,7 @@ describe Puppet::Application::Device do
 
   describe "when handling options" do
     before do
-      @device.command_line.stubs(:args).returns([])
+      allow(@device.command_line).to receive(:args).and_return([])
     end
 
     [:centrallogging, :debug, :verbose,].each do |option|
@@ -67,58 +66,58 @@ describe Puppet::Application::Device do
       end
 
       it "should store argument value when calling handle_#{option}" do
-        @device.options.expects(:[]=).with(option, 'arg')
+        allow(@device.options).to receive(:[]=).with(option, 'arg')
         @device.send("handle_#{option}".to_sym, 'arg')
       end
     end
 
     it "should set waitforcert to 0 with --onetime and if --waitforcert wasn't given" do
       Puppet[:onetime] = true
-      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(0)
+      expect_any_instance_of(Puppet::SSL::Host).to receive(:wait_for_cert).with(0)
       @device.setup_host
     end
 
     it "should use supplied waitforcert when --onetime is specified" do
       Puppet[:onetime] = true
       @device.handle_waitforcert(60)
-      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(60)
+      expect_any_instance_of(Puppet::SSL::Host).to receive(:wait_for_cert).with(60)
       @device.setup_host
     end
 
     it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
-      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(120)
+      expect_any_instance_of(Puppet::SSL::Host).to receive(:wait_for_cert).with(120)
       @device.setup_host
     end
 
     it "should use the waitforcert setting when checking for a signed certificate" do
       Puppet[:waitforcert] = 10
-      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(10)
+      expect_any_instance_of(Puppet::SSL::Host).to receive(:wait_for_cert).with(10)
       @device.setup_host
     end
 
     it "should set the log destination with --logdest" do
-      @device.options.stubs(:[]=).with { |opt,val| opt == :setdest }
-      Puppet::Log.expects(:newdestination).with("console")
+      allow(@device.options).to receive(:[]=).with(:setdest, anything)
+      expect(Puppet::Log).to receive(:newdestination).with("console")
 
       @device.handle_logdest("console")
     end
 
     it "should put the setdest options to true" do
-      @device.options.expects(:[]=).with(:setdest,true)
+      expect(@device.options).to receive(:[]=).with(:setdest, true)
 
       @device.handle_logdest("console")
     end
 
     it "should parse the log destination from the command line" do
-      @device.command_line.stubs(:args).returns(%w{--logdest /my/file})
+      allow(@device.command_line).to receive(:args).and_return(%w{--logdest /my/file})
 
-      Puppet::Util::Log.expects(:newdestination).with("/my/file")
+      expect(Puppet::Util::Log).to receive(:newdestination).with("/my/file")
 
       @device.parse_options
     end
 
     it "should store the waitforcert options with --waitforcert" do
-      @device.options.expects(:[]=).with(:waitforcert,42)
+      expect(@device.options).to receive(:[]=).with(:waitforcert,42)
 
       @device.handle_waitforcert("42")
     end
@@ -129,19 +128,19 @@ describe Puppet::Application::Device do
     end
 
     it "should store the target options with --target" do
-      @device.options.expects(:[]=).with(:target,'test123')
+      expect(@device.options).to receive(:[]=).with(:target,'test123')
 
       @device.handle_target('test123')
     end
 
     it "should store the resource options with --resource" do
-      @device.options.expects(:[]=).with(:resource,true)
+      expect(@device.options).to receive(:[]=).with(:resource,true)
 
       @device.handle_resource(true)
     end
 
     it "should store the facts options with --facts" do
-      @device.options.expects(:[]=).with(:facts,true)
+      expect(@device.options).to receive(:[]=).with(:facts,true)
 
       @device.handle_facts(true)
     end
@@ -149,84 +148,83 @@ describe Puppet::Application::Device do
 
   describe "during setup" do
     before :each do
-      @device.options.stubs(:[])
+      allow(@device.options).to receive(:[])
       Puppet[:libdir] = "/dev/null/lib"
-      Puppet::SSL::Host.stubs(:ca_location=)
-      Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
-      Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
-      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
-      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-      @host = stub_everything 'host'
-      Puppet::SSL::Host.stubs(:new).returns(@host)
-      Puppet.stubs(:settraps)
+      allow(Puppet::SSL::Host).to receive(:ca_location=)
+      allow(Puppet::Transaction::Report.indirection).to receive(:terminus_class=)
+      allow(Puppet::Resource::Catalog.indirection).to receive(:terminus_class=)
+      allow(Puppet::Resource::Catalog.indirection).to receive(:cache_class=)
+      allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
+      @host = double('host')
+      allow(Puppet::SSL::Host).to receive(:new).and_return(@host)
+      allow(Puppet).to receive(:settraps)
     end
 
     it "should call setup_logs" do
-      @device.expects(:setup_logs)
+      expect(@device).to receive(:setup_logs)
       @device.setup
     end
 
     describe "when setting up logs" do
       before :each do
-        Puppet::Util::Log.stubs(:newdestination)
+        allow(Puppet::Util::Log).to receive(:newdestination)
       end
 
       it "should set log level to debug if --debug was passed" do
-        @device.options.stubs(:[]).with(:debug).returns(true)
+        allow(@device.options).to receive(:[]).with(:debug).and_return(true)
         @device.setup_logs
         expect(Puppet::Util::Log.level).to eq(:debug)
       end
 
       it "should set log level to info if --verbose was passed" do
-        @device.options.stubs(:[]).with(:verbose).returns(true)
+        allow(@device.options).to receive(:[]).with(:verbose).and_return(true)
         @device.setup_logs
         expect(Puppet::Util::Log.level).to eq(:info)
       end
 
       [:verbose, :debug].each do |level|
         it "should set console as the log destination with level #{level}" do
-          @device.options.stubs(:[]).with(level).returns(true)
+          allow(@device.options).to receive(:[]).with(level).and_return(true)
 
-          Puppet::Util::Log.expects(:newdestination).with(:console)
+          expect(Puppet::Util::Log).to receive(:newdestination).with(:console)
 
           @device.setup_logs
         end
       end
 
       it "should set a default log destination if no --logdest" do
-        @device.options.stubs(:[]).with(:setdest).returns(false)
+        allow(@device.options).to receive(:[]).with(:setdest).and_return(false)
 
-        Puppet::Util::Log.expects(:setup_default)
+        expect(Puppet::Util::Log).to receive(:setup_default)
 
         @device.setup_logs
       end
-
     end
 
     it "should set a central log destination with --centrallogs" do
-      @device.options.stubs(:[]).with(:centrallogs).returns(true)
+      allow(@device.options).to receive(:[]).with(:centrallogs).and_return(true)
       Puppet[:server] = "puppet.reductivelabs.com"
-      Puppet::Util::Log.stubs(:newdestination).with(:syslog)
+      allow(Puppet::Util::Log).to receive(:newdestination).with(:syslog)
 
-      Puppet::Util::Log.expects(:newdestination).with("puppet.reductivelabs.com")
+      expect(Puppet::Util::Log).to receive(:newdestination).with("puppet.reductivelabs.com")
 
       @device.setup
     end
 
     it "should use :main, :agent, :device and :ssl config" do
-      Puppet.settings.expects(:use).with(:main, :agent, :device, :ssl)
+      expect(Puppet.settings).to receive(:use).with(:main, :agent, :device, :ssl)
 
       @device.setup
     end
 
     it "should install a remote ca location" do
-      Puppet::SSL::Host.expects(:ca_location=).with(:remote)
+      expect(Puppet::SSL::Host).to receive(:ca_location=).with(:remote)
 
       @device.setup
     end
 
     it "should tell the report handler to use REST" do
-      Puppet::Transaction::Report.indirection.expects(:terminus_class=).with(:rest)
+      expect(Puppet::Transaction::Report.indirection).to receive(:terminus_class=).with(:rest)
 
       @device.setup
     end
@@ -242,7 +240,7 @@ describe Puppet::Application::Device do
     end
 
     it "has an application default :catalog_cache_terminus setting of 'json'" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:json)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:cache_class=).with(:json)
 
       @device.initialize_app_defaults
       @device.setup
@@ -250,7 +248,7 @@ describe Puppet::Application::Device do
 
     it "should tell the catalog cache class based on the :catalog_cache_terminus setting" do
       Puppet[:catalog_cache_terminus] = "yaml"
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:yaml)
+      expect(Puppet::Resource::Catalog.indirection).to receive(:cache_class=).with(:yaml)
 
       @device.initialize_app_defaults
       @device.setup
@@ -258,7 +256,7 @@ describe Puppet::Application::Device do
 
     it "should not set catalog cache class if :catalog_cache_terminus is explicitly nil" do
       Puppet[:catalog_cache_terminus] = nil
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).never
+      expect(Puppet::Resource::Catalog.indirection).not_to receive(:cache_class=)
 
       @device.initialize_app_defaults
       @device.setup
@@ -272,18 +270,19 @@ describe Puppet::Application::Device do
 
   describe "when initializing each devices SSL" do
     before(:each) do
-      @host = stub_everything 'host'
-      Puppet::SSL::Host.stubs(:new).returns(@host)
+      @host = double('host')
+      allow(@host).to receive(:wait_for_cert)
+      allow(Puppet::SSL::Host).to receive(:new).and_return(@host)
     end
 
     it "should create a new ssl host" do
-      Puppet::SSL::Host.expects(:new).returns(@host)
+      expect(Puppet::SSL::Host).to receive(:new).and_return(@host)
       @device.setup_host
     end
 
     it "should wait for a certificate" do
-      @device.options.stubs(:[]).with(:waitforcert).returns(123)
-      @host.expects(:wait_for_cert).with(123)
+      allow(@device.options).to receive(:[]).with(:waitforcert).and_return(123)
+      expect(@host).to receive(:wait_for_cert).with(123)
 
       @device.setup_host
     end
@@ -291,112 +290,112 @@ describe Puppet::Application::Device do
 
   describe "when running" do
     before :each do
-      @device.options.stubs(:[]).with(:fingerprint).returns(false)
-      Puppet.stubs(:notice)
-      @device.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
-      @device.options.stubs(:[]).with(:target).returns(nil)
-      @device.options.stubs(:[]).with(:apply).returns(nil)
-      @device.options.stubs(:[]).with(:facts).returns(false)
-      @device.options.stubs(:[]).with(:resource).returns(false)
-      @device.options.stubs(:[]).with(:to_yaml).returns(false)
-      @device.options.stubs(:[]).with(:libdir).returns(nil)
-      @device.options.stubs(:[]).with(:client)
-      @device.command_line.stubs(:args).returns([])
-      Puppet::Util::NetworkDevice::Config.stubs(:devices).returns({})
+      allow(@device.options).to receive(:[]).with(:fingerprint).and_return(false)
+      allow(Puppet).to receive(:notice)
+      allow(@device.options).to receive(:[]).with(:detailed_exitcodes).and_return(false)
+      allow(@device.options).to receive(:[]).with(:target).and_return(nil)
+      allow(@device.options).to receive(:[]).with(:apply).and_return(nil)
+      allow(@device.options).to receive(:[]).with(:facts).and_return(false)
+      allow(@device.options).to receive(:[]).with(:resource).and_return(false)
+      allow(@device.options).to receive(:[]).with(:to_yaml).and_return(false)
+      allow(@device.options).to receive(:[]).with(:libdir).and_return(nil)
+      allow(@device.options).to receive(:[]).with(:client)
+      allow(@device.command_line).to receive(:args).and_return([])
+      allow(Puppet::Util::NetworkDevice::Config).to receive(:devices).and_return({})
     end
 
     it "should dispatch to main" do
-      @device.stubs(:main)
+      allow(@device).to receive(:main)
       @device.run_command
     end
 
     it "should exit if resource is requested without target" do
-      @device.options.stubs(:[]).with(:resource).returns(true)
+      allow(@device.options).to receive(:[]).with(:resource).and_return(true)
       expect { @device.main }.to raise_error(RuntimeError, "resource command requires target")
     end
 
     it "should exit if facts is requested without target" do
-      @device.options.stubs(:[]).with(:facts).returns(true)
+      allow(@device.options).to receive(:[]).with(:facts).and_return(true)
       expect { @device.main }.to raise_error(RuntimeError, "facts command requires target")
     end
 
     it "should get the device list" do
-      device_hash = stub_everything 'device hash'
-      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
+      device_hash = {}
+      expect(Puppet::Util::NetworkDevice::Config).to receive(:devices).and_return(device_hash)
       expect { @device.main }.to exit_with 1
     end
 
     it "should get a single device, when a valid target parameter is passed" do
-      @device.options.stubs(:[]).with(:target).returns('device1')
+      allow(@device.options).to receive(:[]).with(:target).and_return('device1')
 
       device_hash = {
         "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
         "device2" => OpenStruct.new(:name => "device2", :url => "https://user:pass@testhost/some/path", :provider => "rest"),
       }
 
-      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
-      URI.expects(:parse).with("ssh://user:pass@testhost")
-      URI.expects(:parse).with("https://user:pass@testhost/some/path").never
+      expect(Puppet::Util::NetworkDevice::Config).to receive(:devices).and_return(device_hash)
+      expect(URI).to receive(:parse).with("ssh://user:pass@testhost")
+      expect(URI).not_to receive(:parse).with("https://user:pass@testhost/some/path")
       expect { @device.main }.to exit_with 1
     end
 
     it "should exit, when an invalid target parameter is passed" do
-      @device.options.stubs(:[]).with(:target).returns('bla')
+      allow(@device.options).to receive(:[]).with(:target).and_return('bla')
       device_hash = {
         "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
       }
 
-      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
-      Puppet.expects(:info).with(regexp_matches(/starting applying configuration to/)).never
+      expect(Puppet::Util::NetworkDevice::Config).to receive(:devices).and_return(device_hash)
+      expect(Puppet).not_to receive(:info).with(/starting applying configuration to/)
       expect { @device.main }.to raise_error(RuntimeError, /Target device \/ certificate 'bla' not found in .*\.conf/)
     end
 
     it "should error if target is passed and the apply path is incorrect" do
-      @device.options.stubs(:[]).with(:apply).returns('file.pp')
-      @device.options.stubs(:[]).with(:target).returns('device1')
+      allow(@device.options).to receive(:[]).with(:apply).and_return('file.pp')
+      allow(@device.options).to receive(:[]).with(:target).and_return('device1')
 
-      File.expects(:file?).returns(false)
+      expect(File).to receive(:file?).and_return(false)
       expect { @device.main }.to raise_error(RuntimeError, /does not exist, cannot apply/)
     end
 
     it "should run an apply, and not create the state folder" do
-      @device.options.stubs(:[]).with(:apply).returns('file.pp')
-      @device.options.stubs(:[]).with(:target).returns('device1')
+      allow(@device.options).to receive(:[]).with(:apply).and_return('file.pp')
+      allow(@device.options).to receive(:[]).with(:target).and_return('device1')
       device_hash = {
         "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
       }
-      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
-      Puppet::Util::NetworkDevice.stubs(:init)
-      File.expects(:file?).returns(true)
+      expect(Puppet::Util::NetworkDevice::Config).to receive(:devices).and_return(device_hash)
+      allow(Puppet::Util::NetworkDevice).to receive(:init)
+      expect(File).to receive(:file?).and_return(true)
 
-      ::File.stubs(:directory?).returns false
+      allow(::File).to receive(:directory?).and_return(false)
       state_path = tmpfile('state')
       Puppet[:statedir] = state_path
-      File.expects(:directory?).with(state_path).returns true
-      FileUtils.expects(:mkdir_p).with(state_path).never
+      expect(File).to receive(:directory?).with(state_path).and_return(true)
+      expect(FileUtils).not_to receive(:mkdir_p).with(state_path)
 
-      Puppet::Util::CommandLine.expects(:new).once
-      Puppet::Application::Apply.expects(:new).once
+      expect(Puppet::Util::CommandLine).to receive(:new).once
+      expect(Puppet::Application::Apply).to receive(:new).once
 
-      Puppet::Configurer.expects(:new).never
+      expect(Puppet::Configurer).not_to receive(:new)
       expect { @device.main }.to exit_with 1
     end
 
     it "should run an apply, and create the state folder" do
-      @device.options.stubs(:[]).with(:apply).returns('file.pp')
-      @device.options.stubs(:[]).with(:target).returns('device1')
+      allow(@device.options).to receive(:[]).with(:apply).and_return('file.pp')
+      allow(@device.options).to receive(:[]).with(:target).and_return('device1')
       device_hash = {
         "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
       }
-      Puppet::Util::NetworkDevice::Config.expects(:devices).returns(device_hash)
-      Puppet::Util::NetworkDevice.stubs(:init)
-      File.expects(:file?).returns(true)
-      FileUtils.expects(:mkdir_p).once
+      expect(Puppet::Util::NetworkDevice::Config).to receive(:devices).and_return(device_hash)
+      allow(Puppet::Util::NetworkDevice).to receive(:init)
+      expect(File).to receive(:file?).and_return(true)
+      expect(FileUtils).to receive(:mkdir_p).once
 
-      Puppet::Util::CommandLine.expects(:new).once
-      Puppet::Application::Apply.expects(:new).once
+      expect(Puppet::Util::CommandLine).to receive(:new).once
+      expect(Puppet::Application::Apply).to receive(:new).once
 
-      Puppet::Configurer.expects(:new).never
+      expect(Puppet::Configurer).not_to receive(:new)
       expect { @device.main }.to exit_with 1
     end
 
@@ -413,62 +412,63 @@ describe Puppet::Application::Device do
           "device1" => OpenStruct.new(:name => "device1", :url => "ssh://user:pass@testhost", :provider => "cisco"),
           "device2" => OpenStruct.new(:name => "device2", :url => "https://user:pass@testhost/some/path", :provider => "rest"),
         }
-        Puppet::Util::NetworkDevice::Config.stubs(:devices).returns(@device_hash)
-        Puppet.stubs(:[]=)
-        Puppet.settings.stubs(:use)
-        @device.stubs(:setup_host)
-        Puppet::Util::NetworkDevice.stubs(:init)
-        @configurer = stub_everything 'configurer'
-        Puppet::Configurer.stubs(:new).returns(@configurer)
+        allow(Puppet::Util::NetworkDevice::Config).to receive(:devices).and_return(@device_hash)
+        allow(Puppet).to receive(:[]=)
+        allow(Puppet.settings).to receive(:use)
+        allow(@device).to receive(:setup_host)
+        allow(Puppet::Util::NetworkDevice).to receive(:init)
+        @configurer = double('configurer')
+        allow(@configurer).to receive(:run)
+        allow(Puppet::Configurer).to receive(:new).and_return(@configurer)
       end
 
       it "should set vardir to the device vardir" do
-        Puppet.expects(:[]=).with(:vardir, make_absolute("/dummy/devices/device1"))
+        expect(Puppet).to receive(:[]=).with(:vardir, make_absolute("/dummy/devices/device1"))
         expect { @device.main }.to exit_with 1
       end
 
       it "should set confdir to the device confdir" do
-        Puppet.expects(:[]=).with(:confdir, make_absolute("/dummy/devices/device1"))
+        expect(Puppet).to receive(:[]=).with(:confdir, make_absolute("/dummy/devices/device1"))
         expect { @device.main }.to exit_with 1
       end
 
       it "should set certname to the device certname" do
-        Puppet.expects(:[]=).with(:certname, "device1")
-        Puppet.expects(:[]=).with(:certname, "device2")
+        expect(Puppet).to receive(:[]=).with(:certname, "device1")
+        expect(Puppet).to receive(:[]=).with(:certname, "device2")
         expect { @device.main }.to exit_with 1
       end
 
       it "should raise an error if no type is given" do
-        @device.options.stubs(:[]).with(:resource).returns(true)
-        @device.options.stubs(:[]).with(:target).returns('device1')
-        @device.command_line.stubs(:args).returns([])
-        Puppet.expects(:log_exception).with {|e| e.message == "You must specify the type to display"}
+        allow(@device.options).to receive(:[]).with(:resource).and_return(true)
+        allow(@device.options).to receive(:[]).with(:target).and_return('device1')
+        allow(@device.command_line).to receive(:args).and_return([])
+        expect(Puppet).to receive(:log_exception) { |e| expect(e.message).to eq("You must specify the type to display") }
         expect { @device.main }.to exit_with 1
       end
 
       it "should raise an error if the type is not found" do
-        @device.options.stubs(:[]).with(:resource).returns(true)
-        @device.options.stubs(:[]).with(:target).returns('device1')
-        @device.command_line.stubs(:args).returns(['nope'])
-        Puppet.expects(:log_exception).with {|e| e.message == "Could not find type nope"}
+        allow(@device.options).to receive(:[]).with(:resource).and_return(true)
+        allow(@device.options).to receive(:[]).with(:target).and_return('device1')
+        allow(@device.command_line).to receive(:args).and_return(['nope'])
+        expect(Puppet).to receive(:log_exception) { |e| expect(e.message).to eq("Could not find type nope") }
         expect { @device.main }.to exit_with 1
       end
 
       it "should retrieve all resources of a type" do
-        @device.options.stubs(:[]).with(:resource).returns(true)
-        @device.options.stubs(:[]).with(:target).returns('device1')
-        @device.command_line.stubs(:args).returns(['user'])
-        Puppet::Resource.indirection.expects(:search).with('user/', {}).returns([])
+        allow(@device.options).to receive(:[]).with(:resource).and_return(true)
+        allow(@device.options).to receive(:[]).with(:target).and_return('device1')
+        allow(@device.command_line).to receive(:args).and_return(['user'])
+        expect(Puppet::Resource.indirection).to receive(:search).with('user/', {}).and_return([])
         expect { @device.main }.to exit_with 0
       end
 
       it "should retrieve named resources of a type" do
         resource = Puppet::Type.type(:user).new(:name => "jim").to_resource
-        @device.options.stubs(:[]).with(:resource).returns(true)
-        @device.options.stubs(:[]).with(:target).returns('device1')
-        @device.command_line.stubs(:args).returns(['user', 'jim'])
-        Puppet::Resource.indirection.expects(:find).with('user/jim').returns(resource)
-        @device.expects(:puts).with("user { 'jim':\n}")
+        allow(@device.options).to receive(:[]).with(:resource).and_return(true)
+        allow(@device.options).to receive(:[]).with(:target).and_return('device1')
+        allow(@device.command_line).to receive(:args).and_return(['user', 'jim'])
+        expect(Puppet::Resource.indirection).to receive(:find).with('user/jim').and_return(resource)
+        expect(@device).to receive(:puts).with("user { 'jim':\n}")
         expect { @device.main }.to exit_with 0
       end
 
@@ -476,90 +476,92 @@ describe Puppet::Application::Device do
         resources = [
           Puppet::Type.type(:user).new(:name => "title").to_resource,
         ]
-        @device.options.stubs(:[]).with(:resource).returns(true)
-        @device.options.stubs(:[]).with(:target).returns('device1')
-        @device.options.stubs(:[]).with(:to_yaml).returns(true)
-        @device.command_line.stubs(:args).returns(['user'])
-        Puppet::Resource.indirection.expects(:search).with('user/', {}).returns(resources)
-        @device.expects(:puts).with("user:\n  title:\n")
+        allow(@device.options).to receive(:[]).with(:resource).and_return(true)
+        allow(@device.options).to receive(:[]).with(:target).and_return('device1')
+        allow(@device.options).to receive(:[]).with(:to_yaml).and_return(true)
+        allow(@device.command_line).to receive(:args).and_return(['user'])
+        expect(Puppet::Resource.indirection).to receive(:search).with('user/', {}).and_return(resources)
+        expect(@device).to receive(:puts).with("user:\n  title:\n")
         expect { @device.main }.to exit_with 0
       end
 
       it "should retrieve facts" do
         indirection_fact_values = {"operatingsystem"=>"cisco_ios","clientcert"=>"3750"}
         indirection_facts = Puppet::Node::Facts.new("nil", indirection_fact_values)
-        @device.options.stubs(:[]).with(:facts).returns(true)
-        @device.options.stubs(:[]).with(:target).returns('device1')
-        Puppet::Node::Facts.indirection.expects(:find).with(nil, anything()).returns(indirection_facts)
-        @device.expects(:puts).with(regexp_matches(/name.*3750.*\n.*values.*\n.*operatingsystem.*cisco_ios/))
+        allow(@device.options).to receive(:[]).with(:facts).and_return(true)
+        allow(@device.options).to receive(:[]).with(:target).and_return('device1')
+        expect(Puppet::Node::Facts.indirection).to receive(:find).with(nil, anything()).and_return(indirection_facts)
+        expect(@device).to receive(:puts).with(/name.*3750.*\n.*values.*\n.*operatingsystem.*cisco_ios/)
         expect { @device.main }.to exit_with 0
       end
 
       it "should make sure all the required folders and files are created" do
-        Puppet.settings.expects(:use).with(:main, :agent, :ssl).twice
+        expect(Puppet.settings).to receive(:use).with(:main, :agent, :ssl).twice
         expect { @device.main }.to exit_with 1
       end
 
       it "should initialize the device singleton" do
-        Puppet::Util::NetworkDevice.expects(:init).with(@device_hash["device1"]).then.with(@device_hash["device2"])
+        expect(Puppet::Util::NetworkDevice).to receive(:init).with(@device_hash["device1"]).ordered
+        expect(Puppet::Util::NetworkDevice).to receive(:init).with(@device_hash["device2"]).ordered
         expect { @device.main }.to exit_with 1
       end
 
       it "should retrieve plugins and print the device url scheme, host, and port" do
-        Puppet.stubs(:info)
-        Puppet.expects(:info).with "Retrieving pluginfacts"
-        Puppet.expects(:info).with "starting applying configuration to device1 at ssh://testhost"
-        Puppet.expects(:info).with "starting applying configuration to device2 at https://testhost:443/some/path"
+        allow(Puppet).to receive(:info)
+        expect(Puppet).to receive(:info).with("Retrieving pluginfacts")
+        expect(Puppet).to receive(:info).with("starting applying configuration to device1 at ssh://testhost")
+        expect(Puppet).to receive(:info).with("starting applying configuration to device2 at https://testhost:443/some/path")
         expect { @device.main }.to exit_with 1
       end
 
       it "should setup the SSL context" do
-        @device.expects(:setup_host).twice
+        expect(@device).to receive(:setup_host).twice
         expect { @device.main }.to exit_with 1
       end
 
       it "should launch a configurer for this device" do
-        @configurer.expects(:run).twice
+        expect(@configurer).to receive(:run).twice
         expect { @device.main }.to exit_with 1
       end
 
       it "exits 1 when configurer raises error" do
-        @configurer.stubs(:run).raises(Puppet::Error).then.returns(0)
+        expect(@configurer).to receive(:run).and_raise(Puppet::Error).ordered
+        expect(@configurer).to receive(:run).and_return(0).ordered
         expect { @device.main }.to exit_with 1
       end
 
       it "exits 0 when run happens without puppet errors but with failed run" do
-        @configurer.stubs(:run).returns(6,2)
+        allow(@configurer).to receive(:run).and_return(6, 2)
         expect { @device.main }.to exit_with 0
       end
 
       it "should make the Puppet::Pops::Loaaders available" do
-        @configurer.expects(:run).with(:network_device => true, :pluginsync => true) do
+        expect(@configurer).to receive(:run).with(:network_device => true, :pluginsync => true) do
           fail('Loaders not available') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
           true
-        end.at_least_once.returns(6,2)
+        end.and_return(6, 2)
         expect { @device.main }.to exit_with 0
       end
 
       it "exits 2 when --detailed-exitcodes and successful runs" do
-        @device.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
-        @configurer.stubs(:run).returns(0,2)
+        allow(@device.options).to receive(:[]).with(:detailed_exitcodes).and_return(true)
+        allow(@configurer).to receive(:run).and_return(0, 2)
         expect { @device.main }.to exit_with 2
       end
 
       it "exits 1 when --detailed-exitcodes and failed parse" do
-        @configurer = stub_everything 'configurer'
-        Puppet::Configurer.stubs(:new).returns(@configurer)
-        @device.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
-        @configurer.stubs(:run).returns(6,1)
+        @configurer = double('configurer')
+        allow(Puppet::Configurer).to receive(:new).and_return(@configurer)
+        allow(@device.options).to receive(:[]).with(:detailed_exitcodes).and_return(true)
+        allow(@configurer).to receive(:run).and_return(6, 1)
         expect { @device.main }.to exit_with 7
       end
 
       it "exits 6 when --detailed-exitcodes and failed run" do
-        @configurer = stub_everything 'configurer'
-        Puppet::Configurer.stubs(:new).returns(@configurer)
-        @device.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
-        @configurer.stubs(:run).returns(6,2)
+        @configurer = double('configurer')
+        allow(Puppet::Configurer).to receive(:new).and_return(@configurer)
+        allow(@device.options).to receive(:[]).with(:detailed_exitcodes).and_return(true)
+        allow(@configurer).to receive(:run).and_return(6, 2)
         expect { @device.main }.to exit_with 6
       end
 
@@ -570,21 +572,15 @@ describe Puppet::Application::Device do
 
           # a block to use in a few places later to validate the updated settings
           p = Proc.new do |my_setting, my_value|
-            if my_setting == setting && all_devices.include?(my_value)
-              found_devices.add(my_value)
-              true
-            else
-              false
-            end
+            expect(all_devices).to include(my_value)
+            found_devices.add(my_value)
           end
-
-          seq = sequence("clean up dirs")
 
           all_devices.size.times do
             ## one occurrence of set / run / set("/dummy") for each device
-            Puppet.expects(:[]=).with(&p).in_sequence(seq)
-            @configurer.expects(:run).in_sequence(seq)
-            Puppet.expects(:[]=).with(setting, make_absolute("/dummy")).in_sequence(seq)
+            expect(Puppet).to receive(:[]=, &p).with(setting, anything).ordered
+            expect(@configurer).to receive(:run).ordered
+            expect(Puppet).to receive(:[]=).with(setting, make_absolute("/dummy")).ordered
           end
 
           expect { @device.main }.to exit_with 1
@@ -599,21 +595,16 @@ describe Puppet::Application::Device do
 
         # a block to use in a few places later to validate the updated settings
         p = Proc.new do |my_setting, my_value|
-          if my_setting == :certname && all_devices.include?(my_value)
-            found_devices.add(my_value)
-            true
-          else
-            false
-          end
+          expect(all_devices).to include(my_value)
+          found_devices.add(my_value)
         end
 
-        seq = sequence("clean up certname")
-
+        allow(Puppet).to receive(:[]=)
         all_devices.size.times do
           ## one occurrence of set / run / set("certname") for each device
-          Puppet.expects(:[]=).with(&p).in_sequence(seq)
-          @configurer.expects(:run).in_sequence(seq)
-          Puppet.expects(:[]=).with(:certname, "certname").in_sequence(seq)
+          expect(Puppet).to receive(:[]=, &p).with(:certname, anything).ordered
+          expect(@configurer).to receive(:run).ordered
+          expect(Puppet).to receive(:[]=).with(:certname, "certname").ordered
         end
 
 
@@ -624,7 +615,7 @@ describe Puppet::Application::Device do
       end
 
       it "should expire all cached attributes" do
-        Puppet::SSL::Host.expects(:reset).twice
+        expect(Puppet::SSL::Host).to receive(:reset).twice
 
         expect { @device.main }.to exit_with 1
       end

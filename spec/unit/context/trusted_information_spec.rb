@@ -52,7 +52,7 @@ describe Puppet::Context::TrustedInformation do
     end
 
     it "is remote but lacks certificate information when it is authenticated" do
-      Puppet.expects(:info).once.with("TrustedInformation expected a certificate, but none was given.")
+      expect(Puppet).to receive(:info).once.with("TrustedInformation expected a certificate, but none was given.")
 
       trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', nil)
 

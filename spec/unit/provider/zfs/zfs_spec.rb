@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:zfs).provider(:zfs) do
@@ -12,7 +11,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
   let(:provider) { resource.provider }
 
   before do
-    provider.class.stubs(:which).with('zfs').returns(zfs)
+    allow(provider.class).to receive(:which).with('zfs').and_return(zfs)
   end
 
   context ".instances" do
@@ -21,7 +20,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
     end
 
     it "should list instances" do
-      provider.class.expects(:zfs).with(:list,'-H').returns File.read(my_fixture('zfs-list.out'))
+      expect(provider.class).to receive(:zfs).with(:list,'-H').and_return(File.read(my_fixture('zfs-list.out')))
       instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
       expect(instances.size).to eq(2)
       expect(instances[0]).to eq({:name => 'rpool', :ensure => :present})
@@ -43,7 +42,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
 
   context "#create" do
     it "should execute zfs create" do
-      provider.expects(:zfs).with(:create, name)
+      expect(provider).to receive(:zfs).with(:create, name)
 
       provider.create
     end
@@ -53,7 +52,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
       it "should include property #{prop}" do
         resource[prop] = prop
 
-        provider.expects(:zfs).with(:create, '-o', "#{prop}=#{prop}", name)
+        expect(provider).to receive(:zfs).with(:create, '-o', "#{prop}=#{prop}", name)
 
         provider.create
       end
@@ -61,14 +60,14 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
 
     it "should use -V for the volsize property" do
       resource[:volsize] = "10"
-      provider.expects(:zfs).with(:create, '-V', "10", name)
+      expect(provider).to receive(:zfs).with(:create, '-V', "10", name)
       provider.create
     end
   end
 
   context "#destroy" do
     it "should execute zfs destroy" do
-      provider.expects(:zfs).with(:destroy, name)
+      expect(provider).to receive(:zfs).with(:destroy, name)
 
       provider.destroy
     end
@@ -77,13 +76,13 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
   context "#exists?" do
     it "should return true if the resource exists" do
       #return stuff because we have to slice and dice it
-      provider.expects(:zfs).with(:list, name)
+      expect(provider).to receive(:zfs).with(:list, name)
 
       expect(provider).to be_exists
     end
 
     it "should return false if returned values don't match the name" do
-      provider.expects(:zfs).with(:list, name).raises(Puppet::ExecutionFailure, "Failed")
+      expect(provider).to receive(:zfs).with(:list, name).and_raise(Puppet::ExecutionFailure, "Failed")
 
       expect(provider).not_to be_exists
     end
@@ -97,68 +96,74 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
      :secondarycache, :setuid, :shareiscsi, :sharenfs, :sharesmb,
      :snapdir, :version, :volsize, :vscan, :xattr].each do |prop|
       it "should get #{prop}" do
-        provider.expects(:zfs).with(:get, '-H', '-o', 'value', prop, name).returns("value\n")
+        expect(provider).to receive(:zfs).with(:get, '-H', '-o', 'value', prop, name).and_return("value\n")
 
         expect(provider.send(prop)).to eq('value')
       end
 
       it "should set #{prop}=value" do
-        provider.expects(:zfs).with(:set, "#{prop}=value", name)
+        expect(provider).to receive(:zfs).with(:set, "#{prop}=value", name)
 
         provider.send("#{prop}=", "value")
       end
     end
   end
+
   describe "zoned" do
     context "on FreeBSD" do
       before do
-        Facter.stubs(:value).with(:operatingsystem).returns("FreeBSD")
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return("FreeBSD")
       end
+
       it "should get 'jailed' property" do
-        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :jailed, name).returns("value\n")
+        expect(provider).to receive(:zfs).with(:get, '-H', '-o', 'value', :jailed, name).and_return("value\n")
         expect(provider.send("zoned")).to eq('value')
       end
 
       it "should set jalied=value" do
-        provider.expects(:zfs).with(:set, "jailed=value", name)
+        expect(provider).to receive(:zfs).with(:set, "jailed=value", name)
         provider.send("zoned=", "value")
       end
     end
 
     context "when not running FreeBSD" do
       before do
-        Facter.stubs(:value).with(:operatingsystem).returns("Solaris")
+        allow(Facter).to receive(:value).with(:operatingsystem).and_return("Solaris")
       end
+
       it "should get 'zoned' property" do
-        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :zoned, name).returns("value\n")
+        expect(provider).to receive(:zfs).with(:get, '-H', '-o', 'value', :zoned, name).and_return("value\n")
         expect(provider.send("zoned")).to eq('value')
       end
 
       it "should set zoned=value" do
-        provider.expects(:zfs).with(:set, "zoned=value", name)
+        expect(provider).to receive(:zfs).with(:set, "zoned=value", name)
         provider.send("zoned=", "value")
       end
     end
   end
+
   describe "acltype" do
     context "when available" do
       it "should get 'acltype' property" do
-        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :acltype, name).returns("value\n")
+        expect(provider).to receive(:zfs).with(:get, '-H', '-o', 'value', :acltype, name).and_return("value\n")
         expect(provider.send("acltype")).to eq('value')
       end
+
       it "should set acltype=value" do
-        provider.expects(:zfs).with(:set, "acltype=value", name)
+        expect(provider).to receive(:zfs).with(:set, "acltype=value", name)
         provider.send("acltype=", "value")
       end
     end
 
     context "when not available" do
       it "should get '-' for the acltype property" do
-        provider.expects(:zfs).with(:get, '-H', '-o', 'value', :acltype, name).raises(RuntimeError, 'not valid')
+        expect(provider).to receive(:zfs).with(:get, '-H', '-o', 'value', :acltype, name).and_raise(RuntimeError, 'not valid')
         expect(provider.send("acltype")).to eq('-')
       end
+
       it "should not error out when trying to set acltype" do
-        provider.expects(:zfs).with(:set, "acltype=value", name).raises(RuntimeError, 'not valid')
+        expect(provider).to receive(:zfs).with(:set, "acltype=value", name).and_raise(RuntimeError, 'not valid')
         expect{provider.send("acltype=", "value")}.to_not raise_error
       end
     end

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 
@@ -9,7 +8,7 @@ describe tidy do
 
   before do
     @basepath = make_absolute("/what/ever")
-    Puppet.settings.stubs(:use)
+    allow(Puppet.settings).to receive(:use)
   end
 
   context "when normalizing 'path' on windows", :if => Puppet.features.microsoft_windows? do
@@ -21,8 +20,8 @@ describe tidy do
 
   it "should use :lstat when stating a file" do
     path = '/foo/bar'
-    stat = mock 'stat'
-    Puppet::FileSystem.expects(:lstat).with(path).returns stat
+    stat = double('stat')
+    expect(Puppet::FileSystem).to receive(:lstat).with(path).and_return(stat)
 
     resource = tidy.new :path => path, :age => "1d"
 
@@ -135,32 +134,32 @@ describe tidy do
   describe "when tidying" do
     before do
       @tidy = Puppet::Type.type(:tidy).new :path => @basepath
-      @stat = stub 'stat', :ftype => "directory"
+      @stat = double('stat', :ftype => "directory")
       lstat_is(@basepath, @stat)
     end
 
     describe "and generating files" do
       it "should set the backup on the file if backup is set on the tidy instance" do
         @tidy[:backup] = "whatever"
-        Puppet::Type.type(:file).expects(:new).with { |args| args[:backup] == "whatever" }
+        expect(Puppet::Type.type(:file)).to receive(:new).with(hash_including(backup: "whatever"))
 
         @tidy.mkfile(@basepath)
       end
 
       it "should set the file's path to the tidy's path" do
-        Puppet::Type.type(:file).expects(:new).with { |args| args[:path] == @basepath }
+        expect(Puppet::Type.type(:file)).to receive(:new).with(hash_including(path: @basepath))
 
         @tidy.mkfile(@basepath)
       end
 
       it "should configure the file for deletion" do
-        Puppet::Type.type(:file).expects(:new).with { |args| args[:ensure] == :absent }
+        expect(Puppet::Type.type(:file)).to receive(:new).with(hash_including(ensure: :absent))
 
         @tidy.mkfile(@basepath)
       end
 
       it "should force deletion on the file" do
-        Puppet::Type.type(:file).expects(:new).with { |args| args[:force] == true }
+        expect(Puppet::Type.type(:file)).to receive(:new).with(hash_including(force: true))
 
         @tidy.mkfile(@basepath)
       end
@@ -174,16 +173,16 @@ describe tidy do
 
     describe "and recursion is not used" do
       it "should generate a file resource if the file should be tidied" do
-        @tidy.expects(:tidy?).with(@basepath).returns true
+        expect(@tidy).to receive(:tidy?).with(@basepath).and_return(true)
         file = Puppet::Type.type(:file).new(:path => @basepath+"/eh")
-        @tidy.expects(:mkfile).with(@basepath).returns file
+        expect(@tidy).to receive(:mkfile).with(@basepath).and_return(file)
 
         expect(@tidy.generate).to eq([file])
       end
 
       it "should do nothing if the file should not be tidied" do
-        @tidy.expects(:tidy?).with(@basepath).returns false
-        @tidy.expects(:mkfile).never
+        expect(@tidy).to receive(:tidy?).with(@basepath).and_return(false)
+        expect(@tidy).not_to receive(:mkfile)
 
         expect(@tidy.generate).to eq([])
       end
@@ -192,38 +191,38 @@ describe tidy do
     describe "and recursion is used" do
       before do
         @tidy[:recurse] = true
-        Puppet::FileServing::Fileset.any_instance.stubs(:stat).returns mock("stat")
+        allow_any_instance_of(Puppet::FileServing::Fileset).to receive(:stat).and_return(double("stat"))
         @fileset = Puppet::FileServing::Fileset.new(@basepath)
-        Puppet::FileServing::Fileset.stubs(:new).returns @fileset
+        allow(Puppet::FileServing::Fileset).to receive(:new).and_return(@fileset)
       end
 
       it "should use a Fileset for infinite recursion" do
-        Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true).returns @fileset
-        @fileset.expects(:files).returns %w{. one two}
-        @tidy.stubs(:tidy?).returns false
+        expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true).and_return(@fileset)
+        expect(@fileset).to receive(:files).and_return(%w{. one two})
+        allow(@tidy).to receive(:tidy?).and_return(false)
 
         @tidy.generate
       end
 
       it "should use a Fileset for limited recursion" do
         @tidy[:recurse] = 42
-        Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true, :recurselimit => 42).returns @fileset
-        @fileset.expects(:files).returns %w{. one two}
-        @tidy.stubs(:tidy?).returns false
+        expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true, :recurselimit => 42).and_return(@fileset)
+        expect(@fileset).to receive(:files).and_return(%w{. one two})
+        allow(@tidy).to receive(:tidy?).and_return(false)
 
         @tidy.generate
       end
 
       it "should generate a file resource for every file that should be tidied but not for files that should not be tidied" do
-        @fileset.expects(:files).returns %w{. one two}
+        expect(@fileset).to receive(:files).and_return(%w{. one two})
 
-        @tidy.expects(:tidy?).with(@basepath).returns true
-        @tidy.expects(:tidy?).with(@basepath+"/one").returns true
-        @tidy.expects(:tidy?).with(@basepath+"/two").returns false
+        expect(@tidy).to receive(:tidy?).with(@basepath).and_return(true)
+        expect(@tidy).to receive(:tidy?).with(@basepath+"/one").and_return(true)
+        expect(@tidy).to receive(:tidy?).with(@basepath+"/two").and_return(false)
 
         file = Puppet::Type.type(:file).new(:path => @basepath+"/eh")
-        @tidy.expects(:mkfile).with(@basepath).returns file
-        @tidy.expects(:mkfile).with(@basepath+"/one").returns file
+        expect(@tidy).to receive(:mkfile).with(@basepath).and_return(file)
+        expect(@tidy).to receive(:mkfile).with(@basepath+"/one").and_return(file)
 
         @tidy.generate
       end
@@ -234,7 +233,7 @@ describe tidy do
         @tidy = Puppet::Type.type(:tidy).new :path => @basepath, :recurse => 1
         @tidy[:matches] = %w{*foo* *bar*}
 
-        @stat = mock 'stat'
+        @stat = double('stat')
 
         @matcher = @tidy.parameter(:matches)
       end
@@ -258,7 +257,7 @@ describe tidy do
     describe "and determining whether a file is too old" do
       before do
         @tidy = Puppet::Type.type(:tidy).new :path => @basepath
-        @stat = stub 'stat'
+        @stat = double('stat')
 
         @tidy[:age] = "1s"
         @tidy[:type] = "mtime"
@@ -267,19 +266,19 @@ describe tidy do
 
       it "should use the age type specified" do
         @tidy[:type] = :ctime
-        @stat.expects(:ctime).returns(Time.now)
+        expect(@stat).to receive(:ctime).and_return(Time.now)
 
         @ager.tidy?(@basepath, @stat)
       end
 
       it "should return false if the file is more recent than the specified age" do
-        @stat.expects(:mtime).returns(Time.now)
+        expect(@stat).to receive(:mtime).and_return(Time.now)
 
         expect(@ager).not_to be_tidy(@basepath, @stat)
       end
 
       it "should return true if the file is older than the specified age" do
-        @stat.expects(:mtime).returns(Time.now - 10)
+        expect(@stat).to receive(:mtime).and_return(Time.now - 10)
 
         expect(@ager).to be_tidy(@basepath, @stat)
       end
@@ -288,26 +287,26 @@ describe tidy do
     describe "and determining whether a file is too large" do
       before do
         @tidy = Puppet::Type.type(:tidy).new :path => @basepath
-        @stat = stub 'stat', :ftype => "file"
+        @stat = double('stat', :ftype => "file")
 
         @tidy[:size] = "1kb"
         @sizer = @tidy.parameter(:size)
       end
 
       it "should return false if the file is smaller than the specified size" do
-        @stat.expects(:size).returns(4) # smaller than a kilobyte
+        expect(@stat).to receive(:size).and_return(4) # smaller than a kilobyte
 
         expect(@sizer).not_to be_tidy(@basepath, @stat)
       end
 
       it "should return true if the file is larger than the specified size" do
-        @stat.expects(:size).returns(1500) # larger than a kilobyte
+        expect(@stat).to receive(:size).and_return(1500) # larger than a kilobyte
 
         expect(@sizer).to be_tidy(@basepath, @stat)
       end
 
       it "should return true if the file is equal to the specified size" do
-        @stat.expects(:size).returns(1024)
+        expect(@stat).to receive(:size).and_return(1024)
 
         expect(@sizer).to be_tidy(@basepath, @stat)
       end
@@ -318,7 +317,7 @@ describe tidy do
         @tidy = Puppet::Type.type(:tidy).new :path => @basepath
         @catalog = Puppet::Resource::Catalog.new
         @tidy.catalog = @catalog
-        @stat = stub 'stat', :ftype => "file"
+        @stat = double('stat', :ftype => "file")
         lstat_is(@basepath, @stat)
       end
 
@@ -343,7 +342,7 @@ describe tidy do
       end
 
       it "should not be tidied if it is a directory and rmdirs is set to false" do
-        stat = mock 'stat', :ftype => "directory"
+        stat = double('stat', :ftype => "directory")
         lstat_is(@basepath, stat)
 
         expect(@tidy).not_to be_tidy(@basepath)
@@ -354,7 +353,7 @@ describe tidy do
         @tidy[:matches] = "globs"
 
         matches = @tidy.parameter(:matches)
-        matches.expects(:tidy?).with(@basepath, @stat).returns false
+        expect(matches).to receive(:tidy?).with(@basepath, @stat).and_return(false)
         expect(@tidy).not_to be_tidy(@basepath)
       end
 
@@ -362,7 +361,7 @@ describe tidy do
         @tidy[:age] = "1d"
 
         ager = @tidy.parameter(:age)
-        ager.expects(:tidy?).with(@basepath, @stat).returns false
+        expect(ager).to receive(:tidy?).with(@basepath, @stat).and_return(false)
         expect(@tidy).not_to be_tidy(@basepath)
       end
 
@@ -370,7 +369,7 @@ describe tidy do
         @tidy[:size] = "1b"
 
         sizer = @tidy.parameter(:size)
-        sizer.expects(:tidy?).with(@basepath, @stat).returns false
+        expect(sizer).to receive(:tidy?).with(@basepath, @stat).and_return(false)
         expect(@tidy).not_to be_tidy(@basepath)
       end
 
@@ -378,8 +377,8 @@ describe tidy do
         @tidy[:size] = "1b"
         @tidy[:age] = "1d"
 
-        @tidy.parameter(:size).stubs(:tidy?).returns true
-        @tidy.parameter(:age).stubs(:tidy?).returns false
+        allow(@tidy.parameter(:size)).to receive(:tidy?).and_return(true)
+        allow(@tidy.parameter(:age)).to receive(:tidy?).and_return(false)
         expect(@tidy).to be_tidy(@basepath)
       end
 
@@ -387,8 +386,8 @@ describe tidy do
         @tidy[:size] = "1b"
         @tidy[:age] = "1d"
 
-        @tidy.parameter(:size).stubs(:tidy?).returns false
-        @tidy.parameter(:age).stubs(:tidy?).returns true
+        allow(@tidy.parameter(:size)).to receive(:tidy?).and_return(false)
+        allow(@tidy.parameter(:age)).to receive(:tidy?).and_return(true)
         expect(@tidy).to be_tidy(@basepath)
       end
 
@@ -400,10 +399,10 @@ describe tidy do
         @tidy[:recurse] = true
         @tidy[:rmdirs] = true
         fileset = Puppet::FileServing::Fileset.new(@basepath)
-        Puppet::FileServing::Fileset.expects(:new).returns fileset
-        fileset.expects(:files).returns %w{. one one/two}
+        expect(Puppet::FileServing::Fileset).to receive(:new).and_return(fileset)
+        expect(fileset).to receive(:files).and_return(%w{. one one/two})
 
-        @tidy.stubs(:tidy?).returns true
+        allow(@tidy).to receive(:tidy?).and_return(true)
 
         expect(@tidy.generate.collect { |r| r[:path] }).to eq([@basepath+"/one/two", @basepath+"/one", @basepath])
       end
@@ -412,10 +411,10 @@ describe tidy do
     it "should configure directories to require their contained files if rmdirs is enabled, so the files will be deleted first" do
       @tidy[:recurse] = true
       @tidy[:rmdirs] = true
-      fileset = mock 'fileset'
-      Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true).returns fileset
-      fileset.expects(:files).returns %w{. one two one/subone two/subtwo one/subone/ssone}
-      @tidy.stubs(:tidy?).returns true
+      fileset = double('fileset')
+      expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true).and_return(fileset)
+      expect(fileset).to receive(:files).and_return(%w{. one two one/subone two/subtwo one/subone/ssone})
+      allow(@tidy).to receive(:tidy?).and_return(true)
 
       result = @tidy.generate.inject({}) { |hash, res| hash[res[:path]] = res; hash }
       {
@@ -434,10 +433,10 @@ describe tidy do
     it "should configure directories to require their contained files in sorted order" do
       @tidy[:recurse] = true
       @tidy[:rmdirs] = true
-      fileset = mock 'fileset'
-      Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true).returns fileset
-      fileset.expects(:files).returns %w{. a a/2 a/1 a/3}
-      @tidy.stubs(:tidy?).returns true
+      fileset = double('fileset')
+      expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true).and_return(fileset)
+      expect(fileset).to receive(:files).and_return(%w{. a a/2 a/1 a/3})
+      allow(@tidy).to receive(:tidy?).and_return(true)
 
       result = @tidy.generate.inject({}) { |hash, res| hash[res[:path]] = res; hash }
       expect(result[@basepath + '/a'][:require].collect{|a| a.name[('File//a/' + @basepath).length..-1]}.join()).to eq('321')
@@ -447,10 +446,10 @@ describe tidy do
       @tidy[:recurse] = true
       @tidy[:noop] = true
 
-      fileset = mock 'fileset'
-      Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true).returns fileset
-      fileset.expects(:files).returns %w{. a a/2 a/1 a/3}
-      @tidy.stubs(:tidy?).returns true
+      fileset = double('fileset')
+      expect(Puppet::FileServing::Fileset).to receive(:new).with(@basepath, :recurse => true).and_return(fileset)
+      expect(fileset).to receive(:files).and_return(%w{. a a/2 a/1 a/3})
+      allow(@tidy).to receive(:tidy?).and_return(true)
 
       result = @tidy.generate.inject({}) { |hash, res| hash[res[:path]] = res; hash }
 
@@ -459,10 +458,10 @@ describe tidy do
   end
 
   def lstat_is(path, stat)
-    Puppet::FileSystem.stubs(:lstat).with(path).returns(stat)
+    allow(Puppet::FileSystem).to receive(:lstat).with(path).and_return(stat)
   end
 
   def lstat_raises(path, error_class)
-    Puppet::FileSystem.expects(:lstat).with(path).raises Errno::ENOENT
+    expect(Puppet::FileSystem).to receive(:lstat).with(path).and_raise(Errno::ENOENT)
   end
 end

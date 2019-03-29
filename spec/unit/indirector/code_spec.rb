@@ -1,13 +1,12 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/indirector/code'
 
 describe Puppet::Indirector::Code do
-  before :all do
-    Puppet::Indirector::Terminus.stubs(:register_terminus_class)
-    @model = mock 'model'
-    @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
-    Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
+  before(:each) do
+    allow(Puppet::Indirector::Terminus).to receive(:register_terminus_class)
+    @model = double('model')
+    @indirection = double('indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model)
+    allow(Puppet::Indirector::Indirection).to receive(:instance).and_return(@indirection)
 
     module Testing; end
     @code_class = class Testing::MyCode < Puppet::Indirector::Code

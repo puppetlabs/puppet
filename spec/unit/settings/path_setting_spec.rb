@@ -1,8 +1,7 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Settings::PathSetting do
-  subject { described_class.new(:settings => mock('settings'), :desc => "test") }
+  subject { described_class.new(:settings => double('settings'), :desc => "test") }
 
   context "#munge" do
     it "should expand all path elements" do

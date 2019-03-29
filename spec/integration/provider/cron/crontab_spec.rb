@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 require 'puppet_spec/compiler'
@@ -9,17 +7,17 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
   include PuppetSpec::Compiler
 
   before :each do
-    Puppet::Type.type(:cron).stubs(:defaultprovider).returns described_class
-    described_class.stubs(:suitable?).returns true
-    Puppet::FileBucket::Dipper.any_instance.stubs(:backup) # Don't backup to filebucket
+    allow(Puppet::Type.type(:cron)).to receive(:defaultprovider).and_return(described_class)
+    allow(described_class).to receive(:suitable?).and_return(true)
+    allow_any_instance_of(Puppet::FileBucket::Dipper).to receive(:backup) # Don't backup to filebucket
 
     # I don't want to execute anything
-    described_class.stubs(:filetype).returns Puppet::Util::FileType::FileTypeFlat
-    described_class.stubs(:default_target).returns crontab_user1
+    allow(described_class).to receive(:filetype).and_return(Puppet::Util::FileType::FileTypeFlat)
+    allow(described_class).to receive(:default_target).and_return(crontab_user1)
 
     # I don't want to stub Time.now to get a static header because I don't know
     # where Time.now is used elsewhere, so just go with a very simple header
-    described_class.stubs(:header).returns "# HEADER: some simple\n# HEADER: header\n"
+    allow(described_class).to receive(:header).and_return("# HEADER: some simple\n# HEADER: header\n")
     FileUtils.cp(my_fixture('crontab_user1'), crontab_user1)
     FileUtils.cp(my_fixture('crontab_user2'), crontab_user2)
   end
@@ -117,9 +115,9 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
           MANIFEST
           apply_compiled_manifest(manifest) do |res|
             if res.ref == 'Cron[Entirely new resource]'
-              res.expects(:err).with(regexp_matches(/no command/))
+              expect(res).to receive(:err).with(/no command/)
             else
-              res.expects(:err).never
+              expect(res).not_to receive(:err)
             end
           end
         end
