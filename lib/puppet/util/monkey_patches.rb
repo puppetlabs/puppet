@@ -80,6 +80,25 @@ if Puppet::Util::Platform.windows?
   end
 end
 
+unless OpenSSL::X509::Name.instance_methods.include?(:to_utf8)
+  class OpenSSL::X509::Name
+    # https://github.com/openssl/openssl/blob/OpenSSL_1_1_0j/include/openssl/asn1.h#L362
+    ASN1_STRFLGS_ESC_MSB = 4
+
+    FLAGS = if RUBY_PLATFORM == 'java'
+              OpenSSL::X509::Name::RFC2253
+            else
+              OpenSSL::X509::Name::RFC2253 & ~ASN1_STRFLGS_ESC_MSB
+            end
+
+    def to_utf8
+      # https://github.com/ruby/ruby/blob/v2_5_5/ext/openssl/ossl_x509name.c#L317
+      str = to_s(FLAGS)
+      str.force_encoding(Encoding::UTF_8)
+    end
+  end
+end
+
 # The Enumerable#uniq method was added in Ruby 2.4.0 (https://bugs.ruby-lang.org/issues/11090)
 # This is a backport to earlier Ruby versions.
 #
