@@ -606,14 +606,28 @@ module Puppet
       :type       => :duration,
       :desc       => "The minimum time to wait between checking for updates in
       configuration files.  This timeout determines how quickly Puppet checks whether
-      a file (such as manifests or templates) has changed on disk. #{AS_DURATION}",
+      a file (such as manifests or puppet.conf) has changed on disk. The default will
+      change in a future release to be 'unlimited', requiring a reload of the Puppet
+      service to pick up changes to its internal configuration. To reparse files
+      within an environment in Puppet Server please use the environment_cache endpoint",
+      :hook => proc do |val|
+        if ![0, '15s'].include?(val)
+          Puppet.deprecation_warning(<<-WARNING)
+Fine grained control of filetimeouts is deprecated. In future
+releases this value will only determine if file content is cached.
+
+Valid values will be 0 (never cache) and 'unlimited' (always cache).
+With a default of 'unlimited'.
+            WARNING
+        end
+      end
     },
     :environment_timeout => {
       :default    => "0",
       :type       => :ttl,
       :desc       => "How long the Puppet master should cache data it loads from an
       environment.
-      #{AS_DURATION}
+
       A value of `0` will disable caching. This setting can also be set to
       `unlimited`, which will cache environments until the master is restarted
       or told to refresh the cache.
@@ -629,15 +643,21 @@ module Puppet
       * With Puppet Server, you should refresh environments by calling the
         `environment-cache` API endpoint. See the docs for the Puppet Server
         administrative API.
-      * With a Rack Puppet master, you should restart the web server or the
-        application server. Passenger lets you touch a `restart.txt` file to
-        refresh an application without restarting Apache; see the Passenger docs
-        for details.
 
-      We don't recommend using any value other than `0` or `unlimited`, since
-      most Puppet masters use a pool of Ruby interpreters which all have their
-      own cache timers. When these timers drift out of sync, agents can be served
-      inconsistent catalogs."
+      Any value other than `0` or `unlimited` is deprecated, since most Puppet
+      servers use a pool of Ruby interpreters which all have their own cache
+      timers. When these timers drift out of sync, agents can be served
+      inconsistent catalogs.",
+      :hook => proc do |val|
+        if ![0, 'unlimited'].include?(val)
+          Puppet.deprecation_warning(<<-WARNING)
+Fine grained control of environment timeouts is deprecated,
+please use `0` or `unlimited` to control default caching behavior
+and the environment-cache endpoint in Puppet Server's administrative
+API to expire the cache as needed
+          WARNING
+        end
+      end
     },
     :environment_data_provider => {
       :desc       => "The name of a registered environment data provider used when obtaining environment
