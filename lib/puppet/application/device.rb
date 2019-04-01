@@ -270,8 +270,17 @@ Licensed under the Apache 2.0 License
           Puppet[:certname] = device.name
 
           unless options[:resource] || options[:facts] || options[:apply] || options[:libdir]
-            Puppet::Configurer::PluginHandler.new.download_plugins(env)
+            # this will reload and recompute default settings and create the devices sub vardir
+            Puppet.settings.use :main, :agent, :ssl
+            # ask for a ssl cert if needed, but at least
+            # setup the ssl system for this device.
+            ssl_context = setup_context
+
+            Puppet.override(ssl_context: ssl_context) do
+              Puppet::Configurer::PluginHandler.new.download_plugins(env)
+            end
           end
+
           # this init the device singleton, so that the facts terminus
           # and the various network_device provider can use it
           Puppet::Util::NetworkDevice.init(device)
@@ -319,13 +328,6 @@ Licensed under the Apache 2.0 License
             end
           else
             Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
-            # this will reload and recompute default settings and create the devices sub vardir
-            Puppet.settings.use :main, :agent, :ssl
-            # ask for a ssl cert if needed, but at least
-            # setup the ssl system for this device.
-            setup_host
-
-            require 'puppet/configurer'
             configurer = Puppet::Configurer.new
             configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync? && !options[:libdir])
           end
@@ -372,7 +374,7 @@ Licensed under the Apache 2.0 License
     end
   end
 
-  def setup_host
+  def setup_context
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
     sm = Puppet::SSL::StateMachine.new(waitforcert: waitforcert)
     sm.ensure_client_certificate
