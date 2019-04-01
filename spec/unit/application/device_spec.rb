@@ -87,7 +87,7 @@ describe Puppet::Application::Device do
 
       context 'without --waitforcert' do
         it "defaults waitforcert to 0" do
-          device.setup_host
+          device.setup_context
 
           expect(Puppet::SSL::StateMachine).to have_received(:new).with(hash_including(waitforcert: 0))
         end
@@ -96,7 +96,7 @@ describe Puppet::Application::Device do
       context 'with --waitforcert=60' do
         it "uses supplied waitforcert" do
           device.handle_waitforcert(60)
-          device.setup_host
+          device.setup_context
 
           expect(Puppet::SSL::StateMachine).to have_received(:new).with(hash_including(waitforcert: 60))
         end
@@ -109,13 +109,13 @@ describe Puppet::Application::Device do
       end
 
       it "uses a default value for waitforcert when --onetime and --waitforcert are not specified" do
-        device.setup_host
+        device.setup_context
         expect(Puppet::SSL::StateMachine).to have_received(:new).with(hash_including(waitforcert: 120))
       end
 
       it "uses the waitforcert setting when checking for a signed certificate" do
         Puppet[:waitforcert] = 10
-        device.setup_host
+        device.setup_context
         expect(Puppet::SSL::StateMachine).to have_received(:new).with(hash_including(waitforcert: 10))
       end
     end
@@ -282,7 +282,7 @@ describe Puppet::Application::Device do
     it "creates a new ssl host" do
       allow(device.options).to receive(:[]).with(:waitforcert).and_return(123)
 
-      device.setup_host
+      device.setup_context
 
       expect(Puppet::SSL::StateMachine).to have_received(:new).with(hash_including(waitforcert: 123))
     end
@@ -363,7 +363,7 @@ describe Puppet::Application::Device do
         allow(Puppet).to receive(:[]=)
         allow(Puppet.settings).to receive(:use)
 
-        allow(device).to receive(:setup_host)
+        allow(device).to receive(:setup_context)
         allow(Puppet::Util::NetworkDevice).to receive(:init)
 
         allow(configurer).to receive(:run)
@@ -511,8 +511,11 @@ describe Puppet::Application::Device do
           expect { device.main }.to exit_with 1
         end
 
-        it "setups the SSL context" do
-          expect(device).to receive(:setup_host).twice
+        it "setups the SSL context before pluginsync" do
+          expect(device).to receive(:setup_context).ordered
+          expect(plugin_handler).to receive(:download_plugins).ordered
+          expect(device).to receive(:setup_context).ordered
+          expect(plugin_handler).to receive(:download_plugins).ordered
           expect { device.main }.to exit_with 1
         end
 
