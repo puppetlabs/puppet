@@ -97,7 +97,7 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
           expect {
             http.get('/')
           }.to raise_error(Puppet::Error,
-                           %r{certificate verify failed.* .self signed certificate in certificate chain for /CN=Test CA.})
+                           %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
         end
       end
     end
@@ -166,12 +166,12 @@ describe Puppet::Network::HttpPool, unless: Puppet::Util::Platform.jruby? do
         expect {
           http.get('/')
         }.to raise_error(Puppet::Error,
-                         %r{certificate verify failed.* .self signed certificate in certificate chain for /CN=Test CA.})
+                         %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
       end
     end
 
     it "warns when client has an incomplete client cert chain" do
-      expect(Puppet).to receive(:warning).with("The issuer '/CN=Test CA Agent Subauthority' of certificate '/CN=pluto' cannot be found locally")
+      expect(Puppet).to receive(:warning).with("The issuer 'CN=Test CA Agent Subauthority' of certificate 'CN=pluto' cannot be found locally")
 
       pluto = cert_fixture('pluto.pem')
 

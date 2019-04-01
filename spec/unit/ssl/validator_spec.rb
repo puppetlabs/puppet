@@ -39,7 +39,7 @@ describe Puppet::SSL::Validator::DefaultValidator, unless: Puppet::Util::Platfor
 
     context 'When pre-verification is not OK' do
       context 'and the ssl_context is in an error state' do
-        let(:root_subject) { @pki[:root_cert].subject.to_s }
+        let(:root_subject) { @pki[:root_cert].subject.to_utf8 }
         let(:code) { OpenSSL::X509::V_ERR_INVALID_CA }
 
         it 'rejects the connection' do
@@ -93,7 +93,7 @@ describe Puppet::SSL::Validator::DefaultValidator, unless: Puppet::Util::Platfor
             allow(ssl_context).to receive(:current_crl).and_return(crl)
 
             subject.call(false, ssl_context)
-            expect(subject.verify_errors).to eq(["CRL is not yet valid for /CN=Puppet CA: puppetmaster.example.com"])
+            expect(subject.verify_errors).to eq(["CRL is not yet valid for CN=Puppet CA: puppetmaster.example.com"])
           end
 
           it 'rejects CRLs whose last_update time is more than 5 minutes in the future' do
@@ -233,7 +233,9 @@ describe Puppet::SSL::Validator::DefaultValidator, unless: Puppet::Util::Platfor
 
       it 'makes a helpful error message available via #verify_errors' do
         subject.valid_peer?
-        expect(subject.verify_errors).to eq([expected_authz_error_msg])
+        expect(subject.verify_errors).to eq([<<END.chomp])
+The server presented a SSL certificate chain which does not include a CA listed in the ssl_client_ca_auth file.  Authorized Issuers: CN=root-ca-𠜎  Peer Chain: CN=unrevoked-int-node => CN=unrevoked-int-caۿᚠ𠜎 => CN=root-ca-𠜎
+END
       end
     end
   end
@@ -270,17 +272,5 @@ describe Puppet::SSL::Validator::DefaultValidator, unless: Puppet::Util::Platfor
 
   def cert_chain_in_callback_order
     cert_chain.reverse
-  end
-
-  let :authz_error_prefix do
-    "The server presented a SSL certificate chain which does not include a CA listed in the ssl_client_ca_auth file.  "
-  end
-
-  let :expected_authz_error_msg do
-    authz_ca_certs = subject.decode_cert_bundle(subject.read_file)
-    msg = authz_error_prefix
-    msg << "Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject}.join(', ')}  "
-    msg << "Peer Chain: #{cert_chain.collect {|c| c.subject}.join(' => ')}"
-    msg
   end
 end

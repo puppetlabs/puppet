@@ -70,12 +70,31 @@ if Puppet::Util::Platform.windows?
           begin
             add_cert(x509)
           rescue OpenSSL::X509::StoreError
-            warn "Failed to add #{x509.subject.to_s}"
+            warn "Failed to add #{x509.subject.to_utf8}"
           end
         end
       end
 
       __original_set_default_paths
+    end
+  end
+end
+
+unless OpenSSL::X509::Name.instance_methods.include?(:to_utf8)
+  class OpenSSL::X509::Name
+    # https://github.com/openssl/openssl/blob/OpenSSL_1_1_0j/include/openssl/asn1.h#L362
+    ASN1_STRFLGS_ESC_MSB = 4
+
+    FLAGS = if RUBY_PLATFORM == 'java'
+              OpenSSL::X509::Name::RFC2253
+            else
+              OpenSSL::X509::Name::RFC2253 & ~ASN1_STRFLGS_ESC_MSB
+            end
+
+    def to_utf8
+      # https://github.com/ruby/ruby/blob/v2_5_5/ext/openssl/ossl_x509name.c#L317
+      str = to_s(FLAGS)
+      str.force_encoding(Encoding::UTF_8)
     end
   end
 end

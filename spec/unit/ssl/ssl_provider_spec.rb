@@ -151,8 +151,8 @@ describe Puppet::SSL::SSLProvider do
     it 'resolves the client chain from leaf to root' do
       sslctx = subject.create_context(config)
       expect(
-        sslctx.client_chain.map(&:subject).map(&:to_s)
-      ).to eq(['/CN=signed', '/CN=Test CA Subauthority', '/CN=Test CA'])
+        sslctx.client_chain.map(&:subject).map(&:to_utf8)
+      ).to eq(['CN=signed', 'CN=Test CA Subauthority', 'CN=Test CA'])
     end
 
     it 'raises if client cert signature is invalid' do
@@ -160,21 +160,21 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(client_cert: client_cert))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Invalid signature for certificate '/CN=signed'")
+                       "Invalid signature for certificate 'CN=signed'")
     end
 
     it 'raises if client cert and private key are mismatched' do
       expect {
         subject.create_context(config.merge(private_key: wrong_key))
       }.to raise_error(Puppet::SSL::SSLError,
-                       "The certificate for '/CN=signed' does not match its private key")
+                       "The certificate for 'CN=signed' does not match its private key")
     end
 
     it "raises if client cert's public key has been replaced" do
       expect {
         subject.create_context(config.merge(client_cert: cert_fixture('tampered-cert.pem')))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Invalid signature for certificate '/CN=signed'")
+                       "Invalid signature for certificate 'CN=signed'")
     end
 
     # This option is only available in openssl 1.1
@@ -185,7 +185,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(cacerts: global_cacerts))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Invalid signature for certificate '/CN=Test CA'")
+                       "Invalid signature for certificate 'CN=Test CA'")
     end
 
     it 'raises if intermediate CA signature is invalid' do
@@ -195,7 +195,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(cacerts: global_cacerts))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Invalid signature for certificate '/CN=Test CA Subauthority'")
+                       "Invalid signature for certificate 'CN=Test CA Subauthority'")
     end
 
     it 'raises if CRL signature for root CA is invalid', unless: Puppet::Util::Platform.jruby? do
@@ -205,7 +205,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(crls: global_crls))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Invalid signature for CRL issued by '/CN=Test CA'")
+                       "Invalid signature for CRL issued by 'CN=Test CA'")
     end
 
     it 'raises if CRL signature for intermediate CA is invalid', unless: Puppet::Util::Platform.jruby? do
@@ -215,18 +215,18 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(crls: global_crls))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Invalid signature for CRL issued by '/CN=Test CA Subauthority'")
+                       "Invalid signature for CRL issued by 'CN=Test CA Subauthority'")
     end
 
     it 'raises if client cert is revoked' do
       expect {
         subject.create_context(config.merge(private_key: key_fixture('revoked-key.pem'), client_cert: cert_fixture('revoked.pem')))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Certificate '/CN=revoked' is revoked")
+                       "Certificate 'CN=revoked' is revoked")
     end
 
     it 'warns if intermediate issuer is missing' do
-      expect(Puppet).to receive(:warning).with("The issuer '/CN=Test CA Subauthority' of certificate '/CN=signed' cannot be found locally")
+      expect(Puppet).to receive(:warning).with("The issuer 'CN=Test CA Subauthority' of certificate 'CN=signed' cannot be found locally")
 
       subject.create_context(config.merge(cacerts: [cert_fixture('ca.pem')]))
     end
@@ -235,7 +235,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(cacerts: [cert_fixture('intermediate.pem')]))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "The issuer '/CN=Test CA' of certificate '/CN=Test CA Subauthority' is missing")
+                       "The issuer 'CN=Test CA' of certificate 'CN=Test CA Subauthority' is missing")
     end
 
     it 'raises if cert is not valid yet', unless: Puppet::Util::Platform.jruby? do
@@ -243,7 +243,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(client_cert: client_cert))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "The certificate '/CN=signed' is not yet valid, verify time is synchronized")
+                       "The certificate 'CN=signed' is not yet valid, verify time is synchronized")
     end
 
     it 'raises if cert is expired', unless: Puppet::Util::Platform.jruby? do
@@ -251,7 +251,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(client_cert: client_cert))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "The certificate '/CN=signed' has expired, verify time is synchronized")
+                       "The certificate 'CN=signed' has expired, verify time is synchronized")
     end
 
     it 'raises if crl is not valid yet', unless: Puppet::Util::Platform.jruby? do
@@ -262,7 +262,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(crls: future_crls))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "The CRL issued by '/CN=Test CA' is not yet valid, verify time is synchronized")
+                       "The CRL issued by 'CN=Test CA' is not yet valid, verify time is synchronized")
     end
 
     it 'raises if crl is expired', unless: Puppet::Util::Platform.jruby? do
@@ -273,7 +273,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(crls: past_crls))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "The CRL issued by '/CN=Test CA' has expired, verify time is synchronized")
+                       "The CRL issued by 'CN=Test CA' has expired, verify time is synchronized")
     end
 
     it 'raises if the root CRL is missing' do
@@ -281,7 +281,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(crls: crls, revocation: :chain))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "The CRL issued by '/CN=Test CA' is missing")
+                       "The CRL issued by 'CN=Test CA' is missing")
     end
 
     it 'raises if the intermediate CRL is missing' do
@@ -289,7 +289,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(crls: crls))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "The CRL issued by '/CN=Test CA Subauthority' is missing")
+                       "The CRL issued by 'CN=Test CA Subauthority' is missing")
     end
 
     it "doesn't raise if the root CRL is missing and we're just checking the leaf" do
@@ -313,7 +313,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(cacerts: certs, crls: [], revocation: false))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Certificate '/CN=Test CA' failed verification (24): invalid CA certificate")
+                       "Certificate 'CN=Test CA' failed verification (24): invalid CA certificate")
     end
 
     # OpenSSL < 1.1 does not verify basicConstraints
@@ -323,19 +323,19 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.create_context(config.merge(cacerts: certs, crls: [], revocation: false))
       }.to raise_error(Puppet::SSL::CertVerifyError,
-                       "Certificate '/CN=Test CA Subauthority' failed verification (24): invalid CA certificate")
+                       "Certificate 'CN=Test CA Subauthority' failed verification (24): invalid CA certificate")
     end
 
     it 'accepts CA certs in any order' do
       sslctx = subject.create_context(config.merge(cacerts: global_cacerts.reverse))
       # certs in ruby+openssl 1.0.x are not comparable, so compare subjects
-      expect(sslctx.client_chain.map(&:subject).map(&:to_s)).to contain_exactly('/CN=Test CA', '/CN=Test CA Subauthority', '/CN=signed')
+      expect(sslctx.client_chain.map(&:subject).map(&:to_utf8)).to contain_exactly('CN=Test CA', 'CN=Test CA Subauthority', 'CN=signed')
     end
 
     it 'accepts CRLs in any order' do
       sslctx = subject.create_context(config.merge(crls: global_crls.reverse))
       # certs in ruby+openssl 1.0.x are not comparable, so compare subjects
-      expect(sslctx.client_chain.map(&:subject).map(&:to_s)).to contain_exactly('/CN=Test CA', '/CN=Test CA Subauthority', '/CN=signed')
+      expect(sslctx.client_chain.map(&:subject).map(&:to_utf8)).to contain_exactly('CN=Test CA', 'CN=Test CA Subauthority', 'CN=signed')
     end
 
     it 'raises if the frozen context is modified' do
@@ -414,7 +414,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.verify_request(csr, wrong_key.public_key)
       }.to raise_error(Puppet::SSL::SSLError,
-                       "The CSR for host '/CN=pending' does not match the public key")
+                       "The CSR for host 'CN=pending' does not match the public key")
     end
 
     it "raises if the CSR was tampered with" do
@@ -422,7 +422,7 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.verify_request(csr, csr.public_key)
       }.to raise_error(Puppet::SSL::SSLError,
-                       "The CSR for host '/CN=signed' does not match the public key")
+                       "The CSR for host 'CN=signed' does not match the public key")
     end
   end
 end

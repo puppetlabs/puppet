@@ -186,7 +186,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 200, body: @host[:cert].to_pem)
 
       expects_command_to_fail(
-        %r{^Failed to download certificate: The certificate for '/CN=ssl-client' does not match its private key}
+        %r{^Failed to download certificate: The certificate for 'CN=ssl-client' does not match its private key}
       )
     end
 
@@ -223,7 +223,7 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       File.open(Puppet[:hostprivkey], 'w') { |f| f.write(private_key.to_pem) }
       File.open(Puppet[:hostpubkey], 'w') { |f| f.write(public_key.to_pem) }
 
-      expects_command_to_fail(%r{The certificate for '/CN=ssl-client' does not match its private key})
+      expects_command_to_fail(%r{The certificate for 'CN=ssl-client' does not match its private key})
     end
 
     it 'reports if the cert verification fails' do
@@ -234,13 +234,13 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       # and CRL for that CA
       File.open(Puppet[:hostcrl], 'w') { |f| f.write(new_ca.ca_crl.to_pem) }
 
-      expects_command_to_fail(%r{Invalid signature for certificate '/CN=ssl-client'})
+      expects_command_to_fail(%r{Invalid signature for certificate 'CN=ssl-client'})
     end
 
     it 'reports when verification succeeds' do
       allow_any_instance_of(OpenSSL::X509::Store).to receive(:verify).and_return(true)
 
-      expects_command_to_pass(%r{Verified client certificate '/CN=ssl-client' fingerprint})
+      expects_command_to_pass(%r{Verified client certificate 'CN=ssl-client' fingerprint})
     end
   end
 
