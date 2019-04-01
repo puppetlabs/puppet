@@ -267,8 +267,17 @@ Licensed under the Apache 2.0 License
           Puppet[:certname] = device.name
 
           unless options[:resource] || options[:facts] || options[:apply] || options[:libdir]
-            Puppet::Configurer::PluginHandler.new.download_plugins(env)
+            # this will reload and recompute default settings and create the devices sub vardir
+            Puppet.settings.use :main, :agent, :ssl
+            # ask for a ssl cert if needed, but at least
+            # setup the ssl system for this device.
+            ssl_host = setup_host(device.name)
+
+            Puppet.override(ssl_host: ssl_host) do
+              Puppet::Configurer::PluginHandler.new.download_plugins(env)
+            end
           end
+
           # this init the device singleton, so that the facts terminus
           # and the various network_device provider can use it
           Puppet::Util::NetworkDevice.init(device)
@@ -316,11 +325,6 @@ Licensed under the Apache 2.0 License
             end
           else
             Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
-            # this will reload and recompute default settings and create the devices sub vardir
-            Puppet.settings.use :main, :agent, :ssl
-            # ask for a ssl cert if needed, but at least
-            # setup the ssl system for this device.
-            setup_host(device.name)
 
             require 'puppet/configurer'
             configurer = Puppet::Configurer.new
@@ -371,9 +375,10 @@ Licensed under the Apache 2.0 License
   end
 
   def setup_host(name)
-    @host = Puppet::SSL::Host.new(name, true)
+    host = Puppet::SSL::Host.new(name, true)
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-    @host.wait_for_cert(waitforcert)
+    host.wait_for_cert(waitforcert)
+    host
   end
 
   def setup

@@ -523,8 +523,11 @@ describe Puppet::Application::Device do
           expect { device.main }.to exit_with 1
         end
 
-        it "setups the SSL context" do
-          expect(device).to receive(:setup_host).twice
+        it "setups the SSL context before pluginsync" do
+          expect(device).to receive(:setup_host).ordered
+          expect(plugin_handler).to receive(:download_plugins).ordered
+          expect(device).to receive(:setup_host).ordered
+          expect(plugin_handler).to receive(:download_plugins).ordered
           expect { device.main }.to exit_with 1
         end
 
