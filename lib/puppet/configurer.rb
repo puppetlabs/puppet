@@ -401,9 +401,9 @@ class Puppet::Configurer
 
         Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
                      { host: host, port: port, code: response.code, reason: response.message })
-      rescue
-        # Nothing to see here
-        Puppet.debug(_("Puppet server %{host}:%{port} is unreachable") % { host: host, port: port })
+      rescue => detail
+        #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+        Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
       end
     end
     [nil, nil]
