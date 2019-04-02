@@ -256,92 +256,102 @@ Licensed under the Apache 2.0 License
       devices.collect do |devicename,device|
         pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
         Puppet.override(:http_pool => pool) do
-          device_url = URI.parse(device.url)
-          # Handle nil scheme & port
-          scheme = "#{device_url.scheme}://" if device_url.scheme
-          port = ":#{device_url.port}" if device_url.port
+          # TODO ruby 2.5 doesn't need the extra block here anymore
+          begin
+            device_url = URI.parse(device.url)
+            # Handle nil scheme & port
+            scheme = "#{device_url.scheme}://" if device_url.scheme
+            port = ":#{device_url.port}" if device_url.port
 
-          # override local $vardir and $certname
-          Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
-          Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
-          Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
-          Puppet[:certname] = device.name
+            # override local $vardir and $certname
+            Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
+            Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
+            Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
+            Puppet[:certname] = device.name
+            ssl_host = nil
 
-          unless options[:resource] || options[:facts] || options[:apply] || options[:libdir]
-            # this will reload and recompute default settings and create the devices sub vardir
-            Puppet.settings.use :main, :agent, :ssl
-            # ask for a ssl cert if needed, but at least
-            # setup the ssl system for this device.
-            ssl_host = setup_host(device.name)
+            unless options[:resource] || options[:facts] || options[:apply]
+              # this will reload and recompute default settings and create the devices sub vardir
+              Puppet.settings.use :main, :agent, :ssl
+              # ask for a ssl cert if needed, but at least
+              # setup the ssl system for this device.
+              ssl_host = setup_host(device.name)
 
-            Puppet.override(ssl_host: ssl_host) do
-              Puppet::Configurer::PluginHandler.new.download_plugins(env) if Puppet::Configurer.should_pluginsync?
-            end
-          end
-
-          # this init the device singleton, so that the facts terminus
-          # and the various network_device provider can use it
-          Puppet::Util::NetworkDevice.init(device)
-
-          if options[:resource]
-            type, name = parse_args(command_line.args)
-            Puppet.info _("retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
-            resources = find_resources(type, name)
-            if options[:to_yaml]
-              text = resources.map do |resource|
-                resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml.force_encoding(Encoding.default_external)
-              end.join("\n")
-              text.prepend("#{type.downcase}:\n")
-            else
-              text = resources.map do |resource|
-                resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest.force_encoding(Encoding.default_external)
-              end.join("\n")
-            end
-            (puts text)
-            0
-          elsif options[:facts]
-            Puppet.info _("retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
-            remote_facts = Puppet::Node::Facts.indirection.find(name, :environment => env)
-            # Give a proper name to the facts
-            remote_facts.name = remote_facts.values['clientcert']
-            renderer = Puppet::Network::FormatHandler.format(:console)
-            puts renderer.render(remote_facts)
-            0
-          elsif options[:apply]
-            # ensure we have a cache folder structure exists for the device
-            subdir = File.join(Puppet[:statedir], 'graphs')
-            FileUtils.mkdir_p(subdir) unless File.directory?(subdir)
-            # avoid reporting to server
-            Puppet::Transaction::Report.indirection.terminus_class = :yaml
-            Puppet::Resource::Catalog.indirection.cache_class = nil
-
-            require 'puppet/application/apply'
-            begin
-              Puppet[:node_terminus] = :plain
-              Puppet[:catalog_terminus] = :compiler
-              Puppet[:catalog_cache_terminus] = nil
-              Puppet[:facts_terminus] = :network_device
-              Puppet.override(:network_device => true) do
-                Puppet::Application::Apply.new(Puppet::Util::CommandLine.new('puppet', ["apply", options[:apply]])).run_command
+              unless options[:libdir]
+                Puppet.override(ssl_host: ssl_host) do
+                 Puppet::Configurer::PluginHandler.new.download_plugins(env) if Puppet::Configurer.should_pluginsync?
+                end
               end
             end
-          else
-            Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
 
-            configurer = Puppet::Configurer.new
-            configurer.run(:network_device => true, :pluginsync => false)
+            # this init the device singleton, so that the facts terminus
+            # and the various network_device provider can use it
+            Puppet::Util::NetworkDevice.init(device)
+
+            if options[:resource]
+              type, name = parse_args(command_line.args)
+              Puppet.info _("retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
+              resources = find_resources(type, name)
+              if options[:to_yaml]
+                text = resources.map do |resource|
+                  resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml.force_encoding(Encoding.default_external)
+                end.join("\n")
+                text.prepend("#{type.downcase}:\n")
+              else
+                text = resources.map do |resource|
+                  resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest.force_encoding(Encoding.default_external)
+                end.join("\n")
+              end
+              (puts text)
+              0
+            elsif options[:facts]
+              Puppet.info _("retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
+              remote_facts = Puppet::Node::Facts.indirection.find(name, :environment => env)
+              # Give a proper name to the facts
+              remote_facts.name = remote_facts.values['clientcert']
+              renderer = Puppet::Network::FormatHandler.format(:console)
+              puts renderer.render(remote_facts)
+              0
+            elsif options[:apply]
+              # ensure we have a cache folder structure exists for the device
+              subdir = File.join(Puppet[:statedir], 'graphs')
+              FileUtils.mkdir_p(subdir) unless File.directory?(subdir)
+              # avoid reporting to server
+              Puppet::Transaction::Report.indirection.terminus_class = :yaml
+              Puppet::Resource::Catalog.indirection.cache_class = nil
+
+              require 'puppet/application/apply'
+              begin
+                Puppet[:node_terminus] = :plain
+                Puppet[:catalog_terminus] = :compiler
+                Puppet[:catalog_cache_terminus] = nil
+                Puppet[:facts_terminus] = :network_device
+                Puppet.override(:network_device => true) do
+                  Puppet::Application::Apply.new(Puppet::Util::CommandLine.new('puppet', ["apply", options[:apply]])).run_command
+                end
+              end
+            else
+              Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
+
+              overrides = {}
+              override[:ssl_host] = ssl_host if ssl_host
+              Puppet.override(overrides) do
+                configurer = Puppet::Configurer.new
+                configurer.run(:network_device => true, :pluginsync => false)
+              end
+            end
+          rescue => detail
+            Puppet.log_exception(detail)
+            # If we rescued an error, then we return 1 as the exit code
+            1
+          ensure
+            pool.close
+            Puppet[:libdir] = libdir
+            Puppet[:vardir] = vardir
+            Puppet[:confdir] = confdir
+            Puppet[:certname] = certname
+            Puppet::SSL::Host.reset
           end
-        rescue => detail
-          Puppet.log_exception(detail)
-          # If we rescued an error, then we return 1 as the exit code
-          1
-        ensure
-          pool.close
-          Puppet[:libdir] = libdir
-          Puppet[:vardir] = vardir
-          Puppet[:confdir] = confdir
-          Puppet[:certname] = certname
-          Puppet::SSL::Host.reset
         end
       end
     end
