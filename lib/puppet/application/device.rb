@@ -308,7 +308,8 @@ Licensed under the Apache 2.0 License
             0
           elsif options[:apply]
             # ensure we have a cache folder structure exists for the device
-            FileUtils.mkdir_p(Puppet[:statedir]) unless File.directory?(Puppet[:statedir])
+            subdir = File.join(Puppet[:statedir], 'graphs')
+            FileUtils.mkdir_p(subdir) unless File.directory?(subdir)
             # avoid reporting to server
             Puppet::Transaction::Report.indirection.terminus_class = :yaml
             Puppet::Resource::Catalog.indirection.cache_class = nil
