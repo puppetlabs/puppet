@@ -254,7 +254,8 @@ Licensed under the Apache 2.0 License
         end
       end
       devices.collect do |devicename,device|
-        begin
+        pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
+        Puppet.override(:http_pool => pool) do
           device_url = URI.parse(device.url)
           # Handle nil scheme & port
           scheme = "#{device_url.scheme}://" if device_url.scheme
@@ -274,7 +275,7 @@ Licensed under the Apache 2.0 License
             ssl_host = setup_host(device.name)
 
             Puppet.override(ssl_host: ssl_host) do
-              Puppet::Configurer::PluginHandler.new.download_plugins(env)
+              Puppet::Configurer::PluginHandler.new.download_plugins(env) if Puppet::Configurer.should_pluginsync?
             end
           end
 
@@ -327,15 +328,15 @@ Licensed under the Apache 2.0 License
           else
             Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
 
-            require 'puppet/configurer'
             configurer = Puppet::Configurer.new
-            configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync? && !options[:libdir])
+            configurer.run(:network_device => true, :pluginsync => false)
           end
         rescue => detail
           Puppet.log_exception(detail)
           # If we rescued an error, then we return 1 as the exit code
           1
         ensure
+          pool.close
           Puppet[:libdir] = libdir
           Puppet[:vardir] = vardir
           Puppet[:confdir] = confdir
