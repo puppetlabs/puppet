@@ -190,7 +190,7 @@ class Puppet::SSL::StateMachine
   #
   class Wait < SSLState
     def next_state
-      time = @machine.onetime ? 0 : @machine.waitforcert
+      time = @machine.waitforcert
       if time < 1
         puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the waitforcert setting is set to 0.") % { name: Puppet[:certname] }
         exit(1)
@@ -211,10 +211,9 @@ class Puppet::SSL::StateMachine
   #
   class Done < SSLState; end
 
-  attr_reader :onetime, :waitforcert
+  attr_reader :waitforcert
 
-  def initialize(onetime: Puppet[:onetime], waitforcert: Puppet[:waitforcert])
-    @onetime = onetime
+  def initialize(waitforcert: Puppet[:waitforcert])
     @waitforcert = waitforcert
   end
 
