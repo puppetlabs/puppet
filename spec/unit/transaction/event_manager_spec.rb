@@ -304,7 +304,7 @@ describe Puppet::Transaction::EventManager do
       it "should record a failed event on the resource status" do
         @manager.process_events(@resource)
 
-        expect(@transaction.resource_status(@resource).events.length).to eq(2)
+        expect(@transaction.resource_status(@resource).events.length).to eq(1)
         expect(@transaction.resource_status(@resource).events[0].status).to eq('failure')
       end
 
