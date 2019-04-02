@@ -19,23 +19,36 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   commands :gemcmd => "gem"
 
+  # CommandDefiner in provider.rb creates convenience execution methods that set failonfail, combine, and optionally, environment.
+  # And when a child provider defines its own command via commands() or has_command(), the provider-specific path is always returned by command().
+  # But when the convenience execution method is invoked, the last convenience method to be defined is executed.
+  # This makes invoking those convenience execution methods unsuitable for inherited providers.
+  #
+  # In this case, causing the puppet_gem provider to inherit the parent gem provider's convenience gemcmd() methods, with the wrong path.
+
+  def self.execute_gem_command(command_options)
+    cmd = [command(:gemcmd)] << command_options
+
+    execute(cmd, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
+  end
+
   def self.gemlist(options)
-    gem_list_command = [command(:gemcmd), "list"]
+    command_options = ["list"]
 
     if options[:local]
-      gem_list_command << "--local"
+      command_options << "--local"
     else
-      gem_list_command << "--remote"
+      command_options << "--remote"
     end
     if options[:source]
-      gem_list_command << "--source" << options[:source]
+      command_options << "--source" << options[:source]
     end
     if name = options[:justme]
-      gem_list_command << '\A' + name + '\z'
+      command_options << '\A' + name + '\z'
     end
 
     begin
-      list = execute(gem_list_command, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).lines.
+      list = execute_gem_command(command_options).lines.
         map {|set| gemsplit(set) }.
         reject {|x| x.nil? }
     rescue Puppet::ExecutionFailure => detail
@@ -92,27 +105,27 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     is.any? { |version| dependency.match?('', version) }
   end
 
-  def gem_version(cmd)
-    command = [cmd, '--version']
-    execute(command, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
+  def rubygem_version
+    command_options = ["--version"]
+
+    self.class.execute_gem_command(command_options)
   end
 
   def install(useversion = true)
-    command = [command(:gemcmd), "install"]
-    command += install_options if resource[:install_options]
+    command_options = ["install"]
+    command_options += install_options if resource[:install_options]
 
     if Puppet.features.microsoft_windows?
       version = resource[:ensure]
-      command << "-v" << %Q["#{version}"] if (! resource[:ensure].is_a? Symbol) and useversion
+      command_options << "-v" << %Q["#{version}"] if (! resource[:ensure].is_a? Symbol) and useversion
     else
-      command << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
+      command_options << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
     end
 
-    command_version = gem_version(command(:gemcmd))
-    if Puppet::Util::Package.versioncmp(command_version, '2.0.0') == -1
-      command << '--no-rdoc' << '--no-ri'
+    if Puppet::Util::Package.versioncmp(rubygem_version, '2.0.0') == -1
+      command_options << "--no-rdoc" << "--no-ri"
     else
-      command << '--no-document'
+      command_options << "--no-document"
     end
 
     if source = resource[:source]
@@ -125,35 +138,35 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       case uri.scheme
       when nil
         # no URI scheme => interpret the source as a local file
-        command << source
+        command_options << source
       when /file/i
-        command << uri.path
+        command_options << uri.path
       when 'puppet'
         # we don't support puppet:// URLs (yet)
         raise Puppet::Error.new(_("puppet:// URLs are not supported as gem sources"))
       else
         # check whether it's an absolute file path to help Windows out
         if Puppet::Util.absolute_path?(source)
-          command << source
+          command_options << source
         else
           # interpret it as a gem repository
-          command << "--source" << "#{source}" << resource[:name]
+          command_options << "--source" << "#{source}" << resource[:name]
         end
       end
     else
-      command << resource[:name]
+      command_options << resource[:name]
     end
 
-    output = execute(command, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
-    # Apparently some stupid gem versions don't exit non-0 on failure
+    output = self.class.execute_gem_command(command_options)
+    # Apparently some gem versions don't exit non-0 on failure
     self.fail _("Could not install: %{output}") % { output: output.chomp } if output.include?("ERROR")
   end
 
   def latest
     # This always gets the latest version available.
-    gemlist_options = {:justme => resource[:name]}
-    gemlist_options.merge!({:source => resource[:source]}) unless resource[:source].nil?
-    hash = self.class.gemlist(gemlist_options)
+    options = {:justme => resource[:name]}
+    options.merge!({:source => resource[:source]}) unless resource[:source].nil?
+    hash = self.class.gemlist(options)
 
     hash[:ensure][0]
   end
@@ -163,14 +176,12 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   end
 
   def uninstall
-    command = [command(:gemcmd), "uninstall"]
-    command << "--executables" << "--all" << resource[:name]
+    command_options = ["uninstall"]
+    command_options << "--executables" << "--all" << resource[:name]
+    command_options += uninstall_options if resource[:uninstall_options]
 
-    command += uninstall_options if resource[:uninstall_options]
-
-    output = execute(command, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
-
-    # Apparently some stupid gem versions don't exit non-0 on failure
+    output = self.class.execute_gem_command(command_options)
+    # Apparently some gem versions don't exit non-0 on failure
     self.fail _("Could not uninstall: %{output}") % { output: output.chomp } if output.include?("ERROR")
   end
 

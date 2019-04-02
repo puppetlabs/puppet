@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 context Puppet::Type.type(:package).provider(:gem) do
+
+  let(:provider_gem_cmd) { '/provider/gem' }
+
   context 'installing myresource' do
     let(:resource) do
       Puppet::Type.type(:package).new(
@@ -15,59 +18,61 @@ context Puppet::Type.type(:package).provider(:gem) do
       provider
     end
 
+    let(:execute_options) { {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}} }
+
     before :each do
       resource.provider = provider
+      allow(described_class).to receive(:command).with(:gemcmd).and_return(provider_gem_cmd)
     end
 
     context "when installing" do
       before :each do
-        allow(described_class).to receive(:command).with(:gemcmd).and_return("/my/gem")
-        allow(provider).to receive(:gem_version).with("/my/gem").and_return('1.9.9')
+        allow(provider).to receive(:rubygem_version).and_return('1.9.9')
       end
 
-      it "should use the path to the gem" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[0]).to eq("/my/gem") }.and_return("")
+      it "should use the path to the gem command" do
+        allow(described_class).to receive(:which).with(provider_gem_cmd).and_return(provider_gem_cmd)
+        expect(described_class).to receive(:execute).with(be_a(Array), execute_options) { |args| expect(args[0]).to eq(provider_gem_cmd) }.and_return("")
         provider.install
       end
 
       it "should specify that the gem is being installed" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[1]).to eq("install") }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[0]).to eq("install") }.and_return("")
         provider.install
       end
 
       it "should specify that --rdoc should not be included when gem version is < 2.0.0" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[2]).to eq("--no-rdoc") }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[1]).to eq("--no-rdoc") }.and_return("")
         provider.install
       end
 
       it "should specify that --ri should not be included when gem version is < 2.0.0" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[3]).to eq("--no-ri") }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[2]).to eq("--no-ri") }.and_return("")
         provider.install
       end
 
       it "should specify that --document should not be included when gem version is >= 2.0.0" do
-        allow(provider).to receive(:gem_version).with("/my/gem").and_return('2.0.0')
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[2]).to eq("--no-document") }.and_return("")
+        allow(provider).to receive(:rubygem_version).and_return('2.0.0')
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[1]).to eq("--no-document") }.and_return("")
         provider.install
       end
 
       it "should specify the package name" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4]).to eq("myresource") }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[3]).to eq("myresource") }.and_return("")
         provider.install
       end
 
       it "should not append install_options by default" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args.length).to eq(5) }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args.length).to eq(4) }.and_return("")
         provider.install
       end
 
       it "should allow setting an install_options parameter" do
         resource[:install_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) do |args|
-          expect(args[2]).to eq('--force')
-          expect(args[3]).to eq('--bindir=/usr/bin')
-        end.and_return('')
-
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) do |args|
+          expect(args[1]).to eq('--force')
+          expect(args[2]).to eq('--bindir=/usr/bin')
+        end.and_return("")
         provider.install
       end
 
@@ -75,7 +80,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a normal file" do
           it "should use the file name instead of the gem name" do
             resource[:source] = "/my/file"
-            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4]).to eq("/my/file") }.and_return("")
+            expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[3]).to eq("/my/file") }.and_return("")
             provider.install
           end
         end
@@ -83,7 +88,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a file url" do
           it "should use the file name instead of the gem name" do
             resource[:source] = "file:///my/file"
-            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4]).to eq("/my/file") }.and_return("")
+            expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[3]).to eq("/my/file") }.and_return("")
             provider.install
           end
         end
@@ -98,7 +103,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a non-file and non-puppet url" do
           it "should treat the source as a gem repository" do
             resource[:source] = "http://host/my/file"
-            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4..6]).to eq(["--source", "http://host/my/file", "myresource"]) }.and_return("")
+            expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[3..5]).to eq(["--source", "http://host/my/file", "myresource"]) }.and_return("")
             provider.install
           end
         end
@@ -106,7 +111,7 @@ context Puppet::Type.type(:package).provider(:gem) do
         context "as a windows path on windows", :if => Puppet.features.microsoft_windows? do
           it "should treat the source as a local path" do
             resource[:source] = "c:/this/is/a/path/to/a/gem.gem"
-            expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4]).to eq("c:/this/is/a/path/to/a/gem.gem") }.and_return("")
+            expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[3]).to eq("c:/this/is/a/path/to/a/gem.gem") }.and_return("")
             provider.install
           end
         end
@@ -149,16 +154,16 @@ context Puppet::Type.type(:package).provider(:gem) do
 
     context "#instances" do
       before do
-        allow(described_class).to receive(:command).with(:gemcmd).and_return("/my/gem")
+        allow(described_class).to receive(:command).with(:gemcmd).and_return(provider_gem_cmd)
       end
 
       it "should return an empty array when no gems installed" do
-        expect(described_class).to receive(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).and_return("\n")
+        expect(described_class).to receive(:execute_gem_command).with(%w{list --local}).and_return("\n")
         expect(described_class.instances).to eq([])
       end
 
       it "should return ensure values as an array of installed versions" do
-        expect(described_class).to receive(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).and_return(<<-HEREDOC.gsub(/        /, ''))
+        expect(described_class).to receive(:execute_gem_command).with(%w{list --local}).and_return(<<-HEREDOC.gsub(/        /, ''))
         systemu (1.2.0)
         vagrant (0.8.7, 0.6.9)
         HEREDOC
@@ -170,7 +175,7 @@ context Puppet::Type.type(:package).provider(:gem) do
       end
 
       it "should ignore platform specifications" do
-        expect(described_class).to receive(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).and_return(<<-HEREDOC.gsub(/        /, ''))
+        expect(described_class).to receive(:execute_gem_command).with(%w{list --local}).and_return(<<-HEREDOC.gsub(/        /, ''))
         systemu (1.2.0)
         nokogiri (1.6.1 ruby java x86-mingw32 x86-mswin32-60, 1.4.4.1 x86-mswin32)
         HEREDOC
@@ -182,7 +187,7 @@ context Puppet::Type.type(:package).provider(:gem) do
       end
 
       it "should not list 'default: ' text from rubygems''" do
-        expect(described_class).to receive(:execute).with(%w{/my/gem list --local}, anything).and_return(<<-HEREDOC.gsub(/        /, ''))
+        expect(described_class).to receive(:execute_gem_command).with(%w{list --local}).and_return(<<-HEREDOC.gsub(/        /, ''))
         bundler (1.16.1, default: 1.16.0, 1.15.1)
         HEREDOC
 
@@ -192,8 +197,7 @@ context Puppet::Type.type(:package).provider(:gem) do
       end
 
       it "should not fail when an unmatched line is returned" do
-        expect(described_class).to receive(:execute).with(%w{/my/gem list --local}, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).
-          and_return(File.read(my_fixture('line-with-1.8.5-warning')))
+        expect(described_class).to receive(:execute_gem_command).with(%w{list --local}).and_return(File.read(my_fixture('line-with-1.8.5-warning')))
 
         expect(described_class.instances.map {|p| p.properties}).
           to eq([{provider: :gem, ensure: ["0.3.2"],    name: "columnize"},
@@ -212,7 +216,7 @@ context Puppet::Type.type(:package).provider(:gem) do
     context "listing gems" do
       context "searching for a single package" do
         it "searches for an exact match" do
-          expect(described_class).to receive(:execute).with(include('\Abundler\z'), {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}}).and_return(File.read(my_fixture('gem-list-single-package')))
+          expect(described_class).to receive(:execute_gem_command).with(include('\Abundler\z')).and_return(File.read(my_fixture('gem-list-single-package')))
           expected = {:name => 'bundler', :ensure => %w[1.6.2], :provider => :gem}
           expect(described_class.gemlist({:justme => 'bundler'})).to eq(expected)
         end
@@ -304,49 +308,51 @@ context Puppet::Type.type(:package).provider(:gem) do
       provider
     end
 
+    let(:execute_options) { {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}} }
+
     before :each do
       resource.provider = provider
+      allow(described_class).to receive(:command).with(:gemcmd).and_return(provider_gem_cmd)
     end
 
     context "when uninstalling" do
-      it "should use the path to the gem" do
-        allow(described_class).to receive(:command).with(:gemcmd).and_return("/my/gem")
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[0]).to eq("/my/gem") }.and_return("")
+      it "should use the path to the gem command" do
+        allow(described_class).to receive(:which).with(provider_gem_cmd).and_return(provider_gem_cmd)
+        expect(described_class).to receive(:execute).with(be_a(Array), execute_options) { |args| expect(args[0]).to eq(provider_gem_cmd) }.and_return("")
         provider.uninstall
       end
 
       it "should specify that the gem is being uninstalled" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[1]).to eq("uninstall") }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[0]).to eq("uninstall") }.and_return("")
         provider.uninstall
       end
 
       it "should specify that the relevant executables should be removed without confirmation" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[2]).to eq("--executables") }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[1]).to eq("--executables") }.and_return("")
         provider.uninstall
       end
 
       it "should specify that all the matching versions should be removed" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[3]).to eq("--all") }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[2]).to eq("--all") }.and_return("")
         provider.uninstall
       end
 
       it "should specify the package name" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args[4]).to eq("myresource") }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args[3]).to eq("myresource") }.and_return("")
         provider.uninstall
       end
 
       it "should not append uninstall_options by default" do
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) { |args| expect(args.length).to eq(5) }.and_return("")
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) { |args| expect(args.length).to eq(4) }.and_return("")
         provider.uninstall
       end
 
       it "should allow setting an uninstall_options parameter" do
         resource[:uninstall_options] = [ '--ignore-dependencies', {'--version' => '0.1.1' } ]
-        expect(provider).to receive(:execute).with(be_a(Array), be_a(Hash)) do |args|
-          expect(args[5]).to eq('--ignore-dependencies')
-          expect(args[6]).to eq('--version=0.1.1')
+        expect(described_class).to receive(:execute_gem_command).with(be_a(Array)) do |args|
+          expect(args[4]).to eq('--ignore-dependencies')
+          expect(args[5]).to eq('--version=0.1.1')
         end.and_return('')
-
         provider.uninstall
       end
     end
