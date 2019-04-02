@@ -289,11 +289,15 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       else
         if Puppet[:server_list] && !Puppet[:server_list].empty?
           server = Puppet[:server_list].first
+          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+          Puppet.debug _("Selected server from first entry of the `server_list` setting: %{server}:%{port}") % {server: server[0], port: server[1]}
           @client = Puppet::FileBucket::Dipper.new(
             :Server => server[0],
             :Port => server[1]
           )
         else
+          #TRANSLATORS 'server' is the name of a setting and should not be translated
+          Puppet.debug _("Selected server from the `server` setting: %{server}") % {server: Puppet[:server]}
           @client = Puppet::FileBucket::Dipper.new(:Server => Puppet[:server])
         end
       end
