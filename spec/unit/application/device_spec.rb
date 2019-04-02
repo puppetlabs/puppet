@@ -66,6 +66,7 @@ describe Puppet::Application::Device do
 
   describe "when handling options" do
     before do
+      Puppet[:certname] = 'device.example.com'
       allow(device.command_line).to receive(:args).and_return([])
     end
 
@@ -410,8 +411,8 @@ describe Puppet::Application::Device do
         end
 
         it "does not try to recreate the state folder" do
-          allow(File).to receive(:directory?).with('/tmp/statedir').and_return(true)
-          expect(FileUtils).not_to receive(:mkdir_p).with('/tmp/statedir')
+          allow(File).to receive(:directory?).with('/tmp/statedir/graphs').and_return(true)
+          expect(FileUtils).not_to receive(:mkdir_p).with('/tmp/statedir/graphs')
 
           expect(Puppet::Util::CommandLine).to receive(:new).once
           expect(Puppet::Application::Apply).to receive(:new).once
@@ -421,8 +422,8 @@ describe Puppet::Application::Device do
         end
 
         it "creates the missing state folder" do
-          allow(File).to receive(:directory?).with('/tmp/statedir').and_return(false)
-          expect(FileUtils).to receive(:mkdir_p).with('/tmp/statedir').once
+          allow(File).to receive(:directory?).with('/tmp/statedir/graphs').and_return(false)
+          expect(FileUtils).to receive(:mkdir_p).with('/tmp/statedir/graphs').once
 
           expect(Puppet::Util::CommandLine).to receive(:new).once
           expect(Puppet::Application::Apply).to receive(:new).once
@@ -536,7 +537,7 @@ describe Puppet::Application::Device do
         end
 
         it "makes the Puppet::Pops::Loaders available" do
-          expect(configurer).to receive(:run).with(:network_device => true, :pluginsync => true) do
+          expect(configurer).to receive(:run).with(:network_device => true, :pluginsync => false) do
             fail('Loaders not available') unless Puppet.lookup(:loaders) { nil }.is_a?(Puppet::Pops::Loaders)
             true
           end.and_return(6, 2)
