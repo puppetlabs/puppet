@@ -266,9 +266,10 @@ Licensed under the Apache 2.0 License
           Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:certname] = device.name
 
+          # this will reload and recompute default settings and create device-specific sub vardir
+          Puppet.settings.use :main, :agent, :ssl
+
           unless options[:resource] || options[:facts] || options[:apply] || options[:libdir]
-            # this will reload and recompute default settings and create the devices sub vardir
-            Puppet.settings.use :main, :agent, :ssl
             # ask for a ssl cert if needed, but at least
             # setup the ssl system for this device.
             ssl_host = setup_host(device.name)
@@ -307,8 +308,6 @@ Licensed under the Apache 2.0 License
             puts renderer.render(remote_facts)
             0
           elsif options[:apply]
-            # ensure we have a cache folder structure exists for the device
-            FileUtils.mkdir_p(Puppet[:statedir]) unless File.directory?(Puppet[:statedir])
             # avoid reporting to server
             Puppet::Transaction::Report.indirection.terminus_class = :yaml
             Puppet::Resource::Catalog.indirection.cache_class = nil
@@ -383,9 +382,12 @@ Licensed under the Apache 2.0 License
 
   def setup
     setup_logs
+
+    # setup global device-specific defaults; creates all necessary directories, etc
+    Puppet.settings.use :main, :agent, :device, :ssl
+
     if options[:apply] || options[:facts] || options[:resource]
       Puppet::Util::Log.newdestination(:console)
-      Puppet.settings.use :main, :agent, :ssl
     else
       args[:Server] = Puppet[:server]
       if options[:centrallogs]
@@ -394,8 +396,6 @@ Licensed under the Apache 2.0 License
         logdest += ":" + args[:Port] if args.include?(:Port)
         Puppet::Util::Log.newdestination(logdest)
       end
-
-      Puppet.settings.use :main, :agent, :device, :ssl
 
       Puppet::Transaction::Report.indirection.terminus_class = :rest
 
