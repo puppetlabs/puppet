@@ -286,7 +286,6 @@ describe Puppet::Transaction::EventManager do
 
       it "should emit an error and log but not fail" do
         expect(@resource).to receive(:err).with('Failed to call callback1: a failure').and_call_original
-        expect(@resource).to receive(:err).with('a failure').and_call_original
 
         @manager.process_events(@resource)
 
