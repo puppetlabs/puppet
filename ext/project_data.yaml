@@ -20,7 +20,7 @@ gem_runtime_dependencies:
   facter: ['> 2.0.1', '< 4']
   hiera: ['>= 3.2.1', '< 4']
   semantic_puppet: '~> 1.0'
-  fast_gettext: '~> 1.1.2'
+  fast_gettext: '~> 1.1'
   locale: '~> 2.1'
   multi_json: '~> 1.10'
   httpclient: '~> 2.8'
