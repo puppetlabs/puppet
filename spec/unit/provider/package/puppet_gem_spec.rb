@@ -33,38 +33,38 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
     end
 
     it "should use the path to the gem command" do
-      allow(described_class).to receive(:which).with(provider_gem_cmd).and_return(provider_gem_cmd)
+      allow(described_class).to receive(:validate_command).with(provider_gem_cmd)
       expect(described_class).to receive(:execute).with(be_a(Array), execute_options) { |args| expect(args[0]).to eq(provider_gem_cmd) }.and_return('')
       provider.install
     end
 
     it "should not append install_options by default" do
-      expect(described_class).to receive(:execute_gem_command).with(%w{install --no-rdoc --no-ri myresource}).and_return('')
+      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{install --no-rdoc --no-ri myresource}).and_return('')
       provider.install
     end
 
     it "should allow setting an install_options parameter" do
       resource[:install_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-      expect(described_class).to receive(:execute_gem_command).with(%w{install --force --bindir=/usr/bin --no-rdoc --no-ri myresource}).and_return('')
+      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{install --force --bindir=/usr/bin --no-rdoc --no-ri myresource}).and_return('')
       provider.install
     end
   end
 
   context "when uninstalling" do
     it "should use the path to the gem command" do
-      allow(described_class).to receive(:which).with(provider_gem_cmd).and_return(provider_gem_cmd)
+      allow(described_class).to receive(:validate_command).with(provider_gem_cmd)
       expect(described_class).to receive(:execute).with(be_a(Array), execute_options) { |args| expect(args[0]).to eq(provider_gem_cmd) }.and_return('')
       provider.uninstall
     end
 
     it "should not append uninstall_options by default" do
-      expect(described_class).to receive(:execute_gem_command).with(%w{uninstall --executables --all myresource}).and_return('')
+      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{uninstall --executables --all myresource}).and_return('')
       provider.uninstall
     end
 
     it "should allow setting an uninstall_options parameter" do
       resource[:uninstall_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
-      expect(described_class).to receive(:execute_gem_command).with(%w{uninstall --executables --all myresource --force --bindir=/usr/bin}).and_return('')
+      expect(described_class).to receive(:execute_gem_command).with(provider_gem_cmd, %w{uninstall --executables --all myresource --force --bindir=/usr/bin}).and_return('')
       provider.uninstall
     end
   end
