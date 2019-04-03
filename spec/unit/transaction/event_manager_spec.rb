@@ -284,8 +284,12 @@ describe Puppet::Transaction::EventManager do
         expect(@manager).to receive(:queued_events).and_yield(:callback1, [@event])
       end
 
-      it "should log but not fail" do
-        expect { @manager.process_events(@resource) }.not_to raise_error
+      it "should emit an error and log but not fail" do
+        expect(@resource).to receive(:err).with('Failed to call callback1: a failure').and_call_original
+        expect(@resource).to receive(:err).with('a failure').and_call_original
+
+        @manager.process_events(@resource)
+
         expect(@logs).to include(an_object_having_attributes(level: :err, message: 'a failure'))
       end
 
