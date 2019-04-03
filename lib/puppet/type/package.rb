@@ -20,8 +20,8 @@ module Puppet
       requires in order to function, and you must meet those requirements
       to use a given provider.
 
-      You can declare multiple package resources with the same `name`, as long
-      as they specify different providers and have unique titles.
+      You can declare multiple package resources with the same `name` as long
+      as they have unique titles, and specify different providers and commands.
 
       Note that you must use the _title_ to make a reference to a package
       resource; `Package[<NAME>]` is not a synonym for `Package[<TITLE>]` like
@@ -65,6 +65,8 @@ module Puppet
       provider-specific.",
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
     feature :virtual_packages, "The provider accepts virtual package names for install and uninstall."
+
+    feature :targetable, "The provider accepts a targeted package management command."
 
     ensurable do
       desc <<-EOT
@@ -271,20 +273,55 @@ module Puppet
     providify
     paramclass(:provider).isnamevar
 
-    # We have more than one namevar, so we need title_patterns. However, we
-    # cheat and set the patterns to map to name only and completely ignore
-    # provider. So far, the logic that determines uniqueness appears to just
-    # "Do The Right Thing™" when the provider is explicitly set by the user.
+    # Specify a targeted package management command.
+    newparam(:command, :required_features => :targetable) do
+      desc <<-EOT
+        The targeted command to use when managing a package:
+
+          package { 'mysql':
+            provider => gem,
+          }
+
+          package { 'mysql-opt':
+            name     => 'mysql',
+            provider => gem,
+            command  => '/opt/ruby/bin/gem',
+          }
+
+        Each provider defines a package management command; and uses the first
+        instance of the command found in the PATH.
+
+        Providers supporting the targetable feature allow you to specify the
+        absolute path of the package management command; useful when multiple
+        instances of the command are installed, or the command is not in the PATH.
+      EOT
+
+      isnamevar
+      defaultto :default
+    end
+
+    # We have more than one namevar, so we need title_patterns.
+    # However, we cheat and set the patterns to map to name only
+    # and completely ignore provider (and command, for targetable providers).
+    # So far, the logic that determines uniqueness appears to just
+    # "Do The Right Thing™" when provider (and command) are explicitly set.
     #
     # The following resources will be seen as unique by puppet:
     #
     #     # Uniqueness Key: ['mysql', nil]
-    #     package{'mysql': }
+    #     package {'mysql': }
     #
-    #     # Uniqueness Key: ['mysql', 'gem']
-    #     package{'gem-mysql':
+    #     # Uniqueness Key: ['mysql', 'gem', nil]
+    #     package {'gem-mysql':
+    #       name     => 'mysql,
+    #       provider => gem,
+    #     }
+    #
+    #     # Uniqueness Key: ['mysql', 'gem', '/opt/ruby/bin/gem']
+    #     package {'gem-mysql-opt':
     #       name     => 'mysql,
     #       provider => gem
+    #       command  => '/opt/ruby/bin/gem',
     #     }
     #
     # This does not handle the case where providers like 'yum' and 'rpm' should
