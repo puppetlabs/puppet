@@ -111,7 +111,7 @@ EOF
                         "--certname #{certname}"), :acceptable_exit_codes => [1])
         unless agent['locale'] == 'ja'
           assert_key_generated(agent)
-          assert_match(/no certificate found/, stdout, "Expected certificate to not be autosigned")
+          assert_match(/Certificate for #{agent}-reject has not been signed yet/, stdout, "Expected certificate to not be autosigned")
         end
       end
     end
