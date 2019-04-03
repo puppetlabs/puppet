@@ -155,6 +155,7 @@ class Puppet::Transaction::EventManager
     return true
   rescue => detail
     resource_error_message = _("Failed to call %{callback}: %{detail}") % { callback: callback, detail: detail }
+    resource.err(resource_error_message)
     transaction.resource_status(resource).failed_to_restart = true
     transaction.resource_status(resource).fail_with_event(resource_error_message)
     resource.log_exception(detail)
