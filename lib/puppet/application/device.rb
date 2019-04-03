@@ -268,17 +268,20 @@ Licensed under the Apache 2.0 License
             Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
             Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
             Puppet[:certname] = device.name
+            ssl_host = nil
 
             # this will reload and recompute default settings and create device-specific sub vardir
             Puppet.settings.use :main, :agent, :ssl
 
-            unless options[:resource] || options[:facts] || options[:apply] || options[:libdir]
+            unless options[:resource] || options[:facts] || options[:apply]
               # ask for a ssl cert if needed, but at least
               # setup the ssl system for this device.
               ssl_host = setup_host(device.name)
 
-              Puppet.override(ssl_host: ssl_host) do
-                Puppet::Configurer::PluginHandler.new.download_plugins(env) if Puppet::Configurer.should_pluginsync?
+              unless options[:libdir]
+                Puppet.override(ssl_host: ssl_host) do
+                  Puppet::Configurer::PluginHandler.new.download_plugins(env) if Puppet::Configurer.should_pluginsync?
+                end
               end
             end
 
@@ -328,8 +331,12 @@ Licensed under the Apache 2.0 License
             else
               Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
 
-              configurer = Puppet::Configurer.new
-              configurer.run(:network_device => true, :pluginsync => false)
+              overrides = {}
+              overrides[:ssl_host] = ssl_host if ssl_host
+              Puppet.override(overrides) do
+                configurer = Puppet::Configurer.new
+                configurer.run(:network_device => true, :pluginsync => false)
+              end
             end
           rescue => detail
             Puppet.log_exception(detail)
