@@ -606,16 +606,16 @@ module Puppet
       configuration files.  This timeout determines how quickly Puppet checks whether
       a file (such as manifests or puppet.conf) has changed on disk. The default will
       change in a future release to be 'unlimited', requiring a reload of the Puppet
-      service to pick up changes to its internal configuration. To reparse files
-      within an environment in Puppet Server please use the environment_cache endpoint",
+      service to pick up changes to its internal configuration. Currently we do not
+      accept a value of 'unlimited'. To reparse files within an environment in
+      Puppet Server please use the environment_cache endpoint",
       :hook => proc do |val|
-        if ![0, '15s'].include?(val)
+        unless [0, 15, '15s'].include?(val)
           Puppet.deprecation_warning(<<-WARNING)
 Fine grained control of filetimeouts is deprecated. In future
 releases this value will only determine if file content is cached.
 
-Valid values will be 0 (never cache) and 'unlimited' (always cache).
-With a default of 'unlimited'.
+Valid values are 0 (never cache) and 15 (15 second minimum wait time).
             WARNING
         end
       end
@@ -647,7 +647,7 @@ With a default of 'unlimited'.
       timers. When these timers drift out of sync, agents can be served
       inconsistent catalogs.",
       :hook => proc do |val|
-        if ![0, 'unlimited'].include?(val)
+        unless [0, 'unlimited', Float::INFINITY].include?(val)
           Puppet.deprecation_warning(<<-WARNING)
 Fine grained control of environment timeouts is deprecated,
 please use `0` or `unlimited` to control default caching behavior
