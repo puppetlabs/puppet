@@ -71,6 +71,7 @@ describe Puppet::Application::Device do
 
   describe "when handling options" do
     before do
+      Puppet[:certname] = 'device.example.com'
       allow(device.command_line).to receive(:args).and_return([])
     end
 
