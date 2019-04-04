@@ -22,6 +22,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
   end
 
+defaultfor :operatingsystem => :amazon
 defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
 
   def self.prefetch(packages)
