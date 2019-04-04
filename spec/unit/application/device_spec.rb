@@ -410,40 +410,6 @@ describe Puppet::Application::Device do
         end
       end
 
-      context 'when running --apply' do
-        before do
-          allow(device.options).to receive(:[]).with(:apply).and_return('file.pp')
-          allow(device.options).to receive(:[]).with(:target).and_return('device1')
-          allow(Puppet::Util::NetworkDevice).to receive(:init)
-          allow(File).to receive(:file?).with('file.pp').and_return(true)
-          allow(Puppet).to receive(:[]).and_call_original
-          allow(Puppet).to receive(:[]).with(:statedir).and_return('/tmp/statedir')
-          allow(::File).to receive(:directory?).and_return(false)
-        end
-
-        it "does not try to recreate the state folder" do
-          allow(File).to receive(:directory?).with('/tmp/statedir').and_return(true)
-          expect(FileUtils).not_to receive(:mkdir_p).with('/tmp/statedir')
-
-          expect(Puppet::Util::CommandLine).to receive(:new).once
-          expect(Puppet::Application::Apply).to receive(:new).once
-
-          expect(Puppet::Configurer).not_to receive(:new)
-          expect { device.main }.to exit_with 1
-        end
-
-        it "creates the missing state folder" do
-          allow(File).to receive(:directory?).with('/tmp/statedir').and_return(false)
-          expect(FileUtils).to receive(:mkdir_p).with('/tmp/statedir').once
-
-          expect(Puppet::Util::CommandLine).to receive(:new).once
-          expect(Puppet::Application::Apply).to receive(:new).once
-
-          expect(Puppet::Configurer).not_to receive(:new)
-          expect { device.main }.to exit_with 1
-        end
-      end
-
       context 'when running --resource' do
         before do
           allow(device.options).to receive(:[]).with(:resource).and_return(true)
