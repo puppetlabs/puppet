@@ -670,7 +670,7 @@ Where the fileserver configuration is stored\.
 .IP "" 0
 .
 .SS "filetimeout"
-The minimum time to wait between checking for updates in configuration files\. This timeout determines how quickly Puppet checks whether a file (such as manifests or puppet\.conf) has changed on disk\. The default will change in a future release to be \'unlimited\', requiring a reload of the Puppet service to pick up changes to its internal configuration\. To reparse files within an environment in Puppet Server please use the environment_cache endpoint
+The minimum time to wait between checking for updates in configuration files\. This timeout determines how quickly Puppet checks whether a file (such as manifests or puppet\.conf) has changed on disk\. The default will change in a future release to be \'unlimited\', requiring a reload of the Puppet service to pick up changes to its internal configuration\. Currently we do not accept a value of \'unlimited\'\. To reparse files within an environment in Puppet Server please use the environment_cache endpoint
 .
 .IP "\(bu" 4
 \fIDefault\fR: 15s
