@@ -43,6 +43,8 @@ class Puppet::SSL::VerifierAdapter
   # @raise [Puppet::Error] server hostname does not match certificate
   # @raise [OpenSSL::SSL::SSLError] low-level SSL connection failure
   def handle_connection_error(http, error)
+    raise @validator.last_error if @validator.respond_to?(:last_error) && @validator.last_error
+
     Puppet::Util::SSL.handle_connection_error(error, @validator, http.address)
   end
 end
