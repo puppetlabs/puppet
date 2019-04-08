@@ -331,6 +331,8 @@ module Puppet::Network::HTTP
       end
       response
     rescue OpenSSL::SSL::SSLError => error
+      raise @verify.last_error if @verify.last_error
+
       Puppet::Util::SSL.handle_connection_error(error, @verify, site.host)
     end
   end
