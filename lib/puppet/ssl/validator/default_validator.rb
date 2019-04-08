@@ -10,6 +10,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   attr_reader :peer_certs
   attr_reader :verify_errors
   attr_reader :ssl_configuration
+  attr_reader :last_error
 
   FIVE_MINUTES_AS_SECONDS = 5 * 60
 
@@ -40,6 +41,8 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   def reset!
     @peer_certs = []
     @verify_errors = []
+    @hostname = nil
+    @last_error = nil
   end
 
   # Performs verification of the SSL connection and collection of the
@@ -85,6 +88,31 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
       error_string = store_context.error_string || "OpenSSL error #{error}"
 
       case error
+      when OpenSSL::X509::V_OK
+        if @hostname
+          # chain is from leaf to root, opposite of the order that `call` is invoked
+          chain_cert = store_context.chain.first
+          peer_cert = @peer_certs.last
+
+          # ruby 2.4 doesn't compare certs based on value, so force to DER byte array
+          if peer_cert && chain_cert && peer_cert.content.to_der == chain_cert.to_der && !OpenSSL::SSL.verify_certificate_identity(peer_cert.content, @hostname)
+            valid_certnames = [peer_cert.name, *peer_cert.subject_alt_names].uniq
+            if valid_certnames.size > 1
+              expected_certnames = _("expected one of %{certnames}") % { certnames: valid_certnames.join(', ') }
+            else
+              expected_certnames = _("expected %{certname}") % { certname: valid_certnames.first }
+            end
+
+            msg = _("Server hostname '%{host}' did not match server certificate; %{expected_certnames}") % { host: @hostname, expected_certnames: expected_certnames }
+            @last_error = Puppet::Error.new(msg)
+            return false
+          else
+            @verify_errors << "#{error_string} for #{current_cert.subject}"
+          end
+        else
+          @verify_errors << "#{error_string} for #{current_cert.subject}"
+        end
+
       when OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID
         # current_crl can be nil
         # https://github.com/ruby/ruby/blob/ruby_1_9_3/ext/openssl/ossl_x509store.c#L501-L510
@@ -118,6 +146,8 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   # @api private
   #
   def setup_connection(connection)
+    @hostname = connection.address
+
     if ssl_certificates_are_present?
       connection.cert_store = @ssl_host.ssl_store
       connection.ca_file = @ssl_configuration.ca_auth_file

@@ -333,6 +333,8 @@ module Puppet::Network::HTTP
       end
       response
     rescue OpenSSL::SSL::SSLError => error
+      raise @verify.last_error if @verify.last_error
+
       # can be nil
       peer_cert = @verify.peer_certs.last
 
