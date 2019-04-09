@@ -190,12 +190,12 @@ class Puppet::SSL::StateMachine
   #
   class Wait < SSLState
     def next_state
-      time = @machine.onetime ? 0 : @machine.waitforcert
+      time = @machine.waitforcert
       if time < 1
-        puts _("Exiting; no certificate found and waitforcert is disabled")
+        puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the waitforcert setting is set to 0.") % { name: Puppet[:certname] }
         exit(1)
       else
-        Puppet.debug(_("Waiting %{time} seconds for cert to be signed") % {time: time})
+        Puppet.info(_("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Will try again in %{time} seconds.") % {name: Puppet[:certname], time: time})
 
         sleep(time)
 
@@ -211,10 +211,9 @@ class Puppet::SSL::StateMachine
   #
   class Done < SSLState; end
 
-  attr_reader :onetime, :waitforcert
+  attr_reader :waitforcert
 
-  def initialize(onetime: Puppet[:onetime], waitforcert: Puppet[:waitforcert])
-    @onetime = onetime
+  def initialize(waitforcert: Puppet[:waitforcert])
     @waitforcert = waitforcert
   end
 
@@ -239,9 +238,9 @@ class Puppet::SSL::StateMachine
       chain.reverse.each_with_index do |cert, i|
         digest = Puppet::SSL::Digest.new('SHA256', cert.to_der)
         if i == chain.length - 1
-          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_s, digest: digest})
+          Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
         else
-          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_s, digest: digest})
+          Puppet.debug(_("Verified CA certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
         end
       end
     end

@@ -79,7 +79,7 @@ describe Puppet::SSL::Verifier do
 
       expect {
         verifier.handle_connection_error(http, ssl_error)
-      }.to raise_error(Puppet::SSL::CertVerifyError, "certificate verify failed [unable to get local issuer certificate for /CN=127.0.0.1]")
+      }.to raise_error(Puppet::SSL::CertVerifyError, "certificate verify failed [unable to get local issuer certificate for CN=127.0.0.1]")
     end
 
     it "raises a verification error for the server cert" do
@@ -88,7 +88,7 @@ describe Puppet::SSL::Verifier do
 
       expect {
         verifier.handle_connection_error(http, ssl_error)
-      }.to raise_error(Puppet::SSL::CertVerifyError, "certificate verify failed [certificate rejected for /CN=127.0.0.1]")
+      }.to raise_error(Puppet::SSL::CertVerifyError, "certificate verify failed [certificate rejected for CN=127.0.0.1]")
     end
 
     it "raises cert mismatch error on ruby < 2.4" do

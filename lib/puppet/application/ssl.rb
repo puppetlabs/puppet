@@ -207,9 +207,9 @@ HELP
     ssl_context.client_chain.reverse.each_with_index do |cert, i|
       digest = Puppet::SSL::Digest.new('SHA256', cert.to_der)
       if i == ssl_context.client_chain.length - 1
-        Puppet.notice("Verified client certificate '#{cert.subject.to_s}' fingerprint #{digest}")
+        Puppet.notice("Verified client certificate '#{cert.subject.to_utf8}' fingerprint #{digest}")
       else
-        Puppet.notice("Verified CA certificate '#{cert.subject.to_s}' fingerprint #{digest}")
+        Puppet.notice("Verified CA certificate '#{cert.subject.to_utf8}' fingerprint #{digest}")
       end
     end
   end

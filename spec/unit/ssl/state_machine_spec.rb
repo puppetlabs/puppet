@@ -254,7 +254,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         expect {
           state.next_state
-        }.to raise_error(Puppet::SSL::SSLError, %r{The certificate for '/CN=signed' does not match its private key})
+        }.to raise_error(Puppet::SSL::SSLError, %r{The certificate for 'CN=signed' does not match its private key})
       end
 
       it 'generates a new private key, saves it and passes it to the next state' do
@@ -451,7 +451,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         state.next_state
 
-        expect(@logs).to include(an_object_having_attributes(message: %r{The certificate for '/CN=127.0.0.1' does not match its private key}))
+        expect(@logs).to include(an_object_having_attributes(message: %r{The certificate for 'CN=127.0.0.1' does not match its private key}))
         expect(File).to_not exist(Puppet[:hostcert])
       end
 
@@ -461,7 +461,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         state.next_state
 
-        expect(@logs).to include(an_object_having_attributes(message: %r{Certificate '/CN=revoked' is revoked}))
+        expect(@logs).to include(an_object_having_attributes(message: %r{Certificate 'CN=revoked' is revoked}))
         expect(File).to_not exist(Puppet[:hostcert])
       end
     end
@@ -469,24 +469,14 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     context 'in state Wait' do
       let(:ssl_context) { Puppet::SSL::SSLContext.new(cacerts: cacerts, crls: crls)}
 
-      it 'exits with 1 if only running once' do
-        machine = described_class.new(onetime: true)
-
-        expect {
-          expect {
-            Puppet::SSL::StateMachine::Wait.new(machine, ssl_context).next_state
-          }.to output("Exiting; no certificate found and waitforcert is disabled").to_stdout
-        }.to exit_with(1)
-      end
-
       it 'exits with 1 if waitforcert is 0' do
         machine = described_class.new(waitforcert: 0)
 
         expect {
           expect {
             Puppet::SSL::StateMachine::Wait.new(machine, ssl_context).next_state
-          }.to output("Exiting; no certificate found and waitforcert is disabled").to_stdout
-        }.to exit_with(1)
+          }.to exit_with(1)
+        }.to output(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(.*\). Exiting now because the waitforcert setting is set to 0./).to_stdout
       end
 
       it 'sleeps and transitions to NeedCACerts' do
@@ -494,6 +484,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         state = Puppet::SSL::StateMachine::Wait.new(machine, ssl_context)
         expect(state).to receive(:sleep).with(15)
+
+        expect(Puppet).to receive(:info).with(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(.*\). Will try again in 15 seconds./)
 
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
       end

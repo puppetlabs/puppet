@@ -39,7 +39,7 @@ DOC
   # This name is what gets extracted from the subject before being passed
   # to the constructor, so it's not downcased
   def unmunged_name
-    self.class.name_from_subject(content.subject)
+    self.class.name_from_subject(content.subject.to_utf8)
   end
 
   # Any extensions registered with custom OIDs as defined in module

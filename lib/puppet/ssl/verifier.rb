@@ -126,7 +126,7 @@ class Puppet::SSL::Verifier
     # TRANSLATORS: `error` is an untranslated message from openssl describing why a certificate in the server's chain is invalid, and `subject` is the identity/name of the failed certificate
     @last_error = Puppet::SSL::CertVerifyError.new(
       _("certificate verify failed [%{error} for %{subject}]") %
-      { error: store_context.error_string, subject: peer_cert.subject },
+      { error: store_context.error_string, subject: peer_cert.subject.to_utf8 },
       store_context.error, peer_cert
     )
     false

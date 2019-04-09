@@ -304,12 +304,12 @@ describe Puppet::X509::CertProvider do
 
       it 'returns a certificate' do
         cert = provider.load_client_cert('signed')
-        expect(cert.subject.to_s).to eq('/CN=signed')
+        expect(cert.subject.to_utf8).to eq('CN=signed')
       end
 
       it 'downcases name' do
         cert = provider.load_client_cert('SIGNED')
-        expect(cert.subject.to_s).to eq('/CN=signed')
+        expect(cert.subject.to_utf8).to eq('CN=signed')
       end
 
       it 'raises if name is invalid' do
@@ -348,7 +348,7 @@ describe Puppet::X509::CertProvider do
 
       it 'downcases name' do
         csr = provider.load_request('REQUEST')
-        expect(csr.subject.to_s).to eq('/CN=pending')
+        expect(csr.subject.to_utf8).to eq('CN=pending')
       end
 
       it 'raises if name is invalid' do
