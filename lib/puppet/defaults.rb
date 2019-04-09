@@ -1085,6 +1085,23 @@ EOT
       :desc       => "The default TTL for new certificates.
       #{AS_DURATION}",
     },
+    :crl_refresh_interval => {
+      :type       => :duration,
+      :desc       => "How often the Puppet agent refreshes its local CRL. By
+         default the CRL is only downloaded once, and never refreshed. If a
+         duration is specified, then the agent will refresh its CRL whenever it
+         next runs and the elapsed time since the CRL was last refreshed exceeds
+         the duration.
+
+         In general, the duration should be greater than the `runinterval`.
+         Setting it to an equal or lesser value will cause the CRL to be
+         refreshed on every run.
+
+         If the agent downloads a new CRL, the agent will use it for subsequent
+         network requests. If the refresh request fails or if the CRL is
+         unchanged on the server, then the agent run will continue using the
+         local CRL it already has.#{AS_DURATION}",
+    },
     :keylength => {
       :default    => 4096,
       :desc       => "The bit length of keys.",

@@ -1,3 +1,4 @@
+require 'time'
 require 'puppet/rest/route'
 require 'puppet/network/http_pool'
 require 'puppet/network/http/compression'
@@ -50,9 +51,11 @@ module Puppet::Rest
     # @param [Puppet::SSL::SSLContext] ssl_context the ssl content to use when making the request
     # @raise [Puppet::Rest::ResponseError] if the response status is not OK
     # @return [String] the PEM-encoded crl
-    def self.get_crls(name, ssl_context)
+    def self.get_crls(name, ssl_context, if_modified_since: nil)
       ca.with_base_url(Puppet::Network::Resolver.new) do |url|
         header = { 'Accept' => 'text/plain', 'Accept-Encoding' => ACCEPT_ENCODING }
+        header['If-Modified-Since'] = if_modified_since.httpdate if if_modified_since
+
         url.path += "certificate_revocation_list/#{name}"
 
         use_ssl = url.is_a? URI::HTTPS

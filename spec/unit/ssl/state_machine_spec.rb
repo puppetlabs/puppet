@@ -225,6 +225,69 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
       expect(File).to_not exist(Puppet[:hostcrl])
     end
+
+    it 'skips CRL refresh by default' do
+      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
+
+      state.next_state
+    end
+
+    it 'skips CRL refresh if it has not expired' do
+      Puppet[:crl_refresh_interval] = '1y'
+      Puppet::FileSystem.touch(Puppet[:hostcrl], mtime: Time.now)
+
+      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
+
+      state.next_state
+    end
+
+    context 'when refreshing a CRL' do
+      before :each do
+        Puppet[:crl_refresh_interval] = '1s'
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
+
+        yesterday = Time.now - (24 * 60 * 60)
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:crl_last_update).and_return(yesterday)
+      end
+
+      let(:new_crl_bundle) do
+        # add intermediate crl to the bundle
+        int_crl = crl_fixture('intermediate-crl.pem')
+        [crl, int_crl].map(&:to_pem)
+      end
+
+      it 'uses the local crl if it has not been modified' do
+        stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 304)
+
+        expect(state.next_state.ssl_context.crls).to eq(crls)
+      end
+
+      it 'uses the local crl if refreshing fails in HTTP layer' do
+        stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 503)
+
+        expect(state.next_state.ssl_context.crls).to eq(crls)
+      end
+
+      it 'uses the local crl if refreshing fails in TCP layer' do
+        stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_raise(Errno::ECONNREFUSED)
+
+        expect(state.next_state.ssl_context.crls).to eq(crls)
+      end
+
+      it 'uses the updated crl for the future requests' do
+        stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: new_crl_bundle.join)
+
+        expect(state.next_state.ssl_context.crls.map(&:to_pem)).to eq(new_crl_bundle)
+      end
+
+      it 'updates the `last_update` time' do
+        stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: new_crl_bundle.join)
+
+        expect_any_instance_of(Puppet::X509::CertProvider).to receive(:crl_last_update=).with(be_within(60).of(Time.now))
+
+        state.next_state
+      end
+    end
   end
 
   context 'when ensuring a client cert' do

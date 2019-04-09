@@ -69,12 +69,19 @@ class Puppet::SSL::StateMachine
         crls = @cert_provider.load_crls
         if crls
           next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
+
+          crl_ttl = Puppet[:crl_refresh_interval]
+          if crl_ttl
+            last_update = @cert_provider.crl_last_update
+            now = Time.now
+            if last_update.nil? || now.to_i > last_update.to_i + crl_ttl
+              # set last updated time first, then make a best effort to refresh
+              @cert_provider.crl_last_update = now
+              next_ctx = refresh_crl(next_ctx, last_update)
+            end
+          end
         else
-          pem = Puppet::Rest::Routes.get_crls(Puppet::SSL::CA_NAME, @ssl_context)
-          crls = @cert_provider.load_crls_from_pem(pem)
-          # verify crls before saving
-          next_ctx = @ssl_provider.create_root_context(cacerts: ssl_context[:cacerts], crls: crls)
-          @cert_provider.save_crls(crls)
+          next_ctx = download_crl(@ssl_context, nil)
         end
       else
         Puppet.info("Certificate revocation is disabled, skipping CRL download")
@@ -88,6 +95,39 @@ class Puppet::SSL::StateMachine
       else
         raise Puppet::Error.new(_('Could not download CRLs: %{message}') % { message: e.message }, e)
       end
+    end
+
+    private
+
+    def refresh_crl(ssl_ctx, last_update)
+      Puppet.info(_("Refreshing CRL"))
+
+      # return the next_ctx containing the updated crl
+      download_crl(ssl_ctx, last_update)
+    rescue Puppet::Rest::ResponseError => e
+      if e.response.code.to_i == 304
+        Puppet.info(_("CRL is unmodified, using existing CRL"))
+      else
+        Puppet.info(_("Failed to refresh CRL, using existing CRL: %{message}") % {message: e.message})
+      end
+
+      # return the original ssl_ctx
+      ssl_ctx
+    rescue SystemCallError => e
+      Puppet.warning(_("Failed to refresh CRL, using existing CRL: %{message}") % {message: e.message})
+
+      # return the original ssl_ctx
+      ssl_ctx
+    end
+
+    def download_crl(ssl_ctx, last_update)
+      pem = Puppet::Rest::Routes.get_crls(Puppet::SSL::CA_NAME, ssl_ctx, if_modified_since: last_update)
+      crls = @cert_provider.load_crls_from_pem(pem)
+      # verify crls before saving
+      next_ctx = @ssl_provider.create_root_context(cacerts: ssl_ctx[:cacerts], crls: crls)
+      @cert_provider.save_crls(crls)
+
+      next_ctx
     end
   end
 
