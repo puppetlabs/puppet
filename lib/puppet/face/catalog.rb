@@ -1,6 +1,10 @@
 require 'puppet/indirector/face'
 
 Puppet::Indirector::Face.define(:catalog, '0.0.1') do
+  require 'puppet/configurer'
+  require 'puppet/configurer/fact_handler'
+  extend Puppet::Configurer::FactHandler
+
   copyright "Puppet Inc.", 2011
   license   "Apache 2 license; see COPYING"
 
@@ -30,6 +34,58 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
     A serialized catalog. When used from the Ruby API, returns a
     Puppet::Resource::Catalog object.
   EOT
+
+  action(:compile) do
+    summary "Compile a catalog."
+    arguments("[--facts <path>]")
+    description "Stuff"
+    returns "Stuff"
+
+    option("--facts " + _("<path>")) do
+      default_to { nil }
+      summary _("Facts to include in the compilation.")
+    end
+
+    when_invoked do |options|
+      env = Puppet.lookup(:current_environment)
+
+      if options[:facts]
+        yaml = Puppet::FileSystem.read(options[:facts], :encoding => 'bom|utf-8')
+        formatter = Puppet::Network::FormatHandler.format(:yaml)
+        facts = formatter.intern(Puppet::Node::Facts, yaml)
+      else
+        # gather current facts, need to set instance variable for FactHandler
+        @environment = env.name.to_s
+        facts = find_facts
+      end
+
+      # now that we've loaded facts, don't attempt to save them back out
+      Puppet::Node::Facts.indirection.terminus_class = :memory
+
+      # set the same options that configurer does
+      request_options = encode_facts(facts)
+      request_options[:transaction_uuid] = SecureRandom.uuid
+      request_options[:environment] = env.name.to_s
+      request_options[:configured_environment] = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
+      request_options[:checksum_type] = Puppet[:supported_checksum_types]
+      request_options[:static_catalog] = true
+
+      # don't lookup or save to catalog cache
+      request_options[:ignore_cache] = true
+      request_options[:ignore_cache_save] = true
+      begin
+        unless catalog = Puppet::Resource::Catalog.indirection.find(Puppet[:certname], request_options)
+          raise _("Could not compile catalog for %{node}") % { node: Puppet[:certname] }
+        end
+
+        puts JSON::pretty_generate(catalog.to_resource, :allow_nan => true, :max_nesting => false)
+      rescue => detail
+        Puppet.log_exception(detail, _("Failed to compile catalog for node %{node}: %{detail}") % { node: Puppet[:certname], detail: detail })
+        exit(30)
+      end
+      exit(0)
+    end
+  end
 
   action(:apply) do
     summary "Find and apply a catalog."
