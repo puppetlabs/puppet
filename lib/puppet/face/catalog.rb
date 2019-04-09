@@ -83,6 +83,25 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
     end
   end
 
+  action(:compile) do
+    summary _("Compile a catalog.")
+    description <<-'EOT'
+      Compiles a catalog locally for a node, requiring access to modules, node classifier, etc.
+    EOT
+    examples <<-'EOT'
+      Compile catalog for node 'mynode':
+
+      $ puppet catalog compile mynode --codedir ...
+    EOT
+    returns <<-'EOT'
+      A serialized catalog.
+    EOT
+    when_invoked do |*args|
+      Puppet.settings.preferred_run_mode = :master
+      Puppet::Face[:catalog, :current].find(*args)
+    end
+  end
+
   action(:download) do
     summary "Download this node's catalog from the puppet master server."
     description <<-'EOT'
