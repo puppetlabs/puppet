@@ -204,30 +204,35 @@ using rake tasks or beaker to run acceptance, ensure `HOSTS` always points to
 your hosts file. There is no easy way to generate a hosts file with multiple
 hypervisors. This file was put together by hand.
 
-Not only do you need access to vmpooler.delivery.puppetlabs.net, you also need
-access to to pcr-internal.puppet.net to access the docker image with runtime
-components pre-installed.
+You need access to both vmpooler.delivery.puppetlabs.net to access the vmpooler
+test machine and builds.delivery.puppetlabs.net to access the built version of
+puppet-agent that you are testing against.
 
 ```
 ---
 HOSTS:
   redhat7-64-1:
-    hypervisor: vmpooler
+    docker_cmd:
+      - "/sbin/init"
+    image: centos:7
     platform: el-7-x86_64
     packaging_platform: el-7-x86_64
-    template: redhat-7-x86_64
+    hypervisor: docker
     roles:
       - master
-  debian8-64-1:
-    hypervisor: docker
-    docker_image_entrypoint: "/sbin/init"
-    image: pcr-internal.puppet.net/pe-and-platform/agent-runtime-master:201810110.17.gb5afc66
-    platform: debian-8-amd64
-    packaging_platform: debian-8-amd64
+  debian9-64-1:
+    docker_cmd:
+      - "/sbin/init"
+    image: debian:9
+    platform: debian-9-amd64
+    packaging_platform: debian-9-amd64
     docker_image_commands:
+      - cp /bin/true /sbin/agetty
       - rm -f /usr/sbin/policy-rc.d
-      - systemctl mask getty@tty1.service getty-static.service
-      - apt-get update && apt-get install -y cron locales-all net-tools wget
+      - apt-get update && apt-get install -y cron locales-all net-tools wget systemd-sysv
+        gnupg
+    hypervisor: docker
+
     mount_folders:
       puppet:
         host_path: ~/puppet
@@ -239,6 +244,8 @@ CONFIG:
   consoleport: 443
   pooling_api: http://vmpooler.delivery.puppetlabs.net/
 ```
+Run acceptance tests against pre-built puppet-agent packages with
+`bundle exec rake ci:test:aio SHA=<sha or tag> TESTS=path/to/test.rb HOSTS=hosts.yaml`
 
 When you generate your [hosts file](#hosts.yaml), [beaker-hostgenerator][] does
 its best to populate the values as logically as possible. You will likely want
