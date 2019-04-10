@@ -11,9 +11,9 @@
 
 -------------
 An important aside: currently running acceptance tests that contain a specific
-change is challenging unless you have access to internal infrastructure. This
-is a known issue, and we are working to make this a better experience for our
-community.
+change is challenging unless you have access to infrastructure internal to the
+Puppet, Inc. network. This is a known issue, and we are working to make this a
+better experience for our community.
 
 -------------
 
@@ -29,7 +29,7 @@ All of the dependencies you need to run and develop tests are defined in
 command, as will all the command examples in this README, assume you are working
 in the acceptance directory. If you ever have issues with your runtime
 dependencies, you can update them with `bundle update`, or start over fresh with
-`rm -rf .bundle/gems; bundle install`.
+`rm -rf .bundle/gems; bundle install --path .bundle/gems`.
 
 To ensure installation was successful, you can run `bundle exec rake -T`. This
 should return something along these lines:
