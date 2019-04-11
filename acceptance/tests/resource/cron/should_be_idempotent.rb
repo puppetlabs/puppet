@@ -17,10 +17,9 @@ teardown do
   end
 end
 
-
 agents.each do |agent|
   step "ensure the user exist via puppet"
-  user = cron_user(agent)
+  user = cron_user
   setup agent
 
   step "Cron: basic - verify that it can be created"

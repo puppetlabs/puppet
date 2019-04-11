@@ -13,11 +13,6 @@ confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
 
-# Due to OSX 10.14 Mojave new security feature called “Full Disk Access”
-# that limits the operations that a OSX user can do,
-# we can not manage users properly using puppet.
-confine :except, :platform => /^osx-10.14/
-
 agents.each do |agent|
   step "ensure the user and group do not exist"
   agent.user_absent(name)

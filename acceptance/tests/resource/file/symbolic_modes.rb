@@ -2,13 +2,8 @@ test_name 'file resource: symbolic modes' do
   confine :except, :platform => /^eos-/ # See ARISTA-37
   confine :except, :platform => /^solaris-10/
   confine :except, :platform => /^windows/
-
-  # Due to OSX 10.14 Mojave new security feature called “Full Disk Access”
-  # that limits the operations that a OSX user can do,
-  # we can not manage users properly using puppet.
-  confine :except, :platform => /^osx-10.14/
-
   confine :to, {}, hosts.select {|host| !host[:roles].include?('master')}
+
   tag 'audit:high',
       'audit:acceptance'
 
