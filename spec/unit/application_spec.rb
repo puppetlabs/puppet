@@ -6,7 +6,6 @@ require 'getoptlong'
 require 'timeout'
 
 describe Puppet::Application do
-
   before(:each) do
     @app = Class.new(Puppet::Application).new
     @appclass = @app.class
@@ -326,7 +325,6 @@ describe Puppet::Application do
   end
 
   describe "when parsing command-line options" do
-
     before :each do
       allow(@app.command_line).to receive(:args).and_return([])
 
@@ -650,13 +648,6 @@ describe Puppet::Application do
       allow(Puppet::Util::Log).to receive(:newdestination).with(test_arg)
       @app.handle_logdest_arg(test_arg)
       expect(@app.options[:setdest]).to be_truthy
-    end
-
-    it "does not set the log destination if setdest is true" do
-      expect(Puppet::Util::Log).not_to receive(:newdestination)
-      @app.options[:setdest] = true
-
-      @app.handle_logdest_arg(test_arg)
     end
 
     it "does not set the log destination if arg is nil" do
