@@ -257,13 +257,14 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         }.to raise_error(Puppet::SSL::SSLError, %r{The certificate for 'CN=signed' does not match its private key})
       end
 
-      it 'generates a new private key, saves it and passes it to the next state' do
+      it 'generates a new RSA private key, saves it and passes it to the next state' do
         allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_return(nil)
         expect_any_instance_of(Puppet::X509::CertProvider).to receive(:save_private_key)
 
         st = state.next_state
         expect(st).to be_instance_of(Puppet::SSL::StateMachine::NeedSubmitCSR)
         expect(st.private_key).to be_instance_of(OpenSSL::PKey::RSA)
+        expect(st.private_key).to be_private
       end
 
       it 'raises an error if it fails to load the key' do
