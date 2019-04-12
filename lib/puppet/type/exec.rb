@@ -23,6 +23,9 @@ module Puppet
       consider developing a custom resource type instead, as it will be much
       more predictable and maintainable.
 
+      **Duplication:** Even though `command` is the namevar, Puppet allows
+      multiple `exec` resources with the same `command` value.
+
       **Refresh:** `exec` resources can respond to refresh events (via
       `notify`, `subscribe`, or the `~>` arrow). The refresh behavior of execs
       is non-standard, and can be affected by the `refresh` and
@@ -176,7 +179,10 @@ module Puppet
         succeeds, any output produced will be logged at the instance's
         normal log level (usually `notice`), but if the command fails
         (meaning its return code does not match the specified code) then
-        any output is logged at the `err` log level."
+        any output is logged at the `err` log level.
+
+        Multiple `exec` resources can use the same `command` value; Puppet
+        only uses the resource title to ensure `exec`s are unique."
 
       validate do |command|
         raise ArgumentError, _("Command must be a String, got value of class %{klass}") % { klass: command.class } unless command.is_a? String
@@ -628,7 +634,7 @@ module Puppet
       sensitive = false
       parameters_to_check = [:command, :unless, :onlyif]
 
-      parameters_to_check.each do |p| 
+      parameters_to_check.each do |p|
         if sensitive_parameters.include?(p)
           sensitive_parameters.delete(p)
           sensitive = true
