@@ -19,7 +19,7 @@ end
 
 agents.each do |host|
   step "ensure the user exist via puppet"
-  user = cron_user(host)
+  user = cron_user
   setup host
 
   step "apply the resource on the host using puppet resource"

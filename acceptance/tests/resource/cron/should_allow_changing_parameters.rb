@@ -10,7 +10,6 @@ tag 'audit:medium',
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils
 
-
 teardown do
   step "Cron: cleanup"
   agents.each do |agent|
@@ -21,7 +20,7 @@ end
 
 agents.each do |agent|
   step "ensure the user exist via puppet"
-  user = cron_user(agent)
+  user = cron_user
   setup agent
 
   step "Cron: basic - verify that it can be created"
