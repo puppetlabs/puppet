@@ -10,7 +10,7 @@
 * [Getting Help](#getting-help)
 
 -------------
-An important aside: currently running acceptance tests that contain a specific
+An important aside: Currently running acceptance tests that contain a specific
 change is challenging unless you have access to infrastructure internal to the
 Puppet, Inc. network. This is a known issue, and we are working to make this a
 better experience for our community.
@@ -19,16 +19,20 @@ better experience for our community.
 
 ## Setup
 ### Prerequisites
-This assumes you have git, ruby, and the [bundler][] gem installed. You'll need
-a local clone of the puppet repo. All command examples in this readme assume you
-are working in the acceptance directory, where this README is located.
+* git
+* ruby
+* [bundler][]
+* a local clone of the puppet repo
+
+All command examples in this readme assume you are working in the same directory
+this README is in, `puppet/acceptance`.
 
 ### Installation
 All of the dependencies you need to run and develop tests are defined in
 `Gemfile`. To install them, run `bundle install --path .bundle/gems`. This
-command, as will all the command examples in this README, assume you are working
+command, as well all the command examples in this README, assume you are working
 in the acceptance directory. If you ever have issues with your runtime
-dependencies, you can update them with `bundle update`, or start over fresh with
+dependencies, you can update them with `bundle update` or start over fresh with
 `rm -rf .bundle/gems; bundle install --path .bundle/gems`.
 
 To ensure installation was successful, you can run `bundle exec rake -T`. This
@@ -54,8 +58,8 @@ make running puppet acceptance tests easier for our community. In the meantime,
 we apologize for the inconvenience.
 
 ### For Puppet, Inc. employees
-If you have access to infrastructure internal to the Puppet, Inc. network, then the
-quickest way to get acceptance tests running is going to be with vmpooler.
+If you have access to infrastructure internal to the Puppet, Inc. network, then
+the quickest way to get acceptance tests running is with vmpooler.
 
 To test changes that are available on a branch on github.com:
 ```
@@ -75,10 +79,12 @@ To rerun a test on the hosts that have already been provisioned, use beaker subc
 bundle exec beaker exec tests/path/to/test.rb,tests/other/test.rb
 ```
 
-Always clean up after yourself
+Always clean up after yourself when you are done:
 ```
 bundle exec beaker destroy
 ```
+This will remove any provisioned hosts. Only run this once you are done with the
+hosts that have been checked out and provisioned for a given run.
 
 -------------
 
@@ -86,23 +92,20 @@ bundle exec beaker destroy
 ### Environment Variables
 A detailed description of the available environment variables can be found by
 running `bundle exec rake ci:help`. This will print a list of both required and
-optional environment variable with short descriptions on how they are used.
+optional environment variables with short descriptions on how they are used.
 Please review all of these options as they will impact how your test servers
 are provisioned. This rake task is the most up to date source for this
-information.
+information. Please read through the available variables, their defaults, and
+what they do. They may impact your acceptance run in ways you do not expect.
 
 ### Customizing Test Targets
-If you are using the vmpooler hypervisor and the internal pooling api, you can
-customize the platforms to test on using the HOSTS environment variable. The
-internal pooling api is only available to Puppet, Inc. employees. You'll set the
-`HOSTS` environment variable to the host string you want to test, such as
-`HOSTS=redhat7-64ma-windows2012r2-64a`.
+If you are using the vmpooler hypervisor internal to Puppet, Inc. infrastructure,
+you can customize the platforms to test on using the `HOSTS` environment variable.
+You'll set the `HOSTS` environment variable to the host string you want to test,
+such as `HOSTS=redhat7-64ma-windows2012r2-64a`.
 
-If you are unsure of the syntax you need, you can verify the host string against
-the options in
-[beaker hostgenerator](https://github.com/puppetlabs/beaker-hostgenerator/blob/master/lib/beaker-hostgenerator/data.rb). Be sure to use the key from the hash structure.
-You can safely ignore the data associated with the key.
-Generally, this string will be in the format
+For a list of available `HOSTS` platforms and their exact naming structures,
+check the keys listed in [beaker hostgenerator](https://github.com/puppetlabs/beaker-hostgenerator/blob/master/lib/beaker-hostgenerator/data.rb). Generally, this string will be in the format
 `{platform}{version}-{architecture}{role/s}`. You will most often use either the
 agent (a) or master (m) role, but you can find a list of available roles in
 [beaker hostgenerator](https://github.com/puppetlabs/beaker-hostgenerator/blob/master/lib/beaker-hostgenerator/roles.rb).
@@ -114,23 +117,29 @@ tools that expect the host string to be in different forms. For example,
 `packaging_platform` is specific to how [Vanagon](https://github.com/puppetlabs/vanagon)
 parses that string.
 
-### hosts.yaml
+### The Hosts File
 The rake tasks that run acceptance will by default create a hosts file and
 populate it using [beaker-hostgenerator][] using either the `HOSTS` environment
 variable or the default host string (currently `redhat7-64ma-windows2012r2-64a`).
-The automation assumes you are using the vmpooler hypervisor and an internal
-pooling api, which is only available to Puppet, Inc. employees. If you want to
-customize the hypervisor or the pooling api, you'll need to generate your own
+The automation assumes you are using the vmpooler hypervisor and a vmpooler
+instance that is only available to Puppet, Inc. employees. If you want to
+customize the hypervisor or the vmpooler instance, you'll need to generate your own
 hosts file. You must pass in a valid host string to the `beaker-hostgenerator`
-command. See the previous section for more information on how to construct a
-valid host string.
+command. See [Customizing Test Targets](#customizing-test-targets) for more
+information on how to construct a valid host string.
 
 To customize the hypervisor, pass in `--hypervisor {hypervisor name}`. To set
-the pooling api, use `--global-config pooling_api={custom api}`. Only the
-vmpooler hypervisor uses the pooling api.
+the vmpooler instance, use `--global-config pooling_api={vmpooler uri}`. Only the
+vmpooler hypervisor uses the pooling_api key.
 
 The host string that is passed in is the same that you would use with the
-`HOSTS` environment variable. See the [previous section](##customizing-test-targets) on how to format this string.
+`HOSTS` environment variable. See [Customizing Test Targets](#customizing-test-targets)
+on how to format this string.
+
+To have the automation recognize and use your custom hosts file, you'll need to
+set the `HOSTS` environment variable to the hosts file. In the above example, we
+called this file `hosts.yaml`, so we will set `HOSTS` to `hosts.yaml` when running
+all future beaker commands or rake tasks to run acceptance tests.
 
 For example, if you were to run this command:
 ```
@@ -161,10 +170,8 @@ CONFIG:
   consoleport: 443
   pooling_api: http://customvmpooler/
 ```
-To have the automation recognize and use your custom hosts file, you'll need to
-set the `HOSTS` environment variable to the hosts file. In the above example, we
-called this file `hosts.yaml`, so we will use `HOSTS=hosts.yaml` when running
-all future beaker commands or rake tasks to run acceptance tests.
+We can then run the acceptance tests with:
+`bundle exec rake ci:test:aio HOSTS=hosts.yaml SHA={sha}`
 
 ### Hypervisor Options
 The hypervisor dictates where you will be running the acceptance tests. The beaker
@@ -176,7 +183,7 @@ Here, we will focus on vmpooler and docker, as those are the two we use most
 often internally. If you use a hypervisor other than abs, vagrant, vmpooler, or
 docker, you'll have to add the gem to that hypervisor to `Gemfile.local` and run
 `bundle update` to install the new gems. You also have the ability to run tests
-on a static host, which I will cover briefly.
+on a static host.
 
 #### VMPooler
 [VMPooler](https://github.com/puppetlabs/vmpooler) is the default hypervisor we
@@ -184,100 +191,99 @@ use. This is only available to Puppet, Inc. employees as it uses internal
 infrastructure. If you have access to a similar setup, then you are welcome to
 use this option with a few values changed. If you are using the Puppet internal
 vmpooler, then you can simply run the acceptance rake tasks. See
-[the previous section]( #customizing-test-targets) about how to use the
+[Customizing Test Targets](#customizing-test-targets) about how to use the
 `HOSTS` environment variable to customize the platforms you are running tests on.
 
-To use a different pooling api, use
+To use a different vmpooler instance, use
 `--global-config pooling_api=http://customvmpooler/` when you use
 `beaker-hostgenerator` to generate `hosts.yaml`. Make sure you set `HOSTS` to
-the host file you just generated so the automation can find that file. See
-[the previous section](#hosts.yaml) for more detail on the hosts file.
+the hosts file you just generated so the automation can find that file. See
+[The Hosts File](#the-hosts-file) for more detail on the hosts file.
 
 #### Docker
 To test with [the docker hypervisor](https://github.com/puppetlabs/beaker-docker),
 you will want to generate a custom hosts file. You will also mostly likely need
-to manually edit the file. See [the previous section](#hosts.yaml) for more
+to manually edit the file. See [The Hosts File](#the-hosts-file) for more
 detail on the hosts file.
 
-The following hosts file uses a vmpooler master and a docker agent. When
-using rake tasks or beaker to run acceptance, ensure `HOSTS` always points to
-your hosts file. There is no easy way to generate a hosts file with multiple
-hypervisors. This file was put together by hand.
-
-You need access to both vmpooler.delivery.puppetlabs.net to access the vmpooler
-test machine and builds.delivery.puppetlabs.net to access the built version of
-puppet-agent that you are testing against.
-
+To create a hosts file with a centos 7 master and a centos 7 agent, we can use
+the following beaker-hostgenerator command
+`bundle exec beaker-hostgenerator centos7-64m-centos7-64a --disable-default-role --osinfo-version 1 --hypervisor docker  > hosts.yaml`
+Which will produce a file called `hosts.yaml` that contains the following:
 ```
 ---
 HOSTS:
-  redhat7-64-1:
+  centos7-64-1:
     docker_cmd:
-      - "/sbin/init"
+    - "/sbin/init"
     image: centos:7
-    platform: el-7-x86_64
+    platform: centos-7-x86_64
     packaging_platform: el-7-x86_64
-    hypervisor: docker
-    roles:
-      - master
-  debian9-64-1:
-    docker_cmd:
-      - "/sbin/init"
-    image: debian:9
-    platform: debian-9-amd64
-    packaging_platform: debian-9-amd64
     docker_image_commands:
-      - cp /bin/true /sbin/agetty
-      - rm -f /usr/sbin/policy-rc.d
-      - apt-get update && apt-get install -y cron locales-all net-tools wget systemd-sysv
-        gnupg
+    - cp /bin/true /sbin/agetty
+    - yum install -y crontabs initscripts iproute openssl sysvinit-tools tar wget
+      which ss
     hypervisor: docker
-
-    mount_folders:
-      puppet:
-        host_path: ~/puppet
-        container_path: /build/puppet
     roles:
-      - agent
+    - master
+  centos7-64-2:
+    docker_cmd:
+    - "/sbin/init"
+    image: centos:7
+    platform: centos-7-x86_64
+    packaging_platform: el-7-x86_64
+    docker_image_commands:
+    - cp /bin/true /sbin/agetty
+    - yum install -y crontabs initscripts iproute openssl sysvinit-tools tar wget
+      which ss
+    hypervisor: docker
+    roles:
+    - agent
 CONFIG:
   nfs_server: none
   consoleport: 443
-  pooling_api: http://vmpooler.delivery.puppetlabs.net/
+
 ```
 Run acceptance tests against pre-built puppet-agent packages with
-`bundle exec rake ci:test:aio SHA=<sha or tag> TESTS=path/to/test.rb HOSTS=hosts.yaml`
+`bundle exec rake ci:test:aio SHA={sha|tag} TESTS=path/to/test.rb HOSTS=hosts.yaml`
 
-When you generate your [hosts file](#hosts.yaml), [beaker-hostgenerator][] does
+Note that if you are not running tests against the master branch and you are
+installing the latest puppetserver package, you will likely need to set `RELEASE_STREAM`
+to pick up the correct server version. Please see the section on [environment variables](#environment-variables)
+for more information.
+
+When you generate your [hosts file](#the-hosts-file), [beaker-hostgenerator][] does
 its best to populate the values as logically as possible. You will likely want
 to update or modify them to suite your needs.
 
 With `image`, [beaker-hostgenerator][] does its best to guess the most logical
 image string based on the platform you are building. For the most part, this
 should work without interference, but if you are using a custom docker image or
-do not want the default, then you will have to manually update this string. The
-example above has modified `image` to pull from the pcr-internal docker repo.
+do not want the default, then you will have to manually update this string. Not
+every string beaker-hostgenerator uses to populate this variable will be valid.
 
 `docker_image_commands` is automatically populated when generating the hosts
 file with [beaker-hostgenerator][]. This has already been set for a handful of
 host types, but may not be set for all.
 
-* TODO I believe I had a few issues with the initial docker image setup. I'd
-    like to go through these steps with someone else so that I can remember what
-    that initial pain was exactly.
-* TODO I only tried it once with a docker master, but the image I used was SO
-    SLOW, so I gave up. I also ran out of time. So this will be something that
-    would be good to investigate more fully.
-* TODO check with Casey and Molly about these. I can't quite remember the
-    details, but I do remember that we found `docker_image_entrypoint`
-    preferable to `docker_cmd`.
-* TODO These docker containers have to run in priviledged mode (or systemd,
+* TODO I only tried this once using a docker image that already had puppetserver
+    installed as the master host. The image I used took forever to provision,
+    so I gave up. If we want to continue down this route, we need to make sure
+    the setup steps can check if puppetserver has already been installed so that
+    we don't try to install it agian.
+* TODO There's something odd with `docker_mage_entrypoint` versus `docker_cmd`.
+    We should clarify the difference between these two values. I don't quite
+    understand what the difference is between them.
+* TODO These docker containers have to run in privileged mode (or systemd,
     among possibly other things, won't function as we need them to). This is
     not ideal if you're testing code that affects your OS (ie running docker on
     linux without a docker machine in between the container and your laptop).
-* TODO add emphasis that you need an account and permissions to access the images
-    on pcr-internal.puppet.net
+    BE CAREFUL
 
 #### Static Hosts
+This is not recommended unless you are familiar with how beaker and
+beaker-puppet provision hosts.
+
 To test on a server that's already been spun up or doesn't require a hypervisor,
 you should set the name of the host to the FQDN of the server you want to use,
 then remove the hypervisor and template settings. This is not recommended, and
@@ -292,8 +298,6 @@ HOSTS:
         roles:
           - master
 ```
-This is not recommended unless you are familiar with how [beaker][] and
-[beaker-puppet][] provision hosts.
 
 -------------
 
@@ -380,15 +384,14 @@ Please note that any changes you want to test must be pushed up to your github
 server. This is how we access the code to be tested.
 
 #### From a local repo
-If yor are testing with git and using the docker hypervisor, you can run tests
+If you are testing with git and using the docker hypervisor, you can run tests
 against the puppet checkout on your local system. You need to update your hosts
 file to add `mount_folders` to the docker host where you want the checkout of
 puppet to be available. Here, `host_path` is the path to puppet on your local
-machine. You must make sure this matches where puppet is on your machine. The
-`container_path` is where puppet will end up on the docker image, so you can
-leave it as `/build/puppet`. Note that although `SHA` is required, it is never
-used in this workflow. For consistency, I would recommend setting `SHA` to your
-working branch name.
+machine. The `container_path` is where puppet will end up on the docker image,
+so you can leave it as `/build/puppet`. Note that although `SHA` is required, it
+is never used in this workflow. For consistency, I would recommend setting `SHA`
+to your working branch name.
 
 We still need access to our runtime dependencies when testing against a local
 git checkout. When we are testing with the docker hypervisor, we assume that the
@@ -424,10 +427,10 @@ Remember that `HOSTS` must be set to your hosts file for the automation to honor
 it.
 
 ### Testing with Gems
+Currently, running acceptance tests with gems is not working.
 ```
 bundle exec rake ci:test:gem
 ```
-Currently, running acceptance tests with gems is not working.
 
 ### Rerunning Failed Tests
 The rake tasks we use here take advantage of a newer feature in beaker that gives us quite a bit of flexibility. We take advantage of beaker subcommands. Subcommands are individual beaker invocations that are used to run the different stages of running tests: provisioning, pre-suite setup, tests, etc. We do this by writing state to the file `.beaker/subcommand_options.yaml`. With each new invocation of a subcommand, beaker will check for this file and load the contents if the file exists. The important thing about this feature is that you can rerun tests without going through the entire provisioning process every time.
@@ -436,26 +439,25 @@ To ensure your hosts aren't cleaned up after a run, set `OPTIONS='--preserve-hos
 ```
 bundle exec rake ci:test:aio OPTIONS='--preserve-hosts=always' SHA=6.0.5
 ```
-If this run fails because a small handful of tests fail, I can rerun only those tests that failed. For example, assume that `tests/resource/package/yum.rb` and `tests/node/check_woy_cache_works.rb` both had failing tests. I can run
+If this run fails because a small handful of tests fail, you can rerun only those tests that failed. For example, assume that `tests/resource/package/yum.rb` and `tests/node/check_woy_cache_works.rb` both had failing tests. you can run
 ```
 bundle exec beaker exec tests/resource/package/yum.rb,tests/node/check_woy_cache_works.rb
 ```
 
-This will work regardless of which hypervisor or testing method you are using.
+This should work regardless of which hypervisor or testing method you are using.
 
 -------------
 
 ## Writing Tests
-* TODO I'm definitely going to need help with this section. I'm not very good at writing tests. Jacob?
+Read more about writing beaker tests in beaker. Check out the [tutorials section](https://github.com/puppetlabs/beaker/tree/master/docs/tutorials)
+and [how to write a quick test](https://github.com/puppetlabs/beaker/blob/master/docs/tutorials/lets_write_a_test.md)
 
 -------------
 
 ## Getting Help
 ### On the web
 * [Puppet help messageboard](http://puppet.com/community/get-help)
-* [Writing tests](https://docs.puppet.com/guides/module_guides/bgtm.html#step-three-module-testing)
 * [General GitHub documentation](http://help.github.com/)
-* [GitHub pull request documentation](http://help.github.com/send-pull-requests/)
 ### On chat
 * Slack (slack.puppet.com) #testing, #puppet-dev, #windows
 
