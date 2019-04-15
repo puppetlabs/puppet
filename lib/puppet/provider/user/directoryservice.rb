@@ -302,7 +302,7 @@ Puppet::Type.type(:user).provide :directoryservice do
             merge_attribute_with_dscl('Groups', group, 'GroupMembers', @guid)
           end
         else
-          merge_attribute_with_dscl('Users', @resource.name, self.class.ns_to_ds_attribute_map[attribute], value)
+          create_attribute_with_dscl('Users', @resource.name, self.class.ns_to_ds_attribute_map[attribute], value)
         end
       end
     end
@@ -429,11 +429,14 @@ Puppet::Type.type(:user).provide :directoryservice do
   # the case we rescue the error from dscl and alert the user.
   #
   # In the event that the user doesn't HAVE a value for the attribute, the
-  # provider should use the -merge option with dscl to add the attribute value
+  # provider should use the -create option with dscl to add the attribute value
   # for the user record
   ['home', 'uid', 'gid', 'comment', 'shell'].each do |setter_method|
     define_method("#{setter_method}=") do |value|
       if @property_hash[setter_method.intern]
+        if self.class.get_os_version == '10.14' && %w(home uid).include?(setter_method)
+          raise Puppet::Error, "OS X version 10\.14 does not allow changing #{setter_method} using puppet"
+        end
         begin
           dscl '.', '-change', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], @property_hash[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
@@ -442,7 +445,7 @@ Puppet::Type.type(:user).provide :directoryservice do
         end
       else
         begin
-          dscl '.', '-merge', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], value
+          dscl '.', '-create', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
           raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " +
                "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
@@ -472,10 +475,19 @@ Puppet::Type.type(:user).provide :directoryservice do
     '/var/db/shadow/hash'
   end
 
+  # This method will create a given value using dscl
+  def create_attribute_with_dscl(path, username, keyname, value)
+    set_attribute_with_dscl('-create', path, username, keyname, value)
+  end
+
   # This method will merge in a given value using dscl
   def merge_attribute_with_dscl(path, username, keyname, value)
+    set_attribute_with_dscl('-merge', path, username, keyname, value)
+  end
+
+  def set_attribute_with_dscl(dscl_command, path, username, keyname, value)
     begin
-      dscl '.', '-merge', "/#{path}/#{username}", keyname, value
+      dscl '.', dscl_command, "/#{path}/#{username}", keyname, value
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not set the dscl #{keyname} key with value: #{value} - #{detail.inspect}", detail.backtrace
     end
