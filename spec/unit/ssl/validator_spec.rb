@@ -185,6 +185,7 @@ describe Puppet::SSL::Validator::DefaultValidator, unless: Puppet::Util::Platfor
       allow(subject).to receive(:ssl_certificates_are_present?).and_return(true)
       connection = double('Net::HTTP')
 
+      allow(connection).to receive(:address).and_return('puppet.com')
       expect(connection).to receive(:cert_store=).with(ssl_host.ssl_store)
       expect(connection).to receive(:ca_file=).with(ca_path)
       expect(connection).to receive(:cert=).with(ssl_host.certificate.content)
@@ -200,6 +201,7 @@ describe Puppet::SSL::Validator::DefaultValidator, unless: Puppet::Util::Platfor
         allow(subject).to receive(:ssl_certificates_are_present?).and_return(false)
         connection = double('Net::HTTP')
 
+        allow(connection).to receive(:address).and_return('puppet.com')
         expect(connection).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
         subject.setup_connection(connection, ssl_host)
