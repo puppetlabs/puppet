@@ -8,11 +8,6 @@ test_name "should correctly manage the groups property for the User resource" do
   confine :except, :platform => /eos-/ # See ARISTA-37
   confine :except, :platform => /cisco_/ # See PUP-5828
 
-  # Due to OSX 10.14 Mojave new security feature called “Full Disk Access”
-  # that limits the operations that a OSX user can do,
-  # we can not manage users properly using puppet. 
-  confine :except, :platform => /^osx-10.14/
-
   tag 'audit:medium',
       'audit:acceptance' # Could be done as integration tests, but would
                          # require changing the system running the test

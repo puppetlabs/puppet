@@ -20,11 +20,6 @@ test_name 'PUP-6777 Manage users with UTF-8 comments' do
   # and have not been made unicode-aware yet.
   confine :except, :platform => /^(eos|aix)-/
 
-  # Due to OSX 10.14 Mojave new security feature called “Full Disk Access”
-  # that limits the operations that a OSX user can do,
-  # we can not manage users properly using puppet. 
-  confine :except, :platform => /^osx-10.14/
-
   user0 = "foo#{rand(99999).to_i}"
   user1 = "bar#{rand(99999).to_i}"
   user2 = "baz#{rand(99999).to_i}"
