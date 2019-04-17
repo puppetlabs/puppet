@@ -32,7 +32,8 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
 
   # Finds name in a loader this loader depends on / can see
   #
-  def find(typed_name)
+  def find(typed_name, action = nil)
+    parse_plan(typed_name) if action == 'parse'
     if typed_name.qualified?
       if l = index()[typed_name.name_parts[0]]
         l.load_typed(typed_name)
@@ -52,6 +53,25 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
         promote_entry(loaded)
       end
       loaded
+    end
+  end
+
+  # We don't instantiate the plan when parsing it, so want to avoid the caching
+  # logic above and just find the plan
+  def parse_plan(typed_name)
+    if typed_name.qualified?
+      if l = index()[typed_name.name_parts[0]]
+        l.load_typed(typed_name, 'parse')
+      else
+        # no module entered as dependency with name matching first segment of wanted name
+        nil
+      end
+    else
+      # a non name-spaced name, have to search since it can be anywhere.
+      @dependency_loaders.reduce(nil) do |previous, loader|
+        break previous if !previous.nil?
+        loader.load_typed(typed_name, 'parse')
+      end
     end
   end
 

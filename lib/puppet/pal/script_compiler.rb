@@ -15,6 +15,12 @@ module Pal
       nil
     end
 
+    def parse_plan(plan_name)
+      typed_name = Puppet::Pops::Loader::TypedName.new(:plan, plan_name)
+      loader = internal_compiler.loaders.private_environment_loader
+      loader.parse_plan(typed_name)
+    end
+
     # Returns an array of TypedName objects for all plans, optionally filtered by a regular expression.
     # The returned array has more information than just the leaf name - the typical thing is to just get
     # the name as showing the following example.

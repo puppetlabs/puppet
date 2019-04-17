@@ -86,6 +86,10 @@ class Loader
     raise NotImplementedError, "Class #{self.class.name} must implement method #load_typed"
   end
 
+  def parse_plan(typed_name, action)
+    raise NotImplementedError, "Class #{self.class.name} must implement method #parse_plan"
+  end
+
   # Returns an already loaded entry if one exists, or nil. This does not trigger loading
   # of the given type/name.
   #

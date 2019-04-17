@@ -85,7 +85,7 @@ module ModuleLoaders
   end
 
   class EmptyLoader < BaseLoader
-    def find(typed_name)
+    def find(typed_name, action = nil)
       return nil
     end
 
@@ -176,7 +176,7 @@ module ModuleLoaders
     # @param typed_name [TypedName] the type/name to find
     # @return [Loader::NamedEntry, nil found/created entry, or nil if not found
     #
-    def find(typed_name)
+    def find(typed_name, action = nil)
       # This loader is tailored to only find entries in the current runtime
       return nil unless typed_name.name_authority == Pcore::RUNTIME_NAME_AUTHORITY
 
@@ -208,7 +208,11 @@ module ModuleLoaders
 
             # Look for the special 'init' plan.
             origin, smart_path = find_existing_path(init_plan_name)
-            return smart_path.nil? ? nil : instantiate(smart_path, typed_name, origin)
+            if action == 'parse'
+              return smart_path.nil? ? nil : parse_plan(smart_path, typed_name, origin)
+            else
+              return smart_path.nil? ? nil : instantiate(smart_path, typed_name, origin)
+            end
           end
 
         when :task
@@ -255,6 +259,10 @@ module ModuleLoaders
       # The result is an array (that may be empty).
       # Find the file to instantiate, and instantiate the entity if file is found
       origin, smart_path = find_existing_path(typed_name)
+      if typed_name.type == :plan && action == 'parse'
+        return smart_path.nil? ? nil : parse_plan(smart_path, typed_name, origin)
+      end
+
       return instantiate(smart_path, typed_name, origin) unless smart_path.nil?
 
       return nil unless typed_name.type == :type && typed_name.qualified?
@@ -285,6 +293,10 @@ module ModuleLoaders
       end
       # cache the entry and return it
       set_entry(typed_name, value, origin)
+    end
+
+    def parse_plan(smart_path, typed_name, origin)
+      smart_path.instantiator.parse_plan(typed_name, origin)
     end
 
     # Abstract method that subclasses override that checks if it is meaningful to search using a generic smart path.

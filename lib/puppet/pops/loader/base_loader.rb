@@ -32,14 +32,14 @@ class BaseLoader < Loader
 
   # @api public
   #
-  def load_typed(typed_name)
+  def load_typed(typed_name, action = nil)
     # The check for "last queried name" is an optimization when a module searches. First it checks up its parent
     # chain, then itself, and then delegates to modules it depends on.
     # These modules are typically parented by the same
     # loader as the one initiating the search. It is inefficient to again try to search the same loader for
     # the same name.
     if @last_result.nil? || typed_name != @last_result.typed_name
-      @last_result = internal_load(typed_name)
+      @last_result = internal_load(typed_name, action)
     else
       @last_result
     end
@@ -145,11 +145,12 @@ class BaseLoader < Loader
   # 3. find it here
   # 4. give up
   #
-  def internal_load(typed_name)
+  def internal_load(typed_name, action = nil)
     # avoid calling get_entry by looking it up
     te = @named_values[typed_name]
     return te unless te.nil? || te.value.nil?
 
+    # TODO do we need to pass action here?
     te = parent.load_typed(typed_name)
     return te unless te.nil? || te.value.nil?
 
@@ -158,7 +159,11 @@ class BaseLoader < Loader
     # recursive call into this loader. This means that the entry might be present now, so a new
     # check must be made.
     te = @named_values[typed_name]
-    te.nil? || te.value.nil? ? find(typed_name) : te
+    if action
+      te.nil? || te.value.nil? ? find(typed_name, action) : te
+    else
+      te.nil? || te.value.nil? ? find(typed_name) : te
+    end
   end
 end
 end
