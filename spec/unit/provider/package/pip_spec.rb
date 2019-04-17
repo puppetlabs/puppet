@@ -63,9 +63,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
           end
           allow(described_class).to receive(:pip_version).with(pip_cmd).and_return('8.0.1')
           expect(described_class).to receive(:which).with(pip_cmd).and_return(pip_cmd)
-          p = double("process")
-          expect(p).to receive(:collect).and_yield("real_package==1.2.5")
-          expect(described_class).to receive(:execpipe).with([pip_cmd, ["freeze"]]).and_yield(p)
+          expect(described_class).to receive(:execute).with([pip_cmd, ["freeze"]], failonfail: true, combine: true).and_return("real_package==1.2.5")
           described_class.instances
         end
       end
@@ -77,9 +75,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
             allow(Puppet.features).to receive(:microsoft_windows?).and_return(osfamily == 'windows')
             allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
             allow(described_class).to receive(:pip_version).with('/fake/bin/pip').and_return(version)
-            p = double("process")
-            expect(p).to receive(:collect).and_yield("real_package==1.2.5")
-            expect(described_class).to receive(:execpipe).with(["/fake/bin/pip", ["freeze", "--all"]]).and_yield(p)
+            expect(described_class).to receive(:execute).with(["/fake/bin/pip", ["freeze", "--all"]], failonfail: true, combine: true).and_return("real_package==1.2.5")
             described_class.instances
           end
         end
@@ -154,23 +150,20 @@ describe Puppet::Type.type(:package).provider(:pip) do
       end
 
       it "should find a version number for new_pip_package" do
-        p = StringIO.new(
-          <<-EOS
+        p = <<-EOS
           Downloading/unpacking fake-package
             Using version 0.10.1 (newest of versions: 0.10.1, 0.10, 0.9, 0.8.1, 0.8, 0.7.2, 0.7.1, 0.7, 0.6.1, 0.6, 0.5.2, 0.5.1, 0.5, 0.4, 0.3.1, 0.3, 0.2, 0.1)
             Downloading real-package-0.10.1.tar.gz (544Kb): 544Kb downloaded
           Saved ./foo/real-package-0.10.1.tar.gz
           Successfully downloaded real-package
           EOS
-        )
-        expect(Puppet::Util::Execution).to receive(:execpipe).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).and_return(p).once
         @resource[:name] = "real_package"
         expect(@provider.latest).to eq('0.10.1')
       end
 
       it "should not find a version number for fake_package" do
-        p = StringIO.new(
-          <<-EOS
+        p = <<-EOS
           Downloading/unpacking fake-package
             Could not fetch URL http://pypi.python.org/simple/fake_package: HTTP Error 404: Not Found
             Will skip URL http://pypi.python.org/simple/fake_package when looking for download links for fake-package
@@ -192,8 +185,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
 
           Storing complete log in /root/.pip/pip.log
           EOS
-        )
-        expect(Puppet::Util::Execution).to receive(:execpipe).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).and_return(p).once
         @resource[:name] = "fake_package"
         expect(@provider.latest).to eq(nil)
       end
@@ -212,41 +204,35 @@ describe Puppet::Type.type(:package).provider(:pip) do
       end
 
       it "should find a version number for real_package" do
-        p = StringIO.new(
-          <<-EOS
+        p = <<-EOS
           Collecting real-package==versionplease
             Could not find a version that satisfies the requirement real-package==versionplease (from versions: 1.1.3, 1.2, 1.9b1)
           No matching distribution found for real-package==versionplease
           EOS
-        )
-        expect(Puppet::Util::Execution).to receive(:execpipe).with(["/fake/bin/pip", "install", "real_package==versionplease"]).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/fake/bin/pip", "install", "real_package==versionplease"], failonfail: true, combine: true).and_return(p).once
         @resource[:name] = "real_package"
         latest = @provider.latest
         expect(latest).to eq('1.9b1')
       end
 
       it "should not find a version number for fake_package" do
-        p = StringIO.new(
-          <<-EOS
+        p = <<-EOS
           Collecting fake-package==versionplease
             Could not find a version that satisfies the requirement fake-package==versionplease (from versions: )
           No matching distribution found for fake-package==versionplease
           EOS
-        )
-        expect(Puppet::Util::Execution).to receive(:execpipe).with(["/fake/bin/pip", "install", "fake_package==versionplease"]).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/fake/bin/pip", "install", "fake_package==versionplease"], failonfail: true, combine: true).and_return(p).once
         @resource[:name] = "fake_package"
         expect(@provider.latest).to eq(nil)
       end
 
       it "should handle out-of-order version numbers for real_package" do
-        p = StringIO.new(
-          <<-EOS
+        p = <<-EOS
           Collecting real-package==versionplease
             Could not find a version that satisfies the requirement real-package==versionplease (from versions: 1.11, 13.0.3, 1.6, 1.9, 1.3.2, 14.0.1, 12.0.7, 13.0.3, 1.7.2, 1.8.4, 1.6.1, 0.9.2, 1.3, 1.8.3, 12.1.1, 1.1, 1.11.6, 1.4.8, 1.6.3, 1.10.1, 14.0.2, 1.11.3, 14.0.3, 1.4rc1, 0.8.4, 1.0, 12.0.5, 14.0.6, 1.11.5, 1.7.1.1, 1.11.4, 13.0.1, 13.1.2, 1.3.3, 0.8.2, 14.0.0, 12.0, 1.8, 1.3.4, 12.0, 1.2, 12.0.6, 0.9.1, 13.1.1, 14.0.5, 15.0.2, 15.0.0, 1.4.5, 1.4.3, 13.1.1, 1.11.2, 13.1.2, 1.3.1, 13.1.0, 12.0.2, 1.11.1, 12.0.1, 12.1.0, 0.9, 1.4.4, 13.0.0, 1.4.9, 12.1.0, 1.7.1, 1.4.2, 14.0.5, 0.8.1, 1.4.6, 0.8.3, 1.11.3, 1.5.1, 1.4.7, 13.0.2, 12.0.7, 13.0.0, 1.9.1, 1.8.2, 14.0.1, 14.0.0, 14.0.4, 1.6.2, 15.0.1, 13.1.0, 0.8, 1.7, 15.0.2, 12.0.5, 13.0.1, 1.8.1, 1.11.6, 15.0.1, 12.0.4, 12.1.1, 13.0.2, 1.11.4, 1.10, 14.0.4, 14.0.6, 1.4.1, 1.4, 1.5.2, 12.0.2, 12.0.1, 14.0.3, 14.0.2, 1.11.1, 1.7.1.2, 15.0.0, 12.0.4, 1.6.4, 1.11.2, 1.5)
           No distributions matching the version for real-package==versionplease
           EOS
-        )
-        expect(Puppet::Util::Execution).to receive(:execpipe).with(["/fake/bin/pip", "install", "real_package==versionplease"]).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/fake/bin/pip", "install", "real_package==versionplease"], failonfail: true, combine: true).and_return(p).once
         @resource[:name] = "real_package"
         latest = @provider.latest
         expect(latest).to eq('15.0.2')
@@ -343,9 +329,8 @@ describe Puppet::Type.type(:package).provider(:pip) do
   context "pip_version" do
     it "should look up version if pip is present" do
       allow(described_class).to receive(:pip_cmd).and_return('/fake/bin/pip')
-      p = double("process")
-      expect(p).to receive(:collect).and_yield('pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)')
-      expect(described_class).to receive(:execpipe).with(['/fake/bin/pip', '--version']).and_yield(p)
+      p = 'pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)'
+      expect(described_class).to receive(:execute).with(['/fake/bin/pip', '--version'], failonfail: true, combine: true).and_return(p)
       expect(described_class.pip_version('/fake/bin/pip')).to eq('8.0.2')
     end
   end

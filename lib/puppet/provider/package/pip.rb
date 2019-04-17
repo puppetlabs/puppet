@@ -32,10 +32,9 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   end
 
   def self.pip_version(command)
-    execpipe [command, '--version'] do |process|
-      process.collect do |line|
-        return line.strip.match(/^pip (\d+\.\d+\.?\d*).*$/)[1]
-      end
+    output = execute([command, '--version'], failonfail: true, combine: true)
+    output.split("\n").each do |line|
+      return line.strip.match(/^pip (\d+\.\d+\.?\d*).*$/)[1]
     end
   end
 
@@ -59,12 +58,11 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
       command_options << '--all'
     end
 
-    execpipe [command, command_options] do |process|
-      process.collect do |line|
-        next unless pkg = parse(line)
-        pkg[:command] = command
-        packages << new(pkg)
-      end
+    output = execute([command, command_options], failonfail: true, combine: true)
+    output.split("\n").each do |line|
+      next unless pkg = parse(line)
+      pkg[:command] = command
+      packages << new(pkg)
     end
 
     # Pip can also upgrade pip, but it's not listed in freeze so need to special case it
@@ -119,19 +117,18 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     self.class.validate_command(command)
 
     # Less resource intensive approach for pip version 1.5.4 and above
-    execpipe [command, "install", "#{@resource[:name]}==versionplease"] do |process|
-      process.collect do |line|
-        # PIP OUTPUT: Could not find a version that satisfies the requirement Django==versionplease (from versions: 1.1.3, 1.8rc1)
-        if line =~ /from versions: /
-          textAfterLastMatch = $'.chomp(")\n")
-          versionList = textAfterLastMatch.split(', ').sort do |x,y|
-            Puppet::Util::Package.versioncmp(x, y)
-          end
-          return versionList.last
+    output = execute([command, "install", "#{@resource[:name]}==versionplease"], failonfail: true, combine: true)
+    output.split("\n").each do |line|
+      # PIP OUTPUT: Could not find a version that satisfies the requirement Django==versionplease (from versions: 1.1.3, 1.8rc1)
+      if line =~ /from versions: /
+        textAfterLastMatch = $'.chomp(')')
+        versionList = textAfterLastMatch.split(', ').sort do |x,y|
+          Puppet::Util::Package.versioncmp(x, y)
         end
+        return versionList.last
       end
-      return nil
     end
+    return nil
   end
 
   def latest_with_old_pip
@@ -139,15 +136,14 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     self.class.validate_command(command)
 
     Dir.mktmpdir("puppet_pip") do |dir|
-      execpipe [command, "install", "#{@resource[:name]}", "-d", "#{dir}", "-v"] do |process|
-        process.collect do |line|
-          # PIP OUTPUT: Using version 0.10.1 (newest of versions: 0.10.1, 0.10, 0.9, 0.8.1, 0.8, 0.7.2, 0.7.1, 0.7, 0.6.1, 0.6, 0.5.2, 0.5.1, 0.5, 0.4, 0.3.1, 0.3, 0.2, 0.1)
-          if line =~ /Using version (.+?) \(newest of versions/
-            return $1
-          end
+      output = execute([command, "install", "#{@resource[:name]}", "-d", "#{dir}", "-v"], failonfail: true, combine: true)
+      output.split("\n").each do |line|
+        # PIP OUTPUT: Using version 0.10.1 (newest of versions: 0.10.1, 0.10, 0.9, 0.8.1, 0.8, 0.7.2, 0.7.1, 0.7, 0.6.1, 0.6, 0.5.2, 0.5.1, 0.5, 0.4, 0.3.1, 0.3, 0.2, 0.1)
+        if line =~ /Using version (.+?) \(newest of versions/
+          return $1
         end
-        return nil
       end
+      return nil
     end
   end
 
