@@ -63,9 +63,9 @@ To run a single test or group of tests, give the filename and line number:
 
     $ bundle exec rake spec TEST=spec/unit/ssl/host_spec.rb:42
 
-To run all tests in parallel:
+To run all tests in parallel, process count is the number of processes to use when running the tests:
 
-    $ bundle exec rake parallel:spec
+    $ bundle exec rake parallel:spec[process_count]
 
 When tests fail, it is often useful to capture Puppet's log of a test
 run. The test harness pays attention to two environment variables that can
@@ -80,3 +80,7 @@ be used to send logs to a file, and to adjust the log level:
   `debug`.
 
 For details on running tests on windows, see [the windows docs](https://github.com/puppetlabs/puppet/blob/master/docs/windows.md).
+
+## Running Acceptance Tests
+
+For details on how to run puppet acceptance tests, please see the [acceptance readme](../acceptance/README.md)

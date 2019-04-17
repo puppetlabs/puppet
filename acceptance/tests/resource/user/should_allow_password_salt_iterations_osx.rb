@@ -2,11 +2,6 @@ test_name "should allow password, salt, and iteration attributes in OSX"
 
 confine :to, :platform => /osx/
 
-# Due to OSX 10.14 Mojave new security feature called “Full Disk Access”
-# that limits the operations that a OSX user can do,
-# we can not manage users properly using puppet. 
-confine :except, :platform => /^osx-10.14/
-
 tag 'audit:medium',
     'audit:refactor',  # Use block style `test_run`
     'audit:acceptance' # Could be done as integration tests, but would

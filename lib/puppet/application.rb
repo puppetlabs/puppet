@@ -395,7 +395,7 @@ class Application
   end
 
   def setup_logs
-    handle_logdest_arg(Puppet[:logdest])
+    handle_logdest_arg(Puppet[:logdest]) if !options[:setdest]
 
     unless options[:setdest]
       if options[:debug] || options[:verbose]
@@ -418,7 +418,7 @@ class Application
   end
 
   def handle_logdest_arg(arg)
-    return if options[:setdest] || arg.nil?
+    return if arg.nil?
 
     begin
       Puppet[:logdest] = arg
