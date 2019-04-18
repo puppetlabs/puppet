@@ -318,8 +318,7 @@ Licensed under the Apache 2.0 License
             Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
             # this will reload and recompute default settings and create the devices sub vardir
             Puppet.settings.use :main, :agent, :ssl
-            # ask for a ssl cert if needed, but at least
-            # setup the ssl system for this device.
+            # ask for a ssl cert if needed, and setup the ssl system for this device.
             setup_host
 
             require 'puppet/configurer'
