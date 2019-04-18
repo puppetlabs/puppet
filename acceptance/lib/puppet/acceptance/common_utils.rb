@@ -60,6 +60,16 @@ module Puppet
       end
     end
 
+    module PackageUtils
+      def package_present(host, package, version = nil)
+          host.install_package(package, '', version)
+      end
+
+      def package_absent(host, package, cmdline_args = '', opts = {})
+          host.uninstall_package(package, cmdline_args, opts)
+      end
+    end
+
     module CAUtils
 
       def initialize_ssl
@@ -199,10 +209,10 @@ module Puppet
         end.join(",\n")
 
         <<-MANIFEST
-#{resource} { '#{title}':
-  #{params_str}
-}
-MANIFEST
+        #{resource} { '#{title}':
+          #{params_str}
+        }
+        MANIFEST
       end
 
       def file_manifest(path, params = {})
