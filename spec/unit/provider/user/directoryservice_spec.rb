@@ -294,7 +294,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     before :each do
       # Stub out all calls to dscl with default values from above
       defaults.each do |key, val|
-        allow(provider).to receive(:merge_attribute_with_dscl).with('Users', username, key, val)
+        allow(provider).to receive(:create_attribute_with_dscl).with('Users', username, key, val)
       end
 
       # Mock the rest of the dscl calls. We can't assume that our Linux
@@ -327,10 +327,40 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     it 'should convert group names into integers' do
       resource[:gid] = 'somegroup'
       expect(Puppet::Util).to receive(:gid).with('somegroup').and_return(21)
-      expect(provider).to receive(:merge_attribute_with_dscl).with('Users', username, 'PrimaryGroupID', 21)
+      expect(provider).to receive(:create_attribute_with_dscl).with('Users', username, 'PrimaryGroupID', 21)
       provider.create
     end
   end
+
+  describe 'Update existing user' do
+    describe 'home=' do
+      context 'on OS X 10.14' do
+        before do
+          provider.instance_variable_set(:@property_hash, { home: 'value' })
+          allow(provider.class).to receive(:get_os_version).and_return('10.14')
+        end
+
+        it 'raises error' do
+          expect { provider.home = 'new' }.to \
+            raise_error(Puppet::Error, "OS X version 10.14 does not allow changing home using puppet")
+        end
+      end
+  end
+
+  describe 'uid=' do
+    context 'on OS X 10.14' do
+      before do
+        provider.instance_variable_set(:@property_hash, { uid: 'value' })
+        allow(provider.class).to receive(:get_os_version).and_return('10.14')
+      end
+
+      it 'raises error' do
+        expect { provider.uid = 'new' }.to \
+          raise_error(Puppet::Error, "OS X version 10.14 does not allow changing uid using puppet")
+      end
+    end
+  end
+end
 
   describe 'self#instances' do
     it 'should create an array of provider instances' do
@@ -985,6 +1015,13 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     it 'should raise an error if a dscl command raises an error' do
       expect(provider).to receive(:dscl).with('.', '-merge', user_path, 'GeneratedUID', 'GUID').and_raise(Puppet::ExecutionFailure, 'boom')
       expect { provider.merge_attribute_with_dscl('Users', username, 'GeneratedUID', 'GUID') }.to raise_error Puppet::Error, /Could not set the dscl GeneratedUID key with value: GUID/
+    end
+  end
+
+  describe '#create_attribute_with_dscl' do
+    it 'should raise an error if a dscl command raises an error' do
+      expect(provider).to receive(:dscl).with('.', '-create', user_path, 'GeneratedUID', 'GUID').and_raise(Puppet::ExecutionFailure, 'boom')
+      expect { provider.create_attribute_with_dscl('Users', username, 'GeneratedUID', 'GUID') }.to raise_error Puppet::Error, /Could not set the dscl GeneratedUID key with value: GUID/
     end
   end
 
