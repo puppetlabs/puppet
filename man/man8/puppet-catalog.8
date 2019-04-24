@@ -66,6 +66,25 @@ Finds and applies a catalog\. This action takes no arguments, but the source of 
 Nothing\. When used from the Ruby API, returns a Puppet::Transaction::Report object\.
 .
 .TP
+\fBcompile\fR \- Compile a catalog\.
+\fBSYNOPSIS\fR
+.
+.IP
+puppet catalog compile [\-\-terminus _TERMINUS] [\-\-extra HASH]
+.
+.IP
+\fBDESCRIPTION\fR
+.
+.IP
+Compiles a catalog locally for a node, requiring access to modules, node classifier, etc\.
+.
+.IP
+\fBRETURNS\fR
+.
+.IP
+A serialized catalog\.
+.
+.TP
 \fBdownload\fR \- Download this node\'s catalog from the puppet master server\.
 \fBSYNOPSIS\fR
 .
@@ -198,6 +217,15 @@ report  = Puppet::Face[:catalog, \'0\.0\.1\']\.apply
 .fi
 .
 .IP "" 0
+.
+.P
+\fBcompile\fR
+.
+.P
+Compile catalog for node \'mynode\':
+.
+.P
+$ puppet catalog compile mynode \-\-codedir \.\.\.
 .
 .P
 \fBdownload\fR
