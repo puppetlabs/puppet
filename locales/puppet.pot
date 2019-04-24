@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.4.0-81-gcb43a63\n"
+"Project-Id-Version: Puppet automation framework 6.4.1-51-g5d30e1e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-04-04 23:31+0000\n"
-"PO-Revision-Date: 2019-04-04 23:31+0000\n"
+"POT-Creation-Date: 2019-04-24 03:03+0000\n"
+"PO-Revision-Date: 2019-04-24 03:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -734,6 +734,10 @@ msgstr ""
 
 #: ../lib/puppet/face/catalog.rb:7
 msgid "Compile, save, view, and convert catalogs."
+msgstr ""
+
+#: ../lib/puppet/face/catalog.rb:87
+msgid "Compile a catalog."
 msgstr ""
 
 #: ../lib/puppet/face/catalog/select.rb:4
@@ -6575,7 +6579,7 @@ msgstr ""
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:139 ../lib/puppet/provider/package/yum.rb:247
+#: ../lib/puppet/provider/package/aix.rb:139 ../lib/puppet/provider/package/yum.rb:248
 msgid "Tried to get latest on a missing package"
 msgstr ""
 
@@ -6607,7 +6611,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:228 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:229 ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -6647,27 +6651,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:42
+#: ../lib/puppet/provider/package/gem.rb:55
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:68
+#: ../lib/puppet/provider/package/gem.rb:81
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:109
+#: ../lib/puppet/provider/package/gem.rb:135
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:120
+#: ../lib/puppet/provider/package/gem.rb:146
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:136
+#: ../lib/puppet/provider/package/gem.rb:162
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:161
+#: ../lib/puppet/provider/package/gem.rb:185
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -6918,23 +6922,23 @@ msgstr ""
 msgid "Don't know how to install '%{source}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:28
+#: ../lib/puppet/provider/package/yum.rb:29
 msgid "The yum provider can only be used as root"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:82
+#: ../lib/puppet/provider/package/yum.rb:83
 msgid "Could not check for updates, '%{cmd} check-update' exited with %{status}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:116
+#: ../lib/puppet/provider/package/yum.rb:117
 msgid "Failed to parse package name and architecture from '%{pkgname}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:222
+#: ../lib/puppet/provider/package/yum.rb:223
 msgid "Could not find package %{wanted}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:233
+#: ../lib/puppet/provider/package/yum.rb:234
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
@@ -7692,15 +7696,15 @@ msgstr ""
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:164
+#: ../lib/puppet/ssl/host.rb:152
 msgid "No certificate to validate."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:165
+#: ../lib/puppet/ssl/host.rb:153
 msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:167
+#: ../lib/puppet/ssl/host.rb:155
 msgid ""
 "The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?\n"
 "Certificate fingerprint: %{fingerprint}\n"
@@ -7712,7 +7716,7 @@ msgid ""
 "  2. puppet %{puppet_params}\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:218
+#: ../lib/puppet/ssl/host.rb:206
 msgid ""
 "The CSR retrieved from the master does not match the agent's public key.\n"
 "CSR fingerprint: %{fingerprint}\n"
@@ -7726,53 +7730,53 @@ msgid ""
 "  2. puppet %{puppet_params}\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:272 ../lib/puppet/ssl/host.rb:293
+#: ../lib/puppet/ssl/host.rb:260 ../lib/puppet/ssl/host.rb:281
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:274
+#: ../lib/puppet/ssl/host.rb:262
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:283
+#: ../lib/puppet/ssl/host.rb:271
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:291
+#: ../lib/puppet/ssl/host.rb:279
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:331
+#: ../lib/puppet/ssl/host.rb:319
 msgid "Response from the CA did not contain a valid certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:337
+#: ../lib/puppet/ssl/host.rb:325
 msgid "Could not download certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:364
+#: ../lib/puppet/ssl/host.rb:352
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:396 ../lib/puppet/ssl/state_machine.rb:89
+#: ../lib/puppet/ssl/host.rb:384 ../lib/puppet/ssl/state_machine.rb:89
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:426
+#: ../lib/puppet/ssl/host.rb:414
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:447
+#: ../lib/puppet/ssl/host.rb:435
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:451
+#: ../lib/puppet/ssl/host.rb:439
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:454
+#: ../lib/puppet/ssl/host.rb:442
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
@@ -8237,72 +8241,72 @@ msgstr ""
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:104
+#: ../lib/puppet/type/exec.rb:107
 msgid "executed successfully"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:138
+#: ../lib/puppet/type/exec.rb:141
 msgid "Command exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:162
+#: ../lib/puppet/type/exec.rb:165
 msgid "[command redacted] returned %{status} instead of one of [%{expected}]"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:164
+#: ../lib/puppet/type/exec.rb:167
 msgid "'%{cmd}' returned %{status} instead of one of [%{expected}]"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:182
+#: ../lib/puppet/type/exec.rb:188
 msgid "Command must be a String, got value of class %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:214
+#: ../lib/puppet/type/exec.rb:220
 msgid "Unable to execute commands as other users on Windows"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:216
+#: ../lib/puppet/type/exec.rb:222
 msgid "Only root can execute commands as other users"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:272
+#: ../lib/puppet/type/exec.rb:278
 msgid "Invalid environment setting '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:285
+#: ../lib/puppet/type/exec.rb:291
 msgid "The umask specification is invalid: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:301
+#: ../lib/puppet/type/exec.rb:307
 msgid "The timeout must be a number."
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:318
+#: ../lib/puppet/type/exec.rb:324
 msgid "Tries must be an integer"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:322
+#: ../lib/puppet/type/exec.rb:328
 msgid "Tries must be an integer >= 1"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:335
+#: ../lib/puppet/type/exec.rb:341
 msgid "try_sleep must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:339
+#: ../lib/puppet/type/exec.rb:345
 msgid "try_sleep cannot be a negative number"
 msgstr ""
 
 #. TRANSLATORS 'creates' is a parameter name and should not be translated
-#: ../lib/puppet/type/exec.rb:411
+#: ../lib/puppet/type/exec.rb:417
 msgid "Checking that 'creates' path '%{creates_path}' exists"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:456 ../lib/puppet/type/exec.rb:508
+#: ../lib/puppet/type/exec.rb:462 ../lib/puppet/type/exec.rb:514
 msgid "Check %{value} exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:591
+#: ../lib/puppet/type/exec.rb:597
 msgid "'%{cmd}' won't be executed because of failed check '%{check}'"
 msgstr ""
 
@@ -8511,15 +8515,15 @@ msgstr ""
 msgid "Invalid minute '%{n}'"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:278
+#: ../lib/puppet/type/schedule.rb:282
 msgid "Repeat must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:287
+#: ../lib/puppet/type/schedule.rb:291
 msgid "Repeat must be 1 unless periodmatch is 'distance', not '%{period}'"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:331
+#: ../lib/puppet/type/schedule.rb:335
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
