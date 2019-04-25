@@ -1698,8 +1698,17 @@ EOT
       Puppet agent cannot apply configurations until its approved certificate is
       available. Since the certificate may or may not be available immediately,
       puppet agent will repeatedly try to fetch it at this interval. You can
-      turn off waiting for certificates by specifying a time of 0, in which case
+      turn off waiting for certificates by specifying a time of 0, or a maximum
+      amount of time to wait in the `maxwaitforcert` setting, in which case
       puppet agent will exit if it cannot get a cert.
+      #{AS_DURATION}",
+    },
+    :maxwaitforcert => {
+      :default  => "unlimited",
+      :type     => :ttl,
+      :desc     => "The maximum amount of time the Puppet agent should wait for its
+      certificate request to be signed. A value of `unlimited` will cause puppet agent
+      to ask for a signed certificate indefinitely.
       #{AS_DURATION}",
     }
   )
