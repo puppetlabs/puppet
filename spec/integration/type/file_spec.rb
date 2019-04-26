@@ -1680,6 +1680,44 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   end
 
   describe "when using validate_cmd" do
+    test_cmd = '/bin/test'
+    if Facter.value(:operatingsystem) == 'Ubuntu'
+      test_cmd = '/usr/bin/test'
+    end
+
+    if Facter.value(:operatingsystem) == 'Darwin'
+      stat_cmd = "stat -f '%Lp'"
+    else
+      stat_cmd = "stat --format=%a"
+    end
+
+    it "sets the default mode of the temporary file to '0644'", :unless => Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
+      catalog.add_resource(described_class.new(:path => path, :content => "foo",
+                                               :validate_replacement => '^',
+                                               :validate_cmd => %Q{
+                                               echo "The permissions of the file ($(#{stat_cmd} ^)) should equal 644";
+                                               #{test_cmd} "644" == "$(#{stat_cmd} ^)"
+                                               }))
+      report = catalog.apply.report
+      expect(report.resource_statuses["File[#{path}]"].events.first.message).to match(/defined content as '{md5}/)
+      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+      expect(Puppet::FileSystem.exist?(path)).to be_truthy
+    end
+
+    it "should change the permissions of the temp file to match the final file permissions", :unless => Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby?do
+      catalog.add_resource(described_class.new(:path => path, :content => "foo",
+                                               :mode => '0555',
+                                               :validate_replacement => '^',
+                                               :validate_cmd => %Q{
+                                               echo "The permissions of the file ($(#{stat_cmd} ^)) should equal 555";
+                                               #{test_cmd} "555" == "$(#{stat_cmd} ^)"
+                                               }))
+      report = catalog.apply.report
+      expect(report.resource_statuses["File[#{path}]"].events.first.message).to match(/defined content as '{md5}/)
+      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+      expect(Puppet::FileSystem.exist?(path)).to be_truthy
+    end
+
     it "should fail the file resource if command fails" do
       catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env false"))
       expect(Puppet::Util::Execution).to receive(:execute).with("/usr/bin/env false", {:combine => true, :failonfail => true}).and_raise(Puppet::ExecutionFailure, "Failed")

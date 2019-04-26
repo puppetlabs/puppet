@@ -566,7 +566,7 @@ module Util
   DEFAULT_POSIX_MODE = 0644
   DEFAULT_WINDOWS_MODE = nil
 
-  def replace_file(file, default_mode, staging_location: nil, &block)
+  def replace_file(file, default_mode, staging_location: nil, validate_callback: nil, &block)
     raise Puppet::DevError, _("replace_file requires a block") unless block_given?
 
     if default_mode
@@ -631,6 +631,10 @@ module Util
       end
 
       tempfile.close
+
+      if validate_callback
+        validate_callback.call(tempfile.path)
+      end
 
       if Puppet::Util::Platform.windows?
         # Windows ReplaceFile needs a file to exist, so touch handles this
