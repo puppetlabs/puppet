@@ -871,6 +871,16 @@ describe Puppet::Util do
       end
     end
 
+    it "should use a temporary staging location if provided" do
+      new_target = File.join(tmpdir('new_file'), 'new_file.baz')
+      staging_target = tmpdir('staging_file')
+
+      subject.replace_file(new_target, 0555, staging_target) do |fh|
+        expect(File.dirname(fh.path)).to eq(staging_target)
+          fh.puts "foo"
+      end
+    end
+
     it "should not replace the file if an exception is thrown in the block" do
       yielded = false
       threw   = false

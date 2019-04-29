@@ -551,7 +551,7 @@ module Util
   # preserved.  This works hard to avoid loss of any metadata, but will result
   # in an inode change for the file.
   #
-  # Arguments: `filename`, `default_mode`
+  # Arguments: `filename`, `default_mode`, `staging_location`
   #
   # The filename is the file we are going to replace.
   #
@@ -559,11 +559,14 @@ module Util
   # exist; if the file is present we copy the existing mode/owner/group values
   # across. The default_mode can be expressed as an octal integer, a numeric string (ie '0664')
   # or a symbolic file mode.
+  #
+  # The staging_location is a location to render the temporary file before
+  # moving the file to it's final location.
 
   DEFAULT_POSIX_MODE = 0644
   DEFAULT_WINDOWS_MODE = nil
 
-  def replace_file(file, default_mode, &block)
+  def replace_file(file, default_mode, staging_location = nil, &block)
     raise Puppet::DevError, _("replace_file requires a block") unless block_given?
 
     if default_mode
@@ -581,9 +584,15 @@ module Util
     end
 
     begin
-      file     = Puppet::FileSystem.pathname(file)
+      file = Puppet::FileSystem.pathname(file)
+
       # encoding for Uniquefile is not important here because the caller writes to it as it sees fit
-      tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
+      if staging_location
+        tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(file), staging_location)
+      else
+        tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
+      end
+
 
       effective_mode =
       if !Puppet::Util::Platform.windows?
