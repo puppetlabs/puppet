@@ -214,10 +214,12 @@ module Puppet::FileSystem
 
   # Touches the file. On most systems this updates the mtime of the file.
   #
+  # @param mtime [Time] The last modified time or nil to use the current time
+  #
   # @api public
   #
-  def self.touch(path)
-    @impl.touch(assert_path(path))
+  def self.touch(path, mtime: nil)
+    @impl.touch(assert_path(path), mtime: mtime)
   end
 
   # Creates directories for all parts of the given path.

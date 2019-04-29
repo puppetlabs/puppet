@@ -1089,4 +1089,33 @@ describe "Puppet::FileSystem" do
       end
     end
   end
+
+  context '#touch' do
+    let(:dest) { tmpfile('touch_file') }
+
+    it 'creates a file' do
+      Puppet::FileSystem.touch(dest)
+
+      expect(File).to be_file(dest)
+    end
+
+    it 'updates the mtime for an existing file' do
+      Puppet::FileSystem.touch(dest)
+
+      now = Time.now
+      allow(Time).to receive(:now).and_return(now)
+
+      Puppet::FileSystem.touch(dest)
+
+      expect(File.mtime(dest)).to be_within(1).of(now)
+    end
+
+    it 'allows the mtime to be passed in' do
+      tomorrow = Time.now + (24 * 60 * 60)
+
+      Puppet::FileSystem.touch(dest, mtime: tomorrow)
+
+      expect(File.mtime(dest)).to be_within(1).of(tomorrow)
+    end
+  end
 end
