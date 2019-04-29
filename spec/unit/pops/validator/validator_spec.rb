@@ -699,6 +699,13 @@ describe "validating 4x" do
     end
   end
 
+  context 'for hash keys' do
+    it "should not allow reassignment of hash keys" do
+      source = "$my_hash = {'one' => '1', 'two' => '2' }; $my_hash['one']='1.5'"
+      expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::ILLEGAL_INDEXED_ASSIGNMENT)
+    end
+  end
+
   context 'for parameter names' do
     ['class', 'define'].each do |word|
       it "should require that #{word} parameter names are unique" do
