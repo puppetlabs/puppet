@@ -71,6 +71,19 @@ module Puppet
       msg
     end
 
+    def to_h
+      {
+        :issue_code => issue_code,
+        :message => basic_message,
+        :full_message => to_s,
+        :file => file,
+        :line => line,
+        :pos => pos,
+        :environment => environment.to_s,
+        :node => node.to_s,
+      }
+    end
+
     def self.from_issue_and_stack(issue, args = {})
       filename, line = Puppet::Pops::PuppetStack.top_of_stack
 
