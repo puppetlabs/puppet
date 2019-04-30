@@ -109,6 +109,25 @@ class Puppet::X509::CertProvider
     end
   end
 
+  # Return the time when the CRL was last updated.
+  #
+  # @return [Time, nil] Time when the CRL was last updated, or nil if we don't
+  #   have a CRL
+  def crl_last_update
+    stat = Puppet::FileSystem.stat(@crlpath)
+    Time.at(stat.mtime)
+  rescue Errno::ENOENT
+    nil
+  end
+
+  # Set the CRL last updated time.
+  #
+  # @param time [Time] The last updated time
+  #
+  def crl_last_update=(time)
+    Puppet::FileSystem.touch(@crlpath, mtime: time)
+  end
+
   # Save named private key in the configured `privatekeydir`. For
   # historical reasons, names are case insensitive.
   #
