@@ -32,9 +32,9 @@ Puppet::Type.newtype(:file) do
     **Autorequires:** If Puppet is managing the user or group that owns a
     file, the file resource will autorequire them. If Puppet is managing any
     parent directories of a file, the file resource autorequires them.
-    
-    Warning: Enabling `recurse` on directories containing large numbers of 
-    files slows agent runs. To manage file attributes for many files, 
+
+    Warning: Enabling `recurse` on directories containing large numbers of
+    files slows agent runs. To manage file attributes for many files,
     consider using alternative methods such as the `chmod_r`, `chown_r`,
      or `recursive_file_permissions` modules from the Forge."
 
@@ -886,7 +886,16 @@ Puppet::Type.newtype(:file) do
     mode_int = mode ? symbolic_mode_to_int(mode, Puppet::Util::DEFAULT_POSIX_MODE) : nil
 
     if write_temporary_file?
-      Puppet::Util.replace_file(self[:path], mode_int, self[:staging_location]) do |file|
+      if self[:validate_cmd]
+        validate_callback = proc { |path|
+          output = Puppet::Util::Execution.execute(self[:validate_cmd].gsub(self[:validate_replacement], path), :failonfail => true, :combine => true)
+          output.split(/\n/).each { |line|
+            self.debug(line)
+          }
+        }
+      end
+
+      Puppet::Util.replace_file(self[:path], mode_int, staging_location: self[:staging_location], validate_callback: validate_callback) do |file|
         file.binmode
         devfail 'a property should have been provided if write_temporary_file? returned true' if property.nil?
         content_checksum = property.write(file)
@@ -904,12 +913,6 @@ Puppet::Type.newtype(:file) do
         end
 
         fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
-        if self[:validate_cmd]
-          output = Puppet::Util::Execution.execute(self[:validate_cmd].gsub(self[:validate_replacement], file.path), :failonfail => true, :combine => true)
-          output.split(/\n/).each { |line|
-            self.debug(line)
-          }
-        end
       end
     else
       umask = mode ? 000 : 022
