@@ -145,6 +145,7 @@ module Puppet::Test
       Puppet::Util::Profiler.clear
 
       Puppet::SSL::Host.reset
+      Puppet::Rest::Routes.clear
 
       Puppet.clear_deprecation_warnings
     end

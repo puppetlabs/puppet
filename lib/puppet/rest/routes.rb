@@ -16,6 +16,10 @@ module Puppet::Rest
                         srv_service: :ca)
     end
 
+    def self.clear
+      @ca = nil
+    end
+
     # Make an HTTP request to fetch the named certificate
     # @param [String] name the name of the certificate to fetch
     # @param [Puppet::SSL::SSLContext] ssl_context the ssl content to use when making the request
