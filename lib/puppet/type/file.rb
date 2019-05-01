@@ -886,7 +886,7 @@ Puppet::Type.newtype(:file) do
     mode_int = mode ? symbolic_mode_to_int(mode, Puppet::Util::DEFAULT_POSIX_MODE) : nil
 
     if write_temporary_file?
-      Puppet::Util.replace_file(self[:path], mode_int, self[:staging_location]) do |file|
+      Puppet::Util.replace_file(self[:path], mode_int, staging_location: self[:staging_location]) do |file|
         file.binmode
         devfail 'a property should have been provided if write_temporary_file? returned true' if property.nil?
         content_checksum = property.write(file)

@@ -875,7 +875,7 @@ describe Puppet::Util do
       new_target = File.join(tmpdir('new_file'), 'new_file.baz')
       staging_target = tmpdir('staging_file')
 
-      subject.replace_file(new_target, 0555, staging_target) do |fh|
+      subject.replace_file(new_target, 0555, staging_location: staging_target) do |fh|
         expect(File.dirname(fh.path)).to eq(staging_target)
           fh.puts "foo"
       end

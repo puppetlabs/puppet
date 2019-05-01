@@ -1147,13 +1147,13 @@ describe Puppet::Type.type(:file) do
 
         it "should convert symbolic mode to int" do
           file[:mode] = 'oga=r'
-          expect(Puppet::Util).to receive(:replace_file).with(file[:path], 0444, nil)
+          expect(Puppet::Util).to receive(:replace_file).with(file[:path], 0444, { staging_location: nil })
           file.write
         end
 
         it "should support int modes" do
           file[:mode] = '0444'
-          expect(Puppet::Util).to receive(:replace_file).with(file[:path], 0444, nil)
+          expect(Puppet::Util).to receive(:replace_file).with(file[:path], 0444, { staging_location: nil })
           file.write
         end
       end
@@ -1259,7 +1259,7 @@ describe Puppet::Type.type(:file) do
       it "should write the file first to the staging location" do
         file[:content] = 'some content'
         file[:staging_location] = Dir.tmpdir()
-        expect(Puppet::Util).to receive(:replace_file).with(file[:path], nil, Dir.tmpdir())
+        expect(Puppet::Util).to receive(:replace_file).with(file[:path], nil, staging_location: Dir.tmpdir())
         file.write
       end
     end
