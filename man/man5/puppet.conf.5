@@ -896,6 +896,14 @@ Boolean; whether puppet agent should ignore schedules\. This is useful for initi
 .
 .IP "" 0
 .
+.SS "key_type"
+The type of private key\. Valid values are \fBrsa\fR and \fBec\fR\. Default is \fBrsa\fR\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: rsa
+.
+.IP "" 0
+.
 .SS "keylength"
 The bit length of keys\.
 .
@@ -1184,6 +1192,14 @@ The name of the application, if we are running as one\. The default is essential
 .TP
 \fIDefault\fR:
 
+.
+.SS "named_curve"
+The short name for the EC curve used to generate the EC private key\. Valid values must be one of the curves in \fBOpenSSL::PKey::EC\.builtin_curves\fR\. Default is \fBprime256v1\fR\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: prime256v1
+.
+.IP "" 0
 .
 .SS "node_cache_terminus"
 How to store cached nodes\. Valid values are (none), \'json\', \'msgpack\', or \'yaml\'\.
