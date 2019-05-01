@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'puppet/type/user'
 require 'puppet/indirector/resource/ral'
 
 describe "Puppet::Resource::Ral" do
