@@ -7,13 +7,6 @@ require 'puppet/ssl'
 describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
-  before(:each) do
-    WebMock.disable_net_connect!
-
-    allow_any_instance_of(Net::HTTP).to receive(:start)
-    allow_any_instance_of(Net::HTTP).to receive(:finish)
-  end
-
   let(:machine) { described_class.new }
   let(:cacert_pem) { cacert.to_pem }
   let(:cacert) { cert_fixture('ca.pem') }
