@@ -1,0 +1,35 @@
+--- !ruby/object:Puppet::Resource::Catalog
+tags:
+- settings
+name: <%= node_name %>
+version: 1556652267
+code_id:
+catalog_uuid: c552da2c-a0d5-47fe-b3f7-ea42c6e1f940
+catalog_format: 1
+environment: production
+resources:
+- type: Stage
+  title: main
+  tags:
+  - stage
+  exported: false
+- type: Class
+  title: Settings
+  tags:
+  - class
+  - settings
+  exported: false
+- type: Class
+  title: Main
+  tags:
+  - class
+  exported: false
+  parameters:
+    name: main
+edges:
+- source: Stage[main]
+  target: Class[Settings]
+- source: Stage[main]
+  target: Class[Main]
+classes:
+- settings
