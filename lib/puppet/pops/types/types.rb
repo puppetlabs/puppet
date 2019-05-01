@@ -1684,10 +1684,11 @@ class PRegexpType < PScalarType
     @new_function ||= Puppet::Functions.create_loaded_function(:new_float, type.loader) do
       dispatch :from_string do
         param 'String', :pattern
+        optional_param 'Boolean', :escape
       end
 
-      def from_string(pattern)
-        Regexp.new(pattern)
+      def from_string(pattern, escape = false)
+        Regexp.new(escape ? Regexp.escape(pattern) : pattern)
       end
     end
   end

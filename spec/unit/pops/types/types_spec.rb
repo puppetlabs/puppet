@@ -219,6 +219,33 @@ describe 'Puppet Type System' do
     end
   end
 
+  context 'Regexp type' do
+    it 'parameterized type is assignable to base type' do
+      code = <<-CODE
+        notice(Regexp[a] < Regexp)
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true'])
+    end
+
+    it 'new function creates a new regexp' do
+      code = <<-CODE
+        $r = Regexp('abc')
+        notice('abc' =~ $r)
+        notice(type($r) =~ Type[Regexp])
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
+    end
+
+    it 'special characters are escaped with second parameter to Regexp.new set to true' do
+      code = <<-CODE
+        $r = Regexp('.[]', true)
+        notice('.[]' =~ $r)
+        notice(String($r) == "\\.\\[\\]")
+      CODE
+      expect(eval_and_collect_notices(code)).to eq(['true', 'true'])
+    end
+  end
+
   context 'Iterable type' do
     it 'can be parameterized with element type' do
       code = <<-CODE
