@@ -141,11 +141,18 @@ describe Puppet::SSL::SSLProvider do
       expect(sslctx.private_key).to eq(private_key)
     end
 
+    it 'accepts EC keys' do
+      ec_key = ec_key_fixture('ec-key.pem')
+      ec_cert = cert_fixture('ec.pem')
+      sslctx = subject.create_context(config.merge(client_cert: ec_cert, private_key: ec_key))
+      expect(sslctx.private_key).to eq(ec_key)
+    end
+
     it 'raises if private key is unsupported' do
-      ec_key = OpenSSL::PKey::EC.new
+      dsa_key = OpenSSL::PKey::DSA.new
       expect {
-        subject.create_context(config.merge(private_key: ec_key))
-      }.to raise_error(Puppet::SSL::SSLError, /Unsupported key 'OpenSSL::PKey::EC'/)
+        subject.create_context(config.merge(private_key: dsa_key))
+      }.to raise_error(Puppet::SSL::SSLError, /Unsupported key 'OpenSSL::PKey::DSA'/)
     end
 
     it 'resolves the client chain from leaf to root' do

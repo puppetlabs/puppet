@@ -42,6 +42,10 @@ module PuppetSpec::Fixtures
     OpenSSL::PKey::RSA.new(pem_content(name))
   end
 
+  def ec_key_fixture(name)
+    OpenSSL::PKey::EC.new(pem_content(name))
+  end
+
   def request_fixture(name)
     OpenSSL::X509::Request.new(pem_content(name))
   end

@@ -75,7 +75,17 @@ DOC
     csr = OpenSSL::X509::Request.new
     csr.version = 0
     csr.subject = OpenSSL::X509::Name.new([["CN", common_name]])
-    csr.public_key = key.public_key
+
+    csr.public_key = if key.is_a?(OpenSSL::PKey::EC)
+                       # EC#public_key doesn't follow the PKey API,
+                       # see https://github.com/ruby/openssl/issues/29
+                       point = key.public_key
+                       pubkey = OpenSSL::PKey::EC.new(point.group)
+                       pubkey.public_key = point
+                       pubkey
+                     else
+                       key.public_key
+                     end
 
     if options[:csr_attributes]
       add_csr_attributes(csr, options[:csr_attributes])
@@ -88,7 +98,7 @@ DOC
     signer = Puppet::SSL::CertificateSigner.new
     signer.sign(csr, key)
 
-    raise Puppet::Error, _("CSR sign verification failed; you need to clean the certificate request for %{name} on the server") % { name: name } unless csr.verify(key.public_key)
+    raise Puppet::Error, _("CSR sign verification failed; you need to clean the certificate request for %{name} on the server") % { name: name } unless csr.verify(csr.public_key)
 
     @content = csr
 

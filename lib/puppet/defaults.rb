@@ -961,6 +961,19 @@ EOT
           certificate revocation checking and does not attempt to download the CRL.
         EOT
     },
+    :key_type => {
+      :default => 'rsa',
+      :type    => :enum,
+      :values  => %w[rsa ec],
+      :desc    => "The type of private key. Valid values are `rsa` and `ec`. Default is `rsa`."
+    },
+    :named_curve => {
+      :default => 'prime256v1',
+      :type    => :string,
+      :desc    => "The short name for the EC curve used to generate the EC private key. Valid
+                   values must be one of the curves in `OpenSSL::PKey::EC.builtin_curves`.
+                   Default is `prime256v1`."
+    },
     :digest_algorithm => {
         :default  => lambda { default_digest_algorithm },
         :type     => :enum,

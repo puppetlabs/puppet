@@ -10,6 +10,7 @@ class Puppet::X509::CertProvider
   VALID_CERTNAME = /\A[ -.0-~]+\Z/
   CERT_DELIMITERS = /-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m
   CRL_DELIMITERS = /-----BEGIN X509 CRL-----.*?-----END X509 CRL-----/m
+  EC_HEADER = /-----BEGIN EC PRIVATE KEY-----/
 
   def initialize(capath: Puppet[:localcacert],
                  crlpath: Puppet[:hostcrl],
@@ -146,14 +147,30 @@ class Puppet::X509::CertProvider
   # Load a PEM encoded private key.
   #
   # @param pem [String] PEM encoded private key
-  # @return [OpenSSL::PKey::RSA] The private key
-  # @raise [OpenSSL::PKey::RSAError] The `pem` text does not contain a valid key
+  # @return [OpenSSL::PKey::RSA, OpenSSL::PKey::EC] The private key
+  # @raise [OpenSSL::PKey::PKeyError] The `pem` text does not contain a valid key
   # @api private
   def load_private_key_from_pem(pem)
     # set a non-nil passphrase to ensure openssl doesn't prompt
     # but ruby 2.4.0 & 2.4.1 require at least 4 bytes, see
     # https://github.com/ruby/ruby/commit/f012932218fd609f75f9268812df61fb26e2d0f1#diff-40e4270ec386990ac60d7ab5ff8045a4
-    OpenSSL::PKey::RSA.new(pem, '    ')
+    if Puppet::Util::Platform.jruby?
+      begin
+        if pem =~ EC_HEADER
+          OpenSSL::PKey::EC.new(pem, '    ')
+        else
+          OpenSSL::PKey::RSA.new(pem, '    ')
+        end
+      rescue OpenSSL::PKey::PKeyError => e
+        if e.message =~ /Neither PUB key nor PRIV key/
+          raise OpenSSL::PKey::PKeyError, "Could not parse PKey: no start line"
+        else
+          raise e
+        end
+      end
+    else
+      OpenSSL::PKey.read(pem, '    ')
+    end
   end
 
   # Save a named client cert to the configured `certdir`.

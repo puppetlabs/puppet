@@ -246,10 +246,6 @@ describe Puppet::X509::CertProvider do
         }.to raise_error(Puppet::Error, %r{The private key is missing from '/does/not/exist/whatever.pem'})
       end
 
-      it 'returns an RSA key' do
-        expect(provider.load_private_key('signed-key')).to be_a(OpenSSL::PKey::RSA)
-      end
-
       it 'downcases name' do
         expect(provider.load_private_key('SIGNED-KEY')).to be_a(OpenSSL::PKey::RSA)
       end
@@ -275,12 +271,29 @@ describe Puppet::X509::CertProvider do
         }.to raise_error(Puppet::Error, "Failed to load private key for 'signed'")
       end
 
-      context 'that are encrypted' do
+      context 'using RSA' do
+        it 'returns an RSA key' do
+          expect(provider.load_private_key('signed-key')).to be_a(OpenSSL::PKey::RSA)
+        end
+
         it 'raises without a passphrase' do
           # password is 74695716c8b6
           expect {
             provider.load_private_key('encrypted-key')
-          }.to raise_error(OpenSSL::PKey::RSAError, /Neither PUB key nor PRIV key/)
+          }.to raise_error(OpenSSL::PKey::PKeyError, /Could not parse PKey: no start line/)
+        end
+      end
+
+      context 'using EC' do
+        it 'returns an EC key' do
+          expect(provider.load_private_key('ec-key')).to be_a(OpenSSL::PKey::EC)
+        end
+
+        it 'raises without a passphrase' do
+          # password is 74695716c8b6
+          expect {
+            provider.load_private_key('encrypted-ec-key')
+          }.to raise_error(OpenSSL::PKey::PKeyError, /Could not parse PKey: no start line/)
         end
       end
     end

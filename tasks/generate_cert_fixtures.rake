@@ -38,7 +38,8 @@ task(:gen_cert_fixtures) do
   # signed.pem                        |   +- /CN=signed
   # revoked.pem                       |   +- /CN=revoked
   # 127.0.0.1.pem                     |   +- /CN=127.0.0.1 (with dns alt names)
-  # tampered.pem                      |   +- /CN=signed (with different public key)
+  # tampered-cert.pem                 |   +- /CN=signed (with different public key)
+  # ec.pem                            |   +- /CN=ec (with EC private key)
   #                                   |
   #                                   + /CN=Test CA Agent Subauthority
   #                                   |  |
@@ -94,6 +95,17 @@ task(:gen_cert_fixtures) do
   ca.revoke(revoked[:cert], inter_crl, inter[:private_key])
   save(dir, 'revoked.pem', revoked[:cert])
   save(dir, 'revoked-key.pem', revoked[:private_key])
+
+  # Create an EC key and cert, issued by "Test CA Subauthority"
+  ec = ca.create_cert('ec', inter[:cert], inter[:private_key], key_type: :ec)
+  save(dir, 'ec.pem', ec[:cert])
+  save(dir, 'ec-key.pem', ec[:private_key])
+
+  # Create an encrypted version of the above private key for host "ec"
+  save(dir, 'encrypted-ec-key.pem', ec[:private_key]) do |x509|
+    # private key password was chosen at random
+    x509.to_pem(OpenSSL::Cipher::AES.new(128, :CBC), '74695716c8b6')
+  end
 
   # Update intermediate CRL now that we've revoked
   save(dir, 'intermediate-crl.pem', inter_crl)
