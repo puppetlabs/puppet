@@ -1,0 +1,57 @@
+File {
+  ensure => directory,
+  mode => '0750',
+}
+
+file {
+  '<%= testdir %>':;
+  '<%= testdir %>/puppet':;
+  '<%= testdir %>/hieradata':;
+  '<%= testdir %>/code':;
+  '<%= testdir %>/code/environments':;
+  '<%= testdir %>/code/environments/production':;
+  '<%= testdir %>/code/environments/production/manifests':;
+  '<%= testdir %>/code/environments/production/modules':;
+}
+
+file { '<%= testdir %>/puppet/puppet.conf':
+  ensure  => file,
+  content => '
+[user]
+environment = production
+[main]
+codedir = <%= testdir %>/code
+environmentpath = <%= testdir %>/code/environments
+hiera_config = <%= testdir %>/hiera.yaml
+',
+}
+
+file { '<%= testdir %>/hiera.yaml':
+  ensure  => file,
+  content => '---
+    :backends:
+      - "yaml"
+    :logger: "console"
+    :hierarchy:
+      - "%{fqdn}"
+      - "%{environment}"
+      - "global"
+    :yaml:
+      :datadir: "<%= testdir %>/hieradata"
+  ',
+  mode    => '0640',
+}
+
+file { '<%= testdir %>/hieradata/global.yaml':
+  ensure  => file,
+  content => "---",
+  mode    => '0640',
+}
+
+file { '<%= testdir %>/code/environments/production/manifests/site.pp':
+  ensure  => file,
+  content => "
+    node default {
+    }",
+  mode    => '0640',
+}
