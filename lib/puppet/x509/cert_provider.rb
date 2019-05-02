@@ -190,6 +190,16 @@ class Puppet::X509::CertProvider
     end
   end
 
+  # Load the private key password.
+  #
+  # @return [String, nil] The private key password as a binary string or nil
+  #   if there is none.
+  def load_private_key_password
+    Puppet::FileSystem.read(Puppet[:passfile], :encoding => Encoding::BINARY)
+  rescue Errno::ENOENT
+    nil
+  end
+
   # Save a named client cert to the configured `certdir`.
   #
   # @param name [String] The client cert identity

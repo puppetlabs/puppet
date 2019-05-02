@@ -206,11 +206,7 @@ HELP
   end
 
   def verify(certname)
-    password = begin
-                 Puppet::FileSystem.read(Puppet[:passfile], :encoding => Encoding::BINARY)
-               rescue Errno::ENOENT
-                 nil
-               end
+    password = @cert_provider.load_private_key_password
     ssl_context = @ssl_provider.load_context(certname: certname, password: password)
 
     # print from root to client

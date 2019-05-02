@@ -100,11 +100,7 @@ class Puppet::SSL::StateMachine
     def next_state
       Puppet.debug(_("Loading/generating private key"))
 
-      password = begin
-                   Puppet::FileSystem.read(Puppet[:passfile], :encoding => Encoding::BINARY)
-                 rescue Errno::ENOENT
-                   nil
-                 end
+      password = @cert_provider.load_private_key_password
       key = @cert_provider.load_private_key(Puppet[:certname], password: password)
       if key
         cert = @cert_provider.load_client_cert(Puppet[:certname])

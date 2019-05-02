@@ -209,11 +209,8 @@ module Puppet
       },
       :ssl_context => proc {
         begin
-          password = begin
-                       Puppet::FileSystem.read(Puppet[:passfile], :encoding => Encoding::BINARY)
-                     rescue Errno::ENOENT
-                       nil
-                     end
+          cert = Puppet::X509::CertProvider.new
+          password = cert.load_private_key_password
           ssl = Puppet::SSL::SSLProvider.new
           ssl.load_context(certname: Puppet[:certname], password: password)
         rescue => e
