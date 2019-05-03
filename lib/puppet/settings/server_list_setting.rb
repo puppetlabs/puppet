@@ -5,7 +5,12 @@ class Puppet::Settings::ServerListSetting < Puppet::Settings::ArraySetting
   end
 
   def print(value)
-    value
+    if value.is_a?(Array)
+      #turn into a string
+      value.map {|item| item.join(":") }.join(",")
+    else
+      value
+    end
   end
   
   def munge(value)
