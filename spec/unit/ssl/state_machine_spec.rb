@@ -56,6 +56,23 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
   end
 
+  context 'when locking' do
+    it "should lock prior to running the state machine" do
+      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(cacerts)
+      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
+
+      expect_any_instance_of(Puppet::Util::Pidlock).to receive(:lock).and_return(true)
+
+      machine.ensure_ca_certificates
+    end
+
+    it "should raise LockError if it fails to lock" do
+      allow_any_instance_of(Puppet::Util::Pidlock).to receive(:lock).and_return(false)
+
+      expect { machine.ensure_ca_certificates }.to raise_error(Puppet::LockError)
+    end
+  end
+
   context 'NeedCACerts' do
     let(:state) { Puppet::SSL::StateMachine::NeedCACerts.new(machine) }
 

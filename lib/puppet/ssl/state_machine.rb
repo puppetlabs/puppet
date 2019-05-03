@@ -1,4 +1,5 @@
 require 'puppet/ssl'
+require 'puppet/agent'
 
 # This class implements a state machine for bootstrapping a host's CA and CRL
 # bundles, private key and signed client certificate. Each state has a frozen
@@ -11,6 +12,8 @@ require 'puppet/ssl'
 #
 # @private
 class Puppet::SSL::StateMachine
+  include Puppet::Agent::Locker
+
   class SSLState
     attr_reader :ssl_context
 
@@ -302,10 +305,12 @@ class Puppet::SSL::StateMachine
   private
 
   def run_machine(state, stop)
-    loop do
-      state = state.next_state
+    lock do
+      loop do
+        state = state.next_state
 
-      return state if state.is_a?(stop)
+        return state if state.is_a?(stop)
+      end
     end
   end
 end
