@@ -6,7 +6,7 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
       'server'             # Ruby implementation is deprecated
 
   def assert_key_generated(name)
-    assert_match(/Creating a new SSL key for #{name}/, stdout, "Expected agent to create a new SSL key for autosigning")
+    assert_match(/Creating a new RSA SSL key for #{name}/, stdout, "Expected agent to create a new SSL key for autosigning")
   end
 
   testdirs = {}
