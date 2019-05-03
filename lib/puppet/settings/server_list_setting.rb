@@ -4,6 +4,10 @@ class Puppet::Settings::ServerListSetting < Puppet::Settings::ArraySetting
     :server_list
   end
 
+  def print(value)
+    value
+  end
+  
   def munge(value)
     servers = super 
     servers.map! { |server| 
