@@ -70,7 +70,8 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
     execpipe [command, command_options] do |process|
       process.collect do |line|
-        next unless pkg = parse(line)
+        pkg = parse(line)
+        next unless pkg
         pkg[:command] = command
         packages << new(pkg)
       end

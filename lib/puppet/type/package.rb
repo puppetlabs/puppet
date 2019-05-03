@@ -544,14 +544,14 @@ module Puppet
     autorequire(:file) do
       autos = []
       [:responsefile, :adminfile].each { |param|
-      val = self[param]
+        val = self[param]
         if val
           autos << val
         end
       }
 
       source = self[:source]
-      if absolute_path?(source)
+      if source && absolute_path?(source)
         autos << source
       end
       autos

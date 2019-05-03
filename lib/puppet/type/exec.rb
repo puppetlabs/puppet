@@ -619,7 +619,7 @@ module Puppet
     # Run the command, or optionally run a separately-specified command.
     def refresh
       if self.check_all_attributes(true)
-      cmd = self[:refresh]
+        cmd = self[:refresh]
         if cmd
           provider.run(cmd)
         else

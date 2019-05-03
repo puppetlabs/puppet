@@ -138,8 +138,9 @@ class Puppet::Provider
   def self.command(name)
     name = name.intern
 
-    command =   defined?(@commands) && @commands[name]
-    command ||= superclass.respond_to?(:command) && superclass.command(name)
+    command = @commands[name] if defined?(@commands)    
+    command = superclass.command(name) if !command && superclass.respond_to?(:command)
+
     unless command
       raise Puppet::DevError, _("No command %{command} defined for provider %{provider}") % { command: name, provider: self.name }
     end

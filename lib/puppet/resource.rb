@@ -663,9 +663,9 @@ class Puppet::Resource
     h = {}
     type = resource_type
     if type.respond_to?(:title_patterns) && !type.title_patterns.nil?
-      type.title_patterns.each { |regexp, symbols_and_lambdas|
-      captures = regexp.match(title.to_s)  
-      if captures
+      type.title_patterns.each do |regexp, symbols_and_lambdas|
+        captures = regexp.match(title.to_s)  
+        if captures
           symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|
             symbol, proc = symbol_and_lambda
             # Many types pass "identity" as the proc; we might as well give
@@ -684,7 +684,7 @@ class Puppet::Resource
           end
           return h
         end
-      }
+      end
       # If we've gotten this far, then none of the provided title patterns
       # matched. Since there's no way to determine the title then the
       # resource should fail here.

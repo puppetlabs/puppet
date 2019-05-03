@@ -285,10 +285,8 @@ module Puppet
 
     def chunk_file_from_disk
       File.open(full_path, "rb") do |src|
-        chunk = src.read(8192)
-        while chunk
+        while chunk = src.read(8192) #rubocop:disable Lint/AssignmentInCondition
           yield chunk
-          chunk = src.read(8192)
         end
       end
     end

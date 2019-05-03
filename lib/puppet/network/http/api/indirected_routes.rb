@@ -248,9 +248,9 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
       method = METHOD_MAP[http_method][plurality(indirection)]
       unless method
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+        raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
         _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
-    end
+      end
 
     method
   end
