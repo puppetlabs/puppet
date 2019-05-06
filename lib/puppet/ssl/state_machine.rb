@@ -199,6 +199,9 @@ class Puppet::SSL::StateMachine
       if time < 1
         puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the waitforcert setting is set to 0.") % { name: Puppet[:certname] }
         exit(1)
+      elsif Time.now.to_i > @machine.wait_deadline
+        puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the maxwaitforcert timeout has been exceeded.") % {name: Puppet[:certname] }
+        exit(1)
       else
         Puppet.info(_("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Will try again in %{time} seconds.") % {name: Puppet[:certname], time: time})
 
@@ -216,10 +219,11 @@ class Puppet::SSL::StateMachine
   #
   class Done < SSLState; end
 
-  attr_reader :waitforcert
+  attr_reader :waitforcert, :wait_deadline
 
-  def initialize(waitforcert: Puppet[:waitforcert])
+  def initialize(waitforcert: Puppet[:waitforcert], maxwaitforcert: Puppet[:maxwaitforcert])
     @waitforcert = waitforcert
+    @wait_deadline = Time.now.to_i + maxwaitforcert
   end
 
   # Run the state machine for CA certs and CRLs

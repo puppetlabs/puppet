@@ -525,6 +525,36 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
       end
+
+      it 'sleeps and transitions to NeedCACerts when maxwaitforcert is set' do
+        machine = described_class.new(waitforcert: 15, maxwaitforcert: 30)
+
+        state = Puppet::SSL::StateMachine::Wait.new(machine, ssl_context)
+        expect(state).to receive(:sleep).with(15)
+
+        expect(Puppet).to receive(:info).with(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(.*\). Will try again in 15 seconds./)
+
+        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
+      end
+
+      it 'waits indefinitely by default' do
+        machine = described_class.new
+        expect(machine.wait_deadline).to eq(Float::INFINITY)
+      end
+
+      it 'exits with 1 if maxwaitforcert is exceeded' do
+        machine = described_class.new(maxwaitforcert: 1)
+
+        # 5 minutes in the future
+        future = Time.now + (5 * 60)
+        allow(Time).to receive(:now).and_return(future)
+
+        expect {
+          expect {
+            Puppet::SSL::StateMachine::Wait.new(machine, ssl_context).next_state
+          }.to exit_with(1)
+        }.to output(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(.*\). Exiting now because the maxwaitforcert timeout has been exceeded./).to_stdout
+      end
     end
   end
 end
