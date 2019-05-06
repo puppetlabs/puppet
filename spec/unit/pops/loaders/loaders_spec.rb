@@ -448,6 +448,10 @@ describe 'loaders' do
       function = loader.load_typed(typed_name(:function, 'good_func_load')).value
       expect(function.call(scope)).to eql(Float("3.14"))
     end
+
+    it "a function with syntax error has helpful error message" do
+      expect { loader.load_typed(typed_name(:function, 'func_with_syntax_error')) }.to raise_error(/syntax error, unexpected keyword_end/)
+    end
   end
 
   context 'when a 3x load has illegal method added' do
