@@ -8,12 +8,6 @@ describe Puppet::X509::CertProvider do
     described_class.new(options)
   end
 
-  def as_pem_file(pem)
-    path = tmpfile('cert_provider_pem')
-    File.write(path, pem)
-    path
-  end
-
   def expects_public_file(path)
     if Puppet::Util::Platform.windows?
       current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
@@ -69,7 +63,7 @@ describe Puppet::X509::CertProvider do
 
       context 'and input is invalid' do
         it 'raises when invalid input is inside BEGIN-END block' do
-          ca_path = as_pem_file(<<~END)
+          ca_path = file_containing('invalid_ca', <<~END)
             -----BEGIN CERTIFICATE-----
             whoops
             -----END CERTIFICATE-----
@@ -82,12 +76,12 @@ describe Puppet::X509::CertProvider do
 
         it 'raises if the input is empty' do
           expect {
-            create_provider(capath: as_pem_file('')).load_cacerts
+            create_provider(capath: file_containing('empty_ca', '')).load_cacerts
           }.to raise_error(OpenSSL::X509::CertificateError)
         end
 
         it 'raises if the input is malformed' do
-          ca_path = as_pem_file(<<~END)
+          ca_path = file_containing('malformed_ca', <<~END)
             -----BEGIN CERTIFICATE-----
             MIIBpDCCAQ2gAwIBAgIBAjANBgkqhkiG9w0BAQsFADAfMR0wGwYDVQQDDBRUZXN0
           END
@@ -133,7 +127,7 @@ describe Puppet::X509::CertProvider do
         it 'raises when invalid input is inside BEGIN-END block' do
           pending('jruby bug: https://github.com/jruby/jruby/issues/5619') if Puppet::Util::Platform.jruby?
 
-          crl_path = as_pem_file(<<~END)
+          crl_path = file_containing('invalid_crls', <<~END)
             -----BEGIN X509 CRL-----
             whoops
             -----END X509 CRL-----
@@ -146,12 +140,12 @@ describe Puppet::X509::CertProvider do
 
         it 'raises if the input is empty' do
           expect {
-            create_provider(crlpath: as_pem_file('')).load_crls
+            create_provider(crlpath: file_containing('empty_crl', '')).load_crls
           }.to raise_error(OpenSSL::X509::CRLError, 'Failed to parse CRLs as PEM')
         end
 
         it 'raises if the input is malformed' do
-          crl_path = as_pem_file(<<~END)
+          crl_path = file_containing('malformed_crl', <<~END)
             -----BEGIN X509 CRL-----
             MIIBCjB1AgEBMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNVBAMMB1Rlc3QgQ0EXDTcw
           END

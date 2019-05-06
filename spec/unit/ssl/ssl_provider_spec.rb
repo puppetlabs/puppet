@@ -7,12 +7,6 @@ describe Puppet::SSL::SSLProvider do
   let(:global_crls) { [ crl_fixture('crl.pem'), crl_fixture('intermediate-crl.pem') ] }
   let(:wrong_key) { OpenSSL::PKey::RSA.new(512) }
 
-  def as_pem_file(x509)
-    path = tmpfile('ssl_provider_pem')
-    File.write(path, x509.to_pem)
-    path
-  end
-
   context 'when creating an insecure context' do
     let(:sslctx) { subject.create_insecure_context }
 
@@ -359,8 +353,8 @@ describe Puppet::SSL::SSLProvider do
     let(:doesnt_exist) { '/does/not/exist' }
 
     before :each do
-      Puppet[:localcacert] = as_pem_file(global_cacerts.first)
-      Puppet[:hostcrl] = as_pem_file(global_crls.first)
+      Puppet[:localcacert] = file_containing('global_cacerts', global_cacerts.first.to_pem)
+      Puppet[:hostcrl] = file_containing('global_crls', global_crls.first.to_pem)
 
       Puppet[:certname] = 'signed'
       Puppet[:privatekeydir] = tmpdir('privatekeydir')
