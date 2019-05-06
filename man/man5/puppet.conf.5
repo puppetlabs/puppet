@@ -1149,6 +1149,14 @@ The maximum allowed UID\. Some platforms use negative UIDs but then ship with to
 .
 .IP "" 0
 .
+.SS "maxwaitforcert"
+The maximum amount of time the Puppet agent should wait for its certificate request to be signed\. A value of \fBunlimited\fR will cause puppet agent to ask for a signed certificate indefinitely\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: unlimited
+.
+.IP "" 0
+.
 .SS "mkusers"
 Whether to create the necessary user and group that puppet agent will run as\.
 .
@@ -1898,7 +1906,7 @@ How frequently puppet agent should ask for a signed certificate\.
 When starting for the first time, puppet agent will submit a certificate signing request (CSR) to the server named in the \fBca_server\fR setting (usually the puppet master); this may be autosigned, or may need to be approved by a human, depending on the CA server\'s configuration\.
 .
 .P
-Puppet agent cannot apply configurations until its approved certificate is available\. Since the certificate may or may not be available immediately, puppet agent will repeatedly try to fetch it at this interval\. You can turn off waiting for certificates by specifying a time of 0, in which case puppet agent will exit if it cannot get a cert\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
+Puppet agent cannot apply configurations until its approved certificate is available\. Since the certificate may or may not be available immediately, puppet agent will repeatedly try to fetch it at this interval\. You can turn off waiting for certificates by specifying a time of 0, or a maximum amount of time to wait in the \fBmaxwaitforcert\fR setting, in which case puppet agent will exit if it cannot get a cert\. This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y)\.
 .
 .IP "\(bu" 4
 \fIDefault\fR: 2m
