@@ -33,9 +33,9 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
     elsif name.to_s == 'logdir'
       val = 'Unix/Linux: /var/log/puppetlabs/puppet -- Windows: C:\ProgramData\PuppetLabs\puppet\var\log -- Non-root user: ~/.puppetlabs/var/log'
     elsif name.to_s == 'hiera_config'
-      val = '$confdir/hiera.yaml. However, if a file exists at $codedir/hiera.yaml, Puppet uses that instead.'
+      val = '$codedir/hiera.yaml. However, if no $codedir exists, Puppet uses $confdir/hiera.yaml instead.'
     elsif name.to_s == 'certname'
-      val = "the Host's fully qualified domain name, as determined by facter"
+      val = "the Host's fully qualified domain name, as determined by Facter"
     end
 
     # Leave out the section information; it was apparently confusing people.
@@ -80,7 +80,7 @@ config.header = <<EOT
 * Settings that take a single file or directory can optionally set the owner,
   group, and mode for their value: `rundir = $vardir/run { owner = puppet,
   group = puppet, mode = 644 }`
-* The Puppet executables will ignore any setting that isn't relevant to
+* The Puppet executables ignores any setting that isn't relevant to
   their function.
 
 See the [configuration guide][confguide] for more details.
