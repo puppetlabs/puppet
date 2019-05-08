@@ -105,7 +105,15 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
       @custom_environment = Puppet::Util::Libuser.getenv
       [command(:localdelete), @resource[:name]]
     else
-      [command(:delete), @resource[:name]]
+      # Use force flag if available in order to remove groups which are still
+      # used as the GID for an existing user.
+      groupdel_help = execute([command(:delete), '-h'])
+      has_force_flag = !!(groupdel_help =~ /^\s+-f, --force/)
+      if has_force_flag
+        [command(:delete), '-f', @resource[:name]]
+      else
+        [command(:delete), @resource[:name]]
+      end
     end
   end
 end

@@ -136,6 +136,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
 
       it "should use groupdel" do
+        expect(provider).to receive(:execute).with(["/usr/sbin/groupdel", "-h"])
         expect(provider).to receive(:execute).with(['/usr/sbin/groupdel', 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
         provider.delete
       end
