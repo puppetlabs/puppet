@@ -1681,7 +1681,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
   describe "when using validate_cmd" do
     test_cmd = '/bin/test'
-    if Facter.value(:operatingsystem) == 'Ubuntu'
+    if Facter.value(:osfamily) == 'Debian'
       test_cmd = '/usr/bin/test'
     end
 
