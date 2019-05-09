@@ -258,7 +258,9 @@ class Puppet::SSL::StateMachine
     loop do
       state = state.next_state
 
-      return state if state.is_a?(stop)
+      break if state.is_a?(stop)
     end
+
+    state
   end
 end
