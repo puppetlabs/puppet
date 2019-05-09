@@ -33,7 +33,7 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:prefix] = arg
   end
 
-  option('--sort-merge-arrays')
+  option('--sort-merged-arrays')
 
   option('--merge-hash-arrays')
 
