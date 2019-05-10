@@ -60,10 +60,9 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
   context 'when locking' do
     it "should lock prior to running the state machine" do
-      allow(cert_provider).to receive(:load_crls).and_return(crls)
-      allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
-
-      expect_any_instance_of(Puppet::Util::Pidlock).to receive(:lock).and_return(true)
+      expect(machine).to receive(:lock).and_call_original.ordered
+      expect(cert_provider).to receive(:load_cacerts).and_return(cacerts).ordered
+      expect(cert_provider).to receive(:load_crls).and_return(crls).ordered
 
       machine.ensure_ca_certificates
     end
