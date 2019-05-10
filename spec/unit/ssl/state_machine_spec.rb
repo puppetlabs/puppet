@@ -66,10 +66,12 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       machine.ensure_ca_certificates
     end
 
-    it "should raise LockError if it fails to lock" do
+    it "should raise a meaningful exception if it fails to lock" do
       allow_any_instance_of(Puppet::Util::Pidlock).to receive(:lock).and_return(false)
 
-      expect { machine.ensure_ca_certificates }.to raise_error(Puppet::LockError)
+      expect {
+        machine.ensure_ca_certificates
+      }.to raise_error(Puppet::Error, /Another puppet instance is already running; exiting/)
     end
   end
 

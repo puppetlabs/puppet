@@ -314,5 +314,7 @@ class Puppet::SSL::StateMachine
     end
 
     state
+  rescue Puppet::LockError
+    raise Puppet::Error, 'Another puppet instance is already running; exiting'
   end
 end
