@@ -42,13 +42,15 @@ describe 'Puppet::Type::Service::Provider::Openrc', unless: Puppet::Util::Platfo
   describe "#start" do
     it "should use the supplied start command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :start => '/bin/foo'))
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.start
     end
 
     it "should start the service with rc-service start otherwise" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:start], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:start], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.start
     end
   end
@@ -56,13 +58,15 @@ describe 'Puppet::Type::Service::Provider::Openrc', unless: Puppet::Util::Platfo
   describe "#stop" do
     it "should use the supplied stop command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :stop => '/bin/foo'))
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.stop
     end
 
     it "should stop the service with rc-service stop otherwise" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:stop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:stop], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.stop
     end
   end
@@ -150,24 +154,27 @@ describe 'Puppet::Type::Service::Provider::Openrc', unless: Puppet::Util::Platfo
     describe "when a special status command if specified" do
       it "should use the status command from the resource" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+        expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         provider.status
       end
 
       it "should return :stopped when status command returns with a non-zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+        expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(3)
         expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running when status command returns with a zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+        expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect(provider.status).to eq(:running)
       end
@@ -176,14 +183,14 @@ describe 'Puppet::Type::Service::Provider::Openrc', unless: Puppet::Util::Platfo
     describe "when hasstatus is false" do
       it "should return running if a pid can be found" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => false))
-        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         expect(provider).to receive(:getpid).and_return(1000)
         expect(provider.status).to eq(:running)
       end
 
       it "should return stopped if no pid can be found" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => false))
-        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:status], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         expect(provider).to receive(:getpid).and_return(nil)
         expect(provider.status).to eq(:stopped)
       end
@@ -192,14 +199,16 @@ describe 'Puppet::Type::Service::Provider::Openrc', unless: Puppet::Util::Platfo
     describe "when hasstatus is true" do
       it "should return running if rc-service status exits with a zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
-        expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+        expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:status], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect(provider.status).to eq(:running)
       end
 
       it "should return stopped if rc-service status exits with a non-zero exitcode" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasstatus => true))
-        expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+        expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:status], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(3)
         expect(provider.status).to eq(:stopped)
       end
@@ -209,22 +218,26 @@ describe 'Puppet::Type::Service::Provider::Openrc', unless: Puppet::Util::Platfo
   describe "#restart" do
     it "should use the supplied restart command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
-      expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:restart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:restart], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.restart
     end
 
     it "should restart the service with rc-service restart if hasrestart is true" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => true))
-      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:restart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:restart], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.restart
     end
 
     it "should restart the service with rc-service stop/start if hasrestart is false" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => false))
-      expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:restart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:stop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
-      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:start], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(provider).not_to receive(:execute).with(['/sbin/rc-service','sshd',:restart], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:stop], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('Gentoo')
+      expect(provider).to receive(:execute).with(['/sbin/rc-service','sshd',:start], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.restart
     end
   end

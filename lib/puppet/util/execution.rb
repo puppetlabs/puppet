@@ -1,5 +1,6 @@
 require 'timeout'
 require 'puppet/file_system/uniquefile'
+require 'puppet/util/limits'
 
 module Puppet
   require 'rbconfig'
@@ -133,6 +134,7 @@ module Puppet::Util::Execution
   #   Passing in a value of false for this option will allow the command to be executed using the user/system locale.
   # @option options [Hash<{String => String}>] :custom_environment ({}) a hash of key/value pairs to set as environment variables for the duration
   #   of the command.
+  # @option options [Integer] :priority (nil) The priority of child process, aka the nice value in Posix operatingsystems.
   # @return [Puppet::Util::Execution::ProcessOutput] output as specified by options
   # @raise [Puppet::ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
   #   `true`.
@@ -158,6 +160,7 @@ module Puppet::Util::Execution
         :custom_environment => {},
         :sensitive => false,
         :suppress_window => false,
+        :priority => nil,
     }
 
     options = default_options.merge(options)
@@ -336,6 +339,11 @@ module Puppet::Util::Execution
       # turning "/tmp/foo;\r\n /bin/echo" into ["/tmp/foo;\r\n", " /bin/echo"]
       command = [command].flatten
       Process.setsid
+      if options[:priority]
+        if Puppet.features.root?
+          setpriority(options[:priority])
+        end
+      end
       begin
         # We need to chdir to our cwd before changing privileges as there's a
         # chance that the user may not have permissions to access the cwd, which

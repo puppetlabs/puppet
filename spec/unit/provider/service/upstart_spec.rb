@@ -153,7 +153,8 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Debian')
+        expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
         provider.status
       end
@@ -164,7 +165,8 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Debian')
+        expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
         expect(provider.status).to eq(:stopped)
       end
@@ -175,7 +177,8 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Debian')
+        expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect(provider.status).to eq(:running)
       end
@@ -210,7 +213,8 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Debian')
+        expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
         provider.status
       end
@@ -221,7 +225,8 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Debian')
+        expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
         expect(provider.status).to eq(:stopped)
       end
@@ -232,7 +237,8 @@ describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platf
         allow(provider).to receive(:is_upstart?).and_return(true)
 
         expect(provider).not_to receive(:status_exec).with(['foo'])
-        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        expect(Facter).to receive(:value).with(:osfamily).and_return('Debian')
+        expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect(provider.status).to eq(:running)
       end

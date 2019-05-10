@@ -21,8 +21,19 @@ Puppet::Type.type(:service).provide :service do
 
   # A simple wrapper so execution failures are a bit more informative.
   def texecute(type, command, fof = true, squelch = false, combine = true)
+    # Set the process priority to 0 (or normal in Windows) so that services
+    # which are started as children of puppet will start with normal priority,
+    # rather than the priority of the puppet process itself.
+    priority = Puppet::Util::Platform.windows? ? Process::NORMAL_PRIORITY_CLASS : 0
     begin
-      execute(command, :failonfail => fof, :override_locale => false, :squelch => squelch, :combine => combine)
+      opts = {
+        :combine => combine,
+        :failonfail => fof,
+        :override_locale => false,
+        :priority => priority,
+        :squelch => squelch,
+      }
+      execute(command, opts)
     rescue Puppet::ExecutionFailure => detail
       @resource.fail Puppet::Error, "Could not #{type} #{@resource.ref}: #{detail}", detail
     end

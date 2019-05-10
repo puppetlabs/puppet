@@ -62,13 +62,15 @@ _EOF_
 
   context "when starting a service" do
     it "should execute the startsrc command" do
-      expect(@provider).to receive(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
+      expect(Facter).to receive(:value).with(:osfamily).and_return('AIX')
+      expect(@provider).to receive(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false})
       expect(@provider).to receive(:status).and_return(:running)
       @provider.start
     end
 
     it "should error if timeout occurs while stopping the service" do
-      expect(@provider).to receive(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
+      expect(Facter).to receive(:value).with(:osfamily).and_return('AIX')
+      expect(@provider).to receive(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false})
       expect(Timeout).to receive(:timeout).with(60).and_raise(Timeout::Error)
       expect { @provider.start }.to raise_error Puppet::Error, ('Timed out waiting for myservice to transition states')
     end
@@ -76,13 +78,15 @@ _EOF_
 
   context "when stopping a service" do
     it "should execute the stopsrc command" do
-      expect(@provider).to receive(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
+      expect(Facter).to receive(:value).with(:osfamily).and_return('AIX')
+      expect(@provider).to receive(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false})
       expect(@provider).to receive(:status).and_return(:stopped)
       @provider.stop
     end
 
     it "should error if timeout occurs while stopping the service" do
-      expect(@provider).to receive(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:override_locale => false, :squelch => false, :combine => true, :failonfail => true})
+      expect(Facter).to receive(:value).with(:osfamily).and_return('AIX')
+      expect(@provider).to receive(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false})
       expect(Timeout).to receive(:timeout).with(60).and_raise(Timeout::Error)
       expect { @provider.stop }.to raise_error Puppet::Error, ('Timed out waiting for myservice to transition states')
     end

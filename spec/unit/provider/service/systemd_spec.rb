@@ -181,7 +181,8 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
     it "should use the supplied start command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :start => '/bin/foo'))
       expect(provider).to receive(:daemon_reload?).and_return('no')
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.start
     end
 
@@ -189,7 +190,8 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       expect(provider).to receive(:systemctl).with(:unmask, 'sshd.service')
       expect(provider).to receive(:daemon_reload?).and_return('no')
-      expect(provider).to receive(:execute).with(['/bin/systemctl','start','sshd.service'], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/systemctl','start','sshd.service'], {:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false})
       provider.start
     end
 
@@ -197,7 +199,8 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       expect(provider).to receive(:systemctl).with(:unmask, 'sshd.service')
       expect(provider).to receive(:daemon_reload?).and_return('no')
-      expect(provider).to receive(:execute).with(['/bin/systemctl','start','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/systemctl','start','sshd.service'],{:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false})
         .and_raise(Puppet::ExecutionFailure, "Failed to start sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
       journalctl_logs = <<-EOS
 -- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --
@@ -213,19 +216,22 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   describe "#stop" do
     it "should use the supplied stop command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :stop => '/bin/foo'))
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.stop
     end
 
     it "should stop the service with systemctl stop otherwise" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','stop','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/systemctl','stop','sshd.service'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.stop
     end
 
     it "should show journald logs on failure" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','stop','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/systemctl','stop','sshd.service'],{:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false})
         .and_raise(Puppet::ExecutionFailure, "Failed to stop sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
       journalctl_logs = <<-EOS
 -- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --
@@ -330,7 +336,8 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
   describe "#status" do
     it "should return running if if the command returns 0" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      expect(provider).to receive(:execute).with(['/bin/systemctl','is-active','sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).and_return("active\n")
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/systemctl','is-active','sshd.service'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false).and_return("active\n")
       allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
       expect(provider.status).to eq(:running)
     end
@@ -338,7 +345,8 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     [-10,-1,3,10].each { |ec|
       it "should return stopped if the command returns something non-0" do
         provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-        expect(provider).to receive(:execute).with(['/bin/systemctl','is-active','sshd.service'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).and_return("inactive\n")
+        expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+        expect(provider).to receive(:execute).with(['/bin/systemctl','is-active','sshd.service'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false).and_return("inactive\n")
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(ec)
         expect(provider.status).to eq(:stopped)
       end
@@ -346,7 +354,8 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
 
     it "should use the supplied status command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :status => '/bin/foo'))
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => false, :override_locale => false, :priority => 0, :squelch => false)
       provider.status
     end
   end
@@ -357,22 +366,25 @@ Jun 14 21:43:23 foo.example.com systemd[1]: sshd.service lacks both ExecStart= a
     it "should use the supplied restart command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
       expect(provider).to receive(:daemon_reload?).and_return('no')
-      expect(provider).to receive(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
-      expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/systemctl','restart','sshd.service'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false).never
+      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.restart
     end
 
     it "should restart the service with systemctl restart" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       expect(provider).to receive(:daemon_reload?).and_return('no')
-      expect(provider).to receive(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/systemctl','restart','sshd.service'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
       provider.restart
     end
 
     it "should show journald logs on failure" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
       expect(provider).to receive(:daemon_reload?).and_return('no')
-      expect(provider).to receive(:execute).with(['/bin/systemctl','restart','sshd.service'],{:failonfail => true, :override_locale => false, :squelch => false, :combine => true})
+      expect(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider).to receive(:execute).with(['/bin/systemctl','restart','sshd.service'],{:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false})
         .and_raise(Puppet::ExecutionFailure, "Failed to restart sshd.service: Unit sshd.service failed to load: Invalid argument. See system logs and 'systemctl status sshd.service' for details.")
       journalctl_logs = <<-EOS
 -- Logs begin at Tue 2016-06-14 11:59:21 UTC, end at Tue 2016-06-14 21:45:02 UTC. --

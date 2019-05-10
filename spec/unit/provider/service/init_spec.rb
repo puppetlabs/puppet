@@ -242,7 +242,7 @@ describe 'Puppet::Type::Service::Provider::Init', unless: Puppet::Util::Platform
     describe "when starting a service on Solaris" do
       it "should use ctrun" do
         allow(Facter).to receive(:value).with(:osfamily).and_return('Solaris')
-        expect(provider).to receive(:execute).with('/usr/bin/ctrun -l child /service/path/myservice start', {:failonfail => true, :override_locale => false, :squelch => false, :combine => true}).and_return("")
+        expect(provider).to receive(:execute).with('/usr/bin/ctrun -l child /service/path/myservice start', {:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false}).and_return("")
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         provider.start
       end
@@ -251,7 +251,7 @@ describe 'Puppet::Type::Service::Provider::Init', unless: Puppet::Util::Platform
     describe "when starting a service on RedHat" do
       it "should not use ctrun" do
         allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
-        expect(provider).to receive(:execute).with(['/service/path/myservice', :start], {:failonfail => true, :override_locale => false, :squelch => false, :combine => true}).and_return("")
+        expect(provider).to receive(:execute).with(['/service/path/myservice', :start], {:combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false}).and_return("")
         allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         provider.start
       end
