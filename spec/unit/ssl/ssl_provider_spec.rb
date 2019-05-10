@@ -7,12 +7,6 @@ describe Puppet::SSL::SSLProvider do
   let(:global_crls) { [ crl_fixture('crl.pem'), crl_fixture('intermediate-crl.pem') ] }
   let(:wrong_key) { OpenSSL::PKey::RSA.new(512) }
 
-  def as_pem_file(x509)
-    path = tmpfile('ssl_provider_pem')
-    File.write(path, x509.to_pem)
-    path
-  end
-
   context 'when creating an insecure context' do
     let(:sslctx) { subject.create_insecure_context }
 
@@ -359,8 +353,8 @@ describe Puppet::SSL::SSLProvider do
     let(:doesnt_exist) { '/does/not/exist' }
 
     before :each do
-      Puppet[:localcacert] = as_pem_file(global_cacerts.first)
-      Puppet[:hostcrl] = as_pem_file(global_crls.first)
+      Puppet[:localcacert] = file_containing('global_cacerts', global_cacerts.first.to_pem)
+      Puppet[:hostcrl] = file_containing('global_crls', global_crls.first.to_pem)
 
       Puppet[:certname] = 'signed'
       Puppet[:privatekeydir] = tmpdir('privatekeydir')
@@ -406,6 +400,30 @@ describe Puppet::SSL::SSLProvider do
       expect {
         subject.load_context
       }.to raise_error(Puppet::Error, /The client certificate is missing from/)
+    end
+
+    it 'loads the private key and client cert' do
+      ssl_context = subject.load_context
+
+      expect(ssl_context.private_key).to be_an(OpenSSL::PKey::RSA)
+      expect(ssl_context.client_cert).to be_an(OpenSSL::X509::Certificate)
+    end
+
+    it 'loads a password protected key and client cert' do
+      FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'encrypted-key.pem'), File.join(Puppet[:privatekeydir], 'signed.pem'))
+
+      ssl_context = subject.load_context(password: '74695716c8b6')
+
+      expect(ssl_context.private_key).to be_an(OpenSSL::PKey::RSA)
+      expect(ssl_context.client_cert).to be_an(OpenSSL::X509::Certificate)
+    end
+
+    it 'raises if the password is incorrect' do
+      FileUtils.cp(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', 'encrypted-key.pem'), File.join(Puppet[:privatekeydir], 'signed.pem'))
+
+      expect {
+        subject.load_context(password: 'wrongpassword')
+      }.to raise_error(Puppet::SSL::SSLError, /Failed to load private key for host 'signed': Could not parse PKey/)
     end
   end
 

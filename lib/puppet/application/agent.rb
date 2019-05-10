@@ -347,12 +347,12 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       # Setup signal traps immediately after daemonization so we clean up the daemon
       daemon.set_signal_traps
 
-      wait_for_certificates
-
-      if Puppet[:onetime]
-        onetime(daemon)
-      else
-        main(daemon)
+      Puppet.override(ssl_context: wait_for_certificates) do
+        if Puppet[:onetime]
+          onetime(daemon)
+        else
+          main(daemon)
+        end
       end
     end
   end

@@ -209,8 +209,10 @@ module Puppet
       },
       :ssl_context => proc {
         begin
+          cert = Puppet::X509::CertProvider.new
+          password = cert.load_private_key_password
           ssl = Puppet::SSL::SSLProvider.new
-          ssl.load_context(certname: Puppet[:certname])
+          ssl.load_context(certname: Puppet[:certname], password: password)
         rescue => e
           # TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
           Puppet.log_exception(e, _("Failed to initialize SSL: %{message}") % { message: e.message })

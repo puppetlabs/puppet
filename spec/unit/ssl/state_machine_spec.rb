@@ -316,9 +316,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       let(:state) { Puppet::SSL::StateMachine::NeedSubmitCSR.new(machine, ssl_context, private_key) }
 
       def write_csr_attributes(data)
-        csr_yaml = tmpfile('state_machine_csr')
-        File.write(csr_yaml, YAML.dump(data))
-        csr_yaml
+        file_containing('state_machine_csr', YAML.dump(data))
       end
 
       before :each do

@@ -100,7 +100,8 @@ class Puppet::SSL::StateMachine
     def next_state
       Puppet.debug(_("Loading/generating private key"))
 
-      key = @cert_provider.load_private_key(Puppet[:certname])
+      password = @cert_provider.load_private_key_password
+      key = @cert_provider.load_private_key(Puppet[:certname], password: password)
       if key
         cert = @cert_provider.load_client_cert(Puppet[:certname])
         if cert
@@ -117,7 +118,8 @@ class Puppet::SSL::StateMachine
           Puppet.info _("Creating a new RSA SSL key for %{name}") % { name: Puppet[:certname] }
           key = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
         end
-        @cert_provider.save_private_key(Puppet[:certname], key)
+
+        @cert_provider.save_private_key(Puppet[:certname], key, password: password)
       end
 
       NeedSubmitCSR.new(@machine, @ssl_context, key)

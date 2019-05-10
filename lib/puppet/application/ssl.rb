@@ -206,7 +206,8 @@ HELP
   end
 
   def verify(certname)
-    ssl_context = @ssl_provider.load_context(certname: certname)
+    password = @cert_provider.load_private_key_password
+    ssl_context = @ssl_provider.load_context(certname: certname, password: password)
 
     # print from root to client
     ssl_context.client_chain.reverse.each_with_index do |cert, i|

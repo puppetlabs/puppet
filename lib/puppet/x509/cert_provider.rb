@@ -115,11 +115,20 @@ class Puppet::X509::CertProvider
   #
   # @param name [String] The private key identity
   # @param key [OpenSSL::PKey::RSA] private key
+  # @param password [String, nil] If non-nil, derive an encryption key
+  #   from the password, and use that to encrypt the private key. If nil,
+  #   save the private key unencrypted.
   # @raise [Puppet::Error] if the private key cannot be saved
   # @api private
-  def save_private_key(name, key)
+  def save_private_key(name, key, password: nil)
+    pem = if password
+            cipher = OpenSSL::Cipher::AES.new(128, :CBC)
+            key.export(cipher, password)
+          else
+            key.to_pem
+          end
     path = to_path(@privatekeydir, name)
-    save_pem(key.to_pem, path, **permissions_for_setting(:hostprivkey))
+    save_pem(pem, path, **permissions_for_setting(:hostprivkey))
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to save private key for '%{name}'") % {name: name}, e)
   end
@@ -129,17 +138,20 @@ class Puppet::X509::CertProvider
   #
   # @param name [String] The private key identity
   # @param required [Boolean] If true, raise if it is missing
+  # @param password [String, nil] If the private key is encrypted, decrypt
+  #   it using the password. If the key is encrypted, but a password is
+  #   not specified, then the key cannot be loaded.
   # @return (see #load_private_key_from_pem)
   # @raise (see #load_private_key_from_pem)
   # @raise [Puppet::Error] if the private key cannot be loaded
   # @api private
-  def load_private_key(name, required: false)
+  def load_private_key(name, required: false, password: nil)
     path = to_path(@privatekeydir, name)
     pem = load_pem(path)
     if !pem && required
       raise Puppet::Error, _("The private key is missing from '%{path}'") % { path: path }
     end
-    pem ? load_private_key_from_pem(pem) : nil
+    pem ? load_private_key_from_pem(pem, password: password) : nil
   rescue SystemCallError => e
     raise Puppet::Error.new(_("Failed to load private key for '%{name}'") % {name: name}, e)
   end
@@ -147,19 +159,25 @@ class Puppet::X509::CertProvider
   # Load a PEM encoded private key.
   #
   # @param pem [String] PEM encoded private key
+  # @param password [String, nil] If the private key is encrypted, decrypt
+  #   it using the password. If the key is encrypted, but a password is
+  #   not specified, then the key cannot be loaded.
   # @return [OpenSSL::PKey::RSA, OpenSSL::PKey::EC] The private key
   # @raise [OpenSSL::PKey::PKeyError] The `pem` text does not contain a valid key
   # @api private
-  def load_private_key_from_pem(pem)
-    # set a non-nil passphrase to ensure openssl doesn't prompt
-    # but ruby 2.4.0 & 2.4.1 require at least 4 bytes, see
-    # https://github.com/ruby/ruby/commit/f012932218fd609f75f9268812df61fb26e2d0f1#diff-40e4270ec386990ac60d7ab5ff8045a4
+  def load_private_key_from_pem(pem, password: nil)
+    # set a non-nil password to ensure openssl doesn't prompt
+    # but ruby 2.4.0 & 2.4.1 require at least 4 bytes due to
+    # https://github.com/ruby/openssl/commit/f38501249f33bff7ca9d208670b8cde695ea8b7b
+    # and corrected in https://github.com/ruby/openssl/commit/a896c3d1dfa090e92dec1abf8ac12843af6af721
+    password ||= '    '
+
     if Puppet::Util::Platform.jruby?
       begin
         if pem =~ EC_HEADER
-          OpenSSL::PKey::EC.new(pem, '    ')
+          OpenSSL::PKey::EC.new(pem, password)
         else
-          OpenSSL::PKey::RSA.new(pem, '    ')
+          OpenSSL::PKey::RSA.new(pem, password)
         end
       rescue OpenSSL::PKey::PKeyError => e
         if e.message =~ /Neither PUB key nor PRIV key/
@@ -169,8 +187,18 @@ class Puppet::X509::CertProvider
         end
       end
     else
-      OpenSSL::PKey.read(pem, '    ')
+      OpenSSL::PKey.read(pem, password)
     end
+  end
+
+  # Load the private key password.
+  #
+  # @return [String, nil] The private key password as a binary string or nil
+  #   if there is none.
+  def load_private_key_password
+    Puppet::FileSystem.read(Puppet[:passfile], :encoding => Encoding::BINARY)
+  rescue Errno::ENOENT
+    nil
   end
 
   # Save a named client cert to the configured `certdir`.
