@@ -17,8 +17,8 @@ class Puppet::SSL::StateMachine
     def initialize(machine, ssl_context)
       @machine = machine
       @ssl_context = ssl_context
-      @cert_provider = Puppet::X509::CertProvider.new
-      @ssl_provider = Puppet::SSL::SSLProvider.new
+      @cert_provider = machine.cert_provider
+      @ssl_provider = machine.ssl_provider
     end
   end
 
@@ -211,10 +211,14 @@ class Puppet::SSL::StateMachine
   #
   class Done < SSLState; end
 
-  attr_reader :waitforcert
+  attr_reader :waitforcert,  :cert_provider, :ssl_provider
 
-  def initialize(waitforcert: Puppet[:waitforcert])
+
+  def initialize(waitforcert: Puppet[:waitforcert],
+                 cert_provider: Puppet::X509::CertProvider.new, ssl_provider: Puppet::SSL::SSLProvider.new)
     @waitforcert = waitforcert
+    @cert_provider = cert_provider
+    @ssl_provider = ssl_provider
   end
 
   # Run the state machine for CA certs and CRLs
