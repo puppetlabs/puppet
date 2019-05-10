@@ -7,7 +7,9 @@ require 'puppet/ssl'
 describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
-  let(:machine) { described_class.new }
+  let(:cert_provider) { Puppet::X509::CertProvider.new }
+  let(:ssl_provider) { Puppet::SSL::SSLProvider.new }
+  let(:machine) { described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider) }
   let(:cacert_pem) { cacert.to_pem }
   let(:cacert) { cert_fixture('ca.pem') }
   let(:cacerts) { [cacert] }
@@ -28,8 +30,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
   context 'when ensuring CA certs and CRLs' do
     it 'returns an SSLContext with the loaded CA certs and CRLs' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(cacerts)
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
+      allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
 
       ssl_context = machine.ensure_ca_certificates
 
@@ -41,10 +43,10 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
   context 'when ensuring a client cert' do
     it 'returns an SSLContext with the loaded CA certs, CRLs, private key and client cert' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(cacerts)
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_return(private_key)
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(client_cert)
+      allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
+      allow(cert_provider).to receive(:load_private_key).and_return(private_key)
+      allow(cert_provider).to receive(:load_client_cert).and_return(client_cert)
 
       ssl_context = machine.ensure_client_certificate
 
@@ -58,8 +60,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
   context 'when locking' do
     it "should lock prior to running the state machine" do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(cacerts)
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
+      allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
 
       expect_any_instance_of(Puppet::Util::Pidlock).to receive(:lock).and_return(true)
 
@@ -83,20 +85,20 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'transitions to NeedCRLs state' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(cacerts)
+      allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
 
       expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCRLs)
     end
 
     it 'loads existing CA certs' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(cacerts)
+      allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
 
       st = state.next_state
       expect(st.ssl_context[:cacerts]).to eq(cacerts)
     end
 
     it 'fetches and saves CA certs' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(nil)
+      allow(cert_provider).to receive(:load_cacerts).and_return(nil)
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: cacert_pem)
 
       st = state.next_state
@@ -105,9 +107,9 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it "does not verify the server's cert if there are no local CA certs" do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(nil)
+      allow(cert_provider).to receive(:load_cacerts).and_return(nil)
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: cacert_pem)
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:save_cacerts)
+      allow(cert_provider).to receive(:save_cacerts)
 
       expect_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
 
@@ -131,7 +133,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'raises if CA certs are invalid' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_cacerts).and_return(nil)
+      allow(cert_provider).to receive(:load_cacerts).and_return(nil)
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: '')
 
       expect {
@@ -160,20 +162,20 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'transitions to NeedKey state' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
 
       expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedKey)
     end
 
     it 'loads existing CRLs' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(crls)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
 
       st = state.next_state
       expect(st.ssl_context[:crls]).to eq(crls)
     end
 
     it 'fetches and saves CRLs' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(nil)
+      allow(cert_provider).to receive(:load_crls).and_return(nil)
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: crl_pem)
 
       st = state.next_state
@@ -182,9 +184,9 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it "verifies the server's certificate when fetching the CRL" do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(nil)
+      allow(cert_provider).to receive(:load_crls).and_return(nil)
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: crl_pem)
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:save_crls)
+      allow(cert_provider).to receive(:save_crls)
 
       expect_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
 
@@ -208,7 +210,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'raises if CRLs are invalid' do
-      allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_crls).and_return(nil)
+      allow(cert_provider).to receive(:load_crls).and_return(nil)
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: '')
 
       expect {
@@ -230,7 +232,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     it 'skips CRL download when revocation is disabled' do
       Puppet[:certificate_revocation] = false
 
-      expect_any_instance_of(Puppet::X509::CertProvider).not_to receive(:load_crls)
+      expect(cert_provider).not_to receive(:load_crls)
       expect(Puppet::Rest::Routes).not_to receive(:get_crls)
 
       state.next_state
@@ -308,7 +310,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       let(:state) { Puppet::SSL::StateMachine::NeedKey.new(machine, ssl_context) }
 
       it 'loads an existing private key and passes it to the next state' do
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_return(private_key)
+        allow(cert_provider).to receive(:load_private_key).and_return(private_key)
 
         st = state.next_state
         expect(st).to be_instance_of(Puppet::SSL::StateMachine::NeedSubmitCSR)
@@ -316,16 +318,16 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       end
 
       it 'loads a matching private key and cert' do
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_return(private_key)
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(client_cert)
+        allow(cert_provider).to receive(:load_private_key).and_return(private_key)
+        allow(cert_provider).to receive(:load_client_cert).and_return(client_cert)
 
         st = state.next_state
         expect(st).to be_instance_of(Puppet::SSL::StateMachine::Done)
       end
 
       it 'raises if the client cert is mismatched' do
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_return(private_key)
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(cert_fixture('tampered-cert.pem'))
+        allow(cert_provider).to receive(:load_private_key).and_return(private_key)
+        allow(cert_provider).to receive(:load_client_cert).and_return(cert_fixture('tampered-cert.pem'))
 
         expect {
           state.next_state
@@ -333,8 +335,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       end
 
       it 'generates a new RSA private key, saves it and passes it to the next state' do
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_return(nil)
-        expect_any_instance_of(Puppet::X509::CertProvider).to receive(:save_private_key)
+        allow(cert_provider).to receive(:load_private_key).and_return(nil)
+        expect(cert_provider).to receive(:save_private_key)
 
         st = state.next_state
         expect(st).to be_instance_of(Puppet::SSL::StateMachine::NeedSubmitCSR)
@@ -344,8 +346,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
       it 'generates a new EC private key, saves it and passes it to the next state' do
         Puppet[:key_type] = 'ec'
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_return(nil)
-        expect_any_instance_of(Puppet::X509::CertProvider).to receive(:save_private_key)
+        allow(cert_provider).to receive(:load_private_key).and_return(nil)
+        expect(cert_provider).to receive(:save_private_key)
 
         st = state.next_state
         expect(st).to be_instance_of(Puppet::SSL::StateMachine::NeedSubmitCSR)
@@ -357,8 +359,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it 'generates a new EC private key with curve `secp384r1`, saves it and passes it to the next state' do
         Puppet[:key_type] = 'ec'
         Puppet[:named_curve] = 'secp384r1'
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_return(nil)
-        expect_any_instance_of(Puppet::X509::CertProvider).to receive(:save_private_key)
+        allow(cert_provider).to receive(:load_private_key).and_return(nil)
+        expect(cert_provider).to receive(:save_private_key)
 
         st = state.next_state
         expect(st).to be_instance_of(Puppet::SSL::StateMachine::NeedSubmitCSR)
@@ -370,7 +372,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it 'raises if the named curve is unsupported' do
         Puppet[:key_type] = 'ec'
         Puppet[:named_curve] = 'infiniteloop'
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_return(nil)
+        allow(cert_provider).to receive(:load_private_key).and_return(nil)
 
         expect {
           state.next_state
@@ -378,7 +380,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       end
 
       it 'raises an error if it fails to load the key' do
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_private_key).and_raise(OpenSSL::PKey::RSAError)
+        allow(cert_provider).to receive(:load_private_key).and_raise(OpenSSL::PKey::RSAError)
 
         expect {
           state.next_state
@@ -395,7 +397,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       end
 
       before :each do
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:save_request)
+        allow(cert_provider).to receive(:save_request)
       end
 
       it 'submits the CSR and transitions to NeedCert' do
@@ -407,7 +409,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it 'saves the CSR and transitions to NeedCert' do
         stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
 
-        expect_any_instance_of(Puppet::X509::CertProvider).to receive(:save_request).with(Puppet[:certname], instance_of(OpenSSL::X509::Request))
+        expect(cert_provider).to receive(:save_request).with(Puppet[:certname], instance_of(OpenSSL::X509::Request))
 
         state.next_state
       end
@@ -511,8 +513,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       let(:state) { Puppet::SSL::StateMachine::NeedCert.new(machine, ssl_context, private_key) }
 
       it 'transitions to Done if the cert is signed and matches our private key' do
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:save_client_cert)
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:save_request)
+        allow(cert_provider).to receive(:save_client_cert)
+        allow(cert_provider).to receive(:save_request)
 
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: client_cert.to_pem)
 
@@ -534,8 +536,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
       it "verifies the server's certificate when getting the client cert" do
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: client_cert.to_pem)
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:save_client_cert)
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:save_request)
+        allow(cert_provider).to receive(:save_client_cert)
+        allow(cert_provider).to receive(:save_request)
 
         expect_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
 
