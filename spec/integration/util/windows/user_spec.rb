@@ -22,7 +22,7 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
     it "should raise an exception if we can't check token membership" do
       expect(Puppet::Util::Windows::User).to receive(:check_token_membership).and_raise(Puppet::Util::Windows::Error, "Access denied.")
 
-      expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
+      expect {Puppet::Util::Windows::User.admin?}.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
     end
   end
 
@@ -52,7 +52,7 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
       it "should raise an exception if the process fails to open the process token" do
         allow(Puppet::Util::Windows::Process).to receive(:elevated_security?).and_raise(Puppet::Util::Windows::Error, "Access denied.")
 
-        expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
+        expect {Puppet::Util::Windows::User.admin?}.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
       end
     end
 
@@ -76,14 +76,14 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
   end
 
   describe "module function" do
-    let(:username) { 'fabio' }
-    let(:bad_password) { 'goldilocks' }
-    let(:logon_fail_msg) { /Failed to logon user "fabio":  Logon failure: unknown user name or bad password./ }
+    let(:username) {'fabio'}
+    let(:bad_password) {'goldilocks'}
+    let(:logon_fail_msg) {/Failed to logon user "fabio":  Logon failure: unknown user name or bad password./}
 
     def expect_logon_failure_error(&block)
       expect {
         yield
-      }.to raise_error { |error|
+      }.to raise_error {|error|
         expect(error).to be_a(Puppet::Util::Windows::Error)
         # https://msdn.microsoft.com/en-us/library/windows/desktop/ms681385(v=vs.85).aspx
         # ERROR_LOGON_FAILURE 1326
@@ -106,6 +106,12 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
     end
 
     describe "logon_user" do
+      let(:fLOGON32_PROVIDER_DEFAULT) {0}
+      let(:fLOGON32_LOGON_INTERACTIVE) {2}
+      let(:fLOGON32_LOGON_NETWORK) {3}
+      let(:token) {'test'}
+      let(:user) {'test'}
+      let(:passwd) {'test'}
       it "should raise an error when provided with an incorrect username and password" do
         expect_logon_failure_error {
           Puppet::Util::Windows::User.logon_user(username, bad_password)
@@ -117,7 +123,20 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
           Puppet::Util::Windows::User.logon_user(username, nil)
         }
       end
+
+      it 'should raise error given that logon returns false' do
+
+        allow(Puppet::Util::Windows::User).to receive(:logon_user_by_logon_type).with(
+            user, passwd, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, anything).and_return (0)
+        allow(Puppet::Util::Windows::User).to receive(:logon_user_by_logon_type).with(
+            user, passwd, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, anything).and_return(0)
+
+        expect {Puppet::Util::Windows::User.logon_user(user, passwd) {}}
+            .to raise_error(Puppet::Util::Windows::Error, /Failed to logon user/)
+
+      end
     end
+
 
     describe "password_is?" do
       it "should return false given an incorrect username and password" do
@@ -158,7 +177,7 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
     describe "check_token_membership" do
       it "should not raise an error" do
         # added just to call an FFI code path on all platforms
-        expect { Puppet::Util::Windows::User.check_token_membership }.not_to raise_error
+        expect {Puppet::Util::Windows::User.check_token_membership}.not_to raise_error
       end
     end
   end

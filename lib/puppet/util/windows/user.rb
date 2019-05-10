@@ -63,10 +63,10 @@ module Puppet::Util::Windows::User
     rescue Puppet::Util::Windows::Error => detail
 
       authenticated_error_codes = Set[
-        ERROR_ACCOUNT_RESTRICTION,
-        ERROR_INVALID_LOGON_HOURS,
-        ERROR_INVALID_WORKSTATION,
-        ERROR_ACCOUNT_DISABLED,
+          ERROR_ACCOUNT_RESTRICTION,
+          ERROR_INVALID_LOGON_HOURS,
+          ERROR_INVALID_WORKSTATION,
+          ERROR_ACCOUNT_DISABLED,
       ]
 
       return authenticated_error_codes.include?(detail.code)
@@ -75,15 +75,18 @@ module Puppet::Util::Windows::User
   module_function :password_is?
 
   def logon_user(name, password, &block)
-    fLOGON32_LOGON_NETWORK = 3
     fLOGON32_PROVIDER_DEFAULT = 0
+    fLOGON32_LOGON_INTERACTIVE = 2
+    fLOGON32_LOGON_NETWORK = 3
 
     token = nil
     begin
       FFI::MemoryPointer.new(:handle, 1) do |token_pointer|
-        if LogonUserW(wide_string(name), wide_string('.'), password.nil? ? FFI::Pointer::NULL : wide_string(password),
-            fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % { name: name.inspect })
+        #try logon using network else try logon using interactive mode
+        if logon_user_by_logon_type(name, password, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
+          if logon_user_by_logon_type(name, password, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
+            raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % {name: name.inspect})
+          end
         end
 
         yield token = token_pointer.read_handle
@@ -96,6 +99,13 @@ module Puppet::Util::Windows::User
     true
   end
   module_function :logon_user
+
+  def logon_user_by_logon_type(name, password, logon_type, logon_provider, token)
+    LogonUserW(wide_string(name), wide_string('.'), password.nil? ? FFI::Pointer::NULL : wide_string(password), logon_type, logon_provider, token)
+  end
+
+  module_function :logon_user_by_logon_type
+  private_class_method :logon_user_by_logon_type
 
   def load_profile(user, password)
     logon_user(user, password) do |token|
@@ -133,7 +143,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LogonUserW,
-    [:lpwstr, :lpwstr, :lpwstr, :dword, :dword, :phandle], :win32_bool
+                          [:lpwstr, :lpwstr, :lpwstr, :dword, :dword, :phandle], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/bb773378(v=vs.85).aspx
   # typedef struct _PROFILEINFO {
@@ -166,7 +176,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :userenv
   attach_function_private :LoadUserProfileW,
-    [:handle, :pointer], :win32_bool
+                          [:handle, :pointer], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/bb762282(v=vs.85).aspx
   # BOOL WINAPI UnloadUserProfile(
@@ -175,7 +185,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :userenv
   attach_function_private :UnloadUserProfile,
-    [:handle, :handle], :win32_bool
+                          [:handle, :handle], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa376389(v=vs.85).aspx
   # BOOL WINAPI CheckTokenMembership(
@@ -185,105 +195,105 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :CheckTokenMembership,
-    [:handle, :pointer, :pbool], :win32_bool
+                          [:handle, :pointer, :pbool], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379650(v=vs.85).aspx
   WELL_KNOWN_SID_TYPE = enum(
-    :WinNullSid                                   , 0,
-    :WinWorldSid                                  , 1,
-    :WinLocalSid                                  , 2,
-    :WinCreatorOwnerSid                           , 3,
-    :WinCreatorGroupSid                           , 4,
-    :WinCreatorOwnerServerSid                     , 5,
-    :WinCreatorGroupServerSid                     , 6,
-    :WinNtAuthoritySid                            , 7,
-    :WinDialupSid                                 , 8,
-    :WinNetworkSid                                , 9,
-    :WinBatchSid                                  , 10,
-    :WinInteractiveSid                            , 11,
-    :WinServiceSid                                , 12,
-    :WinAnonymousSid                              , 13,
-    :WinProxySid                                  , 14,
-    :WinEnterpriseControllersSid                  , 15,
-    :WinSelfSid                                   , 16,
-    :WinAuthenticatedUserSid                      , 17,
-    :WinRestrictedCodeSid                         , 18,
-    :WinTerminalServerSid                         , 19,
-    :WinRemoteLogonIdSid                          , 20,
-    :WinLogonIdsSid                               , 21,
-    :WinLocalSystemSid                            , 22,
-    :WinLocalServiceSid                           , 23,
-    :WinNetworkServiceSid                         , 24,
-    :WinBuiltinDomainSid                          , 25,
-    :WinBuiltinAdministratorsSid                  , 26,
-    :WinBuiltinUsersSid                           , 27,
-    :WinBuiltinGuestsSid                          , 28,
-    :WinBuiltinPowerUsersSid                      , 29,
-    :WinBuiltinAccountOperatorsSid                , 30,
-    :WinBuiltinSystemOperatorsSid                 , 31,
-    :WinBuiltinPrintOperatorsSid                  , 32,
-    :WinBuiltinBackupOperatorsSid                 , 33,
-    :WinBuiltinReplicatorSid                      , 34,
-    :WinBuiltinPreWindows2000CompatibleAccessSid  , 35,
-    :WinBuiltinRemoteDesktopUsersSid              , 36,
-    :WinBuiltinNetworkConfigurationOperatorsSid   , 37,
-    :WinAccountAdministratorSid                   , 38,
-    :WinAccountGuestSid                           , 39,
-    :WinAccountKrbtgtSid                          , 40,
-    :WinAccountDomainAdminsSid                    , 41,
-    :WinAccountDomainUsersSid                     , 42,
-    :WinAccountDomainGuestsSid                    , 43,
-    :WinAccountComputersSid                       , 44,
-    :WinAccountControllersSid                     , 45,
-    :WinAccountCertAdminsSid                      , 46,
-    :WinAccountSchemaAdminsSid                    , 47,
-    :WinAccountEnterpriseAdminsSid                , 48,
-    :WinAccountPolicyAdminsSid                    , 49,
-    :WinAccountRasAndIasServersSid                , 50,
-    :WinNTLMAuthenticationSid                     , 51,
-    :WinDigestAuthenticationSid                   , 52,
-    :WinSChannelAuthenticationSid                 , 53,
-    :WinThisOrganizationSid                       , 54,
-    :WinOtherOrganizationSid                      , 55,
-    :WinBuiltinIncomingForestTrustBuildersSid     , 56,
-    :WinBuiltinPerfMonitoringUsersSid             , 57,
-    :WinBuiltinPerfLoggingUsersSid                , 58,
-    :WinBuiltinAuthorizationAccessSid             , 59,
-    :WinBuiltinTerminalServerLicenseServersSid    , 60,
-    :WinBuiltinDCOMUsersSid                       , 61,
-    :WinBuiltinIUsersSid                          , 62,
-    :WinIUserSid                                  , 63,
-    :WinBuiltinCryptoOperatorsSid                 , 64,
-    :WinUntrustedLabelSid                         , 65,
-    :WinLowLabelSid                               , 66,
-    :WinMediumLabelSid                            , 67,
-    :WinHighLabelSid                              , 68,
-    :WinSystemLabelSid                            , 69,
-    :WinWriteRestrictedCodeSid                    , 70,
-    :WinCreatorOwnerRightsSid                     , 71,
-    :WinCacheablePrincipalsGroupSid               , 72,
-    :WinNonCacheablePrincipalsGroupSid            , 73,
-    :WinEnterpriseReadonlyControllersSid          , 74,
-    :WinAccountReadonlyControllersSid             , 75,
-    :WinBuiltinEventLogReadersGroup               , 76,
-    :WinNewEnterpriseReadonlyControllersSid       , 77,
-    :WinBuiltinCertSvcDComAccessGroup             , 78,
-    :WinMediumPlusLabelSid                        , 79,
-    :WinLocalLogonSid                             , 80,
-    :WinConsoleLogonSid                           , 81,
-    :WinThisOrganizationCertificateSid            , 82,
-    :WinApplicationPackageAuthoritySid            , 83,
-    :WinBuiltinAnyPackageSid                      , 84,
-    :WinCapabilityInternetClientSid               , 85,
-    :WinCapabilityInternetClientServerSid         , 86,
-    :WinCapabilityPrivateNetworkClientServerSid   , 87,
-    :WinCapabilityPicturesLibrarySid              , 88,
-    :WinCapabilityVideosLibrarySid                , 89,
-    :WinCapabilityMusicLibrarySid                 , 90,
-    :WinCapabilityDocumentsLibrarySid             , 91,
-    :WinCapabilitySharedUserCertificatesSid       , 92,
-    :WinCapabilityEnterpriseAuthenticationSid     , 93,
-    :WinCapabilityRemovableStorageSid             , 94
+      :WinNullSid                                   , 0,
+      :WinWorldSid                                  , 1,
+      :WinLocalSid                                  , 2,
+      :WinCreatorOwnerSid                           , 3,
+      :WinCreatorGroupSid                           , 4,
+      :WinCreatorOwnerServerSid                     , 5,
+      :WinCreatorGroupServerSid                     , 6,
+      :WinNtAuthoritySid                            , 7,
+      :WinDialupSid                                 , 8,
+      :WinNetworkSid                                , 9,
+      :WinBatchSid                                  , 10,
+      :WinInteractiveSid                            , 11,
+      :WinServiceSid                                , 12,
+      :WinAnonymousSid                              , 13,
+      :WinProxySid                                  , 14,
+      :WinEnterpriseControllersSid                  , 15,
+      :WinSelfSid                                   , 16,
+      :WinAuthenticatedUserSid                      , 17,
+      :WinRestrictedCodeSid                         , 18,
+      :WinTerminalServerSid                         , 19,
+      :WinRemoteLogonIdSid                          , 20,
+      :WinLogonIdsSid                               , 21,
+      :WinLocalSystemSid                            , 22,
+      :WinLocalServiceSid                           , 23,
+      :WinNetworkServiceSid                         , 24,
+      :WinBuiltinDomainSid                          , 25,
+      :WinBuiltinAdministratorsSid                  , 26,
+      :WinBuiltinUsersSid                           , 27,
+      :WinBuiltinGuestsSid                          , 28,
+      :WinBuiltinPowerUsersSid                      , 29,
+      :WinBuiltinAccountOperatorsSid                , 30,
+      :WinBuiltinSystemOperatorsSid                 , 31,
+      :WinBuiltinPrintOperatorsSid                  , 32,
+      :WinBuiltinBackupOperatorsSid                 , 33,
+      :WinBuiltinReplicatorSid                      , 34,
+      :WinBuiltinPreWindows2000CompatibleAccessSid  , 35,
+      :WinBuiltinRemoteDesktopUsersSid              , 36,
+      :WinBuiltinNetworkConfigurationOperatorsSid   , 37,
+      :WinAccountAdministratorSid                   , 38,
+      :WinAccountGuestSid                           , 39,
+      :WinAccountKrbtgtSid                          , 40,
+      :WinAccountDomainAdminsSid                    , 41,
+      :WinAccountDomainUsersSid                     , 42,
+      :WinAccountDomainGuestsSid                    , 43,
+      :WinAccountComputersSid                       , 44,
+      :WinAccountControllersSid                     , 45,
+      :WinAccountCertAdminsSid                      , 46,
+      :WinAccountSchemaAdminsSid                    , 47,
+      :WinAccountEnterpriseAdminsSid                , 48,
+      :WinAccountPolicyAdminsSid                    , 49,
+      :WinAccountRasAndIasServersSid                , 50,
+      :WinNTLMAuthenticationSid                     , 51,
+      :WinDigestAuthenticationSid                   , 52,
+      :WinSChannelAuthenticationSid                 , 53,
+      :WinThisOrganizationSid                       , 54,
+      :WinOtherOrganizationSid                      , 55,
+      :WinBuiltinIncomingForestTrustBuildersSid     , 56,
+      :WinBuiltinPerfMonitoringUsersSid             , 57,
+      :WinBuiltinPerfLoggingUsersSid                , 58,
+      :WinBuiltinAuthorizationAccessSid             , 59,
+      :WinBuiltinTerminalServerLicenseServersSid    , 60,
+      :WinBuiltinDCOMUsersSid                       , 61,
+      :WinBuiltinIUsersSid                          , 62,
+      :WinIUserSid                                  , 63,
+      :WinBuiltinCryptoOperatorsSid                 , 64,
+      :WinUntrustedLabelSid                         , 65,
+      :WinLowLabelSid                               , 66,
+      :WinMediumLabelSid                            , 67,
+      :WinHighLabelSid                              , 68,
+      :WinSystemLabelSid                            , 69,
+      :WinWriteRestrictedCodeSid                    , 70,
+      :WinCreatorOwnerRightsSid                     , 71,
+      :WinCacheablePrincipalsGroupSid               , 72,
+      :WinNonCacheablePrincipalsGroupSid            , 73,
+      :WinEnterpriseReadonlyControllersSid          , 74,
+      :WinAccountReadonlyControllersSid             , 75,
+      :WinBuiltinEventLogReadersGroup               , 76,
+      :WinNewEnterpriseReadonlyControllersSid       , 77,
+      :WinBuiltinCertSvcDComAccessGroup             , 78,
+      :WinMediumPlusLabelSid                        , 79,
+      :WinLocalLogonSid                             , 80,
+      :WinConsoleLogonSid                           , 81,
+      :WinThisOrganizationCertificateSid            , 82,
+      :WinApplicationPackageAuthoritySid            , 83,
+      :WinBuiltinAnyPackageSid                      , 84,
+      :WinCapabilityInternetClientSid               , 85,
+      :WinCapabilityInternetClientServerSid         , 86,
+      :WinCapabilityPrivateNetworkClientServerSid   , 87,
+      :WinCapabilityPicturesLibrarySid              , 88,
+      :WinCapabilityVideosLibrarySid                , 89,
+      :WinCapabilityMusicLibrarySid                 , 90,
+      :WinCapabilityDocumentsLibrarySid             , 91,
+      :WinCapabilitySharedUserCertificatesSid       , 92,
+      :WinCapabilityEnterpriseAuthenticationSid     , 93,
+      :WinCapabilityRemovableStorageSid             , 94
   )
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa446585(v=vs.85).aspx
@@ -295,7 +305,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :CreateWellKnownSid,
-    [WELL_KNOWN_SID_TYPE, :pointer, :pointer, :lpdword], :win32_bool
+                          [WELL_KNOWN_SID_TYPE, :pointer, :pointer, :lpdword], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379151(v=vs.85).aspx
   # BOOL WINAPI IsValidSid(
@@ -303,5 +313,5 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :IsValidSid,
-    [:pointer], :win32_bool
+                          [:pointer], :win32_bool
 end
