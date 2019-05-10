@@ -155,28 +155,39 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   end
 
   def uninstall
-    query if get(:arch) == :absent
-    nvr = "#{get(:name)}-#{get(:version)}-#{get(:release)}"
-    arch = ".#{get(:arch)}"
-    # If they specified an arch in the manifest, erase that Otherwise,
-    # erase the arch we got back from the query. If multiple arches are
-    # installed and only the package name is specified (without the
-    # arch), this will uninstall all of them on successive runs of the
-    # client, one after the other
-
-    # version of RPM prior to 4.2.1 can't accept the architecture as
-    # part of the package name.
-    unless Puppet::Util::Package.versioncmp(self.class.current_version, '4.2.1') < 0
-      if @resource[:name][-arch.size, arch.size] == arch
-        nvr += arch
+    query
+    # If version and release (or only version) is specified in the resource,
+    # uninstall using them, otherwise uninstall using only the name of the package.
+    name    = get(:name)
+    version = get(:version)
+    release = get(:release)
+    nav = "#{name}-#{version}"
+    nvr = "#{nav}-#{release}"
+    if @resource[:name].start_with? nvr
+      identifier = nvr
+    else
+      if @resource[:name].start_with? nav
+        identifier = nav
       else
-        nvr += ".#{get(:arch)}"
+        identifier = name
+      end
+    end
+    # If an arch is specified in the resource, uninstall that arch,
+    # otherwise uninstall the arch returned by query.
+    # If multiple arches are installed and arch is not specified,
+    # this will uninstall all of them after successive runs.
+    #
+    # rpm prior to 4.2.1 cannot accept architecture as part of the package name.
+    unless Puppet::Util::Package.versioncmp(self.class.current_version, '4.2.1') < 0
+      arch = ".#{get(:arch)}"
+      if @resource[:name].end_with? arch
+        identifier += arch
       end
     end
 
     flag = ['-e']
     flag += uninstall_options if resource[:uninstall_options]
-    rpm flag, nvr
+    rpm flag, identifier
   end
 
   def update
