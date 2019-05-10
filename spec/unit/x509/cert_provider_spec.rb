@@ -557,4 +557,30 @@ describe Puppet::X509::CertProvider do
       end
     end
   end
+
+  context 'CRL last update time' do
+    let(:crl_path) { tmpfile('pem_crls') }
+
+    it 'returns nil if the CRL does not exist' do
+      provider = create_provider(crlpath: '/does/not/exist')
+
+      expect(provider.crl_last_update).to be_nil
+    end
+
+    it 'returns the last update time' do
+      time = Time.now - 30
+      Puppet::FileSystem.touch(crl_path, mtime: time)
+      provider = create_provider(crlpath: crl_path)
+
+      expect(provider.crl_last_update).to be_within(1).of(time)
+    end
+
+    it 'sets the last update time' do
+      time = Time.now - 30
+      provider = create_provider(crlpath: crl_path)
+      provider.crl_last_update = time
+
+      expect(Puppet::FileSystem.stat(crl_path).mtime).to be_within(1).of(time)
+    end
+  end
 end

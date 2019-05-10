@@ -108,8 +108,8 @@ class Puppet::FileSystem::FileImpl
     path.writable?
   end
 
-  def touch(path)
-    ::FileUtils.touch(path)
+  def touch(path, mtime: nil)
+    ::FileUtils.touch(path, mtime: mtime)
   end
 
   def mkpath(path)
