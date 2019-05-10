@@ -19,9 +19,10 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
     # When func3x turned on, assert content by parsing, when turned off continue with (legacy) undefined behavior
     if Puppet[:func3x_check]
       assertion_result = []
-      assert_code(ruby_code_string, assertion_result)
-      unless ruby_code_string.is_a?(String) && assertion_result.include?(:found_newfunction)
-        raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call.") % { source_ref: source_ref }
+      if assert_code(ruby_code_string, assertion_result)
+        unless ruby_code_string.is_a?(String) && assertion_result.include?(:found_newfunction)
+          raise ArgumentError, _("The code loaded from %{source_ref} does not seem to be a Puppet 3x API function - no 'newfunction' call.") % { source_ref: source_ref }
+        end
       end
     end
 
@@ -72,8 +73,9 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
 
   def self.assert_code(code_string, result)
     ripped = Ripper.sexp(code_string)
-    return if ripped.nil?  # Let the next real parse crash and tell where and what is wrong
+    return false if ripped.nil?  # Let the next real parse crash and tell where and what is wrong
     ripped.each {|x| walk(x, result) }
+    true
   end
   private_class_method :assert_code
 
