@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.12-15-gc8eb177\n"
+"Project-Id-Version: Puppet automation framework 5.5.14-18-gfa6bcf8\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-04-02 16:46+0000\n"
-"PO-Revision-Date: 2019-04-02 16:46+0000\n"
+"POT-Creation-Date: 2019-05-13 08:01+0000\n"
+"PO-Revision-Date: 2019-05-13 08:01+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -4145,15 +4145,15 @@ msgstr ""
 msgid "request %{uri} failed: %{msg}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:346
+#: ../lib/puppet/network/http/connection.rb:348 ../lib/puppet/ssl/validator/default_validator.rb:101
 msgid "expected one of %{certnames}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:348
+#: ../lib/puppet/network/http/connection.rb:350 ../lib/puppet/ssl/validator/default_validator.rb:103
 msgid "expected %{certname}"
 msgstr ""
 
-#: ../lib/puppet/network/http/connection.rb:351
+#: ../lib/puppet/network/http/connection.rb:353 ../lib/puppet/ssl/validator/default_validator.rb:106
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
@@ -6439,65 +6439,65 @@ msgstr ""
 msgid "Unknown type <%{type}>"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:928
+#: ../lib/puppet/pops/types/types.rb:930
 msgid "The string '%{str}' cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:931
+#: ../lib/puppet/pops/types/types.rb:933
 msgid "Value of type %{type} cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1169
+#: ../lib/puppet/pops/types/types.rb:1171
 msgid "The string '%{str}' cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1172
+#: ../lib/puppet/pops/types/types.rb:1174
 msgid "Value of type %{type} cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1180
+#: ../lib/puppet/pops/types/types.rb:1182
 msgid "Illegal radix: %{radix}, expected 2, 8, 10, 16, or default"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1293
+#: ../lib/puppet/pops/types/types.rb:1295
 msgid "The string '%{str}' cannot be converted to Float"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1296
+#: ../lib/puppet/pops/types/types.rb:1298
 msgid "Value of type %{type} cannot be converted to Float"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#initialize' is a class and method name and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1513
+#: ../lib/puppet/pops/types/types.rb:1515
 msgid "Passing more than one argument to PStringType#initialize is deprecated"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#values' and '#value' are classes and method names and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1567
+#: ../lib/puppet/pops/types/types.rb:1569
 msgid "Method PStringType#values is deprecated. Use #value instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1915
+#: ../lib/puppet/pops/types/types.rb:1917
 msgid "The string '%{str}' cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1918
+#: ../lib/puppet/pops/types/types.rb:1920
 msgid "Value of type %{type} cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2646
+#: ../lib/puppet/pops/types/types.rb:2648
 msgid "Value of type %{type} cannot be converted to Array"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2716
+#: ../lib/puppet/pops/types/types.rb:2718
 msgid "Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2853
+#: ../lib/puppet/pops/types/types.rb:2855
 msgid "odd number of arguments for Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2864
+#: ../lib/puppet/pops/types/types.rb:2866
 msgid "Value of type %{type} cannot be converted to Hash"
 msgstr ""
 
@@ -7043,27 +7043,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:42
+#: ../lib/puppet/provider/package/gem.rb:84
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:68
+#: ../lib/puppet/provider/package/gem.rb:110
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:109
+#: ../lib/puppet/provider/package/gem.rb:158
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:120
+#: ../lib/puppet/provider/package/gem.rb:169
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:136
+#: ../lib/puppet/provider/package/gem.rb:185
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:161
+#: ../lib/puppet/provider/package/gem.rb:211
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -7332,6 +7332,14 @@ msgstr ""
 
 #: ../lib/puppet/provider/package/yum.rb:234
 msgid "Failed to update to version %{should}, got version %{version} instead"
+msgstr ""
+
+#: ../lib/puppet/provider/package_targetable.rb:53
+msgid "Provider %{name} package command is not functional on this host"
+msgstr ""
+
+#: ../lib/puppet/provider/package_targetable.rb:56
+msgid "Provider %{name} package command '%{cmd}' does not exist on this host"
 msgstr ""
 
 #: ../lib/puppet/provider/parsedfile.rb:52
@@ -8450,7 +8458,7 @@ msgstr[1] ""
 msgid "Failed to call %{callback}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/transaction/event_manager.rb:171
+#: ../lib/puppet/transaction/event_manager.rb:172
 msgid "Would have triggered '%{callback}' from %{count} event"
 msgid_plural "Would have triggered '%{callback}' from %{count} events"
 msgstr[0] ""
@@ -8907,15 +8915,15 @@ msgstr ""
 msgid "name must not contain whitespace: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:114 ../lib/puppet/type/package.rb:128
+#: ../lib/puppet/type/package.rb:116 ../lib/puppet/type/package.rb:130
 msgid "Could not update: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:163
+#: ../lib/puppet/type/package.rb:165
 msgid "Could not get latest version: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:263
+#: ../lib/puppet/type/package.rb:265
 msgid "Name must be a String not %{klass}"
 msgstr ""
 
@@ -8967,15 +8975,15 @@ msgstr ""
 msgid "Assuming upper limit should be that time the next day"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:329
+#: ../lib/puppet/type/schedule.rb:333
 msgid "Repeat must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:338
+#: ../lib/puppet/type/schedule.rb:342
 msgid "Repeat must be 1 unless periodmatch is 'distance', not '%{period}'"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:382
+#: ../lib/puppet/type/schedule.rb:386
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
