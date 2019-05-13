@@ -31,7 +31,7 @@ If you use the \fBsplay\fR setting, note that the period that it waits changes e
 Settings that take a single file or directory can optionally set the owner, group, and mode for their value: \fBrundir = $vardir/run { owner = puppet, group = puppet, mode = 644 }\fR
 .
 .IP "\(bu" 4
-The Puppet executables will ignore any setting that isn\'t relevant to their function\.
+The Puppet executables ignores any setting that isn\'t relevant to their function\.
 .
 .IP "" 0
 .
@@ -274,7 +274,7 @@ The special value \fBca\fR is reserved, and can\'t be used as the certname for a
 Defaults to the node\'s fully qualified domain name\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: the Host\'s fully qualified domain name, as determined by facter
+\fIDefault\fR: the Host\'s fully qualified domain name, as determined by Facter
 .
 .IP "" 0
 .
@@ -774,7 +774,7 @@ The group Puppet Server will run as\. Used to ensure the agent side processes (a
 The hiera configuration file\. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it\.
 .
 .IP "\(bu" 4
-\fIDefault\fR: $confdir/hiera\.yaml\. However, if a file exists at $codedir/hiera\.yaml, Puppet uses that instead\.
+\fIDefault\fR: $confdir/hiera\.yaml\. However, for backwards compatibility, if a file exists at $codedir/hiera\.yaml, Puppet uses that instead\.
 .
 .IP "" 0
 .
