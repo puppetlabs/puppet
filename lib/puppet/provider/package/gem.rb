@@ -1,8 +1,8 @@
-require 'puppet/provider/package'
+require 'puppet/provider/package_targetable'
 require 'uri'
 
 # Ruby gems support.
-Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package do
+Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::Targetable do
   desc "Ruby Gem support. If a URL is passed via `source`, then that URL is
     appended to the list of remote gem repositories; to ensure that only the
     specified source is used, also pass `--clear-sources` via `install_options`.
@@ -15,9 +15,21 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
     or an array where each element is either a string or a hash."
 
-  has_feature :versionable, :install_options, :uninstall_options
+  has_feature :versionable, :install_options, :uninstall_options, :targetable
 
-  commands :gemcmd => "gem"
+  # Define the default provider package command name when the provider is targetable.
+  # Required by Puppet::Provider::Package::Targetable::resource_or_provider_command
+
+  def self.provider_command
+    command(:gemcmd)
+  end
+
+  # Define the default provider package command as optional when the provider is targetable.
+  # Doing do defers the evaluation of provider suitability until all commands are evaluated.
+
+  has_command(:gemcmd, 'gem') do
+    is_optional
+  end
 
   # CommandDefiner in provider.rb creates convenience execution methods that set failonfail, combine, and optionally, environment.
   # And when a child provider defines its own command via commands() or has_command(), the provider-specific path is always returned by command().
@@ -26,10 +38,27 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   #
   # In this case, causing the puppet_gem provider to inherit the parent gem provider's convenience gemcmd() methods, with the wrong path.
 
-  def self.execute_gem_command(command_options)
-    cmd = [command(:gemcmd)] << command_options
+  def self.execute_gem_command(command, command_options)
+    validate_command(command)
+    cmd = [command] << command_options
 
     execute(cmd, {:failonfail => true, :combine => true, :custom_environment => {"HOME"=>ENV["HOME"]}})
+  end
+
+  def self.instances(target_command = nil)
+    if target_command
+      command = target_command
+    else
+      command = provider_command
+      # The default provider package command is optional.
+      return [] unless command
+    end
+
+    gemlist(:command => command, :local => true).collect do |pkg|
+      # Track the command when the provider is targetable.
+      pkg[:command] = command
+      new(pkg)
+    end
   end
 
   def self.gemlist(options)
@@ -48,7 +77,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
 
     begin
-      list = execute_gem_command(command_options).lines.
+      list = execute_gem_command(options[:command], command_options).lines.
         map {|set| gemsplit(set) }.
         reject {|x| x.nil? }
     rescue Puppet::ExecutionFailure => detail
@@ -83,12 +112,6 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
   end
 
-  def self.instances(justme = false)
-    gemlist(:local => true).collect do |hash|
-      new(hash)
-    end
-  end
-
   def insync?(is)
     return false unless is && is != :absent
 
@@ -105,13 +128,13 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     is.any? { |version| dependency.match?('', version) }
   end
 
-  def rubygem_version
+  def rubygem_version(command)
     command_options = ["--version"]
-
-    self.class.execute_gem_command(command_options)
+    self.class.execute_gem_command(command, command_options)
   end
 
   def install(useversion = true)
+    command = resource_or_provider_command
     command_options = ["install"]
     command_options += install_options if resource[:install_options]
 
@@ -122,7 +145,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       command_options << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
     end
 
-    if Puppet::Util::Package.versioncmp(rubygem_version, '2.0.0') == -1
+    if Puppet::Util::Package.versioncmp(rubygem_version(command), '2.0.0') == -1
       command_options << "--no-rdoc" << "--no-ri"
     else
       command_options << "--no-document"
@@ -157,31 +180,34 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       command_options << resource[:name]
     end
 
-    output = self.class.execute_gem_command(command_options)
-    # Apparently some gem versions don't exit non-0 on failure
+    output = self.class.execute_gem_command(command, command_options)
+    # Apparently some gem versions don't exit non-0 on failure.
     self.fail _("Could not install: %{output}") % { output: output.chomp } if output.include?("ERROR")
   end
 
   def latest
-    # This always gets the latest version available.
-    options = {:justme => resource[:name]}
-    options.merge!({:source => resource[:source]}) unless resource[:source].nil?
-    hash = self.class.gemlist(options)
-
-    hash[:ensure][0]
+    command = resource_or_provider_command
+    options = { :command => command, :justme => resource[:name] }
+    options[:source] = resource[:source] unless resource[:source].nil?
+    pkg = self.class.gemlist(options)
+    pkg[:ensure][0]
   end
 
   def query
-    self.class.gemlist(:justme => resource[:name], :local => true)
+    command = resource_or_provider_command
+    options = { :command => command, :justme => resource[:name], :local => true }
+    pkg = self.class.gemlist(options)
+    pkg[:command] = command unless pkg.nil?
+    pkg
   end
 
   def uninstall
+    command = resource_or_provider_command
     command_options = ["uninstall"]
     command_options << "--executables" << "--all" << resource[:name]
     command_options += uninstall_options if resource[:uninstall_options]
-
-    output = self.class.execute_gem_command(command_options)
-    # Apparently some gem versions don't exit non-0 on failure
+    output = self.class.execute_gem_command(command, command_options)
+    # Apparently some gem versions don't exit non-0 on failure.
     self.fail _("Could not uninstall: %{output}") % { output: output.chomp } if output.include?("ERROR")
   end
 
