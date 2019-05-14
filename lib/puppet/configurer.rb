@@ -222,7 +222,7 @@ class Puppet::Configurer
           found = find_functional_server()
           server = found[:server]
           if server.nil?
-            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet[:server_list] }
+            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
           else
             #TRANSLATORS 'server_list' is the name of a setting and should not be translated
             Puppet.debug _("Selected server from the `server_list` setting: %{server}:%{port}") % {server: server[0], port: server[1]}
