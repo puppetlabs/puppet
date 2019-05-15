@@ -8,6 +8,7 @@ describe test_title, unless: Puppet::Util::Platform.jruby? do
   describe "when running on FreeBSD" do
     before :each do
       allow(Facter).to receive(:value).with(:operatingsystem).and_return('FreeBSD')
+      allow(Facter).to receive(:value).with(:osfamily).and_return('FreeBSD')
     end
 
     it "should set its default path to include /etc/rc.d and /usr/local/etc/rc.d" do
