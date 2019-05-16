@@ -14,13 +14,11 @@ agents.each do |agent|
 end
 
 step"Ensure that package is installed first if not present" do
-  info = on(agent.name, "apt-cache policy #{package} | grep Candidate:").stdout
-  expected_package_version = info.split.first
+  expected_package_version = on(agent.name, "apt-cache policy #{package} | sed -n -e 's/Candidate: //p'").stdout
   package_manifest = resource_manifest('package', package, ensure: "held")
 
   apply_manifest_on(agent, package_manifest) do |result|
-    info = on(agent.name, "apt-cache policy #{package} | grep Installed").stdout
-    installed_package_version = info.split.first
+    installed_package_version = on(agent.name, "apt-cache policy #{package} | sed -n -e 's/Installed: //p'").stdout
     assert_match(expected_package_version, installed_package_version)
   end
 end
