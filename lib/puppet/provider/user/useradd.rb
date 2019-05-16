@@ -203,7 +203,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     else
       cmd = [command(:delete)]
     end
-    cmd += @resource.managehome? ? ['-r'] : []
+    # Solaris `userdel -r` will fail if the homedir does not exist.
+    if @resource.managehome? and ('Solaris' != Facter.value(:operatingsystem) or Dir.exist?(Dir.home(@resource[:name])))
+      cmd << '-r'
+    end
     cmd << @resource[:name]
   end
 
