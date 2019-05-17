@@ -18,6 +18,7 @@ gem "beaker-hostgenerator", *location_for(ENV['BEAKER_HOSTGENERATOR_VERSION'] ||
 gem "beaker-abs", *location_for(ENV['BEAKER_ABS_VERSION'] || "~> 0.4")
 gem "beaker-vagrant", *location_for(ENV['BEAKER_VAGRANT_VERSION'] || "~> 0")
 gem "beaker-vmpooler", *location_for(ENV['BEAKER_VMPOOLER_VERSION'] || "~> 1.3")
+gem "beaker-vcloud", *location_for(ENV['BEAKER_VCLOUD_VERSION'] || "~> 1.0")
 gem "beaker-docker", *location_for(ENV['BEAKER_DOCKER_VERSION'] || "~> 0.5")
 gem "rake", "~> 10.1"
 gem "httparty", :require => false
