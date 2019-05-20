@@ -61,7 +61,7 @@ class Puppet::FileSystem::FileImpl
           timeout -= wait
           wait *= 2
           if timeout < 0
-            raise Timeout::Error, _("Timeout waiting for exclusive lock on %{path}") % { path: @path }
+            raise Timeout::Error, _("Timeout waiting for exclusive lock on %{path}") % { path: path }
           end
         end
       end

@@ -223,7 +223,7 @@ describe "Puppet::FileSystem" do
       expect do
         Puppet::FileSystem.exclusive_open(file, 0666, 'a', 0.1) do |f|
         end
-      end.to raise_error(Timeout::Error)
+      end.to raise_error(Timeout::Error, /Timeout waiting for exclusive lock on #{file}/)
 
       Process.kill(9, child)
     end
