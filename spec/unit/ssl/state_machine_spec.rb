@@ -26,6 +26,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
     allow_any_instance_of(Net::HTTP).to receive(:start)
     allow_any_instance_of(Net::HTTP).to receive(:finish)
+
+    Puppet[:ssl_lockfile] = tmpfile('ssllock')
   end
 
   context 'when ensuring CA certs and CRLs' do
@@ -55,6 +57,27 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       expect(ssl_context[:verify_peer]).to eq(true)
       expect(ssl_context[:private_key]).to eq(private_key)
       expect(ssl_context[:client_cert]).to eq(client_cert)
+    end
+  end
+
+  context 'when locking' do
+    let(:lockfile) { double('ssllockfile') }
+    let(:machine) { described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider, lockfile: lockfile) }
+
+    it 'locks the file prior to running the state machine and unlocks when done' do
+      expect(lockfile).to receive(:lock).and_return(true).ordered
+      expect(cert_provider).to receive(:load_cacerts).and_return(cacerts).ordered
+      expect(cert_provider).to receive(:load_crls).and_return(crls).ordered
+      expect(lockfile).to receive(:unlock).ordered
+
+      machine.ensure_ca_certificates
+    end
+
+    it 'raises an exception when locking fails' do
+      allow(lockfile).to receive(:lock).and_return(false)
+      expect {
+        machine.ensure_ca_certificates
+      }.to raise_error(Puppet::Error, /Another puppet instance is already running; exiting/)
     end
   end
 
