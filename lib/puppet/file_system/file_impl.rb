@@ -54,9 +54,12 @@ class Puppet::FileSystem::FileImpl
     while !written
       ::File.open(path, options, mode) do |rf|
         if rf.flock(::File::LOCK_EX|::File::LOCK_NB)
+          Puppet.debug(_("Locked '%{path}'") % { path: path })
           yield rf
           written = true
+          Puppet.debug(_("Unlocked '%{path}'") % { path: path })
         else
+          Puppet.debug("Failed to lock '%s' retrying in %.2f milliseconds" % [path, wait * 1000])
           sleep wait
           timeout -= wait
           wait *= 2
