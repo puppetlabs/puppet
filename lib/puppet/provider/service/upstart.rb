@@ -27,14 +27,14 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   # We only want to use upstart as our provider if the upstart daemon is running.
   # This can be checked by running `initctl version --quiet` on a machine that has
   # upstart installed.
-  confine :true => lambda {
-    begin
-      initctl('version', '--quiet')
-      true
-    rescue
-      false
-    end
-  }
+  confine :true => lambda { has_initctl? }
+
+  def self.has_initctl?
+    initctl('version', '--quiet')
+    true
+  rescue
+    false
+  end
 
   # upstart developer haven't implemented initctl enable/disable yet:
   # http://www.linuxplanet.com/linuxplanet/tutorials/7033/2/
