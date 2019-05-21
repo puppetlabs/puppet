@@ -17,6 +17,7 @@ module Interpolation
   def interpolate(value, context, allow_methods)
     case value
     when String
+      fail(Issues::HIERA_INTERPOLATION_TRIPLE_NESTING) if /(%\{[^\}]*){3}/.match(value)
       value.index('%{').nil? ? value : interpolate_string(value, context, allow_methods)
     when Array
       value.map { |element| interpolate(element, context, allow_methods) }
@@ -46,7 +47,7 @@ module Interpolation
   def interpolate_string(subject, context, allow_methods)
     lookup_invocation = context.is_a?(Invocation) ? context : context.invocation
     lookup_invocation.with(:interpolate, subject) do
-      subject.gsub(/%\{([^\}]*)\}/) do |match|
+      subject.gsub(/%\{((?![^\}]*%\{)[^\}]*|[^\}]*%\{[^\}]*\}[^}]*)\}/) do |match|
         expr = $1
         # Leading and trailing spaces inside an interpolation expression are insignificant
         expr.strip!
@@ -57,6 +58,10 @@ module Interpolation
 
           # Alias is only permitted if the entire string is equal to the interpolate expression
           fail(Issues::HIERA_INTERPOLATION_ALIAS_NOT_ENTIRE_STRING) if is_alias && subject != match
+
+          # interpolate value if needed
+          key = interpolate(key, lookup_invocation, allow_methods)
+
           value = interpolate_method(method_key).call(key, lookup_invocation, subject)
 
           # break gsub and return value immediately if this was an alias substitution. The value might be something other than a String

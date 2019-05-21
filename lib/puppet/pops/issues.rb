@@ -874,6 +874,10 @@ module Issues
     _('Interpolation using method syntax is not allowed in this context')
   end
 
+  HIERA_INTERPOLATION_TRIPLE_NESTING = hard_issue :HIERA_INTERPOLATION_TRIPLE_NESTING do
+    _('Only two levels of hiera interpolation nesting is allowed')
+  end
+
   SERIALIZATION_ENDLESS_RECURSION = hard_issue :SERIALIZATION_ENDLESS_RECURSION, :type_name do
     _('Endless recursion detected when attempting to serialize value of class %{type_name}') % { :type_name => type_name }
   end

@@ -373,5 +373,73 @@ describe 'Puppet::Pops::Lookup::Interpolation' do
       expect { interpolator.interpolate("%{flubber(\"hello\")}", lookup_invocation, true)}.to raise_error("Unknown interpolation method 'flubber'")
     end
   end
+
+  context 'when dealing with multiple interpolations' do
+    let(:data) {
+      {
+        'a' => '(lookup) a',
+        'b' => '(lookup) b',
+        'c' => 'd',
+        'd' => '(lookup) d',
+        'prefix_factval_suffix' => '(lookup) dataval',
+      }
+    }
+    let(:scope) {
+      {
+        'a' => '(scope) a',
+        'b' => '(scope) b',
+        'c' => 'd',
+        'd' => '(scope) d',
+        'facts' => {
+          'fact1' => 'factval',
+        },
+      }
+    }
+
+    it 'should interpolate a combination of lookup and scope' do
+      expect(interpolator.interpolate('%{lookup("a")} %{b}', lookup_invocation, true)).to eq ('(lookup) a (scope) b')
+    end
+
+    it 'should interpolate multiple lookups' do
+      expect(interpolator.interpolate('%{lookup("a")} %{lookup("b")}', lookup_invocation, true)).to eq ('(lookup) a (lookup) b')
+    end
+
+    it 'should interpolate multiple variables' do
+      expect(interpolator.interpolate('%{a} %{b}', lookup_invocation, true)).to eq ('(scope) a (scope) b')
+    end
+
+    it 'should handle nested scope within lookup interpolation' do
+      expect(interpolator.interpolate('%{lookup("%{c}")}', lookup_invocation, true)).to eq ('(lookup) d')
+    end
+
+    it 'should handle nested lookup within scope interpolation' do
+      expect(interpolator.interpolate('%{%{lookup("c")}}', lookup_invocation, true)).to eq ('(scope) d')
+    end
+
+    it 'should handle nested variable within string within lookup interpolation' do
+      expect(interpolator.interpolate('%{lookup("prefix_%{facts.fact1}_suffix")}', lookup_invocation, true)).to eq ('(lookup) dataval')
+    end
+
+    it 'should handle nested scope within scope interpolation' do
+      expect(interpolator.interpolate('%{%{c}}', lookup_invocation, true)).to eq ('(scope) d')
+    end
+
+    it 'should handle nested lookup within lookup interpolation' do
+      expect(interpolator.interpolate('%{lookup("%{lookup(\'c\')}")}', lookup_invocation, true)).to eq ('(lookup) d')
+    end
+
+    it 'should handle nested lookup within lookup and variable interpolation' do
+      expect(interpolator.interpolate('%{a} %{b} %{lookup("%{lookup(\'c\')}")}', lookup_invocation, true)).to eq ('(scope) a (scope) b (lookup) d')
+      expect(interpolator.interpolate('%{a} %{lookup("%{lookup(\'c\')}")} %{b}', lookup_invocation, true)).to eq ('(scope) a (lookup) d (scope) b')
+      expect(interpolator.interpolate('%{lookup("%{lookup(\'c\')}")} %{a} %{b}', lookup_invocation, true)).to eq ('(lookup) d (scope) a (scope) b')
+    end
+
+    it 'should fail with triple nesting' do
+      expect { interpolator.interpolate('%{%{%{a}}}', lookup_invocation, true) }.to raise_error('Only two levels of hiera interpolation nesting is allowed')
+      expect { interpolator.interpolate('%{lookup("%{%{a}}")}', lookup_invocation, true) }.to raise_error('Only two levels of hiera interpolation nesting is allowed')
+      expect { interpolator.interpolate('%{%{lookup("%{a}")}}', lookup_invocation, true) }.to raise_error('Only two levels of hiera interpolation nesting is allowed')
+      expect { interpolator.interpolate('%{a} %{b} %{%{lookup("%{a}")}}', lookup_invocation, true) }.to raise_error('Only two levels of hiera interpolation nesting is allowed')
+    end
+  end
 end
 end
