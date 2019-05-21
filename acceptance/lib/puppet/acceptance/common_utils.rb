@@ -62,10 +62,10 @@ module Puppet
         end.join(",\n")
 
         <<-MANIFEST
-#{resource} { '#{title}':
-  #{params_str}
-}
-MANIFEST
+        #{resource} { '#{title}':
+          #{params_str}
+        }
+        MANIFEST
       end
 
       def file_manifest(path, params = {})

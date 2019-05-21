@@ -1037,13 +1037,15 @@ describe Puppet::Configurer do
     end
 
     it "should error when no servers in 'server_list' are reachable" do
-      Puppet.settings[:server_list] = ["myserver:123"]
+      Puppet.settings[:server_list] = "myserver:123,someotherservername"
+      pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
+      allow(Puppet::Network::HTTP::Pool).to receive(:new).and_return(pool)
+      allow(Puppet).to receive(:override).with({:http_pool => pool}).and_yield
+      allow(Puppet).to receive(:override).with({:server => "myserver", :serverport => '123'}).and_yield
+      allow(Puppet).to receive(:override).with({:server => "someotherservername", :serverport => 8140}).and_yield
       error = Net::HTTPError.new(400, 'dummy server communication error')
-      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: error))
-
-      options = {}
-      expect{ @agent.run(options) }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list/)
-      expect(options[:report].master_used).to be_nil
+      allow(Puppet::Node.indirection).to receive(:find).and_raise(error)
+      expect{ @agent.run }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list: 'myserver:123,someotherservername'/)
     end
 
     it "should not make multiple node requets when the server is found" do

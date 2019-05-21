@@ -221,19 +221,30 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
       allow(Tempfile).to receive(:open).and_yield(tempfile)
     end
 
-    it "installs first if holding" do
+    it "installs first if package is not present and ensure holding" do
+
       allow(provider).to receive(:execute)
+      allow(provider).to receive(:package_not_installed?).and_return(false)
       expect(provider).to receive(:install).once
       provider.hold
     end
 
+    it "skips install new package if package is allready installed" do
+      allow(provider).to receive(:execute)
+      allow(provider).to receive(:package_not_installed?).and_return(true)
+      expect(provider).not_to receive(:install)
+      provider.hold
+    end
+
     it "executes dpkg --set-selections when holding" do
+      allow(provider).to receive(:package_not_installed?).and_return(false)
       allow(provider).to receive(:install)
       expect(provider).to receive(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
       provider.hold
     end
 
     it "executes dpkg --set-selections when unholding" do
+      allow(provider).to receive(:package_not_installed?).and_return(false)
       allow(provider).to receive(:install)
       expect(provider).to receive(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
       provider.hold
@@ -275,4 +286,10 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
     expect(provider).to receive(:dpkg).with("--purge", resource_name)
     provider.purge
   end
+
+  it "raises error if package name is nil" do
+    expect {provider.package_not_installed?(nil)}.to raise_error(ArgumentError,"Package name is nil or empty")
+    expect {provider.package_not_installed?("")}.to raise_error(ArgumentError,"Package name is nil or empty")
+  end
 end
+
