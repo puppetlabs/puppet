@@ -1,6 +1,7 @@
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Launchd', unless: Puppet::Util::Platform.jruby? do
+describe 'Puppet::Type::Service::Provider::Launchd',
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:launchd) }
 
   let (:plistlib) { Puppet::Util::Plist }
@@ -9,13 +10,8 @@ describe 'Puppet::Type::Service::Provider::Launchd', unless: Puppet::Util::Platf
   let (:resource) { Puppet::Type.type(:service).new(:name => joblabel, :provider => :launchd) }
   let (:launchd_overrides_6_9) { '/var/db/launchd.db/com.apple.launchd/overrides.plist' }
   let (:launchd_overrides_10_) { '/var/db/com.apple.xpc.launchd/disabled.plist' }
-  subject { resource.provider }
 
-  if Puppet::Util::Platform.windows?
-    # Get a pid for $CHILD_STATUS to latch on to
-    command = "cmd.exe /c \"exit 0\""
-    Puppet::Util::Execution.execute(command, {:failonfail => false})
-  end
+  subject { resource.provider }
 
   describe "the type interface" do
     %w{ start stop enabled? enable disable status}.each do |method|

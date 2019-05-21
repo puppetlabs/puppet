@@ -2,7 +2,7 @@ require 'spec_helper'
 
 test_title = 'Integration Tests for Puppet::Type::Service::Provider::Init'
 
-describe test_title, unless: Puppet::Util::Platform.jruby? do
+describe test_title, unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider) { Puppet::Type.type(:service).provider(:init) }
 
   describe "when running on FreeBSD" do

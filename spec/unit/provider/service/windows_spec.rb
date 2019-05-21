@@ -1,8 +1,7 @@
 require 'spec_helper'
 require 'win32/service' if Puppet::Util::Platform.windows?
 
-describe 'Puppet::Type::Service::Provider::Windows',
-    :if => Puppet::Util::Platform.windows? && !Puppet::Util::Platform.jruby? do
+describe 'Puppet::Type::Service::Provider::Windows', if: Puppet::Util::Platform.windows? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:windows) }
   let(:name)     { 'nonexistentservice' }
   let(:resource) { Puppet::Type.type(:service).new(:name => name, :provider => :windows) }

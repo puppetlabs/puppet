@@ -191,7 +191,7 @@ describe 'Puppet::Type::Service::Provider::Openbsd',
   end
 
   context "#flags=" do
-    it "should run rcctl to set flags", unless: Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
+    it "should run rcctl to set flags" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
       allow(provider_class).to receive(:rcctl).with(:set, 'sshd', :flags, '-4').and_return('')
       expect(provider).to receive(:rcctl).with(:set, 'sshd', :flags, '-4')

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 test_title = 'Integration Tests for Puppet::Type::Service::Provider::Systemd'
 
-describe test_title, unless: Puppet::Util::Platform.jruby? do
+describe test_title, unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:systemd) }
 
   # TODO: Unfortunately there does not seem a way to stub the executable

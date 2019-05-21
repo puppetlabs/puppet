@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'rbconfig'
 require 'fileutils'
 
-describe "base service provider" do
+describe "base service provider", unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   let :type do Puppet::Type.type(:service) end
@@ -13,12 +13,6 @@ describe "base service provider" do
   let(:stop_command) { 'stop' }
 
   subject { provider }
-
-  if Puppet::Util::Platform.windows?
-    # Get a pid for $CHILD_STATUS to latch on to
-    cmd = "cmd.exe /c \"exit 0\""
-    Puppet::Util::Execution.execute(cmd, {:failonfail => false})
-  end
 
   context "basic operations" do
     subject do

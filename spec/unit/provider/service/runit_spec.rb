@@ -1,6 +1,7 @@
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Runit', unless: Puppet::Util::Platform.jruby? do
+describe 'Puppet::Type::Service::Provider::Runit',
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:runit) }
 
   before(:each) do

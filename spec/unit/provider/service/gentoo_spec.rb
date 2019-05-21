@@ -1,13 +1,8 @@
 require 'spec_helper'
 
-describe 'Puppet::Type::Service::Provider::Gentoo', unless: Puppet::Util::Platform.jruby? do
+describe 'Puppet::Type::Service::Provider::Gentoo',
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:provider_class) { Puppet::Type.type(:service).provider(:gentoo) }
-
-  if Puppet::Util::Platform.windows?
-    # Get a pid for $CHILD_STATUS to latch on to
-    command = "cmd.exe /c \"exit 0\""
-    Puppet::Util::Execution.execute(command, {:failonfail => false})
-  end
 
   before :each do
     allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
