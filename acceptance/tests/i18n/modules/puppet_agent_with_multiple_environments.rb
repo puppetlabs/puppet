@@ -18,12 +18,19 @@ test_name 'C100575: puppet agent with different modules in different environment
 
   language = 'ja_JP'
 
+  agents.each do |agent|
+    skip_test('on windows this test only works on a machine with a japanese code page set') if agent['platform'] =~ /windows/ && agent['locale'] != 'ja'
+
+    agent_language = enable_locale_language(agent, language)
+    skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
+  end
+
   app_type_1        = File.basename(__FILE__, '.*') + "_env_1"
   app_type_2        = File.basename(__FILE__, '.*') + "_env_2"
   tmp_environment_1 = mk_tmp_environment_with_teardown(master, app_type_1)
   tmp_environment_2 = mk_tmp_environment_with_teardown(master, app_type_2)
-  full_path_env_1 = File.join('/tmp', tmp_environment_1)
-  full_path_env_2 = File.join('/tmp', tmp_environment_2)
+  full_path_env_1 = "#{environmentpath}/#{tmp_environment_1}"
+  full_path_env_2 = "#{environmentpath}/#{tmp_environment_2}"
   tmp_po_file = master.tmpfile('tmp_po_file')
 
   step 'install a i18ndemo module' do
@@ -49,10 +56,7 @@ test_name 'C100575: puppet agent with different modules in different environment
   end
 
   agents.each do |agent|
-    skip_test('on windows this test only works on a machine with a japanese code page set') if agent['platform'] =~ /windows/ && agent['locale'] != 'ja'
-
     agent_language = enable_locale_language(agent, language)
-    skip_test("test machine is missing #{agent_language} locale. Skipping") if agent_language.nil?
     shell_env_language = { 'LANGUAGE' => agent_language, 'LANG' => agent_language }
 
     env_1_po_file = File.join(full_path_env_1, 'modules', I18NDEMO_NAME, 'locales', 'ja', "#{I18NDEMO_MODULE_NAME}.po")

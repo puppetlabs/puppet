@@ -65,7 +65,7 @@ test_name 'C100303: Resource type statement triggered auto-loading works both wi
     PP
     create_sitepp(master, tmp_environment, site_pp)
   end
-  on(master, "chmod -R 755 '/tmp/#{tmp_environment}'")
+  on(master, "chmod -R 755 '#{fq_tmp_environmentpath}'")
 
   # when the agent does its run, the newtype is executed on both the agent and master nodes
   # so we should see a message in the execution log file on the agent and the master
