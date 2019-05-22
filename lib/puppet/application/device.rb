@@ -266,10 +266,29 @@ Licensed under the Apache 2.0 License
           Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
           Puppet[:certname] = device.name
 
-          unless options[:resource] || options[:facts] || options[:apply] || options[:libdir]
-            Puppet::Configurer::PluginHandler.new.download_plugins(env)
+          unless options[:resource] || options[:facts] || options[:apply]
+            # this will reload and recompute default settings and create the devices sub vardir
+            Puppet.settings.use :main, :agent, :ssl
+
+            # Since it's too complicated to fix properly in the default settings, we workaround for PUP-9642 here.
+            # See https://github.com/puppetlabs/puppet/pull/7483#issuecomment-483455997 for details.
+            # This has to happen after `settings.use` above, so the directory is created and before `setup_host` below, where the SSL
+            # routines would fail with access errors
+            if Puppet.features.root? && !Puppet::Util::Platform.windows?
+              user = Puppet::Type.type(:user).new(name: Puppet[:user]).exists? ? Puppet[:user] : nil
+              group = Puppet::Type.type(:group).new(name: Puppet[:group]).exists? ? Puppet[:group] : nil
+              Puppet.debug("Fixing perms for #{user}:#{group} on #{Puppet[:confdir]}")
+              FileUtils.chown(user, group, Puppet[:confdir]) if user || group
+            end
+
+            # ask for a ssl cert if needed, and setup the ssl system for this device.
+            setup_host
+
+            # only pluginsync if we do not have a libdir specified on the command line
+            Puppet::Configurer::PluginHandler.new.download_plugins(env) unless options[:libdir]
           end
-          # this init the device singleton, so that the facts terminus
+
+          # this inits the device singleton, so that the facts terminus
           # and the various network_device provider can use it
           Puppet::Util::NetworkDevice.init(device)
 
@@ -316,13 +335,6 @@ Licensed under the Apache 2.0 License
             end
           else
             Puppet.info _("starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
-            # this will reload and recompute default settings and create the devices sub vardir
-            Puppet.settings.use :main, :agent, :ssl
-            # ask for a ssl cert if needed, but at least
-            # setup the ssl system for this device.
-            setup_host
-
-            require 'puppet/configurer'
             configurer = Puppet::Configurer.new
             configurer.run(:network_device => true, :pluginsync => Puppet::Configurer.should_pluginsync? && !options[:libdir])
           end
