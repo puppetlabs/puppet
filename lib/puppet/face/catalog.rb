@@ -24,7 +24,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
   deactivate_action(:destroy)
   deactivate_action(:search)
   find = get_action(:find)
-  find.summary "Retrieve the catalog for a node."
+  find.summary "Retrieve the catalog for the node from which the command is run."
   find.arguments "<certname>"
   find.returns <<-'EOT'
     A serialized catalog. When used from the Ruby API, returns a
