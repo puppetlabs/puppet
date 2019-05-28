@@ -113,7 +113,7 @@ Nothing\.
 When used from the Ruby API, this action has a side effect of leaving Puppet::Resource::Catalog\.indirection\.terminus_class set to yaml\. The terminus must be explicitly re\-set for subsequent catalog actions\.
 .
 .TP
-\fBfind\fR \- Retrieve the catalog for a node\.
+\fBfind\fR \- Retrieve the catalog for the node from which the command is run\.
 \fBSYNOPSIS\fR
 .
 .IP
@@ -123,7 +123,7 @@ puppet catalog find [\-\-terminus _TERMINUS] [\-\-extra HASH] \fIcertname\fR
 \fBDESCRIPTION\fR
 .
 .IP
-Retrieve the catalog for a node\.
+Retrieve the catalog for the node from which the command is run\.
 .
 .IP
 \fBRETURNS\fR
