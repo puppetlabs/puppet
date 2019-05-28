@@ -12,7 +12,7 @@ Puppet::Type.type(:package).provide :pip3,
   These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
   or an array where each element is either a string or a hash."
 
-  has_feature :installable, :uninstallable, :upgradeable, :versionable, :install_options
+  has_feature :installable, :uninstallable, :upgradeable, :versionable, :install_options, :targetable
 
   def self.cmd
     ["pip3"]
