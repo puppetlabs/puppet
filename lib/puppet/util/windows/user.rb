@@ -75,15 +75,18 @@ module Puppet::Util::Windows::User
   module_function :password_is?
 
   def logon_user(name, password, &block)
-    fLOGON32_LOGON_NETWORK = 3
     fLOGON32_PROVIDER_DEFAULT = 0
+    fLOGON32_LOGON_INTERACTIVE = 2
+    fLOGON32_LOGON_NETWORK = 3
 
     token = nil
     begin
       FFI::MemoryPointer.new(:handle, 1) do |token_pointer|
-        if LogonUserW(wide_string(name), wide_string('.'), password.nil? ? FFI::Pointer::NULL : wide_string(password),
-            fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % { name: name.inspect })
+        #try logon using network else try logon using interactive mode
+        if logon_user_by_logon_type(name, password, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
+          if logon_user_by_logon_type(name, password, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
+            raise Puppet::Util::Windows::Error.new(_("Failed to logon user %{name}") % {name: name.inspect})
+          end
         end
 
         yield token = token_pointer.read_handle
@@ -95,7 +98,14 @@ module Puppet::Util::Windows::User
     # token has been closed by this point
     true
   end
+
   module_function :logon_user
+
+  def self.logon_user_by_logon_type(name, password, logon_type, logon_provider, token)
+    LogonUserW(wide_string(name), wide_string('.'), password.nil? ? FFI::Pointer::NULL : wide_string(password), logon_type, logon_provider, token)
+  end
+
+  private_class_method :logon_user_by_logon_type
 
   def load_profile(user, password)
     logon_user(user, password) do |token|

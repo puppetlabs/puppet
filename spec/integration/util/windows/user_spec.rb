@@ -106,6 +106,12 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
     end
 
     describe "logon_user" do
+      let(:fLOGON32_PROVIDER_DEFAULT) {0}
+      let(:fLOGON32_LOGON_INTERACTIVE) {2}
+      let(:fLOGON32_LOGON_NETWORK) {3}
+      let(:token) {'test'}
+      let(:user) {'test'}
+      let(:passwd) {'test'}
       it "should raise an error when provided with an incorrect username and password" do
         expect_logon_failure_error {
           Puppet::Util::Windows::User.logon_user(username, bad_password)
@@ -117,7 +123,20 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
           Puppet::Util::Windows::User.logon_user(username, nil)
         }
       end
+
+      it 'should raise error given that logon returns false' do
+
+        allow(Puppet::Util::Windows::User).to receive(:logon_user_by_logon_type).with(
+            user, passwd, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, anything).and_return (0)
+        allow(Puppet::Util::Windows::User).to receive(:logon_user_by_logon_type).with(
+            user, passwd, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, anything).and_return(0)
+
+        expect {Puppet::Util::Windows::User.logon_user(user, passwd) {}}
+            .to raise_error(Puppet::Util::Windows::Error, /Failed to logon user/)
+
+      end
     end
+
 
     describe "password_is?" do
       it "should return false given an incorrect username and password" do
