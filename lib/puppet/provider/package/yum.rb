@@ -23,6 +23,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
   end
 
+defaultfor :operatingsystem => :amazon
 defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
 
   def self.prefetch(packages)
@@ -107,7 +108,7 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
   end
 
   def self.update_to_hash(pkgname, pkgversion)
-    
+
     # The pkgname string has two parts: name, and architecture. Architecture
     # is the portion of the string following the last "." character. All
     # characters preceding the final dot are the package name. Parse out
