@@ -560,9 +560,6 @@ Layout/SpaceInsideStringInterpolation:
 Style/NestedModifier:
   Enabled: false
 
-Lint/NonLocalExitFromIterator:
-  Enabled: false
-
 Style/NestedParenthesizedCalls:
   Enabled: false
 
