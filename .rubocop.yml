@@ -655,9 +655,6 @@ Style/TrailingUnderscoreVariable:
 Lint/LiteralInInterpolation:
   Enabled: false
 
-Performance/RedundantSortBy:
-  Enabled: true
-
 Performance/TimesMap:
   Enabled: false
 
