@@ -24,10 +24,6 @@ Lint/EnsureReturn:
 Lint/HandleExceptions:
   Enabled: false
 
-# MAYBE useful - catches while 1
-Lint/LiteralInCondition:
-  Enabled: false
-
 # DISABLED really useless. Detects return as last statement.
 Style/RedundantReturn:
   Enabled: false
