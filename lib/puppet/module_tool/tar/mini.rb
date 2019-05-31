@@ -93,7 +93,7 @@ class Puppet::ModuleTool::Tar::Mini
   def find_valid_files(tarfile)
     Archive::Tar::Minitar.open(tarfile).collect do |entry|
       flag = entry.typeflag
-      if flag.nil? || flag =~ /[[:digit:]]/ && (0..7).include?(flag.to_i)
+      if flag.nil? || flag =~ /[[:digit:]]/ && (0..7).cover?(flag.to_i)
         entry.full_name
       else
         Puppet.debug "Invalid tar flag '#{flag}' will not be extracted: #{entry.name}"
