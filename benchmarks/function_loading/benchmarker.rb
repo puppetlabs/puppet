@@ -97,7 +97,7 @@ class Benchmarker
 
   def dependencies_for(n)
     return [] if n == 0
-    n.times.map do |m|
+    Array.new(n) do |m|
       {'name' => "tester-module#{m}", 'version_requirement' => '1.0.0'}
     end
   end
