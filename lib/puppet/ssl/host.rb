@@ -279,7 +279,7 @@ ERROR_STRING
       exit(1)
     end
 
-    while true
+    loop do
       sleep time
       begin
         break if certificate
