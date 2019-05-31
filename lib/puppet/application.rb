@@ -183,7 +183,7 @@ class Application
 
     # used to declare code that handle an option
     def option(*options, &block)
-      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).gsub('-','_')
+      long = options.find { |opt| opt =~ /^--/ }.gsub(/^--(?:\[no-\])?([^ =]+).*$/, '\1' ).tr('-','_')
       fname = "handle_#{long}".intern
       if (block_given?)
         define_method(fname, &block)

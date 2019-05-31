@@ -314,7 +314,7 @@ module Puppet::Util::Windows
 
     def sanitize(value)
       # Replace null bytes with a space
-      value.gsub!("\x00", ' ')
+      value.tr!("\x00", ' ')
       value
     end
 
