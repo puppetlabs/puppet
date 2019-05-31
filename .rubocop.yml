@@ -613,9 +613,6 @@ Style/IdenticalConditionalBranches:
 Style/CommandLiteral:
   Enabled: false
 
-Performance/Casecmp:
-  Enabled: false
-
 Lint/NestedMethodDefinition:
   Enabled: false
 

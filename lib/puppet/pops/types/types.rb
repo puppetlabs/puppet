@@ -1268,7 +1268,7 @@ class PFloatType < PNumericType
         else
           begin
             # support a binary as float
-            if from[0] == '0' && from[1].downcase == 'b'
+            if from[0] == '0' && from[1].casecmp('b').zero?
               from = Integer(from)
             end
             Float(from)

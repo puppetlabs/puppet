@@ -98,7 +98,7 @@ Puppet::Type.newtype(:cron) do
       # if we can lengthen it (e.g., mon => monday).
       if tmp.length == 3
         ary.each_with_index { |name, index|
-          if tmp.upcase == name[0..2].upcase
+          if tmp.casecmp(name[0..2]).zero?
             return index
           end
         }
