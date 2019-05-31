@@ -628,9 +628,6 @@ Layout/RescueEnsureAlignment:
 Lint/DuplicateMethods:
   Enabled: false
 
-Performance/RangeInclude:
-  Enabled: false
-
 Style/TrailingUnderscoreVariable:
   Enabled: false
 
