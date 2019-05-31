@@ -260,8 +260,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
         catalog =
         begin
           Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
-        rescue Puppet::ParseErrorWithIssue, Puppet::Error
-          # already logged and handled by the compiler for these two cases
+        rescue Puppet::Error
+          # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
           exit(1)
         end
 
