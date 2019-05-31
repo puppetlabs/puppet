@@ -16,18 +16,6 @@ AllCops:
     - 'lib/puppet/pops/parser/eparser.rb'
     - 'lib/semantic_puppet/dependency/module_release.rb'
 
-Lint/ConditionPosition:
-  Enabled: true
-
-Lint/ElseLayout:
-  Enabled: true
-
-Lint/UnreachableCode:
-  Enabled: true
-
-Lint/UselessComparison:
-  Enabled: true
-
 # MAYBE useful - no return inside ensure block.
 Lint/EnsureReturn:
   Enabled: false
@@ -39,14 +27,6 @@ Lint/HandleExceptions:
 # MAYBE useful - catches while 1
 Lint/LiteralInCondition:
   Enabled: false
-
-Lint/ShadowingOuterLocalVariable:
-  Enabled: true
-
-# Can catch complicated strings.
-Lint/LiteralInInterpolation:
-  Enabled: true
-
 
 # DISABLED really useless. Detects return as last statement.
 Style/RedundantReturn:
@@ -133,15 +113,6 @@ Lint/UnusedBlockArgument:
 
 Lint/UnusedMethodArgument:
   Enabled: false
-
-Lint/UselessAccessModifier:
-  Enabled: true
-
-Lint/UselessAssignment:
-  Enabled: true
-
-Lint/Void:
-  Enabled: true
 
 Layout/AccessModifierIndentation:
   Enabled: false
@@ -679,9 +650,6 @@ Layout/MultilineMethodDefinitionBraceLayout:
 Layout/SpaceInsidePercentLiteralDelimiters:
   Enabled: false
 
-Lint/EmptyExpression:
-  Enabled: true
-
 Lint/EmptyWhen:
   Enabled: false
 
@@ -744,9 +712,6 @@ GetText/DecorateFunctionMessage:
 
 GetText/DecorateString:
   Enabled: false
-
-GetText/DecorateStringFormattingUsingInterpolation:
-  Enabled: true
 
 GetText/DecorateStringFormattingUsingPercent:
   Enabled: false
