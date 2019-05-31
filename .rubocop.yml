@@ -571,9 +571,6 @@ Layout/EmptyLinesAroundMethodBody:
 Lint/IneffectiveAccessModifier:
   Enabled: false
 
-Performance/StringReplacement:
-  Enabled: false
-
 Layout/ClosingParenthesisIndentation:
   Enabled: false
 

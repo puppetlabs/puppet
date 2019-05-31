@@ -728,7 +728,7 @@ class StringConverter
     when :c
       char = [val].pack("U")
       char = f.alt? ? "\"#{char}\"" : char
-      Kernel.format(f.orig_fmt.gsub('c','s'), char)
+      Kernel.format(f.orig_fmt.tr('c','s'), char)
 
     when :s
       fmt = f.alt? ? 'p' : 's'
@@ -781,7 +781,7 @@ class StringConverter
 
     when :p
       # width & precision applied to string, not the the name of the type
-      "Binary(\"#{Kernel.format(f.orig_fmt.gsub('p', 's'), val.to_s)}\")"
+      "Binary(\"#{Kernel.format(f.orig_fmt.tr('p', 's'), val.to_s)}\")"
 
     when :b
       Kernel.format(f.orig_fmt.gsub('b', substitute), val.relaxed_to_s)
@@ -817,23 +817,23 @@ class StringConverter
 
     when :c
       c_val = val.capitalize
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('c', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('c', 's'), c_val)
 
     when :C
       c_val = val.split('::').map {|s| s.capitalize }.join('::')
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('C', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('C', 's'), c_val)
 
     when :u
       c_val = val.upcase
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('u', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('u', 's'), c_val)
 
     when :d
       c_val = val.downcase
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('d', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('d', 's'), c_val)
 
     when :t  # trim
       c_val = val.strip
-      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.gsub('t', 's'), c_val)
+      f.alt? ? apply_string_flags(f, puppet_quote(c_val)) :  Kernel.format(f.orig_fmt.tr('t', 's'), c_val)
 
     else
       raise FormatError.new('String', f.format, 'cCudspt')
@@ -921,7 +921,7 @@ class StringConverter
     case f.format
     when :p
       str_regexp = PRegexpType.regexp_to_s_with_delimiters(val)
-      f.orig_fmt == '%p' ? str_regexp : Kernel.format(f.orig_fmt.gsub('p', 's'), str_regexp)
+      f.orig_fmt == '%p' ? str_regexp : Kernel.format(f.orig_fmt.tr('p', 's'), str_regexp)
     when :s
       str_regexp = PRegexpType.regexp_to_s(val)
       str_regexp = puppet_quote(str_regexp) if f.alt?
@@ -1101,7 +1101,7 @@ class StringConverter
       str_val = f.alt? ? "\"#{val.to_s}\"" : val.to_s
       Kernel.format(f.orig_fmt, str_val)
     when :p
-      Kernel.format(f.orig_fmt.gsub('p', 's'), val.to_s)
+      Kernel.format(f.orig_fmt.tr('p', 's'), val.to_s)
     else
       raise FormatError.new('Type', f.format, 'sp')
     end

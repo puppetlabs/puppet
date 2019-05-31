@@ -59,6 +59,6 @@ class Puppet::Util::Metric
 
   # Convert a name into a label.
   def self.labelize(name)
-    name.to_s.capitalize.gsub("_", " ")
+    name.to_s.capitalize.tr("_", " ")
   end
 end

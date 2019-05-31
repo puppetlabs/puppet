@@ -339,7 +339,7 @@ These options should be specified as an array where each element is either a str
       v = s[0,ri]
       r = s[ri+1,s.length]
       if arch = r.scan(ARCH_REGEX)[0]
-        a = arch.gsub(/\./, '')
+        a = arch.delete('.')
         r.gsub!(ARCH_REGEX, '')
       end
     else

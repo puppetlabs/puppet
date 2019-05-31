@@ -303,7 +303,7 @@ module Puppet::ModuleTool
           @environment.modules_by_path[options[:target_dir]].each do |mod|
             if mod.has_metadata?
               metadata = {
-                :name    => mod.forge_name.gsub('/', '-'),
+                :name    => mod.forge_name.tr('/', '-'),
                 :version => mod.version
               }
               next if release[:module] == metadata[:name]
