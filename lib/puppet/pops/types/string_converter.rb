@@ -1093,7 +1093,7 @@ class StringConverter
     f = get_format(val_type, format_map)
     case f.format
     when :s
-      str_val = f.alt? ? "\"#{val.to_s}\"" : val.to_s
+      str_val = f.alt? ? "\"#{val}\"" : val.to_s
       Kernel.format(f.orig_fmt, str_val)
     when :p
       Kernel.format(f.orig_fmt.tr('p', 's'), val.to_s)

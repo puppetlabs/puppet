@@ -26,6 +26,6 @@ class Puppet::Parser::AST::ResourceParam < Puppet::Parser::AST::Branch
   end
 
   def to_s
-    "#{@param} => #{@value.to_s}"
+    "#{@param} => #{@value}"
   end
 end

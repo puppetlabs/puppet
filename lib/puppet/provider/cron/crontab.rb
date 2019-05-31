@@ -212,7 +212,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
         else
           cmd_string = record[:command].gsub(/\s+/, "_")
           index = ( @name_index += 1 )
-          record[:name] = "unmanaged:#{cmd_string}-#{ index.to_s }"
+          record[:name] = "unmanaged:#{cmd_string}-#{ index }"
           record[:unmanaged] = true
         end
         if envs.nil? or envs.empty?

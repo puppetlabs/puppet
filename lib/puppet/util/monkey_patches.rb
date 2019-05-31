@@ -70,7 +70,7 @@ if Puppet::Util::Platform.windows?
           begin
             add_cert(x509)
           rescue OpenSSL::X509::StoreError
-            warn "Failed to add #{x509.subject.to_s}"
+            warn "Failed to add #{x509.subject}"
           end
         end
       end

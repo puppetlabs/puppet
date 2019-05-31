@@ -12,7 +12,7 @@ class Puppet::Parser::AST
   attr_accessor :parent, :scope, :file, :line, :pos
 
   def inspect
-    "( #{self.class} #{self.to_s} #{@children.inspect} )"
+    "( #{self.class} #{self} #{@children.inspect} )"
   end
 
   # Evaluate the current object.  Just a stub method, since the subclass

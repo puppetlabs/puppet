@@ -93,7 +93,7 @@ Puppet::Face.define(:ca, '0.1.0') do
             ca.verify(host.name)
             "+ #{name} #{host.certificate.digest(options[:digest])}"
           rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError => e
-            "- #{name} #{host.certificate.digest(options[:digest])} (#{e.to_s})"
+            "- #{name} #{host.certificate.digest(options[:digest])} (#{e})"
           end
         end
       end.join("\n")

@@ -100,9 +100,6 @@ Lint/ParenthesesAsGroupedExpression:
 Lint/RescueException:
   Enabled: false
 
-Lint/StringConversionInInterpolation:
-  Enabled: false
-
 Lint/UnusedBlockArgument:
   Enabled: false
 

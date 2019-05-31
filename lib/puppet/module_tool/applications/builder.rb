@@ -103,7 +103,7 @@ module Puppet::ModuleTool
           end
 
           # make dir tree, copy files, and add symlinks to the symlinks list
-          dest = "#{build_path}/#{rel.to_s}"
+          dest = "#{build_path}/#{rel}"
           if File.directory? path
             FileUtils.mkdir dest, :mode => File.stat(path).mode
           elsif Puppet::FileSystem.symlink? path
