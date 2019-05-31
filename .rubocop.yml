@@ -613,9 +613,6 @@ Lint/NestedMethodDefinition:
 Layout/SpaceInsideStringInterpolation:
   Enabled: false
 
-Performance/RedundantMerge:
-  Enabled: false
-
 Performance/ReverseEach:
   Enabled: false
 
