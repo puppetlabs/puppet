@@ -649,9 +649,6 @@ Style/TrailingUnderscoreVariable:
 Lint/LiteralInInterpolation:
   Enabled: false
 
-Performance/TimesMap:
-  Enabled: false
-
 Layout/InitialIndentation:
   Enabled: false
 
