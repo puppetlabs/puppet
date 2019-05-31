@@ -77,7 +77,7 @@ Puppet::Util::Log.newdesttype :file do
 
     # create the log file, if it doesn't already exist
     need_array_start = false
-    file_exists = File.exists?(path)
+    file_exists = Puppet::FileSystem.exist?(path)
     if @json == 1
       need_array_start = true
       if file_exists

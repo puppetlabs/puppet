@@ -283,7 +283,7 @@ class Loaders
         nil
       elsif File.directory?(file)
         raise Puppet::Error, "manifest of environment '#{@environment.name}' appoints directory '#{file}'. It must be a file"
-      elsif File.exists?(file)
+      elsif File.exist?(file)
         parser.parse_file(file)
       else
         raise Puppet::Error, "manifest of environment '#{@environment.name}' appoints '#{file}'. It does not exist"
