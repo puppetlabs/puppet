@@ -87,10 +87,6 @@ Lint/EndAlignment:
   Enabled: false
 
 # DISABLED
-Lint/DeprecatedClassMethods:
-  Enabled: false
-
-# DISABLED
 Lint/ParenthesesAsGroupedExpression:
   Enabled: false
 
