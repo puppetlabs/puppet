@@ -1,4 +1,5 @@
 require 'puppet/ssl'
+require 'puppet/util/lockfile'
 
 # This class implements a state machine for bootstrapping a host's CA and CRL
 # bundles, private key and signed client certificate. Each state has a frozen
@@ -17,8 +18,8 @@ class Puppet::SSL::StateMachine
     def initialize(machine, ssl_context)
       @machine = machine
       @ssl_context = ssl_context
-      @cert_provider = Puppet::X509::CertProvider.new
-      @ssl_provider = Puppet::SSL::SSLProvider.new
+      @cert_provider = machine.cert_provider
+      @ssl_provider = machine.ssl_provider
     end
   end
 
@@ -261,11 +262,18 @@ class Puppet::SSL::StateMachine
   #
   class Done < SSLState; end
 
-  attr_reader :waitforcert, :wait_deadline
+  attr_reader :waitforcert, :wait_deadline, :cert_provider, :ssl_provider
 
-  def initialize(waitforcert: Puppet[:waitforcert], maxwaitforcert: Puppet[:maxwaitforcert])
+  def initialize(waitforcert: Puppet[:waitforcert],
+                 maxwaitforcert: Puppet[:maxwaitforcert],
+                 cert_provider: Puppet::X509::CertProvider.new,
+                 ssl_provider: Puppet::SSL::SSLProvider.new,
+                 lockfile: Puppet::Util::Lockfile.new(Puppet[:ssl_lockfile]))
     @waitforcert = waitforcert
     @wait_deadline = Time.now.to_i + maxwaitforcert
+    @cert_provider = cert_provider
+    @ssl_provider = ssl_provider
+    @lockfile = lockfile
   end
 
   # Run the state machine for CA certs and CRLs
@@ -302,10 +310,26 @@ class Puppet::SSL::StateMachine
   private
 
   def run_machine(state, stop)
-    loop do
-      state = state.next_state
+    with_lock do
+      loop do
+        state = state.next_state
 
-      return state if state.is_a?(stop)
+        break if state.is_a?(stop)
+      end
+    end
+
+    state
+  end
+
+  def with_lock
+    if @lockfile.lock(Process.pid)
+      begin
+        yield
+      ensure
+        @lockfile.unlock
+      end
+    else
+      raise Puppet::Error, _('Another puppet instance is already running; exiting')
     end
   end
 end

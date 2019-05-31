@@ -826,6 +826,11 @@ EOT
       :group => "service",
       :desc => "Where SSL certificates are kept."
     },
+    :ssl_lockfile => {
+      :default => "$ssldir/ssl.lock",
+      :type    => :string,
+      :desc    => "A lock file to indicate that the ssl bootstrap process is currently in progress.",
+    },
     :publickeydir => {
       :default => "$ssldir/public_keys",
       :type   => :directory,
