@@ -229,14 +229,14 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       str2 = str2.gsub(front_strip_re, '')
 
       # "handle the tilde separator, it sorts before everything else"
-      if /^~/.match(str1) && /^~/.match(str2)
+      if str1 =~ /^~/ && str2 =~ /^~/
         # if they both have ~, strip it
         str1 = str1[1..-1]
         str2 = str2[1..-1]
         next
-      elsif /^~/.match(str1)
+      elsif str1 =~ /^~/
         return -1
-      elsif /^~/.match(str2)
+      elsif str2 =~ /^~/
         return 1
       end
 
@@ -245,7 +245,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       # "grab first completely alpha or completely numeric segment"
       isnum = false
       # if the first char of str1 is a digit, grab the chunk of continuous digits from each string
-      if /^[0-9]+/.match(str1)
+      if str1 =~ /^[0-9]+/
         if str1 =~ /^[0-9]+/
           segment1 = $~.to_s
           str1 = $~.post_match

@@ -289,7 +289,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     end
     dscl_out = dscl(dscl_args)
     # We're ok with throwing away negative uids here.
-    ids = dscl_out.split.compact.collect { |l| l.to_i if l.match(/^\d+$/) }
+    ids = dscl_out.split.compact.collect { |l| l.to_i if l =~ /^\d+$/ }
     ids.compact!.sort! { |a,b| a.to_f <=> b.to_f }
     # We're just looking for an unused id in our sorted array.
     ids.each_index do |i|

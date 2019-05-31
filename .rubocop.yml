@@ -610,9 +610,6 @@ Performance/RedundantBlockCall:
 Style/IdenticalConditionalBranches:
   Enabled: false
 
-Performance/RedundantMatch:
-  Enabled: false
-
 Style/CommandLiteral:
   Enabled: false
 

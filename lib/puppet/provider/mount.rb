@@ -30,7 +30,7 @@ module Puppet::Provider::Mount
     supports_remounts = (resource[:remounts] == :true)
     if supports_remounts && os == 'AIX'
       remount_with_option("remount")
-    elsif os.match(/^(FreeBSD|DragonFly|OpenBSD)$/)
+    elsif os =~ /^(FreeBSD|DragonFly|OpenBSD)$/
       remount_with_option("update")
     elsif supports_remounts
       mountcmd "-o", "remount", resource[:name]
