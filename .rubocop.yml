@@ -525,9 +525,6 @@ Metrics/ModuleLength:
 Layout/EmptyLinesAroundMethodBody:
   Enabled: false
 
-Lint/IneffectiveAccessModifier:
-  Enabled: false
-
 Layout/ClosingParenthesisIndentation:
   Enabled: false
 
