@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.4.2-124-g31966dd\n"
+"Project-Id-Version: Puppet automation framework 6.4.2-166-ge8a59b3\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-05-10 20:18+0000\n"
-"PO-Revision-Date: 2019-05-10 20:18+0000\n"
+"POT-Creation-Date: 2019-05-31 21:03+0000\n"
+"PO-Revision-Date: 2019-05-31 21:03+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -475,7 +475,7 @@ msgstr ""
 msgid "Unknown action '%{action}'"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:151 ../lib/puppet/ssl/state_machine.rb:155
+#: ../lib/puppet/application/ssl.rb:151 ../lib/puppet/ssl/state_machine.rb:156
 msgid "Creating a new EC SSL key for %{name} using curve %{curve}"
 msgstr ""
 
@@ -716,7 +716,7 @@ msgstr ""
 msgid "Certificate names must be lower case"
 msgstr ""
 
-#: ../lib/puppet/defaults.rb:997 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
+#: ../lib/puppet/defaults.rb:1002 ../lib/puppet/settings/enum_setting.rb:13 ../lib/puppet/settings/symbolic_enum_setting.rb:14
 msgid "Invalid value '%{value}' for parameter %{name}. Allowed values are '%{allowed_values}'"
 msgstr ""
 
@@ -1757,7 +1757,15 @@ msgstr ""
 msgid "FileSystem implementation expected Pathname, got: '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/file_system/file_impl.rb:64
+#: ../lib/puppet/file_system/file_impl.rb:57
+msgid "Locked '%{path}'"
+msgstr ""
+
+#: ../lib/puppet/file_system/file_impl.rb:60
+msgid "Unlocked '%{path}'"
+msgstr ""
+
+#: ../lib/puppet/file_system/file_impl.rb:67
 msgid "Timeout waiting for exclusive lock on %{path}"
 msgstr ""
 
@@ -5691,15 +5699,15 @@ msgid "The code loaded from %{source_ref} does not seem to be a Puppet 3x API fu
 msgstr ""
 
 #. TRANSLATORS - the word 'newfunction' should not be translated as it is a method name.
-#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:46
+#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:47
 msgid "Illegal legacy function definition! The code loaded from %{source_ref} did not return the result of calling 'newfunction'. Got '%{klass}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:49
+#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:50
 msgid "The code loaded from %{source_ref} produced mis-matched name, expected 'function_%{type_name}', got '%{created_name}'"
 msgstr ""
 
-#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:92
+#: ../lib/puppet/pops/loader/ruby_legacy_function_instantiator.rb:94
 msgid "Illegal method definition of method '%{method_name}' on line %{line}' in legacy function. See %{url} for more information"
 msgstr ""
 
@@ -6230,65 +6238,65 @@ msgstr ""
 msgid "Unknown type <%{type}>"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:928
+#: ../lib/puppet/pops/types/types.rb:930
 msgid "The string '%{str}' cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:931
+#: ../lib/puppet/pops/types/types.rb:933
 msgid "Value of type %{type} cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1169
+#: ../lib/puppet/pops/types/types.rb:1171
 msgid "The string '%{str}' cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1172
+#: ../lib/puppet/pops/types/types.rb:1174
 msgid "Value of type %{type} cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1180
+#: ../lib/puppet/pops/types/types.rb:1182
 msgid "Illegal radix: %{radix}, expected 2, 8, 10, 16, or default"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1293
+#: ../lib/puppet/pops/types/types.rb:1295
 msgid "The string '%{str}' cannot be converted to Float"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1296
+#: ../lib/puppet/pops/types/types.rb:1298
 msgid "Value of type %{type} cannot be converted to Float"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#initialize' is a class and method name and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1513
+#: ../lib/puppet/pops/types/types.rb:1515
 msgid "Passing more than one argument to PStringType#initialize is deprecated"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#values' and '#value' are classes and method names and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1567
+#: ../lib/puppet/pops/types/types.rb:1569
 msgid "Method PStringType#values is deprecated. Use #value instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1893
+#: ../lib/puppet/pops/types/types.rb:1895
 msgid "The string '%{str}' cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1896
+#: ../lib/puppet/pops/types/types.rb:1898
 msgid "Value of type %{type} cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2624
+#: ../lib/puppet/pops/types/types.rb:2626
 msgid "Value of type %{type} cannot be converted to Array"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2694
+#: ../lib/puppet/pops/types/types.rb:2696
 msgid "Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2831
+#: ../lib/puppet/pops/types/types.rb:2833
 msgid "odd number of arguments for Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2842
+#: ../lib/puppet/pops/types/types.rb:2844
 msgid "Value of type %{type} cannot be converted to Hash"
 msgstr ""
 
@@ -7764,7 +7772,7 @@ msgid ""
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:384 ../lib/puppet/ssl/state_machine.rb:96
+#: ../lib/puppet/ssl/host.rb:384 ../lib/puppet/ssl/state_machine.rb:97
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
@@ -7880,80 +7888,84 @@ msgstr ""
 msgid "Certificate '%{subject}' failed verification (%{err}): %{err_utf8}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:50
+#: ../lib/puppet/ssl/state_machine.rb:51
 msgid "CA certificate is missing from the server"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:52
+#: ../lib/puppet/ssl/state_machine.rb:53
 msgid "Could not download CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:94
+#: ../lib/puppet/ssl/state_machine.rb:95
 msgid "CRL is missing from the server"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:103
+#: ../lib/puppet/ssl/state_machine.rb:104
 msgid "Refreshing CRL"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:109
+#: ../lib/puppet/ssl/state_machine.rb:110
 msgid "CRL is unmodified, using existing CRL"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:111 ../lib/puppet/ssl/state_machine.rb:117
+#: ../lib/puppet/ssl/state_machine.rb:112 ../lib/puppet/ssl/state_machine.rb:118
 msgid "Failed to refresh CRL, using existing CRL: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:141
+#: ../lib/puppet/ssl/state_machine.rb:142
 msgid "Loading/generating private key"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:158
+#: ../lib/puppet/ssl/state_machine.rb:159
 msgid "Creating a new RSA SSL key for %{name}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:188
+#: ../lib/puppet/ssl/state_machine.rb:189
 msgid "Generating and submitting a CSR"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:196
+#: ../lib/puppet/ssl/state_machine.rb:197
 msgid "Failed to submit the CSR, HTTP response was %{code}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:207
+#: ../lib/puppet/ssl/state_machine.rb:208
 msgid "Downloading client certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:223
+#: ../lib/puppet/ssl/state_machine.rb:224
 msgid "Failed to parse certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:227
+#: ../lib/puppet/ssl/state_machine.rb:228
 msgid "Certificate for %{certname} has not been signed yet"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:229
+#: ../lib/puppet/ssl/state_machine.rb:230
 msgid "Failed to retrieve certificate for %{certname}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:242
+#: ../lib/puppet/ssl/state_machine.rb:243
 msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the waitforcert setting is set to 0."
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:245
+#: ../lib/puppet/ssl/state_machine.rb:246
 msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the maxwaitforcert timeout has been exceeded."
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:248
+#: ../lib/puppet/ssl/state_machine.rb:249
 msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Will try again in %{time} seconds."
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:292
+#: ../lib/puppet/ssl/state_machine.rb:300
 msgid "Verified client certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:294
+#: ../lib/puppet/ssl/state_machine.rb:302
 msgid "Verified CA certificate '%{subject}' fingerprint %{digest}"
+msgstr ""
+
+#: ../lib/puppet/ssl/state_machine.rb:332
+msgid "Another puppet instance is already running; exiting"
 msgstr ""
 
 #. TRANSLATORS: `error` is an untranslated message from openssl describing why a certificate in the server's chain is invalid, and `subject` is the identity/name of the failed certificate
