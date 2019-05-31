@@ -455,9 +455,6 @@ Layout/SpaceBeforeFirstArg:
 Style/ModuleFunction:
   Enabled: false
 
-Lint/Debugger:
-  Enabled: false
-
 Style/IfWithSemicolon:
   Enabled: false
 
