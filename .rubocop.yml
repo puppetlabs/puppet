@@ -619,9 +619,6 @@ Style/NestedModifier:
 Lint/NonLocalExitFromIterator:
   Enabled: false
 
-Performance/Count:
-  Enabled: false
-
 Style/NestedParenthesizedCalls:
   Enabled: false
 
