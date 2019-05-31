@@ -91,10 +91,6 @@ Lint/DeprecatedClassMethods:
   Enabled: false
 
 # DISABLED
-Lint/Loop:
-  Enabled: false
-
-# DISABLED
 Lint/ParenthesesAsGroupedExpression:
   Enabled: false
 
