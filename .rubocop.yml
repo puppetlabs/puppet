@@ -658,9 +658,6 @@ Style/TrailingUnderscoreVariable:
 Lint/LiteralInInterpolation:
   Enabled: false
 
-Performance/DoubleStartEndWith:
-  Enabled: false
-
 Performance/RedundantSortBy:
   Enabled: true
 
