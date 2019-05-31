@@ -437,7 +437,7 @@ def install_binfile(from, op_file, target)
   if $operatingsystem == "windows" && InstallOptions.batch_files
     installed_wrapper = false
 
-    unless File.extname(from).match(/\.(cmd|bat)/)
+    unless File.extname(from) =~ /\.(cmd|bat)/
       if File.exists?("#{from}.bat")
         FileUtils.install("#{from}.bat", File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
         installed_wrapper = true

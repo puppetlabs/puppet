@@ -57,7 +57,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def get_start_link_count
     # Start links don't include '.service'. Just search for the service name.
-    if @resource[:name].match(/\.service/)
+    if @resource[:name] =~ /\.service/
       link_name = @resource[:name].split('.')[0]
     else
       link_name = @resource[:name]
