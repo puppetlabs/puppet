@@ -207,7 +207,7 @@ class Puppet::Property < Puppet::Parameter
       else
         return "#{name} changed #{is_to_s(current_value)} to #{should_to_s(newvalue)}"
       end
-    rescue Puppet::Error, Puppet::DevError
+    rescue Puppet::Error
       raise
     rescue => detail
       message = _("Could not convert change '%{name}' to string: %{detail}") % { name: name, detail: detail }

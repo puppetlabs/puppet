@@ -210,8 +210,8 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
           compiler.compile()
 
-        rescue Puppet::ParseErrorWithIssue, Puppet::Error
-          # already logged and handled by the compiler for these two cases
+        rescue Puppet::Error
+          # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
           exit(1)
         end
 
