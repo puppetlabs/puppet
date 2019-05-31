@@ -15,7 +15,7 @@ class Puppet::Network::HTTP::Site
   end
 
   def addr
-    "#{@scheme}://#{@host}:#{@port.to_s}"
+    "#{@scheme}://#{@host}:#{@port}"
   end
   alias to_s addr
 

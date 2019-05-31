@@ -97,7 +97,7 @@ class Puppet::Interface
         if Puppet::Interface::FaceCollection[name, :current]
           raise Puppet::Error, "Could not find version #{version} of #{name}"
         else
-          raise Puppet::Error, "Could not find Puppet Face #{name.to_s}"
+          raise Puppet::Error, "Could not find Puppet Face #{name}"
         end
       end
 

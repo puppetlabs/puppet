@@ -107,7 +107,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # using both useradd and luseradd
     if (!@resource.allowdupe?) && @resource.forcelocal?
        if @resource.should(:uid) && finduser('uid', @resource.should(:uid).to_s)
-           raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
+           raise(Puppet::Error, "UID #{@resource.should(:uid)} already exists, use allowdupe to force user creation")
        end
     elsif @resource.allowdupe? && (!@resource.forcelocal?)
        return ["-o"]

@@ -90,7 +90,7 @@ class Locator
       f = Puppet::Util.path_to_uri(f).to_s
     end
     offset = ast.offset
-    URI("#{f}?line=#{line_for_offset(offset).to_s}&pos=#{pos_on_line(offset).to_s}")
+    URI("#{f}?line=#{line_for_offset(offset)}&pos=#{pos_on_line(offset)}")
   end
 
   class AbstractLocator < Locator

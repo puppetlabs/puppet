@@ -159,7 +159,7 @@ class ExternalNode
     log("list of patterns for #{filepath}: #{patternlist}")
 
     if matchthis =~ Regexp.union(patternlist)
-      log("matched #{$~.to_s} in #{matchthis}, returning true")
+      log("matched #{$~} in #{matchthis}, returning true")
       return true
 
     else  # hostname didn't match anything in patternlist
@@ -181,7 +181,7 @@ class ExternalNode
       log("Attempting to match [#{@hostname}] in [#{filepath}]")
       if matched_in_patternfile?(filepath,@hostname)
         @classes << patternfile.to_s
-        log("Appended #{patternfile.to_s} to classes instance variable")
+        log("Appended #{patternfile} to classes instance variable")
       end
     end
   end
@@ -198,7 +198,7 @@ class ExternalNode
       log("Attempting to match [#{@hostname}] in [#{filepath}]")
       if matched_in_patternfile?(filepath,@hostname)
         @environment = patternfile.to_s
-        log("Wrote #{patternfile.to_s} to environment instance variable")
+        log("Wrote #{patternfile} to environment instance variable")
       end
     end
   end
@@ -230,7 +230,7 @@ class ExternalNode
         log("Attempting to match [#{@hostname}] in [#{secondlevel}]")
         if matched_in_patternfile?(secondlevel, @hostname)
           @parameters[ parametername.to_s ] = patternfile.to_s
-          log("Set @parameters[#{parametername.to_s}] = #{patternfile.to_s}")
+          log("Set @parameters[#{parametername}] = #{patternfile}")
         end
       end
     end

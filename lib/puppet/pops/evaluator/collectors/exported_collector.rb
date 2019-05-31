@@ -65,6 +65,6 @@ class Puppet::Pops::Evaluator::Collectors::ExportedCollector < Puppet::Pops::Eva
   end
 
   def to_s
-    "Exported-Collector[#{@type.to_s}]"
+    "Exported-Collector[#{@type}]"
   end
 end
