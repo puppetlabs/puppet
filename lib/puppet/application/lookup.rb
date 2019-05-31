@@ -283,7 +283,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
           'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
 
         if options[:prefix]
-          merge_options.merge!({'knockout_prefix' => options[:prefix]})
+          merge_options['knockout_prefix'] = options[:prefix]
         end
 
       else
