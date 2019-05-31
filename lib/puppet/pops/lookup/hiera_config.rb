@@ -339,6 +339,7 @@ class HieraConfig
   def self.not_implemented(impl, method_name)
     raise NotImplementedError, "The class #{impl.class.name} should have implemented the method #{method_name}()"
   end
+  private_class_method :not_implemented
 end
 
 # @api private

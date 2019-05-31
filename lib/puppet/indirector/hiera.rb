@@ -69,6 +69,8 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
     end
   end
 
+  public
+
   def self.hiera_config
     hiera_config = Puppet.settings[:hiera_config]
     config = {}

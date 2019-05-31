@@ -234,4 +234,5 @@ class Puppet::Interface
     define_method(name, proc)
     instance_method(name)
   end
+  private_class_method :__add_method
 end
