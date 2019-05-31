@@ -579,9 +579,6 @@ Style/NestedParenthesizedCalls:
 Layout/RescueEnsureAlignment:
   Enabled: false
 
-Lint/DuplicateMethods:
-  Enabled: false
-
 Style/TrailingUnderscoreVariable:
   Enabled: false
 
