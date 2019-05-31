@@ -133,11 +133,12 @@ class Puppet::Graph::SimpleGraph
         else
           if s[:lowlink][vertex] == s[:index][vertex] then
             this_scc = []
-            begin
+            loop do
               top = s[:stack].pop
               s[:seen][top] = false
               this_scc << top
-            end until top == vertex
+              break if top == vertex
+            end
             s[:scc] << this_scc
           end
           recur.pop               # done with this node, finally.

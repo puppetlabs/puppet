@@ -103,7 +103,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             inSingleTick = !inSingleTick if ch == "'"
             inDoubleTick = !inDoubleTick if ch == "\""
             fail(_("unmatched [")) if nbracket < 0
-          end until ((nbracket == 0 && !inSingleTick && !inDoubleTick && (ch =~ /\s/)) || sc.eos?)
+          end until ((nbracket == 0 && !inSingleTick && !inDoubleTick && (ch =~ /\s/)) || sc.eos?) # rubocop:disable Lint/Loop
             len = sc.pos - start
             len -= 1 unless sc.eos?
           unless p = sc.string[start, len]
