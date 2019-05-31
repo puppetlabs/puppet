@@ -17,7 +17,7 @@ Puppet::Type.type(:service).provide :rcng, :parent => :bsd do
     if Puppet::FileSystem.exist?(rcfile)
       File.open(rcfile).readlines.each do |line|
         # Now look for something that looks like "service=${service:=YES}" or "service=YES"
-        if line.match(/^\s*#{@resource[:name]}=(?:YES|\${#{@resource[:name]}:=YES})/)
+        if line =~ /^\s*#{@resource[:name]}=(?:YES|\${#{@resource[:name]}:=YES})/
           return :true
         end
       end
@@ -34,7 +34,7 @@ Puppet::Type.type(:service).provide :rcng, :parent => :bsd do
     if Puppet::FileSystem.exist?(rcfile)
       newcontents = []
       File.open(rcfile).readlines.each do |line|
-        if line.match(/^\s*#{@resource[:name]}=(NO|\$\{#{@resource[:name]}:NO\})/)
+        if line =~ /^\s*#{@resource[:name]}=(NO|\$\{#{@resource[:name]}:NO\})/
           line = "#{@resource[:name]}=${#{@resource[:name]}:=YES}"
         end
         newcontents.push(line)
