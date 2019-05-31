@@ -632,9 +632,6 @@ Lint/InheritException:
 Lint/ScriptPermission:
   Enabled: false
 
-Lint/ShadowedException:
-  Enabled: false
-
 Metrics/BlockLength:
   Enabled: false
 
