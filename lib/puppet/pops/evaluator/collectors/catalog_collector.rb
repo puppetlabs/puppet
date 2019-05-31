@@ -24,6 +24,6 @@ class Puppet::Pops::Evaluator::Collectors::CatalogCollector < Puppet::Pops::Eval
   end
 
   def to_s
-    "Catalog-Collector[#{@type.to_s}]"
+    "Catalog-Collector[#{@type}]"
   end
 end
