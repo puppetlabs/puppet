@@ -323,7 +323,7 @@ module Util
     params = { :scheme => 'file' }
 
     if Puppet.features.microsoft_windows?
-      path = path.gsub(/\\/, '/')
+      path = path.tr('\\', '/')
 
       if unc = /^\/\/([^\/]+)(\/.+)/.match(path)
         params[:host] = unc[1]

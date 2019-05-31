@@ -225,7 +225,7 @@ class Puppet::Module
     @metadata = data = read_metadata
     return if data.empty?
 
-    @forge_name = data['name'].gsub('-', '/') if data['name']
+    @forge_name = data['name'].tr('-', '/') if data['name']
 
     [:source, :author, :version, :license, :dependencies].each do |attr|
       value = data[attr.to_s]

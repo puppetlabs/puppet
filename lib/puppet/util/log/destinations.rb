@@ -34,7 +34,7 @@ Puppet::Util::Log.newdesttype :syslog do
       end
     else
       msg.to_s.split("\n").each do |line|
-        @syslog.send(msg.level, "(%s) %s" % [msg.source.to_s.gsub("%", ""),
+        @syslog.send(msg.level, "(%s) %s" % [msg.source.to_s.delete("%"),
             line.gsub("%", '%%')
           ]
         )

@@ -340,8 +340,8 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       v = s[0,ri]
       r = s[ri+1,s.length]
       if arch = r.scan(ARCH_REGEX)[0]
-        a = arch.gsub(/\./, '')
-	r.gsub!(ARCH_REGEX, '')
+        a = arch.delete('.')
+        r.gsub!(ARCH_REGEX, '')
       end
     else
       v = s

@@ -31,7 +31,7 @@ module Puppet::Util::RDoc
     # uses relative_path_from that will generate errors when the slashes don't
     # properly match.  This is a workaround for that issue.
     if Puppet.features.microsoft_windows? && RDoc::VERSION !~ /^[0-3]\./
-      options += [ "--root", Dir.pwd.gsub(/\\/, '/')]
+      options += [ "--root", Dir.pwd.tr('\\', '/')]
     end
     options += files
 
