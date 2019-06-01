@@ -12,9 +12,7 @@ AllCops:
     - 'tasks/**/*'
     - 'ext/suse/puppet.spec'
     - 'lib/puppet/vendor/**/*'
-    - 'lib/puppet/parser/parser.rb'
     - 'lib/puppet/pops/parser/eparser.rb'
-    - 'lib/semantic_puppet/dependency/module_release.rb'
 
 # MAYBE useful - no return inside ensure block.
 Lint/EnsureReturn:
