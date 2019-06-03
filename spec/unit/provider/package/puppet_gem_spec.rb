@@ -69,4 +69,20 @@ describe Puppet::Type.type(:package).provider(:puppet_gem) do
     end
   end
 
+  context 'calculated specificity' do
+    context 'when is not defaultfor' do
+      subject { described_class.specificity }
+      it { is_expected.to eql 1 }
+    end
+
+    context 'when is defaultfor' do
+      let(:os) {  Facter.value(:operatingsystem) }
+      subject do
+        described_class.defaultfor(operatingsystem: os)
+        described_class.specificity
+      end
+      it { is_expected.to be > 100 }
+    end
+  end
+
 end

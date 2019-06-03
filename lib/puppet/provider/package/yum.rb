@@ -107,7 +107,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def self.update_to_hash(pkgname, pkgversion)
-    
+
     # The pkgname string has two parts: name, and architecture. Architecture
     # is the portion of the string following the last "." character. All
     # characters preceding the final dot are the package name. Parse out
