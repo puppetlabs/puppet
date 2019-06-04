@@ -81,7 +81,6 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     unless file = @resource[:source]
       raise ArgumentError, _("You cannot install dpkg packages without a source")
     end
-
     args = []
 
     # We always unhold when installing to remove any prior hold.
@@ -146,7 +145,9 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   end
 
   def hold
-    self.install
+    unless package_not_installed?(@resource[:name])
+      self.install
+    end
     Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
       tmpfile.write("#{@resource[:name]} hold\n")
       tmpfile.flush
@@ -162,4 +163,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
   end
 
+  def package_not_installed?(name)
+    if !name.nil? && !name.empty?
+      output = dpkgquery("-W", "-f='${Status} ${Version}\n' #{name}")
+      return output.include?('no packages found matching')
+    end
+    raise ArgumentError.new("Package name is nil or empty")
+  end
 end
