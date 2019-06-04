@@ -532,21 +532,6 @@ describe Puppet::Util::Ldap::Manager, :if => Puppet.features.ldap? do
         @manager.update(@name, @is, @should)
       end
 
-      it "should convert the property names to strings" do
-        expect(@manager).to receive(:create).with(anything, hash_including("uno" => ["yay"]))
-        @manager.update(@name, @is, @should)
-      end
-
-      it "should convert the property values to arrays if necessary" do
-        expect(@manager).to receive(:create).with(anything, hash_including("uno" => ["yay"]))
-        @manager.update(@name, @is, @should)
-      end
-
-      it "should convert the property values to strings if necessary" do
-        expect(@manager).to receive(:create).with(anything, hash_including("uno" => ["yay"]))
-        @manager.update(@name, @is, @should)
-      end
-
       it "should not include :ensure in the properties sent" do
         expect(@manager).to receive(:create).with(anything, hash_excluding(:ensure))
         @manager.update(@name, @is, @should)
