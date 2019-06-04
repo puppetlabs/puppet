@@ -1,7 +1,7 @@
 require 'puppet/version'
 
 if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("2.3.0")
-  raise LoadError, _("Puppet %{version} requires ruby 2.3.0 or greater.") % { version: Puppet.version }
+  raise LoadError, "Puppet #{Puppet.version} requires Ruby 2.3.0 or greater, found Ruby #{RUBY_VERSION.dup}."
 end
 
 Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.3.0'

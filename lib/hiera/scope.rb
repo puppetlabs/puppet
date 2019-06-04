@@ -1,5 +1,8 @@
+require 'forwardable'
 class Hiera
   class Scope
+    extend Forwardable
+
     CALLING_CLASS = 'calling_class'.freeze
     CALLING_CLASS_PATH = 'calling_class_path'.freeze
     CALLING_MODULE = 'calling_module'.freeze
@@ -79,5 +82,9 @@ class Hiera
       end
     end
     private :find_hostclass
+
+    # This is needed for type conversion to work
+    def_delegators :@real, :call_function
+
   end
 end
