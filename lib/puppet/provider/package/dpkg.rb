@@ -145,7 +145,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   end
 
   def hold
-    unless package_not_installed?(@resource[:name])
+    if package_not_installed?(@resource[:name])
       self.install
     end
     Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
@@ -165,8 +165,13 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
   def package_not_installed?(name)
     if !name.nil? && !name.empty?
-      output = dpkgquery("-W", "-f='${Status} ${Version}\n' #{name}")
-      return output.include?('no packages found matching')
+      begin
+       dpkgquery("-W", "--showformat", self.class::DPKG_QUERY_FORMAT_STRING, name)
+      rescue Puppet::ExecutionFailure
+        # return true if exception is generated because package is not found
+        return true
+      end
+      return false
     end
     raise ArgumentError.new("Package name is nil or empty")
   end
