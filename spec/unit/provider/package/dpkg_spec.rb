@@ -224,14 +224,14 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
     it "installs first if package is not present and ensure holding" do
 
       allow(provider).to receive(:execute)
-      allow(provider).to receive(:package_not_installed?).and_return(false)
+      allow(provider).to receive(:package_not_installed?).and_return(true)
       expect(provider).to receive(:install).once
       provider.hold
     end
 
     it "skips install new package if package is allready installed" do
       allow(provider).to receive(:execute)
-      allow(provider).to receive(:package_not_installed?).and_return(true)
+      allow(provider).to receive(:package_not_installed?).and_return(false)
       expect(provider).not_to receive(:install)
       provider.hold
     end
