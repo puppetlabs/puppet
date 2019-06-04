@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.4.0-81-gcb43a63\n"
+"Project-Id-Version: Puppet automation framework 6.4.2-83-g6b91149\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-04-04 23:31+0000\n"
-"PO-Revision-Date: 2019-04-04 23:31+0000\n"
+"POT-Creation-Date: 2019-06-04 20:00+0000\n"
+"PO-Revision-Date: 2019-06-04 20:00+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -28,11 +28,11 @@ msgstr ""
 msgid "See https://puppet.com/docs/puppet/%{minor_version}/deprecated_language.html"
 msgstr ""
 
-#: ../lib/hiera/scope.rb:43 ../lib/puppet/parser/scope.rb:535
+#: ../lib/hiera/scope.rb:46 ../lib/puppet/parser/scope.rb:535
 msgid "Variable: %{name}"
 msgstr ""
 
-#: ../lib/hiera/scope.rb:44 ../lib/hiera/scope.rb:46 ../lib/puppet/parser/scope.rb:536 ../lib/puppet/parser/scope.rb:538
+#: ../lib/hiera/scope.rb:47 ../lib/hiera/scope.rb:49 ../lib/puppet/parser/scope.rb:536 ../lib/puppet/parser/scope.rb:538
 msgid "Undefined variable '%{name}'; %{reason}"
 msgstr ""
 
@@ -46,10 +46,6 @@ msgstr ""
 
 #: ../lib/hiera_puppet.rb:74 ../lib/puppet/indirector/hiera.rb:79
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
-msgstr ""
-
-#: ../lib/puppet.rb:4
-msgid "Puppet %{version} requires ruby 2.3.0 or greater."
 msgstr ""
 
 #: ../lib/puppet.rb:130
@@ -272,23 +268,23 @@ msgstr ""
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:297
+#: ../lib/puppet/application/device.rb:306
 msgid "retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:312
+#: ../lib/puppet/application/device.rb:321
 msgid "retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:335
+#: ../lib/puppet/application/device.rb:344
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:372 ../lib/puppet/application/resource.rb:196
+#: ../lib/puppet/application/device.rb:381 ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:373 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:382 ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -6222,65 +6218,65 @@ msgstr ""
 msgid "Unknown type <%{type}>"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:928
+#: ../lib/puppet/pops/types/types.rb:930
 msgid "The string '%{str}' cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:931
+#: ../lib/puppet/pops/types/types.rb:933
 msgid "Value of type %{type} cannot be converted to Numeric"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1169
+#: ../lib/puppet/pops/types/types.rb:1171
 msgid "The string '%{str}' cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1172
+#: ../lib/puppet/pops/types/types.rb:1174
 msgid "Value of type %{type} cannot be converted to Integer"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1180
+#: ../lib/puppet/pops/types/types.rb:1182
 msgid "Illegal radix: %{radix}, expected 2, 8, 10, 16, or default"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1293
+#: ../lib/puppet/pops/types/types.rb:1295
 msgid "The string '%{str}' cannot be converted to Float"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1296
+#: ../lib/puppet/pops/types/types.rb:1298
 msgid "Value of type %{type} cannot be converted to Float"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#initialize' is a class and method name and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1513
+#: ../lib/puppet/pops/types/types.rb:1515
 msgid "Passing more than one argument to PStringType#initialize is deprecated"
 msgstr ""
 
 #. TRANSLATORS 'PStringType#values' and '#value' are classes and method names and should not be translated
-#: ../lib/puppet/pops/types/types.rb:1567
+#: ../lib/puppet/pops/types/types.rb:1569
 msgid "Method PStringType#values is deprecated. Use #value instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1892
+#: ../lib/puppet/pops/types/types.rb:1894
 msgid "The string '%{str}' cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:1895
+#: ../lib/puppet/pops/types/types.rb:1897
 msgid "Value of type %{type} cannot be converted to Boolean"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2623
+#: ../lib/puppet/pops/types/types.rb:2625
 msgid "Value of type %{type} cannot be converted to Array"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2693
+#: ../lib/puppet/pops/types/types.rb:2695
 msgid "Puppet::Pops::Types::PHashType#element_type is deprecated, use #value_type instead"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2830
+#: ../lib/puppet/pops/types/types.rb:2832
 msgid "odd number of arguments for Hash"
 msgstr ""
 
-#: ../lib/puppet/pops/types/types.rb:2841
+#: ../lib/puppet/pops/types/types.rb:2843
 msgid "Value of type %{type} cannot be converted to Hash"
 msgstr ""
 
@@ -6364,7 +6360,7 @@ msgid "No command %{command} defined for provider %{provider}"
 msgstr ""
 
 #: ../lib/puppet/provider.rb:398
-msgid "Provider %{provider} has not defined the 'instances' class method"
+msgid "To support listing resources of this type the '%{provider}' provider needs to implement an 'instances' class method returning the current set of resources. We recommend porting your module to the simpler Resource API instead: https://puppet.com/search/docs?keys=resource+api"
 msgstr ""
 
 #: ../lib/puppet/provider.rb:470
@@ -6575,7 +6571,7 @@ msgstr ""
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:139 ../lib/puppet/provider/package/yum.rb:247
+#: ../lib/puppet/provider/package/aix.rb:139 ../lib/puppet/provider/package/yum.rb:248
 msgid "Tried to get latest on a missing package"
 msgstr ""
 
@@ -6607,7 +6603,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:228 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:93 ../lib/puppet/provider/package/portupgrade.rb:151 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:229 ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -6639,7 +6635,7 @@ msgstr ""
 msgid "You cannot install dpkg packages without a source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/dpkg.rb:108
+#: ../lib/puppet/provider/package/dpkg.rb:107
 msgid "source doesn't contain named package, but %{name}"
 msgstr ""
 
@@ -6647,27 +6643,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:42
+#: ../lib/puppet/provider/package/gem.rb:84
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:68
+#: ../lib/puppet/provider/package/gem.rb:110
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:109
+#: ../lib/puppet/provider/package/gem.rb:158
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:120
+#: ../lib/puppet/provider/package/gem.rb:169
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:136
+#: ../lib/puppet/provider/package/gem.rb:185
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:161
+#: ../lib/puppet/provider/package/gem.rb:211
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -6918,24 +6914,32 @@ msgstr ""
 msgid "Don't know how to install '%{source}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:28
+#: ../lib/puppet/provider/package/yum.rb:29
 msgid "The yum provider can only be used as root"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:82
+#: ../lib/puppet/provider/package/yum.rb:83
 msgid "Could not check for updates, '%{cmd} check-update' exited with %{status}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:116
+#: ../lib/puppet/provider/package/yum.rb:117
 msgid "Failed to parse package name and architecture from '%{pkgname}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:222
+#: ../lib/puppet/provider/package/yum.rb:223
 msgid "Could not find package %{wanted}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:233
+#: ../lib/puppet/provider/package/yum.rb:234
 msgid "Failed to update to version %{should}, got version %{version} instead"
+msgstr ""
+
+#: ../lib/puppet/provider/package_targetable.rb:53
+msgid "Provider %{name} package command is not functional on this host"
+msgstr ""
+
+#: ../lib/puppet/provider/package_targetable.rb:56
+msgid "Provider %{name} package command '%{cmd}' does not exist on this host"
 msgstr ""
 
 #: ../lib/puppet/provider/parsedfile.rb:52
@@ -7572,7 +7576,7 @@ msgstr ""
 msgid "Invalid priority format '%{value}' for parameter: %{name}"
 msgstr ""
 
-#: ../lib/puppet/settings/server_list_setting.rb:16
+#: ../lib/puppet/settings/server_list_setting.rb:25
 msgid "Expected an Array of String, got a %{klass}"
 msgstr ""
 
@@ -7692,15 +7696,15 @@ msgstr ""
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:164
+#: ../lib/puppet/ssl/host.rb:152
 msgid "No certificate to validate."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:165
+#: ../lib/puppet/ssl/host.rb:153
 msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:167
+#: ../lib/puppet/ssl/host.rb:155
 msgid ""
 "The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?\n"
 "Certificate fingerprint: %{fingerprint}\n"
@@ -7712,7 +7716,7 @@ msgid ""
 "  2. puppet %{puppet_params}\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:218
+#: ../lib/puppet/ssl/host.rb:206
 msgid ""
 "The CSR retrieved from the master does not match the agent's public key.\n"
 "CSR fingerprint: %{fingerprint}\n"
@@ -7726,53 +7730,53 @@ msgid ""
 "  2. puppet %{puppet_params}\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:272 ../lib/puppet/ssl/host.rb:293
+#: ../lib/puppet/ssl/host.rb:260 ../lib/puppet/ssl/host.rb:281
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:274
+#: ../lib/puppet/ssl/host.rb:262
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:283
+#: ../lib/puppet/ssl/host.rb:271
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:291
+#: ../lib/puppet/ssl/host.rb:279
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:331
+#: ../lib/puppet/ssl/host.rb:319
 msgid "Response from the CA did not contain a valid certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:337
+#: ../lib/puppet/ssl/host.rb:325
 msgid "Could not download certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:364
+#: ../lib/puppet/ssl/host.rb:352
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:396 ../lib/puppet/ssl/state_machine.rb:89
+#: ../lib/puppet/ssl/host.rb:384 ../lib/puppet/ssl/state_machine.rb:89
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:426
+#: ../lib/puppet/ssl/host.rb:414
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:447
+#: ../lib/puppet/ssl/host.rb:435
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:451
+#: ../lib/puppet/ssl/host.rb:439
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:454
+#: ../lib/puppet/ssl/host.rb:442
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
@@ -8459,15 +8463,15 @@ msgstr ""
 msgid "Invalid GID %{gid}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:114 ../lib/puppet/type/package.rb:128
+#: ../lib/puppet/type/package.rb:116 ../lib/puppet/type/package.rb:130
 msgid "Could not update: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:163
+#: ../lib/puppet/type/package.rb:165
 msgid "Could not get latest version: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:263
+#: ../lib/puppet/type/package.rb:265
 msgid "Name must be a String not %{klass}"
 msgstr ""
 
@@ -8511,15 +8515,15 @@ msgstr ""
 msgid "Invalid minute '%{n}'"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:278
+#: ../lib/puppet/type/schedule.rb:282
 msgid "Repeat must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:287
+#: ../lib/puppet/type/schedule.rb:291
 msgid "Repeat must be 1 unless periodmatch is 'distance', not '%{period}'"
 msgstr ""
 
-#: ../lib/puppet/type/schedule.rb:331
+#: ../lib/puppet/type/schedule.rb:335
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
@@ -9921,15 +9925,15 @@ msgstr ""
 msgid "Failed to check membership"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:86
+#: ../lib/puppet/util/windows/user.rb:88
 msgid "Failed to logon user %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:110
+#: ../lib/puppet/util/windows/user.rb:120
 msgid "Failed to load user profile %{user}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:116
+#: ../lib/puppet/util/windows/user.rb:126
 msgid "Failed to unload user profile %{user}"
 msgstr ""
 
