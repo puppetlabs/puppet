@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.4.2-166-ge8a59b3\n"
+"Project-Id-Version: Puppet automation framework 6.4.2-220-gcca62be\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-05-31 21:03+0000\n"
-"PO-Revision-Date: 2019-05-31 21:03+0000\n"
+"POT-Creation-Date: 2019-06-05 21:33+0000\n"
+"PO-Revision-Date: 2019-06-05 21:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -28,11 +28,11 @@ msgstr ""
 msgid "See https://puppet.com/docs/puppet/%{minor_version}/deprecated_language.html"
 msgstr ""
 
-#: ../lib/hiera/scope.rb:43 ../lib/puppet/parser/scope.rb:535
+#: ../lib/hiera/scope.rb:46 ../lib/puppet/parser/scope.rb:535
 msgid "Variable: %{name}"
 msgstr ""
 
-#: ../lib/hiera/scope.rb:44 ../lib/hiera/scope.rb:46 ../lib/puppet/parser/scope.rb:536 ../lib/puppet/parser/scope.rb:538
+#: ../lib/hiera/scope.rb:47 ../lib/hiera/scope.rb:49 ../lib/puppet/parser/scope.rb:536 ../lib/puppet/parser/scope.rb:538
 msgid "Undefined variable '%{name}'; %{reason}"
 msgstr ""
 
@@ -46,10 +46,6 @@ msgstr ""
 
 #: ../lib/hiera_puppet.rb:74 ../lib/puppet/indirector/hiera.rb:79
 msgid "Config file %{hiera_config} not found, using Hiera defaults"
-msgstr ""
-
-#: ../lib/puppet.rb:4
-msgid "Puppet %{version} requires ruby 2.3.0 or greater."
 msgstr ""
 
 #: ../lib/puppet.rb:130
@@ -272,23 +268,23 @@ msgstr ""
 msgid "No device found in %{config}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:297
+#: ../lib/puppet/application/device.rb:306
 msgid "retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:312
+#: ../lib/puppet/application/device.rb:321
 msgid "retrieving facts from %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:335
+#: ../lib/puppet/application/device.rb:344
 msgid "starting applying configuration to %{target} at %{scheme}%{url_host}%{port}%{url_path}"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:372 ../lib/puppet/application/resource.rb:196
+#: ../lib/puppet/application/device.rb:381 ../lib/puppet/application/resource.rb:196
 msgid "You must specify the type to display"
 msgstr ""
 
-#: ../lib/puppet/application/device.rb:373 ../lib/puppet/application/resource.rb:197
+#: ../lib/puppet/application/device.rb:382 ../lib/puppet/application/resource.rb:197
 msgid "Could not find type %{type}"
 msgstr ""
 
@@ -6380,7 +6376,7 @@ msgid "No command %{command} defined for provider %{provider}"
 msgstr ""
 
 #: ../lib/puppet/provider.rb:398
-msgid "Provider %{provider} has not defined the 'instances' class method"
+msgid "To support listing resources of this type the '%{provider}' provider needs to implement an 'instances' class method returning the current set of resources. We recommend porting your module to the simpler Resource API instead: https://puppet.com/search/docs?keys=resource+api"
 msgstr ""
 
 #: ../lib/puppet/provider.rb:470
@@ -6655,7 +6651,7 @@ msgstr ""
 msgid "You cannot install dpkg packages without a source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/dpkg.rb:108
+#: ../lib/puppet/provider/package/dpkg.rb:107
 msgid "source doesn't contain named package, but %{name}"
 msgstr ""
 
@@ -6663,27 +6659,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:55
+#: ../lib/puppet/provider/package/gem.rb:84
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:81
+#: ../lib/puppet/provider/package/gem.rb:110
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:135
+#: ../lib/puppet/provider/package/gem.rb:158
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:146
+#: ../lib/puppet/provider/package/gem.rb:169
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:162
+#: ../lib/puppet/provider/package/gem.rb:185
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:185
+#: ../lib/puppet/provider/package/gem.rb:211
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -6952,6 +6948,14 @@ msgstr ""
 
 #: ../lib/puppet/provider/package/yum.rb:234
 msgid "Failed to update to version %{should}, got version %{version} instead"
+msgstr ""
+
+#: ../lib/puppet/provider/package_targetable.rb:53
+msgid "Provider %{name} package command is not functional on this host"
+msgstr ""
+
+#: ../lib/puppet/provider/package_targetable.rb:56
+msgid "Provider %{name} package command '%{cmd}' does not exist on this host"
 msgstr ""
 
 #: ../lib/puppet/provider/parsedfile.rb:52
@@ -7588,7 +7592,7 @@ msgstr ""
 msgid "Invalid priority format '%{value}' for parameter: %{name}"
 msgstr ""
 
-#: ../lib/puppet/settings/server_list_setting.rb:16
+#: ../lib/puppet/settings/server_list_setting.rb:25
 msgid "Expected an Array of String, got a %{klass}"
 msgstr ""
 
@@ -8503,15 +8507,15 @@ msgstr ""
 msgid "Invalid GID %{gid}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:114 ../lib/puppet/type/package.rb:128
+#: ../lib/puppet/type/package.rb:116 ../lib/puppet/type/package.rb:130
 msgid "Could not update: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:163
+#: ../lib/puppet/type/package.rb:165
 msgid "Could not get latest version: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:263
+#: ../lib/puppet/type/package.rb:265
 msgid "Name must be a String not %{klass}"
 msgstr ""
 
@@ -9965,15 +9969,15 @@ msgstr ""
 msgid "Failed to check membership"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:86
+#: ../lib/puppet/util/windows/user.rb:88
 msgid "Failed to logon user %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:110
+#: ../lib/puppet/util/windows/user.rb:120
 msgid "Failed to load user profile %{user}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:116
+#: ../lib/puppet/util/windows/user.rb:126
 msgid "Failed to unload user profile %{user}"
 msgstr ""
 
