@@ -273,12 +273,21 @@ Licensed under the Apache 2.0 License
             Puppet[:certname] = device.name
             ssl_context = nil
 
-            # this will reload and recompute default settings and create device-specific sub vardir
-            Puppet.settings.use :main, :agent, :ssl
-
             unless options[:resource] || options[:facts] || options[:apply]
-              # ask for a ssl cert if needed, but at least
-              # setup the ssl system for this device.
+              # this will reload and recompute default settings and create device-specific sub vardir
+              Puppet.settings.use :main, :agent, :ssl
+
+              # Since it's too complicated to fix properly in the default settings, we workaround for PUP-9642 here.
+              # See https://github.com/puppetlabs/puppet/pull/7483#issuecomment-483455997 for details.
+              # This has to happen after `settings.use` above, so the directory is created and before `setup_host` below, where the SSL
+              # routines would fail with access errors
+              if Puppet.features.root? && !Puppet::Util::Platform.windows?
+                user = Puppet::Type.type(:user).new(name: Puppet[:user]).exists? ? Puppet[:user] : nil
+                group = Puppet::Type.type(:group).new(name: Puppet[:group]).exists? ? Puppet[:group] : nil
+                Puppet.debug("Fixing perms for #{user}:#{group} on #{Puppet[:confdir]}")
+                FileUtils.chown(user, group, Puppet[:confdir]) if user || group
+              end
+
               ssl_context = setup_context
 
               unless options[:libdir]
@@ -288,7 +297,7 @@ Licensed under the Apache 2.0 License
               end
             end
 
-            # this init the device singleton, so that the facts terminus
+            # this inits the device singleton, so that the facts terminus
             # and the various network_device provider can use it
             Puppet::Util::NetworkDevice.init(device)
 

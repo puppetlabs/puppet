@@ -3,8 +3,17 @@ require 'spec_helper'
 osfamilies = { 'windows' => ['pip.exe'], 'other' => ['pip', 'pip-python'] }
 
 describe Puppet::Type.type(:package).provider(:pip) do
+
+  it { is_expected.to be_installable }
+  it { is_expected.to be_uninstallable }
+  it { is_expected.to be_upgradeable }
+  it { is_expected.to be_versionable }
+  it { is_expected.to be_install_options }
+  it { is_expected.to be_targetable }
+
   before do
     @resource = Puppet::Resource.new(:package, "fake_package")
+    allow(@resource).to receive(:original_parameters).and_return({})
     @provider = described_class.new(@resource)
     @client = double('client')
     allow(@client).to receive(:call).with('package_releases', 'real_package').and_return(["1.3", "1.2.5", "1.2.4"])
@@ -52,11 +61,11 @@ describe Puppet::Type.type(:package).provider(:pip) do
               expect(described_class).to receive(:which).with(cmd).and_return(nil)
             end
           end
-          allow(described_class).to receive(:pip_version).and_return('8.0.1')
-          expect(described_class).to receive(:which).with(pip_cmd).and_return("/fake/bin/#{pip_cmd}")
+          allow(described_class).to receive(:pip_version).with(pip_cmd).and_return('8.0.1')
+          expect(described_class).to receive(:which).with(pip_cmd).and_return(pip_cmd)
           p = double("process")
           expect(p).to receive(:collect).and_yield("real_package==1.2.5")
-          expect(described_class).to receive(:execpipe).with(["/fake/bin/#{pip_cmd}", "freeze"]).and_yield(p)
+          expect(described_class).to receive(:execpipe).with([pip_cmd, ["freeze"]]).and_yield(p)
           described_class.instances
         end
       end
@@ -66,11 +75,11 @@ describe Puppet::Type.type(:package).provider(:pip) do
         versions.each do |version|
           it "should use the --all option when version is '#{version}'" do
             allow(Puppet::Util::Platform).to receive(:windows?).and_return(osfamily == 'windows')
-            allow(described_class).to receive(:pip_cmd).and_return('/fake/bin/pip')
-            allow(described_class).to receive(:pip_version).and_return(version)
+            allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
+            allow(described_class).to receive(:pip_version).with('/fake/bin/pip').and_return(version)
             p = double("process")
             expect(p).to receive(:collect).and_yield("real_package==1.2.5")
-            expect(described_class).to receive(:execpipe).with(["/fake/bin/pip", "freeze", "--all"]).and_yield(p)
+            expect(described_class).to receive(:execpipe).with(["/fake/bin/pip", ["freeze", "--all"]]).and_yield(p)
             described_class.instances
           end
         end
@@ -89,6 +98,8 @@ describe Puppet::Type.type(:package).provider(:pip) do
   context "query" do
     before do
       @resource[:name] = "real_package"
+      allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
+      allow(described_class).to receive(:validate_command).with('/fake/bin/pip')
     end
 
     it "should return a hash when pip and the package are present" do
@@ -96,12 +107,14 @@ describe Puppet::Type.type(:package).provider(:pip) do
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
+        :command  => '/fake/bin/pip',
       })])
 
       expect(@provider.query).to eq({
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
+        :command  => '/fake/bin/pip',
       })
     end
 
@@ -117,12 +130,14 @@ describe Puppet::Type.type(:package).provider(:pip) do
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
+        :command  => '/fake/bin/pip',
       })])
 
       expect(@provider.query).to eq({
         :ensure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
+        :command  => '/fake/bin/pip',
       })
     end
   end
@@ -130,10 +145,12 @@ describe Puppet::Type.type(:package).provider(:pip) do
   context "latest" do
     context "with pip version < 1.5.4" do
       before :each do
-        allow(described_class).to receive(:pip_version).and_return('1.0.1')
+        allow(@provider).to receive(:pip_version).with("/fake/bin/pip").and_return('1.0.1')
         allow(described_class).to receive(:which).with('pip').and_return("/fake/bin/pip")
         allow(described_class).to receive(:which).with('pip-python').and_return("/fake/bin/pip")
         allow(described_class).to receive(:which).with('pip.exe').and_return("/fake/bin/pip")
+        allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
+        allow(described_class).to receive(:validate_command).with('/fake/bin/pip')
       end
 
       it "should find a version number for new_pip_package" do
@@ -186,10 +203,12 @@ describe Puppet::Type.type(:package).provider(:pip) do
       # For Pip 1.5.4 and above, you can get a version list from CLI - which allows for native pip behavior
       # with regards to custom repositories, proxies and the like
       before :each do
-        allow(described_class).to receive(:pip_version).and_return('1.5.4')
         allow(described_class).to receive(:which).with('pip').and_return("/fake/bin/pip")
         allow(described_class).to receive(:which).with('pip-python').and_return("/fake/bin/pip")
         allow(described_class).to receive(:which).with('pip.exe').and_return("/fake/bin/pip")
+        allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
+        allow(described_class).to receive(:validate_command).with('/fake/bin/pip')
+        allow(@provider).to receive(:pip_version).with("/fake/bin/pip").and_return('1.5.4')
       end
 
       it "should find a version number for real_package" do
@@ -239,12 +258,14 @@ describe Puppet::Type.type(:package).provider(:pip) do
     before do
       @resource[:name] = "fake_package"
       @url = "git+https://example.com/fake_package.git"
+      allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
+      allow(described_class).to receive(:validate_command).with('/fake/bin/pip')
     end
 
     it "should install" do
       @resource[:ensure] = :installed
       @resource[:source] = nil
-      expect(@provider).to receive(:lazy_pip).with("install", '-q', "fake_package")
+      expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "fake_package"]])
       @provider.install
     end
 
@@ -252,7 +273,8 @@ describe Puppet::Type.type(:package).provider(:pip) do
       # The -e flag makes the provider non-idempotent
       @resource[:ensure] = :installed
       @resource[:source] = @url
-      expect(@provider).to receive(:lazy_pip) do |*args|
+      # TJK
+      expect(@provider).to receive(:execute) do |*args|
         expect(args).not_to include("-e")
       end
       @provider.install
@@ -261,28 +283,31 @@ describe Puppet::Type.type(:package).provider(:pip) do
     it "should install from SCM" do
       @resource[:ensure] = :installed
       @resource[:source] = @url
-      expect(@provider).to receive(:lazy_pip).with("install", '-q', "#{@url}#egg=fake_package")
+      expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "#{@url}#egg=fake_package"]])
       @provider.install
     end
 
     it "should install a particular SCM revision" do
       @resource[:ensure] = "0123456"
       @resource[:source] = @url
-      expect(@provider).to receive(:lazy_pip).with("install", "-q", "#{@url}@0123456#egg=fake_package")
+      # TJK
+      expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "#{@url}@0123456#egg=fake_package"]])
       @provider.install
     end
 
     it "should install a particular version" do
       @resource[:ensure] = "0.0.0"
       @resource[:source] = nil
-      expect(@provider).to receive(:lazy_pip).with("install", "-q", "fake_package==0.0.0")
+      # TJK
+      expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "fake_package==0.0.0"]])
       @provider.install
     end
 
     it "should upgrade" do
       @resource[:ensure] = :latest
       @resource[:source] = nil
-      expect(@provider).to receive(:lazy_pip).with("install", "-q", "--upgrade", "fake_package")
+      # TJK
+      expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "--upgrade", "fake_package"]])
       @provider.install
     end
 
@@ -290,15 +315,20 @@ describe Puppet::Type.type(:package).provider(:pip) do
       @resource[:ensure] = :installed
       @resource[:source] = nil
       @resource[:install_options] = [{"--timeout" => "10"}, "--no-index"]
-      expect(@provider).to receive(:lazy_pip).with("install", "-q", "--timeout=10", "--no-index", "fake_package")
+      expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "--timeout=10", "--no-index", "fake_package"]])
       @provider.install
     end
   end
 
   context "uninstall" do
+    before do
+      allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
+      allow(described_class).to receive(:validate_command).with('/fake/bin/pip')
+    end
+
     it "should uninstall" do
       @resource[:name] = "fake_package"
-      expect(@provider).to receive(:lazy_pip).with('uninstall', '-y', '-q', 'fake_package')
+      expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["uninstall", "-y", "-q", "fake_package"]])
       @provider.uninstall
     end
   end
@@ -311,68 +341,12 @@ describe Puppet::Type.type(:package).provider(:pip) do
   end
 
   context "pip_version" do
-    it "should return nil on missing pip" do
-      allow(described_class).to receive(:pip_cmd).and_return(nil)
-      expect(described_class.pip_version).to eq(nil)
-    end
-
     it "should look up version if pip is present" do
       allow(described_class).to receive(:pip_cmd).and_return('/fake/bin/pip')
       p = double("process")
       expect(p).to receive(:collect).and_yield('pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)')
       expect(described_class).to receive(:execpipe).with(['/fake/bin/pip', '--version']).and_yield(p)
-      expect(described_class.pip_version).to eq('8.0.2')
-    end
-  end
-
-  context "lazy_pip" do
-    after(:each) do
-      Puppet::Type::Package::ProviderPip.instance_variable_set(:@confine_collection, nil)
-    end
-
-    it "should succeed if pip is present" do
-      allow(@provider).to receive(:pip).and_return(nil)
-      @provider.method(:lazy_pip).call "freeze"
-    end
-
-    osfamilies.each do |osfamily, pip_cmds|
-      pip_cmds.each do |pip_cmd|
-        it "should retry on #{osfamily} systems if #{pip_cmd} has not yet been found" do
-          allow(Puppet::Util::Platform).to receive(:windows?).and_return(osfamily == 'windows')
-          times_called = 0
-          expect(@provider).to receive(:pip).twice.with('freeze') do
-            times_called += 1
-            raise NoMethodError if times_called == 1
-            nil
-          end
-          pip_cmds.each do |cmd|
-            unless cmd == pip_cmd
-              expect(@provider).to receive(:which).with(cmd).and_return(nil)
-            end
-          end
-          expect(@provider).to receive(:which).with(pip_cmd).and_return("/fake/bin/#{pip_cmd}")
-          @provider.method(:lazy_pip).call "freeze"
-        end
-      end
-
-      it "should fail on #{osfamily} systems if #{pip_cmds.join(' and ')} are missing" do
-        allow(Puppet::Util::Platform).to receive(:windows?).and_return(osfamily == 'windows')
-        expect(@provider).to receive(:pip).with('freeze').and_raise(NoMethodError)
-        pip_cmds.each do |pip_cmd|
-          expect(@provider).to receive(:which).with(pip_cmd).and_return(nil)
-        end
-        expect { @provider.method(:lazy_pip).call("freeze") }.to raise_error(NoMethodError)
-      end
-
-      it "should output a useful error message on #{osfamily} systems if #{pip_cmds.join(' and ')} are missing" do
-        allow(Puppet::Util::Platform).to receive(:windows?).and_return(osfamily == 'windows')
-        expect(@provider).to receive(:pip).with('freeze').and_raise(NoMethodError)
-        pip_cmds.each do |pip_cmd|
-          expect(@provider).to receive(:which).with(pip_cmd).and_return(nil)
-        end
-        expect { @provider.method(:lazy_pip).call("freeze") }.
-          to raise_error(NoMethodError, "Could not locate command #{pip_cmds.join(' and ')}.")
-      end
+      expect(described_class.pip_version('/fake/bin/pip')).to eq('8.0.2')
     end
   end
 end

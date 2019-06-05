@@ -100,7 +100,7 @@ describe Puppet::Type.type(:package), "when packages with the same name are sour
       provider_name = Puppet::Type.type(:package).defaultprovider.name
       expect {
         @catalog.add_resource(@alt_package)
-      }.to raise_error ArgumentError, "Cannot alias Package[gem-yay] to [\"yay\", :#{provider_name}]; resource [\"Package\", \"yay\", :#{provider_name}] already declared"
+      }.to raise_error ArgumentError, "Cannot alias Package[gem-yay] to [nil, \"yay\", :#{provider_name}]; resource [\"Package\", nil, \"yay\", :#{provider_name}] already declared"
     end
   end
 
