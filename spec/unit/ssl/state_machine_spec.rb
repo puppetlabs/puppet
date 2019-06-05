@@ -64,6 +64,15 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     let(:lockfile) { double('ssllockfile') }
     let(:machine) { described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider, lockfile: lockfile) }
 
+    # lockfile is deleted before `ensure_ca_certificates` returns, so
+    # verify lockfile contents while state machine is running
+    def expect_lockfile_to_contain(pid)
+      allow(cert_provider).to receive(:load_cacerts) do
+        expect(File.read(Puppet[:ssl_lockfile])).to eq(pid.to_s)
+      end.and_return(cacerts)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
+    end
+
     it 'locks the file prior to running the state machine and unlocks when done' do
       expect(lockfile).to receive(:lock).and_return(true).ordered
       expect(cert_provider).to receive(:load_cacerts).and_return(cacerts).ordered
@@ -73,11 +82,49 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       machine.ensure_ca_certificates
     end
 
+    it 'deletes the lockfile when finished' do
+      allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
+
+      machine = described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider)
+      machine.ensure_ca_certificates
+
+      expect(File).to_not be_exist(Puppet[:ssl_lockfile])
+    end
+
     it 'raises an exception when locking fails' do
       allow(lockfile).to receive(:lock).and_return(false)
       expect {
         machine.ensure_ca_certificates
       }.to raise_error(Puppet::Error, /Another puppet instance is already running; exiting/)
+    end
+
+    it 'acquires an empty lockfile' do
+      Puppet::FileSystem.touch(Puppet[:ssl_lockfile])
+
+      expect_lockfile_to_contain(Process.pid)
+
+      machine = described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider)
+      machine.ensure_ca_certificates
+    end
+
+    it 'acquires its own lockfile' do
+      File.write(Puppet[:ssl_lockfile], Process.pid.to_s)
+
+      expect_lockfile_to_contain(Process.pid)
+
+      machine = described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider)
+      machine.ensure_ca_certificates
+    end
+
+    it 'overwrites a stale lockfile' do
+      # 2**31 - 1 chosen to not conflict with existing pid
+      File.write(Puppet[:ssl_lockfile], "2147483647")
+
+      expect_lockfile_to_contain(Process.pid)
+
+      machine = described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider)
+      machine.ensure_ca_certificates
     end
   end
 

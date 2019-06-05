@@ -1,5 +1,5 @@
 require 'puppet/ssl'
-require 'puppet/util/lockfile'
+require 'puppet/util/pidlock'
 
 # This class implements a state machine for bootstrapping a host's CA and CRL
 # bundles, private key and signed client certificate. Each state has a frozen
@@ -268,7 +268,7 @@ class Puppet::SSL::StateMachine
                  maxwaitforcert: Puppet[:maxwaitforcert],
                  cert_provider: Puppet::X509::CertProvider.new,
                  ssl_provider: Puppet::SSL::SSLProvider.new,
-                 lockfile: Puppet::Util::Lockfile.new(Puppet[:ssl_lockfile]))
+                 lockfile: Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile]))
     @waitforcert = waitforcert
     @wait_deadline = Time.now.to_i + maxwaitforcert
     @cert_provider = cert_provider
@@ -322,7 +322,7 @@ class Puppet::SSL::StateMachine
   end
 
   def with_lock
-    if @lockfile.lock(Process.pid)
+    if @lockfile.lock
       begin
         yield
       ensure
