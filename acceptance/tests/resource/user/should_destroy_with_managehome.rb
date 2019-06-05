@@ -11,6 +11,11 @@ tag 'audit:medium',
 name = "pl#{rand(999999).to_i}"
 
 agents.each do |agent|
+  case  agent['platform'] 
+  when /osx/
+    skip_test("OSX doesn't support managehome")
+  end
+
   step "ensure the user is present"
   agent.user_present(name)
 
