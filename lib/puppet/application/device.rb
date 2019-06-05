@@ -270,10 +270,10 @@ Licensed under the Apache 2.0 License
             Puppet[:certname] = device.name
             ssl_host = nil
 
-            unless options[:resource] || options[:facts] || options[:apply]
-              # this will reload and recompute default settings and create device-specific sub vardir
-              Puppet.settings.use :main, :agent, :ssl
+            # this will reload and recompute default settings and create device-specific sub vardir
+            Puppet.settings.use :main, :agent, :ssl
 
+            unless options[:resource] || options[:facts] || options[:apply]
               # Since it's too complicated to fix properly in the default settings, we workaround for PUP-9642 here.
               # See https://github.com/puppetlabs/puppet/pull/7483#issuecomment-483455997 for details.
               # This has to happen after `settings.use` above, so the directory is created and before `setup_host` below, where the SSL
