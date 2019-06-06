@@ -17,6 +17,16 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package::
 
   has_feature :versionable, :install_options, :uninstall_options, :targetable
 
+  # Override the specificity method to return 1 if gem is not set as default provider
+  def self.specificity
+    match = default_match
+    length = match ? match.length : 0
+
+    return 1 if length == 0
+
+    super
+  end
+
   # Define the default provider package command name when the provider is targetable.
   # Required by Puppet::Provider::Package::Targetable::resource_or_provider_command
 
