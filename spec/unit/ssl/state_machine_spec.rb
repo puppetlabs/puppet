@@ -43,6 +43,19 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       expect(ssl_context[:crls]).to eq(crls)
       expect(ssl_context[:verify_peer]).to eq(true)
     end
+
+    it 'retries if it fails to connect' do
+      # first call returns nil to force download, second call returns certs
+      expect(cert_provider).to receive(:load_cacerts).and_return(nil, cacerts)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
+
+      stub_request(:get, %r{puppet-ca/v1/certificate/ca})
+        .to_raise(Errno::ECONNREFUSED, 'Failed to open TCP connection to puppet:8140')
+
+      machine.ensure_ca_certificates
+
+      expect(@logs).to include(an_object_having_attributes(message: %r{Connection refused - request https://puppet:8140}))
+    end
   end
 
   context 'when ensuring a client cert' do

@@ -315,6 +315,9 @@ class Puppet::SSL::StateMachine
         state = state.next_state
 
         break if state.is_a?(stop)
+      rescue => e
+        Puppet.log_exception(e)
+        state = Wait.new(self, state.ssl_context)
       end
     end
 
