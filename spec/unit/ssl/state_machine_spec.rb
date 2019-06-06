@@ -28,6 +28,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     allow_any_instance_of(Net::HTTP).to receive(:finish)
 
     Puppet[:ssl_lockfile] = tmpfile('ssllock')
+
+    allow(Kernel).to receive(:sleep)
   end
 
   context 'when ensuring CA certs and CRLs' do
@@ -645,7 +647,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         machine = described_class.new(waitforcert: 15)
 
         state = Puppet::SSL::StateMachine::Wait.new(machine, ssl_context)
-        expect(state).to receive(:sleep).with(15)
+        expect(Kernel).to receive(:sleep).with(15)
 
         expect(Puppet).to receive(:info).with(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(.*\). Will try again in 15 seconds./)
 
@@ -656,7 +658,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         machine = described_class.new(waitforcert: 15, maxwaitforcert: 30)
 
         state = Puppet::SSL::StateMachine::Wait.new(machine, ssl_context)
-        expect(state).to receive(:sleep).with(15)
+        expect(Kernel).to receive(:sleep).with(15)
 
         expect(Puppet).to receive(:info).with(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(.*\). Will try again in 15 seconds./)
 

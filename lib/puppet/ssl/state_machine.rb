@@ -248,7 +248,7 @@ class Puppet::SSL::StateMachine
       else
         Puppet.info(_("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Will try again in %{time} seconds.") % {name: Puppet[:certname], time: time})
 
-        sleep(time)
+        Kernel.sleep(time)
 
         # our ssl directory may have been cleaned while we were
         # sleeping, start over from the top
