@@ -149,7 +149,8 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
         expect(Process).to receive(:create).with(
           :command_line => "test command",
           :startup_info => {:stdin => @stdin, :stdout => @stdout, :stderr => @stderr},
-          :close_handles => false
+          :close_handles => false,
+          :creation_flags => 0
         ).and_return(proc_info_stub)
 
         call_exec_windows('test command', {}, @stdin, @stdout, @stderr)
@@ -166,7 +167,8 @@ describe Puppet::Util::Execution, if: !Puppet::Util::Platform.jruby? do
               :stderr => @stderr
             },
             :close_handles => false,
-            :cwd => cwd
+            :cwd => cwd,
+            :creation_flags => 0
           )
 
           call_exec_windows('test command', { :cwd => cwd }, @stdin, @stdout, @stderr)
