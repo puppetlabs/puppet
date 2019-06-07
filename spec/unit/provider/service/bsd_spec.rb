@@ -94,13 +94,13 @@ describe 'Puppet::Type::Service::Provider::Bsd',
 
     it "should use the supplied start command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :start => '/bin/foo'))
-      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
+      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => :normal, :squelch => false)
       provider.start
     end
 
     it "should start the serviced directly otherwise" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      expect(provider).to receive(:execute).with(['/etc/rc.d/sshd', :onestart], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
+      expect(provider).to receive(:execute).with(['/etc/rc.d/sshd', :onestart], :combine => true, :failonfail => true, :override_locale => false, :priority => :normal, :squelch => false)
       expect(provider).to receive(:search).with('sshd').and_return('/etc/rc.d/sshd')
       provider.start
     end
@@ -113,13 +113,13 @@ describe 'Puppet::Type::Service::Provider::Bsd',
 
     it "should use the supplied stop command if specified" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :stop => '/bin/foo'))
-      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
+      expect(provider).to receive(:execute).with(['/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => :normal, :squelch => false)
       provider.stop
     end
 
     it "should stop the serviced directly otherwise" do
       provider = provider_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      expect(provider).to receive(:execute).with(['/etc/rc.d/sshd', :onestop], :combine => true, :failonfail => true, :override_locale => false, :priority => 0, :squelch => false)
+      expect(provider).to receive(:execute).with(['/etc/rc.d/sshd', :onestop], :combine => true, :failonfail => true, :override_locale => false, :priority => :normal, :squelch => false)
       expect(provider).to receive(:search).with('sshd').and_return('/etc/rc.d/sshd')
       provider.stop
     end

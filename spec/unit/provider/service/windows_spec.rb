@@ -125,8 +125,7 @@ describe 'Puppet::Type::Service::Provider::Windows',
     it "should use the supplied restart command if specified" do
       resource[:restart] = 'c:/bin/foo'
 
-      expect(Facter).to receive(:value).with(:osfamily).and_return('windows')
-      expect(provider).to receive(:execute).with(['c:/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => Process::NORMAL_PRIORITY_CLASS, :squelch => false)
+      expect(provider).to receive(:execute).with(['c:/bin/foo'], :combine => true, :failonfail => true, :override_locale => false, :priority => :normal, :squelch => false)
 
       provider.restart
     end

@@ -24,9 +24,13 @@ module Puppet::Util::Windows::Process
         :stderr => stderr
       },
       :close_handles => false,
+      :creation_flags => 0,
     }
     if arguments[:suppress_window]
-      create_args[:creation_flags] = CREATE_NO_WINDOW
+      create_args[:creation_flags] |= CREATE_NO_WINDOW
+    end
+    if arguments[:priority]
+      create_args[:creation_flags] |= Puppet::Settings::PrioritySetting::PRIORITY_MAP[arguments[:priority]]
     end
     if arguments[:cwd]
       create_args[:cwd] = arguments[:cwd]
