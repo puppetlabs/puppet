@@ -14,6 +14,16 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
   has_feature :installable, :uninstallable, :upgradeable, :versionable, :install_options, :targetable
 
+  # Override the specificity method to return 1 if pip is not set as default provider
+  def self.specificity
+    match = default_match
+    length = match ? match.length : 0
+
+    return 1 if length == 0
+
+    super
+  end
+
   # Define the default provider package command name when the provider is targetable.
   # Required by Puppet::Provider::Package::Targetable::resource_or_provider_command
 
