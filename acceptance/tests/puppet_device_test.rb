@@ -1,5 +1,7 @@
 test_name "puppet device is able to run and configure a node"
 
+tag 'server'
+
 teardown do
   # revert permission changes to reset state for other tests
   on(master, "puppet agent -td --server #{master}")
@@ -47,7 +49,7 @@ on(master, "umask 077; puppet device #{common_options} --target spinny1.example.
 on(master, "umask 077; puppet device #{common_options} --target spinny1.example.com", acceptable_exit_codes: [0, 1]) do |result|
   assert_no_match(/Permission denied/, result.stderr, 'cert requesting failed')
 end
-on(master, "umask 077; puppet ca sign spinny1.example.com")
+on(master, "umask 077; puppet cert sign spinny1.example.com --allow-dns-alt-names")
 
 # test catalog application
 on(master, "umask 077; puppet device #{common_options} --target spinny1.example.com")
@@ -64,5 +66,5 @@ on(master, "umask 077; puppet device #{common_options} --target spinny2.example.
 on(master, "umask 077; puppet device #{common_options} --target spinny2.example.com", acceptable_exit_codes: [0, 1]) do |result|
   assert_no_match(/Permission denied/, result.stderr, 'cert requesting failed with --libdir')
 end
-on(master, puppet("ca sign spinny2.example.com"))
+on(master, "puppet cert sign spinny2.example.com --allow-dns-alt-names")
 on(master, "umask 077; puppet device #{common_options} --target spinny2.example.com")
