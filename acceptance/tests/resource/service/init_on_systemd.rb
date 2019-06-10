@@ -1,6 +1,6 @@
 test_name 'SysV on default Systemd Service Provider Validation' do
 
-  confine :to, :platform => /el-|centos|fedora/ do |h|
+  confine :to, :platform => /el-|centos|fedora-(2[0-9])/ do |h|
     on h, 'which systemctl', :acceptable_exit_codes => [0, 1]
     stdout =~ /systemctl/
   end
@@ -19,7 +19,7 @@ test_name 'SysV on default Systemd Service Provider Validation' do
 
   # Some scripts don't have status command.
   def initd_file(svc, pidfile, initd_location, status)
-    initd = <<INITD
+    <<INITD
 #!/bin/bash
 # #{svc} daemon
 # chkconfig: 2345 20 80
