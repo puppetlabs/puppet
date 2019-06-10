@@ -9,10 +9,8 @@ test_name "C4553 - agent --disable/--enable functionality should manage the agen
       'audit:medium'
 
   #
-  # This test is intended to ensure that puppet agent --enable/--disable
-  #  work properly, both in terms of complying with our public "API" around
-  #  lockfile semantics ( http://links.puppet.com/agent_lockfiles ), and
-  #  in terms of actually restricting or allowing new agent runs to begin.
+  #  This test is intended to ensure that puppet agent --enable/--disable
+  #  work properly.
   #
 
   require "puppet/acceptance/temp_file_utils"
