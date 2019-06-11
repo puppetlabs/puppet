@@ -20,6 +20,10 @@ class Puppet::SSL::StateMachine
       @cert_provider = machine.cert_provider
       @ssl_provider = machine.ssl_provider
     end
+
+    def to_error(message, cause)
+      Error.new(@machine, message, Puppet::Error.new(message, cause))
+    end
   end
 
   # Load existing CA certs or download them. Transition to NeedCRLs.
@@ -45,11 +49,13 @@ class Puppet::SSL::StateMachine
       end
 
       NeedCRLs.new(@machine, next_ctx)
+    rescue OpenSSL::X509::CertificateError => e
+      Error.new(@machine, e.message, e)
     rescue Puppet::Rest::ResponseError => e
       if e.response.code.to_i == 404
-        raise Puppet::Error.new(_('CA certificate is missing from the server'))
+        to_error(_('CA certificate is missing from the server'), e)
       else
-        raise Puppet::Error.new(_('Could not download CA certificate: %{message}') % { message: e.message }, e)
+        to_error(_('Could not download CA certificate: %{message}') % { message: e.message }, e)
       end
     end
   end
@@ -82,11 +88,13 @@ class Puppet::SSL::StateMachine
       end
 
       NeedKey.new(@machine, next_ctx)
+    rescue OpenSSL::X509::CRLError => e
+      Error.new(@machine, e.message, e)
     rescue Puppet::Rest::ResponseError => e
       if e.response.code.to_i == 404
-        raise Puppet::Error.new(_('CRL is missing from the server'))
+        to_error(_('CRL is missing from the server'), e)
       else
-        raise Puppet::Error.new(_('Could not download CRLs: %{message}') % { message: e.message }, e)
+        to_error(_('Could not download CRLs: %{message}') % { message: e.message }, e)
       end
     end
   end
@@ -145,11 +153,11 @@ class Puppet::SSL::StateMachine
       @cert_provider.save_request(Puppet[:certname], csr)
       NeedCert.new(@machine, @ssl_context, @private_key)
     rescue Puppet::Rest::ResponseError => e
-      if e.response.code.to_i != 400
-        raise Puppet::SSL::SSLError.new(_("Failed to submit the CSR, HTTP response was %{code}") % { code: e.response.code }, e)
+      if e.response.code.to_i == 400
+        NeedCert.new(@machine, @ssl_context, @private_key)
+      else
+        to_error(_("Failed to submit the CSR, HTTP response was %{code}") % { code: e.response.code }, e)
       end
-
-      NeedCert.new(@machine, @ssl_context, @private_key)
     end
   end
 
@@ -170,23 +178,21 @@ class Puppet::SSL::StateMachine
       @cert_provider.delete_request(Puppet[:certname])
       Done.new(@machine, next_ctx)
     rescue Puppet::SSL::SSLError => e
-      Puppet.log_exception(e)
-      Wait.new(@machine, @ssl_context)
+      Error.new(@machine, e.message, e)
     rescue OpenSSL::X509::CertificateError => e
-      Puppet.log_exception(e, _("Failed to parse certificate: %{message}") % {message: e.message})
-      Wait.new(@machine, @ssl_context)
+      Error.new(@machine, _("Failed to parse certificate: %{message}") % {message: e.message}, e)
     rescue Puppet::Rest::ResponseError => e
       if e.response.code.to_i == 404
         Puppet.info(_("Certificate for %{certname} has not been signed yet") % {certname: Puppet[:certname]})
+        Wait.new(@machine, @ssl_context)
       else
-        Puppet.log_exception(e, _("Failed to retrieve certificate for %{certname}: %{message}") %
-                             {certname: Puppet[:certname], message: e.response.message})
+        to_error(_("Failed to retrieve certificate for %{certname}: %{message}") %
+                 {certname: Puppet[:certname], message: e.response.message}, e)
       end
-      Wait.new(@machine, @ssl_context)
     end
   end
 
-  # We cannot make progress, so wait if allowed to do so, or error.
+  # We cannot make progress, so wait if allowed to do so, or exit.
   #
   class Wait < SSLState
     def next_state
@@ -206,13 +212,29 @@ class Puppet::SSL::StateMachine
     end
   end
 
+  # We cannot make progress due to an error.
+  #
+  class Error < SSLState
+    attr_reader :message, :error
+
+    def initialize(machine, message, error)
+      super(machine, nil)
+      @message = message
+      @error = error
+    end
+
+    def next_state
+      Puppet.log_exception(@error, @message)
+      Wait.new(@machine, nil)
+    end
+  end
+
   # We have a CA bundle, optional CRL bundle, a private key and matching cert
   # that chains to one of the root certs in our bundle.
   #
   class Done < SSLState; end
 
   attr_reader :waitforcert,  :cert_provider, :ssl_provider
-
 
   def initialize(waitforcert: Puppet[:waitforcert],
                  cert_provider: Puppet::X509::CertProvider.new, ssl_provider: Puppet::SSL::SSLProvider.new)
@@ -256,11 +278,25 @@ class Puppet::SSL::StateMachine
 
   def run_machine(state, stop)
     loop do
-      state = state.next_state
+      state = run_step(state)
 
-      break if state.is_a?(stop)
+      case state
+      when stop
+        break
+      when Error
+        # always raise for now pending PUP-9717
+        raise state.error
+      else
+        # fall through
+      end
     end
 
     state
+  end
+
+  def run_step(state)
+    state.next_state
+  rescue => e
+    state.to_error(e.message, e)
   end
 end

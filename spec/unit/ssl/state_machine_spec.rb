@@ -131,6 +131,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       end
 
       it 'retries when client cert and private key are mismatched' do
+        pending("PUP-9717 errors are not raised yet")
         allow(cert_provider).to receive(:load_private_key).and_return(private_key)
 
         # return mismatched cert the first time, correct cert second time
@@ -185,29 +186,29 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       state.next_state
     end
 
-    it 'raises if the server returns 404' do
+    it 'returns an Error if the server returns 404' do
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 404)
 
-      expect {
-        state.next_state
-      }.to raise_error(Puppet::Error, /CA certificate is missing from the server/)
+      st = state.next_state
+      expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+      expect(st.message).to eq("CA certificate is missing from the server")
     end
 
-    it 'raises if there is a different error' do
+    it 'returns an Error if there is a different exception' do
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: [500, 'Internal Server Error'])
 
-      expect {
-        state.next_state
-      }.to raise_error(Puppet::Error, /Could not download CA certificate: Internal Server Error/)
+      st = state.next_state
+      expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+      expect(st.message).to eq("Could not download CA certificate: Internal Server Error")
     end
 
-    it 'raises if CA certs are invalid' do
+    it 'returns an Error if CA certs are invalid' do
       allow(cert_provider).to receive(:load_cacerts).and_return(nil)
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: '')
 
-      expect {
-        state.next_state
-      }.to raise_error(OpenSSL::X509::CertificateError)
+      st = state.next_state
+      expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+      expect(st.error).to be_an_instance_of(OpenSSL::X509::CertificateError)
     end
 
     it 'does not save invalid CA certs' do
@@ -262,29 +263,29 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       state.next_state
     end
 
-    it 'raises if the server returns 404' do
+    it 'returns an Error if the server returns 404' do
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 404)
 
-      expect {
-        state.next_state
-      }.to raise_error(Puppet::Error, /CRL is missing from the server/)
+      st = state.next_state
+      expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+      expect(st.message).to eq("CRL is missing from the server")
     end
 
-    it 'raises if there is a different error' do
+    it 'returns an Error if there is a different exception' do
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: [500, 'Internal Server Error'])
 
-      expect {
-        state.next_state
-      }.to raise_error(Puppet::Error, /Could not download CRLs: Internal Server Error/)
+      st = state.next_state
+      expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+      expect(st.message).to eq("Could not download CRLs: Internal Server Error")
     end
 
-    it 'raises if CRLs are invalid' do
+    it 'returns an Error if CRLs are invalid' do
       allow(cert_provider).to receive(:load_crls).and_return(nil)
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: '')
 
-      expect {
-        state.next_state
-      }.to raise_error(OpenSSL::X509::CRLError)
+      st = state.next_state
+      expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+      expect(st.error).to be_an_instance_of(OpenSSL::X509::CRLError)
     end
 
     it 'does not save invalid CRLs' do
@@ -465,9 +466,9 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it 'raises if the server errors' do
         stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 500)
 
-        expect {
-          state.next_state
-        }.to raise_error(Puppet::SSL::SSLError, /Failed to submit the CSR, HTTP response was 500/)
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+        expect(st.message).to eq("Failed to submit the CSR, HTTP response was 500")
       end
 
       it "verifies the server's certificate when submitting the CSR" do
@@ -494,11 +495,13 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::Done)
       end
 
-      it 'transitions to Wait if the cert does not match our private key' do
+      it 'transitions to Error if the cert does not match our private key' do
         wrong_cert = cert_fixture('127.0.0.1.pem')
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: wrong_cert.to_pem)
 
-        expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::Wait)
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+        expect(st.message).to eq("The certificate for 'CN=127.0.0.1' does not match its private key")
       end
 
       it 'transitions to Wait if the server returns non-200' do
@@ -523,9 +526,9 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
           MIIBpDCCAQ2gAwIBAgIBAjANBgkqhkiG9w0BAQsFADAfMR0wGwYDVQQDDBRUZXN0
         END
 
-        state.next_state
-
-        expect(@logs).to include(an_object_having_attributes(message: /Failed to parse certificate: /))
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+        expect(st.message).to match(/Failed to parse certificate:/)
         expect(File).to_not exist(Puppet[:hostcert])
       end
 
@@ -533,9 +536,9 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         wrong_cert = cert_fixture('127.0.0.1.pem').to_pem
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: wrong_cert)
 
-        state.next_state
-
-        expect(@logs).to include(an_object_having_attributes(message: %r{The certificate for 'CN=127.0.0.1' does not match its private key}))
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+        expect(st.message).to eq("The certificate for 'CN=127.0.0.1' does not match its private key")
         expect(File).to_not exist(Puppet[:hostcert])
       end
 
@@ -543,9 +546,9 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         revoked_cert = cert_fixture('revoked.pem').to_pem
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: revoked_cert)
 
-        state.next_state
-
-        expect(@logs).to include(an_object_having_attributes(message: %r{Certificate 'CN=revoked' is revoked}))
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+        expect(st.message).to eq("Certificate 'CN=revoked' is revoked")
         expect(File).to_not exist(Puppet[:hostcert])
       end
     end
