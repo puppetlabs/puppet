@@ -590,7 +590,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
         expect {
           expect {
-            Puppet::SSL::StateMachine::Wait.new(machine, ssl_context).next_state
+            Puppet::SSL::StateMachine::Wait.new(machine).next_state
           }.to exit_with(1)
         }.to output(/Exiting now because the waitforcert setting is set to 0./).to_stdout
       end
@@ -598,7 +598,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it 'sleeps and transitions to NeedCACerts' do
         machine = described_class.new(waitforcert: 15)
 
-        state = Puppet::SSL::StateMachine::Wait.new(machine, ssl_context)
+        state = Puppet::SSL::StateMachine::Wait.new(machine)
         expect(Kernel).to receive(:sleep).with(15)
 
         expect(Puppet).to receive(:info).with(/Will try again in 15 seconds./)

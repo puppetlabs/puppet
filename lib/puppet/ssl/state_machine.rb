@@ -185,7 +185,7 @@ class Puppet::SSL::StateMachine
       if e.response.code.to_i == 404
         Puppet.info(_("Certificate for %{certname} has not been signed yet") % {certname: Puppet[:certname]})
         $stdout.puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}).") % { name: Puppet[:certname] }
-        Wait.new(@machine, @ssl_context)
+        Wait.new(@machine)
       else
         to_error(_("Failed to retrieve certificate for %{certname}: %{message}") %
                  {certname: Puppet[:certname], message: e.response.message}, e)
@@ -196,6 +196,10 @@ class Puppet::SSL::StateMachine
   # We cannot make progress, so wait if allowed to do so, or exit.
   #
   class Wait < SSLState
+    def initialize(machine)
+      super(machine, nil)
+    end
+
     def next_state
       time = @machine.waitforcert
       if time < 1
@@ -226,7 +230,7 @@ class Puppet::SSL::StateMachine
 
     def next_state
       Puppet.log_exception(@error, @message)
-      Wait.new(@machine, nil)
+      Wait.new(@machine)
     end
   end
 
