@@ -121,7 +121,7 @@ class Puppet::SSL::Host
       generate_key unless key
 
       # get CA and optional CRL
-      sm = Puppet::SSL::StateMachine.new
+      sm = Puppet::SSL::StateMachine.new(onetime: true)
       sm.ensure_ca_certificates
 
       cert = get_host_certificate

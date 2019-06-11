@@ -25,6 +25,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   let(:private_key) { key_fixture('signed-key.pem') }
   let(:client_cert) { cert_fixture('signed.pem') }
 
+  let(:refused_message) { %r{Connection refused|No connection could be made because the target machine actively refused it} }
+
   before(:each) do
     WebMock.disable_net_connect!
 
@@ -47,32 +49,40 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
     end
 
     context 'when exceptions occur' do
+      it 'raises in onetime mode' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/ca})
+          .to_raise(Errno::ECONNREFUSED)
+
+        machine = described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider, onetime: true)
+        expect {
+          machine.ensure_ca_certificates
+        }.to raise_error(Puppet::Error, refused_message)
+      end
+
       it 'retries CA cert download' do
-        pending("PUP-9717 errors are not raised yet")
         # first call returns nil to force download, second call returns certs
         expect(cert_provider).to receive(:load_cacerts).and_return(nil, cacerts)
         allow(cert_provider).to receive(:load_crls).and_return(crls)
 
         stub_request(:get, %r{puppet-ca/v1/certificate/ca})
-          .to_raise(Errno::ECONNREFUSED, 'Failed to open TCP connection to puppet:8140')
+          .to_raise(Errno::ECONNREFUSED)
 
         machine.ensure_ca_certificates
 
-        expect(@logs).to include(an_object_having_attributes(message: %r{Connection refused - request https://puppet:8140}))
+        expect(@logs).to include(an_object_having_attributes(message: refused_message))
       end
 
       it 'retries CRL download' do
-        pending("PUP-9717 errors are not raised yet")
         allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
         # first call returns nil to force download, second call returns crls
         expect(cert_provider).to receive(:load_crls).and_return(nil, crls)
 
         stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca})
-          .to_raise(Errno::ECONNREFUSED, 'Failed to open TCP connection to puppet:8140')
+          .to_raise(Errno::ECONNREFUSED)
 
         machine.ensure_ca_certificates
 
-        expect(@logs).to include(an_object_having_attributes(message: %r{Connection refused - request https://puppet:8140}))
+        expect(@logs).to include(an_object_having_attributes(message: refused_message))
       end
     end
   end
@@ -100,7 +110,6 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       end
 
       it 'retries CSR submission' do
-        pending("PUP-9717 errors are not raised yet")
         allow(cert_provider).to receive(:load_private_key).and_return(private_key)
         allow($stdout).to receive(:puts).with(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate/)
 
@@ -108,31 +117,29 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
           .to_return(status: 404).then
           .to_return(status: 200, body: client_cert.to_pem)
         stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}})
-          .to_raise(Errno::ECONNREFUSED, 'Failed to open TCP connection to puppet:8140').then
+          .to_raise(Errno::ECONNREFUSED).then
           .to_return(status: 200)
 
         machine.ensure_client_certificate
 
-        expect(@logs).to include(an_object_having_attributes(message: %r{Connection refused - request https://puppet:8140}))
+        expect(@logs).to include(an_object_having_attributes(message: refused_message))
       end
 
       it 'retries client cert download' do
-        pending("PUP-9717 errors are not raised yet")
         allow(cert_provider).to receive(:load_private_key).and_return(private_key)
 
         # first request raises, second succeeds
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}})
-          .to_raise(Errno::ECONNREFUSED, 'Failed to open TCP connection to puppet:8140').then
+          .to_raise(Errno::ECONNREFUSED).then
           .to_return(status: 200, body: client_cert.to_pem)
         stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
 
         machine.ensure_client_certificate
 
-        expect(@logs).to include(an_object_having_attributes(message: %r{Connection refused - request https://puppet:8140}))
+        expect(@logs).to include(an_object_having_attributes(message: refused_message))
       end
 
       it 'retries when client cert and private key are mismatched' do
-        pending("PUP-9717 errors are not raised yet")
         allow(cert_provider).to receive(:load_private_key).and_return(private_key)
 
         # return mismatched cert the first time, correct cert second time
@@ -144,6 +151,18 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         machine.ensure_client_certificate
 
         expect(@logs).to include(an_object_having_attributes(message: %r{The certificate for 'CN=pluto' does not match its private key}))
+      end
+
+      it 'raises in onetime mode' do
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}})
+          .to_raise(Errno::ECONNREFUSED)
+        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}})
+          .to_return(status: 200)
+
+        machine = described_class.new(cert_provider: cert_provider, ssl_provider: ssl_provider, onetime: true)
+        expect {
+          machine.ensure_client_certificate
+        }.to raise_error(Puppet::Error, refused_message)
       end
     end
   end

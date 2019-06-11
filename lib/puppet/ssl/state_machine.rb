@@ -238,8 +238,10 @@ class Puppet::SSL::StateMachine
   attr_reader :waitforcert,  :cert_provider, :ssl_provider
 
   def initialize(waitforcert: Puppet[:waitforcert],
+                 onetime: Puppet[:onetime],
                  cert_provider: Puppet::X509::CertProvider.new, ssl_provider: Puppet::SSL::SSLProvider.new)
     @waitforcert = waitforcert
+    @onetime = onetime
     @cert_provider = cert_provider
     @ssl_provider = ssl_provider
   end
@@ -285,8 +287,10 @@ class Puppet::SSL::StateMachine
       when stop
         break
       when Error
-        # always raise for now pending PUP-9717
-        raise state.error
+        if @onetime
+          Puppet.log_exception(state.error)
+          raise state.error
+        end
       else
         # fall through
       end
