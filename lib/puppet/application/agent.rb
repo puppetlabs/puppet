@@ -360,7 +360,9 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   def fingerprint
     sm = Puppet::SSL::StateMachine.new(onetime: true)
     ssl_context = sm.ensure_client_certificate
-    puts Puppet::SSL::Digest.new(options[:digest].to_s, ssl_context.client_cert.to_der).to_s
+    if ssl_context
+      puts Puppet::SSL::Digest.new(options[:digest].to_s, ssl_context.client_cert.to_der).to_s
+    end
   rescue
     $stderr.puts _("Fingerprint asked but no certificate nor certificate request have yet been issued")
     exit(1)
