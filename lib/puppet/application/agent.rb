@@ -358,6 +358,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def fingerprint
+    Puppet::Util::Log.newdestination(:console)
     cert_provider = Puppet::X509::CertProvider.new
     client_cert = cert_provider.load_client_cert(Puppet[:certname])
     if client_cert
