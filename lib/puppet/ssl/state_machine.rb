@@ -22,7 +22,9 @@ class Puppet::SSL::StateMachine
     end
 
     def to_error(message, cause)
-      Error.new(@machine, message, Puppet::Error.new(message, cause))
+      detail = Puppet::Error.new(message)
+      detail.set_backtrace(cause.backtrace)
+      Error.new(@machine, message, detail)
     end
   end
 
