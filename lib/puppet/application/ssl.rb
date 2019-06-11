@@ -112,6 +112,8 @@ HELP
       Puppet.settings.use(:main, :agent)
     end
 
+    Puppet::SSL::Oids.register_puppet_oids
+
     certname = Puppet[:certname]
     action = command_line.args.first
     case action
