@@ -420,17 +420,6 @@ describe Puppet::Application::Agent do
       execute_agent
     end
 
-    it "should not wait for a certificate in fingerprint mode" do
-      @puppetd.options[:fingerprint] = true
-      @puppetd.options[:waitforcert] = 123
-      @puppetd.options[:digest] = 'MD5'
-
-      allow($stderr).to receive(:puts).with('Fingerprint asked but no certificate nor certificate request have yet been issued')
-      expect(Puppet::SSL::StateMachine).to receive(:new).with(hash_including(onetime: true)).and_return(machine)
-
-      execute_agent
-    end
-
     describe "when setting up for fingerprint" do
       before(:each) do
         @puppetd.options[:fingerprint] = true
@@ -562,9 +551,7 @@ describe Puppet::Application::Agent do
       it "should fingerprint the certificate if it exists" do
         certificate = double('certificate')
         allow(certificate).to receive(:to_der).and_return('ABCDE')
-        ssl_context = double('ssl_context', client_cert: certificate)
-        machine = double(ensure_client_certificate: ssl_context)
-        allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(certificate)
 
         expect(@puppetd).to receive(:puts).with('(MD5) 2E:CD:DE:39:59:05:1D:91:3F:61:B1:45:79:EA:13:6D')
 
@@ -572,11 +559,10 @@ describe Puppet::Application::Agent do
       end
 
       it "should fingerprint the request if it exists" do
-        pending("PUP-9720")
         request = double('request')
         allow(request).to receive(:to_der).and_return('FGHIJK')
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(nil)
         allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_request).and_return(request)
-        allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
 
         expect(@puppetd).to receive(:puts).with('(MD5) CF:08:B5:D3:25:84:CC:A0:00:CC:B2:6D:5F:62:34:9D')
 
@@ -584,9 +570,8 @@ describe Puppet::Application::Agent do
       end
 
       it "should print an error to stderr if neither exist" do
-        pending("PUP-9720")
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(nil)
         allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_request).and_return(nil)
-        allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
 
         expect {
           expect {
@@ -595,16 +580,14 @@ describe Puppet::Application::Agent do
         }.to output(/Fingerprint asked but no certificate nor certificate request have yet been issued/).to_stderr
       end
 
-      it "should print an error if an exception occurs" do
-        machine = double('machine')
-        allow(machine).to receive(:ensure_client_certificate).and_raise(Puppet::Error, 'Connection refused')
-        allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
+      it "should log an error if an exception occurs" do
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_raise(Puppet::Error, "Invalid PEM")
 
         expect {
-          expect {
-            @puppetd.fingerprint
-          }.to exit_with(1)
-        }.to output(/Fingerprint asked but no certificate nor certificate request have yet been issued/).to_stderr
+          @puppetd.fingerprint
+        }.to exit_with(1)
+
+        expect(@logs).to include(an_object_having_attributes(message: /Failed to generate fingerprint: Invalid PEM/))
       end
     end
 
