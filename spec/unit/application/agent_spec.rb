@@ -146,6 +146,13 @@ describe Puppet::Application::Agent do
       execute_agent
     end
 
+    it "should register ssl OIDs" do
+      expect(Puppet::SSL::StateMachine).to receive(:new).with(waitforcert: 120).and_return(double(ensure_client_certificate: nil))
+      expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
+
+      execute_agent
+    end
+
     it "should use the waitforcert setting when checking for a signed certificate" do
       Puppet[:waitforcert] = 10
 
