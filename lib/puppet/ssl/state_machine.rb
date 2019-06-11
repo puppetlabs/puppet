@@ -241,26 +241,44 @@ class Puppet::SSL::StateMachine
 
   attr_reader :waitforcert,  :cert_provider, :ssl_provider
 
+  # Construct a state machine to manage the SSL initialization process. By
+  # default, if the state machine encounters an exception, it will log the
+  # exception and wait for `waitforcert` seconds and retry, restarting from the
+  # beginning of the state machine.
+  #
+  # However, if `onetime` is true, then the state machine will raise the first
+  # error it encounters, instead of waiting. Otherwise, if `waitforcert` is 0,
+  # then then state machine will exit instead of wait.
+  #
+  # @param waitforcert [Integer] how many seconds to wait between attempts
+  # @param onetime [Boolean] whether to run onetime
+  # @param cert_provider [Puppet::X509::CertProvider] cert provider to use
+  #   to load and save X509 objects.
+  # @param ssl_provider [Puppet::SSL::SSLProvider] ssl provider to use
+  #   to construct ssl contexts.
   def initialize(waitforcert: Puppet[:waitforcert],
                  onetime: Puppet[:onetime],
-                 cert_provider: Puppet::X509::CertProvider.new, ssl_provider: Puppet::SSL::SSLProvider.new)
+                 cert_provider: Puppet::X509::CertProvider.new,
+                 ssl_provider: Puppet::SSL::SSLProvider.new)
     @waitforcert = waitforcert
     @onetime = onetime
     @cert_provider = cert_provider
     @ssl_provider = ssl_provider
   end
 
-  # Run the state machine for CA certs and CRLs
+  # Run the state machine for CA certs and CRLs.
   #
   # @return [Puppet::SSL::SSLContext] initialized SSLContext
+  # @raise [Puppet::Error] If we fail to generate an SSLContext
   def ensure_ca_certificates
     final_state = run_machine(NeedCACerts.new(self), NeedKey)
     final_state.ssl_context
   end
 
-  # Run the state machine for CA certs and CRLs
+  # Run the state machine for CA certs and CRLs.
   #
   # @return [Puppet::SSL::SSLContext] initialized SSLContext
+  # @raise [Puppet::Error] If we fail to generate an SSLContext
   def ensure_client_certificate
     final_state = run_machine(NeedCACerts.new(self), Done)
     ssl_context = final_state.ssl_context
