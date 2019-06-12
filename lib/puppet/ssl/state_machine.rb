@@ -184,6 +184,7 @@ class Puppet::SSL::StateMachine
     rescue Puppet::Rest::ResponseError => e
       if e.response.code.to_i == 404
         Puppet.info(_("Certificate for %{certname} has not been signed yet") % {certname: Puppet[:certname]})
+        $stdout.puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}).") % { name: Puppet[:certname] }
         Wait.new(@machine, @ssl_context)
       else
         to_error(_("Failed to retrieve certificate for %{certname}: %{message}") %
@@ -198,10 +199,10 @@ class Puppet::SSL::StateMachine
     def next_state
       time = @machine.waitforcert
       if time < 1
-        puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the waitforcert setting is set to 0.") % { name: Puppet[:certname] }
+        puts _("Exiting now because the waitforcert setting is set to 0.")
         exit(1)
       else
-        Puppet.info(_("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Will try again in %{time} seconds.") % {name: Puppet[:certname], time: time})
+        Puppet.info(_("Will try again in %{time} seconds.") % {time: time})
 
         Kernel.sleep(time)
 

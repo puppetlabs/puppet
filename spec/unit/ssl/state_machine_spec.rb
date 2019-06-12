@@ -102,6 +102,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it 'retries CSR submission' do
         pending("PUP-9717 errors are not raised yet")
         allow(cert_provider).to receive(:load_private_key).and_return(private_key)
+        allow($stdout).to receive(:puts).with(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate/)
 
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}})
           .to_return(status: 404).then
@@ -495,6 +496,14 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::Done)
       end
 
+      it "prints a message if the cert isn't signed yet" do
+        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 404)
+
+        expect {
+          state.next_state
+        }.to output(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(#{Puppet[:certname]}\)/).to_stdout
+      end
+
       it 'transitions to Error if the cert does not match our private key' do
         wrong_cert = cert_fixture('127.0.0.1.pem')
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 200, body: wrong_cert.to_pem)
@@ -507,6 +516,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it 'transitions to Wait if the server returns non-200' do
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}}).to_return(status: 404)
 
+        allow($stdout).to receive(:puts).with(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate/)
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::Wait)
       end
 
@@ -563,7 +573,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
           expect {
             Puppet::SSL::StateMachine::Wait.new(machine, ssl_context).next_state
           }.to exit_with(1)
-        }.to output(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(.*\). Exiting now because the waitforcert setting is set to 0./).to_stdout
+        }.to output(/Exiting now because the waitforcert setting is set to 0./).to_stdout
       end
 
       it 'sleeps and transitions to NeedCACerts' do
@@ -572,7 +582,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         state = Puppet::SSL::StateMachine::Wait.new(machine, ssl_context)
         expect(Kernel).to receive(:sleep).with(15)
 
-        expect(Puppet).to receive(:info).with(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate \(.*\). Will try again in 15 seconds./)
+        expect(Puppet).to receive(:info).with(/Will try again in 15 seconds./)
 
         expect(state.next_state).to be_an_instance_of(Puppet::SSL::StateMachine::NeedCACerts)
       end
