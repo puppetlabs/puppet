@@ -401,6 +401,14 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       ssl.command_line.args << 'bootstrap'
     end
 
+    it 'registers the OIDs' do
+      expect_any_instance_of(Puppet::SSL::StateMachine).to receive(:ensure_client_certificate).and_return(
+        double('ssl_context')
+      )
+      expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
+      expects_command_to_pass
+    end
+
     it 'returns an SSLContext with the loaded CA certs, CRLs, private key and client cert' do
       expect_any_instance_of(Puppet::SSL::StateMachine).to receive(:ensure_client_certificate).and_return(
         double('ssl_context')
