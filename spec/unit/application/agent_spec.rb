@@ -549,22 +549,20 @@ describe Puppet::Application::Agent do
       end
 
       it "should fingerprint the certificate if it exists" do
-        certificate = double('certificate')
-        allow(certificate).to receive(:to_der).and_return('ABCDE')
-        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(certificate)
+        cert = cert_fixture('signed.pem')
+        allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(cert)
 
-        expect(@puppetd).to receive(:puts).with('(MD5) 2E:CD:DE:39:59:05:1D:91:3F:61:B1:45:79:EA:13:6D')
+        expect(@puppetd).to receive(:puts).with('(MD5) A6:00:3E:C1:DF:CF:E8:44:A6:4F:8D:92:E8:B2:D9:47')
 
         @puppetd.fingerprint
       end
 
       it "should fingerprint the request if it exists" do
-        request = double('request')
-        allow(request).to receive(:to_der).and_return('FGHIJK')
+        request = request_fixture('request.pem')
         allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_client_cert).and_return(nil)
         allow_any_instance_of(Puppet::X509::CertProvider).to receive(:load_request).and_return(request)
 
-        expect(@puppetd).to receive(:puts).with('(MD5) CF:08:B5:D3:25:84:CC:A0:00:CC:B2:6D:5F:62:34:9D')
+        expect(@puppetd).to receive(:puts).with('(MD5) 04:D0:69:23:32:2F:48:77:FE:2F:F2:0C:4E:90:BE:AC')
 
         @puppetd.fingerprint
       end
