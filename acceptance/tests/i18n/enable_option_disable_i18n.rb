@@ -34,7 +34,7 @@ test_name 'C100561: verify that disable_i18n can be set to true and have transla
       end
 
       step "Run Puppet agent with language #{language} and check the output" do
-        on(agent, puppet("agent -t --config '#{puppet_conf}' --server '#{master}'", 'ENV' => {'LANGUAGE' => language})) do |agent_result|
+        on(agent, puppet("agent -t --config '#{puppet_conf}'", 'ENV' => {'LANGUAGE' => language})) do |agent_result|
           assert_match(/Applying configuration version '[^']*'/, agent_result.stdout, "agent run does not contain english 'Applying configuration version'")
           assert_match(/Applied catalog in\s+[0-9.]*\s+seconds/, agent_result.stdout, "agent run does not contain english 'Applied catalog in' ")
         end

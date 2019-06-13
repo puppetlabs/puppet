@@ -53,7 +53,7 @@ test_name "C98092 - a new resource should not be reported as a corrective change
       agents.each do |agent|
         #Run agent once to create new File resource
         step 'Run agent once to create new File resource' do
-          on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"), :acceptable_exit_codes => 2)
+          on(agent, puppet("agent -t --environment '#{tmp_environment}'"), :acceptable_exit_codes => 2)
         end
 
         #Verify the file resource is created

@@ -65,7 +65,6 @@ EOF
 
         test_certnames << (certname = "#{agent}-autosign")
         on(agent, puppet("agent --test",
-                  "--server #{master}",
                   "--waitforcert 0",
                   "--ssldir", "'#{testdirs[agent]}/ssldir-autosign'",
                   "--certname #{certname}"), :acceptable_exit_codes => [0,2])
@@ -106,7 +105,6 @@ EOF
 
         test_certnames << (certname = "#{agent}-reject")
         on(agent, puppet("agent --test",
-                        "--server #{master}",
                         "--waitforcert 0",
                         "--ssldir", "'#{testdirs[agent]}/ssldir-reject'",
                         "--certname #{certname}"), :acceptable_exit_codes => [1])
@@ -175,7 +173,6 @@ custom_attributes:
         step "attempting to obtain cert for #{agent}"
         test_certnames << (certname = "#{agent}-attrs")
         on(agent, puppet("agent --test",
-                         "--server #{master}",
                          "--waitforcert 0",
                          "--ssldir", "'#{testdirs[agent]}/ssldir-attrs'",
                          "--csr_attributes '#{agent_csr_attributes[agent]}'",

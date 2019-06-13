@@ -64,7 +64,7 @@ PP
 
     with_puppet_running_on(master, master_opts, codedir) do
       step "apply utf-8 catalog" do
-        on(agent, puppet("agent -t --vardir '#{agent_vardir}' --server #{master.hostname}"),
+        on(agent, puppet("agent -t --vardir '#{agent_vardir}'"),
            { :acceptable_exit_codes => [2], :environment => { :LANG => "en_US.UTF-8" } })
       end
 

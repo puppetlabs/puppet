@@ -18,7 +18,7 @@ tag 'audit:medium',
     master_opts = {}
     with_puppet_running_on(master, master_opts) do
       agents.each do |agent|
-        on(agent, puppet("agent -t --server #{master} --environment #{tmp_environment}"),
+        on(agent, puppet("agent -t --environment #{tmp_environment}"),
            :acceptable_exit_codes => 2) do |result|
           assert_match(/abc{serverversion/, result.stdout,
                        "#{agent}: $server_facts should have some stuff" )
@@ -29,7 +29,7 @@ tag 'audit:medium',
 
   step 'ensure puppet issues a warning if an agent overwrites a server fact' do
     agents.each do |agent|
-      on(agent, puppet("agent -t --server #{master}",
+      on(agent, puppet("agent -t",
                        'ENV' => { 'FACTER_server_facts' => 'overwrite' }),
         :acceptable_exit_codes => 1) do |result|
           # Do not perform this check on non-English hosts

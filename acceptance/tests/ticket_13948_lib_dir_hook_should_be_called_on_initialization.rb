@@ -118,7 +118,7 @@ begin
           on(agent, puppet('agent',
                            "--vardir=\"#{get_test_file_path(agent, agent_var_dir)}\" ",
                            "--ssldir=\"#{agent_ssldir}\" ",
-                           "--trace  --test --server #{master}")
+                           "--trace  --test")
           )
         end
       end

@@ -106,7 +106,7 @@ end
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
     on(agent,
-       puppet("agent", "-t", "--server", master, "--environment", "direnv"),
+       puppet("agent", "-t", "--environment", "direnv"),
        :acceptable_exit_codes => [2]) do |result|
 
       unless agent['locale'] == 'ja'

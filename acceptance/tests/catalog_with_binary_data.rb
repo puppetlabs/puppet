@@ -63,7 +63,7 @@ test_name "C100300: Catalog containing binary data is applied correctly" do
 
       step "run puppet and ensure that binary data was correctly applied" do
         agents.each do |agent|
-          on(agent, puppet('agent', '--test', "--environment '#{tmp_environment}'", "--server #{master.hostname}"), :acceptable_exit_codes => 2)
+          on(agent, puppet('agent', '--test', "--environment '#{tmp_environment}'"), :acceptable_exit_codes => 2)
           on(agent, "#{Puppet::Acceptance::CommandUtils::ruby_command(agent)} -e 'puts File.binread(\"#{agent_tmp_dirs[agent_to_fqdn(agent)]}/#{test_num}\").bytes.map {|b| b.to_s(16)}'") do |res|
             assert_match(/c0\nff/, res.stdout, 'Binary file did not contain originally specified data')
           end

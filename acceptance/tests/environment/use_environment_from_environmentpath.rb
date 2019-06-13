@@ -126,8 +126,7 @@ file {
     end
 
     agent_config = [
-        "-t",
-        "--server", master,
+        "-t"
     ]
     agent_config << '--environment' << environment if environment
     # This to test how the agent behaves when using the directory environment

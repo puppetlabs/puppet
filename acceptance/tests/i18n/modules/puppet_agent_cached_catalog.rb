@@ -64,7 +64,7 @@ test_name 'C100566: puppet agent with module should translate messages when usin
           }
         PP
         create_sitepp(master, tmp_environment_1, site_pp_content_1)
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
+        on(agent, puppet("agent -t --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
           assert_match(/.*\w+-i18ndemo fact: これは\w+-i18ndemoからのカスタムファクトからのレイズです/, result.stderr, 'missing translation for raise from ruby fact')
         end
         on(agent, puppet("agent -t --environment #{tmp_environment_1} --use_cached_catalog", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
@@ -82,7 +82,7 @@ test_name 'C100566: puppet agent with module should translate messages when usin
           }
         PP
         create_sitepp(master, tmp_environment_1, site_pp_content_6)
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
+        on(agent, puppet("agent -t --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
           assert_match(/Warning:.*\w+-i18ndemo provider: i18ndemo_typeは存在しますか/, result.stderr, 'missing translated provider message')
         end
         on(agent, puppet("agent -t --server #{unresolved_server} --environment #{tmp_environment_1} --use_cached_catalog", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
@@ -99,7 +99,7 @@ test_name 'C100566: puppet agent with module should translate messages when usin
           }
         PP
         create_sitepp(master, tmp_environment_1, site_pp_content_7)
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
+        on(agent, puppet("agent -t --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
           assert_match(/Notice: --\*\w+-i18ndemo function: それは楽しい時間です\*--/, result.stdout, 'missing translated notice message')
         end
         on(agent, puppet("agent -t --server #{unresolved_server} --environment #{tmp_environment_1} --use_cached_catalog", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|

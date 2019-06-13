@@ -169,7 +169,7 @@ module Puppet
             agents.each do |agent|
               next if agent == master && agent.is_using_passenger?
               step "Agents: Run agent --test once to obtain auto-signed cert" do
-                on agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]
+                on agent, puppet('agent', "--test"), :acceptable_exit_codes => [0,2]
               end
             end
           end

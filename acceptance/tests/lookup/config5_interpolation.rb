@@ -95,7 +95,7 @@ notify{"hiera_array_data2: ${hiera_array_data2}":}
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
       step "agent lookups: #{agent.hostname}, hiera5" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           assert_match(/data: \[from global, from test1/, result.stdout,

@@ -90,12 +90,12 @@ MANIFEST
       end
 
       step "Pluginsync the external fact to the agent and ensure it resolves correctly" do
-        on(agent, puppet('agent', '-t', '--server', master, '--pluginfactdest', factsd), :acceptable_exit_codes => [2]) do |result|
+        on(agent, puppet('agent', '-t', '--pluginfactdest', factsd), :acceptable_exit_codes => [2]) do |result|
           assert_match(/foo is bar/, result.stdout)
         end
       end
       step "Use plugin face to download to the agent" do
-        on(agent, puppet('plugin', 'download', '--server', master, '--pluginfactdest', pluginfactdest)) do |result|
+        on(agent, puppet('plugin', 'download', '--pluginfactdest', pluginfactdest)) do |result|
           assert_match(/Downloaded these plugins: .*external_fact/, result.stdout) unless agent['locale'] == 'ja'
         end
       end

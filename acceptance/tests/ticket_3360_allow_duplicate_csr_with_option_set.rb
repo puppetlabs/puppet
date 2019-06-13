@@ -17,7 +17,7 @@ with_puppet_running_on(master, {'master' => {'allow_duplicate_certs' => true,
 
   agents_with_cert_name.each do |fqdn, agent|
     step "Generate a certificate request for the agent"
-    on(agent, puppet("certificate generate #{fqdn} --ca-location remote --server #{master}"))
+    on(agent, puppet("certificate generate #{fqdn} --ca-location remote"))
   end
 
   step "Collect the original certs"
@@ -37,7 +37,7 @@ with_puppet_running_on(master, {'master' => {'allow_duplicate_certs' => true,
 
   agents_with_cert_name.each do |fqdn, agent|
     step "Make another request with the same certname"
-    on(agent, puppet("certificate generate #{fqdn} --ca-location remote --server #{master}"))
+    on(agent, puppet("certificate generate #{fqdn} --ca-location remote"))
   end
 
   step "Collect the new certs"

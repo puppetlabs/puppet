@@ -47,10 +47,10 @@ tag 'audit:medium',
 
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
-      on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
+      on(agent, puppet("agent -t --environment #{tmp_environment}"),
          :acceptable_exit_codes => 2)
       step 'run agent in environment with type with an extra parameter. try to use this parameter' do
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment2}"),
+        on(agent, puppet("agent -t --environment #{tmp_environment2}"),
            :accept_all_exit_codes => true) do |result|
           unless agent['locale'] == 'ja'
             assert_match("Error: no parameter named 'other'", result.output,
@@ -67,9 +67,9 @@ tag 'audit:medium',
 
     agents.each do |agent|
       step 'rerun agents after generate, ensure proper runs' do
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet("agent -t --environment #{tmp_environment}"),
            :acceptable_exit_codes => 2)
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment2}"),
+        on(agent, puppet("agent -t --environment #{tmp_environment2}"),
            :acceptable_exit_codes => 2)
       end
     end

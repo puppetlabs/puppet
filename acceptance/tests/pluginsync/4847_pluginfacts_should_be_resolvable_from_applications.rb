@@ -53,7 +53,7 @@ test_name "Pluginsync'ed custom facts should be resolvable during application ru
 
   with_puppet_running_on(master, {}) do
     agents.each do |agent|
-      on(agent, puppet("agent -t --server #{master} --environment #{tmp_environment}"))
+      on(agent, puppet("agent -t --environment #{tmp_environment}"))
       on(agent, puppet('resource test4847')) do |result|
         assert_match(/fact foo=bar/, result.stderr)
       end

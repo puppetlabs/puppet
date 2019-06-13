@@ -51,7 +51,7 @@ MANIFEST
       agents.each do |agent|
         config_version = ''
         config_version_matcher = /configuration version '(\d+)'/
-        on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"),
+        on(agent, puppet("agent -t --environment '#{tmp_environment}'"),
            :acceptable_exit_codes => 2).stdout do |result|
           config_version = result.match(config_version_matcher)[1]
         end
@@ -60,7 +60,7 @@ MANIFEST
         end
 
         on(agent, "rm -f '#{tmp_file[agent_to_fqdn(agent)]}'")
-        on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname} --use_cached_catalog"),
+        on(agent, puppet("agent -t --environment '#{tmp_environment}' --use_cached_catalog"),
            :acceptable_exit_codes => 2).stdout do |result|
           assert_match(config_version_matcher, result, 'agent did not use cached catalog')
           second_config_version = result.match(config_version_matcher)[1]

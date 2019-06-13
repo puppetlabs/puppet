@@ -131,7 +131,7 @@ master_opts = {
 with_puppet_running_on master, master_opts do
 
   # only one agent is needed because we only care about the file written on the master
-  run_agent_on(agents[0], "--no-daemonize --verbose --onetime --node_name_value #{node_name} --server #{master}")
+  run_agent_on(agents[0], "--no-daemonize --verbose --onetime --node_name_value #{node_name}")
 
   yamldir = on(master, puppet('master', '--configprint', 'yamldir')).stdout.chomp
   on master, puppet('node', 'search', '"*"', '--node_terminus', 'yaml', '--clientyamldir', yamldir, '--render-as', 'json') do

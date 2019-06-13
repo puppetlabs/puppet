@@ -309,7 +309,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     step "Applying catalog to agent: #{agent}. result files in #{resultdir}"
     on(
       agent,
-      puppet('agent', "-t --server #{master}"),
+      puppet('agent', "-t"),
       :acceptable_exit_codes => [2]
     )
 

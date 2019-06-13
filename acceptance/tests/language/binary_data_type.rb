@@ -70,7 +70,7 @@ test_name 'C98346: Binary data type' do
   step "run agent in #{tmp_environment}, run all assertions" do
     with_puppet_running_on(master, {}) do
       agents.each do |agent|
-        on(agent, puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'"), :acceptable_exit_codes => [2]) do |result|
+        on(agent, puppet("agent -t --environment '#{tmp_environment}'"), :acceptable_exit_codes => [2]) do |result|
           run_assertions(assertion_code, result)
         end
       end
