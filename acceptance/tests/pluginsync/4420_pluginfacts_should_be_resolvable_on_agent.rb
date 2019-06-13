@@ -81,8 +81,6 @@ MANIFEST
     agents.each do |agent|
       factsd         = agent.tmpdir('facts.d')
       pluginfactdest = agent.tmpdir('facts.d')
-      tmpdir         = agent.tmpdir('tmpdir')
-      testfile       = File.join(tmpdir, 'testfile')
 
       teardown do
         on(master, "rm -rf '#{codedir}'")
