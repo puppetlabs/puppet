@@ -98,6 +98,8 @@ HELP
       Puppet.settings.use(:main, :agent)
     end
 
+    Puppet::SSL::Oids.register_puppet_oids
+
     action = command_line.args.first
     case action
     when 'submit_request'
