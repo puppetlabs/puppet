@@ -1,5 +1,7 @@
 test_name "puppet device is able to run and configure a node"
 
+tag 'server'
+
 teardown do
   on(master, "[ -f /etc/puppetlabs/puppet/puppet.conf.bak ] && mv /etc/puppetlabs/puppet/puppet.conf.bak /etc/puppetlabs/puppet/puppet.conf")
   # revert permission changes to reset state for other tests
