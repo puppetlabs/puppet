@@ -15,18 +15,6 @@ test_name 'C100561: verify that disable_i18n can be set to true and have transla
 
   with_puppet_running_on master, 'master' => { 'disable_i18n' => true } do
     agents.each do |agent|
-
-      puppet_conf = agent.tmpfile('puppet_conf_test')
-      config      = <<-EOM
-    [user]
-    disable_i18n = true
-      EOM
-      create_remote_file(agent, puppet_conf, config)
-
-      teardown do
-        on(agent, "rm -f '#{puppet_conf}'")
-      end
-
       step("ensure #{language} locale is configured") do
         language = enable_locale_language(agent, language)
         # fall back to ja_JP since we're expecting english fallback for this test anyways
@@ -34,7 +22,7 @@ test_name 'C100561: verify that disable_i18n can be set to true and have transla
       end
 
       step "Run Puppet agent with language #{language} and check the output" do
-        on(agent, puppet("agent -t --config '#{puppet_conf}'", 'ENV' => {'LANGUAGE' => language})) do |agent_result|
+        on(agent, puppet("agent -t --disable_i18n", 'ENV' => {'LANGUAGE' => language})) do |agent_result|
           assert_match(/Applying configuration version '[^']*'/, agent_result.stdout, "agent run does not contain english 'Applying configuration version'")
           assert_match(/Applied catalog in\s+[0-9.]*\s+seconds/, agent_result.stdout, "agent run does not contain english 'Applied catalog in' ")
         end
