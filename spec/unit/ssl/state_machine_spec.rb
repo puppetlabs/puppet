@@ -17,12 +17,11 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
   let(:cacert_pem) { cacert.to_pem }
   let(:cacert) { cert_fixture('ca.pem') }
-  let(:cacerts) { [cacert] }
+  let(:cacerts) { [cacert, cert_fixture('intermediate.pem')] }
 
   let(:crl_pem) { crl.to_pem }
   let(:crl) { crl_fixture('crl.pem') }
-  let(:crls) { [crl] }
-
+  let(:crls) { [crl, crl_fixture('intermediate-crl.pem')] }
   let(:private_key) { key_fixture('signed-key.pem') }
   let(:client_cert) { cert_fixture('signed.pem') }
 
@@ -279,7 +278,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: cacert_pem)
 
       st = state.next_state
-      expect(st.ssl_context[:cacerts].map(&:to_pem)).to eq(cacerts.map(&:to_pem))
+      expect(st.ssl_context[:cacerts].map(&:to_pem)).to eq([cacert_pem])
       expect(File).to be_exist(Puppet[:localcacert])
     end
 
@@ -391,7 +390,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: crl_pem)
 
       st = state.next_state
-      expect(st.ssl_context[:crls].map(&:to_pem)).to eq(crls.map(&:to_pem))
+      expect(st.ssl_context[:crls].map(&:to_pem)).to eq([crl_pem])
       expect(File).to be_exist(Puppet[:hostcrl])
     end
 
@@ -541,6 +540,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         allow(cert_provider).to receive(:load_private_key).and_return(private_key)
         allow(cert_provider).to receive(:load_client_cert).and_return(cert_fixture('tampered-cert.pem'))
 
+        ssl_context = Puppet::SSL::SSLContext.new(cacerts: [cacert], crls: [crl])
+        state = Puppet::SSL::StateMachine::NeedKey.new(machine, ssl_context)
         expect {
           state.next_state
         }.to raise_error(Puppet::SSL::SSLError, %r{The certificate for 'CN=signed' does not match its private key})
