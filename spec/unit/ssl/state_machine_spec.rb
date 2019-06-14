@@ -118,6 +118,23 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       expect(ssl_context[:client_cert]).to eq(client_cert)
     end
 
+    it 'uses the specified digest to log the cert chain fingerprints' do
+      allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
+      allow(cert_provider).to receive(:load_private_key).and_return(private_key)
+      allow(cert_provider).to receive(:load_client_cert).and_return(client_cert)
+
+      Puppet[:log_level] = :debug
+      machine = described_class.new(cert_provider: cert_provider, digest: 'SHA512')
+      machine.ensure_client_certificate
+
+      expect(@logs).to include(
+        an_object_having_attributes(message: /Verified CA certificate 'CN=Test CA' fingerprint \(SHA512\)/),
+        an_object_having_attributes(message: /Verified CA certificate 'CN=Test CA Subauthority' fingerprint \(SHA512\)/),
+        an_object_having_attributes(message: /Verified client certificate 'CN=signed' fingerprint \(SHA512\)/)
+      )
+    end
+
     context 'when exceptions occur' do
       before :each do
         allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
