@@ -10,7 +10,6 @@ test_name 'C98346: Binary data type' do
 
   app_type               = File.basename(__FILE__, '.*')
   tmp_environment        = mk_tmp_environment_with_teardown(master, app_type)
-  fq_tmp_environmentpath = "#{environmentpath}/#{tmp_environment}"
 
   tmp_filename_win = tmp_filename_else = ''
   agents.each do |agent|
@@ -21,11 +20,6 @@ test_name 'C98346: Binary data type' do
       tmp_filename_win = "C:\\cygwin64\\tmp\\#{tmp_environment}.txt"
     end
     tmp_filename_else = "/tmp/#{tmp_environment}.txt"
-    if agent.platform =~ /windows/
-      tmp_filename = tmp_filename_win
-    else
-      tmp_filename = tmp_filename_else
-    end
     on(agent, "echo 'old content' > '/tmp/#{tmp_environment}.txt'")
   end
   # create a fake module files... file for binary_file()

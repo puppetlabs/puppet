@@ -25,8 +25,6 @@ tag 'audit:medium',
   end
 
   step "create hiera configs in #{tmp_environment} and global" do
-    codedir = master.puppet('master')['codedir']
-
     step "create global hiera.yaml and module data" do
       create_remote_file(master, "#{master_confdir}/hiera.yaml", <<-HIERA)
 ---

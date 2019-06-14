@@ -17,7 +17,6 @@ require 'puppet/acceptance/mount_utils'
 extend Puppet::Acceptance::MountUtils
 
 name = "pl#{rand(999999).to_i}"
-new_name = "pl#{rand(999999).to_i}"
 
 agents.each do |agent|
   fs_file = filesystem_file(agent)

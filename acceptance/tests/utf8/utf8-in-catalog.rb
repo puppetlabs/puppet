@@ -4,7 +4,6 @@ test_name 'utf-8 characters in cached catalog' do
       'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
       'audit:refactor' # use mk_temp_environment_with_teardown
 
-  utf8chars_lit = "€‰ㄘ万竹ÜÖ"
   utf8chars     = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
   file_content  = "This is the file content. file #{utf8chars}"
   codedir       = master.tmpdir("code")

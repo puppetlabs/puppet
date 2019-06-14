@@ -9,7 +9,6 @@ tag 'audit:low',       # Install via pmt is not the primary support workflow
 
 module_author = "pmtacceptance"
 module_name   = "nonexistent"
-module_dependencies  = []
 
 default_moduledir = get_default_modulepath_for_host(master)
 

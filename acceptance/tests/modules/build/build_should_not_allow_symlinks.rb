@@ -7,8 +7,6 @@ confine :except, :platform => 'windows'
 
 modauthor = 'foo'
 modname = 'bar'
-defaultversion = '0.1.0'
-buildpath = "#{modname}/pkg/#{modname}-#{defaultversion}"
 
 agents.each do |agent|
 

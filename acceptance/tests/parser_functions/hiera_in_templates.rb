@@ -68,7 +68,6 @@ hash_value:
 NEW_YAML
     osfamily_yamls += new_yaml
   end
-  osfamily_yamls
   environ = <<ENV
 
 File {
@@ -276,7 +275,7 @@ def find_osfamilies
     osf = res.stdout.chomp
     family_hash[osf] = 1
   end
-  osfamilies = family_hash.keys
+  family_hash.keys
 end
 
 def find_tmp_dirs

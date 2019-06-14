@@ -11,7 +11,7 @@ test_name "Use environments from the environmentpath" do
   testdir = create_tmpdir_for_user(master, 'use_environmentpath')
 
   def generate_environment(path_to_env, environment)
-    env_content = <<-EOS
+    <<-EOS
   "#{path_to_env}/#{environment}":;
   "#{path_to_env}/#{environment}/manifests":;
   "#{path_to_env}/#{environment}/modules":;
@@ -27,7 +27,7 @@ test_name "Use environments from the environmentpath" do
     module_info    = "module-#{module_name}"
     module_info << "-from-#{environment}" if environment
 
-    module_content = <<-EOS
+    <<-EOS
   "#{path_to_module}/#{module_name}":;
   "#{path_to_module}/#{module_name}/manifests":;
   "#{path_to_module}/#{module_name}/files":;
@@ -62,7 +62,7 @@ test_name "Use environments from the environmentpath" do
   end
 
   def generate_site_manifest(path_to_manifest, *modules_to_include)
-    manifest_content = <<-EOS
+    <<-EOS
   "#{path_to_manifest}/site.pp":
     ensure => file,
     mode => "0640",
@@ -116,7 +116,6 @@ file {
 
   def run_with_environment(agent, environment, options = {})
     expected_exit_code = options[:expected_exit_code] || 2
-    expected_strings   = options[:expected_strings]
 
     step "running an agent in environment '#{environment}'"
     atmp = agent.tmpdir("use_environmentpath_#{environment}")

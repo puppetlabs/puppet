@@ -13,7 +13,6 @@ test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri
 
   basedir = master.tmpdir(File.basename(__FILE__, '.*'))
   module_dir = "#{basedir}/environments/production/modules"
-  modulepath = "#{module_dir}"
 
   master_opts = {
    'main' => {

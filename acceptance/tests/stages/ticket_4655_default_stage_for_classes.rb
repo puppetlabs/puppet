@@ -33,10 +33,6 @@ class in_three {
 class { "in_three": stage => "three" }
 HERE
 
-  expected_results = "in_one
-in_two
-in_three
-"
   apply_manifest_on agent, test_manifest
 
   on(agent, "cat #{temp_file_name}") do

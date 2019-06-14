@@ -33,9 +33,6 @@ app_name = "superbogus"
 app_desc = "a simple %1$s for testing %1$s delivery via plugin sync"
 app_output = "Hello from the #{app_name} %s"
 
-master_module_file_content = {}
-
-
 master_module_face_content = <<-HERE
 Puppet::Face.define(:#{app_name}, '0.0.1') do
   copyright "Puppet Labs", 2011

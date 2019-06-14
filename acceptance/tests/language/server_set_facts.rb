@@ -8,7 +8,6 @@ tag 'audit:medium',
 
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
-  fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
 
   step 'ensure $server_facts exist' do
     create_sitepp(master, tmp_environment, <<-SITE)

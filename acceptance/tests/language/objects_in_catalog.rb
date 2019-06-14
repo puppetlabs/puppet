@@ -10,7 +10,6 @@ tag 'audit:high',
 
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
-  fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
 
   manifest = <<-PP
 type Mod::Foo = Object[{

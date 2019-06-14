@@ -11,7 +11,6 @@ tmpdir = master.tmpdir('module-upgrade-withenv')
 
 module_author = "pmtacceptance"
 module_name   = "java"
-module_dependencies = ["stdlub"]
 
 step 'Setup'
 
