@@ -128,11 +128,11 @@ with_puppet_running_on(master, master_opts) do
   # Now, try and run the agent on the master against itself.
   step "Successfully run the puppet agent on the master"
   on master, puppet_agent("#{agent_cmd_prefix} --test"), :acceptable_exit_codes => (0..255) do
-    assert_no_match /Creating a new SSL key/, stdout
-    assert_no_match /\Wfailed\W/i, stderr
-    assert_no_match /\Wfailed\W/i, stdout
-    assert_no_match /\Werror\W/i, stderr
-    assert_no_match /\Werror\W/i, stdout
+    assert_no_match(/Creating a new SSL key/, stdout)
+    assert_no_match(/\Wfailed\W/i, stderr)
+    assert_no_match(/\Wfailed\W/i, stdout)
+    assert_no_match(/\Werror\W/i, stderr)
+    assert_no_match(/\Werror\W/i, stdout)
     # Assert the exit code so we get a "Failed test" instead of an "Errored test"
     assert exit_code == 0
   end
@@ -141,10 +141,10 @@ with_puppet_running_on(master, master_opts) do
   on master, "cp #{testdir}/etc/agent/puppet.conf{,.no_email}"
   on master, "cp #{testdir}/etc/agent/puppet.conf{.email,}"
   on master, puppet_agent("#{agent_cmd_prefix} --test"), :acceptable_exit_codes => (0..255) do
-    assert_no_match /\Wfailed\W/i, stdout
-    assert_no_match /\Wfailed\W/i, stderr
-    assert_no_match /\Werror\W/i, stdout
-    assert_no_match /\Werror\W/i, stderr
+    assert_no_match(/\Wfailed\W/i, stdout)
+    assert_no_match(/\Wfailed\W/i, stderr)
+    assert_no_match(/\Werror\W/i, stdout)
+    assert_no_match(/\Werror\W/i, stderr)
     # Assert the exit code so we get a "Failed test" instead of an "Errored test"
     assert exit_code == 0
   end
@@ -155,7 +155,7 @@ with_puppet_running_on(master, master_opts) do
 
   revoke_opts = "--hostcrl #{testdir}/ca_master.crl"
   on master, puppet_agent("#{agent_cmd_prefix} #{revoke_opts} --test"), :acceptable_exit_codes => (0..255) do
-    assert_match /certificate revoked.*?example.org/, stderr
+    assert_match(/certificate revoked.*?example.org/, stderr)
     assert exit_code == 1
   end
 end
@@ -166,9 +166,9 @@ create_remote_file master, "#{jetty_confdir}/webserver.conf",
 with_puppet_running_on(master, master_opts) do
   step "Agent refuses to connect to a rogue master"
   on master, puppet_agent("#{agent_cmd_prefix} --ssl_client_ca_auth=#{testdir}/ca_master.crt --test"), :acceptable_exit_codes => (0..255) do
-    assert_no_match /Creating a new SSL key/, stdout
-    assert_match /certificate verify failed/i, stderr
-    assert_match /The server presented a SSL certificate chain which does not include a CA listed in the ssl_client_ca_auth file/i, stderr
+    assert_no_match(/Creating a new SSL key/, stdout)
+    assert_match(/certificate verify failed/i, stderr)
+    assert_match(/The server presented a SSL certificate chain which does not include a CA listed in the ssl_client_ca_auth file/i, stderr)
     assert exit_code == 1
   end
 end

@@ -34,8 +34,8 @@ test_name 'Test `puppet help` workflow' do
       step "Use `puppet help #{face}`"
 
       on agent, puppet("help #{face} | grep USAGE") do
-        assert_match /^USAGE:/, stdout,
-          "There is NO usage section for 'puppet help #{face}'"
+        assert_match(/^USAGE:/, stdout,
+          "There is NO usage section for 'puppet help #{face}'")
       end
     end
   end

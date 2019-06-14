@@ -37,6 +37,6 @@ HERE
 
   on(agent, "cat #{temp_file_name}") do
     # echo on windows adds \r\n, so do dotall regexp match
-    assert_match(/in_one\s*in_two\s*\in_three/m, stdout, "Unexpected result for host '#{agent}'")
+    assert_match(/in_one\s*in_two\s*in_three/m, stdout, "Unexpected result for host '#{agent}'")
   end
 end

@@ -8,7 +8,7 @@ require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CommandUtils
 
 hosts_to_test = agents.reject do |agent|
-  if agent['platform'].match /(?:ubuntu|centos|debian|el-|fedora)/
+  if agent['platform'].match(/(?:ubuntu|centos|debian|el-|fedora)/)
     result = on(agent, "#{ruby_command(agent)} -e \"require 'shadow' or raise\"", :acceptable_exit_codes => [0,1])
     result.exit_code != 0
   else
