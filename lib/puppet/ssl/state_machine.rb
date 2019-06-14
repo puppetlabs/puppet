@@ -334,8 +334,7 @@ class Puppet::SSL::StateMachine
                  ssl_provider: Puppet::SSL::SSLProvider.new,
                  lockfile: Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile]),
                  digest: 'SHA256',
-                 ca_fingerprint: nil
-                )
+                 ca_fingerprint: Puppet[:ca_fingerprint])
     @waitforcert = waitforcert
     @wait_deadline = Time.now.to_i + maxwaitforcert
     @onetime = onetime
