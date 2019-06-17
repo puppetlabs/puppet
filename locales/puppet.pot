@@ -557,11 +557,16 @@ msgstr ""
 msgid "Applied catalog in %{seconds} seconds"
 msgstr ""
 
+<<<<<<< HEAD
 #: ../lib/puppet/configurer.rb:230
+=======
+#: ../lib/puppet/configurer.rb:224
+>>>>>>> 83e441eba05656a02ddf48723b0ecce27daa15bb
 msgid "Could not select a functional puppet master from server_list: '%{server_list}'"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
+<<<<<<< HEAD
 #: ../lib/puppet/configurer.rb:233
 msgid "Selected puppet server from the `server_list` setting: %{server}:%{port}"
 msgstr ""
@@ -624,6 +629,69 @@ msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
 #: ../lib/puppet/configurer.rb:478
+=======
+#: ../lib/puppet/configurer.rb:227
+msgid "Selected server from the `server_list` setting: %{server}:%{port}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:259
+msgid "Local environment: '%{local_env}' doesn't match the environment of the cached catalog '%{catalog_env}', switching agent to '%{catalog_env}'."
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:304
+msgid "Local environment: '%{local_env}' doesn't match server specified node environment '%{node_env}', switching agent to '%{node_env}'."
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:309
+msgid "Using configured environment '%{env}'"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:313
+msgid "Unable to fetch my node definition, but the agent run will continue:"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:337
+msgid "Not using catalog because its environment '%{catalog_env}' does not match agent specified environment '%{local_env}' and strict_environment_mode is set"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:348
+msgid "Catalog environment didn't stabilize after %{tries} fetches, aborting run"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:350
+msgid "Local environment: '%{local_env}' doesn't match server specified environment '%{catalog_env}', restarting agent run with environment '%{catalog_env}'"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:369
+msgid "Failed to apply catalog: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:392
+msgid "Puppet server %{host}:%{port} is unavailable: % {code} %{reason}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:395
+msgid "Puppet server %{host}:%{port} is unreachable"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:407 ../lib/puppet/face/report.rb:47
+msgid "Could not send report: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:416
+msgid "Could not save last run local report: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:428
+msgid "Could not run command from %{setting}: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:446
+msgid "Could not retrieve catalog from cache: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/configurer.rb:466
+>>>>>>> 83e441eba05656a02ddf48723b0ecce27daa15bb
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -6544,27 +6612,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:84
+#: ../lib/puppet/provider/package/gem.rb:94
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:110
+#: ../lib/puppet/provider/package/gem.rb:120
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:158
+#: ../lib/puppet/provider/package/gem.rb:168
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:169
+#: ../lib/puppet/provider/package/gem.rb:179
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:185
+#: ../lib/puppet/provider/package/gem.rb:195
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:211
+#: ../lib/puppet/provider/package/gem.rb:221
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -9406,6 +9474,7 @@ msgstr ""
 msgid "Failed to call LookupAccountSidW with bytes: %{sid_bytes}"
 msgstr ""
 
+<<<<<<< HEAD
 #: ../lib/puppet/util/windows/process.rb:46
 msgid "Failed to get child process exit code"
 msgstr ""
@@ -9427,6 +9496,29 @@ msgid "Failed to remove environment variable: %{name}"
 msgstr ""
 
 #: ../lib/puppet/util/windows/process.rb:340
+=======
+#: ../lib/puppet/util/windows/process.rb:48
+msgid "Failed to get child process exit code"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:287
+msgid "GetVersionEx failed"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:316
+msgid "Discarding environment variable %{string} which contains invalid bytes"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:332
+msgid "environment variable name must not be nil or empty"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:337
+msgid "Failed to remove environment variable: %{name}"
+msgstr ""
+
+#: ../lib/puppet/util/windows/process.rb:342
+>>>>>>> 83e441eba05656a02ddf48723b0ecce27daa15bb
 msgid "Failed to set environment variable: %{name}"
 msgstr ""
 
@@ -9688,15 +9780,15 @@ msgstr ""
 msgid "Failed to check membership"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:86
+#: ../lib/puppet/util/windows/user.rb:88
 msgid "Failed to logon user %{name}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:110
+#: ../lib/puppet/util/windows/user.rb:120
 msgid "Failed to load user profile %{user}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/user.rb:116
+#: ../lib/puppet/util/windows/user.rb:126
 msgid "Failed to unload user profile %{user}"
 msgstr ""
 

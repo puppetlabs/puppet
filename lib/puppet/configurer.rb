@@ -230,10 +230,10 @@ class Puppet::Configurer
             raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
           else
             #TRANSLATORS 'server_list' is the name of a setting and should not be translated
-            Puppet.debug _("Selected puppet server from the `server_list` setting: %{server}:%{port}") % { server: server, port: port }
+            Puppet.debug _("Selected server from the `server_list` setting: %{server}:%{port}") % {server: server, port: port}
             report.master_used = "#{server}:#{port}"
           end
-          Puppet.override(server: server, serverport: port) do
+          Puppet.override(:server => server, :serverport => port) do
             completed = run_internal(options)
           end
         else
@@ -391,20 +391,18 @@ class Puppet::Configurer
   end
   private :run_internal
 
-  def find_functional_server
+  def find_functional_server()
     Puppet.settings[:server_list].each do |server|
       host = server[0]
       port = server[1] || Puppet[:masterport]
       begin
         http = Puppet::Network::HttpPool.http_ssl_instance(host, port)
-        response = http.get('/status/v1/simple/master')
-        return [host, port] if response.is_a?(Net::HTTPOK)
-
-        Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
+        response = http.get('/status/v1/simple')
+        return [host, port] if response.is_a?(Net::HTTPOK) || response.is_a?(Net::HTTPForbidden)
+        Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: % {code} %{reason}") %
                      { host: host, port: port, code: response.code, reason: response.message })
-      rescue => detail
-        #TRANSLATORS 'server_list' is the name of a setting and should not be translated
-        Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
+      rescue
+        Puppet.debug(_("Puppet server %{host}:%{port} is unreachable") % { host: host, port: port })
       end
     end
     [nil, nil]
