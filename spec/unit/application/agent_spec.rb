@@ -575,7 +575,7 @@ describe Puppet::Application::Agent do
           expect {
             @puppetd.fingerprint
           }.to exit_with(1)
-        }.to output(/Fingerprint asked but no certificate nor certificate request have yet been issued/).to_stderr
+        }.to output(/Fingerprint asked but neither the certificate, nor the certificate request have been issued/).to_stderr
       end
 
       it "should log an error if an exception occurs" do

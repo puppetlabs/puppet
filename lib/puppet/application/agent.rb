@@ -368,7 +368,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       if csr
         puts Puppet::SSL::Digest.new(options[:digest].to_s, csr.to_der).to_s
       else
-        $stderr.puts _("Fingerprint asked but no certificate nor certificate request have yet been issued")
+        $stderr.puts _("Fingerprint asked but neither the certificate, nor the certificate request have been issued")
         exit(1)
       end
     end
