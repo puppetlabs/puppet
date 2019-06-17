@@ -60,28 +60,32 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       end
 
       it 'retries CA cert download' do
-        # first call returns nil to force download, second call returns certs
-        expect(cert_provider).to receive(:load_cacerts).and_return(nil, cacerts)
+        # allow cert to be saved to disk
+        FileUtils.mkdir_p(Puppet[:certdir])
         allow(cert_provider).to receive(:load_crls).and_return(crls)
 
-        stub_request(:get, %r{puppet-ca/v1/certificate/ca})
-          .to_raise(Errno::ECONNREFUSED)
+        req = stub_request(:get, %r{puppet-ca/v1/certificate/ca})
+                .to_raise(Errno::ECONNREFUSED).then
+                .to_return(status: 200, body: cacert_pem)
 
         machine.ensure_ca_certificates
 
+        expect(req).to have_been_made.twice
         expect(@logs).to include(an_object_having_attributes(message: refused_message))
       end
 
       it 'retries CRL download' do
+        # allow crl to be saved to disk
+        FileUtils.mkdir_p(Puppet[:ssldir])
         allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
-        # first call returns nil to force download, second call returns crls
-        expect(cert_provider).to receive(:load_crls).and_return(nil, crls)
 
-        stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca})
-          .to_raise(Errno::ECONNREFUSED)
+        req = stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca})
+                .to_raise(Errno::ECONNREFUSED).then
+                .to_return(status: 200, body: crl_pem)
 
         machine.ensure_ca_certificates
 
+        expect(req).to have_been_made.twice
         expect(@logs).to include(an_object_having_attributes(message: refused_message))
       end
     end
@@ -114,14 +118,15 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         allow($stdout).to receive(:puts).with(/Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate/)
 
         stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}})
-          .to_return(status: 404).then
           .to_return(status: 200, body: client_cert.to_pem)
-        stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}})
-          .to_raise(Errno::ECONNREFUSED).then
-          .to_return(status: 200)
+        # first request raises, second succeeds
+        req = stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}})
+                .to_raise(Errno::ECONNREFUSED).then
+                .to_return(status: 200)
 
         machine.ensure_client_certificate
 
+        expect(req).to have_been_made.twice
         expect(@logs).to include(an_object_having_attributes(message: refused_message))
       end
 
@@ -129,13 +134,14 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         allow(cert_provider).to receive(:load_private_key).and_return(private_key)
 
         # first request raises, second succeeds
-        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}})
-          .to_raise(Errno::ECONNREFUSED).then
-          .to_return(status: 200, body: client_cert.to_pem)
+        req = stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}})
+                .to_raise(Errno::ECONNREFUSED).then
+                .to_return(status: 200, body: client_cert.to_pem)
         stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
 
         machine.ensure_client_certificate
 
+        expect(req).to have_been_made.twice
         expect(@logs).to include(an_object_having_attributes(message: refused_message))
       end
 
@@ -143,13 +149,14 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         allow(cert_provider).to receive(:load_private_key).and_return(private_key)
 
         # return mismatched cert the first time, correct cert second time
-        stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}})
-          .to_return(status: 200, body: cert_fixture('pluto.pem').to_pem)
-          .to_return(status: 200, body: client_cert.to_pem)
+        req = stub_request(:get, %r{puppet-ca/v1/certificate/#{Puppet[:certname]}})
+                .to_return(status: 200, body: cert_fixture('pluto.pem').to_pem)
+                .to_return(status: 200, body: client_cert.to_pem)
         stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
 
         machine.ensure_client_certificate
 
+        expect(req).to have_been_made.twice
         expect(@logs).to include(an_object_having_attributes(message: %r{The certificate for 'CN=pluto' does not match its private key}))
       end
 
