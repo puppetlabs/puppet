@@ -26,6 +26,18 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
         allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
       else
         allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'args=']).and_return('puppet')
+      end
+      expect(@lock).to be_locked
+    end
+
+    it "should become locked if puppet is a gem" do
+      @lock.lock
+      unless Puppet::Util::Platform.windows?
+        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('ruby')
+        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
+      else
+        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\tools\ruby25\bin\ruby.exe')
       end
       expect(@lock).to be_locked
     end
@@ -109,6 +121,18 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
         allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
       else
         allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'args=']).and_return('puppet')
+      end
+      expect(@lock).to be_locked
+    end
+
+    it "should return true if locked when puppet as gem" do
+      @lock.lock
+      unless Puppet::Util::Platform.windows?
+        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'comm=']).and_return('ruby')
+        expect(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', @lock.lock_pid, '-o', 'args=']).and_return('ruby /root/puppet/.bundle/ruby/2.3.0/bin/puppet agent --no-daemonize -v')
+      else
+        allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(@lock.lock_pid).and_return('C:\tools\ruby25\bin\ruby.exe')
       end
       expect(@lock).to be_locked
     end
@@ -159,6 +183,7 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
           allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(6789).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
         else
           allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 6789, '-o', 'comm=']).and_return('puppet')
+          allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 6789, '-o', 'args=']).and_return('puppet')
         end
         @lock.lock
         expect(Puppet::FileSystem.exist?(@lockfile)).to be_truthy
@@ -188,6 +213,7 @@ describe Puppet::Util::Pidlock, if: !Puppet::Util::Platform.jruby? do
         allow(Puppet::Util::Windows::Process).to receive(:get_process_image_name_by_pid).with(1234).and_return('C:\Program Files\Puppet Labs\Puppet\puppet\bin\ruby.exe')
       else
         allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 1234, '-o', 'comm=']).and_return('puppet')
+        allow(Puppet::Util::Execution).to receive(:execute).with(['ps', '-p', 1234, '-o', 'args=']).and_return('puppet')
       end
       # lock the file
       @lock.lock
