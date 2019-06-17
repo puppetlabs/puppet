@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.4.2-83-g6b91149\n"
+"Project-Id-Version: Puppet automation framework 6.4.2-137-gebed29d\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-06-04 20:00+0000\n"
-"PO-Revision-Date: 2019-06-04 20:00+0000\n"
+"POT-Creation-Date: 2019-06-17 21:16+0000\n"
+"PO-Revision-Date: 2019-06-17 21:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -459,51 +459,51 @@ msgstr ""
 msgid "An action must be specified."
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:123 ../lib/puppet/application/ssl.rb:130
+#: ../lib/puppet/application/ssl.rb:125 ../lib/puppet/application/ssl.rb:132
 msgid "The certificate for '%{name}' has not yet been signed"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:141
+#: ../lib/puppet/application/ssl.rb:143
 msgid "Completed SSL initialization"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:143
+#: ../lib/puppet/application/ssl.rb:145
 msgid "Unknown action '%{action}'"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:150 ../lib/puppet/ssl/key.rb:24 ../lib/puppet/ssl/state_machine.rb:113
+#: ../lib/puppet/application/ssl.rb:152 ../lib/puppet/ssl/key.rb:24 ../lib/puppet/ssl/state_machine.rb:123
 msgid "Creating a new SSL key for %{name}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:158
+#: ../lib/puppet/application/ssl.rb:160
 msgid "Submitted certificate request for '%{name}' to https://%{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:163
+#: ../lib/puppet/application/ssl.rb:165
 msgid "Could not submit certificate request for '%{name}' to https://%{server}:%{port} due to a conflict on the server"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:165 ../lib/puppet/application/ssl.rb:168
+#: ../lib/puppet/application/ssl.rb:167 ../lib/puppet/application/ssl.rb:170
 msgid "Failed to submit certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:174
+#: ../lib/puppet/application/ssl.rb:176
 msgid "Downloading certificate '%{name}' from https://%{server}:%{port}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:181 ../lib/puppet/application/ssl.rb:189
+#: ../lib/puppet/application/ssl.rb:183 ../lib/puppet/application/ssl.rb:191
 msgid "Downloaded certificate '%{name}' with fingerprint %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:197 ../lib/puppet/application/ssl.rb:200
+#: ../lib/puppet/application/ssl.rb:199 ../lib/puppet/application/ssl.rb:202
 msgid "Failed to download certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:227 ../lib/puppet/application/ssl.rb:230
+#: ../lib/puppet/application/ssl.rb:229 ../lib/puppet/application/ssl.rb:232
 msgid "Failed to connect to the CA to determine if certificate %{certname} has been cleaned"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:234
+#: ../lib/puppet/application/ssl.rb:236
 msgid ""
 "The certificate %{certname} must be cleaned from the CA first. To fix this,\n"
 "run the following commands on the CA:\n"
@@ -511,7 +511,7 @@ msgid ""
 "  puppet ssl clean\n"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:254
+#: ../lib/puppet/application/ssl.rb:256
 msgid "Removed %{label} %{path}"
 msgstr ""
 
@@ -6643,27 +6643,27 @@ msgstr ""
 msgid "source is defined but does not have trailing slash, ignoring %{source}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:84
+#: ../lib/puppet/provider/package/gem.rb:94
 msgid "Could not list gems: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:110
+#: ../lib/puppet/provider/package/gem.rb:120
 msgid "Could not match %{desc}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:158
+#: ../lib/puppet/provider/package/gem.rb:168
 msgid "Invalid source '%{uri}': %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:169
+#: ../lib/puppet/provider/package/gem.rb:179
 msgid "puppet:// URLs are not supported as gem sources"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:185
+#: ../lib/puppet/provider/package/gem.rb:195
 msgid "Could not install: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/gem.rb:211
+#: ../lib/puppet/provider/package/gem.rb:221
 msgid "Could not uninstall: %{output}"
 msgstr ""
 
@@ -7760,7 +7760,7 @@ msgid ""
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:384 ../lib/puppet/ssl/state_machine.rb:89
+#: ../lib/puppet/ssl/host.rb:384 ../lib/puppet/ssl/state_machine.rb:99
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
@@ -7872,59 +7872,63 @@ msgstr ""
 msgid "Certificate '%{subject}' failed verification (%{err}): %{err_utf8}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:50
+#: ../lib/puppet/ssl/state_machine.rb:58
 msgid "CA certificate is missing from the server"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:52
+#: ../lib/puppet/ssl/state_machine.rb:60
 msgid "Could not download CA certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:87
+#: ../lib/puppet/ssl/state_machine.rb:97
 msgid "CRL is missing from the server"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:101
+#: ../lib/puppet/ssl/state_machine.rb:111
 msgid "Loading/generating private key"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:141
+#: ../lib/puppet/ssl/state_machine.rb:151
 msgid "Generating and submitting a CSR"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:149
+#: ../lib/puppet/ssl/state_machine.rb:161
 msgid "Failed to submit the CSR, HTTP response was %{code}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:160
+#: ../lib/puppet/ssl/state_machine.rb:170
 msgid "Downloading client certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:176
+#: ../lib/puppet/ssl/state_machine.rb:185
 msgid "Failed to parse certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:180
+#: ../lib/puppet/ssl/state_machine.rb:188
 msgid "Certificate for %{certname} has not been signed yet"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:182
+#: ../lib/puppet/ssl/state_machine.rb:189
+msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name})."
+msgstr ""
+
+#: ../lib/puppet/ssl/state_machine.rb:192
 msgid "Failed to retrieve certificate for %{certname}: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:195
-msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Exiting now because the waitforcert setting is set to 0."
+#: ../lib/puppet/ssl/state_machine.rb:208
+msgid "Exiting now because the waitforcert setting is set to 0."
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:198
-msgid "Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}). Will try again in %{time} seconds."
+#: ../lib/puppet/ssl/state_machine.rb:211
+msgid "Will try again in %{time} seconds."
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:241
+#: ../lib/puppet/ssl/state_machine.rb:294
 msgid "Verified client certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
-#: ../lib/puppet/ssl/state_machine.rb:243
+#: ../lib/puppet/ssl/state_machine.rb:296
 msgid "Verified CA certificate '%{subject}' fingerprint %{digest}"
 msgstr ""
 
