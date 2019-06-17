@@ -1005,17 +1005,6 @@ describe Puppet::Configurer do
       @agent.run :catalog => catalog
     end
 
-    it "should select a server when it receives 200 OK response" do
-      Puppet.settings[:server_list] = ["myserver:123"]
-      response = Net::HTTPOK.new(nil, 200, 'OK')
-      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
-      allow(@agent).to receive(:run_internal)
-
-      options = {}
-      @agent.run(options)
-      expect(options[:report].master_used).to eq('myserver:123')
-    end
-
     it "should select a server when provided" do
       Puppet.settings[:server_list] = ["myserver:123"]
       response = Net::HTTPOK.new(nil, 200, 'OK')
@@ -1058,9 +1047,6 @@ describe Puppet::Configurer do
     end
 
     it "should not make multiple node requets when the server is found" do
-      response = Net::HTTPOK.new(nil, 200, 'OK')
-      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
-      
       Puppet.settings[:server_list] = ["myserver:123"]
       response = Net::HTTPOK.new(nil, 200, 'OK')
       allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
