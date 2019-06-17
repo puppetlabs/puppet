@@ -1024,9 +1024,9 @@ describe Puppet::Configurer do
       expect(options[:report].master_used).to eq('myserver:123')
     end
 
-    it "should select a server when it receives 403 Forbidden" do
+    it "should select a server when provided" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      response = Net::HTTPForbidden.new(nil, 403, 'Forbidden')
+      response = Net::HTTPOK.new(nil, 200, 'OK')
       allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
       allow(@agent).to receive(:run_internal)
 
@@ -1035,14 +1035,15 @@ describe Puppet::Configurer do
       expect(options[:report].master_used).to eq('myserver:123')
     end
 
-    it "should report when a server is unavailable" do
+    it "queries the simple status for the 'master' service" do
       Puppet.settings[:server_list] = ["myserver:123"]
-      response = Net::HTTPInternalServerError.new(nil, 500, 'Internal Server Error')
-      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
+      response = Net::HTTPOK.new(nil, 200, 'OK')
+      http = double('request')
+      expect(http).to receive(:get).with('/status/v1/simple/master').and_return(response)
+      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(http)
       allow(@agent).to receive(:run_internal)
 
-      expect(Puppet).to receive(:debug).with("Puppet server myserver:123 is unavailable: 500 Internal Server Error")
-      expect { @agent.run }.to raise_error(Puppet::Error, /Could not select a functional puppet master from server_list:/)
+      @agent.run
     end
 
     it "should error when no servers in 'server_list' are reachable" do
