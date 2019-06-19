@@ -1035,6 +1035,17 @@ describe Puppet::Configurer do
       expect(options[:report].master_used).to eq('myserver:123')
     end
 
+    it "queries the simple status for the 'master' service" do
+      Puppet.settings[:server_list] = ["myserver:123"]
+      response = Net::HTTPOK.new(nil, 200, 'OK')
+      http = double('request')
+      expect(http).to receive(:get).with('/status/v1/simple/master').and_return(response)
+      allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(http)
+      allow(@agent).to receive(:run_internal)
+
+      @agent.run
+    end
+
     it "should report when a server is unavailable" do
       Puppet.settings[:server_list] = ["myserver:123"]
       response = Net::HTTPInternalServerError.new(nil, 500, 'Internal Server Error')
