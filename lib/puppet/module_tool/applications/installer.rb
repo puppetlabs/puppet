@@ -9,6 +9,7 @@ require 'puppet/module_tool/shared_behaviors'
 require 'puppet/module_tool/install_directory'
 require 'puppet/module_tool/local_tarball'
 require 'puppet/module_tool/installed_modules'
+require 'puppet/network/uri'
 
 module Puppet::ModuleTool
   module Applications
@@ -16,6 +17,7 @@ module Puppet::ModuleTool
 
       include Puppet::ModuleTool::Errors
       include Puppet::Forge::Errors
+      include Puppet::Network::Uri
 
       def initialize(name, install_dir, options = {})
         super(options)
@@ -79,7 +81,9 @@ module Puppet::ModuleTool
           results[:install_dir] = @install_dir.target
 
           unless @local_tarball && @ignore_dependencies
-            Puppet.notice _("Downloading from %{host} ...") % { host: module_repository.host }
+            Puppet.notice _("Downloading from %{host} ...") % {
+              host: mask_credentials(module_repository.host)
+            }
           end
 
           if @ignore_dependencies
