@@ -125,6 +125,11 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
       expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
     end
 
+    it 'registers OIDs' do
+      expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
+      expects_command_to_fail(%r{Failed to submit certificate request})
+    end
+
     it 'submits the CSR and saves it locally' do
       stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
       stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
