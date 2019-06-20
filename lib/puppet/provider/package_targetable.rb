@@ -25,24 +25,25 @@ require 'puppet/provider/package'
 class Puppet::Provider::Package::Targetable < Puppet::Provider::Package
   # Prefetch our package list, yo.
   def self.prefetch(packages)
-    catalog_packages = packages.first[1]::catalog::resources.select{ |p| p.provider.class == self }
+    catalog_packages = packages.values.first.catalog.resources.select{ |p| p.provider.class == self }
     package_commands = catalog_packages.map { |catalog_package| catalog_package::original_parameters[:command] }.uniq
     package_commands.each do |command|
       instances(command).each do |instance|
         catalog_packages.each do |catalog_package|
-          if catalog_package[:name] == instance.name && catalog_package::original_parameters[:command] == command
+          if catalog_package[:name] == instance.name && catalog_package.original_parameters[:command] == command
             catalog_package.provider = instance
-            self.debug "Prefetched instance: %{name} via command: %{command}" % { name: instance.name, cmd: (command || :default)}
+            self.debug "Prefetched instance: %{name} via command: %{cmd}" % { name: instance.name, cmd: (command || :default) }
           end
         end
       end
     end
+    package_commands
   end
 
   # Returns the resource command or provider command.
 
   def resource_or_provider_command
-    resource::original_parameters[:command] || self.class.provider_command
+    resource.original_parameters[:command] || self.class.provider_command
   end
 
   # Targetable providers use has_command/is_optional to defer validation of provider suitability.
