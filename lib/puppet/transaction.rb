@@ -170,16 +170,20 @@ class Puppet::Transaction
     # Generate the relationship graph, set up our generator to use it
     # for eval_generate, then kick off our traversal.
     generator.relationship_graph = relationship_graph
+    progress = 0
     relationship_graph.traverse(:while => continue_while,
                                 :pre_process => pre_process,
                                 :overly_deferred_resource_handler => overly_deferred_resource_handler,
                                 :canceled_resource_handler => canceled_resource_handler,
                                 :graph_cycle_handler => graph_cycle_handler,
                                 :teardown => teardown) do |resource|
+      progress += 1
       if resource.is_a?(Puppet::Type::Component)
         Puppet.warning _("Somehow left a component in the relationship graph")
       else
-        resource.info _("Starting to evaluate the resource") if Puppet[:evaltrace] && @catalog.host_config?
+        if Puppet[:evaltrace] && @catalog.host_config?
+          resource.info _("Starting to evaluate the resource (%{progress} of %{total})") % { progress: progress, total: relationship_graph.size }
+        end
         seconds = thinmark { block.call(resource) }
         resource.info _("Evaluated in %{seconds} seconds") % { seconds: "%0.2f" % seconds } if Puppet[:evaltrace] && @catalog.host_config?
       end
