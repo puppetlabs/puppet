@@ -527,6 +527,10 @@ describe Puppet::Module do
     expect(mod.tasks_directory).to eq(File.join(path, "tasks"))
   end
 
+  it "should return the path to the plans directory" do
+    expect(mod.plans_directory).to eq(File.join(path, "plans"))
+  end
+
   describe "when finding tasks" do
     before do
       allow(Puppet::FileSystem).to receive(:exist?).and_call_original
@@ -592,6 +596,75 @@ describe Puppet::Module do
                                                               :tasks => []})
         mod.tasks
         mod.tasks
+      end
+    end
+  end
+
+  describe "when finding plans" do
+    before do
+      allow(Puppet::FileSystem).to receive(:exist?).and_call_original
+      @modpath = tmpdir('modpath')
+      Puppet.settings[:modulepath] = @modpath
+    end
+
+    it "should have an empty array for the plans when the plans directory does not exist" do
+      mod = PuppetSpec::Modules.create('plans_test_nodir', @modpath, :environment => env)
+      expect(mod.plans).to eq([])
+    end
+
+    it "should have an empty array for the plans when the plans directory does exist and is empty" do
+      mod = PuppetSpec::Modules.create('plans_test_empty', @modpath, {:environment => env,
+                                                                      :plans => []})
+      expect(mod.plans).to eq([])
+    end
+
+    it "should list the expected plans when the required files exist" do
+      fake_plans = ['plan1.pp', 'plan2.yaml']
+      mod = PuppetSpec::Modules.create('plans_smoke', @modpath, {:environment => env,
+                                                                 :plans => fake_plans})
+
+      expect(mod.plans.count).to eq(2)
+      expect(mod.plans.map{|t| t.name}.sort).to eq(['plans_smoke::plan1', 'plans_smoke::plan2'])
+      expect(mod.plans.map{|t| t.class}).to eq([Puppet::Module::Plan] * 2)
+    end
+
+    it "should be able to find individual plan files when they exist" do
+      plan_exe = 'stateskateplan.pp'
+      mod = PuppetSpec::Modules.create('plan_file_smoke', @modpath, {:environment => env,
+                                                                     :plans => [plan_exe]})
+
+      expect(mod.plan_file(plan_exe)).to eq("#{mod.path}/plans/#{plan_exe}")
+    end
+
+    it "should return nil when asked for an individual plan file if it does not exist" do
+      mod = PuppetSpec::Modules.create('plan_file_neg', @modpath, {:environment => env,
+                                                                   :plans => []})
+      expect(mod.plan_file('nosuchplan')).to be_nil
+    end
+
+    describe "does the plan finding" do
+      let(:mod_name) { 'plans_test_lazy' }
+      let(:mod_plans_dir) { File.join(@modpath, mod_name, 'plans') }
+
+      it "after the module is initialized" do
+        expect(Puppet::FileSystem).not_to receive(:exist?).with(mod_plans_dir)
+        expect(Puppet::Module::Plan).not_to receive(:plans_in_module)
+        Puppet::Module.new(mod_name, @modpath, env)
+      end
+
+      it "when the plans method is called" do
+        expect(Puppet::Module::Plan).to receive(:plans_in_module)
+        mod = PuppetSpec::Modules.create(mod_name, @modpath, {:environment => env,
+                                                              :plans => ['itascanstaccatoplan.yaml']})
+        mod.plans
+      end
+
+      it "only once for the lifetime of the module object" do
+        expect(Dir).to receive(:glob).with("#{mod_plans_dir}/*").once.and_return(['allalaskaplanattacktactics'])
+        mod = PuppetSpec::Modules.create(mod_name, @modpath, {:environment => env,
+                                                              :plans => []})
+        mod.plans
+        mod.plans
       end
     end
   end

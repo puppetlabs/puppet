@@ -1,5 +1,6 @@
 require 'puppet/util/logging'
 require 'puppet/module/task'
+require 'puppet/module/plan'
 require 'puppet/util/json'
 require 'semantic_puppet/gem_version'
 
@@ -60,7 +61,7 @@ class Puppet::Module
     SemanticPuppet::VersionRange.parse(range)
   end
 
-  attr_reader :name, :environment, :path, :metadata, :tasks
+  attr_reader :name, :environment, :path, :metadata, :tasks, :plans
   attr_writer :environment
 
   attr_accessor :dependencies, :forge_name
@@ -162,6 +163,39 @@ class Puppet::Module
       full_path = File.join(tasks_directory, name)
     else
       full_path = tasks_directory
+    end
+
+    if Puppet::FileSystem.exist?(full_path)
+      return full_path
+    else
+      return nil
+    end
+  end
+
+  def plans_directory
+    subpath("plans")
+  end
+
+  def plans
+    return @plans if instance_variable_defined?(:@plans)
+
+    if Puppet::FileSystem.exist?(plans_directory)
+      @plans = Puppet::Module::Plan.plans_in_module(self)
+    else
+      @plans = []
+    end
+  end
+
+  # This is a re-implementation of the Filetypes singular type method (e.g.
+  # `manifest('my/manifest.pp')`. We don't implement the full filetype "API" for
+  # plans.
+  def plan_file(name)
+    # If 'file' is nil then they're asking for the base path.
+    # This is used for things like fileserving.
+    if name
+      full_path = File.join(plans_directory, name)
+    else
+      full_path = plans_directory
     end
 
     if Puppet::FileSystem.exist?(full_path)
