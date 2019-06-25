@@ -145,7 +145,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
   context "latest" do
     context "with pip version < 1.5.4" do
       before :each do
-        allow(@provider).to receive(:pip_version).with("/fake/bin/pip").and_return('1.0.1')
+        allow(described_class).to receive(:pip_version).with("/fake/bin/pip").and_return('1.0.1')
         allow(described_class).to receive(:which).with('pip').and_return("/fake/bin/pip")
         allow(described_class).to receive(:which).with('pip-python').and_return("/fake/bin/pip")
         allow(described_class).to receive(:which).with('pip.exe').and_return("/fake/bin/pip")
@@ -203,12 +203,12 @@ describe Puppet::Type.type(:package).provider(:pip) do
       # For Pip 1.5.4 and above, you can get a version list from CLI - which allows for native pip behavior
       # with regards to custom repositories, proxies and the like
       before :each do
+        allow(described_class).to receive(:pip_version).with("/fake/bin/pip").and_return('1.5.4')
         allow(described_class).to receive(:which).with('pip').and_return("/fake/bin/pip")
         allow(described_class).to receive(:which).with('pip-python').and_return("/fake/bin/pip")
         allow(described_class).to receive(:which).with('pip.exe').and_return("/fake/bin/pip")
         allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
         allow(described_class).to receive(:validate_command).with('/fake/bin/pip')
-        allow(@provider).to receive(:pip_version).with("/fake/bin/pip").and_return('1.5.4')
       end
 
       it "should find a version number for real_package" do
