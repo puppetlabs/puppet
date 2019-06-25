@@ -1,7 +1,6 @@
 # Puppet package provider for Python's `pip` package management frontend.
 # <http://pip.pypa.io/>
 
-require 'puppet/provider/package'
 require 'puppet/provider/package_targetable'
 require 'puppet/util/http_proxy'
 

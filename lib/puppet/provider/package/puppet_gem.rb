@@ -1,4 +1,4 @@
-require 'puppet/provider/package'
+require 'puppet/provider/package/gem'
 
 Puppet::Type.type(:package).provide :puppet_gem, :parent => :gem do
   desc "Puppet Ruby Gem support. This provider is useful for managing
