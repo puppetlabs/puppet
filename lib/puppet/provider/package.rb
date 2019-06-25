@@ -1,3 +1,5 @@
+require 'puppet/provider'
+
 class Puppet::Provider::Package < Puppet::Provider
   # Prefetch our package list, yo.
   def self.prefetch(packages)

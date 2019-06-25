@@ -1,7 +1,6 @@
 # Puppet package provider for Python's `pip` package management frontend.
 # <http://pip.pypa.io/>
 
-require 'puppet/provider/package'
 require 'puppet/provider/package_targetable'
 require 'puppet/util/http_proxy'
 
@@ -114,7 +113,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     command = resource_or_provider_command
     self.class.validate_command(command)
 
-    command_version = self.pip_version(command)
+    command_version = self.class.pip_version(command)
     if Puppet::Util::Package.versioncmp(command_version, '1.5.4') == -1
       latest_with_old_pip
     else
