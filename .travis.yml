@@ -19,6 +19,7 @@ env:
   matrix:
     - "CHECK=parallel:spec\\[2\\]"
     - "CHECK=spec"
+    - "CHECK=parallel:spec[1,25000]"
     - "CHECK=rubocop"
     - "CHECK=commits"
     - "CHECK=warnings"

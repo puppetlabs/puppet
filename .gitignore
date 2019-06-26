@@ -31,3 +31,4 @@ coverage/
 *.iml
 .rakeTasks
 .idea/
+spec_order.txt
