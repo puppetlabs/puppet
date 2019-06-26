@@ -18,6 +18,7 @@ env:
     - _JAVA_OPTIONS="-Xmx1024m -Xms512m"
   matrix:
     - "CHECK=parallel:spec\\[2\\]"
+    - "CHECK=spec"
     - "CHECK=rubocop"
     - "CHECK=commits"
     - "CHECK=warnings"
