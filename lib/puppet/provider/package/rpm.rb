@@ -76,7 +76,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   end
 
   def self.instances
-    packages = []
+    packages_hash = {}
 
     # list out all of the packages
     begin
@@ -84,14 +84,27 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         # now turn each returned line into a package object
         process.each_line { |line|
           hash = nevra_to_hash(line)
-          packages << new(hash) unless hash.empty?
+          #if we already have the resource for this name
+          # add version details in :extra_versions array
+          if !hash.empty? && packages_hash.member?(hash[:name])
+            tmp_hash = packages_hash[hash[:name]].properties
+
+            if not tmp_hash[:extra_versions]
+              tmp_hash[:extra_versions] = []
+            end
+            tmp_hash[:extra_versions] << hash
+
+            packages_hash[hash[:name]] = new(tmp_hash)
+          else
+            packages_hash[hash[:name]] = new(hash) unless hash.empty?
+          end
         }
       }
     rescue Puppet::ExecutionFailure
       raise Puppet::Error, _("Failed to list packages"), $!.backtrace
     end
 
-    packages
+    packages_hash.values
   end
 
   # Find the fully versioned package name and the version alone. Returns
@@ -118,9 +131,16 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         return nil
       end
     end
-    # FIXME: We could actually be getting back multiple packages
-    # for multilib and this will only return the first such package
-    @property_hash.update(self.class.nevra_to_hash(output))
+    # Multiple packages versions are added as extension in :extra_versions
+    output_array=output.split("\n'")
+    new_property_hash = self.class.nevra_to_hash(output_array[0])
+    if !output_array[1..-1].empty?
+      new_property_hash[:extra_versions] = output_array[1..-1].map do |line|
+        self.class.nevra_to_hash(line)
+      end
+    end
+
+    @property_hash.update(new_property_hash)
 
     @property_hash.dup
   end
@@ -310,7 +330,12 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   def insync?(is)
     return false if [:purged, :absent].include?(is)
     should = resource[:ensure]
-    0 == rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(is))
+    0 == rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(is)) ||
+      (resource.provider.properties[:extra_versions] &&
+       resource.provider.properties[:extra_versions].any? { |ev|
+         0 == rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(ev[:ensure]))
+       }
+      )
   end
 
   # parse a rpm "version" specification
