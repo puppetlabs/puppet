@@ -207,6 +207,54 @@ describe "Puppet::InfoService" do
       end
     end
   end
+  
+  context 'plan information service' do
+    let(:mod_name) { 'test1' }
+    let(:plan_name) { "#{mod_name}::thingplan" }
+    let(:modpath) { tmpdir('modpath') }
+    let(:env_name) { 'testing' }
+    let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [modpath]) }
+    let(:env_loader) { Puppet::Environments::Static.new(env) }
+
+    context 'plans_per_environment method' do
+      it "returns plan data for the plans in an environment" do
+        Puppet.override(:environments => env_loader) do
+          PuppetSpec::Modules.create(mod_name, modpath, {:environment => env, :plans => ['thingplan.pp']})
+          expect(Puppet::InfoService.plans_per_environment(env_name)).to eq([{:name => plan_name, :module => {:name => mod_name}}])
+        end
+      end
+
+      it "should throw EnvironmentNotFound if given a nonexistent environment" do
+        expect{ Puppet::InfoService.plans_per_environment('utopia') }.to raise_error(Puppet::Environments::EnvironmentNotFound)
+      end
+    end
+
+    context 'plan_data method' do
+      context 'For a valid simple module' do
+        before do
+          Puppet.override(:environments => env_loader) do
+            @mod = PuppetSpec::Modules.create(mod_name, modpath,
+                                              {:environment => env,
+                                               :plans => ['thingplan.pp']})
+            @result = Puppet::InfoService.plan_data(env_name, mod_name, plan_name)
+          end
+        end
+
+        it 'returns the right set of keys' do
+          expect(@result.keys.sort).to eq([:files, :metadata])
+        end
+
+        it 'specifies the metadata_file correctly' do
+          expect(@result[:metadata]).to eq({})
+        end
+
+        it 'specifies the other files correctly' do
+          plan = @mod.plans[0]
+          expect(@result[:files]).to eq(plan.files)
+        end
+      end
+    end
+  end
 
   context 'classes_per_environment service' do
     let(:code_dir) do

@@ -34,6 +34,18 @@ module PuppetSpec::Modules
         end
       end
 
+      if plans = options[:plans]
+        plans_dir = File.join(module_dir, 'plans')
+        FileUtils.mkdir_p(plans_dir)
+        plans.each do |plan_file|
+          if plan_file.is_a?(String)
+            # default content to acceptable metadata
+            plan_file = { :name => plan_file, :content => "{}" }
+          end
+          File.write(File.join(plans_dir, plan_file[:name]), plan_file[:content])
+        end
+      end
+
       (options[:files] || {}).each do |fname, content|
         path = File.join(module_dir, fname)
         FileUtils.mkdir_p(File.dirname(path))
