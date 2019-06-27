@@ -29,7 +29,10 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
   def self.provider_command
     # Ensure pip can upgrade pip, which usually puts pip into a new path /usr/local/bin/pip (compared to /usr/bin/pip)
-    self.cmd.map { |c| which(c) }.find { |c| c != nil }
+    cmd = self.cmd.map { |c| which(c) }.find { |c| c != nil }
+    # Quote the command, to protect against spaces:
+    cmd = '"' + cmd + '"' unless cmd.nil?
+    cmd
   end
 
   def self.cmd

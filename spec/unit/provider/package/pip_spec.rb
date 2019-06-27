@@ -61,11 +61,12 @@ describe Puppet::Type.type(:package).provider(:pip) do
               expect(described_class).to receive(:which).with(cmd).and_return(nil)
             end
           end
-          allow(described_class).to receive(:pip_version).with(pip_cmd).and_return('8.0.1')
+          pip_cmd_path = '"' + pip_cmd + '"'
+          allow(described_class).to receive(:pip_version).with(pip_cmd_path).and_return('8.0.1')
           expect(described_class).to receive(:which).with(pip_cmd).and_return(pip_cmd)
           p = double("process")
           expect(p).to receive(:collect).and_yield("real_package==1.2.5")
-          expect(described_class).to receive(:execpipe).with([pip_cmd, ["freeze"]]).and_yield(p)
+          expect(described_class).to receive(:execpipe).with([pip_cmd_path, ["freeze"]]).and_yield(p)
           described_class.instances
         end
       end
