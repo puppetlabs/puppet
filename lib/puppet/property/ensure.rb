@@ -77,7 +77,8 @@ class Puppet::Property::Ensure < Puppet::Property
     # to get checked, which means that those other properties do not have
     # @is values set.  This seems to be the source of quite a few bugs,
     # although they're mostly logging bugs, not functional ones.
-    if prov = @resource.provider and prov.respond_to?(:exists?)
+    prov = @resource.provider
+    if prov && prov.respond_to?(:exists?)
       result = prov.exists?
     elsif @resource.respond_to?(:exists?)
       result = @resource.exists?

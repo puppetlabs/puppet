@@ -37,7 +37,8 @@ module Puppet::Pops::Parser::InterpolationSupport
         enqueue_until count
         break
       when '$'
-        if varname = scn.scan(PATTERN_VARIABLE)
+        varname = scn.scan(PATTERN_VARIABLE)
+        if varname
           # The $ is counted towards the variable
           enqueue_completed([:DQPRE, text, after-before-1], before)
           enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
@@ -78,7 +79,8 @@ module Puppet::Pops::Parser::InterpolationSupport
         enqueue_until count
         break
       when '$'
-        if varname = scn.scan(PATTERN_VARIABLE)
+        varname = scn.scan(PATTERN_VARIABLE)
+        if varname
           # The $ is counted towards the variable
           enqueue_completed([:DQMID, text, after-before-1], before)
           enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
@@ -122,7 +124,8 @@ module Puppet::Pops::Parser::InterpolationSupport
         enqueue_until count
         break
       when '$'
-        if varname = scn.scan(PATTERN_VARIABLE)
+        varname = scn.scan(PATTERN_VARIABLE)
+        if varname
           # The $ is counted towards the variable
           enqueue_completed([:DQPRE, text, after-before-1], before)
           enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
@@ -162,7 +165,8 @@ module Puppet::Pops::Parser::InterpolationSupport
         enqueue_until count
         break
       when '$'
-        if varname = scn.scan(PATTERN_VARIABLE)
+        varname = scn.scan(PATTERN_VARIABLE)
+        if varname
           # The $ is counted towards the variable
           enqueue_completed([:DQMID, text, after-before-1], before)
           enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
@@ -190,7 +194,8 @@ module Puppet::Pops::Parser::InterpolationSupport
     scn.skip(self.class::PATTERN_WS)
     queue_size = queue.size
     until scn.eos? do
-      if token = lex_token
+      token = lex_token
+      if token
         if token.equal?(queue_base)
           # A nested #interpolate_dq call shifted the queue_base token from the @token_queue. It must
           # be put back since it is intended for the top level #interpolate_dq call only.

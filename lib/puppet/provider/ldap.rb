@@ -10,7 +10,8 @@ class Puppet::Provider::Ldap < Puppet::Provider
 
   # Look up all instances at our location.  Yay.
   def self.instances
-    return [] unless list = manager.search
+    list = manager.search
+    return [] unless list
 
     list.collect { |entry| new(entry) }
   end
@@ -29,7 +30,8 @@ class Puppet::Provider::Ldap < Puppet::Provider
   # Query all of our resources from ldap.
   def self.prefetch(resources)
     resources.each do |name, resource|
-      if result = manager.find(name)
+      result = manager.find(name)
+      if result
         result[:ensure] = :present
         resource.provider = new(result)
       else
@@ -45,7 +47,8 @@ class Puppet::Provider::Ldap < Puppet::Provider
   def create
     @property_hash[:ensure] = :present
     self.class.resource_type.validproperties.each do |property|
-      if val = resource.should(property)
+      val = resource.should(property)
+      if val
         if property.to_s == 'gid'
           self.gid = val
         else
@@ -126,7 +129,8 @@ class Puppet::Provider::Ldap < Puppet::Provider
   # LAK:NOTE This is normally not used, because we rely on prefetching.
   def query
     # Use the module function.
-    unless attributes = manager.find(name)
+    attributes = manager.find(name)
+    unless attributes
       @ldap_properties = {}
       return nil
     end

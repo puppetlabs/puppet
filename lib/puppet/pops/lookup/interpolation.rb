@@ -135,7 +135,8 @@ module Interpolation
   end
 
   def get_method_and_data(data, allow_methods)
-    if match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
+    match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
+    if match
       fail(Issues::HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED) unless allow_methods
       key = match[1].to_sym
       data = match[2] || match[3] # double or single qouted

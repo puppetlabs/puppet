@@ -277,12 +277,16 @@ WRAPPER
 
   def add_option(option)
     option.aliases.each do |name|
-      if conflict = get_option(name) then
+      conflict = get_option(name)
+      if conflict
         raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict}") %
             { option: option, conflict: conflict }
-      elsif conflict = @face.get_option(name) then
-        raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict} on %{face}") %
-            { option: option, conflict: conflict, face: @face }
+      else
+        conflict = @face.get_option(name)
+        if conflict
+          raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict} on %{face}") %
+              { option: option, conflict: conflict, face: @face }
+        end
       end
     end
 
@@ -340,7 +344,8 @@ WRAPPER
     overlap = Hash.new do |h, k| h[k] = [] end
     unknown = []
     original.keys.each do |name|
-      if option = get_option(name) then
+      option = get_option(name)
+      if option
         canonical = option.name
         if result.has_key? canonical
           overlap[canonical] << name

@@ -44,7 +44,7 @@ class StaticLoader < Loader
 
   def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY)
     # Static loader only contains runtime types
-    return EMPTY_ARRAY unless type == :type && name_authority == name_authority = Pcore::RUNTIME_NAME_AUTHORITY
+    return EMPTY_ARRAY unless type == :type && name_authority == name_authority = Pcore::RUNTIME_NAME_AUTHORITY #rubocop:disable Lint/AssignmentInCondition
 
     typed_names = type == :type && name_authority == Pcore::RUNTIME_NAME_AUTHORITY ? @loaded.keys : EMPTY_ARRAY
     block_given? ? typed_names.select { |tn| yield(tn) } : typed_names

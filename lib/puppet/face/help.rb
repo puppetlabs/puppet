@@ -182,8 +182,9 @@ Puppet::Face.define(:help, '0.0.1') do
     # depends on the implementation coincidence of how our pages are
     # formatted.  If we can't match the pattern we expect we return the empty
     # string to ensure we don't blow up in the summary. --daniel 2011-04-11
-    while line = help.shift do
-      if md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line)
+    while line = help.shift do #rubocop:disable Lint/AssignmentInCondition
+      md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line)
+      if md
         return md[1]
       end
     end

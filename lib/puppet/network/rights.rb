@@ -39,7 +39,8 @@ class Rights
       # an acl can return :dunno, which means "I'm not qualified to answer your question,
       # please ask someone else". This is used when for instance an acl matches, but not for the
       # current rest method, where we might think some other acl might be more specific.
-      if match = acl.match?(name)
+      match = acl.match?(name)
+      if match
         args[:match] = match
         if (res = acl.allowed?(args[:node], args[:ip], args)) != :dunno
           # return early if we're allowed

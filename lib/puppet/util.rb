@@ -148,7 +148,8 @@ module Util
 
   # Change the process to a different user
   def self.chuser
-    if group = Puppet[:group]
+    group = Puppet[:group]
+    if group
       begin
         Puppet::Util::SUIDManager.change_group(group, true)
       rescue => detail
@@ -161,7 +162,8 @@ module Util
       end
     end
 
-    if user = Puppet[:user]
+    user = Puppet[:user]
+    if user
       begin
         Puppet::Util::SUIDManager.change_user(user, true)
       rescue => detail
@@ -324,7 +326,8 @@ module Util
     if Puppet::Util::Platform.windows?
       path = path.gsub(/\\/, '/')
 
-      if unc = /^\/\/([^\/]+)(\/.+)/.match(path)
+      unc = /^\/\/([^\/]+)(\/.+)/.match(path)
+      if unc
         params[:host] = unc[1]
         path = unc[2]
       elsif path =~ /^[a-z]:\//i

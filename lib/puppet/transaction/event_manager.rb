@@ -68,7 +68,8 @@ class Puppet::Transaction::EventManager
       received = (event.name != :restarted)
       relationship_graph.matching_edges(event, resource).each do |edge|
         received ||= true unless edge.target.is_a?(Puppet::Type.type(:whit))
-        next unless method = edge.callback
+        method = edge.callback
+        next unless method
         next unless edge.target.respond_to?(method)
 
         queue_events_for_resource(resource, edge.target, method, list)
@@ -114,7 +115,8 @@ class Puppet::Transaction::EventManager
   end
 
   def queued_events(resource)
-    return unless callbacks = @event_queues[resource]
+    callbacks = @event_queues[resource]
+    return unless callbacks
     callbacks.each do |callback, events|
       yield callback, events unless events.empty?
     end

@@ -544,12 +544,14 @@ module Puppet
     autorequire(:file) do
       autos = []
       [:responsefile, :adminfile].each { |param|
-        if val = self[param]
+        val = self[param]
+        if val
           autos << val
         end
       }
 
-      if source = self[:source] and absolute_path?(source)
+      source = self[:source]
+      if source && absolute_path?(source)
         autos << source
       end
       autos
@@ -557,7 +559,8 @@ module Puppet
 
     # This only exists for testing.
     def clear
-      if obj = @parameters[:ensure]
+      obj = @parameters[:ensure]
+      if obj
         obj.latest = nil
       end
     end

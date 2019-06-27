@@ -29,7 +29,8 @@ module Puppet::Util
         Puppet[setting]
       else
         server = Puppet.lookup(:server) do
-          if primary_server = Puppet.settings[:server_list][0]
+          primary_server = Puppet.settings[:server_list][0]
+          if primary_server
             #TRANSLATORS 'server_list' is the name of a setting and should not be translated
             debug_once _("Dynamically-bound server lookup failed; using first entry from the `server_list` setting: %{server}") % {server: primary_server[0]}
             primary_server[0]
@@ -60,7 +61,8 @@ module Puppet::Util
         Puppet.settings[port_setting].to_i
       else
         port = Puppet.lookup(:serverport) do
-          if primary_server = Puppet.settings[:server_list][0]
+          primary_server = Puppet.settings[:server_list][0]
+          if primary_server
             # Port might not be set, so we want to fallback in that
             # case. We know we don't need to use `setting` here, since
             # the default value of every port setting is `masterport`

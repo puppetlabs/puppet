@@ -132,7 +132,8 @@ Puppet::Type.newtype(:resources) do
 
   def resource_type
     unless defined?(@resource_type)
-      unless type = Puppet::Type.type(self[:name])
+      type = Puppet::Type.type(self[:name])
+      unless type
         raise Puppet::DevError, _("Could not find resource type")
       end
       @resource_type = type

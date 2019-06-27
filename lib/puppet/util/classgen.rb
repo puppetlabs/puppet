@@ -70,7 +70,8 @@ module Puppet::Util::ClassGen
       retval = true
     end
 
-    if hash = options[:hash] and hash.include? name
+    hash = options[:hash]
+    if hash && hash.include?(name)
       hash.delete(name)
       retval = true
     end
@@ -84,7 +85,8 @@ module Puppet::Util::ClassGen
   # Generates the constant to create or remove.
   # @api private
   def genconst_string(name, options)
-    unless const = options[:constant]
+    const = options[:constant]
+    unless const
       prefix = options[:prefix] || ""
       const = prefix + name2const(name)
     end
@@ -169,7 +171,8 @@ module Puppet::Util::ClassGen
   def initclass(klass, options)
     klass.initvars if klass.respond_to? :initvars
 
-    if attrs = options[:attributes]
+    attrs = options[:attributes]
+    if attrs
       attrs.each do |param, value|
         method = param.to_s + "="
         klass.send(method, value) if klass.respond_to? method
@@ -177,7 +180,8 @@ module Puppet::Util::ClassGen
     end
 
     [:include, :extend].each do |method|
-      if set = options[method]
+      set = options[method]
+      if set
         set = [set] unless set.is_a?(Array)
         set.each do |mod|
           klass.send(method, mod)
@@ -197,7 +201,8 @@ module Puppet::Util::ClassGen
   # Store the class in the appropriate places.
   # @api private
   def storeclass(klass, klassname, options)
-    if hash = options[:hash]
+    hash = options[:hash]
+    if hash
       if hash.include? klassname and ! options[:overwrite]
         raise Puppet::SubclassAlreadyDefined,
           _("Already a generated class named %{klassname}") % { klassname: klassname }
@@ -207,7 +212,8 @@ module Puppet::Util::ClassGen
     end
 
     # If we were told to stick it in a hash, then do so
-    if array = options[:array]
+    array = options[:array]
+    if array
       if (klass.respond_to? :name and
               array.find { |c| c.name == klassname } and
               ! options[:overwrite])

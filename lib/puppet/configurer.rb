@@ -67,7 +67,8 @@ class Puppet::Configurer
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
   def retrieve_catalog(query_options)
     query_options ||= {}
-    if (Puppet[:use_cached_catalog] && result = retrieve_catalog_from_cache(query_options))
+    result = retrieve_catalog_from_cache(query_options) if Puppet[:use_cached_catalog]
+    if result
       @cached_catalog_status = 'explicitly_requested'
 
       Puppet.info _("Using cached catalog from environment '%{environment}'") % { environment: result.environment }
@@ -104,7 +105,8 @@ class Puppet::Configurer
 
     catalog_conversion_time = thinmark do
       # Will mutate the result and replace all Deferred values with resolved values
-      if facts = options[:convert_with_facts]
+      facts = options[:convert_with_facts]
+      if facts
         Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(facts, result)
       end
 
@@ -257,7 +259,8 @@ class Puppet::Configurer
       Puppet::GettextConfig.reset_text_domain('agent')
       Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
 
-      if catalog = prepare_and_retrieve_catalog_from_cache(options)
+      catalog = prepare_and_retrieve_catalog_from_cache(options)
+      if catalog
         options[:catalog] = catalog
         @cached_catalog_status = 'explicitly_requested'
 
@@ -339,7 +342,8 @@ class Puppet::Configurer
       query_options[:configured_environment] = configured_environment
       options[:convert_for_node] = node
 
-      unless catalog = prepare_and_retrieve_catalog(options, query_options)
+      catalog = prepare_and_retrieve_catalog(options, query_options)
+      unless catalog
         return nil
       end
 
@@ -364,7 +368,8 @@ class Puppet::Configurer
         query_options = get_facts(options)
         query_options[:configured_environment] = configured_environment
 
-        return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
+        catalog = prepare_and_retrieve_catalog(options, query_options)
+        return nil unless catalog
         tries += 1
       end
 

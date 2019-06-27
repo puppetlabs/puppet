@@ -92,7 +92,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # clear out our cache when we're done.
   def self.prefetch(resources)
     instances.each do |prov|
-      if resource = resources[prov.name]
+      resource = resources[prov.name]
+      if resource
         resource.provider = prov
       end
     end
@@ -316,7 +317,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     _, job_plist = plist_from_label(resource[:name])
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
-    if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_overrides
+    overrides = self.class.read_overrides if FileTest.file?(self.class.launchd_overrides)
+    if overrides
       if overrides.has_key?(resource[:name])
         if self.class.get_os_version < 14
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")

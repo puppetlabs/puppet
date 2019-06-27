@@ -11,7 +11,8 @@ class Puppet::ConfineCollection
       for_binary = false
     end
     hash.each do |test, values|
-      if klass = Puppet::Confine.test(test)
+      klass = Puppet::Confine.test(test)
+      if klass
         @confines << klass.new(values)
         @confines[-1].for_binary = true if for_binary
       else

@@ -13,7 +13,8 @@ class Puppet::Provider::NetworkDevice < Puppet::Provider
   def self.prefetch(resources)
     resources.each do |name, resource|
       device = Puppet::Util::NetworkDevice.current || device(resource[:device_url])
-      if result = lookup(device, name)
+      result = lookup(device, name)
+      if result
         result[:ensure] = :present
         resource.provider = new(device, result)
       else
@@ -45,7 +46,8 @@ class Puppet::Provider::NetworkDevice < Puppet::Provider
   def create
     @property_hash[:ensure] = :present
     self.class.resource_type.validproperties.each do |property|
-      if val = resource.should(property)
+      val = resource.should(property)
+      if val
         @property_hash[property] = val
       end
     end

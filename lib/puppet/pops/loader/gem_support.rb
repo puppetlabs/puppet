@@ -26,7 +26,8 @@ module Puppet::Pops::Loader::GemSupport
   # TODO: FIND by name raises exception Gem::LoadError with list of all gems on the path
   #
   def gem_dir_from_uri(uri)
-    unless spec = Gem::Specification.find_by_name(uri.hostname)
+    spec = Gem::Specification.find_by_name(uri.hostname)
+    unless spec
       raise ArgumentError, _("Gem not found %{uri}") % { uri: uri }
     end
     # if path given append that, else append given subdir
@@ -41,7 +42,8 @@ module Puppet::Pops::Loader::GemSupport
   # TODO: FIND by name raises exception Gem::LoadError with list of all gems on the path
   #
   def gem_dir_from_name(gem_name)
-    unless spec = Gem::Specification.find_by_name(gem_name)
+    spec = Gem::Specification.find_by_name(gem_name)
+    unless spec
       raise ArgumentError, _("Gem not found '%{gem_name}'") % { gem_name: gem_name }
     end
     spec.full_gem_path

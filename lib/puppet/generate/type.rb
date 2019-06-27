@@ -195,7 +195,8 @@ module Puppet
           types ||= Puppet::Type.instance_variable_get('@types')
 
           # Assume the type follows the naming convention
-          unless type = types[type_name]
+          type = types[type_name]
+          unless type
             Puppet.err _("Custom type '%{type_name}' was not defined in '%{input}'.") % { type_name: type_name, input: input }
             next
           end

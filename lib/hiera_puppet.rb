@@ -58,7 +58,8 @@ module HieraPuppet
   def hiera_config
     config = {}
 
-    if config_file = hiera_config_file
+    config_file = hiera_config_file
+    if config_file
       config = Hiera::Config.load(config_file)
     end
 

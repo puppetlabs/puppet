@@ -53,14 +53,16 @@ module Puppet::Interface::OptionManager
     @options_hash ||= {}
 
     option.aliases.each do |name|
-      if conflict = get_option(name) then
+      conflict = get_option(name)
+      if conflict
         raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict}") %
             { option: option, conflict: conflict }
       end
 
       actions.each do |action|
         action = get_action(action)
-        if conflict = action.get_option(name) then
+        conflict = action.get_option(name)
+        if conflict
           raise ArgumentError, _("Option %{option} conflicts with existing option %{conflict} on %{action}") %
               { option: option, conflict: conflict, action: action }
         end

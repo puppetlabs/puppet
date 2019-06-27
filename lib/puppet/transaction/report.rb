@@ -256,24 +256,24 @@ class Puppet::Transaction::Report
     @time = data['time']
     @corrective_change = data['corrective_change']
 
-    if master_used = data['master_used']
-      @master_used = master_used
+    if data['master_used'] 
+      @master_used = data['master_used']
     end
 
-    if catalog_uuid = data['catalog_uuid']
-      @catalog_uuid = catalog_uuid
+    if data['catalog_uuid'] 
+      @catalog_uuid = data['catalog_uuid']
     end
 
-    if job_id = data['job_id']
-      @job_id = job_id
+    if data['job_id']
+      @job_id = data['job_id']
     end
 
-    if code_id = data['code_id']
-      @code_id = code_id
+    if data['code_id']
+      @code_id = data['code_id']
     end
 
-    if cached_catalog_status = data['cached_catalog_status']
-      @cached_catalog_status = cached_catalog_status
+    if data['cached_catalog_status']
+      @cached_catalog_status = data['cached_catalog_status']
     end
 
     if @time.is_a? String

@@ -232,7 +232,8 @@ module Puppet::Parser::Functions
   def self.function(name, environment = Puppet.lookup(:current_environment))
     name = name.intern
 
-    unless func = get_function(name, environment)
+    func = get_function(name, environment)
+    unless func
       autoloader.delegatee.load(name, environment)
       func = get_function(name, environment)
     end

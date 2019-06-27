@@ -45,7 +45,8 @@ module Puppet
 
       def retrieve
         #ok, some 'convention' if the list property is named groups, provider should implement a groups method
-        if provider and tmp = provider.send(name) and tmp != :absent
+        tmp = provider.send(name) if provider
+        if tmp && tmp != :absent
           return tmp.split(delimiter)
         else
           return :absent

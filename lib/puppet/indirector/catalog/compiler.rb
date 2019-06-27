@@ -18,8 +18,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   #   (possibly) containing facts
   # @return [Puppet::Node::Facts] facts object corresponding to facts in request
   def extract_facts_from_request(request)
-    return unless text_facts = request.options[:facts]
-    unless format = request.options[:facts_format]
+    text_facts = request.options[:facts]
+    return unless text_facts
+    format = request.options[:facts_format]
+    unless format
       raise ArgumentError, _("Facts but no fact format provided for %{request}") % { request: request.key }
     end
 
@@ -199,7 +201,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         sources.each do |source|
           source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
 
-          if list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
+          list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
+          if list_of_data
             basedir_meta = list_of_data.find {|meta| meta.relative_path == '.'}
             devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
@@ -243,7 +246,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         sources.each do |source|
           source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
 
-          if data = Puppet::FileServing::Metadata.indirection.find(source, options)
+          data = Puppet::FileServing::Metadata.indirection.find(source, options)
+          if data
             metadata = data
             metadata.source = source
             break
@@ -362,7 +366,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Extract the node from the request, or use the request
   # to find the node.
   def node_from_request(facts, request)
-    if node = request.options[:use_node]
+    node = request.options[:use_node]
+    if node
       if request.remote?
         raise Puppet::Error, _("Invalid option use_node for a remote request")
       else
@@ -378,7 +383,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # node's catalog with only one certificate and a modification to auth.conf
     # If no key is provided we can only compile the currently connected node.
     name = request.key || request.node
-    if node = find_node(name, request.environment, request.options[:transaction_uuid], request.options[:configured_environment], facts)
+    node = find_node(name, request.environment, request.options[:transaction_uuid], request.options[:configured_environment], facts)
+    if node
       return node
     end
 
@@ -397,7 +403,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     {"servername" => "fqdn",
       "serverip" => "ipaddress"
     }.each do |var, fact|
-      if value = Facter.value(fact)
+      value = Facter.value(fact)
+      if value
         @server_facts[var] = value
       else
         Puppet.warning _("Could not retrieve fact %{fact}") % { fact: fact }
@@ -406,7 +413,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     if @server_facts["servername"].nil?
       host = Facter.value(:hostname)
-      if domain = Facter.value(:domain)
+      domain = Facter.value(:domain)
+      if domain
         @server_facts["servername"] = [host, domain].join(".")
       else
         @server_facts["servername"] = host

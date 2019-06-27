@@ -50,8 +50,8 @@ DOC
   end
 
   def to_s
-    if pass = password
-      @content.export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), pass)
+    if password
+      @content.export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), password)
     else
       return super
     end

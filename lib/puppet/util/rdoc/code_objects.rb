@@ -64,7 +64,8 @@ module RDoc
     # Adds a module called __nodes__ and adds nodes to it as classes
     #
     def add_node(name,superclass)
-      if cls = @nodes[name]
+      cls = @nodes[name]
+      if cls
         return cls
       end
       @node_container ||= add_module(NormalModule, "__nodes__")

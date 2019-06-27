@@ -1,4 +1,3 @@
-
 # The scope class, which handles storing and retrieving variables and types and
 # such.
 require 'forwardable'
@@ -652,8 +651,10 @@ class Puppet::Parser::Scope
   private :has_enclosing_scope?
 
   def qualified_scope(classname)
-    raise _("class %{classname} could not be found") % { classname: classname }     unless klass = find_hostclass(classname)
-    raise _("class %{classname} has not been evaluated") % { classname: classname } unless kscope = class_scope(klass)
+    klass = find_hostclass(classname)
+    raise _("class %{classname} could not be found") % { classname: classname }     unless klass
+    kscope = class_scope(klass)
+    raise _("class %{classname} has not been evaluated") % { classname: classname } unless kscope
     kscope
   end
   private :qualified_scope
@@ -881,7 +882,8 @@ class Puppet::Parser::Scope
     env_path = nil
     env_path = environment.configuration.path_to_env unless (environment.nil? || environment.configuration.nil?)
     # check module paths first since they may be in the environment (i.e. they are longer)
-    if module_path = environment.full_modulepath.detect {|m_path| path.start_with?(m_path) }
+    module_path = environment.full_modulepath.detect {|m_path| path.start_with?(m_path) }
+    if module_path
       path = "<module>" + path[module_path.length..-1]
     elsif env_path && path && path.start_with?(env_path)
       path = "<env>" + path[env_path.length..-1]

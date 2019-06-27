@@ -139,17 +139,19 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     # All types serialized to disk contain only ASCII content:
     # * SSL::Key may be a .export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), pass) or .to_pem
     # * All other classes are translated to strings by calling .to_pem
-
     if file_location
       Puppet.settings.setting(self.class.file_setting).open('w:ASCII') { |f| yield f }
-    elsif setting = self.class.directory_setting
-      begin
-        Puppet.settings.setting(setting).open_file(path, 'w:ASCII') { |f| yield f }
-      rescue => detail
-        raise Puppet::Error, _("Could not write %{path} to %{setting}: %{detail}") % { path: path, setting: setting, detail: detail }, detail.backtrace
-      end
     else
-      raise Puppet::DevError, _("You must provide a setting to determine where the files are stored")
+      setting = self.class.directory_setting
+      if setting
+        begin
+          Puppet.settings.setting(setting).open_file(path, 'w:ASCII') { |f| yield f }
+        rescue => detail
+          raise Puppet::Error, _("Could not write %{path} to %{setting}: %{detail}") % { path: path, setting: setting, detail: detail }, detail.backtrace
+        end
+      else
+        raise Puppet::DevError, _("You must provide a setting to determine where the files are stored")
+      end
     end
   end
 end

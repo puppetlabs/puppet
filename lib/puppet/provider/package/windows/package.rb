@@ -26,7 +26,8 @@ class Puppet::Provider::Package::Windows
         name = key.name.match(/^.+\\([^\\]+)$/).captures[0]
 
         [MsiPackage, ExePackage].find do |klass|
-          if pkg = klass.from_registry(name, values)
+          pkg = klass.from_registry(name, values)
+          if pkg
             yield pkg
           end
         end

@@ -318,17 +318,20 @@ class Puppet::Interface
       when String then
         input.strip.split(/,/).map do |part|
           part = part.strip
-          if part =~ /^\d+$/ then
+          if part.match(/^\d+$/)
             part.to_i
-          elsif found = part.split(/-/) then
-            unless found.length == 2 and found.all? {|x| x.strip =~ /^\d+$/ }
+          else
+            found = part.split(/-/)
+            if found
+              unless found.length == 2 and found.all? {|x| x.strip =~ /^\d+$/ }
+                #TRANSLATORS 'copyright' is an attribute name and should not be translated
+                raise ArgumentError, _("%{value} is not a good copyright year or range") % { value: part.inspect }
+              end
+              Range.new(found[0].to_i, found[1].to_i)
+            else
               #TRANSLATORS 'copyright' is an attribute name and should not be translated
               raise ArgumentError, _("%{value} is not a good copyright year or range") % { value: part.inspect }
             end
-            Range.new(found[0].to_i, found[1].to_i)
-          else
-            #TRANSLATORS 'copyright' is an attribute name and should not be translated
-            raise ArgumentError, _("%{value} is not a good copyright year or range") % { value: part.inspect }
           end
         end
 

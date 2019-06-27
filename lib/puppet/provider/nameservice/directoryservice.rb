@@ -313,10 +313,13 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         # have a string and need to convert it to a number
         if @resource.should(name)
           @resource.property(name).sync
-        elsif value = autogen(name)
-          self.send(name.to_s + "=", value)
         else
-          next
+          value = autogen(name)
+          if value
+            self.send(name.to_s + "=", value)
+          else
+            next
+          end
         end
       end
     end
@@ -393,7 +396,8 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       fail(_("Could not set GeneratedUID for %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail })
     end
 
-    if value = @resource.should(:password) and value != ""
+    value = @resource.should(:password)
+    if value && value != ""
       self.class.set_password(@resource[:name], guid, value)
     end
 

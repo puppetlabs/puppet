@@ -835,7 +835,8 @@ class Factory
   end
 
   def self.NUMBER(name_or_numeric)
-    if n_radix = Utils.to_n_with_radix(name_or_numeric)
+    n_radix = Utils.to_n_with_radix(name_or_numeric)
+    if n_radix
       val, radix = n_radix
       if val.is_a?(Float)
         new(LiteralFloat, val)
@@ -853,7 +854,8 @@ class Factory
   # Convert input string to either a qualified name, a LiteralInteger with radix, or a LiteralFloat
   #
   def self.QNAME_OR_NUMBER(name)
-    if n_radix = Utils.to_n_with_radix(name)
+    n_radix = Utils.to_n_with_radix(name)
+    if n_radix
       val, radix = n_radix
       if val.is_a?(Float)
         new(LiteralFloat, val)

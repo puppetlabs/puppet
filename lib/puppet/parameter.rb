@@ -110,11 +110,13 @@ class Puppet::Parameter
 
       unless defined?(@addeddocvals)
         @doc = Puppet::Util::Docs.scrub(@doc)
-        if vals = value_collection.doc
+        vals = value_collection.doc
+        if vals
           @doc << "\n\n#{vals}"
         end
 
-        if features = self.required_features
+        features = self.required_features
+        if features
           @doc << "\n\nRequires features #{features.flatten.collect { |f| f.to_s }.join(" ")}."
         end
         @addeddocvals = true

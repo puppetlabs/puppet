@@ -144,7 +144,8 @@ module Puppet::ModuleTool
           end
 
           releases.each do |rel|
-            if mod = installed_modules_source.by_name[rel.name.split('-').last]
+            mod = installed_modules_source.by_name[rel.name.split('-').last]
+            if mod
               next if mod.has_metadata? && mod.forge_name.tr('/', '-') == rel.name
 
               if rel.name != name
@@ -189,7 +190,8 @@ module Puppet::ModuleTool
 
           Puppet.notice _('Upgrading -- do not interrupt ...')
           releases.each do |release|
-            if installed = installed_modules[release.name]
+            installed = installed_modules[release.name]
+            if installed
               release.install(Pathname.new(installed.mod.modulepath))
             else
               release.install(dir)

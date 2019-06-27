@@ -111,7 +111,8 @@ module Puppet::ModuleTool::Shared
       valid_versions = versions.select { |x| x[:semver].special == '' }
       valid_versions = versions if valid_versions.empty?
 
-      unless version = valid_versions.last
+      version = valid_versions.last
+      unless version
         req_module   = @module_name
         req_versions = @versions["#{@module_name}"].map { |v| v[:semver] }
         raise NoVersionsSatisfyError,

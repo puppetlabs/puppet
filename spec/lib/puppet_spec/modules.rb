@@ -6,7 +6,8 @@ module PuppetSpec::Modules
 
       environment = options[:environment]
 
-      if metadata = options[:metadata]
+      metadata = options[:metadata]
+      if metadata
         metadata[:source]  ||= 'github'
         metadata[:author]  ||= 'puppetlabs'
         metadata[:version] ||= '9.9.9'
@@ -20,7 +21,8 @@ module PuppetSpec::Modules
         end
       end
 
-      if tasks = options[:tasks]
+      tasks = options[:tasks]
+      if tasks
         tasks_dir = File.join(module_dir, 'tasks')
         FileUtils.mkdir_p(tasks_dir)
         tasks.each do |task_files|

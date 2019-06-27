@@ -179,10 +179,14 @@ ERROR_STRING
   # @return [Puppet::SSL::CertificateRequest, nil]
   def certificate_request
     unless @certificate_request
-      if csr = load_certificate_request_from_file
+      csr = load_certificate_request_from_file
+      if csr
         @certificate_request = csr
-      elsif csr = download_csr_from_ca
-        @certificate_request = csr
+      else
+        csr = download_csr_from_ca
+        if csr 
+          @certificate_request = csr
+        end
       end
     end
     @certificate_request
@@ -389,13 +393,17 @@ ERROR_STRING
   # no certificate could be found.
   # @return [Puppet::SSL::Certificate, nil]
   def get_host_certificate
-    if cert = check_for_certificate_on_disk(name)
-      return cert
-    elsif cert = download_certificate_from_ca(name)
-      save_host_certificate(cert)
+    cert = check_for_certificate_on_disk(name)
+    if cert
       return cert
     else
-      return nil
+      cert = download_certificate_from_ca(name)
+      if cert
+        save_host_certificate(cert)
+        return cert
+      else
+        return nil
+      end
     end
   end
 

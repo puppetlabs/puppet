@@ -71,7 +71,7 @@ module Puppet::Network
         each_srv_record(domain, :puppet, &block)
       else
         each_priority(records) do |recs|
-          while next_rr = recs.delete(find_weighted_server(recs))
+          while next_rr = recs.delete(find_weighted_server(recs)) #rubocop:disable Lint/AssignmentInCondition
             Puppet.debug "Yielding next server of #{next_rr.target.to_s}:#{next_rr.port}"
             yield next_rr.target.to_s, next_rr.port
           end
@@ -125,7 +125,8 @@ module Puppet::Network
     # @return [Boolean] true if the entry has expired, false otherwise.
     #                  Always returns true if the record had no TTL.
     def expired?(service_name)
-      if entry = @record_cache[service_name]
+      entry = @record_cache[service_name]
+      if entry
         return Time.now > (entry.resolution_time + entry.ttl)
       else
         return true

@@ -73,7 +73,8 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
       cmd = [command(:add)]
     end
 
-    if gid = @resource.should(:gid)
+    gid = @resource.should(:gid)
+    if gid
       unless gid == :absent
         cmd << flag(:gid) << gid
       end

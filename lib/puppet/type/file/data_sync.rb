@@ -71,7 +71,8 @@ module Puppet
     end
 
     def retrieve_checksum(resource)
-      return :absent unless stat = resource.stat
+      stat = resource.stat
+      return :absent unless stat
       ftype = stat.ftype
       # Don't even try to manage the content on directories or links
       return nil if ["directory","link"].include?(ftype)

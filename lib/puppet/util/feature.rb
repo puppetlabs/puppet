@@ -93,11 +93,14 @@ class Puppet::Util::Feature
       end
       @results[name] = result
       result
-    elsif libs = options[:libs]
-      libs = [libs] unless libs.is_a?(Array)
-      libs.all? { |lib| load_library(lib, name) } ? true : nil
     else
-      true
+      libs = options[:libs]
+      if libs
+        libs = [libs] unless libs.is_a?(Array)
+        libs.all? { |lib| load_library(lib, name) } ? true : nil
+      else
+        true
+      end
     end
   end
 

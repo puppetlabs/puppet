@@ -197,7 +197,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # because sometimes an alias is created before the resource is
     # added to the catalog, so comparing inside the below if block
     # isn't sufficient.
-    if existing = @resource_table[newref]
+    existing = @resource_table[newref]
+    if existing
       return if existing == resource
       resource_declaration = Puppet::Util::Errors.error_location(resource.file, resource.line)
       msg = if resource_declaration.empty?
@@ -286,10 +287,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Create a new resource and register it in the catalog.
   def create_resource(type, options)
-    unless klass = Puppet::Type.type(type)
+    klass = Puppet::Type.type(type)
+    unless klass
       raise ArgumentError, _("Unknown resource type %{type}") % { type: type }
     end
-    return unless resource = klass.new(options)
+    resource = klass.new(options)
+    return unless resource
 
     add_resource(resource)
     resource
@@ -342,7 +345,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     Puppet::Type.type(:schedule).mkdefaultschedules.each { |res| add_resource(res) unless resource(res.ref) }
 
     # And filebuckets
-    if bucket = Puppet::Type.type(:filebucket).mkdefaultbucket
+    bucket = Puppet::Type.type(:filebucket).mkdefaultbucket
+    if bucket
       add_resource(bucket) unless resource(bucket.ref)
     end
   end
@@ -355,7 +359,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       ref = resource.ref
       title_key = title_key_for_ref(ref)
       @resource_table.delete(title_key)
-      if aliases = @aliases[ref]
+      aliases = @aliases[ref]
+      if aliases
         aliases.each { |res_alias| @resource_table.delete(res_alias) }
         @aliases.delete(ref)
       end
@@ -415,45 +420,36 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def self.from_data_hash(data)
     result = new(data['name'], Puppet::Node::Environment::NONE)
 
-    if tags = data['tags']
-      result.tag(*tags)
-    end
-
-    if version = data['version']
-      result.version = version
-    end
-
-    if code_id = data['code_id']
-      result.code_id = code_id
-    end
-
-    if catalog_uuid = data['catalog_uuid']
-      result.catalog_uuid = catalog_uuid
-    end
-
+    result.tag(*data['tags']) if data['tags'] 
+    result.version = data['version'] if data['version']
+    result.code_id = data['code_id'] if data['code_id']
+    result.catalog_uuid = data['catalog_uuid'] if data['catalog_uuid']
     result.catalog_format = data['catalog_format'] || 0
 
-    if environment = data['environment']
+    environment = data['environment']
+    if environment
       result.environment = environment
       result.environment_instance = Puppet::Node::Environment.remote(environment.to_sym)
     end
 
-    if resources = data['resources']
-      result.add_resource(*resources.collect do |res|
+    result.add_resource(
+      *data['resources'].collect do |res|
         Puppet::Resource.from_data_hash(res)
-      end)
-    end
+      end
+    ) if data['resources']
 
-    if edges = data['edges']
-      edges.each do |edge_hash|
+    if data['edges']
+      data['edges'].each do |edge_hash|
         edge = Puppet::Relationship.from_data_hash(edge_hash)
-        unless source = result.resource(edge.source)
+        source = result.resource(edge.source)
+        unless source
           raise ArgumentError, _("Could not intern from data: Could not find relationship source %{source} for %{target}") %
               { source: edge.source.inspect, target: edge.target.to_s }
         end
         edge.source = source
 
-        unless target = result.resource(edge.target)
+        target = result.resource(edge.target)
+        unless target
           raise ArgumentError, _("Could not intern from data: Could not find relationship target %{target} for %{source}") %
               { target: edge.target.inspect, source: edge.source.to_s }
         end
@@ -463,15 +459,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       end
     end
 
-    if classes = data['classes']
-      result.add_class(*classes)
-    end
+    result.add_class(*data['classes']) if data['classes']
 
-    if metadata = data['metadata']
-      result.metadata = metadata.inject({}) { |h, (k, v)| h[k] = Puppet::FileServing::Metadata.from_data_hash(v); h }
-    end
+    result.metadata = data['metadata'].inject({}) { |h, (k, v)| h[k] = Puppet::FileServing::Metadata.from_data_hash(v); h } if data['metadata']
 
-    if recursive_metadata = data['recursive_metadata']
+    recursive_metadata = data['recursive_metadata']
+    if recursive_metadata
       result.recursive_metadata = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
         h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
           inner_h[source] = metas.map {|meta| Puppet::FileServing::Metadata.from_data_hash(meta)}
@@ -592,7 +585,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Verify that the given resource isn't declared elsewhere.
   def fail_on_duplicate_type_and_title(resource, title_key)
     # Short-circuit the common case,
-    return unless existing_resource = @resource_table[title_key]
+    existing_resource = @resource_table[title_key]
+    return unless existing_resource
 
     # If we've gotten this far, it's a real conflict
     error_location_str = Puppet::Util::Errors.error_location(existing_resource.file, existing_resource.line)
@@ -646,11 +640,13 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       next if virtual_not_exported?(edge.target)
       next if block_given? and yield edge.target
 
-      unless source = map[edge.source.ref]
+      source = map[edge.source.ref]
+      unless source
         raise Puppet::DevError, _("Could not find resource %{resource} when converting %{message} resources") % { resource: edge.source.ref, message: message }
       end
 
-      unless target = map[edge.target.ref]
+      target = map[edge.target.ref]
+      unless target
         raise Puppet::DevError, _("Could not find resource %{resource} when converting %{message} resources") % { resource: edge.target.ref, message: message }
       end
 

@@ -89,7 +89,8 @@ class Puppet::Resource::Type
       produced_resource.resource_type.parameters.each do |name|
         next if name == :name
 
-        if expr = blueprint[:mappings][name.to_s]
+        expr = blueprint[:mappings][name.to_s]
+        if expr
           produced_resource[name] = expr.safeevaluate(scope)
         else
           produced_resource[name] = scope[name.to_s]
@@ -147,7 +148,8 @@ class Puppet::Resource::Type
     set_name_and_namespace(name)
 
     [:code, :doc, :line, :file, :parent].each do |param|
-      next unless value = options[param]
+      value = options[param]
+      next unless value
       send(param.to_s + '=', value)
     end
 
@@ -453,7 +455,9 @@ class Puppet::Resource::Type
   end
 
   def evaluate_parent_type(resource)
-    return unless klass = parent_type(resource.scope) and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name)
+    klass = parent_type(resource.scope)
+    parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name) if klass
+    return unless klass && parent_resource
     parent_resource.evaluate unless parent_resource.evaluated?
     parent_scope(resource.scope, klass)
   end

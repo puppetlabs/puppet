@@ -22,7 +22,8 @@ module Puppet::Interface::ActionManager
     action = Puppet::Interface::ActionBuilder.build(self, name, &block)
 
     # REVISIT: (#18042) doesn't this mean we can't redefine the default action? -- josh
-    if action.default and current = get_default_action
+    current = get_default_action if action.default
+    if current
       raise "Actions #{current.name} and #{name} cannot both be default"
     end
 

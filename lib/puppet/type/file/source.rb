@@ -134,7 +134,8 @@ module Puppet
       return @content if @content
       raise Puppet::DevError, _("No source for content was stored with the metadata") unless metadata.source
 
-      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment_instance, :links => resource[:links])
+      tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment_instance, :links => resource[:links])
+      unless tmp
         self.fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
@@ -183,11 +184,8 @@ module Puppet
     # if we can't find data about this host, and fail if there are any
     # problems in our query.
     def metadata
+      @metadata ||= resource.catalog.metadata[resource.title]
       return @metadata if @metadata
-
-      if @metadata = resource.catalog.metadata[resource.title]
-        return @metadata
-      end
 
       return nil unless value
       value.each do |source|
@@ -199,7 +197,8 @@ module Puppet
             :source_permissions   => resource[:source_permissions]
           }
 
-          if data = Puppet::FileServing::Metadata.indirection.find(source, options)
+          data = Puppet::FileServing::Metadata.indirection.find(source, options)
+          if data
             @metadata = data
             @metadata.source = source
             break
@@ -286,7 +285,7 @@ module Puppet
 
     def chunk_file_from_disk
       File.open(full_path, "rb") do |src|
-        while chunk = src.read(8192)
+        while chunk = src.read(8192) #rubocop:disable Lint/AssignmentInCondition
           yield chunk
         end
       end

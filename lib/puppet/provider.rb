@@ -138,11 +138,10 @@ class Puppet::Provider
   def self.command(name)
     name = name.intern
 
-    if defined?(@commands) and command = @commands[name]
-      # nothing
-    elsif superclass.respond_to? :command and command = superclass.command(name)
-      # nothing
-    else
+    command = @commands[name] if defined?(@commands)    
+    command = superclass.command(name) if !command && superclass.respond_to?(:command)
+
+    unless command
       raise Puppet::DevError, _("No command %{command} defined for provider %{provider}") % { command: name, provider: self.name }
     end
 
@@ -466,11 +465,13 @@ class Puppet::Provider
     if param.is_a?(Class)
       klass = param
     else
-      unless klass = resource_type.attrclass(param)
+      klass = resource_type.attrclass(param)
+      unless klass
         raise Puppet::DevError, _("'%{parameter_name}' is not a valid parameter for %{resource_type}") % { parameter_name: param, resource_type: resource_type.name }
       end
     end
-    return true unless features = klass.required_features
+    features = klass.required_features
+    return true unless features
 
     !!satisfies?(*features)
   end
@@ -546,7 +547,8 @@ class Puppet::Provider
   # @raise [Puppet::DevError] if no resource is set, or no name defined.
   #
   def name
-    if n = @property_hash[:name]
+    n = @property_hash[:name]
+    if n
       return n
     elsif self.resource
       resource.name

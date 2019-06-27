@@ -105,7 +105,8 @@ module Puppet::Network::HTTP::Handler
   end
 
   def find_route_or_raise(request)
-    if route = @routes.find { |r| r.matches?(request) }
+    route = @routes.find { |r| r.matches?(request) }
+    if route
       return route
     else
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(

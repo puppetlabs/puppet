@@ -24,9 +24,11 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
   provider = self
   manager.generates(:gidNumber).with do
     largest = 500
-    if existing = provider.manager.search
-        existing.each do |hash|
-        next unless value = hash[:gid]
+    existing = provider.manager.search
+    if existing
+      existing.each do |hash|
+        value = hash[:gid]
+        next unless value
         num = value[0].to_i
         largest = num if num > largest
       end
@@ -36,7 +38,8 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
 
   # Convert a group name to an id.
   def self.name2id(group)
-    return nil unless result = manager.search("cn=#{group}") and result.length > 0
+    result = manager.search("cn=#{group}")
+    return nil unless result and result.length > 0
 
     # Only use the first result.
     group = result[0]

@@ -176,7 +176,8 @@ class Puppet::Parser::AST::PopsBridge
       # reused and we may reenter without a scope (which is fine). A debug message is then output in case
       # there is the need to track down the odd corner case. See {#obtain_scope}.
       #
-      if scope = obtain_scope
+      scope = obtain_scope
+      if scope
         typed_parameters.each do |p|
           result[p.name] =  @@evaluator.evaluate(scope, p.type_expr)
         end

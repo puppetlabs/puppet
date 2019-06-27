@@ -115,7 +115,8 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
   end
 
   def create_tmpname(basename, *rest)
-    if opts = try_convert_to_hash(rest[-1])
+    opts = try_convert_to_hash(rest[-1])
+    if opts
       opts = opts.dup if rest.pop.equal?(opts)
       max_try = opts.delete(:max_try)
       opts = [opts]
@@ -157,7 +158,8 @@ class Puppet::FileSystem::Uniquefile < DelegateClass(File)
       @@systmpdir
     else
       for dir in [ Puppet::Util.get_env('TMPDIR'), Puppet::Util.get_env('TMP'), Puppet::Util.get_env('TEMP'), @@systmpdir, '/tmp']
-        if dir and stat = File.stat(dir) and stat.directory? and stat.writable?
+        stat = File.stat(dir) if dir
+        if stat && stat.directory? && stat.writable?
           tmp = dir
           break
         end rescue nil

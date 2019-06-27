@@ -397,7 +397,8 @@ module LoaderPaths
     def effective_paths(type)
       smart_paths = @smart_paths
       loader = @loader
-      unless effective_paths = smart_paths[type]
+      effective_paths = smart_paths[type]
+      unless effective_paths
         # type not yet processed, does the various directories for the type exist ?
         # Get the relative dirs for the type
         paths_for_type = LoaderPaths.relative_paths_for_type(type, loader)

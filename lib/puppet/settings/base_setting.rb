@@ -59,7 +59,8 @@ class Puppet::Settings::BaseSetting
 
   # Create the new element.  Pretty much just sets the name.
   def initialize(args = {})
-    unless @settings = args.delete(:settings)
+    @settings = args.delete(:settings)
+    unless @settings
       raise ArgumentError.new("You must refer to a settings object")
     end
 

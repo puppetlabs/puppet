@@ -109,7 +109,8 @@ class Puppet::Transaction::Event
   end
 
   def resource=(res)
-    if res.respond_to?(:[]) and level = res[:loglevel]
+    level = res[:loglevel] if res.respond_to?(:[])
+    if level
       @default_log_level = level
     end
     @resource = res.to_s

@@ -52,7 +52,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     output.split("\n").each { |data|
       # reset hash to nil for each line
       hash.clear
-      if match = regex.match(data)
+      match = regex.match(data)
+      if match
         # Output matched regex
         fields.zip(match.captures) { |field, value|
           hash[field] = value

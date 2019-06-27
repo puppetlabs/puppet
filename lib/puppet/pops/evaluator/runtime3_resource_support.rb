@@ -97,7 +97,8 @@ module Runtime3ResourceSupport
     end
 
     loader = scope.compiler.loaders.private_environment_loader
-    if loaded = loader.load(:resource_type_pp, type_name)
+    loaded = loader.load(:resource_type_pp, type_name)
+    if loaded
       return loaded
     end
 

@@ -99,8 +99,9 @@ class Puppet::Indirector::Request
   end
 
   def model
-    raise ArgumentError, _("Could not find indirection '%{indirection}'") % { indirection: indirection_name } unless i = indirection
-    i.model
+    ind = indirection
+    raise ArgumentError, _("Could not find indirection '%{indirection}'") % { indirection: indirection_name } unless ind
+    ind.model
   end
 
   # Are we trying to interact with multiple resources, or just one?
@@ -169,7 +170,8 @@ class Puppet::Indirector::Request
     result = options.dup
 
     OPTION_ATTRIBUTES.each do |attribute|
-      if value = send(attribute)
+      value = send(attribute)
+      if value
         result[attribute] = value
       end
     end
@@ -206,7 +208,8 @@ class Puppet::Indirector::Request
       self.server = default_server
     else
       self.server = Puppet.lookup(:server) do
-        if primary_server = Puppet.settings[:server_list][0]
+        primary_server = Puppet.settings[:server_list][0]
+        if primary_server
           #TRANSLATORS 'server_list' is the name of a setting and should not be translated
           debug_once _("Selected server from first entry of the `server_list` setting: %{server}") % {server: primary_server[0]}
           primary_server[0]
@@ -222,7 +225,8 @@ class Puppet::Indirector::Request
       self.port = default_port
     else
       self.port = Puppet.lookup(:serverport) do
-        if primary_server = Puppet.settings[:server_list][0]
+        primary_server = Puppet.settings[:server_list][0]
+        if primary_server
           #TRANSLATORS 'server_list' is the name of a setting and should not be translated
           debug_once _("Selected port from the first entry of the `server_list` setting: %{port}") % {port: primary_server[1]}
           primary_server[1]

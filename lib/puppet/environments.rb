@@ -268,7 +268,8 @@ module Puppet::Environments
     # @!macro loader_get
     def get(name)
       @loaders.each do |loader|
-        if env = loader.get(name)
+        env = loader.get(name)
+        if env 
           return env
         end
       end
@@ -278,7 +279,8 @@ module Puppet::Environments
     # @!macro loader_get_conf
     def get_conf(name)
       @loaders.each do |loader|
-        if conf = loader.get_conf(name)
+        conf = loader.get_conf(name)
+        if conf
           return conf
         end
       end
@@ -349,7 +351,8 @@ module Puppet::Environments
       # This strategy favors smaller memory footprint over environment
       # retrieval time.
       clear_all_expired
-      if result = @cache[name]
+      result = @cache[name]
+      if result
         # found in cache
         return result.value
       elsif (result = @loader.get(name))

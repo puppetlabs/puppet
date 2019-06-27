@@ -511,7 +511,8 @@ class Type
 
     raise Puppet::DevError, _("Class %{class_name} already has a property named %{property}") % { class_name: self.name, property: name } if @validproperties.include?(name)
 
-    if parent = options[:parent]
+    parent = options[:parent]
+    if parent
       options.delete(:parent)
     else
       parent = Puppet::Property
@@ -644,11 +645,13 @@ class Type
     name = name.intern
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
 
-    if name == :name && nv = name_var
-      name = nv
+    if name == :name
+      nv = name_var
+      name = nv if nv
     end
 
-    if obj = @parameters[name]
+    obj = @parameters[name]
+    if obj
       # Note that if this is a property, then the value is the "should" value,
       # not the current value.
       obj.value
@@ -667,8 +670,9 @@ class Type
 
     fail("no parameter named '#{name}'") unless self.class.validattr?(name)
 
-    if name == :name && nv = name_var
-      name = nv
+    if name == :name
+      nv = name_var
+      name = nv if nv
     end
     raise Puppet::Error.new("Got nil value for #{name}") if value.nil?
 
@@ -745,8 +749,12 @@ class Type
   # @return [Object, nil] Returns the 'should' (wanted state) value for a specified property, or nil if the
   #   given attribute name is not a property (i.e. if it is a parameter, meta-parameter, or does not exist).
   def should(name)
-    name = name.intern
-    (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
+    prop = @parameters[name.intern]
+    if prop && prop.is_a?(Puppet::Property)
+      prop.should
+    else
+      nil
+    end
   end
 
   # Registers an attribute to this resource type instance.
@@ -768,7 +776,8 @@ class Type
       name = klass.name
     end
 
-    unless klass = self.class.attrclass(name)
+    klass = self.class.attrclass(name)
+    unless klass
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
     end
 
@@ -819,7 +828,12 @@ class Type
   #   this one should probably go away at some point. - Does this mean it should be deprecated ?
   # @return [Puppet::Property] the property with the given name, or nil if not a property or does not exist.
   def property(name)
-    (obj = @parameters[name.intern] and obj.is_a?(Puppet::Property)) ? obj : nil
+    obj = @parameters[name.intern]
+    if obj && obj.is_a?(Puppet::Property)
+      obj
+    else
+      nil
+    end
   end
 
   # @todo comment says "For any parameters or properties that have defaults and have not yet been
@@ -831,14 +845,17 @@ class Type
   # @return [void]
   #
   def set_default(attr)
-    return unless klass = self.class.attrclass(attr)
+    klass = self.class.attrclass(attr)
+    return unless klass
     # TODO this is not a necessary check, as we define a class level attr_reader
     return unless klass.method_defined?(:default)
     return if @parameters.include?(klass.name)
 
-    return unless parameter = newattr(klass.name)
+    parameter = newattr(klass.name)
+    return unless parameter
 
-    if value = parameter.default and ! value.nil?
+    value = parameter.default
+    if value and ! value.nil?
       parameter.value = value
     else
       @parameters.delete(parameter.name)
@@ -880,7 +897,12 @@ class Type
   def value(name)
     name = name.intern
 
-    (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
+    obj = @parameters[name]
+    if obj && obj.respond_to?(:value)
+      obj.value
+    else
+      nil
+    end
   end
 
   # @todo What is this used for? Needs a better explanation.
@@ -1023,7 +1045,8 @@ class Type
   def insync?(is)
     insync = true
 
-    if property = @parameters[:ensure]
+    property = @parameters[:ensure]
+    if property
       unless is.include? property
         #TRANSLATORS 'is' is a variable name and should not be translated
         raise Puppet::DevError, _("The 'is' value is not in the 'is' array for '%{name}'") % { name: property.name }
@@ -1073,7 +1096,12 @@ class Type
     # Provide the name, so we know we'll always refer to a real thing
     result[:name] = self[:name] unless self[:name] == title
 
-    if ensure_prop = property(:ensure) or (self.class.needs_ensure_retrieved and self.class.validattr?(:ensure) and ensure_prop = newattr(:ensure))
+    ensure_prop = property(:ensure)
+    if !ensure_prop && self.class.needs_ensure_retrieved && self.class.validattr?(:ensure)
+      ensure_prop = newattr(:ensure)
+    end
+
+    if ensure_prop
       result[:ensure] = ensure_state = ensure_prop.retrieve
     else
       ensure_state = nil
@@ -1171,7 +1199,8 @@ class Type
       provider.instances.collect do |instance|
         # We always want to use the "first" provider instance we find, unless the resource
         # is already managed and has a different provider set
-        if other = provider_instances[instance.name]
+        other = provider_instances[instance.name]
+        if other
           Puppet.debug "%s %s found in both %s and %s; skipping the %s version" %
             [self.name.to_s.capitalize, instance.name, other.class.name, instance.class.name, instance.class.name]
           next
@@ -1219,7 +1248,8 @@ class Type
     resource = Puppet::Resource.new(self, title)
     resource.catalog = hash.delete(:catalog)
 
-    if sensitive = hash.delete(:sensitive_parameters)
+    sensitive = hash.delete(:sensitive_parameters)
+    if sensitive
       resource.sensitive_parameters = sensitive
     end
 
@@ -1236,7 +1266,8 @@ class Type
   #
   # @api private
   def pathbuilder
-    if p = parent
+    p = parent
+    if p
       [p.pathbuilder, self.ref].flatten
     else
       [self.ref]
@@ -1425,7 +1456,8 @@ class Type
       raise(ArgumentError, _("Cannot add aliases without a catalog")) unless @resource.catalog
 
       aliases.each do |other|
-        if obj = @resource.catalog.resource(@resource.class.name, other)
+        obj = @resource.catalog.resource(@resource.class.name, other)
+        if obj
           unless obj.object_id == @resource.object_id
             self.fail("#{@resource.title} can not create alias #{other}: object already exists")
           end
@@ -1526,7 +1558,8 @@ class Type
 
         # Either of the two retrieval attempts could have returned
         # nil.
-        unless related_resource = reference.resolve
+        related_resource = reference.resolve
+        unless related_resource
           self.fail "Could not retrieve dependency '#{reference}' of #{@resource.ref}"
         end
 
@@ -1540,7 +1573,8 @@ class Type
           target = related_resource
         end
 
-        if method = self.class.callback
+        method = self.class.callback
+        if method
           subargs = {
             :event => self.class.events,
             :callback => method
@@ -1851,12 +1885,14 @@ end
       Puppet.debug "Reloading #{name} #{self.name} provider"
     end
 
-    parent = if pname = options[:parent]
+    pname = options[:parent]
+    parent = if pname
       options.delete(:parent)
       if pname.is_a? Class
         pname
       else
-        if provider = self.provider(pname)
+        provider = self.provider(pname)
+        if provider
           provider
         else
           raise Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name }
@@ -2015,10 +2051,13 @@ end
     if name.is_a?(Puppet::Provider)
       @provider = name
       @provider.resource = self
-    elsif klass = self.class.provider(name)
-      @provider = klass.new(self)
     else
-      raise ArgumentError, _("Could not find %{name} provider of %{provider}") % { name: name, provider: self.class.name }
+      klass = self.class.provider(name)
+      if klass
+        @provider = klass.new(self)
+      else
+        raise ArgumentError, _("Could not find %{name} provider of %{provider}") % { name: name, provider: self.class.name }
+      end
     end
   end
 
@@ -2146,8 +2185,9 @@ end
       next unless Puppet::Type.type(type)
 
       # Retrieve the list of names from the block.
-      next unless list = self.instance_eval(&block)
-      list = [list] unless list.is_a?(Array)
+      list = self.instance_eval(&block)
+      next unless list
+      list = Array(list)
 
       # Collect the current prereqs
       list.each { |dep|
@@ -2156,9 +2196,8 @@ end
         # Support them passing objects directly, to save some effort.
         unless dep.is_a?(Puppet::Type)
           # Skip autorelation that we aren't managing
-          unless dep = rel_catalog.resource(type, dep)
-            next
-          end
+          dep = rel_catalog.resource(type, dep)
+          next unless dep
         end
 
         if [:require, :subscribe].include?(rel_type)
@@ -2194,9 +2233,8 @@ end
   def builddepends
     # Handle the requires
     self.class.relationship_params.collect do |klass|
-      if param = @parameters[klass.name]
-        param.to_edges
-      end
+      param = @parameters[klass.name]
+      param.to_edges if param
     end.flatten.reject { |r| r.nil? }
   end
 
@@ -2386,9 +2424,8 @@ end
 
     [:file, :line, :catalog, :exported, :virtual].each do |getter|
       setter = getter.to_s + "="
-      if val = resource.send(getter)
-        self.send(setter, val)
-      end
+      val = resource.send(getter)
+      self.send(setter, val) if val
     end
 
     merge_tags_from(resource)
@@ -2536,9 +2573,8 @@ end
     # Make sure all of our relationships are valid.  Again, must be done
     # when the entire catalog is instantiated.
     self.class.relationship_params.collect do |klass|
-      if param = @parameters[klass.name]
-        param.validate_relationship
-      end
+      param = @parameters[klass.name]
+      param.validate_relationship if param
     end.flatten.reject { |r| r.nil? }
   end
 
@@ -2560,13 +2596,13 @@ end
   #   resource.
   def parent
     return nil unless catalog
-
-    @parent ||=
-      if parents = catalog.adjacent(self, :direction => :in)
-        parents.shift
-      else
-        nil
-      end
+    return @parent if @parent
+    parents = catalog.adjacent(self, :direction => :in)
+    @parent = if parents
+      parents.shift
+    else
+      nil
+    end
   end
 
   # Returns a reference to this as a string in "Type[name]" format.

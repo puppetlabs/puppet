@@ -31,7 +31,8 @@ module Puppet
     # Return the +username+ and +modname+ for a given +full_module_name+, or raise an
     # ArgumentError if the argument isn't parseable.
     def self.username_and_modname_from(full_module_name)
-      if matcher = full_module_name.match(FULL_MODULE_NAME_PATTERN)
+      matcher = full_module_name.match(FULL_MODULE_NAME_PATTERN)
+      if matcher
         return matcher.captures
       else
         raise ArgumentError, _("Not a valid full name: %{full_module_name}") % { full_module_name: full_module_name }

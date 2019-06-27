@@ -66,9 +66,8 @@ module Puppet::ModuleTool
       validate_name(name)
       validate_version_range(version_requirement) if version_requirement
 
-      if dup = @data['dependencies'].find { |d| d.full_module_name == name && d.version_requirement != version_requirement }
-        raise ArgumentError, _("Dependency conflict for %{module_name}: Dependency %{name} was given conflicting version requirements %{version_requirement} and %{dup_version}. Verify that there are no duplicates in the metadata.json.") % { module_name: full_module_name, name: name, version_requirement: version_requirement, dup_version: dup.version_requirement }
-      end
+      dup = @data['dependencies'].find { |d| d.full_module_name == name && d.version_requirement != version_requirement }
+      raise ArgumentError, _("Dependency conflict for %{module_name}: Dependency %{name} was given conflicting version requirements %{version_requirement} and %{dup_version}. Verify that there are no duplicates in the metadata.json.") % { module_name: full_module_name, name: name, version_requirement: version_requirement, dup_version: dup.version_requirement } if dup
 
       dep = Dependency.new(name, version_requirement, repository)
       @data['dependencies'].add(dep)

@@ -151,9 +151,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       next if property_manages_password_age?(property)
       next if (property == :groups) && @resource.forcelocal?
       next if (property == :expiry) && @resource.forcelocal?
-      # the value needs to be quoted, mostly because -c might
-      # have spaces in it
-      if (value = @resource.should(property)) && (value != "")
+      
+      value = @resource.should(property)
+      if value && value != ""
+        # the value needs to be quoted, mostly because -c might
+        # have spaces in it
         cmd << flag(property) << munge(property, value)
       end
     end
@@ -228,7 +230,8 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   [:expiry, :password_min_age, :password_max_age, :password_warn_days, :password].each do |shadow_property|
     define_method(shadow_property) do
       if Puppet.features.libshadow?
-        if ent = Shadow::Passwd.getspnam(@canonical_name)
+        ent = Shadow::Passwd.getspnam(@canonical_name)
+        if ent
           method = self.class.option(shadow_property, :method)
           return unmunge(shadow_property, ent.send(method))
         end

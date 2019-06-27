@@ -36,7 +36,8 @@ class Puppet::Parser::Relationship
     target_ref = canonical_ref(target)
     rel_param = param_name
 
-    unless source_resource = catalog.resource(*source_ref)
+    source_resource = catalog.resource(*source_ref)
+    unless source_resource
       raise ArgumentError, _("Could not find resource '%{source}' for relationship on '%{target}'") % { source: source.to_s, target: target.to_s }
     end
     unless catalog.resource(*target_ref)

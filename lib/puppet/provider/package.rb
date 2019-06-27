@@ -4,7 +4,8 @@ class Puppet::Provider::Package < Puppet::Provider
   # Prefetch our package list, yo.
   def self.prefetch(packages)
     instances.each do |prov|
-      if pkg = packages[prov.name]
+      pkg = packages[prov.name]
+      if pkg
         pkg.provider = prov
       end
     end

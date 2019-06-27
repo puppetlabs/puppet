@@ -38,7 +38,8 @@ class Puppet::Daemon
 
   # Put the daemon into the background.
   def daemonize
-    if pid = fork
+    pid = fork
+    if pid
       Process.detach(pid)
       exit(0)
     end
@@ -181,7 +182,7 @@ class Puppet::Daemon
     end
 
     signal_loop = Puppet::Scheduler.create_job(SIGNAL_CHECK_INTERVAL) do
-      while method = @signals.shift
+      while method = @signals.shift #rubocop:disable Lint/AssignmentInCondition
         Puppet.notice "Processing #{method}"
         send(method)
       end

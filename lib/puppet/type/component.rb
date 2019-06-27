@@ -38,7 +38,8 @@ Puppet::Type.newtype(:component) do
     else
       myname = reference.to_s
     end
-    if p = self.parent
+    p = self.parent
+    if p
       return [p.pathbuilder, myname]
     else
       return [myname]

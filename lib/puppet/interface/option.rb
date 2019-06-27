@@ -35,7 +35,8 @@ class Puppet::Interface::Option
         if Puppet.settings.include? name then
           raise ArgumentError, _("%{option}: already defined in puppet") % { option: item.inspect }
         end
-        if dup = dups[name] then
+        dup = dups[name]
+        if dup
           raise ArgumentError, _("%{option}: duplicates existing alias %{duplicate} in %{parent}") %
               { option: item.inspect, duplicate: dup.inspect, parent: @parent }
         else
@@ -84,7 +85,8 @@ class Puppet::Interface::Option
 
   # @api private
   def optparse_to_optionname(declaration)
-    unless found = declaration.match(/^-+(?:\[no-\])?([^ =]+)/) then
+    found = declaration.match(/^-+(?:\[no-\])?([^ =]+)/)
+    unless found
       raise ArgumentError, _("Can't find a name in the declaration %{declaration}") % { declaration: declaration.inspect }
     end
     found.captures.first

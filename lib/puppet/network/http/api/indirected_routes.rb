@@ -124,7 +124,8 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   # Execute our find.
   def do_find(indirection, key, params, request, response)
-    unless result = indirection.find(key, params)
+    result = indirection.find(key, params)
+    unless result
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("Could not find %{value0} %{key}") % { value0: indirection.name, key: key }, Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
     end
 
@@ -245,10 +246,11 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new(
       _("No support for http method %{http_method}") % { http_method: http_method }) unless METHOD_MAP[http_method]
 
-    unless method = METHOD_MAP[http_method][plurality(indirection)]
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+      method = METHOD_MAP[http_method][plurality(indirection)]
+      unless method
+        raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
         _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
-    end
+      end
 
     method
   end

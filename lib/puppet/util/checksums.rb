@@ -344,7 +344,7 @@ module Puppet::Util::Checksums
   def checksum_file(digest, filename, lite = false)
     buffer = lite ? 512 : 4096
     File.open(filename, 'rb') do |file|
-      while content = file.read(buffer)
+      while content = file.read(buffer) #rubocop:disable Lint/AssignmentInCondition
         digest << content
         break if lite
       end

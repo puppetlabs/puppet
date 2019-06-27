@@ -29,7 +29,8 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   end
 
   def self.get_latest_version(origin)
-    if latest_version = cached_version_list.lines.find { |l| l =~ /^#{origin} / }
+    latest_version = cached_version_list.lines.find { |l| l =~ /^#{origin} / }
+    if latest_version
       latest_version = latest_version.split(' ').last.split(')').first
       return latest_version
     end
@@ -74,7 +75,8 @@ Puppet::Type.type(:package).provide :pkgng, :parent => Puppet::Provider::Package
   def self.prefetch(resources)
     packages = instances
     resources.each_key do |name|
-      if provider = packages.find{|p| p.name == name or p.origin == name }
+      provider = packages.find{|p| p.name == name or p.origin == name }
+      if provider
         resources[name].provider = provider
       end
     end

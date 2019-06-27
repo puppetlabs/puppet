@@ -55,7 +55,8 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   end
 
   def install(useversion = true)
-    unless source = @resource[:source]
+    source = @resource[:source]
+    unless source
       self.fail _("An LPP source location is required in 'source'")
     end
 
@@ -213,7 +214,8 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   end
 
   def parse_installp_package_string(package_string)
-    unless match = package_string.match(self.class::INSTALLP_PACKAGE_REGEX)
+    match = package_string.match(self.class::INSTALLP_PACKAGE_REGEX)
+    unless match
       self.fail _("Unable to parse output from nimclient showres: package string does not match expected installp package string format:\n'%{package_string}'") % { package_string: package_string }
     end
     package_name = match.captures[0]
@@ -222,7 +224,8 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   end
 
   def parse_rpm_package_string(package_string)
-    unless match = package_string.match(self.class::RPM_PACKAGE_REGEX)
+    match = package_string.match(self.class::RPM_PACKAGE_REGEX)
+    unless match
       self.fail _("Unable to parse output from nimclient showres: package string does not match expected rpm package string format:\n'%{package_string}'") % { package_string: package_string }
     end
     package_name = match.captures[0]
@@ -231,7 +234,8 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   end
 
   def parse_showres_package_line(line)
-    unless match = line.match(self.class::PACKAGE_LINE_REGEX)
+    match = line.match(self.class::PACKAGE_LINE_REGEX)
+    unless match
       self.fail _("Unable to parse output from nimclient showres: line does not match expected package line format:\n'%{line}'") % { line: line }
     end
 

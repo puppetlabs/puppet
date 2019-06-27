@@ -123,9 +123,8 @@ class Puppet::Property < Puppet::Parameter
   # @api private
   #
   def self.value_name(name)
-    if value = value_collection.match?(name)
-      value.name
-    end
+    value = value_collection.match?(name)
+    value.name if value
   end
 
   # Returns the value of the given option (set when a valid value with the given "name" was defined).
@@ -137,9 +136,8 @@ class Puppet::Property < Puppet::Parameter
   # @api private
   #
   def self.value_option(name, option)
-    if value = value_collection.value(name)
-      value.send(option)
-    end
+    value = value_collection.value(name)
+    value.send(option) if value
   end
 
   # Defines a new valid value for this property.
@@ -255,9 +253,9 @@ class Puppet::Property < Puppet::Parameter
   # @see Puppet::Type#event
   def event(options = {})
     attrs = { :name => event_name, :desired_value => should, :property => self, :source_description => path }.merge(options)
-    if should and value = self.class.value_collection.match?(should)
-      attrs[:invalidate_refreshes] = true if value.invalidate_refreshes
-    end
+    value = self.class.value_collection.match?(should) if should
+    
+    attrs[:invalidate_refreshes] = true if value && value.invalidate_refreshes 
     attrs[:redacted] = @sensitive
     resource.event attrs
   end
@@ -486,7 +484,8 @@ class Puppet::Property < Puppet::Parameter
   def set(value)
     # Set a name for looking up associated options like the event.
     name = self.class.value_name(value)
-    if method = self.class.value_option(name, :method) and self.respond_to?(method)
+    method = self.class.value_option(name, :method)
+    if method && self.respond_to?(method)
       begin
         self.send(method)
       rescue Puppet::Error
@@ -498,12 +497,15 @@ class Puppet::Property < Puppet::Parameter
         Puppet.log_exception(detail, error.message)
         raise error
       end
-    elsif block = self.class.value_option(name, :block)
-      # FIXME It'd be better here to define a method, so that
-      # the blocks could return values.
-      self.instance_eval(&block)
     else
-      call_provider(value)
+      block = self.class.value_option(name, :block)
+      if block
+        # FIXME It'd be better here to define a method, so that
+        # the blocks could return values.
+        self.instance_eval(&block)
+      else
+        call_provider(value)
+      end
     end
   end
 
@@ -585,7 +587,8 @@ class Puppet::Property < Puppet::Parameter
   # @api private
   #
   def validate_features_per_value(value)
-    if features = self.class.value_option(self.class.value_name(value), :required_features)
+    features = self.class.value_option(self.class.value_name(value), :required_features)
+    if features
       features = Array(features)
       needed_features = features.collect { |f| f.to_s }.join(", ")
       unless provider.satisfies?(features)

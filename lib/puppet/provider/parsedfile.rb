@@ -46,10 +46,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.filetype=(type)
     if type.is_a?(Class)
       @filetype = type
-    elsif klass = Puppet::Util::FileType.filetype(type)
-      @filetype = klass
     else
-      raise ArgumentError, _("Invalid filetype %{type}") % { type: type }
+      klass = Puppet::Util::FileType.filetype(type)
+      if klass
+        @filetype = klass
+      else
+        raise ArgumentError, _("Invalid filetype %{type}") % { type: type }
+      end
     end
   end
 
@@ -240,7 +243,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       if (resource = resource_for_record(record, resources))
         resource.provider = new(record)
       elsif respond_to?(:match)
-        if resource = match(record, matchers)
+        resource = match(record, matchers)
+        if resource
           matchers.delete(resource.title)
           record[:name] = resource[:name]
           resource.provider = new(record)
@@ -380,7 +384,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # Lastly, check the file from any resource instances
     if resources
       resources.each do |name, resource|
-        if value = resource.should(:target)
+        value = resource.should(:target)
+        if value
           targets << value
         end
       end
@@ -414,7 +419,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   def create
     @resource.class.validproperties.each do |property|
-      if value = @resource.should(property)
+      value = @resource.should(property)
+      if value
         @property_hash[property] = value
       end
     end
@@ -472,7 +478,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Mark both the resource and provider target as modified.
   def mark_target_modified
-    if defined?(@resource) and restarget = @resource.should(:target) and restarget != @property_hash[:target]
+    restarget = @resource.should(:target) if defined?(@resource)
+    if restarget && restarget != @property_hash[:target]
       self.class.modified(restarget)
     end
     self.class.modified(@property_hash[:target]) if @property_hash[:target] != :absent and @property_hash[:target]

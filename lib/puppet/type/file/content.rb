@@ -71,7 +71,9 @@ module Puppet
     # Checksums need to invert how changes are printed.
     def change_to_s(currentvalue, newvalue)
       # Our "new" checksum value is provided by the source.
-      if source = resource.parameter(:source) and tmp = source.checksum
+      source = resource.parameter(:source) 
+      tmp = source.checksum if source
+      if tmp
         newvalue = tmp
       end
       if currentvalue == :absent
@@ -107,7 +109,8 @@ module Puppet
     def property_matches?(current, desired)
       # If checksum_value is specified, it overrides comparing the content field.
       checksum_type = resource.parameter(:checksum).value
-      if checksum_value = resource.parameter(:checksum_value)
+      checksum_value = resource.parameter(:checksum_value)
+      if checksum_value
         desired = "{#{checksum_type}}#{checksum_value.value}"
       end
 
@@ -161,7 +164,8 @@ module Puppet
     end
 
     def read_file_from_filebucket
-      raise "Could not get filebucket from file" unless dipper = resource.bucket
+      dipper = resource.bucket
+      raise "Could not get filebucket from file" unless dipper
       sum = should.sub(/\{\w+\}/, '')
 
       dipper.getfile(sum)

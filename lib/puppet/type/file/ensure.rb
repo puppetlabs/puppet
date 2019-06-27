@@ -62,9 +62,8 @@ module Puppet
 
     newvalue(:file, :event => :file_created) do
       # Make sure we're not managing the content some other way
-      if property = @resource.property(:content)
-        property.sync
-      elsif property = @resource.property(:checksum_value)
+      property = @resource.property(:content) || @resource.property(:checksum_value)
+      if property
         property.sync
       else
         @resource.write
@@ -99,7 +98,8 @@ module Puppet
 
 
     newvalue(:link, :event => :link_created, :required_features => :manages_symlinks) do
-      fail "Cannot create a symlink without a target" unless property = resource.property(:target)
+      property = resource.property(:target)
+      fail "Cannot create a symlink without a target" unless property
       property.retrieve
       property.mklink
     end
@@ -120,11 +120,13 @@ module Puppet
     def change_to_s(currentvalue, newvalue)
       return super unless [:file, :present].include?(newvalue)
 
-      return super unless property = @resource.property(:content)
+      property = @resource.property(:content)
+      return super unless property
 
       # We know that content is out of sync if we're here, because
       # it's essentially equivalent to 'ensure' in the transaction.
-      if source = @resource.parameter(:source)
+      source = @resource.parameter(:source)
+      if source
         should = source.checksum
       else
         should = property.should
@@ -166,7 +168,8 @@ module Puppet
     end
 
     def retrieve
-      if stat = @resource.stat
+      stat = @resource.stat
+      if stat
         return stat.ftype.intern
       else
         if self.should == :false

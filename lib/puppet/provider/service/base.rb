@@ -76,11 +76,14 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
       else
         return :stopped
       end
-    elsif pid = getpid
-      self.debug "PID is #{pid}"
-      return :running
     else
-      return :stopped
+      pid = getpid
+      if pid
+        self.debug "PID is #{pid}"
+        return :running
+      else
+        return :stopped
+      end
     end
   end
 

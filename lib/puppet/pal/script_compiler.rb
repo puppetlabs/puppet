@@ -8,7 +8,8 @@ module Pal
     #
     def plan_signature(plan_name)
       loader = internal_compiler.loaders.private_environment_loader
-      if func = loader.load(:plan, plan_name)
+      func = loader.load(:plan, plan_name)
+      if func
         return PlanSignature.new(func)
       end
       # Could not find plan
@@ -40,7 +41,8 @@ module Pal
     #
     def task_signature(task_name)
       loader = internal_compiler.loaders.private_environment_loader
-      if task = loader.load(:task, task_name)
+      task = loader.load(:task, task_name)
+      if task
         return TaskSignature.new(task)
       end
       # Could not find task

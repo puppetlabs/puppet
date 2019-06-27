@@ -38,14 +38,17 @@ module Puppet::Resource::CapabilityFinder
       Puppet.debug "Could not find capability resource #{cap} in PuppetDB"
     elsif resources.size == 1
       resource_hash = resources.first
-    elsif code_id_resource = disambiguate_by_code_id(environment, code_id, cap)
-      resource_hash = code_id_resource
     else
-      #TRANSLATOR PuppetDB is a product name and should not be translated
-      message = _("Unexpected response from PuppetDB when looking up %{capability}:") % { capability: cap }
-      message += "\n" + _("expected exactly one resource but got %{count};") % { count: resources.size }
-      message += "\n" + _("returned data is:\n%{resources}") % { resources: resources.inspect }
-      raise Puppet::DevError, message
+      code_id_resource = disambiguate_by_code_id(environment, code_id, cap)
+      if code_id_resource
+        resource_hash = code_id_resource
+      else
+        #TRANSLATOR PuppetDB is a product name and should not be translated
+        message = _("Unexpected response from PuppetDB when looking up %{capability}:") % { capability: cap }
+        message += "\n" + _("expected exactly one resource but got %{count};") % { count: resources.size }
+        message += "\n" + _("returned data is:\n%{resources}") % { resources: resources.inspect }
+        raise Puppet::DevError, message
+      end
     end
 
     if resource_hash
@@ -138,7 +141,8 @@ module Puppet::Resource::CapabilityFinder
     real_type.parameters.each do |param|
       param = param.to_s
       next if param == 'name'
-      if value = resource_hash['parameters'][param]
+      value = resource_hash['parameters'][param]
+      if value
         resource[param] = value
       else
         Puppet.debug "No capability value for #{resource}->#{param}"

@@ -216,7 +216,8 @@ module Puppet::Util::Execution
       # We close stdin/stdout/stderr immediately after fork/exec as they're no longer needed by
       # this process. In most cases they could be closed later, but when `stdout` is the "writer"
       # pipe we must close it or we'll never reach eof on the `reader` pipe.
-      if execution_stub = Puppet::Util::ExecutionStub.current_value
+      execution_stub = Puppet::Util::ExecutionStub.current_value
+      if execution_stub
         child_pid = execution_stub.call(*exec_args)
         [stdin, stdout, stderr].each {|io| io.close rescue nil}
         return child_pid
@@ -231,7 +232,8 @@ module Puppet::Util::Execution
             # Use non-blocking read to check for data. After each attempt,
             # check whether the child is done. This is done in case the child
             # forks and inherits stdout, as happens in `foo &`.
-            until results = Process.waitpid2(child_pid, Process::WNOHANG)
+            
+            until results = Process.waitpid2(child_pid, Process::WNOHANG) #rubocop:disable Lint/AssignmentInCondition
 
               # If not done, wait for data to read with a timeout
               # This timeout is selected to keep activity low while waiting on

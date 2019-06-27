@@ -42,7 +42,8 @@ module Puppet
         return nil
       end
 
-      unless context = self.get_selinux_default_context(@resource[:path])
+      context = self.get_selinux_default_context(@resource[:path])
+      unless context
         return nil
       end
 

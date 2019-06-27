@@ -141,7 +141,8 @@ module Puppet
           self.fail Puppet::Error, _("Command exceeded timeout"), $!
         end
 
-        if log = @resource[:logoutput]
+        log = @resource[:logoutput]
+        if log
           case log
           when :true
             log = @resource[:loglevel]
@@ -548,7 +549,8 @@ module Puppet
       }
 
       [:onlyif, :unless].each { |param|
-        next unless tmp = self[param]
+        tmp = self[param]
+        next unless tmp
 
         tmp = [tmp] unless tmp.is_a? Array
 
@@ -570,7 +572,8 @@ module Puppet
 
     autorequire(:user) do
       # Autorequire users if they are specified by name
-      if user = self[:user] and user !~ /^\d+$/
+      user = self[:user]
+      if user !~ /^\d+$/
         user
       end
     end
@@ -616,7 +619,8 @@ module Puppet
     # Run the command, or optionally run a separately-specified command.
     def refresh
       if self.check_all_attributes(true)
-        if cmd = self[:refresh]
+        cmd = self[:refresh]
+        if cmd
           provider.run(cmd)
         else
           self.property(:returns).sync

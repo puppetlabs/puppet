@@ -76,14 +76,17 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
         # network-interface (lo) start/running
         # network-interface (eth0) start/running
         # network-interface-security start/running
-        name = \
-          if matcher = line.match(/^(network-interface)\s\(([^\)]+)\)/)
-            "#{matcher[1]} INTERFACE=#{matcher[2]}"
-          elsif matcher = line.match(/^(network-interface-security)\s\(([^\)]+)\)/)
-            "#{matcher[1]} JOB=#{matcher[2]}"
-          else
-            line.split.first
-          end
+        matcher = line.match(/^(network-interface)\s\(([^\)]+)\)/)
+        name = if matcher
+                 "#{matcher[1]} INTERFACE=#{matcher[2]}"
+               else
+                 matcher = line.match(/^(network-interface-security)\s\(([^\)]+)\)/)
+                 if matcher
+                   "#{matcher[1]} JOB=#{matcher[2]}"
+                 else
+                   line.split.first
+                 end
+               end
         instances << new(:name => name)
       }
     }

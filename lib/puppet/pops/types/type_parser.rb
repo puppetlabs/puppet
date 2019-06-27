@@ -34,7 +34,8 @@ class TypeParser
   #
   def parse(string, context = nil)
     # quick "peephole" optimization of common data types
-    if t = self.class.opt_type_map[string]
+    t = self.class.opt_type_map[string]
+    if t
       return t
     end
     model = @parser.parse_string(string)
@@ -276,7 +277,8 @@ class TypeParser
   # @api private
   def interpret_QualifiedReference(name_ast, context)
     name = name_ast.value
-    if found = self.class.type_map[name]
+    found = self.class.type_map[name]
+    if found
       found
     else
       loader = loader_from_context(name_ast, context)

@@ -98,10 +98,12 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
   end
 
   def install
-    unless source = @resource[:source]
+    source = @resource[:source]
+    unless source
       self.fail _("Mac OS X PKG DMGs must specify a package source.")
     end
-    unless name = @resource[:name]
+    name = @resource[:name]
+    unless name
       self.fail _("Mac OS X PKG DMGs must specify a package name.")
     end
     self.class.installpkgdmg(source,name)

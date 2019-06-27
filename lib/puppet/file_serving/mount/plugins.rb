@@ -6,7 +6,8 @@ require 'puppet/file_serving/mount'
 class Puppet::FileServing::Mount::Plugins < Puppet::FileServing::Mount
   # Return an instance of the appropriate class.
   def find(relative_path, request)
-    return nil unless mod = request.environment.modules.find { |m|  m.plugin(relative_path) }
+    mod = request.environment.modules.find { |m|  m.plugin(relative_path) }
+    return nil unless mod
 
     path = mod.plugin(relative_path)
 

@@ -37,7 +37,8 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
   end
 
   def install
-    unless source = @resource[:source]
+    source = @resource[:source]
+    unless source
       self.fail _("Mac OS X packages must specify a package source")
     end
 
