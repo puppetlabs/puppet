@@ -445,6 +445,7 @@ module Puppet
     autorequire(:group) do
       autos = []
 
+      # autorequire primary group, if managed
       obj = @parameters[:gid]
       groups = obj.shouldorig if obj
       if groups
@@ -468,10 +469,13 @@ module Puppet
         }
       end
 
+      # autorequire groups, excluding primary group, if managed
       obj = @parameters[:groups]
-      groups = obj.should if obj
-      if groups
-        autos += groups.split(",")
+      if obj
+        groups = obj.should
+        if groups
+          autos += groups.split(",")
+        end
       end
 
       autos
