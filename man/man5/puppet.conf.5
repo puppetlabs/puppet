@@ -130,6 +130,13 @@ Where FileBucket files are stored\.
 .
 .IP "" 0
 .
+.SS "ca_fingerprint"
+The expected fingerprint of the CA certificate\. If specified, the agent will compare the CA certificate fingerprint that it downloads against this value and reject the CA certificate if the values do not match\. This only applies during the first download of the CA certificate\.
+.
+.TP
+\fIDefault\fR:
+
+.
 .SS "ca_name"
 The name to use the Certificate Authority certificate\.
 .
