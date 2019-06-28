@@ -9,11 +9,9 @@ module Pal
   # @api public
   class CatalogCompiler < Compiler
 
-    # @api private
     def catalog
       internal_compiler.catalog
     end
-    private :catalog
 
     # Returns true if this is a compiler that compiles a catalog.
     # This implementation returns `true`
