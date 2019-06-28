@@ -17,12 +17,11 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
   let(:cacert_pem) { cacert.to_pem }
   let(:cacert) { cert_fixture('ca.pem') }
-  let(:cacerts) { [cacert] }
+  let(:cacerts) { [cacert, cert_fixture('intermediate.pem')] }
 
   let(:crl_pem) { crl.to_pem }
   let(:crl) { crl_fixture('crl.pem') }
-  let(:crls) { [crl] }
-
+  let(:crls) { [crl, crl_fixture('intermediate-crl.pem')] }
   let(:private_key) { key_fixture('signed-key.pem') }
   let(:client_cert) { cert_fixture('signed.pem') }
 
@@ -36,6 +35,16 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
     Puppet[:ssl_lockfile] = tmpfile('ssllock')
     allow(Kernel).to receive(:sleep)
+  end
+
+  context 'when passing keyword arguments' do
+    it "accepts digest" do
+      expect(described_class.new(digest: 'SHA512').digest).to eq('SHA512')
+    end
+
+    it "accepts ca_fingerprint" do
+      expect(described_class.new(ca_fingerprint: 'CAFE').ca_fingerprint).to eq('CAFE')
+    end
   end
 
   context 'when ensuring CA certs and CRLs' do
@@ -107,6 +116,23 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       expect(ssl_context[:verify_peer]).to eq(true)
       expect(ssl_context[:private_key]).to eq(private_key)
       expect(ssl_context[:client_cert]).to eq(client_cert)
+    end
+
+    it 'uses the specified digest to log the cert chain fingerprints' do
+      allow(cert_provider).to receive(:load_cacerts).and_return(cacerts)
+      allow(cert_provider).to receive(:load_crls).and_return(crls)
+      allow(cert_provider).to receive(:load_private_key).and_return(private_key)
+      allow(cert_provider).to receive(:load_client_cert).and_return(client_cert)
+
+      Puppet[:log_level] = :debug
+      machine = described_class.new(cert_provider: cert_provider, digest: 'SHA512')
+      machine.ensure_client_certificate
+
+      expect(@logs).to include(
+        an_object_having_attributes(message: /Verified CA certificate 'CN=Test CA' fingerprint \(SHA512\)/),
+        an_object_having_attributes(message: /Verified CA certificate 'CN=Test CA Subauthority' fingerprint \(SHA512\)/),
+        an_object_having_attributes(message: /Verified client certificate 'CN=signed' fingerprint \(SHA512\)/)
+      )
     end
 
     context 'when exceptions occur' do
@@ -269,7 +295,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: cacert_pem)
 
       st = state.next_state
-      expect(st.ssl_context[:cacerts].map(&:to_pem)).to eq(cacerts.map(&:to_pem))
+      expect(st.ssl_context[:cacerts].map(&:to_pem)).to eq([cacert_pem])
       expect(File).to be_exist(Puppet[:localcacert])
     end
 
@@ -318,6 +344,41 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
 
       expect(File).to_not exist(Puppet[:localcacert])
     end
+
+    context 'when verifying CA cert bundle' do
+      before :each do
+        allow(cert_provider).to receive(:load_cacerts).and_return(nil)
+        stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: cacert_pem)
+        allow(cert_provider).to receive(:save_cacerts)
+      end
+
+      it 'verifies CA cert bundle if a ca_fingerprint is given case-insensitively' do
+        Puppet[:log_level] = :info
+        machine = described_class.new(digest: 'SHA256', ca_fingerprint: 'caacf69bbbcdad9dbcda92dd2da3608b639d1aea4c314d6cc6823cdb32d8e0f8')
+        state = Puppet::SSL::StateMachine::NeedCACerts.new(machine)
+        state.next_state
+
+        expect(@logs).to include(an_object_having_attributes(message: "Verified CA bundle with digest (SHA256) CA:AC:F6:9B:BB:CD:AD:9D:BC:DA:92:DD:2D:A3:60:8B:63:9D:1A:EA:4C:31:4D:6C:C6:82:3C:DB:32:D8:E0:F8"))
+      end
+
+      it 'verifies CA cert bundle using non-default fingerprint' do
+        Puppet[:log_level] = :info
+        machine = described_class.new(digest: 'SHA512', ca_fingerprint: '3c9d1482b878913ad95c9631feac5090cb05c6eab9496178d6fd5c14a023da3b1a8650a3cbaac516d9a48caf0b0742e1ed7eebf55105c024c74834a45056a9d9')
+        state = Puppet::SSL::StateMachine::NeedCACerts.new(machine)
+        state.next_state
+
+        expect(@logs).to include(an_object_having_attributes(message: "Verified CA bundle with digest (SHA512) 3C:9D:14:82:B8:78:91:3A:D9:5C:96:31:FE:AC:50:90:CB:05:C6:EA:B9:49:61:78:D6:FD:5C:14:A0:23:DA:3B:1A:86:50:A3:CB:AA:C5:16:D9:A4:8C:AF:0B:07:42:E1:ED:7E:EB:F5:51:05:C0:24:C7:48:34:A4:50:56:A9:D9"))
+      end
+
+      it 'returns an error if verification fails' do
+        machine = described_class.new(digest: 'SHA256', ca_fingerprint: 'wrong!')
+        state = Puppet::SSL::StateMachine::NeedCACerts.new(machine)
+
+        st = state.next_state
+        expect(st).to be_an_instance_of(Puppet::SSL::StateMachine::Error)
+        expect(st.message).to eq("CA bundle with digest (SHA256) CA:AC:F6:9B:BB:CD:AD:9D:BC:DA:92:DD:2D:A3:60:8B:63:9D:1A:EA:4C:31:4D:6C:C6:82:3C:DB:32:D8:E0:F8 did not match expected digest WR:ON:G!")
+      end
+    end
   end
 
   context 'NeedCRLs' do
@@ -346,7 +407,7 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: crl_pem)
 
       st = state.next_state
-      expect(st.ssl_context[:crls].map(&:to_pem)).to eq(crls.map(&:to_pem))
+      expect(st.ssl_context[:crls].map(&:to_pem)).to eq([crl_pem])
       expect(File).to be_exist(Puppet[:hostcrl])
     end
 
@@ -496,6 +557,8 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         allow(cert_provider).to receive(:load_private_key).and_return(private_key)
         allow(cert_provider).to receive(:load_client_cert).and_return(cert_fixture('tampered-cert.pem'))
 
+        ssl_context = Puppet::SSL::SSLContext.new(cacerts: [cacert], crls: [crl])
+        state = Puppet::SSL::StateMachine::NeedKey.new(machine, ssl_context)
         expect {
           state.next_state
         }.to raise_error(Puppet::SSL::SSLError, %r{The certificate for 'CN=signed' does not match its private key})

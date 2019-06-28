@@ -913,6 +913,14 @@ EOT
       :group => "service",
       :desc => "Where each client stores the CA certificate."
     },
+    :ca_fingerprint => {
+      :default => nil,
+      :type   => :string,
+      :desc => "The expected fingerprint of the CA certificate. If specified, the agent
+        will compare the CA certificate fingerprint that it downloads against this value
+        and reject the CA certificate if the values do not match. This only applies
+        during the first download of the CA certificate."
+    },
     :ssl_client_ca_auth => {
       :type  => :file,
       :mode  => "0644",

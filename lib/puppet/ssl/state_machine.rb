@@ -45,6 +45,18 @@ class Puppet::SSL::StateMachine
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
       else
         pem = Puppet::Rest::Routes.get_certificate(Puppet::SSL::CA_NAME, @ssl_context)
+        if @machine.ca_fingerprint
+          actual_digest = Puppet::SSL::Digest.new(@machine.digest, pem).to_hex
+          expected_digest = @machine.ca_fingerprint.scan(/../).join(':').upcase
+          if actual_digest == expected_digest
+            Puppet.info(_("Verified CA bundle with digest (%{digest_type}) %{actual_digest}") %
+                        { digest_type: @machine.digest, actual_digest: actual_digest })
+          else
+            e = Puppet::Error.new(_("CA bundle with digest (%{digest_type}) %{actual_digest} did not match expected digest %{expected_digest}") % { digest_type: @machine.digest, actual_digest: actual_digest, expected_digest: expected_digest })
+            return Error.new(@machine, e.message, e)
+          end
+        end
+
         cacerts = @cert_provider.load_cacerts_from_pem(pem)
         # verify cacerts before saving
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
@@ -292,7 +304,7 @@ class Puppet::SSL::StateMachine
   #
   class Done < SSLState; end
 
-  attr_reader :waitforcert, :wait_deadline, :cert_provider, :ssl_provider
+  attr_reader :waitforcert, :wait_deadline, :cert_provider, :ssl_provider, :ca_fingerprint, :digest
 
   # Construct a state machine to manage the SSL initialization process. By
   # default, if the state machine encounters an exception, it will log the
@@ -312,18 +324,25 @@ class Puppet::SSL::StateMachine
   #   to load and save X509 objects.
   # @param ssl_provider [Puppet::SSL::SSLProvider] ssl provider to use
   #   to construct ssl contexts.
+  # @param digest [String] digest algorithm to use for certificate fingerprinting
+  # @param ca_fingerprint [String] optional fingerprint to verify the
+  #   downloaded CA bundle
   def initialize(waitforcert: Puppet[:waitforcert],
                  maxwaitforcert: Puppet[:maxwaitforcert],
                  onetime: Puppet[:onetime],
                  cert_provider: Puppet::X509::CertProvider.new,
                  ssl_provider: Puppet::SSL::SSLProvider.new,
-                 lockfile: Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile]))
+                 lockfile: Puppet::Util::Pidlock.new(Puppet[:ssl_lockfile]),
+                 digest: 'SHA256',
+                 ca_fingerprint: Puppet[:ca_fingerprint])
     @waitforcert = waitforcert
     @wait_deadline = Time.now.to_i + maxwaitforcert
     @onetime = onetime
     @cert_provider = cert_provider
     @ssl_provider = ssl_provider
     @lockfile = lockfile
+    @digest = digest
+    @ca_fingerprint = ca_fingerprint
   end
 
   # Run the state machine for CA certs and CRLs.
@@ -347,7 +366,7 @@ class Puppet::SSL::StateMachine
       chain = ssl_context.client_chain
       # print from root to client
       chain.reverse.each_with_index do |cert, i|
-        digest = Puppet::SSL::Digest.new('SHA256', cert.to_der)
+        digest = Puppet::SSL::Digest.new(@digest, cert.to_der)
         if i == chain.length - 1
           Puppet.debug(_("Verified client certificate '%{subject}' fingerprint %{digest}") % {subject: cert.subject.to_utf8, digest: digest})
         else
