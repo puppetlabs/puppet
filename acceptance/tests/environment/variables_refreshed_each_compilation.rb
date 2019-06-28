@@ -2,6 +2,8 @@ test_name 'C98115 compilation should get new values in variables on each compila
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils
 
+  confine :except, :platform => /^(aix|osx|solaris)/
+
   tag 'audit:medium',
       'audit:integration',
       'server'
