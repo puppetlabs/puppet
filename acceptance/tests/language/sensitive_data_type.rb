@@ -102,7 +102,7 @@ tag 'audit:high',
     with_puppet_running_on(master,{}) do
       agents.each do |agent|
         # redirect logging to a temp location to avoid platform specific syslogs
-        on(agent, puppet("agent -t --debug --trace --show_diff --server #{master.hostname} --environment #{tmp_environment}"), :accept_all_exit_codes => true) do |result|
+        on(agent, puppet("agent -t --debug --trace --show_diff --environment #{tmp_environment}"), :accept_all_exit_codes => true) do |result|
           assert_equal(result.exit_code, 2,'puppet agent run failed')
 
           run_assertions(assertion_code, result) unless agent['locale'] == 'ja'

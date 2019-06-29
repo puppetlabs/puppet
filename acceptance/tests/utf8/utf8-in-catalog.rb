@@ -4,7 +4,6 @@ test_name 'utf-8 characters in cached catalog' do
       'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
       'audit:refactor' # use mk_temp_environment_with_teardown
 
-  utf8chars_lit = "€‰ㄘ万竹ÜÖ"
   utf8chars     = "\u20ac\u2030\u3118\u4e07\u7af9\u00dc\u00d6"
   file_content  = "This is the file content. file #{utf8chars}"
   codedir       = master.tmpdir("code")
@@ -64,7 +63,7 @@ PP
 
     with_puppet_running_on(master, master_opts, codedir) do
       step "apply utf-8 catalog" do
-        on(agent, puppet("agent -t --vardir '#{agent_vardir}' --server #{master.hostname}"),
+        on(agent, puppet("agent -t --vardir '#{agent_vardir}'"),
            { :acceptable_exit_codes => [2], :environment => { :LANG => "en_US.UTF-8" } })
       end
 

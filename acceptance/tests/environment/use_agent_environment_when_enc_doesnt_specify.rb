@@ -55,7 +55,7 @@ END
   with_puppet_running_on(master, master_opts, testdir) do
 
     agents.each do |agent|
-      run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --environment more_different") do |result|
+      run_agent_on(agent, "--no-daemonize --onetime --verbose --environment more_different") do |result|
         assert_match(/more_different_string/, result.stdout, "Did not find more_different_string from \"more_different\" environment")
       end
     end

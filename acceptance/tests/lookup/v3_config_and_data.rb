@@ -102,7 +102,7 @@ notify { "${lookup('environment_key4')}": }
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
       step "agent lookup" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           assert_match(/env value1/, result.stdout,

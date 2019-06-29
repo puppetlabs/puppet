@@ -13,7 +13,7 @@ on master, puppet("module search yup"), :acceptable_exit_codes => [1] do
 \e[mNotice: Searching https://forgeapi.puppet.com ...\e[0m
 STDOUT
 
-assert_no_match /yup/,
+assert_no_match(/yup/,
   stdout,
-  'Found a reference to a fake module when errors should have prevented us from getting here'
+  'Found a reference to a fake module when errors should have prevented us from getting here')
 end
