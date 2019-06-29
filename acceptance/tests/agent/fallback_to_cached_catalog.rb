@@ -6,7 +6,7 @@ tag 'audit:medium',
 
 step "run agents once to cache the catalog" do
   with_puppet_running_on master, {} do
-    on(agents, puppet("agent -t --server #{master}"))
+    on(agents, puppet("agent -t"))
   end
 end
 

@@ -55,7 +55,7 @@ SITEPP
 
   with_puppet_running_on(master, {}) do
     agents.each do |agent|
-      on(agent, puppet("agent -t --environment #{tmp_environment} --server #{master.hostname}"))
+      on(agent, puppet("agent -t --environment #{tmp_environment}"))
     end
   end
 

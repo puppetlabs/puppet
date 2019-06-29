@@ -7,7 +7,7 @@ tag 'audit:high',
 
 def before(agent)
   step "file to be touched should not exist."
-  touched = agent.tmpfile('test-exec')
+  agent.tmpfile('test-exec')
 end
 
 def after(agent, touched)

@@ -10,7 +10,6 @@ tag 'audit:high',
 
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
-  fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
 
   manifest = <<-PP
 type Mod::Foo = Object[{
@@ -37,7 +36,7 @@ include mod
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
       step "run the agent on #{agent.hostname} and assert notify output" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent didn't exit properly: (#{result.exit_code})")
           assert_match(/A foo/, result.stdout, 'agent didn\'t notify correctly')

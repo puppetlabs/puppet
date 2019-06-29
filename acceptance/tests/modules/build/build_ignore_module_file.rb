@@ -1,7 +1,7 @@
 test_name 'PUP-3981 - C63215 - Build Module Should Ignore Module File'
 
 tag 'audit:low',
-    'audit:acceptance'
+    'audit:acceptance',
     'audit:refactor'   # Wrap steps in blocks in accordance with Beaker style guide
 
 #Init

@@ -76,7 +76,7 @@ test_name 'Ensure a file resource can have a UTF-8 source attribute, content, an
 
     with_puppet_running_on(master, {}) do
       agents.each do |agent|
-        on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"), :acceptable_exit_codes => 2)
+        on(agent, puppet("agent -t --environment '#{tmp_environment}'"), :acceptable_exit_codes => 2)
 
         on(agent, "cat '#{agent_tmp_dirs[agent_to_fqdn(agent)]}/\uff72\uff67\u30d5\u30eb'") do |result|
           assert_match("\u2603", result.stdout, "managed UTF-8 file contents '#{result.stdout}' did not match expected value '\u2603'")

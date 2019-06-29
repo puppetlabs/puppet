@@ -1,6 +1,5 @@
 test_name "#3360: Allow duplicate CSR when allow_duplicate_certs is on"
 
-agent_hostnames = agents.map {|a| a.to_s}
 tag 'audit:medium',  # CA functionality
     'audit:refactor', # Use block style `test_name`
     'audit:unit',
@@ -17,7 +16,7 @@ with_puppet_running_on(master, {'master' => {'allow_duplicate_certs' => true,
 
   agents_with_cert_name.each do |fqdn, agent|
     step "Generate a certificate request for the agent"
-    on(agent, puppet("certificate generate #{fqdn} --ca-location remote --server #{master}"))
+    on(agent, puppet("certificate generate #{fqdn} --ca-location remote"))
   end
 
   step "Collect the original certs"
@@ -37,7 +36,7 @@ with_puppet_running_on(master, {'master' => {'allow_duplicate_certs' => true,
 
   agents_with_cert_name.each do |fqdn, agent|
     step "Make another request with the same certname"
-    on(agent, puppet("certificate generate #{fqdn} --ca-location remote --server #{master}"))
+    on(agent, puppet("certificate generate #{fqdn} --ca-location remote"))
   end
 
   step "Collect the new certs"

@@ -71,7 +71,7 @@ MASTER_MANIFEST
       puts "agent name: #{agent.hostname}, platform: #{agent.platform}"
       step "Run puppet agent for plugin sync" do 
         on(
-          agent, puppet("agent", "-t", "--server #{master.node_name}"),
+          agent, puppet("agent", "-t"),
           :acceptable_exit_codes => [0, 2]
         )
       end

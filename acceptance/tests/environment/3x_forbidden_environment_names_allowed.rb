@@ -65,7 +65,7 @@ with_puppet_running_on(master, master_opts, testdir) do
   agents.each do |agent|
     environments.each do |environment|
       on(agent, puppet('agent',
-                       "--test --server #{master} --environment #{environment}"),
+                       "--test --environment #{environment}"),
       :acceptable_exit_codes => 2)
     end
   end

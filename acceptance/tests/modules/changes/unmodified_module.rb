@@ -16,5 +16,5 @@ step 'Run module changes to check an unmodified module'
 on( master, puppet("module changes #{testdir}/nginx"),
     :acceptable_exit_codes => [0] ) do
 
-  assert_match /No modified files/, stdout
+  assert_match(/No modified files/, stdout)
 end

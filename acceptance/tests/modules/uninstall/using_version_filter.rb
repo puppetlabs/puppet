@@ -9,7 +9,6 @@ tag 'audit:low',       # Module management via pmt is not the primary support wo
 
 module_author = "jimmy"
 module_name   = "crakorn"
-module_dependencies = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do

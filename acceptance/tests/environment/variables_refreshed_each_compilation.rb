@@ -65,13 +65,13 @@ echo "custom_time=$(get-date -format HHmmssffffff)"
       agents.each do |agent|
         # ensure our custom facts have been synced
         on(agent,
-           puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'"),
+           puppet("agent -t --environment '#{tmp_environment}'"),
            :accept_all_exit_codes => true)
 
         local_custom_time1 = module_custom_time1 = nil
         local_custom_time2 = module_custom_time2 = nil
 
-        on(agent, puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'"),
+        on(agent, puppet("agent -t --environment '#{tmp_environment}'"),
            :accept_all_exit_codes => [2]) do |result|
           assert_match(/Notice: #{local_custom_time_pattern}/, result.stdout, 'first custom time was not as expected')
           assert_match(/Notice: #{module_custom_time_pattern}/, result.stdout, 'first module uptime was not as expected')
@@ -82,7 +82,7 @@ echo "custom_time=$(get-date -format HHmmssffffff)"
 
         sleep 1
 
-        on(agent, puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'"),
+        on(agent, puppet("agent -t --environment '#{tmp_environment}'"),
            :accept_all_exit_codes => [2]) do |result|
           assert_match(/Notice: #{local_custom_time_pattern}/, result.stdout, 'second custom time was not as expected')
           assert_match(/Notice: #{module_custom_time_pattern}/, result.stdout, 'second module uptime was not as expected')

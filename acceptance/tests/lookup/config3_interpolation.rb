@@ -25,8 +25,6 @@ tag 'audit:medium',
   end
 
   step "create hiera configs in #{tmp_environment} and global" do
-    codedir = master.puppet('master')['codedir']
-
     step "create global hiera.yaml and module data" do
       create_remote_file(master, "#{master_confdir}/hiera.yaml", <<-HIERA)
 ---
@@ -64,7 +62,7 @@ include some_mod
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
       step "agent lookup" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment} --debug"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment} --debug"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           assert_match(/env value/, result.stdout,

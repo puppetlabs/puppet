@@ -61,7 +61,7 @@ master_opts = {
 
 with_puppet_running_on master, master_opts, basedir do
   agents.each do |agent|
-    on(agent, puppet('agent', "-t --server #{master}"))
+    on(agent, puppet('agent', "-t"))
     on agent, "cat \"#{agent.puppet['vardir']}/lib/foo.rb\"" do
       assert_match(/from the first module/, stdout, "The synced plugin was not found or the wrong version was synced")
     end
