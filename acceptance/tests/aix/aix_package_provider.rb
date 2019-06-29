@@ -18,7 +18,7 @@ test_name "aix package provider should work correctly" do
   end
 
   def get_package_manifest(package, version, sourcedir)
-    manifest = <<-MANIFEST
+    <<-MANIFEST
     package { '#{package}':
       ensure   => '#{version}',
       provider => aix,

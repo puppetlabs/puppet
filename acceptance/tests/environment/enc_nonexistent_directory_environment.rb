@@ -60,7 +60,7 @@ file {
 
   with_puppet_running_on(master, master_opts, testdir) do
     agents.each do |agent|
-      on(agent, puppet("agent -t --server #{master} --verbose"), :acceptable_exit_codes => [1]) do |result|
+      on(agent, puppet("agent -t --verbose"), :acceptable_exit_codes => [1]) do |result|
         unless agent['locale'] == 'ja'
           assert_match(/Could not find a directory environment named 'doesnotexist'/, result.stderr, "Errors when nonexistent environment is specified")
         end

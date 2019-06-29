@@ -34,7 +34,7 @@ step "Master: Start Puppet Master" do
       end
 
       tmpfile = agent.tmpfile('testfile')
-      remote_str = "--remote --server #{master}"
+      remote_str = "--remote"
       local_str = "--local"
 
       teardown do

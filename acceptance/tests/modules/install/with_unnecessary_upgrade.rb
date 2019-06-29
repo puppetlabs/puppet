@@ -9,7 +9,6 @@ tag 'audit:low',       # Install via pmt is not the primary support workflow
 
 module_author = "pmtacceptance"
 module_name   = "java"
-module_dependencies   = ["stdlub"]
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do

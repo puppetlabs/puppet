@@ -10,7 +10,6 @@ confine :except, :platform => /centos-4|el-4/ # PUP-5226
 
 module_author = "pmtacceptance"
 module_name   = "nginx"
-module_dependencies = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do

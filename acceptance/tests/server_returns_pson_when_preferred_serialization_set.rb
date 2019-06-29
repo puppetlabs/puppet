@@ -13,7 +13,6 @@ test_name "C100532: Server returns expected format when --preferred_serializatio
         agents.each do |agent|
           on(agent, puppet('agent', '-t',
                            "--preferred_serialization_format #{expected_format}",
-                           "--server #{master}",
                            '--http_debug'), :acceptable_exit_codes => [0,2]) do |res|
             found_format = false
             started = false

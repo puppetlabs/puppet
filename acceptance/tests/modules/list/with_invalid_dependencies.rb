@@ -81,7 +81,7 @@ on master, puppet("module list") do |res|
   ].join("\n"), Regexp::MULTILINE)
   assert_match(pattern, result.stderr)
 
-  assert_match /jimmy-crakorn.*invalid/, res.stdout, 'Did not find module jimmy-crick in module site path'
+  assert_match(/jimmy-crakorn.*invalid/, res.stdout, 'Did not find module jimmy-crick in module site path')
 end
 
 step "List the installed modules as a dependency tree"
@@ -93,5 +93,5 @@ on master, puppet("module list --tree") do |res|
   ].join("\n"), Regexp::MULTILINE)
   assert_match(pattern, result.stderr)
 
-  assert_match /jimmy-crakorn.*\[#{master['distmoduledir']}\].*invalid/, res.stdout
+  assert_match(/jimmy-crakorn.*\[#{master['distmoduledir']}\].*invalid/, res.stdout)
 end
