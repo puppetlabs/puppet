@@ -55,7 +55,7 @@ class Puppet::Util::Metric
   end
 
   def values
-    @values.sort { |a, b| a[1] <=> b[1] }
+    @values.sort_by { |a| a[1] }
   end
 
   # Convert a name into a label.
