@@ -5,14 +5,14 @@ require 'puppet/file_serving/metadata'
 
 reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirection types and their terminus classes" do
   text = ""
-  Puppet::Indirector::Indirection.instances.sort { |a,b| a.to_s <=> b.to_s }.each do |indirection|
+  Puppet::Indirector::Indirection.instances.sort_by(&:to_s).each do |indirection|
     ind = Puppet::Indirector::Indirection.instance(indirection)
     name = indirection.to_s.capitalize
     text << "## " + indirection.to_s + "\n\n"
 
     text << Puppet::Util::Docs.scrub(ind.doc) + "\n\n"
 
-    Puppet::Indirector::Terminus.terminus_classes(ind.name).sort { |a,b| a.to_s <=> b.to_s }.each do |terminus|
+    Puppet::Indirector::Terminus.terminus_classes(ind.name).sort_by(&:to_s).each do |terminus|
       terminus_name = terminus.to_s
       term_class = Puppet::Indirector::Terminus.terminus_class(ind.name, terminus)
       if term_class

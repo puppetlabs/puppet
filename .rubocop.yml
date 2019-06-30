@@ -704,10 +704,6 @@ Metrics/BlockLength:
 Performance/Caller:
   Enabled: false
 
-# TODO PUP-8003
-Performance/CompareWithBlock:
-  Enabled: false
-
 # TODO PUP-8004
 Security/JSONLoad:
   Enabled: false

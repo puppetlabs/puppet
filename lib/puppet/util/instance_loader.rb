@@ -40,7 +40,7 @@ module Puppet::Util::InstanceLoader
     instance_loader(type).loadall
 
     # Use this method so they all get loaded
-    loaded_instances(type).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
+    loaded_instances(type).sort_by(&:to_s).each do |name|
       mod = self.loaded_instance(type, name)
       docs << "#{name}\n#{"-" * name.to_s.length}\n"
 

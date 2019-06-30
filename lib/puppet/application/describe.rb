@@ -64,9 +64,7 @@ class TypeDoc
 
   def list_types
     puts "These are the types known to puppet:\n"
-    @types.keys.sort { |a, b|
-      a.to_s <=> b.to_s
-    }.each do |name|
+    @types.keys.sort_by(&:to_s).each do |name|
       type = @types[name]
       s = type.doc.gsub(/\s+/, " ")
       n = s.index(". ")
@@ -149,18 +147,14 @@ class TypeDoc
   end
 
   def format_providers(type)
-    type.providers.sort { |a,b|
-      a.to_s <=> b.to_s
-    }.each { |prov|
+    type.providers.sort_by(&:to_s).each { |prov|
       puts "\n- **#{prov}**"
       puts @format.wrap(type.provider(prov).doc, :indent => 4, :scrub => true)
     }
   end
 
   def list_providers(type)
-    list = type.providers.sort { |a,b|
-      a.to_s <=> b.to_s
-    }.join(", ")
+    list = type.providers.sort_by(&:to_s).join(", ")
     puts @format.wrap(list, :indent => 4)
   end
 
