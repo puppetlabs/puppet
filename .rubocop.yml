@@ -697,10 +697,6 @@ Lint/ShadowedException:
 Metrics/BlockLength:
   Enabled: false
 
-# TODO PUP-8003
-Performance/CompareWithBlock:
-  Enabled: false
-
 Style/EmptyCaseCondition:
   Enabled: false
 
