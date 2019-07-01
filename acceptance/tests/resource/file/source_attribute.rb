@@ -162,7 +162,7 @@ test_name "The source attribute" do
     agents.each do |agent|
       # accept an exit code of 2 which is returned if there are changes
       step "create file the first run"
-      on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]) do
+      on(agent, puppet('agent', "--test"), :acceptable_exit_codes => [0,2]) do
         file_to_check = agent['platform'] =~ /windows/ ? @target_file_on_windows : @target_file_on_nix
         dir_to_check = agent['platform'] =~ /windows/ ? @target_dir_on_windows : @target_dir_on_nix
 
@@ -178,7 +178,7 @@ test_name "The source attribute" do
       end
 
       step "second run should not update file"
-      on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]) do
+      on(agent, puppet('agent', "--test"), :acceptable_exit_codes => [0,2]) do
         assert_no_match(/content changed.*(md5|sha256)/, stdout, "Shouldn't have overwritten any files")
 
         # When using ctime/mtime, the agent compares the values from its
@@ -210,7 +210,7 @@ test_name "The source attribute" do
 
     on master, "touch #{mod_source_file} #{mod_source_dir_file}"
     agents.each do |agent|
-      on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]) do
+      on(agent, puppet('agent', "--test"), :acceptable_exit_codes => [0,2]) do
         file_to_check = agent['platform'] =~ /windows/ ? @target_file_on_windows : @target_file_on_nix
         dir_to_check = agent['platform'] =~ /windows/ ? @target_dir_on_windows : @target_dir_on_nix
         ['ctime', 'mtime'].each do |time_type|

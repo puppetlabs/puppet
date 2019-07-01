@@ -25,14 +25,13 @@ def manifest_call_each_function_from_array(functions)
 end
 
 
-generator = ''
 agents.each do |agent|
   testdir = agent.tmpdir('calling_all_functions')
-  if agent["platform"] =~ /win/
-    generator = {:args => '"c:/windows/system32/tasklist.exe"', :expected => /\nImage Name/}
-  else
-    generator = {:args => '"/bin/date"',                        :expected => /\w\w\w.*?\d\d:\d\d\:\d\d/}
-  end
+  # if agent["platform"] =~ /win/
+  #   generator = {:args => '"c:/windows/system32/tasklist.exe"', :expected => /\nImage Name/}
+  # else
+  #   generator = {:args => '"/bin/date"',                        :expected => /\w\w\w.*?\d\d:\d\d\:\d\d/}
+  # end
 
   # create list of 3x functions and args
   # notes: hiera functions are well tested elsewhere, included for completeness

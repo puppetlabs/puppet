@@ -46,7 +46,7 @@ test_name "C97899 - Agent run should fail if environment is unreadable" do
     }
     with_puppet_running_on master, master_opts, testdir do
       agents.each do |agent|
-        on(agent, puppet("agent --test --server #{master} --environment testing"), :accept_all_exit_codes => true) do |result|
+        on(agent, puppet("agent --test --environment testing"), :accept_all_exit_codes => true) do |result|
           refute_equal(2, result.exit_code, 'agent run should not apply changes')
           expect_failure('expected to fail until PUP-6241 is resolved') do
             refute_equal(0, result.exit_code, 'agent run should not succeed')

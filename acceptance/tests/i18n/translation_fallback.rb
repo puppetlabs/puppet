@@ -7,7 +7,7 @@ test_name 'C100560: puppet agent run output falls back to english when language 
   agents.each do |agent|
     step 'Run Puppet apply with language Hungarian and check the output' do
       unsupported_language='hu_HU'
-      on(agent, puppet("agent -t --server #{master}",
+      on(agent, puppet("agent -t",
                        'ENV' => {'LANG' => unsupported_language, 'LANGUAGE' => ''})) do |apply_result|
         assert_match(/Applying configuration version '[^']*'/, apply_result.stdout,
                      'agent run should default to english translation')

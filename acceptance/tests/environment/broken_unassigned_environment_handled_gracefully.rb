@@ -51,7 +51,7 @@ master_opts = {
 with_puppet_running_on(master, master_opts, testdir) do
   agents.each do |agent|
     on(agent, puppet('agent',
-                     "--test --server #{master} --environment #{environment}"),
+                     "--test --environment #{environment}"),
        :acceptable_exit_codes => (0..255)) do
       assert_match(/you win/, stdout,
                    'agent did not pickup newly classified environment.')

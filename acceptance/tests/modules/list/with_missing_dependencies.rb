@@ -85,7 +85,7 @@ on master, puppet('module list --tree') do
   ].join("\n"), Regexp::MULTILINE)
   assert_match(pattern, result.stderr)
 
-  assert_match /UNMET DEPENDENCY.*jimmy-sprinkles/, stdout, 'Did not find unmeet dependency for jimmy-sprinkles warning'
+  assert_match(/UNMET DEPENDENCY.*jimmy-sprinkles/, stdout, 'Did not find unmeet dependency for jimmy-sprinkles warning')
 
-  assert_match /UNMET DEPENDENCY.*jimmy-crakorn/, stdout, 'Did not find unmeet dependency for jimmy-crakorn warning'
+  assert_match(/UNMET DEPENDENCY.*jimmy-crakorn/, stdout, 'Did not find unmeet dependency for jimmy-crakorn warning')
 end

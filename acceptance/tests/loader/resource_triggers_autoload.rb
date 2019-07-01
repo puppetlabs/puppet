@@ -39,7 +39,7 @@ test_name 'C100296: can auto-load defined types using a Resource statement' do
 
   with_puppet_running_on(master, {}) do
     agents.each do |agent|
-      on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
+      on(agent, puppet("agent -t --environment #{tmp_environment}"),
          :acceptable_exit_codes => 2) do |puppet_result|
         assert_match(/Notice: tst1: Define found one::tst1/, puppet_result.stdout, 'Expected to see output from define notify')
         assert_match(/Notice: tst2: Define found one::tst2/, puppet_result.stdout, 'Expected to see output from define notify')

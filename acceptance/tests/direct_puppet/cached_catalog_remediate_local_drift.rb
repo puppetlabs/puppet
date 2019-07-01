@@ -13,7 +13,6 @@ test_name "PUP-5122: Puppet remediates local drift using code_id and content_uri
 
   basedir = master.tmpdir(File.basename(__FILE__, '.*'))
   module_dir = "#{basedir}/environments/production/modules"
-  modulepath = "#{module_dir}"
 
   master_opts = {
    'main' => {
@@ -82,7 +81,7 @@ MANIFEST
       end
 
       step "agent: #{agent}: Initial run: create the file with code version 1 and cache the catalog"
-      on(agent, puppet("agent", "-t", "--server #{master}"), :acceptable_exit_codes => [0,2])
+      on(agent, puppet("agent", "-t"), :acceptable_exit_codes => [0,2])
 
       # When there is no drift, there should be no request made to the server
       # for file metadata or file content.  A puppet run depending on
@@ -123,7 +122,7 @@ file { "#{module_dir}/foo/files/foo.txt" :
 MANIFEST
 
       step "Run agent again using --use_cached_catalog and ensure content from the first code_id is used"
-      on(agent, puppet("agent", "-t", "--use_cached_catalog", "--server #{master}"), :acceptable_exit_codes => [0,2])
+      on(agent, puppet("agent", "-t", "--use_cached_catalog"), :acceptable_exit_codes => [0,2])
       on(agent, "cat #{agent_test_file_path}") do
         assert_equal('code_version_1', stdout)
       end
