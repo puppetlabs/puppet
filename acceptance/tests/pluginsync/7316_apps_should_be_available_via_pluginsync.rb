@@ -71,7 +71,7 @@ end
         end
 
         step "run the agent" do
-          on(agent, puppet("agent --libdir='#{agent_lib_dir}' --test --server #{master} --environment '#{tmp_environment}'")) do |result|
+          on(agent, puppet("agent --libdir='#{agent_lib_dir}' --test --environment '#{tmp_environment}'")) do |result|
             assert_no_match(
               /The \`source_permissions\` parameter is deprecated/,
               result.stderr,

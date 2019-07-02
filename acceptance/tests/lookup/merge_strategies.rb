@@ -169,7 +169,7 @@ notify { "lookup-array: ${lookup ('array')}": }
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
       step "agent lookups #{agent.hostname}, hiera3" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           # hiera_hash will honor old global merge strategies, which were a bad idea
@@ -193,7 +193,7 @@ notify { "lookup-array: ${lookup ('array')}": }
         end
       end
       step "agent lookups #{agent.hostname}, hiera5" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment2}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment2}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           assert_match(/hiera_hash: \[auth_kerb, authnz_ldap, cgid, php, status, mpm_prefork, ssl\]/, result.stdout,

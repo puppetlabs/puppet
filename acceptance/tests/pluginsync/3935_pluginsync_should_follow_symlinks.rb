@@ -41,7 +41,7 @@ master_opts = {
 
 with_puppet_running_on master, master_opts, basedir do
   agents.each do |agent|
-    on(agent, puppet('agent', "-t --server #{master}"))
+    on(agent, puppet('agent', "-t"))
       assert_no_match(/Could not retrieve information from environment production source\(s\) puppet:\/\/\/pluginfacts/, stderr)
       assert_no_match(/Could not retrieve information from environment production source\(s\) puppet:\/\/\/plugins/, stderr)
   end

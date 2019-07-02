@@ -68,7 +68,7 @@ END
   with_puppet_running_on(master, master_opts, testdir) do
 
     agents.each do |agent|
-      run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose") do |result|
+      run_agent_on(agent, "--no-daemonize --onetime --verbose") do |result|
         assert_match(/expected_string/, result.stdout, "Did not find expected_string from \"special\" environment")
         caching_catalog_message_count = result.stdout.split(/Info: Caching catalog for/).length - 1
         assert_equal(caching_catalog_message_count, 1, 'Should only compile and cache the catalog once during the run')

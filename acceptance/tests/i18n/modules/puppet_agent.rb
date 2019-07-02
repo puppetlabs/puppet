@@ -63,7 +63,7 @@ test_name 'C100565: puppet agent with module should translate messages' do
           }
         PP
         create_sitepp(master, tmp_environment_1, site_pp_content_1)
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
+        on(agent, puppet("agent -t --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => [0, 2]) do |result|
           assert_match(/.*\w+-i18ndemo fact: これは\w+-i18ndemoからのカスタムファクトからのレイズです/, result.stderr, 'missing translation for raise from ruby fact')
         end
       end
@@ -76,7 +76,7 @@ test_name 'C100565: puppet agent with module should translate messages' do
         #   }
         # PP
         # create_sitepp(master, tmp_environment_1, site_pp_content_3)
-        # on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => { 'LANGUAGE' => '', 'LANG' => language }), :acceptable_exit_codes => 1) do |result|
+        # on(agent, puppet("agent -t --environment #{tmp_environment_1}", 'ENV' => { 'LANGUAGE' => '', 'LANG' => language }), :acceptable_exit_codes => 1) do |result|
         #   assert_match(/Error: リモートサーバからカタログを取得できませんでした: SERVERのエラー500 : サーバエラー: Evaluation/, result.stderr, 'missing translation for Server Error')
         #   assert_match(/Error:.*の検証中にエラーが生じました。.*ファイルの作成に失敗しました/, result.stderr, 'missing translation for fail from init.pp')
         # end
@@ -90,7 +90,7 @@ test_name 'C100565: puppet agent with module should translate messages' do
         PP
 
         create_sitepp(master, tmp_environment_1, site_pp_content_4)
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => 1) do |result|
+        on(agent, puppet("agent -t --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => 1) do |result|
           assert_match(/Warning:.*\w+-i18ndemo type: 良い値/, result.stderr, 'missing warning from custom type')
         end
 
@@ -100,7 +100,7 @@ test_name 'C100565: puppet agent with module should translate messages' do
           }
         PP
         create_sitepp(master, tmp_environment_1, site_pp_content_5)
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => 1) do |result|
+        on(agent, puppet("agent -t --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => 1) do |result|
           assert_match(/Error: .* \w+-i18ndemo type: 値は有12345効な値ではありません/, result.stderr, 'missing error from invalid value for custom type param')
         end
       end
@@ -115,7 +115,7 @@ test_name 'C100565: puppet agent with module should translate messages' do
           }
         PP
         create_sitepp(master, tmp_environment_1, site_pp_content_6)
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language)) do |result|
+        on(agent, puppet("agent -t --environment #{tmp_environment_1}", 'ENV' => shell_env_language)) do |result|
           assert_match(/Warning:.*\w+-i18ndemo provider: i18ndemo_typeは存在しますか/, result.stderr, 'missing translated provider message')
         end
       end
@@ -129,7 +129,7 @@ test_name 'C100565: puppet agent with module should translate messages' do
           }
         PP
         create_sitepp(master, tmp_environment_1, site_pp_content_7)
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => 2) do |result|
+        on(agent, puppet("agent -t --environment #{tmp_environment_1}", 'ENV' => shell_env_language), :acceptable_exit_codes => 2) do |result|
           assert_match(/Notice: --\*\w+-i18ndemo function: それは楽しい時間です\*--/, result.stdout, 'missing translated notice message')
         end
       end

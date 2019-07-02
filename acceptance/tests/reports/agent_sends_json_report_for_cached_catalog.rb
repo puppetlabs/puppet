@@ -11,14 +11,13 @@ test_name "C100533: Agent sends json report for cached catalog" do
 
     step "Perform agent run to ensure that catalog is cached" do
       agents.each do |agent|
-        on(agent, puppet('agent', '-t', "--server #{master}"), :acceptable_exit_codes => [0,2])
+        on(agent, puppet('agent', '-t'), :acceptable_exit_codes => [0,2])
       end
     end
 
     step "Ensure agent sends #{expected_format} report for cached catalog" do
       agents.each do |agent|
         on(agent, puppet('agent', '-t',
-                         "--server #{master}",
                          '--http_debug'), :acceptable_exit_codes => [0,2]) do |res|
           # Expected content-type should be in the headers of the
           # HTTP report payload being PUT to the server by the agent.

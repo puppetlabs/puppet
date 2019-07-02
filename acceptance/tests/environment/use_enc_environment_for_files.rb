@@ -66,7 +66,7 @@ file { "#{atmp}/special_testy":
 END
       on(master, "chmod 644 '#{testdir}/environments/special/manifests/different.pp'")
 
-      run_agent_on(agent, "--no-daemonize --onetime --server #{master} --verbose --trace")
+      run_agent_on(agent, "--no-daemonize --onetime --verbose --trace")
 
       on(agent, "cat '#{atmp}/special_testy'") do |result|
         assert_match(/special_environment/,

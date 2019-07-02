@@ -57,7 +57,7 @@ END
         on(agent, "rm -rf '#{agent_vardir}/lib'")
       end
 
-      run_agent_on(agent, "--no-daemonize --onetime --server #{master}")
+      run_agent_on(agent, "--no-daemonize --onetime")
       on(agent, "cat '#{agent_vardir}/lib/puppet/foo.rb'") do |result|
         assert_match(/#special_version/, result.stdout, "The plugin from environment 'special' was not synced")
       end

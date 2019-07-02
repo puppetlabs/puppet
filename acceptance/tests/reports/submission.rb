@@ -51,7 +51,7 @@ if master.is_pe?
 
   with_puppet_running_on(master, {}) do
     agents.each do |agent|
-      on(agent, puppet('agent', "-t --server #{master}"))
+      on(agent, puppet('agent', "-t"))
 
       sleep_until_queue_empty
 
@@ -72,7 +72,7 @@ else
 
   with_puppet_running_on(master, :main => { :reportdir => testdir, :reports => 'store' }) do
     agents.each do |agent|
-      on(agent, puppet('agent', "-t --server #{master}"))
+      on(agent, puppet('agent', "-t"))
 
       on master, "grep -q #{agent.node_name} #{testdir}/*/*"
     end

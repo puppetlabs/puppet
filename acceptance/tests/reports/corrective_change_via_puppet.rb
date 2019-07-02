@@ -62,7 +62,7 @@ test_name "C98094 - a resource changed via Puppet manifest will not be reported 
     with_puppet_running_on(master, {}) do
       agents.each do |agent|
         step 'Run agent once to create new File resource' do
-          on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"), :acceptable_exit_codes => 2)
+          on(agent, puppet("agent -t --environment '#{tmp_environment}'"), :acceptable_exit_codes => 2)
         end
 
         step 'Verify the file resource is created' do
@@ -78,7 +78,7 @@ test_name "C98094 - a resource changed via Puppet manifest will not be reported 
 
       agents.each do |agent|
         step 'Run agent a 2nd time to change the File resource' do
-          on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"), :acceptable_exit_codes => 2)
+          on(agent, puppet("agent -t --environment '#{tmp_environment}'"), :acceptable_exit_codes => 2)
         end
 
         step 'Verify the file resource is created' do

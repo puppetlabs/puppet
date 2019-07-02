@@ -54,7 +54,7 @@ test_name "C98093 - a resource changed outside of Puppet will be reported as a c
       agents.each do |agent|
         #Run agent once to create new File resource
         step 'Run agent once to create new File resource' do
-          on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"), :acceptable_exit_codes => 2)
+          on(agent, puppet("agent -t --environment '#{tmp_environment}'"), :acceptable_exit_codes => 2)
         end
 
         #Verify the file resource is created
@@ -71,7 +71,7 @@ test_name "C98093 - a resource changed outside of Puppet will be reported as a c
 
         #Run agent to correct the file's absence
         step 'Run agent to correct the files absence' do
-          on(agent, puppet("agent -t --environment '#{tmp_environment}' --server #{master.hostname}"), :acceptable_exit_codes => 2)
+          on(agent, puppet("agent -t --environment '#{tmp_environment}'"), :acceptable_exit_codes => 2)
         end
 
         #Verify the file resource is created

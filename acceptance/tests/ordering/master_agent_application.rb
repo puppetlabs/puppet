@@ -42,7 +42,7 @@ master_opts = {
 
 with_puppet_running_on(master, master_opts) do
   agents.each do |agent|
-    on(agent, puppet('agent', "--no-daemonize --onetime --verbose --server #{master}"))
+    on(agent, puppet('agent', "--no-daemonize --onetime --verbose"))
     if stdout !~ /Notice: first.*Notice: second.*Notice: third.*Notice: fourth.*Notice: fifth.*Notice: sixth.*Notice: seventh.*Notice: eighth/m
       fail_test "Output did not include the notify resources in the correct order"
     end

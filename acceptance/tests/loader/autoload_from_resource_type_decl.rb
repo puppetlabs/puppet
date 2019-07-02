@@ -75,7 +75,7 @@ test_name 'C100303: Resource type statement triggered auto-loading works both wi
       empty_execution_log_file(master, execution_log[agent_to_fqdn(master)])
       empty_execution_log_file(agent, execution_log[agent_to_fqdn(agent)])
 
-      on(agent, puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'")) do |puppet_result|
+      on(agent, puppet("agent -t --environment '#{tmp_environment}'")) do |puppet_result|
         assert_match(/\/File\[.*\/type_tst.rb\]\/ensure: defined content as/, puppet_result.stdout,
                      'Expected to see defined content message for type: type_tst')
         assert_match(/Notice: found_type_tst/, puppet_result.stdout, 'Expected to see the notice from the new type: type_tst')
@@ -130,7 +130,7 @@ test_name 'C100303: Resource type statement triggered auto-loading works both wi
     # Compilation should now work using the generated types,
     # so we should only see a log entry on the agent node and nothing on the master node
     with_puppet_running_on(master, {}) do
-      on(agent, puppet("agent -t --server #{master.hostname} --environment '#{tmp_environment}'"),
+      on(agent, puppet("agent -t --environment '#{tmp_environment}'"),
          :acceptable_exit_codes => 0) do |puppet_result|
         assert_match(/Notice: found_type_tst/, puppet_result.stdout, 'Expected to see output from new type: type_tst')
       end
