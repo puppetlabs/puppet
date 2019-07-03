@@ -25,4 +25,30 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? && Pupp
       expect(File).to exist(File.expand_path("#{extractdir}/#{longfilepath}"))
     end
   end
+
+  describe 'Extraction performance' do
+    require 'benchmark'
+
+    let(:tempdir_control) { Pathname.new(PuppetSpec::Files.tmpdir('minitar-control-perf')) }
+    let(:tempdir_measure) { Pathname.new(PuppetSpec::Files.tmpdir('minitar-measure-perf')) }
+    let(:stdlib) { 'stdlib.tgz' }
+    let(:sourcetar) { File.expand_path("../../../../fixtures/#{stdlib}", __FILE__) }
+
+    it 'should be at most 2x slower then "tar xzvf" command', :onlyif =>
+      Puppet::Util.which('tar') && !Puppet::Util::Platform.windows? do
+
+      # FIXME: PUP-9813 test is not passing, Puppet::ModuleTool::Tar::Mini needs to be faster
+      skip 'PUP-9813 test is not passing, Puppet::ModuleTool::Tar::Mini needs to be faster'
+      control = Benchmark.measure do
+        command = "tar xzvf #{sourcetar} > /dev/null"
+        Dir.chdir tempdir_control do
+          system(command)
+        end
+      end
+      measure = Benchmark.measure do
+        minitar.unpack(sourcetar, tempdir_measure.to_s, 'module')
+      end
+      expect(measure.real).to be < (control.real * 2)
+    end
+  end
 end
