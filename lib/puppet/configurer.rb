@@ -410,7 +410,7 @@ class Puppet::Configurer
   end
 
   def save_last_run_summary(report)
-    mode = Puppet.settings.setting(:lastrunfile).mode
+    mode = Integer(Puppet.settings.setting(:lastrunfile).mode,8)
     Puppet::FileSystem.replace_file(Puppet[:lastrunfile], mode) do |fh|
       fh.print YAML.dump(report.raw_summary)
     end
