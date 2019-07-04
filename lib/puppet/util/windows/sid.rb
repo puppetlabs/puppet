@@ -46,6 +46,7 @@ module Puppet::Util::Windows
     PrintOperators              = 'S-1-5-32-550'
     BackupOperators             = 'S-1-5-32-551'
     Replicators                 = 'S-1-5-32-552'
+    AllAppPackages              = 'S-1-15-2-1'
 
     # Convert an account name, e.g. 'Administrators' into a SID string,
     # e.g. 'S-1-5-32-544'. The name can be specified as 'Administrators',

@@ -200,6 +200,7 @@ module Puppet::Util::Windows::Security
     well_known_world_sid = Puppet::Util::Windows::SID::Everyone
     well_known_nobody_sid = Puppet::Util::Windows::SID::Nobody
     well_known_system_sid = Puppet::Util::Windows::SID::LocalSystem
+    well_known_app_packages_sid = Puppet::Util::Windows::SID::AllAppPackages
 
     mode = S_ISYSTEM_MISSING
 
@@ -234,6 +235,7 @@ module Puppet::Util::Windows::Security
         if (ace.mask & FILE::FILE_APPEND_DATA).nonzero?
           mode |= S_ISVTX
         end
+      when well_known_app_packages_sid
       when well_known_system_sid
       else
         #puts "Warning, unable to map SID into POSIX mode: #{ace.sid}"
