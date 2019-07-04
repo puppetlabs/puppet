@@ -32,7 +32,7 @@ Puppet::Reports.register_report(:store) do
     file = File.join(dir, name)
 
     begin
-      Puppet::Util.replace_file(file, 0640) do |fh|
+      Puppet::FileSystem.replace_file(file, 0640) do |fh|
         fh.print to_yaml
       end
     rescue => detail
