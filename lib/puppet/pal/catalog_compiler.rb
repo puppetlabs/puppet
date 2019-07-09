@@ -9,9 +9,11 @@ module Pal
   # @api public
   class CatalogCompiler < Compiler
 
+    # @api private
     def catalog
       internal_compiler.catalog
     end
+    private :catalog
 
     # Returns true if this is a compiler that compiles a catalog.
     # This implementation returns `true`
@@ -25,7 +27,7 @@ module Pal
     # @example Get resulting catalog as pretty printed Json
     #   Puppet::Pal.in_environment(...) do |pal|
     #     pal.with_catalog_compiler(...) do |compiler|
-    #       compiler.with_json_encoding {| encoder | encoder.encode
+    #       compiler.with_json_encoding { |encoder| encoder.encode }
     #     end
     #   end
     #
@@ -33,6 +35,13 @@ module Pal
     #
     def with_json_encoding(pretty: true, exclude_virtual: true)
       yield JsonCatalogEncoder.new(catalog, pretty: pretty, exclude_virtual: exclude_virtual)
+    end
+
+    # Returns a hash representation of the compiled catalog.
+    #
+    # @api public
+    def catalog_data_hash
+      catalog.to_data_hash
     end
 
     # Evaluates an AST obtained from `parse_string` or `parse_file` in topscope.

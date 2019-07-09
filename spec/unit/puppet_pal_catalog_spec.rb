@@ -111,6 +111,18 @@ describe 'Puppet Pal' do
           expect(resource.title).to eq('test')
         end
 
+        context 'catalog_data_hash' do
+          it 'produces a data_hash encoding of a catalog' do
+            result = Puppet::Pal.in_tmp_environment('pal_env', modulepath: modulepath, facts: node_facts) do |pal|
+              pal.with_catalog_compiler {|c|
+                c.evaluate_string("notify {'test': message => /a regexp/}")
+                c.catalog_data_hash
+              }
+            end
+            expect(result['resources']).to include(include('type' => 'Notify'))
+          end
+        end
+
         context 'the with_json_encoding()' do
 
           it 'produces json for a catalog' do
