@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     and not `apt`, you must specify the source of any packages you want
     to manage."
 
-  has_feature :holdable
+  has_feature :holdable, :virtual_packages
 
   commands :dpkg => "/usr/bin/dpkg"
   commands :dpkg_deb => "/usr/bin/dpkg-deb"
@@ -44,16 +44,18 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderDpkg class.
   self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version}\\n'}
-  self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
+  self::DPKG_QUERY_PROVIDES_FORMAT_STRING = %Q{'${Status} ${Package} ${Version} [${Provides}]\\n'}
+  self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$} 
+  self::FIELDS_REGEX_WITH_PROVIDES = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)  \[.*\]$} 
   self::FIELDS= [:desired, :error, :status, :name, :ensure]
 
   # @param line [String] one line of dpkg-query output
   # @return [Hash,nil] a hash of FIELDS or nil if we failed to match
   # @api private
-  def self.parse_line(line)
+  def self.parse_line(line, regex=self::FIELDS_REGEX)
     hash = nil
 
-    if match = self::FIELDS_REGEX.match(line)
+    if match = regex.match(line)
       hash = {}
 
       self::FIELDS.zip(match.captures) do |field,value|
@@ -113,6 +115,19 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
     # list out our specific package
     begin
+      if @resource.allow_virtual?
+
+        output = dpkgquery(
+          "-W",
+          "--showformat",
+          self.class::DPKG_QUERY_PROVIDES_FORMAT_STRING,
+        ).lines.select {|package| package.match?(/\[.*#{@resource[:name]}.*\]/)}[0]
+        if output
+          Puppet.info("Package #{@resource[:name]} is virtual, defaulting to #{hash[:name]}")
+          hash = self.class.parse_line(output,self::FIELDS_REGEX_WITH_PROVIDES)
+          @resource[:name] = hash[:name]
+        end
+      end
       output = dpkgquery(
         "-W",
         "--showformat",
@@ -120,6 +135,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         @resource[:name]
       )
       hash = self.class.parse_line(output)
+      
     rescue Puppet::ExecutionFailure
       # dpkg-query exits 1 if the package is not found.
       return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}
