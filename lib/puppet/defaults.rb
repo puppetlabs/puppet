@@ -642,7 +642,7 @@ Valid values are 0 (never cache) and 15 (15 second minimum wait time).
 
       * With Puppet Server, you should refresh environments by calling the
         `environment-cache` API endpoint. See the docs for the Puppet Server
-        administrative API.
+        [administrative API](https://puppet.com/docs/puppetserver/latest/admin-api/v1/environment-cache.html).
 
       Any value other than `0` or `unlimited` is deprecated, since most Puppet
       servers use a pool of Ruby interpreters which all have their own cache
