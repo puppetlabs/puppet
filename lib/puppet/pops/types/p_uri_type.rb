@@ -175,7 +175,7 @@ class PURIType < PAnyType
       result[SCHEME] = scheme
     end
     result[USERINFO] = uri.userinfo unless uri.userinfo.nil?
-    result[HOST] = uri.host.downcase unless uri.host.nil?
+    result[HOST] = uri.host.downcase unless uri.host.nil? || uri.host.empty?
     result[PORT] = uri.port.to_s unless uri.port.nil? || uri.port == 80 && 'http' == scheme || uri.port == 443 && 'https' == scheme
     result[PATH] = uri.path unless uri.path.nil? || uri.path.empty?
     result[QUERY] = uri.query unless uri.query.nil?

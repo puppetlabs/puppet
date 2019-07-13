@@ -220,11 +220,11 @@ module Puppet
     end
 
     def server?
-       uri and uri.host
+       uri && uri.host && !uri.host.empty?
     end
 
     def server
-      (uri and uri.host) or Puppet.settings[:server]
+      server? ? uri.host : Puppet.settings[:server]
     end
 
     def port
