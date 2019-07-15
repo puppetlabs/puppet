@@ -105,13 +105,25 @@ describe Puppet::Face[:parser, :current] do
       end
     end
 
-    it "validates the contents of STDIN when no files given and STDIN is not a tty" do
-      from_a_piped_input_of("{ invalid =>")
+    context "when no files given and STDIN is not a tty" do
+      it "validates the contents of STDIN" do
+        from_a_piped_input_of("{ invalid =>")
 
-      Puppet.override(:current_environment => Puppet::Node::Environment.create(:special, [])) do
-        parse_errors = parser.validate()
+        Puppet.override(:current_environment => Puppet::Node::Environment.create(:special, [])) do
+          parse_errors = parser.validate()
 
-        expect(parse_errors['STDIN']).to be_a_kind_of(Puppet::ParseErrorWithIssue)
+          expect(parse_errors['STDIN']).to be_a_kind_of(Puppet::ParseErrorWithIssue)
+        end
+      end
+
+      it "runs error free when contents of STDIN is valid" do
+        from_a_piped_input_of("notify { valid: }")
+
+        Puppet.override(:current_environment => Puppet::Node::Environment.create(:special, [])) do
+          parse_errors = parser.validate()
+
+          expect(parse_errors).to be_empty
+        end
       end
     end
 
