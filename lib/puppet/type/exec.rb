@@ -50,7 +50,7 @@ module Puppet
       it becomes doubly important to make sure the run conditions are restricted.
 
       **Autorequires:** If Puppet is managing an exec's cwd or the executable
-      file used in an exec's command, the exec resource will autorequire those
+      file used in an exec's command, the exec resource autorequires those
       files. If Puppet is managing the user that an exec should run as, the
       exec resource will autorequire that user."
 
@@ -436,7 +436,7 @@ module Puppet
         `grep` determines it's already there.
 
         Note that this test command runs with the same `provider`, `path`,
-        `user`, and `group` as the main command. If the `path` isn't set, you
+        `user`, `cwd`, and `group` as the main command. If the `path` isn't set, you
         must fully qualify the command's name.
 
         This parameter can also take an array of commands. For example:
@@ -488,7 +488,7 @@ module Puppet
         This would run `logrotate` only if that test returns true.
 
         Note that this test command runs with the same `provider`, `path`,
-        `user`, and `group` as the main command. If the `path` isn't set, you
+        `user`, `cwd`, and `group` as the main command. If the `path` isn't set, you
         must fully qualify the command's name.
 
         This parameter can also take an array of commands. For example:
