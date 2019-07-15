@@ -89,7 +89,7 @@ Puppet::Face.define(:parser, '0.0.1') do
           [file, file_errors]
         end.to_h
 
-        puts Puppet::Util::Json.dump(Puppet::Pops::Serialization::ToDataConverter.convert(data, rich_data: false), :pretty => true)
+        puts Puppet::Util::Json.dump(Puppet::Pops::Serialization::ToDataConverter.convert(data, rich_data: false, symbol_as_string: true), :pretty => true)
 
         exit(1)
       end
