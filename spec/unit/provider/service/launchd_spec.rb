@@ -125,6 +125,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
   end
 
   describe "when starting the service" do
+    let(:services) { "12345 0 #{joblabel}"  }
+
     it "should call any explicit 'start' command" do
       resource[:start] = "/bin/false"
       expect(subject).to receive(:texecute).with(:start, ["/bin/false"], true)
@@ -132,6 +134,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
 
     it "should look for the relevant plist once" do
+      allow(provider).to receive(:launchctl).with(:list).and_return(services)
       expect(subject).to receive(:plist_from_label).and_return([joblabel, {}]).once
       expect(subject).to receive(:enabled?).and_return(:true)
       expect(subject).to receive(:execute).with([:launchctl, :load, "-w", joblabel])
@@ -139,6 +142,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
 
     it "should execute 'launchctl load' once without writing to the plist if the job is enabled" do
+      allow(provider).to receive(:launchctl).with(:list).and_return(services)
       expect(subject).to receive(:plist_from_label).and_return([joblabel, {}])
       expect(subject).to receive(:enabled?).and_return(:true)
       expect(subject).to receive(:execute).with([:launchctl, :load, "-w", joblabel]).once
@@ -239,6 +243,30 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       expect(subject).to receive(:enabled?).and_return(:true)
       expect(subject).to receive(:execute).with([:launchctl, :unload, '-w', joblabel])
       subject.stop
+    end
+  end
+
+  describe "when a service is unavailable" do
+    let(:map) { {"some.random.job" => "/path/to/job.plist"} }
+    
+    before :each do
+      allow(provider).to receive(:make_label_to_path_map).and_return(map)
+    end
+
+    it "should fail when searching for the unavailable service" do
+      expect { provider.jobsearch("NOSUCH") }.to raise_error(Puppet::Error)
+    end
+
+    it "should return false when enabling the service" do
+      expect(subject.enabled?).to eq(:false)
+    end
+
+    it "should fail when starting the service" do
+      expect { subject.start }.to raise_error(Puppet::Error)
+    end
+
+    it "should fail when starting the service" do
+      expect { subject.stop }.to raise_error(Puppet::Error)
     end
   end
 
