@@ -1,6 +1,8 @@
 test_name "autosign command and csr attributes behavior (#7243,#7244)" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
 
+  skip_test "Test requires at least one non-master agent" if hosts.length == 1
+
   tag 'audit:high',        # cert/ca core behavior
       'audit:integration',
       'server'             # Ruby implementation is deprecated

@@ -5,9 +5,11 @@ initialize_temp_dirs
 test_name "certificate extensions available as trusted data" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
 
+  skip_test "Test requires at least one non-master agent" if hosts.length == 1
+
   tag 'audit:high',        # ca/cert core functionality
       'audit:integration',
-      'server'             # Ruby implimentation is deprecated
+      'server'             # Ruby implementation is deprecated
 
   agent_certnames = []
   hostname = master.execute('facter hostname')
