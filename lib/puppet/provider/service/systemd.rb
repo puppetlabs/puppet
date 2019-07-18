@@ -24,7 +24,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => :suse
   defaultfor :osfamily => :coreos
   defaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2"]
-  defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["8", "stretch/sid", "9", "buster/sid"]
+  defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["8", "stretch/sid", "9", "buster/sid", "10", "bullseye/sid"]
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["15.04","15.10","16.04","16.10","17.04","17.10","18.04"]
   defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3"]
 
