@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
     or an array where each element is either a string or a hash."
 
-  has_feature :versionable, :install_options
+  has_feature :versionable, :install_options, :virtual_packages
 
   commands :aptget => "/usr/bin/apt-get"
   commands :aptcache => "/usr/bin/apt-cache"
