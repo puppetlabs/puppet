@@ -42,7 +42,8 @@ Puppet::Face.define(:parser, '0.0.1') do
       if files.empty?
         if not STDIN.tty?
           Puppet[:code] = STDIN.read
-          parse_errors['STDIN'] = validate_manifest(nil)
+          error = validate_manifest(nil)
+          parse_errors['STDIN'] = error if error
         else
           manifest = Puppet.lookup(:current_environment).manifest
           files << manifest
@@ -88,7 +89,7 @@ Puppet::Face.define(:parser, '0.0.1') do
           [file, file_errors]
         end.to_h
 
-        puts Puppet::Util::Json.dump(Puppet::Pops::Serialization::ToDataConverter.convert(data, rich_data: false), :pretty => true)
+        puts Puppet::Util::Json.dump(Puppet::Pops::Serialization::ToDataConverter.convert(data, rich_data: false, symbol_as_string: true), :pretty => true)
 
         exit(1)
       end
