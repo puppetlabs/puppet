@@ -108,7 +108,7 @@ END
   with_puppet_running_on(master, {}) do
     step "agent doesn't pluginsync the vendored module, instead using its local vendored module" do
       agents.each do |agent|
-        on(agent, puppet("agent -t --server #{master}"), :acceptable_exit_codes => [0,2]) do |result|
+        on(agent, puppet("agent -t"), :acceptable_exit_codes => [0,2]) do |result|
           assert_match(/defined 'message' as 'vendored module from #{agent}'/, result.stdout)
         end
       end
@@ -121,7 +121,7 @@ END
       on(master, "chown -R puppet:puppet #{global_dir}")
 
       agents.each do |agent|
-        on(agent, puppet("agent -t --server #{master}"), :acceptable_exit_codes => [0,2]) do |result|
+        on(agent, puppet("agent -t"), :acceptable_exit_codes => [0,2]) do |result|
           assert_match(/defined 'message' as 'server module from #{master}'/, result.stdout)
         end
       end
