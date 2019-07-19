@@ -32,7 +32,6 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
     table_data = {}
 
-    functional = false
     notes = []
     default = type.defaultprovider ? type.defaultprovider.name : 'none'
     type.providers.sort_by(&:to_s).each do |pname|
@@ -44,7 +43,6 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
       if missing = provider.suitable?(false) and missing.empty?
         data << "*X*"
         suit = true
-        functional = true
       else
         data << "[#{count}]_" # A pointer to the appropriate footnote
         suit = false

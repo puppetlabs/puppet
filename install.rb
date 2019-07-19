@@ -122,12 +122,12 @@ def check_prereqs
         facter_version = Facter.version.to_f
         if facter_version < MIN_FACTER_VERSION
           puts "Facter version: #{facter_version}; minimum required: #{MIN_FACTER_VERSION}; cannot install"
-          exit (-1)
+          exit(-1)
         end
       end
     rescue LoadError
       puts "Could not load #{pre}; cannot install"
-      exit (-1)
+      exit(-1)
     end
   }
 end
@@ -248,7 +248,7 @@ def prepare_installation
       require 'win32/dir'
     rescue LoadError => e
       puts "Cannot run on Microsoft Windows without the win32-process, win32-dir & win32-service gems: #{e}"
-      exit (-1)
+      exit(-1)
     end
   end
 
