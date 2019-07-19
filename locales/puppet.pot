@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.6.0-15-gcd8d2d0\n"
+"Project-Id-Version: Puppet automation framework 6.7.0-17-g6ab7bcc\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-06-28 23:18+0000\n"
-"PO-Revision-Date: 2019-06-28 23:18+0000\n"
+"POT-Creation-Date: 2019-07-19 23:18+0000\n"
+"PO-Revision-Date: 2019-07-19 23:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -182,19 +182,19 @@ msgstr ""
 msgid "The puppet agent daemon"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:371
+#: ../lib/puppet/application/agent.rb:375
 msgid "Fingerprint asked but neither the certificate, nor the certificate request have been issued"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:376
+#: ../lib/puppet/application/agent.rb:380
 msgid "Failed to generate fingerprint: %{message}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:399
+#: ../lib/puppet/application/agent.rb:403
 msgid "Starting Puppet client version %{version}"
 msgstr ""
 
-#: ../lib/puppet/application/agent.rb:415
+#: ../lib/puppet/application/agent.rb:419
 msgid "The puppet agent command does not take parameters"
 msgstr ""
 
@@ -479,7 +479,7 @@ msgstr ""
 msgid "Creating a new EC SSL key for %{name} using curve %{curve}"
 msgstr ""
 
-#: ../lib/puppet/application/ssl.rb:156 ../lib/puppet/ssl/key.rb:24
+#: ../lib/puppet/application/ssl.rb:156 ../lib/puppet/ssl/key.rb:26
 msgid "Creating a new SSL key for %{name}"
 msgstr ""
 
@@ -892,11 +892,11 @@ msgstr ""
 msgid "Outputs a dump of the internal template parse tree for debugging"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:108 ../lib/puppet/face/parser.rb:105
+#: ../lib/puppet/face/epp.rb:108 ../lib/puppet/face/parser.rb:106
 msgid "A dump of the resulting AST model unless there are syntax or validation errors."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:137 ../lib/puppet/face/epp.rb:309 ../lib/puppet/face/parser.rb:126
+#: ../lib/puppet/face/epp.rb:137 ../lib/puppet/face/epp.rb:309 ../lib/puppet/face/parser.rb:127
 msgid "<source>"
 msgstr ""
 
@@ -908,15 +908,15 @@ msgstr ""
 msgid "Whether or not to validate the parsed result, if no-validate only syntax errors are reported."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:146 ../lib/puppet/face/parser.rb:135
+#: ../lib/puppet/face/epp.rb:146 ../lib/puppet/face/parser.rb:136
 msgid "<old, pn, or json>"
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:147 ../lib/puppet/face/parser.rb:136
+#: ../lib/puppet/face/epp.rb:147 ../lib/puppet/face/parser.rb:137
 msgid "Get result in 'old' (deprecated format), 'pn' (new format), or 'json' (new format in JSON)."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:151 ../lib/puppet/face/parser.rb:140
+#: ../lib/puppet/face/epp.rb:151 ../lib/puppet/face/parser.rb:141
 msgid "Pretty print output. Only applicable together with --format pn or json"
 msgstr ""
 
@@ -924,7 +924,7 @@ msgstr ""
 msgid "Whether or not to show a file name header between files."
 msgstr ""
 
-#: ../lib/puppet/face/epp.rb:179 ../lib/puppet/face/parser.rb:152
+#: ../lib/puppet/face/epp.rb:179 ../lib/puppet/face/parser.rb:153
 msgid "No input to parse given on command line or stdin"
 msgstr ""
 
@@ -1413,34 +1413,34 @@ msgstr ""
 msgid "Nothing, or the first syntax error encountered."
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:49
+#: ../lib/puppet/face/parser.rb:50
 msgid "No manifest specified. Validating the default manifest %{manifest}"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:65
+#: ../lib/puppet/face/parser.rb:66
 msgid ""
 "One or more file(s) specified did not exist:\n"
 "%{files}"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:103
+#: ../lib/puppet/face/parser.rb:104
 msgid "Outputs a dump of the internal parse tree for debugging"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:128
+#: ../lib/puppet/face/parser.rb:129
 msgid "dump one source expression given on the command line."
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:132
+#: ../lib/puppet/face/parser.rb:133
 msgid "Whether or not to validate the parsed result, if no-validate only syntax errors are reported"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:168
+#: ../lib/puppet/face/parser.rb:169
 msgid ""
 "One or more file(s) specified did not exist:\n"
 msgstr ""
 
-#: ../lib/puppet/face/parser.rb:214
+#: ../lib/puppet/face/parser.rb:215
 msgid "For puppet parser validate"
 msgstr ""
 
@@ -2608,11 +2608,11 @@ msgstr ""
 msgid "Could not parse JSON data for %{name} %{key}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/key/file.rb:28
+#: ../lib/puppet/indirector/key/file.rb:29
 msgid "Could not remove %{request} public key: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/indirector/key/file.rb:42
+#: ../lib/puppet/indirector/key/file.rb:43
 msgid "Could not write %{request}: %{detail}"
 msgstr ""
 
@@ -4044,50 +4044,50 @@ msgstr ""
 msgid "manifest_file or code_string cannot be given when configured_by_env is true"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:206
+#: ../lib/puppet/pal/pal_impl.rb:214
 msgid "temporary environment name"
 msgstr ""
 
 #. TRANSLATORS: do not translate variable name string in these assertions
-#: ../lib/puppet/pal/pal_impl.rb:211
+#: ../lib/puppet/pal/pal_impl.rb:219
 msgid "A block must be given to 'in_tmp_environment'"
 msgstr ""
 
 #. TRANSLATORS terms in the assertions below are names of terms in code
-#: ../lib/puppet/pal/pal_impl.rb:265
+#: ../lib/puppet/pal/pal_impl.rb:273
 msgid "A block must be given to 'in_environment'"
 msgstr ""
 
 #. TRANSLATORS 'in_environment' is a name, do not translate
-#: ../lib/puppet/pal/pal_impl.rb:270
+#: ../lib/puppet/pal/pal_impl.rb:278
 msgid "The environment directory '%{env_dir}' does not exist"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:293
+#: ../lib/puppet/pal/pal_impl.rb:301
 msgid "No directory found for the environment '%{env_name}' on the path '%{envpath}'"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:347
+#: ../lib/puppet/pal/pal_impl.rb:355
 msgid "Given variables must be a hash, got %{type}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:353
+#: ../lib/puppet/pal/pal_impl.rb:361
 msgid "Given variable '%{varname}' has illegal name"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:357
+#: ../lib/puppet/pal/pal_impl.rb:365
 msgid "Given value for '%{varname}' has illegal type - got: %{type}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:497
+#: ../lib/puppet/pal/pal_impl.rb:505
 msgid "Puppet Pal: %{what}"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:511
+#: ../lib/puppet/pal/pal_impl.rb:519
 msgid "Cannot use '%{a_term}' and '%{b_term}' at the same time"
 msgstr ""
 
-#: ../lib/puppet/pal/pal_impl.rb:518
+#: ../lib/puppet/pal/pal_impl.rb:526
 msgid "A block must be given"
 msgstr ""
 
@@ -7736,15 +7736,15 @@ msgstr ""
 msgid "Server hostname '%{host}' did not match server certificate; %{expected_certnames}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:152
+#: ../lib/puppet/ssl/host.rb:154
 msgid "No certificate to validate."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:153
+#: ../lib/puppet/ssl/host.rb:155
 msgid "No private key with which to validate certificate with fingerprint: %{fingerprint}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:155
+#: ../lib/puppet/ssl/host.rb:157
 msgid ""
 "The certificate retrieved from the master does not match the agent's private key. Did you forget to run as root?\n"
 "Certificate fingerprint: %{fingerprint}\n"
@@ -7756,7 +7756,7 @@ msgid ""
 "  2. puppet %{puppet_params}\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:210
+#: ../lib/puppet/ssl/host.rb:212
 msgid ""
 "The CSR retrieved from the master does not match the agent's public key.\n"
 "CSR fingerprint: %{fingerprint}\n"
@@ -7770,53 +7770,57 @@ msgid ""
 "  2. puppet %{puppet_params}\n"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:264 ../lib/puppet/ssl/host.rb:285
+#: ../lib/puppet/ssl/host.rb:235
+msgid "Puppet::SSL::Host is deprecated and will be removed in a future release of Puppet."
+msgstr ""
+
+#: ../lib/puppet/ssl/host.rb:267 ../lib/puppet/ssl/host.rb:288
 msgid "Could not request certificate: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:266
+#: ../lib/puppet/ssl/host.rb:269
 msgid "Exiting; failed to retrieve certificate and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:275
+#: ../lib/puppet/ssl/host.rb:278
 msgid "Exiting; no certificate found and waitforcert is disabled"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:283
+#: ../lib/puppet/ssl/host.rb:286
 msgid "Did not receive certificate"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:323
+#: ../lib/puppet/ssl/host.rb:326
 msgid "Response from the CA did not contain a valid certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:329
+#: ../lib/puppet/ssl/host.rb:332
 msgid "Could not download certificate request: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:356
+#: ../lib/puppet/ssl/host.rb:359
 msgid ""
 "Failed attempting to load CRL from %{crl_path}! The CRL below caused the error '%{error}':\n"
 "%{crl}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:388 ../lib/puppet/ssl/state_machine.rb:119
+#: ../lib/puppet/ssl/host.rb:391 ../lib/puppet/ssl/state_machine.rb:119
 msgid "Could not download CRLs: %{message}"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:422
+#: ../lib/puppet/ssl/host.rb:425
 msgid "The certificate at %{file_path} is invalid. Could not load."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:443
+#: ../lib/puppet/ssl/host.rb:446
 msgid "Response from the CA did not contain a valid certificate for %{cert_name}."
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:447
+#: ../lib/puppet/ssl/host.rb:450
 msgid "No certificate for %{cert_name} on CA"
 msgstr ""
 
-#: ../lib/puppet/ssl/host.rb:450
+#: ../lib/puppet/ssl/host.rb:453
 msgid "Could not download host certificate: %{message}"
 msgstr ""
 
