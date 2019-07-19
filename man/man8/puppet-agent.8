@@ -22,19 +22,36 @@ This is the main puppet client\. Its job is to retrieve the local machine\'s con
 Once the client has a signed certificate, it will retrieve its configuration and apply it\.
 .
 .SH "USAGE NOTES"
-\'puppet agent\' does its best to find a compromise between interactive use and daemon use\. Run with no arguments and no configuration, it will go into the background, attempt to get a signed certificate, and retrieve and apply its configuration every 30 minutes\.
+\'puppet agent\' does its best to find a compromise between interactive use and daemon use\. If you run it with no arguments and no configuration, it goes into the background, attempts to get a signed certificate, and retrieves and applies its configuration every 30 minutes\.
 .
 .P
-Some flags are meant specifically for interactive use \-\- in particular, \'test\', \'tags\' and \'fingerprint\' are useful\.
+Some flags are meant specifically for interactive use \-\-\- in particular, \'test\', \'tags\' and \'fingerprint\' are useful\.
 .
 .P
-\'\-\-test\' does a single run in the foreground with verbose logging, then exits\. It will also exit if it can\'t get a valid catalog\. The exit code after running with \'\-\-test\' is 0 if the catalog was successfully applied, and 1 if the run either failed or wasn\'t attempted (due to another run already in progress)\.
+\'\-\-test\' runs once in the foreground with verbose logging, then exits\. It also exits if it can\'t get a valid catalog\. \fB\-\-test\fR includes the \'\-\-detailed\-exitcodes\' option by default and exits with one of the following exit codes:
+.
+.IP "\(bu" 4
+0: The run succeeded with no changes or failures; the system was already in the desired state\.
+.
+.IP "\(bu" 4
+1: The run failed, or wasn\'t attempted due to another run already in progress\.
+.
+.IP "\(bu" 4
+2: The run succeeded, and some resources were changed\.
+.
+.IP "\(bu" 4
+4: The run succeeded, and some resources failed\.
+.
+.IP "\(bu" 4
+6: The run succeeded, and included both changes and failures\.
+.
+.IP "" 0
 .
 .P
-\'\-\-tags\' allows you to specify what portions of a configuration you want to apply\. Puppet elements are tagged with all of the class or definition names that contain them, and you can use the \'tags\' flag to specify one of these names, causing only configuration elements contained within that class or definition to be applied\. This is very useful when you are testing new configurations \-\- for instance, if you are just starting to manage \'ntpd\', you would put all of the new elements into an \'ntpd\' class, and call puppet with \'\-\-tags ntpd\', which would only apply that small portion of the configuration during your testing, rather than applying the whole thing\.
+\'\-\-tags\' allows you to specify what portions of a configuration you want to apply\. Puppet elements are tagged with all of the class or definition names that contain them, and you can use the \'tags\' flag to specify one of these names, causing only configuration elements contained within that class or definition to be applied\. This is very useful when you are testing new configurations \-\-\- for instance, if you are just starting to manage \'ntpd\', you would put all of the new elements into an \'ntpd\' class, and call puppet with \'\-\-tags ntpd\', which would only apply that small portion of the configuration during your testing, rather than applying the whole thing\.
 .
 .P
-\'\-\-fingerprint\' is a one\-time flag\. In this mode \'puppet agent\' will run once and display on the console (and in the log) the current certificate (or certificate request) fingerprint\. Providing the \'\-\-digest\' option allows to use a different digest algorithm to generate the fingerprint\. The main use is to verify that before signing a certificate request on the master, the certificate request the master received is the same as the one the client sent (to prevent against man\-in\-the\-middle attacks when signing certificates)\.
+\'\-\-fingerprint\' is a one\-time flag\. In this mode \'puppet agent\' runs once and displays on the console (and in the log) the current certificate (or certificate request) fingerprint\. Providing the \'\-\-digest\' option allows to use a different digest algorithm to generate the fingerprint\. The main use is to verify that before signing a certificate request on the master, the certificate request the master received is the same as the one the client sent (to prevent against man\-in\-the\-middle attacks when signing certificates)\.
 .
 .SH "OPTIONS"
 Note that any Puppet setting that\'s valid in the configuration file is also a valid long argument\. For example, \'server\' is a valid setting, so you can specify \'\-\-server \fIservername\fR\' as an argument\. Boolean settings translate into \'\-\-setting\' and \'\-\-no\-setting\' pairs\.
@@ -60,7 +77,7 @@ Enable full debugging\.
 .
 .TP
 \-\-detailed\-exitcodes
-Provide extra information about the run via exit codes; only works if \'\-\-test\' or \'\-\-onetime\' is also specified\. If enabled, \'puppet agent\' will use the following exit codes:
+Provide extra information about the run via exit codes; works only if \'\-\-test\' or \'\-\-onetime\' is also specified\. If enabled, \'puppet agent\' uses the following exit codes:
 .
 .IP
 0: The run succeeded with no changes or failures; the system was already in the desired state\.
