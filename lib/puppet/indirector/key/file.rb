@@ -1,6 +1,7 @@
 require 'puppet/indirector/ssl_file'
 require 'puppet/ssl/key'
 
+# @deprecated
 class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
   desc "Manage SSL private and public keys on disk."
 

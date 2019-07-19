@@ -1,6 +1,7 @@
 require 'puppet/ssl/certificate'
 require 'puppet/indirector/rest'
 
+# @deprecated
 class Puppet::SSL::Certificate::Rest < Puppet::Indirector::REST
   desc "Find certificates over HTTP via REST."
 
