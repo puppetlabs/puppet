@@ -2,6 +2,10 @@ test_name 'puppet module list (with environment)'
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor'   # Master is not required for this test. Replace with agents.each
+
 tmpdir = master.tmpdir('module-list-with-environment')
 
 step 'Setup'
