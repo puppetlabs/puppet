@@ -2,6 +2,8 @@ require 'puppet/ssl/base'
 require 'puppet/indirector'
 
 # Manage private and public keys as a pair.
+#
+# @deprecated Use {Puppet::SSL::SSLProvider} instead.
 class Puppet::SSL::Key < Puppet::SSL::Base
   wraps OpenSSL::PKey::RSA
 

@@ -5,6 +5,8 @@ require 'puppet/ssl/base'
 # for turning CSRs into certificates; we can only
 # retrieve them from the CA (or not, as is often
 # the case).
+#
+# @deprecated Use {Puppet::SSL::SSLProvider} instead.
 class Puppet::SSL::Certificate < Puppet::SSL::Base
   # This is defined from the base class
   wraps OpenSSL::X509::Certificate

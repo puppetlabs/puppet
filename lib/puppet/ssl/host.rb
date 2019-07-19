@@ -9,6 +9,8 @@ require 'puppet/rest/routes'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
+#
+# @deprecated Use {Puppet::SSL::SSLProvider} instead.
 class Puppet::SSL::Host
   # Yay, ruby's strange constant lookups.
   Key = Puppet::SSL::Key
@@ -230,6 +232,7 @@ ERROR_STRING
     @key = @certificate = @certificate_request = nil
     @crl_usage = Puppet.settings[:certificate_revocation]
     @crl_path = Puppet.settings[:hostcrl]
+    Puppet.deprecation_warning(_("Puppet::SSL::Host is deprecated and will be removed in a future release of Puppet."));
   end
 
   # Extract the public key from the private key.
