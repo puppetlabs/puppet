@@ -321,6 +321,8 @@ Puppet::Type.newtype(:yumrepo) do
     desc "Password for this proxy. #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
+
+    sensitive true
   end
 
   newproperty(:s3_enabled) do
@@ -423,12 +425,6 @@ Puppet::Type.newtype(:yumrepo) do
     desc "Password to use with the username for basic authentication.
       #{ABSENT_DOC}"
     newvalues(/.*/, :absent)
-  end
-
-  private
-
-  def set_sensitive_parameters(sensitive_parameters)
-    parameter(:password).sensitive = true if parameter(:password)
-    super(sensitive_parameters)
+    sensitive true
   end
 end

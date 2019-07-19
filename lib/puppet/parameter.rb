@@ -93,6 +93,14 @@ class Puppet::Parameter
       end
     end
 
+    def sensitive(value = nil, &block)
+      if block
+        define_method(:is_sensitive, &block)
+      else
+        define_method(:is_sensitive) do value end
+      end
+    end
+
     # Produces a documentation string.
     # If an enumeration of _valid values_ has been defined, it is appended to the documentation
     # for this parameter specified with the {desc} method.

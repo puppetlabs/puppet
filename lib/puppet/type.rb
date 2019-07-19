@@ -2443,6 +2443,13 @@ end
         err(_("Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}.") % { name: name, type: type })
       end
     end
+
+    parameters.each do |name, param|
+      next if param.sensitive
+      if param.is_a?(Puppet::Parameter)
+        param.sensitive = param.is_sensitive if param.respond_to?(:is_sensitive)
+      end
+    end
   end
 
   private

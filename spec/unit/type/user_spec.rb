@@ -323,24 +323,24 @@ describe Puppet::Type.type(:user) do
   end
 
   describe "when managing passwords" do
-    before do
-      @password = described_class.new(:name => 'foo', :password => 'mypass').parameter(:password)
-    end
+    let(:transaction) { Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil) }
+    let(:harness) { Puppet::Transaction::ResourceHarness.new(transaction) }
+    let(:provider) { @provider_class.new(:name => 'foo', :ensure => :present) }
+    let(:resource) { described_class.new(:name => 'foo', :ensure => :present, :password => 'top secret', :provider => provider) }
 
     it "should not include the password in the change log when adding the password" do
-      expect(@password.change_to_s(:absent, "mypass")).not_to be_include("mypass")
+      status = harness.evaluate(resource)
+      sync_event = status.events[0]
+      expect(sync_event.message).not_to include('top secret')
+      expect(sync_event.message).to eql('changed [redacted] to [redacted]')
     end
 
     it "should not include the password in the change log when changing the password" do
-      expect(@password.change_to_s("other", "mypass")).not_to be_include("mypass")
-    end
-
-    it "should redact the password when displaying the old value" do
-      expect(@password.is_to_s("currentpassword")).to match(/^\[old password hash redacted\]$/)
-    end
-
-    it "should redact the password when displaying the new value" do
-      expect(@password.should_to_s("newpassword")).to match(/^\[new password hash redacted\]$/)
+      resource[:password] = 'super extra classified'
+      status = harness.evaluate(resource)
+      sync_event = status.events[0]
+      expect(sync_event.message).not_to include('super extra classified')
+      expect(sync_event.message).to eql('changed [redacted] to [redacted]')
     end
 
     it "should fail if a ':' is included in the password" do

@@ -255,21 +255,7 @@ module Puppet
         raise ArgumentError, _("Passwords cannot include ':'") if value.is_a?(String) and value.include?(":")
       end
 
-      def change_to_s(currentvalue, newvalue)
-        if currentvalue == :absent
-          return _("created password")
-        else
-          return _("changed password")
-        end
-      end
-
-      def is_to_s( currentvalue )
-        return _('[old password hash redacted]')
-      end
-      def should_to_s( newvalue )
-        return _('[new password hash redacted]')
-      end
-
+      sensitive true
     end
 
     newproperty(:password_min_age, :required_features => :manages_password_age) do
