@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 5.5.14-76-g2064e7d\n"
+"Project-Id-Version: Puppet automation framework 5.5.16-15-g5d1048d\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-06-17 20:46+0000\n"
-"PO-Revision-Date: 2019-06-17 20:46+0000\n"
+"POT-Creation-Date: 2019-07-19 20:45+0000\n"
+"PO-Revision-Date: 2019-07-19 20:45+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -573,32 +573,32 @@ msgstr ""
 msgid "Failed to apply catalog: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:392
+#: ../lib/puppet/configurer.rb:393
 msgid "Puppet server %{host}:%{port} is unavailable: %{code} %{reason}"
 msgstr ""
 
 #. TRANSLATORS 'server_list' is the name of a setting and should not be translated
-#: ../lib/puppet/configurer.rb:396
+#: ../lib/puppet/configurer.rb:397
 msgid "Unable to connect to server from server_list setting: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:408 ../lib/puppet/face/report.rb:47
+#: ../lib/puppet/configurer.rb:409 ../lib/puppet/face/report.rb:47
 msgid "Could not send report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:417
+#: ../lib/puppet/configurer.rb:418
 msgid "Could not save last run local report: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:429
+#: ../lib/puppet/configurer.rb:430
 msgid "Could not run command from %{setting}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:447
+#: ../lib/puppet/configurer.rb:448
 msgid "Could not retrieve catalog from cache: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/configurer.rb:467
+#: ../lib/puppet/configurer.rb:468
 msgid "Could not retrieve catalog from remote server: %{detail}"
 msgstr ""
 
@@ -4308,15 +4308,15 @@ msgstr ""
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/parameter.rb:341
+#: ../lib/puppet/parameter.rb:349
 msgid "No resource set for %{name}"
 msgstr ""
 
-#: ../lib/puppet/parameter.rb:428
+#: ../lib/puppet/parameter.rb:436
 msgid "Munging failed for value %{value} in class %{class_name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/parameter.rb:462
+#: ../lib/puppet/parameter.rb:470
 msgid "Validate method failed for class %{class_name}: %{detail}"
 msgstr ""
 
@@ -7026,11 +7026,11 @@ msgstr ""
 msgid "Cannot match %{line}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/dpkg.rb:82
+#: ../lib/puppet/provider/package/dpkg.rb:84
 msgid "You cannot install dpkg packages without a source"
 msgstr ""
 
-#: ../lib/puppet/provider/package/dpkg.rb:107
+#: ../lib/puppet/provider/package/dpkg.rb:109
 msgid "source doesn't contain named package, but %{name}"
 msgstr ""
 
@@ -7329,11 +7329,11 @@ msgstr ""
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
-#: ../lib/puppet/provider/package_targetable.rb:53
+#: ../lib/puppet/provider/package_targetable.rb:55
 msgid "Provider %{name} package command is not functional on this host"
 msgstr ""
 
-#: ../lib/puppet/provider/package_targetable.rb:56
+#: ../lib/puppet/provider/package_targetable.rb:58
 msgid "Provider %{name} package command '%{cmd}' does not exist on this host"
 msgstr ""
 
@@ -8589,7 +8589,7 @@ msgstr ""
 msgid "Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}."
 msgstr ""
 
-#: ../lib/puppet/type.rb:2494
+#: ../lib/puppet/type.rb:2501
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
@@ -9057,101 +9057,85 @@ msgstr ""
 msgid "Passwords cannot include ':'"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:260
-msgid "created password"
-msgstr ""
-
-#: ../lib/puppet/type/user.rb:262
-msgid "changed password"
-msgstr ""
-
-#: ../lib/puppet/type/user.rb:267
-msgid "[old password hash redacted]"
-msgstr ""
-
-#: ../lib/puppet/type/user.rb:270
-msgid "[new password hash redacted]"
-msgstr ""
-
-#: ../lib/puppet/type/user.rb:289
+#: ../lib/puppet/type/user.rb:275
 msgid "Password minimum age must be provided as a number."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:308
+#: ../lib/puppet/type/user.rb:294
 msgid "Password maximum age must be provided as a number."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:339
+#: ../lib/puppet/type/user.rb:325
 msgid "Group names must be provided, not GID numbers."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:341
+#: ../lib/puppet/type/user.rb:327
 msgid "Group names must be provided as an array, not a comma-separated list."
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:342
+#: ../lib/puppet/type/user.rb:328
 msgid "Group names must not be empty. If you want to specify \"no groups\" pass an empty array"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:435
+#: ../lib/puppet/type/user.rb:421
 msgid "User provider %{name} can not manage home directories"
 msgstr ""
 
 #. TRANSLATORS YYYY-MM-DD represents a date with a four-digit year, a two-digit month, and a two-digit day,
 #. TRANSLATORS separated by dashes.
-#: ../lib/puppet/type/user.rb:452
+#: ../lib/puppet/type/user.rb:438
 msgid "Expiry dates must be YYYY-MM-DD or the string \"absent\""
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:529
+#: ../lib/puppet/type/user.rb:515
 msgid "Role names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:531
+#: ../lib/puppet/type/user.rb:517
 msgid "Role names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:566
+#: ../lib/puppet/type/user.rb:552
 msgid "Auth names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:568
+#: ../lib/puppet/type/user.rb:554
 msgid "Auth names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:592
+#: ../lib/puppet/type/user.rb:578
 msgid "Profile names must be provided, not numbers"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:594
+#: ../lib/puppet/type/user.rb:580
 msgid "Profile names must be provided as an array, not a comma-separated list"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:717
+#: ../lib/puppet/type/user.rb:703
 msgid "Each entry for purge_ssh_keys must be a string, not a %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:720
+#: ../lib/puppet/type/user.rb:706
 msgid "Paths to keyfiles must be absolute, not %{entry}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:724
+#: ../lib/puppet/type/user.rb:710
 msgid "purge_ssh_keys must be true, false, or an array of file names, not %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:736
+#: ../lib/puppet/type/user.rb:722
 msgid "purge_ssh_keys can only be true for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:743
+#: ../lib/puppet/type/user.rb:729
 msgid "purge_ssh_keys value '%{value}' meta character ~ or %{home_placeholder} only allowed for users with a defined home directory"
 msgstr ""
 
-#: ../lib/puppet/type/user.rb:757
+#: ../lib/puppet/type/user.rb:743
 msgid "Class name must be provided."
 msgstr ""
 
-#: ../lib/puppet/type/yumrepo.rb:65 ../lib/puppet/type/yumrepo.rb:82 ../lib/puppet/type/yumrepo.rb:138 ../lib/puppet/type/yumrepo.rb:162 ../lib/puppet/type/yumrepo.rb:185 ../lib/puppet/type/yumrepo.rb:309 ../lib/puppet/type/yumrepo.rb:375
+#: ../lib/puppet/type/yumrepo.rb:65 ../lib/puppet/type/yumrepo.rb:82 ../lib/puppet/type/yumrepo.rb:138 ../lib/puppet/type/yumrepo.rb:162 ../lib/puppet/type/yumrepo.rb:185 ../lib/puppet/type/yumrepo.rb:309 ../lib/puppet/type/yumrepo.rb:377
 msgid "Must be a valid URL"
 msgstr ""
 
