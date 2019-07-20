@@ -81,7 +81,7 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
                     node: Puppet[:node_name_value],
                     server: server})
 
-      Puppet::Node::Facts.indirection.save(facts)
+      Puppet::Node::Facts.indirection.save(facts, nil, :environment => Puppet.lookup(:current_environment))
     end
   end
 end
