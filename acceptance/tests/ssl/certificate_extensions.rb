@@ -93,7 +93,6 @@ test_name "certificate extensions available as trusted data" do
                        "--csr_attributes", agent_csr_attributes,
                        "--certname", agent_certname,
                        "--ssldir", agent_ssldir,
-                       "--server", fqdn,
                        'ENV' => { "FACTER_test_dir" => get_test_file_path(agent, "") }),
         :acceptable_exit_codes => [0, 2])
 
