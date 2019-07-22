@@ -15,6 +15,7 @@ describe Puppet::Forge::ModuleRelease do
   let(:module_full_name) { "#{module_author}-#{module_name}" }
   let(:module_full_name_versioned) { "#{module_full_name}-#{module_version}" }
   let(:module_md5) { "bbf919d7ee9d278d2facf39c25578bf8" }
+  let(:module_sha256) { "b4c6f15cec64a9fe16ef0d291e2598fc84f381bc59f0e67198d61706fafedae4" }
   let(:uri) { " "}
   let(:release) { Puppet::Forge::ModuleRelease.new(ssl_repository, JSON.parse(release_json)) }
 
@@ -29,21 +30,6 @@ describe Puppet::Forge::ModuleRelease do
   shared_examples 'a module release' do
     def mock_digest_file_with_md5(md5)
       allow(Digest::MD5).to receive(:file).and_return(double(:hexdigest => md5))
-    end
-
-    describe '#prepare' do
-      before :each do
-        allow(release).to receive(:tmpfile).and_return(mock_file)
-        allow(release).to receive(:tmpdir).and_return(mock_dir)
-      end
-
-      it 'should call sub methods with correct params' do
-        expect(release).to receive(:download).with("/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file)
-        expect(release).to receive(:validate_checksum).with(mock_file, module_md5)
-        expect(release).to receive(:unpack).with(mock_file, mock_dir)
-
-        release.prepare
-      end
     end
 
     describe '#tmpfile' do
@@ -64,21 +50,6 @@ describe Puppet::Forge::ModuleRelease do
       it 'should raise a response error when it receives an error from forge' do
         allow(ssl_repository).to receive(:make_http_request).and_return(double(:body => '{"errors": ["error"]}', :code => '500', :message => 'server error'))
         expect { release.send(:download, "/some/path", mock_file)}.to raise_error Puppet::Forge::Errors::ResponseError
-      end
-    end
-
-    describe '#verify_checksum' do
-      it 'passes md5 check when valid' do
-        # valid hash comes from file_md5 in JSON blob above
-        mock_digest_file_with_md5(module_md5)
-
-        release.send(:validate_checksum, mock_file, module_md5)
-      end
-
-      it 'fails md5 check when invalid' do
-        mock_digest_file_with_md5('ffffffffffffffffffffffffffffffff')
-
-        expect { release.send(:validate_checksum, mock_file, module_md5) }.to raise_error(RuntimeError, /did not match expected checksum/)
       end
     end
 
@@ -130,6 +101,7 @@ describe Puppet::Forge::ModuleRelease do
       "file_uri": "/#{api_version}/files/#{module_full_name_versioned}.tar.gz",
       "file_size": 67586,
       "file_md5": "#{module_md5}",
+      "file_sha256": "#{module_sha256}",
       "downloads": 610751,
       "readme": "",
       "changelog": "",
@@ -142,6 +114,66 @@ describe Puppet::Forge::ModuleRelease do
     end
 
     it_behaves_like 'a module release'
+
+    context 'when verifying checksums' do
+      let(:json) { JSON.parse(release_json) }
+
+      def mock_release(json)
+        release = Puppet::Forge::ModuleRelease.new(ssl_repository, json)
+        allow(release).to receive(:tmpfile).and_return(mock_file)
+        allow(release).to receive(:tmpdir).and_return(mock_dir)
+        allow(release).to receive(:download).with("/#{api_version}/files/#{module_full_name_versioned}.tar.gz", mock_file)
+        allow(release).to receive(:unpack)
+        release
+      end
+
+      it 'verifies using SHA256' do
+        expect(Digest::SHA256).to receive(:file).and_return(double(:hexdigest => module_sha256))
+
+        release = mock_release(json)
+        release.prepare
+      end
+
+      it 'rejects an invalid release with SHA256' do
+        expect(Digest::SHA256).to receive(:file).and_return(double(:hexdigest => 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'))
+
+        release = mock_release(json)
+        expect {
+          release.prepare
+        }.to raise_error(RuntimeError, /did not match expected checksum/)
+      end
+
+      context 'when `file_sha256` is missing' do
+        before(:each) do
+          json.delete('file_sha256')
+        end
+
+        it 'verifies using MD5 if `file_sha256` is missing' do
+          expect(Digest::MD5).to receive(:file).and_return(double(:hexdigest => module_md5))
+
+          release = mock_release(json)
+          release.prepare
+        end
+
+        it 'rejects an invalid release with MD5' do
+          expect(Digest::MD5).to receive(:file).and_return(double(:hexdigest => 'ffffffffffffffffffffffffffffffff'))
+
+          release = mock_release(json)
+          expect {
+            release.prepare
+          }.to raise_error(RuntimeError, /did not match expected checksum/)
+        end
+
+        it 'raises if FIPS is enabled' do
+          allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
+
+          release = mock_release(json)
+          expect {
+            release.prepare
+          }.to raise_error(/Module install using MD5 is prohibited in FIPS mode./)
+        end
+      end
+    end
   end
 
   context 'forge module with no dependencies field' do
@@ -180,6 +212,7 @@ describe Puppet::Forge::ModuleRelease do
       "file_uri": "/#{api_version}/files/#{module_full_name_versioned}.tar.gz",
       "file_size": 67586,
       "file_md5": "#{module_md5}",
+      "file_sha256": "#{module_sha256}",
       "downloads": 610751,
       "readme": "",
       "changelog": "",
@@ -208,7 +241,8 @@ describe Puppet::Forge::ModuleRelease do
       },
       "file_uri": "/#{api_version}/files/#{module_full_name_versioned}.tar.gz",
       "file_size": 67586,
-      "file_md5": "#{module_md5}"
+      "file_md5": "#{module_md5}",
+      "file_sha256": "#{module_sha256}"
     }
     }
     end
@@ -256,6 +290,7 @@ describe Puppet::Forge::ModuleRelease do
       "file_uri": "/#{api_version}/files/#{module_full_name_versioned}.tar.gz",
       "file_size": 67586,
       "file_md5": "#{module_md5}",
+      "file_sha256": "#{module_sha256}",
       "downloads": 610751,
       "readme": "",
       "changelog": "",
