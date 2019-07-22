@@ -45,6 +45,15 @@ CONF
       subject.upload
     end
 
+    it "passes the current environment" do
+      env = Puppet::Node::Environment.remote('qa')
+      expect(model.indirection).to receive(:save).with(anything, nil, :environment => env)
+
+      Puppet.override(:current_environment => env) do
+        subject.upload
+      end
+    end
+
     it "uses settings from the agent section of puppet.conf" do
       expect(facter_terminus).to receive(:find).with(have_attributes(key: 'puppet.node.test')).and_return(test_data)
 
