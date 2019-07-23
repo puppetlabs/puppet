@@ -11,9 +11,19 @@ describe Puppet::Type.type(:service).provider(:systemd), '(integration)' do
     expect(described_class).to be_suitable
   end
 
-  it "should be considered suitable if /proc/1/exe is present and contains 'systemd'",
-    :if => File.exist?('/proc/1/exe') && File.open('/proc/1/exe').grep(/systemd/).size > 0
-    expect(provider_class).to be_suitable
+  it "should be considered suitable if /proc/1/exe is present and points to 'systemd'",
+    :if => File.exist?('/proc/1/exe') && Puppet::FileSystem.readlink('/proc/1/exe').include?('systemd') do
+    expect(described_class).to be_suitable
+  end
+
+  it "should not be considered suitable if /proc/1/exe is present it does not point to 'systemd'",
+    :if => File.exist?('/proc/1/exe') && !Puppet::FileSystem.readlink('/proc/1/exe').include?('systemd') do
+    expect(described_class).not_to be_suitable
+  end
+
+  it "should not be considered suitable if /proc/1/exe is absent",
+    :if => !File.exist?('/proc/1/exe') do
+    expect(described_class).not_to be_suitable
   end
 
   it "should not be cosidered suitable if systemctl is absent",
