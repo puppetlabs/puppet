@@ -365,14 +365,5 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM =
         end
       end
     end
-
-    context 'when in FIPS mode...' do
-      it 'module installer refuses to run' do
-        allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
-        expect {application.run}.to raise_error(/Module install is prohibited in FIPS mode./)
-      end 
-    end
-
   end
-
 end

@@ -172,7 +172,18 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       Puppet.warning "#{@metadata['name']} has been deprecated by its author! View module on Puppet Forge for more info." if deprecated?
 
       download(@data['file_uri'], tmpfile)
-      validate_checksum(tmpfile, @data['file_md5'])
+      checksum = @data['file_sha256']
+      if checksum
+        validate_checksum(tmpfile, checksum, Digest::SHA256)
+      else
+        checksum = @data['file_md5']
+        if checksum
+          validate_checksum(tmpfile, checksum, Digest::MD5)
+        else
+          raise _("Forge module is missing SHA256 and MD5 checksums")
+        end
+      end
+
       unpack(tmpfile, tmpdir)
 
       @unpacked_into = Pathname.new(tmpdir)
@@ -201,9 +212,13 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       end
     end
 
-    def validate_checksum(file, checksum)
-      if Digest::MD5.file(file.path).hexdigest != checksum
-        raise RuntimeError, _("Downloaded release for %{name} did not match expected checksum") % { name: name }
+    def validate_checksum(file, checksum, digest_class)
+      if Facter.value(:fips_enabled) && digest_class == Digest::MD5
+        raise _("Module install using MD5 is prohibited in FIPS mode.")
+      end
+
+      if digest_class.file(file.path).hexdigest != checksum
+        raise RuntimeError, _("Downloaded release for %{name} did not match expected checksum %{checksum}") % { name: name, checksum: checksum }
       end
     end
 
