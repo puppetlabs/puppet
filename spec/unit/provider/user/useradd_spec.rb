@@ -44,6 +44,27 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       allow(provider).to receive(:exists?).and_return(false)
     end
 
+    it "should not redact the command from debug logs if there is no password" do
+      described_class.has_feature :manages_passwords
+      resource[:ensure] = :present
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: false))
+      provider.create
+    end
+
+    it "should redact the command from debug logs if there is a password" do
+      described_class.has_feature :manages_passwords
+      resource2 = Puppet::Type.type(:user).new(
+        :name       => 'myuser',
+        :password   => 'a pass word',
+        :managehome => :false,
+        :system     => :false,
+        :provider   => provider,
+      )
+      resource2[:ensure] = :present
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: true))
+      provider.create
+    end
+
     it "should add -g when no gid is specified and group already exists" do
       allow(Puppet::Util).to receive(:gid).and_return(true)
       resource[:ensure] = :present
@@ -162,6 +183,27 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         expect(provider).to receive(:execute).with(include('-s'), kind_of(Hash))
         provider.create
       end
+    end
+  end
+
+  describe 'when modifying the password' do
+    before do
+      described_class.has_feature :libuser
+      described_class.has_feature :manages_passwords
+      #Setting any resource value here initializes needed variables and methods in the resource and provider
+      #Setting a password value here initializes the existence and management of the password parameter itself
+      #Otherwise, this value would not need to be initialized for the test
+      resource[:password] = ''
+    end
+
+    it "should not call execute with sensitive if non-sensitive data is changed" do
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: false))
+      provider.home = 'foo/bar'
+    end
+
+    it "should call execute with sensitive if sensitive data is changed" do
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: true))
+      provider.password = 'bird bird bird'
     end
   end
 
