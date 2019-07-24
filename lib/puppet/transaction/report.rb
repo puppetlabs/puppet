@@ -256,11 +256,11 @@ class Puppet::Transaction::Report
     @time = data['time']
     @corrective_change = data['corrective_change']
 
-    if data['master_used'] 
+    if data['master_used']
       @master_used = data['master_used']
     end
 
-    if data['catalog_uuid'] 
+    if data['catalog_uuid']
       @catalog_uuid = data['catalog_uuid']
     end
 
