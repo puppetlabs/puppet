@@ -201,7 +201,7 @@ module Puppet::Util::FileParsing
       else
         ret = {}
         sep = record.separator
-  
+
         # String "helpfully" replaces ' ' with /\s+/ in splitting, so we
         # have to work around it.
         if sep == " "
@@ -216,20 +216,20 @@ module Puppet::Util::FileParsing
             ret[param] = :absent
           end
         end
-  
+
         if record.rollup and ! line_fields.empty?
           last_field = record.fields[-1]
           val = ([ret[last_field]] + line_fields).join(record.joiner)
           ret[last_field] = val
         end
       end
-  
-      if ret
-        ret[:record_type] = record.name
-        return ret
-      else
-        return nil
-      end
+    end
+
+    if ret
+      ret[:record_type] = record.name
+      return ret
+    else
+      return nil
     end
   end
 
@@ -373,7 +373,7 @@ module Puppet::Util::FileParsing
 
   def valid_attr?(type, attr)
     type = type.intern
-    record = record_type(type) 
+    record = record_type(type)
     if record && record.fields.include?(attr.intern)
       return true
     else
