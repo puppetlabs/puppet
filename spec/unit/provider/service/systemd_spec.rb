@@ -120,6 +120,20 @@ describe 'Puppet::Type::Service::Provider::Systemd', unless: Puppet::Util::Platf
     expect(provider_class).to be_default
   end
 
+  it "should be the default provider on debian11" do
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("11")
+    expect(provider_class).to be_default
+  end
+
+  it "should be the default provider on debian bookworm/sid" do
+    allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystem).and_return(:debian)
+    allow(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("bookworm/sid")
+    expect(provider_class).to be_default
+  end
+
   it "should not be the default provider on ubuntu14.04" do
     allow(Facter).to receive(:value).with(:osfamily).and_return(:debian)
     allow(Facter).to receive(:value).with(:operatingsystem).and_return(:ubuntu)
