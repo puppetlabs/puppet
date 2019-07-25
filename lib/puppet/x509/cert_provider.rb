@@ -191,22 +191,20 @@ class Puppet::X509::CertProvider
     # and corrected in https://github.com/ruby/openssl/commit/a896c3d1dfa090e92dec1abf8ac12843af6af721
     password ||= '    '
 
-    if Puppet::Util::Platform.jruby?
-      begin
-        if pem =~ EC_HEADER
-          OpenSSL::PKey::EC.new(pem, password)
-        else
-          OpenSSL::PKey::RSA.new(pem, password)
-        end
-      rescue OpenSSL::PKey::PKeyError => e
-        if e.message =~ /Neither PUB key nor PRIV key/
-          raise OpenSSL::PKey::PKeyError, "Could not parse PKey: no start line"
-        else
-          raise e
-        end
+    # Can't use OpenSSL::PKey.read, because it's broken in MRI 2.3, doesn't exist
+    # in JRuby 9.1, and is broken in JRuby 9.2
+    begin
+      if pem =~ EC_HEADER
+        OpenSSL::PKey::EC.new(pem, password)
+      else
+        OpenSSL::PKey::RSA.new(pem, password)
       end
-    else
-      OpenSSL::PKey.read(pem, password)
+    rescue OpenSSL::PKey::PKeyError => e
+      if e.message =~ /Neither PUB key nor PRIV key/
+        raise OpenSSL::PKey::PKeyError, "Could not parse PKey: no start line"
+      else
+        raise e
+      end
     end
   end
 

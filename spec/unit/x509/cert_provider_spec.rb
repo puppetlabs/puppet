@@ -307,7 +307,7 @@ describe Puppet::X509::CertProvider do
           # password is 74695716c8b6
           expect {
             provider.load_private_key('encrypted-ec-key')
-          }.to raise_error(OpenSSL::PKey::PKeyError, /Could not parse PKey: no start line/)
+          }.to raise_error(OpenSSL::PKey::PKeyError, /(unknown|invalid) curve name|Could not parse PKey: no start line/)
         end
       end
     end
