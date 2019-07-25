@@ -408,6 +408,24 @@ describe Puppet::Type, :unless => Puppet::Util::Platform.windows? do
     end
 
     describe "when building autorelations" do
+      it "should be able to autorequire puppet resources" do
+        Puppet::Type.newtype(:autorelation_two) do
+          newparam(:name) { isnamevar }
+          autorequire(:autorelation_one) { Puppet::Type.type(:notify).new(name: 'test') }
+        end
+
+        relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+          autorelation_one { 'Notify[test]': }
+          autorelation_two { 'bar': }
+        MANIFEST
+
+        src = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Notify[test]' }.first
+        dst = relationship_graph.vertices.select{ |x| x.ref.to_s == 'Autorelation_two[bar]' }.first
+
+        expect(relationship_graph.edge?(src,dst)).to be_truthy
+        expect(relationship_graph.edges_between(src,dst).first.event).to eq(:NONE)
+      end
+
       it "should be able to autorequire resources" do
         Puppet::Type.newtype(:autorelation_two) do
           newparam(:name) { isnamevar }
