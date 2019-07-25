@@ -27,6 +27,8 @@ class LookupAdapter < DataAdapter
     super()
     @compiler = compiler
     @lookup_options = {}
+    # Get a KeyRecorder from context, and set a "null recorder" if not defined
+    @key_recorder = Puppet.lookup(:lookup_key_recorder) { KeyRecorder.singleton }
   end
 
   # Performs a lookup using global, environment, and module data providers. Merge the result using the given
@@ -47,6 +49,11 @@ class LookupAdapter < DataAdapter
         throw :no_such_key
       end
     end
+
+    # Record that the key was looked up. This will record all keys for which a lookup is performed
+    # except 'lookup_options' (since that is illegal from a user perspective,
+    # and from an impact perspective is always looked up).
+    @key_recorder.record(key)
 
     key = LookupKey.new(key)
     lookup_invocation.lookup(key, key.module_name) do

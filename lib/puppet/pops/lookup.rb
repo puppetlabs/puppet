@@ -94,3 +94,4 @@ end
 end
 
 require_relative 'lookup/lookup_adapter'
+require_relative 'lookup/key_recorder'
