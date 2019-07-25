@@ -1700,7 +1700,7 @@ A lock file to indicate that the ssl bootstrap process is currently in progress\
 .IP "" 0
 .
 .SS "ssl_server_ca_auth"
-Certificate authorities who issue client certificates\. SSL clients will not be considered authentic unless they possess a certificate issued by an authority listed in this file\. If this setting has no value then the Puppet master\'s CA certificate (localcacert) will be used\.
+The setting is deprecated and has no effect\. Ensure all root and intermediate certificate authorities used to issue client certificates are contained in the server\'s \fBcacert\fR file on the server\.
 .
 .TP
 \fIDefault\fR:
