@@ -240,12 +240,20 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def status
     if @resource && ((@resource[:hasstatus] == :false) || (@resource[:status]))
       return super
-    else
-      if @property_hash[:status].nil?
-        :absent
+    elsif @property_hash[:status].nil?
+      # property_hash was flushed so the service changed status
+      service_name = @resource[:name]
+      # Updating services with new statuses
+      job_list = self.class.job_list
+      # if job is present in job_list, return its status
+      if job_list.key?(service_name)
+        job_list[service_name]
+      # if job is no longer present in job_list, it was stopped
       else
-        @property_hash[:status]
+        :stopped
       end
+    else
+      @property_hash[:status]
     end
   end
 
@@ -313,7 +321,14 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_plist_disabled = nil
     overrides_disabled = nil
 
-    _, job_plist = plist_from_label(resource[:name])
+    begin
+      _, job_plist = plist_from_label(resource[:name])
+    rescue Puppet::Error => err
+      # if job does not exist, log the error and return false as on other platforms
+      Puppet.log_exception(err)
+      return :false
+    end
+
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
     if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_overrides

@@ -79,4 +79,21 @@ SCRIPT
   ensure_service_on_host(agent, svc, {:enable => 'true'}) do
     launchctl_assert_status(agent, svc, false)
   end
+
+  # switching from stopped to running should output the correct status of the service and not 'absent'
+  step "Start the service on #{agent} when service is stopped, and check outoput" do
+    on agent, puppet_resource('service', svc, 'ensure=stopped')
+    on agent, puppet_resource('service', svc, 'ensure=running') do |result|
+      assert_match(/service { '#{svc}':\n  ensure => 'running',\n}$/, stdout, 'Service status change failed')
+    end
+  end
+
+   # switching from running to stopped should output the correct status of the service and not 'absent'
+  step "Start the service on #{agent} when service is running, and check outoput" do
+    on agent, puppet_resource('service', svc, 'ensure=running')
+    on agent, puppet_resource('service', svc, 'ensure=stopped') do |result|
+      assert_match(/service { '#{svc}':\n  ensure => 'stopped',\n}$/, stdout, 'Service status change failed')
+    end
+  end
+
 end
