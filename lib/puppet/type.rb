@@ -2187,7 +2187,7 @@ end
       # Retrieve the list of names from the block.
       list = self.instance_eval(&block)
       next unless list
-      list = Array(list)
+      list = [list] unless list.is_a?(Array)
 
       # Collect the current prereqs
       list.each { |dep|
@@ -2207,7 +2207,6 @@ end
         end
       }
     }
-
     reqs
   end
 
