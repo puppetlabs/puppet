@@ -224,4 +224,30 @@ describe "A very basic provider based on ParsedFile" do
       end
     end
   end
+
+  context 'parsing a record type' do
+    let(:input_text) { File.read(my_fixture('aliases.txt')) }
+    let(:target) { tmpfile('parsedfile_spec') }
+    let(:provider) do
+      example_provider_class = Class.new(Puppet::Provider::ParsedFile)
+      example_provider_class.default_target = target
+      # Setup some record rules
+      example_provider_class.instance_eval do
+        record_line :aliases, :fields =>  %w{manager alias}, :separator => ':'
+      end
+      example_provider_class.initvars
+      example_provider_class.prefetch
+      example_provider_class
+    end
+    let(:expected_result) do
+      [
+        {:manager=>"manager", :alias=>"  root", :record_type=>:aliases},
+        {:manager=>"dumper", :alias=>"   postmaster", :record_type=>:aliases}
+      ]
+    end
+
+    subject { provider.parse(input_text) }
+
+    it { is_expected.to  match_array(expected_result) }
+  end
 end
