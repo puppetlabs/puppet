@@ -235,6 +235,7 @@ Licensed under the Apache 2.0 License
     libdir = Puppet[:libdir]
     vardir = Puppet[:vardir]
     confdir = Puppet[:confdir]
+    ssldir = Puppet[:ssldir]
     certname = Puppet[:certname]
 
     env = Puppet::Node::Environment.remote(Puppet[:environment])
@@ -264,14 +265,22 @@ Licensed under the Apache 2.0 License
             port = ":#{device_url.port}" if device_url.port
 
             # override local $vardir and $certname
+            Puppet[:ssldir] = ::File.join(Puppet[:deviceconfdir], device.name, 'ssl')
             Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
             Puppet[:libdir] = options[:libdir] || ::File.join(Puppet[:devicedir], device.name, 'lib')
             Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
             Puppet[:certname] = device.name
             ssl_host = nil
 
+            # create device directory under $deviceconfdir
+            Puppet::FileSystem.dir_mkpath(Puppet[:ssldir]) unless Puppet::FileSystem.dir_exist?(Puppet[:ssldir])
+
             # this will reload and recompute default settings and create device-specific sub vardir
             Puppet.settings.use :main, :agent, :ssl
+
+            # Workaround for PUP-8736: store ssl certs outside the cache directory to prevent accidental removal and keep the old path as symlink
+            optssldir = File.join(Puppet[:confdir], 'ssl')
+            Puppet::FileSystem.symlink(Puppet[:ssldir], optssldir) unless Puppet::FileSystem.exist?(optssldir)
 
             unless options[:resource] || options[:facts] || options[:apply]
               # Since it's too complicated to fix properly in the default settings, we workaround for PUP-9642 here.
@@ -357,6 +366,7 @@ Licensed under the Apache 2.0 License
             Puppet[:libdir] = libdir
             Puppet[:vardir] = vardir
             Puppet[:confdir] = confdir
+            Puppet[:ssldir] = ssldir
             Puppet[:certname] = certname
             Puppet::SSL::Host.reset
           end
