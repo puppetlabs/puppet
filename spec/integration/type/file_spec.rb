@@ -21,6 +21,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     File.join(parent, 'file_testing')
   end
 
+  let(:path_protected) do
+    # we create a file inside windows protected folders (C:\Windows, C:\Windows\system32, etc)
+    # the file will also be removed after the tests
+    parent = 'C:\Windows'
+    File.join(parent, 'file_testing')
+  end
+
   let(:dir) do
     # we create a directory first so backups of :path that are stored in
     # the same directory will also be removed after the tests
@@ -268,6 +275,27 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           expect(get_mode(path) & 07777).to eq(0666)
         end
 
+        context "file is in protected windows directory", :if => Puppet.features.microsoft_windows? do
+          after { FileUtils.rm(path_protected) }
+
+          it "should set and get the correct mode for files inside protected windows folders" do
+            catalog.add_resource described_class.new(:path => path_protected, :ensure => :file, :mode => '0640')
+            catalog.apply
+  
+            expect(get_mode(path_protected) & 07777).to eq(0640)
+          end
+
+          it "should not change resource's status inside protected windows folders if mode is the same" do
+            FileUtils.touch(path_protected)
+            set_mode(0644, path_protected)
+            catalog.add_resource described_class.new(:path => path_protected, :ensure => :file, :mode => '0644')
+            result = catalog.apply
+            status = result.report.resource_statuses["File[#{path_protected}]"]
+            expect(status).not_to be_failed
+            expect(status).not_to be_changed
+          end
+        end
+        
         it "should not set executable bits when replacing an executable directory (#10365)" do
           pending("bug #10365")
 

@@ -265,6 +265,14 @@ module Puppet
       :group    => "service",
       :desc     => "Where Puppet PID files are kept."
     },
+    :deviceconfdir => {
+      :default  => "$confdir/devices",
+      :type     => :directory,
+      :mode     => "0750",
+      :owner    => "service",
+      :group    => "service",
+      :desc     => "The root directory of devices' $confdir.",
+    },
     :genconfig => {
         :default  => false,
         :type     => :boolean,
