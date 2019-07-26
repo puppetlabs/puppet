@@ -1,4 +1,4 @@
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 require 'net/http'
 require 'puppet/util/http_proxy'
 

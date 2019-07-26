@@ -1,4 +1,4 @@
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 require 'puppet/ssl'
 
 # Perform peer certificate verification against the known CA.

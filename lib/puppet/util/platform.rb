@@ -33,6 +33,22 @@ module Puppet
       def self.jruby?
         RUBY_PLATFORM == 'java'
       end
+
+      def jruby_fips?
+        @@jruby_fips ||= if RUBY_PLATFORM == 'java'
+                           require 'java'
+
+                           begin
+                             require 'openssl'
+                             false
+                           rescue LoadError
+                             true
+                           end
+                         else
+                           false
+                         end
+      end
+      module_function :jruby_fips?
     end
   end
 end

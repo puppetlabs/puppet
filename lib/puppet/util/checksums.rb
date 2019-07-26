@@ -139,7 +139,7 @@ module Puppet::Util::Checksums
 
   # Calculate a checksum using Digest::SHA224.
   def sha224(content)
-    require 'openssl'
+    require 'puppet/ssl/openssl_loader'
     OpenSSL::Digest::SHA224.new.hexdigest(content)
   end
 
@@ -148,14 +148,14 @@ module Puppet::Util::Checksums
   end
 
   def sha224_file(filename, lite = false)
-    require 'openssl'
+    require 'puppet/ssl/openssl_loader'
 
     digest = OpenSSL::Digest::SHA224.new
     checksum_file(digest, filename,  lite)
   end
 
   def sha224_stream(lite = false, &block)
-    require 'openssl'
+    require 'puppet/ssl/openssl_loader'
     digest = OpenSSL::Digest::SHA224.new
     checksum_stream(digest, block, lite)
   end

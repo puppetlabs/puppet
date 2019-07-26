@@ -1,3 +1,5 @@
+require 'puppet/util/platform'
+
 module Puppet::Util::MonkeyPatches
 end
 
@@ -28,34 +30,34 @@ class Object
 end
 
 # (#19151) Reject all SSLv2 ciphers and handshakes
-require 'openssl'
-class OpenSSL::SSL::SSLContext
-  if DEFAULT_PARAMS[:options]
-    DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
-  else
-    DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
-  end
-  if DEFAULT_PARAMS[:ciphers]
-    DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
-  end
+require 'puppet/ssl/openssl_loader'
+unless Puppet::Util::Platform.jruby_fips?
+  class OpenSSL::SSL::SSLContext
+    if DEFAULT_PARAMS[:options]
+      DEFAULT_PARAMS[:options] |= OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
+    else
+      DEFAULT_PARAMS[:options] = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
+    end
+    if DEFAULT_PARAMS[:ciphers]
+      DEFAULT_PARAMS[:ciphers] << ':!SSLv2'
+    end
 
-  alias __original_initialize initialize
-  private :__original_initialize
+    alias __original_initialize initialize
+    private :__original_initialize
 
-  def initialize(*args)
-    __original_initialize(*args)
-    params = {
-      :options => DEFAULT_PARAMS[:options],
-      :ciphers => DEFAULT_PARAMS[:ciphers],
-    }
-    set_params(params)
+    def initialize(*args)
+      __original_initialize(*args)
+      params = {
+        :options => DEFAULT_PARAMS[:options],
+        :ciphers => DEFAULT_PARAMS[:ciphers],
+      }
+      set_params(params)
+    end
   end
 end
 
-require 'puppet/util/platform'
 if Puppet::Util::Platform.windows?
   require 'puppet/util/windows'
-  require 'openssl'
 
   class OpenSSL::X509::Store
     @puppet_certs_loaded = false
@@ -80,38 +82,42 @@ if Puppet::Util::Platform.windows?
   end
 end
 
-unless OpenSSL::X509::Name.instance_methods.include?(:to_utf8)
-  class OpenSSL::X509::Name
-    # https://github.com/openssl/openssl/blob/OpenSSL_1_1_0j/include/openssl/asn1.h#L362
-    ASN1_STRFLGS_ESC_MSB = 4
+unless Puppet::Util::Platform.jruby_fips?
+  unless OpenSSL::X509::Name.instance_methods.include?(:to_utf8)
+    class OpenSSL::X509::Name
+      # https://github.com/openssl/openssl/blob/OpenSSL_1_1_0j/include/openssl/asn1.h#L362
+      ASN1_STRFLGS_ESC_MSB = 4
 
-    FLAGS = if RUBY_PLATFORM == 'java'
-              OpenSSL::X509::Name::RFC2253
-            else
-              OpenSSL::X509::Name::RFC2253 & ~ASN1_STRFLGS_ESC_MSB
-            end
+      FLAGS = if RUBY_PLATFORM == 'java'
+                OpenSSL::X509::Name::RFC2253
+              else
+                OpenSSL::X509::Name::RFC2253 & ~ASN1_STRFLGS_ESC_MSB
+              end
 
-    def to_utf8
-      # https://github.com/ruby/ruby/blob/v2_5_5/ext/openssl/ossl_x509name.c#L317
-      str = to_s(FLAGS)
-      str.force_encoding(Encoding::UTF_8)
+      def to_utf8
+        # https://github.com/ruby/ruby/blob/v2_5_5/ext/openssl/ossl_x509name.c#L317
+        str = to_s(FLAGS)
+        str.force_encoding(Encoding::UTF_8)
+      end
     end
   end
 end
 
-unless OpenSSL::PKey::EC.instance_methods.include?(:private?)
-  class OpenSSL::PKey::EC
-    # Added in ruby 2.4.0 in https://github.com/ruby/ruby/commit/7c971e61f04
-    alias :private? :private_key?
+unless Puppet::Util::Platform.jruby_fips?
+  unless OpenSSL::PKey::EC.instance_methods.include?(:private?)
+    class OpenSSL::PKey::EC
+      # Added in ruby 2.4.0 in https://github.com/ruby/ruby/commit/7c971e61f04
+      alias :private? :private_key?
+    end
   end
-end
 
-unless OpenSSL::PKey::EC.singleton_methods.include?(:generate)
-  class OpenSSL::PKey::EC
-    # Added in ruby 2.4.0 in https://github.com/ruby/ruby/commit/85500b66342
-    def self.generate(string)
-      ec = OpenSSL::PKey::EC.new(string)
-      ec.generate_key
+  unless OpenSSL::PKey::EC.singleton_methods.include?(:generate)
+    class OpenSSL::PKey::EC
+      # Added in ruby 2.4.0 in https://github.com/ruby/ruby/commit/85500b66342
+      def self.generate(string)
+        ec = OpenSSL::PKey::EC.new(string)
+        ec.generate_key
+      end
     end
   end
 end
