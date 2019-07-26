@@ -13,12 +13,16 @@ require 'pathname'
 
 module Puppet::Util::SELinux
 
-  def selinux_support?
+  def self.selinux_support?
     return false unless defined?(Selinux)
     if Selinux.is_selinux_enabled == 1
       return true
     end
     false
+  end
+
+  def selinux_support?
+    Puppet::Util::SELinux.selinux_support?
   end
 
   # Retrieve and return the full context of the file.  If we don't have
