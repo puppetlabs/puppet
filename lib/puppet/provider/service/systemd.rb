@@ -1,5 +1,7 @@
 # Manage systemd services using systemctl
 
+require 'puppet/file_system'
+
 Puppet::Type.type(:service).provide :systemd, :parent => :base do
   desc "Manages `systemd` services using `systemctl`.
 
@@ -9,14 +11,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   commands :systemctl => "systemctl"
 
-  if Facter.value(:osfamily).downcase == 'debian'
-    # With multiple init systems on Debian, it is possible to have
-    # pieces of systemd around (e.g. systemctl) but not really be
-    # using systemd.  We do not do this on other platforms as it can
-    # cause issues when running in a chroot without /run mounted
-    # (PUP-5577)
-    confine :exists => "/run/systemd/system"
-  end
+  confine :true => Puppet::FileSystem.exist?('/proc/1/exe') && Puppet::FileSystem.readlink('/proc/1/exe').include?('systemd')
 
   defaultfor :osfamily => [:archlinux]
   defaultfor :osfamily => :redhat, :operatingsystemmajrelease => ["7", "8"]
@@ -24,8 +19,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   defaultfor :osfamily => :suse
   defaultfor :osfamily => :coreos
   defaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2"]
-  defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["8", "stretch/sid", "9", "buster/sid", "10", "bullseye/sid"]
-
+  defaultfor :operatingsystem => :debian
+  notdefaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["5", "6", "7"] # These are using the "debian" method
   defaultfor :operatingsystem => :LinuxMint
   notdefaultfor :operatingsystem => :LinuxMint, :operatingsystemmajrelease => ["10", "11", "12", "13", "14", "15", "16", "17"] # These are using upstart
   defaultfor :operatingsystem => :ubuntu
