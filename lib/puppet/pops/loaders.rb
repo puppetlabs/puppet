@@ -380,20 +380,15 @@ class Loaders
     env_conf = Puppet.lookup(:environments).get_conf(environment.name)
     env_path = env_conf.nil? || !env_conf.is_a?(Puppet::Settings::EnvironmentConf) ? nil : env_conf.path_to_env
 
-    if Puppet[:tasks]
-      loader = Loader::ModuleLoaders.environment_loader_from(parent_loader, self, env_path)
-    else
-      # Create the 3.x resource type loader
-      static_loader.runtime_3_init
-      @runtime3_type_loader = add_loader_by_name(Loader::Runtime3TypeLoader.new(parent_loader, self, environment, env_conf.nil? ? nil : env_path))
+    # Create the 3.x resource type loader
+    @runtime3_type_loader = add_loader_by_name(Loader::Runtime3TypeLoader.new(puppet_system_loader, self, environment, env_conf.nil? ? nil : env_path))
 
-      if env_path.nil?
-        # Not a real directory environment, cannot work as a module TODO: Drop when legacy env are dropped?
-        loader = add_loader_by_name(Loader::SimpleEnvironmentLoader.new(@runtime3_type_loader, Loader::ENVIRONMENT))
-      else
-        # View the environment as a module to allow loading from it - this module is always called 'environment'
-        loader = Loader::ModuleLoaders.environment_loader_from(@runtime3_type_loader, self, env_path)
-      end
+    if env_path.nil?
+      # Not a real directory environment, cannot work as a module TODO: Drop when legacy env are dropped?
+      loader = add_loader_by_name(Loader::SimpleEnvironmentLoader.new(@runtime3_type_loader, Loader::ENVIRONMENT))
+    else
+      # View the environment as a module to allow loading from it - this module is always called 'environment'
+      loader = Loader::ModuleLoaders.environment_loader_from(@runtime3_type_loader, self, env_path)
     end
 
     # An environment has a module path even if it has a null loader

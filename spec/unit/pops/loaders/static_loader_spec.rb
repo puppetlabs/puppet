@@ -3,22 +3,17 @@ require 'puppet/pops'
 require 'puppet/loaders'
 
 describe 'the static loader' do
-  let(:loader) do
-    loader = Puppet::Pops::Loader::StaticLoader.new()
-    loader.runtime_3_init
-    loader
-  end
-
   it 'has no parent' do
-    expect(loader.parent).to be(nil)
+    expect(Puppet::Pops::Loader::StaticLoader.new.parent).to be(nil)
   end
 
   it 'identifies itself in string form' do
-    expect(loader.to_s).to be_eql('(StaticLoader)')
+    expect(Puppet::Pops::Loader::StaticLoader.new.to_s).to be_eql('(StaticLoader)')
   end
 
   it 'support the Loader API' do
     # it may produce things later, this is just to test that calls work as they should - now all lookups are nil.
+    loader = Puppet::Pops::Loader::StaticLoader.new()
     a_typed_name = typed_name(:function, 'foo')
     expect(loader[a_typed_name]).to be(nil)
     expect(loader.load_typed(a_typed_name)).to be(nil)
@@ -26,6 +21,8 @@ describe 'the static loader' do
   end
 
   context 'provides access to resource types built into puppet' do
+    let(:loader) { Puppet::Pops::Loader::StaticLoader.new() }
+
     %w{
       Component
       Exec
@@ -49,16 +46,10 @@ describe 'the static loader' do
   end
 
   context 'provides access to app-management specific resource types built into puppet' do
-    it "such that Node is available" do
-      expect(loader.load(:type, 'node')).to be_the_type(resource_type('Node'))
-    end
-  end
-
-  context 'without init_runtime3 initialization' do
     let(:loader) { Puppet::Pops::Loader::StaticLoader.new() }
 
-    it 'does not provide access to resource types built into puppet' do
-      expect(loader.load(:type, 'file')).to be_nil
+    it "such that Node is available" do
+      expect(loader.load(:type, 'node')).to be_the_type(resource_type('Node'))
     end
   end
 

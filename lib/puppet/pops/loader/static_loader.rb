@@ -38,8 +38,9 @@ class StaticLoader < Loader
   attr_reader :loaded
   def initialize
     @loaded = {}
-    @runtime_3_initialized = false
     create_built_in_types
+    create_resource_type_references
+    register_aliases
   end
 
   def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY)
@@ -77,14 +78,6 @@ class StaticLoader < Loader
 
   def loaded_entry(typed_name, check_dependencies = false)
     @loaded[typed_name]
-  end
-
-  def runtime_3_init
-    unless @runtime_3_initialized
-      @runtime_3_initialized = true
-      create_resource_type_references
-    end
-    nil
   end
 
   def register_aliases

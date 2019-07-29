@@ -459,14 +459,12 @@ describe 'The Loader' do
               let(:environments_dir) { tmpdir('loader_spec') }
               let(:env) { Puppet::Node::Environment.create(:none_such, [modules_dir]) }
 
-              it 'an EmptyLoader is used and module loader finds types' do
-                expect_any_instance_of(Puppet::Pops::Loader::ModuleLoaders::EmptyLoader).to receive(:find).and_return(nil)
+              it 'a module loader finds types' do
                 expect(Loaders.find_loader('a').discover(:type) { |t| t.name =~ /^.::.*\z/ }).to(
                   contain_exactly(tn(:type, 'a::atype')))
               end
 
-              it 'an EmptyLoader is used and module loader finds tasks' do
-                expect_any_instance_of(Puppet::Pops::Loader::ModuleLoaders::EmptyLoader).to receive(:find).and_return(nil)
+              it 'a module loader finds tasks' do
                 expect(Loaders.find_loader('a').discover(:task) { |t| t.name =~ /^.::.*\z/ }).to(
                   contain_exactly(tn(:task, 'a::atask')))
               end
