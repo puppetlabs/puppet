@@ -12,6 +12,7 @@ rvm:
   - 2.4
   - 2.3
   - jruby-9.2.0.0
+jdk: openjdk8
 
 env:
   global:
