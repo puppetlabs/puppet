@@ -11,49 +11,33 @@ script:
   - "bundle exec rake $CHECK"
 notifications:
   email: false
-rvm:
-  - 2.4
-  - 2.3
-  - 2.2
-  - 2.1
-  - 2.0
-  - 1.9.3
-
-env:
-  - "CHECK=parallel:spec\\[2\\]"
-  - "CHECK=rubocop"
-  - "CHECK=commits"
-  - "CHECK=warnings"
 
 matrix:
-  exclude:
-    - rvm: 2.4
-      env: "CHECK=rubocop"
-    - rvm: 2.3
-      env: "CHECK=rubocop"
-    - rvm: 2.2
-      env: "CHECK=rubocop"
-    - rvm: 2.0
-      env: "CHECK=rubocop"
+  include:
     - rvm: 1.9.3
-      env: "CHECK=rubocop"
-    - rvm: 2.4
-      env: "CHECK=commits"
-    - rvm: 2.3
-      env: "CHECK=commits"
-    - rvm: 2.2
-      env: "CHECK=commits"
+      dist: trusty
+      env: "CHECK=parallel:spec\\[2\\]"
+
     - rvm: 2.0
-      env: "CHECK=commits"
-    - rvm: 1.9.3
-      env: "CHECK=commits"
-    - rvm: 2.3
-      env: "CHECK=warnings"
-    - rvm: 2.2
-      env: "CHECK=warnings"
+      env: "CHECK=parallel:spec\\[2\\]"
+
     - rvm: 2.1
-      env: "CHECK=warnings"
-    - rvm: 2.0
-      env: "CHECK=warnings"
-    - rvm: 1.9.3
+      env: "CHECK=parallel:spec\\[2\\]"
+
+    - rvm: 2.1
+      env: "CHECK=rubocop"
+
+    - rvm: 2.1
+      env: "CHECK=commits"
+
+    - rvm: 2.2
+      env: "CHECK=parallel:spec\\[2\\]"
+
+    - rvm: 2.3
+      env: "CHECK=parallel:spec\\[2\\]"
+
+    - rvm: 2.4
+      env: "CHECK=parallel:spec\\[2\\]"
+
+    - rvm: 2.4
       env: "CHECK=warnings"
