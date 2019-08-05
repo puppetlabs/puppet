@@ -23,7 +23,7 @@ group(:features) do
   gem 'hiera-eyaml', require: false
   gem 'hocon', '~> 1.0', require: false
   # requires native libshadow headers/libs
-  # gem 'libshadow', '~> 1.0', require: false, platforms: [:ruby]
+  #gem 'ruby-shadow', '~> 2.5', require: false, platforms: [:ruby]
   gem 'minitar', '~> 0.6', require: false
   gem 'msgpack', '~> 1.2', require: false
   gem 'rdoc', '~> 6.0', require: false, platforms: [:ruby]
