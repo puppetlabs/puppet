@@ -23,7 +23,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
 defaultfor :operatingsystem => :amazon
-defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
+defaultfor :osfamily => :redhat
+notdefaultfor :osfamily => :redhat, :operatingsystemmajrelease => (1..3).to_a
 
   def self.prefetch(packages)
     raise Puppet::Error, _("The yum provider can only be used as root") if Process.euid != 0
