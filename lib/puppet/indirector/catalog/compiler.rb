@@ -395,22 +395,27 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     # And then add the server name and IP
     {"servername" => "fqdn",
-      "serverip" => "ipaddress"
+      "serverip"  => "ipaddress",
+      "serverip6" => "ipaddress6"
     }.each do |var, fact|
-      if value = Facter.value(fact)
+      value = Facter.value(fact)
+      if !value.nil?
         @server_facts[var] = value
-      else
-        Puppet.warning _("Could not retrieve fact %{fact}") % { fact: fact }
       end
     end
 
     if @server_facts["servername"].nil?
       host = Facter.value(:hostname)
-      if domain = Facter.value(:domain)
+      if host.nil?
+        Puppet.warning _("Could not retrieve fact servername")
+      elsif domain = Facter.value(:domain)
         @server_facts["servername"] = [host, domain].join(".")
       else
         @server_facts["servername"] = host
       end
+    end
+    if @server_facts["serverip"].nil?
+      Puppet.warning _("Could not retrieve fact serverip")
     end
   end
 end
