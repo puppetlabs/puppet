@@ -12,8 +12,10 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
       installed on the machine, the resource will fail with an error message."
 
   # The commands we are using on an AIX box are installed standard
-  # (except nimclient) nimclient needs the bos.sysmgt.nim.client fileset.
+  # except nimclient: needs the bos.sysmgt.nim.client fileset
+  # and nim: needs the bos.sysmgt.nim.master fileset
   commands    :nimclient  => "/usr/sbin/nimclient",
+              :nim        => "/usr/sbin/nim",
               :lslpp      => "/usr/bin/lslpp",
               :rpm        => "rpm"
 
@@ -29,7 +31,11 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
 
   def self.srclistcmd(source)
-    [ command(:nimclient), "-o", "showres", "-a", "installp_flags=L", "-a", "resource=#{source}" ]
+    if Facter.value(:nim_type) == "master"
+      return [ command(:nim), "-o", "showres", "-a", "installp_flags=L", "#{source}" ]
+    else
+      return [ command(:nimclient), "-o", "showres", "-a", "installp_flags=L", "-a", "resource=#{source}" ]
+    end
   end
 
   def uninstall
@@ -79,7 +85,11 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     # through the metaprogrammed layer.  We could get rid of the grep and
     # switch back to the metaprogrammed stuff, and just parse all of the output
     # in Ruby... but we'd be doing an awful lot of unnecessary work.
-    showres_command = "/usr/sbin/nimclient -o showres -a resource=#{source} |/usr/bin/grep -p -E "
+    if Facter.value(:nim_type) == "master"
+      showres_command = "#{command(:nim)} -o showres #{source} |/usr/bin/grep -p -E "
+    else
+      showres_command = "#{command(:nimclient)} -o showres -a resource=#{source} |/usr/bin/grep -p -E "
+    end
     if (version_specified)
       version = @resource.should(:ensure)
       showres_command << "'#{Regexp.escape(pkg)}( |-)#{Regexp.escape(version)}'"
@@ -128,7 +138,11 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     end
 
     # NOTE: the installp flags here are ignored (but harmless) for RPMs
-    output = nimclient "-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=#{source}", "-a", "filesets=#{pkg}"
+    if Facter.value(:nim_type) == "master"
+      output = nim "-o", "cust", "-a", "installp_flags=acgwXY", "#{source}", "-a", "filesets=#{pkg}"
+    else
+      output = nimclient "-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=#{source}", "-a", "filesets=#{pkg}"
+    end
 
     # If the package is superseded, it means we're trying to downgrade and we
     # can't do that.

@@ -11,6 +11,8 @@ describe Puppet::Type.type(:package).provider(:nim) do
     allow(@resource).to receive(:[]).with(:name).and_return("mypackage.foo")
     allow(@resource).to receive(:[]).with(:source).and_return("mysource")
     allow(@resource).to receive(:[]).with(:ensure).and_return(:installed)
+    allow(described_class).to receive(:command).with(:nimclient).and_return("/usr/sbin/nimclient")
+    allow(described_class).to receive(:command).with(:nim).and_return("/usr/sbin/nim")
 
     @provider = subject()
     @provider.resource = @resource
@@ -42,10 +44,18 @@ END
   }
 
   context "when installing" do
-    it "should install a package" do
+    it "should install a package on a nim client" do
       allow(@resource).to receive(:should).with(:ensure).and_return(:installed)
       expect(Puppet::Util::Execution).to receive(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo'").and_return(bff_showres_output)
       expect(@provider).to receive(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.8")
+      @provider.install
+    end
+
+    it "should install a package on a nim master" do
+      allow(Facter).to receive(:value).with(:nim_type).and_return('master')
+      allow(@resource).to receive(:should).with(:ensure).and_return(:installed)
+      expect(Puppet::Util::Execution).to receive(:execute).with("/usr/sbin/nim -o showres mysource |/usr/bin/grep -p -E 'mypackage\\.foo'").and_return(bff_showres_output)
+      expect(@provider).to receive(:nim).with("-o", "cust", "-a", "installp_flags=acgwXY", "mysource", "-a", "filesets=mypackage.foo 1.2.3.8")
       @provider.install
     end
 
