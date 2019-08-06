@@ -172,9 +172,10 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     begin
-      execute(self.addcmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
+      sensitive = has_sensitive_data?
+      execute(self.addcmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})
       if feature?(:manages_password_age) && (cmd = passcmd)
-        execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
+        execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})
       end
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not create %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
@@ -276,11 +277,17 @@ class Puppet::Provider::NameService < Puppet::Provider
     self.class.validate(param, value)
     cmd = modifycmd(param, munge(param, value))
     raise Puppet::DevError, _("Nameservice command must be an array") unless cmd.is_a?(Array)
+    sensitive = has_sensitive_data?(param)
     begin
-      execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
+      execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
+  end
+
+  #Derived classes can override to declare sensitive data so a flag can be passed to execute
+  def has_sensitive_data?(property = nil)
+    false
   end
 
   # From overriding Puppet::Property#insync? Ruby Etc::getpwnam < 2.1.0 always
