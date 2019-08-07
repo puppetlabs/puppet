@@ -66,11 +66,11 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
 
   # use pw to update password hash
   def password=(cryptopw)
-    Puppet.debug "change password for user '#{@resource[:name]}' method called with hash '#{cryptopw}'"
+    Puppet.debug "change password for user '#{@resource[:name]}' method called with hash [redacted]"
     stdin, _, _ = Open3.popen3("pw user mod #{@resource[:name]} -H 0")
     stdin.puts(cryptopw)
     stdin.close
-    Puppet.debug "finished password for user '#{@resource[:name]}' method called with hash '#{cryptopw}'"
+    Puppet.debug "finished password for user '#{@resource[:name]}' method called with hash [redacted]"
   end
 
   # get password from /etc/master.passwd
@@ -78,8 +78,17 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     Puppet.debug "checking password for user '#{@resource[:name]}' method called"
     current_passline = `getent passwd #{@resource[:name]}`
     current_password = current_passline.chomp.split(':')[1] if current_passline
-    Puppet.debug "finished password for user '#{@resource[:name]}' method called : '#{current_password}'"
+    Puppet.debug "finished password for user '#{@resource[:name]}' method called : [redacted]"
     current_password
+  end
+
+  def has_sensitive_data?(property = nil)
+    #Check for sensitive values?
+    properties = property ? [property] : Puppet::Type.type(:user).validproperties
+    properties.any? do |prop|
+      p = @resource.parameter(prop)
+      p && p.respond_to?(:is_sensitive) && p.is_sensitive
+    end
   end
 
   # Get expiry from system and convert to Puppet-style date
