@@ -265,14 +265,6 @@ module Puppet
       :group    => "service",
       :desc     => "Where Puppet PID files are kept."
     },
-    :deviceconfdir => {
-      :default  => "$confdir/devices",
-      :type     => :directory,
-      :mode     => "0750",
-      :owner    => "service",
-      :group    => "service",
-      :desc     => "The root directory of devices' $confdir.",
-    },
     :genconfig => {
         :default  => false,
         :type     => :boolean,
@@ -1526,6 +1518,14 @@ EOT
         option in the manual pages for puppet master, puppet agent, and puppet
         apply. You can see man pages by running `puppet <SUBCOMMAND> --help`,
         or read them online at https://puppet.com/docs/puppet/latest/man/."
+    },
+    :deviceconfdir => {
+      :default  => "$confdir/devices",
+      :type     => :directory,
+      :mode     => "0750",
+      :owner    => "service",
+      :group    => "service",
+      :desc     => "The root directory of devices' $confdir.",
     },
     :server => {
       :default => "puppet",
