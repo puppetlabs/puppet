@@ -589,13 +589,24 @@ describe Puppet::Configurer do
       expect(Puppet.settings.setting(:lastrunfile)).to receive(:mode).and_return('664')
       @configurer.save_last_run_summary(@report)
 
+      # Copy/Pasta from file_system_spec to see if we can get this working.
+      SYSTEM_SID_BYTES = [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0]
+
+      def is_current_user_system?
+        SYSTEM_SID_BYTES == Puppet::Util::Windows::ADSI::User.current_user_sid.sid_bytes
+      end
+
       if Puppet::Util::Platform.windows?
         require 'puppet/util/windows/security'
         mode = Puppet::Util::Windows::Security.get_mode(Puppet[:lastrunfile])
+        # Using a solution here similar to that employed for file_system_spec.rb to mitigate
+        # an issue running under appveyor
+        expected_perm = is_current_user_system? ? 0664 : 0644
+        expect(mode & 0777).to eq(expected_perm)
       else
         mode = Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode
+        expect(mode & 0777).to eq(0664)
       end
-      expect(mode & 0777).to eq(0664)
     end
 
     it "should report invalid last run file permissions with invalid mode", :if => Puppet.features.microsoft_windows? do

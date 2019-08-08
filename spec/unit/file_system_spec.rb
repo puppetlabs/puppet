@@ -37,25 +37,35 @@ describe "Puppet::FileSystem" do
 
       Puppet::FileSystem.open(file, nil, 'a') { |fh| fh.write('') }
 
-      expected_perms = Puppet::Util::Platform.windows? ?
+      default_file = tmpfile('file_to_update2')
+      if Puppet::Util::Platform.windows?
         # default Windows mode based on temp file storage for SYSTEM user or regular user
         # for Jenkins or other services running as SYSTEM writing to c:\windows\temp
         # the permissions will typically be SYSTEM(F) / Administrators(F) which is 770
         # but sometimes there are extra users like IIS_IUSRS granted rights which adds the "extra ace" 2
         # for local Administrators writing to their own temp folders under c:\users\USER
         # they will have (F) for themselves, and Users will not have a permission, hence 700
-        ['770', '2000770'] :
-        # or for *nix determine expected mode via bitwise AND complement of umask
-        (0100000 | 0666 & ~File.umask).to_s(8)
-      expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
+        expected_perms = is_current_user_system? ? ['770', '2000770'] : '2000700'
+        require 'puppet/util/windows/security'
+        expect([expected_perms].flatten).to include(Puppet::Util::Windows::Security.get_mode(file).to_s(8))
 
-      default_file = tmpfile('file_to_update2')
-      expect(Puppet::FileSystem.exist?(default_file)).to be_falsey
+        expect(Puppet::FileSystem.exist?(default_file)).to be_falsey
 
-      File.open(default_file, 'a') { |fh| fh.write('') }
+        File.open(default_file, 'a') { |fh| fh.write('') }
 
-      # which matches the behavior of File.open
-      expect(Puppet::FileSystem.stat(file).mode).to eq(Puppet::FileSystem.stat(default_file).mode)
+        # which matches the behavior of File.open
+        expect(Puppet::Util::Windows::Security.get_mode(file)).to eq(Puppet::Util::Windows::Security.get_mode(default_file))
+      else
+        expected_perms = (0100000 | 0666 & ~File.umask).to_s(8)
+        expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
+
+        expect(Puppet::FileSystem.exist?(default_file)).to be_falsey
+
+        File.open(default_file, 'a') { |fh| fh.write('') }
+
+        # which matches the behavior of File.open
+        expect(Puppet::FileSystem.stat(file).mode).to eq(Puppet::FileSystem.stat(default_file).mode)
+      end
     end
 
     it "can accept an octal mode integer" do
@@ -63,26 +73,21 @@ describe "Puppet::FileSystem" do
       # NOTE: 777 here returns 755, but due to Ruby?
       Puppet::FileSystem.open(file, 0444, 'a') { |fh| fh.write('') }
 
-      # Behavior may change in the future on Windows, to *actually* change perms
-      # but for now, setting a mode doesn't touch them
-      expected_perms = Puppet::Util::Platform.windows? ? ['770', '2000770'] : '100444'
-      expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
+      if Puppet::Util::Platform.windows?
+        require 'puppet/util/windows/security'
+        # Behavior may change in the future on Windows, to *actually* change perms
+        # but for now, setting a mode doesn't touch them
+        expected_perms = is_current_user_system? ? ['770', '2000770'] : '2000700'
+        expect([expected_perms].flatten).to include(Puppet::Util::Windows::Security.get_mode(file).to_s(8))
 
-      expected_ruby_mode = Puppet::Util::Platform.windows? ?
-        # The Windows behavior has been changed to ignore the mode specified by open
-        # given it's unlikely a caller expects Windows file attributes to be set
-        # therefore mode is explicitly not managed (until PUP-6959 is fixed)
-        #
-        # In default Ruby on Windows a mode controls file attribute setting
-        # (like archive, read-only, etc)
-        # The GetFileInformationByHandle API returns an attributes value that is
-        # a bitmask of Windows File Attribute Constants at
-        # https://msdn.microsoft.com/en-us/library/windows/desktop/gg258117(v=vs.85).aspx
-        '100644' :
-        # On other platforms, the mode should be what was set by octal 0444
-        '100444'
+        expected_perm = is_current_user_system? ? 0770 : 02000700
+        expect(Puppet::Util::Windows::Security.get_mode(file)).to eq(expected_perm)
+      else
+        expected_perms = '100444'
+        expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
 
-      expect(File.stat(file).mode.to_s(8)).to eq(expected_ruby_mode)
+        expect(File.stat(file).mode).to eq(0100444)
+      end
     end
 
     it "cannot accept a mode string" do
