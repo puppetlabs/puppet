@@ -408,7 +408,6 @@ describe Puppet::Type.type(:user) do
       Puppet::Resource::Catalog.new :testing do |conf|
         [testuser, testrole].each { |resource| conf.add_resource resource }
       end
-      allow(Puppet::Type::User::ProviderDirectoryservice).to receive(:get_macosx_version_major).and_return("10.5")
 
       rel = testuser.autorequire[0]
       expect(rel.source.ref).to eq(testrole.ref)
