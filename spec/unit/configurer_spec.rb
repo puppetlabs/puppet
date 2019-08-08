@@ -579,7 +579,7 @@ describe Puppet::Configurer do
         end
       end.new
 
-      expect(Puppet::Util).to receive(:replace_file).and_yield(fh)
+      expect(Puppet::FileSystem).to receive(:replace_file).and_yield(fh)
 
       expect(Puppet).to receive(:err)
       expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
@@ -598,9 +598,16 @@ describe Puppet::Configurer do
       expect(mode & 0777).to eq(0664)
     end
 
-    it "should report invalid last run file permissions" do
+    it "should report invalid last run file permissions with invalid mode", :if => Puppet.features.microsoft_windows? do
+      # Needs some additional work for non-windows so filtered out.
+      expect(Puppet.settings.setting(:lastrunfile)).to receive(:mode).and_return('33333')
+      expect(Puppet).to receive(:err).with(/Could not save last run local report:.* is invalid:.*/)
+      @configurer.save_last_run_summary(@report)
+    end
+
+    it "should report invalid last run file permissions with octal mode" do
       expect(Puppet.settings.setting(:lastrunfile)).to receive(:mode).and_return('892')
-      expect(Puppet).to receive(:err).with(/Could not save last run local report.*892 is invalid/)
+      expect(Puppet).to receive(:err).with("Could not save last run local report: invalid value for Integer(): \"892\"")
       @configurer.save_last_run_summary(@report)
     end
   end

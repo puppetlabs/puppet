@@ -45,10 +45,12 @@ describe Puppet::Configurer do
       @configurer.run :catalog => @catalog, :report => report
       t2 = Time.now.tv_sec
 
-      # sticky bit only applies to directories in windows
-      file_mode = Puppet.features.microsoft_windows? ? '666' : '100666'
-
-      expect(Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode.to_s(8)).to eq(file_mode)
+      if Puppet.features.microsoft_windows?
+        require 'puppet/util/windows/security'
+        expect(Puppet::Util::Windows::Security.get_mode(Puppet[:lastrunfile])).to eq(02000666)
+      else
+        expect(Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode).to eq(0100666)
+      end
 
       summary = nil
       File.open(Puppet[:lastrunfile], "r") do |fd|
