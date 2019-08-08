@@ -124,30 +124,61 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   LOCK_VIOLATION = 33
 
   def replace_file(path, mode = nil)
+    # This method should only be used for internal file handling, as BuiltInAdministrators is added
+    # as a right to any files created which is probably not desired for the "file:" provider.
+
     if Puppet::FileSystem.directory?(path)
       raise Errno::EISDIR, _("Is a directory: %{directory}") % { directory: path }
     end
 
+    # Case through the provided mode and apply matching Windows rights.
+    # Note mode 6 is set to READ/WRITE rather than FULL_CONTROL
+
     current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+    # puts "relace_file: sid: #{current_sid.inspect}"
     dacl = case mode
            when 0644
-             dacl = secure_dacl(current_sid)
+             dacl = secure_dacl(current_sid, FILE_RW, FILE_READ)
              dacl.allow(Puppet::Util::Windows::SID::BuiltinUsers, FILE_READ)
+             dacl.allow(Puppet::Util::Windows::SID::Everyone, FILE_READ)
              dacl
-           when 0640, 0600
-             secure_dacl(current_sid)
-           when nil
+           when 0640, 0600 # Setting both of these with Group Read Access
+             dacl = secure_dacl(current_sid, FILE_RW, FILE_READ)
+             dacl
+           when 0660
+             dacl = secure_dacl(current_sid, FILE_RW, FILE_RW)
+             dacl
+           when 0664
+             dacl = secure_dacl(current_sid, FILE_RW, FILE_RW)
+             dacl.allow(Puppet::Util::Windows::SID::BuiltinUsers, FILE_READ)
+             dacl.allow(Puppet::Util::Windows::SID::Everyone, FILE_READ)
+             dacl
+           when 0666
+             dacl = secure_dacl(current_sid, FILE_RW, FILE_RW)
+             dacl.allow(Puppet::Util::Windows::SID::BuiltinUsers, FILE_RW)
+             dacl.allow(Puppet::Util::Windows::SID::Everyone, FILE_RW)
+             dacl
+           when 0444
+             dacl = secure_dacl(current_sid, FILE_READ, FILE_READ)
+             dacl.allow(Puppet::Util::Windows::SID::BuiltinUsers, FILE_READ)
+             dacl.allow(Puppet::Util::Windows::SID::Everyone, FILE_READ)
+             dacl
+           when 0440
+             dacl = secure_dacl(current_sid, FILE_READ, FILE_READ)
+             dacl
+            when nil
              get_dacl_from_file(path) || secure_dacl(current_sid)
            else
-             raise ArgumentError, "Only modes 0644, 0640 and 0600 are allowed"
+             raise ArgumentError, "#{mode} is invalid: Only modes 0644, 0640, 0660, 0666, 0600 and 0440 are allowed"
            end
 
-
+    # puts "replace_file: dacl: #{dacl.inspect}"
     tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(path), Puppet::FileSystem.dir_string(path))
     begin
       tempdacl = Puppet::Util::Windows::AccessControlList.new
       tempdacl.allow(current_sid, FULL_CONTROL)
       set_dacl(tempfile.path, tempdacl)
+      # puts "replace_file: tempfile 1 work"
 
       begin
         yield tempfile
