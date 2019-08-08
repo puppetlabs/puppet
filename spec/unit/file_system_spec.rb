@@ -44,7 +44,7 @@ describe "Puppet::FileSystem" do
         # but sometimes there are extra users like IIS_IUSRS granted rights which adds the "extra ace" 2
         # for local Administrators writing to their own temp folders under c:\users\USER
         # they will have (F) for themselves, and Users will not have a permission, hence 700
-        (is_current_user_system? ? ['770', '2000770'] : '2000700') :
+        ['770', '2000770'] :
         # or for *nix determine expected mode via bitwise AND complement of umask
         (0100000 | 0666 & ~File.umask).to_s(8)
       expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
@@ -65,9 +65,7 @@ describe "Puppet::FileSystem" do
 
       # Behavior may change in the future on Windows, to *actually* change perms
       # but for now, setting a mode doesn't touch them
-      expected_perms = Puppet::Util::Platform.windows? ?
-        (is_current_user_system? ? ['770', '2000770'] : '2000700') :
-        '100444'
+      expected_perms = Puppet::Util::Platform.windows? ? ['770', '2000770'] : '100444'
       expect([expected_perms].flatten).to include(Puppet::FileSystem.stat(file).mode.to_s(8))
 
       expected_ruby_mode = Puppet::Util::Platform.windows? ?
@@ -945,17 +943,110 @@ describe "Puppet::FileSystem" do
           current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
           sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
           expect(sd.dacl).to contain_exactly(
-            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
-            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
-            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
-            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089)
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-1-0', mask: 0x120089)
+          )
+        end
+
+        # TBD - this begs for a helper function?
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0640) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0600) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0660) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x12019f),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0664) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x12019f),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-1-0', mask: 0x120089)
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0666) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x12019f),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-1-0', mask: 0x12019f)
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0440) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x120089),
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0444) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-1-0', mask: 0x120089)
           )
         end
 
         it 'rejects unsupported modes' do
           expect {
             Puppet::FileSystem.replace_file(dest, 0755) { |_| }
-          }.to raise_error(ArgumentError, /Only modes 0644, 0640 and 0600 are allowed/)
+          }.to raise_error(ArgumentError, /.* is invalid: Only modes .* are allowed/)
         end
       end
     end
@@ -1032,16 +1123,108 @@ describe "Puppet::FileSystem" do
           end
         end
 
+        # TBD - as noted earlier - Helper function for this ?
         it 'applies the specified mode' do
           Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
 
           current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
           sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
           expect(sd.dacl).to contain_exactly(
-            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x1f01ff),
-            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x1f01ff),
-            an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
-            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089)
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-1-0', mask: 0x120089)
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0640) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0600) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0660) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x12019f),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0664) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x12019f),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-1-0', mask: 0x120089)
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0666) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x12019f),
+            an_object_having_attributes(sid: current_sid, mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x12019f),
+            an_object_having_attributes(sid: 'S-1-1-0', mask: 0x12019f)
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0440) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x120089),
+          )
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0444) { |f| f.write(content) }
+
+          current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+          sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(sd.dacl).to contain_exactly(
+            an_object_having_attributes(sid: 'S-1-5-18', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-5-32-544', mask: 0x120089),
+            an_object_having_attributes(sid: current_sid, mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-5-32-545', mask: 0x120089),
+            an_object_having_attributes(sid: 'S-1-1-0', mask: 0x120089)
           )
         end
 
