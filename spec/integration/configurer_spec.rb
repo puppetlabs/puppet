@@ -35,7 +35,7 @@ describe Puppet::Configurer do
       allow(Puppet::Transaction::Report.indirection).to receive(:save)
 
       Puppet[:lastrunfile] = tmpfile("lastrunfile")
-      Puppet.settings.setting(:lastrunfile).mode = 0666
+      Puppet.settings.setting(:lastrunfile).mode = '666'
       Puppet[:report] = true
 
       # We only record integer seconds in the timestamp, and truncate
