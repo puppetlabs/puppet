@@ -184,14 +184,22 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     Puppet::Util::Windows::Security.set_security_descriptor(path, new_sd)
   end
 
-  def secure_dacl(current_sid)
+  def secure_dacl(current_sid, owner_permission = FULL_CONTROL, group_permission = FULL_CONTROL)
     dacl = Puppet::Util::Windows::AccessControlList.new
     [
      Puppet::Util::Windows::SID::LocalSystem,
      Puppet::Util::Windows::SID::BuiltinAdministrators,
      current_sid
     ].uniq.map do |sid|
-      dacl.allow(sid, FULL_CONTROL)
+        permission = case sid
+                     when Puppet::Util::Windows::SID::LocalSystem
+                       owner_permission
+                     when Puppet::Util::Windows::SID::BuiltinAdministrators
+                       group_permission
+                     else
+                       owner_permission
+                     end
+        dacl.allow(sid, permission)
     end
     dacl
   end
