@@ -4,6 +4,8 @@ require 'puppet/util/windows'
 class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   FULL_CONTROL = Puppet::Util::Windows::File::FILE_ALL_ACCESS
   FILE_READ = Puppet::Util::Windows::File::FILE_GENERIC_READ
+  FILE_WRITE = Puppet::Util::Windows::File::FILE_GENERIC_WRITE
+  FILE_RW = (FILE_READ | FILE_WRITE)
 
   def open(path, mode, options, &block)
     # PUP-6959 mode is explicitly ignored until it can be implemented
