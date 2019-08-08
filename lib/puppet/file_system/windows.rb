@@ -172,8 +172,15 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   private
 
   def set_dacl(path, dacl)
+    # Set the DACL
+    # This has a "special case" - if both Owner and Group are SYSTEM, then the Group field
+    # is set to BuiltinAdministrators (PUP-9719). This is needed to ensure that if Puppet Agent
+    # is run under SYSTEM/SYSTEM (e.g. under AWS services), that all internally managed Puppet files
+    # are are still writeable from the Administrator account
     sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
-    new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, dacl, true)
+    sd_group = sd.group == sd.owner && sd.group == Puppet::Util::Windows::SID::LocalSystem ? Puppet::Util::Windows::SID::BuiltinAdministrators : sd.group
+    # puts "set_dacl: sd.owner = #{sd.group}, sd.owner = #{sd.group}"
+    new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd_group, dacl, true)
     Puppet::Util::Windows::Security.set_security_descriptor(path, new_sd)
   end
 
