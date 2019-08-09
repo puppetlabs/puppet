@@ -57,11 +57,11 @@ The tests can be run with the following rake task:
 
 To run a single file's worth of tests (much faster!), give the filename:
 
-    $ bundle exec rake spec TEST=spec/unit/ssl/host_spec.rb
+    $ bundle exec rake spec TEST=spec/unit/file_system_spec.rb
 
 To run a single test or group of tests, give the filename and line number:
 
-    $ bundle exec rake spec TEST=spec/unit/ssl/host_spec.rb:42
+    $ bundle exec rake spec TEST=spec/unit/file_system_spec.rb:42
 
 To run all tests in parallel, process count is the number of processes to use when running the tests:
 
@@ -78,8 +78,6 @@ be used to send logs to a file, and to adjust the log level:
 * `PUPPET_TEST_LOG_LEVEL`: change the log level to adjust how much detail
   is captured. It defaults to `notice`; useful values include `info` and
   `debug`.
-
-For details on running tests on windows, see [the windows docs](https://github.com/puppetlabs/puppet/blob/master/docs/windows.md).
 
 ## Running Acceptance Tests
 
