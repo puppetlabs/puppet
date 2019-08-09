@@ -1,6 +1,8 @@
 test_name "ticket 4622 filebucket diff test."
 confine :except, :platform => 'windows'
 skip_test 'skip test, no non-Windows agents specified' if agents.empty?
+# Filebucket is not supported in PE, the only context in which FIPS is expected to work
+skip_test 'skip test if any host is in FIPS mode' if hosts.any? { |host| host.fips_mode? }
 
 tag 'audit:medium',
     'audit:integration',
