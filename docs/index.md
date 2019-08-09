@@ -13,5 +13,6 @@ Developer References
 * [Windows](windows.md)
 * [Unicode and you](unicode.md)
 * [Working on the parser](parser_work.md)
+* [Indirector](indirector.md)
 
 Misc
