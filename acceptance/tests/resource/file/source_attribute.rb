@@ -15,9 +15,9 @@ test_name "The source attribute" do
   # common denominator.
   checksums_fips = [nil, 'sha256', 'sha256lite', 'ctime', 'mtime']
   checksums_no_fips = [nil, 'md5', 'md5lite', 'sha256', 'sha256lite', 'ctime', 'mtime']
- 
+
   fips_host_present = hosts.any? { |host| on(host, facter("fips_enabled")).stdout =~ /true/ }
-  
+
   if fips_host_present
     checksums = checksums_fips
   else
@@ -263,8 +263,8 @@ test_name "The source attribute" do
     byte_after_md5lite = 513
     source_content[byte_after_md5lite] = 'z'
     create_remote_file agent, source, source_content
-    
-    if fips_host_present == 1
+
+    if fips_host_present
       apply_manifest_on agent, "file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
         assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
       end
@@ -272,7 +272,7 @@ test_name "The source attribute" do
       apply_manifest_on agent, "file { '#{localsource_testdir}/targetmd5lite': source => '#{source}', ensure => present, checksum => md5lite } file { '#{localsource_testdir}/targetsha256lite': source => '#{source}', ensure => present, checksum => sha256lite }" do
         assert_no_match(/(content changed|defined content)/, stdout, "Shouldn't have overwrote any files")
       end
-    end 
+    end
 
     local_module_manifest = ""
     checksums.each do |checksum_type|
