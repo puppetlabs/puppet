@@ -12,6 +12,7 @@ tag 'audit:medium',
   app_type = File.basename(__FILE__, '.*')
 
   agents.each do |agent|
+    skip_test('this test fails on windows French due to Cygwin/UTF Issues - PUP-8319,IMAGES-492') if agent['platform'] =~ /windows/ && agent['locale'] == 'fr'
 
     step 'manifest with parser function call' do
       if agent.platform !~ /windows/

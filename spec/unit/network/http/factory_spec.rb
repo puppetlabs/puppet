@@ -46,7 +46,6 @@ describe Puppet::Network::HTTP::Factory do
 
     it "should not set a proxy if the value is 'none'" do
       Puppet[:http_proxy_host] = 'none'
-      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(false)
       conn = create_connection(site)
 
       expect(conn.proxy_address).to be_nil
@@ -55,16 +54,16 @@ describe Puppet::Network::HTTP::Factory do
     it 'should not set a proxy if a no_proxy env var matches the destination' do
       Puppet[:http_proxy_host] = proxy_host
       Puppet[:http_proxy_port] = proxy_port
-      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(true)
-      conn = create_connection(site)
+      Puppet::Util.withenv('NO_PROXY' => site.host) do
+        conn = create_connection(site)
 
-      expect(conn.proxy_address).to be_nil
-      expect(conn.proxy_port).to be_nil
+        expect(conn.proxy_address).to be_nil
+        expect(conn.proxy_port).to be_nil
+      end
     end
 
     it 'sets proxy_address' do
       Puppet[:http_proxy_host] = proxy_host
-      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(false)
       conn = create_connection(site)
 
       expect(conn.proxy_address).to eq(proxy_host)
@@ -73,7 +72,6 @@ describe Puppet::Network::HTTP::Factory do
     it 'sets proxy address and port' do
       Puppet[:http_proxy_host] = proxy_host
       Puppet[:http_proxy_port] = proxy_port
-      expect(Puppet::Util::HttpProxy).to receive(:no_proxy?).and_return(false)
       conn = create_connection(site)
 
       expect(conn.proxy_port).to eq(proxy_port)

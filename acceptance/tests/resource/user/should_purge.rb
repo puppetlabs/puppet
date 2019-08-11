@@ -46,7 +46,8 @@ test_name "should purge a user" do
 
     step "verify system user is not purged" do
       if agent['platform'] =~ /windows/
-        assert(agent.user_list.include?("Administrator"), "System user (Administrator) was purged")
+        win_admin_user = agent['locale'] == 'fr' ? "Administrateur" : "Administrator"
+        assert(agent.user_list.include?(win_admin_user), "System user (Administrator) was purged")
       else
         assert(agent.user_list.include?("root"), "System user (root) was purged")
       end
