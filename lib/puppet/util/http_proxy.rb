@@ -33,7 +33,7 @@ module Puppet::Util::HttpProxy
   #   .example.com
   # We'll accommodate both here.
   def self.no_proxy?(dest)
-    unless no_proxy_env = ENV["no_proxy"] || ENV["NO_PROXY"]
+    unless no_proxy = self.no_proxy
       return false
     end
 
@@ -45,7 +45,7 @@ module Puppet::Util::HttpProxy
       end
     end
 
-    no_proxy_env.split(/\s*,\s*/).each do |d|
+    no_proxy.split(/\s*,\s*/).each do |d|
       host, port = d.split(':')
       host = Regexp.escape(host).gsub('\*', '.*')
 
@@ -125,6 +125,20 @@ module Puppet::Util::HttpProxy
     end
 
     return Puppet.settings[:http_proxy_password]
+  end
+
+  def self.no_proxy
+    no_proxy_env = ENV["no_proxy"] || ENV["NO_PROXY"]
+
+    if no_proxy_env
+      return no_proxy_env
+    end
+
+    if Puppet.settings[:no_proxy] == 'none'
+      return nil
+    end
+
+    return Puppet.settings[:no_proxy]
   end
 
   # Return a Net::HTTP::Proxy object.
