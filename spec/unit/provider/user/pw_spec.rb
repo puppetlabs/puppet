@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'open3'
 
 RSpec::Matchers.define_negated_matcher :excluding, :include
 
@@ -78,6 +79,23 @@ describe Puppet::Type.type(:user).provider(:pw) do
       resource[:password] = "*"
       expect(provider).to receive(:execute)
       expect(provider).to receive(:password=).with("*")
+      provider.create
+    end
+
+    it "should call execute with sensitive true when the password property is set" do
+      Puppet::Util::Log.level = :debug
+      resource[:password] = "abc123"
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: true))
+      popen = double("popen", :puts => nil, :close => nil)
+      expect(Open3).to receive(:popen3).and_return(popen)
+      expect(popen).to receive(:puts).with("abc123")
+      provider.create
+      expect(@logs).not_to be_any {|log| log.level == :debug and log.message =~ /abc123/}
+    end
+
+    it "should call execute with sensitive false when a non-sensitive property is set" do
+      resource[:managehome] = true
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: false))
       provider.create
     end
 
@@ -208,6 +226,25 @@ describe Puppet::Type.type(:user).provider(:pw) do
       resource[:uid] = 12345
       expect(provider).to receive(:execute).with(include("-u").and(include(54321)), hash_including(custom_environment: {}))
       provider.uid = 54321
+    end
+
+    it "should print a debug message with sensitive data redacted when the password property is set" do
+      Puppet::Util::Log.level = :debug
+      resource[:password] = "*"
+      popen = double("popen", :puts => nil, :close => nil)
+      expect(Open3).to receive(:popen3).and_return(popen)
+      expect(popen).to receive(:puts).with("abc123")
+      provider.password = "abc123"
+
+      expect(@logs).not_to be_any {|log| log.level == :debug and log.message =~ /abc123/}
+     end
+
+    it "should call execute with sensitive false when a non-sensitive property is set" do
+      Puppet::Util::Log.level = :debug
+      resource[:home] = "/home/testuser"
+      resource[:managehome] = true
+      expect(provider).to receive(:execute).with(kind_of(Array), hash_including(sensitive: false))
+      provider.home = "/newhome/testuser"
     end
   end
 end

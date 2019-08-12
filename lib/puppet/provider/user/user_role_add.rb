@@ -204,6 +204,10 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     shadow_entry[5].empty? ? -1 : shadow_entry[5]
   end
 
+  def has_sensitive_data?(property = nil)
+    false
+  end
+
   # Read in /etc/shadow, find the line for our used and rewrite it with the
   # new pw.  Smooth like 80 grit sandpaper.
   #

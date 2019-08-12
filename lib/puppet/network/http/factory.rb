@@ -27,7 +27,7 @@ class Puppet::Network::HTTP::Factory
 
     args = [site.host, site.port]
 
-    unless Puppet::Util::HttpProxy.no_proxy?(site)
+    unless Puppet::Util::HttpProxy.no_proxy?(site.addr)
       if Puppet[:http_proxy_host] == "none"
         args << nil << nil
       else

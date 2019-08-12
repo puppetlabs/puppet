@@ -147,19 +147,33 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # validproperties is a list of properties in undefined order
     # sort them to have a predictable command line in tests
     Puppet::Type.type(:user).validproperties.sort.each do |property|
-      next if property == :ensure
-      next if property_manages_password_age?(property)
-      next if (property == :groups) && @resource.forcelocal?
-      next if (property == :expiry) && @resource.forcelocal?
-      
-      value = @resource.should(property)
-      if value && value != ""
-        # the value needs to be quoted, mostly because -c might
-        # have spaces in it
-        cmd << flag(property) << munge(property, value)
-      end
+      value = get_value_for_property(property)
+      next if value.nil?
+      # the value needs to be quoted, mostly because -c might
+      # have spaces in it
+      cmd << flag(property) << munge(property, value)
     end
     cmd
+  end
+
+  def get_value_for_property(property)
+    return nil if property == :ensure
+    return nil if property_manages_password_age?(property)
+    return nil if property == :groups and @resource.forcelocal?
+    return nil if property == :expiry and @resource.forcelocal?
+    value = @resource.should(property)
+    return nil if !value || value == ""
+
+    value
+  end
+
+  def has_sensitive_data?(property = nil)
+    #Check for sensitive values?
+    properties = property ? [property] : Puppet::Type.type(:user).validproperties
+    properties.any? do |prop|
+      p = @resource.parameter(prop)
+      p && p.respond_to?(:is_sensitive) && p.is_sensitive
+    end
   end
 
   def addcmd

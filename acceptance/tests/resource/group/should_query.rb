@@ -9,6 +9,8 @@ tag 'audit:high',
 name = "pl#{rand(999999).to_i}"
 
 agents.each do |agent|
+  skip_test('this test fails on windows French due to Cygwin/UTF Issues - PUP-8319,IMAGES-492') if agent['platform'] =~ /windows/ && agent['locale'] == 'fr'
+
   step "ensure that our test group exists"
   agent.group_present(name)
 
