@@ -64,6 +64,17 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     render_as :json
 
     when_invoked do |options|
+
+      # Temporary change log level to display specific download/sync info
+      previous_log_level = Puppet::Util::Log.level
+      Puppet::Util::Log.level = :info
+
+      # Sync/Download plugins and facts before uploading them
+      Puppet::Face[:plugin, '0.0.1'].download
+
+      # Change log level back to previous state
+      Puppet::Util::Log.level = previous_log_level
+
       # Use `agent` sections  settings for certificates, Puppet Server URL,
       # etc. instead of `user` section settings.
       Puppet.settings.preferred_run_mode = :agent
