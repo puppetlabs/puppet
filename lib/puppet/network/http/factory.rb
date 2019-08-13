@@ -25,17 +25,7 @@ class Puppet::Network::HTTP::Factory
   def create_connection(site)
     Puppet.debug("Creating new connection for #{site}")
 
-    args = [site.host, site.port]
-
-    unless Puppet::Util::HttpProxy.no_proxy?(site.addr)
-      if Puppet[:http_proxy_host] == "none"
-        args << nil << nil
-      else
-        args << Puppet[:http_proxy_host] << Puppet[:http_proxy_port]
-      end
-    end
-
-    http = Net::HTTP.new(*args)
+    http = Puppet::Util::HttpProxy.proxy(URI(site.addr))
     http.use_ssl = site.use_ssl?
     http.read_timeout = Puppet[:http_read_timeout]
     http.open_timeout = Puppet[:http_connect_timeout]

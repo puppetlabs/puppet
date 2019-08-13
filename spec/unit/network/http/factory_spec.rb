@@ -42,8 +42,10 @@ describe Puppet::Network::HTTP::Factory do
   context "proxy settings" do
     let(:proxy_host) { 'myhost' }
     let(:proxy_port) { 432 }
+    let(:proxy_user) { 'mo' }
+    let(:proxy_pass) { 'password' }
 
-    it "should not set a proxy if the value is 'none'" do
+    it "should not set a proxy if the http_proxy_host setting is 'none'" do
       Puppet[:http_proxy_host] = 'none'
       conn = create_connection(site)
 
@@ -61,6 +63,16 @@ describe Puppet::Network::HTTP::Factory do
       end
     end
 
+    it 'should not set a proxy if the no_proxy setting matches the destination' do
+      Puppet[:http_proxy_host] = proxy_host
+      Puppet[:http_proxy_port] = proxy_port
+      Puppet[:no_proxy] = site.host
+      conn = create_connection(site)
+
+      expect(conn.proxy_address).to be_nil
+      expect(conn.proxy_port).to be_nil
+    end
+
     it 'sets proxy_address' do
       Puppet[:http_proxy_host] = proxy_host
       conn = create_connection(site)
@@ -74,6 +86,18 @@ describe Puppet::Network::HTTP::Factory do
       conn = create_connection(site)
 
       expect(conn.proxy_port).to eq(proxy_port)
+    end
+
+    it 'sets proxy user and password' do
+      Puppet[:http_proxy_host] = proxy_host
+      Puppet[:http_proxy_port] = proxy_port
+      Puppet[:http_proxy_user] = proxy_user
+      Puppet[:http_proxy_password] = proxy_pass
+
+      conn = create_connection(site)
+
+      expect(conn.proxy_user).to eq(proxy_user)
+      expect(conn.proxy_pass).to eq(proxy_pass)
     end
   end
 
