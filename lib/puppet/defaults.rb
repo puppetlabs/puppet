@@ -572,6 +572,10 @@ module Puppet
         contains any characters with special meanings in URLs (as specified by RFC 3986
         section 2.2), they must be URL-encoded. (For example, `#` would become `%23`.)",
     },
+    :no_proxy => {
+      :default    => "localhost, 127.0.0.1",
+      :desc       => "List of domain names that should not go through `http_proxy_host`. Environment variable no_proxy or NO_PROXY will override this value.",
+    },
     :http_keepalive_timeout => {
       :default    => "4s",
       :type       => :duration,
