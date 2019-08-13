@@ -1190,6 +1190,14 @@ The name of the application, if we are running as one\. The default is essential
 \fIDefault\fR:
 
 .
+.SS "no_proxy"
+List of domain names that should not go through \fBhttp_proxy_host\fR\. Environment variable no_proxy or NO_PROXY will override this value\.
+.
+.IP "\(bu" 4
+\fIDefault\fR: localhost, 127\.0\.0\.1
+.
+.IP "" 0
+.
 .SS "node_cache_terminus"
 How to store cached nodes\. Valid values are (none), \'json\', \'msgpack\', or \'yaml\'\.
 .
