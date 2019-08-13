@@ -53,7 +53,7 @@ module Puppet
 
     feature :libuser,
       "Allows local users to be managed on systems that also use some other
-       remote NSS method of managing accounts."
+       remote Name Service Switch (NSS) method of managing accounts."
 
     feature :manages_shell,
       "The provider allows for setting shell and validates if possible"
@@ -690,7 +690,9 @@ module Puppet
             :required_features => :libuser,
             :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
-            being managed by some other NSS"
+            being managed by some other Name Service Switch (NSS).
+            
+            This option relies on your operating system's implementation of `luser*` commands, such as `luseradd` , and `lgroupadd`, `lusermod`. The `forcelocal` option could behave unpredictably in some circumstances. If the tools it depends on are not available, it might have no effect at all."
       defaultto false
     end
 
