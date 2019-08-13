@@ -129,9 +129,32 @@ describe Puppet::Util::HttpProxy do
 
   end
 
+  describe ".no_proxy" do
+    no_proxy = '127.0.0.1, localhost'
+    it "should use a no_proxy list if set in environment" do
+      Puppet::Util.withenv('NO_PROXY' => no_proxy) do
+        expect(subject.no_proxy).to eq(no_proxy)
+      end
+    end
+
+    it "should use a no_proxy list if set in config" do
+      Puppet.settings[:no_proxy] = no_proxy
+      expect(subject.no_proxy).to eq(no_proxy)
+    end
+
+    it "should use environment variable before puppet settings" do
+      no_proxy_puppet_setting = '10.0.0.1, localhost'
+      Puppet::Util.withenv('NO_PROXY' => no_proxy) do
+        Puppet.settings[:no_proxy] = no_proxy_puppet_setting
+        expect(subject.no_proxy).to eq(no_proxy)
+      end
+    end
+  end
+
   describe ".no_proxy?" do
     no_proxy = '127.0.0.1, localhost, mydomain.com, *.otherdomain.com, oddport.com:8080, *.otheroddport.com:8080, .anotherdomain.com, .anotheroddport.com:8080'
-    it "should return false if no_proxy does not exist in env" do
+
+    it "should return false if no_proxy does not exist in environment or puppet settings" do
       Puppet::Util.withenv('no_proxy' => nil) do
         dest = 'https://puppetlabs.com'
         expect(subject.no_proxy?(dest)).to be false
