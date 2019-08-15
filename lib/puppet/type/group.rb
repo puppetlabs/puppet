@@ -24,7 +24,7 @@ module Puppet
 
     feature :libuser,
       "Allows local groups to be managed on systems that also use some other
-       remote NSS method of managing accounts."
+       remote Name Switch Service (NSS) method of managing accounts."
 
     ensurable do
       desc "Create or remove the group."
@@ -216,7 +216,9 @@ module Puppet
              :required_features => :libuser,
              :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
-            being managed by some other NSS"
+            being managed by some other Name Switch Service (NSS).
+            
+            This option relies on your operating system's implementation of `luser*` commands, such as `luseradd` , `lgroupadd`, and `lusermod`. The `forcelocal` option could behave unpredictably in some circumstances. If the tools it depends on are not available, it might have no effect at all."
       defaultto false
     end
 
