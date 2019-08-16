@@ -4,6 +4,12 @@ require 'matchers/resource'
 
 require 'puppet/indirector/catalog/compiler'
 
+def set_facts(fact_hash)
+  fact_hash.each do |key, value|
+    allow(Facter).to receive(:value).with(key).and_return(value)
+  end
+end
+
 describe Puppet::Resource::Catalog::Compiler do
   let(:compiler) { described_class.new }
   let(:node_name) { "foo" }
@@ -390,9 +396,11 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "after finding nodes" do
     before do
-      expect(Puppet).to receive(:version).and_return(1)
-      expect(Facter).to receive(:value).with('fqdn').and_return("my.server.com")
-      expect(Facter).to receive(:value).with('ipaddress').and_return("my.ip.address")
+      allow(Puppet).to receive(:version).and_return(1)
+      set_facts({
+        'fqdn'      => "my.server.com",
+        'ipaddress' => "my.ip.address"
+        })
       @request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil)
       allow(compiler).to receive(:compile)
       allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
