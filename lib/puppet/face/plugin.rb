@@ -41,8 +41,15 @@ Puppet::Face.define(:plugin, '0.0.1') do
     when_invoked do |options|
       remote_environment_for_plugins = Puppet::Node::Environment.remote(Puppet[:environment])
 
-      handler = Puppet::Configurer::PluginHandler.new()
-      handler.download_plugins(remote_environment_for_plugins)
+      pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
+      Puppet.override(:http_pool => pool) do
+        begin
+          handler = Puppet::Configurer::PluginHandler.new()
+          handler.download_plugins(remote_environment_for_plugins)
+        ensure
+          pool.close
+        end
+      end
     end
 
     when_rendering :console do |value|
