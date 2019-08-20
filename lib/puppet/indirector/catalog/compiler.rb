@@ -414,8 +414,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         @server_facts["servername"] = host
       end
     end
-    if @server_facts["serverip"].nil?
-      Puppet.warning _("Could not retrieve fact serverip")
+
+    if @server_facts["serverip"].nil? && @server_facts["serverip6"].nil?
+      Puppet.warning _("Could not retrieve either serverip or serverip6 fact")
     end
   end
 end
