@@ -113,8 +113,8 @@ module Puppet::Test
       indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
       indirections.each do |indirector|
         $saved_indirection_state[indirector.name] = {
-            :@terminus_class => indirector.instance_variable_get(:@terminus_class),
-            :@cache_class    => indirector.instance_variable_get(:@cache_class)
+            :@terminus_class => indirector.instance_variable_get(:@terminus_class).value,
+            :@cache_class    => indirector.instance_variable_get(:@cache_class).value
         }
       end
 
@@ -172,7 +172,7 @@ module Puppet::Test
       indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
       indirections.each do |indirector|
         $saved_indirection_state.fetch(indirector.name, {}).each do |variable, value|
-          indirector.instance_variable_set(variable, value)
+          indirector.instance_variable_get(variable).value = value
         end
       end
       $saved_indirection_state = nil

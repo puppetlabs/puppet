@@ -124,6 +124,26 @@ describe Puppet::Indirector::Indirection do
       @request = double('instance')
     end
 
+    describe 'ensure that indirection settings are threadsafe' do
+      before :each do
+        @alt_term = double('alternate_terminus')
+        expect(Puppet::Indirector::Terminus).to receive(:terminus_class).with(:test, :alternate_terminus).and_return(@alt_term)
+        @alt_cache= double('alternate_cache')
+        expect(Puppet::Indirector::Terminus).to receive(:terminus_class).with(:test, :alternate_cache).and_return(@alt_cache)
+      end
+
+      it 'does not change the original value when modified in new thread' do
+        Thread.new do
+          @indirection.terminus_class = :alternate_terminus
+          @indirection.terminus_setting = :alternate_terminus_setting
+          @indirection.cache_class = :alternate_cache
+        end.join
+        expect(@indirection.terminus_class).to eq(:test_terminus)
+        expect(@indirection.terminus_setting).to eq(nil)
+        expect(@indirection.cache_class).to eq(nil)
+      end
+    end
+
     it "should allow setting the ttl" do
       @indirection.ttl = 300
       expect(@indirection.ttl).to eq(300)
