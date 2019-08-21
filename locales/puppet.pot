@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.4.3-100-g86283a9\n"
+"Project-Id-Version: Puppet automation framework 6.4.3-109-gba98863\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-08-17 16:15+0000\n"
-"PO-Revision-Date: 2019-08-17 16:15+0000\n"
+"POT-Creation-Date: 2019-08-21 19:45+0000\n"
+"PO-Revision-Date: 2019-08-21 19:45+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -1451,11 +1451,11 @@ msgid ""
 "      the files downloaded, which will be empty if none were retrieved.\n"
 msgstr ""
 
-#: ../lib/puppet/face/plugin.rb:50
+#: ../lib/puppet/face/plugin.rb:57
 msgid "No plugins downloaded."
 msgstr ""
 
-#: ../lib/puppet/face/plugin.rb:52
+#: ../lib/puppet/face/plugin.rb:59
 msgid "Downloaded these plugins: %{plugins}"
 msgstr ""
 
@@ -2322,8 +2322,8 @@ msgstr ""
 msgid "Could not retrieve fact servername"
 msgstr ""
 
-#: ../lib/puppet/indirector/catalog/compiler.rb:418
-msgid "Could not retrieve fact serverip"
+#: ../lib/puppet/indirector/catalog/compiler.rb:419
+msgid "Could not retrieve either serverip or serverip6 fact"
 msgstr ""
 
 #: ../lib/puppet/indirector/catalog/json.rb:13
