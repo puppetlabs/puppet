@@ -1,4 +1,4 @@
-require 'net/https'
+require 'puppet/ssl/openssl_loader'
 require 'puppet/ssl/host'
 require 'puppet/ssl/validator'
 require 'puppet/network/http'

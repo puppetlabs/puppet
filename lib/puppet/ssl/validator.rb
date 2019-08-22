@@ -1,4 +1,4 @@
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 
 # API for certificate verification
 #

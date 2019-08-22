@@ -1,4 +1,5 @@
 require 'puppet/network/http/connection'
+require 'puppet/util/platform'
 
 module Puppet::Network; end
 

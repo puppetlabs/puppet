@@ -1,5 +1,5 @@
 require 'uri'
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 require 'puppet/network/http'
 
 module Puppet::Util::HttpProxy

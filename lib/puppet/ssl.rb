@@ -1,6 +1,6 @@
 # Just to make the constants work out.
 require 'puppet'
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 
 module Puppet::SSL # :nodoc:
   CA_NAME = "ca".freeze

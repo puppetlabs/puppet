@@ -1,4 +1,4 @@
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 require 'puppet/ssl'
 require 'puppet/ssl/digest'
 require 'puppet/util/ssl'

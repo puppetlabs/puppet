@@ -1,4 +1,4 @@
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 
 ##
 # SSL is a private module with class methods that help work with x.509
