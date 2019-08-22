@@ -589,7 +589,6 @@ describe Puppet::Configurer do
       expect(Puppet.settings.setting(:lastrunfile)).to receive(:mode).and_return('664')
       @configurer.save_last_run_summary(@report)
 
-      # Copy/Pasta from file_system_spec to see if we can get this working.
       SYSTEM_SID_BYTES = [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0]
 
       def is_current_user_system?
@@ -609,16 +608,15 @@ describe Puppet::Configurer do
       end
     end
 
-    it "should report invalid last run file permissions with invalid mode", :if => Puppet.features.microsoft_windows? do
-      # Needs some additional work for non-windows so filtered out.
+    it "should report invalid last run file permissions with invalid mode" do
       expect(Puppet.settings.setting(:lastrunfile)).to receive(:mode).and_return('33333')
-      expect(Puppet).to receive(:err).with(/Could not save last run local report:.* is invalid:.*/)
+      expect(Puppet).to receive(:err).with("Could not save last run local report: invalid file mode: 33333")
       @configurer.save_last_run_summary(@report)
     end
 
     it "should report invalid last run file permissions with octal mode" do
       expect(Puppet.settings.setting(:lastrunfile)).to receive(:mode).and_return('892')
-      expect(Puppet).to receive(:err).with("Could not save last run local report: invalid value for Integer(): \"892\"")
+      expect(Puppet).to receive(:err).with("Could not save last run local report: invalid file mode: 892")
       @configurer.save_last_run_summary(@report)
     end
   end
@@ -1089,7 +1087,7 @@ describe Puppet::Configurer do
     it "should not make multiple node requets when the server is found" do
       response = Net::HTTPOK.new(nil, 200, 'OK')
       allow(Puppet::Network::HttpPool).to receive(:http_ssl_instance).with('myserver', '123').and_return(double('request', get: response))
-      
+
       Puppet.settings[:server_list] = ["myserver:123"]
       expect(Puppet::Node.indirection).to receive(:find).and_return("mynode").once
       expect(@agent).to receive(:prepare_and_retrieve_catalog).and_return(nil)

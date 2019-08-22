@@ -956,8 +956,6 @@ describe "Puppet::FileSystem" do
           )
         end
 
-        # TBD - this begs for a helper function?
-
         it 'applies the specified mode' do
           Puppet::FileSystem.replace_file(dest, 0640) { |f| f.write(content) }
 
@@ -1128,7 +1126,6 @@ describe "Puppet::FileSystem" do
           end
         end
 
-        # TBD - as noted earlier - Helper function for this ?
         it 'applies the specified mode' do
           Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
 

@@ -119,6 +119,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
   end
 
   # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--0-499-
+  FILE_NOT_FOUND = 2
   ACCESS_DENIED = 5
   SHARING_VIOLATION = 32
   LOCK_VIOLATION = 33
@@ -135,7 +136,6 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     # Note mode 6 is set to READ/WRITE rather than FULL_CONTROL
 
     current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
-    # puts "relace_file: sid: #{current_sid.inspect}"
     dacl = case mode
            when 0644
              dacl = secure_dacl(current_sid, FILE_RW, FILE_READ)
@@ -172,13 +172,11 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
              raise ArgumentError, "#{mode} is invalid: Only modes 0644, 0640, 0660, 0666, 0600 and 0440 are allowed"
            end
 
-    # puts "replace_file: dacl: #{dacl.inspect}"
     tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(path), Puppet::FileSystem.dir_string(path))
     begin
       tempdacl = Puppet::Util::Windows::AccessControlList.new
       tempdacl.allow(current_sid, FULL_CONTROL)
       set_dacl(tempfile.path, tempdacl)
-      # puts "replace_file: tempfile 1 work"
 
       begin
         yield tempfile
@@ -211,9 +209,14 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     # is run under SYSTEM/SYSTEM (e.g. under AWS services), that all internally managed Puppet files
     # are are still writeable from the Administrator account
     sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
-    sd_group = sd.group == sd.owner && sd.group == Puppet::Util::Windows::SID::LocalSystem ? Puppet::Util::Windows::SID::BuiltinAdministrators : sd.group
-    # puts "set_dacl: sd.owner = #{sd.group}, sd.owner = #{sd.group}"
-    new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd_group, dacl, true)
+    sd_group = sd.group
+    sd_owner = sd.owner
+
+    if sd_group == sd_owner && sd_group == Puppet::Util::Windows::SID::LocalSystem
+      sd_group = Puppet::Util::Windows::SID::BuiltinAdministrators
+    end
+
+    new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd_owner, sd_group, dacl, true)
     Puppet::Util::Windows::Security.set_security_descriptor(path, new_sd)
   end
 
@@ -241,11 +244,7 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     sd = Puppet::Util::Windows::Security.get_security_descriptor(Puppet::FileSystem.path_string(path))
     sd.dacl
   rescue Puppet::Util::Windows::Error => e
-    if e.code == 2 # ERROR_FILE_NOT_FOUND
-      nil
-    else
-      raise e
-    end
+    raise e unless e.code == FILE_NOT_FOUND
   end
 
   def raise_if_symlinks_unsupported

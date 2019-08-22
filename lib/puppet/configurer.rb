@@ -410,7 +410,14 @@ class Puppet::Configurer
   end
 
   def save_last_run_summary(report)
-    mode = Integer(Puppet.settings.setting(:lastrunfile).mode,8)
+    mode = Puppet.settings.setting(:lastrunfile).mode
+
+    if !Puppet::Util.valid_symbolic_mode?(mode)
+      raise Puppet::DevError, _("invalid file mode: %{mode}") % { mode: mode }
+    end
+
+    mode = Integer(mode, 8)
+
     Puppet::FileSystem.replace_file(Puppet[:lastrunfile], mode) do |fh|
       fh.print YAML.dump(report.raw_summary)
     end
