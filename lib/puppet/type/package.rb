@@ -1,3 +1,4 @@
+# coding: utf-8
 # Define the different packaging systems.  Each package system is implemented
 # in a module, which then gets used to individually extend each package object.
 # This allows packages to exist on the same machine using different packaging
@@ -56,6 +57,7 @@ module Puppet
         a user or another package. Held is considered a superset of
         installed.",
       :methods => [:hold]
+    feature :install_only, "The provider accepts options to only install packages never update (kernels, etc.)"
     feature :install_options, "The provider accepts options to be
       passed to the installer command."
     feature :uninstall_options, "The provider accepts options to be
@@ -485,6 +487,14 @@ module Puppet
     newparam(:flavor) do
       desc "OpenBSD supports 'flavors', which are further specifications for
         which type of package you want."
+    end
+
+    newparam(:install_only, :boolean => false, :parent => Puppet::Parameter::Boolean, :required_features => :install_only) do
+      desc <<-EOT
+        It should be set for packages that should only ever be installed,
+        never updated. Kernels in particular fall into this category.
+      EOT
+      defaultto false
     end
 
     newparam(:install_options, :parent => Puppet::Parameter::PackageOptions, :required_features => :install_options) do

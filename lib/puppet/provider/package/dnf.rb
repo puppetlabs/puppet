@@ -9,7 +9,7 @@ Puppet::Type.type(:package).provide :dnf, :parent => :yum do
   These options should be specified as an array where each element is either
    a string or a hash."
 
-  has_feature :install_options, :versionable, :virtual_packages
+  has_feature :install_options, :versionable, :virtual_packages, :install_only
 
   commands :cmd => "dnf", :rpm => "rpm"
 

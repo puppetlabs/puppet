@@ -13,6 +13,7 @@ These options should be specified as an array where each element is either a str
   has_feature :install_options
   has_feature :uninstall_options
   has_feature :virtual_packages
+  has_feature :install_only
 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderRpm class.
@@ -20,6 +21,7 @@ These options should be specified as an array where each element is either a str
   self::NEVRA_FORMAT = %Q{%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n}
   self::NEVRA_REGEX  = %r{^'?(\S+) (\S+) (\S+) (\S+) (\S+)$}
   self::NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch]
+  self::MULTIVERSION_SEPARATOR = "; "
 
   ARCH_LIST = [
     'noarch',
@@ -79,12 +81,9 @@ These options should be specified as an array where each element is either a str
 
     # list out all of the packages
     begin
-      execpipe("#{command(:rpm)} -qa #{nosignature} #{nodigest} --qf '#{self::NEVRA_FORMAT}'") { |process|
+      execpipe("#{command(:rpm)} -qa #{nosignature} #{nodigest} --qf '#{self::NEVRA_FORMAT}' | sort") { |process|
         # now turn each returned line into a package object
-        process.each_line { |line|
-          hash = nevra_to_hash(line)
-          packages << new(hash) unless hash.empty?
-        }
+        nevra_to_multiversion_hash(process).each { |hash| packages << new(hash) }
       }
     rescue Puppet::ExecutionFailure
       raise Puppet::Error, _("Failed to list packages"), $!.backtrace
@@ -100,7 +99,7 @@ These options should be specified as an array where each element is either a str
     #NOTE: Prior to a fix for issue 1243, this method potentially returned a cached value
     #IF YOU CALL THIS METHOD, IT WILL CALL RPM
     #Use get(:property) to check if cached values are available
-    cmd = ["-q",  @resource[:name], "#{self.class.nosignature}", "#{self.class.nodigest}", "--qf", "'#{self.class::NEVRA_FORMAT}'"]
+    cmd = ["-q",  @resource[:name], "#{self.class.nosignature}", "#{self.class.nodigest}", "--qf", "#{self.class::NEVRA_FORMAT}"]
 
     begin
       output = rpm(*cmd)
@@ -117,9 +116,7 @@ These options should be specified as an array where each element is either a str
         return nil
       end
     end
-    # FIXME: We could actually be getting back multiple packages
-    # for multilib and this will only return the first such package
-    @property_hash.update(self.class.nevra_to_hash(output))
+    @property_hash.update(self.class.nevra_to_multiversion_hash(output))
 
     @property_hash.dup
   end
@@ -130,8 +127,8 @@ These options should be specified as an array where each element is either a str
       @resource.fail _("RPMs must specify a package source")
     end
 
-    cmd = [command(:rpm), "-q", "--qf", "'#{self.class::NEVRA_FORMAT}'", "-p", source]
-    h = self.class.nevra_to_hash(execute(cmd))
+    cmd = [command(:rpm), "-q", "--qf", "#{self.class::NEVRA_FORMAT}", "-p", source]
+    h = self.class.nevra_to_multiversion_hash(execute(cmd))
     h[:ensure]
   rescue Puppet::ExecutionFailure => e
     raise Puppet::Error, e.message, e.backtrace
@@ -168,7 +165,11 @@ These options should be specified as an array where each element is either a str
       if @resource[:name].start_with? nav
         identifier = nav
       else
-        identifier = name
+        if @resource[:install_only]
+          identifier = get(:ensure).split(self.class::MULTIVERSION_SEPARATOR).map { |ver| "#{name}-#{ver}" }
+        else
+          identifier = name
+        end
       end
     end
     # If an arch is specified in the resource, uninstall that arch,
@@ -308,8 +309,12 @@ These options should be specified as an array where each element is either a str
 
   def insync?(is)
     return false if [:purged, :absent].include?(is)
+    return false if is.include?(self.class::MULTIVERSION_SEPARATOR) && !@resource[:install_only]
+
     should = resource[:ensure]
-    0 == rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(is))
+    is.split(self.class::MULTIVERSION_SEPARATOR).any? do |version|
+      0 == self.rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(version))
+    end
   end
 
   # parse a rpm "version" specification
@@ -411,5 +416,38 @@ These options should be specified as an array where each element is either a str
     end
 
     return hash
+  end
+
+  # @param line [String] multiple lines of rpm package query information
+  # @return list of [Hash] of NEVRA_FIELDS strings parsed from package info
+  # or an empty list if we failed to parse
+  # @api private
+  def self.nevra_to_multiversion_hash(multiline)
+    list = []
+    multiversion_hash = {}
+    multiline.each_line do |line|
+      hash = self.nevra_to_hash(line)
+      if !hash.empty?
+        if multiversion_hash.empty?
+          multiversion_hash = hash.dup
+          next
+        end
+
+        if multiversion_hash[:name] != hash[:name]
+          list << multiversion_hash
+          multiversion_hash = hash.dup
+          next
+        end
+
+        if !multiversion_hash[:ensure].include?(hash[:ensure])
+          multiversion_hash[:ensure].concat("#{self::MULTIVERSION_SEPARATOR}#{hash[:ensure]}")
+        end
+      end
+    end
+    list << multiversion_hash if multiversion_hash
+    if list.size == 1
+      return list[0]
+    end
+    return list
   end
 end
