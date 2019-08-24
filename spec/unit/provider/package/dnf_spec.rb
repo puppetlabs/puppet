@@ -44,5 +44,12 @@ describe Puppet::Type.type(:package).provider(:dnf) do
     end
   end
 
+  describe 'provider features' do
+    it { is_expected.to be_versionable }
+    it { is_expected.to be_install_options }
+    it { is_expected.to be_virtual_packages }
+    it { is_expected.to be_install_only }
+  end
+
   it_behaves_like 'RHEL package provider', described_class, 'dnf'
 end

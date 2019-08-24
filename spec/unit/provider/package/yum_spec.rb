@@ -64,6 +64,13 @@ describe Puppet::Type.type(:package).provider(:yum) do
 
     before { allow(described_class).to receive(:command).with(:cmd).and_return("/usr/bin/yum") }
 
+  describe 'provider features' do
+    it { is_expected.to be_versionable }
+    it { is_expected.to be_install_options }
+    it { is_expected.to be_virtual_packages }
+    it { is_expected.to be_install_only }
+  end
+
     context "when installing" do
       it "should use the supplied source as the explicit path to a package to install" do
         resource[:ensure] = :present
