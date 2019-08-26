@@ -162,14 +162,15 @@ module Puppet::Util::Execution
 
     options = default_options.merge(options)
 
-    if options[:sensitive]
-      command_str = '[redacted]'
-    elsif command.is_a?(Array)
+    if command.is_a?(Array)
       command = command.flatten.map(&:to_s)
       command_str = command.join(" ")
     elsif command.is_a?(String)
       command_str = command
     end
+
+    # do this after processing 'command' array or string
+    command_str = '[redacted]' if options[:sensitive]
 
     user_log_s = ''
     if options[:uid]
