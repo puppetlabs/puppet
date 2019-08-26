@@ -538,7 +538,7 @@ module Puppet
     newparam(:allow_virtual, :boolean => true, :parent => Puppet::Parameter::Boolean, :required_features => :virtual_packages) do
       desc 'Specifies if virtual package names are allowed for install and uninstall.'
 
-      defaultto true
+      defaultto false
     end
 
     autorequire(:file) do
