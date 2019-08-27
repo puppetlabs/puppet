@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     and not `apt`, you must specify the source of any packages you want
     to manage."
 
-  has_feature :holdable, :virtual_packages 
+  has_feature :holdable
 
   commands :dpkg => "/usr/bin/dpkg"
   commands :dpkg_deb => "/usr/bin/dpkg-deb"
@@ -44,18 +44,16 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderDpkg class.
   self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version}\\n'}
-  self::DPKG_QUERY_PROVIDES_FORMAT_STRING = %Q{'${Status} ${Package} ${Version} [${Provides}]\\n'}
   self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
-  self::FIELDS_REGEX_WITH_PROVIDES = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*) \[.*\]$} 
   self::FIELDS= [:desired, :error, :status, :name, :ensure]
 
   # @param line [String] one line of dpkg-query output
   # @return [Hash,nil] a hash of FIELDS or nil if we failed to match
   # @api private
-  def self.parse_line(line, regex=self::FIELDS_REGEX)
+  def self.parse_line(line)
     hash = nil
 
-    if match = regex.match(line)
+    if match = self::FIELDS_REGEX.match(line)
       hash = {}
 
       self::FIELDS.zip(match.captures) do |field,value|
@@ -115,18 +113,6 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
     # list out our specific package
     begin
-      if @resource.allow_virtual?
-        output = dpkgquery(
-          "-W",
-          "--showformat",
-          self.class::DPKG_QUERY_PROVIDES_FORMAT_STRING
-        ).lines.find {|package| package.match(/\[.*#{@resource[:name]}.*\]/)}
-        if output          
-          hash = self.class.parse_line(output,self.class::FIELDS_REGEX_WITH_PROVIDES)
-          Puppet.info("Package #{@resource[:name]} is virtual, defaulting to #{hash[:name]}")
-          @resource[:name] = hash[:name]
-        end
-      end
       output = dpkgquery(
         "-W",
         "--showformat",
