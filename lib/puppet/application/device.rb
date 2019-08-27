@@ -297,10 +297,10 @@ Licensed under the Apache 2.0 License
             Puppet.info _("retrieving resource: %{resource} from %{target} at %{scheme}%{url_host}%{port}%{url_path}") % { resource: type, target: device.name, scheme: scheme, url_host: device_url.host, port: port, url_path: device_url.path }
             resources = find_resources(type, name)
             if options[:to_yaml]
-              text = resources.map do |resource|
-                resource.prune_parameters(:parameters_to_include => @extra_params).to_hierayaml.force_encoding(Encoding.default_external)
-              end.join("\n")
-              text.prepend("#{type.downcase}:\n")
+              data = resources.map do |resource|
+                resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_yaml_hash
+              end.inject(:merge!)
+              text = YAML.dump(type.downcase => data)
             else
               text = resources.map do |resource|
                 resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest.force_encoding(Encoding.default_external)

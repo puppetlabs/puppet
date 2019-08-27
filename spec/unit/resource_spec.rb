@@ -747,7 +747,8 @@ describe Puppet::Resource do
       @resource = Puppet::Resource.new("one::two", "/my/file",
         :parameters => {
           :noop => true,
-          :foo => %w{one two},
+          :foo => [:one, "two"],
+          :bar => 'a\'b',
           :ensure => 'present',
         }
       )
@@ -757,9 +758,21 @@ describe Puppet::Resource do
       expect(@resource.to_hierayaml).to eq <<-HEREDOC.gsub(/^\s{8}/, '')
           /my/file:
             ensure: 'present'
+            bar   : 'a\\'b'
             foo   : ['one', 'two']
             noop  : true
       HEREDOC
+    end
+
+    it "should convert some types to String" do
+      expect(@resource.to_hiera_yaml_hash).to eq(
+        "/my/file" => {
+          'ensure' => "present",
+          'bar'    => "a'b",
+          'foo'    => ["one", "two"],
+          'noop'   => true
+        }
+      )
     end
   end
   describe "when converting to json" do

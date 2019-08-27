@@ -429,6 +429,38 @@ class Puppet::Resource
     "  %s:\n%s" % [self.title, attributes]
   end
 
+  def hiera_yaml_serialize(data)
+    case data
+    when Array
+      data.map { |v| hiera_yaml_serialize(v) }
+    when Hash
+      data.map do |k, v|
+        { k.to_s => hiera_yaml_serialize(v) }
+      end.inject(:merge)
+    when Time, Symbol
+      data.to_s
+    when String
+      # Malformed strings cause trouble when building the YAML document, scrub
+      # all strings to ensure they are valid.
+      data.scrub
+      data
+    else
+      data
+    end
+  end
+
+  # Convert our resource to a hash suitable for YAML serialization.
+  def to_hiera_yaml_hash
+    res = {}
+
+    if parameters.include?(:ensure)
+      res['ensure'] = parameters.delete(:ensure).to_s
+    end
+    res.merge!(hiera_yaml_serialize(Hash[parameters.sort]) || {})
+
+    return { self.title.to_s => res }
+  end
+
   # Convert our resource to Puppet code.
   def to_manifest
     # Collect list of attributes to align => and move ensure first
