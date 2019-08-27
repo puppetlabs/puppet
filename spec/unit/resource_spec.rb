@@ -748,18 +748,24 @@ describe Puppet::Resource do
         :parameters => {
           :noop => true,
           :foo => %w{one two},
+          :bar => 'a\'b',
           :ensure => 'present',
         }
       )
     end
 
-    it "should align and sort to attributes with ensure first" do
-      expect(@resource.to_hierayaml).to eq(<<-HEREDOC.gsub(/^\s{8}/, ''))
+    it "should align and sort attributes with ensure first" do
+      expect(@resource.to_hierayaml).to eq(<<-'HEREDOC'.gsub(/^\s{8}/, ''))
           /my/file:
             ensure: 'present'
+            bar   : 'a\'b'
             foo   : ['one', 'two']
             noop  : true
       HEREDOC
+    end
+
+    it "should produce a parsable YAML output" do
+      expect {YAML.parse(@resource.to_hierayaml)}.to_not raise_exception
     end
   end
 
