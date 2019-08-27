@@ -25,7 +25,34 @@ describe Puppet::Util::Execution, unless: Puppet::Util::Platform.jruby? do
     end
   end
 
-  describe "#execute (non-Windows)", :if => !Puppet::Util::Platform.windows? do
+  describe "#execute" do
+    if Puppet::Util::Platform.windows?
+      let(:argv) { ["cmd", "/c", "echo", 123] }
+    else
+      let(:argv) { ["echo", 123] }
+    end
+
+    it 'stringifies sensitive arguments when given an array containing integers' do
+      result = Puppet::Util::Execution.execute(argv, sensitive: true)
+      expect(result.to_s.strip).to eq("123")
+      expect(result.exitstatus).to eq(0)
+    end
+
+    it 'redacts sensitive arguments when given an array' do
+      Puppet[:log_level] = :debug
+      Puppet::Util::Execution.execute(argv, sensitive: true)
+      expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Executing: '[redacted]'"))
+    end
+
+    it 'redacts sensitive arguments when given a string' do
+      Puppet[:log_level] = :debug
+      str = argv.map(&:to_s).join(' ')
+      Puppet::Util::Execution.execute(str, sensitive: true)
+      expect(@logs).to include(an_object_having_attributes(level: :debug, message: "Executing: '[redacted]'"))
+    end
+  end
+
+  describe "#execute (non-Windows)", :if => !Puppet.features.microsoft_windows? do
     it "should execute basic shell command" do
       result = Puppet::Util::Execution.execute("ls /tmp", :failonfail => true)
       expect(result.exitstatus).to eq(0)
