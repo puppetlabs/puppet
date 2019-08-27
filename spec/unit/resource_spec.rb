@@ -747,25 +747,26 @@ describe Puppet::Resource do
       @resource = Puppet::Resource.new("one::two", "/my/file",
         :parameters => {
           :noop => true,
-          :foo => %w{one two},
+          :foo => [:one, "two"],
           :bar => 'a\'b',
           :ensure => 'present',
         }
       )
     end
 
-    it "should align and sort attributes with ensure first" do
-      expect(@resource.to_hierayaml).to eq(<<-'HEREDOC'.gsub(/^\s{8}/, ''))
-          /my/file:
-            ensure: 'present'
-            bar   : 'a\'b'
-            foo   : ['one', 'two']
-            noop  : true
-      HEREDOC
+    it "should sort attributes with ensure first" do
+      expect(@resource.to_hiera_yaml_hash['/my/file'].keys).to eq(['ensure', 'bar', 'foo', 'noop'])
     end
 
-    it "should produce a parsable YAML output" do
-      expect {YAML.parse(@resource.to_hierayaml)}.to_not raise_exception
+    it "should convert some types to String" do
+      expect(@resource.to_hiera_yaml_hash).to eq(
+        "/my/file" => {
+          'ensure' => "present",
+          'bar'    => "a'b",
+          'foo'    => ["one", "two"],
+          'noop'   => true
+        }
+      )
     end
   end
 

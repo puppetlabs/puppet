@@ -460,11 +460,12 @@ describe Puppet::Application::Device do
         it "outputs resources as YAML" do
           resources = [
             Puppet::Type.type(:user).new(:name => "title").to_resource,
+            Puppet::Type.type(:user).new(:name => "other").to_resource,
           ]
           allow(device.options).to receive(:[]).with(:to_yaml).and_return(true)
           allow(device.command_line).to receive(:args).and_return(['user'])
           expect(Puppet::Resource.indirection).to receive(:search).with('user/', {}).and_return(resources)
-          expect(device).to receive(:puts).with("user:\n  title:\n")
+          expect(device).to receive(:puts).with("---\nuser:\n  title: {}\n  other: {}\n")
           expect { device.main }.to exit_with 0
         end
       end
