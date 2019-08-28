@@ -66,41 +66,18 @@ Puppet::Face.define(:config, '0.0.1') do
         @default_section = true
       end
 
-      render_all_settings = args.empty? || args == ['all']
-
-      args = Puppet.settings.to_a.collect(&:first) if render_all_settings
-
-      values_from_the_selected_section =
-        Puppet.settings.values(nil, options[:section].to_sym)
-
-      loader_settings = {
-        :environmentpath => values_from_the_selected_section.interpolate(:environmentpath),
-        :basemodulepath => values_from_the_selected_section.interpolate(:basemodulepath),
-      }
-
-      to_be_rendered = nil
-      Puppet.override(Puppet.base_context(loader_settings),
-                     _("New environment loaders generated from the requested section.")) do
-        # And now we can lookup values that include those from environments configured from
-        # the requested section
-        values = Puppet.settings.values(Puppet[:environment].to_sym, options[:section].to_sym)
-
-        if Puppet::Util::Log.sendlevel?(:info)
-          warn_default_section(options[:section]) if @default_section
-          report_section_and_environment(options[:section], Puppet.settings[:environment])
-        end
-
-        to_be_rendered = {}
-        args.sort.each do |setting_name|
-          to_be_rendered[setting_name] = values.print(setting_name.to_sym)
-        end
+      if Puppet::Util::Log.sendlevel?(:info)
+        warn_default_section(options[:section]) if @default_section
+        report_section_and_environment(options[:section], Puppet.settings[:environment])
       end
 
-      # convert symbols to strings before formatting output
-      if render_all_settings
-        to_be_rendered = stringifyhash(to_be_rendered)
-      end
-      to_be_rendered
+      names = if args.empty? || args == ['all']
+                :all
+              else
+                args
+              end
+
+      Puppet.settings.stringify_settings(options[:section], names)
     end
 
     when_rendering :console do |to_be_rendered|
@@ -115,21 +92,6 @@ Puppet::Face.define(:config, '0.0.1') do
 
       output
     end
-  end
-
-  def stringifyhash(hash)
-    newhash = {}
-    hash.each do |key, val|
-      key = key.to_s
-      if val.is_a? Hash
-        newhash[key] = stringifyhash(val)
-      elsif val.is_a? Symbol
-        newhash[key] = val.to_s
-      else
-        newhash[key] = val
-      end
-    end
-    newhash
   end
 
   def warn_default_section(section_name)
