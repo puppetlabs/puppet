@@ -93,4 +93,42 @@ describe Puppet::HTTP::Client, unless: Puppet::Util::Platform.jruby? do
       end
     end
   end
+
+  context "with a system trust store" do
+    it "connects when the client trusts the server's CA" do
+      system_context = ssl_provider.create_system_context(cacerts: [server.ca_cert])
+
+      server.start_server do |port|
+        res = client.get(URI("https://127.0.0.1:#{port}"), ssl_context: system_context)
+        expect(res).to be_success
+      end
+    end
+
+    it "connects when the server's CA is in the system store" do
+      # create a temp cacert bundle
+      ssl_file = tmpfile('systemstore')
+      File.write(ssl_file, server.ca_cert)
+
+      # override path to system cacert bundle, this must be done before
+      # the SSLContext is created and the call to X509::Store.set_default_paths
+      Puppet::Util.withenv("SSL_CERT_FILE" => ssl_file) do
+        system_context = ssl_provider.create_system_context(cacerts: [])
+        server.start_server do |port|
+          res = client.get(URI("https://127.0.0.1:#{port}"), ssl_context: system_context)
+          expect(res).to be_success
+        end
+      end
+    end
+
+    it "raises if the server's CA is not in the context or system store" do
+      system_context = ssl_provider.create_system_context(cacerts: [cert_fixture('netlock-arany-utf8.pem')])
+
+      server.start_server do |port|
+        expect {
+          client.get(URI("https://127.0.0.1:#{port}"), ssl_context: system_context)
+        }.to raise_error(Puppet::HTTP::ConnectionError,
+                         %r{certificate verify failed.* .self signed certificate in certificate chain for CN=Test CA.})
+      end
+    end
+  end
 end

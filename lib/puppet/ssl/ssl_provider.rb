@@ -36,6 +36,26 @@ class Puppet::SSL::SSLProvider
     Puppet::SSL::SSLContext.new(store: store, cacerts: cacerts, crls: crls, revocation: revocation).freeze
   end
 
+  # Create an `SSLContext` using the trusted `cacerts` and any certs in OpenSSL's
+  # default verify path locations. When running puppet as a gem, the location is
+  # system dependent. When running puppet from puppet-agent packages, the location
+  # refers to the cacerts bundle in the puppet-agent package.
+  #
+  # Connections made from the returned context will authenticate the server,
+  # i.e. `VERIFY_PEER`, but will not use a client certificate and will not
+  # perform revocation checking.
+  #
+  # @param cacerts [Array<OpenSSL::X509::Certificate>] Array of trusted CA certs
+  # @return [Puppet::SSL::SSLContext] A context to use to create connections
+  # @raise (see #create_context)
+  # @api private
+  def create_system_context(cacerts:)
+    store = create_x509_store(cacerts, [], false)
+    store.set_default_paths
+
+    Puppet::SSL::SSLContext.new(store: store, cacerts: cacerts, crls: [], revocation: false).freeze
+  end
+
   # Create an `SSLContext` using the trusted `cacerts`, `crls`, `private_key`,
   # `client_cert`, and `revocation` mode. Connections made from the returned
   # context will be mutually authenticated.
