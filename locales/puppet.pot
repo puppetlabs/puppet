@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.8.0-30-g7018bcb\n"
+"Project-Id-Version: Puppet automation framework 6.8.0-51-g626038b\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-08-22 21:48+0000\n"
-"PO-Revision-Date: 2019-08-22 21:48+0000\n"
+"POT-Creation-Date: 2019-08-30 23:33+0000\n"
+"PO-Revision-Date: 2019-08-30 23:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -641,24 +641,20 @@ msgstr ""
 msgid "Could not retrieve local facts: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/context.rb:41
-msgid "Attempted to pop, but already at root of the context stack."
-msgstr ""
-
-#: ../lib/puppet/context.rb:55
-msgid "Unable to lookup '%{name}'"
-msgstr ""
-
-#: ../lib/puppet/context.rb:80
-msgid "no '%{name}' in ignores %{ignores} at top of %{stack}"
-msgstr ""
-
-#: ../lib/puppet/context.rb:93
+#: ../lib/puppet/context.rb:77
 msgid "Mark for '%{name}' already exists"
 msgstr ""
 
-#: ../lib/puppet/context.rb:107
+#: ../lib/puppet/context.rb:92
 msgid "Unknown mark '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/context.rb:111 ../lib/puppet/context.rb:169
+msgid "Unable to lookup '%{name}'"
+msgstr ""
+
+#: ../lib/puppet/context.rb:120
+msgid "Attempted to pop, but already at root of the context stack."
 msgstr ""
 
 #: ../lib/puppet/context/trusted_information.rb:48
@@ -6623,7 +6619,7 @@ msgstr ""
 msgid "Could not list installed Packages: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aix.rb:141 ../lib/puppet/provider/package/yum.rb:248
+#: ../lib/puppet/provider/package/aix.rb:141 ../lib/puppet/provider/package/yum.rb:252
 msgid "Tried to get latest on a missing package"
 msgstr ""
 
@@ -6655,7 +6651,7 @@ msgstr ""
 msgid "No responsefile specified or non existent, not preseeding anything"
 msgstr ""
 
-#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:229 ../lib/puppet/provider/package/zypper.rb:109
+#: ../lib/puppet/provider/package/aptitude.rb:21 ../lib/puppet/provider/package/ports.rb:20 ../lib/puppet/provider/package/portupgrade.rb:94 ../lib/puppet/provider/package/portupgrade.rb:152 ../lib/puppet/provider/package/rug.rb:28 ../lib/puppet/provider/package/up2date.rb:17 ../lib/puppet/provider/package/yum.rb:232 ../lib/puppet/provider/package/zypper.rb:109
 msgid "Could not find package %{name}"
 msgstr ""
 
@@ -6917,11 +6913,11 @@ msgstr ""
 msgid "portversion.latest() - fatal error with portversion: %{output}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/rpm.rb:90
+#: ../lib/puppet/provider/package/rpm.rb:89
 msgid "Failed to list packages"
 msgstr ""
 
-#: ../lib/puppet/provider/package/rpm.rb:131 ../lib/puppet/provider/package/rpm.rb:144
+#: ../lib/puppet/provider/package/rpm.rb:128 ../lib/puppet/provider/package/rpm.rb:141
 msgid "RPMs must specify a package source"
 msgstr ""
 
@@ -6978,11 +6974,11 @@ msgstr ""
 msgid "Failed to parse package name and architecture from '%{pkgname}'"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:223
+#: ../lib/puppet/provider/package/yum.rb:226
 msgid "Could not find package %{wanted}"
 msgstr ""
 
-#: ../lib/puppet/provider/package/yum.rb:234
+#: ../lib/puppet/provider/package/yum.rb:237
 msgid "Failed to update to version %{should}, got version %{version} instead"
 msgstr ""
 
@@ -8559,15 +8555,15 @@ msgstr ""
 msgid "Invalid GID %{gid}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:116 ../lib/puppet/type/package.rb:130
+#: ../lib/puppet/type/package.rb:118 ../lib/puppet/type/package.rb:132
 msgid "Could not update: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:165
+#: ../lib/puppet/type/package.rb:167
 msgid "Could not get latest version: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/package.rb:265
+#: ../lib/puppet/type/package.rb:267
 msgid "Name must be a String not %{klass}"
 msgstr ""
 
@@ -9127,23 +9123,23 @@ msgstr ""
 msgid "%{klass} failed with error %{error_type}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:195
+#: ../lib/puppet/util/execution.rb:196
 msgid "Working directory %{cwd} does not exist!"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:287
+#: ../lib/puppet/util/execution.rb:288
 msgid "Could not get output"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:296
+#: ../lib/puppet/util/execution.rb:297
 msgid "Execution of '%{str}' returned %{exit_status}: %{output}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:373
+#: ../lib/puppet/util/execution.rb:374
 msgid "Could not execute posix command: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/execution.rb:421
+#: ../lib/puppet/util/execution.rb:422
 msgid "Waiting for output; will sleep %{time_to_sleep} seconds"
 msgstr ""
 
