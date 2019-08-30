@@ -148,7 +148,7 @@ module Puppet
     Puppet.settings.initialize_global_settings(args, require_config)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
-    Puppet.push_context(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
+    @context.unsafe_push_global(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
     Puppet::Parser::Functions.reset
   end
   private_class_method :do_initialize_settings_for_run_mode

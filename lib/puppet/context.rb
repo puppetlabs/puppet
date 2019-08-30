@@ -1,3 +1,5 @@
+require 'concurrent'
+
 # Puppet::Context is a system for tracking services and contextual information
 # that puppet needs to be able to run. Values are "bound" in a context when it is created
 # and cannot be changed; however a child context can be created, using
@@ -19,66 +21,47 @@ class Puppet::Context
 
   # @api private
   def initialize(initial_bindings)
-    @table = initial_bindings
-    @ignores = []
-    @description = "root"
-    @id = 0
-    @rollbacks = {}
-    @stack = [[0, nil, nil]]
+    @stack = Concurrent::ThreadLocalVar.new(EmptyStack.new.push(initial_bindings))
+
+    # By initializing @rollbacks to nil and creating a hash lazily when #mark or
+    # #rollback are called we ensure that the hashes are never shared between
+    # threads and it's safe to mutate them
+    @rollbacks = Concurrent::ThreadLocalVar.new(nil)
   end
 
   # @api private
-  def push(overrides, description = "")
-    @id += 1
-    @stack.push([@id, @table, @description])
-    @table = @table.merge(overrides || {})
-    @description = description
+  def push(overrides, description = '')
+    @stack.value = @stack.value.push(overrides, description)
+  end
+
+  # Push a context and make this global across threads
+  # Do not use in a context where multiple threads may already exist
+  #
+  # @api private
+  def unsafe_push_global(overrides, description = '')
+    @stack = Concurrent::ThreadLocalVar.new(
+      @stack.value.push(overrides, description)
+    )
   end
 
   # @api private
   def pop
-    if @stack[-1][0] == 0
-      raise(StackUnderflow, _("Attempted to pop, but already at root of the context stack."))
-    else
-      (_, @table, @description) = @stack.pop
-    end
+    @stack.value = @stack.value.pop
   end
 
   # @api private
   def lookup(name, &block)
-    if @table.include?(name) && !@ignores.include?(name)
-      value = @table[name]
-      value.is_a?(Proc) ? (@table[name] = value.call) : value
-    elsif block
-      block.call
-    else
-      raise UndefinedBindingError, _("Unable to lookup '%{name}'") % { name: name }
-    end
+    @stack.value.lookup(name, &block)
   end
 
   # @api private
-  def override(bindings, description = "", &block)
-    mark_point = "override over #{@stack[-1][0]}"
-    mark(mark_point)
+  def override(bindings, description = '', &block)
+    saved_point = @stack.value
     push(bindings, description)
 
     yield
   ensure
-    rollback(mark_point)
-  end
-
-  # @api private
-  def ignore(name)
-    @ignores << name
-  end
-
-  # @api private
-  def restore(name)
-    if @ignores.include?(name)
-      @ignores.delete(name)
-    else
-      raise UndefinedBindingError, _("no '%{name}' in ignores %{ignores} at top of %{stack}") % { name: name, ignores: @ignores.inspect, stack: @stack.inspect }
-    end
+    @stack.value = saved_point
   end
 
   # Mark a place on the context stack to later return to with {rollback}.
@@ -87,8 +70,9 @@ class Puppet::Context
   #
   # @api private
   def mark(name)
-    if @rollbacks[name].nil?
-      @rollbacks[name] = @stack[-1][0]
+    @rollbacks.value ||= {}
+    if @rollbacks.value[name].nil?
+      @rollbacks.value[name] = @stack.value
     else
       raise DuplicateRollbackMarkError, _("Mark for '%{name}' already exists") % { name: name }
     end
@@ -103,14 +87,102 @@ class Puppet::Context
   #
   # @api private
   def rollback(name)
-    if @rollbacks[name].nil?
+    @rollbacks.value ||= {}
+    if @rollbacks.value[name].nil?
       raise UnknownRollbackMarkError, _("Unknown mark '%{name}'") % { name: name }
     end
 
-    while @stack[-1][0] != @rollbacks[name]
-      pop
+    @stack.value = @rollbacks.value.delete(name)
+  end
+
+  # Base case for Puppet::Context::Stack.
+  #
+  # @api private
+  class EmptyStack
+    # Lookup a binding. Since there are none in EmptyStack, this always raises
+    # an exception unless a block is passed, in which case the block is called
+    # and its return value is used.
+    #
+    # @api private
+    def lookup(name, &block)
+      if block
+        block.call
+      else
+        raise UndefinedBindingError, _("Unable to lookup '%{name}'") % { name: name }
+      end
     end
 
-    @rollbacks.delete(name)
+    # Base case of #pop always raises an error since this is the bottom
+    #
+    # @api private
+    def pop
+      raise(StackUnderflow,
+            _('Attempted to pop, but already at root of the context stack.'))
+    end
+
+    # Push bindings onto the stack by creating a new Stack object with `self` as
+    # the parent
+    #
+    # @api private
+    def push(overrides, description = '')
+      Puppet::Context::Stack.new(self, overrides, description)
+    end
+
+    # Return the bindings table, which is always empty here
+    #
+    # @api private
+    def bindings
+      {}
+    end
+  end
+
+  # Internal implementation of the bindings stack used by Puppet::Context. An
+  # instance of Puppet::Context::Stack represents one level of bindings. It
+  # caches a merged copy of all the bindings in the stack up to this point.
+  # Each element of the stack is immutable, allowing the base to be shared
+  # between threads.
+  #
+  # @api private
+  class Stack
+    attr_reader :bindings
+
+    def initialize(parent, bindings, description = '')
+      @parent = parent
+      @bindings = parent.bindings.merge(bindings || {})
+      @description = description
+    end
+
+    # Lookup a binding in the current stack. Return the value if it is present.
+    # If the value is a stored Proc, evaluate, cache, and return the result. If
+    # no binding is found and a block is passed evaluate it and return the
+    # result. Otherwise an exception is raised.
+    #
+    # @api private
+    def lookup(name, &block)
+      if @bindings.include?(name)
+        value = @bindings[name]
+        value.is_a?(Proc) ? (@bindings[name] = value.call) : value
+      elsif block
+        block.call
+      else
+        raise UndefinedBindingError,
+              _("Unable to lookup '%{name}'") % { name: name }
+      end
+    end
+
+    # Pop one level off the stack by returning the parent object.
+    #
+    # @api private
+    def pop
+      @parent
+    end
+
+    # Push bindings onto the stack by creating a new Stack object with `self` as
+    # the parent
+    #
+    # @api private
+    def push(overrides, description = '')
+      Puppet::Context::Stack.new(self, overrides, description)
+    end
   end
 end
