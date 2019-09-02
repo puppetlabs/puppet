@@ -98,7 +98,8 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
         '1.3.6.1.4.1.34380.1.2.2' => 'more CSR specific info',
       },
       'hostname' => 'cert name',
-      'domain' => nil
+      'domain' => nil,
+      'external' => nil,
     })
   end
 
@@ -113,7 +114,8 @@ describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java'
         '1.3.6.1.4.1.34380.1.2.2' => 'more CSR specific info',
       },
       'hostname' => 'hostname',
-      'domain' => 'domain.long'
+      'domain' => 'domain.long',
+      'external' => nil,
     })
   end
 

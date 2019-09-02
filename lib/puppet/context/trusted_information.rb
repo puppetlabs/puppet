@@ -1,3 +1,5 @@
+require 'puppet/trusted_external'
+
 # @api private
 class Puppet::Context::TrustedInformation
   # one of 'remote', 'local', or false, where 'remote' is authenticated via cert,
@@ -27,7 +29,12 @@ class Puppet::Context::TrustedInformation
   # @return [String]
   attr_reader :hostname
 
-  def initialize(authenticated, certname, extensions)
+  # Additional external facts loaded through `trusted_external_terminus`.
+  #
+  # @return [Hash]
+  attr_reader :external
+
+  def initialize(authenticated, certname, extensions, external)
     @authenticated = authenticated.freeze
     @certname = certname.freeze
     @extensions = extensions.freeze
@@ -39,9 +46,12 @@ class Puppet::Context::TrustedInformation
     end
     @hostname = hostname.freeze
     @domain = domain.freeze
+    @external = external.freeze
   end
 
   def self.remote(authenticated, node_name, certificate)
+    external = retrieve_trusted_external(node_name)
+
     if authenticated
       extensions = {}
       if certificate.nil?
@@ -51,9 +61,9 @@ class Puppet::Context::TrustedInformation
           [ext['oid'].freeze, ext['value'].freeze]
         end]
       end
-      new('remote', node_name, extensions)
+      new('remote', node_name, extensions, external)
     else
-      new(false, nil, {})
+      new(false, nil, {}, external)
     end
   end
 
@@ -61,7 +71,32 @@ class Puppet::Context::TrustedInformation
     # Always trust local data by picking up the available parameters.
     client_cert = node ? node.parameters['clientcert'] : nil
 
-    new('local', client_cert, {})
+    new('local', client_cert, {}, retrieve_trusted_external(client_cert))
+  end
+
+  def self.retrieve_trusted_external(certname)
+    deep_freeze(Puppet::TrustedExternal.retrieve(certname))
+  end
+
+  # Deeply freezes the given object. The object and its content must be of the types:
+  # Array, Hash, Numeric, Boolean, Regexp, NilClass, or String. All other types raises an Error.
+  # (i.e. if they are assignable to Puppet::Pops::Types::Data type).
+  def self.deep_freeze(object)
+    case object
+    when Array
+      object.each {|v| deep_freeze(v) }
+      object.freeze
+    when Hash
+      object.each {|k, v| deep_freeze(k); deep_freeze(v) }
+      object.freeze
+    when NilClass, Numeric, TrueClass, FalseClass
+      # do nothing
+    when String
+      object.freeze
+    else
+      raise Puppet::Error, _("Unsupported data type: '%{klass}'") % { klass: object.class }
+    end
+    object
   end
 
   def to_h
@@ -71,6 +106,7 @@ class Puppet::Context::TrustedInformation
       'extensions'.freeze => extensions,
       'hostname'.freeze => hostname,
       'domain'.freeze => domain,
+      'external'.freeze => external,
     }.freeze
   end
 end
