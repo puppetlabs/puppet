@@ -6,6 +6,9 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
   "
 
+  # is there a better way to default this (or make sure libuser is never defaulted)?
+  defaultfor :kernel => :Linux
+
   commands :add => "groupadd", :delete => "groupdel", :modify => "groupmod"
 
   has_feature :system_groups unless %w{HP-UX Solaris}.include? Facter.value(:operatingsystem)
@@ -69,6 +72,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     if @resource.forcelocal?
       cmd = [command(:localadd)]
       @custom_environment = Puppet::Util::Libuser.getenv
+      Puppet.deprecation_warning _("`forcelocal` is deprecated and will be removed in a future release. This property has been replaced by the `libuser` provider.")
     else
       cmd = [command(:add)]
     end
@@ -89,6 +93,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     if @resource.forcelocal?
       cmd = [command(:localmodify)]
       @custom_environment = Puppet::Util::Libuser.getenv
+      Puppet.deprecation_warning _("`forcelocal` is deprecated and will be removed in a future release. This property has been replaced by the `libuser` provider.")
     else
       cmd = [command(:modify)]
     end
@@ -104,6 +109,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
   def deletecmd
     if @resource.forcelocal?
       @custom_environment = Puppet::Util::Libuser.getenv
+      Puppet.deprecation_warning _("`forcelocal` is deprecated and will be removed in a future release. This property has been replaced by the `libuser` provider.")
       [command(:localdelete), @resource[:name]]
     else
       [command(:delete), @resource[:name]]
