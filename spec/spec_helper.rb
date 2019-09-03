@@ -20,8 +20,7 @@ require 'puppet'
 # FastGettext's implementation of these methods.
 require 'puppet/gettext/stubs'
 
-gem 'rspec', '>=3.1.0'
-require 'rspec/expectations'
+require 'rspec'
 require 'rspec/its'
 require 'rspec/collection_matchers'
 
