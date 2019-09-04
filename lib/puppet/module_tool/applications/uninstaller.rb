@@ -15,9 +15,6 @@ module Puppet::ModuleTool
       end
 
       def run
-        # Disallow anything that invokes md5 to avoid un-friendly termination due to FIPS
-        raise _("Module uninstall is prohibited in FIPS mode.") if Facter.value(:fips_enabled)
-
         results = {
           :module_name       => @name,
           :requested_version => @version,
@@ -92,6 +89,8 @@ module Puppet::ModuleTool
         mod = @installed.first
 
         unless @ignore_changes
+          raise _("Either the `--ignore_changes` or `--force` argument must be specified to uninstall modules when running in FIPS mode.") if Facter.value(:fips_enabled)
+
           changes = begin
             Puppet::ModuleTool::Applications::Checksummer.run(mod.path)
           rescue ArgumentError
