@@ -12,6 +12,56 @@ describe Puppet::Util::HttpProxy do
 
   host, port, user, password = 'some.host', 1234, 'user1', 'pAssw0rd'
 
+  def expects_direct_connection_to(http, www)
+    expect(http.address).to eq(www.host)
+    expect(http.port).to eq(www.port)
+
+    expect(http.proxy_address).to be_nil
+    expect(http.proxy_port).to be_nil
+    expect(http.proxy_user).to be_nil
+    expect(http.proxy_pass).to be_nil
+  end
+
+  def expects_proxy_connection_via(http, www, host, port, user, password)
+    expect(http.address).to eq(www.host)
+    expect(http.port).to eq(www.port)
+
+    expect(http.proxy_address).to eq(host)
+    expect(http.proxy_port).to eq(port)
+    expect(http.proxy_user).to eq(user)
+    expect(http.proxy_pass).to eq(password)
+  end
+
+  describe '.proxy' do
+    let(:www) { URI::HTTP.build(host: 'www.example.com', port: 80) }
+
+    it 'uses a proxy' do
+      Puppet[:http_proxy_host] = host
+      Puppet[:http_proxy_port] = port
+      Puppet[:http_proxy_user] = user
+      Puppet[:http_proxy_password] = password
+
+      http = subject.proxy(www)
+      expects_proxy_connection_via(http, www, host, port, user, password)
+    end
+
+    it 'connects directly to the server' do
+      http = subject.proxy(www)
+      expects_direct_connection_to(http, www)
+    end
+
+    it 'connects directly to the server when HTTP_PROXY environment variable is set, but server matches no_proxy setting' do
+      Puppet[:http_proxy_host] = host
+      Puppet[:http_proxy_port] = port
+      Puppet[:no_proxy] = www.host
+
+      Puppet::Util.withenv('HTTP_PROXY' => "http://#{host}:#{port}") do
+        http = subject.proxy(www)
+        expects_direct_connection_to(http, www)
+      end
+    end
+  end
+
   describe ".http_proxy_env" do
     it "should return nil if no environment variables" do
       expect(subject.http_proxy_env).to eq(nil)
