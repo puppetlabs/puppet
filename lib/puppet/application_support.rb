@@ -19,7 +19,7 @@ module Puppet
     # @return [void]
     # @api private
     def self.push_application_context(run_mode, environment_mode = :local)
-      Puppet.push_context(Puppet.base_context(Puppet.settings), "Update for application settings (#{run_mode})")
+      Puppet.push_context_global(Puppet.base_context(Puppet.settings), "Update for application settings (#{run_mode})")
       # This use of configured environment is correct, this is used to establish
       # the defaults for an application that does not override, or where an override
       # has not been made from the command line.

@@ -148,7 +148,7 @@ module Puppet
     Puppet.settings.initialize_global_settings(args, require_config)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
-    @context.unsafe_push_global(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
+    push_context_global(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
     Puppet::Parser::Functions.reset
   end
   private_class_method :do_initialize_settings_for_run_mode
@@ -243,6 +243,14 @@ module Puppet
   # @api private
   def self.push_context(overrides, description = "")
     @context.push(overrides, description)
+  end
+
+  # Push something onto the the context and make it global across threads. This
+  # has the potential to convert threadlocal overrides earlier on the stack into
+  # global overrides.
+  # @api private
+  def self.push_context_global(overrides, description = '')
+    @context.unsafe_push_global(overrides, description)
   end
 
   # Return to the previous context.
