@@ -755,6 +755,15 @@ RSpec.describe Puppet::Type.type(:exec) do
           expect(@test.check_all_attributes).to eq(true)
           expect(@logs.shift.message).to eq("test output")
         end
+
+        it "should not emit output to debug if sensitive is true" do
+          Puppet::Util::Log.level = :debug
+          @test[param] = @fail
+          allow(@test.parameters[param]).to receive(:sensitive).and_return(true)
+          expect(@test.check_all_attributes).to eq(true)
+          expect(@logs).not_to include(an_object_having_attributes(level: :debug, message: "test output"))
+          expect(@logs).to include(an_object_having_attributes(level: :debug, message: "[output redacted]"))
+        end
       end
     end
   end

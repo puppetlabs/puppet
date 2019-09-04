@@ -455,9 +455,13 @@ module Puppet
           return false
         end
 
-        output.split(/\n/).each { |line|
-          self.debug(line)
-        }
+        if sensitive
+          self.debug("[output redacted]")
+        else
+          output.split(/\n/).each { |line|
+            self.debug(line)
+          }
+        end
 
         status.exitstatus != 0
       end
@@ -507,9 +511,13 @@ module Puppet
           return false
         end
 
-        output.split(/\n/).each { |line|
-          self.debug(line)
-        }
+        if sensitive
+          self.debug("[output redacted]")
+        else
+          output.split(/\n/).each { |line|
+            self.debug(line)
+          }
+        end
 
         status.exitstatus == 0
       end
