@@ -351,6 +351,8 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
       # Setup signal traps immediately after daemonization so we clean up the daemon
       daemon.set_signal_traps
 
+      log_config if Puppet[:daemonize]
+      
       Puppet.override(ssl_context: wait_for_certificates) do
         if Puppet[:onetime]
           onetime(daemon)
@@ -358,6 +360,16 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
           main(daemon)
         end
       end
+    end
+  end
+
+  def log_config
+    #skip also config reading and parsing if debug is not enabled
+    return unless Puppet::Util::Log.sendlevel?(:debug)
+
+    Puppet.settings.stringify_settings(:agent, :all).each_pair do |k,v|
+      next if k.include?("password") || v.to_s.empty?
+      Puppet.debug("Using setting: #{k}=#{v}")
     end
   end
 
