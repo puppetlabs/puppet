@@ -63,7 +63,7 @@ describe Puppet::Type.type(:schedule) do
     it "should not produce default schedules when default_schedules is false"  do
       Puppet[:default_schedules] = false
       schedules = Puppet::Type.type(:schedule).mkdefaultschedules
-      expect(schedules).to have_exactly(0).items
+      expect(schedules).to be_empty
     end
 
     it "should produce a schedule named puppet with a period of hourly and a repeat of 2" do

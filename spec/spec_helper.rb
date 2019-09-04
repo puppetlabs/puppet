@@ -22,7 +22,6 @@ require 'puppet/gettext/stubs'
 
 require 'rspec'
 require 'rspec/its'
-require 'rspec/collection_matchers'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec

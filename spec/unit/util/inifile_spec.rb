@@ -132,7 +132,7 @@ describe Puppet::Util::IniConfig::PhysicalFile do
 
         subject.parse(text)
 
-        expect(subject.contents).to have(1).items
+        expect(subject.contents.count).to eq 1
         sect = subject.contents[0]
         expect(sect.name).to eq "mysect"
       end
@@ -171,7 +171,7 @@ describe Puppet::Util::IniConfig::PhysicalFile do
         text = "[main]\nkey=val\n"
 
         subject.parse(text)
-        expect(subject.contents).to have(1).items
+        expect(subject.contents.count).to eq 1
         sect = subject.contents[0]
         expect(sect['key']).to eq 'val'
       end
@@ -186,7 +186,7 @@ white_space_after_equals= value3
 white_space_after_value=value4\t
 INIFILE
           subject.parse(text)
-          expect(subject.contents).to have(1).items
+          expect(subject.contents.count).to eq 1
           subject.contents[0]
         end
 
@@ -213,7 +213,7 @@ INIFILE
         text = "[main]\nkey=val\n moreval"
 
         subject.parse(text)
-        expect(subject.contents).to have(1).items
+        expect(subject.contents.count).to eq 1
         sect = subject.contents[0]
         expect(sect['key']).to eq "val\n moreval"
       end
@@ -261,7 +261,7 @@ INIFILE
     subject.parse(text)
 
     sections = subject.sections
-    expect(sections).to have(2).items
+    expect(sections.count).to eq 2
     expect(sections[0].name).to eq "first"
     expect(sections[1].name).to eq "second"
   end

@@ -155,7 +155,7 @@ describe Puppet::Face[:help, '0.0.1'] do
     # If we don't, these tests are ... less than useful, because they assume
     # it.  When this breaks you should consider ditching the entire feature
     # and tests, but if not work out how to fake one. --daniel 2011-04-11
-    it { is_expected.to have_at_least(1).item }
+    it { expect(subject.count).to be > 1 }
 
     # Meh.  This is nasty, but we can't control the other list; the specific
     # bug that caused these to be listed is annoyingly subtle and has a nasty
