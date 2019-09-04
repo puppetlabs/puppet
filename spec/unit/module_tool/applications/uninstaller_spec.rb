@@ -58,6 +58,12 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       subject[:affected_modules].length == 1
     end
 
+    it 'should refuse to uninstall in FIPS mode' do
+      allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
+      err = subject[:error][:oneline]
+      expect(err).to eq("Either the `--ignore_changes` or `--force` argument must be specified to uninstall modules when running in FIPS mode.")
+    end
+
     context 'in two modulepaths' do
       before { preinstall('pmtacceptance-stdlib', '2.0.0', :into => secondary_dir) }
 
@@ -126,6 +132,11 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         it 'overwrites the installed module with the greatest version matching that range' do
           expect(subject).to include :result => :success
         end
+
+        it 'uninstalls in FIPS mode' do
+          allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
+          expect(subject).to include :result => :success
+        end
       end
 
       context 'without local changes' do
@@ -150,6 +161,11 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
           expect(subject[:affected_modules].length).to eq(1)
           expect(subject[:affected_modules].first.forge_name).to eq("pmtacceptance/stdlib")
         end
+
+        it 'uninstalls in FIPS mode' do
+          allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
+          expect(subject).to include :result => :success
+        end
       end
 
       context "while depended upon" do
@@ -161,12 +177,5 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         end
       end
     end
-  end
-
-  context 'when in FIPS mode...' do
-    it 'module uninstaller refuses to run' do
-      allow(Facter).to receive(:value).with(:fips_enabled).and_return(true)
-      expect {application.run}.to raise_error(/Module uninstall is prohibited in FIPS mode/)
-    end 
   end
 end
