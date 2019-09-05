@@ -603,6 +603,25 @@ describe Puppet::Application::Agent do
     end
   end
 
+  describe "when starting in daemon mode on non-windows", :unless => Puppet.features.microsoft_windows? do
+    before :each do
+      allow(Puppet).to receive(:notice)
+      Puppet[:daemonize] = true
+      allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
+    end
+
+    it "should not print config in default mode" do
+      execute_agent
+      expect(@logs).to be_empty
+    end
+
+    it "should print config in debug mode" do
+      @puppetd.options[:debug] = true
+      execute_agent
+      expect(@logs).to include(an_object_having_attributes(level: :debug, message: /agent_catalog_run_lockfile=/))
+    end
+  end
+
   def execute_agent
     @puppetd.setup
     @puppetd.run_command
