@@ -1,17 +1,19 @@
 class Puppet::HTTP::Client
-  def initialize(pool: Puppet::Network::HTTP::Pool.new, ssl_context: nil)
+  def initialize(pool: Puppet::Network::HTTP::Pool.new, ssl_context: nil, redirect_limit: 10)
     @pool = pool
     @default_headers = {
       'X-Puppet-Version' => Puppet.version,
       'User-Agent' => Puppet[:http_user_agent],
     }.freeze
     @default_ssl_context = ssl_context
+    @redirector = Puppet::HTTP::Redirector.new(redirect_limit)
   end
 
   def connect(uri, ssl_context: nil, &block)
     ctx = ssl_context ? ssl_context : default_ssl_context
     site = Puppet::Network::HTTP::Site.from_uri(uri)
-    verifier = Puppet::SSL::Verifier.new(uri.host, ctx)
+    verifier = Puppet::SSL::Verifier.new(site.host, ctx)
+
     @pool.with_connection(site, verifier) do |http|
       if block_given?
         handle_post_connect(uri, http, &block)
@@ -24,54 +26,40 @@ class Puppet::HTTP::Client
   end
 
   def get(url, headers: {}, params: {}, ssl_context: nil, user: nil, password: nil, &block)
-    response = nil
-
-    connect(url, ssl_context: ssl_context) do |http|
-      query = encode_params(params)
-      path = "#{url.path}?#{query}"
-
-      request = Net::HTTP::Get.new(path, @default_headers.merge(headers))
-      apply_auth(request, user, password)
-
-      http.request(request) do |nethttp|
-        response = Puppet::HTTP::Response.new(nethttp)
-        if block_given?
-          yield response
-        else
-          response.read_body
-        end
-      end
+    query = encode_params(params)
+    unless query.empty?
+      url = url.dup
+      url.query = query
     end
 
-    Puppet.info("HTTP GET #{url} returned #{response.code} #{response.reason}")
-    response
+    request = Net::HTTP::Get.new(url, @default_headers.merge(headers))
+    apply_auth(request, user, password)
+
+    execute_streaming(request, ssl_context: ssl_context) do |response|
+      if block_given?
+        yield response
+      else
+        response.read_body
+      end
+    end
   end
 
   def put(url, headers: {}, params: {}, content_type:, body:, ssl_context: nil, user: nil, password: nil)
-    response = nil
-
-    connect(url, ssl_context: ssl_context) do |http|
-      query = encode_params(params)
-      path = "#{url.path}?#{query}"
-
-      request = Net::HTTP::Put.new(path, @default_headers.merge(headers))
-      request.body = body
-      request['Content-Length'] = body.bytesize
-      request['Content-Type'] = content_type
-      apply_auth(request, user, password)
-
-      http.request(request) do |nethttp|
-        response = Puppet::HTTP::Response.new(nethttp)
-        if block_given?
-          yield response
-        else
-          response.read_body
-        end
-      end
+    query = encode_params(params)
+    unless query.empty?
+      url = url.dup
+      url.query = query
     end
 
-    Puppet.info("HTTP PUT #{url} returned #{response.code} #{response.reason}")
-    response
+    request = Net::HTTP::Put.new(url, @default_headers.merge(headers))
+    request.body = body
+    request['Content-Length'] = body.bytesize
+    request['Content-Type'] = content_type
+    apply_auth(request, user, password)
+
+    execute_streaming(request, ssl_context: ssl_context) do |response|
+      response.read_body
+    end
   end
 
   def close
@@ -79,6 +67,33 @@ class Puppet::HTTP::Client
   end
 
   private
+
+  def execute_streaming(request, ssl_context:, &block)
+    redirects = 0
+
+    loop do
+      connect(request.uri, ssl_context: ssl_context) do |http|
+        http.request(request) do |nethttp|
+          response = Puppet::HTTP::Response.new(nethttp)
+          begin
+            Puppet.info("HTTP #{request.method.upcase} returned #{response.code} #{response.reason}")
+
+            if @redirector.redirect?(request, response)
+              request = @redirector.redirect_to(request, response, redirects)
+              redirects += 1
+              next
+            end
+
+            yield response
+          ensure
+            response.drain
+          end
+
+          return response
+        end
+      end
+    end
+  end
 
   def encode_params(params)
     params.map do |key, value|

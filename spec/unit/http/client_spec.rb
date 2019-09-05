@@ -193,4 +193,160 @@ describe Puppet::HTTP::Client do
       client.get(uri, user: 'user', password: nil)
     end
   end
+
+  context "when redirecting" do
+    let(:start_url)  { URI("https://www.example.com:8140/foo") }
+    let(:bar_url)  { "https://www.example.com:8140/bar" }
+    let(:baz_url) { "https://www.example.com:8140/baz" }
+    let(:other_host)  { "https://other.example.com:8140/qux" }
+
+    def redirect_to(status: 302, url:, body: nil)
+      { status: status, headers: { 'Location' => url }, body: body }
+    end
+
+    it "preserves GET method" do
+      stub_request(:get, start_url).to_return(redirect_to(url: bar_url))
+      stub_request(:get, bar_url).to_return(status: 200)
+
+      client.get(start_url)
+    end
+
+    it "preserves PUT method" do
+      stub_request(:put, start_url).to_return(redirect_to(url: bar_url))
+      stub_request(:put, bar_url).to_return(status: 200)
+
+      client.put(start_url, body: "", content_type: 'text/plain')
+    end
+
+    it "preserves query parameters" do
+      query = { 'debug' => true }
+      stub_request(:get, start_url).with(query: query).to_return(redirect_to(url: bar_url))
+      stub_request(:get, bar_url).with(query: query).to_return(status: 200)
+
+      client.get(start_url, params: query)
+    end
+
+    it "preserves custom and default headers when redirecting" do
+      headers = { 'X-Foo' => 'Bar', 'X-Puppet-Version' => Puppet.version }
+      stub_request(:get, start_url).with(headers: headers).to_return(redirect_to(url: bar_url))
+      stub_request(:get, bar_url).with(headers: headers).to_return(status: 200)
+
+      client.get(start_url, headers: headers)
+    end
+
+    it "redirects given a relative location" do
+      relative_url = "/people.html"
+      stub_request(:get, start_url).to_return(redirect_to(url: relative_url))
+      stub_request(:get, "https://www.example.com:8140/people.html").to_return(status: 200)
+
+      client.get(start_url)
+    end
+
+    it "preserves query parameters given a relative location" do
+      relative_url = "/people.html"
+      query = { 'debug' => true }
+      stub_request(:get, start_url).with(query: query).to_return(redirect_to(url: relative_url))
+      stub_request(:get, "https://www.example.com:8140/people.html").with(query: query).to_return(status: 200)
+
+      client.get(start_url, params: query)
+    end
+
+    [301, 302, 307].each do |code|
+      it "redirects on #{code}" do
+        stub_request(:get, start_url).to_return(redirect_to(status: code, url: bar_url))
+        stub_request(:get, bar_url).to_return(status: 200)
+
+        client.get(start_url)
+      end
+    end
+
+    [303, 308].each do |code|
+      it "returns an error on #{code}" do
+        stub_request(:get, start_url).to_return(redirect_to(status: code, url: bar_url))
+
+        response = client.get(start_url)
+        expect(response.code).to eq(code)
+        expect(response).to_not be_success
+      end
+    end
+
+    it "raises an error if the Location header is missing" do
+      stub_request(:get, start_url).to_return(status: 302)
+
+      expect {
+        client.get(start_url)
+      }.to raise_error(Puppet::HTTP::ProtocolError, "Location response header is missing")
+    end
+
+    it "raises an error if the Location header is invalid" do
+      stub_request(:get, start_url).to_return(redirect_to(status: 302, url: 'http://foo"bar'))
+
+      expect {
+        client.get(start_url)
+      }.to raise_error(Puppet::HTTP::ProtocolError, /Location URI is invalid/)
+    end
+
+    it "raises an error if limit is 0 and we're asked to follow" do
+      stub_request(:get, start_url).to_return(redirect_to(url: bar_url))
+
+      client = described_class.new(redirect_limit: 0)
+      expect {
+        client.get(start_url)
+      }.to raise_error(Puppet::HTTP::TooManyRedirects, %r{Too many HTTP redirections for https://www.example.com:8140})
+    end
+
+    it "raises an error if asked to follow redirects more times than the limit" do
+      stub_request(:get, start_url).to_return(redirect_to(url: bar_url))
+      stub_request(:get, bar_url).to_return(redirect_to(url: baz_url))
+
+      client = described_class.new(redirect_limit: 1)
+      expect {
+        client.get(start_url)
+      }.to raise_error(Puppet::HTTP::TooManyRedirects, %r{Too many HTTP redirections for https://www.example.com:8140})
+    end
+
+    it "follows multiple redirects if equal to or less than the redirect limit" do
+      stub_request(:get, start_url).to_return(redirect_to(url: bar_url))
+      stub_request(:get, bar_url).to_return(redirect_to(url: baz_url))
+      stub_request(:get, baz_url).to_return(status: 200, body: 'followed')
+
+      client = described_class.new(redirect_limit: 2)
+      response = client.get(start_url)
+      expect(response).to be_success
+      expect(response.body).to eq('followed')
+    end
+
+    it "redirects to a different host" do
+      stub_request(:get, start_url).to_return(redirect_to(url: other_host))
+      stub_request(:get, other_host).to_return(status: 200, body: 'followed')
+
+      response = client.get(start_url)
+      expect(response).to be_success
+      expect(response.body).to eq('followed')
+    end
+
+    it "redirects from http to https" do
+      http = URI("http://example.com/foo")
+      https = URI("https://example.com/bar")
+
+      stub_request(:get, http).to_return(redirect_to(url: https))
+      stub_request(:get, https).to_return(status: 200, body: 'followed')
+
+      response = client.get(http)
+      expect(response).to be_success
+      expect(response.body).to eq('followed')
+    end
+
+    it "redirects from https to http" do
+      http = URI("http://example.com/foo")
+      https = URI("https://example.com/bar")
+
+      stub_request(:get, https).to_return(redirect_to(url: http))
+      stub_request(:get, http).to_return(status: 200, body: 'followed')
+
+      response = client.get(https)
+      expect(response).to be_success
+      expect(response.body).to eq('followed')
+    end
+  end
 end

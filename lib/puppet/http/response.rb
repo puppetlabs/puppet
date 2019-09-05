@@ -22,4 +22,13 @@ class Puppet::HTTP::Response
   def success?
     @nethttp.is_a?(Net::HTTPSuccess)
   end
+
+  def [](name)
+    @nethttp[name]
+  end
+
+  def drain
+    body
+    true
+  end
 end
