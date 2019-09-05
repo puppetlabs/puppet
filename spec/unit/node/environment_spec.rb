@@ -53,7 +53,7 @@ describe Puppet::Node::Environment do
 
         expect(hash[base]).to eq("same env")
         expect(hash[different]).to eq("different env")
-        expect(hash).to have(2).item
+        expect(hash.count).to eq 2
       end
 
       it "is equal when name, modules, and manifests are the same" do

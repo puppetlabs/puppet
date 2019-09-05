@@ -48,7 +48,7 @@ describe Puppet::Type.type(:package).provider(:pkgin) do
 
     it "returns an array of providers for each package" do
       instances = described_class.instances
-      expect(instances).to have(2).items
+      expect(instances.count).to eq 2
       instances.each do |instance|
         expect(instance).to be_a(described_class)
       end

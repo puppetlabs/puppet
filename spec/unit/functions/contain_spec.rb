@@ -192,7 +192,7 @@ describe 'The "contain" function' do
     contained = catalog.resource("Class", "contained")
     container = catalog.resource("Class", "container")
 
-    expect(catalog.edges_between(container, contained)).to have(1).item
+    expect(catalog.edges_between(container, contained).count).to eq 1
   end
 
   context "when a containing class has a dependency order" do
