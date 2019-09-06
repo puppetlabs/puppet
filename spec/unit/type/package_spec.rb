@@ -375,6 +375,11 @@ describe Puppet::Type.type(:package) do
       expect(pkg[:allow_virtual]).to eq true
     end
 
+    it "defaults to false on dpkg provider" do
+      pkg = Puppet::Type.type(:package).new(:name => 'yay', :provider => :dpkg)
+      expect(pkg[:allow_virtual]).to be_nil
+    end
+
     it "defaults to false on platforms that do not support virtual packages" do
       pkg = Puppet::Type.type(:package).new(:name => 'yay', :provider => :apple)
       expect(pkg[:allow_virtual]).to be_nil
