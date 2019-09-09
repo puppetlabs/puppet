@@ -29,6 +29,14 @@ describe Puppet::Type.type(:package).provider(:pip) do
       })
     end
 
+    it "should correctly parse arbitrary equality" do
+      expect(described_class.parse("real_package===1.2.5")).to eq({
+        :ensure   => "1.2.5",
+        :name     => "real_package",
+        :provider => :pip,
+      })
+    end
+
     it "should return nil on invalid input" do
       expect(described_class.parse("foo")).to eq(nil)
     end
