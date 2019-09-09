@@ -73,6 +73,11 @@ module Puppet
         provider.enabled?
       end
 
+      #This only works on Windows systems.
+      newvalue(:delayed, :event => :service_delayed_start) do
+        provider.delayed_start
+      end
+
       # This only makes sense on systemd systems. Static services cannot be enabled
       # or disabled manually.
       def insync?(current)
