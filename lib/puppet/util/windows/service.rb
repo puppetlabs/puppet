@@ -180,7 +180,22 @@ module Puppet::Util::Windows
     # // Value to indicate no change to an optional parameter
     # //
     # #define SERVICE_NO_CHANGE              0xffffffff
-    SERVICE_NO_CHANGE = 0xffffffff
+    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w
+    SERVICE_CONFIG_DESCRIPTION              = 0x00000001
+    SERVICE_CONFIG_FAILURE_ACTIONS          = 0x00000002
+    SERVICE_CONFIG_DELAYED_AUTO_START       = 0x00000003
+    SERVICE_CONFIG_FAILURE_ACTIONS_FLAG     = 0x00000004
+    SERVICE_CONFIG_SERVICE_SID_INFO         = 0x00000005
+    SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO = 0x00000006
+    SERVICE_CONFIG_PRESHUTDOWN_INFO         = 0x00000007
+    SERVICE_CONFIG_TRIGGER_INFO             = 0x00000008
+    SERVICE_CONFIG_PREFERRED_NODE           = 0x00000009
+    SERVICE_CONFIG_LAUNCH_PROTECTED         = 0x00000012
+    SERVICE_NO_CHANGE                       = 0xffffffff
+
+    SERVICE_CONFIG_CHANGES = {
+      SERVICE_CONFIG_DELAYED_AUTO_START => :SERVICE_CONFIG_DELAYED_AUTO_START
+    }
 
     # Service enum codes
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-enumservicesstatusexa
@@ -219,6 +234,15 @@ module Puppet::Util::Windows
       )
     end
 
+    class SERVICE_DELAYED_AUTO_START_INFO < FFI::Struct
+      layout(:fDelayedAutostart, :int) # BOOL
+      alias aset []=
+      # Intercept the accessor so that we can handle either true/false or 1/0.
+      # Since there is only one member, there’s no need to check the key name.
+      def []=(key, value)
+        [0, false].include?(value) ? aset(key, 0) : aset(key, 1)
+      end
+    end
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_enum_service_status_processw
     # typedef struct _ENUM_SERVICE_STATUS_PROCESSW {
@@ -426,6 +450,23 @@ module Puppet::Util::Windows
       end
     end
     module_function :set_startup_mode
+
+    def set_startup_mode_delayed(service_name, startup_type, delayed)
+      change = SERVICE_CONFIG_CHANGES.key(startup_type) 
+      delayed_start = SERVICE_DELAYED_AUTO_START_INFO.new
+      delayed_start[:fDelayedAutostart] = delayed
+      open_service(service_name, SC_MANAGER_CONNECT, SERVICE_CHANGE_CONFIG) do |service|
+        success = ChangeServiceConfig2W(
+          service,
+          change,
+          delayed_start,
+        )
+        if success == FFI::WIN32_FALSE
+          raise Puppet::Util::windows::Error.new(_("Failed to update service delayed_auto_start configuration"))
+        end
+      end
+    end
+    module_function :set_startup_mode_delayed
 
     # enumerate over all services in all states and return them as a hash
     #
@@ -949,6 +990,13 @@ module Puppet::Util::Windows
         :lpcwstr
       ], :win32_bool
 
+      ffi_lib :advapi32
+      attach_function_private :ChangeServiceConfig2W,
+        [
+          :handle,
+          :dword,
+          :lpvoid
+        ], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-enumservicesstatusexw
     # BOOL EnumServicesStatusExW(
