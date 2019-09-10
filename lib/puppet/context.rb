@@ -1,4 +1,4 @@
-require 'concurrent'
+require 'puppet/thread_local'
 
 # Puppet::Context is a system for tracking services and contextual information
 # that puppet needs to be able to run. Values are "bound" in a context when it is created
@@ -21,12 +21,12 @@ class Puppet::Context
 
   # @api private
   def initialize(initial_bindings)
-    @stack = Concurrent::ThreadLocalVar.new(EmptyStack.new.push(initial_bindings))
+    @stack = Puppet::ThreadLocal.new(EmptyStack.new.push(initial_bindings))
 
     # By initializing @rollbacks to nil and creating a hash lazily when #mark or
     # #rollback are called we ensure that the hashes are never shared between
     # threads and it's safe to mutate them
-    @rollbacks = Concurrent::ThreadLocalVar.new(nil)
+    @rollbacks = Puppet::ThreadLocal.new(nil)
   end
 
   # @api private
@@ -39,7 +39,7 @@ class Puppet::Context
   #
   # @api private
   def unsafe_push_global(overrides, description = '')
-    @stack = Concurrent::ThreadLocalVar.new(
+    @stack = Puppet::ThreadLocal.new(
       @stack.value.push(overrides, description)
     )
   end
