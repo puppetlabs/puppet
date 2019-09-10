@@ -97,10 +97,8 @@ describe Puppet::Forge do
   def mock_proxy(port, proxy_args, result, &block)
     http = double("http client")
     proxy = double("http proxy")
-    proxy_class = double("http proxy class")
 
-    expect(Net::HTTP).to receive(:Proxy).with(*proxy_args).and_return(proxy_class)
-    expect(proxy_class).to receive(:new).with(host, port).and_return(proxy)
+    expect(Net::HTTP).to receive(:new).with(host, port, *proxy_args).and_return(proxy)
 
     expect(proxy).to receive(:open_timeout=)
     expect(proxy).to receive(:read_timeout=)
