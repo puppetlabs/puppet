@@ -30,6 +30,7 @@ describe Puppet::Application::Agent do
     allow(Puppet::Node::Facts.indirection).to receive(:terminus_class=)
 
     allow(Puppet.settings).to receive(:use)
+    allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
   end
 
   it "should operate in agent run_mode" do
@@ -393,8 +394,6 @@ describe Puppet::Application::Agent do
     it "should inform the daemon about our agent if :client is set to 'true'" do
       @puppetd.options[:client] = true
 
-      allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
-
       execute_agent
 
       expect(@daemon.agent).to eq(@agent)
@@ -404,8 +403,6 @@ describe Puppet::Application::Agent do
       allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
       Puppet[:daemonize] = true
       allow(Signal).to receive(:trap)
-
-      allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
 
       expect(@daemon).to receive(:daemonize)
 
@@ -470,7 +467,6 @@ describe Puppet::Application::Agent do
 
     it "should dispatch to onetime if --onetime is used" do
       Puppet[:onetime] = true
-      allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
 
       expect(@puppetd).to receive(:onetime)
 
@@ -479,7 +475,6 @@ describe Puppet::Application::Agent do
 
     it "should dispatch to main if --onetime and --fingerprint are not used" do
       Puppet[:onetime] = false
-      allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
 
       expect(@puppetd).to receive(:main)
 
@@ -493,7 +488,7 @@ describe Puppet::Application::Agent do
         @puppetd.options[:client] = :client
         @puppetd.options[:detailed_exitcodes] = false
 
-        allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
+
       end
 
       it "should setup traps" do
@@ -592,7 +587,6 @@ describe Puppet::Application::Agent do
     describe "without --onetime and --fingerprint" do
       before :each do
         allow(Puppet).to receive(:notice)
-        allow(Puppet::SSL::StateMachine).to receive(:new).and_return(machine)
       end
 
       it "should start our daemon" do
