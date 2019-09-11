@@ -1,12 +1,13 @@
+
+require 'yaml'
 # The `yaml_data` is a hiera 5 `data_hash` data provider function.
 # See [the configuration guide documentation](https://puppet.com/docs/puppet/latest/hiera_config_yaml_5.html#configuring-a-hierarchy-level-built-in-backends) for
 # how to use this function.
 #
 # @since 4.8.0
 #
-require 'yaml'
-
 Puppet::Functions.create_function(:yaml_data) do
+  # @since 4.8.0
   dispatch :yaml_data do
     param 'Struct[{path=>String[1]}]', :options
     param 'Puppet::LookupContext', :context
