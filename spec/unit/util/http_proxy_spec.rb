@@ -292,5 +292,21 @@ describe Puppet::Util::HttpProxy do
 
       subject.request_with_redirects(dest, :head, 0)
     end
+
+    it 'preserves query parameters' do
+      url = URI.parse('http://mydomain.com/some/path?foo=bar')
+
+      expect_any_instance_of(Net::HTTP).to receive(:head) do |_method, path, _headers|
+        expect(path).to eq(url)
+      end.and_return(http_ok)
+
+      expect_any_instance_of(Net::HTTP).to receive(:request_get) do |_http, path, _headers, &block|
+        expect(path).to eq(url)
+      end.and_return(http_ok)
+
+      subject.request_with_redirects(url, :get, 0) do
+        # unused
+      end
+    end
   end
 end
