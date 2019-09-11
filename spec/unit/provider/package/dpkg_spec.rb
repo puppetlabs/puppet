@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'stringio'
 
-describe Puppet::Type.type(:package).provider(:dpkg) do
+describe Puppet::Type.type(:package).provider(:dpkg), unless: Puppet::Util::Platform.jruby? do
   let(:bash_version) { '4.2-5ubuntu3' }
   let(:bash_installed_output) { "install ok installed bash #{bash_version}\n" }
   let(:bash_installed_io) { StringIO.new(bash_installed_output) }
