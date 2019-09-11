@@ -86,9 +86,9 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   end
 
   # Parse lines of output from `pip freeze`, which are structured as:
-  # _package_==_version_
+  # _package_==_version_ or _package_===_version_
   def self.parse(line)
-    if line.chomp =~ /^([^=]+)==([^=]+)$/
+    if line.chomp =~ /^([^=]+)===?([^=]+)$/
       {:ensure => $2, :name => $1, :provider => name}
     end
   end
