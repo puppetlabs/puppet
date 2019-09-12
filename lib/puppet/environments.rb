@@ -1,3 +1,5 @@
+require 'puppet/concurrent/synchronized'
+
 # @api private
 module Puppet::Environments
 
@@ -293,6 +295,7 @@ module Puppet::Environments
 
   class Cached
     include EnvironmentLoader
+    include Puppet::Concurrent::Synchronized
 
     class DefaultCacheExpirationService
       def created(env)
