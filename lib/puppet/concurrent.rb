@@ -1,0 +1,2 @@
+module Puppet::Concurrent
+end
