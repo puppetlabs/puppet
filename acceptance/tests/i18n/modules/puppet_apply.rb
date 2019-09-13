@@ -4,6 +4,8 @@ test_name 'C100567: puppet apply of module should translate messages' do
   confine :except, :platform => /^cumulus/ # translation not supported
   confine :except, :platform => /^solaris/ # translation not supported
 
+  skip_test "Localizations are unavailable"
+
   tag 'audit:medium',
       'audit:acceptance'
 
