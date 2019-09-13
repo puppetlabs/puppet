@@ -410,6 +410,8 @@ class Puppet::Resource
   end
 
   # Convert our resource to yaml for Hiera purposes.
+  #
+  # @deprecated Use {to_hiera_hash} instead.
   def to_hierayaml
     # Collect list of attributes to align => and move ensure first
     attr = parameters.keys
@@ -429,36 +431,19 @@ class Puppet::Resource
     "  %s:\n%s" % [self.title, attributes]
   end
 
-  def hiera_yaml_serialize(data)
-    case data
-    when Array
-      data.map { |v| hiera_yaml_serialize(v) }
-    when Hash
-      data.map do |k, v|
-        { k.to_s => hiera_yaml_serialize(v) }
-      end.inject(:merge)
-    when Time, Symbol
-      data.to_s
-    when String
-      # Malformed strings cause trouble when building the YAML document, scrub
-      # all strings to ensure they are valid.
-      data.scrub
-      data
-    else
-      data
-    end
-  end
-
   # Convert our resource to a hiera hash suitable for serialization.
   def to_hiera_hash
+    # to_data_hash converts to safe Data types, e.g. no symbols, unicode replacement character
+    h = to_data_hash
+
+    params = h['parameters'] || {}
+    value = params.delete('ensure')
+
     res = {}
+    res['ensure'] = value if value
+    res.merge!(Hash[params.sort])
 
-    if parameters.include?(:ensure)
-      res['ensure'] = parameters.delete(:ensure).to_s
-    end
-    res.merge!(hiera_yaml_serialize(Hash[parameters.sort]) || {})
-
-    return { self.title.to_s => res }
+    return { h['title'] => res }
   end
 
   # Convert our resource to Puppet code.
