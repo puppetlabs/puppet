@@ -143,7 +143,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
     if options[:to_yaml]
       data = resources.map do |resource|
-        resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_yaml_hash
+        resource.prune_parameters(:parameters_to_include => @extra_params).to_hiera_hash
       end.inject(:merge!)
       text = YAML.dump(type.downcase => data)
     else

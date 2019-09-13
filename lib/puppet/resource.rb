@@ -449,8 +449,8 @@ class Puppet::Resource
     end
   end
 
-  # Convert our resource to a hash suitable for YAML serialization.
-  def to_hiera_yaml_hash
+  # Convert our resource to a hiera hash suitable for serialization.
+  def to_hiera_hash
     res = {}
 
     if parameters.include?(:ensure)

@@ -765,7 +765,7 @@ describe Puppet::Resource do
     end
 
     it "should convert some types to String" do
-      expect(@resource.to_hiera_yaml_hash).to eq(
+      expect(@resource.to_hiera_hash).to eq(
         "/my/file" => {
           'ensure' => "present",
           'bar'    => "a'b",
@@ -778,13 +778,13 @@ describe Puppet::Resource do
     it "accepts symbolic titles" do
       res = Puppet::Resource.new(:file, "/my/file", :parameters => { 'ensure' => "present" })
 
-      expect(res.to_hiera_yaml_hash.keys).to eq(["/my/file"])
+      expect(res.to_hiera_hash.keys).to eq(["/my/file"])
     end
 
     it "emits an empty parameters hash" do
       res = Puppet::Resource.new(:file, "/my/file")
 
-      expect(res.to_hiera_yaml_hash).to eq({"/my/file" => {}})
+      expect(res.to_hiera_hash).to eq({"/my/file" => {}})
     end
   end
   describe "when converting to json" do
