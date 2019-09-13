@@ -189,6 +189,14 @@ describe 'Puppet::Type::User::Provider::Aix' do
       provider.password = 'foo'
     end
 
+    it "changes the user's password without leaking it into logs" do
+      pending "Cannot test :execute on JRuby" if RUBY_PLATFORM == 'java' || Puppet::Util::Platform.windows?
+      Puppet::Util::Log.level = :debug
+      provider.password = 'foo'
+      expect(@logs).to include(an_object_having_attributes(level: :debug, message: /Executing/))
+      expect(@logs).not_to include(an_object_having_attributes(level: :debug, message: /foo/))
+    end
+
     it "closes and deletes the tempfile" do
       allow(provider).to receive(:execute).with(cmd, execute_options).and_return("")
 
@@ -210,6 +218,35 @@ describe 'Puppet::Type::User::Provider::Aix' do
       expect(provider).to receive(:password=).with('password')
 
       provider.create
+    end
+
+    it 'should create the user without leaking the password into logs' do
+      Puppet::Util::Log.level = :debug
+
+      #allow(provider).to receive(:command).with(:list).and_return '/usr/sbin/lsuser'
+      allow(provider.class).to receive(:command).with(:list).and_return '/usr/sbin/lsuser2'
+      #allow(provider).to receive(:command).with(:add).and_return '/usr/bin/mkuser'
+      allow(provider.class).to receive(:command).with(:add).and_return '/usr/bin/mkuser2'
+      #allow(provider).to receive(:command).with(:delete).and_return '/usr/sbin/rmuser'
+      #allow(provider).to receive(:command).with(:modify).and_return '/usr/bin/chuser'
+      allow(provider.class).to receive(:command).with(:modify).and_return '/usr/bin/chuser2'
+      #allow(provider).to receive(:command).with(:chpasswd).and_return '/bin/chpasswd'
+      allow(provider.class).to receive(:command).with(:chpasswd).and_return '/bin/chpasswd2'
+
+      resource[:password] = 'foo'
+      #resource[:groups] = ['g1','g2']
+
+      allow(provider).to receive(:execute) do |command, options|
+        #expect(command).not_to match(/foo/) if !command.nil?
+        #expect(options[:stdin]).to be_an_instance_of(File)
+        expect(options).not_to match(/foo/)
+        #Puppet.debug('foo')
+        '' # good generic result?
+      end
+
+      provider.create
+
+      expect(@logs).not_to include(an_object_having_attributes(level: :debug, message: /foo/))
     end
   end
 end
