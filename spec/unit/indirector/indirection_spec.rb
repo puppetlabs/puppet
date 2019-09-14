@@ -142,6 +142,17 @@ describe Puppet::Indirector::Indirection do
         expect(@indirection.terminus_setting).to eq(nil)
         expect(@indirection.cache_class).to eq(nil)
       end
+
+      it 'can modify indirection settings globally for all threads using the global setter' do
+        Thread.new do
+          @indirection.set_global_setting(:terminus_class, :alternate_terminus)
+          @indirection.set_global_setting(:terminus_setting, :alternate_terminus_setting)
+          @indirection.set_global_setting(:cache_class, :alternate_cache)
+        end.join
+        expect(@indirection.terminus_class).to eq(:alternate_terminus)
+        expect(@indirection.terminus_setting).to eq(:alternate_terminus_setting)
+        expect(@indirection.cache_class).to eq(:alternate_cache)
+      end
     end
 
     it "should allow setting the ttl" do
