@@ -63,9 +63,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
           end
           allow(described_class).to receive(:pip_version).with(pip_cmd).and_return('8.0.1')
           expect(described_class).to receive(:which).with(pip_cmd).and_return(pip_cmd)
-          p = double("process")
-          expect(p).to receive(:collect).and_yield("real_package==1.2.5")
-          expect(described_class).to receive(:execpipe).with([pip_cmd, ["freeze"]]).and_yield(p)
+          expect(described_class).to receive(:execute).with([pip_cmd, ["freeze"]]).and_return("real_package==1.2.5")
           described_class.instances
         end
       end
@@ -77,9 +75,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
             allow(Puppet.features).to receive(:microsoft_windows?).and_return(osfamily == 'windows')
             allow(described_class).to receive(:provider_command).and_return('/fake/bin/pip')
             allow(described_class).to receive(:pip_version).with('/fake/bin/pip').and_return(version)
-            p = double("process")
-            expect(p).to receive(:collect).and_yield("real_package==1.2.5")
-            expect(described_class).to receive(:execpipe).with(["/fake/bin/pip", ["freeze", "--all"]]).and_yield(p)
+            expect(described_class).to receive(:execute).with(["/fake/bin/pip", ["freeze", "--all"]]).and_return("real_package==1.2.5")
             described_class.instances
           end
         end
@@ -163,7 +159,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
           Successfully downloaded real-package
           EOS
         )
-        expect(Puppet::Util::Execution).to receive(:execpipe).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).and_return(p).once
         @resource[:name] = "real_package"
         expect(@provider.latest).to eq('0.10.1')
       end
@@ -193,7 +189,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
           Storing complete log in /root/.pip/pip.log
           EOS
         )
-        expect(Puppet::Util::Execution).to receive(:execpipe).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).and_return(p).once
         @resource[:name] = "fake_package"
         expect(@provider.latest).to eq(nil)
       end
@@ -219,7 +215,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
           No matching distribution found for real-package==versionplease
           EOS
         )
-        expect(Puppet::Util::Execution).to receive(:execpipe).with(["/fake/bin/pip", "install", "real_package==versionplease"]).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/fake/bin/pip", "install", "real_package==versionplease"]).and_return(p).once
         @resource[:name] = "real_package"
         latest = @provider.latest
         expect(latest).to eq('1.9b1')
@@ -233,7 +229,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
           No matching distribution found for fake-package==versionplease
           EOS
         )
-        expect(Puppet::Util::Execution).to receive(:execpipe).with(["/fake/bin/pip", "install", "fake_package==versionplease"]).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/fake/bin/pip", "install", "fake_package==versionplease"]).and_return(p).once
         @resource[:name] = "fake_package"
         expect(@provider.latest).to eq(nil)
       end
@@ -246,7 +242,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
           No distributions matching the version for real-package==versionplease
           EOS
         )
-        expect(Puppet::Util::Execution).to receive(:execpipe).with(["/fake/bin/pip", "install", "real_package==versionplease"]).and_yield(p).once
+        expect(Puppet::Util::Execution).to receive(:execute).with(["/fake/bin/pip", "install", "real_package==versionplease"]).and_return(p).once
         @resource[:name] = "real_package"
         latest = @provider.latest
         expect(latest).to eq('15.0.2')
@@ -273,7 +269,6 @@ describe Puppet::Type.type(:package).provider(:pip) do
       # The -e flag makes the provider non-idempotent
       @resource[:ensure] = :installed
       @resource[:source] = @url
-      # TJK
       expect(@provider).to receive(:execute) do |*args|
         expect(args).not_to include("-e")
       end
@@ -290,7 +285,6 @@ describe Puppet::Type.type(:package).provider(:pip) do
     it "should install a particular SCM revision" do
       @resource[:ensure] = "0123456"
       @resource[:source] = @url
-      # TJK
       expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "#{@url}@0123456#egg=fake_package"]])
       @provider.install
     end
@@ -298,7 +292,6 @@ describe Puppet::Type.type(:package).provider(:pip) do
     it "should install a particular version" do
       @resource[:ensure] = "0.0.0"
       @resource[:source] = nil
-      # TJK
       expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "fake_package==0.0.0"]])
       @provider.install
     end
@@ -306,7 +299,6 @@ describe Puppet::Type.type(:package).provider(:pip) do
     it "should upgrade" do
       @resource[:ensure] = :latest
       @resource[:source] = nil
-      # TJK
       expect(@provider).to receive(:execute).with(["/fake/bin/pip", ["install", "-q", "--upgrade", "fake_package"]])
       @provider.install
     end
@@ -343,9 +335,7 @@ describe Puppet::Type.type(:package).provider(:pip) do
   context "pip_version" do
     it "should look up version if pip is present" do
       allow(described_class).to receive(:pip_cmd).and_return('/fake/bin/pip')
-      p = double("process")
-      expect(p).to receive(:collect).and_yield('pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)')
-      expect(described_class).to receive(:execpipe).with(['/fake/bin/pip', '--version']).and_yield(p)
+      expect(described_class).to receive(:execute).with(['/fake/bin/pip', '--version']).and_return('pip 8.0.2 from /usr/local/lib/python2.7/dist-packages (python 2.7)')
       expect(described_class.pip_version('/fake/bin/pip')).to eq('8.0.2')
     end
   end
