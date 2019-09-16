@@ -82,12 +82,10 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     # list out all of the packages
     begin
-      execpipe("#{command(:rpm)} -qa #{nosignature} #{nodigest} --qf '#{self::NEVRA_FORMAT}' | sort") { |process|
-        # now turn each returned line into a package object
-        nevra_to_multiversion_hash(process).each { |hash| packages << new(hash) }
-      }
+      results = execute([command(:rpm), "-qa", nosignature, nodigest, "--qf", self::NEVRA_FORMAT].delete_if(&:nil?)).lines.sort.join
+      nevra_to_multiversion_hash(results).each { |hash| packages << new(hash) }
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error, _("Failed to list packages"), $!.backtrace
+      raise Puppet::Error, _("Failed to list packages"), results
     end
 
     packages

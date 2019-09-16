@@ -3,15 +3,14 @@ require 'spec_helper'
 describe Puppet::Type.type(:package).provider(:rpm) do
   let (:packages) do
     <<-RPM_OUTPUT
-    'cracklib-dicts 0 2.8.9 3.3 x86_64
     basesystem 0 8.0 5.1.1.el5.centos noarch
     chkconfig 0 1.3.30.2 2.el5 x86_64
+    cracklib-dicts 0 2.8.9 3.3 x86_64
+    kernel 1 1.2.3.4 5.el4 x86_64
+    kernel 1 1.2.3.6 5.el4 x86_64
     myresource 0 1.2.3.4 5.el4 noarch
     mysummaryless 0 1.2.3.4 5.el4 noarch
     tomcat 1 1.2.3.4 5.el4 x86_64
-    kernel 1 1.2.3.4 5.el4 x86_64
-    kernel 1 1.2.3.6 5.el4 x86_64
-    '
     RPM_OUTPUT
   end
 
@@ -40,7 +39,7 @@ describe Puppet::Type.type(:package).provider(:rpm) do
     allow(Puppet::Util).to receive(:which).with("rpm").and_return("/bin/rpm")
     allow(described_class).to receive(:which).with("rpm").and_return("/bin/rpm")
     described_class.instance_variable_set("@current_version", nil)
-    expect(Puppet::Type::Package::ProviderRpm).to receive(:execute)
+    expect(described_class).to receive(:execute)
       .with(["/bin/rpm", "--version"])
       .and_return(rpm_version).at_most(:once)
     expect(Puppet::Util::Execution).to receive(:execute)
@@ -58,9 +57,9 @@ describe Puppet::Type.type(:package).provider(:rpm) do
   describe "self.instances" do
     describe "with a modern version of RPM" do
       it "includes all the modern flags" do
-        expect(Puppet::Util::Execution).to receive(:execpipe)
-          .with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}' | sort")
-          .and_yield(packages)
+        expect(described_class).to receive(:execute)
+          .with(["/bin/rpm", "-qa", "--nosignature", "--nodigest", "--qf", nevra_format])
+          .and_return(packages)
 
         described_class.instances
       end
@@ -70,9 +69,9 @@ describe Puppet::Type.type(:package).provider(:rpm) do
       let(:rpm_version) { "RPM version 4.0.2\n" }
 
       it "excludes the --nosignature flag" do
-        expect(Puppet::Util::Execution).to receive(:execpipe)
-          .with("/bin/rpm -qa  --nodigest --qf '#{nevra_format}' | sort")
-          .and_yield(packages)
+        expect(described_class).to receive(:execute)
+          .with(["/bin/rpm", "-qa", "--nodigest", "--qf", nevra_format])
+          .and_return(packages)
 
         described_class.instances
       end
@@ -82,33 +81,22 @@ describe Puppet::Type.type(:package).provider(:rpm) do
       let(:rpm_version) { "RPM version 3.0.5\n" }
 
       it "excludes the --nodigest flag" do
-        expect(Puppet::Util::Execution).to receive(:execpipe)
-        .with("/bin/rpm -qa   --qf '#{nevra_format}' | sort")
-        .and_yield(packages)
+        expect(described_class).to receive(:execute)
+        .with(["/bin/rpm", "-qa", "--qf", nevra_format])
+        .and_return(packages)
 
         described_class.instances
       end
     end
 
     it "returns an array of packages" do
-      expect(Puppet::Util::Execution).to receive(:execpipe)
-        .with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}' | sort")
-        .and_yield(packages)
+      expect(described_class).to receive(:execute)
+        .with(["/bin/rpm", "-qa", "--nosignature", "--nodigest", "--qf", nevra_format])
+        .and_return(packages)
 
       installed_packages = described_class.instances
 
       expect(installed_packages[0].properties).to eq(
-        {
-          :provider => :rpm,
-          :name => "cracklib-dicts",
-          :epoch => "0",
-          :version => "2.8.9",
-          :release => "3.3",
-          :arch => "x86_64",
-          :ensure => "2.8.9-3.3",
-        }
-      )
-      expect(installed_packages[1].properties).to eq(
         {
           :provider => :rpm,
           :name => "basesystem",
@@ -119,7 +107,7 @@ describe Puppet::Type.type(:package).provider(:rpm) do
           :ensure => "8.0-5.1.1.el5.centos",
         }
       )
-      expect(installed_packages[2].properties).to eq(
+      expect(installed_packages[1].properties).to eq(
         {
           :provider => :rpm,
           :name => "chkconfig",
@@ -130,7 +118,29 @@ describe Puppet::Type.type(:package).provider(:rpm) do
           :ensure => "1.3.30.2-2.el5",
         }
       )
+      expect(installed_packages[2].properties).to eq(
+        {
+          :provider => :rpm,
+          :name => "cracklib-dicts",
+          :epoch => "0",
+          :version => "2.8.9",
+          :release => "3.3",
+          :arch => "x86_64",
+          :ensure => "2.8.9-3.3",
+        }
+      )
       expect(installed_packages[3].properties).to eq(
+        {
+          :provider    => :rpm,
+          :name        => "kernel",
+          :epoch       => "1",
+          :version     => "1.2.3.4",
+          :release     => "5.el4",
+          :arch        => "x86_64",
+          :ensure      => "1:1.2.3.4-5.el4; 1:1.2.3.6-5.el4",
+        }
+      )
+      expect(installed_packages[4].properties).to eq(
         {
           :provider => :rpm,
           :name => "myresource",
@@ -141,7 +151,7 @@ describe Puppet::Type.type(:package).provider(:rpm) do
           :ensure => "1.2.3.4-5.el4",
         }
       )
-      expect(installed_packages[4].properties).to eq(
+      expect(installed_packages[5].properties).to eq(
         {
           :provider    => :rpm,
           :name        => "mysummaryless",
@@ -152,7 +162,7 @@ describe Puppet::Type.type(:package).provider(:rpm) do
           :ensure      => "1.2.3.4-5.el4",
         }
       )
-      expect(installed_packages[5].properties).to eq(
+      expect(installed_packages[6].properties).to eq(
         {
           :provider    => :rpm,
           :name        => "tomcat",
@@ -161,17 +171,6 @@ describe Puppet::Type.type(:package).provider(:rpm) do
           :release     => "5.el4",
           :arch        => "x86_64",
           :ensure      => "1:1.2.3.4-5.el4",
-        }
-      )
-      expect(installed_packages[6].properties).to eq(
-        {
-          :provider    => :rpm,
-          :name        => "kernel",
-          :epoch       => "1",
-          :version     => "1.2.3.4",
-          :release     => "5.el4",
-          :arch        => "x86_64",
-          :ensure      => "1:1.2.3.4-5.el4; 1:1.2.3.6-5.el4",
         }
       )
     end
