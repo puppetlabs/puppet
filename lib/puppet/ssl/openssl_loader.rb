@@ -21,8 +21,4 @@ else
       class Certificate; end
     end
   end
-
-  Puppet::SSL::Certificate.indirection.terminus = :none
-  Puppet::SSL::CertificateRequest.indirection.terminus = :none
-  Puppet::SSL::Key.indirection.terminus = :none
 end
