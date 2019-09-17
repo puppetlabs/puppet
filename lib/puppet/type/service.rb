@@ -35,7 +35,7 @@ module Puppet
     feature :refreshable, "The provider can restart the service.",
       :methods => [:restart]
 
-    feature :enableable, "The provider can enable and disable the service",
+    feature :enableable, "The provider can enable and disable the service.",
       :methods => [:disable, :enable, :enabled?]
 
     feature :controllable, "The provider uses a control variable."
@@ -49,9 +49,9 @@ module Puppet
 
     newproperty(:enable, :required_features => :enableable) do
       desc "Whether a service should be enabled to start at boot.
-        This property behaves quite differently depending on the platform;
+        This property behaves differently depending on the platform;
         wherever possible, it relies on local tools to enable or disable
-        a given service."
+        a given service. Default values depend on the platform."
 
       newvalue(:true, :event => :service_enabled) do
         provider.enable
@@ -95,7 +95,7 @@ module Puppet
 
     # Handle whether the service should actually be running right now.
     newproperty(:ensure) do
-      desc "Whether a service should be running."
+      desc "Whether a service should be running. Default values depend on the platform."
 
       newvalue(:stopped, :event => :service_stopped) do
         provider.stop
