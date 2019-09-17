@@ -57,7 +57,11 @@ class Puppet::Transaction
 
     @prefetch_failed_providers = Hash.new { |h,k| h[k] = {} }
 
+    # With merge_dependency_warnings, notify and warn about class dependency failures ... just once per class. TJK 2019-09-09
+    @merge_dependency_warnings = Puppet[:merge_dependency_warnings]
     @failed_dependencies_already_notified = Set.new()
+    @failed_class_dependencies_already_notified = Set.new()
+    @failed_class_dependencies_already_warned = Set.new()
   end
 
   # Invoke the pre_run_check hook in every resource in the catalog.
@@ -287,15 +291,25 @@ class Puppet::Transaction
     # explosion of edges, we also ended up reporting failures for containers
     # like class and stage.  This is undesirable; while just skipping the
     # output isn't perfect, it is RC-safe. --daniel 2011-06-07
-    suppress_report = (resource.class == Puppet::Type.type(:whit))
-
+    is_puppet_class = resource.class == Puppet::Type.type(:whit)
+    # With merge_dependency_warnings, notify about class dependency failures ... just once per class. TJK 2019-09-09
     s = resource_status(resource)
     if s && s.dependency_failed?
-      # See above. --daniel 2011-06-06
-      unless suppress_report then
-        s.failed_dependencies.find_all { |d| !(@failed_dependencies_already_notified.include?(d.ref)) }.each do |dep|
-          resource.notice _("Dependency %{dep} has failures: %{status}") % { dep: dep, status: resource_status(dep).failed }
-          @failed_dependencies_already_notified.add(dep.ref)
+      if @merge_dependency_warnings && is_puppet_class
+       	# Notes: Puppet::Resource::Status.failed_dependencies() is an Array of Puppet::Resource(s) and
+        #        Puppet::Resource.ref() calls Puppet::Resource.to_s() which is: "#{type}[#{title}]" and
+       	#        Puppet::Resource.resource_status(resource) calls Puppet::Resource.to_s()
+        class_dependencies_to_be_notified = (s.failed_dependencies.map(&:ref) - @failed_class_dependencies_already_notified.to_a)
+        class_dependencies_to_be_notified.each do |dep_ref|
+          resource.notice _("Class dependency %{dep} has failures: %{status}") % { dep: dep_ref, status: resource_status(dep_ref).failed }
+        end
+        @failed_class_dependencies_already_notified.merge(class_dependencies_to_be_notified)
+      else
+        unless @merge_dependency_warnings || is_puppet_class
+          s.failed_dependencies.find_all { |d| !(@failed_dependencies_already_notified.include?(d.ref)) }.each do |dep|
+            resource.notice _("Dependency %{dep} has failures: %{status}") % { dep: dep, status: resource_status(dep).failed }
+            @failed_dependencies_already_notified.add(dep.ref)
+          end
         end
       end
     end
@@ -395,11 +409,19 @@ class Puppet::Transaction
       # explosion of edges, we also ended up reporting failures for containers
       # like class and stage.  This is undesirable; while just skipping the
       # output isn't perfect, it is RC-safe. --daniel 2011-06-07
-      unless resource.class == Puppet::Type.type(:whit) then
-        resource.warning _("Skipping because of failed dependencies")
+      # With merge_dependency_warnings, warn about class dependency failures ... just once per class. TJK 2019-09-09
+      unless resource.class == Puppet::Type.type(:whit)
+        if @merge_dependency_warnings && resource.parent && failed_dependencies?(resource.parent)
+          ps = resource_status(resource.parent)
+          ps.failed_dependencies.find_all { |d| !(@failed_class_dependencies_already_warned.include?(d.ref)) }.each do |dep|
+            resource.parent.warning _("Skipping resources in class because of failed class dependencies")
+            @failed_class_dependencies_already_warned.add(dep.ref)
+          end
+        else
+          resource.warning _("Skipping because of failed dependencies")
+        end
       end
-    elsif resource_status(resource).failed? &&
-        @prefetch_failed_providers[resource.type][resource.provider.class.name]
+    elsif resource_status(resource).failed? && @prefetch_failed_providers[resource.type][resource.provider.class.name]
       #Do not try to evaluate a resource with a known failed provider
       resource.warning _("Skipping because provider prefetch failed")
     elsif resource.virtual?
