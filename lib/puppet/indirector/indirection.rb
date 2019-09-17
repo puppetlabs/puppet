@@ -2,6 +2,7 @@ require 'puppet/util/docs'
 require 'puppet/util/profiler'
 require 'puppet/indirector/envelope'
 require 'puppet/indirector/request'
+require 'puppet/thread_local'
 
 # The class that connects functional classes with their different collection
 # back-ends.  Each indirection has a set of associated terminus classes,
@@ -45,11 +46,14 @@ class Puppet::Indirector::Indirection
     cache_class ? true : false
   end
 
-  attr_reader :cache_class
+  def cache_class
+    @cache_class.value
+  end
+
   # Define a terminus class to be used for caching.
   def cache_class=(class_name)
     validate_terminus_class(class_name) if class_name
-    @cache_class = class_name
+    @cache_class.value = class_name
   end
 
   # This is only used for testing.
@@ -101,10 +105,26 @@ class Puppet::Indirector::Indirection
     @indirected_class = indirected_class
     self.extend(extend) if extend
 
-    # These setters depend on the indirection already being installed so they have to be at the end
-    self.cache_class = cache_class if cache_class
-    self.terminus_class = terminus_class if terminus_class
-    self.terminus_setting = terminus_setting if terminus_setting
+    # Setting these depend on the indirection already being installed so they have to be at the end
+    set_global_setting(:cache_class, cache_class)
+    set_global_setting(:terminus_class, terminus_class)
+    set_global_setting(:terminus_setting, terminus_setting)
+  end
+
+  # Use this to set indirector settings globally across threads.
+  def set_global_setting(setting, value)
+    case setting
+    when :cache_class
+      validate_terminus_class(value) if !value.nil?
+      @cache_class = Puppet::ThreadLocal.new(value)
+    when :terminus_class
+      validate_terminus_class(value) if !value.nil?
+      @terminus_class = Puppet::ThreadLocal.new(value)
+    when :terminus_setting
+      @terminus_setting = Puppet::ThreadLocal.new(value)
+    else
+      raise(ArgumentError, _("The setting %{setting} is not a valid indirection setting.") % {setting: setting})
+    end
   end
 
   # Set up our request object.
@@ -120,12 +140,18 @@ class Puppet::Indirector::Indirection
     termini[terminus_name] ||= make_terminus(terminus_name)
   end
 
-  # This can be used to select the terminus class.
-  attr_accessor :terminus_setting
+  # These can be used to select the terminus class.
+  def terminus_setting
+    @terminus_setting.value
+  end
+
+  def terminus_setting=(setting)
+    @terminus_setting.value = setting
+  end
 
   # Determine the terminus class.
   def terminus_class
-    unless @terminus_class
+    unless @terminus_class.value
       setting = self.terminus_setting
       if setting
         self.terminus_class = Puppet.settings[setting]
@@ -133,17 +159,17 @@ class Puppet::Indirector::Indirection
         raise Puppet::DevError, _("No terminus class nor terminus setting was provided for indirection %{name}") % { name: self.name}
       end
     end
-    @terminus_class
+    @terminus_class.value
   end
 
   def reset_terminus_class
-    @terminus_class = nil
+    @terminus_class.value = nil
   end
 
   # Specify the terminus class to use.
   def terminus_class=(klass)
     validate_terminus_class(klass)
-    @terminus_class = klass
+    @terminus_class.value = klass
   end
 
   # This is used by terminus_class= and cache=.
