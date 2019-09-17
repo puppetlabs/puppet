@@ -44,26 +44,28 @@ describe 'the find_template function' do
     with_file_content('file content') do |name|
       mod = double('module')
       allow(mod).to receive(:template).with('myfile').and_return(name)
-      Puppet[:code] = "notify { find_template('mymod/myfile'):}"
-      node = Puppet::Node.new('localhost')
-      compiler = Puppet::Parser::Compiler.new(node)
-      allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)
+      Puppet.override(code: "notify { find_template('mymod/myfile'):}") do
+        node = Puppet::Node.new('localhost')
+        compiler = Puppet::Parser::Compiler.new(node)
+        allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)
 
-      expect(compiler.compile().filter { |r| r.virtual? }).to have_resource("Notify[#{name}]")
+        expect(compiler.compile().filter { |r| r.virtual? }).to have_resource("Notify[#{name}]")
+      end
     end
   end
 
   it 'returns undef when none of the paths were found' do
     mod = double('module')
     allow(mod).to receive(:template).with('myfile').and_return(nil)
-    Puppet[:code] = "notify { String(type(find_template('mymod/myfile', 'nomod/nofile'))):}"
-    node = Puppet::Node.new('localhost')
-    compiler = Puppet::Parser::Compiler.new(node)
-    # For a module that does not have the file
-    allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)
-    # For a module that does not exist
-    allow(compiler.environment).to receive(:module).with('nomod').and_return(nil)
+    Puppet.override(code: "notify { String(type(find_template('mymod/myfile', 'nomod/nofile'))):}") do
+      node = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      # For a module that does not have the file
+      allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)
+      # For a module that does not exist
+      allow(compiler.environment).to receive(:module).with('nomod').and_return(nil)
 
-    expect(compiler.compile().filter { |r| r.virtual? }).to have_resource("Notify[Undef]")
+      expect(compiler.compile().filter { |r| r.virtual? }).to have_resource("Notify[Undef]")
+    end
   end
 end

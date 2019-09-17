@@ -35,7 +35,7 @@ describe 'the binary_file function' do
     with_file_content('binary_data') do |name|
       mod = double('module')
       allow(mod).to receive(:file).with('myfile').and_return(name)
-      Puppet[:code] = "notify { String(binary_file('mymod/myfile')):}"
+      Puppet.push_context({code: "notify { String(binary_file('mymod/myfile')):}"})
       node = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
       allow(compiler.environment).to receive(:module).with('mymod').and_return(mod)

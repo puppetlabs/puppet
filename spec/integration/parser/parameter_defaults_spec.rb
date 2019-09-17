@@ -30,7 +30,7 @@ require 'puppet_spec/language'
 
     def collect_notices(code)
       logs = []
-      Puppet[:code] = code
+      Puppet.push_context({code: code})
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           compiler.compile do |catalog|
             yield

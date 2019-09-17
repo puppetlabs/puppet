@@ -986,7 +986,7 @@ describe 'Puppet Pal' do
       end
 
       context 'with a script compiler' do
-        it 'uses configured manifest_file if configured_by_env is true and Puppet[:code] is unset' do
+        it 'uses configured manifest_file if configured_by_env is true and Puppet.lookup(:code) is unset' do
           testing_env_dir # creates the structure
           Puppet[:manifest] = file_containing('afunc.pp', "function myfunc(Integer $a) { $a * 2 } ")
           result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
@@ -995,10 +995,10 @@ describe 'Puppet Pal' do
           expect(result).to eql(8)
         end
 
-        it 'uses Puppet[:code] if configured_by_env is true and Puppet[:code] is set' do
+        it 'uses Puppet.lookup(:code) if configured_by_env is true and Puppet.lookup(:code) is set' do
           testing_env_dir # creates the structure
           Puppet[:manifest] = file_containing('amanifest.pp', "$a = 20")
-          Puppet[:code] = '$a = 40'
+          Puppet.push_context({code: '$a = 40'})
           result = Puppet::Pal.in_environment('pal_env', envpath: environments_dir, facts: node_facts) do |ctx|
             ctx.with_script_compiler(configured_by_env: true) {|c|  c.evaluate_string('$a')}
           end

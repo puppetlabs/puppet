@@ -92,8 +92,8 @@ describe 'FileBased module loader' do
 
   context 'loading tasks' do
     before(:each) do
-      Puppet[:tasks] = true
-      Puppet.push_context(:loaders => loaders)
+      Puppet.push_context({:tasks => true})
+      Puppet.push_context({:loaders => loaders})
     end
     after(:each) { Puppet.pop_context }
 

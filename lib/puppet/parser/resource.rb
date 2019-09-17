@@ -175,7 +175,7 @@ class Puppet::Parser::Resource < Puppet::Resource
             else
               _('Attempt to override an already evaluated resource, defined at %{error_location}, with new values') % { error_location: error_location_str }
             end
-      strict = Puppet[:strict]
+      strict = Puppet.lookup(:strict)
       unless strict == :off
         if strict == :error
           raise Puppet::ParseError.new(msg, resource.file, resource.line)

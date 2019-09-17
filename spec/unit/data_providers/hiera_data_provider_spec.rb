@@ -31,7 +31,7 @@ describe "when using a hiera data provider" do
   end
 
   def compile(environment, code = nil)
-    Puppet[:code] = code if code
+    Puppet.push_context({code: code}) if code
     node = Puppet::Node.new("testnode", :facts => facts, :environment => environment)
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.topscope['domain'] = 'example.com'
@@ -152,7 +152,7 @@ describe "when using a hiera data provider" do
   end
 
   it 'uses compiler lifecycle for caching' do
-    Puppet[:code] = 'notify{lookup(one::my_var):}'
+    Puppet.push_context({code: 'notify{lookup(one::my_var):}'})
     node = Puppet::Node.new('testnode', :facts => facts, :environment => 'hiera_module_config')
 
     compiler = Puppet::Parser::Compiler.new(node)

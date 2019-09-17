@@ -24,10 +24,11 @@ describe "the inline_template function" do
   end
 
   it 'is not available when --tasks is on' do
-    Puppet[:tasks] = true
-    expect {
-      inline_template("<%= lookupvar('myvar') %>")
-    }.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+    Puppet.override({tasks: true}) do
+      expect {
+        inline_template("<%= lookupvar('myvar') %>")
+      }.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+    end
   end
 
   def inline_template(*templates)

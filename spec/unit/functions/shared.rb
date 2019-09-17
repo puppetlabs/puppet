@@ -84,7 +84,7 @@ end
 
 shared_examples_for 'an inclusion function, when --tasks is on,' do |function|
   it "is not available when --tasks is on" do
-    Puppet[:tasks] = true
+    Puppet.push_context({tasks: true})
     expect do
       compile_to_catalog(<<-MANIFEST)
         #{function}(bar)

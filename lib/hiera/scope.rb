@@ -39,7 +39,7 @@ class Hiera
         return @real.lookupvar(key)
       end
 
-      case Puppet[:strict]
+      case Puppet.lookup(:strict)
       when :off
         # do nothing
       when :warning

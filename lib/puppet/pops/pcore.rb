@@ -32,7 +32,7 @@ module Pcore
   end
 
   def self.init_env(loader)
-    if Puppet[:tasks]
+    if Puppet.lookup(:tasks)
       add_object_type('Task', <<-PUPPET, loader)
         {
           attributes => {

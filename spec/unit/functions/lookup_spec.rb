@@ -86,7 +86,7 @@ describe "The lookup function" do
   end
 
   def collect_notices(code, explain = false, &block)
-    Puppet[:code] = code
+    Puppet.push_context({code: code})
     Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
       scope = compiler.topscope
       scope['domain'] = 'example.com'
@@ -269,7 +269,7 @@ describe "The lookup function" do
             YAML
 
           it 'fails and reports error' do
-            Puppet[:strict] = :error
+            Puppet.push_context({strict: :error})
             expect { lookup('a') }.to raise_error(
               "Unable to find 'data_hash' function named 'nonesuch_txt_data' (file: #{code_dir}/hiera.yaml)")
           end
@@ -287,7 +287,7 @@ describe "The lookup function" do
             YAML
 
           it 'fails and reports error' do
-            Puppet[:strict] = :error
+            Puppet.push_context({strict: :error})
             expect { lookup('a') }.to raise_error(
               "'default_hierarchy' is only allowed in the module layer (file: #{code_dir}/hiera.yaml, line: 5)")
           end
@@ -303,7 +303,7 @@ describe "The lookup function" do
             YAML
 
           it 'fails and reports errors when strict == error' do
-            Puppet[:strict] = :error
+            Puppet.push_context({strict: :error})
             expect { lookup('a') }.to raise_error("Undefined variable '::nonesuch' (file: #{code_dir}/hiera.yaml, line: 4)")
           end
         end
@@ -317,7 +317,7 @@ describe "The lookup function" do
             YAML
 
           it 'fails and reports errors when strict == error' do
-            Puppet[:strict] = :error
+            Puppet.push_context({strict: :error})
             expect { lookup('a') }.to raise_error("Interpolation using method syntax is not allowed in this context (file: #{code_dir}/hiera.yaml)")
           end
         end
@@ -390,7 +390,7 @@ describe "The lookup function" do
             YAML
 
           it 'fails and reports error' do
-            Puppet[:strict] = :error
+            Puppet.push_context({strict: :error})
             expect { lookup('a') }.to raise_error(
               "'default_hierarchy' is only allowed in the module layer (file: #{env_dir}/spec/hiera.yaml, line: 5)")
           end
@@ -1439,23 +1439,23 @@ describe "The lookup function" do
       end
 
       it 'will raise an error if --strict is set to error' do
-        Puppet[:strict] = :error
+        Puppet.push_context({strict: :error})
         expect { lookup('g') }.to raise_error(Puppet::Error, /hiera.yaml version 3 cannot be used in an environment/)
       end
 
       it 'will log a warning and ignore the file if --strict is set to warning' do
-        Puppet[:strict] = :warning
+        Puppet.push_context({strict: :warning})
         expect { lookup('g') }.to raise_error(Puppet::Error, /did not find a value for the name 'g'/)
       end
 
       it 'will not log a warning and ignore the file if --strict is set to off' do
-        Puppet[:strict] = :off
+        Puppet.push_context({strict: :off})
         expect { lookup('g') }.to raise_error(Puppet::Error, /did not find a value for the name 'g'/)
         expect(warnings).to include(/hiera.yaml version 3 found at the environment root was ignored/)
       end
 
       it 'will use the configuration if appointed by global setting but still warn when encountered by environment data provider' do
-        Puppet[:strict] = :warning
+        Puppet.push_context({strict: :warning})
         Puppet.settings[:hiera_config] = File.join(env_dir, env_name, 'hiera.yaml')
         expect(lookup('g')).to eql('Value g')
         expect(warnings).to include(/hiera.yaml version 3 found at the environment root was ignored/)

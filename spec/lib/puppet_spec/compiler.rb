@@ -2,14 +2,14 @@ module PuppetSpec::Compiler
   module_function
 
   def compile_to_catalog(string, node = Puppet::Node.new('test'))
-    Puppet[:code] = string
+    Puppet.push_context({code: string})
     # see lib/puppet/indirector/catalog/compiler.rb#filter
     Puppet::Parser::Compiler.compile(node).filter { |r| r.virtual? }
   end
 
   # Does not removed virtual resources in compiled catalog (i.e. keeps unrealized)
   def compile_to_catalog_unfiltered(string, node = Puppet::Node.new('test'))
-    Puppet[:code] = string
+    Puppet.push_context({code: string})
     # see lib/puppet/indirector/catalog/compiler.rb#filter
     Puppet::Parser::Compiler.compile(node)
   end
@@ -55,7 +55,7 @@ module PuppetSpec::Compiler
   end
 
   def collect_notices(code, node = Puppet::Node.new('foonode'))
-    Puppet[:code] = code
+    Puppet.push_context({code: code})
     compiler = Puppet::Parser::Compiler.new(node)
     node.environment.check_for_reparse
     logs = []
@@ -91,7 +91,7 @@ module PuppetSpec::Compiler
   #
   def evaluate(code: 'undef', source: nil, node: Puppet::Node.new('testnode'), variables: {})
     source_location = caller[0]
-    Puppet[:code] = code
+    Puppet.push_context({code: code})
     compiler = Puppet::Parser::Compiler.new(node)
     unless variables.empty?
       scope = compiler.topscope

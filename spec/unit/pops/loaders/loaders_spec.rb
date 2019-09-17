@@ -213,7 +213,7 @@ describe 'loaders' do
     }
 
     def compile_and_get_notifications(code)
-      Puppet[:code] = code
+      Puppet.push_context({code: code})
       catalog = block_given? ? compiler.compile { |c| yield(compiler.topscope); c } : compiler.compile
       catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
     end
@@ -271,7 +271,7 @@ describe 'loaders' do
           allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
           allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
-          Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
+          Puppet.push_context({code: "$case_number = #{case_number}\ninclude ::user"})
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
           expect(resource).not_to be_nil
@@ -281,7 +281,7 @@ describe 'loaders' do
         it "can call #{desc[:called]} from #{desc[:from]} when no metadata is present" do
           times_has_metadata_called = 0
           allow_any_instance_of(Puppet::Module).to receive('has_metadata?') { times_has_metadata_called += 1 }.and_return(false)
-          Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
+          Puppet.push_context({code: "$case_number = #{case_number}\ninclude ::user"})
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
           expect(resource).not_to be_nil
@@ -293,7 +293,7 @@ describe 'loaders' do
           allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => []).to_pson)
           allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
-          Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
+          Puppet.push_context({code: "$case_number = #{case_number}\ninclude ::user"})
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
           expect(resource).not_to be_nil

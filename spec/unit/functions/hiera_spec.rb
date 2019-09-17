@@ -147,7 +147,7 @@ describe 'when calling' do
 
   def with_scope(code = 'undef')
     result = nil
-    Puppet[:code] = 'undef'
+    Puppet.push_context({code: 'undef'})
     Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
       compiler.compile do |catalog|
         result = yield(compiler.topscope)

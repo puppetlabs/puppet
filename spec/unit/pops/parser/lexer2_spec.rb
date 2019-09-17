@@ -111,8 +111,9 @@ describe 'Lexer2' do
   end
 
   context 'when --tasks' do
-    before(:each) { Puppet[:tasks] = true }
-    after(:each) { Puppet[:tasks] = false }
+    around(:each) do |example|
+      Puppet.override({tasks: true}) { example.run }
+    end
 
     it "should lex a keyword from 'plan'" do
       expect(tokens_scanned_from('plan')).to match_tokens2(:PLAN)

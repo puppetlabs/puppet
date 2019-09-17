@@ -197,7 +197,7 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
   end
 
   def main
-    manifest          = get_manifest() # Get either a manifest or nil if apply should use content of Puppet[:code]
+    manifest          = get_manifest() # Get either a manifest or nil if apply should use content of Puppet.lookup(:code)
     splay                              # splay if needed
     facts             = get_facts()    # facts or nil
     node              = get_node()     # node or error
@@ -366,13 +366,13 @@ Copyright (c) 2011 Puppet Inc., LLC Licensed under the Apache 2.0 License
     node
   end
 
-  # Returns either a manifest (filename) or nil if apply should use content of Puppet[:code]
+  # Returns either a manifest (filename) or nil if apply should use content of Puppet.lookup(:code)
   #
   def get_manifest()
     manifest = nil
     # Set our code or file to use.
     if options[:code] or command_line.args.length == 0
-      Puppet[:code] = options[:code] || STDIN.read
+      Puppet.push_context(code: options[:code] || STDIN.read)
     else
       manifest = command_line.args.shift
       raise _("Could not find file %{manifest}") % { manifest: manifest } unless Puppet::FileSystem.exist?(manifest)

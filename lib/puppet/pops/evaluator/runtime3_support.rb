@@ -494,22 +494,24 @@ module Runtime3Support
       # if strict variables are on, an error is raised
       # if strict variables are off, the Puppet[strict] defines what is done
       #
-      if Puppet[:strict_variables]
+      strict = Puppet.lookup(:strict)
+      if Puppet.lookup(:strict_variables)
         p[Issues::UNKNOWN_VARIABLE] = :error
-      elsif Puppet[:strict] == :off
+      elsif strict == :off
         p[Issues::UNKNOWN_VARIABLE] = :ignore
       else
-        p[Issues::UNKNOWN_VARIABLE] = Puppet[:strict]
+        p[Issues::UNKNOWN_VARIABLE] = strict
       end
 
+      standard_config = strict == :off ? :warning : strict
       # Store config issues, ignore or warning
       p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
       p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
-      p[Issues::CLASS_NOT_VIRTUALIZABLE]      = Puppet[:strict] == :off ? :warning : Puppet[:strict]
-      p[Issues::NUMERIC_COERCION]             = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
-      p[Issues::SERIALIZATION_DEFAULT_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
-      p[Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
-      p[Issues::SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+      p[Issues::CLASS_NOT_VIRTUALIZABLE]      = standard_config
+      p[Issues::NUMERIC_COERCION]             = strict == :off ? :ignore : strict
+      p[Issues::SERIALIZATION_DEFAULT_CONVERTED_TO_STRING] = standard_config
+      p[Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING] = standard_config
+      p[Issues::SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING] = standard_config
     end
   end
 

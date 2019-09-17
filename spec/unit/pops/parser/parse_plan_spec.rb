@@ -7,7 +7,7 @@ describe "egrammar parsing of 'plan'" do
 
   context 'with --tasks' do
     before(:each) do
-      Puppet[:tasks] = true
+      Puppet.push_context({tasks: true})
     end
 
     it "an empty body" do
@@ -37,7 +37,7 @@ describe "egrammar parsing of 'plan'" do
 
   context 'with --no-tasks' do
     before(:each) do
-      Puppet[:tasks] = false
+      Puppet.push_context({tasks: false})
     end
 
     it "the keyword 'plan' is a name" do

@@ -426,7 +426,7 @@ class LookupAdapter < DataAdapter
       if mp_config.nil?
         mp = nil
       elsif mp_config.version >= 5
-        unless provider_name.nil? || Puppet[:strict] == :off
+        unless provider_name.nil? || Puppet.lookup(:strict) == :off
           Puppet.warn_once('deprecations', "metadata.json#data_provider-#{module_name}",
             _("Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated. It is ignored since a '%{config}' with version >= 5 is present") % { name: provider_name, config: HieraConfig::CONFIG_FILE_NAME }, mod.metadata_file)
         end
@@ -437,7 +437,7 @@ class LookupAdapter < DataAdapter
     if provider_name.nil?
       mp
     else
-      unless Puppet[:strict] == :off
+      unless Puppet.lookup(:strict) == :off
         msg = _("Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated.") % { name: provider_name }
         msg += " " + _("A '%{hiera_config}' file should be used instead") % { hiera_config: HieraConfig::CONFIG_FILE_NAME } if mp.nil?
         Puppet.warn_once('deprecations', "metadata.json#data_provider-#{module_name}", msg, mod.metadata_file)
@@ -475,7 +475,7 @@ class LookupAdapter < DataAdapter
       if ep_config.nil?
         ep = nil
       elsif ep_config.version >= 5
-        unless provider_name.nil? || Puppet[:strict] == :off
+        unless provider_name.nil? || Puppet.lookup(:strict) == :off
           Puppet.warn_once('deprecations', 'environment.conf#data_provider',
             _("Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated") % { provider_name: provider_name }, env_path + 'environment.conf')
 
@@ -491,7 +491,7 @@ class LookupAdapter < DataAdapter
     if provider_name.nil?
       ep
     else
-      unless Puppet[:strict] == :off
+      unless Puppet.lookup(:strict) == :off
         msg = _("Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated.") % { provider_name: provider_name }
         msg += " " + _("A '%{hiera_config}' file should be used instead") % { hiera_config: HieraConfig::CONFIG_FILE_NAME } if ep.nil?
         Puppet.warn_once('deprecations', 'environment.conf#data_provider', msg, env_path + 'environment.conf')

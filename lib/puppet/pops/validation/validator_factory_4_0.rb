@@ -7,7 +7,7 @@ class ValidatorFactory_4_0 < Factory
 
   # Produces the checker to use
   def checker diagnostic_producer
-    if Puppet[:tasks]
+    if Puppet.lookup(:tasks)
       require_relative 'tasks_checker'
       TasksChecker.new(diagnostic_producer)
     else
@@ -32,10 +32,11 @@ class ValidatorFactory_4_0 < Factory
 
     p[Issues::FUTURE_RESERVED_WORD]           = :deprecation
 
-    p[Issues::DUPLICATE_KEY]                  = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
+    strict = Puppet.lookup(:strict)
+    p[Issues::DUPLICATE_KEY]                  = strict == :off ? :ignore : strict
     p[Issues::NAME_WITH_HYPHEN]               = :error
     p[Issues::EMPTY_RESOURCE_SPECIALIZATION]  = :ignore
-    p[Issues::CLASS_NOT_VIRTUALIZABLE]        = Puppet[:strict] == :off ? :warning : Puppet[:strict]
+    p[Issues::CLASS_NOT_VIRTUALIZABLE]        = strict == :off ? :warning : strict
     p
   end
 end

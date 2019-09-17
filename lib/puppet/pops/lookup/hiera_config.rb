@@ -80,7 +80,7 @@ class HieraConfig
   }
 
   def self.v4_function_config(config_root, function_name, owner)
-    unless Puppet[:strict] == :off
+    unless Puppet.lookup(:strict) == :off
       Puppet.warn_once('deprecations', 'legacy_provider_function',
         _("Using of legacy data provider function '%{function_name}'. Please convert to a 'data_hash' function") % { function_name: function_name })
     end
@@ -423,7 +423,7 @@ class HieraConfigV3 < HieraConfig
   }
 
   def validate_config(config, owner)
-    unless Puppet[:strict] == :off
+    unless Puppet.lookup(:strict) == :off
       Puppet.warn_once('deprecations', 'hiera.yaml',
         _("%{config_path}: Use of 'hiera.yaml' version 3 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
     end
@@ -523,7 +523,7 @@ class HieraConfigV4 < HieraConfig
   end
 
   def validate_config(config, owner)
-    unless Puppet[:strict] == :off
+    unless Puppet.lookup(:strict) == :off
       Puppet.warn_once('deprecations', 'hiera.yaml',
         _("%{config_path}: Use of 'hiera.yaml' version 4 is deprecated. It should be converted to version 5") % { config_path: @config_path }, config_path.to_s)
     end

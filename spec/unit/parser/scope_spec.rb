@@ -322,7 +322,7 @@ describe Puppet::Parser::Scope do
 
     context "and strict_variables is true" do
       before(:each) do
-        Puppet[:strict_variables] = true
+        Puppet.push_context({strict_variables: true})
       end
 
       it "should throw a symbol when unknown variable is looked up" do
@@ -341,8 +341,7 @@ describe Puppet::Parser::Scope do
 
     context "and strict_variables is false and --strict=off" do
       before(:each) do
-        Puppet[:strict_variables] = false
-        Puppet[:strict] = :off
+        Puppet.push_context({strict_variables: false, strict: :off})
       end
 
       it "should not error when unknown variable is looked up and produce nil" do
@@ -356,8 +355,7 @@ describe Puppet::Parser::Scope do
 
     context "and strict_variables is false and --strict=warning" do
       before(:each) do
-        Puppet[:strict_variables] = false
-        Puppet[:strict] = :warning
+        Puppet.push_context({strict: :warning, strict_variables: false})
       end
 
       it "should not error when unknown variable is looked up" do
@@ -371,8 +369,7 @@ describe Puppet::Parser::Scope do
 
     context "and strict_variables is false and --strict=error" do
       before(:each) do
-        Puppet[:strict_variables] = false
-        Puppet[:strict] = :error
+        Puppet.push_context({strict: :error, strict_variables: false})
       end
 
       it "should raise error when unknown variable is looked up" do

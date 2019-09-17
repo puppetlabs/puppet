@@ -12,7 +12,7 @@ module PuppetSpec::Language
           case resources
           when String
             node = Puppet::Node.new('specification')
-            Puppet[:code] = manifest
+            Puppet.push_context({code: manifest})
             compiler = Puppet::Parser::Compiler.new(node)
             evaluator = Puppet::Pops::Parser::EvaluatingParser.new()
 

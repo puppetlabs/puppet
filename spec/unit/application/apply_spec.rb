@@ -220,19 +220,20 @@ describe Puppet::Application::Apply do
       end
 
       it "should set the code to run from --code" do
-        @apply.options[:code] = "code to run"
-        expect(Puppet).to receive(:[]=).with(:code,"code to run")
+        code = "code to run"
+        @apply.options[:code] = code
 
         expect { @apply.main }.to exit_with 0
+        expect(Puppet.lookup(:code)).to eq(code)
       end
 
       it "should set the code to run from STDIN if no arguments" do
+        code = "code to run"
         allow(@apply.command_line).to receive(:args).and_return([])
-        allow(STDIN).to receive(:read).and_return("code to run")
-
-        expect(Puppet).to receive(:[]=).with(:code,"code to run")
+        allow(STDIN).to receive(:read).and_return(code)
 
         expect { @apply.main }.to exit_with 0
+        expect(Puppet.lookup(:code)).to eq(code)
       end
 
       it "should raise an error if a file is passed on command line and the file does not exist" do

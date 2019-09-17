@@ -11,7 +11,7 @@ describe 'Puppet::Pops::MigrationMigrationChecker' do
   include PuppetSpec::Pops
   include PuppetSpec::Scope
   before(:each) do
-    Puppet[:strict_variables] = true
+    Puppet.push_context({strict_variables: true})
 
     # Puppetx cannot be loaded until the correct parser has been set (injector is turned off otherwise)
     require 'puppet_x'

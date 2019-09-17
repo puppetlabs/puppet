@@ -15,7 +15,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   include PuppetSpec::Pops
   include PuppetSpec::Scope
   before(:each) do
-    Puppet[:strict_variables] = true
+    Puppet.push_context({strict_variables: true})
     Puppet[:data_binding_terminus] = 'none'
 
     # Tests needs a known configuration of node/scope/compiler since it parses and evaluates
@@ -477,21 +477,21 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         "'10' % 3"      => 10,
       }.each do |source, coerced_val|
           it "should warn about numeric coercion in '#{source}' when strict = warning" do
-            Puppet[:strict] = :warning
+            Puppet.push_context({strict: :warning})
             expect(Puppet::Pops::Evaluator::Runtime3Support::EvaluationError).not_to receive(:new)
             collect_notices(source)
             expect(warnings).to include(/The string '#{coerced_val}' was automatically coerced to the numerical value #{coerced_val}/)
           end
 
           it "should not warn about numeric coercion in '#{source}' if strict = off" do
-            Puppet[:strict] = :off
+            Puppet.push_context({strict: :off})
             expect(Puppet::Pops::Evaluator::Runtime3Support::EvaluationError).not_to receive(:new)
             collect_notices(source)
             expect(warnings).to_not include(/The string '#{coerced_val}' was automatically coerced to the numerical value #{coerced_val}/)
           end
 
         it "should error when finding numeric coercion in '#{source}' if strict = error" do
-          Puppet[:strict] = :error
+          Puppet.push_context({strict: :error})
           expect {
             parser.evaluate_string(scope, source, __FILE__)
           }.to raise_error {|error|
@@ -1571,7 +1571,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
   context 'with --tasks' do
     before(:each) do
-      Puppet[:tasks] = true
+      Puppet.push_context({tasks: true})
     end
 
     context 'when evaluating apply' do

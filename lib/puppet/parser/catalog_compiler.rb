@@ -12,10 +12,7 @@ class Puppet::Parser::CatalogCompiler < Puppet::Parser::Compiler
   # Evaluates the configured setup for a script + code in an environment with modules
   #
   def compile
-    Puppet[:strict_variables] = true
-    Puppet[:strict] = :error
-
-    Puppet.override(rich_data: true) do
+    Puppet.override(rich_data: true, strict: :error, strict_variables: true) do
       super
     end
 

@@ -35,9 +35,6 @@ class Puppet::Parser::ScriptCompiler
   # Evaluates the configured setup for a script + code in an environment with modules
   #
   def compile
-    Puppet[:strict_variables] = true
-    Puppet[:strict] = :error
-
     # TRANSLATORS, "For running script" is not user facing
     Puppet.override( @context_overrides , "For running script") do
 
@@ -67,6 +64,8 @@ class Puppet::Parser::ScriptCompiler
       :global_scope => @topscope,             # 4x placeholder for new global scope
       :loaders  => @loaders,                  # 4x loaders
       :rich_data => true,
+      :strict => :error,
+      :strict_variables => true,
     }
   end
 

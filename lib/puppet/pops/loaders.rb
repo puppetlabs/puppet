@@ -261,7 +261,7 @@ class Loaders
   #
   # There are two sources that can be used for the initial parse:
   #
-  #   1. The value of `Puppet[:code]`: Puppet can take a string from
+  #   1. The value of `Puppet.lookup(:code)`: Puppet can take a string from
   #     its settings and parse that as a manifest. This is used by various
   #     Puppet applications to read in a manifest and pass it to the
   #     environment as a side effect. This is attempted first.
@@ -271,7 +271,7 @@ class Loaders
   # @return [Model::Program] The manifest parsed into a model object
   def load_main_manifest
     parser = Parser::EvaluatingParser.singleton
-    parsed_code = Puppet[:code]
+    parsed_code = Puppet.lookup(:code)
     program = if parsed_code != ""
       parser.parse_string(parsed_code, 'unknown-source-location')
     else
@@ -380,7 +380,7 @@ class Loaders
     env_conf = Puppet.lookup(:environments).get_conf(environment.name)
     env_path = env_conf.nil? || !env_conf.is_a?(Puppet::Settings::EnvironmentConf) ? nil : env_conf.path_to_env
 
-    if Puppet[:tasks]
+    if Puppet.lookup(:tasks)
       loader = Loader::ModuleLoaders.environment_loader_from(parent_loader, self, env_path)
     else
       # Create the 3.x resource type loader

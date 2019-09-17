@@ -434,7 +434,7 @@ class Puppet::Node::Environment
   #
   def check_for_reparse
     @lock.synchronize do
-      if (Puppet[:code] != @parsed_code || @known_resource_types.parse_failed?)
+      if (Puppet.lookup(:code) != @parsed_code || @known_resource_types.parse_failed?)
         @parsed_code = nil
         @known_resource_types = nil
       end
@@ -508,7 +508,7 @@ class Puppet::Node::Environment
   #
   # There are two sources that can be used for the initial parse:
   #
-  #   1. The value of `Puppet[:code]`: Puppet can take a string from
+  #   1. The value of `Puppet.lookup(:code)`: Puppet can take a string from
   #     its settings and parse that as a manifest. This is used by various
   #     Puppet applications to read in a manifest and pass it to the
   #     environment as a side effect. This is attempted first.
@@ -519,7 +519,7 @@ class Puppet::Node::Environment
   #   representing the 'main' hostclass
   def perform_initial_import
     parser = Puppet::Parser::ParserFactory.parser
-    @parsed_code = Puppet[:code]
+    @parsed_code = Puppet.lookup(:code)
     if @parsed_code != ""
       parser.string = @parsed_code
       parser.parse

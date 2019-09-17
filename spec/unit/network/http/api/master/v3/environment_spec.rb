@@ -34,7 +34,7 @@ describe Puppet::Network::HTTP::API::Master::V3::Environment do
 
   describe "processing the environment catalog" do
     def compile_site_to_catalog(site, code_id=nil)
-      Puppet[:code] = <<-MANIFEST
+      manifests = <<-MANIFEST
       define db() { }
       Db produces Sql { }
 
@@ -55,6 +55,7 @@ describe Puppet::Network::HTTP::API::Master::V3::Environment do
         #{site}
       }
       MANIFEST
+      Puppet.push_context({code: manifests})
       Puppet::Parser::EnvironmentCompiler.compile(environment, code_id).filter { |r| r.virtual? }
     end
 

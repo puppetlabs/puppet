@@ -187,7 +187,7 @@ module Puppet
         ",
     },
     :strict => {
-      :default    => :warning,
+      :default    => Puppet::DEFAULT_STRICT_SETTING_VALUE,
       :type       => :symbolic_enum,
       :values     => [:off, :warning, :error],
       :desc       => "The strictness level of puppet. Allowed values are:
@@ -526,7 +526,7 @@ module Puppet
          A value of 'none' turns off the global binding.",
       :call_hook => :on_initialize_and_write,
       :hook => proc do |value|
-        if Puppet[:strict] != :off
+        if Puppet.lookup(:strict) != :off
           s_val = value.to_s # because sometimes the value is a symbol
           unless s_val == 'hiera' || s_val == 'none' || value == '' || value.nil?
             #TRANSLATORS 'data_binding_terminus' is a setting and should not be translated
@@ -720,7 +720,7 @@ API to expire the cache as needed
       Other environment data providers may be registered in modules on the module path. For such
       custom data providers see the respective module documentation. This setting is deprecated.",
       :hook => proc { |value|
-        unless value.nil? || Puppet[:strict] == :off
+        unless value.nil? || Puppet.lookup(:strict) == :off
           #TRANSLATORS 'environment_data_provider' is a setting and should not be translated
           Puppet.deprecation_warning(_("Setting 'environment_data_provider' is deprecated."))
         end
@@ -1311,7 +1311,7 @@ EOT
       end,
     },
     :code => {
-      :default    => "",
+      :default    => Puppet::DEFAULT_CODE_SETTING_VALUE,
       :desc       => "Code to parse directly.  This is essentially only used
       by `puppet`, and should only be set if you're writing your own Puppet
       executable.",
@@ -2086,7 +2086,7 @@ EOT
      EOT
      },
   :tasks => {
-    :default => false,
+    :default => Puppet::DEFAULT_TASKS_SETTING_VALUE,
     :type => :boolean,
     :desc => <<-'EOT'
       Turns on experimental support for tasks and plans in the puppet language. This is for internal API use only.

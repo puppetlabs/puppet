@@ -171,7 +171,7 @@ describe "validating 4x" do
   end
 
   context 'with --strict set to warning' do
-    before(:each) { Puppet[:strict] = :warning }
+    before(:each) { Puppet.push_context({strict: :warning}) }
     it 'produces a warning for duplicate keys in a literal hash' do
       acceptor = validate(parse('{ a => 1, a => 2 }'))
       expect(acceptor.warning_count).to eql(1)
@@ -215,7 +215,7 @@ describe "validating 4x" do
   end
 
   context 'with --strict set to error' do
-    before(:each) { Puppet[:strict] = :error }
+    before(:each) { Puppet.push_context({strict: :error}) }
     it 'produces an error for duplicate keys in a literal hash' do
       acceptor = validate(parse('{ a => 1, a => 2 }'))
       expect(acceptor.warning_count).to eql(0)
@@ -266,7 +266,7 @@ describe "validating 4x" do
   end
 
   context 'with --strict set to off' do
-    before(:each) { Puppet[:strict] = :off }
+    before(:each) { Puppet.push_context({strict: :off}) }
     it 'does not produce an error or warning for duplicate keys in a literal hash' do
       acceptor = validate(parse('{ a => 1, a => 2 }'))
       expect(acceptor.warning_count).to eql(0)
@@ -326,7 +326,7 @@ describe "validating 4x" do
   end
 
   context 'with --tasks set' do
-    before(:each) { Puppet[:tasks] = true }
+    before(:each) { Puppet.push_context({tasks: true}) }
 
     it 'raises an error for illegal plan names' do
       with_environment(environment) do

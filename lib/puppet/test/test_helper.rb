@@ -53,6 +53,9 @@ module Puppet::Test
       Puppet.push_context(Puppet.base_context({
         :environmentpath => @environmentpath,
         :basemodulepath => "",
+        :strict => Puppet::DEFAULT_STRICT_SETTING_VALUE,
+        :tasks => Puppet::DEFAULT_TASKS_SETTING_VALUE,
+        :code => Puppet::DEFAULT_CODE_SETTING_VALUE
       }), "Initial for specs")
       Puppet::Parser::Functions.reset
 

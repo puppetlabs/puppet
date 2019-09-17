@@ -438,13 +438,13 @@ describe Puppet::Node::Environment do
         Puppet.pop_context()
       end
 
-      it "loads from Puppet[:code]" do
-        Puppet[:code] = "define foo {}"
+      it "loads from Puppet.lookup(:code)" do
+        Puppet.push_context({code: "define foo {}"})
         krt = env.known_resource_types
         expect(krt.find_definition('foo')).to be_kind_of(Puppet::Resource::Type)
       end
 
-      it "parses from the the environment's manifests if Puppet[:code] is not set" do
+      it "parses from the the environment's manifests if Puppet.lookup(:code) is not set" do
         filename = tmpfile('a_manifest.pp')
         File.open(filename, 'w') do |f|
           f.puts("define from_manifest {}")
@@ -454,8 +454,8 @@ describe Puppet::Node::Environment do
         expect(krt.find_definition('from_manifest')).to be_kind_of(Puppet::Resource::Type)
       end
 
-      it "prefers Puppet[:code] over manifest files" do
-        Puppet[:code] = "define from_code_setting {}"
+      it "prefers Puppet.lookup(:code) over manifest files" do
+        Puppet.push_context({code: "define from_code_setting {}"})
         filename = tmpfile('a_manifest.pp')
         File.open(filename, 'w') do |f|
           f.puts("define from_manifest {}")
@@ -476,14 +476,14 @@ describe Puppet::Node::Environment do
       end
 
       it "fails helpfully if there is an error importing" do
-        Puppet[:code] = "oops {"
+        Puppet.push_context({code: "oops {"})
         expect do
           env.known_resource_types
         end.to raise_error(Puppet::Error, /Could not parse for environment #{env.name}/)
       end
 
       it "should mark the type collection as needing a reparse when there is an error parsing" do
-        Puppet[:code] = "oops {"
+        Puppet.push_context({code: "oops {"})
         expect do
           env.known_resource_types
         end.to raise_error(Puppet::Error, /Syntax error at .../)

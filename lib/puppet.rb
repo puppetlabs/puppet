@@ -41,6 +41,10 @@ module Puppet
   require 'puppet/context'
   require 'puppet/environments'
 
+  DEFAULT_STRICT_SETTING_VALUE = :warning
+  DEFAULT_TASKS_SETTING_VALUE = false
+  DEFAULT_CODE_SETTING_VALUE = ''
+
   class << self
     Puppet::GettextConfig.setup_locale
     Puppet::GettextConfig.create_default_text_domain
@@ -223,7 +227,11 @@ module Puppet
       },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
       :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
-      :rich_data => false
+      :rich_data => false,
+      :strict => settings[:strict],
+      :strict_variables => settings[:strict_variables],
+      :tasks => settings[:tasks],
+      :code => settings[:code],
     }
   end
 
@@ -233,6 +241,8 @@ module Puppet
   def self.bootstrap_context
     root_environment = Puppet::Node::Environment.create(:'*root*', [], Puppet::Node::Environment::NO_MANIFEST)
     {
+      :strict => DEFAULT_STRICT_SETTING_VALUE,
+      :tasks => DEFAULT_TASKS_SETTING_VALUE,
       :current_environment => root_environment,
       :root_environment => root_environment
     }

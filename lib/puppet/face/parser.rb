@@ -41,7 +41,7 @@ Puppet::Face.define(:parser, '0.0.1') do
 
       if files.empty?
         if not STDIN.tty?
-          Puppet[:code] = STDIN.read
+          Puppet.push_context(code: STDIN.read)
           error = validate_manifest(nil)
           parse_errors['STDIN'] = error if error
         else

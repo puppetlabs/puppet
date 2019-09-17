@@ -22,9 +22,10 @@ describe "the 'tag' function" do
   end
 
   it 'is not available when --tasks is on' do
-    Puppet[:tasks] = true
-    expect do
-      @scope.function_tag(['one', 'two'])
-    end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+    Puppet.override({tasks: true}) do
+      expect do
+        @scope.function_tag(['one', 'two'])
+      end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+    end
   end
 end

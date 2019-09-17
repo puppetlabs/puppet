@@ -87,7 +87,7 @@ describe Puppet::Parser::Compiler do
   # NEW INTEGRATION TEST
   describe "when evaluating collections" do
     it 'matches on container inherited tags' do
-      Puppet[:code] = <<-MANIFEST
+      manifest = <<-MANIFEST
       class xport_test {
         tag('foo_bar')
         @notify { 'nbr1':
@@ -105,6 +105,7 @@ describe Puppet::Parser::Compiler do
       }
       include xport_test
       MANIFEST
+      Puppet.push_context({code: manifest})
 
       catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
 
@@ -140,10 +141,11 @@ describe Puppet::Parser::Compiler do
 
   context "when converting catalog to resource" do
     it "the same environment is used for compilation as for transformation to resource form" do
-        Puppet[:code] = <<-MANIFEST
-          notify { 'dummy':
-          }
-        MANIFEST
+      manifest = <<-MANIFEST
+        notify { 'dummy':
+        }
+      MANIFEST
+      Puppet.push_context({code: manifest})
 
       expect_any_instance_of(Puppet::Parser::Resource::Catalog).to receive(:to_resource) do |catalog|
         expect(Puppet.lookup(:current_environment).name).to eq(:production)
@@ -368,7 +370,7 @@ describe Puppet::Parser::Compiler do
         # tested with strict == off since this was once conditional on strict
         # can be removed in a later version.
         before(:each) do
-          Puppet[:strict] = :off
+          Puppet.push_context({strict: :off})
         end
 
         it 'is reported as an error' do
@@ -444,7 +446,7 @@ describe Puppet::Parser::Compiler do
     end
 
     it 'should recompute the version after input files are re-parsed' do
-      Puppet[:code] = 'class foo { }'
+      Puppet.push_context({code: 'class foo { }'})
       first_time = Time.at(1)
       second_time = Time.at(200)
       allow(Time).to receive(:now).and_return(first_time)
@@ -452,7 +454,7 @@ describe Puppet::Parser::Compiler do
       expect(Puppet::Parser::Compiler.compile(node).version).to eq(first_time.to_i)
       allow(Time).to receive(:now).and_return(second_time)
       expect(Puppet::Parser::Compiler.compile(node).version).to eq(first_time.to_i) # no change because files didn't change
-      Puppet[:code] = nil
+      Puppet.push_context({code: ''})
       expect(Puppet::Parser::Compiler.compile(node).version).to eq(second_time.to_i)
     end
 

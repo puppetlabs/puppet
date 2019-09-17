@@ -527,7 +527,7 @@ class Puppet::Parser::Scope
     begin
       throw(:undefined_variable, reason)
     rescue  UNCAUGHT_THROW_EXCEPTION
-      case Puppet[:strict]
+      case Puppet.lookup(:strict)
       when :off
         # do nothing
       when :warning
@@ -632,7 +632,7 @@ class Puppet::Parser::Scope
   end
 
   def handle_not_found(class_name, variable_name, position, reason = nil)
-    unless Puppet[:strict_variables]
+    unless Puppet.lookup(:strict_variables)
       # Do not issue warning if strict variables are on, as an error will be raised by variable_not_found
       location = if position[:lineproc]
                    Puppet::Util::Errors.error_location_with_space(nil, position[:lineproc].call)

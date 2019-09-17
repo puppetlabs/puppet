@@ -793,7 +793,7 @@ describe Puppet::Module do
 
   describe 'when --strict is warning' do
     before :each do
-      Puppet[:strict] = :warning
+      Puppet.push_context({strict: :warning})
     end
 
     it "should warn about a failure to parse" do
@@ -806,7 +806,7 @@ describe Puppet::Module do
 
     describe 'when --strict is off' do
       before :each do
-        Puppet[:strict] = :off
+        Puppet.push_context({strict: :off})
       end
 
       it "should not warn about a failure to parse" do
@@ -827,7 +827,7 @@ describe Puppet::Module do
 
     describe 'when --strict is error' do
       before :each do
-        Puppet[:strict] = :error
+        Puppet.push_context({strict: :error})
       end
 
       it "should fail on a failure to parse" do

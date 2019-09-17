@@ -19,7 +19,7 @@ describe "Application instantiation" do
   end
 
   def compile_to_env_catalog(string, code_id=nil)
-    Puppet[:code] = string
+    Puppet.push_context({code: string})
     Puppet::Parser::EnvironmentCompiler.compile(env, code_id).filter { |r| r.virtual? }
   end
 

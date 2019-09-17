@@ -435,7 +435,7 @@ describe 'the 4x function api' do
       end
 
       before(:each) do
-        Puppet[:strict_variables] = true
+        Puppet.push_context({strict_variables: true})
       end
 
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }

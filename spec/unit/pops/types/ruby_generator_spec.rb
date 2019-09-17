@@ -437,7 +437,7 @@ describe 'Puppet Ruby Generator' do
             module_def = generator.module_definition([first_type, second_type], 'Generated stuff')
           end
           Loaders.clear
-          Puppet[:code] = nil
+          Puppet.push_context({code: nil})
 
           # Create the actual classes in the PuppetSpec::RubyGenerator module
           Puppet.override(:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
@@ -753,7 +753,7 @@ describe 'Puppet Ruby Generator' do
             module_def2 = generator.module_definition_from_typeset(typeset2)
           end
           Loaders.clear
-          Puppet[:code] = nil
+          Puppet.push_context({code: nil})
 
           # Create the actual classes in the PuppetSpec::RubyGenerator module
           Puppet.override(:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))) do

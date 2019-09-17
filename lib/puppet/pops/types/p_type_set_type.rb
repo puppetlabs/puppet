@@ -299,7 +299,7 @@ class PTypeSetType < PMetaType
           entries = []
           unless name == 'Object' or name == 'TypeSet'
             if value.operations.any? { |op| op.attribute_name == KEY_PARENT }
-              case Puppet[:strict]
+              case Puppet.lookup(:strict)
               when :warning
                 IssueReporter.warning(value, Issues::DUPLICATE_KEY, :key => KEY_PARENT)
               when :error

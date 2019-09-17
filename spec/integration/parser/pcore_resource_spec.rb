@@ -245,7 +245,7 @@ describe 'when pcore described resources types are in use' do
     # Since an instance of a compiler is needed and it starts an initial import that evaluates
     # code, and that code will be loaded from manifests with a glob (go figure)
     # the only way to stop that is to set 'code' to something as that overrides "importing" files.
-    Puppet[:code] = "undef"
+    Puppet.push_context({code: "undef"})
     node = Puppet::Node.new('test')
     # All loading must be done in a context configured as the compiler does it.
     # (Therefore: use the context a compiler creates as this test logic must otherwise

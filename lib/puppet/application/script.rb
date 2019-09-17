@@ -127,11 +127,11 @@ Copyright (c) 2017 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
   def main
     # The tasks feature is always on
-    Puppet[:tasks] = true
+    Puppet.push_context(tasks: true)
 
     # Set the puppet code or file to use.
     if options[:code] || command_line.args.length == 0
-      Puppet[:code] = options[:code] || STDIN.read
+      Puppet.push_context(code: options[:code] || STDIN.read)
     else
       manifest = command_line.args.shift
       raise _("Could not find file %{manifest}") % { manifest: manifest } unless Puppet::FileSystem.exist?(manifest)

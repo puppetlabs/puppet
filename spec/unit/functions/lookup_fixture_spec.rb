@@ -44,7 +44,7 @@ describe 'The lookup function' do
   end
 
   def compile_and_get_notifications(code)
-    Puppet[:code] = code
+    Puppet.push_context({code: code})
     node.environment.check_for_reparse
     catalog = block_given? ? compiler.compile { |cat| yield(compiler.topscope); cat } : compiler.compile
     catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
@@ -373,7 +373,7 @@ describe 'The lookup function' do
     it 'will both log a warning and raise an exception when key in the function provided module data is not prefixed' do
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-        Puppet[:code] = "include bad_data\nlookup('bad_data::b')"
+        Puppet.push_context({code: "include bad_data\nlookup('bad_data::b')"})
         expect { compiler.compile }.to raise_error(Puppet::ParseError, /did not find a value for the name 'bad_data::b'/)
       end
       warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }
@@ -417,7 +417,7 @@ describe 'The lookup function' do
 
   context 'accessing bad data' do
     it 'a warning will be logged when key in the function provided module data is not prefixed' do
-      Puppet[:code] = "include bad_data\nlookup('bad_data::c')"
+      Puppet.push_context({code: "include bad_data\nlookup('bad_data::c')"})
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         compiler.compile
@@ -427,7 +427,7 @@ describe 'The lookup function' do
     end
 
     it 'a warning will be logged when key in the hiera provided module data is not prefixed' do
-      Puppet[:code] = "include hieraprovider\nlookup('hieraprovider::test::param_a')"
+      Puppet.push_context({code: "include hieraprovider\nlookup('hieraprovider::test::param_a')"})
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         compiler.compile
@@ -440,20 +440,20 @@ describe 'The lookup function' do
   context 'accessing empty files' do
     # An empty YAML file is OK and should be treated as a file that contains no keys
     it "will fail normally with a 'did not find a value' error when a yaml file is empty" do
-      Puppet[:code] = "include empty_yaml\nlookup('empty_yaml::a')"
+      Puppet.push_context({code: "include empty_yaml\nlookup('empty_yaml::a')"})
       expect { compiler.compile }.to raise_error(Puppet::ParseError, /did not find a value for the name 'empty_yaml::a'/)
     end
 
     # An empty JSON file is not OK. Should yield a parse error
     it "will fail with a LookupError indicating a parser failure when a json file is empty" do
-      Puppet[:code] = "include empty_json\nlookup('empty_json::a')"
+      Puppet.push_context({code: "include empty_json\nlookup('empty_json::a')"})
       expect { compiler.compile }.to raise_error(Puppet::DataBinding::LookupError, /Unable to parse/)
     end
   end
 
   context 'accessing nil values' do
     it 'will find a key with undef value in a yaml file' do
-      Puppet[:code] = 'include empty_key_yaml'
+      Puppet.push_context({code: 'include empty_key_yaml'})
       compiler.compile do |catalog|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
         begin
@@ -469,7 +469,7 @@ describe 'The lookup function' do
     end
 
     it 'will find a key with undef value in a json file' do
-      Puppet[:code] = 'include empty_key_json'
+      Puppet.push_context({code: 'include empty_key_json'})
       compiler.compile do |catalog|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
         begin
@@ -487,7 +487,7 @@ describe 'The lookup function' do
 
   context 'using explain' do
     it 'will explain that module is not found' do
-      Puppet[:code] = 'undef'
+      Puppet.push_context({code: 'undef'})
       compiler.compile do |catalog|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
         begin
@@ -499,7 +499,7 @@ describe 'The lookup function' do
     end
 
     it 'will explain that module does not find a key' do
-      Puppet[:code] = 'undef'
+      Puppet.push_context({code: 'undef'})
       compiler.compile do |catalog|
         lookup_invocation = Puppet::Pops::Lookup::Invocation.new(compiler.topscope, {}, {}, true)
         begin

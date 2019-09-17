@@ -192,9 +192,9 @@ describe 'Puppet::Pops::Lookup::Context' do
 
           logs = []
           Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-            Puppet[:code] = code1
+            Puppet.push_context({code: code1})
             Puppet::Parser::Compiler.compile(node)
-            Puppet[:code] = code2
+            Puppet.push_context({code: code2})
             Puppet::Parser::Compiler.compile(node)
           end
           logs = logs.select { |log| log.level == :notice }.map { |log| log.message }
@@ -212,7 +212,7 @@ describe 'Puppet::Pops::Lookup::Context' do
 
           logs = []
           Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-            Puppet[:code] = code
+            Puppet.push_context({code: code})
             Puppet::Parser::Compiler.compile(node)
 
             # Change content size!
@@ -236,7 +236,7 @@ describe 'Puppet::Pops::Lookup::Context' do
 
           logs = []
           Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-            Puppet[:code] = code
+            Puppet.push_context({code: code})
             Puppet::Parser::Compiler.compile(node)
 
             # Write content with the same size
@@ -262,7 +262,7 @@ describe 'Puppet::Pops::Lookup::Context' do
 
           logs = []
           Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-            Puppet[:code] = code
+            Puppet.push_context({code: code})
             Puppet::Parser::Compiler.compile(node)
 
             # Change inode!
@@ -284,7 +284,7 @@ describe 'Puppet::Pops::Lookup::Context' do
       let(:invocation_with_explain) { Invocation.new(compiler.topscope, {}, {}, true) }
 
       def compile_and_get_notices(code, scope_vars = {})
-        Puppet[:code] = code
+        Puppet.push_context({code: code})
         scope = compiler.topscope
         scope_vars.each_pair { |k,v| scope.setvar(k, v) }
         node.environment.check_for_reparse

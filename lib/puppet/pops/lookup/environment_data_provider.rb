@@ -14,7 +14,7 @@ class EnvironmentDataProvider < ConfiguredDataProvider
     if config.version > 3
       config
     else
-      if Puppet[:strict] == :error
+      if Puppet.lookup(:strict) == :error
         config.fail(Issues::HIERA_VERSION_3_NOT_GLOBAL, :where => 'environment')
       else
         Puppet.warn_once(:hiera_v3_at_env_root, config.config_path, _('hiera.yaml version 3 found at the environment root was ignored'), config.config_path)

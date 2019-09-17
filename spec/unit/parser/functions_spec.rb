@@ -47,10 +47,6 @@ describe Puppet::Parser::Functions do
   end
 
   describe "when calling function to test function existence" do
-    before :each do
-      Puppet[:strict] = :error
-    end
-
     it "emits a deprecation warning when loading all 3.x functions" do
       allow(Puppet::Parser::Functions.autoloader.delegatee).to receive(:loadall)
       Puppet::Parser::Functions.autoloader.loadall

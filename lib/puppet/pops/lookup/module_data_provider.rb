@@ -63,7 +63,7 @@ class ModuleDataProvider < ConfiguredDataProvider
     if config.version > 3
       config
     else
-      if Puppet[:strict] == :error
+      if Puppet.lookup(:strict) == :error
         config.fail(Issues::HIERA_VERSION_3_NOT_GLOBAL, :where => 'module')
       else
         Puppet.warn_once(:hiera_v3_at_module_root, config.config_path, _('hiera.yaml version 3 found at module root was ignored'), config.config_path)

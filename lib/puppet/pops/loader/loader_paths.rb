@@ -31,7 +31,7 @@ module LoaderPaths
     when :plan
       result << PlanPath.new(loader)
     when :task
-      result << TaskPath.new(loader) if Puppet[:tasks] && loader.loadables.include?(:task)
+      result << TaskPath.new(loader) if Puppet.lookup(:tasks) && loader.loadables.include?(:task)
     when :type
       result << DataTypePath.new(loader) if loader.loadables.include?(:datatype)
       result << TypePathPP.new(loader) if loader.loadables.include?(:type_pp)

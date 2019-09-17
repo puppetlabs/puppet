@@ -976,7 +976,7 @@ describe 'The Object Type' do
       let(:compiler) { Puppet::Parser::Compiler.new(node) }
 
       def compile(code)
-        Puppet[:code] = code
+        Puppet.push_context({code: code})
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) { compiler.compile }
       end
 
@@ -1015,7 +1015,7 @@ describe 'The Object Type' do
       end
 
       it 'parent can be specified in the hash' do
-        Puppet[:strict] = 'warning'
+        Puppet.push_context({strict: :warning})
         compile(<<-CODE)
           type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
           type MySecondObject = { parent => MyObject, attributes => { b => String }}
@@ -1026,7 +1026,7 @@ describe 'The Object Type' do
       end
 
       it 'Object before the hash and parent inside the hash can be combined' do
-        Puppet[:strict] = 'warning'
+        Puppet.push_context({strict: :warning})
         compile(<<-CODE)
           type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
           type MySecondObject = Object { parent => MyObject, attributes => { b => String }}
@@ -1037,7 +1037,7 @@ describe 'The Object Type' do
       end
 
       it 'if strict == warning, a warning is issued when the same is parent specified both before and inside the hash' do
-        Puppet[:strict] = 'warning'
+        Puppet.push_context({strict: :warning})
         compile(<<-CODE)
           type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
           type MySecondObject = MyObject { parent => MyObject, attributes => { b => String }}
@@ -1048,7 +1048,7 @@ describe 'The Object Type' do
       end
 
       it 'if strict == warning, a warning is issued when different parents are specified before and inside the hash. The former overrides the latter' do
-        Puppet[:strict] = 'warning'
+        Puppet.push_context({strict: :warning})
         compile(<<-CODE)
           type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
           type MySecondObject = MyObject { parent => MyObject, attributes => { b => String }}
@@ -1059,7 +1059,7 @@ describe 'The Object Type' do
       end
 
       it 'if strict == error, an error is raised when the same parent is specified both before and inside the hash' do
-        Puppet[:strict] = 'error'
+        Puppet.push_context({strict: :error})
         expect { compile(<<-CODE) }.to raise_error(/The key 'parent' is declared more than once/)
           type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
           type MySecondObject = MyObject { parent => MyObject, attributes => { b => String }}
@@ -1068,7 +1068,7 @@ describe 'The Object Type' do
       end
 
       it 'if strict == error, an error is raised when different parents are specified before and inside the hash' do
-        Puppet[:strict] = 'error'
+        Puppet.push_context({strict: :error})
         expect { compile(<<-CODE) }.to raise_error(/The key 'parent' is declared more than once/)
           type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
           type MySecondObject = MyObject { parent => MyOtherType, attributes => { b => String }}

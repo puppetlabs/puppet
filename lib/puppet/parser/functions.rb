@@ -38,7 +38,7 @@ module Puppet::Parser::Functions
     end
 
     def loadall(env = Puppet.lookup(:current_environment))
-      if Puppet[:strict] != :off
+      if Puppet.lookup(:strict) != :off
         Puppet.warn_once('deprecations', 'Puppet::Parser::Functions#loadall', _("The method 'Puppet::Parser::Functions.autoloader#loadall' is deprecated in favor of using 'Scope#call_function'."))
       end
 
@@ -46,7 +46,7 @@ module Puppet::Parser::Functions
     end
 
     def load(name, env = Puppet.lookup(:current_environment))
-      if Puppet[:strict] != :off
+      if Puppet.lookup(:strict) != :off
         Puppet.warn_once('deprecations', "Puppet::Parser::Functions#load('#{name}')", _("The method 'Puppet::Parser::Functions.autoloader#load(\"%{name}\")' is deprecated in favor of using 'Scope#call_function'.") % {name: name})
       end
 
@@ -54,7 +54,7 @@ module Puppet::Parser::Functions
     end
 
     def loaded?(name)
-      if Puppet[:strict] != :off
+      if Puppet.lookup(:strict) != :off
         Puppet.warn_once('deprecations', "Puppet::Parser::Functions.loaded?('#{name}')", _("The method 'Puppet::Parser::Functions.autoloader#loaded?(\"%{name}\")' is deprecated in favor of using 'Scope#call_function'.") % {name: name})
       end
 

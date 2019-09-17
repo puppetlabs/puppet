@@ -419,7 +419,7 @@ module Puppet::Pops
           let(:compiler) { Puppet::Parser::Compiler.new(node) }
 
           def compile(code)
-            Puppet[:code] = code
+            Puppet.push_context({code: code})
             Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) { compiler.compile }
           end
 
@@ -485,7 +485,7 @@ module Puppet::Pops
           end
 
           it 'and warns when parent is specified both before and inside the hash if strict == warning' do
-            Puppet[:strict] = 'warning'
+            Puppet.push_context({strict: :warning})
             compile(<<-PUPPET)
               type TS = TypeSet {
                 pcore_version => '1.0.0',
@@ -501,7 +501,7 @@ module Puppet::Pops
           end
 
           it 'and errors when parent is specified both before and inside the hash if strict == error' do
-            Puppet[:strict] = 'error'
+            Puppet.push_context({strict: :error})
             expect{ compile(<<-PUPPET) }.to raise_error(/The key 'parent' is declared more than once/)
               type TS = TypeSet {
                 pcore_version => '1.0.0',

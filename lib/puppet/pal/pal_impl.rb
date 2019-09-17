@@ -75,26 +75,21 @@ module Pal
       # Use the manifest setting
       manifest_file = Puppet[:manifest]
     else
-      # An "undef" code_string is the only way to override Puppet[:manifest] & Puppet[:code] settings since an
-      # empty string is taken as Puppet[:code] not being set.
+      # An "undef" code_string is the only way to override Puppet[:manifest] setting & Puppet.lookup(:code) since an
+      # empty string is taken as Puppet.lookup(:code) not being set.
       #
       if manifest_file.nil? && code_string.nil?
         code_string = 'undef'
       end
     end
 
-    previous_tasks_value = Puppet[:tasks]
-    previous_code_value = Puppet[:code]
-    Puppet[:tasks] = true
-    # After the assertions, if code_string is non nil - it has the highest precedence
-    Puppet[:code] = code_string unless code_string.nil?
-
-    # If manifest_file is nil, the #main method will use the env configured manifest
-    # to do things in the block while a Script Compiler is in effect
-    main(manifest_file, facts, variables, :script, &block)
-  ensure
-    Puppet[:tasks] = previous_tasks_value
-    Puppet[:code] = previous_code_value
+    context = { tasks: true }
+    context[:code] = code_string unless code_string.nil?
+    Puppet.override(context) do
+      # If manifest_file is nil, the #main method will use the env configured manifest
+      # to do things in the block while a Script Compiler is in effect
+      main(manifest_file, facts, variables, :script, &block)
+    end
   end
 
   # Evaluates a Puppet Language script string.
@@ -173,29 +168,23 @@ module Pal
       # Use the manifest setting
       manifest_file = Puppet[:manifest]
     else
-      # An "undef" code_string is the only way to override Puppet[:manifest] & Puppet[:code] settings since an
-      # empty string is taken as Puppet[:code] not being set.
+      # An "undef" code_string is the only way to override Puppet[:manifest] setting & Puppet.lookup(:code)
+      # since an empty string is taken as Puppet.lookup(:code) not being set.
       #
       if manifest_file.nil? && code_string.nil?
         code_string = 'undef'
       end
     end
 
-    # We need to make sure to set these back when we're done
-    previous_tasks_value = Puppet[:tasks]
-    previous_code_value = Puppet[:code]
+    context = { tasks: false }
+    context[:code] = code_string unless code_string.nil?
+    Puppet.override(context) do
+      # After the assertions, if code_string is non nil - it has the highest precedence
 
-    Puppet[:tasks] = false
-    # After the assertions, if code_string is non nil - it has the highest precedence
-    Puppet[:code] = code_string unless code_string.nil?
-
-    # If manifest_file is nil, the #main method will use the env configured manifest
-    # to do things in the block while a Script Compiler is in effect
-    main(manifest_file, facts, variables, :catalog, &block)
-  ensure
-    # Clean up after ourselves
-    Puppet[:tasks] = previous_tasks_value
-    Puppet[:code] = previous_code_value
+      # If manifest_file is nil, the #main method will use the env configured manifest
+      # to do things in the block while a Script Compiler is in effect
+      main(manifest_file, facts, variables, :catalog, &block)
+    end
   end
 
   # Defines the context in which to perform puppet operations (evaluation, etc)

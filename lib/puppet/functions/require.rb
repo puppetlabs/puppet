@@ -45,7 +45,7 @@ Puppet::Functions.create_function(:require, Puppet::Functions::InternalFunction)
   end
 
   def require_impl(scope, *classes)
-    if Puppet[:tasks]
+    if Puppet.lookup(:tasks)
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
         {:operation => 'require'})

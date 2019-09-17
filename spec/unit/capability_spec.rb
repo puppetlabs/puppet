@@ -87,7 +87,7 @@ describe 'Capability types' do
       main = Puppet::Parser::AST::Hostclass.new('', :code => Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results))
       allow_any_instance_of(Puppet::Node::Environment).to receive(:perform_initial_import).and_return(main)
 
-      type = compile_to_catalog(nil).environment_instance.known_resource_types.definition(:test)
+      type = compile_to_catalog('').environment_instance.known_resource_types.definition(:test)
       expect(type.produces).to be_instance_of(Array)
       cns = type.consumes.first
 
@@ -121,7 +121,7 @@ describe 'Capability types' do
       main = Puppet::Parser::AST::Hostclass.new('', :code => Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results))
      allow_any_instance_of(Puppet::Node::Environment).to receive(:perform_initial_import).and_return(main)
 
-      type = compile_to_catalog(nil).environment_instance.known_resource_types.definition('Mod::Test')
+      type = compile_to_catalog('').environment_instance.known_resource_types.definition('Mod::Test')
       expect(type.produces).to be_instance_of(Array)
       cns = type.consumes.first
 

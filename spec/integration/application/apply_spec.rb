@@ -105,7 +105,7 @@ end
 
       # Test just to verify that the Pcore Resource Type and not the Ruby one is produced when the catalog is produced
       it 'loads pcore resource type instead of ruby resource type during compile' do
-        Puppet[:code] = 'applytest { "applytest was here": }'
+        Puppet.push_context({code: 'applytest { "applytest was here": }'})
         compiler = Puppet::Parser::Compiler.new(node)
         tn = Puppet::Pops::Loader::TypedName.new(:resource_type_pp, 'applytest')
         rt = Puppet::Pops::Resource::ResourceTypeImpl.new('applytest', [Puppet::Pops::Resource::Param.new(String, 'message')], [Puppet::Pops::Resource::Param.new(String, 'name', true)])
@@ -116,7 +116,7 @@ end
       end
 
       it "does not fail when pcore type is loaded twice" do
-        Puppet[:code] = 'applytest { xyz: alias => aptest }; Resource[applytest]'
+        Puppet.push_context({code: 'applytest { xyz: alias => aptest }; Resource[applytest]'})
         compiler = Puppet::Parser::Compiler.new(node)
         expect { compiler.compile }.not_to raise_error
       end

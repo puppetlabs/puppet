@@ -12,7 +12,7 @@ describe 'The Loader' do
   include PuppetSpec::Files
 
   before(:each) do
-    Puppet[:tasks] = true
+    Puppet.push_context({tasks: true})
   end
 
   let(:testing_env) do
@@ -53,7 +53,8 @@ describe 'The Loader' do
   let(:tasks_feature) { false }
 
   before(:each) do
-    Puppet[:tasks] = tasks_feature
+    # We have to set :tasks prior to calling Loaders.new?
+    Puppet.push_context({tasks: tasks_feature})
     loaders = Loaders.new(env)
     Puppet.push_context(:loaders => loaders)
     loaders.pre_load

@@ -111,11 +111,11 @@ describe Puppet::Parser::Compiler do
     it 'should not create the settings class more than once' do
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-        Puppet[:code] = 'undef'
+        Puppet.push_context({code: 'undef'})
         @compiler.compile
 
         @compiler = Puppet::Parser::Compiler.new(@node)
-        Puppet[:code] = 'undef'
+        Puppet.push_context({code: 'undef'})
         @compiler.compile
       end
       warnings = logs.select { |log| log.level == :warning }.map { |log| log.message }

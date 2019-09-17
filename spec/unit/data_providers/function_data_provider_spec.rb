@@ -38,7 +38,7 @@ describe "when using function data provider" do
   # module.
   #
   it 'gets data from module and environment functions and combines them with env having higher precedence' do
-    Puppet[:code] = 'include abc'
+    Puppet.push_context({code: 'include abc'})
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
     compiler = Puppet::Parser::Compiler.new(node)
     catalog = compiler.compile()
@@ -47,7 +47,7 @@ describe "when using function data provider" do
   end
 
   it 'gets data from module having a puppet function delivering module data' do
-    Puppet[:code] = 'include xyz'
+    Puppet.push_context({code: 'include xyz'})
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
     compiler = Puppet::Parser::Compiler.new(node)
     catalog = compiler.compile()
@@ -56,7 +56,7 @@ describe "when using function data provider" do
   end
 
   it 'gets data from puppet function delivering environment data' do
-    Puppet[:code] = <<-CODE
+    manifest = <<-CODE
       function environment::data() {
         { 'cls::test1' => 'env_puppet1',
           'cls::test2' => 'env_puppet2'
@@ -68,13 +68,14 @@ describe "when using function data provider" do
       }
       include cls
     CODE
+    Puppet.push_context({code: manifest})
     node = Puppet::Node.new('testnode', :facts => Puppet::Node::Facts.new('facts', {}), :environment => 'production')
     catalog = Puppet::Parser::Compiler.new(node).compile
     expect(resources_in(catalog)).to include('Notify[env_puppet1]', 'Notify[env_puppet2]')
   end
 
   it 'raises an error if the environment data function does not return a hash' do
-    Puppet[:code] = 'include abc'
+    Puppet.push_context({code: 'include abc'})
     # find the loaders to patch with faulty function
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
 
@@ -93,7 +94,7 @@ describe "when using function data provider" do
   end
 
   it 'raises an error if the module data function does not return a hash' do
-    Puppet[:code] = 'include abc'
+    Puppet.push_context({code: 'include abc'})
     # find the loaders to patch with faulty function
     node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}), :environment => 'production')
 

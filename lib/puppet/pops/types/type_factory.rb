@@ -112,7 +112,7 @@ module TypeFactory
     if deprecated_second_argument.empty?
       size_type_or_value.nil? ? PStringType::DEFAULT : PStringType.new(size_type_or_value)
     else
-      if Puppet[:strict] != :off
+      if Puppet.lookup(:strict) != :off
         #TRANSLATORS 'TypeFactory#string' is a class and method name and should not be translated
         message = _("Passing more than one argument to TypeFactory#string is deprecated")
         Puppet.warn_once('deprecations', "TypeFactory#string_multi_args", message)

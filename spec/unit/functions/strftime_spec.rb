@@ -95,7 +95,7 @@ describe 'the strftime function' do
   end
 
   def collect_log(code, node = Puppet::Node.new('foonode'))
-    Puppet[:code] = code
+    Puppet.push_context({code: code})
     compiler = Puppet::Parser::Compiler.new(node)
     node.environment.check_for_reparse
     logs = []

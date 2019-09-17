@@ -5,7 +5,7 @@ describe 'the log function' do
   include PuppetSpec::Compiler
 
   def collect_logs(code)
-    Puppet[:code] = code
+    Puppet.push_context({code: code})
     node = Puppet::Node.new('logtest')
     compiler = Puppet::Parser::Compiler.new(node)
     node.environment.check_for_reparse

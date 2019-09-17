@@ -11,7 +11,7 @@ describe 'the module_directory function' do
   it 'returns first found module from one or more given names' do
     mod = double('module')
     allow(mod).to receive(:path).and_return('expected_path')
-    Puppet[:code] = "notify { module_directory('one', 'two'):}"
+    Puppet.push_context({code: "notify { module_directory('one', 'two'):}"})
     node = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
     allow(compiler.environment).to receive(:module).with('one').and_return(nil)
@@ -22,7 +22,7 @@ describe 'the module_directory function' do
   it 'returns first found module from one or more given names in an array' do
     mod = double('module')
     allow(mod).to receive(:path).and_return('expected_path')
-    Puppet[:code] = "notify { module_directory(['one', 'two']):}"
+    Puppet.push_context({code: "notify { module_directory(['one', 'two']):}"})
     node = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
     allow(compiler.environment).to receive(:module).with('one').and_return(nil)
@@ -33,7 +33,7 @@ describe 'the module_directory function' do
   it 'returns undef when none of the modules were found' do
     mod = double('module')
     allow(mod).to receive(:path).and_return('expected_path')
-    Puppet[:code] = "notify { String(type(module_directory('one', 'two'))):}"
+    Puppet.push_context({code: "notify { String(type(module_directory('one', 'two'))):}"})
     node = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
     allow(compiler.environment).to receive(:module).with('one').and_return(nil)

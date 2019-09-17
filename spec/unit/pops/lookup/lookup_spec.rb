@@ -111,7 +111,7 @@ describe 'The lookup API' do
 
     it 'includes APL in explain output when debug is enabled' do
       Puppet[:log_level] = 'debug'
-      Puppet[:code] = 'include mod'
+      Puppet.push_context({code: 'include mod'})
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         compiler.compile
       end
@@ -137,9 +137,9 @@ describe 'The lookup API' do
     end
     let(:msg) { /file does not contain a valid yaml hash/ }
 
-    %w(off warning).each do |strict|
+    %i(off warning).each do |strict|
       it "logs a warning when --strict is '#{strict}'" do
-        Puppet[:strict] = strict
+        Puppet.push_context({strict: strict})
         logs = []
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           expect(Lookup.lookup('mod::somevar', nil, nil, true, nil, invocation)).to be_nil
@@ -149,7 +149,7 @@ describe 'The lookup API' do
     end
 
     it 'fails when --strict is "error"' do
-      Puppet[:strict] = 'error'
+      Puppet.push_context({strict: :error})
       expect { Lookup.lookup('mod::somevar', nil, nil, true, nil, invocation) }.to raise_error(msg)
     end
   end
@@ -163,9 +163,9 @@ describe 'The lookup API' do
     end
     let(:msg) { /file does not contain a valid yaml hash/ }
 
-    %w(off warning error).each do |strict|
+    %i(off warning error).each do |strict|
       it "logs a warning when --strict is '#{strict}'" do
-        Puppet[:strict] = strict
+        Puppet.push_context({strict: strict})
         logs = []
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           expect(Lookup.lookup('mod::somevar', nil, nil, true, nil, invocation)).to be_nil

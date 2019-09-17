@@ -47,7 +47,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
     final value of a parameter (just as when setting a parameter to `undef` in a puppet language
     resource declaration).
   ENDHEREDOC
-  if Puppet[:tasks]
+  if Puppet.lookup(:tasks)
     raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
       Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
       {:operation => 'create_resources'})

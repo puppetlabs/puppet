@@ -190,24 +190,25 @@ describe Puppet::Parser::Resource do
     end
 
     it 'should allow a resource reference to be undef' do
-      Puppet[:code] = "notify { 'hello': message=>'yo', notify => undef }"
+      Puppet.push_context({code: "notify { 'hello': message=>'yo', notify => undef }"})
       catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
       edges = catalog.edges.map {|e| [e.source.ref, e.target.ref]}
       expect(edges).to include(['Class[main]', 'Notify[hello]'])
     end
 
     it 'should evaluate class in the same file without include' do
-      Puppet[:code] = <<-MANIFEST
+      manifest = <<-MANIFEST
         class a($myvar = 'hello') {}
         class { 'a': myvar => 'goodbye' }
         notify { $a::myvar: }
       MANIFEST
+      Puppet.push_context({code: manifest})
       catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
       expect(catalog.resource('Notify[goodbye]')).to be_a(Puppet::Resource)
     end
 
     it "should allow edges to propagate multiple levels down the scope hierarchy" do
-      Puppet[:code] = <<-MANIFEST
+      manifest = <<-MANIFEST
         stage { before: before => Stage[main] }
 
         class alpha {
@@ -219,6 +220,7 @@ describe Puppet::Parser::Resource do
         class gamma { }
         class { alpha: stage => before }
       MANIFEST
+      Puppet.push_context({code: manifest})
 
       catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
 
@@ -231,7 +233,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should use the specified stage even if the parent scope specifies one" do
-      Puppet[:code] = <<-MANIFEST
+      manifest = <<-MANIFEST
         stage { before: before => Stage[main], }
         stage { after: require => Stage[main], }
 
@@ -241,6 +243,7 @@ describe Puppet::Parser::Resource do
         class beta { }
         class { alpha: stage => before }
       MANIFEST
+      Puppet.push_context({code: manifest})
 
       catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
 
@@ -262,7 +265,7 @@ describe Puppet::Parser::Resource do
     end
 
     it 'should assign default value to generated resource' do
-      Puppet[:code] = <<-PUPPET
+      manifest = <<-PUPPET
         define one($var) {
           notify { "${var} says hello": }
         }
@@ -276,6 +279,7 @@ describe Puppet::Parser::Resource do
         }
         two { 'bob': }
       PUPPET
+      Puppet.push_context({code: manifest})
 
       catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
       edges = catalog.edges.map {|e| [e.source.ref, e.target.ref]}
@@ -285,7 +289,7 @@ describe Puppet::Parser::Resource do
     end
 
     it 'should override default value with new value' do
-      Puppet[:code] = <<-PUPPET.unindent
+      manifest = <<-PUPPET.unindent
         class foo {
           File {
             ensure => file,
@@ -302,6 +306,7 @@ describe Puppet::Parser::Resource do
         }
         include foo
         PUPPET
+      Puppet.push_context({code: manifest})
 
       catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new 'anyone')
       file = catalog.resource('File[/tmp/foo]')

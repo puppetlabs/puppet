@@ -9,7 +9,7 @@ describe 'the script compiler' do
   include PuppetSpec::Files
   include Matchers::Resource
   before(:each) do
-    Puppet[:tasks] = true
+    Puppet.push_context({tasks: true})
   end
 
   context "when used" do
@@ -47,38 +47,30 @@ describe 'the script compiler' do
 
     context 'is configured such that' do
       it 'returns what the script_compiler returns' do
-        Puppet[:code] = <<-CODE
-            42
-          CODE
+        Puppet.push_context({code: '42'})
         expect(script_compiler.compile).to eql(42)
       end
 
       it 'referencing undefined variables raises an error' do
         expect do
-          Puppet[:code] = <<-CODE
-              notice $rubyversion
-            CODE
-            Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
+          Puppet.push_context({code: 'notice $rubyversion'})
+          Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
 
         end.to raise_error(/Unknown variable: 'rubyversion'/)
       end
 
       it 'has strict=error behavior' do
         expect do
-          Puppet[:code] = <<-CODE
-              notice({a => 10, a => 20})
-            CODE
-            Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
+          Puppet.push_context({code: 'notice({a => 10, a => 20})'})
+          Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
 
         end.to raise_error(/The key 'a' is declared more than once/)
       end
 
       it 'performing a multi assign from a class reference raises an error' do
         expect do
-          Puppet[:code] = <<-CODE
-              [$a] = Class[the_dalit]
-            CODE
-            Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
+          Puppet.push_context({code: '[$a] = Class[the_dalit]'})
+          Puppet::Parser::ScriptCompiler.new(env, 'test_node_name').compile
 
         end.to raise_error(/The catalog operation 'multi var assignment from class' is only available when compiling a catalog/)
       end

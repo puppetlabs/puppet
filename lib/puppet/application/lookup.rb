@@ -362,7 +362,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       node.add_extra_facts(given_facts)
     end
 
-    Puppet[:code] = 'undef' unless options[:compile]
+    Puppet.push_context(code: 'undef') unless options[:compile]
     compiler = Puppet::Parser::Compiler.new(node)
     compiler.compile { |catalog| yield(compiler.topscope); catalog }
   end

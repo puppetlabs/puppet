@@ -36,7 +36,7 @@ describe 'The Task Type' do
     let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
     let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
     let(:task_t) { TypeFactory.task }
-    before(:each) { Puppet[:tasks] = true }
+    before(:each) { Puppet.push_context({tasks: true}) }
 
     context 'tasks' do
       let(:compiler) { Puppet::Parser::ScriptCompiler.new(env, node.name) }
@@ -47,8 +47,8 @@ describe 'The Task Type' do
 
       let(:module_loader) { Puppet.lookup(:loaders).find_loader('testmodule') }
 
-      def compile(code = nil)
-        Puppet[:code] = code
+      def compile(code = '')
+        Puppet.push_context({code: code})
         Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           compiler.compile do |catalog|
             yield if block_given?
@@ -81,7 +81,7 @@ describe 'The Task Type' do
         end
 
         context 'without --tasks' do
-          before(:each) { Puppet[:tasks] = false }
+          before(:each) { Puppet.push_context({tasks: false}) }
 
           it 'evaluator does not recognize generic tasks' do
             compile do

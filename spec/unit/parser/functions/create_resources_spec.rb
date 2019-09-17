@@ -259,14 +259,14 @@ describe 'function for dynamically creating resources' do
 
     [:off, :warning].each do | strictness |
       it "should warn if strict = #{strictness} and class is exported" do
-        Puppet[:strict] = strictness
+        Puppet.push_context({strict: strictness})
         collect_notices('class test{} create_resources("@@class", {test => {}})')
         expect(warnings).to include(/Classes are not virtualizable/)
       end
     end
 
     it 'should error if strict = error and class is exported' do
-      Puppet[:strict] = :error
+      Puppet.push_context({strict: :error})
       expect{
         compile_to_catalog('class test{} create_resources("@@class", {test => {}})')
       }.to raise_error(/Classes are not virtualizable/)
@@ -274,14 +274,14 @@ describe 'function for dynamically creating resources' do
 
     [:off, :warning].each do | strictness |
       it "should warn if strict = #{strictness} and class is virtual" do
-        Puppet[:strict] = strictness
+        Puppet.push_context({strict: strictness})
         collect_notices('class test{} create_resources("@class", {test => {}})')
         expect(warnings).to include(/Classes are not virtualizable/)
       end
     end
 
     it 'should error if strict = error and class is virtual' do
-      Puppet[:strict] = :error
+      Puppet.push_context({strict: :error})
       expect{
         compile_to_catalog('class test{} create_resources("@class", {test => {}})')
       }.to raise_error(/Classes are not virtualizable/)
@@ -326,12 +326,13 @@ describe 'function for dynamically creating resources' do
     end
 
     it 'is not available when --tasks is on' do
-      Puppet[:tasks] = true
-      expect do
-        compile_to_catalog(<<-MANIFEST)
-          create_resources('class', {'bar'=>{}}, {'one' => 'two'})
-        MANIFEST
-      end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+      Puppet.override({tasks: true}) do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            create_resources('class', {'bar'=>{}}, {'one' => 'two'})
+          MANIFEST
+        end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+      end
     end
   end
 

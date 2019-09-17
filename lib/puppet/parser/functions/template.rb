@@ -12,7 +12,7 @@ Puppet::Parser::Functions::newfunction(:template, :type => :rvalue, :arity => -2
   * An absolute path, which can load a template file from anywhere on disk.
   * Multiple arguments, which will evaluate all of the specified templates and
   return their outputs concatenated into a single string.") do |vals|
-    if Puppet[:tasks]
+    if Puppet.lookup(:tasks)
       raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
         Puppet::Pops::Issues::FEATURE_NOT_SUPPORTED_WHEN_SCRIPTING,
         {:feature => 'ERB template'})
