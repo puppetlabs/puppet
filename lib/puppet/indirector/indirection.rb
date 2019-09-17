@@ -106,11 +106,9 @@ class Puppet::Indirector::Indirection
     self.extend(extend) if extend
 
     # Setting these depend on the indirection already being installed so they have to be at the end
-    validate_terminus_class(cache_class) if !cache_class.nil?
-    validate_terminus_class(terminus_class) if !terminus_class.nil?
-    @cache_class = Puppet::ThreadLocal.new(cache_class)
-    @terminus_class = Puppet::ThreadLocal.new(terminus_class)
-    @terminus_setting = Puppet::ThreadLocal.new(terminus_setting)
+    set_global_setting(:cache_class, cache_class)
+    set_global_setting(:terminus_class, terminus_class)
+    set_global_setting(:terminus_setting, terminus_setting)
   end
 
   # Use this to set indirector settings globally across threads.
