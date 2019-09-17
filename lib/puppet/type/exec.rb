@@ -12,15 +12,27 @@ module Puppet
       * The command itself is already idempotent. (For example, `apt-get update`.)
       * The exec has an `onlyif`, `unless`, or `creates` attribute, which prevents
         Puppet from running the command unless some condition is met.
-      * The exec has `refreshonly => true`, which only allows Puppet to run the
-        command when some other resource is changed. (See the notes on refreshing
-        below.)
+      * The exec has `refreshonly => true`, which allows Puppet to run the
+        command only when some other resource is changed. (See the notes on refreshing
+        below.) 
+        
+      The state managed by an `exec` resource represents whether the specified command
+      _needs to be_ executed during the catalog run. The target state is always that
+      the command does not need to be executed. If the initial state is that the
+      command _does_ need to be executed, then successfully executing the command
+      transitions it to the target state.
+      
+      The `unless`, `onlyif`, and `creates` properties check the initial state of the
+      resource. If one or more of these properties is specified, the exec might not
+      need to run. If the exec does not need to run, then the system is already in
+      the target state. In such cases, the exec is considered successful without 
+      actually executing its command.
 
       A caution: There's a widespread tendency to use collections of execs to
       manage resources that aren't covered by an existing resource type. This
       works fine for simple tasks, but once your exec pile gets complex enough
       that you really have to think to understand what's happening, you should
-      consider developing a custom resource type instead, as it will be much
+      consider developing a custom resource type instead, as it is much
       more predictable and maintainable.
 
       **Duplication:** Even though `command` is the namevar, Puppet allows
@@ -31,30 +43,29 @@ module Puppet
       is non-standard, and can be affected by the `refresh` and
       `refreshonly` attributes:
 
-      * If `refreshonly` is set to true, the exec will _only_ run when it receives an
+      * If `refreshonly` is set to true, the exec runs _only_ when it receives an
         event. This is the most reliable way to use refresh with execs.
-      * If the exec already would have run and receives an event, it will run its
-        command **up to two times.** (If an `onlyif`, `unless`, or `creates` condition
-        is no longer met after the first run, the second run will not occur.)
-      * If the exec already would have run, has a `refresh` command, and receives an
-        event, it will run its normal command, then run its `refresh` command
-        (as long as any `onlyif`, `unless`, or `creates` conditions are still met
-        after the normal command finishes).
-      * If the exec would **not** have run (due to an `onlyif`, `unless`, or `creates`
-        attribute) and receives an event, it still will not run.
+      * If the exec has already run and then receives an event, it runs its
+        command **up to two times.** If an `onlyif`, `unless`, or `creates` condition
+        is no longer met after the first run, the second run does not occur.
+      * If the exec has already run, has a `refresh` command, and receives an
+        event, it runs its normal command. Then, if any `onlyif`, `unless`, or `creates`
+        conditions are still met, the exec runs its `refresh` command.
+      * If the exec has an `onlyif`, `unless`, or `creates` attribute that prevents it
+        from running, and it then receives an event, it still will not run.
       * If the exec has `noop => true`, would otherwise have run, and receives
-        an event from a non-noop resource, it will run once (or run its `refresh`
-        command instead, if it has one).
+        an event from a non-noop resource, it runs once. However, if it has a `refresh`
+        command, it runs that instead of its normal command.
 
       In short: If there's a possibility of your exec receiving refresh events,
-      it becomes doubly important to make sure the run conditions are restricted.
+      it is extremely important to make sure the run conditions are restricted.
 
       **Autorequires:** If Puppet is managing an exec's cwd or the executable
       file used in an exec's command, the exec resource autorequires those
       files. If Puppet is managing the user that an exec should run as, the
-      exec resource will autorequire that user."
+      exec resource autorequires that user."
 
-    # Create a new check mechanism.  It's basically just a parameter that
+    # Create a new check mechanism.  It's basically a parameter that
     # provides one extra 'check' method.
     def self.newcheck(name, options = {}, &block)
       @checks ||= {}
