@@ -178,7 +178,7 @@ describe Puppet::Util::Log do
       expect(logs.collect(&:message)).to include("Inner block", "Outer block")
     end
 
-    it 'includes backtrace for RuntimeError in log message when trace is enabled' do
+    it 'includes backtrace for RuntimeError in log message when trace option is passed' do
       logs = []
       destination = Puppet::Test::LogCollector.new(logs)
 
@@ -194,6 +194,32 @@ describe Puppet::Util::Log do
       log = logs[0]
       expect(log.message).to match('/log_spec.rb')
       expect(log.backtrace).to be_nil
+    end
+
+    context "global options" do
+      around :each do |example|
+        Puppet[:trace] = true
+        example.run
+        Puppet[:trace] = false
+      end
+
+      it 'includes backtrace for RuntimeError in log message when trace is enabled globally' do
+        logs = []
+        destination = Puppet::Test::LogCollector.new(logs)
+
+        Puppet::Util::Log.newdestination(destination)
+        Puppet::Util::Log.with_destination(destination) do
+          begin
+            raise RuntimeError, 'Oops'
+          rescue RuntimeError => e
+            Puppet.log_exception(e, :default)
+          end
+        end
+        expect(logs.size).to eq(1)
+        log = logs[0]
+        expect(log.message).to match('/log_spec.rb')
+        expect(log.backtrace).to be_nil
+      end
     end
 
     it 'excludes backtrace for RuntimeError in log message when trace is disabled' do
