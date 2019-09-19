@@ -41,7 +41,7 @@ module Puppet
                            begin
                              require 'openssl'
                              false
-                           rescue LoadError
+                           rescue LoadError, NameError
                              true
                            end
                          else
