@@ -287,6 +287,13 @@ class LookupAdapter < DataAdapter
     self
   end
 
+  def clear_lookup_options
+    @lookup_options = {}
+    @global_lookup_options = nil
+    @env_only_lookup_options = nil
+    @env_lookup_options = nil
+  end
+
   private
 
   PROVIDER_STACK = [:lookup_global, :lookup_in_environment, :lookup_in_module].freeze

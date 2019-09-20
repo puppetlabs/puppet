@@ -196,6 +196,7 @@ class HieraConfig
   # @return [Array<DataProvider>] the data providers
   def configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy = false)
     unless @data_providers && scope_interpolations_stable?(lookup_invocation)
+      lookup_invocation.lookup_adapter.clear_lookup_options
       if @data_providers
         lookup_invocation.report_text { _('Hiera configuration recreated due to change of scope variables used in interpolation expressions') }
       end
