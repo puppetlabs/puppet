@@ -66,6 +66,25 @@ module Puppet
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
 
   define_settings(:main,
+    :facterng => {
+        :default => false,
+        :type    => :boolean,
+        :desc    => 'Whether to enable a pre-Facter 4.0 release of Facter (distributed as
+          the "facter-ng" gem). This is not necessary if Facter 3.x or later is installed.
+          This setting is still experimental and has been only included on Windows builds',
+        :hook    => proc do |value|
+                      if value && Puppet::Util::Platform.windows?
+                        begin
+                          require 'facter-ng'
+                        rescue LoadError
+                          raise ArgumentError, 'facter-ng could not be loaded'
+                        end
+                      end
+                    end
+    }
+  )
+
+  define_settings(:main,
     :confdir  => {
         :default  => nil,
         :type     => :directory,
