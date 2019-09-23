@@ -35,7 +35,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
   end
 
   def delayed_start
-    Puppet::Util::Windows::Service.set_startup_mode_delayed( @resource[:name], :SERVICE_CONFIG_DELAYED_AUTO_START, true )
+    Puppet::Util::Windows::Service.set_startup_mode( @resource[:name], :SERVICE_AUTO_START, true )
   rescue => detail
     raise Puppet::Error.new(_("Cannot enable %{resource_name} for delayed start, error was: %{detail}") % { resource_name: @resource[:name], detail: detail }, detail )
   end
@@ -52,7 +52,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
         :true
       when :SERVICE_DEMAND_START
         :manual
-      when :SERVICE_CONFIG_DELAYED_AUTO_START
+      when :SERVICE_DELAYED_AUTO_START
         :delayed
       when :SERVICE_DISABLED
         :false

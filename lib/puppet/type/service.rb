@@ -73,7 +73,7 @@ module Puppet
         provider.enabled?
       end
 
-      #This only works on Windows systems.
+      # This only works on Windows systems.
       newvalue(:delayed, :event => :service_delayed_start) do
         provider.delayed_start
       end
@@ -91,7 +91,7 @@ module Puppet
 
       validate do |value|
         if (value == :manual || value == :delayed) && !Puppet.features.microsoft_windows?
-          raise Puppet::Error.new(_("Setting enable to %{value} is only supported on Microsoft Windows.") % { value: value.to_s})
+          raise Puppet::Error.new(_("Setting enable to %{value} is only supported on Microsoft Windows.") % { value: value.to_s} )
         end
       end
     end

@@ -73,9 +73,9 @@ MANIFEST
       assert_service_properties_on(agent, mock_service_nofail[:name], StartMode: 'Manual')
     end
 
-    step 'Verify that enable = delayed indicates that the service can be started on demand' do
+    step 'Verify that enable = delayed indicates that the service start mode is correctly set' do
       apply_manifest_on(agent, service_manifest(mock_service_nofail[:name], enable: :delayed))
-      assert_service_properties_on(agent, mock_service_nofail[:name], StartMode: 'Delayed')
+      assert_service_startmode_delayed(agent, mock_service_nofail[:name])
     end
 
     step 'Verify that enable = true indicates that the service is started automatically upon reboot' do
