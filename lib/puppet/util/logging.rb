@@ -2,7 +2,7 @@
 require 'puppet/util/log'
 require 'puppet/error'
 
-require 'facter'
+require ENV['USE_FACTER_NG'] ? 'facter-ng' : 'facter'
 
 module Puppet::Util
 module Logging

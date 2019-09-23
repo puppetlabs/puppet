@@ -1,5 +1,5 @@
 require 'etc'
-require 'facter'
+require ENV['USE_FACTER_NG'] ? 'facter-ng' : 'facter'
 require 'puppet/parameter/boolean'
 require 'puppet/property/list'
 require 'puppet/property/ordered_list'
@@ -630,16 +630,16 @@ module Puppet
     end
 
     newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
-      desc "Specify AIX attributes for the user in an array or hash of attribute = value pairs. 
-      
+      desc "Specify AIX attributes for the user in an array or hash of attribute = value pairs.
+
       For example:
-      
+
       ```
       ['minage=0', 'maxage=5', 'SYSTEM=compat']
       ```
-      
-      or 
-    
+
+      or
+
      ```
      attributes => { 'minage' => '0', 'maxage' => '5', 'SYSTEM' => 'compat' }
      ```
@@ -691,7 +691,7 @@ module Puppet
             :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
             being managed by some other Name Service Switch (NSS).
-            
+
             This option relies on your operating system's implementation of `luser*` commands, such as `luseradd` , and `lgroupadd`, `lusermod`. The `forcelocal` option could behave unpredictably in some circumstances. If the tools it depends on are not available, it might have no effect at all."
       defaultto false
     end
@@ -712,7 +712,7 @@ module Puppet
       desc "Whether to purge authorized SSH keys for this user if they are not managed
         with the `ssh_authorized_key` resource type. This parameter is a noop if the
         ssh_authorized_key type is not available.
-        
+
         Allowed values are:
 
         * `false` (default) --- don't purge SSH keys for this user.

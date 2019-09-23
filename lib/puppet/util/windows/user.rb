@@ -1,6 +1,6 @@
 require 'puppet/util/windows'
 
-require 'facter'
+require ENV['USE_FACTER_NG'] ? 'facter-ng' : 'facter'
 require 'ffi'
 
 module Puppet::Util::Windows::User

@@ -1,4 +1,4 @@
-require 'facter'
+require ENV['USE_FACTER_NG'] ? 'facter-ng' : 'facter'
 require 'puppet/util/warnings'
 require 'forwardable'
 require 'etc'
