@@ -5,6 +5,15 @@ module Puppet::HTTP
 
   class ProtocolError < HTTPError; end
 
+  class ResponseError < HTTPError
+    attr_reader :response
+
+    def initialize(response)
+      super(response.reason)
+      @response = response
+    end
+  end
+
   class TooManyRedirects < HTTPError
     def initialize(addr)
       super(_("Too many HTTP redirections for %{addr}") % { addr: addr})
@@ -16,6 +25,4 @@ module Puppet::HTTP
       super(_("Too many HTTP retries for %{addr}") % { addr: addr})
     end
   end
-
-
 end
