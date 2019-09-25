@@ -86,4 +86,11 @@ describe Puppet::Network::HTTP::Site do
     expect(new_site.host).to eq('host2')
     expect(new_site.port).to eq(443)
   end
+
+  it 'creates a site from a URI' do
+    site = create_site('https', 'rubygems.org', 443)
+    uri = URI.parse('https://rubygems.org/gems/puppet/')
+
+    expect(described_class.from_uri(uri)).to eq(site)
+  end
 end
