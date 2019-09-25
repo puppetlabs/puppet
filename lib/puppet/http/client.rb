@@ -16,7 +16,27 @@ class Puppet::HTTP::Client
     end
   end
 
+  def get(url, headers: {}, params: {})
+    connect(url) do |http|
+      query = encode_params(params)
+      path = "#{url.path}?#{query}"
+
+      request = Net::HTTP::Get.new(path, @default_headers.merge(headers))
+      resp = http.request(request)
+      Puppet.info("HTTP GET #{url} returned #{resp.code} #{resp.message}")
+      resp
+    end
+  end
+
   def close
     @pool.close
+  end
+
+  private
+
+  def encode_params(params)
+    params.map do |key, value|
+      "#{key}=#{Puppet::Util.uri_query_encode(value.to_s)}"
+    end.join('&')
   end
 end
