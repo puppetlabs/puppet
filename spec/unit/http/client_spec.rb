@@ -64,4 +64,38 @@ describe Puppet::HTTP::Client do
       expect(response.code).to eq("200")
     end
   end
+
+  context "for PUT requests" do
+    it "includes default HTTP headers" do
+      stub_request(:put, uri).with(headers: {'X-Puppet-Version' => /./, 'User-Agent' => /./})
+
+      client.put(uri, content_type: 'text/plain', body: "")
+    end
+
+    it "stringifies keys and encodes values in the query" do
+      stub_request(:put, "https://www.example.com").with(query: "foo=bar%3Dbaz")
+
+      client.put(uri, params: {:foo => "bar=baz"}, content_type: 'text/plain', body: "")
+    end
+
+    it "includes custom headers" do
+      stub_request(:put, "https://www.example.com").with(headers: { 'X-Foo' => 'Bar' })
+
+      client.put(uri, headers: {'X-Foo' => 'Bar'}, content_type: 'text/plain', body: "")
+    end
+
+    it "returns the response" do
+      stub_request(:put, uri)
+
+      response = client.put(uri, content_type: 'text/plain', body: "")
+      expect(response).to be_an_instance_of(Net::HTTPOK)
+      expect(response.code).to eq("200")
+    end
+
+    it "sets content-length and content-type for the body" do
+      stub_request(:put, uri).with(headers: {"Content-Length" => "5", "Content-Type" => "text/plain"})
+
+      client.put(uri, content_type: 'text/plain', body: "hello")
+    end
+  end
 end

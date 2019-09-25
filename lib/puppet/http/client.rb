@@ -28,6 +28,21 @@ class Puppet::HTTP::Client
     end
   end
 
+  def put(url, headers: {}, params: {}, content_type:, body:)
+    connect(url) do |http|
+      query = encode_params(params)
+      path = "#{url.path}?#{query}"
+
+      request = Net::HTTP::Put.new(path, @default_headers.merge(headers))
+      request.body = body
+      request['Content-Length'] = body.bytesize
+      request['Content-Type'] = content_type
+      resp = http.request(request)
+      Puppet.info("HTTP PUT #{url} returned #{resp.code} #{resp.message}")
+      resp
+    end
+  end
+
   def close
     @pool.close
   end
