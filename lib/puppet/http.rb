@@ -8,6 +8,7 @@ module Puppet::HTTP
   require 'puppet/http/service'
   require 'puppet/http/service/ca'
   require 'puppet/http/session'
+  require 'puppet/http/resolver'
   require 'puppet/http/client'
   require 'puppet/http/redirector'
   require 'puppet/http/retry_after_handler'
