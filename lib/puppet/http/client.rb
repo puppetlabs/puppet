@@ -1,23 +1,23 @@
 class Puppet::HTTP::Client
   CONNECT_EXCEPTIONS = [Timeout::Error, OpenSSL::SSL::SSLError, SystemCallError, SocketError, IOError].freeze
 
-  def initialize(ssl_context:)
+  def initialize
     @pool = Puppet::Network::HTTP::Pool.new
     @default_headers = {
       'X-Puppet-Version' => Puppet.version,
       'User-Agent' => Puppet[:http_user_agent],
     }.freeze
-    @ssl_context = ssl_context
     @resolvers = [Puppet::HTTP::Resolver::Settings.new].freeze
   end
 
-  def create_session
-    Puppet::HTTP::Session.new(self, @resolvers)
+  def create_session(ssl_context: nil)
+    Puppet::HTTP::Session.new(self, @resolvers, ssl_context: ssl_context)
   end
 
-  def connect(uri, &block)
+  def connect(uri, ssl_context: nil, &block)
+    ctx = ssl_context ? ssl_context : default_ssl_context
     site = Puppet::Network::HTTP::Site.from_uri(uri)
-    verifier = Puppet::SSL::Verifier.new(uri.host, @ssl_context)
+    verifier = Puppet::SSL::Verifier.new(uri.host, ctx)
     @pool.with_connection(site, verifier) do |http|
       if block_given?
         # An exception may occur after the connection is established
@@ -35,8 +35,8 @@ class Puppet::HTTP::Client
     raise Puppet::HTTP::ConnectionError.new(e.message, e)
   end
 
-  def get(url, headers: {}, params: {}, &block)
-    connect(url) do |http|
+  def get(url, headers: {}, params: {}, ssl_context: nil, &block)
+    connect(url, ssl_context: ssl_context) do |http|
       query = encode_params(params)
       path = "#{url.path}?#{query}"
 
@@ -57,8 +57,8 @@ class Puppet::HTTP::Client
     end
   end
 
-  def put(url, headers: {}, params: {}, content_type:, body:)
-    connect(url) do |http|
+  def put(url, headers: {}, params: {}, content_type:, body:, ssl_context: nil)
+    connect(url, ssl_context: ssl_context) do |http|
       query = encode_params(params)
       path = "#{url.path}?#{query}"
 
@@ -83,5 +83,9 @@ class Puppet::HTTP::Client
     params.map do |key, value|
       "#{key.to_s}=#{Puppet::Util.uri_query_encode(value.to_s)}"
     end.join('&')
+  end
+
+  def default_ssl_context
+    Puppet.lookup(:ssl_context)
   end
 end

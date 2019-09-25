@@ -5,9 +5,10 @@ class Puppet::HTTP::Session
     ca: Route.new(Puppet::HTTP::Service::Ca, '/puppet-ca/v1', :ca_server, :ca_port),
   }.freeze
 
-  def initialize(client, resolvers)
+  def initialize(client, resolvers, ssl_context: nil)
     @client = client
     @resolvers = resolvers
+    @ssl_context = ssl_context
     @resolved_services = {}
   end
 
@@ -45,6 +46,6 @@ class Puppet::HTTP::Session
                            port: port,
                            path: route.api
                           ).freeze
-    route.service.new(@client, url)
+    route.service.new(@client, url, ssl_context: @ssl_context)
   end
 end

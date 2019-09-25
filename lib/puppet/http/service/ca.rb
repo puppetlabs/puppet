@@ -4,7 +4,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
   def get_certificate(name)
     response = @client.get(
       with_base_url("/certificate/#{name}"),
-      headers: HEADERS
+      headers: HEADERS,
+      ssl_context: @ssl_context
     )
 
     if response.success?
@@ -25,7 +26,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
 
     response = @client.get(
       with_base_url("/certificate_revocation_list/ca"),
-      headers: request_headers
+      headers: request_headers,
+      ssl_context: @ssl_context
     )
 
     if response.success?
@@ -40,7 +42,8 @@ class Puppet::HTTP::Service::Ca < Puppet::HTTP::Service
       with_base_url("/certificate_request/#{name}"),
       headers: HEADERS,
       content_type: 'text/plain',
-      body: csr.to_pem
+      body: csr.to_pem,
+      ssl_context: @ssl_context
     )
 
     if response.success?
