@@ -6,5 +6,6 @@ module Puppet::HTTP
   require 'puppet/http/errors'
   require 'puppet/http/response'
   require 'puppet/http/streaming_response'
+  require 'puppet/http/service'
   require 'puppet/http/client'
 end
