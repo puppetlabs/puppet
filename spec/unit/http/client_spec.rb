@@ -25,6 +25,40 @@ describe Puppet::HTTP::Client do
         expect(http).to be_use_ssl
       end
     end
+
+    it 'raises ConnectionError if the connection is refused' do
+      allow_any_instance_of(Net::HTTP).to receive(:start).and_raise(Errno::ECONNREFUSED)
+
+      expect {
+        client.connect(uri)
+      }.to raise_error(Puppet::HTTP::ConnectionError, %r{Failed to connect to https://www.example.com:})
+    end
+  end
+
+  context 'after connecting' do
+    def expect_http_error(cause, expected_message)
+      expect {
+        client.connect(uri) do |_|
+          raise cause, 'whoops'
+        end
+      }.to raise_error(Puppet::HTTP::HTTPError, expected_message)
+    end
+
+    it 're-raises HTTPError' do
+      expect_http_error(Puppet::HTTP::HTTPError, 'whoops')
+    end
+
+    it 'raises HTTPError if connection is interrupted while reading' do
+      expect_http_error(EOFError, %r{Request to https://www.example.com interrupted after .* seconds})
+    end
+
+    it 'raises HTTPError if connection times out' do
+      expect_http_error(Net::ReadTimeout, %r{Request to https://www.example.com timed out after .* seconds})
+    end
+
+    it 'raises HTTPError if connection fails' do
+      expect_http_error(ArgumentError, %r{Request to https://www.example.com failed after .* seconds})
+    end
   end
 
   context "when closing" do

@@ -12,8 +12,14 @@ class Puppet::HTTP::Client
     site = Puppet::Network::HTTP::Site.from_uri(uri)
     verifier = Puppet::SSL::Verifier.new(uri.host, @ssl_context)
     @pool.with_connection(site, verifier) do |http|
-      yield http if block_given?
+      if block_given?
+        handle_post_connect(uri, http, &block)
+      end
     end
+  rescue Puppet::HTTP::HTTPError
+    raise
+  rescue => e
+    raise Puppet::HTTP::ConnectionError.new(_("Failed to connect to %{uri}: %{message}") % {uri: uri, message: e.message}, e)
   end
 
   def get(url, headers: {}, params: {}, &block)
@@ -73,5 +79,22 @@ class Puppet::HTTP::Client
     params.map do |key, value|
       "#{key}=#{Puppet::Util.uri_query_encode(value.to_s)}"
     end.join('&')
+  end
+
+  def handle_post_connect(uri, http, &block)
+    start = Time.now
+    yield http
+  rescue Puppet::HTTP::HTTPError
+    raise
+  rescue EOFError => e
+    raise Puppet::HTTP::HTTPError.new(_("Request to %{uri} interrupted after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e)
+  rescue Timeout::Error => e
+    raise Puppet::HTTP::HTTPError.new(_("Request to %{uri} timed out after %{elapsed} seconds") % {uri: uri, elapsed: elapsed(start)}, e)
+  rescue => e
+    raise Puppet::HTTP::HTTPError.new(_("Request to %{uri} failed after %{elapsed} seconds: %{message}") % {uri: uri, elapsed: elapsed(start), message: e.message}, e)
+  end
+
+  def elapsed(start)
+    (Time.now - start).to_f.round(3)
   end
 end
