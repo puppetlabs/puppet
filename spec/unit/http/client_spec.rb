@@ -3,9 +3,8 @@ require 'webmock/rspec'
 require 'puppet/http'
 
 describe Puppet::HTTP::Client do
-  let(:ssl_context) { Puppet::SSL::SSLContext.new }
-  let(:client) { described_class.new(ssl_context: ssl_context) }
   let(:uri) { URI.parse('https://www.example.com') }
+  let(:client) { described_class.new }
 
   context "when connecting" do
     it 'connects to HTTP URLs' do
@@ -66,7 +65,7 @@ describe Puppet::HTTP::Client do
       pool = double('pool')
       expect(pool).to receive(:close)
 
-      client = described_class.new(pool: pool, ssl_context: ssl_context)
+      client = described_class.new(pool: pool)
       client.close
     end
   end

@@ -1,16 +1,17 @@
 class Puppet::HTTP::Client
-  def initialize(pool: Puppet::Network::HTTP::Pool.new, ssl_context:)
+  def initialize(pool: Puppet::Network::HTTP::Pool.new, ssl_context: nil)
     @pool = pool
     @default_headers = {
       'X-Puppet-Version' => Puppet.version,
       'User-Agent' => Puppet[:http_user_agent],
     }.freeze
-    @ssl_context = ssl_context
+    @default_ssl_context = ssl_context
   end
 
-  def connect(uri, &block)
+  def connect(uri, ssl_context: nil, &block)
+    ctx = ssl_context ? ssl_context : default_ssl_context
     site = Puppet::Network::HTTP::Site.from_uri(uri)
-    verifier = Puppet::SSL::Verifier.new(uri.host, @ssl_context)
+    verifier = Puppet::SSL::Verifier.new(uri.host, ctx)
     @pool.with_connection(site, verifier) do |http|
       if block_given?
         handle_post_connect(uri, http, &block)
@@ -22,10 +23,10 @@ class Puppet::HTTP::Client
     raise Puppet::HTTP::ConnectionError.new(_("Failed to connect to %{uri}: %{message}") % {uri: uri, message: e.message}, e)
   end
 
-  def get(url, headers: {}, params: {}, &block)
+  def get(url, headers: {}, params: {}, ssl_context: nil, &block)
     response = nil
 
-    connect(url) do |http|
+    connect(url, ssl_context: ssl_context) do |http|
       query = encode_params(params)
       path = "#{url.path}?#{query}"
 
@@ -44,10 +45,10 @@ class Puppet::HTTP::Client
     response
   end
 
-  def put(url, headers: {}, params: {}, content_type:, body:)
+  def put(url, headers: {}, params: {}, content_type:, body:, ssl_context: nil)
     response = nil
 
-    connect(url) do |http|
+    connect(url, ssl_context: ssl_context) do |http|
       query = encode_params(params)
       path = "#{url.path}?#{query}"
 
@@ -96,5 +97,9 @@ class Puppet::HTTP::Client
 
   def elapsed(start)
     (Time.now - start).to_f.round(3)
+  end
+
+  def default_ssl_context
+    @default_ssl_context || Puppet.lookup(:ssl_context)
   end
 end
