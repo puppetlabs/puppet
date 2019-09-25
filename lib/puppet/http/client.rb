@@ -1,5 +1,5 @@
 class Puppet::HTTP::Client
-  CONNECT_EXCEPTIONS = [Timeout::Error, OpenSSL::SSL::SSLError, SystemCallError].freeze
+  CONNECT_EXCEPTIONS = [Timeout::Error, OpenSSL::SSL::SSLError, SystemCallError, SocketError, IOError].freeze
 
   def initialize(ssl_context:)
     @pool = Puppet::Network::HTTP::Pool.new
@@ -8,6 +8,11 @@ class Puppet::HTTP::Client
       'User-Agent' => Puppet[:http_user_agent],
     }.freeze
     @ssl_context = ssl_context
+    @resolvers = [].freeze
+  end
+
+  def create_session
+    Puppet::HTTP::Session.new(self, @resolvers)
   end
 
   def connect(uri, &block)

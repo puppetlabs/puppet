@@ -8,5 +8,6 @@ module Puppet::HTTP
   require 'puppet/http/streaming_response'
   require 'puppet/http/service'
   require 'puppet/http/service/ca'
+  require 'puppet/http/session'
   require 'puppet/http/client'
 end

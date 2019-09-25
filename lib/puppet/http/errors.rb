@@ -3,6 +3,8 @@ module Puppet::HTTP
 
   class ConnectionError < HTTPError; end
 
+  class RouteError < HTTPError; end
+
   class ResponseError < HTTPError
     attr_reader :response
 
