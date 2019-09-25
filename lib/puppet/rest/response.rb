@@ -1,3 +1,4 @@
+# @deprecated Use {Puppet::HTTP::Client} instead.
 module Puppet::Rest
   # This is a wrapper for the HTTP::Message class of the HTTPClient
   # gem. It is designed to wrap a message sent as an HTTP response.
