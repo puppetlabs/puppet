@@ -16,12 +16,23 @@ class Puppet::HTTP::Client
     end
   end
 
-  def get(url, headers: {}, params: {})
+  def get(url, headers: {}, params: {}, &block)
     connect(url) do |http|
-      query = encode_params(params).join('&')
+      query = encode_params(params)
       path = "#{url.path}?#{query}"
 
-      resp = http.get(path, @default_headers.merge(headers))
+      request = Net::HTTP::Get.new(path, @default_headers.merge(headers))
+
+      if block_given?
+        resp = nil
+        http.request(request) do |nethttp|
+          resp = Puppet::HTTP::StreamingResponse.new(nethttp)
+          yield resp
+        end
+      else
+        resp = Puppet::HTTP::Response.new(http.request(request))
+      end
+
       Puppet.info("HTTP GET #{url} returned #{resp.code} #{resp.reason}")
       resp
     end
@@ -36,7 +47,8 @@ class Puppet::HTTP::Client
       request.body = body
       request['Content-Length'] = body.bytesize
       request['Content-Type'] = content_type
-      resp = http.request(request)
+
+      resp = Puppet::HTTP::Response.new(http.request(request))
       Puppet.info("HTTP PUT #{url} returned #{resp.code} #{resp.reason}")
       resp
     end
