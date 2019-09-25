@@ -296,10 +296,20 @@ module Puppet
     @context.rollback(name)
   end
 
+  def self.runtime
+    @runtime
+  end
+
   require 'puppet/node'
 
   # The single instance used for normal operation
   @context = Puppet::Context.new(bootstrap_context)
+
+  require 'puppet/runtime'
+  @runtime = Puppet::Runtime.instance
+
+  require 'puppet/http'
+  @runtime['http'] = Puppet::HTTP::Client.new
 end
 
 # This feels weird to me; I would really like for us to get to a state where there is never a "require" statement
