@@ -152,4 +152,45 @@ describe Puppet::HTTP::Client do
       client.put(uri, content_type: 'text/plain', body: "hello")
     end
   end
+
+  context "Basic Auth" do
+    let(:credentials) { ['user', 'pass'] }
+
+    it "submits credentials for GET requests" do
+      stub_request(:get, uri).with(basic_auth: credentials)
+
+      client.get(uri, user: 'user', password: 'pass')
+    end
+
+    it "submits credentials for PUT requests" do
+      stub_request(:put, uri).with(basic_auth: credentials)
+
+      client.put(uri, content_type: 'text/plain', body: "hello", user: 'user', password: 'pass')
+    end
+
+    it "returns response containing access denied" do
+      stub_request(:get, uri).with(basic_auth: credentials).to_return(status: [403, "Ye Shall Not Pass"])
+
+      response = client.get(uri, user: 'user', password: 'pass')
+      expect(response.code).to eq(403)
+      expect(response.reason).to eq("Ye Shall Not Pass")
+      expect(response).to_not be_success
+    end
+
+    it 'omits basic auth if user is nil' do
+      stub_request(:get, uri).with do |req|
+        expect(req.headers).to_not include('Authorization')
+      end
+
+      client.get(uri, user: nil, password: 'pass')
+    end
+
+    it 'omits basic auth if password is nil' do
+      stub_request(:get, uri).with do |req|
+        expect(req.headers).to_not include('Authorization')
+      end
+
+      client.get(uri, user: 'user', password: nil)
+    end
+  end
 end

@@ -23,7 +23,7 @@ class Puppet::HTTP::Client
     raise Puppet::HTTP::ConnectionError.new(_("Failed to connect to %{uri}: %{message}") % {uri: uri, message: e.message}, e)
   end
 
-  def get(url, headers: {}, params: {}, ssl_context: nil, &block)
+  def get(url, headers: {}, params: {}, ssl_context: nil, user: nil, password: nil, &block)
     response = nil
 
     connect(url, ssl_context: ssl_context) do |http|
@@ -31,6 +31,8 @@ class Puppet::HTTP::Client
       path = "#{url.path}?#{query}"
 
       request = Net::HTTP::Get.new(path, @default_headers.merge(headers))
+      apply_auth(request, user, password)
+
       http.request(request) do |nethttp|
         response = Puppet::HTTP::Response.new(nethttp)
         if block_given?
@@ -45,7 +47,7 @@ class Puppet::HTTP::Client
     response
   end
 
-  def put(url, headers: {}, params: {}, content_type:, body:, ssl_context: nil)
+  def put(url, headers: {}, params: {}, content_type:, body:, ssl_context: nil, user: nil, password: nil)
     response = nil
 
     connect(url, ssl_context: ssl_context) do |http|
@@ -56,6 +58,8 @@ class Puppet::HTTP::Client
       request.body = body
       request['Content-Length'] = body.bytesize
       request['Content-Type'] = content_type
+      apply_auth(request, user, password)
+
       http.request(request) do |nethttp|
         response = Puppet::HTTP::Response.new(nethttp)
         if block_given?
@@ -101,5 +105,11 @@ class Puppet::HTTP::Client
 
   def default_ssl_context
     @default_ssl_context || Puppet.lookup(:ssl_context)
+  end
+
+  def apply_auth(request, user, password)
+    if user && password
+      request.basic_auth(user, password)
+    end
   end
 end
