@@ -1,3 +1,4 @@
+# @deprecated Use {Puppet::HTTP::Client} instead.
 module Puppet::Rest
   class ResponseError < Puppet::Error
     attr_reader :response
