@@ -298,9 +298,12 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate/ca}).to_return(status: 200, body: cacert_pem)
       allow(cert_provider).to receive(:save_cacerts)
 
-      expect_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+      receive_count = 0
+      allow_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE) { receive_count += 1 }
 
       state.next_state
+
+      expect(receive_count).to eq(2)
     end
 
     it 'returns an Error if the server returns 404' do
@@ -410,9 +413,12 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       stub_request(:get, %r{puppet-ca/v1/certificate_revocation_list/ca}).to_return(status: 200, body: crl_pem)
       allow(cert_provider).to receive(:save_crls)
 
-      expect_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+      receive_count = 0
+      allow_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER) { receive_count += 1 }
 
       state.next_state
+
+      expect(receive_count).to eq(2)
     end
 
     it 'returns an Error if the server returns 404' do
@@ -724,9 +730,12 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
       it "verifies the server's certificate when submitting the CSR" do
         stub_request(:put, %r{puppet-ca/v1/certificate_request/#{Puppet[:certname]}}).to_return(status: 200)
 
-        expect_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+        receive_count = 0
+        allow_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER) { receive_count += 1 }
 
         state.next_state
+
+        expect(receive_count).to eq(2)
       end
     end
 
@@ -774,9 +783,12 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
         allow(cert_provider).to receive(:save_client_cert)
         allow(cert_provider).to receive(:save_request)
 
-        expect_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+        receive_count = 0
+        allow_any_instance_of(Net::HTTP).to receive(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER) { receive_count += 1 }
 
         state.next_state
+
+        expect(receive_count).to eq(2)
       end
 
       it 'does not save an invalid client cert' do
