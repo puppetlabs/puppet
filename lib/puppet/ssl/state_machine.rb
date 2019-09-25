@@ -44,7 +44,8 @@ class Puppet::SSL::StateMachine
       if cacerts
         next_ctx = @ssl_provider.create_root_context(cacerts: cacerts, revocation: false)
       else
-        pem = Puppet::Rest::Routes.get_certificate(Puppet::SSL::CA_NAME, @ssl_context)
+        route = @machine.create_route(@ssl_context)
+        pem = route.get_certificate(Puppet::SSL::CA_NAME)
         if @machine.ca_fingerprint
           actual_digest = Puppet::SSL::Digest.new(@machine.digest, pem).to_hex
           expected_digest = @machine.ca_fingerprint.scan(/../).join(':').upcase
@@ -66,8 +67,8 @@ class Puppet::SSL::StateMachine
       NeedCRLs.new(@machine, next_ctx)
     rescue OpenSSL::X509::CertificateError => e
       Error.new(@machine, e.message, e)
-    rescue Puppet::Rest::ResponseError => e
-      if e.response.code.to_i == 404
+    rescue Puppet::HTTP::ResponseError => e
+      if e.response.code == 404
         to_error(_('CA certificate is missing from the server'), e)
       else
         to_error(_('Could not download CA certificate: %{message}') % { message: e.message }, e)
@@ -112,8 +113,8 @@ class Puppet::SSL::StateMachine
       NeedKey.new(@machine, next_ctx)
     rescue OpenSSL::X509::CRLError => e
       Error.new(@machine, e.message, e)
-    rescue Puppet::Rest::ResponseError => e
-      if e.response.code.to_i == 404
+    rescue Puppet::HTTP::ResponseError => e
+      if e.response.code == 404
         to_error(_('CRL is missing from the server'), e)
       else
         to_error(_('Could not download CRLs: %{message}') % { message: e.message }, e)
@@ -127,8 +128,8 @@ class Puppet::SSL::StateMachine
 
       # return the next_ctx containing the updated crl
       download_crl(ssl_ctx, last_update)
-    rescue Puppet::Rest::ResponseError => e
-      if e.response.code.to_i == 304
+    rescue Puppet::HTTP::ResponseError => e
+      if e.response.code == 304
         Puppet.info(_("CRL is unmodified, using existing CRL"))
       else
         Puppet.info(_("Failed to refresh CRL, using existing CRL: %{message}") % {message: e.message})
@@ -144,7 +145,8 @@ class Puppet::SSL::StateMachine
     end
 
     def download_crl(ssl_ctx, last_update)
-      pem = Puppet::Rest::Routes.get_crls(Puppet::SSL::CA_NAME, ssl_ctx, if_modified_since: last_update)
+      route = @machine.create_route(ssl_ctx)
+      pem = route.get_certificate_revocation_list(if_modified_since: last_update)
       crls = @cert_provider.load_crls_from_pem(pem)
       # verify crls before saving
       next_ctx = @ssl_provider.create_root_context(cacerts: ssl_ctx[:cacerts], crls: crls)
@@ -211,11 +213,12 @@ class Puppet::SSL::StateMachine
       Puppet.debug(_("Generating and submitting a CSR"))
 
       csr = @cert_provider.create_request(Puppet[:certname], @private_key)
-      Puppet::Rest::Routes.put_certificate_request(csr.to_pem, Puppet[:certname], @ssl_context)
+      route = @machine.create_route(@ssl_context)
+      route.put_certificate_request(Puppet[:certname], csr)
       @cert_provider.save_request(Puppet[:certname], csr)
       NeedCert.new(@machine, @ssl_context, @private_key)
-    rescue Puppet::Rest::ResponseError => e
-      if e.response.code.to_i == 400
+    rescue Puppet::HTTP::ResponseError => e
+      if e.response.code == 400
         NeedCert.new(@machine, @ssl_context, @private_key)
       else
         to_error(_("Failed to submit the CSR, HTTP response was %{code}") % { code: e.response.code }, e)
@@ -229,8 +232,9 @@ class Puppet::SSL::StateMachine
     def next_state
       Puppet.debug(_("Downloading client certificate"))
 
+      route = @machine.create_route(@ssl_context)
       cert = OpenSSL::X509::Certificate.new(
-        Puppet::Rest::Routes.get_certificate(Puppet[:certname], @ssl_context)
+        route.get_certificate(Puppet[:certname])
       )
       # verify client cert before saving
       next_ctx = @ssl_provider.create_context(
@@ -243,8 +247,8 @@ class Puppet::SSL::StateMachine
       Error.new(@machine, e.message, e)
     rescue OpenSSL::X509::CertificateError => e
       Error.new(@machine, _("Failed to parse certificate: %{message}") % {message: e.message}, e)
-    rescue Puppet::Rest::ResponseError => e
-      if e.response.code.to_i == 404
+    rescue Puppet::HTTP::ResponseError => e
+      if e.response.code == 404
         Puppet.info(_("Certificate for %{certname} has not been signed yet") % {certname: Puppet[:certname]})
         $stdout.puts _("Couldn't fetch certificate from CA server; you might still need to sign this agent's certificate (%{name}).") % { name: Puppet[:certname] }
         Wait.new(@machine)
@@ -376,6 +380,13 @@ class Puppet::SSL::StateMachine
     end
 
     ssl_context
+  end
+
+  # @api private
+  def create_route(ssl_context)
+    http = Puppet.runtime['http']
+    session = http.create_session(ssl_context: ssl_context)
+    session.route_to(:ca)
   end
 
   private
