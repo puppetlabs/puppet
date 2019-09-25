@@ -79,7 +79,7 @@ module Puppet::Util
     # Adds extra headers to a given hash if http_extra_headers option was set.
     # @param [Hash] headers The headers to be modified
     # @return [Hash] the modified headers hash
-    def self.add_extra_headers(headers)
+    def self.add_extra_headers(headers={})
       Puppet[:http_extra_headers].each do |name, value|
         if headers.key?(name)
           Puppet.warning(_('Ignoring extra header "%{name}" as it was previously set.') %
