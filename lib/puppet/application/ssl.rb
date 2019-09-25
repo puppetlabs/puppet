@@ -90,6 +90,7 @@ HELP
     @cert_provider = Puppet::X509::CertProvider.new
     @ssl_provider = Puppet::SSL::SSLProvider.new
     @machine = Puppet::SSL::StateMachine.new
+    @session = Puppet.runtime['http'].create_session
   end
 
   def setup_logs
@@ -160,13 +161,14 @@ HELP
     end
 
     csr = @cert_provider.create_request(Puppet[:certname], key)
-    Puppet::Rest::Routes.put_certificate_request(csr.to_pem, Puppet[:certname], ssl_context)
+    route = create_route(ssl_context)
+    route.put_certificate_request(Puppet[:certname], csr, ssl_context: ssl_context)
     @cert_provider.save_request(Puppet[:certname], csr)
     Puppet.notice _("Submitted certificate request for '%{name}' to https://%{server}:%{port}") % {
       name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port]
     }
-  rescue Puppet::Rest::ResponseError => e
-    if e.response.code.to_i == 400
+  rescue Puppet::HTTP::ResponseError => e
+    if e.response.code == 400
       raise Puppet::Error.new(_("Could not submit certificate request for '%{name}' to https://%{server}:%{port} due to a conflict on the server") % { name: Puppet[:certname], server: Puppet[:ca_server], port: Puppet[:ca_port] })
     else
       raise Puppet::Error.new(_("Failed to submit certificate request: %{message}") % { message: e.message }, e)
@@ -183,7 +185,8 @@ HELP
     }
 
     # try to download cert
-    x509 = Puppet::Rest::Routes.get_certificate(Puppet[:certname], ssl_context)
+    route = create_route(ssl_context)
+    x509 = route.get_certificate(Puppet[:certname], ssl_context: ssl_context)
     cert = OpenSSL::X509::Certificate.new(x509)
     Puppet.notice _("Downloaded certificate '%{name}' with fingerprint %{fingerprint}") % { name: Puppet[:certname], fingerprint: fingerprint(cert) }
     # verify client cert before saving
@@ -197,8 +200,8 @@ HELP
       name: Puppet[:certname], fingerprint: fingerprint(cert)
     }
     cert
-  rescue Puppet::Rest::ResponseError => e
-    if e.response.code.to_i == 404
+  rescue Puppet::HTTP::ResponseError => e
+    if e.response.code == 404
       return nil
     else
       raise Puppet::Error.new(_("Failed to download certificate: %{message}") % { message: e.message }, e)
@@ -229,8 +232,9 @@ HELP
 
       begin
         ssl_context = @machine.ensure_ca_certificates
-        cert = Puppet::Rest::Routes.get_certificate(certname, ssl_context)
-      rescue Puppet::Rest::ResponseError => e
+        route = create_route(ssl_context)
+        cert = route.get_certificate(certname, ssl_context: ssl_context)
+      rescue Puppet::HTTP::ResponseError => e
         if e.response.code.to_i != 404
           raise Puppet::Error.new(_("Failed to connect to the CA to determine if certificate %{certname} has been cleaned") % { certname: certname }, e)
         end
@@ -271,5 +275,9 @@ END
 
   def fingerprint(cert)
     Puppet::SSL::Digest.new(nil, cert.to_der)
+  end
+
+  def create_route(ssl_context)
+    @session.route_to(:ca, ssl_context: ssl_context)
   end
 end
