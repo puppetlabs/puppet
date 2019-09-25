@@ -1,4 +1,6 @@
 class Puppet::HTTP::Client
+  CONNECT_EXCEPTIONS = [Timeout::Error, OpenSSL::SSL::SSLError, SystemCallError].freeze
+
   def initialize(ssl_context:)
     @pool = Puppet::Network::HTTP::Pool.new
     @default_headers = {
@@ -12,8 +14,20 @@ class Puppet::HTTP::Client
     site = Puppet::Network::HTTP::Site.from_uri(uri)
     verifier = Puppet::SSL::Verifier.new(uri.host, @ssl_context)
     @pool.with_connection(site, verifier) do |http|
-      yield http if block_given?
+      if block_given?
+        # An exception may occur after the connection is established
+        begin
+          yield http
+        rescue Puppet::HTTP::HTTPError
+          raise
+        rescue *CONNECT_EXCEPTIONS => e
+          raise Puppet::HTTP::HTTPError.new(e.message, e)
+        end
+      end
     end
+  rescue *CONNECT_EXCEPTIONS => e
+    # An exception occurred while trying to connect
+    raise Puppet::HTTP::ConnectionError.new(e.message, e)
   end
 
   def get(url, headers: {}, params: {}, &block)
