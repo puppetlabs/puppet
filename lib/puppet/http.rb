@@ -5,6 +5,7 @@ module Puppet::HTTP
 
   require 'puppet/http/errors'
   require 'puppet/http/response'
+  require 'puppet/http/service'
   require 'puppet/http/client'
   require 'puppet/http/redirector'
   require 'puppet/http/retry_after_handler'
