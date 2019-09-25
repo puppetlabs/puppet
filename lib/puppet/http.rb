@@ -10,5 +10,6 @@ module Puppet::HTTP
   require 'puppet/http/service/ca'
   require 'puppet/http/session'
   require 'puppet/http/resolver'
+  require 'puppet/http/resolver/settings'
   require 'puppet/http/client'
 end

@@ -8,7 +8,7 @@ class Puppet::HTTP::Client
       'User-Agent' => Puppet[:http_user_agent],
     }.freeze
     @ssl_context = ssl_context
-    @resolvers = [].freeze
+    @resolvers = [Puppet::HTTP::Resolver::Settings.new].freeze
   end
 
   def create_session

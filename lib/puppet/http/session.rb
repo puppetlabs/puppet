@@ -34,4 +34,17 @@ class Puppet::HTTP::Session
 
     raise Puppet::HTTP::RouteError, "No more routes to #{name}"
   end
+
+  def create_service(name, server = nil, port = nil)
+    route = ROUTES[name]
+    raise ArgumentError, "Unknown service #{name}" unless route
+
+    server ||= Puppet[route.server_setting]
+    port   ||= Puppet[route.port_setting]
+    url = URI::HTTPS.build(host: server,
+                           port: port,
+                           path: route.api
+                          ).freeze
+    route.service.new(@client, url)
+  end
 end
