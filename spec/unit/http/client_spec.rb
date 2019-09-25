@@ -60,8 +60,28 @@ describe Puppet::HTTP::Client do
       stub_request(:get, uri)
 
       response = client.get(uri)
-      expect(response).to be_an_instance_of(Net::HTTPOK)
-      expect(response.code).to eq("200")
+      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_success
+      expect(response.code).to eq(200)
+    end
+
+    it "returns the entire response body" do
+      stub_request(:get, uri).to_return(body: "abc")
+
+      expect(client.get(uri).body).to eq("abc")
+    end
+
+    it "streams the response body when a block is given" do
+      stub_request(:get, uri).to_return(body: "abc")
+
+      io = StringIO.new
+      client.get(uri) do |response|
+        response.read_body do |data|
+          io.write(data)
+        end
+      end
+
+      expect(io.string).to eq("abc")
     end
   end
 
@@ -88,8 +108,9 @@ describe Puppet::HTTP::Client do
       stub_request(:put, uri)
 
       response = client.put(uri, content_type: 'text/plain', body: "")
-      expect(response).to be_an_instance_of(Net::HTTPOK)
-      expect(response.code).to eq("200")
+      expect(response).to be_an_instance_of(Puppet::HTTP::Response)
+      expect(response).to be_success
+      expect(response.code).to eq(200)
     end
 
     it "sets content-length and content-type for the body" do

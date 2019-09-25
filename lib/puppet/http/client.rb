@@ -16,19 +16,31 @@ class Puppet::HTTP::Client
     end
   end
 
-  def get(url, headers: {}, params: {})
+  def get(url, headers: {}, params: {}, &block)
+    response = nil
+
     connect(url) do |http|
       query = encode_params(params)
       path = "#{url.path}?#{query}"
 
       request = Net::HTTP::Get.new(path, @default_headers.merge(headers))
-      resp = http.request(request)
-      Puppet.info("HTTP GET #{url} returned #{resp.code} #{resp.message}")
-      resp
+      http.request(request) do |nethttp|
+        response = Puppet::HTTP::Response.new(nethttp)
+        if block_given?
+          yield response
+        else
+          response.read_body
+        end
+      end
     end
+
+    Puppet.info("HTTP GET #{url} returned #{response.code} #{response.reason}")
+    response
   end
 
   def put(url, headers: {}, params: {}, content_type:, body:)
+    response = nil
+
     connect(url) do |http|
       query = encode_params(params)
       path = "#{url.path}?#{query}"
@@ -37,10 +49,18 @@ class Puppet::HTTP::Client
       request.body = body
       request['Content-Length'] = body.bytesize
       request['Content-Type'] = content_type
-      resp = http.request(request)
-      Puppet.info("HTTP PUT #{url} returned #{resp.code} #{resp.message}")
-      resp
+      http.request(request) do |nethttp|
+        response = Puppet::HTTP::Response.new(nethttp)
+        if block_given?
+          yield response
+        else
+          response.read_body
+        end
+      end
     end
+
+    Puppet.info("HTTP PUT #{url} returned #{response.code} #{response.reason}")
+    response
   end
 
   def close
