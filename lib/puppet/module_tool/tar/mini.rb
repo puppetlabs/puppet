@@ -1,7 +1,7 @@
 class Puppet::ModuleTool::Tar::Mini
   def unpack(sourcefile, destdir, _)
     Zlib::GzipReader.open(sourcefile) do |reader|
-      Archive::Tar::Minitar.unpack(reader, destdir, find_valid_files(reader)) do |action, name, stats|
+      Archive::Tar::Minitar.unpack(reader, destdir, find_valid_files(reader), :fsync => false) do |action, name, stats|
         case action
         when :dir
           validate_entry(destdir, name)
