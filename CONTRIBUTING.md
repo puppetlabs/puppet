@@ -114,7 +114,7 @@ respectively.
 
 ## Submitting Changes
 
-* Sign the [Contributor License Agreement](http://links.puppet.com/cla).
+* Sign the [Contributor License Agreement](https://cla.puppet.com).
 * Push your changes to a topic branch in your fork of the repository.
 * Submit a pull request to the repository in the puppetlabs organization.
 * Update your Jira ticket to mark that you have submitted code and are ready
