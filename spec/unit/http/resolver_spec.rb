@@ -21,4 +21,25 @@ describe Puppet::HTTP::Resolver do
       end
     end
   end
+
+  context 'when resolving using SRV' do
+    let(:dns) { double('dns') }
+    let(:subject) { Puppet::HTTP::Resolver::SRV.new(domain: 'example.com', dns: dns) }
+
+    def stub_srv(host, port)
+      srv = Resolv::DNS::Resource::IN::SRV.new(0, 0, port, host)
+      srv.instance_variable_set :@ttl, 3600
+
+      allow(dns).to receive(:getresources).with("_x-puppet-ca._tcp.example.com", Resolv::DNS::Resource::IN::SRV).and_return([srv])
+    end
+
+    it 'yields a service based on an SRV record' do
+      stub_srv('ca1.example.com', 8142)
+
+      subject.resolve(session, :ca) do |service|
+        expect(service).to be_an_instance_of(Puppet::HTTP::Service::Ca)
+        expect(service.url.to_s).to eq("https://ca1.example.com:8142/puppet-ca/v1")
+      end
+    end
+  end
 end

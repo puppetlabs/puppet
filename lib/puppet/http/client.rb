@@ -8,7 +8,7 @@ class Puppet::HTTP::Client
     @default_ssl_context = ssl_context
     @redirector = Puppet::HTTP::Redirector.new(redirect_limit)
     @retry_after_handler = Puppet::HTTP::RetryAfterHandler.new(retry_limit, Puppet[:runinterval])
-    @resolvers = [Puppet::HTTP::Resolver::Settings.new].freeze
+    @resolvers = build_resolvers
   end
 
   def create_session
@@ -141,5 +141,16 @@ class Puppet::HTTP::Client
     if user && password
       request.basic_auth(user, password)
     end
+  end
+
+  def build_resolvers
+    resolvers = []
+
+    if Puppet[:use_srv_records]
+      resolvers << Puppet::HTTP::Resolver::SRV.new(domain: Puppet[:srv_domain])
+    end
+
+    resolvers << Puppet::HTTP::Resolver::Settings.new
+    resolvers.freeze
   end
 end

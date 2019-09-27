@@ -1,5 +1,6 @@
 module Puppet::HTTP
   require 'puppet/network/http'
+  require 'puppet/network/resolver'
   require 'puppet/ssl'
   require 'puppet/x509'
 
@@ -10,6 +11,7 @@ module Puppet::HTTP
   require 'puppet/http/session'
   require 'puppet/http/resolver'
   require 'puppet/http/resolver/settings'
+  require 'puppet/http/resolver/srv'
   require 'puppet/http/client'
   require 'puppet/http/redirector'
   require 'puppet/http/retry_after_handler'
