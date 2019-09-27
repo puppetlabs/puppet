@@ -221,6 +221,22 @@ describe Puppet::Settings do
       @settings.define_settings :main, :bool => { :type => :boolean, :default => true, :desc => "desc" }
     end
 
+    it "should be threadsafe" do
+      other_request = Thread.new do
+        @settings[:bool] = false
+        @settings[:myval] = "Some value"
+
+        @settings[:myval] = "Foo"
+        expect(@settings[:myval]).to eql("Foo")
+        expect(@settings[:bool]).to eql(false)
+      end
+
+      other_request.join
+
+      expect(@settings[:bool]).to eql(true)
+      expect(@settings[:myval]).to eql("val")
+    end
+
     it "should provide a method for setting values from other objects" do
       @settings[:myval] = "something else"
       expect(@settings[:myval]).to eq("something else")

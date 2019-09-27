@@ -6,6 +6,13 @@ require 'forwardable'
 require 'fileutils'
 
 # The class for handling configuration files.
+#
+# NOTE: Despite this class using ThreadLocal variables it is not generally
+# threadsafe. All attempts at thread safety are around the setting and
+# retrieving via `[](param)` and `[]=(param, value)`. Other operations
+# like parsing config files, cli options, and overriding defaults are not
+# threadsafe.
+#
 class Puppet::Settings
   extend Forwardable
   include Enumerable
@@ -134,18 +141,22 @@ class Puppet::Settings
     # Keep track of set values.
     @value_sets = {
       :cli => Values.new(:cli, @config),
-      :memory => Values.new(:memory, @config),
+      :memory => Values.new(:memory, @config, :threadlocal),
       :application_defaults => Values.new(:application_defaults, @config),
       :overridden_defaults => Values.new(:overridden_defaults, @config),
     }
     @configuration_file = nil
 
     # And keep a per-environment cache
-    @cache = Hash.new { |hash, key| hash[key] = {} }
-    @values = Hash.new { |hash, key| hash[key] = {} }
+    @cache = Puppet::ThreadLocal.new do
+      Hash.new { |hash, key| hash[key] = {} }
+    end
+    @values_by_env_and_section = Puppet::ThreadLocal.new do
+      Hash.new { |hash, key| hash[key] = {} }
+    end
 
     # The list of sections we've used.
-    @used = []
+    @used = Puppet::ThreadLocal.new { Array.new }
 
     @hooks_to_call_on_application_initialization = []
     @deprecated_setting_names = []
@@ -154,6 +165,21 @@ class Puppet::Settings
     @translate = Puppet::Settings::ValueTranslator.new
     @config_file_parser = Puppet::Settings::ConfigFile.new(@translate)
   end
+
+  def cache
+    @cache.value
+  end
+  private :cache
+
+  def values_by_env_and_section
+    @values_by_env_and_section.value
+  end
+  private :values_by_env_and_section
+
+  def used_sections
+    @used.value
+  end
+  private :used_sections
 
   # Retrieve a config value
   # @param param [Symbol] the name of the setting
@@ -238,15 +264,15 @@ class Puppet::Settings
       # Only clear the 'used' values if we were explicitly asked to clear out
       #  :cli values; otherwise, it may be just a config file reparse,
       #  and we want to retain this cli values.
-      @used = []
+      used_sections.clear
     end
 
-    @value_sets[:memory] = Values.new(:memory, @config)
+    @value_sets[:memory] = Values.new(:memory, @config, :threadlocal)
     @value_sets[:overridden_defaults] = Values.new(:overridden_defaults, @config)
 
     @deprecated_settings_that_have_been_configured.clear
-    @values.clear
-    @cache.clear
+    values_by_env_and_section.clear
+    cache.clear
   end
   private :unsafe_clear
 
@@ -263,20 +289,20 @@ class Puppet::Settings
       return
     end
 
-    @cache[environment.to_sym].clear
-    @values[environment.to_sym] = {}
+    cache[environment.to_sym].clear
+    values_by_env_and_section[environment.to_sym] = {}
   end
 
-  # Clear @cache, @used and the Environment.
+  # Clear cache, used_sections and the Environment.
   #
-  # Whenever an object is returned by Settings, a copy is stored in @cache.
+  # Whenever an object is returned by Settings, a copy is stored in cache.
   # As long as Setting attributes that determine the content of returned
-  # objects remain unchanged, Settings can keep returning objects from @cache
+  # objects remain unchanged, Settings can keep returning objects from cache
   # without re-fetching or re-generating them.
   #
-  # Whenever a Settings attribute changes, such as @values or @preferred_run_mode,
-  # this method must be called to clear out the caches so that updated
-  # objects will be returned.
+  # Whenever a Settings attribute changes, such as values_by_env_and_section
+  # or @preferred_run_mode, this method must be called to clear out the caches
+  # so that updated objects will be returned.
   def flush_cache
     unsafe_flush_cache
   end
@@ -287,8 +313,8 @@ class Puppet::Settings
   private :unsafe_flush_cache
 
   def clearused
-    @cache.clear
-    @used = []
+    cache.clear
+    used_sections.clear
   end
 
   def global_defaults_initialized?()
@@ -452,7 +478,7 @@ class Puppet::Settings
 
   # Handle a command-line argument.
   def handlearg(opt, value = nil)
-    @cache.clear
+    cache.clear
 
     if value.is_a?(FalseClass)
       value = "false"
@@ -807,10 +833,9 @@ class Puppet::Settings
   private :any_files_changed?
 
   def reuse
-    return unless defined?(@used)
-    new = @used
-    @used = []
-    self.use(*new)
+    sections_to_reuse = used_sections.dup
+    used_sections.clear
+    self.use(*sections_to_reuse)
   end
 
   class SearchPathElement < Struct.new(:name, :type); end
@@ -1052,7 +1077,7 @@ Generated on #{Time.now}.
   # you can 'use' a section as many times as you want.
   def use(*sections)
     sections = sections.collect { |s| s.to_sym }
-    sections = sections.reject { |s| @used.include?(s) }
+    sections = sections.reject { |s| used_sections.include?(s) }
 
     return if sections.empty?
 
@@ -1079,8 +1104,8 @@ Generated on #{Time.now}.
       end
     end
 
-    sections.each { |s| @used << s }
-    @used.uniq!
+    sections.each { |s| used_sections << s }
+    used_sections.uniq!
   end
 
   def valid?(param)
@@ -1096,7 +1121,7 @@ Generated on #{Time.now}.
   # @return [Puppet::Settings::ChainedValues] An object to perform lookups
   # @api public
   def values(environment, section)
-    @values[environment][section] ||= ChainedValues.new(
+    values_by_env_and_section[environment][section] ||= ChainedValues.new(
       section,
       environment,
       value_sets_for(environment, section),
@@ -1130,7 +1155,7 @@ Generated on #{Time.now}.
     # Check the cache first.  It needs to be a per-environment
     # cache so that we don't spread values from one env
     # to another.
-    cached_env = @cache[environment || NONE]
+    cached_env = cache[environment || NONE]
 
     # Avoid two lookups in cache_env unless val is nil. When it is, it's important
     # to check if the key is included so that further processing (that will result
@@ -1444,19 +1469,43 @@ Generated on #{Time.now}.
     end
   end
 
-  class Values
-    extend Forwardable
-
-    attr_reader :name
-
-    def initialize(name, defaults)
-      @name = name
-      @values = {}
-      @defaults = defaults
+  class NonThreadLocal
+    def initialize(val)
+      @val = val
     end
 
-    def_delegator :@values, :include?
-    def_delegator :@values, :[], :lookup
+    def value
+      @val
+    end
+  end
+
+  class Values
+    attr_reader :name
+
+    def initialize(name, defaults, threadlocal = false)
+      @name = name
+      @defaults = defaults
+
+      if threadlocal
+        @internal_storage = Puppet::ThreadLocal.new { Hash.new }
+      else
+        @internal_storage = NonThreadLocal.new({})
+      end
+    end
+
+    def store
+      @internal_storage.value
+    end
+    private :store
+
+    def include?(setting_name)
+      store.include?(setting_name)
+    end
+
+    def [](name)
+      store[name]
+    end
+    alias_method :lookup, :[]
 
     def set(name, value)
       default = @defaults[name]
@@ -1469,20 +1518,20 @@ Generated on #{Time.now}.
       # able to check whether a value for itself has been explicitly
       # set, while still preserving the existing value if the hook
       # throws (as was existing behavior)
-      old_value = @values[name]
-      @values[name] = value
+      old_value = store[name]
+      store[name] = value
       begin
         if default.has_hook?
           default.handle(value)
         end
       rescue Exception => e
-        @values[name] = old_value
+        store[name] = old_value
         raise e
       end
     end
 
     def inspect
-      %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">}
+      %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{store}">}
     end
   end
 
