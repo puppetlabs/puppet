@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/application/ssl'
-require 'webmock/rspec'
 require 'openssl'
 require 'puppet/test_ca'
 

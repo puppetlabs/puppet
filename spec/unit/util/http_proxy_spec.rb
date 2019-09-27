@@ -1,6 +1,5 @@
 require 'uri'
 require 'spec_helper'
-require 'webmock/rspec'
 require 'puppet/util/http_proxy'
 
 describe Puppet::Util::HttpProxy do

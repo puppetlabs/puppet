@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'webmock/rspec'
 require 'puppet/network/http/connection'
 require 'puppet_spec/validators'
 require 'puppet/test_ca'
