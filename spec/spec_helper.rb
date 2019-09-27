@@ -59,6 +59,9 @@ VCR.configure do |vcr|
   vcr.configure_rspec_metadata!
 end
 
+# Disable VCR by default
+VCR.turn_off!
+
 RSpec.configure do |config|
   include PuppetSpec::Fixtures
 
@@ -151,6 +154,20 @@ RSpec.configure do |config|
     FileUtils.mkdir_p Puppet[:statedir]
 
     Puppet::Test::TestHelper.before_each_test()
+  end
+
+  config.around :each do |example|
+    # Enable VCR if the example is tagged with `:vcr` metadata.
+    if example.metadata[:vcr]
+      VCR.turn_on!
+      begin
+        example.run
+      ensure
+        VCR.turn_off!
+      end
+    else
+      example.run
+    end
   end
 
   config.after :each do
