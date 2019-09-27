@@ -23,8 +23,8 @@ module Puppet::Network
       end
     end
 
-    def initialize
-      @resolver = Resolv::DNS.new
+    def initialize(resolver = Resolv::DNS.new)
+      @resolver = resolver
 
       # Stores DNS records per service, along with their TTL
       # and the time at which they were resolved, for cache
