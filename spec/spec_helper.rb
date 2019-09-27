@@ -59,6 +59,8 @@ VCR.configure do |vcr|
   vcr.cassette_library_dir = File.expand_path('vcr/cassettes', PuppetSpec::FIXTURE_DIR)
   vcr.hook_into :webmock
   vcr.configure_rspec_metadata!
+  # Uncomment next line to debug vcr
+  # vcr.debug_logger = $stderr
 end
 
 # Disable VCR by default

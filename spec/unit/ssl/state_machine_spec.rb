@@ -28,11 +28,6 @@ describe Puppet::SSL::StateMachine, unless: Puppet::Util::Platform.jruby? do
   let(:refused_message) { %r{Connection refused|No connection could be made because the target machine actively refused it} }
 
   before(:each) do
-    WebMock.disable_net_connect!
-
-    allow_any_instance_of(Net::HTTP).to receive(:start)
-    allow_any_instance_of(Net::HTTP).to receive(:finish)
-
     allow(Kernel).to receive(:sleep)
   end
 

@@ -308,10 +308,6 @@ describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
       allow(@host).to receive(:validate_certificate_with_key)
       allow(@host).to receive(:http_client).and_return(@http)
       allow(@host).to receive(:ssl_store).and_return(double("ssl store"))
-
-      WebMock.disable_net_connect!
-      allow_any_instance_of(Net::HTTP).to receive(:start)
-      allow_any_instance_of(Net::HTTP).to receive(:finish)
     end
 
     let(:ca_cert_response) { @pki[:ca_bundle] }
