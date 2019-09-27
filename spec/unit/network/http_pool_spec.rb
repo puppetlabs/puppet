@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'webmock/rspec'
 require 'puppet/network/http_pool'
 
 describe Puppet::Network::HttpPool do
