@@ -75,12 +75,28 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
       expect(srv.should(:enable)).to eq(:manual)
     end
 
+    it "should support :delayed as a value on Windows" do
+      allow(Puppet.features).to receive(:microsoft_windows?).and_return(true)
+
+      srv = Puppet::Type.type(:service).new(:name => "yay", :enable => :delayed)
+      expect(srv.should(:enable)).to eq(:delayed)
+    end
+
     it "should not support :manual as a value when not on Windows" do
       allow(Puppet.features).to receive(:microsoft_windows?).and_return(false)
 
       expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :manual) }.to raise_error(
         Puppet::Error,
         /Setting enable to manual is only supported on Microsoft Windows\./
+      )
+    end
+
+    it "should not support :delayed as a value when not on Windows" do
+      allow(Puppet.features).to receive(:microsoft_windows?).and_return(false)
+
+      expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :delayed) }.to raise_error(
+        Puppet::Error,
+        /Setting enable to delayed is only supported on Microsoft Windows\./
       )
     end
   end

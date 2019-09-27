@@ -41,6 +41,10 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
     expect(subject::QUERY_SERVICE_CONFIGW).to receive(:new).and_return(query_return)
   end
 
+  def expect_successful_config_query2_and_return(param, query_return)
+    expect(param).to receive(:new).and_return(query_return)
+  end
+
   let(:subject)      { Puppet::Util::Windows::Service }
   let(:pointer) { double() }
   let(:mock_service_name) { double() }
@@ -50,7 +54,9 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
   before do
     allow(subject).to receive(:QueryServiceStatusEx).and_return(1)
     allow(subject).to receive(:QueryServiceConfigW).and_return(1)
+    allow(subject).to receive(:QueryServiceConfig2W).and_return(1)
     allow(subject).to receive(:ChangeServiceConfigW).and_return(1)
+    allow(subject).to receive(:ChangeServiceConfig2W).and_return(1)
     allow(subject).to receive(:OpenSCManagerW).and_return(scm)
     allow(subject).to receive(:OpenServiceW).and_return(service)
     allow(subject).to receive(:CloseServiceHandle)
@@ -576,6 +582,9 @@ describe "Puppet::Util::Windows::Service", :if => Puppet.features.microsoft_wind
         }.each do |start_type_name, start_type|
           it "queries the service and returns the service start type #{start_type_name}" do
             expect_successful_config_query_and_return({:dwStartType => start_type})
+            if start_type_name == :SERVICE_AUTO_START
+              expect_successful_config_query2_and_return(subject::SERVICE_DELAYED_AUTO_START_INFO, {:fDelayedAutostart => 0})
+            end
             expect(subject.service_start_type(mock_service_name)).to eq(start_type_name)
           end
         end

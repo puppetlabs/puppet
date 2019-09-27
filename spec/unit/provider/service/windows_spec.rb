@@ -148,6 +148,11 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
       expect(provider.enabled?).to eq(:manual)
     end
 
+    it "should report a service with a startup type of delayed as delayed" do
+      expect(service_util).to receive(:service_start_type).with(name).and_return(:SERVICE_DELAYED_AUTO_START)
+      expect(provider.enabled?).to eq(:delayed)
+    end
+
     it "should report a service with a startup type of disabled as false" do
       expect(service_util).to receive(:service_start_type).with(name).and_return(:SERVICE_DISABLED)
       expect(provider.enabled?).to eq(:false)
@@ -210,6 +215,21 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
 
       expect {
         provider.manual_start
+      }.to raise_error(Puppet::Error, /Cannot enable #{name}/)
+    end
+  end
+
+  describe "#delayed_start" do
+    it "should set service start type to Service_Config_Delayed_Auto_Start (delayed) when delayed" do
+      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_AUTO_START, true)
+      provider.delayed_start
+    end
+
+    it "raises an error if set_startup_mode fails" do
+      expect(service_util).to receive(:set_startup_mode).with(name, :SERVICE_AUTO_START, true).and_raise(Puppet::Error.new('foobar'))
+
+      expect {
+        provider.delayed_start
       }.to raise_error(Puppet::Error, /Cannot enable #{name}/)
     end
   end
