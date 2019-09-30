@@ -25,11 +25,6 @@ class Puppet::Node::Environment
   NO_MANIFEST = :no_manifest
 
   # The create() factory method should be used instead.
-  #
-  # @api private
-  def self.new(*args)
-    create(*args)
-  end
   private_class_method :new
 
   # Create a new environment with the given name
@@ -44,13 +39,7 @@ class Puppet::Node::Environment
   #
   # @api public
   def self.create(name, modulepath, manifest = NO_MANIFEST, config_version = nil)
-    obj = self.allocate
-    obj.send(:initialize,
-             name.intern,
-             expand_dirs(extralibs() + modulepath),
-             manifest == NO_MANIFEST ? manifest : Puppet::FileSystem.expand_path(manifest),
-             config_version)
-    obj
+    new(name, modulepath, manifest, config_version)
   end
 
   # A remote subclass to make it easier to trace instances when debugging.
@@ -81,9 +70,10 @@ class Puppet::Node::Environment
   #
   # @param name [Symbol] The environment name
   def initialize(name, modulepath, manifest, config_version)
-    @name = name
-    @modulepath = modulepath
-    @manifest = manifest
+    @name = name.intern
+    @modulepath = self.class.expand_dirs(self.class.extralibs() + modulepath)
+    @manifest = manifest == NO_MANIFEST ? manifest : Puppet::FileSystem.expand_path(manifest)
+
     @config_version = config_version
   end
 
