@@ -75,6 +75,11 @@ module Puppet
         provider.enabled?
       end
 
+      # This only works on Windows systems.
+      newvalue(:delayed, :event => :service_delayed_start) do
+        provider.delayed_start
+      end
+
       # This only makes sense on systemd systems. Static services cannot be enabled
       # or disabled manually.
       def insync?(current)
@@ -87,8 +92,8 @@ module Puppet
       end
 
       validate do |value|
-        if value == :manual && !Puppet::Util::Platform.windows?
-          raise Puppet::Error.new(_("Setting enable to manual is only supported on Microsoft Windows."))
+        if (value == :manual || value == :delayed) && !Puppet::Util::Platform.windows?
+          raise Puppet::Error.new(_("Setting enable to %{value} is only supported on Microsoft Windows.") % { value: value.to_s} )
         end
       end
     end
