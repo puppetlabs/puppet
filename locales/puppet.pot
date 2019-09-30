@@ -6,11 +6,11 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Puppet automation framework 6.9.0-36-g6b76b78\n"
+"Project-Id-Version: Puppet automation framework 6.10.0-16-gc7a8e5e\n"
 "\n"
 "Report-Msgid-Bugs-To: https://tickets.puppetlabs.com\n"
-"POT-Creation-Date: 2019-09-17 23:18+0000\n"
-"PO-Revision-Date: 2019-09-17 23:18+0000\n"
+"POT-Creation-Date: 2019-09-30 23:18+0000\n"
+"PO-Revision-Date: 2019-09-30 23:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -3215,19 +3215,19 @@ msgstr ""
 msgid "No file containing checksums found."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:82 ../lib/puppet/module_tool/applications/upgrader.rb:102
+#: ../lib/puppet/module_tool/applications/installer.rb:84 ../lib/puppet/module_tool/applications/upgrader.rb:102
 msgid "Downloading from %{host} ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:128 ../lib/puppet/module_tool/applications/upgrader.rb:140
+#: ../lib/puppet/module_tool/applications/installer.rb:132 ../lib/puppet/module_tool/applications/upgrader.rb:140
 msgid "Resolving dependencies ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:158
+#: ../lib/puppet/module_tool/applications/installer.rb:162
 msgid "Preparing to install ..."
 msgstr ""
 
-#: ../lib/puppet/module_tool/applications/installer.rb:161
+#: ../lib/puppet/module_tool/applications/installer.rb:165
 msgid "Installing -- do not interrupt ..."
 msgstr ""
 
@@ -4012,11 +4012,11 @@ msgstr ""
 msgid "Trusted node data modified for node %{name}"
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:216
+#: ../lib/puppet/node/environment.rb:206
 msgid "The 'disable_per_environment_manifest' setting is true, and the '%{env_name}' environment has an environment.conf manifest that conflicts with the 'default_manifest' setting."
 msgstr ""
 
-#: ../lib/puppet/node/environment.rb:553 ../lib/puppet/pops/loaders.rb:298
+#: ../lib/puppet/node/environment.rb:543 ../lib/puppet/pops/loaders.rb:298
 msgid "Could not parse for environment %{env}: %{detail}"
 msgstr ""
 
@@ -7064,19 +7064,23 @@ msgstr ""
 msgid "Cannot enable %{resource_name} for manual start, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:53
+#: ../lib/puppet/provider/service/windows.rb:41
+msgid "Cannot enable %{resource_name} for delayed start, error was: %{detail}"
+msgstr ""
+
+#: ../lib/puppet/provider/service/windows.rb:61
 msgid "Unknown start type: %{start_type}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:56
+#: ../lib/puppet/provider/service/windows.rb:64
 msgid "Cannot get start type %{resource_name}, error was: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:70
+#: ../lib/puppet/provider/service/windows.rb:78
 msgid "Will not start disabled service %{resource_name} without managing enable. Specify 'enable => false' to override."
 msgstr ""
 
-#: ../lib/puppet/provider/service/windows.rb:102
+#: ../lib/puppet/provider/service/windows.rb:110
 msgid "Unknown service state '%{current_state}' for service '%{resource_name}'"
 msgstr ""
 
@@ -7194,35 +7198,35 @@ msgstr ""
 msgid "Invalid resource type %{type}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:504
+#: ../lib/puppet/resource.rb:521
 msgid "The method Puppet::Resource.set_default_parameters is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:509
+#: ../lib/puppet/resource.rb:526
 msgid "Cannot evaluate default parameters for %{resource} - not a parser resource"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:549
+#: ../lib/puppet/resource.rb:566
 msgid "The method Puppet::Resource.validate_complete is deprecated and will be removed in the next major release of Puppet."
 msgstr ""
 
-#: ../lib/puppet/resource.rb:555
+#: ../lib/puppet/resource.rb:572
 msgid "Must pass %{param} to %{resource}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:567
+#: ../lib/puppet/resource.rb:584
 msgid "Expected parameter '%{name}' of '%{value0}' to have type %{value1}, got %{value2}"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:573
+#: ../lib/puppet/resource.rb:590
 msgid "no parameter named '%{name}'"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:617
+#: ../lib/puppet/resource.rb:634
 msgid "No title provided and %{type} is not a valid resource reference"
 msgstr ""
 
-#: ../lib/puppet/resource.rb:691
+#: ../lib/puppet/resource.rb:708
 msgid "No set of title patterns matched the title \"%{title}\"."
 msgstr ""
 
@@ -8337,72 +8341,72 @@ msgstr ""
 msgid "Could not set %{attribute} on %{class_name}: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:107
+#: ../lib/puppet/type/exec.rb:118
 msgid "executed successfully"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:141
+#: ../lib/puppet/type/exec.rb:152
 msgid "Command exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:166
+#: ../lib/puppet/type/exec.rb:177
 msgid "[command redacted] returned %{status} instead of one of [%{expected}]"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:168
+#: ../lib/puppet/type/exec.rb:179
 msgid "'%{cmd}' returned %{status} instead of one of [%{expected}]"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:189
+#: ../lib/puppet/type/exec.rb:200
 msgid "Command must be a String, got value of class %{klass}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:221
+#: ../lib/puppet/type/exec.rb:232
 msgid "Unable to execute commands as other users on Windows"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:223
+#: ../lib/puppet/type/exec.rb:234
 msgid "Only root can execute commands as other users"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:279
+#: ../lib/puppet/type/exec.rb:290
 msgid "Invalid environment setting '%{value}'"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:292
+#: ../lib/puppet/type/exec.rb:303
 msgid "The umask specification is invalid: %{value}"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:308
+#: ../lib/puppet/type/exec.rb:319
 msgid "The timeout must be a number."
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:325
+#: ../lib/puppet/type/exec.rb:336
 msgid "Tries must be an integer"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:329
+#: ../lib/puppet/type/exec.rb:340
 msgid "Tries must be an integer >= 1"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:342
+#: ../lib/puppet/type/exec.rb:353
 msgid "try_sleep must be a number"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:346
+#: ../lib/puppet/type/exec.rb:357
 msgid "try_sleep cannot be a negative number"
 msgstr ""
 
 #. TRANSLATORS 'creates' is a parameter name and should not be translated
-#: ../lib/puppet/type/exec.rb:418
+#: ../lib/puppet/type/exec.rb:429
 msgid "Checking that 'creates' path '%{creates_path}' exists"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:463 ../lib/puppet/type/exec.rb:519
+#: ../lib/puppet/type/exec.rb:474 ../lib/puppet/type/exec.rb:530
 msgid "Check %{value} exceeded timeout"
 msgstr ""
 
-#: ../lib/puppet/type/exec.rb:608
+#: ../lib/puppet/type/exec.rb:619
 msgid "'%{cmd}' won't be executed because of failed check '%{check}'"
 msgstr ""
 
@@ -8623,11 +8627,11 @@ msgstr ""
 msgid "%{value} is not a valid day of the week"
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:91
-msgid "Setting enable to manual is only supported on Microsoft Windows."
+#: ../lib/puppet/type/service.rb:96
+msgid "Setting enable to %{value} is only supported on Microsoft Windows."
 msgstr ""
 
-#: ../lib/puppet/type/service.rb:248
+#: ../lib/puppet/type/service.rb:253
 msgid "\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer"
 msgstr ""
 
@@ -9885,115 +9889,123 @@ msgstr ""
 msgid "Failed to set security information"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:301
+#: ../lib/puppet/util/windows/service.rb:338
 msgid "Starting the %{service_name} service. Timeout set to: %{timeout} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:311
+#: ../lib/puppet/util/windows/service.rb:348
 msgid "Failed to start the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:315
+#: ../lib/puppet/util/windows/service.rb:352
 msgid "Successfully started the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:324
+#: ../lib/puppet/util/windows/service.rb:361
 msgid "Stopping the %{service_name} service. Timeout set to: %{timeout} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:332
+#: ../lib/puppet/util/windows/service.rb:369
 msgid "Successfully stopped the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:341
+#: ../lib/puppet/util/windows/service.rb:378
 msgid "Resuming the %{service_name} service. Timeout set to: %{timeout} seconds"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:357
+#: ../lib/puppet/util/windows/service.rb:394
 msgid "Successfully resumed the %{service_name} service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:373
+#: ../lib/puppet/util/windows/service.rb:410
 msgid "Unknown Service state '%{current_state}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:391
+#: ../lib/puppet/util/windows/service.rb:437
 msgid "Unknown start type '%{start_type}' for '%{service_name}'"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:406
+#: ../lib/puppet/util/windows/service.rb:453
 msgid "Unknown start type %{start_type}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:427
+#: ../lib/puppet/util/windows/service.rb:474
 msgid "Failed to update service configuration"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:487
+#: ../lib/puppet/util/windows/service.rb:535
 msgid "Failed to fetch services"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:536
+#: ../lib/puppet/util/windows/service.rb:584
 msgid "Failed to open a handle to the service"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:553
+#: ../lib/puppet/util/windows/service.rb:601
 msgid "Failed to open a handle to the service control manager"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:576
+#: ../lib/puppet/util/windows/service.rb:624
 msgid "The service is already in the %{final_state} state. No further work needs to be done."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:588
+#: ../lib/puppet/util/windows/service.rb:636
 msgid "The service must be in one of the %{valid_initial_states} states to perform this transition. It is currently in the %{current_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:599
+#: ../lib/puppet/util/windows/service.rb:647
 msgid "There is already a pending transition to the %{final_state} state for the %{service_name} service."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:615
+#: ../lib/puppet/util/windows/service.rb:663
 msgid "The service is in the %{pending_state} state, which is an unsafe pending state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:620
+#: ../lib/puppet/util/windows/service.rb:668
 msgid "Transitioning the %{service_name} service from %{initial_state} to %{final_state}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:624
+#: ../lib/puppet/util/windows/service.rb:672
 msgid "Waiting for the transition to finish"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:629
+#: ../lib/puppet/util/windows/service.rb:677
 msgid "Failed to transition the %{service_name} service to the %{final_state} state. Detail: %{detail}"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:668 ../lib/puppet/util/windows/service.rb:704
+#: ../lib/puppet/util/windows/service.rb:716 ../lib/puppet/util/windows/service.rb:752
 msgid "Service query failed"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:721
+#: ../lib/puppet/util/windows/service.rb:795
+msgid "Service query for %{parameter_name} failed"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:818
+msgid "Failed to update service %{change} configuration"
+msgstr ""
+
+#: ../lib/puppet/util/windows/service.rb:845
 msgid "Failed to send the %{control_signal} signal to the service. Its current state is %{current_state}. Reason for failure:"
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:756
+#: ../lib/puppet/util/windows/service.rb:880
 msgid "The service transitioned to the %{pending_state} state."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:770
+#: ../lib/puppet/util/windows/service.rb:894
 msgid "Timed out while waiting for the service to transition from %{initial_state} to %{final_state} OR from %{initial_state} to %{pending_state} to %{final_state}. The service's current state is %{current_state}."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:785
+#: ../lib/puppet/util/windows/service.rb:909
 msgid "Waiting for the pending transition to the %{final_state} state to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:799
+#: ../lib/puppet/util/windows/service.rb:923
 msgid "Unexpected transition to the %{current_state} state while waiting for the pending transition from %{pending_state} to %{final_state} to finish."
 msgstr ""
 
-#: ../lib/puppet/util/windows/service.rb:813
+#: ../lib/puppet/util/windows/service.rb:937
 msgid "Timed out while waiting for the pending transition from %{pending_state} to %{final_state} to finish. The current state is %{current_state}."
 msgstr ""
 
