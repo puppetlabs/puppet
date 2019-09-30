@@ -91,7 +91,7 @@ module Validation
   # @api public
   #
   class SeverityProducer
-    @@severity_hash = {:ignore => true, :warning => true, :error => true, :deprecation => true }
+    SEVERITIES = { ignore: true, warning: true, error: true, deprecation: true }.freeze
 
     # Creates a new instance where all issues are diagnosed as :error unless overridden.
     # @param [Symbol] specifies default severity if :error is not wanted as the default
@@ -128,7 +128,7 @@ module Validation
       unless issue.is_a? Issues::Issue
         raise Puppet::DevError.new(_("Attempt to set validation severity for something that is not an Issue. (Got %{issue})") % { issue: issue.class })
       end
-      unless @@severity_hash[level]
+      unless SEVERITIES[level]
         raise Puppet::DevError.new(_("Illegal severity level: %{level} for '%{issue_code}'") % { issue_code: issue.issue_code, level: level })
       end
       unless issue.demotable? || level == :error
