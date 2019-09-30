@@ -412,9 +412,9 @@ module Validation
     # @param diagnostic [Diagnostic, Acceptor] diagnostic(s) that should be accepted
     def accept(diagnostic)
       if diagnostic.is_a?(Acceptor)
-        diagnostic.diagnostics.each {|d| self.send(d.severity, d)}
+        diagnostic.diagnostics.each {|d| _accept(d)}
       else
-        self.send(diagnostic.severity, diagnostic)
+        _accept(diagnostic)
       end
     end
 
@@ -445,22 +445,14 @@ module Validation
 
     private
 
-    def ignore diagnostic
+    def _accept(diagnostic)
       @diagnostics << diagnostic
-    end
-
-    def error diagnostic
-      @diagnostics << diagnostic
-      @error_count += 1
-    end
-
-    def warning diagnostic
-      @diagnostics << diagnostic
-      @warning_count += 1
-    end
-
-    def deprecation diagnostic
-      warning diagnostic
+      case diagnostic.severity
+      when :error
+        @error_count += 1
+      when :deprecation, :warning
+        @warning_count += 1
+      end
     end
   end
 end
