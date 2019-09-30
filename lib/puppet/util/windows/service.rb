@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'puppet/util/windows'
 require 'ffi'
 
@@ -180,7 +181,30 @@ module Puppet::Util::Windows
     # // Value to indicate no change to an optional parameter
     # //
     # #define SERVICE_NO_CHANGE              0xffffffff
-    SERVICE_NO_CHANGE = 0xffffffff
+    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w
+    SERVICE_CONFIG_DESCRIPTION              = 0x00000001
+    SERVICE_CONFIG_FAILURE_ACTIONS          = 0x00000002
+    SERVICE_CONFIG_DELAYED_AUTO_START_INFO  = 0x00000003
+    SERVICE_CONFIG_FAILURE_ACTIONS_FLAG     = 0x00000004
+    SERVICE_CONFIG_SERVICE_SID_INFO         = 0x00000005
+    SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO = 0x00000006
+    SERVICE_CONFIG_PRESHUTDOWN_INFO         = 0x00000007
+    SERVICE_CONFIG_TRIGGER_INFO             = 0x00000008
+    SERVICE_CONFIG_PREFERRED_NODE           = 0x00000009
+    SERVICE_CONFIG_LAUNCH_PROTECTED         = 0x00000012
+    SERVICE_NO_CHANGE                       = 0xffffffff
+    SERVICE_CONFIG_TYPES = {
+      SERVICE_CONFIG_DESCRIPTION => :SERVICE_CONFIG_DESCRIPTION,
+      SERVICE_CONFIG_FAILURE_ACTIONS => :SERVICE_CONFIG_FAILURE_ACTIONS,
+      SERVICE_CONFIG_DELAYED_AUTO_START_INFO => :SERVICE_CONFIG_DELAYED_AUTO_START_INFO,
+      SERVICE_CONFIG_FAILURE_ACTIONS_FLAG => :SERVICE_CONFIG_FAILURE_ACTIONS_FLAG,
+      SERVICE_CONFIG_SERVICE_SID_INFO => :SERVICE_CONFIG_SERVICE_SID_INFO,
+      SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO => :SERVICE_CONFIG_REQUIRED_PRIVILEGES_INFO,
+      SERVICE_CONFIG_PRESHUTDOWN_INFO => :SERVICE_CONFIG_PRESHUTDOWN_INFO,
+      SERVICE_CONFIG_TRIGGER_INFO => :SERVICE_CONFIG_TRIGGER_INFO,
+      SERVICE_CONFIG_PREFERRED_NODE => :SERVICE_CONFIG_PREFERRED_NODE,
+      SERVICE_CONFIG_LAUNCH_PROTECTED => :SERVICE_CONFIG_LAUNCH_PROTECTED,
+    }
 
     # Service enum codes
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-enumservicesstatusexa
@@ -219,6 +243,19 @@ module Puppet::Util::Windows
       )
     end
 
+    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-service_delayed_auto_start_info
+    # typedef struct _SERVICE_DELAYED_AUTO_START_INFO {
+    #   BOOL fDelayedAutostart;
+    # } SERVICE_DELAYED_AUTO_START_INFO, *LPSERVICE_DELAYED_AUTO_START_INFO;
+    class SERVICE_DELAYED_AUTO_START_INFO < FFI::Struct
+      layout(:fDelayedAutostart, :int)
+      alias aset []=
+      # Intercept the accessor so that we can handle either true/false or 1/0.
+      # Since there is only one member, there’s no need to check the key name.
+      def []=(key, value)
+        [0, false].include?(value) ? aset(key, 0) : aset(key, 1)
+      end
+    end
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/ns-winsvc-_enum_service_status_processw
     # typedef struct _ENUM_SERVICE_STATUS_PROCESSW {
@@ -377,6 +414,7 @@ module Puppet::Util::Windows
     module_function :service_state
 
     # Query the configuration of a service using QueryServiceConfigW
+    # or QueryServiceConfig2W
     #
     # @param [String] service_name name of the service to query
     # @return [QUERY_SERVICE_CONFIGW.struct] the configuration of the service
@@ -385,6 +423,14 @@ module Puppet::Util::Windows
       open_service(service_name, SC_MANAGER_CONNECT, SERVICE_QUERY_CONFIG) do |service|
         query_config(service) do |config|
           start_type = SERVICE_START_TYPES[config[:dwStartType]]
+        end
+      end
+      # if the service has type AUTO_START, check if it's a delayed service
+      if start_type == :SERVICE_AUTO_START
+        open_service(service_name, SC_MANAGER_CONNECT, SERVICE_QUERY_CONFIG) do |service|
+          query_config2(service, SERVICE_CONFIG_DELAYED_AUTO_START_INFO) do |config|
+            return :SERVICE_DELAYED_AUTO_START if config[:fDelayedAutostart] == 1
+          end
         end
       end
       if start_type.nil?
@@ -396,11 +442,12 @@ module Puppet::Util::Windows
 
     # Change the startup mode of a windows service
     #
-    # @param [string] service_name the name of the service to modify
-    # @param [Int] startup_type a code corresponding to a start type for
+    # @param [String] service_name the name of the service to modify
+    # @param [Integer] startup_type a code corresponding to a start type for
     #  windows service, see the "Service start type codes" section in the
     #  Puppet::Util::Windows::Service file for the list of available codes
-    def set_startup_mode(service_name, startup_type)
+    # @param [Bool] delayed whether the service should be started with a delay
+    def set_startup_mode(service_name, startup_type, delayed=false)
       startup_code = SERVICE_START_TYPES.key(startup_type)
       if startup_code.nil?
         raise Puppet::Error.new(_("Unknown start type %{start_type}") % {startup_type: startup_type.to_s})
@@ -427,6 +474,7 @@ module Puppet::Util::Windows
           raise Puppet::Util::Windows::Error.new(_("Failed to update service configuration"))
         end
       end
+      set_startup_mode_delayed(service_name, delayed)
     end
     module_function :set_startup_mode
 
@@ -710,6 +758,82 @@ module Puppet::Util::Windows
       private :query_config
 
       # @api private
+      # perform QueryServiceConfig2W on a windows service and return the
+      # result
+      #
+      # @param [:handle] service handle of the service to query
+      # @param [Integer] info_level the configuration information to be queried
+      # @return [QUERY_SERVICE_CONFIG2W struct] the result of the query
+      def query_config2(service, info_level, &block)
+        config = nil
+        size_required = nil
+        # Fetch the bytes of memory required to be allocated
+        # for QueryServiceConfig2W to return succesfully. This
+        # is done by sending NULL and 0 for the pointer and size
+        # respectively, letting the command fail, then reading the
+        # value of pcbBytesNeeded
+        FFI::MemoryPointer.new(:lpword) do |bytes_pointer|
+          # return value will be false from this call, since it's designed
+          # to fail. Just ignore it
+          QueryServiceConfig2W(service, info_level, FFI::Pointer::NULL, 0, bytes_pointer)
+          size_required = bytes_pointer.read_dword
+          FFI::MemoryPointer.new(size_required) do |ssp_ptr|
+            # We need to supply the appropriate struct to be created based on
+            # the info_level
+            case info_level
+            when SERVICE_CONFIG_DELAYED_AUTO_START_INFO
+              config = SERVICE_DELAYED_AUTO_START_INFO.new(ssp_ptr)
+            end
+            success = QueryServiceConfig2W(
+              service,
+              info_level,
+              ssp_ptr,
+              size_required,
+              bytes_pointer
+            )
+            if success == FFI::WIN32_FALSE
+              raise Puppet::Util::Windows::Error.new(_("Service query for %{parameter_name} failed") % { parameter_name: SERVICE_CONFIG_TYPES[info_level] } )
+            end
+            yield config
+          end
+        end
+      end
+      private :query_config2
+
+      # @api private
+      # Sets an optional parameter on a service by calling
+      # ChangeServiceConfig2W
+      #
+      # @param [String] service_name name of service
+      # @param [Integer] change parameter to change
+      # @param [struct] value appropriate struct based on the parameter to change
+      def set_optional_parameter(service_name, change, value)
+        open_service(service_name, SC_MANAGER_CONNECT, SERVICE_CHANGE_CONFIG) do |service|
+          success = ChangeServiceConfig2W(
+            service,
+            change, # dwInfoLevel
+            value,  # lpInfo
+          )
+          if success == FFI::WIN32_FALSE
+            raise Puppet::Util::windows::Error.new(_("Failed to update service %{change} configuration") % { change: change } )
+          end
+        end
+      end
+      private :set_optional_parameter
+
+      # @api private
+      # Controls the delayed auto-start setting of a service
+      #
+      # @param [String] service_name name of service
+      # @param [Bool] delayed whether the service should be started with a delay or not
+      def set_startup_mode_delayed(service_name, delayed)
+        delayed_start = SERVICE_DELAYED_AUTO_START_INFO.new
+        delayed_start[:fDelayedAutostart] = delayed
+        set_optional_parameter(service_name, SERVICE_CONFIG_DELAYED_AUTO_START_INFO, delayed_start)
+      end
+      private :set_startup_mode_delayed
+
+      # @api private
       # Sends a service control signal to a service
       #
       # @param [:handle] service handle to the service
@@ -905,6 +1029,18 @@ module Puppet::Util::Windows
     attach_function_private :QueryServiceConfigW,
       [:handle, :lpbyte, :dword, :lpdword], :win32_bool
 
+    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-queryserviceconfig2w
+    # BOOL QueryServiceConfig2W(
+    #   SC_HANDLE hService,
+    #   DWORD     dwInfoLevel,
+    #   LPBYTE    lpBuffer,
+    #   DWORD     cbBufSize,
+    #   LPDWORD   pcbBytesNeeded
+    # );
+    ffi_lib :advapi32
+    attach_function_private :QueryServiceConfig2W,
+      [:handle, :dword, :lpbyte, :dword, :lpdword], :win32_bool
+
     # https://docs.microsoft.com/en-us/windows/desktop/api/Winsvc/nf-winsvc-startservicew
     # BOOL StartServiceW(
     #   SC_HANDLE hService,
@@ -955,6 +1091,15 @@ module Puppet::Util::Windows
         :lpcwstr
       ], :win32_bool
 
+    # https://docs.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-changeserviceconfig2w
+    # BOOL ChangeServiceConfig2W(
+    #   SC_HANDLE hService,
+    #   DWORD     dwInfoLevel,
+    #   LPVOID    lpInfo
+    # );
+    ffi_lib :advapi32
+    attach_function_private :ChangeServiceConfig2W,
+      [:handle, :dword, :lpvoid], :win32_bool
 
     # https://docs.microsoft.com/en-us/windows/desktop/api/winsvc/nf-winsvc-enumservicesstatusexw
     # BOOL EnumServicesStatusExW(
