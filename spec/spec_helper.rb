@@ -162,6 +162,10 @@ RSpec.configure do |config|
   end
 
   config.around :each do |example|
+    # Ignore requests from Facter GCE fact in Travis
+    stub_request(:get, "http://metadata/computeMetadata/v1beta1/?alt=json&recursive=true") # facter 2
+    stub_request(:get, "http://metadata.google.internal/computeMetadata/v1/?recursive=true&alt=json") # facter 3
+
     # Enable VCR if the example is tagged with `:vcr` metadata.
     if example.metadata[:vcr]
       VCR.turn_on!
