@@ -1,3 +1,4 @@
+# coding: utf-8
 test_name "Windows Service Provider With Mixed UTF-8 Service Names" do
   confine :to, :platform => 'windows'
 
@@ -47,6 +48,11 @@ MANIFEST
       step 'Verify that enable = manual indicates that the service can be started on demand' do
         apply_manifest_on(agent, service_manifest(mock_service[:name], enable: :manual))
         assert_service_properties_on(agent, mock_service[:name], StartMode: 'Manual')
+      end
+
+      step 'Verify that enable = delayed indicates that the service start mode is correctly set' do
+        apply_manifest_on(agent, service_manifest(mock_service[:name], enable: :delayed))
+        assert_service_startmode_delayed(agent, mock_service[:name])
       end
 
       step 'Verify that enable = true indicates that the service is started automatically upon reboot' do
