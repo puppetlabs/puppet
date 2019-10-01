@@ -348,6 +348,27 @@ describe Puppet::Type.type(:package).provider(:pip) do
       expect(described_class).to receive(:execpipe).with(['/fake/bin/pip', '--version']).and_yield(p)
       expect(described_class.pip_version('/fake/bin/pip')).to eq('8.0.2')
     end
+
+    it "parses multiple lines of output" do
+      allow(described_class).to receive(:pip_cmd).and_return('/fake/bin/pip')
+      p = double("process")
+      expect(p).to receive(:collect)
+                     .and_yield("/usr/local/lib/python2.7/dist-packages/urllib3/contrib/socks.py:37: DependencyWarning: SOCKS support in urllib3 requires the installation of optional dependencies: specifically, PySocks. For more information, see https://urllib3.readthedocs.io/en/latest/contrib.html#socks-proxies")
+                     .and_yield("  DependencyWarning")
+                     .and_yield("pip 1.5.6 from /usr/lib/python2.7/dist-packages (python 2.7)")
+      expect(described_class).to receive(:execpipe).with(['/fake/bin/pip', '--version']).and_yield(p)
+      expect(described_class.pip_version('/fake/bin/pip')).to eq('1.5.6')
+    end
+
+    it "raises if there isn't a version string" do
+      allow(described_class).to receive(:pip_cmd).and_return('/fake/bin/pip')
+      p = double("process")
+      expect(p).to receive(:collect).and_yield("")
+      expect(described_class).to receive(:execpipe).with(['/fake/bin/pip', '--version']).and_yield(p)
+      expect {
+        described_class.pip_version('/fake/bin/pip')
+      }.to raise_error(Puppet::Error, 'Cannot resolve pip version')
+    end
   end
 
   context 'calculated specificity' do
