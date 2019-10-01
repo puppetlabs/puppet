@@ -369,6 +369,15 @@ describe Puppet::Type.type(:package).provider(:pip) do
         described_class.pip_version('/fake/bin/pip')
       }.to raise_error(Puppet::Error, 'Cannot resolve pip version')
     end
+
+    it "quotes commands with spaces" do
+      pip = 'C:\Program Files\Python27\Scripts\pip.exe'
+      allow(described_class).to receive(:pip_cmd).and_return(pip)
+      p = double("process")
+      expect(p).to receive(:collect).and_yield("pip 18.1 from c:\program files\python27\lib\site-packages\pip (python 2.7)\r\n")
+      expect(described_class).to receive(:execpipe).with(["\"#{pip}\"", '--version']).and_yield(p)
+      expect(described_class.pip_version(pip)).to eq('18.1')
+    end
   end
 
   context 'calculated specificity' do
