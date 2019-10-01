@@ -194,9 +194,9 @@ module Logging
     # let's find the offending line;  we need to jump back up the stack a few steps to find the method that called
     #  the deprecated method
     if Puppet[:trace]
-      caller()[2..-1]
+      caller(2)
     else
-      [caller()[2]]
+      [caller(1, 3)[2]]
     end
   end
 
