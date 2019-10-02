@@ -1,7 +1,17 @@
 class Puppet::ModuleTool::Tar::Mini
   def unpack(sourcefile, destdir, _)
     Zlib::GzipReader.open(sourcefile) do |reader|
-      Archive::Tar::Minitar.unpack(reader, destdir, find_valid_files(reader), :fsync => false) do |action, name, stats|
+      # puppet doesn't have a hard dependency on minitar, so we
+      # can't be certain which version is installed. If it's 0.9
+      # or above then we can prevent minitar from fsync'ing each
+      # extracted file and directory, otherwise fallback to the
+      # old behavior
+      args = [reader, destdir, find_valid_files(reader)]
+      spec = Gem::Specification.find_by_name('minitar')
+      if spec && spec.version >= Gem::Version.new('0.9')
+        args << {:fsync => false}
+      end
+      Archive::Tar::Minitar.unpack(*args) do |action, name, stats|
         case action
         when :dir
           validate_entry(destdir, name)

@@ -446,7 +446,9 @@ describe Puppet::Type.type(:schedule) do
 
     it "should fail if the periodmatch is 'number'" do
       @schedule[:periodmatch] = :number
-      expect(proc { @schedule[:repeat] = 2 }).to raise_error(Puppet::Error)
+      expect {
+        @schedule[:repeat] = 2
+      }.to raise_error(Puppet::Error)
     end
 
     it "should match if the previous run was further away than the distance divided by the repeat" do
