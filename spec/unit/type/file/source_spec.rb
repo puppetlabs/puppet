@@ -34,11 +34,11 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
     it "should fail if the set values are not URLs" do
       expect(URI).to receive(:parse).with('foo').and_raise(RuntimeError)
 
-      expect(lambda { resource[:source] = %w{foo} }).to raise_error(Puppet::Error)
+      expect { resource[:source] = %w{foo} }.to raise_error(Puppet::Error)
     end
 
     it "should fail if the URI is not a local file, file URI, or puppet URI" do
-      expect(lambda { resource[:source] = %w{ftp://foo/bar} }).to raise_error(Puppet::Error, /Cannot use URLs of type 'ftp' as source for fileserving/)
+      expect { resource[:source] = %w{ftp://foo/bar} }.to raise_error(Puppet::Error, /Cannot use URLs of type 'ftp' as source for fileserving/)
     end
 
     it "should strip trailing forward slashes", :unless => Puppet::Util::Platform.windows? do
@@ -61,11 +61,11 @@ describe Puppet::Type.type(:file).attrclass(:source), :uses_checksums => true do
     end
 
     it "should reject relative URI sources" do
-      expect(lambda { resource[:source] = 'foo/bar' }).to raise_error(Puppet::Error)
+      expect { resource[:source] = 'foo/bar' }.to raise_error(Puppet::Error)
     end
 
     it "should reject opaque sources" do
-      expect(lambda { resource[:source] = 'mailto:foo@com' }).to raise_error(Puppet::Error)
+      expect { resource[:source] = 'mailto:foo@com' }.to raise_error(Puppet::Error)
     end
 
     it "should accept URI authority component" do
