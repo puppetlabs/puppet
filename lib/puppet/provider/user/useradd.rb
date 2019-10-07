@@ -55,6 +55,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
      get(:uid)
   end
 
+  def comment
+     return localcomment if @resource.forcelocal?
+     get(:comment)
+  end
+
   def finduser(key, value)
     passwd_file = "/etc/passwd"
     passwd_keys = ['account', 'password', 'uid', 'gid', 'gecos', 'directory', 'shell']
@@ -64,7 +69,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
          user = line.split(":")
          if user[index] == value
              f.close
-             return user
+             return Hash[passwd_keys.zip(user)]
          end
       end
     end
@@ -77,8 +82,13 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def localuid
     user = finduser('account', resource[:name])
-    return user[2] if user
+    return user['uid'] if user
     false
+  end
+
+  def localcomment
+    user = finduser('account', resource[:name])
+    user['gecos']
   end
 
   def shell=(value)

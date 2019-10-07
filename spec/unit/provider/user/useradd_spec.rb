@@ -317,6 +317,28 @@ describe Puppet::Type.type(:user).provider(:useradd) do
     end
   end
 
+  describe "#comment" do
+    before do
+      described_class.has_feature :libuser
+    end
+
+    let(:passwd_line) { "myuser:x:1492:1000:local comment:/home/myuser:/bin/bash" }
+
+    it "should return the local comment string when forcelocal is true" do
+      resource[:forcelocal] = true
+      allow(provider).to receive(:finduser).with('account', 'myuser').and_return(passwd_line)
+      expect(provider).to receive(:localcomment).and_return('local comment')
+      provider.comment
+    end
+
+    it "should fall back to nameservice comment string when forcelocal is false" do
+      resource[:forcelocal] = false
+      allow(provider).to receive(:get).with(:comment).and_return('remote comment')
+      expect(provider).not_to receive(:localcomment)
+      provider.comment
+    end
+  end
+
   describe "#check_allow_dup" do
     it "should return an array with a flag if dup is allowed" do
       resource[:allowdupe] = :true
