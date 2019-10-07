@@ -163,6 +163,33 @@ describe 'FileBased module loader' do
       expect(module_loader.load_typed(typed_name(:task, 'testmodule::baz'))).not_to be_nil
       expect { module_loader.load_typed(typed_name(:task, 'testmodule::qux')) }.to raise_error(/No source besides task metadata was found/)
     end
+
+    it 'raises and error when `parameters` is not a hash' do
+      metadata = { 'parameters' => 'foo' }
+      module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '', 'foo.json' => metadata.to_json})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+      expect{module_loader.load_typed(typed_name(:task, 'testmodule::foo'))}
+        .to raise_error(Puppet::ParseError, /Failed to load metadata for task testmodule::foo: 'parameters' must be a hash/)
+    end
+
+    it 'raises and error when top-level `files` is not an array' do
+      metadata = { 'files' => 'foo' }
+      module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '', 'foo.json' => metadata.to_json})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+      expect{module_loader.load_typed(typed_name(:task, 'testmodule::foo'))}
+        .to raise_error(Puppet::Module::Task::InvalidMetadata, /The 'files' task metadata expects an array, got foo/)
+    end
+
+    it 'raises and error when `files` nested in `interpreters` is not an array' do
+      metadata = { 'implementations' => [{'name' => 'foo.py', 'files' => 'foo'}] }
+      module_dir = dir_containing('testmodule', 'tasks' => {'foo.py' => '', 'foo.json' => metadata.to_json})
+
+      module_loader = Puppet::Pops::Loader::ModuleLoaders.module_loader_from(static_loader, loaders, 'testmodule', module_dir)
+      expect{module_loader.load_typed(typed_name(:task, 'testmodule::foo'))}
+        .to raise_error(Puppet::Module::Task::InvalidMetadata, /The 'files' task metadata expects an array, got foo/)
+    end
   end
 
   def typed_name(type, name)
