@@ -21,6 +21,9 @@
 # `epp('apache/vhost/_docroot.epp', { 'docroot' => '/var/www/html',
 # 'virtual_docroot' => '/var/www/example' })`
 #
+# This function can also accept an absolute path, which can load a template file
+# from anywhere on disk.
+#
 # Puppet produces a syntax error if you pass more parameters than are declared in
 # the template's parameter tag. When passing parameters to a template that
 # contains a parameter tag, use the same names as the tag's declared parameters.

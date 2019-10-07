@@ -16,93 +16,95 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
   let(:node) { Puppet::Node.new('test', :environment => env) }
   let(:loaders) { Puppet::Pops::Loaders.new(env) }
 
-  around :each do |example|
-    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
-    Puppet.override(:loaders => loaders, :current_environment => env) do
-      Puppet::Type.newtype(:generator) do
-        include PuppetSpec::Compiler
+  before(:each) do
+    allow_any_instance_of(Puppet::Parser::Compiler).to receive(:loaders).and_return(loaders)
+    Puppet.push_context({:loaders => loaders, :current_environment => env})
+    Puppet::Type.newtype(:generator) do
+      include PuppetSpec::Compiler
 
-        newparam(:name) do
-          isnamevar
-        end
-
-        newparam(:kind) do
-          defaultto :eval_generate
-          newvalues(:eval_generate, :generate)
-        end
-
-        newparam(:code)
-
-        def respond_to?(method_name)
-          method_name == self[:kind] || super
-        end
-
-        def eval_generate
-          eval_code
-        end
-
-        def generate
-          eval_code
-        end
-
-        def eval_code
-          if self[:code]
-            compile_to_ral(self[:code]).resources.select { |r| r.ref =~ /Notify/ }
-          else
-            []
-          end
-        end
+      newparam(:name) do
+        isnamevar
       end
 
-      Puppet::Type.newtype(:autorequire) do
-        newparam(:name) do
-          isnamevar
-        end
-
-        autorequire(:notify) do
-          self[:name]
-        end
+      newparam(:kind) do
+        defaultto :eval_generate
+        newvalues(:eval_generate, :generate)
       end
 
-      Puppet::Type.newtype(:gen_auto) do
-        newparam(:name) do
-          isnamevar
-        end
+      newparam(:code)
 
-        newparam(:eval_after) do
-        end
-
-        def generate()
-          [ Puppet::Type.type(:autorequire).new(:name => self[:eval_after]) ]
-        end
+      def respond_to?(method_name)
+        method_name == self[:kind] || super
       end
 
-      Puppet::Type.newtype(:empty) do
-        newparam(:name) do
-          isnamevar
-        end
+      def eval_generate
+        eval_code
       end
 
-      Puppet::Type.newtype(:gen_empty) do
-        newparam(:name) do
-          isnamevar
-        end
-
-        newparam(:eval_after) do
-        end
-
-        def generate()
-          [ Puppet::Type.type(:empty).new(:name => self[:eval_after], :require => "Notify[#{self[:eval_after]}]") ]
-        end
+      def generate
+        eval_code
       end
 
-      example.run
-
-      Puppet::Type.rmtype(:gen_empty)
-      Puppet::Type.rmtype(:eval_after)
-      Puppet::Type.rmtype(:autorequire)
-      Puppet::Type.rmtype(:generator)
+      def eval_code
+        if self[:code]
+          compile_to_ral(self[:code]).resources.select { |r| r.ref =~ /Notify/ }
+        else
+          []
+        end
+      end
     end
+
+    Puppet::Type.newtype(:autorequire) do
+      newparam(:name) do
+        isnamevar
+      end
+
+      autorequire(:notify) do
+        self[:name]
+      end
+    end
+
+    Puppet::Type.newtype(:gen_auto) do
+      newparam(:name) do
+        isnamevar
+      end
+
+      newparam(:eval_after) do
+      end
+
+      def generate()
+        [ Puppet::Type.type(:autorequire).new(:name => self[:eval_after]) ]
+      end
+    end
+
+    Puppet::Type.newtype(:empty) do
+      newparam(:name) do
+        isnamevar
+      end
+    end
+
+    Puppet::Type.newtype(:gen_empty) do
+      newparam(:name) do
+        isnamevar
+      end
+
+      newparam(:eval_after) do
+      end
+
+      def generate()
+        [ Puppet::Type.type(:empty).new(:name => self[:eval_after], :require => "Notify[#{self[:eval_after]}]") ]
+      end
+    end
+  end
+
+
+
+  after(:each) do
+    Puppet::Type.rmtype(:gen_empty)
+    Puppet::Type.rmtype(:eval_after)
+    Puppet::Type.rmtype(:autorequire)
+    Puppet::Type.rmtype(:generator)
+    Puppet.pop_context()
   end
 
   def find_vertex(graph, type, title)
@@ -311,12 +313,11 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
 
     it "sets resources_failed_to_generate to true if resource#eval_generate raises an exception" do
-
       catalog = compile_to_ral(<<-MANIFEST)
         notify { 'hello': }
       MANIFEST
 
-      catalog.resource("Notify[hello]").stubs(:eval_generate).raises(RuntimeError)
+      allow(catalog.resource("Notify[hello]")).to receive(:eval_generate).and_raise(RuntimeError)
       relationship_graph = relationship_graph_for(catalog)
       generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
       generator.eval_generate(catalog.resource("Notify[hello]"))
@@ -485,14 +486,13 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
 
     it "sets resources_failed_to_generate to true if resource#generate raises an exception" do
-
       catalog = compile_to_ral(<<-MANIFEST)
         user { 'foo':
           ensure => present,
         }
       MANIFEST
 
-      catalog.resource("User[foo]").stubs(:generate).raises(RuntimeError)
+      allow(catalog.resource("User[foo]")).to receive(:generate).and_raise(RuntimeError)
       relationship_graph = relationship_graph_for(catalog)
       generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
       generator.generate_additional_resources(catalog.resource("User[foo]"))

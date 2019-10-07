@@ -1,5 +1,9 @@
 test_name "`puppet resource service` should list running services without calling dangerous init scripts"
 
+tag 'audit:medium',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:integration' # Doesn't change the system it runs on
+
 confine :except, :platform => 'windows'
 confine :except, :platform => 'solaris'
 confine :except, :platform => /^cisco_/ # See PUP-5827
@@ -22,9 +26,9 @@ agents.each do |agent|
 
   step "list running services and make sure ssh reports running"
   on(agent, puppet('resource service'))
-  assert_match /service { '#{service_name}':\n\s*ensure\s*=>\s*'(?:true|running)'/, stdout, "ssh is not running"
+  assert_match(/service { '#{service_name}':\n\s*ensure\s*=>\s*'(?:true|running)'/, stdout, "ssh is not running")
 
   step "list running services again and make sure ssh is still running"
   on(agent, puppet('resource service'))
-  assert_match /service { '#{service_name}':\n\s*ensure\s*=>\s*'(?:true|running)'/, stdout, "ssh is no longer running"
+  assert_match(/service { '#{service_name}':\n\s*ensure\s*=>\s*'(?:true|running)'/, stdout, "ssh is no longer running")
 end

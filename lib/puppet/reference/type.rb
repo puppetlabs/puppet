@@ -47,25 +47,26 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
   Resource types define features they can use, and providers can be tested to see
   which features they provide.
 
-    }
+  }
 
-    types.sort { |a,b|
-      a.to_s <=> b.to_s
-    }.each { |name,type|
+  types.sort { |a,b|
+    a.to_s <=> b.to_s
+  }.each { |name,type|
 
-      str << "
+    str << "
 
 ----------------
 
 "
 
-  str << markdown_header(name, 3)
-  str << scrub(type.doc) + "\n\n"
+    str << markdown_header(name, 3)
+    str << scrub(type.doc) + "\n\n"
 
-  # Handle the feature docs.
-  if featuredocs = type.featuredocs
-    str << markdown_header("Features", 4)
-    str << featuredocs
+    # Handle the feature docs.
+    featuredocs = type.featuredocs
+    if featuredocs
+      str << markdown_header("Features", 4)
+      str << featuredocs
     end
 
     docs = {}
@@ -79,8 +80,8 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
 
       raise _("Could not retrieve property %{sname} on type %{type_name}") % { sname: sname, type_name: type.name } unless property
 
-      doc = nil
-      unless doc = property.doc
+      doc = property.doc
+      unless doc
         $stderr.puts _("No docs for %{type}[%{sname}]") % { type: type, sname: sname }
         next
       end

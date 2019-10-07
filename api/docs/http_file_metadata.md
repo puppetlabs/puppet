@@ -13,10 +13,11 @@ the following three types:
 
 The endpoint path includes a `:mount` which can be one of the following types:
 
-* Custom file serving mounts as specified in fileserver.conf --- see [the docs on configuring mount points](https://docs.puppet.com/puppet/latest/reference/file_serving.html).
-* `modules/<MODULE>` --- a semi-magical mount point which allows access to the `files` subdirectory of `<MODULE>` --- see [the docs on file serving](https://docs.puppet.com/puppet/latest/reference/file_serving.html).
+* Custom file serving mounts as specified in fileserver.conf --- see [the docs on configuring mount points](https://puppet.com/docs/puppet/latest/file_serving.html).
+* `modules/<MODULE>` --- a semi-magical mount point which allows access to the `files` subdirectory of `<MODULE>` --- see [the docs on file serving](https://puppet.com/docs/puppet/latest/file_serving.html).
 * `plugins` --- a highly magical mount point which merges the `lib`  directory of every module together. Used for syncing plugins; not intended for general consumption. Per-module sub-paths can not be specified.
 * `pluginfacts` --- a highly magical mount point which merges the `facts.d` directory of every module together. Used for syncing external facts; not intended for general consumption. Per-module sub-paths can not be specified.
+* `tasks/<MODULE>` --- a semi-magical mount point which allows access to files in the `tasks` subdirectory of `<MODULE>` --- see the [the docs on file serving](https://puppet.com/docs/puppet/latest/file_serving.html).
 
 Note: PSON responses in the examples below are pretty-printed for readability.
 
@@ -33,7 +34,7 @@ GET
 
 ### Supported Response Formats
 
-PSON
+`application/json`, `text/pson`
 
 ### Parameters
 
@@ -133,9 +134,9 @@ Get a list of metadata for multiple files
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: pson, text/pson
+`application/json`, `text/pson`
 
 ### Parameters
 

@@ -1,4 +1,12 @@
 module Puppet::Pops::Types
+
+  # Implemented by classes that can produce an iterator to iterate over their contents
+  module IteratorProducer
+    def iterator
+      raise ArgumentError, 'iterator() is not implemented'
+    end
+  end
+
   # The runtime Iterable type for an Iterable
   module Iterable
     # Produces an `Iterable` for one of the following types with the following characterstics:
@@ -25,7 +33,7 @@ module Puppet::Pops::Types
       iter
     end
 
-    # Produces an `Iterable` for one of the following types with the following characterstics:
+    # Produces an `Iterable` for one of the following types with the following characteristics:
     #
     # `String`       - yields each character in the string
     # `Array`        - yields each element in the array
@@ -40,11 +48,14 @@ module Puppet::Pops::Types
     # The value `nil` is returned for all other objects.
     #
     # @param o [Object] The object to produce an `Iterable` for
+    # @param element_type [PAnyType] the element type for the iterator. Optional (inferred if not provided)
     # @return [Iterable,nil] The produced `Iterable` or `nil` if it couldn't be produced
     #
     # @api public
-    def self.on(o)
+    def self.on(o, element_type = nil)
       case o
+      when IteratorProducer
+        o.iterator
       when Iterable
         o
       when String
@@ -53,18 +64,24 @@ module Puppet::Pops::Types
         if o.empty?
           Iterator.new(PUnitType::DEFAULT, o.each)
         else
-          tc = TypeCalculator.singleton
-          Iterator.new(PVariantType.maybe_create(o.map {|e| tc.infer_set(e) }), o.each)
+          if element_type.nil?
+            tc = TypeCalculator.singleton
+            element_type = PVariantType.maybe_create(o.map {|e| tc.infer_set(e) })
+          end
+          Iterator.new(element_type, o.each)
         end
       when Hash
         # Each element is a two element [key, value] tuple.
         if o.empty?
-          Iterator.new(PHashType::DEFAULT_KEY_PAIR_TUPLE, o.each)
+          HashIterator.new(PHashType::DEFAULT_KEY_PAIR_TUPLE, o.each)
         else
-          tc = TypeCalculator.singleton
-          Iterator.new(PTupleType.new([
-            PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
-            PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })], PHashType::KEY_PAIR_TUPLE_SIZE), o.each_pair)
+          if element_type.nil?
+            tc = TypeCalculator.singleton
+            element_type = PTupleType.new([
+              PVariantType.maybe_create(o.keys.map {|e| tc.infer_set(e) }),
+              PVariantType.maybe_create(o.values.map {|e| tc.infer_set(e) })], PHashType::KEY_PAIR_TUPLE_SIZE)
+          end
+          HashIterator.new(element_type, o.each_pair)
         end
       when Integer
         if o == 0
@@ -79,6 +96,8 @@ module Puppet::Pops::Types
         o.finite_range? ? IntegerRangeIterator.new(o) : nil
       when PEnumType
         Iterator.new(o, o.values.each)
+      when PTypeAliasType
+        on(o.resolved_type)
       when Range
         min = o.min
         max = o.max
@@ -132,18 +151,22 @@ module Puppet::Pops::Types
     def reverse_each(&block)
       # Default implementation cannot propagate reverse_each to a new enumerator so chained
       # calls must put reverse_each last.
-      raise ArgumentError 'reverse_each() is not implemented'
+      raise ArgumentError, 'reverse_each() is not implemented'
     end
 
     def step(step, &block)
       # Default implementation cannot propagate step to a new enumerator so chained
       # calls must put stepping last.
-      raise ArgumentError 'step() is not implemented'
+      raise ArgumentError, 'step() is not implemented'
     end
 
     def to_a
       raise Puppet::Error, 'Attempt to create an Array from an unbounded Iterable' if unbounded?
       super
+    end
+
+    def hash_style?
+      false
     end
 
     def unbounded?
@@ -215,6 +238,14 @@ module Puppet::Pops::Types
 
     def unbounded?
       Iterable.unbounded?(@enumeration)
+    end
+  end
+
+  # Special iterator used when iterating over hashes. Returns `true` for `#hash_style?` so that
+  # it is possible to differentiate between two element arrays and key => value associations
+  class HashIterator < Iterator
+    def hash_style?
+      true
     end
   end
 

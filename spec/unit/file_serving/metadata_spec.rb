@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/file_serving/metadata'
 require 'matchers/json'
@@ -184,14 +183,14 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
 
           it "should give a mtime checksum when checksum_type is set" do
             metadata.checksum_type = "mtime"
-            metadata.expects(:mtime_file).returns(time)
+            expect(metadata).to receive(:mtime_file).and_return(time)
             metadata.collect
             expect(metadata.checksum).to eq("{mtime}#{time}")
           end
 
           it "should give a ctime checksum when checksum_type is set" do
             metadata.checksum_type = "ctime"
-            metadata.expects(:ctime_file).returns(time)
+            expect(metadata).to receive(:ctime_file).and_return(time)
             metadata.collect
             expect(metadata.checksum).to eq("{ctime}#{time}")
           end
@@ -218,7 +217,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
         let(:time) { Time.now }
 
         before :each do
-          metadata.expects(:ctime_file).returns(time)
+          expect(metadata).to receive(:ctime_file).and_return(time)
         end
 
         it "should only use checksums of type 'ctime' for directories" do
@@ -228,7 +227,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
 
         it "should only use checksums of type 'ctime' for directories even if checksum_type set" do
           metadata.checksum_type = "mtime"
-          metadata.expects(:mtime_file).never
+          expect(metadata).not_to receive(:mtime_file)
           metadata.collect
           expect(metadata.checksum).to eq("{ctime}#{time}")
         end
@@ -241,7 +240,7 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
     end
   end
 
-  describe "WindowsStat", :if => Puppet.features.microsoft_windows? do
+  describe "WindowsStat", :if => Puppet::Util::Platform.windows? do
     include PuppetSpec::Files
 
     it "should return default owner, group and mode when the given path has an invalid DACL (such as a non-NTFS volume)" do
@@ -249,9 +248,9 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
       path = tmpfile('foo')
       FileUtils.touch(path)
 
-      Puppet::Util::Windows::Security.stubs(:get_owner).with(path).raises(invalid_error)
-      Puppet::Util::Windows::Security.stubs(:get_group).with(path).raises(invalid_error)
-      Puppet::Util::Windows::Security.stubs(:get_mode).with(path).raises(invalid_error)
+      allow(Puppet::Util::Windows::Security).to receive(:get_owner).with(path).and_raise(invalid_error)
+      allow(Puppet::Util::Windows::Security).to receive(:get_group).with(path).and_raise(invalid_error)
+      allow(Puppet::Util::Windows::Security).to receive(:get_mode).with(path).and_raise(invalid_error)
 
       stat = Puppet::FileSystem.stat(path)
 
@@ -267,9 +266,9 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
       path = tmpfile('bar')
       FileUtils.touch(path)
 
-      Puppet::Util::Windows::Security.stubs(:get_owner).with(path, :use).raises(invalid_error)
-      Puppet::Util::Windows::Security.stubs(:get_group).with(path, :use).raises(invalid_error)
-      Puppet::Util::Windows::Security.stubs(:get_mode).with(path, :use).raises(invalid_error)
+      allow(Puppet::Util::Windows::Security).to receive(:get_owner).with(path, :use).and_raise(invalid_error)
+      allow(Puppet::Util::Windows::Security).to receive(:get_group).with(path, :use).and_raise(invalid_error)
+      allow(Puppet::Util::Windows::Security).to receive(:get_mode).with(path, :use).and_raise(invalid_error)
 
       stat = Puppet::FileSystem.stat(path)
 
@@ -348,8 +347,8 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
     let(:group) {20}
 
     before :each do
-      File::Stat.any_instance.stubs(:uid).returns owner
-      File::Stat.any_instance.stubs(:gid).returns group
+      allow_any_instance_of(File::Stat).to receive(:uid).and_return(owner)
+      allow_any_instance_of(File::Stat).to receive(:gid).and_return(group)
     end
 
     describe "when collecting attributes when managing files" do
@@ -388,14 +387,14 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
     end
   end
 
-  describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+  describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
     let(:owner) {'S-1-1-50'}
     let(:group) {'S-1-1-51'}
 
     before :each do
       require 'puppet/util/windows/security'
-      Puppet::Util::Windows::Security.stubs(:get_owner).returns owner
-      Puppet::Util::Windows::Security.stubs(:get_group).returns group
+      allow(Puppet::Util::Windows::Security).to receive(:get_owner).and_return(owner)
+      allow(Puppet::Util::Windows::Security).to receive(:get_group).and_return(group)
     end
 
     describe "when collecting attributes when managing files" do
@@ -441,19 +440,19 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
       end
 
       it "should default owner" do
-        Puppet::Util::Windows::Security.stubs(:get_owner).returns nil
+        allow(Puppet::Util::Windows::Security).to receive(:get_owner).and_return(nil)
 
         expect(metadata.owner).to eq('S-1-5-32-544')
       end
 
       it "should default group" do
-        Puppet::Util::Windows::Security.stubs(:get_group).returns nil
+        allow(Puppet::Util::Windows::Security).to receive(:get_group).and_return(nil)
 
         expect(metadata.group).to eq('S-1-0-0')
       end
 
       it "should default mode" do
-        Puppet::Util::Windows::Security.stubs(:get_mode).returns nil
+        allow(Puppet::Util::Windows::Security).to receive(:get_mode).and_return(nil)
 
         expect(metadata.mode).to eq(0644)
       end
@@ -461,24 +460,23 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
       describe "when the path raises an Invalid ACL error" do
         # these simulate the behavior of a symlink file whose target does not support ACLs
         it "should default owner" do
-          Puppet::Util::Windows::Security.stubs(:get_owner).raises(invalid_dacl_error)
+          allow(Puppet::Util::Windows::Security).to receive(:get_owner).and_raise(invalid_dacl_error)
 
           expect(metadata.owner).to eq('S-1-5-32-544')
         end
 
         it "should default group" do
-          Puppet::Util::Windows::Security.stubs(:get_group).raises(invalid_dacl_error)
+          allow(Puppet::Util::Windows::Security).to receive(:get_group).and_raise(invalid_dacl_error)
 
           expect(metadata.group).to eq('S-1-0-0')
         end
 
         it "should default mode" do
-          Puppet::Util::Windows::Security.stubs(:get_mode).raises(invalid_dacl_error)
+          allow(Puppet::Util::Windows::Security).to receive(:get_mode).and_raise(invalid_dacl_error)
 
           expect(metadata.mode).to eq(0644)
         end
       end
-
     end
 
     def set_mode(mode, path)
@@ -487,36 +485,35 @@ describe Puppet::FileServing::Metadata, :uses_checksums => true do
   end
 end
 
-
 describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppet.features.manages_symlinks?, :uses_checksums => true do
   with_digest_algorithms do
     describe "when links are managed" do
       before do
         path = "/base/path/my/file"
         @file = Puppet::FileServing::Metadata.new(path, :links => :manage)
-        stat = stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
-        stub_file = stub(:readlink => "/some/other/path", :lstat => stat)
-        Puppet::FileSystem.expects(:lstat).with(path).at_least_once.returns stat
-        Puppet::FileSystem.expects(:readlink).with(path).at_least_once.returns "/some/other/path"
-        @file.stubs("#{digest_algorithm}_file".intern).returns(checksum) # Remove these when :managed links are no longer checksumed.
+        stat = double("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
+        expect(Puppet::FileSystem).to receive(:lstat).with(path).and_return(stat)
+        expect(Puppet::FileSystem).to receive(:readlink).with(path).and_return("/some/other/path")
+        allow(@file).to receive("#{digest_algorithm}_file".intern).and_return(checksum) # Remove these when :managed links are no longer checksumed.
 
-        if Puppet.features.microsoft_windows?
-          win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
+        if Puppet::Util::Platform.windows?
+          win_stat = double('win_stat', :owner => 'snarf', :group => 'thundercats',
             :ftype => 'link', :mode => 0755)
-          Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
+          allow(Puppet::FileServing::Metadata::WindowsStat).to receive(:new).and_return(win_stat)
         end
-
       end
 
       it "should store the destination of the link in :destination if links are :manage" do
         @file.collect
         expect(@file.destination).to eq("/some/other/path")
       end
+
       pending "should not collect the checksum if links are :manage" do
         # We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow.
         @file.collect
         expect(@file.checksum).to be_nil
       end
+
       it "should collect the checksum if links are :manage" do # see pending note above
         @file.collect
         expect(@file.checksum).to eq("{#{digest_algorithm}}#{checksum}")
@@ -527,22 +524,24 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
       before do
         path = "/base/path/my/file"
         @file = Puppet::FileServing::Metadata.new(path, :links => :follow)
-        stat = stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
-        Puppet::FileSystem.expects(:stat).with(path).at_least_once.returns stat
-        Puppet::FileSystem.expects(:readlink).never
+        stat = double("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
+        expect(Puppet::FileSystem).to receive(:stat).with(path).and_return(stat)
+        expect(Puppet::FileSystem).not_to receive(:readlink)
 
-        if Puppet.features.microsoft_windows?
-          win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
+        if Puppet::Util::Platform.windows?
+          win_stat = double('win_stat', :owner => 'snarf', :group => 'thundercats',
             :ftype => 'file', :mode => 0755)
-          Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
+          allow(Puppet::FileServing::Metadata::WindowsStat).to receive(:new).and_return(win_stat)
         end
 
-        @file.stubs("#{digest_algorithm}_file".intern).returns(checksum)
+        allow(@file).to receive("#{digest_algorithm}_file".intern).and_return(checksum)
       end
+
       it "should not store the destination of the link in :destination if links are :follow" do
         @file.collect
         expect(@file.destination).to be_nil
       end
+
       it "should collect the checksum if links are :follow" do
         @file.collect
         expect(@file.checksum).to eq("{#{digest_algorithm}}#{checksum}")

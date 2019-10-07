@@ -1,14 +1,13 @@
 require 'puppet/util/docs'
 require 'puppet/util/profiler'
-require 'puppet/util/methodhelper'
 require 'puppet/indirector/envelope'
 require 'puppet/indirector/request'
+require 'puppet/thread_local'
 
 # The class that connects functional classes with their different collection
 # back-ends.  Each indirection has a set of associated terminus classes,
 # each of which is a subclass of Puppet::Indirector::Terminus.
 class Puppet::Indirector::Indirection
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Docs
 
   attr_accessor :name, :model
@@ -31,13 +30,14 @@ class Puppet::Indirector::Indirection
   # Find an indirected model by name.  This is provided so that Terminus classes
   # can specifically hook up with the indirections they are associated with.
   def self.model(name)
-    return nil unless match = @@indirections.find { |i| i.name == name }
+    match = @@indirections.find { |i| i.name == name }
+    return nil unless match
     match.model
   end
 
   # Create and return our cache terminus.
   def cache
-    raise(Puppet::DevError, "Tried to cache when no cache class was set") unless cache_class
+    raise Puppet::DevError, _("Tried to cache when no cache class was set") unless cache_class
     terminus(cache_class)
   end
 
@@ -46,11 +46,14 @@ class Puppet::Indirector::Indirection
     cache_class ? true : false
   end
 
-  attr_reader :cache_class
+  def cache_class
+    @cache_class.value
+  end
+
   # Define a terminus class to be used for caching.
   def cache_class=(class_name)
     validate_terminus_class(class_name) if class_name
-    @cache_class = class_name
+    @cache_class.value = class_name
   end
 
   # This is only used for testing.
@@ -89,25 +92,39 @@ class Puppet::Indirector::Indirection
     text
   end
 
-  def initialize(model, name, options = {})
+  def initialize(model, name, doc: nil, indirected_class: nil, cache_class: nil, terminus_class: nil, terminus_setting: nil, extend: nil)
     @model = model
     @name = name
     @termini = {}
 
-    @cache_class = nil
-    @terminus_class = nil
+    @doc = doc
 
-    raise(ArgumentError, "Indirection #{@name} is already defined") if @@indirections.find { |i| i.name == @name }
+    raise(ArgumentError, _("Indirection %{name} is already defined") % { name: @name }) if @@indirections.find { |i| i.name == @name }
     @@indirections << self
 
-    @indirected_class = options.delete(:indirected_class)
-    if mod = options[:extend]
-      extend(mod)
-      options.delete(:extend)
-    end
+    @indirected_class = indirected_class
+    self.extend(extend) if extend
 
-    # This is currently only used for cache_class and terminus_class.
-    set_options(options)
+    # Setting these depend on the indirection already being installed so they have to be at the end
+    set_global_setting(:cache_class, cache_class)
+    set_global_setting(:terminus_class, terminus_class)
+    set_global_setting(:terminus_setting, terminus_setting)
+  end
+
+  # Use this to set indirector settings globally across threads.
+  def set_global_setting(setting, value)
+    case setting
+    when :cache_class
+      validate_terminus_class(value) if !value.nil?
+      @cache_class = Puppet::ThreadLocal.new(value)
+    when :terminus_class
+      validate_terminus_class(value) if !value.nil?
+      @terminus_class = Puppet::ThreadLocal.new(value)
+    when :terminus_setting
+      @terminus_setting = Puppet::ThreadLocal.new(value)
+    else
+      raise(ArgumentError, _("The setting %{setting} is not a valid indirection setting.") % {setting: setting})
+    end
   end
 
   # Set up our request object.
@@ -118,41 +135,51 @@ class Puppet::Indirector::Indirection
   # Return the singleton terminus for this indirection.
   def terminus(terminus_name = nil)
     # Get the name of the terminus.
-    raise Puppet::DevError, "No terminus specified for #{self.name}; cannot redirect" unless terminus_name ||= terminus_class
+    raise Puppet::DevError, _("No terminus specified for %{name}; cannot redirect") % { name: self.name } unless terminus_name ||= terminus_class
 
     termini[terminus_name] ||= make_terminus(terminus_name)
   end
 
-  # This can be used to select the terminus class.
-  attr_accessor :terminus_setting
+  # These can be used to select the terminus class.
+  def terminus_setting
+    @terminus_setting.value
+  end
+
+  def terminus_setting=(setting)
+    @terminus_setting.value = setting
+  end
 
   # Determine the terminus class.
   def terminus_class
-    unless @terminus_class
-      if setting = self.terminus_setting
+    unless @terminus_class.value
+      setting = self.terminus_setting
+      if setting
         self.terminus_class = Puppet.settings[setting]
       else
-        raise Puppet::DevError, "No terminus class nor terminus setting was provided for indirection #{self.name}"
+        raise Puppet::DevError, _("No terminus class nor terminus setting was provided for indirection %{name}") % { name: self.name}
       end
     end
-    @terminus_class
+    @terminus_class.value
   end
 
   def reset_terminus_class
-    @terminus_class = nil
+    @terminus_class.value = nil
   end
 
   # Specify the terminus class to use.
   def terminus_class=(klass)
     validate_terminus_class(klass)
-    @terminus_class = klass
+    @terminus_class.value = klass
   end
 
   # This is used by terminus_class= and cache=.
   def validate_terminus_class(terminus_class)
-    raise ArgumentError, "Invalid terminus name #{terminus_class.inspect}" unless terminus_class and terminus_class.to_s != ""
+    unless terminus_class and terminus_class.to_s != ""
+      raise ArgumentError, _("Invalid terminus name %{terminus_class}") % { terminus_class: terminus_class.inspect }
+    end
     unless Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
-      raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{self.name}"
+      raise ArgumentError, _("Could not find terminus %{terminus_class} for indirection %{name}") %
+          { terminus_class: terminus_class, name: self.name }
     end
   end
 
@@ -162,9 +189,10 @@ class Puppet::Indirector::Indirection
   def expire(key, options={})
     request = request(:expire, key, nil, options)
 
-    return nil unless cache?
+    return nil unless cache? && !request.ignore_cache_save?
 
-    return nil unless instance = cache.find(request(:find, key, nil, options))
+    instance = cache.find(request(:find, key, nil, options))
+    return nil unless instance
 
     Puppet.info _("Expiring the %{cache} cache of %{instance}") % { cache: self.name, instance: instance.name }
 
@@ -195,7 +223,7 @@ class Puppet::Indirector::Indirection
       result = terminus.find(request)
       if not result.nil?
         result.expiration ||= self.expiration if result.respond_to?(:expiration)
-        if cache?
+        if cache? && !request.ignore_cache_save?
           Puppet.info _("Caching %{indirection} for %{request}") % { indirection: self.name, request: request.key }
           begin
             cache.save request(:save, key, result, options)
@@ -234,7 +262,8 @@ class Puppet::Indirector::Indirection
 
   def find_in_cache(request)
     # See if our instance is in the cache and up to date.
-    return nil unless cache? and ! request.ignore_cache? and cached = cache.find(request)
+    cached = cache.find(request) if cache? && ! request.ignore_cache?
+    return nil unless cached
     if cached.expired?
       Puppet.info _("Not using expired %{indirection} for %{request} from cache; expired at %{expiration}") % { indirection: self.name, request: request.key, expiration: cached.expiration }
       return nil
@@ -267,8 +296,9 @@ class Puppet::Indirector::Indirection
     request = request(:search, key, nil, options)
     terminus = prepare(request)
 
-    if result = terminus.search(request)
-      raise Puppet::DevError, "Search results from terminus #{terminus.name} are not an array" unless result.is_a?(Array)
+    result = terminus.search(request)
+    if result
+      raise Puppet::DevError, _("Search results from terminus %{terminus_name} are not an array") % { terminus_name: terminus.name } unless result.is_a?(Array)
       result.each do |instance|
         next unless instance.respond_to? :expiration
         instance.expiration ||= self.expiration
@@ -286,7 +316,7 @@ class Puppet::Indirector::Indirection
     result = terminus.save(request)
 
     # If caching is enabled, save our document there
-    cache.save(request) if cache?
+    cache.save(request) if cache? && !request.ignore_cache_save?
 
     result
   end
@@ -304,8 +334,13 @@ class Puppet::Indirector::Indirection
     return unless terminus.respond_to?(:authorized?)
 
     unless terminus.authorized?(request)
-      msg = "Not authorized to call #{request.method} on #{request.description}"
-      msg += " with #{request.options.inspect}" unless request.options.empty?
+      msg = if request.options.empty?
+              _("Not authorized to call %{method} on %{description}") %
+                  { method: request.method, description: request.description }
+            else
+              _("Not authorized to call %{method} on %{description} with %{option}") %
+                  { method: request.method, description: request.description, option: request.options.inspect }
+            end
       raise ArgumentError, msg
     end
   end
@@ -328,7 +363,8 @@ class Puppet::Indirector::Indirection
   # Create a new terminus instance.
   def make_terminus(terminus_class)
     # Load our terminus class.
-    unless klass = Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
+    klass = Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
+    unless klass
       raise ArgumentError, _("Could not find terminus %{terminus_class} for indirection %{indirection}") % { terminus_class: terminus_class, indirection: self.name }
     end
     klass.new

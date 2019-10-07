@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/defaults'
@@ -113,8 +112,7 @@ describe Puppet::Indirector, "when registering an indirection" do
   end
 
   it "should pass any provided options to the indirection during initialization" do
-    klass = mock 'terminus class'
-    Puppet::Indirector::Indirection.expects(:new).with(@thingie, :first, {:some => :options, :indirected_class => 'Thingie'})
+    expect(Puppet::Indirector::Indirection).to receive(:new).with(@thingie, :first, {:some => :options, :indirected_class => 'Thingie'})
     @indirection = @thingie.indirects :first, :some => :options
   end
 

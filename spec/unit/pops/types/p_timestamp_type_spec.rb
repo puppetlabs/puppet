@@ -12,6 +12,11 @@ describe 'Timestamp type' do
     expect(t).to eql(TypeFactory.timestamp('2015-03-01', '2016-12-24'))
   end
 
+  it 'DateTime#_strptime creates hash with :leftover field' do
+    expect(DateTime._strptime('2015-05-04 and bogus', '%F')).to include(:leftover)
+    expect(DateTime._strptime('2015-05-04T10:34:11.003 UTC and bogus', '%FT%T.%N %Z')).to include(:leftover)
+  end
+
   context 'when used in Puppet expressions' do
     include PuppetSpec::Compiler
     it 'is equal to itself only' do
@@ -25,6 +30,20 @@ describe 'Timestamp type' do
       expect(eval_and_collect_notices(code)).to eq(%w(true true false false))
     end
 
+    it 'does not consider an Integer to be an instance' do
+      code = <<-CODE
+        notice(assert_type(Timestamp, 1234))
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a Timestamp value, got Integer/)
+    end
+
+    it 'does not consider a Float to be an instance' do
+      code = <<-CODE
+        notice(assert_type(Timestamp, 1.234))
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(/expects a Timestamp value, got Float/)
+    end
+
     context "when parameterized" do
       it 'is equal other types with the same parameterization' do
         code = <<-CODE
@@ -34,9 +53,16 @@ describe 'Timestamp type' do
         expect(eval_and_collect_notices(code)).to eq(%w(true true))
       end
 
-      it 'using just one parameter is the same as using that parameter twice' do
+      it 'using just one parameter is the same as using default for the second parameter' do
         code = <<-CODE
-            notice(Timestamp['2015-03-01'] == Timestamp['2015-03-01', '2015-03-01'])
+            notice(Timestamp['2015-03-01'] == Timestamp['2015-03-01', default])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true))
+      end
+
+      it 'if the second parameter is default, it is unlimited' do
+        code = <<-CODE
+            notice(Timestamp('5553-12-31') =~ Timestamp['2015-03-01', default])
         CODE
         expect(eval_and_collect_notices(code)).to eq(%w(true))
       end
@@ -48,16 +74,63 @@ describe 'Timestamp type' do
         CODE
         expect(eval_and_collect_notices(code)).to eq(%w(true false))
       end
+
+      it 'accepts integer values when specifying the range' do
+        code = <<-CODE
+            notice(Timestamp(1) =~ Timestamp[1, 2])
+            notice(Timestamp(3) =~ Timestamp[1])
+            notice(Timestamp(0) =~ Timestamp[default, 2])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true true true))
+      end
+
+      it 'accepts float values when specifying the range' do
+        code = <<-CODE
+            notice(Timestamp(1.0) =~ Timestamp[1.0, 2.0])
+            notice(Timestamp(3.0) =~ Timestamp[1.0])
+            notice(Timestamp(0.0) =~ Timestamp[default, 2.0])
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(%w(true true true))
+      end
+
     end
 
     context 'a Timestamp instance' do
-      it 'can be created from a string' do
+      it 'can be created from a string with just a date' do
         code = <<-CODE
             $o = Timestamp('2015-03-01')
             notice($o)
             notice(type($o))
         CODE
         expect(eval_and_collect_notices(code)).to eq(['2015-03-01T00:00:00.000000000 UTC', "Timestamp['2015-03-01T00:00:00.000000000 UTC']"])
+      end
+
+      it 'can be created from a string and time separated by "T"' do
+        code = <<-CODE
+            notice(Timestamp('2015-03-01T11:12:13'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2015-03-01T11:12:13.000000000 UTC'])
+      end
+
+      it 'can be created from a string and time separated by space' do
+        code = <<-CODE
+            notice(Timestamp('2015-03-01 11:12:13'))
+        CODE
+        expect(eval_and_collect_notices(code)).to eq(['2015-03-01T11:12:13.000000000 UTC'])
+      end
+
+      it 'should error when none of the default formats can parse the string' do
+        code = <<-CODE
+            notice(Timestamp('2015#03#01 11:12:13'))
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(/Unable to parse/)
+      end
+
+      it 'should error when only part of the string is parsed' do
+        code = <<-CODE
+            notice(Timestamp('2015-03-01T11:12:13 bogus after'))
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(/Unable to parse/)
       end
 
       it 'can be created from a string and format' do
@@ -114,6 +187,13 @@ describe 'Timestamp type' do
         CODE
         expect(eval_and_collect_notices(code)).to eq(
           ['2016-08-28T12:15:00.000000000 UTC', '2016-07-24T01:20:00.000000000 UTC', '2016-06-21T18:23:15.000000000 UTC'])
+      end
+
+      it 'it cannot be created using an empty formats array' do
+        code = <<-CODE
+            notice(Timestamp('2015-03-01T11:12:13', []))
+        CODE
+        expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error, /parameter 'format' variant 1 expects size to be at least 1, got 0/)
       end
 
       it 'can be created from a string, array of formats, and a timezone' do

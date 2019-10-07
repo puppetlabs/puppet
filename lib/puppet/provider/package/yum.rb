@@ -6,10 +6,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   feature is destructive and should be used with the utmost care.
 
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to yum.
-  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-  or an array where each element is either a string or a hash."
+  These options should be specified as an array where each element is either a string or a hash."
 
-  has_feature :install_options, :versionable, :virtual_packages
+  has_feature :install_options, :versionable, :virtual_packages, :install_only
 
   commands :cmd => "yum", :rpm => "rpm"
 
@@ -23,7 +22,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
   end
 
-  defaultfor :osfamily => :redhat
+defaultfor :operatingsystem => :amazon
+defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
 
   def self.prefetch(packages)
     raise Puppet::Error, _("The yum provider can only be used as root") if Process.euid != 0
@@ -92,6 +92,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     updates = Hash.new { |h, k| h[k] = [] }
     body.split.each_slice(3) do |tuple|
       break if tuple[0] =~ /^(Obsoleting|Security:|Update)/
+      break unless tuple[1].match(/^(?:(\d+):)?(\S+)-(\S+)$/)
       hash = update_to_hash(*tuple[0..1])
       # Create entries for both the package name without a version and a
       # version since yum considers those as mostly interchangeable.
@@ -106,7 +107,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def self.update_to_hash(pkgname, pkgversion)
-    name, arch = pkgname.split('.')
+
+    # The pkgname string has two parts: name, and architecture. Architecture
+    # is the portion of the string following the last "." character. All
+    # characters preceding the final dot are the package name. Parse out
+    # these two pieces of component data.
+    name, _, arch = pkgname.rpartition('.')
+    if name.empty?
+      raise _("Failed to parse package name and architecture from '%{pkgname}'") % { pkgname: pkgname }
+    end
 
     match = pkgversion.match(/^(?:(\d+):)?(\S+)-(\S+)$/)
     epoch = match[1] || '0'
@@ -136,7 +145,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     # Quote the DNF docs:
     # "Yum does this if its obsoletes config option is enabled but
     # the behavior is not properly documented and can be harmful."
-    # So we'll stick with the safter option
+    # So we'll stick with the safer option
     # If a user wants to remove obsoletes, they can use { :install_options => '--obsoletes' }
     # More detail here: https://bugzilla.redhat.com/show_bug.cgi?id=1096506
     'update'
@@ -166,20 +175,38 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         operation = :install
       end
       should = nil
-    when true, false, Symbol
+    when true, :present, :installed
+      # if we have been given a source and we were not asked for a specific
+      # version feed it to yum directly
+      if @resource[:source]
+        wanted = @resource[:source]
+        self.debug "Installing directly from #{wanted}"
+      end
+      should = nil
+    when false,:absent
       # pass
       should = nil
     else
-      # Add the package version
-      wanted += "-#{should}"
-      if wanted.scan(ARCH_REGEX)
-        self.debug "Detected Arch argument in package! - Moving arch to end of version string"
-        wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
+      if @resource[:source]
+        # An explicit source was supplied, which means we're ensuring a specific
+        # version, and also supplying the path to a package that supplies that
+        # version.
+        wanted = @resource[:source]
+        self.debug "Installing directly from #{wanted}"
+      else
+        # No explicit source was specified, so add the package version
+        wanted += "-#{should}"
+        if wanted.scan(ARCH_REGEX)
+          self.debug "Detected Arch argument in package! - Moving arch to end of version string"
+          wanted.gsub!(/(.+)(#{ARCH_REGEX})(.+)/,'\1\3\2')
+        end
       end
-
       current_package = self.query
       if current_package
-        if rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) < 0
+        if @resource[:install_only]
+          self.debug "Updating package #{@resource[:name]} from version #{current_package[:ensure]} to #{should} as install_only packages are never downgraded"
+          operation = update_command
+        elsif rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) < 0
           self.debug "Downgrading package #{@resource[:name]} from version #{current_package[:ensure]} to #{should}"
           operation = :downgrade
         elsif rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(current_package[:ensure])) > 0
@@ -204,10 +231,11 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       is = self.query
       raise Puppet::Error, _("Could not find package %{name}") % { name: self.name } unless is
 
+      version = is[:ensure]
       # FIXME: Should we raise an exception even if should == :latest
       # and yum updated us to a version other than @param_hash[:ensure] ?
-      vercmp_result = rpm_compareEVR(rpm_parse_evr(should), rpm_parse_evr(is[:ensure]))
-      raise Puppet::Error, _("Failed to update to version %{should}, got version %{version} instead") % { should: should, version: is[:ensure] } if vercmp_result != 0
+      raise Puppet::Error, _("Failed to update to version %{should}, got version %{version} instead") % { should: should, version: version } unless
+        insync?(version)
     end
   end
 
@@ -221,7 +249,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     else
       # Yum didn't find updates, pretend the current version is the latest
       version = properties[:ensure]
-      raise Puppet::DevError, "Tried to get latest on a missing package" if version == :absent || version == :purged
+      raise Puppet::DevError, _("Tried to get latest on a missing package") if version == :absent || version == :purged
       return version
     end
   end

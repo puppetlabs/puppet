@@ -2,6 +2,8 @@ require 'puppet/file_system/posix'
 require 'puppet/util/windows'
 
 class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
+  FULL_CONTROL = Puppet::Util::Windows::File::FILE_ALL_ACCESS
+  FILE_READ = Puppet::Util::Windows::File::FILE_GENERIC_READ
 
   def open(path, mode, options, &block)
     # PUP-6959 mode is explicitly ignored until it can be implemented
@@ -114,7 +116,89 @@ class Puppet::FileSystem::Windows < Puppet::FileSystem::Posix
     contents
   end
 
+  # https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes--0-499-
+  ACCESS_DENIED = 5
+  SHARING_VIOLATION = 32
+  LOCK_VIOLATION = 33
+
+  def replace_file(path, mode = nil)
+    if Puppet::FileSystem.directory?(path)
+      raise Errno::EISDIR, _("Is a directory: %{directory}") % { directory: path }
+    end
+
+    current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+    dacl = case mode
+           when 0644
+             dacl = secure_dacl(current_sid)
+             dacl.allow(Puppet::Util::Windows::SID::BuiltinUsers, FILE_READ)
+             dacl
+           when 0640, 0600
+             secure_dacl(current_sid)
+           when nil
+             get_dacl_from_file(path) || secure_dacl(current_sid)
+           else
+             raise ArgumentError, "Only modes 0644, 0640 and 0600 are allowed"
+           end
+
+
+    tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(path), Puppet::FileSystem.dir_string(path))
+    begin
+      tempdacl = Puppet::Util::Windows::AccessControlList.new
+      tempdacl.allow(current_sid, FULL_CONTROL)
+      set_dacl(tempfile.path, tempdacl)
+
+      begin
+        yield tempfile
+        tempfile.flush
+        tempfile.fsync
+      ensure
+        tempfile.close
+      end
+
+      set_dacl(tempfile.path, dacl) if dacl
+      File.rename(tempfile.path, Puppet::FileSystem.path_string(path))
+    ensure
+      tempfile.close!
+    end
+  rescue Puppet::Util::Windows::Error => e
+    case e.code
+    when ACCESS_DENIED, SHARING_VIOLATION, LOCK_VIOLATION
+      raise Errno::EACCES.new(Puppet::FileSystem.path_string(path), e)
+    else
+      raise SystemCallError.new(e.message)
+    end
+  end
+
   private
+
+  def set_dacl(path, dacl)
+    sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+    new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, dacl, true)
+    Puppet::Util::Windows::Security.set_security_descriptor(path, new_sd)
+  end
+
+  def secure_dacl(current_sid)
+    dacl = Puppet::Util::Windows::AccessControlList.new
+    [
+     Puppet::Util::Windows::SID::LocalSystem,
+     Puppet::Util::Windows::SID::BuiltinAdministrators,
+     current_sid
+    ].uniq.map do |sid|
+      dacl.allow(sid, FULL_CONTROL)
+    end
+    dacl
+  end
+
+  def get_dacl_from_file(path)
+    sd = Puppet::Util::Windows::Security.get_security_descriptor(Puppet::FileSystem.path_string(path))
+    sd.dacl
+  rescue Puppet::Util::Windows::Error => e
+    if e.code == 2 # ERROR_FILE_NOT_FOUND
+      nil
+    else
+      raise e
+    end
+  end
 
   def raise_if_symlinks_unsupported
     if ! Puppet.features.manages_symlinks?

@@ -30,6 +30,35 @@ describe "Puppet::FileSystem" do
     SYSTEM_SID_BYTES == Puppet::Util::Windows::ADSI::User.current_user_sid.sid_bytes
   end
 
+  def expects_public_file(path)
+    if Puppet::Util::Platform.windows?
+      current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+      sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+      expect(sd.dacl).to contain_exactly(
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::LocalSystem, mask: 0x1f01ff),
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinAdministrators, mask: 0x1f01ff),
+        an_object_having_attributes(sid: current_sid, mask: 0x1f01ff),
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinUsers, mask: 0x120089)
+      )
+    else
+      expect(File.stat(path).mode & 07777).to eq(0644)
+    end
+  end
+
+  def expects_private_file(path)
+    if Puppet::Util::Platform.windows?
+      current_sid = Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name)
+      sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+      expect(sd.dacl).to contain_exactly(
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::LocalSystem, mask: 0x1f01ff),
+        an_object_having_attributes(sid: Puppet::Util::Windows::SID::BuiltinAdministrators, mask: 0x1f01ff),
+        an_object_having_attributes(sid: current_sid, mask: 0x1f01ff)
+      )
+    else
+      expect(File.stat(path).mode & 07777).to eq(0640)
+    end
+  end
+
   context "#open" do
     it "uses the same default mode as File.open, when specifying a nil mode (umask used on non-Windows)" do
       file = tmpfile('file_to_update')
@@ -167,7 +196,8 @@ describe "Puppet::FileSystem" do
       end
     end
 
-    it "excludes other processes from updating at the same time", :unless => Puppet::Util::Platform.windows? do
+    it "excludes other processes from updating at the same time",
+       unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
       file = file_containing("file_to_update", "0")
 
       increment_counter_in_multiple_processes(file, 5, 'r+')
@@ -175,7 +205,8 @@ describe "Puppet::FileSystem" do
       expect(Puppet::FileSystem.read(file)).to eq("5")
     end
 
-    it "excludes other processes from updating at the same time even when creating the file", :unless => Puppet::Util::Platform.windows? do
+    it "excludes other processes from updating at the same time even when creating the file",
+       unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
       file = tmpfile("file_to_update")
 
       increment_counter_in_multiple_processes(file, 5, 'a+')
@@ -183,7 +214,8 @@ describe "Puppet::FileSystem" do
       expect(Puppet::FileSystem.read(file)).to eq("5")
     end
 
-    it "times out if the lock cannot be acquired in a specified amount of time", :unless => Puppet::Util::Platform.windows? do
+    it "times out if the lock cannot be acquired in a specified amount of time",
+       unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
       file = tmpfile("file_to_update")
 
       child = spawn_process_that_locks(file)
@@ -191,7 +223,7 @@ describe "Puppet::FileSystem" do
       expect do
         Puppet::FileSystem.exclusive_open(file, 0666, 'a', 0.1) do |f|
         end
-      end.to raise_error(Timeout::Error)
+      end.to raise_error(Timeout::Error, /Timeout waiting for exclusive lock on #{file}/)
 
       Process.kill(9, child)
     end
@@ -299,7 +331,7 @@ describe "Puppet::FileSystem" do
 
   describe "symlink",
     :if => ! Puppet.features.manages_symlinks? &&
-    Puppet.features.microsoft_windows? do
+    Puppet::Util::Platform.windows? do
 
     let(:file)         { tmpfile("somefile") }
     let(:missing_file) { tmpfile("missingfile") }
@@ -330,7 +362,7 @@ describe "Puppet::FileSystem" do
     end
 
     it "should fall back to stat when trying to lstat a file" do
-      Puppet::Util::Windows::File.expects(:stat).with(Puppet::FileSystem.assert_path(file))
+      expect(Puppet::Util::Windows::File).to receive(:stat).with(Puppet::FileSystem.assert_path(file))
 
       Puppet::FileSystem.lstat(file)
     end
@@ -767,6 +799,20 @@ describe "Puppet::FileSystem" do
 
         expect(Puppet::FileSystem.exist?(dir)).to be_truthy
       end
+
+      it "should raise Errno::EACCESS when trying to delete a file whose parent directory does not allow execute/traverse", unless: Puppet::Util::Platform.windows? do
+        dir = tmpdir('file_system_unlink')
+        path = File.join(dir, 'deleteme')
+        mode = Puppet::FileSystem.stat(dir).mode
+        Puppet::FileSystem.chmod(0, dir)
+        begin
+          expect {
+            Puppet::FileSystem.unlink(path)
+          }.to raise_error(Errno::EACCES, /^Permission denied .* #{path}/)
+        ensure
+          Puppet::FileSystem.chmod(mode, dir)
+        end
+      end
     end
 
     describe "exclusive_create" do
@@ -809,7 +855,7 @@ describe "Puppet::FileSystem" do
       describe 'on non-Windows', :unless => Puppet::Util::Platform.windows? do
         it 'should produce the same results as the Ruby File.expand_path' do
           # on Windows this may be 8.3 style, but not so on other platforms
-          # only done since ::File.expects(:expand_path).with(path).at_least_once
+          # only done since expect(::File).to receive(:expand_path).with(path).at_least(:once)
           # cannot be used since it will cause a stack overflow
           path = tmpdir('foobar')
 
@@ -870,6 +916,206 @@ describe "Puppet::FileSystem" do
           expect(File.identical?(short_path, puppet_expanded)).to be_truthy
         end
       end
+    end
+  end
+
+  describe '#replace_file' do
+    let(:dest) { tmpfile('replace_file') }
+    let(:content) { "some data" }
+
+    context 'when creating' do
+      it 'writes the data' do
+        Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+        expect(Puppet::FileSystem.binread(dest)).to eq(content)
+      end
+
+      it 'writes in binary mode' do
+        Puppet::FileSystem.replace_file(dest) { |f| f.write("\x00\x01\x02") }
+
+        expect(Puppet::FileSystem.binread(dest)).to eq("\x00\x01\x02")
+      end
+
+      context 'on posix', unless: Puppet::Util::Platform.windows? do
+        it 'applies the default mode 0640' do
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0640)
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0777) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0777)
+        end
+
+        it 'raises EACCES if we do not have permission' do
+          dir = tmpdir('file_system')
+          dest = File.join(dir, 'unwritable')
+
+          Puppet::FileSystem.chmod(0600, dir)
+
+          expect {
+            Puppet::FileSystem.replace_file(dest) { |_| }
+          }.to raise_error(Errno::EACCES, /Permission denied/)
+        end
+
+        it 'creates a read-only file' do
+          Puppet::FileSystem.replace_file(dest, 0400) { |f| f.write(content) }
+
+          expect(Puppet::FileSystem.binread(dest)).to eq(content)
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0400)
+        end
+      end
+
+      context 'on windows', if: Puppet::Util::Platform.windows? do
+        it 'does not grant users access by default' do
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          expects_private_file(dest)
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
+
+          expects_public_file(dest)
+        end
+
+        it 'rejects unsupported modes' do
+          expect {
+            Puppet::FileSystem.replace_file(dest, 0755) { |_| }
+          }.to raise_error(ArgumentError, /Only modes 0644, 0640 and 0600 are allowed/)
+        end
+      end
+    end
+
+    context "when overwriting" do
+      before :each do
+        FileUtils.touch(dest)
+      end
+
+      it 'overwrites the content' do
+        Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+        expect(Puppet::FileSystem.binread(dest)).to eq(content)
+      end
+
+      it 'raises ISDIR if the destination is a directory' do
+        dir = tmpdir('file_system')
+
+        expect {
+          Puppet::FileSystem.replace_file(dir) { |f| f.write(content) }
+        }.to raise_error(Errno::EISDIR, /Is a directory/)
+      end
+
+      it 'preserves the existing content if an error is raised' do
+        File.write(dest, 'existing content')
+
+        Puppet::FileSystem.replace_file(dest) { |f| raise 'whoops' } rescue nil
+
+        expect(Puppet::FileSystem.binread(dest)).to eq('existing content')
+      end
+
+      context 'on posix', unless: Puppet::Util::Platform.windows? do
+        it 'preserves the existing mode' do
+          Puppet::FileSystem.chmod(0600, dest)
+
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0600)
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.chmod(0600, dest)
+
+          Puppet::FileSystem.replace_file(dest, 0777) { |f| f.write(content) }
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0777)
+        end
+
+        it 'updates a read-only file' do
+          Puppet::FileSystem.chmod(0400, dest)
+
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          expect(Puppet::FileSystem.binread(dest)).to eq(content)
+
+          mode = Puppet::FileSystem.stat(dest).mode
+          expect(mode & 07777).to eq(0400)
+        end
+      end
+
+      context 'on windows', if: Puppet::Util::Platform.windows? do
+        it 'preserves the existing mode' do
+          old_sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+
+          Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+
+          new_sd = Puppet::Util::Windows::Security.get_security_descriptor(dest)
+          expect(old_sd.owner).to eq(new_sd.owner)
+          expect(old_sd.group).to eq(new_sd.group)
+          old_sd.dacl.each do |ace|
+            expect(new_sd.dacl).to include(an_object_having_attributes(sid: ace.sid, mask: ace.mask))
+          end
+        end
+
+        it 'applies the specified mode' do
+          Puppet::FileSystem.replace_file(dest, 0644) { |f| f.write(content) }
+
+          expects_public_file(dest)
+        end
+
+        it 'raises Errno::EACCES if access is denied' do
+          allow(Puppet::Util::Windows::Security).to receive(:get_security_descriptor).and_raise(Puppet::Util::Windows::Error.new('access denied', 5))
+
+          expect {
+            Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+          }.to raise_error(Errno::EACCES, /Access is denied/)
+        end
+
+        it 'raises SystemCallError otherwise' do
+          allow(Puppet::Util::Windows::Security).to receive(:get_security_descriptor).and_raise(Puppet::Util::Windows::Error.new('arena is trashed', 7))
+
+          expect {
+            Puppet::FileSystem.replace_file(dest) { |f| f.write(content) }
+          }.to raise_error(SystemCallError, /The storage control blocks were destroyed/)
+        end
+      end
+    end
+  end
+
+  context '#touch' do
+    let(:dest) { tmpfile('touch_file') }
+
+    it 'creates a file' do
+      Puppet::FileSystem.touch(dest)
+
+      expect(File).to be_file(dest)
+    end
+
+    it 'updates the mtime for an existing file' do
+      Puppet::FileSystem.touch(dest)
+
+      now = Time.now
+      allow(Time).to receive(:now).and_return(now)
+
+      Puppet::FileSystem.touch(dest)
+
+      expect(File.mtime(dest)).to be_within(1).of(now)
+    end
+
+    it 'allows the mtime to be passed in' do
+      tomorrow = Time.now + (24 * 60 * 60)
+
+      Puppet::FileSystem.touch(dest, mtime: tomorrow)
+
+      expect(File.mtime(dest)).to be_within(1).of(tomorrow)
     end
   end
 end

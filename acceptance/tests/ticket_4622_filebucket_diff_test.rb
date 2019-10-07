@@ -1,6 +1,14 @@
 test_name "ticket 4622 filebucket diff test."
 confine :except, :platform => 'windows'
 skip_test 'skip test, no non-Windows agents specified' if agents.empty?
+# Filebucket is not supported in PE, the only context in which FIPS is expected to work
+skip_test 'skip test if any host is in FIPS mode' if hosts.any? { |host| host.fips_mode? }
+
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',    # look into combining with ticket_6541_invalid_filebucket_files.rb
+                         # Use block style `test_run`
+    'server'
 
 def get_checksum_from_backup_on(host, filename, bucket_locale)
   on host, puppet("filebucket backup #{filename} #{bucket_locale}"), :acceptable_exit_codes => [ 0, 2 ]
@@ -20,8 +28,15 @@ step "Master: Start Puppet Master" do
   with_puppet_running_on(master, {}) do
     agents.each do |agent|
 
+      if on(agent, facter("fips_enabled")).stdout =~ /true/
+        # We do not want to do a skip_test here as that aborts the tests across all targets
+        # and the whole test gets skipped even if it will succeed on any non-fips platforms
+        puts "Skipping test on platforms in fips mode - (remote) filebucket is not supported"
+        next
+      end
+
       tmpfile = agent.tmpfile('testfile')
-      remote_str = "--remote --server #{master}"
+      remote_str = "--remote"
       local_str = "--local"
 
       teardown do

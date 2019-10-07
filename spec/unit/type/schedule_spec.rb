@@ -1,8 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 module ScheduleTesting
-
   def diff(unit, incr, method, count)
     diff = Time.now.to_i.send(method, incr * count)
     Time.at(diff)
@@ -19,11 +17,11 @@ module ScheduleTesting
   def min(method, count)
     diff(:min, 60, method, count)
   end
-
 end
 
 describe Puppet::Type.type(:schedule) do
   include ScheduleTesting
+
   before :each do
     Puppet[:ignoreschedules] = false
 
@@ -65,7 +63,7 @@ describe Puppet::Type.type(:schedule) do
     it "should not produce default schedules when default_schedules is false"  do
       Puppet[:default_schedules] = false
       schedules = Puppet::Type.type(:schedule).mkdefaultschedules
-      expect(schedules).to have_exactly(0).items
+      expect(schedules).to be_empty
     end
 
     it "should produce a schedule named puppet with a period of hourly and a repeat of 2" do
@@ -78,7 +76,7 @@ describe Puppet::Type.type(:schedule) do
 
   describe Puppet::Type.type(:schedule), "when matching ranges" do
     before do
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 0, 0))
     end
 
     it "should match when the start time is before the current time and the end time is after the current time" do
@@ -107,14 +105,14 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should match the upper array of ranges" do
-      @schedule[:range] = ["4-6", "11-12"]
+      @schedule[:range] = ["11:30 - 6", "11-12"]
       expect(@schedule).to be_match
     end
   end
 
   describe Puppet::Type.type(:schedule), "when matching ranges with abbreviated time specifications" do
     before do
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 45, 59))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 45, 59))
     end
 
     it "should match when just an hour is specified" do
@@ -135,7 +133,7 @@ describe Puppet::Type.type(:schedule) do
 
   describe Puppet::Type.type(:schedule), "when matching ranges with abbreviated time specifications, edge cases part 1" do
     before do
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 00, 00))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 00, 00))
     end
 
     it "should match when the current time is the start of the range using hours" do
@@ -161,7 +159,7 @@ describe Puppet::Type.type(:schedule) do
 
   describe Puppet::Type.type(:schedule), "when matching ranges with abbreviated time specifications, edge cases part 2" do
     before do
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 00, 01))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 00, 01))
     end
 
     it "should match when the current time is just past the start of the range using hours" do
@@ -187,7 +185,7 @@ describe Puppet::Type.type(:schedule) do
 
   describe Puppet::Type.type(:schedule), "when matching ranges with abbreviated time specifications, edge cases part 3" do
     before do
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 10, 59, 59))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 10, 59, 59))
     end
 
     it "should not match when the current time is just before the start of the range using hours" do
@@ -217,7 +215,7 @@ describe Puppet::Type.type(:schedule) do
       # advancing the day properly when we push the ending limit out a day.
       # For example, adding 1 to 31 would throw an error instead of advancing
       # the date.
-      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 22, 30, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "mar", 31, 22, 30, 0))
     end
 
     it "should match when the start time is before current time and the end time is the following day" do
@@ -237,7 +235,7 @@ describe Puppet::Type.type(:schedule) do
       # advancing the day properly when we push the ending limit out a day.
       # For example, adding 1 to 31 would throw an error instead of advancing
       # the date.
-      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 1, 30, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "mar", 31, 1, 30, 0))
     end
 
     it "should match when the start time is the day before the current time and the end time is after the current time" do
@@ -261,7 +259,7 @@ describe Puppet::Type.type(:schedule) do
       @schedule[:period] = :hourly
       @schedule[:periodmatch] = :distance
 
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 0, 0))
     end
 
     it "should match when the previous time was an hour ago" do
@@ -282,7 +280,7 @@ describe Puppet::Type.type(:schedule) do
       @schedule[:period] = :daily
       @schedule[:periodmatch] = :distance
 
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 0, 0))
     end
 
     it "should match when the previous time was one day ago" do
@@ -303,7 +301,7 @@ describe Puppet::Type.type(:schedule) do
       @schedule[:period] = :weekly
       @schedule[:periodmatch] = :distance
 
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 0, 0))
     end
 
     it "should match when the previous time was seven days ago" do
@@ -324,7 +322,7 @@ describe Puppet::Type.type(:schedule) do
       @schedule[:period] = :monthly
       @schedule[:periodmatch] = :distance
 
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 0, 0))
     end
 
     it "should match when the previous time was 32 days ago" do
@@ -350,7 +348,7 @@ describe Puppet::Type.type(:schedule) do
       current = Time.utc(2008, 1, 1, 0, 0, 0)
       previous = Time.utc(2007, 12, 31, 23, 59, 0)
 
-      Time.stubs(:now).returns(current)
+      allow(Time).to receive(:now).and_return(current)
       expect(@schedule).to be_match(previous)
     end
 
@@ -358,7 +356,7 @@ describe Puppet::Type.type(:schedule) do
       current = Time.utc(2009, 2, 1, 12, 59, 0)
       previous = Time.utc(2009, 2, 1, 12, 0, 0)
 
-      Time.stubs(:now).returns(current)
+      allow(Time).to receive(:now).and_return(current)
       expect(@schedule).to_not be_match(previous)
     end
   end
@@ -375,7 +373,7 @@ describe Puppet::Type.type(:schedule) do
       # Now set the previous time to one minute before that
       previous = current - 60
 
-      Time.stubs(:now).returns(current)
+      allow(Time).to receive(:now).and_return(current)
       expect(@schedule).to be_match(previous)
     end
 
@@ -387,7 +385,7 @@ describe Puppet::Type.type(:schedule) do
       # Set the current time to 23:59
       now = previous + (23 * 3600) + (59 * 60)
 
-      Time.stubs(:now).returns(now)
+      allow(Time).to receive(:now).and_return(now)
       expect(@schedule).to_not be_match(previous)
     end
   end
@@ -400,7 +398,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match if the previous time is prior to the most recent Sunday" do
       now = Time.utc(2010, "nov", 11, 0, 0, 0) # Thursday
-      Time.stubs(:now).returns(now)
+      allow(Time).to receive(:now).and_return(now)
       previous = Time.utc(2010, "nov", 6, 23, 59, 59) # Sat
 
       expect(@schedule).to be_match(previous)
@@ -408,7 +406,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should not match if the previous time is after the most recent Saturday" do
       now = Time.utc(2010, "nov", 11, 0, 0, 0) # Thursday
-      Time.stubs(:now).returns(now)
+      allow(Time).to receive(:now).and_return(now)
       previous = Time.utc(2010, "nov", 7, 0, 0, 0) # Sunday
 
       expect(@schedule).to_not be_match(previous)
@@ -423,7 +421,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match when the previous time is prior to the first day of this month" do
       now = Time.utc(2010, "nov", 8, 00, 59, 59)
-      Time.stubs(:now).returns(now)
+      allow(Time).to receive(:now).and_return(now)
       previous = Time.utc(2010, "oct", 31, 23, 59, 59)
 
       expect(@schedule).to be_match(previous)
@@ -431,7 +429,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should not match when the previous time is after the last day of last month" do
       now = Time.utc(2010, "nov", 8, 00, 59, 59)
-      Time.stubs(:now).returns(now)
+      allow(Time).to receive(:now).and_return(now)
       previous = Time.utc(2010, "nov", 1, 0, 0, 0)
 
       expect(@schedule).to_not be_match(previous)
@@ -443,12 +441,14 @@ describe Puppet::Type.type(:schedule) do
       @schedule[:period] = :daily
       @schedule[:repeat] = 2
 
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 0, 0))
     end
 
     it "should fail if the periodmatch is 'number'" do
       @schedule[:periodmatch] = :number
-      expect(proc { @schedule[:repeat] = 2 }).to raise_error(Puppet::Error)
+      expect {
+        @schedule[:repeat] = 2
+      }.to raise_error(Puppet::Error)
     end
 
     it "should match if the previous run was further away than the distance divided by the repeat" do
@@ -465,7 +465,7 @@ describe Puppet::Type.type(:schedule) do
   describe Puppet::Type.type(:schedule), "when matching days of the week" do
     before do
       # 2011-05-23 is a Monday
-      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "may", 23, 11, 0, 0))
     end
 
     it "should raise an error if the weekday is 'Someday'" do
@@ -486,6 +486,11 @@ describe Puppet::Type.type(:schedule) do
           'Fri', 'Sat'] }.not_to raise_error
     end
 
+    it "should accept all integers 0-6 as valid values" do
+      expect {@schedule[:weekday] = [0, 1, 2, 3, 4,
+      5, 6] }.not_to raise_error
+    end
+
     it "should match if the weekday is 'Monday'" do
       @schedule[:weekday] = "Monday"
       expect(@schedule.match?).to be_truthy
@@ -499,6 +504,11 @@ describe Puppet::Type.type(:schedule) do
     it "should match if the weekday is '1'" do
       @schedule[:weekday] = "1"
       expect(@schedule.match?).to be_truthy
+    end
+
+    it "should match if weekday is 1" do
+      @schedule[:weekday] = 1
+      expect(@schedule).to be_match
     end
 
     it "should not match if the weekday is Tuesday" do
@@ -542,10 +552,14 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
+  it "should raise an error if the weekday is an int higher than 6" do
+    expect { @schedule[:weekday] = 7 }.to raise_error(Puppet::ResourceError, /7 is not a valid day of the week/)
+  end
+
   describe Puppet::Type.type(:schedule), "when matching days of week and ranges spanning days, day 1" do
     before do
       # Test with ranges and days-of-week both set. 2011-03-31 was a Thursday.
-      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 22, 30, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "mar", 31, 22, 30, 0))
     end
 
     it "should match when the range and day of week matches" do
@@ -577,7 +591,7 @@ describe Puppet::Type.type(:schedule) do
     before do
       # 2011-03-31 was a Thursday. As the end-time of a day spanning match, that means
       # we need to match on Wednesday.
-      Time.stubs(:now).returns(Time.local(2011, "mar", 31, 1, 30, 0))
+      allow(Time).to receive(:now).and_return(Time.local(2011, "mar", 31, 1, 30, 0))
     end
 
     it "should match when the range matches and the day of week should match" do

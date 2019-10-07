@@ -74,7 +74,7 @@ info = read_node(node)
 
 # Iterate over any provided parents, merging in there information.
 parents_seen = []
-while parent = info["parent"]
+while parent = info["parent"] #rubocop:disable Lint/AssignmentInCondition
   raise "Found inheritance loop with parent #{parent}" if parents_seen.include?(parent)
 
   parents_seen << parent
@@ -84,21 +84,21 @@ while parent = info["parent"]
   parent_info = read_node(parent)
 
   # Include any parent classes in our list.
-  if pclasses = parent_info["classes"]
-    info["classes"] += pclasses
+  if parent_info["classes"]
+    info["classes"] += parent_info["classes"]
     info["classes"].uniq!
   end
 
   # And inherit parameters from our parent, while preferring our own values.
-  if pparams = parent_info["parameters"]
+  if parent_info["parameters"]
     # When using Hash#merge, the hash being merged in wins, and we
     # want the subnode parameters to be the parent node parameters.
-    info["parameters"] = pparams.merge(info["parameters"])
+    info["parameters"] = parent_info["parameters"].merge(info["parameters"])
   end
 
   # Copy over any parent node name.
-  if pparent = parent_info["parent"]
-    info["parent"] = pparent
+  if parent_info["parent"]
+    info["parent"] = parent_info["parent"]
   end
 end
 

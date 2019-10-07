@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix? do
@@ -51,7 +50,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
 
       it "should fail if the command isn't executable" do
         FileUtils.touch(command)
-        File.stubs(:executable?).with(command).returns(false)
+        allow(File).to receive(:executable?).with(command).and_return(false)
 
         expect { provider.run(command) }.to raise_error(ArgumentError, "'#{command}' is not executable")
       end
@@ -63,7 +62,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
         provider.resource[:path] = [File.dirname(command)]
         filename = File.basename(command)
 
-        Puppet::Util::Execution.expects(:execute).with(filename, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+        expect(Puppet::Util::Execution).to receive(:execute).with(filename, instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
         provider.run(filename)
       end
@@ -77,7 +76,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       it "should fail if the command is in the path but not executable" do
         command = make_exe
         File.chmod(0644, command)
-        FileTest.stubs(:executable?).with(command).returns(false)
+        allow(FileTest).to receive(:executable?).with(command).and_return(false)
         resource[:path] = [File.dirname(command)]
         filename = File.basename(command)
 
@@ -94,7 +93,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       provider.resource[:path] = ['/bogus/bin']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with("#{command} bar --sillyarg=true --blah", instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      expect(Puppet::Util::Execution).to receive(:execute).with("#{command} bar --sillyarg=true --blah", instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
       provider.run("#{command} bar --sillyarg=true --blah")
     end
@@ -110,20 +109,44 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
       provider.resource[:environment] = ['WHATEVER=/something/else', 'WHATEVER=/foo']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with(command, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      expect(Puppet::Util::Execution).to receive(:execute).with(command, instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
       provider.run(command)
 
       expect(@logs.map {|l| "#{l.level}: #{l.message}" }).to eq(["warning: Overriding environment setting 'WHATEVER' with '/foo'"])
     end
 
+    it "should warn when setting an empty environment variable" do
+      provider.resource[:environment] = ['WHATEVER=']
+      command = make_exe
+
+      expect(Puppet::Util::Execution).to receive(:execute).with(command, instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
+      provider.run(command)
+
+      expect(@logs.map(&:to_s).join).to match(/Empty environment setting 'WHATEVER'\n\s+\(file & line not available\)/m)
+    end
+
+    it "should warn when setting an empty environment variable (within a manifest)" do
+      provider.resource[:environment] = ['WHATEVER=']
+      provider.resource.file = '/tmp/foobar'
+      provider.resource.line = 42
+      command = make_exe
+
+      expect(Puppet::Util::Execution).to receive(:execute).with(command, instance_of(Hash)).and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
+      provider.run(command)
+
+      expect(@logs.map(&:to_s).join).to match(/Empty environment setting 'WHATEVER'\n\s+\(file: \/tmp\/foobar, line: 42\)/m)
+    end
+
     it "should set umask before execution if umask parameter is in use" do
       provider.resource[:umask] = '0027'
-      Puppet::Util.expects(:withumask).with(0027)
+      expect(Puppet::Util).to receive(:withumask).with(0027)
       provider.run(provider.resource[:command])
     end
 
-    describe "posix locale settings" do
+    describe "posix locale settings", :unless => RUBY_PLATFORM == 'java' do
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
       # system.
       lang_sentinel_value = "en_US.UTF-8"
@@ -140,14 +163,14 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
         Puppet::Util::POSIX::LOCALE_ENV_VARS.each { |var| orig_env[var] = ENV[var] if ENV[var] }
 
         orig_env.keys.each do |var|
-          output, status = provider.run(command % var)
+          output, _ = provider.run(command % var)
           expect(output.strip).to eq(orig_env[var])
         end
 
         # now, once more... but with our sentinel values
         Puppet::Util.withenv(locale_sentinel_env) do
           Puppet::Util::POSIX::LOCALE_ENV_VARS.each do |var|
-            output, status = provider.run(command % var)
+            output, _ = provider.run(command % var)
             expect(output.strip).to eq(locale_sentinel_env[var])
           end
         end
@@ -155,14 +178,14 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
 
       it "should respect locale overrides in user's 'environment' configuration" do
         provider.resource[:environment] = ['LANG=C', 'LC_ALL=C']
-        output, status = provider.run(command % 'LANG')
+        output, _ = provider.run(command % 'LANG')
         expect(output.strip).to eq('C')
-        output, status = provider.run(command % 'LC_ALL')
+        output, _ = provider.run(command % 'LC_ALL')
         expect(output.strip).to eq('C')
       end
     end
 
-    describe "posix user-related environment vars" do
+    describe "posix user-related environment vars", :unless => RUBY_PLATFORM == 'java' do
       # a temporary hash that contains sentinel values for each of the user-related environment variables that we
       # are expected to unset during an "exec"
       user_sentinel_env = {}
@@ -180,7 +203,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
             expect(ENV[var]).to eq(user_sentinel_env[var])
 
             # run an "exec" via the provider and ensure that it unsets the vars
-            output, status = provider.run(command % var)
+            output, _ = provider.run(command % var)
             expect(output.strip).to eq("")
 
             # ensure that after the exec, our temporary env is still intact
@@ -199,7 +222,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix
         # loop over the posix user-related environment variables
         Puppet::Util::POSIX::USER_ENV_VARS.each do |var|
           # run an 'exec' to get the value of each variable
-          output, status = provider.run(command % var)
+          output, _ = provider.run(command % var)
           # ensure that it matches our expected sentinel value
           expect(output.strip).to eq(sentinel_value)
         end

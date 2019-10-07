@@ -24,7 +24,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     else
       puts Puppet::Face[:help, :current].help(face.name)
     end
-    exit
+    exit(0)
   end
 
   attr_accessor :face, :action, :type, :arguments, :render_as
@@ -74,32 +74,38 @@ class Puppet::Application::FaceBase < Puppet::Application
     index       = -1
     until action_name or (index += 1) >= command_line.args.length do
       item = command_line.args[index]
-      if item =~ /^-/ then
+      if item =~ /^-/
         option = @face.options.find do |name|
           item =~ /^-+#{name.to_s.gsub(/[-_]/, '[-_]')}(?:[ =].*)?$/
         end
-        if option then
+        if option
           option = @face.get_option(option)
           # If we have an inline argument, just carry on.  We don't need to
           # care about optional vs mandatory in that case because we do a real
           # parse later, and that will totally take care of raising the error
           # when we get there. --daniel 2011-04-04
-          if option.takes_argument? and !item.index('=') then
+          if option.takes_argument? and !item.index('=')
             index += 1 unless
               (option.optional_argument? and command_line.args[index + 1] =~ /^-/)
           end
-        elsif option = find_global_settings_argument(item) then
-          unless Puppet.settings.boolean? option.name then
-            # As far as I can tell, we treat non-bool options as always having
-            # a mandatory argument. --daniel 2011-04-05
-            # ... But, the mandatory argument will not be the next item if an = is
-            # employed in the long form of the option. --jeffmccune 2012-09-18
-            index += 1 unless item =~ /^--#{option.name}=/
-          end
-        elsif option = find_application_argument(item) then
-          index += 1 if (option[:argument] and not option[:optional])
         else
-          raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
+          option = find_global_settings_argument(item)
+          if option
+            unless Puppet.settings.boolean? option.name
+              # As far as I can tell, we treat non-bool options as always having
+              # a mandatory argument. --daniel 2011-04-05
+              # ... But, the mandatory argument will not be the next item if an = is
+              # employed in the long form of the option. --jeffmccune 2012-09-18
+              index += 1 unless item =~ /^--#{option.name}=/
+            end
+          else 
+            option = find_application_argument(item)
+            if option
+              index += 1 if (option[:argument] and not option[:optional])
+            else
+              raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
+            end
+          end
         end
       else
         # Stash away the requested action name for later, and try to fetch the
@@ -112,7 +118,8 @@ class Puppet::Application::FaceBase < Puppet::Application
     end
 
     if @action.nil?
-      if @action = @face.get_default_action() then
+      @action = @face.get_default_action()
+      if @action
         @is_default_action = true
       else
         # First try to handle global command line options

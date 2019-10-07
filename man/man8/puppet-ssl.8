@@ -1,0 +1,55 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "PUPPET\-SSL" "8" "October 2019" "Puppet, Inc." "Puppet manual"
+.
+.SH "NAME"
+\fBpuppet\-ssl\fR \- Manage SSL keys and certificates for puppet SSL clients
+.
+.SH "SYNOPSIS"
+Manage SSL keys and certificates for SSL clients needing to communicate with a puppet infrastructure\.
+.
+.SH "USAGE"
+puppet ssl \fIaction\fR [\-h|\-\-help] [\-v|\-\-verbose] [\-d|\-\-debug] [\-\-localca] [\-\-target CERTNAME]
+.
+.SH "OPTIONS"
+.
+.IP "\(bu" 4
+\-\-help: Print this help messsge\.
+.
+.IP "\(bu" 4
+\-\-verbose: Print extra information\.
+.
+.IP "\(bu" 4
+\-\-debug: Enable full debugging\.
+.
+.IP "\(bu" 4
+\-\-localca Also clean the local CA certificate and CRL\.
+.
+.IP "\(bu" 4
+\-\-target CERTNAME Clean the specified device certificate instead of this host\'s certificate\.
+.
+.IP "" 0
+.
+.SH "ACTIONS"
+.
+.TP
+bootstrap
+Perform all of the steps necessary to request and download a client certificate\. If autosigning is disabled, then puppet will wait every \fBwaitforcert\fR seconds for its certificate to be signed\. To only attempt once and never wait, specify a time of 0\. Since \fBwaitforcert\fR is a Puppet setting, it can be specified as a time interval, such as 30s, 5m, 1h\.
+.
+.TP
+submit_request
+Generate a certificate signing request (CSR) and submit it to the CA\. If a private and public key pair already exist, they will be used to generate the CSR\. Otherwise a new key pair will be generated\. If a CSR has already been submitted with the given \fBcertname\fR, then the operation will fail\.
+.
+.TP
+download_cert
+Download a certificate for this host\. If the current private key matches the downloaded certificate, then the certificate will be saved and used for subsequent requests\. If there is already an existing certificate, it will be overwritten\.
+.
+.TP
+verify
+Verify the private key and certificate are present and match, verify the certificate is issued by a trusted CA, and check revocation status\.
+.
+.TP
+clean
+Remove the private key and certificate related files for this host\. If \fB\-\-localca\fR is specified, then also remove this host\'s local copy of the CA certificate(s) and CRL bundle\. if \fB\-\-target CERTNAME\fR is specified, then remove the files for the specified device on this host instead of this host\.
+

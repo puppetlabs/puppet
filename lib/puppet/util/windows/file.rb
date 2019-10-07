@@ -7,11 +7,29 @@ module Puppet::Util::Windows::File
 
   FILE_ATTRIBUTE_READONLY      = 0x00000001
 
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379607(v=vs.85).aspx
+  # The right to use the object for synchronization. This enables a thread to
+  # wait until the object is in the signaled state. Some object types do not
+  # support this access right.
   SYNCHRONIZE                 = 0x100000
+  # The right to delete the object.
+  DELETE                      = 0x00010000
+  # The right to read the information in the object's security descriptor, not including the information in the system access control list (SACL).
+  # READ_CONTROL              = 0x00020000
+  # The right to modify the discretionary access control list (DACL) in the object's security descriptor.
+  WRITE_DAC                   = 0x00040000
+  # The right to change the owner in the object's security descriptor.
+  WRITE_OWNER                 = 0x00080000
+
+  # Combines DELETE, READ_CONTROL, WRITE_DAC, and WRITE_OWNER access.
   STANDARD_RIGHTS_REQUIRED    = 0xf0000
+  # Currently defined to equal READ_CONTROL.
   STANDARD_RIGHTS_READ        = 0x20000
+  # Currently defined to equal READ_CONTROL.
   STANDARD_RIGHTS_WRITE       = 0x20000
+  # Currently defined to equal READ_CONTROL.
   STANDARD_RIGHTS_EXECUTE     = 0x20000
+  # Combines DELETE, READ_CONTROL, WRITE_DAC, WRITE_OWNER, and SYNCHRONIZE access.
   STANDARD_RIGHTS_ALL         = 0x1F0000
   SPECIFIC_RIGHTS_ALL         = 0xFFFF
 
@@ -111,11 +129,15 @@ module Puppet::Util::Windows::File
 
       # return true if path exists and it's not a symlink
       # Other file attributes are ignored. https://msdn.microsoft.com/en-us/library/windows/desktop/gg258117(v=vs.85).aspx
-      return true if (result & FILE_ATTRIBUTE_REPARSE_POINT) != FILE_ATTRIBUTE_REPARSE_POINT
-
-      # walk the symlink and try again...
-      seen_paths << path.downcase
-      path = readlink(path)
+      reparse_point = (result & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT
+      if reparse_point && symlink_reparse_point?(path)
+        # walk the symlink and try again...
+        seen_paths << path.downcase
+        path = readlink(path)
+      else
+        # file was found and its not a symlink
+        return true
+      end
     end
 
     false
@@ -177,15 +199,55 @@ module Puppet::Util::Windows::File
         "#{flags_and_attributes.to_s(8)}, #{template_file_handle})")
   end
 
+  IO_REPARSE_TAG_MOUNT_POINT  = 0xA0000003
+  IO_REPARSE_TAG_HSM          = 0xC0000004
+  IO_REPARSE_TAG_HSM2         = 0x80000006
+  IO_REPARSE_TAG_SIS          = 0x80000007
+  IO_REPARSE_TAG_WIM          = 0x80000008
+  IO_REPARSE_TAG_CSV          = 0x80000009
+  IO_REPARSE_TAG_DFS          = 0x8000000A
+  IO_REPARSE_TAG_SYMLINK      = 0xA000000C
+  IO_REPARSE_TAG_DFSR         = 0x80000012
+  IO_REPARSE_TAG_DEDUP        = 0x80000013
+  IO_REPARSE_TAG_NFS          = 0x80000014
+
   def self.get_reparse_point_data(handle, &block)
     # must be multiple of 1024, min 10240
-    FFI::MemoryPointer.new(REPARSE_DATA_BUFFER.size) do |reparse_data_buffer_ptr|
+    FFI::MemoryPointer.new(MAXIMUM_REPARSE_DATA_BUFFER_SIZE) do |reparse_data_buffer_ptr|
       device_io_control(handle, FSCTL_GET_REPARSE_POINT, nil, reparse_data_buffer_ptr)
-      yield REPARSE_DATA_BUFFER.new(reparse_data_buffer_ptr)
+
+      reparse_tag = reparse_data_buffer_ptr.read_win32_ulong
+      buffer_type = case reparse_tag
+      when IO_REPARSE_TAG_SYMLINK
+        SYMLINK_REPARSE_DATA_BUFFER
+      when IO_REPARSE_TAG_MOUNT_POINT
+        MOUNT_POINT_REPARSE_DATA_BUFFER
+      when IO_REPARSE_TAG_NFS
+        raise Puppet::Util::Windows::Error.new("Retrieving NFS reparse point data is unsupported")
+      else
+        raise Puppet::Util::Windows::Error.new("DeviceIoControl(#{handle}, " +
+          "FSCTL_GET_REPARSE_POINT) returned unknown tag 0x#{reparse_tag.to_s(16).upcase}")
+      end
+
+      yield buffer_type.new(reparse_data_buffer_ptr)
     end
 
     # underlying struct MemoryPointer has been cleaned up by this point, nothing to return
     nil
+  end
+
+  def self.get_reparse_point_tag(handle)
+    reparse_tag = nil
+
+    # must be multiple of 1024, min 10240
+    FFI::MemoryPointer.new(MAXIMUM_REPARSE_DATA_BUFFER_SIZE) do |reparse_data_buffer_ptr|
+      device_io_control(handle, FSCTL_GET_REPARSE_POINT, nil, reparse_data_buffer_ptr)
+
+      # DWORD ReparseTag is the first member of the struct
+      reparse_tag = reparse_data_buffer_ptr.read_win32_ulong
+    end
+
+    reparse_tag
   end
 
   def self.device_io_control(handle, io_control_code, in_buffer = nil, out_buffer = nil)
@@ -215,11 +277,17 @@ module Puppet::Util::Windows::File
   end
 
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
-  def symlink?(file_name)
+  def reparse_point?(file_name)
     attributes = get_attributes(file_name, false)
 
     return false if (attributes == INVALID_FILE_ATTRIBUTES)
     (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT
+  end
+  module_function :reparse_point?
+
+  def symlink?(file_name)
+    # Puppet currently only handles mount point and symlink reparse points, ignores others
+    reparse_point?(file_name) && symlink_reparse_point?(file_name)
   end
   module_function :symlink?
 
@@ -343,8 +411,6 @@ module Puppet::Util::Windows::File
   end
   module_function :lstat
 
-  private
-
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364571(v=vs.85).aspx
   FSCTL_GET_REPARSE_POINT = 0x900a8
 
@@ -360,6 +426,24 @@ module Puppet::Util::Windows::File
 
     path
   end
+  private_class_method :resolve_symlink
+
+  # these reparse point types are the only ones Puppet currently understands
+  # so rather than raising an exception in readlink, prefer to not consider
+  # the path a symlink when stat'ing later
+  def self.symlink_reparse_point?(path)
+    symlink = false
+
+    open_symlink(path) do |handle|
+      symlink = [
+        IO_REPARSE_TAG_SYMLINK,
+        IO_REPARSE_TAG_MOUNT_POINT
+      ].include?(get_reparse_point_tag(handle))
+    end
+
+    symlink
+  end
+  private_class_method :symlink_reparse_point?
 
   ffi_convention :stdcall
 
@@ -448,11 +532,11 @@ module Puppet::Util::Windows::File
 
   MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
 
-  # REPARSE_DATA_BUFFER
+  # SYMLINK_REPARSE_DATA_BUFFER
   # https://msdn.microsoft.com/en-us/library/cc232006.aspx
   # https://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
   # struct is always MAXIMUM_REPARSE_DATA_BUFFER_SIZE bytes
-  class REPARSE_DATA_BUFFER < FFI::Struct
+  class SYMLINK_REPARSE_DATA_BUFFER < FFI::Struct
     layout :ReparseTag, :win32_ulong,
            :ReparseDataLength, :ushort,
            :Reserved, :ushort,
@@ -464,6 +548,23 @@ module Puppet::Util::Windows::File
            # max less above fields dword / uint 4 bytes, ushort 2 bytes
            # technically a WCHAR buffer, but we care about size in bytes here
            :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 20]
+  end
+
+  # MOUNT_POINT_REPARSE_DATA_BUFFER
+  # https://msdn.microsoft.com/en-us/library/cc232007.aspx
+  # https://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
+  # struct is always MAXIMUM_REPARSE_DATA_BUFFER_SIZE bytes
+  class MOUNT_POINT_REPARSE_DATA_BUFFER < FFI::Struct
+    layout :ReparseTag, :win32_ulong,
+           :ReparseDataLength, :ushort,
+           :Reserved, :ushort,
+           :SubstituteNameOffset, :ushort,
+           :SubstituteNameLength, :ushort,
+           :PrintNameOffset, :ushort,
+           :PrintNameLength, :ushort,
+           # max less above fields dword / uint 4 bytes, ushort 2 bytes
+           # technically a WCHAR buffer, but we care about size in bytes here
+           :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 16]
   end
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa364980(v=vs.85).aspx

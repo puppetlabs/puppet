@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/interface'
@@ -232,7 +231,7 @@ describe Puppet::Interface::ActionManager do
           when_invoked do |options| true end
           default
         }
-      }.to raise_error /cannot both be default/
+      }.to raise_error(/cannot both be default/)
     end
   end
 

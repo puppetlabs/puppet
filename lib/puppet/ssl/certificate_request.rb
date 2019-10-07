@@ -30,19 +30,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
   extend Puppet::Indirector
 
-  # If auto-signing is on, sign any certificate requests as they are saved.
-  module AutoSigner
-    def save(instance, key = nil)
-      super
-
-      # Try to autosign the CSR.
-      if ca = Puppet::SSL::CertificateAuthority.instance
-        ca.autosign(instance)
-      end
-    end
-  end
-
-  indirects :certificate_request, :terminus_class => :file, :extend => AutoSigner, :doc => <<DOC
+  indirects :certificate_request, :terminus_class => :file, :doc => <<DOC
     This indirection wraps an `OpenSSL::X509::Request` object, representing a certificate signing request (CSR).
     The indirection key is the certificate CN (generally a hostname).
 DOC
@@ -87,7 +75,17 @@ DOC
     csr = OpenSSL::X509::Request.new
     csr.version = 0
     csr.subject = OpenSSL::X509::Name.new([["CN", common_name]])
-    csr.public_key = key.public_key
+
+    csr.public_key = if key.is_a?(OpenSSL::PKey::EC)
+                       # EC#public_key doesn't follow the PKey API,
+                       # see https://github.com/ruby/openssl/issues/29
+                       point = key.public_key
+                       pubkey = OpenSSL::PKey::EC.new(point.group)
+                       pubkey.public_key = point
+                       pubkey
+                     else
+                       key.public_key
+                     end
 
     if options[:csr_attributes]
       add_csr_attributes(csr, options[:csr_attributes])
@@ -100,16 +98,20 @@ DOC
     signer = Puppet::SSL::CertificateSigner.new
     signer.sign(csr, key)
 
-    raise Puppet::Error, _("CSR sign verification failed; you need to clean the certificate request for %{name} on the server") % { name: name } unless csr.verify(key.public_key)
+    raise Puppet::Error, _("CSR sign verification failed; you need to clean the certificate request for %{name} on the server") % { name: name } unless csr.verify(csr.public_key)
 
     @content = csr
-    Puppet.info _("Certificate Request fingerprint (%{digest}): %{hex_digest}") % { digest: digest.name, hex_digest: digest.to_hex }
+
+    # we won't be able to get the digest on jruby
+    if @content.signature_algorithm
+      Puppet.info _("Certificate Request fingerprint (%{digest}): %{hex_digest}") % { digest: digest.name, hex_digest: digest.to_hex }
+    end
     @content
   end
 
   def ext_value_to_ruby_value(asn1_arr)
     # A list of ASN1 types than can't be directly converted to a Ruby type
-    @non_convertable ||= [OpenSSL::ASN1::EndOfContent,
+    @non_convertible ||= [OpenSSL::ASN1::EndOfContent,
                           OpenSSL::ASN1::BitString,
                           OpenSSL::ASN1::Null,
                           OpenSSL::ASN1::Enumerated,
@@ -130,7 +132,7 @@ DOC
     # type, use the original ASN1 value. This is needed to work around a bug
     # in Ruby's OpenSSL library which doesn't convert the value of unknown
     # extension OIDs properly. See PUP-3560
-    if @non_convertable.include?(asn1_val.class) then
+    if @non_convertible.include?(asn1_val.class) then
       # Allows OpenSSL to take the ASN1 value and turn it into something Ruby understands
       OpenSSL::X509::Extension.new(asn1_arr.first.value, asn1_val.to_der).value
     else
@@ -238,8 +240,6 @@ DOC
     end
   end
 
-  private
-
   PRIVATE_EXTENSIONS = [
     'subjectAltName', '2.5.29.17',
   ]
@@ -264,9 +264,17 @@ DOC
     end
 
     if options[:dns_alt_names]
-      names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
-      names = names.sort.uniq.map {|name| "DNS:#{name}" }.join(", ")
-      alt_names_ext = extension_factory.create_extension("subjectAltName", names, false)
+      raw_names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
+
+      parsed_names = raw_names.map do |name|
+        if !name.start_with?("IP:") && !name.start_with?("DNS:")
+          "DNS:#{name}"
+        else
+          name
+        end
+      end.sort.uniq.join(", ")
+
+      alt_names_ext = extension_factory.create_extension("subjectAltName", parsed_names, false)
 
       extensions << alt_names_ext
     end

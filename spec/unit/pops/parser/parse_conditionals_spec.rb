@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
 
@@ -112,6 +111,18 @@ describe "egrammar parsing conditionals" do
     it "$a = $b ? { default => wat, banana => fruit, grape => berry,  }" do
       expect(dump(parse("$a = $b ? {default => wat, banana => fruit, grape => berry}"))).to eq(
       "(= $a (? $b (:default => wat) (banana => fruit) (grape => berry)))"
+      )
+    end
+
+    it '1+2 ? 3 => yes' do
+      expect(dump(parse("1+2 ? 3 => yes"))).to eq(
+      "(? (+ 1 2) (3 => yes))"
+      )
+    end
+
+    it 'true and 1+2 ? 3 => yes' do
+      expect(dump(parse("true and 1+2 ? 3 => yes"))).to eq(
+      "(&& true (? (+ 1 2) (3 => yes)))"
       )
     end
   end

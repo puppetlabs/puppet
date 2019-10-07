@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet_spec/scope'
@@ -42,6 +41,25 @@ describe Puppet::Parser::Scope do
     expect(@scope.inspect).to eq("Scope(foo::bar)")
   end
 
+  it "should generate a path if there is one on the puppet stack" do
+    result = Puppet::Pops::PuppetStack.stack('/tmp/kansas.pp', 42, @scope, 'inspect', [])
+    expect(result).to eq("Scope(/tmp/kansas.pp, 42)")
+  end
+
+  it "should generate an <env> shortened path if path points into the environment" do
+    env_path = @scope.environment.configuration.path_to_env
+    mocked_path = File.join(env_path, 'oz.pp')
+    result = Puppet::Pops::PuppetStack.stack(mocked_path, 42, @scope, 'inspect', [])
+
+    expect(result).to eq("Scope(<env>/oz.pp, 42)")
+  end
+
+  it "should generate a <module> shortened path if path points into a module" do
+    mocked_path = File.join(@scope.environment.full_modulepath[0], 'mymodule', 'oz.pp')
+    result = Puppet::Pops::PuppetStack.stack(mocked_path, 42, @scope, 'inspect', [])
+    expect(result).to eq("Scope(<module>/mymodule/oz.pp, 42)")
+  end
+
   it "should return a scope for use in a test harness" do
     expect(create_test_scope_for_node("node_name_foo")).to be_a_kind_of(Puppet::Parser::Scope)
   end
@@ -52,8 +70,8 @@ describe Puppet::Parser::Scope do
   end
 
   it "should be able to retrieve class scopes by object" do
-    klass = mock 'ast_class'
-    klass.expects(:name).returns("myname")
+    klass = double('ast_class')
+    expect(klass).to receive(:name).and_return("myname")
     @scope.class_set "myname", "myscope"
     expect(@scope.class_scope(klass)).to eq("myscope")
   end
@@ -74,7 +92,7 @@ describe Puppet::Parser::Scope do
 
   it "should get its environment from its compiler" do
     env = Puppet::Node::Environment.create(:testing, [])
-    compiler = stub 'compiler', :environment => env, :is_a? => true
+    compiler = double('compiler', :environment => env, :is_a? => true)
     scope = Puppet::Parser::Scope.new(compiler)
     expect(scope.environment).to equal(env)
   end
@@ -127,7 +145,7 @@ describe Puppet::Parser::Scope do
     it "should extend itself with its environment's Functions module as well as the default" do
       env = Puppet::Node::Environment.create(:myenv, [])
       root = Puppet.lookup(:root_environment)
-      compiler = stub 'compiler', :environment => env, :is_a? => true
+      compiler = double('compiler', :environment => env, :is_a? => true)
 
       scope = Puppet::Parser::Scope.new(compiler)
       expect(scope.singleton_class.ancestors).to be_include(Puppet::Parser::Functions.environment_module(env))
@@ -205,22 +223,22 @@ describe Puppet::Parser::Scope do
     end
 
     it "warns and return nil for non found unqualified variable" do
-      Puppet.expects(:warn_once)
+      expect(Puppet).to receive(:warn_once)
       expect(@scope["santa_clause"]).to be_nil
     end
 
     it "warns once for a non found variable" do
-      Puppet.expects(:warning).once
+      expect(Puppet).to receive(:send_log).with(:warning, be_a(String)).once
       expect([@scope["santa_claus"],@scope["santa_claus"]]).to eq([nil, nil])
     end
 
     it "warns and return nil for non found qualified variable" do
-      Puppet.expects(:warn_once)
+      expect(Puppet).to receive(:warn_once)
       expect(@scope["north_pole::santa_clause"]).to be_nil
     end
 
     it "does not warn when a numeric variable is missing - they always exist" do
-      Puppet.expects(:warn_once).never
+      expect(Puppet).not_to receive(:warn_once)
       expect(@scope["1"]).to be_nil
     end
 
@@ -242,13 +260,13 @@ describe Puppet::Parser::Scope do
         catalog = Puppet::Resource::Catalog.new
         catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new(@compiler)))
 
-        Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source'), :catalog => catalog).evaluate
+        Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => double('source'), :catalog => catalog).evaluate
 
         @scope.class_scope(klass)
       end
 
       it "should be able to look up explicitly fully qualified variables from compiler's top scope" do
-        Puppet.expects(:deprecation_warning).never
+        expect(Puppet).not_to receive(:deprecation_warning)
         other_scope = @scope.compiler.topscope
 
         other_scope["othervar"] = "otherval"
@@ -257,7 +275,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up explicitly fully qualified variables from other scopes" do
-        Puppet.expects(:deprecation_warning).never
+        expect(Puppet).not_to receive(:deprecation_warning)
         other_scope = create_class_scope("other")
 
         other_scope["var"] = "otherval"
@@ -266,7 +284,7 @@ describe Puppet::Parser::Scope do
       end
 
       it "should be able to look up deeply qualified variables" do
-        Puppet.expects(:deprecation_warning).never
+        expect(Puppet).not_to receive(:deprecation_warning)
         other_scope = create_class_scope("other::deep::klass")
 
         other_scope["var"] = "otherval"
@@ -275,19 +293,19 @@ describe Puppet::Parser::Scope do
       end
 
       it "should return nil for qualified variables that cannot be found in other classes" do
-        other_scope = create_class_scope("other::deep::klass")
+        create_class_scope("other::deep::klass")
 
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
       it "should warn and return nil for qualified variables whose classes have not been evaluated" do
-        klass = newclass("other::deep::klass")
-        Puppet.expects(:warn_once)
+        newclass("other::deep::klass")
+        expect(Puppet).to receive(:warn_once)
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
       it "should warn and return nil for qualified variables whose classes do not exist" do
-        Puppet.expects(:warn_once)
+        expect(Puppet).to receive(:warn_once)
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
 
@@ -296,8 +314,8 @@ describe Puppet::Parser::Scope do
       end
 
       it "should return nil when asked for a non-string qualified variable from a class that has not been evaluated" do
-        @scope.stubs(:warning)
-        klass = newclass("other::deep::klass")
+        allow(@scope).to receive(:warning)
+        newclass("other::deep::klass")
         expect(@scope["other::deep::klass::var"]).to be_nil
       end
     end
@@ -518,10 +536,10 @@ describe Puppet::Parser::Scope do
 
   describe "when setting ephemeral vars from matches" do
     before :each do
-      @match = stub 'match', :is_a? => true
-      @match.stubs(:[]).with(0).returns("this is a string")
-      @match.stubs(:captures).returns([])
-      @scope.stubs(:setvar)
+      @match = double('match', :is_a? => true)
+      allow(@match).to receive(:[]).with(0).and_return("this is a string")
+      allow(@match).to receive(:captures).and_return([])
+      allow(@scope).to receive(:setvar)
     end
 
     it "should accept only MatchData" do
@@ -532,27 +550,32 @@ describe Puppet::Parser::Scope do
 
     it "should set $0 with the full match" do
       # This is an internal impl detail test
-      @scope.expects(:new_match_scope).with { |*arg| arg[0][0] == "this is a string" }
+      expect(@scope).to receive(:new_match_scope) do |arg|
+        expect(arg[0]).to eq("this is a string")
+      end
       @scope.ephemeral_from(@match)
     end
 
     it "should set every capture as ephemeral var" do
       # This is an internal impl detail test
-      @match.stubs(:[]).with(1).returns(:capture1)
-      @match.stubs(:[]).with(2).returns(:capture2)
-      @scope.expects(:new_match_scope).with { |*arg| arg[0][1] == :capture1 && arg[0][2] == :capture2 }
+      allow(@match).to receive(:[]).with(1).and_return(:capture1)
+      allow(@match).to receive(:[]).with(2).and_return(:capture2)
+      expect(@scope).to receive(:new_match_scope) do |arg|
+        expect(arg[1]).to eq(:capture1)
+        expect(arg[2]).to eq(:capture2)
+      end
 
       @scope.ephemeral_from(@match)
     end
 
     it "should shadow previous match variables" do
       # This is an internal impl detail test
-      @match.stubs(:[]).with(1).returns(:capture1)
-      @match.stubs(:[]).with(2).returns(:capture2)
+      allow(@match).to receive(:[]).with(1).and_return(:capture1)
+      allow(@match).to receive(:[]).with(2).and_return(:capture2)
 
-      @match2 = stub 'match', :is_a? => true
-      @match2.stubs(:[]).with(1).returns(:capture2_1)
-      @match2.stubs(:[]).with(2).returns(nil)
+      @match2 = double('match', :is_a? => true)
+      allow(@match2).to receive(:[]).with(1).and_return(:capture2_1)
+      allow(@match2).to receive(:[]).with(2).and_return(nil)
       @scope.ephemeral_from(@match)
       @scope.ephemeral_from(@match2)
       expect(@scope.lookupvar('2')).to eq(nil)
@@ -567,13 +590,13 @@ describe Puppet::Parser::Scope do
 
   describe "when managing defaults" do
     it "should be able to set and lookup defaults" do
-      param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
+      param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => double("source"))
       @scope.define_settings(:mytype, param)
       expect(@scope.lookupdefaults(:mytype)).to eq({:myparam => param})
     end
 
     it "should fail if a default is already defined and a new default is being defined" do
-      param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
+      param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => double("source"))
       @scope.define_settings(:mytype, param)
       expect {
         @scope.define_settings(:mytype, param)
@@ -581,20 +604,20 @@ describe Puppet::Parser::Scope do
     end
 
     it "should return multiple defaults at once" do
-      param1 = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
+      param1 = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => double("source"))
       @scope.define_settings(:mytype, param1)
-      param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => stub("source"))
+      param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => double("source"))
       @scope.define_settings(:mytype, param2)
 
       expect(@scope.lookupdefaults(:mytype)).to eq({:myparam => param1, :other => param2})
     end
 
     it "should look up defaults defined in parent scopes" do
-      param1 = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
+      param1 = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => double("source"))
       @scope.define_settings(:mytype, param1)
 
       child_scope = @scope.newscope
-      param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => stub("source"))
+      param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => double("source"))
       child_scope.define_settings(:mytype, param2)
 
       expect(child_scope.lookupdefaults(:mytype)).to eq({:myparam => param1, :other => param2})

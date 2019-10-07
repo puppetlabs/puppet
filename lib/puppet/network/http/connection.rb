@@ -1,9 +1,10 @@
-require 'net/https'
+require 'puppet/ssl/openssl_loader'
 require 'puppet/ssl/host'
-require 'puppet/ssl/configuration'
 require 'puppet/ssl/validator'
 require 'puppet/network/http'
 require 'uri'
+require 'date'
+require 'time'
 
 module Puppet::Network::HTTP
 
@@ -24,7 +25,8 @@ module Puppet::Network::HTTP
 
     OPTION_DEFAULTS = {
       :use_ssl => true,
-      :verify => nil,
+      :verify => nil, # Puppet::SSL::Validator is deprecated
+      :verifier => nil,
       :redirect_limit => 10,
     }
 
@@ -55,7 +57,17 @@ module Puppet::Network::HTTP
 
       options = OPTION_DEFAULTS.merge(options)
       @use_ssl = options[:use_ssl]
-      @verify = options[:verify]
+      if @use_ssl
+        if options[:verifier]
+          unless options[:verifier].is_a?(Puppet::SSL::Verifier)
+            raise ArgumentError, _("Expected an instance of Puppet::SSL::Verifier but was passed a %{klass}") % { klass: options[:verifier].class }
+          end
+
+          @verifier = options[:verifier]
+        else
+          @verifier = Puppet::SSL::VerifierAdapter.new(options[:verify])
+        end
+      end
       @redirect_limit = options[:redirect_limit]
       @site = Puppet::Network::HTTP::Site.new(@use_ssl ? 'https' : 'http', host, port)
       @pool = Puppet.lookup(:http_pool)
@@ -75,7 +87,7 @@ module Puppet::Network::HTTP
     # @!macro common_options
     # @api public
     def get(path, headers = {}, options = {})
-      request_with_redirects(Net::HTTP::Get.new(path, headers), options)
+      do_request(Net::HTTP::Get.new(path, headers), options)
     end
 
     # @param path [String]
@@ -86,7 +98,7 @@ module Puppet::Network::HTTP
     def post(path, data, headers = nil, options = {})
       request = Net::HTTP::Post.new(path, headers)
       request.body = data
-      request_with_redirects(request, options)
+      do_request(request, options)
     end
 
     # @param path [String]
@@ -94,7 +106,7 @@ module Puppet::Network::HTTP
     # @!macro common_options
     # @api public
     def head(path, headers = {}, options = {})
-      request_with_redirects(Net::HTTP::Head.new(path, headers), options)
+      do_request(Net::HTTP::Head.new(path, headers), options)
     end
 
     # @param path [String]
@@ -102,7 +114,7 @@ module Puppet::Network::HTTP
     # @!macro common_options
     # @api public
     def delete(path, headers = {'Depth' => 'Infinity'}, options = {})
-      request_with_redirects(Net::HTTP::Delete.new(path, headers), options)
+      do_request(Net::HTTP::Delete.new(path, headers), options)
     end
 
     # @param path [String]
@@ -113,7 +125,7 @@ module Puppet::Network::HTTP
     def put(path, data, headers = nil, options = {})
       request = Net::HTTP::Put.new(path, headers)
       request.body = data
-      request_with_redirects(request, options)
+      do_request(request, options)
     end
 
     def request(method, *args)
@@ -129,20 +141,26 @@ module Puppet::Network::HTTP
     # future we may want to refactor these so that they are funneled through
     # that method and do inherit the error handling.
     def request_get(*args, &block)
-      with_connection(@site) do |connection|
-        connection.request_get(*args, &block)
+      with_connection(@site) do |http|
+        resp = http.request_get(*args, &block)
+        Puppet.debug("HTTP GET #{@site}#{args.first.split('?').first} returned #{resp.code} #{resp.message}")
+        resp
       end
     end
 
     def request_head(*args, &block)
-      with_connection(@site) do |connection|
-        connection.request_head(*args, &block)
+      with_connection(@site) do |http|
+        resp = http.request_head(*args, &block)
+        Puppet.debug("HTTP HEAD #{@site}#{args.first.split('?').first} returned #{resp.code} #{resp.message}")
+        resp
       end
     end
 
     def request_post(*args, &block)
-      with_connection(@site) do |connection|
-        connection.request_post(*args, &block)
+      with_connection(@site) do |http|
+        resp = http.request_post(*args, &block)
+        Puppet.debug("HTTP POST #{@site}#{args.first.split('?').first} returned #{resp.code} #{resp.message}")
+        resp
       end
     end
     # end of Net::HTTP#request_* proxies
@@ -162,9 +180,14 @@ module Puppet::Network::HTTP
       @site.use_ssl?
     end
 
+    # @api private
+    def verifier
+      @verifier
+    end
+
     private
 
-    def request_with_redirects(request, options)
+    def do_request(request, options)
       current_request = request
       current_site = @site
       response = nil
@@ -177,9 +200,9 @@ module Puppet::Network::HTTP
 
           current_response = execute_request(connection, current_request)
 
-          if [301, 302, 307].include?(current_response.code.to_i)
-
-            # handle the redirection
+          case current_response.code.to_i
+          when 301, 302, 307
+            # handle redirection
             location = URI.parse(current_response['location'])
             current_site = current_site.move_to(location)
 
@@ -189,6 +212,8 @@ module Puppet::Network::HTTP
             request.each do |header, value|
               current_request[header] = value
             end
+          when 429, 503
+            response = handle_retry_after(current_response)
           else
             response = current_response
           end
@@ -200,6 +225,90 @@ module Puppet::Network::HTTP
       raise RedirectionLimitExceededException, _("Too many HTTP redirections for %{host}:%{port}") % { host: @host, port: @port }
     end
 
+    # Handles the Retry-After header of a HTTPResponse
+    #
+    # This method checks the response for a Retry-After header and handles
+    # it by sleeping for the indicated number of seconds. The response is
+    # returned unmodified if no Retry-After header is present.
+    #
+    # @param response [Net::HTTPResponse] A response received from the
+    #   HTTP client.
+    #
+    # @return [nil] Sleeps and returns nil if the response contained a
+    #   Retry-After header that indicated the request should be retried.
+    # @return [Net::HTTPResponse] Returns the `response` unmodified if
+    #   no Retry-After header was present or the Retry-After header could
+    #   not be parsed as an integer or RFC 2822 date.
+    def handle_retry_after(response)
+      retry_after = response['Retry-After']
+      return response if retry_after.nil?
+
+      retry_sleep = parse_retry_after_header(retry_after)
+      # Recover remote hostname if Net::HTTPResponse was generated by a
+      # method that fills in the uri attribute.
+      #
+      server_hostname = if response.uri.is_a?(URI)
+                          response.uri.host
+                        else
+                          # TRANSLATORS: Used in the phrase:
+                          # "Received a response from the remote server."
+                          _('the remote server')
+                        end
+
+      if retry_sleep.nil?
+        Puppet.err(_('Received a %{status_code} response from %{server_hostname}, but the Retry-After header value of "%{retry_after}" could not be converted to an integer or RFC 2822 date.') %
+                   {status_code: response.code,
+                    server_hostname: server_hostname,
+                    retry_after: retry_after.inspect})
+
+        return response
+      end
+
+      # Cap maximum sleep at the run interval of the Puppet agent.
+      retry_sleep = [retry_sleep, Puppet[:runinterval]].min
+
+      Puppet.warning(_('Received a %{status_code} response from %{server_hostname}. Sleeping for %{retry_sleep} seconds before retrying the request.') %
+                     {status_code: response.code,
+                      server_hostname: server_hostname,
+                      retry_sleep: retry_sleep})
+
+      ::Kernel.sleep(retry_sleep)
+
+      return nil
+    end
+
+    # Parse the value of a Retry-After header
+    #
+    # Parses a string containing an Integer or RFC 2822 datestamp and returns
+    # an integer number of seconds before a request can be retried.
+    #
+    # @param header_value [String] The value of the Retry-After header.
+    #
+    # @return [Integer] Number of seconds to wait before retrying the
+    #   request. Will be equal to 0 for the case of date that has already
+    #   passed.
+    # @return [nil] Returns `nil` when the `header_value` can't be
+    #   parsed as an Integer or RFC 2822 date.
+    def parse_retry_after_header(header_value)
+      retry_after = begin
+                      Integer(header_value)
+                    rescue TypeError, ArgumentError
+                      begin
+                        DateTime.rfc2822(header_value)
+                      rescue ArgumentError
+                        return nil
+                      end
+                    end
+
+      case retry_after
+      when Integer
+        retry_after
+      when DateTime
+        sleep = (retry_after.to_time - DateTime.now.to_time).to_i
+        (sleep > 0) ? sleep : 0
+      end
+    end
+
     def apply_options_to(request, options)
       request["User-Agent"] = Puppet[:http_user_agent]
 
@@ -209,31 +318,34 @@ module Puppet::Network::HTTP
     end
 
     def execute_request(connection, request)
-      connection.request(request)
+      start = Time.now
+      resp = connection.request(request)
+      Puppet.debug("HTTP #{request.method.upcase} #{@site}#{request.path.split('?').first} returned #{resp.code} #{resp.message}")
+      resp
+    rescue => exception
+      elapsed = (Time.now - start).to_f.round(3)
+      uri = [@site.addr, request.path.split('?')[0]].join('/')
+      eclass = exception.class
+
+      err = case exception
+            when EOFError
+              eclass.new(_('request %{uri} interrupted after %{elapsed} seconds') % {uri: uri, elapsed: elapsed})
+            when Timeout::Error
+              eclass.new(_('request %{uri} timed out after %{elapsed} seconds') % {uri: uri, elapsed: elapsed})
+            else
+              eclass.new(_('request %{uri} failed: %{msg}') % {uri: uri, msg: exception.message})
+            end
+
+      err.set_backtrace(exception.backtrace) unless exception.backtrace.empty?
+      raise err
     end
 
     def with_connection(site, &block)
       response = nil
-      @pool.with_connection(site, @verify) do |conn|
+      @pool.with_connection(site, @verifier) do |conn|
         response = yield conn
       end
       response
-    rescue OpenSSL::SSL::SSLError => error
-      # can be nil
-      peer_cert = @verify.peer_certs.last
-
-      if peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert.content, site.host)
-        valid_certnames = [peer_cert.name, *peer_cert.subject_alt_names].uniq
-        msg = valid_certnames.length > 1 ? _("one of %{certnames}") % { certnames: valid_certnames.join(', ') } : valid_certnames.first
-        msg += _("Server hostname '%{host}' did not match server certificate; expected %{msg}") % { host: site.host, msg: msg }
-        raise Puppet::Error, msg, error.backtrace
-      elsif error.message.include? "certificate verify failed"
-        msg = error.message
-        msg << ": [" + @verify.verify_errors.join('; ') + "]"
-        raise Puppet::Error, msg, error.backtrace
-      else
-        raise
-      end
     end
   end
 end

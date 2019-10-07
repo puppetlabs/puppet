@@ -19,43 +19,25 @@ rescue LoadError
 end
 
 require 'rake'
+require 'open3'
 
 Dir['tasks/**/*.rake'].each { |t| load t }
 
-begin
-  load File.join(RAKE_ROOT, 'ext', 'packaging', 'packaging.rake')
-rescue LoadError
+if Rake.application.top_level_tasks.grep(/^(pl:|package:)/).any?
+  begin
+    require 'packaging'
+    Pkg::Util::RakeUtils.load_packaging_tasks
+  rescue LoadError => e
+    puts "Error loading packaging rake tasks: #{e}"
+  end
 end
 
-build_defs_file = 'ext/build_defaults.yaml'
-if File.exist?(build_defs_file)
-  begin
-    require 'yaml'
-    @build_defaults ||= YAML.load_file(build_defs_file)
-  rescue Exception => e
-    STDERR.puts "Unable to load yaml from #{build_defs_file}:"
-    STDERR.puts e
+namespace :package do
+  task :bootstrap do
+    puts 'Bootstrap is no longer needed, using packaging-as-a-gem'
   end
-  @packaging_url  = @build_defaults['packaging_url']
-  @packaging_repo = @build_defaults['packaging_repo']
-  raise "Could not find packaging url in #{build_defs_file}" if @packaging_url.nil?
-  raise "Could not find packaging repo in #{build_defs_file}" if @packaging_repo.nil?
-
-  namespace :package do
-    desc "Bootstrap packaging automation, e.g. clone into packaging repo"
-    task :bootstrap do
-      if File.exist?("ext/#{@packaging_repo}")
-        puts "It looks like you already have ext/#{@packaging_repo}. If you don't like it, blow it away with package:implode."
-      else
-        cd 'ext' do
-          %x{git clone #{@packaging_url}}
-        end
-      end
-    end
-    desc "Remove all cloned packaging automation"
-    task :implode do
-      rm_rf "ext/#{@packaging_repo}"
-    end
+  task :implode do
+    puts 'Implode is no longer needed, using packaging-as-a-gem'
   end
 end
 
@@ -64,6 +46,7 @@ task :default do
 end
 
 task :spec do
+  ENV["LOG_SPEC_ORDER"] = "true"
   sh %{rspec #{ENV['TEST'] || ENV['TESTS'] || 'spec'}}
 end
 
@@ -88,14 +71,16 @@ task(:commits) do
   %x{git log --no-merges --pretty=%s #{commit_range}}.each_line do |commit_summary|
     # This regex tests for the currently supported commit summary tokens: maint, doc, packaging, or pup-<number>.
     # The exception tries to explain it in more full.
-    if /^\((maint|doc|docs|packaging|pup-\d+)\)|revert/i.match(commit_summary).nil?
+    if /^\((maint|doc|docs|packaging|l10n|pup-\d+)\)|revert/i.match(commit_summary).nil?
       raise "\n\n\n\tThis commit summary didn't match CONTRIBUTING.md guidelines:\n" \
         "\n\t\t#{commit_summary}\n" \
         "\tThe commit summary (i.e. the first line of the commit message) should start with one of:\n"  \
-        "\t\t(pup-<digits>) # this is most common and should be a ticket at tickets.puppetlabs.com\n" \
+        "\t\t(PUP-<digits>) # this is most common and should be a ticket at tickets.puppet.com\n" \
         "\t\t(docs)\n" \
+        "\t\t(docs)(DOCUMENT-<digits>)\n" \
         "\t\t(maint)\n" \
         "\t\t(packaging)\n" \
+        "\t\t(L10n)\n" \
         "\n\tThis test for the commit summary is case-insensitive.\n\n\n"
     else
       puts "#{commit_summary}"
@@ -104,9 +89,39 @@ task(:commits) do
   end
 end
 
-begin
-  spec = Gem::Specification.find_by_name 'gettext-setup'
-  load "#{spec.gem_dir}/lib/tasks/gettext.rake"
-  GettextSetup.initialize(File.absolute_path('locales', File.dirname(__FILE__)))
-rescue LoadError
+desc "verify that changed files are clean of Ruby warnings"
+task(:warnings) do
+  # This rake task looks at all files modified in this branch. This is
+  # accomplished by using the TRAVIS_COMMIT_RANGE environment variable, which
+  # is present in travis CI and populated with the range of commits the PR
+  # contains. If not available, this falls back to `master..HEAD` as a next
+  # best bet as `master` is unlikely to ever be absent.
+  commit_range = ENV['TRAVIS_COMMIT_RANGE'].nil? ? 'master...HEAD' : ENV['TRAVIS_COMMIT_RANGE']
+  ruby_files_ok = true
+  puts "Checking modified files #{commit_range}"
+  %x{git diff --diff-filter=ACM --name-only #{commit_range}}.each_line do |modified_file|
+    modified_file.chomp!
+    # Skip racc generated file as it can have many warnings that cannot be manually fixed
+    next if modified_file.end_with?("pops/parser/eparser.rb")
+    next if modified_file.start_with?('spec/fixtures/', 'acceptance/fixtures/') || File.extname(modified_file) != '.rb'
+    puts modified_file
+
+    stdout, stderr, _ = Open3.capture3("ruby -wc \"#{modified_file}\"")
+    unless stderr.empty?
+      ruby_files_ok = false
+      puts stderr
+    end
+    puts stdout
+  end
+  raise "One or more ruby files contain warnings." unless ruby_files_ok
+end
+
+if Rake.application.top_level_tasks.grep(/^gettext:/).any?
+  begin
+    spec = Gem::Specification.find_by_name 'gettext-setup'
+    load "#{spec.gem_dir}/lib/tasks/gettext.rake"
+    GettextSetup.initialize(File.absolute_path('locales', File.dirname(__FILE__)))
+  rescue LoadError
+    abort("Run `bundle install --with documentation` to install the `gettext-setup` gem.")
+  end
 end

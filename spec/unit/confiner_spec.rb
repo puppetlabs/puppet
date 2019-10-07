@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/confiner'
@@ -22,15 +21,15 @@ describe Puppet::Confiner do
   end
 
   it "should delegate its confine method to its confine collection" do
-    coll = mock 'collection'
-    @object.stubs(:confine_collection).returns coll
-    coll.expects(:confine).with(:foo => :bar, :bee => :baz)
+    coll = double('collection')
+    allow(@object).to receive(:confine_collection).and_return(coll)
+    expect(coll).to receive(:confine).with(:foo => :bar, :bee => :baz)
     @object.confine(:foo => :bar, :bee => :baz)
   end
 
   it "should create a new confine collection if one does not exist" do
-    Puppet::ConfineCollection.expects(:new).with("mylabel").returns "mycoll"
-    @object.expects(:to_s).returns "mylabel"
+    expect(Puppet::ConfineCollection).to receive(:new).with("mylabel").and_return("mycoll")
+    expect(@object).to receive(:to_s).and_return("mylabel")
     expect(@object.confine_collection).to eq("mycoll")
   end
 
@@ -40,22 +39,22 @@ describe Puppet::Confiner do
 
   describe "when testing suitability" do
     before do
-      @coll = mock 'collection'
-      @object.stubs(:confine_collection).returns @coll
+      @coll = double('collection')
+      allow(@object).to receive(:confine_collection).and_return(@coll)
     end
 
     it "should return true if the confine collection is valid" do
-      @coll.expects(:valid?).returns true
+      expect(@coll).to receive(:valid?).and_return(true)
       expect(@object).to be_suitable
     end
 
     it "should return false if the confine collection is invalid" do
-      @coll.expects(:valid?).returns false
+      expect(@coll).to receive(:valid?).and_return(false)
       expect(@object).not_to be_suitable
     end
 
     it "should return the summary of the confine collection if a long result is asked for" do
-      @coll.expects(:summary).returns "myresult"
+      expect(@coll).to receive(:summary).and_return("myresult")
       expect(@object.suitable?(false)).to eq("myresult")
     end
   end

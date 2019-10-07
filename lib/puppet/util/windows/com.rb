@@ -76,8 +76,9 @@ module Puppet::Util::Windows::COM
           vtable_hash = Hash[(ifaces.map { |iface| iface::VTBL::SPEC.to_a } << spec.to_a).flatten(1)]
           const_set(:SPEC, vtable_hash)
 
-          layout \
+          layout(
             *self::SPEC.map { |name, signature| [name, callback(*signature)] }.flatten
+          )
         end
 
         const_set(:VTBL, vtable)

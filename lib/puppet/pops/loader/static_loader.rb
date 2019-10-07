@@ -6,57 +6,21 @@ module Loader
 class StaticLoader < Loader
 
   BUILTIN_TYPE_NAMES = %w{
-      Auegas
       Component
-      Computer
-      Cron
       Exec
       File
       Filebucket
       Group
-      Host
-      Interface
-      K5login
-      Macauthorization
-      Mailalias
-      Maillist
-      Mcx
-      Mount
-      Nagios_command
-      Nagios_contact
-      Nagios_contactgroup
-      Nagios_host
-      Nagios_hostdependency
-      Nagios_hostescalation
-      Nagios_hostgroup
-      Nagios_hostextinfo
-      Nagios_service
-      Nagios_servicedependency
-      Nagios_serviceescalation
-      Nagios_serviceextinfo
-      Nagios_servicegroup
-      Nagios_timeperiod
       Node
       Notify
       Package
       Resources
-      Router
       Schedule
-      Scheduled_task
-      Selboolean
-      Selmodule
       Service
-      Ssh_authorized_key
-      Sshkey
       Stage
       Tidy
       User
-      Vlan
       Whit
-      Yumrepo
-      Zfs
-      Zone
-      Zpool
     }.freeze
 
   BUILTIN_TYPE_NAMES_LC = Set.new(BUILTIN_TYPE_NAMES.map { |n| n.downcase }).freeze
@@ -64,7 +28,7 @@ class StaticLoader < Loader
   BUILTIN_ALIASES = {
     'Data' => 'Variant[ScalarData,Undef,Hash[String,Data],Array[Data]]',
     'RichDataKey' => 'Variant[String,Numeric]',
-    'RichData' => 'Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Undef,Hash[RichDataKey,RichData],Array[RichData]]',
+    'RichData' => 'Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,URI,Object,Undef,Default,Hash[RichDataKey,RichData],Array[RichData]]',
 
     # Backward compatible aliases.
     'Puppet::LookupKey' => 'RichDataKey',
@@ -74,9 +38,16 @@ class StaticLoader < Loader
   attr_reader :loaded
   def initialize
     @loaded = {}
+    @runtime_3_initialized = false
     create_built_in_types
-    create_resource_type_references
-    register_aliases
+  end
+
+  def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY)
+    # Static loader only contains runtime types
+    return EMPTY_ARRAY unless type == :type && name_authority == name_authority = Pcore::RUNTIME_NAME_AUTHORITY #rubocop:disable Lint/AssignmentInCondition
+
+    typed_names = type == :type && name_authority == Pcore::RUNTIME_NAME_AUTHORITY ? @loaded.keys : EMPTY_ARRAY
+    block_given? ? typed_names.select { |tn| yield(tn) } : typed_names
   end
 
   def load_typed(typed_name)
@@ -108,6 +79,19 @@ class StaticLoader < Loader
     @loaded[typed_name]
   end
 
+  def runtime_3_init
+    unless @runtime_3_initialized
+      @runtime_3_initialized = true
+      create_resource_type_references
+    end
+    nil
+  end
+
+  def register_aliases
+    aliases = BUILTIN_ALIASES.map { |name, string| add_type(name, Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(string), nil)) }
+    aliases.each { |type| type.resolve(self) }
+  end
+
   private
 
   def load_constant(typed_name)
@@ -137,12 +121,6 @@ class StaticLoader < Loader
 
   def create_resource_type_reference(name)
     add_type(name, Types::TypeFactory.resource(name))
-  end
-
-  def register_aliases
-    aliases = BUILTIN_ALIASES.map { |name, string| add_type(name, Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(string), nil)) }
-    parser = Types::TypeParser.singleton
-    aliases.each { |type| type.resolve(parser, self) }
   end
 end
 end

@@ -1,5 +1,8 @@
 test_name 'Ensure hiera lookup occurs if class param is undef' do
 
+  tag 'audit:medium',
+      'audit:unit'    # basic auto lookup functionality
+
   agents.each do |agent|
 
     testdir = agent.tmpdir('undef')

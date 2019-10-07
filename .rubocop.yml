@@ -1,3 +1,6 @@
+require:
+  rubocop-i18n
+
 AllCops:
   Include:
     - 'lib/**/*.rb'
@@ -5,14 +8,12 @@ AllCops:
   Exclude:
     - '**/*.erb'
     - 'acceptance/**/*'
-    - 'autotest/**/*'
     - 'spec/**/*'
     - 'tasks/**/*'
+    - 'ext/suse/puppet.spec'
     - 'lib/puppet/vendor/**/*'
     - 'lib/puppet/parser/parser.rb'
     - 'lib/puppet/pops/parser/eparser.rb'
-    - 'lib/puppet/external/nagios/parser.rb'
-    - 'lib/puppet/module_tool/skeleton/**/*'
     - 'lib/semantic_puppet/dependency/module_release.rb'
 
 Lint/ConditionPosition:
@@ -59,14 +60,8 @@ Style/RedundantParentheses:
 Lint/AmbiguousOperator:
   Enabled: false
 
-# DISABLED since for all the checked, we are basically checking nil
-# TODO: Change the checking so that if the variable being assigned to has
-# a value ALREADY, then raise an error.
-Lint/AssignmentInCondition:
-  Enabled: false
-
 # DISABLED - not useful
-Style/SpaceBeforeComment:
+Layout/SpaceBeforeComment:
   Enabled: false
 
 # DISABLED - not useful
@@ -95,7 +90,7 @@ Lint/AmbiguousRegexpLiteral:
   Enabled: false
 
 # DISABLED
-Lint/Eval:
+Security/Eval:
   Enabled: false
 # DISABLED
 Lint/BlockAlignment:
@@ -133,19 +128,16 @@ Lint/UnusedBlockArgument:
 Lint/UnusedMethodArgument:
   Enabled: false
 
-# DISABLED - TODO
 Lint/UselessAccessModifier:
-  Enabled: false
+  Enabled: true
 
-# DISABLED - TODO
 Lint/UselessAssignment:
-  Enabled: false
+  Enabled: true
 
-# DISABLED - TODO
 Lint/Void:
-  Enabled: false
+  Enabled: true
 
-Style/AccessModifierIndentation:
+Layout/AccessModifierIndentation:
   Enabled: false
 
 Style/AccessorMethodName:
@@ -154,13 +146,13 @@ Style/AccessorMethodName:
 Style/Alias:
   Enabled: false
 
-Style/AlignArray:
+Layout/AlignArray:
   Enabled: false
 
-Style/AlignHash:
+Layout/AlignHash:
   Enabled: false
 
-Style/AlignParameters:
+Layout/AlignParameters:
   Enabled: false
 
 Metrics/BlockNesting:
@@ -178,7 +170,7 @@ Style/BracesAroundHashParameters:
 Style/CaseEquality:
   Enabled: false
 
-Style/CaseIndentation:
+Layout/CaseIndentation:
   Enabled: false
 
 Style/CharacterLiteral:
@@ -213,65 +205,65 @@ Style/WordArray:
 Style/UnneededPercentQ:
   Enabled: false
 
-Style/Tab:
+Layout/Tab:
   Enabled: false
 
-Style/SpaceBeforeSemicolon:
+Layout/SpaceBeforeSemicolon:
   Enabled: false
 
-Style/TrailingBlankLines:
+Layout/TrailingBlankLines:
   Enabled: false
 
-Style/SpaceInsideBlockBraces:
+Layout/SpaceInsideBlockBraces:
   Enabled: false
 
-Style/SpaceInsideBrackets:
+Layout/SpaceInsideBrackets:
   Enabled: false
 
-Style/SpaceInsideHashLiteralBraces:
+Layout/SpaceInsideHashLiteralBraces:
   Enabled: false
 
-Style/SpaceInsideParens:
+Layout/SpaceInsideParens:
   Enabled: false
 
-Style/LeadingCommentSpace:
+Layout/LeadingCommentSpace:
   Enabled: false
 
-Style/SpaceAfterColon:
+Layout/SpaceAfterColon:
   Enabled: false
 
-Style/SpaceAfterComma:
+Layout/SpaceAfterComma:
   Enabled: false
 
-Style/SpaceAroundKeyword:
+Layout/SpaceAroundKeyword:
   Enabled: false
 
-Style/SpaceAfterMethodName:
+Layout/SpaceAfterMethodName:
   Enabled: false
 
-Style/SpaceAfterNot:
+Layout/SpaceAfterNot:
   Enabled: false
 
-Style/SpaceAfterSemicolon:
+Layout/SpaceAfterSemicolon:
   Enabled: false
 
-Style/SpaceAroundEqualsInParameterDefault:
+Layout/SpaceAroundEqualsInParameterDefault:
   Enabled: false
 
-Style/SpaceAroundOperators:
+Layout/SpaceAroundOperators:
   Enabled: false
 
-Style/SpaceBeforeBlockBraces:
+Layout/SpaceBeforeBlockBraces:
   Enabled: false
 
-Style/SpaceBeforeComma:
+Layout/SpaceBeforeComma:
   Enabled: false
 
 
 Style/CollectionMethods:
   Enabled: false
 
-Style/CommentIndentation:
+Layout/CommentIndentation:
   Enabled: false
 
 Style/ColonMethodCall:
@@ -292,10 +284,10 @@ Style/Documentation:
 Style/DefWithParentheses:
   Enabled: false
 
-Style/DeprecatedHashMethods:
+Style/PreferredHashMethods:
   Enabled: false
 
-Style/DotPosition:
+Layout/DotPosition:
   Enabled: false
 
 # DISABLED - used for converting to bool
@@ -305,25 +297,25 @@ Style/DoubleNegation:
 Style/EachWithObject:
   Enabled: false
 
-Style/EmptyLineBetweenDefs:
+Layout/EmptyLineBetweenDefs:
   Enabled: false
 
-Style/IndentArray:
+Layout/IndentArray:
   Enabled: false
 
-Style/IndentHash:
+Layout/IndentHash:
   Enabled: false
 
-Style/IndentationConsistency:
+Layout/IndentationConsistency:
   Enabled: false
 
-Style/IndentationWidth:
+Layout/IndentationWidth:
   Enabled: false
 
-Style/EmptyLines:
+Layout/EmptyLines:
   Enabled: false
 
-Style/EmptyLinesAroundAccessModifier:
+Layout/EmptyLinesAroundAccessModifier:
   Enabled: false
 
 Style/EmptyLiteral:
@@ -332,7 +324,7 @@ Style/EmptyLiteral:
 Metrics/LineLength:
   Enabled: false
 
-Style/MethodCallParentheses:
+Style/MethodCallWithoutArgsParentheses:
   Enabled: false
 
 Style/MethodDefParentheses:
@@ -341,7 +333,7 @@ Style/MethodDefParentheses:
 Style/LineEndConcatenation:
   Enabled: false
 
-Style/TrailingWhitespace:
+Layout/TrailingWhitespace:
   Enabled: false
 
 Style/StringLiterals:
@@ -492,7 +484,7 @@ Metrics/ParameterLists:
 Lint/RequireParentheses:
   Enabled: false
 
-Style/SpaceBeforeFirstArg:
+Layout/SpaceBeforeFirstArg:
   Enabled: false
 
 Style/ModuleFunction:
@@ -513,7 +505,7 @@ Metrics/PerceivedComplexity:
 Style/SymbolProc:
   Enabled: false
 
-Style/SpaceInsideRangeLiteral:
+Layout/SpaceInsideRangeLiteral:
   Enabled: false
 
 Style/InfiniteLoop:
@@ -525,7 +517,7 @@ Style/BarePercentLiterals:
 Style/PercentQLiterals:
   Enabled: false
 
-Style/MultilineBlockLayout:
+Layout/MultilineBlockLayout:
   Enabled: false
 
 Metrics/AbcSize:
@@ -537,22 +529,22 @@ Style/MutableConstant:
 Style/BlockDelimiters:
   Enabled: false
 
-Style/EmptyLinesAroundClassBody:
+Layout/EmptyLinesAroundClassBody:
   Enabled: false
 
 Style/ConditionalAssignment:
   Enabled: false
 
-Style/ExtraSpacing:
+Layout/ExtraSpacing:
   Enabled: false
 
-Style/EmptyLinesAroundBlockBody:
+Layout/EmptyLinesAroundBlockBody:
   Enabled: false
 
-Style/EmptyLinesAroundModuleBody:
+Layout/EmptyLinesAroundModuleBody:
   Enabled: false
 
-Style/MultilineOperationIndentation:
+Layout/MultilineOperationIndentation:
   Enabled: false
 
 Style/EmptyElse:
@@ -561,13 +553,13 @@ Style/EmptyElse:
 Style/StringLiteralsInInterpolation:
   Enabled: false
 
-Style/MultilineMethodCallIndentation:
+Layout/MultilineMethodCallIndentation:
   Enabled: false
 
 Metrics/ModuleLength:
   Enabled: false
 
-Style/EmptyLinesAroundMethodBody:
+Layout/EmptyLinesAroundMethodBody:
   Enabled: false
 
 Lint/IneffectiveAccessModifier:
@@ -576,28 +568,28 @@ Lint/IneffectiveAccessModifier:
 Performance/StringReplacement:
   Enabled: false
 
-Style/ClosingParenthesisIndentation:
+Layout/ClosingParenthesisIndentation:
   Enabled: false
 
 Style/UnneededInterpolation:
   Enabled: false
 
-Style/ElseAlignment:
+Layout/ElseAlignment:
   Enabled: false
 
 Style/FrozenStringLiteralComment:
   Enabled: false
 
-Style/FirstParameterIndentation:
+Layout/FirstParameterIndentation:
   Enabled: false
 
 Style/IfInsideElse:
   Enabled: false
 
-Style/IndentAssignment:
+Layout/IndentAssignment:
   Enabled: false
 
-Style/SpaceAroundBlockParameters:
+Layout/SpaceAroundBlockParameters:
   Enabled: false
 
 Style/ParallelAssignment:
@@ -621,7 +613,7 @@ Performance/Casecmp:
 Lint/NestedMethodDefinition:
   Enabled: false
 
-Style/SpaceInsideStringInterpolation:
+Layout/SpaceInsideStringInterpolation:
   Enabled: false
 
 Performance/RedundantMerge:
@@ -642,7 +634,7 @@ Performance/Count:
 Style/NestedParenthesizedCalls:
   Enabled: false
 
-Style/RescueEnsureAlignment:
+Layout/RescueEnsureAlignment:
   Enabled: false
 
 Lint/DuplicateMethods:
@@ -661,12 +653,12 @@ Performance/DoubleStartEndWith:
   Enabled: false
 
 Performance/RedundantSortBy:
-  Enabled: false
+  Enabled: true
 
 Performance/TimesMap:
   Enabled: false
 
-Style/InitialIndentation:
+Layout/InitialIndentation:
   Enabled: false
 
 Style/StructInheritance:
@@ -681,3 +673,115 @@ Style/IfUnlessModifierOfIfUnless:
 Style/ZeroLengthPredicate:
   Enabled: false
 
+Bundler/OrderedGems:
+  Enabled: false
+
+Layout/EmptyLineAfterMagicComment:
+  Enabled: false
+
+Layout/EmptyLinesAroundBeginBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundExceptionHandlingKeywords:
+  Enabled: false
+
+Layout/IndentHeredoc:
+  Enabled: false
+
+Layout/MultilineArrayBraceLayout:
+  Enabled: false
+
+Layout/MultilineHashBraceLayout:
+  Enabled: false
+
+Layout/MultilineMethodCallBraceLayout:
+  Enabled: false
+
+Layout/MultilineMethodDefinitionBraceLayout:
+  Enabled: false
+
+Layout/SpaceInsidePercentLiteralDelimiters:
+  Enabled: false
+
+Lint/EmptyExpression:
+  Enabled: true
+
+Lint/EmptyWhen:
+  Enabled: false
+
+Lint/InheritException:
+  Enabled: false
+
+Lint/ScriptPermission:
+  Enabled: false
+
+Lint/ShadowedException:
+  Enabled: false
+
+Metrics/BlockLength:
+  Enabled: false
+
+# TODO PUP-8003
+Performance/Caller:
+  Enabled: false
+
+# TODO PUP-8003
+Performance/CompareWithBlock:
+  Enabled: false
+
+Style/EmptyCaseCondition:
+  Enabled: false
+
+Style/EmptyMethod:
+  Enabled: false
+
+Style/FormatStringToken:
+  Enabled: false
+
+Style/InverseMethods:
+  Enabled: false
+
+Style/MethodMissing:
+  Enabled: false
+
+Style/MixinGrouping:
+  Enabled: false
+
+Style/MultilineIfModifier:
+  Enabled: false
+
+Style/MultilineMemoization:
+  Enabled: false
+
+Style/MultipleComparison:
+  Enabled: false
+
+Style/NumericLiteralPrefix:
+  Enabled: false
+
+Style/NumericPredicate:
+  Enabled: false
+
+Style/SymbolArray:
+  Enabled: false
+
+Style/TernaryParentheses:
+  Enabled: false
+
+Style/YodaCondition:
+  Enabled: false
+
+GetText/DecorateFunctionMessage:
+  Enabled: false
+
+GetText/DecorateString:
+  Enabled: false
+
+GetText/DecorateStringFormattingUsingInterpolation:
+  Enabled: true
+
+GetText/DecorateStringFormattingUsingPercent:
+  Enabled: false
+
+Style/SafeNavigation:
+  Enabled: false

@@ -91,7 +91,7 @@ class Parser
   #
   def on_error(token,value,stack)
     if token == 0 # denotes end of file
-      value_at = 'end of file'
+      value_at = 'end of input'
     else
       value_at = "'#{value[:value]}'"
     end
@@ -114,14 +114,23 @@ class Parser
     pos  = nil
     if token != 0
       file = value[:file]
-      line = value[:line]
-      pos  = value[:pos]
+      locator = value.locator
+      if locator.is_a?(Puppet::Pops::Parser::Locator::SubLocator)
+        # The error occurs when doing sub-parsing and the token must be transformed
+        # Transpose the local offset, length to global "coordinates"
+        global_offset, _ = locator.to_global(value.offset, value.length)
+        line = locator.locator.line_for_offset(global_offset)
+        pos = locator.locator.pos_on_line(global_offset)
+      else
+        line = value[:line]
+        pos  = value[:pos]
+      end
     else
       # At end of input, use what the lexer thinks is the source file
       file = lexer.file
     end
     file = nil unless file.is_a?(String) && !file.empty?
-    raise Puppet::ParseErrorWithIssue.new(error, file, line, pos, nil, issue_code = Issues::SYNTAX_ERROR.issue_code)
+    raise Puppet::ParseErrorWithIssue.new(error, file, line, pos, nil, Issues::SYNTAX_ERROR.issue_code)
   end
 
   # Parses a String of pp DSL code.
@@ -219,7 +228,7 @@ class Parser
     # Create a synthetic NOOP token at EOF offset with 0 size. The lexer does not produce an EOF token that is
     # visible to the grammar rules. Creating this token is mainly to reuse the positioning logic as it
     # expects a token decorated with location information.
-    token_sym, token = @lexer.emit_completed([:NOOP,'',0], locator.string.bytesize)
+    _, token = @lexer.emit_completed([:NOOP,'',0], locator.string.bytesize)
     loc(no_op, token)
     # Program with a Noop
     program = Factory.PROGRAM(no_op, [], locator)

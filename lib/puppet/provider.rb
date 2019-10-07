@@ -138,12 +138,11 @@ class Puppet::Provider
   def self.command(name)
     name = name.intern
 
-    if defined?(@commands) and command = @commands[name]
-      # nothing
-    elsif superclass.respond_to? :command and command = superclass.command(name)
-      # nothing
-    else
-      raise Puppet::DevError, "No command #{name} defined for provider #{self.name}"
+    command = @commands[name] if defined?(@commands)    
+    command = superclass.command(name) if !command && superclass.respond_to?(:command)
+
+    unless command
+      raise Puppet::DevError, _("No command %{command} defined for provider %{provider}") % { command: name, provider: self.name }
     end
 
     which(command)
@@ -278,7 +277,12 @@ class Puppet::Provider
   # @see Provider.defaultfor
   # @api private
   def self.default_match
-    @defaults.find do |default|
+    return nil if some_default_match(@notdefaults) # Blacklist means this provider cannot be a default
+    some_default_match(@defaults)
+  end
+
+  def self.some_default_match(defaultlist)
+    defaultlist.find do |default|
       default.all? do |key, values|
         case key
           when :feature
@@ -290,16 +294,26 @@ class Puppet::Provider
     end
   end
 
+  # Compare a fact value against one or more supplied value
+  # @param [Symbol] fact a fact to query to match against one of the given values
+  # @param [Array, Regexp, String] values one or more values to compare to the
+  #   value of the given fact
+  # @return [Boolean] whether or not the fact value matches one of the supplied
+  #   values. Given one or more Regexp instances, fact is compared via the basic
+  #   pattern-matching operator.
   def self.fact_match(fact, values)
-    values = [values] unless values.is_a? Array
-    values.map! { |v| v.to_s.downcase.intern }
-
-    if fval = Facter.value(fact).to_s and fval != ""
-      fval = fval.to_s.downcase.intern
-
-      values.include?(fval)
+    fact_val = Facter.value(fact).to_s.downcase
+    if fact_val.empty?
+      return false
     else
-      false
+      values = [values] unless values.is_a?(Array)
+      values.any? do |value|
+        if value.is_a?(Regexp)
+          fact_val =~ value
+        else
+          fact_val.intern == value.to_s.downcase.intern
+        end
+      end
     end
   end
 
@@ -319,6 +333,10 @@ class Puppet::Provider
     @defaults << hash
   end
 
+  def self.notdefaultfor(hash)
+    @notdefaults << hash
+  end
+
   # @return [Integer] Returns a numeric specificity for this provider based on how many requirements it has
   #  and number of _ancestors_. The higher the number the more specific the provider.
   # The number of requirements is based on the hash size of the matching {Provider.defaultfor}.
@@ -336,6 +354,7 @@ class Puppet::Provider
     # complexity of a provider).
     match = default_match
     length = match ? match.length : 0
+
     (length * 100) + ancestors.select { |a| a.is_a? Class }.length
   end
 
@@ -343,6 +362,7 @@ class Puppet::Provider
   # @return [void]
   def self.initvars
     @defaults = []
+    @notdefaults = []
     @commands = {}
   end
 
@@ -374,7 +394,7 @@ class Puppet::Provider
   # @raise [Puppet::DevError] Error indicating that the method should have been implemented by subclass.
   # @see prefetch
   def self.instances
-    raise Puppet::DevError, "Provider #{self.name} has not defined the 'instances' class method"
+    raise Puppet::DevError, _("To support listing resources of this type the '%{provider}' provider needs to implement an 'instances' class method returning the current set of resources. We recommend porting your module to the simpler Resource API instead: https://puppet.com/search/docs?keys=resource+api") % { provider: self.name }
   end
 
   # Creates getter- and setter- methods for each property supported by the resource type.
@@ -445,11 +465,13 @@ class Puppet::Provider
     if param.is_a?(Class)
       klass = param
     else
-      unless klass = resource_type.attrclass(param)
-        raise Puppet::DevError, "'#{param}' is not a valid parameter for #{resource_type.name}"
+      klass = resource_type.attrclass(param)
+      unless klass
+        raise Puppet::DevError, _("'%{parameter_name}' is not a valid parameter for %{resource_type}") % { parameter_name: param, resource_type: resource_type.name }
       end
     end
-    return true unless features = klass.required_features
+    features = klass.required_features
+    return true unless features
 
     !!satisfies?(*features)
   end
@@ -525,12 +547,13 @@ class Puppet::Provider
   # @raise [Puppet::DevError] if no resource is set, or no name defined.
   #
   def name
-    if n = @property_hash[:name]
+    n = @property_hash[:name]
+    if n
       return n
     elsif self.resource
       resource.name
     else
-      raise Puppet::DevError, "No resource and no name in property hash in #{self.class.name} instance"
+      raise Puppet::DevError, _("No resource and no name in property hash in %{class_name} instance") % { class_name: self.class.name }
     end
   end
 
@@ -600,4 +623,3 @@ class Puppet::Provider
   # @return [void]
   # @api public
 end
-

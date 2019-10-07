@@ -91,7 +91,7 @@ module Validation
   # @api public
   #
   class SeverityProducer
-    @@severity_hash = {:ignore => true, :warning => true, :error => true, :deprecation => true }
+    SEVERITIES = { ignore: true, warning: true, error: true, deprecation: true }.freeze
 
     # Creates a new instance where all issues are diagnosed as :error unless overridden.
     # @param [Symbol] specifies default severity if :error is not wanted as the default
@@ -125,9 +125,15 @@ module Validation
     # @api public
     #
     def []=(issue, level)
-      raise Puppet::DevError.new("Attempt to set validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Issues::Issue
-      raise Puppet::DevError.new("Illegal severity level: #{level} for '#{issue.issue_code}'") unless @@severity_hash[level]
-      raise Puppet::DevError.new("Attempt to demote the hard issue '#{issue.issue_code}' to #{level}") unless issue.demotable? || level == :error
+      unless issue.is_a? Issues::Issue
+        raise Puppet::DevError.new(_("Attempt to set validation severity for something that is not an Issue. (Got %{issue})") % { issue: issue.class })
+      end
+      unless SEVERITIES[level]
+        raise Puppet::DevError.new(_("Illegal severity level: %{level} for '%{issue_code}'") % { issue_code: issue.issue_code, level: level })
+      end
+      unless issue.demotable? || level == :error
+        raise Puppet::DevError.new(_("Attempt to demote the hard issue '%{issue_code}' to %{level}") % { issue_code: issue.issue_code, level: level })
+      end
       @severities[issue] = level
     end
 
@@ -145,14 +151,9 @@ module Validation
     # @api private
     #
     def assert_issue issue
-      raise Puppet::DevError.new("Attempt to get validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Issues::Issue
-    end
-
-    # Checks if the given severity level is valid.
-    # @api private
-    #
-    def assert_severity level
-      raise Puppet::DevError.new("Illegal severity level: #{option}") unless @@severity_hash[level]
+      unless issue.is_a? Issues::Issue
+        raise Puppet::DevError.new(_("Attempt to get validation severity for something that is not an Issue. (Got %{issue})") % { issue: issue.class })
+      end
     end
   end
 
@@ -203,7 +204,8 @@ module Validation
       # Accept an Error as semantic if it supports methods #file(), #line(), and #pos()
       if semantic.is_a?(StandardError)
         unless semantic.respond_to?(:file) && semantic.respond_to?(:line) && semantic.respond_to?(:pos)
-          raise Puppet::DevError("Issue #{issue.issue_code}: Cannot pass a #{semantic.class} as a semantic object when it does not support #pos(), #file() and #line()")
+          raise Puppet::DevError, _("Issue %{issue_code}: Cannot pass a %{class_name} as a semantic object when it does not support #pos(), #file() and #line()") %
+              { issue_code: issue.issue_code, class_name: semantic.class }
         end
       end
 
@@ -410,9 +412,9 @@ module Validation
     # @param diagnostic [Diagnostic, Acceptor] diagnostic(s) that should be accepted
     def accept(diagnostic)
       if diagnostic.is_a?(Acceptor)
-        diagnostic.diagnostics.each {|d| self.send(d.severity, d)}
+        diagnostic.diagnostics.each {|d| _accept(d)}
       else
-        self.send(diagnostic.severity, diagnostic)
+        _accept(diagnostic)
       end
     end
 
@@ -423,7 +425,8 @@ module Validation
     def prune(&block)
       removed = []
       @diagnostics.delete_if do |d|
-        if should_remove = yield(d)
+        should_remove = yield(d)
+        if should_remove
           removed << d
         end
         should_remove
@@ -442,22 +445,14 @@ module Validation
 
     private
 
-    def ignore diagnostic
+    def _accept(diagnostic)
       @diagnostics << diagnostic
-    end
-
-    def error diagnostic
-      @diagnostics << diagnostic
-      @error_count += 1
-    end
-
-    def warning diagnostic
-      @diagnostics << diagnostic
-      @warning_count += 1
-    end
-
-    def deprecation diagnostic
-      warning diagnostic
+      case diagnostic.severity
+      when :error
+        @error_count += 1
+      when :deprecation, :warning
+        @warning_count += 1
+      end
     end
   end
 end

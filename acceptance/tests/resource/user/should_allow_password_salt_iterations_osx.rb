@@ -2,6 +2,13 @@ test_name "should allow password, salt, and iteration attributes in OSX"
 
 confine :to, :platform => /osx/
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:acceptance' # Could be done as integration tests, but would
+                       # require changing the system running the test
+                       # in ways that might require special permissions
+                       # or be harmful to the system running the test
+
 agents.each do |agent|
   teardown do
     puppet_resource("user", 'testuser', "ensure=absent")

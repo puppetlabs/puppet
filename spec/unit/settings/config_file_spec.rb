@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 require 'puppet/settings/config_file'
 
@@ -123,7 +122,7 @@ badline
 
     expect { config.parse_file(filename, text, [:legal]) }.
       to raise_error Puppet::Error,
-        /Illegal section 'legal' in config file #{filename} at line 1/
+        /Illegal section 'legal' in config file at \(file: #{filename}, line: 1\)/
   end
 
   it "transforms values with the given function" do
@@ -145,5 +144,14 @@ badline
                             with_section(Section.new(:main).
                                          with_setting(:mode, "value", NO_META)))
   end
+
+  it "accepts non-UTF8 encoded text" do
+    result = the_parse_of("var = value".encode("UTF-16LE"))
+
+    expect(result).to eq(Conf.new.
+                           with_section(Section.new(:main).
+                                          with_setting(:var, "value", NO_META)))
+
+    end
 end
 

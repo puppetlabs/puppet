@@ -18,13 +18,15 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
   def addcmd
     cmd = [command(:pw), "groupadd", @resource[:name]]
 
-    if gid = @resource.should(:gid)
+    gid = @resource.should(:gid)
+    if gid
       unless gid == :absent
         cmd << flag(:gid) << gid
       end
     end
 
-    if members = @resource.should(:members)
+    members = @resource.should(:members)
+    if members
       unless members == :absent
         if members.is_a?(Array)
           members = members.join(",")

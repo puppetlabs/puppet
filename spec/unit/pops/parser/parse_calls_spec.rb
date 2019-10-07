@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
 
@@ -30,12 +29,36 @@ describe "egrammar parsing function calls" do
         expect(dump(parse("notice {a => 2}"))).to eq("(invoke notice ({} ('a' 2)))")
       end
 
+      it 'notice a=>2' do
+        expect{parse('notice a => 2')}.to raise_error(/Syntax error at '=>'/)
+      end
+
       it "foo(bar,)" do
         expect(dump(parse("foo(bar,)"))).to eq("(invoke foo bar)")
       end
 
       it "foo(bar, fum,)" do
         expect(dump(parse("foo(bar,fum,)"))).to eq("(invoke foo bar fum)")
+      end
+
+      it 'foo(a=>1)' do
+        expect(dump(parse('foo(a=>1)'))).to eq('(invoke foo ({} (a 1)))')
+      end
+
+      it 'foo(a=>1, b=>2)' do
+        expect(dump(parse('foo(a=>1, b=>2)'))).to eq('(invoke foo ({} (a 1) (b 2)))')
+      end
+
+      it 'foo({a=>1, b=>2})' do
+        expect(dump(parse('foo({a=>1, b=>2})'))).to eq('(invoke foo ({} (a 1) (b 2)))')
+      end
+
+      it 'foo({a=>1}, b=>2)' do
+        expect(dump(parse('foo({a=>1}, b=>2)'))).to eq('(invoke foo ({} (a 1)) ({} (b 2)))')
+      end
+
+      it 'foo(a=>1, {b=>2})' do
+        expect(dump(parse('foo(a=>1, {b=>2})'))).to eq('(invoke foo ({} (a 1)) ({} (b 2)))')
       end
 
       it "notice fqdn_rand(30)" do
@@ -111,6 +134,10 @@ describe "egrammar parsing function calls" do
 
     it "notice 42.type()" do
       expect(dump(parse("notice 42.type()"))).to eq('(invoke notice (call-method (. 42 type)))')
+    end
+
+    it 'notice Hash.assert_type(a => 42)' do
+      expect(dump(parse('notice Hash.assert_type(a => 42)'))).to eq('(invoke notice (call-method (. Hash assert_type) ({} (a 42))))')
     end
 
     it "notice 42.type(detailed)" do

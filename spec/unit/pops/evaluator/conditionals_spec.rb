@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet/pops/evaluator/evaluator_impl'
@@ -171,7 +170,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           ))).to eq('w00t')
       end
 
-      it "3 ? {1 => 'wat', default => 'w00t', 3 => 'wat'} == 'w00t'" do
+      it "3 ? {1 => 'wat', default => 'w00t', 2 => 'wat'} == 'w00t'" do
         expect(evaluate(literal(3).select(
           MAP(literal(1), literal('wat')),
           MAP(literal(:default), literal('w00t')),

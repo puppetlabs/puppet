@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet/parser/functions'
@@ -6,7 +5,6 @@ require 'matchers/containment_matchers'
 require 'matchers/resource'
 require 'matchers/include_in_order'
 require 'unit/functions/shared'
-
 
 describe 'The "contain" function' do
   include PuppetSpec::Compiler
@@ -194,7 +192,7 @@ describe 'The "contain" function' do
     contained = catalog.resource("Class", "contained")
     container = catalog.resource("Class", "container")
 
-    expect(catalog.edges_between(container, contained)).to have(1).item
+    expect(catalog.edges_between(container, contained).count).to eq 1
   end
 
   context "when a containing class has a dependency order" do
@@ -295,4 +293,5 @@ describe 'The "contain" function' do
 
   it_should_behave_like 'all functions transforming relative to absolute names', :contain
   it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :contain
+  it_should_behave_like 'an inclusion function, when --tasks is on,', :contain
 end

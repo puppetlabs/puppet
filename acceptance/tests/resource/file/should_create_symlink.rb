@@ -1,4 +1,7 @@
 test_name "should create symlink"
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
 
 def message
   'hello world'

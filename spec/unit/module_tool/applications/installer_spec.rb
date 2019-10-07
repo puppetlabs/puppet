@@ -5,7 +5,7 @@ require 'puppet_spec/module_tool/stub_source'
 
 require 'tmpdir'
 
-describe Puppet::ModuleTool::Applications::Installer do
+describe Puppet::ModuleTool::Applications::Installer, :unless => RUBY_PLATFORM == 'java' do
   include PuppetSpec::ModuleTool::SharedFunctions
   include PuppetSpec::Files
   include PuppetSpec::Fixtures
@@ -21,22 +21,21 @@ describe Puppet::ModuleTool::Applications::Installer do
   let(:remote_source) { PuppetSpec::ModuleTool::StubSource.new }
 
   let(:install_dir) do
-    mock("Puppet::ModuleTool::InstallDirectory").tap do |dir|
-      dir.stubs(:prepare)
-      dir.stubs(:target).returns(primary_dir)
-    end
+    dir = double("Puppet::ModuleTool::InstallDirectory")
+    allow(dir).to receive(:prepare)
+    allow(dir).to receive(:target).and_return(primary_dir)
+    dir
   end
 
   before do
     SemanticPuppet::Dependency.clear_sources
-    installer = Puppet::ModuleTool::Applications::Installer.any_instance
-    installer.stubs(:module_repository).returns(remote_source)
+    allow_any_instance_of(Puppet::ModuleTool::Applications::Installer).to receive(:module_repository).and_return(remote_source)
   end
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     before :each do
-      Puppet.settings.stubs(:[])
-      Puppet.settings.stubs(:[]).with(:module_working_dir).returns(Dir.mktmpdir('installertmp'))
+      allow(Puppet.settings).to receive(:[])
+      allow(Puppet.settings).to receive(:[]).with(:module_working_dir).and_return(Dir.mktmpdir('installertmp'))
     end
   end
 
@@ -81,7 +80,7 @@ describe Puppet::ModuleTool::Applications::Installer do
         end
 
         it 'installs the specified tarball' do
-          remote_source.expects(:fetch).never
+          expect(remote_source).not_to receive(:fetch)
           expect(subject).to include :result => :success
           graph_should_include 'puppetlabs-stdlib', nil => v('3.2.0')
         end
@@ -102,7 +101,7 @@ describe Puppet::ModuleTool::Applications::Installer do
           end
 
           it 'installs the specified tarball without dependencies' do
-            remote_source.expects(:fetch).never
+            expect(remote_source).not_to receive(:fetch)
             expect(subject).to include :result => :success
             graph_should_include 'puppetlabs-java', nil => v('1.0.0')
             graph_should_include 'puppetlabs-stdlib', nil
@@ -367,5 +366,4 @@ describe Puppet::ModuleTool::Applications::Installer do
       end
     end
   end
-
 end

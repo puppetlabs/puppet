@@ -59,7 +59,7 @@ class Puppet::Property::Ensure < Puppet::Property
     rescue Puppet::Error, Puppet::DevError
       raise
     rescue => detail
-      raise Puppet::DevError, "Could not convert change #{self.name} to string: #{detail}", detail.backtrace
+      raise Puppet::DevError, _("Could not convert change %{name} to string: %{detail}") % { name: self.name, detail: detail }, detail.backtrace
     end
   end
 
@@ -77,12 +77,13 @@ class Puppet::Property::Ensure < Puppet::Property
     # to get checked, which means that those other properties do not have
     # @is values set.  This seems to be the source of quite a few bugs,
     # although they're mostly logging bugs, not functional ones.
-    if prov = @resource.provider and prov.respond_to?(:exists?)
+    prov = @resource.provider
+    if prov && prov.respond_to?(:exists?)
       result = prov.exists?
     elsif @resource.respond_to?(:exists?)
       result = @resource.exists?
     else
-      raise Puppet::DevError, "No ability to determine if #{@resource.class.name} exists"
+      raise Puppet::DevError, _("No ability to determine if %{name} exists") % { name: @resource.class.name }
     end
     if result
       return :present

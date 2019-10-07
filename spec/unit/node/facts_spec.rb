@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet/node/facts'
 require 'matchers/json'
@@ -81,18 +79,30 @@ describe Puppet::Node::Facts, "when indirecting" do
       @facts.sanitize
       expect(@facts.values["test"]).to eq({"(?-mix:foo)" => ["bar", "(?-mix:baz)"]})
     end
+
+    it "should handle alien values having a to_s that returns ascii-8bit" do
+      class Alien
+      end
+      an_alien = Alien.new
+      @facts.values["test"] = an_alien
+      @facts.sanitize
+      fact_value = @facts.values['test']
+      expect(fact_value).to eq(an_alien.to_s)
+      expect(fact_value.encoding).to eq(Encoding::UTF_8)
+    end
+
   end
 
   describe "when indirecting" do
     before do
-      @indirection = stub 'indirection', :request => mock('request'), :name => :facts
+      @indirection = double('indirection', :request => double('request'), :name => :facts)
 
       @facts = Puppet::Node::Facts.new("me", "one" => "two")
     end
 
     it "should redirect to the specified fact store for storage" do
-      Puppet::Node::Facts.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:save)
+      allow(Puppet::Node::Facts).to receive(:indirection).and_return(@indirection)
+      expect(@indirection).to receive(:save)
       Puppet::Node::Facts.indirection.save(@facts)
     end
 
@@ -129,8 +139,9 @@ describe Puppet::Node::Facts, "when indirecting" do
       end
 
       def deserialize_yaml_facts(facts)
+        facts.sanitize
         format = Puppet::Network::FormatHandler.format('yaml')
-        format.intern(Puppet::Node::Facts, facts.to_yaml)
+        format.intern(Puppet::Node::Facts, YAML.dump(facts.to_data_hash))
       end
 
       it 'preserves `_timestamp` value' do
@@ -177,7 +188,7 @@ describe Puppet::Node::Facts, "when indirecting" do
       end
 
       it "should generate properly formatted json" do
-        Time.stubs(:now).returns(@timestamp)
+        allow(Time).to receive(:now).and_return(@timestamp)
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
         result = JSON.parse(facts.to_json)
@@ -188,7 +199,7 @@ describe Puppet::Node::Facts, "when indirecting" do
       end
 
       it "should generate valid facts data against the facts schema" do
-        Time.stubs(:now).returns(@timestamp)
+        allow(Time).to receive(:now).and_return(@timestamp)
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
 

@@ -16,10 +16,12 @@ module Serialization
   let(:serializer) { Serializer.new(writer_class.new(io)) }
   let(:deserializer) { Deserializer.new(reader_class.new(io), loaders.find_loader(nil)) }
 
-  around :each do |example|
-     Puppet.override(:loaders => loaders, :current_environment => env) do
-      example.run
-    end
+  before(:each) do
+    Puppet.push_context(:loaders => loaders, :current_environment => env)
+  end
+
+  after(:each) do
+    Puppet.pop_context()
   end
 
   def write(*values)
@@ -145,6 +147,14 @@ module Serialization
       expect(val2).to eql(val)
     end
 
+    it 'URI' do
+      val = URI('http://bob:ewing@dallas.example.com:8080/oil/baron?crude=cash#leftovers')
+      write(val)
+      val2 = read
+      expect(val2).to be_a(URI)
+      expect(val2).to eql(val)
+    end
+
     it 'Sensitive with rich data' do
       sval = Time::Timestamp.now
       val = Types::PSensitiveType::Sensitive.new(sval)
@@ -225,6 +235,28 @@ module Serialization
         expect(val2).to be_a(Types::PObjectType)
         expect(val2).to eql(val)
       end
+
+      context 'ObjectType' do
+        let(:type) do
+          Types::PObjectType.new({
+            'name' => 'MyType',
+            'type_parameters' => {
+              'x' => Types::PIntegerType::DEFAULT
+            },
+            'attributes' => {
+              'x' => Types::PIntegerType::DEFAULT
+            }
+          })
+        end
+
+        it 'with preserved parameters' do
+          val = type.create(34)._pcore_type
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Types::PObjectTypeExtension)
+          expect(val2).to eql(val)
+        end
+      end
     end
 
     it 'Array of rich data' do
@@ -295,7 +327,7 @@ module Serialization
 
           def self.register_ptype(loader, ir)
             @type = Pcore.create_object_type(loader, ir, DerivedArray, 'DerivedArray', nil, 'values' => Types::PArrayType::DEFAULT)
-              .resolve(Types::TypeParser.singleton, loader)
+              .resolve(loader)
           end
 
           def initialize(values)
@@ -316,7 +348,7 @@ module Serialization
 
           def self.register_ptype(loader, ir)
             @type = Pcore.create_object_type(loader, ir, DerivedHash, 'DerivedHash', nil, '_pcore_init_hash' => Types::PHashType::DEFAULT)
-              .resolve(Types::TypeParser.singleton, loader)
+              .resolve(loader)
           end
 
           def initialize(_pcore_init_hash)
@@ -392,7 +424,7 @@ module Serialization
     it 'succeeds when deserializer is aware of the referenced type' do
       obj = type.create(32)
       write(obj)
-      loaders.find_loader(nil).expects(:load).with(:type, 'mytype').returns(type)
+      expect(loaders.find_loader(nil)).to receive(:load).with(:type, 'mytype').and_return(type)
       expect(read).to eql(obj)
     end
   end

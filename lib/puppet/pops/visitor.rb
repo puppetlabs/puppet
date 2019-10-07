@@ -36,7 +36,8 @@ class Visitor
     if @max_args
       raise "Visitor Error: Too many arguments passed. max = #{@max_args}" unless args.length <= @max_args
     end
-    if method_name = @cache[thing.class]
+    method_name = @cache[thing.class]
+    if method_name
       return receiver.send(method_name, thing, *args)
     else
       thing.class.ancestors().each do |ancestor|
@@ -57,7 +58,8 @@ class Visitor
     if @max_args
       raise "Visitor Error: Too many arguments passed. max = #{@max_args}" unless args.length <= @max_args
     end
-    if method_name = @cache[clazz]
+    method_name = @cache[clazz]
+    if method_name
       return receiver.send(method_name, clazz, *args)
     else
       clazz.ancestors().each do |ancestor|
@@ -76,7 +78,8 @@ class Visitor
   # (This is ~30% faster than calling the general method)
   #
   def visit_this_0(receiver, thing)
-    if method_name = @cache[thing.class]
+    method_name = @cache[thing.class]
+    if method_name
       return receiver.send(method_name, thing)
     end
     visit_this(receiver, thing, NO_ARGS)
@@ -86,7 +89,8 @@ class Visitor
   # (This is ~30% faster than calling the general method)
   #
   def visit_this_1(receiver, thing, arg)
-    if method_name = @cache[thing.class]
+    method_name = @cache[thing.class]
+    if method_name
       return receiver.send(method_name, thing, arg)
     end
     visit_this(receiver, thing, [arg])
@@ -96,7 +100,8 @@ class Visitor
   # (This is ~30% faster than calling the general method)
   #
   def visit_this_2(receiver, thing, arg1, arg2)
-    if method_name = @cache[thing.class]
+    method_name = @cache[thing.class]
+    if method_name
       return receiver.send(method_name, thing, arg1, arg2)
     end
     visit_this(receiver, thing, [arg1, arg2])
@@ -106,7 +111,8 @@ class Visitor
   # (This is ~30% faster than calling the general method)
   #
   def visit_this_3(receiver, thing, arg1, arg2, arg3)
-    if method_name = @cache[thing.class]
+    method_name = @cache[thing.class]
+    if method_name
       return receiver.send(method_name, thing, arg1, arg2, arg3)
     end
     visit_this(receiver, thing, [arg1, arg2, arg3])

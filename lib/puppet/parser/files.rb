@@ -14,7 +14,8 @@ module Puppet::Parser::Files
   def find_manifests_in_modules(pattern, environment)
     module_name, file_pattern = split_file_path(pattern)
 
-    if mod = environment.module(module_name)
+    mod = environment.module(module_name)
+    if mod
       [mod.name, mod.match_manifests(file_pattern)]
     else
       [nil, []]

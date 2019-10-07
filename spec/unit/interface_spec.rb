@@ -61,7 +61,7 @@ describe Puppet::Interface do
     end
 
     it "should load actions" do
-      subject.any_instance.expects(:load_actions)
+      expect_any_instance_of(subject).to receive(:load_actions)
       subject.define(:face_test_load_actions, '0.0.1')
     end
 
@@ -121,9 +121,21 @@ describe Puppet::Interface do
   end
 
   it "should try to require faces that are not known" do
-    subject::FaceCollection.expects(:load_face).with(:foo, :current)
-    subject::FaceCollection.expects(:load_face).with(:foo, '0.0.1')
+    expect(subject::FaceCollection).to receive(:load_face).with(:foo, :current)
+    expect(subject::FaceCollection).to receive(:load_face).with(:foo, '0.0.1')
     expect { subject[:foo, '0.0.1'] }.to raise_error Puppet::Error
+  end
+
+  describe 'when raising NoMethodErrors' do
+    subject { described_class.new(:foo, '1.0.0') }
+
+    it 'includes the face name in the error message' do
+      expect { subject.boombaz }.to raise_error(NoMethodError, /#{subject.name}/)
+    end
+
+    it 'includes the face version in the error message' do
+      expect { subject.boombaz }.to raise_error(NoMethodError, /#{subject.version}/)
+    end
   end
 
   it_should_behave_like "things that declare options" do

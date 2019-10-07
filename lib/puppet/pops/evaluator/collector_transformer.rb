@@ -10,7 +10,8 @@ class CollectorTransformer
   end
 
   def transform(o, scope)
-    raise ArgumentError, "Expected CollectExpression" unless o.is_a? Model::CollectExpression
+    #TRANSLATORS 'CollectExpression' is a class name and should not be translated
+    raise ArgumentError, _("Expected CollectExpression") unless o.is_a? Model::CollectExpression
 
     raise "LHS is not a type" unless o.type_expr.is_a? Model::QualifiedReference
     type = o.type_expr.value().downcase()
@@ -27,7 +28,7 @@ class CollectorTransformer
       overrides = {
         :parameters => o.operations.map{ |x| @@evaluator.evaluate(x, scope)}.flatten,
         :file       => o.file,
-        :line       => [o.line, o.pos],
+        :line       => o.line,
         :source     => scope.source,
         :scope      => scope
       }
@@ -37,10 +38,10 @@ class CollectorTransformer
 
     case o.query
     when Model::VirtualQuery
-      newcoll = Collectors::CatalogCollector.new(scope, resource_type.name, code, overrides)
+      newcoll = Collectors::CatalogCollector.new(scope, resource_type, code, overrides)
     when Model::ExportedQuery
       match = match_unless_nop(o.query, scope)
-      newcoll = Collectors::ExportedCollector.new(scope, resource_type.name, match, code, overrides)
+      newcoll = Collectors::ExportedCollector.new(scope, resource_type, match, code, overrides)
     end
 
     scope.compiler.add_collection(newcoll)
@@ -123,7 +124,7 @@ protected
     end
   end
 
- def query_AccessExpression(o, scope)
+  def query_AccessExpression(o, scope)
     pops_object = @@evaluator.evaluate(o, scope)
 
     # Convert to Puppet 3 style objects since that is how they are represented

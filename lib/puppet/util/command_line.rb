@@ -14,6 +14,7 @@ require 'puppet/util'
 require "puppet/util/rubygems"
 require "puppet/util/limits"
 require 'puppet/util/colors'
+require 'puppet/gettext/module_translations'
 
 module Puppet
   module Util
@@ -63,8 +64,12 @@ module Puppet
       #
       # @return [void]
       def execute
-        Puppet::Util.exit_on_fail(_("initialize global default settings")) do
-          Puppet.initialize_settings(args)
+        require_config = true
+        if @argv.first =~ /help|-h|--help|-V|--version/
+          require_config = false
+        end
+        Puppet::Util.exit_on_fail(_("Could not initialize global default settings")) do
+          Puppet.initialize_settings(args, require_config)
         end
 
         setpriority(Puppet[:priority])
@@ -88,10 +93,13 @@ module Puppet
           end
         elsif Puppet::Application.available_application_names.include?(subcommand_name)
           ApplicationSubcommand.new(subcommand_name, self)
-        elsif path_to_subcommand = external_subcommand
-          ExternalSubcommand.new(path_to_subcommand, self)
         else
-          UnknownSubcommand.new(subcommand_name, self)
+          path_to_subcommand = external_subcommand
+          if path_to_subcommand
+            ExternalSubcommand.new(path_to_subcommand, self)
+          else
+            UnknownSubcommand.new(subcommand_name, self)
+          end
         end
       end
 
@@ -105,7 +113,7 @@ module Puppet
         def run
           # For most applications, we want to be able to load code from the modulepath,
           # such as apply, describe, resource, and faces.
-          # For agent, we only want to load pluginsync'ed code from libdir.
+          # For agent and device in agent mode, we only want to load pluginsync'ed code from libdir.
           # For master, we shouldn't ever be loading per-environment code into the master's
           # ruby process, but that requires fixing (#17210, #12173, #8750). So for now
           # we try to restrict to only code that can be autoloaded from the node's
@@ -115,12 +123,15 @@ module Puppet
           # have an appropriate application-wide current_environment set.
           # If we cannot find the configured environment, which may not exist,
           # we do not attempt to add plugin directories to the load path.
-          #
-          if @subcommand_name != 'master' and @subcommand_name != 'agent'
-            if configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+          unless @subcommand_name == 'master' || @subcommand_name == 'agent' || (@subcommand_name == 'device' && (['--apply', '--facts', '--resource'] - @command_line.args).empty?)
+            configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+            if configured_environment
               configured_environment.each_plugin_directory do |dir|
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
               end
+
+              Puppet::ModuleTranslations.load_from_modulepath(configured_environment.modules)
+              Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
 
               # Puppet requires Facter, which initializes its lookup paths. Reset Facter to
               # pickup the new $LOAD_PATH.

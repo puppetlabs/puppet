@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/windows'
 
@@ -12,6 +11,6 @@ describe "Puppet::Util::Windows::RootCerts", :if => Puppet::Util::Platform.windo
   it "should return an X509 certificate with a subject" do
     x509 = x509_store.first
 
-    expect(x509.subject.to_s).to match(/CN=.*/)
+    expect(x509.subject.to_utf8).to match(/CN=.*/)
   end
 end

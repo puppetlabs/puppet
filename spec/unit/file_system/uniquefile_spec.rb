@@ -7,6 +7,12 @@ describe Puppet::FileSystem::Uniquefile do
     end
   end
 
+  it "ensures the file has permissions 0600", unless: Puppet::Util::Platform.windows? do
+    Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
+      expect(Puppet::FileSystem.stat(file.path).mode & 07777).to eq(0600)
+    end
+  end
+
   it "provides a writeable file" do
     Puppet::FileSystem::Uniquefile.open_tmp('foo') do |file|
       file.write("stuff")
@@ -49,8 +55,8 @@ describe Puppet::FileSystem::Uniquefile do
   it "propagates lock creation failures" do
     # use an arbitrary exception so as not accidentally collide
     # with the ENOENT that occurs when trying to call rmdir
-    Puppet::FileSystem::Uniquefile.stubs(:mkdir).raises 'arbitrary failure'
-    Puppet::FileSystem::Uniquefile.expects(:rmdir).never
+    allow(Puppet::FileSystem::Uniquefile).to receive(:mkdir).and_raise('arbitrary failure')
+    expect(Puppet::FileSystem::Uniquefile).not_to receive(:rmdir)
 
     expect {
       Puppet::FileSystem::Uniquefile.open_tmp('foo') { |tmp| }
@@ -59,10 +65,10 @@ describe Puppet::FileSystem::Uniquefile do
 
   it "only removes lock files that exist" do
     # prevent the .lock directory from being created
-    Puppet::FileSystem::Uniquefile.stubs(:mkdir) { }
+    allow(Puppet::FileSystem::Uniquefile).to receive(:mkdir)
 
     # and expect cleanup to be skipped
-    Puppet::FileSystem::Uniquefile.expects(:rmdir).never
+    expect(Puppet::FileSystem::Uniquefile).not_to receive(:rmdir)
 
     Puppet::FileSystem::Uniquefile.open_tmp('foo') { |tmp| }
   end
@@ -149,7 +155,7 @@ describe Puppet::FileSystem::Uniquefile do
       expect(File.exist?(path)).to eq(false)
     end
 
-    context "on unix platforms", :unless => Puppet.features.microsoft_windows? do
+    context "on unix platforms", :unless => Puppet::Util::Platform.windows? do
       it "close doesn't unlink if already unlinked" do
         t = tempfile("foo")
         path = t.path
@@ -173,7 +179,7 @@ describe Puppet::FileSystem::Uniquefile do
       expect(File.exist?(path)).to eq(false)
     end
 
-    context "on unix platforms", :unless => Puppet.features.microsoft_windows? do
+    context "on unix platforms", :unless => Puppet::Util::Platform.windows? do
       it "close! doesn't unlink if already unlinked" do
         t = tempfile("foo")
         path = t.path

@@ -7,6 +7,8 @@ describe "apply" do
 
   before :each do
     Puppet[:reports] = "none"
+    # Let exceptions be raised instead of exiting
+    allow_any_instance_of(Puppet::Application).to receive(:exit_on_fail).and_yield
   end
 
   describe "when applying provided catalogs" do
@@ -97,7 +99,7 @@ end
         apply.options[:catalog] = file_containing('manifest', catalog.to_json)
 
         Puppet[:environmentpath] = envdir
-        Puppet::Pops::Loader::Runtime3TypeLoader.any_instance.expects(:find).never
+        expect_any_instance_of(Puppet::Pops::Loader::Runtime3TypeLoader).not_to receive(:find)
         expect { apply.run }.to have_printed(/the Puppet::Type says hello.*applytest was here/m)
       end
 
@@ -108,8 +110,8 @@ end
         tn = Puppet::Pops::Loader::TypedName.new(:resource_type_pp, 'applytest')
         rt = Puppet::Pops::Resource::ResourceTypeImpl.new('applytest', [Puppet::Pops::Resource::Param.new(String, 'message')], [Puppet::Pops::Resource::Param.new(String, 'name', true)])
 
-        compiler.loaders.runtime3_type_loader.instance_variable_get(:@resource_3x_loader).expects(:set_entry).once.with(tn, rt, is_a(String))
-          .returns(Puppet::Pops::Loader::Loader::NamedEntry.new(tn, rt, nil))
+        expect(compiler.loaders.runtime3_type_loader.instance_variable_get(:@resource_3x_loader)).to receive(:set_entry).once.with(tn, rt, instance_of(String))
+          .and_return(Puppet::Pops::Loader::Loader::NamedEntry.new(tn, rt, nil))
         expect { compiler.compile }.not_to have_printed(/the Puppet::Type says hello/)
       end
 
@@ -129,6 +131,16 @@ end
         # c) That this doesn't trigger a load of the Puppet::Type
         notices = eval_and_collect_notices('applytest { abc: name => some_alias }; notice(defined(Resource[applytest,xyz]))', node)
         expect(notices).to include('false')
+        expect(notices).not_to include('the Puppet::Type says hello')
+      end
+
+      it 'does not load the ruby type when when referenced from collector during compile' do
+        notices = eval_and_collect_notices("@applytest { 'applytest was here': }\nApplytest<| title == 'applytest was here' |>", node)
+        expect(notices).not_to include('the Puppet::Type says hello')
+      end
+
+      it 'does not load the ruby type when when referenced from exported collector during compile' do
+        notices = eval_and_collect_notices("@@applytest { 'applytest was here': }\nApplytest<<| |>>", node)
         expect(notices).not_to include('the Puppet::Type says hello')
       end
     end
@@ -153,7 +165,7 @@ end
                     'street' => String,
                     'zipcode' => String,
                     'city' => String,
-                  } 
+                  }
                 }]
               PUPPET
               'address.pp' => <<-PUPPET,
@@ -161,7 +173,7 @@ end
                   parent => Mod::StreetAddress,
                   attributes => {
                     'state' => String
-                  } 
+                  }
                 }]
               PUPPET
               'contact.pp' => <<-PUPPET,
@@ -227,7 +239,7 @@ end
     Puppet.override(:current_environment => special) do
       Puppet[:environment] = 'special'
       puppet = Puppet::Application[:apply]
-      puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
+      allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
       expect { puppet.run_command }.to exit_with(0)
     end
 
@@ -238,14 +250,14 @@ end
     manifest = file_containing("manifest.pp", "notice(\"$server_facts\")")
 
     puppet = Puppet::Application[:apply]
-    puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
+    allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
 
     expect { puppet.run_command }.to exit_with(0)
 
     expect(@logs.map(&:to_s)).to include(/{environment =>.*/)
   end
 
-  it "applies a given file even when an ENC is configured", :if => !Puppet.features.microsoft_windows? do
+  it "applies a given file even when an ENC is configured", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
     manifest = file_containing("manifest.pp", "notice('specific manifest applied')")
     enc = script_containing('enc_script',
       :windows => '@echo classes: []' + "\n" + '@echo environment: special',
@@ -259,7 +271,7 @@ end
       Puppet[:node_terminus] = 'exec'
       Puppet[:external_nodes] = enc
       puppet = Puppet::Application[:apply]
-      puppet.stubs(:command_line).returns(stub('command_line', :args => [manifest]))
+      allow(puppet).to receive(:command_line).and_return(double('command_line', :args => [manifest]))
       expect { puppet.run_command }.to exit_with(0)
     end
 
@@ -269,7 +281,7 @@ end
   context "handles errors" do
     it "logs compile errors once" do
       Puppet.initialize_settings([])
-      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => []))
+      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => []))
       apply.options[:code] = '08'
 
       msg = 'valid octal'
@@ -284,7 +296,7 @@ end
 
     it "logs compile post processing errors once" do
       Puppet.initialize_settings([])
-      apply = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => []))
+      apply = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => []))
       path = File.expand_path('/tmp/content_file_test.Q634Dlmtime')
       apply.options[:code] = "file { '#{path}':
         content => 'This is the test file content',
@@ -326,7 +338,7 @@ end
 
     def init_cli_args_and_apply_app(args, execute)
       Puppet.initialize_settings(args)
-      puppet = Puppet::Application.find(:apply).new(stub('command_line', :subcommand_name => :apply, :args => args))
+      puppet = Puppet::Application.find(:apply).new(double('command_line', :subcommand_name => :apply, :args => args))
       puppet.options[:code] = execute
       return puppet
     end
@@ -366,7 +378,7 @@ end
     # External node script execution will fail, likely due to the tampering
     # with the basic file descriptors.
     # Workaround: Define a log destination and merely inspect logs.
-    context "with an ENC" do
+    context "with an ENC", :unless => RUBY_PLATFORM == 'java' do
       let(:logdest) { tmpfile('logdest') }
       let(:args) { ['-e', execute, '--logdest', logdest ] }
       let(:enc) do
@@ -396,7 +408,7 @@ end
     end
   end
 
-  context 'when compiling a provided catalog with rich data and then applying from file' do
+  context 'when applying from file' do
     include PuppetSpec::Compiler
 
     let(:env_dir) { tmpdir('environments') }
@@ -450,24 +462,29 @@ class amod::bad_type {
     let(:env) { Puppet::Node::Environment.create(env_name.to_sym, [File.join(populated_env_dir, 'spec', 'modules')]) }
     let(:node) { Puppet::Node.new('test', :environment => env) }
 
-    around(:each) do |example|
+    before(:each) do
       Puppet[:rich_data] = rich_data
-      Puppet.override(:loaders => Puppet::Pops::Loaders.new(env)) { example.run }
+      Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(env))
     end
 
-    context 'and rich_data is set to false during compile' do
+    after(:each) do
+      Puppet.pop_context()
+    end
+
+    context 'and the file is not serialized with rich_data' do
       it 'will notify a string that is the result of Regexp#inspect (from Runtime3xConverter)' do
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', catalog.to_json)
-        apply.expects(:apply_catalog).with do |catalog|
-          catalog.resource(:notify, 'rx')['message'].is_a?(String)
-          catalog.resource(:notify, 'bin')['message'].is_a?(String)
-          catalog.resource(:notify, 'ver')['message'].is_a?(String)
-          catalog.resource(:notify, 'vrange')['message'].is_a?(String)
-          catalog.resource(:notify, 'tspan')['message'].is_a?(String)
-          catalog.resource(:notify, 'tstamp')['message'].is_a?(String)
+        expect(apply).to receive(:apply_catalog) do |cat|
+          expect(cat.resource(:notify, 'rx')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'bin')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'ver')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'vrange')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'tspan')['message']).to be_a(String)
+          expect(cat.resource(:notify, 'tstamp')['message']).to be_a(String)
         end
+
         apply.run
       end
 
@@ -475,15 +492,16 @@ class amod::bad_type {
         json = compile_to_catalog('include amod::bad_type', node).to_json
         apply = Puppet::Application[:apply]
         apply.options[:catalog] = file_containing('manifest', json)
-        apply.expects(:apply_catalog).with do |catalog|
-          catalog.resource(:notify, 'bogus')['message'].is_a?(String)
+        expect(apply).to receive(:apply_catalog) do |catalog|
+          expect(catalog.resource(:notify, 'bogus')['message']).to be_a(String)
         end
+
         apply.run
       end
 
       it 'will log a warning that a value of unknown type is converted into a string' do
         logs = []
-        json = Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
           compile_to_catalog('include amod::bad_type', node).to_json
         end
         logs = logs.select { |log| log.level == :warning }.map { |log| log.message }
@@ -492,24 +510,28 @@ class amod::bad_type {
       end
     end
 
-    context 'and rich_data is set to true during compile' do
-      let(:rich_data) { true }
-
+    context 'and the file is serialized with rich_data' do
       it 'will notify a regexp using Regexp#to_s' do
         catalog = compile_to_catalog(execute, node)
         apply = Puppet::Application[:apply]
-        apply.options[:catalog] = file_containing('manifest', catalog.to_json)
-        apply.expects(:apply_catalog).with do |catalog|
-          catalog.resource(:notify, 'rx')['message'].is_a?(Regexp)
-          catalog.resource(:notify, 'bin')['message'].is_a?(Puppet::Pops::Types::PBinaryType::Binary)
-          catalog.resource(:notify, 'ver')['message'].is_a?(SemanticPuppet::Version)
-          catalog.resource(:notify, 'vrange')['message'].is_a?(SemanticPuppet::VersionRange)
-          catalog.resource(:notify, 'tspan')['message'].is_a?(Puppet::Pops::Time::Timespan)
-          catalog.resource(:notify, 'tstamp')['message'].is_a?(Puppet::Pops::Time::Timestamp)
+        serialized_catalog = Puppet.override(rich_data: true) do
+          catalog.to_json
         end
+        apply.options[:catalog] = file_containing('manifest', serialized_catalog)
+        expect(apply).to receive(:apply_catalog) do |cat|
+          expect(cat.resource(:notify, 'rx')['message']).to be_a(Regexp)
+          # The resource return in this expect is a String, but since it was a Binary type that
+          # was converted with `resolve_and_replace`, we want to make sure that the encoding
+          # of that string is the expected ASCII-8BIT.
+          expect(cat.resource(:notify, 'bin')['message'].encoding.inspect).to include('ASCII-8BIT')
+          expect(cat.resource(:notify, 'ver')['message']).to be_a(SemanticPuppet::Version)
+          expect(cat.resource(:notify, 'vrange')['message']).to be_a(SemanticPuppet::VersionRange)
+          expect(cat.resource(:notify, 'tspan')['message']).to be_a(Puppet::Pops::Time::Timespan)
+          expect(cat.resource(:notify, 'tstamp')['message']).to be_a(Puppet::Pops::Time::Timestamp)
+        end
+
         apply.run
       end
     end
-
   end
 end

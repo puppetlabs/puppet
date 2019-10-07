@@ -23,6 +23,7 @@ token FUNCTION
 token TYPE
 token PRIVATE ATTR
 token APPLICATION PRODUCES CONSUMES SITE
+token PLAN APPLY
 token LOW
 
 prechigh
@@ -35,7 +36,6 @@ prechigh
   nonassoc EPP_START
   left  LBRACK LISTSTART
   left  RBRACK
-  left  QMARK
   left  LCOLLECT LLCOLLECT
   right NOT
   nonassoc SPLAT
@@ -47,6 +47,7 @@ prechigh
   left  LSHIFT RSHIFT
   left  NOTEQUAL ISEQUAL
   left  GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL
+  left  QMARK
   left  AND
   left  OR
   left  LBRACE
@@ -97,9 +98,15 @@ assignment
   | relationship APPENDS assignment         { result = val[0].plus_set(val[2]) ; loc result, val[1] }
   | relationship DELETES assignment         { result = val[0].minus_set(val[2]); loc result, val[1] }
 
-assignments
-  : assignment                              { result = [val[0]] }
-  | assignments COMMA assignment            { result = val[0].push(val[2]) }
+# Argument is like assignment but permits KEY_ENTRY which it converts it to a HASH_UNFOLDED
+argument
+  : assignment
+  | hashpair { result = Factory.HASH_UNFOLDED([val[0]]); loc result, val[0] }
+
+# Repeated adjacent HASH_UNFOLDED entries merged into one HASH_UNFOLDED
+arguments
+  : argument                            { result = [val[0]] }
+  | arguments COMMA argument            { result = Factory.ARGUMENTS(val[0], val[2]) }
 
 relationship
   : resource =LOW
@@ -222,7 +229,15 @@ expression
   |            WSLPAREN     assignment RPAREN          { result = val[1].paren          ; loc result, val[0] }
 
 bracketed_expression
-  : expression LBRACK       expressions endcomma RBRACK =LBRACK { result = val[0].access(val[2])         ; loc result, val[0], val[4] }
+  : expression LBRACK access_args endcomma RBRACK =LBRACK { result = val[0].access(val[2]); loc result, val[0], val[4] }
+
+access_args
+  : access_arg                   { result = [val[0]] }
+  | access_args COMMA access_arg { result = Factory.ARGUMENTS(val[0], val[2]) }
+
+access_arg
+  : expression
+  | hashpair { result = Factory.HASH_UNFOLDED([val[0]]); loc result, val[0] }
 
 #---EXPRESSIONS
 #   (i.e. "argument list")
@@ -242,10 +257,10 @@ primary_expression
   | if_expression
   | unless_expression
   | definition_expression
-  # @todo lutter 2014-09-03: application declarations must be at the toplevel
-  # in a manifest - Should be validated, not handled here. helindbe 2015-09-10
   | application_expression
   | hostclass_expression
+  | plan_expression
+  | apply_expression
   | node_definition_expression
   | site_definition_expression
   | epp_render_expression
@@ -270,7 +285,7 @@ primary_expression
 # Produces Model::CallNamedFunction
 
 call_function_expression
-  : call_function_start assignments endcomma RPAREN {
+  : call_function_start arguments endcomma RPAREN {
       result = Factory.CALL_NAMED(val[0], true, val[1])
       loc result, val[0], val[3]
     }
@@ -278,7 +293,7 @@ call_function_expression
       result = Factory.CALL_NAMED(val[0], true, [])
       loc result, val[0], val[1]
     }
-  | call_function_start assignments endcomma RPAREN lambda {
+  | call_function_start arguments endcomma RPAREN lambda {
       result = Factory.CALL_NAMED(val[0], true, val[1])
       loc result, val[0], val[4]
       result.lambda = val[4]
@@ -300,7 +315,7 @@ call_method_with_lambda_expression
   | call_method_expression lambda       { result = val[0]; val[0].lambda = val[1] }
 
   call_method_expression
-    : named_access LPAREN assignments RPAREN { result = Factory.CALL_METHOD(val[0], val[2]); loc result, val[1], val[3] }
+    : named_access LPAREN arguments RPAREN { result = Factory.CALL_METHOD(val[0], val[2]); loc result, val[1], val[3] }
     | named_access LPAREN RPAREN             { result = Factory.CALL_METHOD(val[0], []); loc result, val[1], val[3] }
     | named_access =LOW                      { result = Factory.CALL_METHOD(val[0], []); loc result, val[0] }
 
@@ -344,7 +359,7 @@ if_expression
   # Produces Model::IfExpression
   if_part
     : expression LBRACE statements RBRACE else {
-        result = Factory.IF(val[0], Factory.block_or_expression(val[2]), val[4])
+        result = Factory.IF(val[0], Factory.block_or_expression(val[2], val[1], val[3]), val[4])
         loc(result, val[0], (val[4] ? val[4] : val[3]))
       }
     | expression LBRACE RBRACE else {
@@ -360,8 +375,7 @@ if_expression
         loc(result, val[0], val[1])
       }
     | ELSE LBRACE statements RBRACE {
-        result = Factory.block_or_expression(val[2])
-        loc result, val[0], val[3]
+        result = Factory.block_or_expression(val[2], val[1], val[3])
       }
     | ELSE LBRACE RBRACE {
         result = nil # don't think a nop is needed here either
@@ -371,7 +385,7 @@ if_expression
 #
 unless_expression
   : UNLESS expression LBRACE statements RBRACE unless_else {
-      result = Factory.UNLESS(val[1], Factory.block_or_expression(val[3]), val[5])
+      result = Factory.UNLESS(val[1], Factory.block_or_expression(val[3], val[2], val[4]), val[5])
       loc result, val[0], val[4]
     }
   | UNLESS expression LBRACE RBRACE unless_else {
@@ -385,8 +399,7 @@ unless_expression
   unless_else
     : # nothing
     | ELSE LBRACE statements RBRACE {
-        result = Factory.block_or_expression(val[2])
-        loc result, val[0], val[3]
+        result = Factory.block_or_expression(val[2], val[1], val[3])
       }
     | ELSE LBRACE RBRACE {
         result = nil # don't think a nop is needed here either
@@ -518,7 +531,7 @@ application_expression
 capability_mapping
   : classname capability_kw classname LBRACE  attribute_operations endcomma RBRACE {
     result = Factory.CAPABILITY_MAPPING(val[1][:value],
-                                        Factory.QNAME(classname(val[0][:value])),
+                                        Factory.QREF(classname(val[0][:value])),
                                         classname(val[2][:value]), val[4])
     loc result, val[0], val[6]
     add_mapping(result)
@@ -534,6 +547,26 @@ capability_mapping
 capability_kw
   : PRODUCES
   | CONSUMES
+
+#--PLAN
+plan_expression
+  : PLAN stacked_classname parameter_list LBRACE opt_statements RBRACE {
+      # Remove this plan's name from the namestack as all nested plans have been parsed
+      namepop
+      definition = Factory.PLAN(classname(val[1][:value]), val[2], val[4])
+      loc(definition, val[0], val[5])
+      result = add_definition(definition)
+    }
+
+apply_expression
+  : APPLY LPAREN arguments endcomma RPAREN LBRACE statements RBRACE {
+      result = Factory.APPLY(val[2], Factory.APPLY_BLOCK(val[6]))
+      loc result, val[0], val[7]
+    }
+  | APPLY LPAREN arguments endcomma RPAREN LBRACE RBRACE {
+      result = Factory.APPLY(val[2], Factory.APPLY_BLOCK([]))
+      loc result, val[0], val[6]
+    }
 
 #---HOSTCLASS
 #
@@ -645,7 +678,7 @@ function_definition
 
 opt_return_type
   : RSHIFT type { result = val[1] }
-  | RSHIFT type LBRACK expressions RBRACK { result = val[1].access(val[3]) ; loc result, val[1], val[4] }
+  | RSHIFT type LBRACK access_args RBRACK { result = val[1].access(val[3]) ; loc result, val[1], val[4] }
   | nil
 
 #---NAMES AND PARAMETERS COMMON TO SEVERAL RULES
@@ -692,15 +725,38 @@ typed_parameter
 
 parameter_type
   : type { result = val[0] }
-  | type LBRACK expressions RBRACK { result = val[0].access(val[2]) ; loc result, val[0], val[3] }
+  | type LBRACK access_args RBRACK { result = val[0].access(val[2]) ; loc result, val[0], val[3] }
 
 #--TYPE ALIAS
 type_alias
-  : TYPE parameter_type EQUALS expression {
-      definition = Factory.TYPE_ASSIGNMENT(val[1], val[3])
+  : type_alias_lhs EQUALS type hash {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], Factory.KEY_ENTRY(val[2], val[3]))
       loc(definition, val[0], val[3])
       result = add_definition(definition)
     }
+  | type_alias_lhs EQUALS type LBRACK access_args endcomma RBRACK {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], val[2].access(val[4]))
+      loc(definition, val[0], val[5])
+      result = add_definition(definition)
+    }
+  | type_alias_lhs EQUALS type {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], val[2])
+      loc(definition, val[0], val[2])
+      result = add_definition(definition)
+    }
+  | type_alias_lhs EQUALS hash {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], val[2])
+      loc(definition, val[0], val[2])
+      result = add_definition(definition)
+    }
+  | type_alias_lhs EQUALS array {
+      definition = Factory.TYPE_ASSIGNMENT(val[0], val[2])
+      loc(definition, val[0], val[4])
+      result = add_definition(definition)
+    }
+
+type_alias_lhs
+  : TYPE parameter_type { result = val[1] }
 
 #--TYPE definition
 # TODO: Uses the optional_statements rule temporarily since the actual body awaits final spec on methods and attributes.
@@ -753,15 +809,20 @@ hash
     | hashpairs COMMA hashpair { result = val[0].push val[2] }
 
   hashpair
-    : collection_entry FARROW collection_entry { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
+    : hash_entry FARROW hash_entry { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
 
 collection_entry:
+  : argument
+  | collection_entry_keyword { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
+
+# Like collection_entry but will not allow nested hashpair
+hash_entry:
   : assignment
   | collection_entry_keyword { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
 
 collection_entries
   : collection_entry                           { result = [val[0]] }
-  | collection_entries COMMA collection_entry  { result = val[0].push(val[2]) }
+  | collection_entries COMMA collection_entry  { result = Factory.ARGUMENTS(val[0], val[2]) }
 
 # Keywords valid as a collection value
 collection_entry_keyword
@@ -796,8 +857,8 @@ heredoc
   : HEREDOC sublocated_text  { result = Factory.HEREDOC(val[0][:value], val[1]); loc result, val[0] }
 
 sublocated_text
-  : SUBLOCATE string    { result = Factory.SUBLOCATE(val[0], val[1]); loc result, val[0] }
-  | SUBLOCATE dq_string { result = Factory.SUBLOCATE(val[0], val[1]); loc result, val[0] }
+  : SUBLOCATE string    { result = Factory.SUBLOCATE(val[0], val[1]); }
+  | SUBLOCATE dq_string { result = Factory.SUBLOCATE(val[0], val[1]); }
 
 epp_expression
   : EPP_START epp_parameters_list optional_statements { result = Factory.EPP(val[1], val[2]); loc result, val[0] }
@@ -814,7 +875,7 @@ epp_parameters_list
 epp_render_expression
   : RENDER_STRING                  { result = Factory.RENDER_STRING(val[0][:value]); loc result, val[0] }
   | RENDER_EXPR expression epp_end { result = Factory.RENDER_EXPR(val[1]); loc result, val[0], val[2] }
-  | RENDER_EXPR LBRACE statements RBRACE epp_end { result = Factory.RENDER_EXPR(Factory.block_or_expression(val[2])); loc result, val[0], val[4] }
+  | RENDER_EXPR LBRACE statements RBRACE epp_end { result = Factory.RENDER_EXPR(Factory.block_or_expression(val[2], val[1], val[3])); loc result, val[0], val[4] }
 
 epp_end
   : EPP_END

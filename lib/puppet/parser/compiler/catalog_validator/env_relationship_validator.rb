@@ -1,7 +1,7 @@
 class Puppet::Parser::Compiler
   # Validator that asserts that all capability resources that are referenced by 'consume' or 'require' has
   # been exported by some other resource in the environment
- class CatalogValidator::EnvironmentRelationshipValidator < CatalogValidator
+  class CatalogValidator::EnvironmentRelationshipValidator < CatalogValidator
 
     def validate
       assumed_exports = {}

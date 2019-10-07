@@ -28,6 +28,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     o.value.to_s
   end
 
+  def dump_QualifiedReference o
+    o.cased_value.to_s
+  end
+
   def dump_Factory o
     o['locator'] ||= Puppet::Pops::Parser::Locator.locator("<not from source>", nil)
     do_dump(o.model)
@@ -160,7 +164,7 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_LiteralRegularExpression o
-    "/#{o.value.source}/"
+    Puppet::Pops::Types::StringConverter.convert(o.value, '%p')
   end
 
   def dump_Nop o
@@ -209,12 +213,23 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   end
 
   def dump_HeredocExpression(o)
-    result = ["@(#{o.syntax})", :indent, :break, do_dump(o.text_expr), :dedent, :break]
+    ["@(#{o.syntax})", :indent, :break, do_dump(o.text_expr), :dedent, :break]
   end
 
   def dump_HostClassDefinition o
     result = ["class", o.name]
     result << ["inherits", o.parent_class] if o.parent_class
+    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    if o.body
+      result << do_dump(o.body)
+    else
+      result << []
+    end
+    result
+  end
+
+  def dump_PlanDefinition o
+    result = ["plan", o.name]
     result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
     if o.body
       result << do_dump(o.body)

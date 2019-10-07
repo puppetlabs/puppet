@@ -3,12 +3,64 @@ require 'spec_helper'
 require 'puppet/util/http_proxy'
 
 describe Puppet::Util::HttpProxy do
+  include Puppet::Network::HTTP::Compression.module
+
   before(:all) do
     ENV['http_proxy'] = nil
     ENV['HTTP_PROXY'] = nil
   end
 
   host, port, user, password = 'some.host', 1234, 'user1', 'pAssw0rd'
+
+  def expects_direct_connection_to(http, www)
+    expect(http.address).to eq(www.host)
+    expect(http.port).to eq(www.port)
+
+    expect(http.proxy_address).to be_nil
+    expect(http.proxy_port).to be_nil
+    expect(http.proxy_user).to be_nil
+    expect(http.proxy_pass).to be_nil
+  end
+
+  def expects_proxy_connection_via(http, www, host, port, user, password)
+    expect(http.address).to eq(www.host)
+    expect(http.port).to eq(www.port)
+
+    expect(http.proxy_address).to eq(host)
+    expect(http.proxy_port).to eq(port)
+    expect(http.proxy_user).to eq(user)
+    expect(http.proxy_pass).to eq(password)
+  end
+
+  describe '.proxy' do
+    let(:www) { URI::HTTP.build(host: 'www.example.com', port: 80) }
+
+    it 'uses a proxy' do
+      Puppet[:http_proxy_host] = host
+      Puppet[:http_proxy_port] = port
+      Puppet[:http_proxy_user] = user
+      Puppet[:http_proxy_password] = password
+
+      http = subject.proxy(www)
+      expects_proxy_connection_via(http, www, host, port, user, password)
+    end
+
+    it 'connects directly to the server' do
+      http = subject.proxy(www)
+      expects_direct_connection_to(http, www)
+    end
+
+    it 'connects directly to the server when HTTP_PROXY environment variable is set, but server matches no_proxy setting' do
+      Puppet[:http_proxy_host] = host
+      Puppet[:http_proxy_port] = port
+      Puppet[:no_proxy] = www.host
+
+      Puppet::Util.withenv('HTTP_PROXY' => "http://#{host}:#{port}") do
+        http = subject.proxy(www)
+        expects_direct_connection_to(http, www)
+      end
+    end
+  end
 
   describe ".http_proxy_env" do
     it "should return nil if no environment variables" do
@@ -127,9 +179,32 @@ describe Puppet::Util::HttpProxy do
 
   end
 
+  describe ".no_proxy" do
+    no_proxy = '127.0.0.1, localhost'
+    it "should use a no_proxy list if set in environment" do
+      Puppet::Util.withenv('NO_PROXY' => no_proxy) do
+        expect(subject.no_proxy).to eq(no_proxy)
+      end
+    end
+
+    it "should use a no_proxy list if set in config" do
+      Puppet.settings[:no_proxy] = no_proxy
+      expect(subject.no_proxy).to eq(no_proxy)
+    end
+
+    it "should use environment variable before puppet settings" do
+      no_proxy_puppet_setting = '10.0.0.1, localhost'
+      Puppet::Util.withenv('NO_PROXY' => no_proxy) do
+        Puppet.settings[:no_proxy] = no_proxy_puppet_setting
+        expect(subject.no_proxy).to eq(no_proxy)
+      end
+    end
+  end
+
   describe ".no_proxy?" do
     no_proxy = '127.0.0.1, localhost, mydomain.com, *.otherdomain.com, oddport.com:8080, *.otheroddport.com:8080, .anotherdomain.com, .anotheroddport.com:8080'
-    it "should return false if no_proxy does not exist in env" do
+
+    it "should return false if no_proxy does not exist in environment or puppet settings" do
       Puppet::Util.withenv('no_proxy' => nil) do
         dest = 'https://puppetlabs.com'
         expect(subject.no_proxy?(dest)).to be false
@@ -210,6 +285,77 @@ describe Puppet::Util::HttpProxy do
       Puppet::Util.withenv('no_proxy' => no_proxy) do
         dest = URI.parse('http://sub.otheroddport.com:8080')
         expect(subject.no_proxy?(dest)).to be true
+      end
+    end
+  end
+
+  describe '.request_with_redirects' do
+    let(:dest) { URI.parse('http://mydomain.com/some/path') }
+    let(:http_ok) { double('http ok', :code => 200, :message => 'HTTP OK') }
+
+    it 'generates accept and accept-encoding headers' do
+      allow_any_instance_of(Net::HTTP).to receive(:head).and_return(http_ok)
+      expect_any_instance_of(Net::HTTP).to receive(:get) do |_, _, headers|
+        expect(headers)
+          .to match({'Accept' => '*/*',
+                     'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+                     'User-Agent' => /Puppet/})
+      end.and_return(http_ok)
+
+      subject.request_with_redirects(dest, :get, 0)
+    end
+
+    it 'can return a compressed response body' do
+      allow_any_instance_of(Net::HTTP).to receive(:head).and_return(http_ok)
+
+      compressed_body = [
+        0x1f, 0x8b, 0x08, 0x08, 0xe9, 0x08, 0x7a, 0x5a, 0x00, 0x03,
+        0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x00, 0xcb, 0xc8, 0xe4, 0x02,
+        0x00, 0x7a, 0x7a, 0x6f, 0xed, 0x03, 0x00, 0x00, 0x00
+      ].pack('C*')
+
+      response = double('http ok', :code => 200, :message => 'HTTP OK', :body => compressed_body)
+      allow(response).to receive(:[]).with('content-encoding').and_return('gzip')
+      expect_any_instance_of(Net::HTTP).to receive(:get).and_return(response)
+
+      expect(
+        uncompress_body(subject.request_with_redirects(dest, :get, 0))
+      ).to eq("hi\n")
+    end
+
+    it 'generates accept and accept-encoding headers when a block is provided' do
+      allow_any_instance_of(Net::HTTP).to receive(:head).and_return(http_ok)
+      expect_any_instance_of(Net::HTTP).to receive(:request_get) do |_, _, headers, &block|
+        expect(headers)
+          .to match({'Accept' => '*/*',
+                     'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+                     'User-Agent' => /Puppet/})
+      end.and_return(http_ok)
+
+      subject.request_with_redirects(dest, :get, 0) do
+        # unused
+      end
+    end
+
+    it 'only makes a single HEAD request' do
+      expect_any_instance_of(Net::HTTP).to receive(:head).with(anything, anything).and_return(http_ok)
+
+      subject.request_with_redirects(dest, :head, 0)
+    end
+
+    it 'preserves query parameters' do
+      url = URI.parse('http://mydomain.com/some/path?foo=bar')
+
+      expect_any_instance_of(Net::HTTP).to receive(:head) do |_method, path, _headers|
+        expect(path).to eq(url)
+      end.and_return(http_ok)
+
+      expect_any_instance_of(Net::HTTP).to receive(:request_get) do |_http, path, _headers, &block|
+        expect(path).to eq(url)
+      end.and_return(http_ok)
+
+      subject.request_with_redirects(url, :get, 0) do
+        # unused
       end
     end
   end

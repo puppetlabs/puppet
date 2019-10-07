@@ -43,7 +43,7 @@ class Puppet::Resource::Type
   #   :capability  - the type name of the capres produced/consumed
   #   :mappings    - a hash of attribute_name => Expression
   # These two attributes are populated in
-  # PopsBridge::instantiate_CapabilityMaping
+  # PopsBridge::instantiate_CapabilityMapping
 
   # Map from argument (aka parameter) names to Puppet Type
   # @return [Hash<Symbol, Puppet::Pops::Types::PAnyType] map from name to type
@@ -89,7 +89,8 @@ class Puppet::Resource::Type
       produced_resource.resource_type.parameters.each do |name|
         next if name == :name
 
-        if expr = blueprint[:mappings][name.to_s]
+        expr = blueprint[:mappings][name.to_s]
+        if expr
           produced_resource[name] = expr.safeevaluate(scope)
         else
           produced_resource[name] = scope[name.to_s]
@@ -140,14 +141,15 @@ class Puppet::Resource::Type
 
   def initialize(type, name, options = {})
     @type = type.to_s.downcase.to_sym
-    raise ArgumentError, "Invalid resource supertype '#{type}'" unless RESOURCE_KINDS.include?(@type)
+    raise ArgumentError, _("Invalid resource supertype '%{type}'") % { type: type } unless RESOURCE_KINDS.include?(@type)
 
     name = convert_from_ast(name) if name.is_a?(Puppet::Parser::AST::HostName)
 
     set_name_and_namespace(name)
 
     [:code, :doc, :line, :file, :parent].each do |param|
-      next unless value = options[param]
+      value = options[param]
+      next unless value
       send(param.to_s + '=', value)
     end
 
@@ -189,8 +191,12 @@ class Puppet::Resource::Type
   def merge(other)
     fail _("%{name} is not a class; cannot add code to it") % { name: name } unless type == :hostclass
     fail _("%{name} is not a class; cannot add code from it") % { name: other.name } unless other.type == :hostclass
-    fail _("Cannot have code outside of a class/node/define because 'freeze_main' is enabled") if name == "" and Puppet.settings[:freeze_main]
-
+    if name == "" && Puppet.settings[:freeze_main]
+      # It is ok to merge definitions into main even if freeze is on (definitions are nodes, classes, defines, functions, and types)
+      unless other.code.is_definitions_only?
+        fail _("Cannot have code outside of a class/node/define because 'freeze_main' is enabled")
+      end
+    end
     if parent and other.parent and parent != other.parent
       fail _("Cannot merge classes with different parent classes (%{name} => %{parent} vs. %{other_name} => %{other_parent})") % { name: name, parent: parent, other_name: other.name, other_parent: other.parent }
     end
@@ -223,7 +229,7 @@ class Puppet::Resource::Type
     resource_type =
     case type
     when :definition
-      raise ArgumentError, 'Cannot create resources for defined resource types'
+      raise ArgumentError, _('Cannot create resources for defined resource types')
     when :hostclass
       :class
     when :node
@@ -258,7 +264,7 @@ class Puppet::Resource::Type
     end
 
     if ['Class', 'Node'].include? resource.type
-      scope.catalog.tag(*resource.tags)
+      scope.catalog.merge_tags_from(resource)
     end
   end
 
@@ -420,10 +426,10 @@ class Puppet::Resource::Type
     name_to_type_hash.each do |name, t|
       # catch internal errors
       unless @arguments.include?(name)
-        raise Puppet::DevError, "Parameter '#{name}' is given a type, but is not a valid parameter."
+        raise Puppet::DevError, _("Parameter '%{name}' is given a type, but is not a valid parameter.") % { name: name }
       end
       unless t.is_a? Puppet::Pops::Types::PAnyType
-        raise Puppet::DevError, "Parameter '#{name}' is given a type that is not a Puppet Type, got #{t.class}"
+        raise Puppet::DevError, _("Parameter '%{name}' is given a type that is not a Puppet Type, got %{class_name}") % { name: name, class_name: t.class }
       end
       @argument_types[name] = t
     end
@@ -442,14 +448,16 @@ class Puppet::Resource::Type
   def convert_from_ast(name)
     value = name.value
     if value.is_a?(Puppet::Parser::AST::Regex)
-      name = value.value
+      value.value
     else
-      name = value
+      value
     end
   end
 
   def evaluate_parent_type(resource)
-    return unless klass = parent_type(resource.scope) and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name)
+    klass = parent_type(resource.scope)
+    parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name) if klass
+    return unless klass && parent_resource
     parent_resource.evaluate unless parent_resource.evaluated?
     parent_scope(resource.scope, klass)
   end
@@ -463,7 +471,7 @@ class Puppet::Resource::Type
   end
 
   def parent_scope(scope, klass)
-    scope.class_scope(klass) || raise(Puppet::DevError, "Could not find scope for #{klass.name}")
+    scope.class_scope(klass) || raise(Puppet::DevError, _("Could not find scope for %{class_name}") % { class_name: klass.name })
   end
 
   def set_name_and_namespace(name)
@@ -476,7 +484,7 @@ class Puppet::Resource::Type
       # Note we're doing something somewhat weird here -- we're setting
       # the class's namespace to its fully qualified name.  This means
       # anything inside that class starts looking in that namespace first.
-      @namespace, ignored_shortname = @type == :hostclass ? [@name, ''] : namesplit(@name)
+      @namespace, _ = @type == :hostclass ? [@name, ''] : namesplit(@name)
     end
   end
 

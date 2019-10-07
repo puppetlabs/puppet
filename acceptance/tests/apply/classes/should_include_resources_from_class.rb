@@ -1,4 +1,8 @@
 test_name "resources declared in a class can be applied with include"
+
+tag 'audit:high',
+    'audit:unit'   # This should be covered at the unit layer.
+
 manifest = %q{
 class x {
   notify{'a':}

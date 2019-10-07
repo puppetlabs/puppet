@@ -11,7 +11,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
   def authorized?(request)
     return false unless [:find, :search].include?(request.method)
 
-    mount, file_path = configuration.split_path(request)
+    mount, _ = configuration.split_path(request)
 
     # If we're not serving this mount, then access is denied.
     return false unless mount
@@ -34,7 +34,8 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
 
     # The mount checks to see if the file exists, and returns nil
     # if not.
-    return nil unless path = mount.find(relative_path, request)
+    path = mount.find(relative_path, request)
+    return nil unless path
     path2instance(request, path)
   end
 
@@ -43,7 +44,8 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
   def search(request)
     mount, relative_path = configuration.split_path(request)
 
-    unless mount and paths = mount.search(relative_path, request)
+    paths = mount.search(relative_path, request) if mount
+    unless paths
       Puppet.info _("Could not find filesystem info for file '%{request}' in environment %{env}") % { request: request.key, env: request.environment }
       return nil
     end

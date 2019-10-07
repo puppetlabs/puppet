@@ -24,15 +24,13 @@ class ClassLoader
     when Array
       provide_from_name_path(name.join('::'), name)
 
-    when PAnyType, PType
+    when PAnyType, PTypeType
       provide_from_type(name)
 
     else
       raise ArgumentError, "Cannot provide a class from a '#{name.class.name}'"
     end
   end
-
-  private
 
   def self.provide_from_type(type)
     case type
@@ -44,8 +42,8 @@ class ClassLoader
       # There is no other thing to load except this Enum meta type
       RGen::MetamodelBuilder::MMBase::Boolean
 
-    when PType
-      # TODO: PType should has a type argument (a PAnyType) so the Class' class could be returned
+    when PTypeType
+      # TODO: PTypeType should have a type argument (a PAnyType) so the Class' class could be returned
       #       (but this only matters in special circumstances when meta programming has been used).
       Class
 
@@ -66,12 +64,13 @@ class ClassLoader
     when PPatternType  ; String
     when PEnumType     ; String
     when PFloatType    ; Float
-    when PUndefType      ; NilClass
+    when PUndefType    ; NilClass
     when PCallableType ; Proc
     else
       nil
     end
   end
+  private_class_method :provide_from_type
 
   def self.provide_from_string(name)
     name_path = name.split(TypeFormatter::NAME_SEGMENT_SEPARATOR)
@@ -97,6 +96,7 @@ class ClassLoader
     return nil unless result.is_a?(Module)
     result
   end
+  private_class_method :provide_from_string
 
   def self.find_class(name_path)
     name_path.reduce(Object) do |ns, name|
@@ -107,6 +107,7 @@ class ClassLoader
       end
     end
   end
+  private_class_method :find_class
 
   def self.paths_for_name(fq_named_parts)
     # search two entries, one where all parts are decamelized, and one with names just downcased
@@ -115,6 +116,7 @@ class ClassLoader
     #
     [fq_named_parts.map {|part| de_camel(part)}.join('/'), fq_named_parts.join('/').downcase ]
   end
+  private_class_method :paths_for_name
 
   def self.de_camel(fq_name)
     fq_name.to_s.gsub(/::/, '/').
@@ -123,6 +125,7 @@ class ClassLoader
     tr("-", "_").
     downcase
   end
+  private_class_method :de_camel
 
 end
 end

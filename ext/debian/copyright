@@ -7,13 +7,13 @@ Maintainer:
  Nigel Kersten <nigel@explanatorygap.net>,
  Stig Sandbeck Mathisen <ssm@debian.org>
 Source: git://github.com/puppetlabs/puppet.git,
- https://docs.puppetlabs.com/puppet/latest/reference/install_pre.html
+ https://puppet.com/docs/puppet/latest/install_pre.html
 
 Copyright: 2005-2015 Puppet Labs
 License: Apache 2.0
 
 Files: debian/*
-Copyright: 
+Copyright:
  Andrew Pollock <apollock@debian.org>,
  Jamie Wilkinson <jaq@debian.org>,
  Matthew Palmer <mpalmer@debian.org>,
@@ -61,16 +61,6 @@ Files: lib/puppet/external/event-loop/*
 Copyright: Daniel Brockman
 License: GPL-2+
 
-Files: lib/puppet/external/nagios/parser.rb
-Copyright: Minero Aoki
-License: other
- This program is free software.
- You can distribute/modify this program under the same terms of ruby.
- .
- As a special exception, when this code is copied by Racc
- into a Racc output file, you may use that output file
- without restriction.
-
 Files: lib/puppet/network/http_server/mongrel.rb
 Copyright: Manuel Holtgrewe, Luke Kanies
 License: MIT
@@ -93,18 +83,6 @@ License: MIT
  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
-
-Files: lib/puppet/provider/augeas/augeas.rb, lib/puppet/type/augeas.rb
-Copyright: Red Hat Inc.
-License: GPL-2+
-
-Files: lib/puppet/provider/mcx/mcxcontent.rb
-Copyright: Jeff McCune <jeff@northstarlabs.net>
-License: GPL-2+
-
-Files: lib/puppet/type/mcx.rb, spec/unit/type/mcx.rb
-Copyright: Jeffrey J McCune.
-License: GPL-2+
 
 Files: lib/puppet/provider/nameservice/directoryservice.rb
 Copyright: Jeff McCune

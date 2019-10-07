@@ -16,13 +16,14 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
       hash = {}
 
       process.each_line { |line|
-        if match = regex.match(line)
+        match = regex.match(line)
+        if match
           fields.zip(match.captures) { |field,value| hash[field] = value }
           hash[:provider] = self.name
           packages << new(hash)
           hash = {}
         else
-          warning(_("Failed to match line %s" % line))
+          warning(_("Failed to match line %{line}") % { line: line })
         end
       }
     end

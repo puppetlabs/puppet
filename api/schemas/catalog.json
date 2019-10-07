@@ -5,11 +5,11 @@
     "type": "object",
     "properties": {
         "tags": {
-            "description": "Tags: regex is from https://docs.puppetlabs.com/puppet/latest/reference/lang_reserved.html",
+            "description": "Tags: regex is from https://puppet.com/docs/puppet/latest/lang_reserved.html",
             "type": "array",
             "items": {
                 "type": "string",
-                "pattern": "^[a-z0-9_][a-z0-9_:\.\-]*$"
+                "pattern": "\\A[[:alnum:]_][[:alnum:]_:.-]*\\Z"
             }
         },
         "name": {
@@ -59,15 +59,15 @@
                         }
                     },
                     "tags": {
-                        "description": "Tags: regex is from https://docs.puppetlabs.com/puppet/latest/reference/lang_reserved.html",
+                        "description": "Tags: regex is from https://puppet.com/docs/puppet/latest/lang_reserved.html",
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "pattern": "^[a-z0-9_][a-z0-9_:\.\-]*$"
+                            "pattern": "\\A[[:alnum:]_][[:alnum:]_:.-]*\\Z"
                         }
                     },
                     "parameters": {
-                        "description": "Parameters: regex is from https://docs.puppetlabs.com/puppet/latest/reference/lang_reserved.html",
+                        "description": "Parameters: regex is from https://puppet.com/docs/puppet/latest/lang_reserved.html",
                         "type": "object",
                         "patternProperties": {
                             "^[a-z][a-z0-9_]*$": {}

@@ -1,5 +1,8 @@
 require 'puppet/util/logging'
-require 'json'
+require 'puppet/module/task'
+require 'puppet/module/plan'
+require 'puppet/util/json'
+require 'semantic_puppet/gem_version'
 
 # Support for modules
 class Puppet::Module
@@ -21,6 +24,7 @@ class Puppet::Module
     "templates" => "templates",
     "plugins" => "lib",
     "pluginfacts" => "facts.d",
+    "locales" => "locales",
   }
 
   # Find and return the +module+ that +path+ belongs to. If +path+ is
@@ -52,16 +56,20 @@ class Puppet::Module
     return false
   end
 
-  attr_reader :name, :environment, :path, :metadata
+  # @api private
+  def self.parse_range(range)
+    SemanticPuppet::VersionRange.parse(range)
+  end
+
+  attr_reader :name, :environment, :path, :metadata, :tasks, :plans
   attr_writer :environment
 
   attr_accessor :dependencies, :forge_name
   attr_accessor :source, :author, :version, :license, :summary, :description, :project_page
 
-  def initialize(name, path, environment, strict_semver = true)
+  def initialize(name, path, environment)
     @name = name
     @path = path
-    @strict_semver = strict_semver
     @environment = environment
 
     assert_validity
@@ -131,6 +139,72 @@ class Puppet::Module
     end
   end
 
+  def tasks_directory
+    subpath("tasks")
+  end
+
+  def tasks
+    return @tasks if instance_variable_defined?(:@tasks)
+
+    if Puppet::FileSystem.exist?(tasks_directory)
+      @tasks = Puppet::Module::Task.tasks_in_module(self)
+    else
+      @tasks = []
+    end
+  end
+
+  # This is a re-implementation of the Filetypes singular type method (e.g.
+  # `manifest('my/manifest.pp')`. We don't implement the full filetype "API" for
+  # tasks since tasks don't map 1:1 onto files.
+  def task_file(name)
+    # If 'file' is nil then they're asking for the base path.
+    # This is used for things like fileserving.
+    if name
+      full_path = File.join(tasks_directory, name)
+    else
+      full_path = tasks_directory
+    end
+
+    if Puppet::FileSystem.exist?(full_path)
+      return full_path
+    else
+      return nil
+    end
+  end
+
+  def plans_directory
+    subpath("plans")
+  end
+
+  def plans
+    return @plans if instance_variable_defined?(:@plans)
+
+    if Puppet::FileSystem.exist?(plans_directory)
+      @plans = Puppet::Module::Plan.plans_in_module(self)
+    else
+      @plans = []
+    end
+  end
+
+  # This is a re-implementation of the Filetypes singular type method (e.g.
+  # `manifest('my/manifest.pp')`. We don't implement the full filetype "API" for
+  # plans.
+  def plan_file(name)
+    # If 'file' is nil then they're asking for the base path.
+    # This is used for things like fileserving.
+    if name
+      full_path = File.join(plans_directory, name)
+    else
+      full_path = plans_directory
+    end
+
+    if Puppet::FileSystem.exist?(full_path)
+      return full_path
+    else
+      return nil
+    end
+  end
+
   def license_file
     return @license_file if defined?(@license_file)
 
@@ -140,11 +214,12 @@ class Puppet::Module
 
   def read_metadata
     md_file = metadata_file
-    md_file.nil? ? {} : JSON.parse(File.read(md_file, :encoding => 'utf-8'))
+    md_file.nil? ? {} : Puppet::Util::Json.load(File.read(md_file, :encoding => 'utf-8'))
   rescue Errno::ENOENT
     {}
-  rescue JSON::JSONError => e
-    msg = "#{name} has an invalid and unparsable metadata.json file. The parse error: #{e.message}"
+  rescue Puppet::Util::Json::ParseError => e
+    #TRANSLATORS 'metadata.json' is a specific file name and should not be translated.
+    msg = _("%{name} has an invalid and unparsable metadata.json file. The parse error: %{error}") % { name: name, error: e.message }
     case Puppet[:strict]
     when :off
       Puppet.debug(msg)
@@ -238,6 +313,21 @@ class Puppet::Module
     subpath("facts.d")
   end
 
+  #@return [String]
+  def locale_directory
+    subpath("locales")
+  end
+
+  # Returns true if the module has translation files for the
+  # given locale.
+  # @param [String] locale the two-letter language code to check
+  #        for translations
+  # @return true if the module has a directory for the locale, false
+  #         false otherwise
+  def has_translations?(locale)
+    return Puppet::FileSystem.exist?(File.join(locale_directory, locale))
+  end
+
   def has_external_facts?
     File.directory?(plugin_fact_directory)
   end
@@ -256,7 +346,7 @@ class Puppet::Module
   def dependencies_as_modules
     dependent_modules = []
     dependencies and dependencies.each do |dep|
-      author, dep_name = dep["name"].split('/')
+      _, dep_name = dep["name"].split('/')
       found_module = environment.module(dep_name)
       dependent_modules << found_module if found_module
     end
@@ -328,7 +418,7 @@ class Puppet::Module
 
       if version_string
         begin
-          required_version_semver_range = SemanticPuppet::VersionRange.parse(version_string, @strict_semver)
+          required_version_semver_range = self.class.parse_range(version_string)
           actual_version_semver = SemanticPuppet::Version.parse(dep_mod.version)
         rescue ArgumentError
           error_details[:reason] = :non_semantic_version
@@ -354,10 +444,6 @@ class Puppet::Module
     self.environment == other.environment
   end
 
-  def strict_semver?
-    @strict_semver
-  end
-
   private
 
   def wanted_manifests_from(pattern)
@@ -379,7 +465,11 @@ class Puppet::Module
 
   def assert_validity
     if !Puppet::Module.is_module_directory_name?(@name) && !Puppet::Module.is_module_namespaced_name?(@name)
-      raise InvalidName, "Invalid module name #{@name}; module names must be alphanumeric (plus '-'), not '#{@name}'"
+      raise InvalidName, _(<<-ERROR_STRING).chomp % { name: @name }
+        Invalid module name '%{name}'; module names must match either:
+        An installed module name (ex. modulename) matching the expression /^[a-z][a-z0-9_]*$/ -or-
+        A namespaced module name (ex. author-modulename) matching the expression /^[a-zA-Z0-9]+[-][a-z][a-z0-9_]*$/
+      ERROR_STRING
     end
   end
 end

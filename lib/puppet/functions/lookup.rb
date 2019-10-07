@@ -29,7 +29,7 @@
 #     first key, it will try again with the subsequent ones, only resorting to a
 #     default value if none of them succeed.
 # 2. `<VALUE TYPE>` (data type) --- A
-# [data type](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_type.html)
+# [data type](https://puppet.com/docs/puppet/latest/lang_data_type.html)
 # that must match the retrieved value; if not, the lookup (and catalog
 # compilation) will fail. Defaults to `Data` (accepts any normal value).
 # 3. `<MERGE BEHAVIOR>` (string or hash; see **"Merge Behaviors"** below) ---
@@ -91,12 +91,13 @@
 # merged hash. If the same key exists in multiple source hashes, Puppet will
 # recursively merge hash or array values (with duplicate values removed from
 # arrays). For conflicting scalar values, the highest-priority value will win.
-# * `{'strategy' => 'first|unique|hash'}` --- Same as the string versions of these
-# merge behaviors.
+# * `{'strategy' => 'first'}`, `{'strategy' => 'unique'}`,
+# or `{'strategy' => 'hash'}` --- Same as the string versions of these merge behaviors.
 # * `{'strategy' => 'deep', <DEEP OPTION> => <VALUE>, ...}` --- Same as `'deep'`,
 # but can adjust the merge with additional options. The available options are:
 #     * `'knockout_prefix'` (string or undef) --- A string prefix to indicate a
-#     value should be _removed_ from the final result. Defaults to `undef`, which
+#     value should be _removed_ from the final result. If a value is exactly equal
+#     to the prefix, it will knockout the entire element. Defaults to `undef`, which
 #     disables this feature.
 #     * `'sort_merged_arrays'` (boolean) --- Whether to sort all arrays that are
 #     merged together. Defaults to `false`.
@@ -206,7 +207,8 @@ Puppet::Functions.create_function(:lookup, Puppet::Functions::InternalFunction) 
   end
 
   def do_lookup(scope, name, value_type, default_value, has_default, override, default_values_hash, merge, &block)
-    Puppet::Pops::Lookup.lookup(name, value_type, default_value, has_default, merge, Puppet::Pops::Lookup::Invocation.new(scope, override, default_values_hash), &block)
+    Puppet::Pops::Lookup.lookup(name, value_type, default_value, has_default, merge,
+      Puppet::Pops::Lookup::Invocation.new(scope, override, default_values_hash), &block)
   end
 
   def hash_args(options_hash)

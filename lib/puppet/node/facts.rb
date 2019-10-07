@@ -59,6 +59,15 @@ class Puppet::Node::Facts
     end
   end
 
+  # Add extra values, such as facts given to lookup on the command line. The
+  # extra values will override existing values.
+  # @param extra_values [Hash{String=>Object}] the values to add
+  # @api private
+  def add_extra_values(extra_values)
+    @values.merge!(extra_values)
+    nil
+  end
+
   # Sanitize fact values by converting everything not a string, Boolean
   # numeric, array or hash into strings.
   def sanitize
@@ -122,7 +131,17 @@ class Puppet::Node::Facts
       or fact.is_a? String
       fact
     else
-      fact.to_s
+      result = fact.to_s
+      # The result may be ascii-8bit encoded without being a binary (low level object.inspect returns ascii-8bit string)
+      if result.encoding == Encoding::ASCII_8BIT
+        begin
+          result = result.encode(Encoding::UTF_8)
+        rescue
+          # return the ascii-8bit - it will be taken as a binary
+          result
+        end
+      end
+      result
     end
   end
 end

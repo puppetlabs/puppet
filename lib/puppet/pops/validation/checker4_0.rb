@@ -1,5 +1,8 @@
+require 'puppet/pops/evaluator/external_syntax_support'
+
 module Puppet::Pops
 module Validation
+
 # A Validator validates a model.
 #
 # Validation is performed on each model element in isolation. Each method should validate the model element's state
@@ -12,22 +15,30 @@ module Validation
 #       This is however mostly valuable when validating model to model transformations, and is therefore T.B.D
 #
 class Checker4_0 < Evaluator::LiteralEvaluator
+  include Puppet::Pops::Evaluator::ExternalSyntaxSupport
+
   attr_reader :acceptor
   attr_reader :migration_checker
+
+  def self.check_visitor
+    # Class instance variable rather than Class variable because methods visited
+    # may be overridden in subclass
+    @check_visitor ||= Visitor.new(nil, 'check', 0, 0)
+  end
 
   # Initializes the validator with a diagnostics producer. This object must respond to
   # `:will_accept?` and `:accept`.
   #
   def initialize(diagnostics_producer)
     super()
-    @@check_visitor       ||= Visitor.new(nil, "check", 0, 0)
     @@rvalue_visitor      ||= Visitor.new(nil, "rvalue", 0, 0)
     @@hostname_visitor    ||= Visitor.new(nil, "hostname", 1, 2)
     @@assignment_visitor  ||= Visitor.new(nil, "assign", 0, 1)
     @@query_visitor       ||= Visitor.new(nil, "query", 0, 0)
     @@relation_visitor    ||= Visitor.new(nil, "relation", 0, 0)
-    @@idem_visitor        ||= Visitor.new(self, "idem", 0, 0)
+    @@idem_visitor        ||= Visitor.new(nil, "idem", 0, 0)
 
+    @check_visitor = self.class.check_visitor
     @acceptor = diagnostics_producer
 
     # Use null migration checker unless given in context
@@ -42,6 +53,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # tree iterate the model, and call check for each element
     @path = []
     check(model)
+    internal_check_top_construct_in_module(model)
     model._pcore_all_contents(@path) { |element| check(element) }
   end
 
@@ -51,7 +63,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   # Performs regular validity check
   def check(o)
-    @@check_visitor.visit_this_0(self, o)
+    @check_visitor.visit_this_0(self, o)
   end
 
   # Performs check if this is a vaid hostname expression
@@ -286,8 +298,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   def check_CapabilityMapping(o)
     ok =
     case o.component
-    when Model::QualifiedName
-      name = o.component.value
+    when Model::QualifiedReference
+      name = o.component.cased_value
       acceptor.accept(Issues::ILLEGAL_CLASSREF, o.component, {:name=>name}) unless name =~ Patterns::CLASSREF_EXT
       true
     when Model::AccessExpression
@@ -314,6 +326,14 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     if p.is_a?(Model::LambdaExpression)
       internal_check_no_capture(p, o)
       internal_check_parameter_name_uniqueness(p)
+    end
+  end
+
+  def check_HeredocExpression(o)
+    # Only syntax check static text in heredoc during validation - dynamic text is validated by the evaluator.
+    expr = o.text_expr
+    if expr.is_a?(Model::LiteralString)
+      assert_external_syntax(nil, expr.value, o.syntax, o.text_expr)
     end
   end
 
@@ -380,9 +400,7 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   }
 
   FUTURE_RESERVED_WORDS = {
-    'application' => true,
-    'produces' => true,
-    'consumes' => true
+    'plan' => true
   }
 
   # for 'class', 'define', and function
@@ -391,6 +409,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     if o.name !~ Patterns::CLASSREF_DECL
       acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
     end
+
+    internal_check_file_namespace(o)
     internal_check_reserved_type_name(o, o.name)
     internal_check_future_reserved_word(o, o.name)
   end
@@ -492,7 +512,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   end
 
   def internal_check_no_idem_last(o)
-    if violator = ends_with_idem(o.body)
+    violator = ends_with_idem(o.body)
+    if violator
       acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
     end
   end
@@ -526,6 +547,128 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     end
   end
 
+  NO_NAMESPACE = :no_namespace
+  NO_PATH = :no_path
+  BAD_MODULE_FILE = :bad_module_file
+
+  def internal_check_file_namespace(o)
+    file = o.locator.file
+    return if file.nil? || file == '' #e.g. puppet apply -e '...'
+
+    file_namespace = namespace_for_file(file)
+    return if file_namespace == NO_NAMESPACE
+
+    # Downcasing here because check is case-insensitive
+    if file_namespace == BAD_MODULE_FILE || !o.name.downcase.start_with?(file_namespace)
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_LOCATION, o, {:name => o.name, :file => file})
+    end
+  end
+
+  def internal_check_top_construct_in_module(prog)
+    return unless prog.is_a?(Model::Program) && !prog.body.nil?
+
+    #Check that this is a module autoloaded file
+    file = prog.locator.file
+    return if file.nil?
+    return if namespace_for_file(file) == NO_NAMESPACE
+
+    body = prog.body
+    return if prog.body.is_a?(Model::Nop) #Ignore empty or comment-only files
+
+    if(body.is_a?(Model::BlockExpression))
+      body.statements.each { |s| acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, s) unless valid_top_construct?(s) }
+    else
+      acceptor.accept(Issues::ILLEGAL_TOP_CONSTRUCT_LOCATION, body) unless valid_top_construct?(body)
+    end
+  end
+
+  def valid_top_construct?(o)
+    o.is_a?(Model::Definition) && !o.is_a?(Model::NodeDefinition)
+  end
+
+  # @api private
+  class Puppet::Util::FileNamespaceAdapter < Puppet::Pops::Adaptable::Adapter
+    attr_accessor :file_to_namespace
+  end
+
+  def namespace_for_file(file)
+    env = Puppet.lookup(:current_environment)
+    return NO_NAMESPACE if env.nil?
+
+    Puppet::Util::FileNamespaceAdapter.adapt(env) do |adapter|
+      adapter.file_to_namespace ||= {}
+
+      file_namespace = adapter.file_to_namespace[file]
+      return file_namespace unless file_namespace.nil? # No cache entry, so we do the calculation
+
+      path = Pathname.new(file)
+
+      return adapter.file_to_namespace[file] = NO_NAMESPACE if path.extname != ".pp"
+
+      path = path.expand_path
+
+      return adapter.file_to_namespace[file] = NO_NAMESPACE if initial_manifest?(path, env.manifest)
+
+      #All auto-loaded files from modules come from a module search path dir
+      relative_path = get_module_relative_path(path, env.full_modulepath)
+
+      return adapter.file_to_namespace[file] = NO_NAMESPACE if relative_path == NO_PATH
+
+      #If a file comes from a module, but isn't in the right place, always error
+      names = dir_to_names(relative_path)
+
+      return adapter.file_to_namespace[file] = (names == BAD_MODULE_FILE ? BAD_MODULE_FILE : names.join("::").freeze)
+    end
+  end
+
+  def initial_manifest?(path, manifest_setting)
+    return false if manifest_setting.nil? || manifest_setting == :no_manifest
+
+    string_path = path.to_s
+
+    string_path == manifest_setting || string_path.start_with?(manifest_setting)
+  end
+
+  def get_module_relative_path(file_path, modulepath_directories)
+    clean_file = file_path.cleanpath
+    parent_path = modulepath_directories.find { |path_dir| is_parent_dir_of(path_dir, clean_file) }
+    return NO_PATH if parent_path.nil?
+
+    file_path.relative_path_from(Pathname.new(parent_path))
+  end
+
+  def is_parent_dir_of(parent_dir, child_dir)
+    parent_dir_path = Pathname.new(parent_dir)
+    clean_parent = parent_dir_path.cleanpath.to_s + File::SEPARATOR
+
+    return child_dir.to_s.start_with?(clean_parent)
+  end
+
+  def dir_to_names(relative_path)
+    # Downcasing here because check is case-insensitive
+    path_components = relative_path.to_s.downcase.split(File::SEPARATOR)
+
+    # Example definition dir: manifests in this path:
+    # <module name>/manifests/<module subdir>/<classfile>.pp
+    dir = path_components[1]
+
+    # How can we get this result?
+    # If it is not an initial manifest, it must come from a module,
+    # and from the manifests dir there.  This may never get used...
+    return BAD_MODULE_FILE unless dir == 'manifests' || dir == 'functions' || dir == 'types' || dir == 'plans'
+
+    names = path_components[2 .. -2] # Directories inside module
+    names.unshift(path_components[0]) # Name of the module itself
+
+    # Do not include name of module init file at top level of module
+    # e.g. <module name>/manifests/init.pp
+    filename = path_components[-1]
+    if !(path_components.length == 3 && filename == 'init.pp')
+      names.push(filename[0 .. -4]) # Remove .pp from filename
+    end
+
+    names
+  end
 
   RESERVED_PARAMETERS = {
     'name' => true,
@@ -589,7 +732,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     # Check that hostnames are valid hostnames (or regular expressions)
     hostname(o.host_matches, o)
     top(o)
-    if violator = ends_with_idem(o.body)
+    violator = ends_with_idem(o.body)
+    if violator
       acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o}) unless resource_without_title?(violator)
     end
     unless o.parent.nil?
@@ -775,7 +919,8 @@ class Checker4_0 < Evaluator::LiteralEvaluator
 
   def hostname_ConcatenatedString(o, semantic)
     # Puppet 3.1. only accepts a concatenated string without interpolated expressions
-    if the_expr = o.segments.index {|s| s.is_a?(Model::TextExpression) }
+    the_expr = o.segments.index {|s| s.is_a?(Model::TextExpression) }
+    if the_expr
       acceptor.accept(Issues::ILLEGAL_HOSTNAME_INTERPOLATION, o.segments[the_expr].expr)
     elsif o.segments.size() != 1
       # corner case, bad model, concatenation of several plain strings
@@ -904,6 +1049,10 @@ class Checker4_0 < Evaluator::LiteralEvaluator
     true
   end
 
+  def idem_MatchExpression(o)
+    false # can have side effect of setting $n match variables
+  end
+
   def idem_RelationshipExpression(o)
     # Always side effect
     false
@@ -953,6 +1102,12 @@ class Checker4_0 < Evaluator::LiteralEvaluator
   # May technically have side effects inside the Selector, but this is bad design - treat as idem
   def idem_SelectorExpression(o)
     true
+  end
+
+  # An apply expression exists purely for the side effect of applying a
+  # catalog somewhere, so it always has side effects
+  def idem_ApplyExpression(o)
+    false
   end
 
   def idem_IfExpression(o)

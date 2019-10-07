@@ -44,7 +44,8 @@ class Puppet::Util::Ldap::Manager
   # Open, yield, and close the connection.  Cannot be left
   # open, at this point.
   def connect
-    raise ArgumentError, "You must pass a block to #connect" unless block_given?
+    #TRANSLATORS '#connect' is a method name and and should not be translated, 'block' refers to a Ruby code block
+    raise ArgumentError, _("You must pass a block to #connect") unless block_given?
 
     unless @connection
       if Puppet[:ldaptls]
@@ -55,10 +56,12 @@ class Puppet::Util::Ldap::Manager
         ssl = false
       end
       options = {:ssl => ssl}
-      if user = Puppet[:ldapuser] and user != ""
+      user = Puppet[:ldapuser]
+      if user && user != ""
         options[:user] = user
       end
-      if password = Puppet[:ldappassword] and password != ""
+      password = Puppet[:ldappassword]
+      if password && password != ""
         options[:password] = password
       end
       @connection = Puppet::Util::Ldap::Connection.new(Puppet[:ldapserver], Puppet[:ldapport], options)
@@ -85,7 +88,8 @@ class Puppet::Util::Ldap::Manager
 
   # Convert an ldap-style entry hash to a provider-style hash.
   def entry2provider(entry)
-    raise ArgumentError, "Could not get dn from ldap entry" unless entry["dn"]
+    #TRANSLATOR 'dn' refers to a 'distinguished name' in LDAP (Lightweight Directory Access Protocol) and they should not be translated
+    raise ArgumentError, _("Could not get dn from ldap entry") unless entry["dn"]
 
     # DN is always a single-entry array.  Strip off the bits before the
     # first comma, then the bits after the remaining equal sign.  This is the
@@ -136,8 +140,10 @@ class Puppet::Util::Ldap::Manager
       next if values[generator.name]
 
       if generator.source
-        unless value = values[generator.source]
-          raise ArgumentError, "#{generator.source} must be defined to generate #{generator.name}"
+        value = values[generator.source]
+        unless value
+          raise ArgumentError, _("%{source} must be defined to generate %{name}") %
+              { source: generator.source, name: generator.name }
         end
         result = generator.generate(value)
       else

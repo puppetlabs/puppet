@@ -4,21 +4,44 @@
 require 'puppet/configurer'
 
 class Puppet::Configurer::PluginHandler
-  def initialize(factory)
-    @factory = factory
-  end
+  SUPPORTED_LOCALES_MOUNT_AGENT_VERSION = Gem::Version.new("5.3.4")
 
-  # Retrieve facts from the central server.
   def download_plugins(environment)
-    plugin_downloader = @factory.create_plugin_downloader(environment)
+    source_permissions = Puppet::Util::Platform.windows? ? :ignore : :use
+
+    plugin_downloader = Puppet::Configurer::Downloader.new(
+      "plugin",
+      Puppet[:plugindest],
+      Puppet[:pluginsource],
+      Puppet[:pluginsignore],
+      environment
+    )
+    plugin_fact_downloader = Puppet::Configurer::Downloader.new(
+      "pluginfacts",
+      Puppet[:pluginfactdest],
+      Puppet[:pluginfactsource],
+      Puppet[:pluginsignore],
+      environment,
+      source_permissions
+    )
 
     result = []
-
-    plugin_fact_downloader = @factory.create_plugin_facts_downloader(environment)
     result += plugin_fact_downloader.evaluate
-
     result += plugin_downloader.evaluate
-    Puppet::Util::Autoload.reload_changed
+
+    server_agent_version = Puppet.lookup(:server_agent_version) { "0.0" }
+    if Gem::Version.new(server_agent_version) >= SUPPORTED_LOCALES_MOUNT_AGENT_VERSION
+      locales_downloader = Puppet::Configurer::Downloader.new(
+        "locales",
+        Puppet[:localedest],
+        Puppet[:localesource],
+        Puppet[:pluginsignore] + " *.pot config.yaml",
+        environment
+      )
+      result += locales_downloader.evaluate
+    end
+
+    Puppet::Util::Autoload.reload_changed(Puppet.lookup(:current_environment))
 
     result
   end

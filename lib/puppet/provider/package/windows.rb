@@ -12,8 +12,8 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
 
     This provider supports the `install_options` and `uninstall_options`
     attributes, which allow command-line flags to be passed to the installer.
-    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-    or an array where each element is either a string or a hash.
+    These options should be specified as an array where each element is either
+    a string or a hash.
 
     If the executable requires special arguments to perform a silent install or
     uninstall, then the appropriate arguments should be specified using the
@@ -63,14 +63,18 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     installer = Puppet::Provider::Package::Windows::Package.installer_class(resource)
 
     command = [installer.install_command(resource), install_options].flatten.compact.join(' ')
-    output = execute(command, :failonfail => false, :combine => true)
+    working_dir = File.dirname(resource[:source])
+    if !Puppet::FileSystem.exist?(working_dir) && resource[:source] =~ /\.msi"?\Z/i
+      working_dir = nil
+    end
+    output = execute(command, :failonfail => false, :combine => true, :cwd => working_dir, :suppress_window => true)
 
     check_result(output.exitstatus)
   end
 
   def uninstall
     command = [package.uninstall_command, uninstall_options].flatten.compact.join(' ')
-    output = execute(command, :failonfail => false, :combine => true)
+    output = execute(command, :failonfail => false, :combine => true, :suppress_window => true)
 
     check_result(output.exitstatus)
   end

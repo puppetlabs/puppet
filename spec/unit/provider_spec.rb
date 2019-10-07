@@ -1,8 +1,7 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 def existing_command
-  Puppet.features.microsoft_windows? ? "cmd" : "echo"
+  Puppet::Util::Platform.windows? ? "cmd" : "echo"
 end
 
 describe Puppet::Provider do
@@ -13,6 +12,7 @@ describe Puppet::Provider do
   end
 
   after :each do
+    Puppet::Type.type(:test).provider_hash.clear
     Puppet::Type.rmtype(:test)
   end
 
@@ -149,13 +149,13 @@ describe Puppet::Provider do
     # otherwise is to assign it to a constant, and that hurts more here in
     # testing world. --daniel 2012-01-29
     a = Class.new(Puppet::Provider).new(res)
-    a.class.stubs(:name).returns "Puppet::Provider::Notify::A"
+    allow(a.class).to receive(:name).and_return("Puppet::Provider::Notify::A")
 
     b = Class.new(Puppet::Provider).new(res)
-    b.class.stubs(:name).returns "Puppet::Provider::Notify::B"
+    allow(b.class).to receive(:name).and_return("Puppet::Provider::Notify::B")
 
     c = Class.new(Puppet::Provider).new(res)
-    c.class.stubs(:name).returns "Puppet::Provider::Notify::C"
+    allow(c.class).to receive(:name).and_return("Puppet::Provider::Notify::C")
 
     [[a, b, c], [a, c, b], [b, a, c], [b, c, a], [c, a, b], [c, b, a]].each do |this|
       expect(this.sort).to eq([a, b, c])
@@ -279,6 +279,45 @@ describe Puppet::Provider do
       expect(subject.name).to eq(type.defaultprovider.name)
     end
 
+    describe "regex matches" do
+      it "should match a singular regex" do
+        expect(Facter).to receive(:value).with(:osfamily).at_least(:once).and_return("solaris")
+
+        one = type.provide(:one) do
+          defaultfor :osfamily => /solaris/
+        end
+
+        expect(one).to be_default
+      end
+
+      it "should not match a non-matching regex " do
+        expect(Facter).to receive(:value).with(:osfamily).at_least(:once).and_return("redhat")
+
+        one = type.provide(:one) do
+          defaultfor :osfamily => /solaris/
+        end
+
+        expect(one).to_not be_default
+      end
+
+      it "should allow a mix of regex and string" do
+
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return("fedora")
+        expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("24")
+
+        one = type.provide(:one) do
+          defaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => /^2[2-9]$/
+        end
+
+        two = type.provide(:two) do
+          defaultfor :operatingsystem => /fedora/, :operatingsystemmajrelease => '24'
+        end
+
+        expect(one).to be_default
+        expect(two).to be_default
+      end
+    end
+
     describe "when there are multiple defaultfor's of equal specificity" do
       before :each do
         subject.defaultfor :operatingsystem => :os1
@@ -288,14 +327,14 @@ describe Puppet::Provider do
       let(:alternate) { type.provide(:alternate) {} }
 
       it "should be default for the first defaultfor" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os1
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os1)
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
       end
 
       it "should be default for the last defaultfor" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os2
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os2)
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
@@ -306,20 +345,29 @@ describe Puppet::Provider do
       before :each do
         subject.defaultfor :operatingsystem => :os1
         subject.defaultfor :operatingsystem => :os2, :operatingsystemmajrelease => "42"
+        subject.defaultfor :operatingsystem => :os3, :operatingsystemmajrelease => /^4[2-9]$/
       end
 
       let(:alternate) { type.provide(:alternate) {} }
 
       it "should be default for a more specific, but matching, defaultfor" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os2
-        Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "42"
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os2)
+        expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("42")
+
+        expect(provider).to be_default
+        expect(alternate).not_to be_default
+      end
+
+      it "should be default for a more specific, but matching, defaultfor with regex" do
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os3)
+        expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("42")
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
       end
 
       it "should be default for a less specific, but matching, defaultfor" do
-        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os1
+        expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return(:os1)
 
         expect(provider).to be_default
         expect(alternate).not_to be_default
@@ -342,26 +390,173 @@ describe Puppet::Provider do
       expect(subject).not_to be_default
     end
 
-    it "should consider two defaults to be higher specificity than one default" do
-      Facter.expects(:value).with(:osfamily).at_least_once.returns "solaris"
-      Facter.expects(:value).with(:operatingsystemrelease).at_least_once.returns "5.10"
+    it "should not be default if the notdefaultfor does match" do
+      expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return("fedora")
+      expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("24")
 
       one = type.provide(:one) do
-        defaultfor :osfamily => "solaris"
+        defaultfor :operatingsystem => "fedora"
+        notdefaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => 24
       end
 
-      two = type.provide(:two) do
-        defaultfor :osfamily => "solaris", :operatingsystemrelease => "5.10"
-      end
-
-      expect(two.specificity).to be > one.specificity
+      expect(one).not_to be_default
     end
 
-    it "should consider a subclass more specific than its parent class" do
-      parent = type.provide(:parent)
-      child  = type.provide(:child, :parent => parent)
+    it "should be default if the notdefaultfor doesn't match" do
+      expect(Facter).to receive(:value).with(:operatingsystem).at_least(:once).and_return("fedora")
+      expect(Facter).to receive(:value).with(:operatingsystemmajrelease).at_least(:once).and_return("24")
 
-      expect(child.specificity).to be > parent.specificity
+      one = type.provide(:one) do
+        defaultfor :operatingsystem => "fedora"
+        notdefaultfor :operatingsystem => "fedora", :operatingsystemmajrelease => 42
+      end
+
+      expect(one).to be_default
+    end
+
+    # Key: spec has 4 required and 1 optional part:
+    # one-defaultfor, one-notdefaultfor, two-defaultfor, two-notdefaultfor
+    # d = defaultfor, n = notdefaultfor,
+    # d2 - two clauses in defaultfor constraint,
+    # ! = constraint exists but doesn't match
+    # none = no constraint
+    # d+/!d+/none+ - provider class has deeper inheritence
+
+    context "defaultfor/notdefaultfor configurable tests" do
+      [
+        # Two default? group - ties go to first to register
+        %w{d    none d     none pickone},
+        # Two default? group - second is selected for specificity
+        %w{d    !n   d2     !n         },
+        %w{d    !n   d2     none       },
+        # Two default? group - second is selected for inheritence
+        %w{d    !n   d+     !n         },
+        %w{d    !n   d+     none       },
+        # One default? group - second (only default?) always is selected
+        %w{!d   !n   d     none        },
+        %w{!d   !n   d     !n          },
+        %w{!d   n    d     none        },
+        %w{!d   n    d     !n          },
+        %w{d    n    d     none        },
+        %w{d    n    d     !n          },
+        # No default? group:
+        %w{d    !n   d     !n   pickone},
+        %w{d    !n   d     none pickone},
+        %w{!d   !n   !d    !n   pickone},
+        %w{!d   !n   !d    none pickone},
+        %w{!d   none !d    none pickone},
+        %w{none !n   none  !n   pickone},
+        %w{none none none  none pickone},
+        # No default? but deeper class inheritence group:
+        %w{!d   !n   !d+   !n          },
+        %w{!d   !n   !d+   none        },
+        %w{!d   none !d+   none        },
+        %w{none !n   none+ !n          },
+        %w{none none none+ none        },
+      ].each do |thisspec|
+
+        defaultforspec = {
+          :one => {},
+          :two => {},
+          :expect_one => false #Default expectation is to expect provider two for these tests
+        }
+
+        fail "Inheritence not supported on first provider" if thisspec[0].end_with?('+')
+
+        case thisspec[0] # First provider defaultfor spec
+        when 'd'
+          defaultforspec[:one][:defaultfor] = true
+        when '!d'
+          defaultforspec[:one][:defaultfor] = false
+        when 'none'
+          # Do not include a defaultfor constraint
+        else
+          fail "Did not understand first spec: %{spec}" % { spec: thisspec[0] }
+        end
+
+        case thisspec[1] # First provider notdefaultfor spec
+        when 'n'
+          defaultforspec[:one][:notdefaultfor] = true
+        when '!n'
+          defaultforspec[:one][:notdefaultfor] = false
+        when 'none'
+          # Do not include a notdefaultfor constraint
+        else
+          fail "Did not understand second spec: %{spec}" % { spec: thisspec[1] }
+        end
+
+        if thisspec[2].end_with?('+') then # d+ !d+ none+
+          defaultforspec[:two][:derived] = true
+          thisspec[2] = thisspec[2][0 .. -2]
+        end
+
+        case thisspec[2]
+        when 'd'
+          defaultforspec[:two][:defaultfor] = true
+        when 'd2'
+          defaultforspec[:two][:extradefaultfor] = true
+        when '!d'
+          defaultforspec[:two][:defaultfor] = false
+        when 'none'
+          # Do not include a defaultfor constraint
+        else
+          fail "Did not understand third spec: %{spec}" % { spec: thisspec[2] }
+        end
+
+        case thisspec[3] # Second provider notdefaultfor spec
+        when 'n'
+          defaultforspec[:two][:notdefaultfor] = true
+        when '!n'
+          defaultforspec[:two][:notdefaultfor] = false
+        when 'none'
+          # Do not include a notdefaultfor constraint
+        else
+          fail "Did not understand fourth spec: %{spec}" % { spec: thisspec[3] }
+        end
+
+        if thisspec.length == 5 && thisspec[4] == "pickone" then
+          defaultforspec[:expect_one] = true
+        end
+
+        it "with the specification: %{spec}" % { spec: thisspec.join(', ') } do
+          allow(Facter).to receive(:value).with(:osfamily).and_return("redhat")
+          allow(Facter).to receive(:value).with(:operatingsystem).and_return("centos")
+          allow(Facter).to receive(:value).with(:operatingsystemrelease).and_return("27")
+
+          one = type.provide(:one) do
+            if defaultforspec[:one].key?(:defaultfor)
+              defaultfor    :osfamily               => "redhat" if  defaultforspec[:one][:defaultfor]
+              defaultfor    :osfamily               => "ubuntu" if !defaultforspec[:one][:defaultfor]
+            end
+            if defaultforspec[:one].key?(:notdefaultfor)
+              notdefaultfor :operatingsystem        => "centos" if  defaultforspec[:one][:notdefaultfor]
+              notdefaultfor :operatingsystem        => "ubuntu" if !defaultforspec[:one][:notdefaultfor]
+            end
+          end
+
+          provider_options = {}
+          provider_options[:parent] = one if defaultforspec[:two][:derived] # :two inherits from one, if spec'd
+          two = type.provide(:two, provider_options) do
+            if defaultforspec[:two].key?(:defaultfor) || defaultforspec[:two].key?(:extradefaultfor)
+              defaultfor    :osfamily               => "redhat" if  defaultforspec[:two][:defaultfor]
+              defaultfor    :osfamily               => "redhat",#   defaultforspec[:two][:extradefaultfor] has two parts
+                            :operatingsystem        => "centos" if  defaultforspec[:two][:extradefaultfor]
+              defaultfor    :osfamily               => "ubuntu" if !defaultforspec[:two][:defaultfor]
+            end
+            if defaultforspec[:two].key?(:notdefaultfor)
+              notdefaultfor :operatingsystemrelease => "27" if  defaultforspec[:two][:notdefaultfor]
+              notdefaultfor :operatingsystemrelease => "99" if !defaultforspec[:two][:notdefaultfor]
+            end
+          end
+
+          if defaultforspec[:expect_one] then
+            expect(Puppet).to receive(:warning).with(/Found multiple default providers/)
+            expect(type.defaultprovider).to eq(one)
+          else
+            expect(type.defaultprovider).to eq(two)
+          end
+        end
+      end
     end
 
     describe "using a :feature key" do
@@ -411,7 +606,7 @@ describe Puppet::Provider do
       subject.commands :testing => "puppet-bug-1197"
       expect(subject.command(:testing)).to be_nil
 
-      subject.stubs(:which).with("puppet-bug-1197").returns("/puppet-bug-1197")
+      allow(subject).to receive(:which).with("puppet-bug-1197").and_return("/puppet-bug-1197")
       expect(subject.command(:testing)).to eq("/puppet-bug-1197")
 
       # Ideally, we would also test that `suitable?` returned the right thing
@@ -447,43 +642,43 @@ describe Puppet::Provider do
 
   context "execution" do
     before :each do
-      Puppet.expects(:deprecation_warning).never
+      expect(Puppet).not_to receive(:deprecation_warning)
     end
 
     it "delegates instance execute to Puppet::Util::Execution" do
-      Puppet::Util::Execution.expects(:execute).with("a_command", { :option => "value" })
+      expect(Puppet::Util::Execution).to receive(:execute).with("a_command", { :option => "value" })
 
       provider.new.send(:execute, "a_command", { :option => "value" })
     end
 
     it "delegates class execute to Puppet::Util::Execution" do
-      Puppet::Util::Execution.expects(:execute).with("a_command", { :option => "value" })
+      expect(Puppet::Util::Execution).to receive(:execute).with("a_command", { :option => "value" })
 
       provider.send(:execute, "a_command", { :option => "value" })
     end
 
     it "delegates instance execpipe to Puppet::Util::Execution" do
       block = Proc.new { }
-      Puppet::Util::Execution.expects(:execpipe).with("a_command", true, block)
+      expect(Puppet::Util::Execution).to receive(:execpipe).with("a_command", true, block)
 
       provider.new.send(:execpipe, "a_command", true, block)
     end
 
     it "delegates class execpipe to Puppet::Util::Execution" do
       block = Proc.new { }
-      Puppet::Util::Execution.expects(:execpipe).with("a_command", true, block)
+      expect(Puppet::Util::Execution).to receive(:execpipe).with("a_command", true, block)
 
       provider.send(:execpipe, "a_command", true, block)
     end
 
     it "delegates instance execfail to Puppet::Util::Execution" do
-      Puppet::Util::Execution.expects(:execfail).with("a_command", "an exception to raise")
+      expect(Puppet::Util::Execution).to receive(:execfail).with("a_command", "an exception to raise")
 
       provider.new.send(:execfail, "a_command", "an exception to raise")
     end
 
     it "delegates class execfail to Puppet::Util::Execution" do
-      Puppet::Util::Execution.expects(:execfail).with("a_command", "an exception to raise")
+      expect(Puppet::Util::Execution).to receive(:execfail).with("a_command", "an exception to raise")
 
       provider.send(:execfail, "a_command", "an exception to raise")
     end
@@ -707,16 +902,17 @@ describe Puppet::Provider do
 
   def expect_command_executed(name, path, *args)
     command = Puppet::Provider::Command.new(name, path, Puppet::Util, Puppet::Util::Execution)
-    command.expects(:execute).with(*args)
+    args = [no_args] if args.empty?
+    expect(command).to receive(:execute).with(*args)
     command
   end
 
   def allow_creation_of(command, environment = {})
-      Puppet::Provider::Command.stubs(:new).with(command.name, command.executable, Puppet::Util, Puppet::Util::Execution, { :failonfail => true, :combine => true, :custom_environment => environment }).returns(command)
+      allow(Puppet::Provider::Command).to receive(:new).with(command.name, command.executable, Puppet::Util, Puppet::Util::Execution, { :failonfail => true, :combine => true, :custom_environment => environment }).and_return(command)
   end
 
   def file_exists_and_is_executable(path)
-    FileTest.expects(:file?).with(path).returns(true)
-    FileTest.expects(:executable?).with(path).returns(true)
+    expect(FileTest).to receive(:file?).with(path).and_return(true)
+    expect(FileTest).to receive(:executable?).with(path).and_return(true)
   end
 end

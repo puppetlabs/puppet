@@ -13,6 +13,11 @@ class Runtime3TypeLoader < BaseLoader
     @resource_3x_loader = env_path.nil? ? nil : ModuleLoaders.pcore_resource_type_loader_from(parent_loader, loaders, env_path)
   end
 
+  def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+    # TODO: Use generated index of all known types (requires separate utility).
+    parent.discover(type, error_collector, name_authority, &block)
+  end
+
   def to_s()
     "(Runtime3TypeLoader '#{loader_name()}')"
   end
@@ -83,7 +88,7 @@ class Runtime3TypeLoader < BaseLoader
   end
   private :find_impl
 
-  # Allows shadowing since this loader is populalted with all loaded resource types at time
+  # Allows shadowing since this loader is populated with all loaded resource types at time
   # of loading. This loading will, for built in types override the aliases configured in the static
   # loader.
   #

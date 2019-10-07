@@ -93,10 +93,12 @@ class Puppet::Util::AtFork::Solaris
     begin
       raise_if_error { ct_tmpl_clear(tmpl.fileno) }
     rescue => detail
-      Puppet.log_exception(detail, parent \
-        ? _('Failed to deactivate process contract template in the parent process')
-        : _('Failed to deactivate process contract template in the child process')
-      )
+      msg = if parent
+              _('Failed to deactivate process contract template in the parent process')
+            else
+              _('Failed to deactivate process contract template in the child process')
+            end
+      Puppet.log_exception(detail, msg)
       exit(1)
     ensure
       tmpl.close

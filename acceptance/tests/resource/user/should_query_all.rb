@@ -1,8 +1,12 @@
 test_name "should query all users"
 confine :except, :platform => /^cisco_/ # See PUP-5828
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:integration'
 
 agents.each do |agent|
   next if agent == master
+  skip_test('this test fails on windows French due to Cygwin/UTF Issues - PUP-8319,IMAGES-492') if agent['platform'] =~ /windows/ && agent['locale'] == 'fr'
 
   step "query natively"
   users = agent.user_list

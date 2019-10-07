@@ -90,9 +90,9 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
         elsif http_proxy_host and not http_proxy_port
           args << "--proxy" << http_proxy_host
         end
-      begin
-        curl *args
-          Puppet.debug "Success: curl transferred [#{name}] (via: curl #{args.join(" ")})"
+        begin
+          curl(*args)
+            Puppet.debug "Success: curl transferred [#{name}] (via: curl #{args.join(" ")})"
         rescue Puppet::ExecutionFailure
           Puppet.debug "curl #{args.join(" ")} did not transfer [#{name}].  Falling back to local file." # This used to fall back to open-uri. -NF
           cached_source = source
@@ -140,11 +140,12 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
   end
 
   def install
-    source = nil
-    unless source = @resource[:source]
+    source = @resource[:source]
+    unless source
       raise Puppet::Error.new(_("Mac OS X PKG DMGs must specify a package source."))
     end
-    unless name = @resource[:name]
+    name = @resource[:name]
+    unless name
       raise Puppet::Error.new(_("Mac OS X PKG DMGs must specify a package name."))
     end
     self.class.installpkgdmg(source,name)

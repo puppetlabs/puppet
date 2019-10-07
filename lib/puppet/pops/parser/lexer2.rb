@@ -1,4 +1,4 @@
-# The Lexer is responsbile for turning source text into tokens.
+# The Lexer is responsible for turning source text into tokens.
 # This version is a performance enhanced lexer (in comparison to the 3.x and earlier "future parser" lexer.
 #
 # Old returns tokens [:KEY, value, { locator = }
@@ -189,7 +189,12 @@ class Lexer2
       ',' => lambda {  emit(TOKEN_COMMA, @scanner.pos) },
       '[' => lambda do
         before = @scanner.pos
-        if (before == 0 || @scanner.string[locator.char_offset(before)-1,1] =~ /[[:blank:]\r\n]+/)
+        # Must check the preceding character to see if it is whitespace.
+        # The fastest thing to do is to simply byteslice to get the string ending at the offset before
+        # and then check what the last character is. (This is the same as  what an locator.char_offset needs
+        # to compute, but with less overhead of trying to find out the global offset from a local offset in the
+        # case when this is sublocated in a heredoc).
+        if before == 0 || @scanner.string.byteslice(0, before)[-1] =~ /[[:blank:]\r\n]+/
           emit(TOKEN_LISTSTART, before)
         else
           emit(TOKEN_LBRACK, before)
@@ -350,7 +355,8 @@ class Lexer2
         else
           before = scn.pos
           # regexp position is a regexp, else a div
-          if regexp_acceptable? && value = scn.scan(PATTERN_REGEX)
+          value = scn.scan(PATTERN_REGEX) if regexp_acceptable?
+          if value
             # Ensure an escaped / was not matched
             while escaped_end(value)
               more = scn.scan_until(PATTERN_REGEX_END)
@@ -447,7 +453,8 @@ class Lexer2
       '$' => lambda do
         scn = @scanner
         before = scn.pos
-        if value = scn.scan(PATTERN_DOLLAR_VAR)
+        value = scn.scan(PATTERN_DOLLAR_VAR)
+        if value
           emit_completed([:VARIABLE, value[1..-1].freeze, scn.pos - before], before)
         else
           # consume the $ and let higher layer complain about the error instead of getting a syntax error
@@ -513,7 +520,6 @@ class Lexer2
             scn.pos = before
             invalid_number = scn.peek(after - before) unless invalid_number
           end
-          length = scn.pos - before
           assert_numeric(invalid_number, before)
           scn.pos = before + 1
           lex_error(Issues::ILLEGAL_NUMBER, {:value => invalid_number})
@@ -523,12 +529,11 @@ class Lexer2
     ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
       'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '_'].each do |c|
       @selector[c] = lambda do
-
         scn = @scanner
         before = scn.pos
         value = scn.scan(PATTERN_BARE_WORD)
         if value && value =~ PATTERN_NAME
-          emit_completed(KEYWORDS[value] || [:NAME, value.freeze, scn.pos - before], before)
+          emit_completed(KEYWORDS[value] || @taskm_keywords[value] || [:NAME, value.freeze, scn.pos - before], before)
         elsif value
           emit_completed([:WORD, value.freeze, scn.pos - before], before)
         else
@@ -649,7 +654,7 @@ class Lexer2
   #
   def lex_file(file)
     initvars
-    contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file, :encoding => 'utf-8') : ''
+    contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file, :mode => 'rb', :encoding => 'utf-8') : ''
     assert_not_bom(contents)
     @scanner = StringScanner.new(contents.freeze)
     @locator = Locator.locator(contents, file)
@@ -663,6 +668,8 @@ class Lexer2
       :after => nil,
       :line_lexical_start => 0
     }
+    # Use of --tasks introduces the new keyword 'plan'
+    @taskm_keywords = Puppet[:tasks] ? { 'plan' => [:PLAN, 'plan',  4], 'apply' => [:APPLY, 'apply', 5] }.freeze : EMPTY_HASH
   end
 
   # Scans all of the content and returns it in an array
@@ -698,7 +705,8 @@ class Lexer2
 
     # This is the lexer's main loop
     until queue.empty? && scn.eos? do
-      if token = queue.shift || selector[scn.peek(1)].call
+      token = queue.shift || selector[scn.peek(1)].call
+      if token
         ctx[:after] = token[0]
         yield token
       end

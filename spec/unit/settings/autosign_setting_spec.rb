@@ -6,11 +6,11 @@ require 'puppet/type/file'
 
 describe Puppet::Settings::AutosignSetting do
   let(:settings) do
-    s = stub('settings')
-    s.stubs(:[]).with(:mkusers).returns true
-    s.stubs(:[]).with(:user).returns 'puppet'
-    s.stubs(:[]).with(:group).returns 'puppet'
-    s.stubs(:[]).with(:manage_internal_file_permissions).returns true
+    s = double('settings')
+    allow(s).to receive(:[]).with(:mkusers).and_return(true)
+    allow(s).to receive(:[]).with(:user).and_return('puppet')
+    allow(s).to receive(:[]).with(:group).and_return('puppet')
+    allow(s).to receive(:[]).with(:manage_internal_file_permissions).and_return(true)
     s
   end
 
@@ -72,11 +72,11 @@ describe Puppet::Settings::AutosignSetting do
   end
 
   describe "converting the setting to a resource" do
-    it "converts the file path to a file resource" do
+    it "converts the file path to a file resource", :if => !Puppet::Util::Platform.windows? do
       path = File.expand_path('/path/to/autosign.conf')
-      settings.stubs(:value).with('autosign', nil, false).returns(path)
-      Puppet::FileSystem.stubs(:exist?).with(path).returns true
-      Puppet.stubs(:features).returns(stub(:root? => true, :microsoft_windows? => false))
+      allow(settings).to receive(:value).with('autosign', nil, false).and_return(path)
+      allow(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
+      expect(Puppet.features).to receive(:root?).and_return(true)
 
       setting.mode = '0664'
       setting.owner = 'service'
@@ -92,7 +92,7 @@ describe Puppet::Settings::AutosignSetting do
     end
 
     it "returns nil when the setting is a boolean" do
-      settings.stubs(:value).with('autosign', nil, false).returns 'true'
+      allow(settings).to receive(:value).with('autosign', nil, false).and_return('true')
 
       setting.mode = '0664'
       setting.owner = 'service'

@@ -14,13 +14,13 @@ describe "Two step scoping for variables" do
   end
 
   before :each do
-    Puppet.expects(:deprecation_warning).never
+    expect(Puppet).not_to receive(:deprecation_warning)
   end
 
   describe "using unsupported operators" do
     it "issues an error for +=" do
       expect do
-        catalog = compile_to_catalog(<<-MANIFEST)
+        compile_to_catalog(<<-MANIFEST)
               $var = ["top_msg"]
               node default {
                 $var += ["override"]
@@ -31,7 +31,7 @@ describe "Two step scoping for variables" do
 
     it "issues an error for -=" do
       expect do
-        catalog = compile_to_catalog(<<-MANIFEST)
+        compile_to_catalog(<<-MANIFEST)
               $var = ["top_msg"]
               node default {
                 $var -= ["top_msg"]
@@ -47,7 +47,7 @@ describe "Two step scoping for variables" do
           compile_to_catalog("$name = 'never in a 0xF4240 years'", enc_node)
         }.to raise_error(
           Puppet::Error,
-          /Cannot reassign built in \(or already assigned\) variable '\$name' at line 1(\:7)? on node the_node/
+          /Cannot reassign built in \(or already assigned\) variable '\$name' \(line: 1(, column: 7)?\) on node the_node/
         )
     end
 
@@ -58,7 +58,7 @@ describe "Two step scoping for variables" do
           compile_to_catalog("$title = 'never in a 0xF4240 years'", enc_node)
         }.to raise_error(
           Puppet::Error,
-          /Cannot reassign built in \(or already assigned\) variable '\$title' at line 1(\:8)? on node the_node/
+          /Cannot reassign built in \(or already assigned\) variable '\$title' \(line: 1(, column: 8)?\) on node the_node/
         )
     end
 
@@ -313,6 +313,19 @@ describe "Two step scoping for variables" do
               }
           MANIFEST
         end
+      end
+    end
+
+    it 'resolves a qualified name in class parameter scope' do
+      expect_the_message_to_be('Does it work? Yes!') do <<-PUPPET
+        class a ( 
+          $var1 = 'Does it work?',
+          $var2 = "${a::var1} Yes!"
+        ) { 
+          notify { 'something': message => $var2 }
+        }
+        include a
+        PUPPET
       end
     end
 
@@ -682,7 +695,7 @@ describe "Two step scoping for variables" do
         compile_to_catalog("$var = 'top scope'", enc_node)
       }.to raise_error(
         Puppet::Error,
-        /Cannot reassign variable '\$var' at line 1(\:6)? on node the_node/
+        /Cannot reassign variable '\$var' \(line: 1(, column: 6)?\) on node the_node/
       )
     end
 

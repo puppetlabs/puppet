@@ -1,4 +1,3 @@
-require 'puppet/util/methodhelper'
 require 'puppet/util/logging'
 require 'puppet/util/docs'
 
@@ -22,7 +21,6 @@ class Puppet::Parameter
   include Puppet::Util
   include Puppet::Util::Errors
   include Puppet::Util::Logging
-  include Puppet::Util::MethodHelper
 
   require 'puppet/parameter/value_collection'
 
@@ -93,6 +91,14 @@ class Puppet::Parameter
       end
     end
 
+    def sensitive(value = nil, &block)
+      if block
+        define_method(:is_sensitive, &block)
+      else
+        define_method(:is_sensitive) do value end
+      end
+    end
+
     # Produces a documentation string.
     # If an enumeration of _valid values_ has been defined, it is appended to the documentation
     # for this parameter specified with the {desc} method.
@@ -104,11 +110,13 @@ class Puppet::Parameter
 
       unless defined?(@addeddocvals)
         @doc = Puppet::Util::Docs.scrub(@doc)
-        if vals = value_collection.doc
+        vals = value_collection.doc
+        if vals
           @doc << "\n\n#{vals}"
         end
 
-        if features = self.required_features
+        features = self.required_features
+        if features
           @doc << "\n\nRequires features #{features.flatten.collect { |f| f.to_s }.join(" ")}."
         end
         @addeddocvals = true
@@ -332,16 +340,15 @@ class Puppet::Parameter
   # @api public
   # @note A parameter should be created via the DSL method {Puppet::Type::newparam}
   #
-  def initialize(options = {})
-    options = symbolize_options(options)
-    if resource = options[:resource]
+  def initialize(resource: nil, value: nil, should: nil)
+    if resource
       self.resource = resource
-      options.delete(:resource)
     else
-      raise Puppet::DevError, "No resource set for #{self.class.name}"
+      raise Puppet::DevError, _("No resource set for %{name}") % { name: self.class.name }
     end
 
-    set_options(options)
+    self.value = value if value
+    self.should = should if should
   end
 
   # Writes the given `msg` to the log with the loglevel indicated by the associated resource's
@@ -425,7 +432,7 @@ class Puppet::Parameter
       Puppet.debug "Reraising #{detail}"
       raise
     rescue => detail
-      raise Puppet::DevError, "Munging failed for value #{value.inspect} in class #{self.name}: #{detail}", detail.backtrace
+      raise Puppet::DevError, _("Munging failed for value %{value} in class %{class_name}: %{detail}") % { value: value.inspect, class_name: self.name, detail: detail }, detail.backtrace
     end
     ret
   end
@@ -459,7 +466,7 @@ class Puppet::Parameter
     rescue Puppet::Error, TypeError
       raise
     rescue => detail
-      raise Puppet::DevError, "Validate method failed for class #{self.name}: #{detail}", detail.backtrace
+      raise Puppet::DevError, _("Validate method failed for class %{class_name}: %{detail}") % { class_name: self.name, detail: detail }, detail.backtrace
     end
   end
 

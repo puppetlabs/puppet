@@ -2,13 +2,18 @@ test_name 'C99903: merge strategies' do
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # Master is not needed for this test. Refactor
+                       # to use puppet apply with a local module tree.
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type + '1')
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
   tmp_environment2 = mk_tmp_environment_with_teardown(master, app_type + '2')
   fq_tmp_environmentpath2  = "#{environmentpath}/#{tmp_environment2}"
 
-  master_confdir = master.puppet('master')['confdir']
+  master_confdir = puppet_config(master, 'confdir', section: 'master')
   hiera_conf_backup = master.tmpfile(app_type)
 
   teardown do
@@ -164,7 +169,7 @@ notify { "lookup-array: ${lookup ('array')}": }
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
       step "agent lookups #{agent.hostname}, hiera3" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           # hiera_hash will honor old global merge strategies, which were a bad idea
@@ -188,7 +193,7 @@ notify { "lookup-array: ${lookup ('array')}": }
         end
       end
       step "agent lookups #{agent.hostname}, hiera5" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment2}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment2}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           assert_match(/hiera_hash: \[auth_kerb, authnz_ldap, cgid, php, status, mpm_prefork, ssl\]/, result.stdout,

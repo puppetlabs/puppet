@@ -1,6 +1,12 @@
 test_name "Puppet Lookup Command"
+
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor'   # Master is not required for this test. Replace with agents.each
+                       # Wrap steps in blocks in accordance with Beaker style guide
+
 # doc:
-# https://docs.puppetlabs.com/puppet/latest/reference/lookup_quick_module.html
+# https://puppet.com/docs/puppet/latest/hiera_automatic.html
 
 @module_name = "puppet_lookup_command_test"
 
@@ -2172,7 +2178,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "production environment_key not provided"
-  rep = on(master, puppet('lookup', 'enviroment_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', 'enviroment_key'), :acceptable_exit_codes => [1])
 
   step "environment_key from environment env1"
   re1 = on(master, puppet('lookup', '--environment env1', 'environment_key'))
@@ -2202,7 +2208,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "environment_key from environment env4"
-  re4 = on(master, puppet('lookup', '--environment env4', 'environment_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', '--environment env4', 'environment_key'), :acceptable_exit_codes => [1])
 
   step "production mod1 module_key"
   repm1 = on(master, puppet('lookup', 'mod1::module_key'))
@@ -2232,7 +2238,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "production mod4 module_key"
-  repm4 = on(master, puppet('lookup', 'mod4::module_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
   step "env1 mod1 module_key"
   re1m1 = on(master, puppet('lookup', '--environment env1', 'mod1::module_key'))
@@ -2262,7 +2268,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "env1 mod4 module_key"
-  re1m4 = on(master, puppet('lookup', '--environment env1', 'mod4::module_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', '--environment env1', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
   step "env2 mod1 module_key"
   re2m1 = on(master, puppet('lookup', '--environment env2', 'mod1::module_key'))
@@ -2292,7 +2298,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "env2 mod4 module_key"
-  re2m4 = on(master, puppet('lookup', '--environment env2', 'mod4::module_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', '--environment env2', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
   step "env3 mod1 module_key"
   re3m1 = on(master, puppet('lookup', '--environment env3', 'mod1::module_key'))
@@ -2353,7 +2359,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
   )
 
   step "env4 mod4 module_key"
-  re4m4 = on(master, puppet('lookup', '--environment env4', 'mod4::module_key'), :acceptable_exit_codes => [1])
+  on(master, puppet('lookup', '--environment env4', 'mod4::module_key'), :acceptable_exit_codes => [1])
 
   step "global key explained"
   rxg = on(master, puppet('lookup', '--explain', 'global_key'))
@@ -2546,22 +2552,22 @@ with_puppet_running_on master, @master_opts, @coderoot do
   step 'apply enc manifest'
   apply_manifest_on(master, @encmanifest, :catch_failures => true)
 
-  step "enc specified node1 environment environment_key"
-  r = on(master, puppet('lookup', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
+  step "--compile uses environment specified in ENC"
+  r = on(master, puppet('lookup', '--compile', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
   result = r.stdout
   assert_match(
     /env-env2-ruby-function/,
     result,
-    "enc specified environment env2 environment_key lookup failed"
+    "lookup in ENC specified environment failed"
   )
 
-  step "enc specified node2 environment environment_key"
-  r = on(master, puppet('lookup', "--node #{@node2}", "--confdir #{@confdir}", 'environment_key'))
+  step "without --compile does not use environment specified in ENC"
+  r = on(master, puppet('lookup', "--node #{@node1}", "--confdir #{@confdir}", 'environment_key'))
   result = r.stdout
   assert_match(
-    /env-env3-puppet-function/,
+    /env-production hiera provided value/,
     result,
-    "enc specified environment env2 environment_key lookup failed"
+    "lookup in production environment failed"
   )
 
 end

@@ -10,11 +10,17 @@ require 'puppet/util/fileparsing'
 #
 # Once the provider prefetches the data, it's the resource's job to copy
 # that data over to the @is variables.
+#
+# NOTE: The prefetch method swallows FileReadErrors by treating the
+# corresponding target as an empty file. If you would like to turn this
+# behavior off, then set the raise_prefetch_errors class variable to
+# true. Doing so will error all resources associated with the failed
+# target.
 class Puppet::Provider::ParsedFile < Puppet::Provider
   extend Puppet::Util::FileParsing
 
   class << self
-    attr_accessor :default_target, :target
+    attr_accessor :default_target, :target, :raise_prefetch_errors
   end
 
   attr_accessor :property_hash
@@ -40,10 +46,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.filetype=(type)
     if type.is_a?(Class)
       @filetype = type
-    elsif klass = Puppet::Util::FileType.filetype(type)
-      @filetype = klass
     else
-      raise ArgumentError, "Invalid filetype #{type}"
+      klass = Puppet::Util::FileType.filetype(type)
+      if klass
+        @filetype = klass
+      else
+        raise ArgumentError, _("Invalid filetype %{type}") % { type: type }
+      end
     end
   end
 
@@ -89,6 +98,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Flush all of the records relating to a specific target.
   def self.flush_target(target)
+    if @raise_prefetch_errors && @failed_prefetch_targets.key?(target)
+      raise Puppet::Error, _("Failed to read %{target}'s records when prefetching them. Reason: %{detail}") % { target: target, detail: @failed_prefetch_targets[target] }
+    end
+
     backup_target(target)
 
     records = target_records(target).reject { |r|
@@ -141,6 +154,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.initvars
     @records = []
     @target_objects = {}
+
+    # Hash of <target> => <failure reason>.
+    @failed_prefetch_targets = {}
+    @raise_prefetch_errors = false
 
     @target = nil
 
@@ -226,7 +243,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       if (resource = resource_for_record(record, resources))
         resource.provider = new(record)
       elsif respond_to?(:match)
-        if resource = match(record, matchers)
+        resource = match(record, matchers)
+        if resource
           matchers.delete(resource.title)
           record[:name] = resource[:name]
           resource.provider = new(record)
@@ -260,12 +278,19 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Prefetch an individual target.
   def self.prefetch_target(target)
-
     begin
       target_records = retrieve(target)
     rescue Puppet::Util::FileType::FileReadError => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err _("Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty") % { resource: self.resource_type.name, name: self.name, target: target, detail: detail }
+      if @raise_prefetch_errors
+        # We will raise an error later in flush_target. This way,
+        # only the resources linked to our target will fail
+        # evaluation.
+        @failed_prefetch_targets[target] = detail.to_s
+      else
+        puts detail.backtrace if Puppet[:trace]
+        Puppet.err _("Could not prefetch %{resource} provider '%{name}' target '%{target}': %{detail}. Treating as empty") % { resource: self.resource_type.name, name: self.name, target: target, detail: detail }
+      end
+
       target_records = []
     end
 
@@ -277,7 +302,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     target_records = prefetch_hook(target_records) if respond_to?(:prefetch_hook)
 
-    raise Puppet::DevError, "Prefetching #{target} for provider #{self.name} returned nil" unless target_records
+    raise Puppet::DevError, _("Prefetching %{target} for provider %{name} returned nil") % { target: target, name: self.name } unless target_records
 
     target_records
   end
@@ -350,7 +375,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.targets(resources = nil)
     targets = []
     # First get the default target
-    raise Puppet::DevError, "Parsed Providers must define a default target" unless self.default_target
+    raise Puppet::DevError, _("Parsed Providers must define a default target") unless self.default_target
     targets << self.default_target
 
     # Then get each of the file objects
@@ -359,7 +384,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # Lastly, check the file from any resource instances
     if resources
       resources.each do |name, resource|
-        if value = resource.should(:target)
+        value = resource.should(:target)
+        if value
           targets << value
         end
       end
@@ -393,7 +419,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   def create
     @resource.class.validproperties.each do |property|
-      if value = @resource.should(property)
+      value = @resource.should(property)
+      if value
         @property_hash[property] = value
       end
     end
@@ -439,7 +466,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Retrieve the current state from disk.
   def prefetch
-    raise Puppet::DevError, "Somehow got told to prefetch with no resource set" unless @resource
+    raise Puppet::DevError, _("Somehow got told to prefetch with no resource set") unless @resource
     self.class.prefetch(@resource[:name] => @resource)
   end
 
@@ -451,7 +478,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Mark both the resource and provider target as modified.
   def mark_target_modified
-    if defined?(@resource) and restarget = @resource.should(:target) and restarget != @property_hash[:target]
+    restarget = @resource.should(:target) if defined?(@resource)
+    if restarget && restarget != @property_hash[:target]
       self.class.modified(restarget)
     end
     self.class.modified(@property_hash[:target]) if @property_hash[:target] != :absent and @property_hash[:target]

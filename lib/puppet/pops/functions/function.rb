@@ -49,13 +49,13 @@ class Puppet::Pops::Functions::Function
     rescue Puppet::Pops::Evaluator::Next => jumper
       begin
         throw :next, jumper.value
-      rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION => uncaught
+      rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
         raise Puppet::ParseError.new("next() from context where this is illegal", jumper.file, jumper.line)
       end
     rescue Puppet::Pops::Evaluator::Return => jumper
       begin
         throw :return, jumper
-      rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION => uncaught
+      rescue Puppet::Parser::Scope::UNCAUGHT_THROW_EXCEPTION
         raise Puppet::ParseError.new("return() from context where this is illegal", jumper.file, jumper.line)
       end
     end
@@ -108,7 +108,10 @@ class Puppet::Pops::Functions::Function
   def internal_call_function(scope, function_name, args, &block)
 
     the_loader = loader
-    raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - no loader specified" unless the_loader
+    unless the_loader
+      raise ArgumentError, _("Function %{class_name}(): cannot call function '%{function_name}' - no loader specified") %
+          { class_name: self.class.name, function_name: function_name }
+    end
 
     func = the_loader.load(:function, function_name)
     if func
@@ -121,7 +124,10 @@ class Puppet::Pops::Functions::Function
     # about where in a puppet manifest this error originates. (Such information is not available here).
     loader_scope = closure_scope
     func_3x = Puppet::Parser::Functions.function(function_name, loader_scope.environment) if loader_scope.is_a?(Puppet::Parser::Scope)
-    raise ArgumentError, "Function #{self.class.name}(): Unknown function: '#{function_name}'" unless func_3x
+    unless func_3x
+      raise ArgumentError, _("Function %{class_name}(): Unknown function: '%{function_name}'") %
+          { class_name: self.class.name, function_name: function_name }
+    end
 
     # Call via 3x API
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.

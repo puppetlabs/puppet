@@ -91,7 +91,8 @@ class Puppet::Interface
     #
     # @api public
     def [](name, version)
-      unless face = Puppet::Interface::FaceCollection[name, version]
+      face = Puppet::Interface::FaceCollection[name, version]
+      unless face
         # REVISIT (#18042) no sense in rechecking if version == :current -- josh
         if Puppet::Interface::FaceCollection[name, :current]
           raise Puppet::Error, "Could not find version #{version} of #{name}"
@@ -149,7 +150,7 @@ class Puppet::Interface
   # @api private
   def initialize(name, version, &block)
     unless SemanticPuppet::Version.valid?(version)
-      raise ArgumentError, "Cannot create face #{name.inspect} with invalid version number '#{version}'!"
+      raise ArgumentError, _("Cannot create face %{name} with invalid version number '%{version}'!") % { name: name.inspect, version: version }
     end
 
     @name    = Puppet::Interface::FaceCollection.underscorize(name)
@@ -170,7 +171,7 @@ class Puppet::Interface
   # @return [void]
   # @api private
   def load_actions
-    loader.loadall
+    loader.loadall(Puppet.lookup(:current_environment))
   end
 
   # Returns a string representation with the face's name and version
@@ -178,6 +179,7 @@ class Puppet::Interface
   def to_s
     "Puppet::Face[#{name.inspect}, #{version.inspect}]"
   end
+  alias_method :inspect, :to_s
 
   # @return [void]
   def deprecate

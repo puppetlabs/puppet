@@ -132,7 +132,7 @@ class HieraConfig
       if config_path.exist?
         env_context = EnvironmentContext.adapt(lookup_invocation.scope.compiler.environment)
         loaded_config = env_context.cached_file_data(config_path) do |content|
-          parsed = YAML.load(content, config_path)
+          parsed = Puppet::Util::Yaml.safe_load(content, [Symbol], config_path)
 
           # For backward compatibility, we must treat an empty file, or a yaml that doesn't
           # produce a Hash as Hiera version 3 default.
@@ -543,8 +543,8 @@ class HieraConfigV5 < HieraConfig
     tf = Types::TypeFactory
     nes_t = Types::PStringType::NON_EMPTY
 
-    # Need alias here to avoid ridiculously long regexp burp in case of validation errors.
-    uri_t = Pcore::TYPE_URI_ALIAS
+    # Validated using Ruby URI implementation
+    uri_t = Types::PStringType::NON_EMPTY
 
     # The option name must start with a letter and end with a letter or digit. May contain underscore and dash.
     option_name_t = tf.pattern(/\A[A-Za-z](:?[0-9A-Za-z_-]*[0-9A-Za-z])?\z/)
@@ -585,7 +585,7 @@ class HieraConfigV5 < HieraConfig
 
   def create_configured_data_providers(lookup_invocation, parent_data_provider, use_default_hierarchy)
     defaults = @config[KEY_DEFAULTS] || EMPTY_HASH
-    datadir = defaults[KEY_DATADIR] || _('data')
+    datadir = defaults[KEY_DATADIR] || 'data'
 
     # Hashes enumerate their values in the order that the corresponding keys were inserted so it's safe to use
     # a hash for the data_providers.

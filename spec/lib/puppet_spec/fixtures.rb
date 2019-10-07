@@ -25,4 +25,28 @@ module PuppetSpec::Fixtures
     block_given? and files.each do |file| yield file end
     files
   end
+
+  def pem_content(name)
+    File.read(File.join(PuppetSpec::FIXTURE_DIR, 'ssl', name), encoding: 'UTF-8')
+  end
+
+  def cert_fixture(name)
+    OpenSSL::X509::Certificate.new(pem_content(name))
+  end
+
+  def crl_fixture(name)
+    OpenSSL::X509::CRL.new(pem_content(name))
+  end
+
+  def key_fixture(name)
+    OpenSSL::PKey::RSA.new(pem_content(name))
+  end
+
+  def ec_key_fixture(name)
+    OpenSSL::PKey::EC.new(pem_content(name))
+  end
+
+  def request_fixture(name)
+    OpenSSL::X509::Request.new(pem_content(name))
+  end
 end

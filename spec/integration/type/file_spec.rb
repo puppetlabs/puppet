@@ -1,9 +1,8 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet_spec/files'
 
-if Puppet.features.microsoft_windows?
+if Puppet::Util::Platform.windows?
   require 'puppet/util/windows'
   class WindowsSecurity
     extend Puppet::Util::Windows::Security
@@ -19,6 +18,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     # we create a directory first so backups of :path that are stored in
     # the same directory will also be removed after the tests
     parent = tmpdir('file_spec')
+    File.join(parent, 'file_testing')
+  end
+
+  let(:path_protected) do
+    # we create a file inside windows protected folders (C:\Windows, C:\Windows\system32, etc)
+    # the file will also be removed after the tests
+    parent = 'C:\Windows'
     File.join(parent, 'file_testing')
   end
 
@@ -79,7 +85,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
   before do
     # stub this to not try to create state.yaml
-    Puppet::Util::Storage.stubs(:store)
+    allow(Puppet::Util::Storage).to receive(:store)
+
+    allow_any_instance_of(Puppet::Type.type(:file)).to receive(:file).and_return('my/file.pp')
+    allow_any_instance_of(Puppet::Type.type(:file)).to receive(:line).and_return(5)
   end
 
   it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
@@ -266,6 +275,27 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
           expect(get_mode(path) & 07777).to eq(0666)
         end
 
+        context "file is in protected windows directory", :if => Puppet.features.microsoft_windows? do
+          after { FileUtils.rm(path_protected) }
+
+          it "should set and get the correct mode for files inside protected windows folders" do
+            catalog.add_resource described_class.new(:path => path_protected, :ensure => :file, :mode => '0640')
+            catalog.apply
+  
+            expect(get_mode(path_protected) & 07777).to eq(0640)
+          end
+
+          it "should not change resource's status inside protected windows folders if mode is the same" do
+            FileUtils.touch(path_protected)
+            set_mode(0644, path_protected)
+            catalog.add_resource described_class.new(:path => path_protected, :ensure => :file, :mode => '0644')
+            result = catalog.apply
+            status = result.report.resource_statuses["File[#{path_protected}]"]
+            expect(status).not_to be_failed
+            expect(status).not_to be_changed
+          end
+        end
+        
         it "should not set executable bits when replacing an executable directory (#10365)" do
           pending("bug #10365")
 
@@ -292,13 +322,14 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             Puppet::FileSystem.symlink(link_target, link)
           end
 
-          it "should not set the executable bit on the link nor the target" do
+          it "should not set the executable bit on the link target" do
             catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => '0666', :target => link_target, :links => :manage)
 
             catalog.apply
 
-            (Puppet::FileSystem.stat(link).mode & 07777) == 0666
-            (Puppet::FileSystem.lstat(link_target).mode & 07777) == 0444
+            expected_target_permissions = Puppet::Util::Platform.windows? ? 0700 : 0444
+
+            expect(Puppet::FileSystem.stat(link_target).mode & 07777).to eq(expected_target_permissions)
           end
 
           it "should ignore dangling symlinks (#6856)" do
@@ -413,6 +444,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               expect(get_mode(path) & 07777).to eq(0600)
             end
 
+            it "should not give a deprecation warning about using a checksum in content when using source to define content" do
+              FileUtils.touch(path)
+              expect(Puppet).not_to receive(:puppet_deprecation_warning)
+              catalog.add_resource described_class.new(:path => path, :source => link, :links => :follow)
+              catalog.apply
+            end
+
             context "overwriting a file" do
               before :each do
                 FileUtils.touch(path)
@@ -479,7 +517,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
   describe "when writing files" do
     shared_examples "files are backed up" do |resource_options|
-      it "should backup files to a filebucket when one is configured" do
+      it "should backup files to a filebucket when one is configured" do |example|
+        if Puppet::Util::Platform.windows? && ['sha512', 'sha384'].include?(example.metadata[:digest_algorithm])
+          skip "PUP-8257: Skip file bucket test on windows for #{example.metadata[:digest_algorithm]} due to long path names"
+        end
+
         filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
         file = described_class.new({:path => path, :backup => "mybucket", :content => "foo"}.merge(resource_options))
         catalog.add_resource file
@@ -518,7 +560,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         # Create a directory where the backup should be so that writing to it fails
         Dir.mkdir(File.join(dir, "testfile.bak"))
 
-        Puppet::Util::Log.stubs(:newmessage)
+        allow(Puppet::Util::Log).to receive(:newmessage)
 
         catalog.apply
 
@@ -536,8 +578,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
         File.open(dest1, "w") { |f| f.puts "whatever" }
         Puppet::FileSystem.symlink(dest1, link)
-
-        d = filebucket_digest.call(File.read(file[:path]))
 
         catalog.apply
 
@@ -562,7 +602,11 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
         expect(File.read(File.join(backup, "foo"))).to eq("yay")
       end
 
-      it "should backup directories to filebuckets by backing up each file separately" do
+      it "should backup directories to filebuckets by backing up each file separately" do |example|
+        if Puppet::Util::Platform.windows? && ['sha512', 'sha384'].include?(example.metadata[:digest_algorithm])
+          skip "PUP-8257: Skip file bucket test on windows for #{example.metadata[:digest_algorithm]} due to long path names"
+        end
+
         bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
         file = described_class.new({:path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true}.merge(resource_options))
         catalog.add_resource file
@@ -585,9 +629,29 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       end
     end
 
+    it "should not give a checksum deprecation warning when given actual content" do
+      expect(Puppet).not_to receive(:puppet_deprecation_warning)
+      catalog.add_resource described_class.new(:path => path, :content => 'this is content')
+      catalog.apply
+    end
+
     with_digest_algorithms do
       it_should_behave_like "files are backed up", {} do
         let(:filebucket_digest) { method(:digest) }
+      end
+
+      it "should give a checksum deprecation warning" do
+        expect(Puppet).to receive(:puppet_deprecation_warning).with('Using a checksum in a file\'s "content" property is deprecated. The ability to use a checksum to retrieve content from the filebucket using the "content" property will be removed in a future release. The literal value of the "content" property will be written to the file. The checksum retrieval functionality is being replaced by the use of static catalogs. See https://puppet.com/docs/puppet/latest/static_catalogs.html for more information.', {:file => 'my/file.pp', :line => 5})
+        d = digest("this is some content")
+        catalog.add_resource described_class.new(:path => path, :content => "{#{digest_algorithm}}#{d}")
+        catalog.apply
+      end
+
+      it "should not give a checksum deprecation warning when no content is specified while checksum and checksum value are used" do
+        expect(Puppet).not_to receive(:puppet_deprecation_warning)
+        d = digest("this is some content")
+        catalog.add_resource described_class.new(:path => path, :checksum => digest_algorithm, :checksum_value => d)
+        catalog.apply
       end
     end
 
@@ -654,13 +718,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       catalog.apply
 
       expect(@dirs).not_to be_empty
-      @dirs.each do |path|
-        expect(get_mode(path) & 007777).to eq(0755)
+      @dirs.each do |dir|
+        expect(get_mode(dir) & 007777).to eq(0755)
       end
 
       expect(@files).not_to be_empty
-      @files.each do |path|
-        expect(get_mode(path) & 007777).to eq(0644)
+      @files.each do |dir|
+        expect(get_mode(dir) & 007777).to eq(0644)
       end
     end
 
@@ -1022,8 +1086,8 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     before do
       source = tmpdir("generating_in_catalog_source")
 
-      s1 = file_in_dir_with_contents(source, "one", "uno")
-      s2 = file_in_dir_with_contents(source, "two", "dos")
+      file_in_dir_with_contents(source, "one", "uno")
+      file_in_dir_with_contents(source, "two", "dos")
 
       @file = described_class.new(
         :name => path,
@@ -1093,7 +1157,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       uri_path = resource.parameters[:source].uri.path
 
       # note that Windows file:// style URIs get an extra / in front of c:/ like /c:/
-      source_prefix = Puppet.features.microsoft_windows? ? '/' : ''
+      source_prefix = Puppet::Util::Platform.windows? ? '/' : ''
 
       # the URI can be round-tripped through unescape
       expect(URI.unescape(uri_path)).to eq(source_prefix + source)
@@ -1244,6 +1308,21 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   end
 
   describe "when sourcing" do
+    it "should give a deprecation warning when the user sets source_permissions" do
+      expect(Puppet).to receive(:puppet_deprecation_warning).with(
+        'The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`.',
+        {:file => 'my/file.pp', :line => 5})
+
+      catalog.add_resource described_class.new(:path => path, :content => 'this is content', :source_permissions => :use_when_creating)
+      catalog.apply
+    end
+
+    it "should not give a deprecation warning when the user does not set source_permissions" do
+      expect(Puppet).not_to receive(:puppet_deprecation_warning)
+      catalog.add_resource described_class.new(:path => path, :content => 'this is content')
+      catalog.apply
+    end
+
     with_checksum_types "source", "default_values" do
       before(:each) do
         set_mode(0770, checksum_file)
@@ -1386,7 +1465,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       end
     end
 
-    describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows systems", :if => Puppet::Util::Platform.windows? do
       def expects_sid_granted_full_access_explicitly(path, sid)
         inherited_ace = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE
 
@@ -1473,15 +1552,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               catalog.apply
             end
 
-            it "should allow the user to explicitly set the mode to 4" do
-              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-              expect(system_aces).not_to be_empty
-
-              system_aces.each do |ace|
-                expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_GENERIC_READ)
-              end
-            end
-
             it "prepends SYSTEM ace when changing group from system to power users" do
               @file[:group] = @sids[:power_users]
               catalog.apply
@@ -1558,16 +1628,6 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
                 @directory[:mode] = '0644'
 
                 catalog.apply
-              end
-
-              it "should allow the user to explicitly set the mode to 4" do
-                system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-                expect(system_aces).not_to be_empty
-
-                system_aces.each do |ace|
-                  # unlike files, Puppet sets execute bit on directories that are readable
-                  expect(ace.mask).to eq(Puppet::Util::Windows::File::FILE_GENERIC_READ | Puppet::Util::Windows::File::FILE_GENERIC_EXECUTE)
-                end
               end
 
               it "prepends SYSTEM ace when changing group from system to power users" do
@@ -1648,9 +1708,47 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
   end
 
   describe "when using validate_cmd" do
+    test_cmd = '/bin/test'
+    if Facter.value(:osfamily) == 'Debian'
+      test_cmd = '/usr/bin/test'
+    end
+
+    if Facter.value(:operatingsystem) == 'Darwin'
+      stat_cmd = "stat -f '%Lp'"
+    else
+      stat_cmd = "stat --format=%a"
+    end
+
+    it "sets the default mode of the temporary file to '0644'", :unless => Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
+      catalog.add_resource(described_class.new(:path => path, :content => "foo",
+                                               :validate_replacement => '^',
+                                               :validate_cmd => %Q{
+                                               echo "The permissions of the file ($(#{stat_cmd} ^)) should equal 644";
+                                               #{test_cmd} "644" == "$(#{stat_cmd} ^)"
+                                               }))
+      report = catalog.apply.report
+      expect(report.resource_statuses["File[#{path}]"].events.first.message).to match(/defined content as '{md5}/)
+      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+      expect(Puppet::FileSystem.exist?(path)).to be_truthy
+    end
+
+    it "should change the permissions of the temp file to match the final file permissions", :unless => Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby?do
+      catalog.add_resource(described_class.new(:path => path, :content => "foo",
+                                               :mode => '0555',
+                                               :validate_replacement => '^',
+                                               :validate_cmd => %Q{
+                                               echo "The permissions of the file ($(#{stat_cmd} ^)) should equal 555";
+                                               #{test_cmd} "555" == "$(#{stat_cmd} ^)"
+                                               }))
+      report = catalog.apply.report
+      expect(report.resource_statuses["File[#{path}]"].events.first.message).to match(/defined content as '{md5}/)
+      expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
+      expect(Puppet::FileSystem.exist?(path)).to be_truthy
+    end
+
     it "should fail the file resource if command fails" do
       catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env false"))
-      Puppet::Util::Execution.expects(:execute).with("/usr/bin/env false", {:combine => true, :failonfail => true}).raises(Puppet::ExecutionFailure, "Failed")
+      expect(Puppet::Util::Execution).to receive(:execute).with("/usr/bin/env false", {:combine => true, :failonfail => true}).and_raise(Puppet::ExecutionFailure, "Failed")
       report = catalog.apply.report
       expect(report.resource_statuses["File[#{path}]"]).to be_failed
       expect(Puppet::FileSystem.exist?(path)).to be_falsey
@@ -1658,7 +1756,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
     it "should succeed the file resource if command succeeds" do
       catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env true"))
-      Puppet::Util::Execution.expects(:execute).with("/usr/bin/env true", {:combine => true, :failonfail => true}).returns ''
+      expect(Puppet::Util::Execution).to receive(:execute)
+        .with("/usr/bin/env true", {:combine => true, :failonfail => true})
+        .and_return(Puppet::Util::Execution::ProcessOutput.new('', 0))
       report = catalog.apply.report
       expect(report.resource_statuses["File[#{path}]"]).not_to be_failed
       expect(Puppet::FileSystem.exist?(path)).to be_truthy
@@ -1816,7 +1916,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
     end
   end
 
-  [:md5, :sha256, :md5lite, :sha256lite].each do |checksum|
+  [:md5, :sha256, :md5lite, :sha256lite, :sha384, :sha512, :sha224].each do |checksum|
     describe "setting checksum_value explicitly with checksum #{checksum}" do
       let(:path) { tmpfile('target') }
       let(:contents) { 'yay' }

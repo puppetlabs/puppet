@@ -11,11 +11,11 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
   end
 
   def destroy(facts)
-    raise Puppet::DevError, 'You cannot destroy facts in the code store; it is only used for getting facts from Facter'
+    raise Puppet::DevError, _('You cannot destroy facts in the code store; it is only used for getting facts from Facter')
   end
 
   def save(facts)
-    raise Puppet::DevError, 'You cannot save facts to the code store; it is only used for getting facts from Facter'
+    raise Puppet::DevError, _('You cannot save facts to the code store; it is only used for getting facts from Facter')
   end
 
   # Lookup a host's facts up in Facter.
@@ -38,8 +38,6 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     result
   end
 
-  private
-
   def self.setup_search_paths(request)
     # Add any per-module fact directories to facter's search path
     dirs = request.environment.modulepath.collect do |dir|
@@ -55,7 +53,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       # print out each .rb in the facts directory as module
       # developers may find that information useful for debugging purposes
       if Puppet::Util::Log.sendlevel?(:info)
-        Puppet.info "Loading facts"
+        Puppet.info _("Loading facts")
         Dir.glob("#{dir}/*.rb").each do |file|
           Puppet.debug "Loading facts from #{file}"
         end
@@ -64,7 +62,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       true
     end
 
-    Facter.search *dirs
+    Facter.search(*dirs)
   end
 
   def self.setup_external_search_paths(request)

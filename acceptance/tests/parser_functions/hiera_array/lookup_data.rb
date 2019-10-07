@@ -1,5 +1,9 @@
 test_name "Lookup data using the hiera_array parser function"
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor'    # Master is not required for this test. Replace with agents.each
+
 testdir = master.tmpdir('hiera')
 
 step 'Setup'
@@ -97,7 +101,7 @@ master_opts = {
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [2])
+    on(agent, puppet('agent', "-t"), :acceptable_exit_codes => [2])
 
     assert_match("ntpserver global.ntp.puppetlabs.com", stdout)
     assert_match("ntpserver production.ntp.puppetlabs.com", stdout)

@@ -1,11 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "the scanf function" do
-  before :all do
-    Puppet::Parser::Functions.autoloader.loadall
-  end
-
   let(:node) { Puppet::Node.new('localhost') }
   let(:compiler) { Puppet::Parser::Compiler.new(node) }
   let(:scope) { Puppet::Parser::Scope.new(compiler) }

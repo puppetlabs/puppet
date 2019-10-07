@@ -14,8 +14,8 @@ module Puppet::Pops
       let(:loader) { loaders.find_loader(nil) }
 
       def type_set_t(name, body_string, name_authority)
-        i12n_literal_hash = pp_parser.parse_string("{#{body_string}}").body
-        typeset = PTypeSetType.new(name, i12n_literal_hash, name_authority)
+        init_literal_hash = pp_parser.parse_string("{#{body_string}}").body
+        typeset = PTypeSetType.new(name, init_literal_hash, name_authority)
         loader.set_entry(Loader::TypedName.new(:type, name, name_authority), typeset)
         typeset
       end
@@ -314,7 +314,7 @@ module Puppet::Pops
           OBJECT
         end
 
-        it 'can declare a type and Object type' do
+        it 'can declare an Object type using Object[{}]' do
           expect { parse_type_set('TheSet', <<-OBJECT) }.not_to raise_error
             version => '1.0.0',
             pcore_version => '1.0.0',
@@ -410,6 +410,110 @@ module Puppet::Pops
               }
           OBJECT
         end
+
+        context 'allows bracket-less form' do
+          let(:logs) { [] }
+          let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
+          let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+          let(:node) { Puppet::Node.new('example.com') }
+          let(:compiler) { Puppet::Parser::Compiler.new(node) }
+
+          def compile(code)
+            Puppet[:code] = code
+            Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) { compiler.compile }
+          end
+
+          it 'on the TypeSet declaration itself' do
+            compile(<<-PUPPET)
+              type TS = TypeSet { pcore_version => '1.0.0' }
+              notice(TS =~ Type[TypeSet])
+            PUPPET
+            expect(warnings).to be_empty
+            expect(notices).to eql(['true'])
+          end
+
+          it 'without prefix on declared types (implies Object)' do
+            compile(<<-PUPPET)
+              type TS = TypeSet {
+                pcore_version => '1.0.0',
+                types => {
+                  MyObject => { attributes => { a => Integer} }
+                }
+              }
+              notice(TS =~ Type[TypeSet])
+              notice(TS::MyObject =~ Type)
+              notice(TS::MyObject(3))
+            PUPPET
+            expect(warnings).to be_empty
+            expect(notices).to eql(['true', 'true', "TS::MyObject({'a' => 3})"])
+          end
+
+          it "prefixed with QREF 'Object' on declared types" do
+            compile(<<-PUPPET)
+              type TS = TypeSet {
+                pcore_version => '1.0.0',
+                types => {
+                  MyObject => Object { attributes => { a => Integer} }
+                }
+              }
+              notice(TS =~ Type[TypeSet])
+              notice(TS::MyObject =~ Type)
+              notice(TS::MyObject(3))
+            PUPPET
+            expect(warnings).to be_empty
+            expect(notices).to eql(['true', 'true', "TS::MyObject({'a' => 3})"])
+          end
+
+          it 'prefixed with QREF to declare parent on declared types' do
+            compile(<<-PUPPET)
+              type TS = TypeSet {
+                pcore_version => '1.0.0',
+                types => {
+                  MyObject => { attributes => { a => String }},
+                  MySecondObject => MyObject { attributes => { b => String }}
+                }
+              }
+              notice(TS =~ Type[TypeSet])
+              notice(TS::MySecondObject =~ Type)
+              notice(TS::MySecondObject < TS::MyObject)
+              notice(TS::MyObject('hi'))
+              notice(TS::MySecondObject('hello', 'world'))
+            PUPPET
+            expect(warnings).to be_empty
+            expect(notices).to eql(
+              ['true', 'true', 'true', "TS::MyObject({'a' => 'hi'})", "TS::MySecondObject({'a' => 'hello', 'b' => 'world'})"])
+          end
+
+          it 'and warns when parent is specified both before and inside the hash if strict == warning' do
+            Puppet[:strict] = 'warning'
+            compile(<<-PUPPET)
+              type TS = TypeSet {
+                pcore_version => '1.0.0',
+                types => {
+                  MyObject => { attributes => { a => String }},
+                  MySecondObject => MyObject { parent => MyObject, attributes => { b => String }}
+                }
+              }
+              notice(TS =~ Type[TypeSet])
+            PUPPET
+            expect(warnings).to eql(["The key 'parent' is declared more than once"])
+            expect(notices).to eql(['true'])
+          end
+
+          it 'and errors when parent is specified both before and inside the hash if strict == error' do
+            Puppet[:strict] = 'error'
+            expect{ compile(<<-PUPPET) }.to raise_error(/The key 'parent' is declared more than once/)
+              type TS = TypeSet {
+                pcore_version => '1.0.0',
+                types => {
+                  MyObject => { attributes => { a => String }},
+                  MySecondObject => MyObject { parent => MyObject, attributes => { b => String }}
+                }
+              }
+              notice(TS =~ Type[TypeSet])
+            PUPPET
+          end
+        end
       end
 
       it '#name_for method reports the name of deeply nested type correctly' do
@@ -418,7 +522,7 @@ module Puppet::Pops
             pcore_version => '1.0.0',
             types => { Car => Object[{}] }
         OBJECT
-        tt = parse_type_set('Transports', <<-OBJECT)
+        parse_type_set('Transports', <<-OBJECT)
             version => '1.0.0',
             pcore_version => '1.0.0',
             references => {

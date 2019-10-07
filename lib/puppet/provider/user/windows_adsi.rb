@@ -52,7 +52,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
   def groups_to_s(groups)
     return '' if groups.nil? || !groups.kind_of?(Array)
     groups = groups.map do |group_name|
-      sid = Puppet::Util::Windows::SID.name_to_sid_object(group_name)
+      sid = Puppet::Util::Windows::SID.name_to_principal(group_name)
       if sid.account =~ /\\/
         account, _ = Puppet::Util::Windows::ADSI::Group.parse_name(sid.account)
       else
@@ -124,7 +124,15 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def password=(value)
-    user.password = value
+    if user.disabled?
+      warning _("The user account '%s' is disabled; puppet will not reset the password" % @resource[:name])
+    elsif user.locked_out?
+      warning _("The user account '%s' is locked out; puppet will not reset the password" % @resource[:name])
+    elsif user.expired?
+      warning _("The user account '%s' is expired; puppet will not reset the password" % @resource[:name])
+    else
+      user.password = value
+    end
   end
 
   def uid

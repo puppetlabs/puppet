@@ -6,7 +6,9 @@ module Puppet::Interface::FaceCollection
   def self.faces
     unless @loaded
       @loaded = true
-      names = @loader.files_to_load.map {|fn| ::File.basename(fn, '.rb')}.uniq
+      names = @loader.files_to_load(Puppet.lookup(:current_environment)).map do |fn|
+        ::File.basename(fn, '.rb')
+      end.uniq
       names.each {|name| self[name, :current]}
     end
     @faces.keys.select {|name| @faces[name].length > 0 }
@@ -22,13 +24,16 @@ module Puppet::Interface::FaceCollection
 
     # If the version they request specifically doesn't exist, don't search
     # elsewhere.  Usually this will start from :current and all...
-    return nil unless face = self[name, version]
-    unless action = face.get_action(action_name)
+    face = self[name, version]
+    return nil unless face
+    action = face.get_action(action_name)
+    unless action
       # ...we need to search for it bound to an o{lder,ther} version.  Since
       # we load all actions when the face is first references, this will be in
       # memory in the known set of versions of the face.
       (@faces[name].keys - [ :current ]).sort.reverse_each do |vers|
-        break if action = @faces[name][vers].get_action(action_name)
+        action = @faces[name][vers].get_action(action_name)
+        break if action
       end
     end
 
@@ -111,7 +116,7 @@ module Puppet::Interface::FaceCollection
     nil
   rescue SyntaxError => e
     raise unless e.message =~ %r{#{path}\.rb:\d+: }
-    Puppet.err "Failed to load face #{name}:\n#{e}"
+    Puppet.err _("Failed to load face %{name}:\n%{detail}") % { name: name, detail: e }
     # ...but we just carry on after complaining.
     nil
   end
@@ -122,7 +127,9 @@ module Puppet::Interface::FaceCollection
 
   def self.underscorize(name)
     unless name.to_s =~ /^[-_a-z][-_a-z0-9]*$/i then
-      raise ArgumentError, "#{name.inspect} (#{name.class}) is not a valid face name"
+      #TRANSLATORS 'face' refers to a programming API in Puppet
+      raise ArgumentError, _("%{name} (%{class_name}) is not a valid face name") %
+          { name: name.inspect, class_name: name.class }
     end
 
     name.to_s.downcase.split(/[-_]/).join('_').to_sym

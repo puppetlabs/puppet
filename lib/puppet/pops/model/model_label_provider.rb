@@ -56,10 +56,12 @@ class ModelLabelProvider
   def label_UnaryMinusExpression o        ; "Unary Minus"                       end
   def label_UnfoldExpression o            ; "Unfold"                            end
   def label_BlockExpression o             ; "Block Expression"                  end
+  def label_ApplyBlockExpression o        ; "Apply Block Expression"            end
   def label_ConcatenatedString o          ; "Double Quoted String"              end
   def label_HeredocExpression o           ; "'@(#{o.syntax})' expression"       end
   def label_HostClassDefinition o         ; "Host Class Definition"             end
   def label_FunctionDefinition o          ; "Function Definition"               end
+  def label_PlanDefinition o              ; "Plan Definition"                   end
   def label_NodeDefinition o              ; "Node Definition"                   end
   def label_SiteDefinition o              ; "Site Definition"                   end
   def label_ResourceTypeDefinition o      ; "'define' expression"               end
@@ -70,6 +72,7 @@ class ModelLabelProvider
   def label_UnlessExpression o            ; "'unless' Statement"                end
   def label_CallNamedFunctionExpression o ; "Function Call"                     end
   def label_CallMethodExpression o        ; "Method call"                       end
+  def label_ApplyExpression o             ; "'apply' expression"                end
   def label_CapabilityMapping o           ; "Capability Mapping"                end
   def label_CaseExpression o              ; "'case' statement"                  end
   def label_CaseOption o                  ; "Case Option"                       end
@@ -103,6 +106,8 @@ class ModelLabelProvider
   def label_Sensitive o                   ; "Sensitive"                         end
   def label_Timestamp o                   ; "Timestamp"                         end
   def label_Timespan o                    ; "Timespan"                          end
+  def label_Version o                     ; "Semver"                            end
+  def label_VersionRange o                ; "SemverRange"                       end
 
   def label_PResourceType o
     if o.title
@@ -123,7 +128,10 @@ class ModelLabelProvider
       simple_name[1..-5] + "-Type"
     else
       n = o.name
-      n.nil? ? 'Anonymous Class' : n
+      if n.nil?
+        n = o.respond_to?(:_pcore_type) ? o._pcore_type.name : 'Anonymous Class'
+      end
+      n
     end
   end
 end

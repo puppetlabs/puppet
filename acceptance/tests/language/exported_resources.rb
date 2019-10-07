@@ -2,6 +2,11 @@ test_name "C94788: exported resources using a yaml terminus for storeconfigs" do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',     # This could be a component of a larger workflow scenario.
+    'server'
+
   # user resource doesn't have a provider on arista
   skip_test if agents.any? {|agent| agent['platform'] =~ /^eos/ } # see PUP-5404, ARISTA-42
   skip_test 'requires puppetserver to service restart' if @options[:type] != 'aio'
@@ -155,12 +160,12 @@ MANIFEST
     on(master, puppet("config set storeconfigs_backend #{storeconfigs_backend_name} --section main"))
     on(master, "service #{master['puppetservice']} restart")
     step 'run the master agent to export the resources' do
-      on(master, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"))
+      on(master, puppet("agent -t --environment #{tmp_environment}"))
     end
     agents.each do |agent|
       next if agent == master
       step 'run the agents to collect exported resources' do
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet("agent -t --environment #{tmp_environment}"),
            :acceptable_exit_codes => 2)
         on(agent, puppet_resource("user #{exported_username}"), :accept_all_exit_codes => true) do |result|
           assert_match(/present/, result.stdout, 'collected resource not found')

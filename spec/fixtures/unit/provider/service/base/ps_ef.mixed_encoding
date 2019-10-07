@@ -1,0 +1,3 @@
+UID        PID  PPID  C STIME TTY          TIME CMD
+root      4113 26549  0 11:07 pts/0    00:00:00 latin-1 args m�ni interesting furry animals
+root      4056 26549  0 11:06 pts/0    00:00:00 utf-8 args including the majestik møøse

@@ -2,11 +2,16 @@ test_name 'C99572: v4 hieradata with v5 configs' do
   require 'puppet/acceptance/puppet_type_test_tools.rb'
   extend Puppet::Acceptance::PuppetTypeTestTools
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # Master is not needed for this test. Refactor
+                       # to use puppet apply with a local module tree.
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
 
-  confdir = master.puppet('master')['confdir']
+  confdir = puppet_config(master, 'confdir', section: 'master')
   hiera_conf_backup = master.tmpfile('C99572-hiera-yaml')
 
   step "backup global hiera.yaml" do
@@ -104,7 +109,7 @@ environment_key2 = "hocon value",
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
       step 'agent lookup' do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           assert_match(/global_key-common_file/m, result.stdout,

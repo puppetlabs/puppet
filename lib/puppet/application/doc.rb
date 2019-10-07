@@ -40,7 +40,8 @@ class Puppet::Application::Doc < Puppet::Application
 
   option("--list", "-l") do |arg|
     require 'puppet/util/reference'
-    puts Puppet::Util::Reference.references.collect { |r| Puppet::Util::Reference.reference(r).doc }.join("\n")
+    refs = Puppet::Util::Reference.references(Puppet.lookup(:current_environment))
+    puts refs.collect { |r| Puppet::Util::Reference.reference(r).doc }.join("\n")
     exit(0)
   end
 
@@ -48,10 +49,14 @@ class Puppet::Application::Doc < Puppet::Application
     options[:references] << arg.intern
   end
 
-  def help
-    <<-'HELP'
+  def summary
+    _("Generate Puppet references")
+  end
 
-puppet-doc(8) -- Generate Puppet references
+  def help
+    <<-HELP
+
+puppet-doc(8) -- #{summary}
 ========
 
 SYNOPSIS
@@ -151,7 +156,8 @@ HELP
     exit_code = 0
     require 'puppet/util/reference'
     options[:references].sort { |a,b| a.to_s <=> b.to_s }.each do |name|
-      raise _("Could not find reference %{name}") % { name: name } unless section = Puppet::Util::Reference.reference(name)
+      section = Puppet::Util::Reference.reference(name)
+      raise _("Could not find reference %{name}") % { name: name } unless section
 
       begin
         # Add the per-section text, but with no ToC
@@ -194,7 +200,8 @@ HELP
     if options[:all]
       # Don't add dynamic references to the "all" list.
       require 'puppet/util/reference'
-      options[:references] = Puppet::Util::Reference.references.reject do |ref|
+      refs = Puppet::Util::Reference.references(Puppet.lookup(:current_environment))
+      options[:references] = refs.reject do |ref|
         Puppet::Util::Reference.reference(ref).dynamic?
       end
     end

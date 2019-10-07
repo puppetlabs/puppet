@@ -178,6 +178,15 @@ class EvaluatorImpl
     end
   end
 
+  # Implementation of case option matching.
+  #
+  # This is the type of matching performed in a case option, using == for every type
+  # of value except regular expression where a match is performed.
+  #
+  def match?(left, right)
+    @@compare_operator.match(left, right, nil)
+  end
+
   protected
 
   def lvalue_VariableExpression(o, scope)
@@ -231,7 +240,10 @@ class EvaluatorImpl
           values.fetch(lval) {|k| fail(Issues::MISSING_MULTI_ASSIGNMENT_KEY, o, :key =>k)},
           o, scope)
       end
-    elsif values.is_a?(Puppet::Pops::Types::PHostClassType)
+    elsif values.is_a?(Puppet::Pops::Types::PClassType)
+      if Puppet[:tasks]
+        fail(Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING, o, {:operation => _('multi var assignment from class')})
+      end
       # assign variables from class variables
       # lookup class resource and return one or more parameter values
       # TODO: behavior when class_name is nil
@@ -305,7 +317,7 @@ class EvaluatorImpl
     nil
   end
 
-  # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType
+  # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PTypeType
   #
   def eval_QualifiedReference(o, scope)
     type = Types::TypeParser.singleton.interpret(o)
@@ -330,7 +342,7 @@ class EvaluatorImpl
       candidate
     when Hash
       candidate.to_a
-    when Puppet::Pops::Types::Iterator
+    when Puppet::Pops::Types::Iterable
       candidate.to_a
     else
       # turns anything else into an array (so result can be unfolded)
@@ -392,7 +404,9 @@ class EvaluatorImpl
     end
 
     left_o = bin_expr.left_expr
-    if (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
+    if (left.is_a?(URI) || left.is_a?(Types::PBinaryType::Binary)) && operator == '+'
+      concatenate(left, right)
+    elsif (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
       # Handle operation on collections
       case operator
       when '+'
@@ -428,9 +442,9 @@ class EvaluatorImpl
           end
         end
         result = left.send(operator, right)
-      rescue NoMethodError => e
+      rescue NoMethodError
         fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
-      rescue ZeroDivisionError => e
+      rescue ZeroDivisionError
         fail(Issues::DIV_BY_ZERO, bin_expr.right_expr)
       end
       case result
@@ -479,7 +493,7 @@ class EvaluatorImpl
   def eval_AccessExpression(o, scope)
     left = evaluate(o.left_expr, scope)
     keys = o.keys || []
-    if left.is_a?(Types::PHostClassType)
+    if left.is_a?(Types::PClassType)
       # Evaluate qualified references without errors no undefined types
       keys = keys.map {|key| key.is_a?(Model::QualifiedReference) ? Types::TypeParser.singleton.interpret(key) : evaluate(key, scope) }
     else
@@ -689,7 +703,7 @@ class EvaluatorImpl
   end
 
   # Evaluates a CollectExpression by creating a collector transformer. The transformer
-  # will evaulate the collection, create the appropriate collector, and hand it off
+  # will evaluate the collection, create the appropriate collector, and hand it off
   # to the compiler to collect the resources specified by the query.
   #
   def eval_CollectExpression o, scope
@@ -724,7 +738,8 @@ class EvaluatorImpl
       #evaluate(o.body, scope)
     rescue Puppet::Pops::Evaluator::PuppetStopIteration => ex
       # breaking out of a file level program is not allowed
-      raise Puppet::ParseError.new("break() from context where this is illegal", ex.file, ex.line)
+      #TRANSLATOR break() is a method that should not be translated
+      raise Puppet::ParseError.new(_("break() from context where this is illegal"), ex.file, ex.line)
     end
   end
 
@@ -755,7 +770,7 @@ class EvaluatorImpl
 
       # must be a CatalogEntry subtype
       case evaluated_name
-      when Types::PHostClassType
+      when Types::PClassType
         unless evaluated_name.class_name.nil?
           fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
         end
@@ -858,6 +873,18 @@ class EvaluatorImpl
     evaluated_resources
   end
 
+  def eval_ApplyExpression(o, scope)
+    # All expressions are wrapped in an ApplyBlockExpression so we can identify the contents of
+    # that block. However we don't want to serialize the block expression, so unwrap here.
+    body = if o.body.statements.count > 1
+      Model::BlockExpression.from_asserted_hash(o.body._pcore_init_hash)
+    else
+      o.body.statements[0]
+    end
+
+    Puppet.lookup(:apply_executor).apply(unfold([], o.arguments, scope), body, scope)
+  end
+
   # Produces 3x parameter
   def eval_AttributeOperation(o, scope)
     create_resource_parameter(o, scope, o.attribute_name, evaluate(o.value_expr, scope), o.operator)
@@ -933,7 +960,7 @@ class EvaluatorImpl
 
     obj = receiver[0]
     receiver_type = Types::TypeCalculator.infer(obj)
-    if receiver_type.is_a?(Types::PObjectType)
+    if receiver_type.is_a?(Types::TypeWithMembers)
       member = receiver_type[name]
       unless member.nil?
         args = unfold([], o.arguments || [], scope)
@@ -1001,8 +1028,12 @@ class EvaluatorImpl
 
   # Evaluates Puppet DSL Heredoc
   def eval_HeredocExpression o, scope
+    expr = o.text_expr
     result = evaluate(o.text_expr, scope)
-    assert_external_syntax(scope, result, o.syntax, o.text_expr)
+    unless expr.is_a?(Model::LiteralString)
+      # When expr is a LiteralString, validation has already validated this
+      assert_external_syntax(scope, result, o.syntax, o.text_expr)
+    end
     result
   end
 
@@ -1095,7 +1126,7 @@ class EvaluatorImpl
   end
 
   def string_Regexp(o, scope)
-    "/#{o.source}/"
+    Types::PRegexpType.regexp_to_s_with_delimiters(o)
   end
 
   def string_PAnyType(o, scope)
@@ -1116,7 +1147,11 @@ class EvaluatorImpl
   # * Hash => a merge, where entries in `y` overrides
   # * any other => error
   #
-  # When x is something else, wrap it in an array first.
+  # When x is a URI, y of type produces:
+  #
+  # * String => merge of URI interpreted x + URI(y) using URI merge semantics
+  # * URI => merge of URI interpreted x + y using URI merge semantics
+  # * any other => error
   #
   # When x is nil, an empty array is used instead.
   #
@@ -1146,11 +1181,18 @@ class EvaluatorImpl
   #   @param hsh_x [Hash] the hash to merge to
   #   @param hsh_y [Hash] hash merged with `hsh_x`
   #   @return [Hash] new hash with `hsh_x` merged with `hsh_y`
+  # @overload concatenate(uri_x, uri_y)
+  #   @param uri_x [URI] the uri to merge to
+  #   @param uri_y [URI] uri to merged with `uri_x`
+  #   @return [URI] new uri with `uri_x` merged with `uri_y`
+  # @overload concatenate(uri_x, string_y)
+  #   @param uri_x [URI] the uri to merge to
+  #   @param string_y [String] string to merge with `uri_x`
+  #   @return [URI] new uri with `uri_x` merged with `string_y`
   # @raise [ArgumentError] when `xxx_x` is neither an Array nor a Hash
   # @raise [ArgumentError] when `xxx_x` is a Hash, and `xxx_y` is neither Array nor Hash.
   #
   def concatenate(x, y)
-    x = [x] unless x.is_a?(Array) || x.is_a?(Hash)
     case x
     when Array
       y = case y
@@ -1168,7 +1210,7 @@ class EvaluatorImpl
         # Hash[a,1,b,2] => {a => 1, b => 2}
         # Hash[[a,1], [b,2]] => {[a,1] => [b,2]}
         # Hash[[[a,1], [b,2]]] => {a => 1, b => 2}
-        # Use type calcultor to determine if array is Array[Array[?]], and if so use second form
+        # Use type calculator to determine if array is Array[Array[?]], and if so use second form
         # of call
         t = @@type_calculator.infer(y)
         if t.element_type.is_a? Types::PArrayType
@@ -1177,11 +1219,17 @@ class EvaluatorImpl
           Hash[*y]
         end
       else
-        raise ArgumentError.new(_("Can only append Array or Hash to a Hash"))
+        raise ArgumentError.new(_('Can only append Array or Hash to a Hash'))
       end
       x.merge y # new hash with overwrite
+    when URI
+      raise ArgumentError.new(_('An URI can only be merged with an URI or String')) unless y.is_a?(String) || y.is_a?(URI)
+      x + y
+    when Types::PBinaryType::Binary
+      raise ArgumentError.new(_('Can only append Binary to a Binary')) unless y.is_a?(Types::PBinaryType::Binary)
+      Types::PBinaryType::Binary.from_binary_string(x.binary_buffer + y.binary_buffer)
     else
-      raise ArgumentError.new(_("Can only append to an Array or a Hash."))
+      concatenate([x], y)
     end
   end
 

@@ -19,6 +19,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
 
   defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ['1','2']
   defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ['5','6','7']
+  defaultfor :operatingsystem => :devuan
 
   # Remove the symlinks
   def disable

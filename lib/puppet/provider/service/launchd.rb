@@ -4,10 +4,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     This provider manages jobs with `launchd`, which is the default service
     framework for Mac OS X (and may be available for use on other platforms).
 
-    For `launchd` documentation, see:
+    For more information, see the `launchd` man page:
 
-    * <https://developer.apple.com/macosx/launchd.html>
-    * <http://launchd.macosforge.org/>
+    * <https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man8/launchd.8.html>
 
     This provider reads plists out of the following directories:
 
@@ -93,7 +92,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # clear out our cache when we're done.
   def self.prefetch(resources)
     instances.each do |prov|
-      if resource = resources[prov.name]
+      resource = resources[prov.name]
+      if resource
         resource.provider = prov
       end
     end
@@ -141,8 +141,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         if job.has_key?("Label")
           @label_to_path_map[job["Label"]] = filepath
         else
-          Puppet.warning("The #{filepath} plist does not contain a 'label' key; " +
-                       "Puppet is skipping it")
+          #TRANSLATORS 'plist' and label' should not be translated
+          Puppet.debug(_("The %{file} plist does not contain a 'label' key; Puppet is skipping it") % { file: filepath })
           next
         end
       end
@@ -197,6 +197,22 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     Puppet::Util::Plist.read_plist_file(path)
   end
 
+  # Read overrides plist, retrying if necessary
+  def self.read_overrides
+    i = 1
+    overrides = nil
+    loop do
+      Puppet.debug(_("Reading overrides plist, attempt %{i}") % {i: i}) if i > 1
+      overrides = read_plist(launchd_overrides)
+      break unless overrides.nil?
+      raise Puppet::Error.new(_('Unable to read overrides plist, too many attempts')) if i == 20
+      Puppet.info(_('Overrides file could not be read, trying again.'))
+      Kernel.sleep(0.1)
+      i += 1
+    end
+    overrides
+  end
+
   # Clean out the @property_hash variable containing the cached list of services
   def flush
     @property_hash.clear
@@ -225,12 +241,20 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def status
     if @resource && ((@resource[:hasstatus] == :false) || (@resource[:status]))
       return super
-    else
-      if @property_hash[:status].nil?
-        :absent
+    elsif @property_hash[:status].nil?
+      # property_hash was flushed so the service changed status
+      service_name = @resource[:name]
+      # Updating services with new statuses
+      job_list = self.class.job_list
+      # if job is present in job_list, return its status
+      if job_list.key?(service_name)
+        job_list[service_name]
+      # if job is no longer present in job_list, it was stopped
       else
-        @property_hash[:status]
+        :stopped
       end
+    else
+      @property_hash[:status]
     end
   end
 
@@ -239,7 +263,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # directly.
   def start
     return ucommand(:start) if resource[:start]
-    job_path, job_plist = plist_from_label(resource[:name])
+    job_path, _ = plist_from_label(resource[:name])
     did_enable_job = false
     cmds = []
     cmds << :launchctl << :load
@@ -262,7 +286,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   def stop
     return ucommand(:stop) if resource[:stop]
-    job_path, job_plist = plist_from_label(resource[:name])
+    job_path, _ = plist_from_label(resource[:name])
     did_disable_job = false
     cmds = []
     cmds << :launchctl << :unload
@@ -298,10 +322,18 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_plist_disabled = nil
     overrides_disabled = nil
 
-    job_path, job_plist = plist_from_label(resource[:name])
+    begin
+      _, job_plist = plist_from_label(resource[:name])
+    rescue Puppet::Error => err
+      # if job does not exist, log the error and return false as on other platforms
+      Puppet.log_exception(err)
+      return :false
+    end
+
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
-    if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_plist(self.class.launchd_overrides)
+    overrides = self.class.read_overrides if FileTest.file?(self.class.launchd_overrides)
+    if overrides
       if overrides.has_key?(resource[:name])
         if self.class.get_os_version < 14
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
@@ -325,7 +357,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # rather than dealing with launchctl as it is unable to change the Disabled flag
   # without actually loading/unloading the job.
   def enable
-    overrides = self.class.read_plist(self.class.launchd_overrides)
+    overrides = self.class.read_overrides
     if self.class.get_os_version < 14
       overrides[resource[:name]] = { "Disabled" => false }
     else
@@ -335,7 +367,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   def disable
-    overrides = self.class.read_plist(self.class.launchd_overrides)
+    overrides = self.class.read_overrides
     if self.class.get_os_version < 14
       overrides[resource[:name]] = { "Disabled" => true }
     else

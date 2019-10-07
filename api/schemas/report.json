@@ -14,6 +14,7 @@
         "report_format",
         "puppet_version",
         "status",
+        "transaction_completed",
         "noop",
         "noop_pending",
         "environment"
@@ -126,7 +127,7 @@
         "report_format": {
             "description": "The report format version documented by this schema",
             "type":        "integer",
-            "enum":        ["7", 7]
+            "enum":        ["10", 10]
         },
 
         "puppet_version": {
@@ -142,6 +143,11 @@
                 "unchanged"
             ]
         },
+
+        "transaction_completed": {
+                    "description": "Whether the transaction completed (e.g. didn't have an unrescued exception).",
+                    "type":        "boolean"
+                },
 
         "noop": {
             "description": "Whether the puppet run was started in noop mode",
@@ -454,6 +460,14 @@
                     "type":        "string"
                 },
 
+                "provider_used": {
+                    "description": "The provider name used by the resource",
+                    "oneOf":       [
+                        {"type": "string"},
+                        {"type": "null"}
+                    ]
+                },
+
                 "file": {
                     "description": "The pathname of the manifest file which declared the resource.",
                     "oneOf":       [
@@ -522,6 +536,11 @@
 
                 "failed": {
                     "description": "True if Puppet experienced an error while evaluating this resource, otherwise false. **Deprecated**",
+                    "type":        "boolean"
+                },
+
+                "failed_to_restart": {
+                    "description": "True if Puppet experienced an error while trying to restart this resource (For example, when a Service resource has been notified from another resource), otherwise false.",
                     "type":        "boolean"
                 },
 

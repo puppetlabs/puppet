@@ -100,7 +100,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     resources.each do |resource|
       other_title_key = title_key_for_ref(other.ref)
       idx = @resources.index(other_title_key)
-      raise ArgumentError, "Cannot add resource #{resource.ref} before #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      if idx.nil?
+        raise ArgumentError, _("Cannot add resource %{resource_1} before %{resource_2} because %{resource_2} is not yet in the catalog") %
+            { resource_1: resource.ref, resource_2: other.ref }
+      end
       add_one_resource(resource, idx)
     end
   end
@@ -112,7 +115,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     resources.each do |resource|
       other_title_key = title_key_for_ref(other.ref)
       idx = @resources.index(other_title_key)
-      raise ArgumentError, "Cannot add resource #{resource.ref} after #{other.ref} because #{other.ref} is not yet in the catalog" if idx.nil?
+      if idx.nil?
+        raise ArgumentError, _("Cannot add resource %{resource_1} after %{resource_2} because %{resource_2} is not yet in the catalog") %
+            { resource_1: resource.ref, resource_2: other.ref }
+      end
       add_one_resource(resource, idx+1)
     end
   end
@@ -191,12 +197,20 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     # because sometimes an alias is created before the resource is
     # added to the catalog, so comparing inside the below if block
     # isn't sufficient.
-    if existing = @resource_table[newref]
+    existing = @resource_table[newref]
+    if existing
       return if existing == resource
-      resource_declaration = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
-      existing_declaration = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
-      #TRANSLATORS "resource" here is a Puppet type and should not be translated
-      msg = _("Cannot alias %{ref} to %{key}%{resource_declaration}; resource %{newref} already declared%{existing_declaration}") % { ref: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect, existing_declaration: existing_declaration }
+      resource_declaration = Puppet::Util::Errors.error_location(resource.file, resource.line)
+      msg = if resource_declaration.empty?
+              #TRANSLATORS 'alias' should not be translated
+              _("Cannot alias %{resource} to %{key}; resource %{newref} already declared") %
+                  { resource: ref, key: key.inspect, newref: newref.inspect }
+            else
+              #TRANSLATORS 'alias' should not be translated
+              _("Cannot alias %{resource} to %{key} at %{resource_declaration}; resource %{newref} already declared") %
+                  { resource: ref, key: key.inspect, resource_declaration: resource_declaration, newref: newref.inspect }
+            end
+      msg += Puppet::Util::Errors.error_location_with_space(existing.file, existing.line)
       raise ArgumentError, msg
     end
     @resource_table[newref] = resource
@@ -222,7 +236,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     begin
       transaction.report.as_logging_destination do
-        transaction.evaluate
+        transaction_evaluate_time = Puppet::Util.thinmark do
+          transaction.evaluate
+        end
+        transaction.report.add_times(:transaction_evaluation, transaction_evaluate_time)
       end
     ensure
       # Don't try to store state unless we're a host config
@@ -270,10 +287,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Create a new resource and register it in the catalog.
   def create_resource(type, options)
-    unless klass = Puppet::Type.type(type)
-      raise ArgumentError, "Unknown resource type #{type}"
+    klass = Puppet::Type.type(type)
+    unless klass
+      raise ArgumentError, _("Unknown resource type %{type}") % { type: type }
     end
-    return unless resource = klass.new(options)
+    resource = klass.new(options)
+    return unless resource
 
     add_resource(resource)
     resource
@@ -326,7 +345,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     Puppet::Type.type(:schedule).mkdefaultschedules.each { |res| add_resource(res) unless resource(res.ref) }
 
     # And filebuckets
-    if bucket = Puppet::Type.type(:filebucket).mkdefaultbucket
+    bucket = Puppet::Type.type(:filebucket).mkdefaultbucket
+    if bucket
       add_resource(bucket) unless resource(bucket.ref)
     end
   end
@@ -339,7 +359,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       ref = resource.ref
       title_key = title_key_for_ref(ref)
       @resource_table.delete(title_key)
-      if aliases = @aliases[ref]
+      aliases = @aliases[ref]
+      if aliases
         aliases.each { |res_alias| @resource_table.delete(res_alias) }
         @aliases.delete(ref)
       end
@@ -361,8 +382,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     result = @resource_table[title_key]
     if result.nil?
       # an instance has to be created in order to construct the unique key used when
-      # searching for aliases, or when app_management is active and nothing is found in
-      # which case it is needed by the CapabilityFinder.
+      # searching for aliases, or nothing is found as it is needed by the CapabilityFinder.
       res = Puppet::Resource.new(type, title, { :environment => @environment_instance })
 
       # Must check with uniqueness key because of aliases or if resource transforms title in title
@@ -400,45 +420,38 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   def self.from_data_hash(data)
     result = new(data['name'], Puppet::Node::Environment::NONE)
 
-    if tags = data['tags']
-      result.tag(*tags)
-    end
-
-    if version = data['version']
-      result.version = version
-    end
-
-    if code_id = data['code_id']
-      result.code_id = code_id
-    end
-
-    if catalog_uuid = data['catalog_uuid']
-      result.catalog_uuid = catalog_uuid
-    end
-
+    result.tag(*data['tags']) if data['tags'] 
+    result.version = data['version'] if data['version']
+    result.code_id = data['code_id'] if data['code_id']
+    result.catalog_uuid = data['catalog_uuid'] if data['catalog_uuid']
     result.catalog_format = data['catalog_format'] || 0
 
-    if environment = data['environment']
+    environment = data['environment']
+    if environment
       result.environment = environment
       result.environment_instance = Puppet::Node::Environment.remote(environment.to_sym)
     end
 
-    if resources = data['resources']
-      result.add_resource(*resources.collect do |res|
+    result.add_resource(
+      *data['resources'].collect do |res|
         Puppet::Resource.from_data_hash(res)
-      end)
-    end
+      end
+    ) if data['resources']
 
-    if edges = data['edges']
-      edges.each do |edge_hash|
+    if data['edges']
+      data['edges'].each do |edge_hash|
         edge = Puppet::Relationship.from_data_hash(edge_hash)
-        unless source = result.resource(edge.source)
-          raise ArgumentError, "Could not intern from data: Could not find relationship source #{edge.source.inspect} for #{edge.target.to_s}"
+        source = result.resource(edge.source)
+        unless source
+          raise ArgumentError, _("Could not intern from data: Could not find relationship source %{source} for %{target}") %
+              { source: edge.source.inspect, target: edge.target.to_s }
         end
         edge.source = source
 
-        unless target = result.resource(edge.target)
-          raise ArgumentError, "Could not intern from data: Could not find relationship target #{edge.target.inspect} for #{edge.source.to_s}"
+        target = result.resource(edge.target)
+        unless target
+          raise ArgumentError, _("Could not intern from data: Could not find relationship target %{target} for %{source}") %
+              { target: edge.target.inspect, source: edge.source.to_s }
         end
         edge.target = target
 
@@ -446,15 +459,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       end
     end
 
-    if classes = data['classes']
-      result.add_class(*classes)
-    end
+    result.add_class(*data['classes']) if data['classes']
 
-    if metadata = data['metadata']
-      result.metadata = metadata.inject({}) { |h, (k, v)| h[k] = Puppet::FileServing::Metadata.from_data_hash(v); h }
-    end
+    result.metadata = data['metadata'].inject({}) { |h, (k, v)| h[k] = Puppet::FileServing::Metadata.from_data_hash(v); h } if data['metadata']
 
-    if recursive_metadata = data['recursive_metadata']
+    recursive_metadata = data['recursive_metadata']
+    if recursive_metadata
       result.recursive_metadata = recursive_metadata.inject({}) do |h, (title, source_to_meta_hash)|
         h[title] = source_to_meta_hash.inject({}) do |inner_h, (source, metas)|
           inner_h[source] = metas.map {|meta| Puppet::FileServing::Metadata.from_data_hash(meta)}
@@ -524,7 +534,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Store the classes in the classfile.
   def write_class_file
     # classfile paths may contain UTF-8
-    # https://docs.puppet.com/puppet/latest/reference/configuration.html#classfile
+    # https://puppet.com/docs/puppet/latest/configuration.html#classfile
     classfile = Puppet.settings.setting(:classfile)
     Puppet::FileSystem.open(classfile.value, classfile.mode.to_i(8), "w:UTF-8") do |f|
       f.puts classes.join("\n")
@@ -536,16 +546,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Store the list of resources we manage
   def write_resource_file
     # resourcefile contains resources that may be UTF-8 names
-    # https://docs.puppet.com/puppet/latest/reference/configuration.html#resourcefile
+    # https://puppet.com/docs/puppet/latest/configuration.html#resourcefile
     resourcefile = Puppet.settings.setting(:resourcefile)
     Puppet::FileSystem.open(resourcefile.value, resourcefile.mode.to_i(8), "w:UTF-8") do |f|
       to_print = resources.map do |resource|
         next unless resource.managed?
-        if resource.name_var
-          "#{resource.type}[#{resource[resource.name_var]}]"
-        else
-          "#{resource.ref.downcase}"
-        end
+        "#{resource.ref.downcase}"
       end.compact
       f.puts to_print.join("\n")
     end
@@ -564,23 +570,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   private
 
   def prioritizer
-    @prioritizer ||= case Puppet[:ordering]
-                     when "title-hash"
-                       Puppet::Graph::TitleHashPrioritizer.new
-                     when "manifest"
-                       Puppet::Graph::SequentialPrioritizer.new
-                     when "random"
-                       Puppet::Graph::RandomPrioritizer.new
-                     else
-                       raise Puppet::DevError, "Unknown ordering type #{Puppet[:ordering]}"
-                     end
+    @prioritizer = Puppet::Graph::SequentialPrioritizer.new
   end
 
   def create_transaction(options)
     transaction = Puppet::Transaction.new(self, options[:report], prioritizer)
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
-    transaction.for_network_device = options[:network_device]
+    transaction.for_network_device = Puppet.lookup(:network_device) { nil } || options[:network_device]
 
     transaction
   end
@@ -588,15 +585,16 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Verify that the given resource isn't declared elsewhere.
   def fail_on_duplicate_type_and_title(resource, title_key)
     # Short-circuit the common case,
-    return unless existing_resource = @resource_table[title_key]
+    existing_resource = @resource_table[title_key]
+    return unless existing_resource
 
     # If we've gotten this far, it's a real conflict
-    msg = "Duplicate declaration: #{resource.ref} is already declared"
-
-    msg << " in file #{existing_resource.file}:#{existing_resource.line}" if existing_resource.file and existing_resource.line
-
-    msg << "; cannot redeclare"
-
+    error_location_str = Puppet::Util::Errors.error_location(existing_resource.file, existing_resource.line)
+    msg = if error_location_str.empty?
+            _("Duplicate declaration: %{resource} is already declared; cannot redeclare") % { resource: resource.ref }
+          else
+            _("Duplicate declaration: %{resource} is already declared at %{error_location}; cannot redeclare") % { resource: resource.ref, error_location: error_location_str }
+          end
     raise DuplicateResourceError.new(msg, resource.file, resource.line)
   end
 
@@ -642,12 +640,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       next if virtual_not_exported?(edge.target)
       next if block_given? and yield edge.target
 
-      unless source = map[edge.source.ref]
-        raise Puppet::DevError, "Could not find resource #{edge.source.ref} when converting #{message} resources"
+      source = map[edge.source.ref]
+      unless source
+        raise Puppet::DevError, _("Could not find resource %{resource} when converting %{message} resources") % { resource: edge.source.ref, message: message }
       end
 
-      unless target = map[edge.target.ref]
-        raise Puppet::DevError, "Could not find resource #{edge.target.ref} when converting #{message} resources"
+      target = map[edge.target.ref]
+      unless target
+        raise Puppet::DevError, _("Could not find resource %{resource} when converting %{message} resources") % { resource: edge.target.ref, message: message }
       end
 
       result.add_edge(source, target, edge.label)
@@ -656,7 +656,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     map.clear
 
     result.add_class(*self.classes)
-    result.tag(*self.tags)
+    result.merge_tags_from(self)
 
     result
   end

@@ -1,5 +1,5 @@
 require 'net/http'
-require 'json'
+require 'puppet/util/json'
 require 'puppet/util/colors'
 
 module Puppet::ModuleTool
@@ -26,7 +26,7 @@ module Puppet::ModuleTool
         when Net::HTTPOK, Net::HTTPCreated
           Puppet.notice success
         else
-          errors = JSON.parse(response.body)['error'] rescue "HTTP #{response.code}, #{response.body}"
+          errors = Puppet::Util::Json.load(response.body)['error'] rescue "HTTP #{response.code}, #{response.body}"
           Puppet.warning "#{failure} (#{errors})"
         end
       end
@@ -40,7 +40,7 @@ module Puppet::ModuleTool
         end
 
         if require_metadata && !Puppet::ModuleTool.is_module_root?(@path)
-          raise ArgumentError, _("Unable to find metadata.json in module root at %{path} See https://docs.puppet.com/puppet/latest/reference/modules_publishing.html for required file format.") % { path: @path }
+          raise ArgumentError, _("Unable to find metadata.json in module root at %{path} See https://puppet.com/docs/puppet/latest/modules_publishing.html for required file format.") % { path: @path }
         end
 
         metadata_path   = File.join(@path, 'metadata.json')
@@ -48,8 +48,8 @@ module Puppet::ModuleTool
         if File.file?(metadata_path)
           File.open(metadata_path) do |f|
             begin
-              @metadata.update(JSON.load(f))
-            rescue JSON::ParserError => ex
+              @metadata.update(Puppet::Util::Json.load(f))
+            rescue Puppet::Util::Json::ParseError => ex
               raise ArgumentError, _("Could not parse JSON %{metadata_path}") % { metadata_path: metadata_path }, ex.backtrace
             end
           end
@@ -68,7 +68,8 @@ module Puppet::ModuleTool
       end
 
       def parse_filename(filename)
-        if match = /^((.*?)-(.*?))-(\d+\.\d+\.\d+.*?)$/.match(File.basename(filename, '.tar.gz'))
+        match = /^((.*?)-(.*?))-(\d+\.\d+\.\d+.*?)$/.match(File.basename(filename, '.tar.gz'))
+        if match
           module_name, author, shortname, version = match.captures
         else
           raise ArgumentError, _("Could not parse filename to obtain the username, module name and version.  (%{release_name})") % { release_name: @release_name }

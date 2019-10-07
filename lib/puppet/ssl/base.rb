@@ -1,4 +1,4 @@
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 require 'puppet/ssl'
 require 'puppet/ssl/digest'
 require 'puppet/util/ssl'
@@ -24,7 +24,7 @@ class Puppet::SSL::Base
   end
 
   def self.wrapped_class
-    raise(Puppet::DevError, "#{self} has not declared what class it wraps") unless defined?(@wrapped_class)
+    raise(Puppet::DevError, _("%{name} has not declared what class it wraps") % { name: self }) unless defined?(@wrapped_class)
     @wrapped_class
   end
 
@@ -34,13 +34,8 @@ class Puppet::SSL::Base
 
   attr_accessor :name, :content
 
-  # Is this file for the CA?
-  def ca?
-    name == Puppet::SSL::Host.ca_name
-  end
-
   def generate
-    raise Puppet::DevError, "#{self.class} did not override 'generate'"
+    raise Puppet::DevError, _("%{class_name} did not override 'generate'") % { class_name: self.class }
   end
 
   def initialize(name)
@@ -64,8 +59,13 @@ class Puppet::SSL::Base
 
   # Create an instance of our Puppet::SSL::* class using a given instance of the wrapped class
   def self.from_instance(instance, name = nil)
-    raise ArgumentError, "Object must be an instance of #{wrapped_class}, #{instance.class} given" unless instance.is_a? wrapped_class
-    raise ArgumentError, "Name must be supplied if it cannot be determined from the instance" if name.nil? and !instance.respond_to?(:subject)
+    unless instance.is_a?(wrapped_class)
+      raise ArgumentError, _("Object must be an instance of %{class_name}, %{actual_class} given") %
+          { class_name: wrapped_class, actual_class: instance.class }
+    end
+    if name.nil? and !instance.respond_to?(:subject)
+      raise ArgumentError, _("Name must be supplied if it cannot be determined from the instance")
+    end
 
     name ||= name_from_subject(instance.subject)
     result = new(name)
@@ -81,18 +81,15 @@ class Puppet::SSL::Base
 
   # Read content from disk appropriately.
   def read(path)
-    # applies to Puppet::SSL::Certificate, Puppet::SSL::CertificateRequest, Puppet::SSL::CertificateRevocationList
+    # applies to Puppet::SSL::Certificate, Puppet::SSL::CertificateRequest
     # Puppet::SSL::Key uses this, but also provides its own override
     # nothing derives from Puppet::SSL::Certificate, but it is called by a number of other SSL Indirectors:
-    # Puppet::SSL::Certificate::DisabledCa (:find, :save, :destroy)
     # Puppet::Indirector::CertificateStatus::File (.indirection.find)
     # Puppet::Network::HTTP::WEBrick (.indirection.find)
     # Puppet::Network::HTTP::RackREST (.from_instance)
     # Puppet::Network::HTTP::WEBrickREST (.from_instance)
-    # Puppet::SSL::CertificateAuthority (.new, .indirection.find, .indirection.save)
     # Puppet::SSL::Host (.indirection.find)
     # Puppet::SSL::Inventory (.indirection.search, implements its own add / rebuild / serials with encoding UTF8)
-    # Puppet::SSL::CertificateAuthority::Interface (.indirection.find)
     # Puppet::SSL::Validator::DefaultValidator (.from_instance) / Puppet::SSL::Validator::NoValidator does nothing
     @content = wrapped_class.new(Puppet::FileSystem.read(path, :encoding => Encoding::ASCII))
   end
@@ -138,7 +135,8 @@ class Puppet::SSL::Base
       /sha\d*/i
     )
     ln = content.signature_algorithm
-    if match = digest_re.match(ln)
+    match = digest_re.match(ln)
+    if match
       match[0].downcase
     else
       raise Puppet::Error, _("Unknown signature algorithm '%{ln}'") % { ln: ln }

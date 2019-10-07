@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet'
@@ -70,7 +69,9 @@ describe 'agent logging' do
   shared_examples "an agent" do |argv, expected|
     before(:each) do
       # Don't actually run the agent, bypassing cert checks, forking and the puppet run itself
-      Puppet::Application::Agent.any_instance.stubs(:run_command)
+      allow_any_instance_of(Puppet::Application::Agent).to receive(:run_command)
+      # Let exceptions be raised instead of exiting
+      allow_any_instance_of(Puppet::Application::Agent).to receive(:exit_on_fail).and_yield
     end
 
     def double_of_bin_puppet_agent_call(argv)
@@ -79,7 +80,7 @@ describe 'agent logging' do
       command_line.execute
     end
 
-    if Puppet.features.microsoft_windows? && argv.include?(DAEMONIZE)
+    if Puppet::Util::Platform.windows? && argv.include?(DAEMONIZE)
 
       it "should exit on a platform which cannot daemonize if the --daemonize flag is set" do
         expect { double_of_bin_puppet_agent_call(argv) }.to raise_error(SystemExit)
@@ -94,16 +95,15 @@ describe 'agent logging' do
           #
           # It's not something we are specifically testing here since it occurs
           # regardless of user flags.
-          Puppet::Util::Log.expects(:newdestination).with(instance_of(Puppet::Transaction::Report)).at_least_once
+          expect(Puppet::Util::Log).to receive(:newdestination).with(instance_of(Puppet::Transaction::Report))
           expected[:loggers].each do |logclass|
-            Puppet::Util::Log.expects(:newdestination).with(logclass).at_least_once
+            expect(Puppet::Util::Log).to receive(:newdestination).with(logclass)
           end
           double_of_bin_puppet_agent_call(argv)
 
           expect(Puppet::Util::Log.level).to eq(expected[:level])
         end
       end
-
     end
   end
 
@@ -126,7 +126,7 @@ describe 'agent logging' do
     loggers << CONSOLE if verbose_or_debug_set_in_argv(argv)
     loggers << 'console' if log_dest_is_set_to(argv, LOGDEST_CONSOLE)
     loggers << '/dev/null/foo' if log_dest_is_set_to(argv, LOGDEST_FILE)
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       # an explicit call to --logdest syslog on windows is swallowed silently with no
       # logger created (see #suitable() of the syslog Puppet::Util::Log::Destination subclass)
       # however Puppet::Util::Log.newdestination('syslog') does get called...so we have
@@ -171,7 +171,7 @@ describe 'agent logging' do
         argv = (onetime_daemonize_args + [log_level_args, log_dest_args]).flatten.compact
 
         describe "for #{argv}" do
-          it_should_behave_like( "an agent", argv, with_expectations_based_on(argv))
+          it_should_behave_like("an agent", argv, with_expectations_based_on(argv))
         end
       end
     end

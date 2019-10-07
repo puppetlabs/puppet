@@ -18,8 +18,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   #   (possibly) containing facts
   # @return [Puppet::Node::Facts] facts object corresponding to facts in request
   def extract_facts_from_request(request)
-    return unless text_facts = request.options[:facts]
-    unless format = request.options[:facts_format]
+    text_facts = request.options[:facts]
+    return unless text_facts
+    format = request.options[:facts_format]
+    unless format
       raise ArgumentError, _("Facts but no fact format provided for %{request}") % { request: request.key }
     end
 
@@ -49,12 +51,12 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     node = node_from_request(facts, request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
-    if catalog = compile(node, request.options)
-      return catalog
+    if node.environment
+      node.environment.with_text_domain do
+        compile(node, request.options)
+      end
     else
-      # This shouldn't actually happen; we should either return
-      # a config or raise an exception.
-      return nil
+      compile(node, request.options)
     end
   end
 
@@ -87,9 +89,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       # PSON is deprecated, but continue to accept from older agents
       return Puppet::Node::Facts.convert_from('pson', CGI.unescape(facts))
     elsif format == 'application/json'
-      return Puppet::Node::Facts.convert_from('json', facts)
+      return Puppet::Node::Facts.convert_from('json', CGI.unescape(facts))
     else
-      raise ArgumentError, "Unsupported facts format"
+      raise ArgumentError, _("Unsupported facts format")
     end
   end
 
@@ -129,10 +131,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def inlineable?(resource, sources)
     case
       when resource[:ensure] == 'absent'
+        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
         return Puppet::Util::Profiler.profile(_("Not inlining absent resource"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :absent]) { false }
       when sources.empty?
+        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
         return Puppet::Util::Profiler.profile(_("Not inlining resource without sources"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :no_sources]) { false }
       when (not (sources.all? {|source| source =~ /^puppet:/}))
+        #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
         return Puppet::Util::Profiler.profile(_("Not inlining unsupported source scheme"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :unsupported_scheme]) { false }
       else
         return true
@@ -154,11 +159,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Helper method to log file resources that could not be inlined because they
   # fall outside of an environment.
   def log_file_outside_environment
+    #TRANSLATORS Inlining refers to adding additional metadata (in this case we are not inlining)
     Puppet::Util::Profiler.profile(_("Not inlining file outside environment"), [:compiler, :static_compile_inlining, :skipped_file_metadata, :file_outside_environment]) { true }
   end
 
   # Helper method to log file resources that were successfully inlined.
   def log_metadata_inlining
+    #TRANSLATORS Inlining refers to adding additional metadata
     Puppet::Util::Profiler.profile(_("Inlining file metadata"), [:compiler, :static_compile_inlining, :inlined_file_metadata]) { true }
   end
 
@@ -171,7 +178,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # TODO: get property/parameter defaults if entries are nil in the resource
     # For now they're hard-coded to match the File type.
 
-    file_metadata = {}
     list_of_resources.each do |resource|
       sources = [resource[:source]].flatten.compact
       next unless inlineable?(resource, sources)
@@ -195,7 +201,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         sources.each do |source|
           source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
 
-          if list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
+          list_of_data = Puppet::FileServing::Metadata.indirection.search(source, options)
+          if list_of_data
             basedir_meta = list_of_data.find {|meta| meta.relative_path == '.'}
             devfail "FileServing::Metadata search should always return the root search path" if basedir_meta.nil?
 
@@ -239,7 +246,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         sources.each do |source|
           source = Puppet::Type.type(:file).attrclass(:source).normalize(source)
 
-          if data = Puppet::FileServing::Metadata.indirection.find(source, options)
+          data = Puppet::FileServing::Metadata.indirection.find(source, options)
+          if data
             metadata = data
             metadata.source = source
             break
@@ -270,14 +278,31 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       raise Puppet::Error, _("Unable to find a common checksum type between agent '%{agent_type}' and master '%{master_type}'.") % { agent_type: options[:checksum_type], master_type: known_checksum_types } unless checksum_type
     end
 
-    str = _("Compiled %s for ") % (checksum_type ? _('static catalog') : _('catalog'))
-    str += node.name
-    str += _(" in environment %{env}") % { env: node.environment } if node.environment
+    escaped_node_name = node.name.gsub(/%/, '%%')
+    if checksum_type
+      if node.environment
+        escaped_node_environment = node.environment.to_s.gsub(/%/, '%%')
+        benchmark_str = _("Compiled static catalog for %{node} in environment %{environment} in %%{seconds} seconds") % { node: escaped_node_name, environment: escaped_node_environment }
+        profile_str   = _("Compiled static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+      else
+        benchmark_str = _("Compiled static catalog for %{node} in %%{seconds} seconds") % { node: escaped_node_name }
+        profile_str   = _("Compiled static catalog for %{node}") % { node: node.name }
+      end
+    else
+      if node.environment
+        escaped_node_environment = node.environment.to_s.gsub(/%/, '%%')
+        benchmark_str = _("Compiled catalog for %{node} in environment %{environment} in %%{seconds} seconds") % { node: escaped_node_name, environment: escaped_node_environment }
+        profile_str   = _("Compiled catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+      else
+        benchmark_str = _("Compiled catalog for %{node} in %%{seconds} seconds") % { node: escaped_node_name }
+        profile_str   = _("Compiled catalog for %{node}") % { node: node.name }
+      end
+    end
     config = nil
 
-    benchmark(:notice, str) do
+    benchmark(:notice, benchmark_str) do
       compile_type = checksum_type ? :static_compile : :compile
-      Puppet::Util::Profiler.profile(str, [:compiler, compile_type, node.environment, node.name]) do
+      Puppet::Util::Profiler.profile(profile_str, [:compiler, compile_type, node.environment, node.name]) do
         begin
           config = Puppet::Parser::Compiler.compile(node, options[:code_id])
         rescue Puppet::Error => detail
@@ -288,10 +313,21 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         if checksum_type && config.is_a?(model)
-          str = _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
-          str += _(" in environment %{env}") % { env: node.environment } if node.environment
-          benchmark(:notice, str) do
-            Puppet::Util::Profiler.profile(str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
+          escaped_node_name = node.name.gsub(/%/, '%%')
+          if node.environment
+            escaped_node_environment = node.environment.to_s.gsub(/%/, '%%')
+            #TRANSLATORS Inlined refers to adding additional metadata
+            benchmark_str = _("Inlined resource metadata into static catalog for %{node} in environment %{environment} in %%{seconds} seconds") % { node: escaped_node_name, environment: escaped_node_environment }
+            #TRANSLATORS Inlined refers to adding additional metadata
+            profile_str   = _("Inlined resource metadata into static catalog for %{node} in environment %{environment}") % { node: node.name, environment: node.environment }
+          else
+            #TRANSLATORS Inlined refers to adding additional metadata
+            benchmark_str = _("Inlined resource metadata into static catalog for %{node} in %%{seconds} seconds") % { node: escaped_node_name }
+            #TRANSLATORS Inlined refers to adding additional metadata
+            profile_str   = _("Inlined resource metadata into static catalog for %{node}") % { node: node.name }
+          end
+          benchmark(:notice, benchmark_str) do
+            Puppet::Util::Profiler.profile(profile_str, [:compiler, :static_compile_postprocessing, node.environment, node.name]) do
               inline_metadata(config, checksum_type)
             end
           end
@@ -330,7 +366,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Extract the node from the request, or use the request
   # to find the node.
   def node_from_request(facts, request)
-    if node = request.options[:use_node]
+    node = request.options[:use_node]
+    if node
       if request.remote?
         raise Puppet::Error, _("Invalid option use_node for a remote request")
       else
@@ -346,7 +383,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # node's catalog with only one certificate and a modification to auth.conf
     # If no key is provided we can only compile the currently connected node.
     name = request.key || request.node
-    if node = find_node(name, request.environment, request.options[:transaction_uuid], request.options[:configured_environment], facts)
+    node = find_node(name, request.environment, request.options[:transaction_uuid], request.options[:configured_environment], facts)
+    if node
       return node
     end
 
@@ -363,22 +401,28 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     # And then add the server name and IP
     {"servername" => "fqdn",
-      "serverip" => "ipaddress"
+      "serverip"  => "ipaddress",
+      "serverip6" => "ipaddress6"
     }.each do |var, fact|
-      if value = Facter.value(fact)
+      value = Facter.value(fact)
+      if !value.nil?
         @server_facts[var] = value
-      else
-        Puppet.warning _("Could not retrieve fact %{fact}") % { fact: fact }
       end
     end
 
     if @server_facts["servername"].nil?
       host = Facter.value(:hostname)
-      if domain = Facter.value(:domain)
+      if host.nil?
+        Puppet.warning _("Could not retrieve fact servername")
+      elsif domain = Facter.value(:domain) #rubocop:disable Lint/AssignmentInCondition
         @server_facts["servername"] = [host, domain].join(".")
       else
         @server_facts["servername"] = host
       end
+    end
+
+    if @server_facts["serverip"].nil? && @server_facts["serverip6"].nil?
+      Puppet.warning _("Could not retrieve either serverip or serverip6 fact")
     end
   end
 end

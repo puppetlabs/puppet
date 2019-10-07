@@ -1,5 +1,3 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 require 'puppet_spec/handler'
 require 'puppet/network/http'
@@ -39,11 +37,9 @@ describe Puppet::Network::HTTP::API do
 
   describe "Puppet API" do
     let(:handler) { PuppetSpec::Handler.new(Puppet::Network::HTTP::API.master_routes,
-                                            Puppet::Network::HTTP::API.ca_routes,
                                             Puppet::Network::HTTP::API.not_found_upgrade) }
 
     let(:master_prefix) { Puppet::Network::HTTP::MASTER_URL_PREFIX }
-    let(:ca_prefix) { Puppet::Network::HTTP::CA_URL_PREFIX }
 
     it "raises a not-found error for non-CA or master routes and suggests an upgrade" do
       req = Puppet::Network::HTTP::Request.from_hash(:path => "/unknown")
@@ -61,7 +57,6 @@ describe Puppet::Network::HTTP::API do
         expect(res[:status]).to eq(404)
         expect(res[:body]).to include("Puppet version: #{Puppet.version}")
         expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}")
-        expect(res[:body]).to include("Supported /puppet-ca API versions: #{Puppet::Network::HTTP::CA_URL_VERSIONS}")
       end
 
       it "gives an upgrade message for CA routes" do
@@ -71,7 +66,6 @@ describe Puppet::Network::HTTP::API do
         expect(res[:status]).to eq(404)
         expect(res[:body]).to include("Puppet version: #{Puppet.version}")
         expect(res[:body]).to include("Supported /puppet API versions: #{Puppet::Network::HTTP::MASTER_URL_VERSIONS}")
-        expect(res[:body]).to include("Supported /puppet-ca API versions: #{Puppet::Network::HTTP::CA_URL_VERSIONS}")
       end
     end
 
@@ -98,28 +92,6 @@ describe Puppet::Network::HTTP::API do
         handler.process(req, res)
         expect(res[:status]).to eq(404)
         expect(res[:body]).to include("No route for GET #{master_prefix}/unknown")
-        expect(res[:body]).not_to include("Puppet version: #{Puppet.version}")
-      end
-    end
-
-    describe "when processing CA routes" do
-      it "responds to v1 indirector requests" do
-        Puppet::SSL::Certificate.indirection.stubs(:find).returns "foo"
-        req = Puppet::Network::HTTP::Request.from_hash(:path => "#{ca_prefix}/v1/certificate/foo",
-                                                       :params => {:environment => "production"},
-                                                       :headers => {'accept' => "s"})
-        res = {}
-        handler.process(req, res)
-        expect(res[:body]).to eq("foo")
-        expect(res[:status]).to eq(200)
-      end
-
-      it "responds with a not found error to non-v1 requests and does not suggest an upgrade" do
-        req = Puppet::Network::HTTP::Request.from_hash(:path => "#{ca_prefix}/unknown")
-        res = {}
-        handler.process(req, res)
-        expect(res[:status]).to eq(404)
-        expect(res[:body]).to include("No route for GET #{ca_prefix}/unknown")
         expect(res[:body]).not_to include("Puppet version: #{Puppet.version}")
       end
     end

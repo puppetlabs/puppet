@@ -22,7 +22,7 @@ module Puppet::Util::CharacterEncoding
             Puppet.debug(_("%{value} is already labeled as UTF-8 but this encoding is invalid. It cannot be transcoded by Puppet.") %
               { value: string.dump })
           end
-          # String is aleady valid UTF-8 - noop
+          # String is already valid UTF-8 - noop
           return string_copy
         else
           # If the string comes to us as BINARY encoded, we don't know what it
@@ -47,7 +47,7 @@ module Puppet::Util::CharacterEncoding
     end
 
     # Given a string, tests if that string's bytes represent valid UTF-8, and if
-    # so return a copy of the string with external enocding set to UTF-8. Does
+    # so return a copy of the string with external encoding set to UTF-8. Does
     # not modify the byte representation of the string. If the string does not
     # represent valid UTF-8, does not set the external encoding.
     #
@@ -70,28 +70,6 @@ module Puppet::Util::CharacterEncoding
         Puppet.debug(_("%{value} is not valid UTF-8 and result of overriding encoding would be invalid.") % { value: string.dump })
         # Set copy back to its original encoding before returning
         return string_copy.force_encoding(original_encoding)
-      end
-    end
-
-    REPLACEMENT_CHAR_MAP = {
-      Encoding::UTF_8 => "\uFFFD",
-      Encoding::UTF_16LE => "\xFD\xFF".force_encoding(Encoding::UTF_16LE),
-    }
-
-    # Given a string, return a copy of that string with any invalid byte
-    # sequences in its current encoding replaced with the replacement character
-    # "\uFFFD" (UTF-8) if the string is UTF-8 or UTF-16LE, or "?" otherwise.
-    # @param string a string to remove invalid byte sequences from
-    # @return a copy of string invalid byte sequences replaced by the unicode
-    #   replacement character or "?" character
-    # @note does not modify encoding, but new string will have different bytes
-    #   from original. Only needed for ruby 1.9.3 support.
-    def scrub(string)
-      if string.respond_to?(:scrub)
-        string.scrub
-      else
-        replacement_character = REPLACEMENT_CHAR_MAP[string.encoding] || '?'
-        string.chars.map { |c| c.valid_encoding? ? c : replacement_character }.join
       end
     end
   end

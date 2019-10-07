@@ -30,7 +30,7 @@ module LexerSupport
 
   # Raises a Puppet::LexError with the given message
   def lex_error_without_pos(issue, args = {})
-    raise Puppet::ParseErrorWithIssue.new(issue.format(args), nil, nil, nil, nil, issue.issue_code)
+    raise Puppet::ParseErrorWithIssue.new(issue.format(args), nil, nil, nil, nil, issue.issue_code, args)
   end
 
   # Raises a Puppet::ParserErrorWithIssue with the given issue and arguments
@@ -73,7 +73,8 @@ module LexerSupport
         line(pos),
         position(pos),
         nil,
-        issue.issue_code)
+        issue.issue_code,
+        args)
   end
 
   # Asserts that the given string value is a float, or an integer in decimal, octal or hex form.
@@ -135,7 +136,7 @@ module LexerSupport
     end
 
     def to_s
-      # This format is very compact and is intended for debugging output from racc parsser in
+      # This format is very compact and is intended for debugging output from racc parser in
       # debug mode. If this is made more elaborate the output from a debug run becomes very hard to read.
       #
       "'#{self[:value]} #{@token_array[0]}'"
@@ -204,7 +205,7 @@ module LexerSupport
 
   def get_bom(content)
     # get 5 bytes as efficiently as possible (none of the string methods works since a bom consists of
-    # illegal characters on most platforms, and there is no get_bytes(n). xplicit calls are faster than
+    # illegal characters on most platforms, and there is no get_bytes(n). Explicit calls are faster than
     # looping with a lambda. The get_byte returns nil if there are too few characters, and they
     # are changed to spaces
     MM.new(

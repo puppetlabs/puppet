@@ -1,6 +1,6 @@
 require 'pathname'
 require 'tmpdir'
-require 'json'
+require 'puppet/util/json'
 require 'puppet/file_system'
 
 module Puppet::ModuleTool
@@ -14,7 +14,7 @@ module Puppet::ModuleTool
       end
 
       def self.harmonize_ownership(source, target)
-        unless Puppet.features.microsoft_windows?
+        unless Puppet::Util::Platform.windows?
           source = Pathname.new(source) unless source.respond_to?(:stat)
           target = Pathname.new(target) unless target.respond_to?(:stat)
 
@@ -75,8 +75,8 @@ module Puppet::ModuleTool
 
       # @api private
       def module_name
-        metadata = JSON.parse((root_dir + 'metadata.json').read)
-        name = metadata['name'][/-(.*)/, 1]
+        metadata = Puppet::Util::Json.load((root_dir + 'metadata.json').read)
+        metadata['name'][/-(.*)/, 1]
       end
 
       # @api private

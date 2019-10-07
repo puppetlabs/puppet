@@ -1,53 +1,64 @@
-require 'puppet'
+begin
+  require 'puppet'
+rescue LoadError
+  #nothing to see here
+else
+  desc "Generate the Pcore model that represents the AST for the Puppet Language"
+  task :gen_pcore_ast do
+    Puppet::Pops.generate_ast
+  end
 
-desc "Generate the Pcore model that represents the AST for the Puppet Language"
-task :gen_pcore_ast do
-  Puppet::Pops.generate_ast
-end
+  module Puppet::Pops
+    def self.generate_ast
+      Puppet.initialize_settings
+      env = Puppet.lookup(:environments).get(Puppet[:environment])
+      loaders = Loaders.new(env)
+      ast_pp = Pathname(__FILE__).parent.parent + 'lib/puppet/pops/model/ast.pp'
+      Puppet.override(:current_environment => env, :loaders => loaders) do
+        ast_factory = Parser::Parser.new.parse_file(ast_pp.expand_path.to_s)
+        ast_model = Types::TypeParser.singleton.interpret(
+          ast_factory.model.body, Loader::PredefinedLoader.new(loaders.find_loader(nil), 'TypeSet loader'))
 
-module Puppet::Pops
-  def self.generate_ast
-    Puppet.initialize_settings
-    env = Puppet.lookup(:environments).get(Puppet[:environment])
-    loaders = Loaders.new(env)
-    ast_pp = Pathname(__FILE__).parent.parent + 'lib/puppet/pops/model/ast.pp'
-    Puppet.override(:current_environment => env, :loaders => loaders) do
-      ast_factory = Parser::Parser.new.parse_file(ast_pp.expand_path.to_s)
-      ast_model = Types::TypeParser.singleton.interpret(
-        ast_factory.model.body, Loader::PredefinedLoader.new(loaders.find_loader(nil), 'TypeSet loader'))
+        ruby = Types::RubyGenerator.new.module_definition_from_typeset(ast_model)
 
-      ruby = Types::RubyGenerator.new.module_definition_from_typeset(ast_model)
+        # Replace ref() constructs to known Pcore types with directly initialized types. ref() cannot be used
+        # since it requires a parser (chicken-and-egg problem)
+        ruby.gsub!(/^module Parser\nmodule Locator\n.*\nend\nend\nmodule Model\n/m, "module Model\n")
 
-      # Replace ref() constructs to known Pcore types with directly initialized types. ref() cannot be used
-      # since it requires a parser (hen and egg problem)
-      ruby.gsub!(/^module Parser\nmodule Locator\n.*\nend\nend\nmodule Model\n/m, "module Model\n")
+        # Remove generated RubyMethod annotations. The ruby methods are there now, no need to also have
+        # the annotations present.
+        ruby.gsub!(/^\s+'annotations' => \{\n\s+ref\('RubyMethod'\) => \{\n.*\n\s+\}\n\s+\},\n/, '')
 
-      # Remove generated RubyMethod annotations. The ruby methods are there now, no need to also have
-      # the annotations present.
-      ruby.gsub!(/^\s+'annotations' => \{\n\s+ref\('RubyMethod'\) => \{\n.*\n\s+\}\n\s+\},\n/, '')
+        ruby.gsub!(/ref\('([A-Za-z]+)'\)/, 'Types::P\1Type::DEFAULT')
+        ruby.gsub!(/ref\('Optional\[([0-9A-Za-z_]+)\]'\)/, 'Types::POptionalType.new(Types::P\1Type::DEFAULT)')
+        ruby.gsub!(/ref\('Array\[([0-9A-Za-z_]+)\]'\)/, 'Types::PArrayType.new(Types::P\1Type::DEFAULT)')
+        ruby.gsub!(/ref\('Optional\[Array\[([0-9A-Za-z_]+)\]\]'\)/,
+            'Types::POptionalType.new(Types::PArrayType.new(Types::P\1Type::DEFAULT))')
+        ruby.gsub!(/ref\('Enum(\[[^\]]+\])'\)/) do |match|
+          params = $1
+          params.gsub!(/\\'/, '\'')
+          "Types::PEnumType.new(#{params})"
+        end
 
-      ruby.gsub!(/ref\('([A-Za-z]+)'\)/, 'Types::P\1Type::DEFAULT')
-      ruby.gsub!(/ref\('Optional\[([0-9A-Za-z_]+)\]'\)/, 'Types::POptionalType.new(Types::P\1Type::DEFAULT)')
-      ruby.gsub!(/ref\('Array\[([0-9A-Za-z_]+)\]'\)/, 'Types::PArrayType.new(Types::P\1Type::DEFAULT)')
-      ruby.gsub!(/ref\('Optional\[Array\[([0-9A-Za-z_]+)\]\]'\)/,
-          'Types::POptionalType.new(Types::PArrayType.new(Types::P\1Type::DEFAULT))')
-      ruby.gsub!(/ref\("Enum(\[[^\]]+\])"\)/, 'Types::PEnumType.new(\1)')
+        # Replace ref() constructs with references to _pcore_type of the types in the module namespace
+        ruby.gsub!(/ref\('Puppet::AST::Locator'\)/, 'Parser::Locator::Locator19._pcore_type')
+        ruby.gsub!(/ref\('Puppet::AST::([0-9A-Za-z_]+)'\)/, '\1._pcore_type')
+        ruby.gsub!(/ref\('Optional\[Puppet::AST::([0-9A-Za-z_]+)\]'\)/, 'Types::POptionalType.new(\1._pcore_type)')
+        ruby.gsub!(/ref\('Array\[Puppet::AST::([0-9A-Za-z_]+)\]'\)/, 'Types::PArrayType.new(\1._pcore_type)')
+        ruby.gsub!(/ref\('Array\[Puppet::AST::([0-9A-Za-z_]+), 1, default\]'\)/,
+            'Types::PArrayType.new(\1._pcore_type, Types::PCollectionType::NOT_EMPTY_SIZE)')
 
-      # Replace ref() constructs with references to _pcore_type of the types in the module namespace
-      ruby.gsub!(/ref\('Puppet::AST::Locator'\)/, 'Parser::Locator::Locator19._pcore_type')
-      ruby.gsub!(/ref\('Puppet::AST::([0-9A-Za-z_]+)'\)/, '\1._pcore_type')
-      ruby.gsub!(/ref\('Optional\[Puppet::AST::([0-9A-Za-z_]+)\]'\)/, 'Types::POptionalType.new(\1._pcore_type)')
-      ruby.gsub!(/ref\('Array\[Puppet::AST::([0-9A-Za-z_]+)\]'\)/, 'Types::PArrayType.new(\1._pcore_type)')
-      ruby.gsub!(/ref\('Array\[Puppet::AST::([0-9A-Za-z_]+), 1, default\]'\)/,
-          'Types::PArrayType.new(\1._pcore_type, Types::PCollectionType::NOT_EMPTY_SIZE)')
+        # Remove the generated ref() method. It's not needed by this model
+        ruby.gsub!(/  def self\.ref\(type_string\)\n.*\n  end\n\n/, '')
 
-      # Remove the generated ref() method. It's not needed by this model
-      ruby.gsub!(/  def self\.ref\(type_string\)\n.*\n  end\n\n/, '')
+        # Add Program#current method for backward compatibility
+        ruby.gsub!(/(attr_reader :body\n  attr_reader :definitions\n  attr_reader :locator)/, "\\1\n\n  def current\n    self\n  end")
 
-      # Replace the generated registration with a registration that uses the static loader. This will
-      # become part of the Puppet bootstrap code and there will be no other loader until we have a
-      # parser.
-      ruby.gsub!(/^Puppet::Pops::Pcore.register_implementations\((\[[^\]]+\])\)/, <<-RUBY)
+        # Replace the generated registration with a registration that uses the static loader. This will
+        # become part of the Puppet bootstrap code and there will be no other loader until we have a
+        # parser.
+        ruby.gsub!(/^Puppet::Pops::Pcore.register_implementations\((\[[^\]]+\])\)/, <<-RUBY)
+
 module Model
 @@pcore_ast_initialized = false
 def self.register_pcore_types
@@ -71,8 +82,9 @@ def self.register_pcore_types
 end
 end
 RUBY
-      ast_rb = Pathname(__FILE__).parent.parent + 'lib/puppet/pops/model/ast.rb'
-      File.open(ast_rb.to_s, 'w') { |f| f.write(ruby) }
+        ast_rb = Pathname(__FILE__).parent.parent + 'lib/puppet/pops/model/ast.rb'
+        File.open(ast_rb.to_s, 'w') { |f| f.write(ruby) }
+      end
     end
   end
 end

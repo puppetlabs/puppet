@@ -1,4 +1,4 @@
-require 'json'
+require 'puppet/util/json'
 
 class Puppet::Network::HTTP::API::Master::V3::Environments
   def initialize(env_loader)
@@ -6,7 +6,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environments
   end
 
   def call(request, response)
-    response.respond_with(200, "application/json", JSON.dump({
+    response.respond_with(200, "application/json", Puppet::Util::Json.dump({
       "search_paths" => @env_loader.search_paths,
       "environments" => Hash[@env_loader.list.collect do |env|
         [env.name, {

@@ -1,8 +1,7 @@
-#!/usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/windows'
 
-describe "Puppet::Util::Windows::AccessControlEntry", :if => Puppet.features.microsoft_windows? do
+describe "Puppet::Util::Windows::AccessControlEntry", :if => Puppet::Util::Platform.windows? do
   let(:klass) { Puppet::Util::Windows::AccessControlEntry }
   let(:sid) { 'S-1-5-18' }
   let(:mask) { Puppet::Util::Windows::File::FILE_ALL_ACCESS }

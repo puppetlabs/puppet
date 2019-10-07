@@ -1,4 +1,10 @@
 test_name 'C98097 - generated pcore resource types should be loaded instead of ruby for custom types' do
+
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',    # use `mk_temp_environment_with_teardown` helper to build environment
+    'server'
+
   environment = 'production'
   step 'setup - install module with custom ruby resource type' do
     #{{{
@@ -63,13 +69,13 @@ MANIFEST
       }
     }
 
-    backup_file = backup_the_file(master, master.puppet('master')['confdir'], testdir, 'puppet.conf')
+    backup_file = backup_the_file(master, puppet_config(master, 'confdir', section: 'master'), testdir, 'puppet.conf')
     lay_down_new_puppet_conf master, conf_opts, testdir
 
     teardown do
       restore_puppet_conf_from_backup( master, backup_file )
       # See PUP-6995
-      on(master, "rm -f #{master.puppet('master')['yamldir']}/node/*.yaml")
+      on(master, "rm -f #{puppet_config(master, 'yamldir', section: 'master')}/node/*.yaml")
     end
     #}}}
 
@@ -77,7 +83,7 @@ MANIFEST
     catalog_results[master.hostname] = { 'ruby_cat' => '', 'pcore_cat' => '' }
 
     step 'compile catalog using ruby resource' do
-      on master, puppet('master', '--compile', master.hostname) do |result|
+      on master, puppet('catalog', 'find', master.hostname) do |result|
         assert_match(/running ruby code/, result.stderr)
         catalog_results[master.hostname]['ruby_cat'] = JSON.parse(result.stdout.sub(/^[^{]+/,''))
       end
@@ -88,7 +94,7 @@ MANIFEST
     end
 
     step 'compile catalog and make sure that ruby code is NOT executed' do
-      on master, puppet('master', '--compile', master.hostname) do |result|
+      on master, puppet('catalog', 'find', master.hostname) do |result|
         assert_no_match(/running ruby code/, result.stderr)
         catalog_results[master.hostname]['pcore_cat'] = JSON.parse(result.stdout.sub(/^[^{]+/,''))
       end

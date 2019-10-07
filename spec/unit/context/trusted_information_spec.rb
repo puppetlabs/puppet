@@ -1,8 +1,9 @@
 require 'spec_helper'
+require 'puppet/certificate_factory'
 
 require 'puppet/context/trusted_information'
 
-describe Puppet::Context::TrustedInformation do
+describe Puppet::Context::TrustedInformation, :unless => RUBY_PLATFORM == 'java' do
   let(:key) do
     key = Puppet::SSL::Key.new("myname")
     key.generate
@@ -21,7 +22,7 @@ describe Puppet::Context::TrustedInformation do
   end
 
   let(:cert) do
-    cert = Puppet::SSL::Certificate.from_instance(Puppet::SSL::CertificateFactory.build('ca', csr, csr.content, 1))
+    cert = Puppet::SSL::Certificate.from_instance(Puppet::CertificateFactory.build('ca', csr, csr.content, 1))
 
     # The cert must be signed so that it can be successfully be DER-decoded later
     signer = Puppet::SSL::CertificateSigner.new
@@ -52,7 +53,7 @@ describe Puppet::Context::TrustedInformation do
     end
 
     it "is remote but lacks certificate information when it is authenticated" do
-      Puppet.expects(:info).once.with("TrustedInformation expected a certificate, but none was given.")
+      expect(Puppet).to receive(:info).once.with("TrustedInformation expected a certificate, but none was given.")
 
       trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', nil)
 

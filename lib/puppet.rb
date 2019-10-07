@@ -1,10 +1,10 @@
 require 'puppet/version'
 
-if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("1.9.3")
-  raise LoadError, _("Puppet %{version} requires ruby 1.9.3 or greater.") % { version: Puppet.version }
+if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new("2.3.0")
+  raise LoadError, "Puppet #{Puppet.version} requires Ruby 2.3.0 or greater, found Ruby #{RUBY_VERSION.dup}."
 end
 
-Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.1.0'
+Puppet::OLDEST_RECOMMENDED_RUBY_VERSION = '2.3.0'
 
 # see the bottom of the file for further inclusions
 # Also see the new Vendor support - towards the end
@@ -21,51 +21,7 @@ require 'puppet/util/run_mode'
 require 'puppet/external/pson/common'
 require 'puppet/external/pson/version'
 require 'puppet/external/pson/pure'
-
-# When running within puppetserver, the gettext-setup gem might not be available, so
-# we need to skip initializing i18n functionality and stub out methods normally
-# supplied by gettext-setup. Can be removed in Puppet 5. See PUP-7116.
-begin
-  require 'gettext-setup'
-  require 'locale'
-
-  # e.g. ~/code/puppet/locales. Also when running as a gem.
-  local_locale_path = File.absolute_path('../locales', File.dirname(__FILE__))
-  # e.g. /opt/puppetlabs/puppet/share/locale
-  posix_system_locale_path = File.absolute_path('../../../share/locale', File.dirname(__FILE__))
-  # e.g. C:\Program Files\Puppet Labs\Puppet\puppet\share\locale
-  win32_system_locale_path = File.absolute_path('../../../../../puppet/share/locale', File.dirname(__FILE__))
-
-  if File.exist?(local_locale_path)
-    locale_path = local_locale_path
-  elsif Puppet::Util::Platform.windows? && File.exist?(win32_system_locale_path)
-    locale_path = win32_system_locale_path
-  elsif !Puppet::Util::Platform.windows? && File.exist?(posix_system_locale_path)
-    locale_path = posix_system_locale_path
-  else
-    # We couldn't load our locale data.
-    raise LoadError, "could not find locale data, skipping Gettext initialization"
-  end
-
-  Puppet::LOCALE_PATH = locale_path
-  Puppet::GETTEXT_AVAILABLE = true
-rescue LoadError
-  def _(msg)
-    msg
-  end
-
-  def n_(*args, &block)
-    # assume two string args (singular and plural English form) and the count
-    # to pluralize on
-    plural = args[2] == 1 ? args[0] : args[1]
-    # if a block is passed, prefer that over the string selection above
-    block ? block.call : plural
-  end
-
-  Puppet::LOCALE_PATH = nil
-  Puppet::GETTEXT_AVAILABLE = false
-end
-
+require 'puppet/gettext/config'
 
 
 #------------------------------------------------------------
@@ -86,15 +42,8 @@ module Puppet
   require 'puppet/environments'
 
   class << self
-    if Puppet::GETTEXT_AVAILABLE && Puppet::LOCALE_PATH
-      if GettextSetup.method(:initialize).parameters.count == 1
-        # Will load translations from PO files only
-        GettextSetup.initialize(Puppet::LOCALE_PATH)
-      else
-        GettextSetup.initialize(Puppet::LOCALE_PATH, :file_format => :mo)
-      end
-      FastGettext.locale = GettextSetup.negotiate_locale(Locale.current.language)
-    end
+    Puppet::GettextConfig.setup_locale
+    Puppet::GettextConfig.create_default_text_domain
 
     include Puppet::Util
     attr_reader :features
@@ -178,7 +127,7 @@ module Puppet
   # Now that settings are loaded we have the code loaded to be able to issue
   # deprecation warnings. Warn if we're on a deprecated ruby version.
   if Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
-    Puppet.deprecation_warning(_("Support for ruby version %{version} is deprecated and will be removed in a future release. See https://docs.puppet.com/puppet/latest/system_requirements.html#ruby for a list of supported ruby versions.") % { version: RUBY_VERSION })
+    Puppet.deprecation_warning(_("Support for ruby version %{version} is deprecated and will be removed in a future release. See https://puppet.com/docs/puppet/latest/system_requirements.html for a list of supported ruby versions.") % { version: RUBY_VERSION })
   end
 
   # Initialize puppet's settings. This is intended only for use by external tools that are not
@@ -189,17 +138,17 @@ module Puppet
   # @api public
   # @param args [Array<String>] the command line arguments to use for initialization
   # @return [void]
-  def self.initialize_settings(args = [])
-    do_initialize_settings_for_run_mode(:user, args)
+  def self.initialize_settings(args = [], require_config = true)
+    do_initialize_settings_for_run_mode(:user, args, require_config)
   end
 
   # private helper method to provide the implementation details of initializing for a run mode,
   #  but allowing us to control where the deprecation warning is issued
-  def self.do_initialize_settings_for_run_mode(run_mode, args)
-    Puppet.settings.initialize_global_settings(args)
+  def self.do_initialize_settings_for_run_mode(run_mode, args, require_config = true)
+    Puppet.settings.initialize_global_settings(args, require_config)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
-    Puppet.push_context(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
+    push_context_global(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
     Puppet::Parser::Functions.reset
   end
   private_class_method :do_initialize_settings_for_run_mode
@@ -219,14 +168,6 @@ module Puppet
         end
       end
     end
-  end
-
-  # Create a new type.  Just proxy to the Type class.  The mirroring query
-  # code was deprecated in 2008, but this is still in heavy use.  I suppose
-  # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
-  def self.newtype(name, options = {}, &block)
-    Puppet.deprecation_warning(_("Creating %{name} via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.") % { name: name })
-    Puppet::Type.newtype(name, options, &block)
   end
 
   # Load vendored (setup paths, and load what is needed upfront).
@@ -251,9 +192,11 @@ module Puppet
       # doesn't exist
       default_environment = Puppet[:environment].to_sym
       if default_environment == :production
+        modulepath = settings[:modulepath]
+        modulepath = (modulepath.nil? || '' == modulepath) ? basemodulepath : Puppet::Node::Environment.split_path(modulepath)
         loaders << Puppet::Environments::StaticPrivate.new(
           Puppet::Node::Environment.create(default_environment,
-                                           basemodulepath,
+                                           modulepath,
                                            Puppet::Node::Environment::NO_MANIFEST))
       end
     end
@@ -264,8 +207,23 @@ module Puppet
         require 'puppet/network/http'
         Puppet::Network::HTTP::NoCachePool.new
       },
+      :ssl_context => proc {
+        begin
+          cert = Puppet::X509::CertProvider.new
+          password = cert.load_private_key_password
+          ssl = Puppet::SSL::SSLProvider.new
+          ssl.load_context(certname: Puppet[:certname], password: password)
+        rescue => e
+          # TRANSLATORS: `message` is an already translated string of why SSL failed to initialize
+          Puppet.log_exception(e, _("Failed to initialize SSL: %{message}") % { message: e.message })
+          # TRANSLATORS: `puppet agent -t` is a command and should not be translated
+          Puppet.err(_("Run `puppet agent -t`"))
+          raise e
+        end
+      },
       :ssl_host => proc { Puppet::SSL::Host.localhost },
-      :plugins => proc { Puppet::Plugins::Configuration.load_plugins }
+      :plugins => proc { Puppet::Plugins::Configuration.load_plugins },
+      :rich_data => false
     }
   end
 
@@ -285,6 +243,14 @@ module Puppet
   # @api private
   def self.push_context(overrides, description = "")
     @context.push(overrides, description)
+  end
+
+  # Push something onto the the context and make it global across threads. This
+  # has the potential to convert threadlocal overrides earlier on the stack into
+  # global overrides.
+  # @api private
+  def self.push_context_global(overrides, description = '')
+    @context.unsafe_push_global(overrides, description)
   end
 
   # Return to the previous context.
@@ -346,6 +312,7 @@ require 'puppet/type'
 require 'puppet/resource'
 require 'puppet/parser'
 require 'puppet/network'
+require 'puppet/x509'
 require 'puppet/ssl'
 require 'puppet/module'
 require 'puppet/data_binding'
@@ -353,3 +320,4 @@ require 'puppet/util/storage'
 require 'puppet/status'
 require 'puppet/file_bucket/file'
 require 'puppet/plugins/configuration'
+require 'puppet/pal/pal_api'

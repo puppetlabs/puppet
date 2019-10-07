@@ -14,15 +14,18 @@ gem_test_files: 'spec/**/*'
 gem_executables: 'puppet'
 gem_default_executables: 'puppet'
 gem_forge_project: 'puppet'
-gem_required_ruby_version: '>= 1.9.3'
+gem_required_ruby_version: '>= 2.3.0'
 gem_required_rubygems_version: '> 1.3.1'
 gem_runtime_dependencies:
-  facter: ['> 2.0', '< 4']
+  facter: ['> 2.0.1', '< 4']
   hiera: ['>= 3.2.1', '< 4']
-  # PUP-7115 - return to a gem dependency in Puppet 5
-  # semantic_puppet: ['>= 0.1.3', '< 2']
-  gettext-setup: ['>= 0.10', '< 1']
+  semantic_puppet: '~> 1.0'
+  fast_gettext: '~> 1.1'
   locale: '~> 2.1'
+  multi_json: '~> 1.10'
+  httpclient: '~> 2.8'
+  puppet-resource_api: '~>1.5'
+  concurrent-ruby: '~> 1.0'
 gem_rdoc_options:
   - --title
   - "Puppet - Configuration Management"
@@ -35,25 +38,24 @@ gem_platform_dependencies:
       CFPropertyList: '~> 2.2'
   x86-mingw32:
     gem_runtime_dependencies:
-      # Pinning versions that require native extensions
-      ffi: '~> 1.9.6'
+      ffi: '~> 1.9.25'
       # win32-xxxx gems are pinned due to PUP-6445
       win32-dir: '= 0.4.9'
       win32-process: '= 0.7.5'
       # Use of win32-security is deprecated
       win32-security: '= 0.2.5'
       win32-service: '= 0.8.8'
-      minitar: '~> 0.6.1'
+      minitar: '~> 0.9'
   x64-mingw32:
     gem_runtime_dependencies:
-      ffi: '~> 1.9.6'
+      ffi: '~> 1.9.25'
       # win32-xxxx gems are pinned due to PUP-6445
       win32-dir: '= 0.4.9'
       win32-process: '= 0.7.5'
       # Use of win32-security is deprecated
       win32-security: '= 0.2.5'
       win32-service: '= 0.8.8'
-      minitar: '~> 0.6.1'
+      minitar: '~> 0.9'
 bundle_platforms:
   universal-darwin: all
   x86-mingw32: mingw

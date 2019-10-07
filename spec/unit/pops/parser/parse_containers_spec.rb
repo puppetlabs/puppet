@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
 
@@ -88,7 +87,7 @@ describe "egrammar parsing containers" do
       it "class 'foo' {} # a string as class name" do
         # A common error is to put quotes around the class name, the parser should provide the error message at the right location
         # See PUP-7471
-        expect { parse("class 'foo' {}") }.to raise_error(/A quoted string is not valid as a name here at line 1:7/)
+        expect { parse("class 'foo' {}") }.to raise_error(/A quoted string is not valid as a name here \(line: 1, column: 7\)/)
       end
 
 

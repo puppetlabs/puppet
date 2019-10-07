@@ -52,7 +52,7 @@ describe 'the step method' do
       compile_to_catalog(<<-MANIFEST)
         [1].step(0) |$x| {  }
       MANIFEST
-    end.to raise_error(Puppet::Error, /'step' expects an Integer\[1, default\] value, got Integer\[0, 0\]/)
+    end.to raise_error(Puppet::Error, /'step' expects an Integer\[1\] value, got Integer\[0, 0\]/)
   end
 
   it 'raises an error when step is not an integer' do

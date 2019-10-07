@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/windows'
 
@@ -31,8 +30,8 @@ describe Puppet::Util::Windows::Registry do
     TestRegistry.new
   end
 
-  let(:name)   { 'HKEY_LOCAL_MACHINE' }
-  let(:path)   { 'Software\Microsoft' }
+  let(:name) { 'HKEY_LOCAL_MACHINE' }
+  let(:path) { 'Software\Microsoft' }
 
   context "#root" do
     it "should lookup the root hkey" do
@@ -45,17 +44,15 @@ describe Puppet::Util::Windows::Registry do
   end
 
   context "#open" do
-    let(:hkey)   { stub 'hklm' }
-    let(:subkey) { stub 'subkey' }
+    let(:hkey)   { double('hklm') }
+    let(:subkey) { double('subkey') }
 
     before :each do
-      subject.stubs(:root).returns(hkey)
+      allow(subject).to receive(:root).and_return(hkey)
     end
 
     it "should yield the opened the subkey" do
-      hkey.expects(:open).with do |p, _|
-        expect(p).to eq(path)
-      end.yields(subkey)
+      expect(hkey).to receive(:open).with(path, anything).and_yield(subkey)
 
       yielded = nil
       subject.open(name, path) {|reg| yielded = reg}
@@ -66,7 +63,7 @@ describe Puppet::Util::Windows::Registry do
       [described_class::KEY64, described_class::KEY32].each do |access|
         it "should open the key for read access 0x#{access.to_s(16)}" do
           mode = described_class::KEY_READ | access
-          hkey.expects(:open).with(path, mode)
+          expect(hkey).to receive(:open).with(path, mode)
 
           subject.open(name, path, mode) {|reg| }
         end
@@ -74,14 +71,14 @@ describe Puppet::Util::Windows::Registry do
     end
 
     it "should default to KEY64" do
-      hkey.expects(:open).with(path, described_class::KEY_READ | described_class::KEY64)
+      expect(hkey).to receive(:open).with(path, described_class::KEY_READ | described_class::KEY64)
 
       subject.open(hkey, path) {|hkey| }
     end
 
     it "should raise for a path that doesn't exist" do
-      hkey.expects(:keyname).returns('HKEY_LOCAL_MACHINE')
-      hkey.expects(:open).raises(Win32::Registry::Error.new(2)) # file not found
+      expect(hkey).to receive(:keyname).and_return('HKEY_LOCAL_MACHINE')
+      expect(hkey).to receive(:open).and_raise(Win32::Registry::Error.new(2)) # file not found
       expect do
         subject.open(hkey, 'doesnotexist') {|hkey| }
       end.to raise_error(Puppet::Error, /Failed to open registry key 'HKEY_LOCAL_MACHINE\\doesnotexist'/)
@@ -89,34 +86,27 @@ describe Puppet::Util::Windows::Registry do
   end
 
   context "#values" do
-    let(:key) { stub('uninstall') }
-
-    def expects_registry_value(array)
-      key.expects(:each_value).never
-      subject.expects(:each_value).with(key).multiple_yields(array)
-
-      subject.values(key).first[1]
-    end
+    let(:key) { double('uninstall') }
 
     it "should return each value's name and data" do
-      key.expects(:each_value).never
-      subject.expects(:each_value).with(key).multiple_yields(
-        ['string', 1, 'foo'], ['dword', 4, 0]
-      )
+      expect(key).not_to receive(:each_value)
+      expect(subject).to receive(:each_value).with(key).and_yield('string', 1, 'foo').and_yield('dword', 4, 0)
+
       expect(subject.values(key)).to eq({ 'string' => 'foo', 'dword' => 0 })
     end
 
     it "should return an empty hash if there are no values" do
-      key.expects(:each_value).never
-      subject.expects(:each_value).with(key)
+      expect(key).not_to receive(:each_value)
+      expect(subject).to receive(:each_value).with(key)
 
       expect(subject.values(key)).to eq({})
     end
 
     it "passes REG_DWORD through" do
-      reg_value = ['dword', Win32::Registry::REG_DWORD, '1']
+      expect(key).not_to receive(:each_value)
+      expect(subject).to receive(:each_value).with(key).and_yield('dword', Win32::Registry::REG_DWORD, '1')
 
-      value = expects_registry_value(reg_value)
+      value = subject.values(key).first[1]
 
       expect(Integer(value)).to eq(1)
     end
@@ -127,11 +117,11 @@ describe Puppet::Util::Windows::Registry do
       TM_UTF_8 = [0xE2, 0x84, 0xA2]
       TM_UTF_16 = [0x2122]
 
-      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
-      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
-      let (:guid) { SecureRandom.uuid }
-      let (:regsam) { Puppet::Util::Windows::Registry::KEY32 }
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+      let(:guid) { SecureRandom.uuid }
+      let(:regsam) { Puppet::Util::Windows::Registry::KEY32 }
 
       after(:each) do
         # Ruby 2.1.5 has bugs with deleting registry keys due to using ANSI
@@ -146,7 +136,7 @@ describe Puppet::Util::Windows::Registry do
 
       # proof that local encodings (such as IBM437 are no longer relevant)
       it "will return a UTF-8 string from a REG_SZ registry value (written as UTF-16LE)",
-        :if => Puppet::Util::Platform.windows? && RUBY_VERSION >= '2.1' do
+        :if => Puppet::Util::Platform.windows? do
 
         # create a UTF-16LE byte array representing "–™"
         utf_16_bytes = ENDASH_UTF_16 + TM_UTF_16
@@ -160,11 +150,11 @@ describe Puppet::Util::Windows::Registry do
         # a local codepage which can totally break when that codepage has no
         # conversion from the given UTF-16LE characters to local codepage
         # a prime example is that IBM437 has no conversion from a Unicode en-dash
-        Win32::Registry.expects(:export_string).never
+        expect(Win32::Registry).not_to receive(:export_string)
 
         # also, expect that we're using our variants of keys / values, not Rubys
-        Win32::Registry.expects(:each_key).never
-        Win32::Registry.expects(:each_value).never
+        expect(Win32::Registry).not_to receive(:each_key)
+        expect(Win32::Registry).not_to receive(:each_value)
 
         hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS | regsam) do |reg|
           reg.write("#{guid}", Win32::Registry::REG_SZ, utf_16_str)
@@ -185,10 +175,10 @@ describe Puppet::Util::Windows::Registry do
     end
 
     context "when reading values" do
-      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
-      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
-      let (:value_name) { SecureRandom.uuid }
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+      let(:value_name) { SecureRandom.uuid }
 
       after(:each) do
         hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
@@ -226,10 +216,10 @@ describe Puppet::Util::Windows::Registry do
     end
 
     context "when reading corrupt values" do
-      let (:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
-      let (:puppet_key) { "SOFTWARE\\Puppet Labs"}
-      let (:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
-      let (:value_name) { SecureRandom.uuid }
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+      let(:value_name) { SecureRandom.uuid }
 
       before(:each) do
         hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg_key|
@@ -249,6 +239,97 @@ describe Puppet::Util::Windows::Registry do
 
           expect(vals).to have_key(value_name)
           expect(vals[value_name]).to be_nil
+        end
+      end
+    end
+
+    context 'whean reading null byte' do
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { 'SOFTWARE\\Puppet Labs' }
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+      let(:value_name) { SecureRandom.uuid }
+
+      after(:each) do
+        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          subject.delete_key(reg, subkey_name)
+        end
+      end
+
+      [
+        {
+          name: 'REG_SZ',
+          type: Win32::Registry::REG_SZ,
+          value: "reg sz\u0000 string",
+          expected_value: "reg sz  string"
+        },
+        {
+          name: 'REG_SZ_2',
+          type: Win32::Registry::REG_SZ,
+          value: "reg sz\x00 string",
+          expected_value: "reg sz  string"
+        },
+        {
+          name: 'REG_EXPAND_SZ',
+          type: Win32::Registry::REG_EXPAND_SZ,
+          value: "\0reg expand string",
+          expected_value: " reg expand string"
+        }
+      ].each do |pair|
+        it 'replaces null bytes with spaces' do
+          hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
+            reg.write(value_name, pair[:type], pair[:value])
+          end
+
+          hklm.open("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_READ) do |reg|
+            vals = subject.values(reg)
+
+            expect(vals).to have_key(value_name)
+            subject.each_value(reg) do |_subkey, type, _data|
+              expect(type).to eq(pair[:type])
+            end
+
+            written = vals[value_name]
+            expect(written).to eq(pair[:expected_value])
+          end
+        end
+      end
+    end
+  end
+
+  context "#values_by_name" do
+    let(:hkey)   { double('hklm') }
+    let(:subkey) { double('subkey') }
+
+    before :each do
+      allow(subject).to receive(:root).and_return(hkey)
+    end
+
+    context "when reading values" do
+      let(:hklm) { Win32::Registry::HKEY_LOCAL_MACHINE }
+      let(:puppet_key) { "SOFTWARE\\Puppet Labs"}
+      let(:subkey_name) { "PuppetRegistryTest#{SecureRandom.uuid}" }
+
+      before(:each) do
+        hklm.create("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          reg.write('valuename1', Win32::Registry::REG_SZ, 'value1')
+          reg.write('valuename2', Win32::Registry::REG_SZ, 'value2')
+        end
+      end
+
+      after(:each) do
+        hklm.open(puppet_key, Win32::Registry::KEY_ALL_ACCESS) do |reg|
+          subject.delete_key(reg, subkey_name)
+        end
+      end
+
+      it "should return only the values for the names specified" do
+        hklm.open("#{puppet_key}\\#{subkey_name}", Win32::Registry::KEY_ALL_ACCESS) do |reg_key|
+          vals = subject.values_by_name(reg_key, ['valuename1', 'missingname'])
+
+          expect(vals).to have_key('valuename1')
+          expect(vals).to_not have_key('valuename2')
+          expect(vals['valuename1']).to eq('value1')
+          expect(vals['missingname']).to be_nil
         end
       end
     end

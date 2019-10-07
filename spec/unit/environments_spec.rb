@@ -211,6 +211,20 @@ static_catalogs=false
       it "logs a warning, but processes the main settings if there are any extraneous settings" do
         content << "dog=arf\n"
         content << "cat=mew\n"
+        loader_from(:filesystem => [envdir, manifestdir, modulepath].flatten,
+                    :directory => envdir) do |loader|
+          expect(loader.get("env1")).to environment(:env1).
+            with_manifest(manifestdir.path).
+            with_modulepath(modulepath.map(&:path)).
+            with_config_version(File.expand_path('/some/script'))
+        end
+
+        expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*\/env1.*unknown setting.*dog, cat/)
+      end
+
+      it "logs a warning, but processes the main settings if there are any ignored sections" do
+        content << "dog=arf\n"
+        content << "cat=mew\n"
         content << "[ignored]\n"
         content << "cow=moo\n"
         loader_from(:filesystem => [envdir, manifestdir, modulepath].flatten,
@@ -221,6 +235,7 @@ static_catalogs=false
             with_config_version(File.expand_path('/some/script'))
         end
 
+        expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*\/env1.*The following sections are being ignored: 'ignored'/)
         expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*\/env1.*unknown setting.*dog, cat/)
       end
 
@@ -246,6 +261,46 @@ config_version=relative/script
           expect(loader.get("env1")).to environment(:env1).
             with_manifest(File.join(envdir, 'env1', 'relative', 'manifest')).
             with_modulepath([File.join(envdir, 'env1', 'relative', 'modules')]).
+            with_config_version(File.join(envdir, 'env1', 'relative', 'script'))
+        end
+      end
+
+      it "interprets glob modulepaths from the environment's directory" do
+        allow(Dir).to receive(:glob).with(File.join(envdir, 'env1', 'other', '*', 'modules')).and_return([
+          File.join(envdir, 'env1', 'other', 'foo', 'modules'),
+          File.join(envdir, 'env1', 'other', 'bar', 'modules')
+        ])
+        content = <<-EOF
+manifest=relative/manifest
+modulepath=relative/modules#{File::PATH_SEPARATOR}other/*/modules
+config_version=relative/script
+        EOF
+
+        envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+          FS::MemoryFile.a_directory("env1", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", content),
+            FS::MemoryFile.a_missing_file("modules"),
+            FS::MemoryFile.a_directory('relative', [
+              FS::MemoryFile.a_directory('modules'),
+            ]),
+            FS::MemoryFile.a_directory('other', [
+              FS::MemoryFile.a_directory('foo', [
+                FS::MemoryFile.a_directory('modules'),
+              ]),
+              FS::MemoryFile.a_directory('bar', [
+                FS::MemoryFile.a_directory('modules'),
+              ]),
+            ]),
+          ]),
+        ])
+
+        loader_from(:filesystem => [envdir],
+                    :directory => envdir) do |loader|
+          expect(loader.get("env1")).to environment(:env1).
+            with_manifest(File.join(envdir, 'env1', 'relative', 'manifest')).
+            with_modulepath([File.join(envdir, 'env1', 'relative', 'modules'),
+                             File.join(envdir, 'env1', 'other', 'foo', 'modules'),
+                             File.join(envdir, 'env1', 'other', 'bar', 'modules')]).
             with_config_version(File.join(envdir, 'env1', 'relative', 'script'))
         end
       end
@@ -406,6 +461,13 @@ config_version=$vardir/random/scripts
       expect(loader.get_conf(:doesnotexist)).to be_nil
     end
 
+    it "gets the conf environment_timeout if one is specified" do
+      Puppet[:environment_timeout] = 8675
+      conf = loader.get_conf(:static1)
+
+      expect(conf.environment_timeout).to eq(8675)
+    end
+
     context "that are private" do
       let(:private_env) { Puppet::Node::Environment.create(:private, []) }
       let(:loader) { Puppet::Environments::StaticPrivate.new(private_env) }
@@ -501,9 +563,9 @@ config_version=$vardir/random/scripts
 
       it "does not reload the environment if it isn't expired" do
         env = Puppet::Node::Environment.create(:cached, [])
-        mocked_loader = mock('loader')
-        mocked_loader.expects(:get).with(:cached).returns(env).once
-        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+        mocked_loader = double('loader')
+        expect(mocked_loader).to receive(:get).with(:cached).and_return(env).once
+        expect(mocked_loader).to receive(:get_conf).with(:cached).and_return(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
 
         cached = Puppet::Environments::Cached.new(mocked_loader)
 
@@ -527,9 +589,9 @@ config_version=$vardir/random/scripts
 
       it "does not reload the environment if it isn't expired" do
         env = Puppet::Node::Environment.create(:cached, [])
-        mocked_loader = mock('loader')
-        mocked_loader.expects(:get).with(:cached).returns(env).once
-        mocked_loader.expects(:get_conf).with(:cached).returns(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
+        mocked_loader = double('loader')
+        expect(mocked_loader).to receive(:get).with(:cached).and_return(env).once
+        expect(mocked_loader).to receive(:get_conf).with(:cached).and_return(Puppet::Settings::EnvironmentConf.static_for(env, 20)).once
 
         cached = Puppet::Environments::Cached.new(mocked_loader)
 

@@ -35,13 +35,13 @@
 # For example, to evaluate an inline EPP template using a heredoc, call the
 # `inline_epp` function like this:
 #
-# ~~~ puppet
+# ```puppet
 # # Outputs 'Hello given argument planet!'
 # inline_epp(@(END), { x => 'given argument' })
 # <%- | $x, $y = planet | -%>
 # Hello <%= $x %> <%= $y %>!
 # END
-# ~~~
+# ```
 #
 # @since 4.0.0
 #

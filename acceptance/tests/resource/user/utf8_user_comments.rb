@@ -9,6 +9,12 @@
 # Where applicable, we should be able to do this in different locales
 test_name 'PUP-6777 Manage users with UTF-8 comments' do
 
+  tag 'audit:high',
+      'audit:acceptance' # Could be done as integration tests, but would
+                         # require changing the system running the test
+                         # in ways that might require special permissions
+                         # or be harmful to the system running the test
+
   # PUP-7049 / ARISTA-42 - user provider bug on Arista
   # AIX providers are separate from most other platforms,
   # and have not been made unicode-aware yet.

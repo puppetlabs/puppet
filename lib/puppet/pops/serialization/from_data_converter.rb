@@ -1,5 +1,57 @@
 module Puppet::Pops
 module Serialization
+  class Builder
+    def initialize(values)
+      @values = values
+      @resolved = true
+    end
+
+    def [](key)
+      @values[key]
+    end
+
+    def []=(key, value)
+      @values[key] = value
+      @resolved = false if value.is_a?(Builder)
+    end
+
+    def resolve
+      unless @resolved
+        @resolved = true
+        if @values.is_a?(Array)
+          @values.each_with_index { |v, idx| @values[idx] = v.resolve if v.is_a?(Builder) }
+        elsif @values.is_a?(Hash)
+          @values.each_pair { |k, v| @values[k] = v.resolve if v.is_a?(Builder) }
+        end
+      end
+      @values
+    end
+  end
+
+  class ObjectHashBuilder < Builder
+    def initialize(instance)
+      super({})
+      @instance = instance
+    end
+
+    def resolve
+      @instance._pcore_init_from_hash(super)
+      @instance
+    end
+  end
+
+  class ObjectArrayBuilder < Builder
+    def initialize(instance)
+      super({})
+      @instance = instance
+    end
+
+    def resolve
+      @instance.send(:initialize, *super.values)
+      @instance
+    end
+  end
+
   # Class that can process the `Data` produced by the {ToDataConverter} class and reassemble
   # the objects that were converted.
   #
@@ -12,7 +64,7 @@ module Serialization
     # @option options [Loaders::Loader] :loader the loader to use. Can be `nil` in which case the default is
     #    determined by the {Types::TypeParser}.
     # @option options [Boolean] :allow_unresolved `true` to allow that rich_data hashes are kept "as is" if the
-    #    designated '__pcore_type__' cannot be resolved. Defaults to `false`.
+    #    designated '__ptype' cannot be resolved. Defaults to `false`.
     # @return [RichData] the processed result.
     #
     # @api public
@@ -26,7 +78,7 @@ module Serialization
     # @option options [Loaders::Loader] :loader the loader to use. Can be `nil` in which case the default is
     #    determined by the {Types::TypeParser}.
     # @option options [Boolean] :allow_unresolved `true` to allow that rich_data hashes are kept "as is" if the
-    #    designated '__pcore_type__' cannot be resolved. Defaults to `false`.
+    #    designated '__ptype' cannot be resolved. Defaults to `false`.
     #
     # @api public
     def initialize(options = EMPTY_HASH)
@@ -83,6 +135,7 @@ module Serialization
             end
             hash
           else
+            # not a string
             pcore_type_hash_to_value(type, value)
           end
         end
@@ -98,7 +151,7 @@ module Serialization
     def convert(value)
       if value.is_a?(Hash)
         pcore_type = value[PCORE_TYPE_KEY]
-        if pcore_type
+        if pcore_type && (pcore_type.is_a?(String) || pcore_type.is_a?(Hash))
           @pcore_type_procs[pcore_type].call(value, pcore_type)
         else
           build({}) { value.each_pair { |key, elem| with(key) { convert(elem) }}}
@@ -137,9 +190,16 @@ module Serialization
     end
 
     def build(value, &block)
-      @current[@key] = value unless @current.nil?
-      with_value(value, &block) if block_given?
-      value
+      vx = Builder.new(value)
+      @current[@key] = vx unless @current.nil?
+      with_value(vx, &block) if block_given?
+      vx.resolve
+    end
+
+    def build_object(builder, &block)
+      @current[@key] = builder unless @current.nil?
+      with_value(builder, &block) if block_given?
+      builder.resolve
     end
 
     def pcore_type_hash_to_value(pcore_type, value)
@@ -148,32 +208,15 @@ module Serialization
         if value.empty?
           build(pcore_type.create)
         elsif pcore_type.implementation_class.respond_to?(:_pcore_init_from_hash)
-          build(pcore_type.allocate) do
-            @current._pcore_init_from_hash(with_value({}) { value.each_pair { |key, elem| with(key) { convert(elem) } } })
-          end
+          build_object(ObjectHashBuilder.new(pcore_type.allocate)) { value.each_pair { |key, elem| with(key) { convert(elem) } } }
         else
-          build(pcore_type.allocate) do
-            args = with_value([]) { value.values.each_with_index { |elem, idx| with(idx) { convert(elem) }}}
-            @current.send(:initialize, *args)
-          end
+          build_object(ObjectArrayBuilder.new(pcore_type.allocate)) { value.each_pair { |key, elem| with(key) { convert(elem) } } }
         end
       elsif value.is_a?(String)
         build(pcore_type.create(value))
       else
-        raise SerializationError, _('Cannot create a %{type_name} from a %{arg_class') %
+        raise SerializationError, _('Cannot create a %{type_name} from a %{arg_class}') %
             { :type_name => pcore_type.name, :arg_class => value.class.name }
-      end
-    end
-
-    def data_to_pcore_type(pcore_type)
-      if pcore_type.is_a?(Hash)
-        without_value { convert(pcore_type) }
-      else
-        type = Types::TypeParser.singleton.parse(pcore_type, @loader)
-        if type.is_a?(Types::PTypeReferenceType)
-          raise SerializationError, _('No implementation mapping found for Puppet Type %{type_name}') % { type_name: pcore_type }
-        end
-        type
       end
     end
   end

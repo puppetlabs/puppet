@@ -4,14 +4,13 @@ require 'puppet/loaders'
 
 describe 'the regsubst function' do
 
-  before(:all) do
+  before(:each) do
     loaders = Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))
     Puppet.push_context({:loaders => loaders}, "test-examples")
   end
 
-  after(:all) do
-    Puppet::Pops::Loaders.clear
-    Puppet::pop_context()
+  after(:each) do
+    Puppet.pop_context()
   end
 
   def regsubst(*args)
@@ -30,7 +29,7 @@ describe 'the regsubst function' do
     end
 
     it 'should raise an Error if given a bad flag' do
-      expect { regsubst('foo', 'bar', 'gazonk', 'X') }.to raise_error(/parameter 'flags' expects a match for Pattern\[\/\^\[GEIM\]\*\$\/\], got 'X'/)
+      expect { regsubst('foo', 'bar', 'gazonk', 'X') }.to raise_error(/parameter 'flags' expects an undef value or a match for Pattern\[\/\^\[GEIM\]\*\$\/\], got 'X'/)
     end
 
     it 'should raise an Error if given a bad encoding' do

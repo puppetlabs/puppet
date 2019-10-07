@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 # encoding: UTF-8
 require 'spec_helper'
 
@@ -13,7 +12,7 @@ describe Puppet::Type.type(:user) do
       def flush; end
       def self.instances; []; end
     end
-    described_class.stubs(:defaultprovider).returns @provider_class
+    allow(described_class).to receive(:defaultprovider).and_return(@provider_class)
   end
 
   it "should be able to create an instance" do
@@ -65,12 +64,12 @@ describe Puppet::Type.type(:user) do
     end
 
     it "cannot be set to true for a provider that does not manage homedirs" do
-      provider.class.stubs(:manages_homedir?).returns false
+      allow(provider.class).to receive(:manages_homedir?).and_return(false)
       expect { instance[:managehome] = 'yes' }.to raise_error(Puppet::Error, /can not manage home directories/)
     end
 
     it "can be set to true for a provider that does manage homedirs" do
-      provider.class.stubs(:manages_homedir?).returns true
+      allow(provider.class).to receive(:manages_homedir?).and_return(true)
       instance[:managehome] = 'yes'
     end
   end
@@ -86,7 +85,7 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
+  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :password_warn_days, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
 
   properties.each do |property|
     it "should have a #{property} property" do
@@ -127,8 +126,8 @@ describe Puppet::Type.type(:user) do
     end
 
     it "should set all values to :absent if the user is absent" do
-      @user.property(:ensure).expects(:retrieve).returns :absent
-      @user.property(:uid).expects(:retrieve).never
+      expect(@user.property(:ensure)).to receive(:retrieve).and_return(:absent)
+      expect(@user.property(:uid)).not_to receive(:retrieve)
       expect(@user.retrieve[@user.property(:uid)]).to eq(:absent)
     end
 
@@ -148,13 +147,13 @@ describe Puppet::Type.type(:user) do
 
     it "should call :create on the provider when asked to sync to the :present state" do
       @provider = @provider_class.new(:name => 'foo', :ensure => :absent)
-      @provider.expects(:create)
+      expect(@provider).to receive(:create)
       described_class.new(:name => 'foo', :ensure => :present, :provider => @provider).parameter(:ensure).sync
     end
 
     it "should call :delete on the provider when asked to sync to the :absent state" do
       @provider = @provider_class.new(:name => 'foo', :ensure => :present)
-      @provider.expects(:delete)
+      expect(@provider).to receive(:delete)
       described_class.new(:name => 'foo', :ensure => :absent, :provider => @provider).parameter(:ensure).sync
     end
 
@@ -212,27 +211,27 @@ describe Puppet::Type.type(:user) do
       end
 
       it "should return true if any of the specified groups are equal to the current integer" do
-        Puppet::Util.expects(:gid).with("foo").returns 300
-        Puppet::Util.expects(:gid).with("bar").returns 500
+        expect(Puppet::Util).to receive(:gid).with("foo").and_return(300)
+        expect(Puppet::Util).to receive(:gid).with("bar").and_return(500)
         expect(described_class.new(:name => 'baz', :gid => [ 'foo', 'bar' ]).parameter(:gid)).to be_safe_insync(500)
       end
 
       it "should return false if none of the specified groups are equal to the current integer" do
-        Puppet::Util.expects(:gid).with("foo").returns 300
-        Puppet::Util.expects(:gid).with("bar").returns 500
+        expect(Puppet::Util).to receive(:gid).with("foo").and_return(300)
+        expect(Puppet::Util).to receive(:gid).with("bar").and_return(500)
         expect(described_class.new(:name => 'baz', :gid => [ 'foo', 'bar' ]).parameter(:gid)).to_not be_safe_insync(700)
       end
     end
 
     describe "when syncing" do
       it "should use the first found, specified group as the desired value and send it to the provider" do
-        Puppet::Util.expects(:gid).with("foo").returns nil
-        Puppet::Util.expects(:gid).with("bar").returns 500
+        expect(Puppet::Util).to receive(:gid).with("foo").and_return(nil)
+        expect(Puppet::Util).to receive(:gid).with("bar").and_return(500)
 
         @provider = @provider_class.new(:name => 'foo')
         resource = described_class.new(:name => 'foo', :provider => @provider, :gid => [ 'foo', 'bar' ])
 
-        @provider.expects(:gid=).with 500
+        expect(@provider).to receive(:gid=).with(500)
         resource.parameter(:gid).sync
       end
     end
@@ -257,7 +256,6 @@ describe Puppet::Type.type(:user) do
     end
 
     describe "when testing is in sync" do
-
       before :each do
         # the useradd provider uses a single string to represent groups and so does Puppet::Property::List when converting to should values
         @provider = @provider_class.new(:name => 'foo', :groups => 'a,b,e,f')
@@ -314,25 +312,35 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  describe "when managing passwords" do
-    before do
-      @password = described_class.new(:name => 'foo', :password => 'mypass').parameter(:password)
+  describe "when managing warning password days" do
+    it "should accept a negative warning days" do
+      expect { described_class.new(:name => 'foo', :password_warn_days => '-1') }.to_not raise_error
     end
 
+    it "should fail with an empty warning days" do
+      expect { described_class.new(:name => 'foo', :password_warn_days => '') }.to raise_error(Puppet::Error, /warning days must be provided as a number/)
+    end
+  end
+
+  describe "when managing passwords" do
+    let(:transaction) { Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil) }
+    let(:harness) { Puppet::Transaction::ResourceHarness.new(transaction) }
+    let(:provider) { @provider_class.new(:name => 'foo', :ensure => :present) }
+    let(:resource) { described_class.new(:name => 'foo', :ensure => :present, :password => 'top secret', :provider => provider) }
+
     it "should not include the password in the change log when adding the password" do
-      expect(@password.change_to_s(:absent, "mypass")).not_to be_include("mypass")
+      status = harness.evaluate(resource)
+      sync_event = status.events[0]
+      expect(sync_event.message).not_to include('top secret')
+      expect(sync_event.message).to eql('changed [redacted] to [redacted]')
     end
 
     it "should not include the password in the change log when changing the password" do
-      expect(@password.change_to_s("other", "mypass")).not_to be_include("mypass")
-    end
-
-    it "should redact the password when displaying the old value" do
-      expect(@password.is_to_s("currentpassword")).to match(/^\[old password hash redacted\]$/)
-    end
-
-    it "should redact the password when displaying the new value" do
-      expect(@password.should_to_s("newpassword")).to match(/^\[new password hash redacted\]$/)
+      resource[:password] = 'super extra classified'
+      status = harness.evaluate(resource)
+      sync_event = status.events[0]
+      expect(sync_event.message).not_to include('super extra classified')
+      expect(sync_event.message).to eql('changed [redacted] to [redacted]')
     end
 
     it "should fail if a ':' is included in the password" do
@@ -356,7 +364,7 @@ describe Puppet::Type.type(:user) do
         # useradd subclasses nameservice and thus inherits #comments_insync?
         user = described_class.new(:name => 'foo', :comment => @value, :provider => :useradd)
         comment_property = user.properties.find {|p| p.name == :comment}
-        user.provider.expects(:comments_insync?)
+        expect(user.provider).to receive(:comments_insync?)
         comment_property.insync?('bar')
       end
 
@@ -364,6 +372,7 @@ describe Puppet::Type.type(:user) do
         let(:is) { "\u2603" }
         let(:should) { "\u06FF" }
         let(:comment_property) { @user.properties.find { |p| p.name == :comment } }
+
         context "given is and should strings with incompatible encoding" do
           it "should return a formatted string" do
             is.force_encoding(Encoding::ASCII_8BIT)
@@ -396,10 +405,10 @@ describe Puppet::Type.type(:user) do
       testuser = described_class.new(:name => "testuser", :roles => ['testrole'] )
       testrole = described_class.new(:name => "testrole")
 
-      config = Puppet::Resource::Catalog.new :testing do |conf|
+      Puppet::Resource::Catalog.new :testing do |conf|
         [testuser, testrole].each { |resource| conf.add_resource resource }
       end
-      Puppet::Type::User::ProviderDirectoryservice.stubs(:get_macosx_version_major).returns "10.5"
+      allow(Puppet::Type::User::ProviderDirectoryservice).to receive(:get_macosx_version_major).and_return("10.5")
 
       rel = testuser.autorequire[0]
       expect(rel.source.ref).to eq(testrole.ref)
@@ -421,15 +430,15 @@ describe Puppet::Type.type(:user) do
         def check_valid_shell; end
       end
 
-      described_class.stubs(:defaultprovider).returns @shell_provider_class
+      allow(described_class).to receive(:defaultprovider).and_return(@shell_provider_class)
     end
 
     it "should call :check_valid_shell on the provider when changing shell value" do
       @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => :present)
-      @provider.expects(:check_valid_shell)
+      expect(@provider).to receive(:check_valid_shell)
       resource = described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider)
-      Puppet::Util::Storage.stubs(:load)
-      Puppet::Util::Storage.stubs(:store)
+      allow(Puppet::Util::Storage).to receive(:load)
+      allow(Puppet::Util::Storage).to receive(:store)
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource resource
       catalog.apply
@@ -437,114 +446,13 @@ describe Puppet::Type.type(:user) do
 
     it "should call :check_valid_shell on the provider when changing ensure from present to absent" do
       @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => :absent)
-      @provider.expects(:check_valid_shell)
+      expect(@provider).to receive(:check_valid_shell)
       resource = described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider)
-      Puppet::Util::Storage.stubs(:load)
-      Puppet::Util::Storage.stubs(:store)
+      allow(Puppet::Util::Storage).to receive(:load)
+      allow(Puppet::Util::Storage).to receive(:store)
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource resource
       catalog.apply
-    end
-  end
-
-  describe "when purging ssh keys" do
-    it "should not accept a keyfile with a relative path" do
-      expect {
-        described_class.new(:name => "a", :purge_ssh_keys => "keys")
-      }.to raise_error(Puppet::Error, /Paths to keyfiles must be absolute, not keys/)
-    end
-
-    context "with a home directory specified" do
-      it "should accept true" do
-        described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => true)
-      end
-      it "should accept the ~ wildcard" do
-        described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "~/keys")
-      end
-      it "should accept the %h wildcard" do
-        described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "%h/keys")
-      end
-      it "raises when given a relative path" do
-        expect {
-          described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "keys")
-        }.to raise_error(Puppet::Error, /Paths to keyfiles must be absolute/)
-      end
-    end
-
-    context "with no home directory specified" do
-      it "should not accept true" do
-        expect {
-          described_class.new(:name => "a", :purge_ssh_keys => true)
-        }.to raise_error(Puppet::Error, /purge_ssh_keys can only be true for users with a defined home directory/)
-      end
-      it "should not accept the ~ wildcard" do
-        expect {
-          described_class.new(:name => "a", :purge_ssh_keys => "~/keys")
-        }.to raise_error(Puppet::Error, /meta character ~ or %h only allowed for users with a defined home directory/)
-      end
-      it "should not accept the %h wildcard" do
-        expect {
-          described_class.new(:name => "a", :purge_ssh_keys => "%h/keys")
-        }.to raise_error(Puppet::Error, /meta character ~ or %h only allowed for users with a defined home directory/)
-      end
-    end
-
-    context "with a valid parameter" do
-      let(:paths) do
-        [ "/dev/null", "/tmp/keyfile" ].map { |path| File.expand_path(path) }
-      end
-      subject do
-        res = described_class.new(:name => "test", :purge_ssh_keys => paths)
-        res.catalog = Puppet::Resource::Catalog.new
-        res
-      end
-      it "should not just return from generate" do
-        subject.expects :find_unmanaged_keys
-        subject.generate
-      end
-      it "should check each keyfile for readability" do
-        paths.each do |path|
-          File.expects(:readable?).with(path)
-        end
-        subject.generate
-      end
-    end
-
-    describe "generated keys" do
-      subject do
-        res = described_class.new(:name => "test_user_name", :purge_ssh_keys => purge_param)
-        res.catalog = Puppet::Resource::Catalog.new
-        res
-      end
-      context "when purging is disabled" do
-        let(:purge_param) { false }
-        its(:generate) { should be_empty }
-      end
-      context "when purging is enabled" do
-        let(:purge_param) { my_fixture('authorized_keys') }
-        let(:resources) { subject.generate }
-        it "should contain a resource for each key" do
-          names = resources.collect { |res| res.name }
-          expect(names).to include("key1 name")
-          expect(names).to include("keyname2")
-        end
-        it "should not include keys in comment lines" do
-          names = resources.collect { |res| res.name }
-          expect(names).not_to include("keyname3")
-        end
-        it "should generate names for unnamed keys" do
-          names = resources.collect { |res| res.name }
-          fixture_path = File.join(my_fixture_dir, 'authorized_keys')
-          expect(names).to include("#{fixture_path}:unnamed-1")
-        end
-        it "should each have a value for the user property" do
-          expect(resources.map { |res|
-            res[:user]
-          }.reject { |user_name|
-            user_name == "test_user_name"
-          }).to be_empty
-        end
-      end
     end
   end
 end

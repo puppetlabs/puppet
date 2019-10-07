@@ -22,6 +22,9 @@ function like this:
 `epp('apache/vhost/_docroot.epp', { 'docroot' => '/var/www/html',
 'virtual_docroot' => '/var/www/example' })`
 
+This function can also accept an absolute path, which can load a template file
+from anywhere on disk.
+
 Puppet produces a syntax error if you pass more parameters than are declared in
 the template's parameter tag. When passing parameters to a template that
 contains a parameter tag, use the same names as the tag's declared parameters.
@@ -32,5 +35,5 @@ function fails to pass any required parameter.
 
 - Since 4.0.0") do |args|
 
-  Error.is4x('epp')
+  Puppet::Parser::Functions::Error.is4x('epp')
 end

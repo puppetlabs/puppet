@@ -44,7 +44,7 @@ module PSON
         /(?=\*/)      # single slash before this comment's end
         )*
         \*/               # the End of this comment
-        |[ \t\r\n]+       # whitespaces: space, horicontal tab, lf, cr
+        |[ \t\r\n]+       # whitespaces: space, horizontal tab, lf, cr
       )+
       )mx
 
@@ -180,7 +180,8 @@ module PSON
         if scan(STRING)
           return '' if self[1].empty?
           string = self[1].gsub(%r{(?:\\[\\bfnrt"/]|(?:\\u(?:[A-Fa-f\d]{4}))+|\\[\x20-\xff])}n) do |c|
-            if u = UNESCAPE_MAP[$MATCH[1]]
+            u = UNESCAPE_MAP[$MATCH[1]]
+            if u
               u
             else # \uXXXX
               bytes = ''

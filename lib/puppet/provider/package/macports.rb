@@ -38,7 +38,8 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
 
   def self.hash_from_line(line, regex, fields)
     hash = {}
-    if match = regex.match(line)
+    match = regex.match(line)
+    if match
       fields.zip(match.captures) { |field, value|
         hash[field] = value
       }
@@ -51,7 +52,8 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   def self.instances
     packages = []
     port("-q", :installed).each_line do |line|
-      if hash = parse_installed_query_line(line)
+      hash = parse_installed_query_line(line)
+      if hash
         packages << new(hash)
       end
     end
@@ -61,9 +63,9 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   def install
     should = @resource.should(:ensure)
     if [:latest, :installed, :present].include?(should)
-      output = port("-q", :install, @resource[:name])
+      port("-q", :install, @resource[:name])
     else
-      output = port("-q", :install, @resource[:name], "@#{should}")
+      port("-q", :install, @resource[:name], "@#{should}")
     end
     # MacPorts now correctly exits non-zero with appropriate errors in
     # situations where a port cannot be found or installed.
@@ -82,7 +84,8 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
     info_line = execute([command(:port), "-q", :info, "--line", "--version", "--revision", @resource[:name]], :failonfail => false, :combine => false)
     return nil if info_line == ""
 
-    if newest = self.class.parse_info_query_line(info_line)
+    newest = self.class.parse_info_query_line(info_line)
+    if newest
       current = query
       # We're doing some fiddling behind the scenes here to cope with updated revisions.
       # If we're already at the latest version/revision, then just return the version

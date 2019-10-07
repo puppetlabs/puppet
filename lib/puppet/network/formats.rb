@@ -1,5 +1,5 @@
 require 'puppet/network/format_handler'
-require 'json'
+require 'puppet/util/json'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20, :mime => "application/x-msgpack", :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
 
@@ -23,13 +23,25 @@ Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20
 end
 
 Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
+  def allowed_yaml_classes
+    @allowed_yaml_classes ||= [
+      Puppet::Node::Facts,
+      Puppet::Node,
+      Puppet::Transaction::Report,
+      Puppet::Resource,
+      Puppet::Resource::Catalog
+    ]
+  end
+
   def intern(klass, text)
-    data = YAML.load(text)
+    data = Puppet::Util::Yaml.safe_load(text, allowed_yaml_classes)
     data_to_instance(klass, data)
+  rescue Puppet::Util::Yaml::YamlLoadError => e
+    raise Puppet::Network::FormatHandler::FormatError, _("Serialized YAML did not contain a valid instance of %{klass}: %{message}") % { klass: klass, message: e.message }
   end
 
   def intern_multiple(klass, text)
-    data = YAML.load(text)
+    data = Puppet::Util::Yaml.safe_load(text, allowed_yaml_classes)
     unless data.respond_to?(:collect)
       raise Puppet::Network::FormatHandler::FormatError, _("Serialized YAML did not contain a collection of instances when calling intern_multiple")
     end
@@ -37,6 +49,8 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
     data.collect do |datum|
       data_to_instance(klass, datum)
     end
+  rescue Puppet::Util::Yaml::YamlLoadError => e
+    raise Puppet::Network::FormatHandler::FormatError, _("Serialized YAML did not contain a valid instance of %{klass}: %{message}") % { klass: klass, message: e.message }
   end
 
   def data_to_instance(klass, data)
@@ -91,7 +105,8 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
   # If they pass class information, we want to ignore it.
   # This is required for compatibility with Puppet 3.x
   def data_to_instance(klass, data)
-    if data.is_a?(Hash) and d = data['data']
+    d = data['data'] if data.is_a?(Hash)
+    if d
       data = d
     end
     return data if data.is_a?(klass)
@@ -101,19 +116,17 @@ end
 
 Puppet::Network::FormatHandler.create_serialized_formats(:json, :mime => 'application/json', :charset => Encoding::UTF_8, :weight => 15, :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
   def intern(klass, text)
-    data_to_instance(klass, JSON.parse(text))
+    data_to_instance(klass, Puppet::Util::Json.load(text))
   end
 
   def intern_multiple(klass, text)
-    JSON.parse(text).collect do |data|
+    Puppet::Util::Json.load(text).collect do |data|
       data_to_instance(klass, data)
     end
   end
 
-  # JSON monkey-patches Array, so this works.
-  # https://github.com/ruby/ruby/blob/ruby_1_9_3/ext/json/generator/generator.c#L1416
   def render_multiple(instances)
-    instances.to_json
+    Puppet::Util::Json.dump(instances)
   end
 
   # Unlike PSON, we do not need to unwrap the data envelope, because legacy 3.x agents
@@ -162,10 +175,87 @@ Puppet::Network::FormatHandler.create(:console,
     end
 
     # ...or pretty-print the inspect outcome.
-    JSON.pretty_generate(datum, :quirks_mode => true)
+    Puppet::Util::Json.dump(datum, :pretty => true, :quirks_mode => true)
   end
 
   def render_multiple(data)
     data.collect(&:render).join("\n")
+  end
+end
+
+Puppet::Network::FormatHandler.create(:rich_data_json, mime: 'application/vnd.puppet.rich+json', charset: Encoding::UTF_8, weight: 30) do
+  def intern(klass, text)
+    Puppet.override({:rich_data => true}) do
+      data_to_instance(klass, Puppet::Util::Json.load(text))
+    end
+  end
+
+  def intern_multiple(klass, text)
+    Puppet.override({:rich_data => true}) do
+      Puppet::Util::Json.load(text).collect do |data|
+        data_to_instance(klass, data)
+      end
+    end
+  end
+
+  def render(instance)
+    Puppet.override({:rich_data => true}) do
+      instance.to_json
+    end
+  end
+
+  def render_multiple(instances)
+    Puppet.override({:rich_data => true}) do
+      Puppet::Util::Json.dump(instances)
+    end
+  end
+
+  def data_to_instance(klass, data)
+    Puppet.override({:rich_data => true}) do
+      return data if data.is_a?(klass)
+      klass.from_data_hash(data)
+    end
+  end
+
+  def supported?(klass)
+    klass == Puppet::Resource::Catalog &&
+      Puppet.lookup(:current_environment).rich_data?
+  end
+end
+
+Puppet::Network::FormatHandler.create_serialized_formats(:rich_data_msgpack, mime: "application/vnd.puppet.rich+msgpack", weight: 35) do
+  confine :feature => :msgpack
+
+  def intern(klass, text)
+    Puppet.override(rich_data: true) do
+      data = MessagePack.unpack(text)
+      return data if data.is_a?(klass)
+      klass.from_data_hash(data)
+    end
+  end
+
+  def intern_multiple(klass, text)
+    Puppet.override(rich_data: true) do
+      MessagePack.unpack(text).collect do |data|
+        klass.from_data_hash(data)
+      end
+    end
+  end
+
+  def render_multiple(instances)
+    Puppet.override(rich_data: true) do
+      instances.to_msgpack
+    end
+  end
+
+  def render(instance)
+    Puppet.override(rich_data: true) do
+      instance.to_msgpack
+    end
+  end
+
+  def supported?(klass)
+    klass == Puppet::Resource::Catalog &&
+      Puppet.lookup(:current_environment).rich_data?
   end
 end

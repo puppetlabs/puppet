@@ -31,7 +31,7 @@ module Puppet
       * Fully qualified paths to locally available files (including files on NFS
       shares or Windows mapped drives).
       * `file:` URIs, which behave the same as local file paths.
-      * `http:` URIs, which point to files served by common web servers
+      * `http:` URIs, which point to files served by common web servers.
 
       The normal form of a `puppet:` URI is:
 
@@ -47,10 +47,14 @@ module Puppet
       a source directory contains symlinks, use the `links` attribute to
       specify whether to recreate links or follow them.
 
-      *HTTP* URIs cannot be used to recursively synchronize whole directory
-      trees. It is also not possible to use `source_permissions` values other
-      than `ignore`. That's because HTTP servers do not transfer any metadata
-      that translates to ownership or permission details.
+      _HTTP_ URIs cannot be used to recursively synchronize whole directory
+      trees. You cannot use `source_permissions` values other than `ignore`
+      because HTTP servers do not transfer any metadata that translates to
+      ownership or permission details.
+
+      The `http` source uses the server `Content-MD5` header as a checksum to
+      determine if the remote file has changed. If the server response does not
+      include that header, Puppet defaults to using the `Last-Modified` header.
 
       Multiple `source` values can be specified as an array, and Puppet will
       use the first source that exists. This can be used to serve different
@@ -128,9 +132,10 @@ module Puppet
     # Look up (if necessary) and return local content.
     def content
       return @content if @content
-      raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
+      raise Puppet::DevError, _("No source for content was stored with the metadata") unless metadata.source
 
-      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment_instance, :links => resource[:links])
+      tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment_instance, :links => resource[:links])
+      unless tmp
         self.fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
@@ -152,7 +157,7 @@ module Puppet
         next if metadata_method == :group and !Puppet.features.root?
 
         case resource[:source_permissions]
-        when :ignore
+        when :ignore, nil
           next
         when :use_when_creating
           next if Puppet::FileSystem.exist?(resource[:path])
@@ -179,11 +184,8 @@ module Puppet
     # if we can't find data about this host, and fail if there are any
     # problems in our query.
     def metadata
+      @metadata ||= resource.catalog.metadata[resource.title]
       return @metadata if @metadata
-
-      if @metadata = resource.catalog.metadata[resource.title]
-        return @metadata
-      end
 
       return nil unless value
       value.each do |source|
@@ -195,7 +197,8 @@ module Puppet
             :source_permissions   => resource[:source_permissions]
           }
 
-          if data = Puppet::FileServing::Metadata.indirection.find(source, options)
+          data = Puppet::FileServing::Metadata.indirection.find(source, options)
+          if data
             @metadata = data
             @metadata.source = source
             break
@@ -254,7 +257,7 @@ module Puppet
     def copy_source_value(metadata_method)
       param_name = (metadata_method == :checksum) ? :content : metadata_method
       if resource[param_name].nil? or resource[param_name] == :absent
-        if Puppet.features.microsoft_windows? && [:owner, :group, :mode].include?(metadata_method)
+        if Puppet::Util::Platform.windows? && [:owner, :group, :mode].include?(metadata_method)
           devfail "Should not have tried to use source owner/mode/group on Windows"
         end
 
@@ -282,7 +285,7 @@ module Puppet
 
     def chunk_file_from_disk
       File.open(full_path, "rb") do |src|
-        while chunk = src.read(8192)
+        while chunk = src.read(8192) #rubocop:disable Lint/AssignmentInCondition
           yield chunk
         end
       end
@@ -298,7 +301,8 @@ module Puppet
       end
 
       request.do_request(:fileserver) do |req|
-        connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
+        ssl_context = Puppet.lookup(:ssl_context)
+        connection = Puppet::Network::HttpPool.connection(req.server, req.port, ssl_context: ssl_context)
         connection.request_get(Puppet::Network::HTTP::API::IndirectedRoutes.request_to_uri(req), add_accept_encoding({"Accept" => BINARY_MIME_TYPES}), &block)
       end
     end
@@ -315,7 +319,6 @@ module Puppet
         get_from_puppet_source(source_uri, metadata.content_uri, &block)
       end
     end
-
 
     def chunk_file_from_source
       get_from_source do |response|
@@ -352,5 +355,14 @@ module Puppet
 
     defaultto :ignore
     newvalues(:use, :use_when_creating, :ignore)
+     munge do |value|
+      value = value ? value.to_sym : :ignore
+      if @resource.file && @resource.line && value != :ignore
+        #TRANSLATORS "source_permissions" is a parameter name and should not be translated
+        Puppet.puppet_deprecation_warning(_("The `source_permissions` parameter is deprecated. Explicitly set `owner`, `group`, and `mode`."), file: @resource.file, line: @resource.line)
+      end
+
+      value
+     end
   end
 end

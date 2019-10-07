@@ -142,7 +142,7 @@ class WindowsDaemon < Win32::Daemon
         :event_id    => id,     # 0x01 or 0x02, 0x03 etc.
         :data        => message # "the message"
       )
-    rescue Exception => e
+    rescue Exception
       # Ignore all errors
     ensure
       if (!eventlog.nil?)

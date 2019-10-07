@@ -24,11 +24,11 @@ Puppet::Type.type(:group).provide :windows_adsi do
     # since the default array_matching comparison is not commutative
 
     # dupes automatically weeded out when hashes built
-    current_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current)
-    specified_users = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
+    current_members = Puppet::Util::Windows::ADSI::Group.name_sid_hash(current)
+    specified_members = Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
 
-    current_sids = current_users.keys.to_a
-    specified_sids = specified_users.keys.to_a
+    current_sids = current_members.keys.to_a
+    specified_sids = specified_members.keys.to_a
 
     if @resource[:auth_membership]
       current_sids.sort == specified_sids.sort
@@ -40,7 +40,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   def members_to_s(users)
     return '' if users.nil? or !users.kind_of?(Array)
     users = users.map do |user_name|
-      sid = Puppet::Util::Windows::SID.name_to_sid_object(user_name)
+      sid = Puppet::Util::Windows::SID.name_to_principal(user_name)
       if !sid
         resource.debug("#{user_name} (unresolvable to SID)")
         next user_name
@@ -58,7 +58,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def member_valid?(user_name)
-    ! Puppet::Util::Windows::SID.name_to_sid_object(user_name).nil?
+    ! Puppet::Util::Windows::SID.name_to_principal(user_name).nil?
   end
 
   def group
@@ -66,7 +66,11 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def members
-    group.members
+    @members ||= Puppet::Util::Windows::ADSI::Group.name_sid_hash(group.members)
+
+    # @members.keys returns an array of SIDs. We need to convert those SIDs into
+    # names so that `puppet resource` prints the right output.
+    members_to_s(@members.keys).split(',')
   end
 
   def members=(members)

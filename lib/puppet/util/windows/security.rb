@@ -200,6 +200,7 @@ module Puppet::Util::Windows::Security
     well_known_world_sid = Puppet::Util::Windows::SID::Everyone
     well_known_nobody_sid = Puppet::Util::Windows::SID::Nobody
     well_known_system_sid = Puppet::Util::Windows::SID::LocalSystem
+    well_known_app_packages_sid = Puppet::Util::Windows::SID::AllAppPackages
 
     mode = S_ISYSTEM_MISSING
 
@@ -234,6 +235,7 @@ module Puppet::Util::Windows::Security
         if (ace.mask & FILE::FILE_APPEND_DATA).nonzero?
           mode |= S_ISVTX
         end
+      when well_known_app_packages_sid
       when well_known_system_sid
       else
         #puts "Warning, unable to map SID into POSIX mode: #{ace.sid}"
@@ -274,7 +276,7 @@ module Puppet::Util::Windows::Security
   # mode. Only a user with the SE_BACKUP_NAME and SE_RESTORE_NAME
   # privileges in their process token can change the mode for objects
   # that they do not have read and write access to.
-  def set_mode(mode, path, protected = true)
+  def set_mode(mode, path, protected = true, managing_owner = false, managing_group = false)
     sd = get_security_descriptor(path)
     well_known_world_sid = Puppet::Util::Windows::SID::Everyone
     well_known_nobody_sid = Puppet::Util::Windows::SID::Nobody
@@ -283,6 +285,8 @@ module Puppet::Util::Windows::Security
     owner_allow = FILE::STANDARD_RIGHTS_ALL  |
       FILE::FILE_READ_ATTRIBUTES |
       FILE::FILE_WRITE_ATTRIBUTES
+    # this prevents a mode that is not 7 from taking ownership of a file based
+    # on group membership and rewriting it / making it executable
     group_allow = FILE::STANDARD_RIGHTS_READ |
       FILE::FILE_READ_ATTRIBUTES |
       FILE::SYNCHRONIZE
@@ -304,33 +308,75 @@ module Puppet::Util::Windows::Security
       end
     end
 
+    # With a mode value of '7' for group / other, the value must then include
+    # additional perms beyond STANDARD_RIGHTS_READ to allow DACL modification
+    if ((mode & S_IRWXG) == S_IRWXG)
+      group_allow |= FILE::DELETE | FILE::WRITE_DAC | FILE::WRITE_OWNER
+    end
+    if ((mode & S_IRWXO) == S_IRWXO)
+      other_allow |= FILE::DELETE | FILE::WRITE_DAC | FILE::WRITE_OWNER
+    end
+
     if (mode & S_ISVTX).nonzero?
       nobody_allow |= FILE::FILE_APPEND_DATA;
     end
+
+    isownergroup = sd.owner == sd.group
 
     # caller is NOT managing SYSTEM by using group or owner, so set to FULL
     if ! [sd.owner, sd.group].include? well_known_system_sid
       # we don't check S_ISYSTEM_MISSING bit, but automatically carry over existing SYSTEM perms
       # by default set SYSTEM perms to full
       system_allow = FILE::FILE_ALL_ACCESS
+    else
+      # It is possible to set SYSTEM with a mode other than Full Control (7) however this makes no sense and in practical terms
+      # should not be done.  We can trap these instances and correct them before being applied.
+      if (sd.owner == well_known_system_sid) && (owner_allow != FILE::FILE_ALL_ACCESS)
+        # If owner and group are both SYSTEM but group is unmanaged the control rights of system will be set to FullControl by
+        # the unmanaged group, so there is no need for the warning
+        if managing_owner && (!isownergroup || managing_group)
+          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          Puppet.warning _("Setting control rights for %{path} owner SYSTEM to less than Full Control rights. Setting SYSTEM rights to less than Full Control may have unintented consequences for operations on this file") % { path: path }
+        elsif managing_owner && isownergroup
+          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          Puppet.debug _("%{path} owner and group both set to user SYSTEM, but group is not managed directly: SYSTEM user rights will be set to FullControl by group") % { path: path }
+        else
+          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          Puppet.debug _("An attempt to set mode %{mode} on item %{path} would result in the owner, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode.to_s(8), path: path }
+          owner_allow = FILE::FILE_ALL_ACCESS
+        end
+      end
+
+      if (sd.group == well_known_system_sid) && (group_allow != FILE::FILE_ALL_ACCESS)
+        # If owner and group are both SYSTEM but owner is unmanaged the control rights of system will be set to FullControl by
+        # the unmanaged owner, so there is no need for the warning.
+        if managing_group && (!isownergroup || managing_owner)
+          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          Puppet.warning _("Setting control rights for %{path} group SYSTEM to less than Full Control rights. Setting SYSTEM rights to less than Full Control may have unintented consequences for operations on this file") % { path: path }
+        elsif managing_group && isownergroup
+          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          Puppet.debug _("%{path} owner and group both set to user SYSTEM, but owner is not managed directly: SYSTEM user rights will be set to FullControl by owner") % { path: path }
+        else
+          #TRANSLATORS 'SYSTEM' is a Windows name and should not be translated
+          Puppet.debug _("An attempt to set mode %{mode} on item %{path} would result in the group, SYSTEM, to have less than Full Control rights. This attempt has been corrected to Full Control") % { mode: mode.to_s(8), path: path }
+          group_allow = FILE::FILE_ALL_ACCESS
+        end
+      end
     end
 
-    isdir = File.directory?(path)
-
-    if isdir
-      if (mode & (S_IWUSR | S_IXUSR)) == (S_IWUSR | S_IXUSR)
-        owner_allow |= FILE::FILE_DELETE_CHILD
-      end
-      if (mode & (S_IWGRP | S_IXGRP)) == (S_IWGRP | S_IXGRP) && (mode & S_ISVTX) == 0
-        group_allow |= FILE::FILE_DELETE_CHILD
-      end
-      if (mode & (S_IWOTH | S_IXOTH)) == (S_IWOTH | S_IXOTH) && (mode & S_ISVTX) == 0
-        other_allow |= FILE::FILE_DELETE_CHILD
-      end
+    # even though FILE_DELETE_CHILD only applies to directories, it can be set on files
+    # this is necessary to do to ensure a file ends up with (F) FullControl
+    if (mode & (S_IWUSR | S_IXUSR)) == (S_IWUSR | S_IXUSR)
+      owner_allow |= FILE::FILE_DELETE_CHILD
+    end
+    if (mode & (S_IWGRP | S_IXGRP)) == (S_IWGRP | S_IXGRP) && (mode & S_ISVTX) == 0
+      group_allow |= FILE::FILE_DELETE_CHILD
+    end
+    if (mode & (S_IWOTH | S_IXOTH)) == (S_IWOTH | S_IXOTH) && (mode & S_ISVTX) == 0
+      other_allow |= FILE::FILE_DELETE_CHILD
     end
 
     # if owner and group the same, then map group permissions to the one owner ACE
-    isownergroup = sd.owner == sd.group
     if isownergroup
       owner_allow |= group_allow
     end
@@ -341,6 +387,7 @@ module Puppet::Util::Windows::Security
       FILE.remove_attributes(path, FILE::FILE_ATTRIBUTE_READONLY)
     end
 
+    isdir = File.directory?(path)
     dacl = Puppet::Util::Windows::AccessControlList.new
     dacl.allow(sd.owner, owner_allow)
     unless isownergroup
@@ -363,8 +410,10 @@ module Puppet::Util::Windows::Security
       dacl.allow(Puppet::Util::Windows::SID::CreatorGroup, group_allow, inherit)
 
       inherit = inherit_only | Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE
-      dacl.allow(Puppet::Util::Windows::SID::CreatorOwner, owner_allow & ~FILE::FILE_EXECUTE, inherit)
-      dacl.allow(Puppet::Util::Windows::SID::CreatorGroup, group_allow & ~FILE::FILE_EXECUTE, inherit)
+      # allow any previously set bits *except* for these
+      perms_to_strip = ~(FILE::FILE_EXECUTE + FILE::WRITE_OWNER + FILE::WRITE_DAC)
+      dacl.allow(Puppet::Util::Windows::SID::CreatorOwner, owner_allow & perms_to_strip, inherit)
+      dacl.allow(Puppet::Util::Windows::SID::CreatorGroup, group_allow & perms_to_strip, inherit)
     end
 
     new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, dacl, protected)

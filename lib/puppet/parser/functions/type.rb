@@ -49,5 +49,5 @@ function type(Any $value, InferenceFidelity $fidelity = 'detailed') # returns Ty
 
 DOC
 ) do |args|
-  Error.is4x('type')
+  Puppet::Parser::Functions::Error.is4x('type')
 end

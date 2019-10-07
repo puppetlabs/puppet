@@ -99,7 +99,8 @@ class AbstractWriter
   #
   # @api private
   def write_tpl(ep, value)
-    raise ArgumentError, 'Internal error. Integers cannot be tabulated in extension payload' if value.is_a?(Integer)
+    #TRANSLATORS 'Integers' is a Ruby class for numbers and should not be translated
+    raise ArgumentError, _('Internal error. Integers cannot be tabulated in extension payload') if value.is_a?(Integer)
     if @tabulate
       index = @written[value]
       if index.nil?
@@ -198,6 +199,12 @@ class AbstractWriter
       end
     else
       register_type(Extension::BASE64, Types::PBinaryType::Binary) do |o|
+        build_payload { |ep| ep.write(o.to_s) }
+      end
+    end
+
+    URI.scheme_list.values.each do |uri_class|
+      register_type(Extension::URI, uri_class) do |o|
         build_payload { |ep| ep.write(o.to_s) }
       end
     end

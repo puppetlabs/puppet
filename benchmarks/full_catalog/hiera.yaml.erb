@@ -1,0 +1,25 @@
+---
+:backends:
+  - yaml
+:yaml:
+  :datadir: "<%= datadir %>"
+:hierarchy:
+# This hierarchy is based on the one from the puppetlabs ops team.
+  - "vagrant/%{is_vagrant}"
+  - "nodes/%{fake_domain}/%{fqdn}"
+  - "nodes/%{fake_domain}/%{hostname}"
+  - "domains/%{fake_domain}/groups/%{group}"
+  - "domains/%{fake_domain}/stages/%{stage}"
+  - "domains/%{fake_domain}"
+  - "groups/%{group}/%{function}/%{stage}"
+  - "groups/%{group}/%{function}"
+  - "groups/%{group}/%{whereami}/%{stage}"
+  - "groups/%{group}/%{stage}"
+  - "groups/%{group}"
+  - "location/%{whereami}/%{stage}"
+  - "location/%{whereami}"
+  - "os/%{osfamily}/%{lsbdistcodename}"
+  - "os/%{osfamily}"
+  - "modules/%{module_name}"
+  - "stages/%{stage}"
+  - "common"

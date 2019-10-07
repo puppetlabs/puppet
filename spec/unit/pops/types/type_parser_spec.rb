@@ -30,8 +30,13 @@ describe TypeParser do
       /The expression <Array\[notAType\]> is not a valid type specification/)
   end
 
+  it "rejects an unknown type parameter in a variant" do
+    expect { parser.parse("Variant[Integer,'not a type']") }.to raise_error(Puppet::ParseError,
+      /The expression <Variant\[Integer,'not a type'\]> is not a valid type specification/)
+  end
+
   [
-    'Any', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric', 'Default'
+    'Any', 'Data', 'CatalogEntry', 'Scalar', 'Undef', 'Numeric', 'Default'
   ].each do |name|
     it "does not support parameterizing unparameterized type <#{name}>" do
       expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
@@ -72,6 +77,18 @@ describe TypeParser do
 
   it "interprets a parameterized Hash[t] as a Hash of Scalar to t" do
     expect(parser.parse("Hash[Scalar, Integer]")).to be_the_type(types.hash_of(types.integer))
+  end
+
+  it 'interprets an Boolean with a true parameter to represent boolean true' do
+    expect(parser.parse('Boolean[true]')).to be_the_type(types.boolean(true))
+  end
+
+  it 'interprets an Boolean with a false parameter to represent boolean false' do
+    expect(parser.parse('Boolean[false]')).to be_the_type(types.boolean(false))
+  end
+
+  it 'does not accept non-boolean parameters' do
+    expect{parser.parse('Boolean["false"]')}.to raise_error(/Boolean parameter must be true or false/)
   end
 
   it 'interprets an Integer with one parameter to have unbounded upper range' do
@@ -155,39 +172,39 @@ describe TypeParser do
 
   context 'with scope context and loader' do
     let!(:scope) { {} }
-    let(:loader) { Object.new }
+    let(:loader) { double }
 
     before :each do
-      Adapters::LoaderAdapter.expects(:loader_for_model_object).returns loader
+      expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).and_return(loader)
     end
 
     it 'interprets anything that is not found by the loader to be a type reference' do
-      loader.expects(:load).with(:type, 'nonesuch').returns nil
+      expect(loader).to receive(:load).with(:type, 'nonesuch').and_return(nil)
       expect(parser.parse('Nonesuch', scope)).to be_the_type(types.type_reference('Nonesuch'))
     end
 
     it 'interprets anything that is found by the loader to be what the loader found' do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse('File', scope)).to be_the_type(types.resource('File'))
     end
 
     it "parses a resource type with title" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("File['/tmp/foo']", scope)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
 
     it "parses a resource type using 'Resource[type]' form" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("Resource[File]", scope)).to be_the_type(types.resource('file'))
     end
 
     it "parses a resource type with title using 'Resource[type, title]'" do
-      loader.expects(:load).with(:type, 'file').returns nil
+      expect(loader).to receive(:load).with(:type, 'file').and_return(nil)
       expect(parser.parse("Resource[File, '/tmp/foo']", scope)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
 
     it "parses a resource type with title using 'Resource[Type[title]]'" do
-      loader.expects(:load).with(:type, 'nonesuch').returns nil
+      expect(loader).to receive(:load).with(:type, 'nonesuch').and_return(nil)
       expect(parser.parse("Resource[Nonesuch['fife']]", scope)).to be_the_type(types.resource('nonesuch', 'fife'))
     end
   end
@@ -196,27 +213,27 @@ describe TypeParser do
     let(:loader) { Puppet::Pops::Loader::BaseLoader.new(nil, "type_parser_unit_test_loader") }
 
     it 'interprets anything that is not found by the loader to be a type reference' do
-      loader.expects(:load).with(:type, 'nonesuch').returns nil
+      expect(loader).to receive(:load).with(:type, 'nonesuch').and_return(nil)
       expect(parser.parse('Nonesuch', loader)).to be_the_type(types.type_reference('Nonesuch'))
     end
 
     it 'interprets anything that is found by the loader to be what the loader found' do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse('File', loader)).to be_the_type(types.resource('file'))
     end
 
     it "parses a resource type with title" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("File['/tmp/foo']", loader)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
 
     it "parses a resource type using 'Resource[type]' form" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("Resource[File]", loader)).to be_the_type(types.resource('file'))
     end
 
     it "parses a resource type with title using 'Resource[type, title]'" do
-      loader.expects(:load).with(:type, 'file').returns types.resource('File')
+      expect(loader).to receive(:load).with(:type, 'file').and_return(types.resource('File'))
       expect(parser.parse("Resource[File, '/tmp/foo']", loader)).to be_the_type(types.resource('file', '/tmp/foo'))
     end
   end
@@ -369,6 +386,26 @@ describe TypeParser do
     t = parser.parse('Nonesuch[{a=>undef,b=>true,c=>false,d=>default,e=>"string",f=>0,g=>1.0,h=>[1,2,3]}]')
     expect(t).to be_a(PTypeReferenceType)
     expect(t.type_string).to eql('Nonesuch[{a=>undef,b=>true,c=>false,d=>default,e=>"string",f=>0,g=>1.0,h=>[1,2,3]}]')
+  end
+
+  it 'parses a parameterized Enum using identifiers' do
+    t = parser.parse('Enum[a, b]')
+    expect(t).to be_a(PEnumType)
+    expect(t.to_s).to eql("Enum['a', 'b']")
+  end
+
+  it 'parses a parameterized Enum using strings' do
+    t = parser.parse("Enum['a', 'b']")
+    expect(t).to be_a(PEnumType)
+    expect(t.to_s).to eql("Enum['a', 'b']")
+  end
+
+  it 'rejects a parameterized Enum using type refs' do
+    expect { parser.parse('Enum[A, B]') }.to raise_error(/Enum parameters must be identifiers or strings/)
+  end
+
+  it 'rejects a parameterized Enum using integers' do
+    expect { parser.parse('Enum[1, 2]') }.to raise_error(/Enum parameters must be identifiers or strings/)
   end
 
   matcher :be_the_type do |type|

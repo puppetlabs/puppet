@@ -62,24 +62,6 @@ def do_configs(configs, target, strip = 'conf/')
     ocf = File.join(InstallOptions.config_dir, cf.gsub(/#{strip}/, ''))
     FileUtils.install(cf, ocf, {:mode => 0644, :preserve => true, :verbose => true})
   end
-
-  if $operatingsystem == 'windows'
-    src_dll = 'ext/windows/eventlog/puppetres.dll'
-    dst_dll = File.join(InstallOptions.bin_dir, 'puppetres.dll')
-    FileUtils.install(src_dll, dst_dll, {:mode => 0644, :preserve => true, :verbose => true})
-
-    require 'win32/registry'
-    include Win32::Registry::Constants
-
-    begin
-      Win32::Registry::HKEY_LOCAL_MACHINE.create('SYSTEM\CurrentControlSet\services\eventlog\Application\Puppet', KEY_ALL_ACCESS | 0x0100) do |reg|
-        reg.write_s('EventMessageFile', dst_dll.tr('/', '\\'))
-        reg.write_i('TypesSupported', 0x7)
-      end
-    rescue Win32::Registry::Error => e
-      warn "Failed to create puppet eventlog registry key: #{e}"
-    end
-  end
 end
 
 def do_bins(bins, target, strip = 's?bin/')
@@ -140,12 +122,12 @@ def check_prereqs
         facter_version = Facter.version.to_f
         if facter_version < MIN_FACTER_VERSION
           puts "Facter version: #{facter_version}; minimum required: #{MIN_FACTER_VERSION}; cannot install"
-          exit -1
+          exit (-1)
         end
       end
     rescue LoadError
       puts "Could not load #{pre}; cannot install"
-      exit -1
+      exit (-1)
     end
   }
 end
@@ -266,7 +248,7 @@ def prepare_installation
       require 'win32/dir'
     rescue LoadError => e
       puts "Cannot run on Microsoft Windows without the win32-process, win32-dir & win32-service gems: #{e}"
-      exit -1
+      exit (-1)
     end
   end
 
@@ -482,7 +464,6 @@ EOS
         FileUtils.install(tmp_file2.path, File.join(target, "#{op_file}.bat"), :mode => 0755, :preserve => true, :verbose => true)
 
         tmp_file2.unlink
-        installed_wrapper = true
       end
     end
   end
@@ -495,8 +476,8 @@ FileUtils.cd File.dirname(__FILE__) do
   # Set these values to what you want installed.
   configs = glob(%w{conf/auth.conf conf/puppet.conf conf/hiera.yaml})
   bins  = glob(%w{bin/*})
-  rdoc  = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
-  ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
+  #rdoc  = glob(%w{bin/* lib/**/*.rb README* }).reject { |e| e=~ /\.(bat|cmd)$/ }
+  #ri    = glob(%w{bin/*.rb lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
   man   = glob(%w{man/man[0-9]/*})
   libs  = glob(%w{lib/**/*})
   locales = glob(%w{locales/**/*})

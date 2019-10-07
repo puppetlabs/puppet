@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/settings'
@@ -19,13 +18,13 @@ describe Puppet::Settings::FileSetting do
         :service_group_available? => false
       }.merge(wanted_values)
 
-      settings = mock("settings")
+      settings = double("settings")
 
-      settings.stubs(:[]).with(:user).returns real_values[:user]
-      settings.stubs(:[]).with(:group).returns real_values[:group]
-      settings.stubs(:[]).with(:mkusers).returns real_values[:mkusers]
-      settings.stubs(:service_user_available?).returns real_values[:service_user_available?]
-      settings.stubs(:service_group_available?).returns real_values[:service_group_available?]
+      allow(settings).to receive(:[]).with(:user).and_return(real_values[:user])
+      allow(settings).to receive(:[]).with(:group).and_return(real_values[:group])
+      allow(settings).to receive(:[]).with(:mkusers).and_return(real_values[:mkusers])
+      allow(settings).to receive(:service_user_available?).and_return(real_values[:service_user_available?])
+      allow(settings).to receive(:service_group_available?).and_return(real_values[:service_group_available?])
 
       settings
     end
@@ -120,16 +119,16 @@ describe Puppet::Settings::FileSetting do
   end
 
   it "should be able to be converted into a resource" do
-    expect(FileSetting.new(:settings => mock("settings"), :desc => "eh")).to respond_to(:to_resource)
+    expect(FileSetting.new(:settings => double("settings"), :desc => "eh")).to respond_to(:to_resource)
   end
 
   describe "when being converted to a resource" do
     before do
       @basepath = make_absolute("/somepath")
-      @settings = mock 'settings'
+      @settings = double('settings')
       @file = Puppet::Settings::FileSetting.new(:settings => @settings, :desc => "eh", :name => :myfile, :section => "mysect")
-      @file.stubs(:create_files?).returns true
-      @settings.stubs(:value).with(:myfile, nil, false).returns @basepath
+      allow(@file).to receive(:create_files?).and_return(true)
+      allow(@settings).to receive(:value).with(:myfile, nil, false).and_return(@basepath)
     end
 
     it "should return :file as its type" do
@@ -137,29 +136,29 @@ describe Puppet::Settings::FileSetting do
     end
 
     it "should skip non-existent files if 'create_files' is not enabled" do
-      @file.expects(:create_files?).returns false
-      @file.expects(:type).returns :file
-      Puppet::FileSystem.expects(:exist?).with(@basepath).returns false
+      expect(@file).to receive(:create_files?).and_return(false)
+      expect(@file).to receive(:type).and_return(:file)
+      expect(Puppet::FileSystem).to receive(:exist?).with(@basepath).and_return(false)
       expect(@file.to_resource).to be_nil
     end
 
     it "should manage existent files even if 'create_files' is not enabled" do
-      @file.expects(:create_files?).returns false
-      @file.expects(:type).returns :file
-      Puppet::FileSystem.stubs(:exist?)
-      Puppet::FileSystem.expects(:exist?).with(@basepath).returns true
+      expect(@file).to receive(:create_files?).and_return(false)
+      expect(@file).to receive(:type).and_return(:file)
+      allow(Puppet::FileSystem).to receive(:exist?)
+      expect(Puppet::FileSystem).to receive(:exist?).with(@basepath).and_return(true)
       expect(@file.to_resource).to be_instance_of(Puppet::Resource)
     end
 
     describe "on POSIX systems", :if => Puppet.features.posix? do
       it "should skip files in /dev" do
-        @settings.stubs(:value).with(:myfile, nil, false).returns "/dev/file"
+        allow(@settings).to receive(:value).with(:myfile, nil, false).and_return("/dev/file")
         expect(@file.to_resource).to be_nil
       end
     end
 
     it "should skip files whose paths are not strings" do
-      @settings.stubs(:value).with(:myfile, nil, false).returns :foo
+      allow(@settings).to receive(:value).with(:myfile, nil, false).and_return(:foo)
       expect(@file.to_resource).to be_nil
     end
 
@@ -169,25 +168,27 @@ describe Puppet::Settings::FileSetting do
       expect(resource.title).to eq(@basepath)
     end
 
-    it "should have a working directory with a root directory not called dev", :if => Puppet.features.microsoft_windows? do
+    it "should have a working directory with a root directory not called dev", :if => Puppet::Util::Platform.windows? do
       # Although C:\Dev\.... is a valid path on Windows, some other code may regard it as a path to be ignored.  e.g. /dev/null resolves to C:\dev\null on Windows.
       path = File.expand_path('somefile')
       expect(path).to_not match(/^[A-Z]:\/dev/i)
     end
 
     it "should fully qualified returned files if necessary (#795)" do
-      @settings.stubs(:value).with(:myfile, nil, false).returns "myfile"
+      allow(@settings).to receive(:value).with(:myfile, nil, false).and_return("myfile")
       path = File.expand_path('myfile')
       expect(@file.to_resource.title).to eq(path)
     end
 
     it "should set the mode on the file if a mode is provided as an octal number" do
+      Puppet[:manage_internal_file_permissions] = true
       @file.mode = 0755
 
       expect(@file.to_resource[:mode]).to eq('755')
     end
 
     it "should set the mode on the file if a mode is provided as a string" do
+      Puppet[:manage_internal_file_permissions] = true
       @file.mode = '0755'
 
       expect(@file.to_resource[:mode]).to eq('755')
@@ -196,76 +197,81 @@ describe Puppet::Settings::FileSetting do
     it "should not set the mode on a the file if manage_internal_file_permissions is disabled" do
       Puppet[:manage_internal_file_permissions] = false
 
-      @file.stubs(:mode).returns(0755)
+      allow(@file).to receive(:mode).and_return(0755)
 
       expect(@file.to_resource[:mode]).to eq(nil)
     end
 
     it "should set the owner if running as root and the owner is provided" do
-      Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      Puppet[:manage_internal_file_permissions] = true
+      expect(Puppet.features).to receive(:root?).and_return(true)
+      allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
+      allow(@file).to receive(:owner).and_return("foo")
 
-      @file.stubs(:owner).returns "foo"
       expect(@file.to_resource[:owner]).to eq("foo")
     end
 
     it "should not set the owner if manage_internal_file_permissions is disabled" do
       Puppet[:manage_internal_file_permissions] = false
-      Puppet.features.stubs(:root?).returns true
-      @file.stubs(:owner).returns "foo"
+      allow(Puppet.features).to receive(:root?).and_return(true)
+      allow(@file).to receive(:owner).and_return("foo")
 
       expect(@file.to_resource[:owner]).to eq(nil)
     end
 
     it "should set the group if running as root and the group is provided" do
-      Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
+      Puppet[:manage_internal_file_permissions] = true
+      expect(Puppet.features).to receive(:root?).and_return(true)
+      allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
+      allow(@file).to receive(:group).and_return("foo")
 
-      @file.stubs(:group).returns "foo"
       expect(@file.to_resource[:group]).to eq("foo")
     end
 
     it "should not set the group if manage_internal_file_permissions is disabled" do
       Puppet[:manage_internal_file_permissions] = false
-      Puppet.features.stubs(:root?).returns true
-      @file.stubs(:group).returns "foo"
+      allow(Puppet.features).to receive(:root?).and_return(true)
+      allow(@file).to receive(:group).and_return("foo")
 
       expect(@file.to_resource[:group]).to eq(nil)
     end
 
-
     it "should not set owner if not running as root" do
-      Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
-      @file.stubs(:owner).returns "foo"
+      Puppet[:manage_internal_file_permissions] = true
+      expect(Puppet.features).to receive(:root?).and_return(false)
+      allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
+      allow(@file).to receive(:owner).and_return("foo")
+
       expect(@file.to_resource[:owner]).to be_nil
     end
 
     it "should not set group if not running as root" do
-      Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
-      @file.stubs(:group).returns "foo"
+      Puppet[:manage_internal_file_permissions] = true
+      expect(Puppet.features).to receive(:root?).and_return(false)
+      allow(Puppet::Util::Platform).to receive(:windows?).and_return(false)
+      allow(@file).to receive(:group).and_return("foo")
+
       expect(@file.to_resource[:group]).to be_nil
     end
 
     describe "on Microsoft Windows systems" do
       before :each do
-        Puppet.features.stubs(:microsoft_windows?).returns true
+        allow(Puppet::Util::Platform).to receive(:windows?).and_return(true)
       end
 
       it "should not set owner" do
-        @file.stubs(:owner).returns "foo"
+        allow(@file).to receive(:owner).and_return("foo")
         expect(@file.to_resource[:owner]).to be_nil
       end
 
       it "should not set group" do
-        @file.stubs(:group).returns "foo"
+        allow(@file).to receive(:group).and_return("foo")
         expect(@file.to_resource[:group]).to be_nil
       end
     end
 
     it "should set :ensure to the file type" do
-      @file.expects(:type).returns :directory
+      expect(@file).to receive(:type).and_return(:directory)
       expect(@file.to_resource[:ensure]).to eq(:directory)
     end
 
@@ -278,7 +284,7 @@ describe Puppet::Settings::FileSetting do
     end
 
     it "should tag the resource with the settings section" do
-      @file.expects(:section).returns "mysect"
+      expect(@file).to receive(:section).and_return("mysect")
       expect(@file.to_resource).to be_tagged("mysect")
     end
 
@@ -297,18 +303,18 @@ describe Puppet::Settings::FileSetting do
 
   describe "#munge" do
     it 'does not expand the path of the special value :memory: so we can set dblocation to an in-memory database' do
-      filesetting = FileSetting.new(:settings => mock("settings"), :desc => "eh")
+      filesetting = FileSetting.new(:settings => double("settings"), :desc => "eh")
       expect(filesetting.munge(':memory:')).to eq(':memory:')
     end
   end
 
-  context "when opening", :unless => Puppet.features.microsoft_windows? do
+  context "when opening", :unless => Puppet::Util::Platform.windows? do
     let(:path) do
       tmpfile('file_setting_spec')
     end
 
     let(:setting) do
-      settings = mock("settings", :value => path)
+      settings = double("settings", :value => path)
       FileSetting.new(:name => :mysetting, :desc => "creates a file", :settings => settings)
     end
 

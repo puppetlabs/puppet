@@ -37,7 +37,6 @@ class Formatter
   def scrub(text)
     # For text with no carriage returns, there's nothing to do.
     return text if text !~ /\n/
-    indent = nil
 
     # If we can match an indentation, then just remove that same level of
     # indent from every line.
@@ -178,10 +177,14 @@ class Puppet::Application::Describe < Puppet::Application
   option("--list", "-l")
   option("--meta","-m")
 
-  def help
-    <<-'HELP'
+  def summary
+    _("Display help about resource types")
+  end
 
-puppet-describe(8) -- Display help about resource types
+  def help
+    <<-HELP
+
+puppet-describe(8) -- #{summary}
 ========
 
 SYNOPSIS

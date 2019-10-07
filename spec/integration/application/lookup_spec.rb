@@ -52,7 +52,7 @@ describe 'lookup' do
 
     def lookup(key, options = {}, explain = false)
       key = [key] unless key.is_a?(Array)
-      app.command_line.stubs(:args).returns(key)
+      allow(app.command_line).to receive(:args).and_return(key)
       if explain
         app.options[:explain] = true
         app.options[:render_as] = :s
@@ -88,6 +88,27 @@ describe 'lookup' do
 
     it 'finds data in the environment' do
       expect(lookup('a')).to eql('value a')
+    end
+
+    context 'uses node_terminus' do
+      require 'puppet/indirector/node/exec'
+      require 'puppet/indirector/node/plain'
+
+      let(:node) { Puppet::Node.new('testnode', :environment => env) }
+
+      it ':plain without --compile' do
+        Puppet.settings[:node_terminus] = 'exec'
+        expect_any_instance_of(Puppet::Node::Plain).to receive(:find).and_return(node)
+        expect_any_instance_of(Puppet::Node::Exec).not_to receive(:find)
+        expect(lookup('a')).to eql('value a')
+      end
+
+      it 'configured in Puppet settings with --compile' do
+        Puppet.settings[:node_terminus] = 'exec'
+        expect_any_instance_of(Puppet::Node::Plain).not_to receive(:find)
+        expect_any_instance_of(Puppet::Node::Exec).to receive(:find).and_return(node)
+        expect(lookup('a', :compile => true)).to eql('value a')
+      end
     end
 
     context 'configured with the wrong environment' do

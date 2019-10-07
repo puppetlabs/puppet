@@ -55,19 +55,19 @@ class PSemVerType < PScalarType
   end
 
   # @api private
-  def self.new_function(_, loader)
-    @@new_function ||= Puppet::Functions.create_loaded_function(:new_Version, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_Version, type.loader) do
       local_types do
         type 'PositiveInteger = Integer[0,default]'
         type 'SemVerQualifier = Pattern[/\A(?<part>[0-9A-Za-z-]+)(?:\.\g<part>)*\Z/]'
-        type 'SemVerString = String[1]'
+        type "SemVerPattern = Pattern[/\\A#{SemanticPuppet::Version::REGEX_FULL}\\Z/]"
         type 'SemVerHash = Struct[{major=>PositiveInteger,minor=>PositiveInteger,patch=>PositiveInteger,Optional[prerelease]=>SemVerQualifier,Optional[build]=>SemVerQualifier}]'
       end
 
       # Creates a SemVer from a string as specified by http://semver.org/
       #
       dispatch :from_string do
-        param 'SemVerString', :str
+        param 'SemVerPattern', :str
       end
 
       # Creates a SemVer from integers, prerelease, and build arguments
@@ -86,6 +86,10 @@ class PSemVerType < PScalarType
         param 'SemVerHash', :hash_args
       end
 
+      argument_mismatch :on_error do
+        param 'String', :str
+      end
+
       def from_string(str)
         SemanticPuppet::Version.parse(str)
       end
@@ -96,6 +100,10 @@ class PSemVerType < PScalarType
 
       def from_hash(hash)
         SemanticPuppet::Version.new(hash['major'], hash['minor'], hash['patch'], hash['prerelease'], hash['build'])
+      end
+
+      def on_error(str)
+        _("The string '%{str}' cannot be converted to a SemVer") % { str: str }
       end
     end
   end

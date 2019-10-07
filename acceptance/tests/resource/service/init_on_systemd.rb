@@ -1,9 +1,14 @@
 test_name 'SysV on default Systemd Service Provider Validation' do
 
-  confine :to, :platform => /el-|centos|fedora/ do |h|
+  confine :to, :platform => /el-|centos|fedora-(2[0-9])/ do |h|
     on h, 'which systemctl', :acceptable_exit_codes => [0, 1]
     stdout =~ /systemctl/
   end
+
+  tag 'audit:medium',
+      'audit:acceptance' # Could be done at the integration (or unit) layer though
+                         # actual changing of resources could irreparably damage a
+                         # host running this, or require special permissions.
 
   require 'puppet/acceptance/service_utils'
   extend Puppet::Acceptance::ServiceUtils
@@ -14,7 +19,7 @@ test_name 'SysV on default Systemd Service Provider Validation' do
 
   # Some scripts don't have status command.
   def initd_file(svc, pidfile, initd_location, status)
-    initd = <<INITD
+    <<INITD
 #!/bin/bash
 # #{svc} daemon
 # chkconfig: 2345 20 80

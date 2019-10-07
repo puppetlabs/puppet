@@ -22,7 +22,6 @@ class Puppet::Settings::EnvironmentConf
   def self.load_from(path_to_env, global_module_path)
     path_to_env = File.expand_path(path_to_env)
     conf_file = File.join(path_to_env, 'environment.conf')
-    config = nil
 
     begin
       config = Puppet.settings.parse_file(conf_file)
@@ -66,13 +65,11 @@ class Puppet::Settings::EnvironmentConf
     if disable_per_environment_manifest
       environment_conf_manifest = absolute(raw_setting(:manifest))
       if environment_conf_manifest && fallback_manifest_directory != environment_conf_manifest
-        errmsg = ["The 'disable_per_environment_manifest' setting is true, but the",
-        "environment located at #{@path_to_env} has a manifest setting in its",
-        "environment.conf of '#{environment_conf_manifest}' which does not match",
-        "the default_manifest setting '#{puppet_conf_manifest}'. If this",
-        "environment is expecting to find modules in",
-        "'#{environment_conf_manifest}', they will not be available!"]
-        Puppet.err(errmsg.join(' '))
+        #TRANSLATORS 'disable_per_environment_manifest' is a setting and 'environment.conf' is a file name and should not be translated
+        message = _("The 'disable_per_environment_manifest' setting is true, but the environment located at %{path_to_env} has a manifest setting in its environment.conf of '%{environment_conf}' which does not match the default_manifest setting '%{puppet_conf}'.") %
+            { path_to_env: @path_to_env, environment_conf: environment_conf_manifest, puppet_conf: puppet_conf_manifest }
+        message += ' ' + _("If this environment is expecting to find modules in '%{environment_conf}', they will not be available!") % { environment_conf: environment_conf_manifest }
+        Puppet.err(message)
       end
       fallback_manifest_directory.to_s
     else
@@ -104,7 +101,7 @@ class Puppet::Settings::EnvironmentConf
       path = modulepath.kind_of?(String) ?
         modulepath.split(File::PATH_SEPARATOR) :
         modulepath
-      path.map { |p| absolute(p) }.join(File::PATH_SEPARATOR)
+      path.map { |p| expand_glob(absolute(p)) }.flatten.join(File::PATH_SEPARATOR)
     end
   end
 
@@ -138,13 +135,25 @@ class Puppet::Settings::EnvironmentConf
     section_keys = config.sections.keys
     main = config.sections[:main]
     if section_keys.size > 1
-      Puppet.warning(_("Invalid sections in environment.conf at '%{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '%{sections}'") % { path_to_conf_file: path_to_conf_file, sections: (section_keys - [:main]).join(',') })
+      # warn once per config file path
+      Puppet.warn_once(
+        :invalid_settings_section, "EnvironmentConf-section:#{path_to_conf_file}",
+        _("Invalid sections in environment.conf at '%{path_to_conf_file}'. Environment conf may not have sections. The following sections are being ignored: '%{sections}'") % {
+          path_to_conf_file: path_to_conf_file,
+          sections: (section_keys - [:main]).join(',')
+        })
       valid = false
     end
 
     extraneous_settings = main.settings.map(&:name) - VALID_SETTINGS
     if !extraneous_settings.empty?
-      Puppet.warning(_("Invalid settings in environment.conf at '%{path_to_conf_file}'. The following unknown setting(s) are being ignored: %{ignored_settings}") % { path_to_conf_file: path_to_conf_file, ignored_settings: extraneous_settings.join(', ') })
+      # warn once per config file path
+      Puppet.warn_once(
+        :invalid_settings, "EnvironmentConf-settings:#{path_to_conf_file}",
+        _("Invalid settings in environment.conf at '%{path_to_conf_file}'. The following unknown setting(s) are being ignored: %{ignored_settings}") % {
+          path_to_conf_file: path_to_conf_file,
+          ignored_settings: extraneous_settings.join(', ')
+        })
       valid = false
     end
 
@@ -155,6 +164,15 @@ class Puppet::Settings::EnvironmentConf
     value = raw_setting(setting_name)
     value = default if value.nil?
     yield value
+  end
+
+  def expand_glob(path)
+    return nil if path.nil?
+    if path =~ /[*?\[\{]/
+      Dir.glob(path)
+    else
+      path
+    end
   end
 
   def absolute(path)

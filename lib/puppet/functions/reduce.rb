@@ -1,4 +1,4 @@
-# Applies a [lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+# Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 # to every value in a data structure from the first argument, carrying over the returned
 # value of each iteration, and returns the result of the lambda's final iteration. This
 # lets you create a new value or data structure by combining values from the first
@@ -47,7 +47,7 @@
 #
 # @example Using the `reduce` function
 #
-# ~~~ puppet
+# ```puppet
 # # Reduce the array $data, returning the sum of all values in the array.
 # $data = [1, 2, 3]
 # $sum = $data.reduce |$memo, $value| { $memo + $value }
@@ -68,11 +68,11 @@
 #   [$string, $number]
 # }
 # # $combine contains [abc, 6]
-# ~~~
+# ```
 #
 # @example Using the `reduce` function with a start memo and two-parameter lambda
 #
-# ~~~ puppet
+# ```puppet
 # # Reduce the array $data, returning the sum of all values in the array and starting
 # # with $memo set to an arbitrary value instead of $data's first value.
 # $data = [1, 2, 3]
@@ -92,7 +92,38 @@
 # # At the start of the lambda's first iteration, $memo contains [d, 4] and $value
 # # contains [a, 1].
 # # $combine contains [dabc, 10]
-# ~~~
+# ```
+#
+# @example Using the `reduce` function to reduce a hash of hashes
+#
+# ```puppet
+# # Reduce a hash of hashes $data, merging defaults into the inner hashes.
+# $data = {
+#   'connection1' => {
+#     'username' => 'user1',
+#     'password' => 'pass1',
+#   },
+#   'connection_name2' => {
+#     'username' => 'user2',
+#     'password' => 'pass2',
+#   },
+# }
+#
+# $defaults = {
+#   'maxActive' => '20',
+#   'maxWait'   => '10000',
+#   'username'  => 'defaultuser',
+#   'password'  => 'defaultpass',
+# }
+#
+# $merged = $data.reduce( {} ) |$memo, $x| {
+#   $memo + { $x[0] => $defaults + $data[$x[0]] }
+# }
+# # At the start of the lambda's first iteration, $memo is set to {}, and $x is set to
+# # the first [key, value] tuple. The key in $data is, therefore, given by $x[0]. In
+# # subsequent rounds, $memo retains the value returned by the expression, i.e.
+# # $memo + { $x[0] => $defaults + $data[$x[0]] }.
+# ```
 #
 # @since 4.0.0
 #

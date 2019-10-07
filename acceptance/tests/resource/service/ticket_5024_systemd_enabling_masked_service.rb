@@ -3,6 +3,12 @@ extend Puppet::Acceptance::ServiceUtils
 
 test_name 'Systemd masked services are unmasked before attempting to start'
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
+
 skip_test "requires AIO install to require 'puppet'" if @options[:type] != 'aio'
 
 # This test in intended to ensure that a service which was previously marked
@@ -60,7 +66,7 @@ agents.each do |agent|
 
   teardown do
     if platform == 'sles'
-      on agent, 'zypper remove -y apache2 apache2-prefork apache2-worker libapr1 libapr-util1'
+      on agent, 'zypper remove -y apache2 apache2-prefork libapr1 libapr-util1'
     else
       apply_manifest_on(agent, manifest_uninstall_package)
     end

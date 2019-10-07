@@ -1,9 +1,9 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/test_ca'
 
 require 'puppet/ssl/host'
 
-describe Puppet::SSL::Host do
+describe Puppet::SSL::Host, if: !Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   before do
@@ -12,19 +12,18 @@ describe Puppet::SSL::Host do
 
     Puppet.settings[:confdir] = dir
     Puppet.settings[:vardir] = dir
-
-    Puppet::SSL::Host.ca_location = :local
+    Puppet.settings.use :main, :ssl
 
     @host = Puppet::SSL::Host.new("luke.madstop.com")
-    @ca = Puppet::SSL::CertificateAuthority.new
-  end
+    allow(@host).to receive(:submit_certificate_request)
 
-  after {
-    Puppet::SSL::Host.ca_location = :none
-  }
-
-  it "should be considered a CA host if its name is equal to 'ca'" do
-    expect(Puppet::SSL::Host.new(Puppet::SSL::CA_NAME)).to be_ca
+    @ca = Puppet::TestCa.new
+    Puppet::Util.replace_file(Puppet[:localcacert], 0644) do |f|
+      f.write(@ca.ca_cert.to_s)
+    end
+    Puppet::Util.replace_file(Puppet[:hostcrl], 0644) do |f|
+      f.write(@ca.ca_crl.to_s)
+    end
   end
 
   describe "when managing its key" do
@@ -61,20 +60,12 @@ describe Puppet::SSL::Host do
     end
   end
 
-  describe "when the CA host" do
-    it "should never store its key in the :privatekeydir" do
-      Puppet.settings.use(:main, :ssl, :ca)
-      @ca = Puppet::SSL::Host.new(Puppet::SSL::Host.ca_name)
-      @ca.generate_key
-
-      expect(Puppet::FileSystem.exist?(File.join(Puppet[:privatekeydir], "ca.pem"))).to be_falsey
-    end
-  end
-
   it "should pass the verification of its own SSL store", :unless => Puppet.features.microsoft_windows? do
-    @host.generate
-    @ca = Puppet::SSL::CertificateAuthority.new
-    @ca.sign(@host.name)
+    @host.generate_certificate_request
+    cert = @ca.sign(@host.certificate_request.content)
+    Puppet::Util.replace_file(File.join(Puppet[:certdir], "#{@host.name}.pem"), 0644) do |f|
+      f.write(cert)
+    end
 
     expect(@host.ssl_store.verify(@host.certificate.content)).to be_truthy
   end

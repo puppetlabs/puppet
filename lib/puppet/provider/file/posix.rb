@@ -8,6 +8,11 @@ Puppet::Type.type(:file).provide :posix do
   include Puppet::Util::Warnings
 
   require 'etc'
+  require 'puppet/util/selinux'
+
+  def self.post_resource_eval
+    Selinux.matchpathcon_fini if Puppet::Util::SELinux.selinux_support?
+  end
 
   def uid2name(id)
     return id.to_s if id.is_a?(Symbol) or id.is_a?(String)
@@ -53,7 +58,8 @@ Puppet::Type.type(:file).provide :posix do
   end
 
   def owner
-    unless stat = resource.stat
+    stat = resource.stat
+    unless stat
       return :absent
     end
 
@@ -86,7 +92,8 @@ Puppet::Type.type(:file).provide :posix do
   end
 
   def group
-    return :absent unless stat = resource.stat
+    stat = resource.stat
+    return :absent unless stat
 
     currentvalue = stat.gid
 
@@ -117,7 +124,8 @@ Puppet::Type.type(:file).provide :posix do
   end
 
   def mode
-    if stat = resource.stat
+    stat = resource.stat
+    if stat
       return (stat.mode & 007777).to_s(8).rjust(4, '0')
     else
       return :absent

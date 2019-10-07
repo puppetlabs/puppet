@@ -5,15 +5,8 @@
 dir = File.expand_path(File.dirname(__FILE__))
 $LOAD_PATH.unshift File.join(dir, 'lib')
 
-# Don't want puppet getting the command line arguments for rake or autotest
+# Don't want puppet getting the command line arguments for rake
 ARGV.clear
-
-# Stub out gettext's `_` method, which attempts to load translations.
-# Several of our mocks (mostly around file system interaction) are broken by
-# FastGettext's implementation of this method.
-def _(msg)
-  msg
-end
 
 begin
   require 'rubygems'
@@ -21,14 +14,18 @@ rescue LoadError
 end
 
 require 'puppet'
-gem 'rspec', '>=3.1.0'
-require 'rspec/expectations'
+
+# Stub out gettext's `_` and `n_()` methods, which attempt to load translations.
+# Several of our mocks (mostly around file system interaction) are broken by
+# FastGettext's implementation of these methods.
+require 'puppet/gettext/stubs'
+
+require 'rspec'
 require 'rspec/its'
-require 'rspec/collection_matchers'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
-  FIXTURE_DIR = File.join(dir = File.expand_path(File.dirname(__FILE__)), "fixtures") unless defined?(FIXTURE_DIR)
+  FIXTURE_DIR = File.join(File.expand_path(File.dirname(__FILE__)), "fixtures") unless defined?(FIXTURE_DIR)
 end
 
 require 'pathname'
@@ -78,7 +75,14 @@ RSpec.configure do |config|
   exclude_filters[:benchmark] = true unless ENV['BENCHMARK']
   config.filter_run_excluding exclude_filters
 
-  config.mock_with :mocha
+  config.filter_run_when_matching :focus
+
+  config.mock_with :rspec do |mocks|
+    # We really should have this on, but it breaks a _lot_ of tests. We'll
+    # need to go through and fix those tests first before it can be enabled
+    # for real.
+    mocks.verify_partial_doubles = false
+  end
 
   tmpdir = Puppet::FileSystem.expand_path(Dir.mktmpdir("rspecrun"))
   oldtmpdir = Puppet::FileSystem.expand_path(Dir.tmpdir())
@@ -113,12 +117,6 @@ RSpec.configure do |config|
     # some platforms *cough* windows *cough* that are a little slower.
     GC.disable
 
-    # REVISIT: I think this conceals other bad tests, but I don't have time to
-    # fully diagnose those right now.  When you read this, please come tell me
-    # I suck for letting this float. --daniel 2011-04-21
-    Signal.stubs(:trap)
-
-
     # TODO: in a more sane world, we'd move this logging redirection into our TestHelper class.
     #  Without doing so, external projects will all have to roll their own solution for
     #  redirecting logging, and for validating expected log messages.  However, because the
@@ -129,6 +127,7 @@ RSpec.configure do |config|
     # redirecting logging away from console, because otherwise the test output will be
     #  obscured by all of the log output
     @logs = []
+    Puppet::Util::Log.close_all
     if ENV["PUPPET_TEST_LOG_LEVEL"]
       Puppet::Util::Log.level = ENV["PUPPET_TEST_LOG_LEVEL"].intern
     end
@@ -158,6 +157,7 @@ RSpec.configure do |config|
     Puppet::Test::TestHelper.after_each_test()
 
     # TODO: would like to move this into puppetlabs_spec_helper, but there are namespace issues at the moment.
+    allow(Dir).to receive(:entries).and_call_original
     PuppetSpec::Files.cleanup
 
     # TODO: this should be abstracted in the future--see comments above the '@logs' block in the

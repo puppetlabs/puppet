@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet_spec/files'
@@ -30,6 +29,7 @@ describe Puppet::Settings do
   end
 
   it "should make its directories with the correct modes" do
+    Puppet[:manage_internal_file_permissions] = true
     define_settings(:main,
         :maindir => {
             :default => tmpfile("main"),
@@ -70,7 +70,7 @@ environment=#{rune_utf8}
     expect(settings[:environment]).to eq(rune_utf8)
   end
 
-  it "reparses configuration if configuration file is touched", :if => !Puppet.features.microsoft_windows? do
+  it "reparses configuration if configuration file is touched", :if => !Puppet::Util::Platform.windows? do
     config = tmpfile("config")
     define_settings(:main,
       :config => {

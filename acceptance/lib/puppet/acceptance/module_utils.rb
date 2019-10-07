@@ -14,7 +14,7 @@ module Puppet
       #
       # @param host [String] hostname
       # @return [Array] paths for found modulepath
-      def get_modulepaths_for_host (host)
+      def get_modulepaths_for_host(host)
         environment = on(host, puppet("config print environment")).stdout.chomp
         on(host, puppet("config print modulepath --environment #{environment}")).stdout.chomp.split(host['pathseparator'])
       end
@@ -27,7 +27,7 @@ module Puppet
       #
       # @param host [String] hostname
       # @return [String] first path for found modulepath
-      def get_default_modulepath_for_host (host)
+      def get_default_modulepath_for_host(host)
         get_modulepaths_for_host(host)[0]
       end
 
@@ -43,7 +43,7 @@ module Puppet
       #
       # @param host [String] hostname
       # @return [Array] paths for found modules
-      def get_installed_modules_for_host (host)
+      def get_installed_modules_for_host(host)
         on host, puppet("module list --render-as pson")
         str  = stdout.lines.to_a.last
         pat = /\(([^()]+)\)/
@@ -74,7 +74,7 @@ module Puppet
       #
       # @param hosts [Array] hostnames
       # @return [Hash] paths for found modules indexed by hostname
-      def get_installed_modules_for_hosts (hosts)
+      def get_installed_modules_for_hosts(hosts)
         mods  = {}
         hosts.each do |host|
           mods[host] = get_installed_modules_for_host host
@@ -102,7 +102,7 @@ module Puppet
       #   by hostname. Taken in the setup stage of a test.
       # @param ending_hash [Hash] paths for found modules indexed
       #   by hostname. Taken in the teardown stage of a test.
-      def rm_installed_modules_from_hosts (beginning_hash, ending_hash)
+      def rm_installed_modules_from_hosts(beginning_hash, ending_hash)
         ending_hash.each do |host, mod_array|
           mod_array.each do |mod|
             if ! beginning_hash[host].include? mod
@@ -119,7 +119,7 @@ module Puppet
       #   10242
       #
       # @param semver [String] semantic version number
-      def semver_to_i ( semver )
+      def semver_to_i( semver )
         # semver assumed to be in format <major>.<minor>.<patch>
         # calculation assumes that each segment is < 100
         tmp = semver.split('.')
@@ -133,7 +133,7 @@ module Puppet
       #   a value greater than 0 indicates that the semver1 is greater than semver2
       #   a value less than 0 indicates that the semver1 is less than semver2
       #
-      def semver_cmp ( semver1, semver2 )
+      def semver_cmp( semver1, semver2 )
         semver_to_i(semver1) - semver_to_i(semver2)
       end
 
@@ -151,7 +151,7 @@ module Puppet
       #     installed version
       # @param compare_op [String] the operator for comparing the verions of
       #     the installed module
-      def assert_module_installed_ui ( stdout, module_author, module_name, module_version = nil, compare_op = nil )
+      def assert_module_installed_ui( stdout, module_author, module_name, module_version = nil, compare_op = nil )
         valid_compare_ops = {'==' => 'equal to', '>' => 'greater than', '<' => 'less than'}
         assert_match(/#{module_author}-#{module_name}/, stdout,
               "Notice that module '#{module_author}-#{module_name}' was installed was not displayed")
@@ -171,7 +171,7 @@ module Puppet
       # @param module_name [String] the name portion of a module name
       # @param optional moduledir [String, Array] the path where the module should be, will
       #        iterate over components of the modulepath by default.
-      def assert_module_installed_on_disk (host, module_name, moduledir=nil)
+      def assert_module_installed_on_disk(host, module_name, moduledir=nil)
         moduledir ||= get_modulepaths_for_host(host)
         modulepath = moduledir.is_a?(Array) ? moduledir : [moduledir]
         moduledir= nil
@@ -249,7 +249,7 @@ module Puppet
       # @param module_name [String] the name portion of a module name
       # @param optional moduledir [String, Array] the path where the module should be, will
       #        iterate over components of the modulepath by default.
-      def assert_module_not_installed_on_disk (host, module_name, moduledir=nil)
+      def assert_module_not_installed_on_disk(host, module_name, moduledir=nil)
         moduledir ||= get_modulepaths_for_host(host)
         modulepath = moduledir.is_a?(Array) ? moduledir : [moduledir]
         moduledir= nil

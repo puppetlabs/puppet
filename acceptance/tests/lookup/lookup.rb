@@ -2,6 +2,12 @@ test_name "Lookup data using the agnostic lookup function" do
   # pre-docs:
   # https://puppet-on-the-edge.blogspot.com/2015/01/puppet-40-data-in-modules-and.html
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # Master is not needed for this test. Refactor
+                       # to use puppet apply with a local module tree.
+                       # Use mk_tmp_environment_with_teardown to create environment.
+
   testdir = master.tmpdir('lookup')
 
   module_name                     = "data_module"
@@ -76,7 +82,7 @@ PP
 
   def mod_manifest_metadata_json(module_name = nil, testdir)
     if module_name
-      metadata_manifest = <<PPmetadata
+      <<PPmetadata
       file { '#{testdir}/environments/production/modules/#{module_name}/metadata.json':
         ensure => file,
         content => '
@@ -293,14 +299,12 @@ PP
     'main' => {
       'environmentpath' => "#{testdir}/environments",
       'hiera_config' => "#{testdir}/hiera.yaml",
-      # required for site{}
-      'app_management' => true,
     },
   }
   with_puppet_running_on master, master_opts, testdir do
     step "Lookup string data, binding specified in metadata.json" do
       agents.each do |agent|
-        on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [0, 2])
+        on(agent, puppet('agent', "-t"), :acceptable_exit_codes => [0, 2])
         assert_match("#{env_data_implied_key} #{env_data_implied_value}", stdout)
         assert_match("#{env_data_key} #{env_data_value}", stdout)
 

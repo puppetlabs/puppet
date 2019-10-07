@@ -18,12 +18,22 @@ task :gen_manpages do
   sbins = Dir.glob(%w{sbin/*})
   bins  = Dir.glob(%w{bin/*})
   non_face_applications = helpface.legacy_applications
-  faces = Puppet::Face.faces
-  ronn_args = '--manual="Puppet manual" --organization="Puppet Labs, LLC" -r'
+  faces = Puppet::Face.faces.map(&:to_s)
+  apps = non_face_applications + faces
+
+  ronn_args = '--manual="Puppet manual" --organization="Puppet, Inc." -r'
 
   # Locate ronn
+  begin
+    require 'ronn'
+  rescue LoadError
+    abort("Run `bundle install --with documentation` to install the `ronn` gem.")
+  end
+
   ronn = %x{which ronn}.chomp
-  unless File.executable?(ronn) then fail("Ronn does not appear to be installed.") end
+  unless File.executable?(ronn)
+    abort("Ronn does not appear to be installed")
+  end
 
 #   def write_manpage(text, filename)
 #     IO.popen("#{ronn} #{ronn_args} -r > #{filename}") do |fh| fh.write text end
@@ -62,6 +72,12 @@ task :gen_manpages do
 
     %x{#{ronn} #{ronn_args} ./man/man8/puppet-#{face}.8.ronn}
     FileUtils.rm("./man/man8/puppet-#{face}.8.ronn")
+  end
+
+  # Delete orphaned manpages if binary was deleted
+  Dir.glob(%w{./man/man8/puppet-*.8}) do |app|
+    appname = app.match(/puppet-(.*)\.8/)[1]
+    FileUtils.rm("./man/man8/puppet-#{appname}.8") unless apps.include?(appname)
   end
 
   # Vile hack: create puppet resource man page

@@ -1,23 +1,23 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/files'
 
 describe Puppet::Transaction::Report do
-  describe "when using the indirector" do
-    after do
-      Puppet.settings.stubs(:use)
-    end
+  before :each do
+    # Enable persistence during tests
+    allow_any_instance_of(Puppet::Transaction::Persistence).to receive(:enabled?).and_return(true)
+  end
 
+  describe "when using the indirector" do
     it "should be able to delegate to the :processor terminus" do
-      Puppet::Transaction::Report.indirection.stubs(:terminus_class).returns :processor
+      allow(Puppet::Transaction::Report.indirection).to receive(:terminus_class).and_return(:processor)
 
       terminus = Puppet::Transaction::Report.indirection.terminus(:processor)
 
-      Facter.stubs(:value).returns "host.domain.com"
+      allow(Facter).to receive(:value).and_return("host.domain.com")
 
       report = Puppet::Transaction::Report.new
 
-      terminus.expects(:process).with(report)
+      expect(terminus).to receive(:process).with(report)
 
       Puppet::Transaction::Report.indirection.save(report)
     end
@@ -45,10 +45,10 @@ describe Puppet::Transaction::Report do
 
     def run_catalogs(resources1, resources2, noop1 = false, noop2 = false, &block)
       last_run_report = nil
-      Puppet::Transaction::Report.indirection.expects(:save).twice.with do |report, x|
+      expect(Puppet::Transaction::Report.indirection).to receive(:save) do |report, x|
         last_run_report = report
         true
-      end
+      end.twice
 
       Puppet[:report] = true
       Puppet[:noop] = noop1
@@ -82,7 +82,7 @@ describe Puppet::Transaction::Report do
     end
 
     def get_cc_count(report)
-      cc = report.metrics["resources"].values.each do |v|
+      report.metrics["resources"].values.each do |v|
         if v[0] == "corrective_change"
           return v[2]
         end
@@ -293,8 +293,8 @@ describe Puppet::Transaction::Report do
                                                            :content => "mystuff1"),
                               Puppet::Type.type(:file).new(:title => file,
                                                            :content => "mystuff2")) do
-          File.open(file, 'w') do |file|
-            file.write "some content"
+          File.open(file, 'w') do |f|
+            f.write "some content"
           end
         end
 
@@ -380,7 +380,7 @@ describe Puppet::Transaction::Report do
         expect(get_cc_count(report)).to eq(0)
       end
 
-      it "link with ensure property change present => absent", :unless => Puppet.features.microsoft_windows? do
+      it "link with ensure property change present => absent", :unless => Puppet::Util::Platform.windows? do
         file = tmpfile("test_file")
         FileUtils.symlink(file, tmpfile("test_link"))
 
@@ -435,7 +435,7 @@ describe Puppet::Transaction::Report do
         expect(get_cc_count(report)).to eq(0)
       end
 
-      it "exec with idempotence issue", :unless => Puppet.features.microsoft_windows? do
+      it "exec with idempotence issue", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
         report = run_catalogs(Puppet::Type.type(:exec).new(:title => "exec1",
                                                            :command => "/bin/echo foo"),
                               Puppet::Type.type(:exec).new(:title => "exec1",
@@ -453,7 +453,7 @@ describe Puppet::Transaction::Report do
         expect(get_cc_count(report)).to eq(1)
       end
 
-      it "exec with no idempotence issue", :unless => Puppet.features.microsoft_windows? do
+      it "exec with no idempotence issue", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
         report = run_catalogs(Puppet::Type.type(:exec).new(:title => "exec1",
                                                            :command => "echo foo",
                                                            :path => "/bin",

@@ -13,7 +13,8 @@ describe Puppet::Application::Lookup do
     ensure
       $stdout = saved_stdout
     end
-    capture.string.strip
+    # Drop end of line and an optional yaml end of document
+    capture.string.gsub(/\n(\.\.\.\n)?\Z/m, '')
   end
 
   context "when running with incorrect command line options" do
@@ -29,7 +30,7 @@ describe Puppet::Application::Lookup do
     it "does not allow invalid arguments for '--merge'" do
       lookup.options[:node] = 'dantooine.local'
       lookup.options[:merge] = 'something_bad'
-      lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
+      allow(lookup.command_line).to receive(:args).and_return(['atton', 'kreia'])
 
       expected_error = "The --merge option only accepts 'first', 'hash', 'unique', or 'deep'\nRun 'puppet lookup --help' for more details"
 
@@ -40,7 +41,7 @@ describe Puppet::Application::Lookup do
       lookup.options[:node] = 'dantooine.local'
       lookup.options[:merge_hash_arrays] = true
       lookup.options[:merge] = 'hash'
-      lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
+      allow(lookup.command_line).to receive(:args).and_return(['atton', 'kreia'])
 
       expected_error = "The options --knock-out-prefix, --sort-merged-arrays, and --merge-hash-arrays are only available with '--merge deep'\nRun 'puppet lookup --help' for more details"
 
@@ -56,12 +57,12 @@ describe Puppet::Application::Lookup do
       lookup.options[:render_as] = :s;
       lookup.options[:merge_hash_arrays] = true
       lookup.options[:merge] = 'deep'
-      lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
-      lookup.stubs(:generate_scope).yields('scope')
+      allow(lookup.command_line).to receive(:args).and_return(['atton', 'kreia'])
+      allow(lookup).to receive(:generate_scope).and_yield('scope')
 
-      expected_merge = { "strategy" => "deep", "sort_merge_arrays" => false, "merge_hash_arrays" => true }
+      expected_merge = { "strategy" => "deep", "sort_merged_arrays" => false, "merge_hash_arrays" => true }
 
-      (Puppet::Pops::Lookup).expects(:lookup).with(['atton', 'kreia'], nil, nil, false, expected_merge, anything).returns('rand')
+      expect(Puppet::Pops::Lookup).to receive(:lookup).with(['atton', 'kreia'], nil, nil, false, expected_merge, anything).and_return('rand')
 
       expect(run_lookup(lookup)).to eql("rand")
     end
@@ -71,24 +72,25 @@ describe Puppet::Application::Lookup do
       it "accepts --merge #{opt}" do
         lookup.options[:node] = 'dantooine.local'
         lookup.options[:merge] = opt
-        lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
-        lookup.stubs(:generate_scope).yields('scope')
-        Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
-        expect(run_lookup(lookup)).to eql("--- rand\n...")
+        lookup.options[:render_as] = :s
+        allow(lookup.command_line).to receive(:args).and_return(['atton', 'kreia'])
+        allow(lookup).to receive(:generate_scope).and_yield('scope')
+        allow(Puppet::Pops::Lookup).to receive(:lookup).and_return('rand')
+        expect(run_lookup(lookup)).to eql("rand")
       end
     end
 
     it "prints the value found by lookup" do
       lookup.options[:node] = 'dantooine.local'
-      lookup.command_line.stubs(:args).returns(['atton', 'kreia'])
-      lookup.stubs(:generate_scope).yields('scope')
+      lookup.options[:render_as] = :s
+      allow(lookup.command_line).to receive(:args).and_return(['atton', 'kreia'])
+      allow(lookup).to receive(:generate_scope).and_yield('scope')
 
-      Puppet::Pops::Lookup.stubs(:lookup).returns('rand')
+      allow(Puppet::Pops::Lookup).to receive(:lookup).and_return('rand')
 
-      expect(run_lookup(lookup)).to eql("--- rand\n...")
+      expect(run_lookup(lookup)).to eql("rand")
     end
   end
-
 
   context 'when given a valid configuration' do
     let (:lookup) { Puppet::Application[:lookup] }
@@ -269,7 +271,7 @@ describe Puppet::Application::Lookup do
     it '--explain produces human readable text by default and does not produce output to debug logger' do
       lookup.options[:node] = node
       lookup.options[:explain] = true
-      lookup.command_line.stubs(:args).returns(['a'])
+      allow(lookup.command_line).to receive(:args).and_return(['a'])
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
         expect(run_lookup(lookup)).to eql(<<-EXPLANATION.chomp)
@@ -298,7 +300,7 @@ Searching for "a"
 
     it '--debug using multiple interpolation functions produces output to the logger' do
       lookup.options[:node] = node
-      lookup.command_line.stubs(:args).returns(['ab'])
+      allow(lookup.command_line).to receive(:args).and_return(['ab'])
       Puppet.debug = true
       logs = []
       begin
@@ -318,7 +320,7 @@ Searching for "a"
     it '--explain produces human readable text by default and --debug produces the same output to debug logger' do
       lookup.options[:node] = node
       lookup.options[:explain] = true
-      lookup.command_line.stubs(:args).returns(['a'])
+      allow(lookup.command_line).to receive(:args).and_return(['a'])
       Puppet.debug = true
       logs = []
       Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
@@ -432,7 +434,7 @@ Lookup of '__global__'
       lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.options[:explain_options] = true
-      lookup.command_line.stubs(:args).returns(['a'])
+      allow(lookup.command_line).to receive(:args).and_return(['a'])
       expect(run_lookup(lookup)).to eql(<<-EXPLANATION.chomp)
 Searching for "lookup_options"
   Global Data Provider (hiera configuration version 5)
@@ -459,16 +461,16 @@ Searching for "a"
       lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.options[:render_as] = :yaml
-      lookup.command_line.stubs(:args).returns(['a'])
+      allow(lookup.command_line).to receive(:args).and_return(['a'])
       output = run_lookup(lookup)
-      expect(YAML.load(output)).to eq(expected_yaml_hash)
+      expect(Puppet::Util::Yaml.safe_load(output, [Symbol])).to eq(expected_yaml_hash)
     end
 
     it 'can produce a json explanation' do
       lookup.options[:node] = node
       lookup.options[:explain] = true
       lookup.options[:render_as] = :json
-      lookup.command_line.stubs(:args).returns(['a'])
+      allow(lookup.command_line).to receive(:args).and_return(['a'])
       output = run_lookup(lookup)
       expect(JSON.parse(output)).to eq(expected_json_hash)
     end
@@ -476,7 +478,7 @@ Searching for "a"
     it 'can access values using dotted keys' do
       lookup.options[:node] = node
       lookup.options[:render_as] = :json
-      lookup.command_line.stubs(:args).returns(['d.one.two.three'])
+      allow(lookup.command_line).to receive(:args).and_return(['d.one.two.three'])
       output = run_lookup(lookup)
       expect(JSON.parse("[#{output}]")).to eq(['the value'])
     end
@@ -484,7 +486,7 @@ Searching for "a"
     it 'can access values using quoted dotted keys' do
       lookup.options[:node] = node
       lookup.options[:render_as] = :json
-      lookup.command_line.stubs(:args).returns(['"e.one.two.three"'])
+      allow(lookup.command_line).to receive(:args).and_return(['"e.one.two.three"'])
       output = run_lookup(lookup)
       expect(JSON.parse("[#{output}]")).to eq(['the value'])
     end
@@ -492,23 +494,57 @@ Searching for "a"
     it 'can access values using mix of dotted keys and quoted dotted keys' do
       lookup.options[:node] = node
       lookup.options[:render_as] = :json
-      lookup.command_line.stubs(:args).returns(['"f.one"."two.three".1'])
+      allow(lookup.command_line).to receive(:args).and_return(['"f.one"."two.three".1'])
       output = run_lookup(lookup)
       expect(JSON.parse("[#{output}]")).to eq(['second value'])
     end
 
     context 'the global scope' do
+      include PuppetSpec::Files
+
       it "is unaffected by global variables unless '--compile' is used" do
         lookup.options[:node] = node
-        lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is\n...")
+        lookup.options[:render_as] = :s
+        allow(lookup.command_line).to receive(:args).and_return(['c'])
+        expect(run_lookup(lookup)).to eql("This is")
       end
 
       it "is affected by global variables when '--compile' is used" do
         lookup.options[:node] = node
         lookup.options[:compile] = true
-        lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from site.pp\n...")
+        lookup.options[:render_as] = :s
+        allow(lookup.command_line).to receive(:args).and_return(['c'])
+        expect(run_lookup(lookup)).to eql("This is C from site.pp")
+      end
+
+      it 'receives extra facts in top scope' do
+        file_path = tmpdir('lookup_spec')
+        filename = File.join(file_path, "facts.yaml")
+        File.open(filename, "w+") { |f| f.write(<<-YAML.unindent) }
+          ---
+          cx: ' C from facts'
+          YAML
+
+        lookup.options[:node] = node
+        lookup.options[:fact_file] = filename
+        lookup.options[:render_as] = :s
+        allow(lookup.command_line).to receive(:args).and_return(['c'])
+        expect(run_lookup(lookup)).to eql("This is C from facts")
+      end
+
+      it 'receives extra facts in the facts hash' do
+        file_path = tmpdir('lookup_spec')
+        filename = File.join(file_path, "facts.yaml")
+        File.open(filename, "w+") { |f| f.write(<<-YAML.unindent) }
+          ---
+          cx: ' G from facts'
+        YAML
+
+        lookup.options[:node] = node
+        lookup.options[:fact_file] = filename
+        lookup.options[:render_as] = :s
+        allow(lookup.command_line).to receive(:args).and_return(['g'])
+        expect(run_lookup(lookup)).to eql("This is G from facts in facts hash")
       end
     end
 
@@ -517,15 +553,17 @@ Searching for "a"
 
       it "works OK in the absense of '--compile'" do
         lookup.options[:node] = node
-        lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from data.pp\n...")
+        allow(lookup.command_line).to receive(:args).and_return(['c'])
+        lookup.options[:render_as] = :s
+        expect(run_lookup(lookup)).to eql("This is C from data.pp")
       end
 
       it "global scope is affected by global variables when '--compile' is used" do
         lookup.options[:node] = node
         lookup.options[:compile] = true
-        lookup.command_line.stubs(:args).returns(['c'])
-        expect(run_lookup(lookup)).to eql("--- This is C from site.pp\n...")
+        lookup.options[:render_as] = :s
+        allow(lookup.command_line).to receive(:args).and_return(['c'])
+        expect(run_lookup(lookup)).to eql("This is C from site.pp")
       end
     end
   end

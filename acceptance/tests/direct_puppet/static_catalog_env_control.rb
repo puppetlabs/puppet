@@ -1,5 +1,10 @@
 test_name "Environment control of static catalogs"
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # use mk_tmp_environment_with_teardown helper for environment construction
+    'server'
+
 skip_test 'requires puppetserver to test static catalogs' if @options[:type] != 'aio'
 
 require 'json'
@@ -192,8 +197,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
       puppet(
         'agent',
         '-t',
-        '--environment', 'production',
-        '--server', master.node_name
+        '--environment', 'production'
       ),
       :acceptable_exit_codes => [0, 2]
     )
@@ -219,8 +223,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
       puppet(
         'agent',
         '-t',
-        '--environment', 'canary',
-        '--server', master.node_name
+        '--environment', 'canary'
       ),
       :acceptable_exit_codes => [0, 2]
     )
@@ -278,8 +281,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
       puppet(
         'agent',
         '-t',
-        '--environment', 'production',
-        '--server', master.node_name
+        '--environment', 'production'
       ),
       :acceptable_exit_codes => [0, 2]
     )
@@ -305,8 +307,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
       puppet(
         'agent',
         '-t',
-        '--environment', 'canary',
-        '--server', master.node_name
+        '--environment', 'canary'
       ),
       :acceptable_exit_codes => [0, 2]
     )

@@ -43,8 +43,14 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("No handler for %{indirection}") % { indirection: indirection.name }, :NO_INDIRECTION_REMOTE_REQUESTS)
     end
 
-    trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
-    Puppet.override(:trusted_information => trusted) do
+    overrides = {
+      trusted_information: Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate),
+    }
+    if params[:environment]
+      overrides[:current_environment] = params[:environment]
+    end
+
+    Puppet.override(overrides) do
       send("do_#{method}", indirection, key, params, request, response)
     end
   end
@@ -118,21 +124,23 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
 
   # Execute our find.
   def do_find(indirection, key, params, request, response)
-    unless result = indirection.find(key, params)
+    result = indirection.find(key, params)
+    unless result
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("Could not find %{value0} %{key}") % { value0: indirection.name, key: key }, Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
     end
 
-    format = accepted_response_formatter_for(indirection.model, request)
-
     rendered_result = result
-    if result.respond_to?(:render)
-      Puppet::Util::Profiler.profile(_("Rendered result in %{format}") % { format: format }, [:http, :v3_render, format]) do
-        rendered_result = result.render(format)
+
+    rendered_format = first_response_formatter_for(indirection.model, request) do |format|
+      if result.respond_to?(:render)
+        Puppet::Util::Profiler.profile(_("Rendered result in %{format}") % { format: format }, [:http, :v3_render, format]) do
+          rendered_result = result.render(format)
+        end
       end
     end
 
     Puppet::Util::Profiler.profile(_("Sent response"), [:http, :v3_response]) do
-      response.respond_with(200, format, rendered_result)
+      response.respond_with(200, rendered_format, rendered_result)
     end
   end
 
@@ -154,9 +162,13 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
       raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(_("Could not find instances in %{indirection} with '%{key}'") % { indirection: indirection.name, key: key }, Puppet::Network::HTTP::Issues::RESOURCE_NOT_FOUND)
     end
 
-    format = accepted_response_formatter_for(indirection.model, request)
+    rendered_result = nil
 
-    response.respond_with(200, format, indirection.model.render_multiple(format, result))
+    rendered_format = first_response_formatter_for(indirection.model, request) do |format|
+      rendered_result = indirection.model.render_multiple(format, result)
+    end
+
+    response.respond_with(200, rendered_format, rendered_result)
   end
 
   # Execute our destroy.
@@ -178,12 +190,37 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     response.respond_with(200, formatter, formatter.render(result))
   end
 
-  def accepted_response_formatter_for(model_class, request)
-    request.response_formatter_for(model_class.supported_formats)
+  # Return the first response formatter that didn't cause the yielded
+  # block to raise a FormatError.
+  def first_response_formatter_for(model, request, &block)
+    formats = accepted_response_formatters_for(model, request)
+    formatter = formats.find do |format|
+      begin
+        yield format
+        true
+      rescue Puppet::Network::FormatHandler::FormatError => err
+        Puppet.log_exception(err, err.message, level: :debug)
+        false
+      end
+    end
+
+    return formatter if formatter
+
+    raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError.new(
+            _("No supported formats are acceptable (Accept: %{accepted_formats})") % { accepted_formats: formats },
+            Puppet::Network::HTTP::Issues::UNSUPPORTED_FORMAT)
   end
 
+  # Return an array of response formatters that the client accepts and
+  # the server supports.
+  def accepted_response_formatters_for(model_class, request)
+    request.response_formatters_for(model_class.supported_formats)
+  end
+
+  # Return the first response formatter that the client accepts and
+  # the server supports, or default to 'application/json'.
   def accepted_response_formatter_or_json_for(model_class, request)
-    request.response_formatter_for(model_class.supported_formats, "application/json")
+    request.response_formatters_for(model_class.supported_formats, "application/json").first
   end
 
   def read_body_into_model(model_class, request)
@@ -209,10 +246,11 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new(
       _("No support for http method %{http_method}") % { http_method: http_method }) unless METHOD_MAP[http_method]
 
-    unless method = METHOD_MAP[http_method][plurality(indirection)]
-      raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
+      method = METHOD_MAP[http_method][plurality(indirection)]
+      unless method
+        raise Puppet::Network::HTTP::Error::HTTPBadRequestError.new(
         _("No support for plurality %{indirection} for %{http_method} operations") % { indirection: plurality(indirection), http_method: http_method })
-    end
+      end
 
     method
   end
@@ -236,6 +274,7 @@ class Puppet::Network::HTTP::API::IndirectedRoutes
     # NOTE These specific hooks for paths are ridiculous, but it's a *many*-line
     # fix to not need this, and our goal is to move away from the complication
     # that leads to the fix being too long.
+    return :singular if indirection == "facts"
     return :singular if indirection == "status"
     return :singular if indirection == "certificate_status"
 

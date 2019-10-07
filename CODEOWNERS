@@ -1,0 +1,30 @@
+# default to platform-core
+* @puppetlabs/platform-core
+
+# Night's Watch
+/lib/puppet/type/group @puppetlabs/night-s-watch
+/lib/puppet/type/package @puppetlabs/night-s-watch
+/lib/puppet/type/service @puppetlabs/night-s-watch
+/lib/puppet/type/user @puppetlabs/night-s-watch
+/lib/puppet/provider/group @puppetlabs/night-s-watch
+/lib/puppet/provider/package @puppetlabs/night-s-watch
+/lib/puppet/provider/service @puppetlabs/night-s-watch
+/lib/puppet/provider/user @puppetlabs/night-s-watch
+
+# language
+/lib/puppet/datatypes @puppetlabs/language
+/lib/puppet/functions @puppetlabs/language
+/lib/puppet/pal @puppetlabs/language
+/lib/puppet/parser @puppetlabs/language
+/lib/puppet/pops @puppetlabs/language
+/lib/puppet/syntax_checkers @puppetlabs/language
+
+# puppet device
+/lib/puppet/application/device.rb @puppetlabs/networking
+/lib/puppet/util/network_device @puppetlabs/networking
+
+# puppet module
+/lib/puppet/application/module.rb @puppetlabs/pdk
+/lib/puppet/face/module @puppetlabs/pdk
+/lib/puppet/forge @puppetlabs/pdk
+/lib/puppet/module_tool @puppetlabs/pdk

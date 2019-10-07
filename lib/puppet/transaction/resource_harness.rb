@@ -35,7 +35,8 @@ class Puppet::Transaction::ResourceHarness
 
   def scheduled?(resource)
     return true if Puppet[:ignoreschedules]
-    return true unless schedule = schedule(resource)
+    schedule = schedule(resource)
+    return true unless schedule
 
     # We use 'checked' here instead of 'synced' because otherwise we'll
     # end up checking most resources most times, because they will generally
@@ -51,7 +52,8 @@ class Puppet::Transaction::ResourceHarness
       return nil
     end
 
-    return nil unless name = resource[:schedule]
+    name = resource[:schedule]
+    return nil unless name
     resource.catalog.resource(:schedule, name) || resource.fail(_("Could not find schedule %{name}") % { name: name })
   end
 
@@ -158,7 +160,10 @@ class Puppet::Transaction::ResourceHarness
       raise
     ensure
       if event
-        event.calculate_corrective_change(@persistence.get_system_value(context.resource.ref, param.name.to_s))
+        name = param.name.to_s
+        event.message ||= _("could not create change error message for %{name}") % { name: name }
+        event.calculate_corrective_change(@persistence.get_system_value(context.resource.ref, name))
+        event.message << ' (corrective)' if event.corrective_change
         context.record(event)
         event.send_log
         context.synced_params << param.name

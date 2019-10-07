@@ -125,7 +125,8 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
   # Turn our setting thing into a Puppet::Resource instance.
   def to_resource
-    return nil unless type = self.type
+    type = self.type
+    return nil unless type
 
     path = self.value
 
@@ -156,7 +157,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
       end
 
       # REMIND fails on Windows because chown/chgrp functionality not supported yet
-      if Puppet.features.root? and !Puppet.features.microsoft_windows?
+      if Puppet.features.root? and !Puppet::Util::Platform.windows?
         resource[:owner] = self.owner if self.owner
         resource[:group] = self.group if self.group
       end

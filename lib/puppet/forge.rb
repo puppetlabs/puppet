@@ -5,7 +5,7 @@ require 'net/http'
 require 'tempfile'
 require 'uri'
 require 'pathname'
-require 'json'
+require 'puppet/util/json'
 require 'semantic_puppet'
 
 class Puppet::Forge < SemanticPuppet::Dependency::Source
@@ -16,6 +16,9 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   include Puppet::Forge::Errors
 
   USER_AGENT = "PMT/1.1.1 (v3; Net::HTTP)".freeze
+
+  # From https://forgeapi.puppet.com/#!/release/getReleases
+  MODULE_RELEASE_EXCLUSIONS=%w[readme changelog license uri module tags supported file_size downloads created_at updated_at deleted_at].join(',').freeze
 
   attr_reader :host, :repository
 
@@ -63,8 +66,8 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       response = make_http_request(uri)
 
       if response.code == '200'
-        result = JSON.parse(response.body)
-        uri = result['pagination']['next']
+        result = Puppet::Util::Json.load(response.body)
+        uri = decode_uri(result['pagination']['next'])
         matches.concat result['results']
       else
         raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
@@ -89,7 +92,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   # @see SemanticPuppet::Dependency::Source#fetch
   def fetch(input)
     name = input.tr('/', '-')
-    uri = "/v3/releases?module=#{name}"
+    uri = "/v3/releases?module=#{name}&sort_by=version&exclude_fields=#{MODULE_RELEASE_EXCLUSIONS}"
     if Puppet[:module_groups]
       uri += "&module_groups=#{Puppet[:module_groups].gsub('+', ' ')}"
     end
@@ -100,13 +103,13 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       response = make_http_request(uri)
 
       if response.code == '200'
-        response = JSON.parse(response.body)
+        response = Puppet::Util::Json.load(response.body)
       else
         raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :response => response)
       end
 
       releases.concat(process(response['results']))
-      uri = response['pagination']['next']
+      uri = decode_uri(response['pagination']['next'])
     end
 
     return releases
@@ -119,7 +122,7 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
   class ModuleRelease < SemanticPuppet::Dependency::ModuleRelease
     attr_reader :install_dir, :metadata
 
-    def initialize(source, data, strict_semver = true)
+    def initialize(source, data)
       @data = data
       @metadata = meta = data['metadata']
 
@@ -131,9 +134,10 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
         dependencies = meta['dependencies'].collect do |dep|
           begin
             Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
-            Puppet::ModuleTool.parse_module_dependency(release, dep, strict_semver)[0..1]
+            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
           rescue ArgumentError => e
-            raise ArgumentError, "Malformed dependency: #{dep['name']}. Exception was: #{e}"
+            raise ArgumentError, _("Malformed dependency: %{name}.") % { name: dep['name'] } +
+                ' ' + _("Exception was: %{detail}") % { detail: e }
           end
         end
       else
@@ -165,8 +169,21 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     def prepare
       return @unpacked_into if @unpacked_into
 
+      Puppet.warning "#{@metadata['name']} has been deprecated by its author! View module on Puppet Forge for more info." if deprecated?
+
       download(@data['file_uri'], tmpfile)
-      validate_checksum(tmpfile, @data['file_md5'])
+      checksum = @data['file_sha256']
+      if checksum
+        validate_checksum(tmpfile, checksum, Digest::SHA256)
+      else
+        checksum = @data['file_md5']
+        if checksum
+          validate_checksum(tmpfile, checksum, Digest::MD5)
+        else
+          raise _("Forge module is missing SHA256 and MD5 checksums")
+        end
+      end
+
       unpack(tmpfile, tmpdir)
 
       @unpacked_into = Pathname.new(tmpdir)
@@ -195,9 +212,13 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       end
     end
 
-    def validate_checksum(file, checksum)
-      if Digest::MD5.file(file.path).hexdigest != checksum
-        raise RuntimeError, _("Downloaded release for %{name} did not match expected checksum") % { name: name }
+    def validate_checksum(file, checksum, digest_class)
+      if Facter.value(:fips_enabled) && digest_class == Digest::MD5
+        raise _("Module install using MD5 is prohibited in FIPS mode.")
+      end
+
+      if digest_class.file(file.path).hexdigest != checksum
+        raise RuntimeError, _("Downloaded release for %{name} did not match expected checksum %{checksum}") % { name: name, checksum: checksum }
       end
     end
 
@@ -207,6 +228,10 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
       rescue Puppet::ExecutionFailure => e
         raise RuntimeError, _("Could not extract contents of module archive: %{message}") % { message: e.message }
       end
+    end
+
+    def deprecated?
+      @data['module'] && (@data['module']['deprecated_at'] != nil)
     end
   end
 
@@ -224,5 +249,11 @@ class Puppet::Forge < SemanticPuppet::Dependency::Source
     end
 
     l.select { |r| r }
+  end
+
+  def decode_uri(uri)
+    return if uri.nil?
+
+    URI.decode(uri.gsub('+', ' '))
   end
 end

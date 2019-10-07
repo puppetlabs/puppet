@@ -83,13 +83,19 @@ describe 'The string converter' do
 
     it "Is an error to specify different delimiters at the same time" do
       expect do
-        fmt = format.new("%[{d")
+        format.new("%[{d")
       end.to raise_error(/Only one of the delimiters/)
+    end
+
+    it "Is an error to have trailing characters after the format" do
+      expect do
+        format.new("%dv")
+      end.to raise_error(/The format '%dv' is not a valid format/)
     end
 
     it "Is an error to specify the same flag more than once" do
       expect do
-        fmt = format.new("%[[d")
+        format.new("%[[d")
       end.to raise_error(/The same flag can only be used once/)
     end
   end
@@ -122,8 +128,12 @@ describe 'The string converter' do
          expect(converter.convert("hello\tworld.\r\nSun is brigth today.", string_formats)).to eq('"hello\\tworld.\\r\\nSun is brigth today."')
       end
 
-      it 'singe quoted result for string that is plain ascii without \\, $ or control characters' do
+      it 'single quoted result for string that is plain ascii without \\, $ or control characters' do
         expect(converter.convert('hello world', string_formats)).to eq("'hello world'")
+      end
+
+      it 'double quoted result when using %#p if it would otherwise be single quoted' do
+        expect(converter.convert('hello world', '%#p')).to eq('"hello world"')
       end
 
       it 'quoted 5-byte unicode chars' do
@@ -290,7 +300,6 @@ describe 'The string converter' do
       '%o'      => '22',
       '%4.2o'   => '  22',
       '%#o'     => '022',
-      '%#6.4o'  => '  0022',
       '%b'      => '10010',
       '%7.6b'   => ' 010010',
       '%#b'     => '0b10010',
@@ -307,9 +316,16 @@ describe 'The string converter' do
       '%.1f'    => '18.0',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
+        pending("PUP-8612 %a and %A not support on JRuby") if RUBY_PLATFORM == 'java' && fmt =~ /^%[aA]$/
         string_formats = { Puppet::Pops::Types::PIntegerType::DEFAULT => fmt}
         expect(converter.convert(18, string_formats)).to eq(result)
       end
+    end
+
+    it 'the format %#6.4o produces 0022' do
+      string_formats = { Puppet::Pops::Types::PIntegerType::DEFAULT => '%#6.4o' }
+      result = RUBY_PLATFORM == 'java' ? ' 00022' : '  0022'
+      expect(converter.convert(18, string_formats)).to eq(result)
     end
 
     it 'produces a unicode char string by using format %c' do
@@ -394,6 +410,7 @@ describe 'The string converter' do
       '%#B'     => '0B10010',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
+        pending("PUP-8612 %a and %A not support on JRuby") if RUBY_PLATFORM == 'java' && fmt =~ /^%[-.014]*[aA]$/
         string_formats = { Puppet::Pops::Types::PFloatType::DEFAULT => fmt}
         expect(converter.convert(18.0, string_formats)).to eq(result)
       end
@@ -570,6 +587,7 @@ describe 'The string converter' do
       "%#Y"  => 'Y',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
+        pending("PUP-8612 %a and %A not support on JRuby") if RUBY_PLATFORM == 'java' && fmt =~ /^%[aA]$/
         string_formats = { Puppet::Pops::Types::PBooleanType::DEFAULT => fmt}
         expect(converter.convert(true, string_formats)).to eq(result)
       end
@@ -616,6 +634,7 @@ describe 'The string converter' do
       "%#Y"  => 'N',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
+        pending("PUP-8612 %a and %A not support on JRuby") if RUBY_PLATFORM == 'java' && fmt =~ /^%[aA]$/
         string_formats = { Puppet::Pops::Types::PBooleanType::DEFAULT => fmt}
         expect(converter.convert(false, string_formats)).to eq(result)
       end
@@ -644,15 +663,19 @@ describe 'The string converter' do
       "% a"  => "1, 'hello'",
 
       {'format' => '%(a',
-        'separator' => ''
+        'separator' => ' '
       } => "(1 'hello')",
 
-      {'format' => '%|a',
+      {'format' => '%(a',
         'separator' => ''
+      } => "(1'hello')",
+
+      {'format' => '%|a',
+        'separator' => ' '
       } => "|1 'hello'|",
 
       {'format' => '%(a',
-        'separator' => '',
+        'separator' => ' ',
         'string_formats' => {Puppet::Pops::Types::PIntegerType::DEFAULT => '%#x'}
       } => "(0x1 'hello')",
     }.each do |fmt, result |
@@ -669,12 +692,12 @@ describe 'The string converter' do
         short_array_t => "%(a",
         long_array_t  => "%[a",
       }
-      expect(converter.convert([1, 2], string_formats)).to eq('(1, 2)')
+      expect(converter.convert([1, 2], string_formats)).to eq('(1, 2)') unless RUBY_PLATFORM == 'java' # PUP-8615
       expect(converter.convert([1, 2, 3], string_formats)).to eq('[1, 2, 3]')
     end
 
     it 'indents elements in alternate mode' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[1, 2, 9, 9,",
@@ -688,8 +711,17 @@ describe 'The string converter' do
      expect(formatted).to eq(result)
     end
 
+    it 'applies a short form format' do
+      result = [
+        "[1,",
+        "  [2, 3],",
+        "  4]"
+        ].join("\n")
+      expect(converter.convert([1, [2,3], 4], '%#a')).to eq(result)
+    end
+
     it 'treats hashes as nested arrays wrt indentation' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[1, 2, 9, 9,",
@@ -704,7 +736,7 @@ describe 'The string converter' do
     end
 
     it 'indents and breaks when a sequence > given width, in alternate mode' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#3a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#3a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[ 1,",
@@ -722,7 +754,7 @@ describe 'The string converter' do
     end
 
     it 'indents and breaks when a sequence (placed last) > given width, in alternate mode' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#3a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#3a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[ 1,",
@@ -740,7 +772,7 @@ describe 'The string converter' do
     end
 
     it 'indents and breaks nested sequences when one is placed first' do
-      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>"," } }
+      string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#a', 'separator' =>", " } }
       # formatting matters here
       result = [
        "[",
@@ -801,7 +833,12 @@ describe 'The string converter' do
        } => "(1 'hello', 2 'world')",
 
        {'format' => '%(h',
-         'separator' => ' >>',
+         'separator' => '',
+         'separator2' => ''
+       } => "(1'hello'2'world')",
+
+       {'format' => '%(h',
+         'separator' => ' >> ',
          'separator2' => ' <=> ',
          'string_formats' => {Puppet::Pops::Types::PIntegerType::DEFAULT => '%#x'}
        } => "(0x1 <=> 'hello' >> 0x2 <=> 'world')",
@@ -831,6 +868,17 @@ describe 'The string converter' do
       expect(converter.convert({1 => "hello", 2 => {3=> "world"}}, string_formats)).to eq(result)
     end
 
+    it 'applies a short form format' do
+      result = [
+        "{",
+        "  1 => {",
+        "    2 => 3",
+        "  },",
+        "  4 => 5",
+        "}"].join("\n")
+      expect(converter.convert({1 => {2 => 3}, 4 => 5}, '%#h')).to eq(result)
+    end
+
     context "containing an array" do
       it 'the hash and array renders without breaks and indentation by default' do
         result = "{1 => [1, 2, 3]}"
@@ -851,7 +899,7 @@ describe 'The string converter' do
 
       it 'both hash and array renders with breaks and indentation if so specified for both' do
         string_formats = {
-          Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#1a', 'separator' =>"," },
+          Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%#1a', 'separator' =>", " },
           Puppet::Pops::Types::PHashType::DEFAULT => { 'format' => '%#h', 'separator' =>"," }
         }
         result = [
@@ -867,7 +915,7 @@ describe 'The string converter' do
 
       it 'hash, but not array is rendered with breaks and indentation if so specified only for the hash' do
         string_formats = {
-          Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%a', 'separator' =>"," },
+          Puppet::Pops::Types::PArrayType::DEFAULT => { 'format' => '%a', 'separator' =>", " },
           Puppet::Pops::Types::PHashType::DEFAULT => { 'format' => '%#h', 'separator' =>"," }
         }
         result = [
@@ -993,6 +1041,28 @@ describe 'The string converter' do
         string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
         expect(converter.convert(/foo\/bar/, string_formats)).to eq('/foo\/bar/')
       end
+
+      context 'and slashes' do
+        it 'the format %s produces \'(?m-ix:foo/bar)\' for expression /foo\/bar/m' do
+          string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%s'}
+          expect(converter.convert(/foo\/bar/m, string_formats)).to eq('(?m-ix:foo/bar)')
+        end
+
+        it 'the format %s produces \'(?m-ix:foo\/bar)\' for expression /foo\\\/bar/m' do
+          string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%s'}
+          expect(converter.convert(/foo\\\/bar/m, string_formats)).to eq('(?m-ix:foo\\\\/bar)')
+        end
+
+        it 'the format %p produces \'(?m-ix:foo\/bar)\' for expression /foo\/bar/m' do
+          string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
+          expect(converter.convert(/foo\/bar/m, string_formats)).to eq('/(?m-ix:foo\/bar)/')
+        end
+
+        it 'the format %p produces \'(?m-ix:foo\/bar)\' for expression /(?m-ix:foo\/bar)/' do
+          string_formats = { Puppet::Pops::Types::PRegexpType::DEFAULT => '%p'}
+          expect(converter.convert(/(?m-ix:foo\/bar)/, string_formats)).to eq('/(?m-ix:foo\/bar)/')
+        end
+      end
     end
 
     it 'errors when format is not recognized' do
@@ -1109,14 +1179,14 @@ describe 'The string converter' do
       "%#p" => 'Integer',
     }.each do |fmt, result |
       it "the format #{fmt} produces #{result}" do
-        string_formats = { Puppet::Pops::Types::PType::DEFAULT => fmt}
+        string_formats = { Puppet::Pops::Types::PTypeType::DEFAULT => fmt}
         expect(converter.convert(factory.integer, string_formats)).to eq(result)
       end
     end
 
     it 'errors when format is not recognized' do
       expect do
-        string_formats = { Puppet::Pops::Types::PType::DEFAULT => "%k"}
+        string_formats = { Puppet::Pops::Types::PTypeType::DEFAULT => "%k"}
         converter.convert(factory.integer, string_formats)
       end.to raise_error(/Illegal format 'k' specified for value of Type type - expected one of the characters 'sp'/)
     end

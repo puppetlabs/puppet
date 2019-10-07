@@ -30,7 +30,7 @@ module Puppet::Util::RDoc
     # replacing Ruby's normal / with \.  When RDoc generates relative paths it
     # uses relative_path_from that will generate errors when the slashes don't
     # properly match.  This is a workaround for that issue.
-    if Puppet.features.microsoft_windows? && RDoc::VERSION !~ /^[0-3]\./
+    if Puppet::Util::Platform.windows? && RDoc::VERSION !~ /^[0-3]\./
       options += [ "--root", Dir.pwd.gsub(/\\/, '/')]
     end
     options += files

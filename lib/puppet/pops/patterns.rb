@@ -48,7 +48,8 @@ module Puppet::Pops::Patterns
 
   # VAR_NAME matches the name part of a variable (The $ character is not included)
   # Note, that only the final segment may start with an underscore.
-  VAR_NAME = %r{\A(?:(::)?[a-z]\w*)*(?:(::)?[a-z_]\w*)\z}
+  # Note, regexp sensitive to backtracking
+  VAR_NAME = %r{\A(?:::)?(?:[a-z]\w*::)*[a-z_]\w*\z}
 
   # PARAM_NAME matches the name part of a parameter (The $ character is not included)
   PARAM_NAME = %r{\A[a-z_]\w*\z}

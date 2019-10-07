@@ -24,11 +24,13 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     def instances
       objects = []
-      Puppet::Etc.send("set#{section}ent")
       begin
-        while ent = Puppet::Etc.send("get#{section}ent")
+        method = Puppet::Etc.method(:"get#{section}ent")
+        while ent = method.call #rubocop:disable Lint/AssignmentInCondition
           objects << new(:name => ent.name, :canonical_name => ent.canonical_name, :ensure => :present)
         end
+      ensure
+        Puppet::Etc.send("end#{section}ent")
       end
       objects
     end
@@ -39,7 +41,9 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     def options(name, hash)
-      raise Puppet::DevError, "#{name} is not a valid attribute for #{resource_type.name}" unless resource_type.valid_parameter?(name)
+      unless resource_type.valid_parameter?(name)
+        raise Puppet::DevError, _("%{name} is not a valid attribute for %{resource_type}") % { name: name, resource_type: resource_type.name }
+      end
       @options ||= {}
       @options[name] ||= {}
 
@@ -57,7 +61,7 @@ class Puppet::Provider::NameService < Puppet::Provider
       names = []
       Puppet::Etc.send("set#{section()}ent")
       begin
-        while ent = Puppet::Etc.send("get#{section()}ent")
+        while ent = Puppet::Etc.send("get#{section()}ent") #rubocop:disable Lint/AssignmentInCondition
           names << ent.name
           yield ent.name if block_given?
         end
@@ -113,14 +117,15 @@ class Puppet::Provider::NameService < Puppet::Provider
   end
 
   # Autogenerate a value.  Mostly used for uid/gid, but also used heavily
-  # with DirectoryServices, because DirectoryServices is stupid.
+  # with DirectoryServices
   def autogen(field)
     field = field.intern
     id_generators = {:user => :uid, :group => :gid}
     if id_generators[@resource.class.name] == field
       return self.class.autogen_id(field, @resource.class.name)
     else
-      if value = self.class.autogen_default(field)
+      value = self.class.autogen_default(field)
+      if value
         return value
       elsif respond_to?("autogen_#{field}")
         return send("autogen_#{field}")
@@ -139,7 +144,8 @@ class Puppet::Provider::NameService < Puppet::Provider
     when :user;   database = :passwd;  method = :uid
     when :group;  database = :group;   method = :gid
     else
-      raise Puppet::DevError, "Invalid resource name #{resource}"
+      #TRANSLATORS "autogen_id()" is a method name and should not be translated
+      raise Puppet::DevError, _("autogen_id() does not support auto generation of id for resource type %{resource_type}") % { resource_type: resource_type }
     end
 
     # Initialize from the data set, if needed.
@@ -167,9 +173,10 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     begin
-      execute(self.addcmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
+      sensitive = has_sensitive_data?
+      execute(self.addcmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})
       if feature?(:manages_password_age) && (cmd = passcmd)
-        execute(cmd)
+        execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})
       end
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not create %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
@@ -184,7 +191,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     begin
-      execute(self.deletecmd)
+      execute(self.deletecmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not delete %{resource} %{name}: %{detail}") % { resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
@@ -209,7 +216,8 @@ class Puppet::Provider::NameService < Puppet::Provider
   end
 
   def munge(name, value)
-    if block = self.class.option(name, :munge) and block.is_a? Proc
+    block = self.class.option(name, :munge)
+    if block and block.is_a? Proc
       block.call(value)
     else
       value
@@ -217,7 +225,8 @@ class Puppet::Provider::NameService < Puppet::Provider
   end
 
   def unmunge(name, value)
-    if block = self.class.option(name, :unmunge) and block.is_a? Proc
+    block = self.class.option(name, :unmunge)
+    if block and block.is_a? Proc
       block.call(value)
     else
       value
@@ -242,26 +251,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   # The list of all groups the user is a member of.  Different
   # user mgmt systems will need to override this method.
   def groups
-    groups = []
-
-    # Reset our group list
-    Puppet::Etc.setgrent
-
-    user = @resource[:name]
-
-    # Now iterate across all of the groups, adding each one our
-    # user is a member of
-    while group = Puppet::Etc.getgrent
-      members = group.mem
-
-      groups << group.name if members.include? user
-    end
-
-    # We have to close the file, so each listing is a separate
-    # reading of the file.
-    Puppet::Etc.endgrent
-
-    groups.join(",")
+    Puppet::Util::POSIX.groups_of(@resource[:name]).join(',')
   end
 
   # Convert the Etc struct into a hash.
@@ -289,12 +279,18 @@ class Puppet::Provider::NameService < Puppet::Provider
   def set(param, value)
     self.class.validate(param, value)
     cmd = modifycmd(param, munge(param, value))
-    raise Puppet::DevError, "Nameservice command must be an array" unless cmd.is_a?(Array)
+    raise Puppet::DevError, _("Nameservice command must be an array") unless cmd.is_a?(Array)
+    sensitive = has_sensitive_data?(param)
     begin
-      execute(cmd)
+      execute(cmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment, :sensitive => sensitive})
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, _("Could not set %{param} on %{resource}[%{name}]: %{detail}") % { param: param, resource: @resource.class.name, name: @resource.name, detail: detail }, detail.backtrace
     end
+  end
+
+  #Derived classes can override to declare sensitive data so a flag can be passed to execute
+  def has_sensitive_data?(property = nil)
+    false
   end
 
   # From overriding Puppet::Property#insync? Ruby Etc::getpwnam < 2.1.0 always

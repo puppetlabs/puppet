@@ -70,7 +70,7 @@ class PathSpec
   end
 
   def drive_letter_to_path(path)
-    path.gsub(/^([a-zA-z]):\//, '/\1/')
+    path.gsub(/^([a-zA-Z]):\//, '/\1/')
   end
 
   # Generate specs from a filename, such as a .gitignore

@@ -38,7 +38,8 @@ class Puppet::Daemon
 
   # Put the daemon into the background.
   def daemonize
-    if pid = fork
+    pid = fork
+    if pid
       Process.detach(pid)
       exit(0)
     end
@@ -79,7 +80,7 @@ class Puppet::Daemon
   end
 
   def reexec
-    raise Puppet::DevError, "Cannot reexec unless ARGV arguments are set" unless argv
+    raise Puppet::DevError, _("Cannot reexec unless ARGV arguments are set") unless argv
     command = $0 + " " + argv.join(" ")
     Puppet.notice "Restarting with '#{command}'"
     stop(:exit => false)
@@ -113,7 +114,7 @@ class Puppet::Daemon
     end
 
     # extended signals not supported under windows
-    if !Puppet.features.microsoft_windows?
+    if !Puppet::Util::Platform.windows?
       signals = {:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }
       signals.each do |signal, method|
         Signal.trap(signal) do
@@ -140,7 +141,7 @@ class Puppet::Daemon
   def start
     create_pidfile
 
-    raise Puppet::DevError, "Daemons must have an agent, server, or both" unless agent or server
+    raise Puppet::DevError, _("Daemons must have an agent, server, or both") unless agent or server
 
     # Start the listening server, if required.
     server.start if server
@@ -181,7 +182,7 @@ class Puppet::Daemon
     end
 
     signal_loop = Puppet::Scheduler.create_job(SIGNAL_CHECK_INTERVAL) do
-      while method = @signals.shift
+      while method = @signals.shift #rubocop:disable Lint/AssignmentInCondition
         Puppet.notice "Processing #{method}"
         send(method)
       end

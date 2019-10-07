@@ -1,6 +1,8 @@
+require 'puppet/ssl/openssl_loader'
+
 ##
 # SSL is a private module with class methods that help work with x.509
-# subjects.
+# subjects and errors.
 #
 # @api private
 module Puppet::Util::SSL
@@ -49,5 +51,33 @@ module Puppet::Util::SSL
 
   def self.is_possibly_valid_dn?(dn)
     dn =~ /=/
+  end
+
+  ##
+  # Extract and format meaningful error messages from OpenSSL::OpenSSLErrors
+  # and a Validator. Re-raises the error if unknown.
+  #
+  # @api private
+  #
+  # @param [OpenSSL::OpenSSLError] error An error thrown during creating a
+  #   connection
+  # @param [Puppet::SSL::DefaultValidator] verifier A Validator who may have
+  #   invalidated the connection
+  # @param [String] host The DNS name of the other end of the SSL connection
+  #
+  # @raises [Puppet::Error, OpenSSL::OpenSSLError]
+  def self.handle_connection_error(error, verifier, host)
+    # can be nil
+    peer_cert = verifier.peer_certs.last
+
+    if error.message.include? "certificate verify failed"
+      msg = error.message
+      msg << ": [" + verifier.verify_errors.join('; ') + "]"
+      raise Puppet::Error, msg, error.backtrace
+    elsif peer_cert && !OpenSSL::SSL.verify_certificate_identity(peer_cert, host)
+      raise Puppet::SSL::CertMismatchError.new(peer_cert, host)
+    else
+      raise error
+    end
   end
 end

@@ -1,5 +1,9 @@
 test_name "Calling Hiera function from inside templates"
 
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor'    # Master is not required for this test. Replace with agents.each
+
 @module_name = "hieratest"
 @coderoot = master.tmpdir("#{@module_name}")
 
@@ -64,7 +68,6 @@ hash_value:
 NEW_YAML
     osfamily_yamls += new_yaml
   end
-  osfamily_yamls
   environ = <<ENV
 
 File {
@@ -272,7 +275,7 @@ def find_osfamilies
     osf = res.stdout.chomp
     family_hash[osf] = 1
   end
-  osfamilies = family_hash.keys
+  family_hash.keys
 end
 
 def find_tmp_dirs
@@ -305,7 +308,7 @@ with_puppet_running_on master, @master_opts, @coderoot do
     step "Applying catalog to agent: #{agent}. result files in #{resultdir}"
     on(
       agent,
-      puppet('agent', "-t --server #{master}"),
+      puppet('agent', "-t"),
       :acceptable_exit_codes => [2]
     )
 

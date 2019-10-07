@@ -1,9 +1,8 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/key'
 
-describe Puppet::SSL::Key do
+describe Puppet::SSL::Key, unless: Puppet::Util::Platform.jruby? do
   include PuppetSpec::Files
 
   # different UTF-8 widths
@@ -41,8 +40,6 @@ describe Puppet::SSL::Key do
     end
 
     it "should be able to read an existing private key given the correct password" do
-      Puppet[:keylength] = '50'
-
       key_name = 'test'
       # use OpenSSL APIs to generate a private key
       private_key = OpenSSL::PKey::RSA.generate(512)
@@ -58,7 +55,7 @@ describe Puppet::SSL::Key do
 
       # indirector loads existing .pem off disk instead of replacing it
       host = Puppet::SSL::Host.new(key_name)
-      host.generate
+      host.key
 
       # newly loaded host private key matches the manually created key
       # Private-Key: (512 bit) style data
@@ -69,8 +66,6 @@ describe Puppet::SSL::Key do
     end
 
     it 'should export the private key to PEM using the password' do
-      Puppet[:keylength] = '50'
-
       key_name = 'test'
 
       # uses specified :passfile when writing the private key
@@ -84,7 +79,7 @@ describe Puppet::SSL::Key do
       # note incorrect password is an error
       expect do
         Puppet::FileSystem.open(pem_path, nil, 'r:ASCII') do |f|
-          reloaded_key = OpenSSL::PKey::RSA.new(f.read, 'invalid_password')
+          OpenSSL::PKey::RSA.new(f.read, 'invalid_password')
         end
       end.to raise_error(OpenSSL::PKey::RSAError)
 

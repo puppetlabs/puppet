@@ -1,10 +1,11 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/network/http'
 require 'puppet/network/http/api/indirected_routes'
 require 'puppet/indirector_testing'
 require 'puppet_spec/network'
+
+RSpec::Matchers.define_negated_matcher :excluding, :include
 
 describe Puppet::Network::HTTP::API::IndirectedRoutes do
   include PuppetSpec::Network
@@ -16,7 +17,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
   before do
     Puppet::IndirectorTesting.indirection.terminus_class = :memory
     Puppet::IndirectorTesting.indirection.terminus.clear
-    handler.stubs(:warn_if_near_expiration)
+    allow(handler).to receive(:warn_if_near_expiration)
   end
 
   describe "when converting a URI into a request" do
@@ -25,7 +26,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     let(:params) { { :environment => "env" } }
 
     before do
-      handler.stubs(:handler).returns "foo"
+      allow(handler).to receive(:handler).and_return("foo")
     end
 
     around do |example|
@@ -39,19 +40,27 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should fail if there is no environment specified" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {}) }).to raise_error(bad_request_error)
+      expect {
+        handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {})
+      }.to raise_error(bad_request_error)
     end
 
     it "should fail if the environment is not alphanumeric" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {:environment => "env ness"}) }).to raise_error(bad_request_error)
+      expect {
+        handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", {:environment => "env ness"})
+      }.to raise_error(bad_request_error)
     end
 
     it "should fail if the indirection does not match the prefix" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/certificate/foo", params) }).to raise_error(bad_request_error)
+      expect {
+        handler.uri2indirection("GET", "#{master_url_prefix}/certificate/foo", params)
+      }.to raise_error(bad_request_error)
     end
 
     it "should fail if the indirection does not have the correct version" do
-      expect(lambda { handler.uri2indirection("GET", "#{Puppet::Network::HTTP::CA_URL_PREFIX}/v3/certificate/foo", params) }).to raise_error(bad_request_error)
+      expect {
+        handler.uri2indirection("GET", "#{Puppet::Network::HTTP::MASTER_URL_PREFIX}/v1/node/bar", params)
+      }.to raise_error(bad_request_error)
     end
 
     it "should not pass a buck_path parameter through (See Bugs #13553, #13518, #13511)" do
@@ -75,7 +84,9 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should fail if the indirection name is not alphanumeric" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/foo ness/bar", params) }).to raise_error(bad_request_error)
+      expect {
+        handler.uri2indirection("GET", "#{master_url_prefix}/foo ness/bar", params)
+      }.to raise_error(bad_request_error)
     end
 
     it "should use the remainder of the URI as the indirection key" do
@@ -87,7 +98,9 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should fail if no indirection key is specified" do
-      expect(lambda { handler.uri2indirection("GET", "#{master_url_prefix}/node", params) }).to raise_error(bad_request_error)
+      expect {
+        handler.uri2indirection("GET", "#{master_url_prefix}/node", params)
+      }.to raise_error(bad_request_error)
     end
 
     it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is singular" do
@@ -104,6 +117,10 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
     it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is plural" do
       expect(handler.uri2indirection("GET", "#{master_url_prefix}/nodes/bar", params)[1]).to eq(:search)
+    end
+
+    it "should choose 'save' as the indirection method if the http method is a PUT and the indirection name is facts" do
+      expect(handler.uri2indirection("PUT", "#{master_url_prefix}/facts/puppet.node.test", params)[0].name).to eq(:facts)
     end
 
     it "should change indirection name to 'status' if the http method is a GET and the indirection name is statuses" do
@@ -123,40 +140,37 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should fail if an indirection method cannot be picked" do
-      expect(lambda { handler.uri2indirection("UPDATE", "#{master_url_prefix}/node/bar", params) }).to raise_error(method_not_allowed_error)
+      expect {
+        handler.uri2indirection("UPDATE", "#{master_url_prefix}/node/bar", params)
+      }.to raise_error(method_not_allowed_error)
     end
 
     it "should not URI unescape the indirection key" do
       escaped = Puppet::Util.uri_encode("foo bar")
-      indirection, _, key, _ = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
+      _, _, key, _ = handler.uri2indirection("GET", "#{master_url_prefix}/node/#{escaped}", params)
       expect(key).to eq(escaped)
     end
 
     it "should not unescape the URI passed through in a call to check_authorization" do
       key_escaped = Puppet::Util.uri_encode("foo bar")
       uri_escaped = "#{master_url_prefix}/node/#{key_escaped}"
-      handler.expects(:check_authorization).with(anything, uri_escaped, anything)
-      indirection, _, _, _ = handler.uri2indirection("GET", uri_escaped, params)
+      expect(handler).to receive(:check_authorization).with(anything, uri_escaped, anything)
+      handler.uri2indirection("GET", uri_escaped, params)
     end
 
-    it "should not pass through an environment to check_authorization and fail if the environment is unknown" do
-      handler.expects(:check_authorization).with(anything,
-                                                 anything,
-                                                 Not(has_entry(:environment)))
-      expect(lambda { handler.uri2indirection("GET",
-                                              "#{master_url_prefix}/node/bar",
-                                              {:environment => 'bogus'}) }).to raise_error(not_found_error)
+    it "when the environment is unknown should remove :environment from params passed to check_authorization and therefore fail" do
+      expect(handler).to receive(:check_authorization).with(anything,
+                                                            anything,
+                                                            excluding(:environment))
+      expect { handler.uri2indirection("GET",
+                                       "#{master_url_prefix}/node/bar",
+                                       {:environment => 'bogus'})
+      }.to raise_error(not_found_error)
     end
 
     it "should not URI unescape the indirection key as passed through to a call to check_authorization" do
-      handler.expects(:check_authorization).with(anything,
-                                                 anything,
-                                                 all_of(
-                                                     has_entry(:environment,
-                                                               is_a(Puppet::Node::Environment)),
-                                                     has_entry(:environment,
-                                                               responds_with(:name,
-                                                                             :env))))
+      expect(handler).to receive(:check_authorization).with(anything, anything, hash_including(environment: be_a(Puppet::Node::Environment).and(have_attributes(name: :env))))
+
       handler.uri2indirection("GET", "#{master_url_prefix}/node/bar", params)
     end
 
@@ -167,7 +181,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     let(:request) { Puppet::Indirector::Request.new(:foo, :find, "with spaces", nil, :foo => :bar, :environment => environment) }
 
     before do
-      handler.stubs(:handler).returns "foo"
+      allow(handler).to receive(:handler).and_return("foo")
     end
 
     it "should include the environment in the query string of the URI" do
@@ -175,17 +189,17 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should include the correct url prefix if it is a ca request" do
-      request.stubs(:indirection_name).returns("certificate")
+      allow(request).to receive(:indirection_name).and_return("certificate")
       expect(handler.class.request_to_uri(request)).to eq("#{ca_url_prefix}/certificate/with%20spaces?environment=myenv&foo=bar")
     end
 
     it "should pluralize the indirection name if the method is 'search'" do
-      request.stubs(:method).returns :search
+      allow(request).to receive(:method).and_return(:search)
       expect(handler.class.request_to_uri(request).split("/")[3]).to eq("foos")
     end
 
     it "should add the query string to the URI" do
-      request.expects(:query_string).returns "query"
+      expect(request).to receive(:query_string).and_return("query")
       expect(handler.class.request_to_uri(request)).to match(/\&query$/)
     end
   end
@@ -208,7 +222,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     end
 
     it "should include the correct url prefix if it is a ca request" do
-      request.stubs(:indirection_name).returns("certificate")
+      allow(request).to receive(:indirection_name).and_return("certificate")
       expect(handler.class.request_to_uri_and_body(request).first).to eq("#{ca_url_prefix}/certificate/with%20spaces")
     end
 
@@ -223,7 +237,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       indirection.save(data, "my data")
       request = a_request_that_heads(data)
 
-      handler.expects(:check_authorization).raises(Puppet::Network::AuthorizationError.new("forbidden"))
+      expect(handler).to receive(:check_authorization).and_raise(Puppet::Network::AuthorizationError.new("forbidden"))
 
       expect {
         handler.call(request, response)
@@ -233,7 +247,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
     it "should raise not_found_error if the indirection does not support remote requests" do
       request = a_request_that_heads(Puppet::IndirectorTesting.new("my data"))
 
-      indirection.expects(:allow_remote_requests?).returns(false)
+      expect(indirection).to receive(:allow_remote_requests?).and_return(false)
 
       expect {
         handler.call(request, response)
@@ -263,11 +277,23 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:json))
     end
 
+    it "falls back to the next supported format" do
+      data = Puppet::IndirectorTesting.new("my data")
+      indirection.save(data, "my data")
+      request = a_request_that_finds(data, :accept_header => "application/json, text/pson")
+      allow(data).to receive(:to_json).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[json]: source sequence is illegal/malformed utf-8')
+
+      handler.call(request, response)
+
+      expect(response.body).to eq(data.render(:pson))
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
+    end
+
     it "should pass the result through without rendering it if the result is a string" do
       data = Puppet::IndirectorTesting.new("my data")
       data_string = "my data string"
       request = a_request_that_finds(data, :accept_header => "application/json")
-      indirection.expects(:find).returns(data_string)
+      expect(indirection).to receive(:find).and_return(data_string)
 
       handler.call(request, response)
 
@@ -297,6 +323,30 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
       expect(response.body).to eq(Puppet::IndirectorTesting.render_multiple(:json, [data]))
     end
 
+    it "falls back to the next supported format" do
+      data = Puppet::IndirectorTesting.new("my data")
+      indirection.save(data, "my data")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "application/json, text/pson")
+      allow(data).to receive(:to_json).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[json]: source sequence is illegal/malformed utf-8')
+
+      handler.call(request, response)
+
+      expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
+      expect(response.body).to eq(Puppet::IndirectorTesting.render_multiple(:pson, [data]))
+    end
+
+    it "raises 406 not acceptable if no formats are accceptable" do
+      data = Puppet::IndirectorTesting.new("my data")
+      indirection.save(data, "my data")
+      request = a_request_that_searches(Puppet::IndirectorTesting.new("my"), :accept_header => "application/json, text/pson")
+      allow(data).to receive(:to_json).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[json]: source sequence is illegal/malformed utf-8')
+      allow(data).to receive(:to_pson).and_raise(Puppet::Network::FormatHandler::FormatError, 'Could not render to Puppet::Network::Format[pson]: source sequence is illegal/malformed utf-8')
+
+      expect {
+        handler.call(request, response)
+      }.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAcceptableError, /No supported formats are acceptable/)
+    end
+
     it "should return [] when searching returns an empty array" do
       request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, application/json")
 
@@ -308,7 +358,7 @@ describe Puppet::Network::HTTP::API::IndirectedRoutes do
 
     it "should raise not_found_error when searching returns nil" do
       request = a_request_that_searches(Puppet::IndirectorTesting.new("nothing"), :accept_header => "unknown, application/json")
-      indirection.expects(:search).returns(nil)
+      expect(indirection).to receive(:search).and_return(nil)
 
       expect {
         handler.call(request, response)

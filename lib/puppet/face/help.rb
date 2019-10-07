@@ -26,47 +26,33 @@ Puppet::Face.define(:help, '0.0.1') do
 
     default
     when_invoked do |*args|
-      # Check our invocation, because we want varargs and can't do defaults
-      # yet.  REVISIT: when we do option defaults, and positional options, we
-      # should rewrite this to use those. --daniel 2011-04-04
       options = args.pop
-      if options.nil? or args.length > 2 then
-        if args.select { |x| x == 'help' }.length > 2 then
-          c = "\n %'(),-./=ADEFHILORSTUXY\\_`gnv|".split('')
-          i = <<-'EOT'.gsub(/\s*/, '').to_i(36)
-            3he6737w1aghshs6nwrivl8mz5mu9nywg9tbtlt081uv6fq5kvxse1td3tj1wvccmte806nb
-            cy6de2ogw0fqjymbfwi6a304vd56vlq71atwmqsvz3gpu0hj42200otlycweufh0hylu79t3
-            gmrijm6pgn26ic575qkexyuoncbujv0vcscgzh5us2swklsp5cqnuanlrbnget7rt3956kam
-            j8adhdrzqqt9bor0cv2fqgkloref0ygk3dekiwfj1zxrt13moyhn217yy6w4shwyywik7w0l
-            xtuevmh0m7xp6eoswin70khm5nrggkui6z8vdjnrgdqeojq40fya5qexk97g4d8qgw0hvokr
-            pli1biaz503grqf2ycy0ppkhz1hwhl6ifbpet7xd6jjepq4oe0ofl575lxdzjeg25217zyl4
-            nokn6tj5pq7gcdsjre75rqylydh7iia7s3yrko4f5ud9v8hdtqhu60stcitirvfj6zphppmx
-            7wfm7i9641d00bhs44n6vh6qvx39pg3urifgr6ihx3e0j1ychzypunyou7iplevitkyg6gbg
-            wm08oy1rvogcjakkqc1f7y1awdfvlb4ego8wrtgu9vzw4vmj59utwifn2ejcs569dh1oaavi
-            sc581n7jjg1dugzdu094fdobtx6rsvk3sfctvqnr36xctold
-          EOT
-          353.times{i,x=i.divmod(1184);a,b=x.divmod(37);print(c[a]*b)}
-        end
-        raise ArgumentError, _("Puppet help only takes two (optional) arguments: a subcommand and an action")
+
+      if default_case?(args) || help_for_help?(args)
+        return erb('global.erb').result(binding)
+      end
+
+      if args.length > 2
+        #TRANSLATORS 'puppet help' is a command line and should not be translated
+        raise ArgumentError, _("The 'puppet help' command takes two (optional) arguments: a subcommand and an action")
       end
 
       version = :current
-      if options.has_key? :version then
-        if options[:version].to_s !~ /^current$/i then
+      if options.has_key? :version
+        if options[:version].to_s !~ /^current$/i
           version = options[:version]
         else
-          if args.length == 0 then
-            raise ArgumentError, _("Version only makes sense when a Faces subcommand is given")
+          if args.length == 0
+            #TRANSLATORS '--version' is a command line option and should not be translated
+            raise ArgumentError, _("Supplying a '--version' only makes sense when a Faces subcommand is given")
           end
         end
       end
 
-      return erb('global.erb').result(binding) if args.empty?
-
       facename, actionname = args
-      if legacy_applications.include? facename then
-        if actionname then
-          raise ArgumentError, _("Legacy subcommands don't take actions")
+      if legacy_applications.include? facename
+        if actionname
+          raise ArgumentError, _("The legacy subcommand '%{sub_command}' does not support supplying an action") % { sub_command: facename }
         end
         return render_application_help(facename)
       else
@@ -75,36 +61,42 @@ Puppet::Face.define(:help, '0.0.1') do
     end
   end
 
+  def default_case?(args)
+    args.empty?
+  end
+
+  def help_for_help?(args)
+    args.length == 1 && args.first == 'help'
+  end
+
   def render_application_help(applicationname)
     return Puppet::Application[applicationname].help
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG) % { applicationname: applicationname, detail: detail.message }
-Could not load help for the application %{applicationname}.
-Please check the error logs for more information.
-
-Detail: "%{detail}"
-MSG
-    fail ArgumentError, msg, detail.backtrace
+    message = []
+    message << _('Could not load help for the application %{application_name}.') % { application_name: applicationname }
+    message << _('Please check the error logs for more information.')
+    message << ''
+    message << _('Detail: "%{detail}"') % { detail: detail.message }
+    fail ArgumentError, message.join("\n"), detail.backtrace
   end
 
   def render_face_help(facename, actionname, version)
     face, action = load_face_help(facename, actionname, version)
     return template_for(face, action).result(binding)
   rescue StandardError, LoadError => detail
-    msg = _(<<-MSG) % { facename: facename, detail: detail.message }
-Could not load help for the face %{facename}.
-Please check the error logs for more information.
-
-Detail: "%{detail}"
-MSG
-    fail ArgumentError, msg, detail.backtrace
+    message = []
+    message << _('Could not load help for the face %{face_name}.') % { face_name: facename }
+    message << _('Please check the error logs for more information.')
+    message << ''
+    message << _('Detail: "%{detail}"') % { detail: detail.message }
+    fail ArgumentError, message.join("\n"), detail.backtrace
   end
 
   def load_face_help(facename, actionname, version)
     face = Puppet::Face[facename.to_sym, version]
     if actionname
       action = face.get_action(actionname.to_sym)
-      if not action
+      if ! action
         fail ArgumentError, _("Unable to load action %{actionname} from %{face}") % { actionname: actionname, face: face }
       end
     end
@@ -140,38 +132,61 @@ MSG
   #  element in the outer array is a pair whose first element is a String containing the application
   #  name, and whose second element is a String containing the summary for that application.
   def all_application_summaries()
-    Puppet::Application.available_application_names.sort.inject([]) do |result, appname|
+    available_application_names_special_sort().inject([]) do |result, appname|
       next result if exclude_from_docs?(appname)
 
-      if (is_face_app?(appname))
+      if (appname == COMMON || appname == SPECIALIZED || appname == BLANK)
+        result << appname
+      elsif (is_face_app?(appname))
         begin
           face = Puppet::Face[appname, :current]
           # Add deprecation message to summary if the face is deprecated
-          summary = face.deprecated? ? face.summary + _(" (Deprecated)") : face.summary
-          result << [appname, summary]
+          summary = face.deprecated? ? face.summary + ' ' + _("(Deprecated)") : face.summary
+          result << [appname, summary, '  ']
         rescue StandardError, LoadError
-          result << [ "! #{appname}", _("! Subcommand unavailable due to error. Check error logs.") ]
+          error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
+          error_message += ' ' + _("Check error logs.")
+          result << [ error_message, '', '  ' ]
         end
       else
-        result << [appname, horribly_extract_summary_from(appname)]
+        begin
+          summary = Puppet::Application[appname].summary
+          if summary.empty?
+            summary = horribly_extract_summary_from(appname)
+          end
+          result << [appname, summary, '  ']
+        rescue StandardError, LoadError
+          error_message = _("!%{sub_command}! Subcommand unavailable due to error.") % { sub_command: appname }
+          error_message += ' ' + _("Check error logs.")
+          result << [ error_message, '', '  ' ]
+        end
       end
     end
   end
 
+  COMMON = 'Common:'.freeze
+  SPECIALIZED = 'Specialized:'.freeze
+  BLANK = "\n".freeze
+  def available_application_names_special_sort()
+    full_list = Puppet::Application.available_application_names
+    a_list = full_list & %w{apply agent config help lookup module resource}
+    a_list = a_list.sort
+    also_ran = full_list - a_list
+    also_ran = also_ran.sort
+    [[COMMON], a_list, [BLANK], [SPECIALIZED], also_ran].flatten(1)
+  end
+
   def horribly_extract_summary_from(appname)
-    begin
-      help = Puppet::Application[appname].help.split("\n")
-      # Now we find the line with our summary, extract it, and return it.  This
-      # depends on the implementation coincidence of how our pages are
-      # formatted.  If we can't match the pattern we expect we return the empty
-      # string to ensure we don't blow up in the summary. --daniel 2011-04-11
-      while line = help.shift do
-        if md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line) then
-          return md[1]
-        end
+    help = Puppet::Application[appname].help.split("\n")
+    # Now we find the line with our summary, extract it, and return it.  This
+    # depends on the implementation coincidence of how our pages are
+    # formatted.  If we can't match the pattern we expect we return the empty
+    # string to ensure we don't blow up in the summary. --daniel 2011-04-11
+    while line = help.shift do #rubocop:disable Lint/AssignmentInCondition
+      md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line)
+      if md
+        return md[1]
       end
-    rescue StandardError, LoadError
-      return _("! Subcommand unavailable due to error. Check error logs.")
     end
     return ''
   end
@@ -181,7 +196,7 @@ MSG
   #private :horribly_extract_summary_from
 
   def exclude_from_docs?(appname)
-    %w{face_base indirection_base}.include? appname
+    %w{face_base indirection_base cert key man report status}.include? appname
   end
   # This should absolutely be a private method, but for some reason it appears
   #  that you can't use the 'private' keyword inside of a Face definition.

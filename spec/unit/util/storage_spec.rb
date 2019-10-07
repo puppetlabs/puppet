@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'yaml'
@@ -68,7 +67,7 @@ describe Puppet::Util::Storage do
 
   describe "when loading from the state file" do
     before do
-      Puppet.settings.stubs(:use).returns(true)
+      allow(Puppet.settings).to receive(:use).and_return(true)
     end
 
     describe "when the state file/directory does not exist" do
@@ -146,7 +145,7 @@ describe Puppet::Util::Storage do
       it "should raise an error if the state file does not contain valid YAML and cannot be renamed" do
         write_state_file('{ invalid')
 
-        File.expects(:rename).raises(SystemCallError)
+        expect(File).to receive(:rename).and_raise(SystemCallError)
 
         expect { Puppet::Util::Storage.load }.to raise_error(Puppet::Error, /Could not rename/)
       end
@@ -154,7 +153,7 @@ describe Puppet::Util::Storage do
       it "should attempt to rename the state file if the file is corrupted" do
         write_state_file('{ invalid')
 
-        File.expects(:rename).at_least_once
+        expect(File).to receive(:rename).at_least(:once)
 
         Puppet::Util::Storage.load
       end
@@ -165,10 +164,24 @@ describe Puppet::Util::Storage do
 
         Puppet::Util::Storage.load
       end
+
+      it 'should load Time and Symbols' do
+        state = {
+          'File[/etc/puppetlabs/puppet]' =>
+          { :checked => Time.new('2018-08-08 15:28:25.546999000 -07:00') }
+        }
+        write_state_file(YAML.dump(state))
+
+        Puppet::Util::Storage.load
+
+        expect(Puppet::Util::Storage.state).to eq(state.dup)
+      end
     end
   end
 
   describe "when storing to the state file" do
+    A_SMALL_AMOUNT_OF_TIME = 0.001 #Seconds
+
     before(:each) do
       @state_file = tmpfile('storage_test')
       @saved_statefile = Puppet[:statefile]
@@ -188,7 +201,7 @@ describe Puppet::Util::Storage do
       Dir.mkdir(Puppet[:statefile])
       Puppet::Util::Storage.cache(:yayness)
 
-      if Puppet.features.microsoft_windows?
+      if Puppet::Util::Platform.windows?
         expect { Puppet::Util::Storage.store }.to raise_error do |error|
           expect(error).to be_a(Puppet::Util::Windows::Error)
           expect(error.code).to eq(5) # ERROR_ACCESS_DENIED
@@ -212,6 +225,111 @@ describe Puppet::Util::Storage do
       Puppet::Util::Storage.load
 
       expect(Puppet::Util::Storage.state).to eq({:yayness=>{}})
+    end
+
+    it "expires entries with a :checked older than statettl seconds ago" do
+      Puppet[:statettl] = '1d'
+      recent_checked = Time.now.round
+      stale_checked = recent_checked - (Puppet[:statettl] + 10)
+      Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
+      Puppet::Util::Storage.cache(:stale)[:checked] = stale_checked
+      expect(Puppet::Util::Storage.state).to match(
+        {
+          :yayness => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
+          },
+          :stale => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(stale_checked)
+          }
+        }
+      )
+
+      Puppet::Util::Storage.store
+      Puppet::Util::Storage.clear
+
+      expect(Puppet::Util::Storage.state).to eq({})
+
+      Puppet::Util::Storage.load
+
+      expect(Puppet::Util::Storage.state).to match(
+        {
+          :yayness => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
+          }
+        }
+      )
+    end
+
+    it "does not expire entries when statettl is 0" do
+      Puppet[:statettl] = '0'
+      recent_checked = Time.now.round
+      older_checked = recent_checked - 10_000_000
+      Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
+      Puppet::Util::Storage.cache(:older)[:checked] = older_checked
+      expect(Puppet::Util::Storage.state).to match(
+        {
+          :yayness => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
+          },
+          :older => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(older_checked)
+          }
+        }
+      )
+
+      Puppet::Util::Storage.store
+      Puppet::Util::Storage.clear
+
+      expect(Puppet::Util::Storage.state).to eq({})
+
+      Puppet::Util::Storage.load
+
+      expect(Puppet::Util::Storage.state).to match(
+        {
+          :yayness => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
+          },
+          :older => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(older_checked)
+          }
+        }
+      )
+    end
+
+    it "does not expire entries when statettl is 'unlimited'" do
+      Puppet[:statettl] = 'unlimited'
+      recent_checked = Time.now
+      older_checked = Time.now - 10_000_000
+      Puppet::Util::Storage.cache(:yayness)[:checked] = recent_checked
+      Puppet::Util::Storage.cache(:older)[:checked] = older_checked
+      expect(Puppet::Util::Storage.state).to match(
+        {
+          :yayness => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
+          },
+          :older => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(older_checked)
+          }
+        }
+      )
+
+      Puppet::Util::Storage.store
+      Puppet::Util::Storage.clear
+
+      expect(Puppet::Util::Storage.state).to eq({})
+
+      Puppet::Util::Storage.load
+
+      expect(Puppet::Util::Storage.state).to match(
+        {
+          :yayness => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(recent_checked)
+          },
+          :older => {
+            :checked => a_value_within(A_SMALL_AMOUNT_OF_TIME).of(older_checked)
+          }
+        }
+      )
     end
   end
 end

@@ -1,14 +1,13 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/indirector/face'
 
 describe Puppet::Indirector::Face do
   subject do
     instance = Puppet::Indirector::Face.new(:test, '0.0.1')
-    indirection = stub('indirection',
+    indirection = double('indirection',
                        :name => :stub_indirection,
                        :reset_terminus_class => nil)
-    instance.stubs(:indirection).returns indirection
+    allow(instance).to receive(:indirection).and_return(indirection)
     instance
   end
 
@@ -19,7 +18,7 @@ describe Puppet::Indirector::Face do
   end
 
   it "should return the sorted to_s list of terminus classes" do
-    Puppet::Indirector::Terminus.expects(:terminus_classes).returns([
+    expect(Puppet::Indirector::Terminus).to receive(:terminus_classes).and_return([
       :yaml,
       :compiler,
       :rest
@@ -34,7 +33,7 @@ describe Puppet::Indirector::Face do
   describe "as an instance" do
     it "should be able to determine its indirection" do
       # Loading actions here can get, um, complicated
-      Puppet::Face.stubs(:load_actions)
+      allow(Puppet::Face).to receive(:load_actions)
       expect(Puppet::Indirector::Face.new(:catalog, '0.0.1').indirection).to equal(Puppet::Resource::Catalog.indirection)
     end
   end
@@ -53,17 +52,18 @@ describe Puppet::Indirector::Face do
     end
 
     it "should call the indirection method with options when the '#{method}' action is invoked" do
-      subject.indirection.expects(method).with(:test, *params(method, {}))
+      expect(subject.indirection).to receive(method).with(:test, *params(method, {}))
       subject.send(method, :test)
     end
+
     it "should forward passed options" do
-      subject.indirection.expects(method).with(:test, *params(method, {'one'=>'1'}))
+      expect(subject.indirection).to receive(method).with(:test, *params(method, {'one'=>'1'}))
       subject.send(method, :test, :extra => {'one'=>'1'})
     end
   end
 
   it "should default key to certname for find action" do
-    subject.indirection.expects(:find).with(Puppet[:certname], {'one'=>'1'})
+    expect(subject.indirection).to receive(:find).with(Puppet[:certname], {'one'=>'1'})
     subject.send(:find, :extra => {'one'=>'1'})
   end
 
@@ -73,7 +73,7 @@ describe Puppet::Indirector::Face do
   end
 
   it "should be able to set its terminus class" do
-    subject.indirection.expects(:terminus_class=).with(:myterm)
+    expect(subject.indirection).to receive(:terminus_class=).with(:myterm)
     subject.set_terminus(:myterm)
   end
 

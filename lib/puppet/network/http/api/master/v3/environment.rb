@@ -1,4 +1,4 @@
-require 'json'
+require 'puppet/util/json'
 require 'puppet/parser/environment_compiler'
 
 class Puppet::Network::HTTP::API::Master::V3::Environment
@@ -15,7 +15,7 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
 
     env_graph = build_environment_graph(catalog)
 
-    response.respond_with(200, "application/json", JSON.dump(env_graph))
+    response.respond_with(200, "application/json", Puppet::Util::Json.dump(env_graph))
   end
 
   def build_environment_graph(catalog)
@@ -36,12 +36,15 @@ class Puppet::Network::HTTP::API::Master::V3::Environment
 
       nonexistent_components = mapped_components - required_components
       if nonexistent_components.any?
-        raise Puppet::ParseError.new("Application #{app} assigns nodes to non-existent components: #{nonexistent_components.join(', ')}", file, line)
+        raise Puppet::ParseError.new(
+            _("Application %{application} assigns nodes to non-existent components: %{component_list}") %
+                { application: app, component_list: nonexistent_components.join(', ') }, file, line)
       end
 
       missing_components = required_components - mapped_components
       if missing_components.any?
-        raise Puppet::ParseError.new("Application #{app} has components without assigned nodes: #{missing_components.join(', ')}", file, line)
+        raise Puppet::ParseError.new(_("Application %{application} has components without assigned nodes: %{component_list}") %
+                                         { application: app, component_list: missing_components.join(', ') }, file, line)
       end
 
       # Turn the 'nodes' hash into a map component ref => node name

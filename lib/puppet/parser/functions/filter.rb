@@ -3,9 +3,9 @@ Puppet::Parser::Functions::newfunction(
   :type => :rvalue,
   :arity => -3,
   :doc => <<-DOC
-Applies a [lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html)
+Applies a [lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html)
 to every value in a data structure and returns an array or hash containing any elements
-for which the lambda evaluates to `true`.
+for which the lambda evaluates to a truthy value (not `false` or `undef`).
 
 This function takes two mandatory arguments, in this order:
 
@@ -74,5 +74,5 @@ $filtered_data = $data.filter |$keys, $values| { $keys =~ /berry$/ and $values <
 - Since 4.0.0
 DOC
 ) do |args|
-  Error.is4x('filter')
+  Puppet::Parser::Functions::Error.is4x('filter')
 end

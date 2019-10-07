@@ -5,6 +5,11 @@
 #
 test_name "Ticket 5477, Puppet Master does not detect newly created site.pp file"
 
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',     # Use block style `test_name`
+    'server'
+
 testdir = master.tmpdir('missing_site_pp')
 manifest_file = "#{testdir}/environments/production/manifests/site.pp"
 
@@ -35,7 +40,7 @@ master_opts = {
 with_puppet_running_on master, master_opts, testdir do
   # Run test on Agents
   step "Agent: agent --test"
-  on(agents, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [0,2])
+  on(agents, puppet('agent', "-t"), :acceptable_exit_codes => [0,2])
 
   # Create a new site.pp
   step "Master: create basic site.pp file"
@@ -48,7 +53,7 @@ with_puppet_running_on master, master_opts, testdir do
   step "Agent: puppet agent --test"
 
   agents.each do |host|
-    on(host, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [2]) do
+    on(host, puppet('agent', "-t"), :acceptable_exit_codes => [2]) do
       assert_match(/ticket_5477_notify/, stdout, "#{host}: Site.pp not detected on Puppet Master")
     end
   end

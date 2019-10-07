@@ -1,5 +1,11 @@
 test_name 'SysV and Systemd Service Provider Validation'
 
+tag 'audit:medium',
+    'audit:refactor',  # Investigate merging with init_on_systemd.rb
+                       # Use block style `test_name`
+    'audit:acceptance' # Could be done at the integration (or unit) layer though
+                       # actual changing of resources could irreparably damage a
+                       # host running this, or require special permissions.
 
 confine :to, :platform => /el-|centos|fedora|debian|sles|ubuntu-v/
 # osx covered by launchd_provider.rb
@@ -15,6 +21,7 @@ package_name = {'el'     => 'httpd',
 
 agents.each do |agent|
   platform = agent.platform.variant
+  osname = on(agent, facter('os.name')).stdout.chomp
   majrelease = on(agent, facter('operatingsystemmajrelease')).stdout.chomp.to_i
 
   init_script_systemd = "/usr/lib/systemd/system/#{package_name[platform]}.service"
@@ -59,9 +66,13 @@ agents.each do |agent|
   apply_manifest_on(agent, manifest_install_package, :catch_failures => true)
 
   step "ensure enabling service creates the start & kill symlinks"
-  is_sysV = ((platform == 'centos' || platform == 'el') && majrelease < 7) ||
-              platform == 'debian' || platform == 'ubuntu' ||
-             (platform == 'sles'                        && majrelease < 12)
+  # amazon linux is based on el: v1 uses a 4-digit year for its majrelease
+  # and is based on el-6 (sysV). v2 returns a single-digit version for its
+  # majrelease and is based on el-7 (systemd).
+  is_sysV = ((platform == 'centos' || platform == 'el') && osname != 'Amazon' && majrelease < 7) ||
+             (osname == 'Amazon' && majrelease > 2010) ||
+             platform == 'debian' || platform == 'ubuntu' ||
+             (platform == 'sles' && majrelease < 12)
   apply_manifest_on(agent, manifest_service_disabled, :catch_failures => true)
   apply_manifest_on(agent, manifest_service_enabled, :catch_failures => true) do
     if is_sysV

@@ -7,13 +7,15 @@ class Puppet::FileServing::Mount::Modules < Puppet::FileServing::Mount
   def find(path, request)
     raise _("No module specified") if path.to_s.empty?
     module_name, relative_path = path.split("/", 2)
-    return nil unless mod = request.environment.module(module_name)
+    mod = request.environment.module(module_name)
+    return nil unless mod
 
     mod.file(relative_path)
   end
 
   def search(path, request)
-    if result = find(path, request)
+    result = find(path, request)
+    if result
       [result]
     end
   end

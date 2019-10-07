@@ -1,15 +1,18 @@
 require 'uri'
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
+require 'puppet/network/http'
 
 module Puppet::Util::HttpProxy
   def self.proxy(uri)
-    if self.no_proxy?(uri)
-      proxy_class = Net::HTTP::Proxy(nil)
+    if http_proxy_host && !no_proxy?(uri)
+      Net::HTTP.new(uri.host, uri.port, self.http_proxy_host, self.http_proxy_port, self.http_proxy_user, self.http_proxy_password)
     else
-      proxy_class = Net::HTTP::Proxy(self.http_proxy_host, self.http_proxy_port, self.http_proxy_user, self.http_proxy_password)
+      http = Net::HTTP.new(uri.host, uri.port, nil, nil, nil, nil)
+      # Net::HTTP defaults the proxy port even though we said not to
+      # use one. Set it to nil so caller is not surprised
+      http.proxy_port = nil
+      http
     end
-
-    return proxy_class.new(uri.host, uri.port)
   end
 
   def self.http_proxy_env
@@ -32,7 +35,8 @@ module Puppet::Util::HttpProxy
   #   .example.com
   # We'll accommodate both here.
   def self.no_proxy?(dest)
-    unless no_proxy_env = ENV["no_proxy"] || ENV["NO_PROXY"]
+    no_proxy = self.no_proxy
+    unless no_proxy
       return false
     end
 
@@ -44,7 +48,7 @@ module Puppet::Util::HttpProxy
       end
     end
 
-    no_proxy_env.split(/\s*,\s*/).each do |d|
+    no_proxy.split(/\s*,\s*/).each do |d|
       host, port = d.split(':')
       host = Regexp.escape(host).gsub('\*', '.*')
 
@@ -126,6 +130,20 @@ module Puppet::Util::HttpProxy
     return Puppet.settings[:http_proxy_password]
   end
 
+  def self.no_proxy
+    no_proxy_env = ENV["no_proxy"] || ENV["NO_PROXY"]
+
+    if no_proxy_env
+      return no_proxy_env
+    end
+
+    if Puppet.settings[:no_proxy] == 'none'
+      return nil
+    end
+
+    return Puppet.settings[:no_proxy]
+  end
+
   # Return a Net::HTTP::Proxy object.
   #
   # This method optionally configures SSL correctly if the URI scheme is
@@ -156,8 +174,10 @@ module Puppet::Util::HttpProxy
     proxy
   end
 
-  # Retrieve a document through HTTP(s), following redirects if necessary.
-  # 
+  # Retrieve a document through HTTP(s), following redirects if necessary. The
+  # returned response body may be compressed, and it is the caller's
+  # responsibility to decompress it based on the 'content-encoding' header.
+  #
   # Based on the the client implementation in the HTTP pool.
   #
   # @see Puppet::Network::HTTP::Connection#request_with_redirects
@@ -172,7 +192,14 @@ module Puppet::Util::HttpProxy
 
     0.upto(redirect_limit) do |redirection|
       proxy = get_http_object(current_uri)
-      response = proxy.send(:head, current_uri.path)
+
+      headers = { 'Accept' => '*/*', 'User-Agent' => Puppet[:http_user_agent] }
+      if Puppet.features.zlib?
+        headers.merge!({"Accept-Encoding" => Puppet::Network::HTTP::Compression::ACCEPT_ENCODING})
+      end
+
+      response = proxy.send(:head, current_uri, headers)
+      Puppet.debug("HTTP HEAD request to #{current_uri} returned #{response.code} #{response.message}")
 
       if [301, 302, 307].include?(response.code.to_i)
         # handle the redirection
@@ -180,14 +207,15 @@ module Puppet::Util::HttpProxy
         next
       end
 
-      if block_given?
-        headers = {'Accept' => 'binary', 'accept-encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3'}
-        response = proxy.send("request_#{method}".to_sym, current_uri.path, headers, &block)
-      else
-        response = proxy.send(method, current_uri.path)
-      end
+      if method != :head
+        if block_given?
+          response = proxy.send("request_#{method}".to_sym, current_uri, headers, &block)
+        else
+          response = proxy.send(method, current_uri, headers)
+        end
 
-      Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
+        Puppet.debug("HTTP #{method.to_s.upcase} request to #{current_uri} returned #{response.code} #{response.message}")
+      end
 
       return response
     end

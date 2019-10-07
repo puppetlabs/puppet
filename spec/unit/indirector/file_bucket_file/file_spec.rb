@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/indirector/file_bucket_file/file'
@@ -23,7 +22,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         expect(result.contents).to be_empty
       end
 
-      it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? do
+      it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? || RUBY_PLATFORM == 'java' do
         bucket_file = Puppet::FileBucket::File.new("contents")
 
         children = []
@@ -41,21 +40,21 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
       end
 
       it "fails if the contents collide with existing contents" do
-        # This is the shortest known MD5 collision. See https://eprint.iacr.org/2010/643.pdf
+        # This is the shortest known MD5 collision (little endian). See https://eprint.iacr.org/2010/643.pdf
         first_contents = [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,
                           0x6503cf04,0x854f709e,0xfb0fc034,0x874c9c65,
                           0x2f94cc40,0x15a12deb,0x5c15f4a3,0x490786bb,
-                          0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a].pack("I" * 16)
+                          0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a].pack("V" * 16)
 
         collision_contents = [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,
                               0x6503cf04,0x854f749e,0xfb0fc034,0x874c9c65,
                               0x2f94cc40,0x15a12deb,0xdc15f4a3,0x490786bb,
-                              0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a].pack("I" * 16)
+                              0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a].pack("V" * 16)
 
         checksum_value = save_bucket_file(first_contents, "/foo/bar")
 
         # We expect Puppet to log an error with the path to the file
-        Puppet.expects(:err).with(regexp_matches(/Unable to verify existing FileBucket backup at '#{Puppet[:bucketdir]}.*#{checksum_value}\/contents'/))
+        expect(Puppet).to receive(:err).with(/Unable to verify existing FileBucket backup at '#{Puppet[:bucketdir]}.*#{checksum_value}\/contents'/)
 
         # But the exception should not contain it
         expect do
@@ -80,7 +79,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         end
 
         it "issues a warning that the backup will be overwritten" do
-          Puppet.expects(:warning).with(regexp_matches(/Existing backup does not match its expected sum, #{bucket_file.checksum}/))
+          expect(Puppet).to receive(:warning).with(/Existing backup does not match its expected sum, #{bucket_file.checksum}/)
           Puppet::FileBucket::File.indirection.save(bucket_file)
         end
 
@@ -92,44 +91,60 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
 
       describe "when supplying a path" do
         with_digest_algorithms do
-          it "should store the path if not already stored" do
-            checksum = save_bucket_file(plaintext, "/foo/bar")
-
-            dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            contents_file = "#{dir_path}/contents"
-            paths_file = "#{dir_path}/paths"
-            expect(Puppet::FileSystem.binread(contents_file)).to eq(plaintext)
-            expect(Puppet::FileSystem.read(paths_file)).to eq("foo/bar\n")
-          end
-
-          it "should leave the paths file alone if the path is already stored" do
-            checksum = save_bucket_file(plaintext, "/foo/bar")
-            checksum = save_bucket_file(plaintext, "/foo/bar")
-            dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
-            expect(File.read("#{dir_path}/paths")).to eq("foo/bar\n")
-          end
-
-          it "should store an additional path if the new path differs from those already stored" do
-            checksum = save_bucket_file(plaintext, "/foo/bar")
-
-            checksum = save_bucket_file(plaintext, "/foo/baz")
-
-            dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
-            expect(File.read("#{dir_path}/paths")).to eq("foo/bar\nfoo/baz\n")
-          end
+            it "should store the path if not already stored" do
+              if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+                skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+              else
+                save_bucket_file(plaintext, "/foo/bar")
+  
+                dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
+                contents_file = "#{dir_path}/contents"
+                paths_file = "#{dir_path}/paths"
+                expect(Puppet::FileSystem.binread(contents_file)).to eq(plaintext)
+                expect(Puppet::FileSystem.read(paths_file)).to eq("foo/bar\n")
+              end
+            end
+  
+            it "should leave the paths file alone if the path is already stored" do
+              if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+                skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+              else
+                # save it twice
+                save_bucket_file(plaintext, "/foo/bar")
+                save_bucket_file(plaintext, "/foo/bar")
+                dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
+                expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
+                expect(File.read("#{dir_path}/paths")).to eq("foo/bar\n")
+              end
+            end
+  
+            it "should store an additional path if the new path differs from those already stored" do
+              if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+                skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+              else
+                save_bucket_file(plaintext, "/foo/bar")
+                save_bucket_file(plaintext, "/foo/baz")
+                dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
+                expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
+                expect(File.read("#{dir_path}/paths")).to eq("foo/bar\nfoo/baz\n")
+              end
+            end
+          # end
         end
       end
 
       describe "when not supplying a path" do
         with_digest_algorithms do
           it "should save the file and create an empty paths file" do
-            checksum = save_bucket_file(plaintext, "")
-
-            dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
-            expect(File.read("#{dir_path}/paths")).to eq("")
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+            else
+              save_bucket_file(plaintext, "")
+  
+              dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
+              expect(Puppet::FileSystem.binread("#{dir_path}/contents")).to eq(plaintext)
+              expect(File.read("#{dir_path}/paths")).to eq("")
+            end
           end
         end
       end
@@ -157,37 +172,45 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           end
 
           it "should return the list of bucketed files in a human readable way" do
-            checksum1 = save_bucket_file("I'm the contents of a file", '/foo/bar1')
-            checksum2 = save_bucket_file("I'm the contents of another file", '/foo/bar2')
-            checksum3 = save_bucket_file("I'm the modified content of a existing file", '/foo/bar1')
-
-            # Use the first checksum as we know it's stored in the bucket
-            find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}/foo/bar1", :list_all => true)
-
-            # The list is sort order from date and file name, so first and third checksums come before the second
-            date_pattern = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
-            expect(find_result.to_s).to match(Regexp.new("^(#{checksum1}|#{checksum3}) #{date_pattern} foo/bar1\\n(#{checksum3}|#{checksum1}) #{date_pattern} foo/bar1\\n#{checksum2} #{date_pattern} foo/bar2\\n$"))
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+            else
+              checksum1 = save_bucket_file("I'm the contents of a file", '/foo/bar1')
+              checksum2 = save_bucket_file("I'm the contents of another file", '/foo/bar2')
+              checksum3 = save_bucket_file("I'm the modified content of a existing file", '/foo/bar1')
+  
+              # Use the first checksum as we know it's stored in the bucket
+              find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}/foo/bar1", :list_all => true)
+  
+              # The list is sort order from date and file name, so first and third checksums come before the second
+              date_pattern = '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}'
+              expect(find_result.to_s).to match(Regexp.new("^(#{checksum1}|#{checksum3}) #{date_pattern} foo/bar1\\n(#{checksum3}|#{checksum1}) #{date_pattern} foo/bar1\\n#{checksum2} #{date_pattern} foo/bar2\\n$"))
+            end
           end
 
           it "should fail in an informative way when provided dates are not in the right format" do
-            contents = "I'm the contents of a file"
-            save_bucket_file(contents, '/foo/bar1')
-            expect {
-              Puppet::FileBucket::File.indirection.find(
-                "#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar",
-                :list_all => true,
-                :todate => "0:0:0 1-1-1970",
-                :fromdate => "WEIRD"
-              )
-            }.to raise_error(Puppet::Error, /fromdate/)
-            expect {
-              Puppet::FileBucket::File.indirection.find(
-                "#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar",
-                :list_all => true,
-                :todate => "WEIRD",
-                :fromdate => Time.now
-              )
-            }.to raise_error(Puppet::Error, /todate/)
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+            else
+              contents = "I'm the contents of a file"
+              save_bucket_file(contents, '/foo/bar1')
+              expect {
+                Puppet::FileBucket::File.indirection.find(
+                  "#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar",
+                  :list_all => true,
+                  :todate => "0:0:0 1-1-1970",
+                  :fromdate => "WEIRD"
+                )
+              }.to raise_error(Puppet::Error, /fromdate/)
+              expect {
+                Puppet::FileBucket::File.indirection.find(
+                  "#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar",
+                  :list_all => true,
+                  :todate => "WEIRD",
+                  :fromdate => Time.now
+                )
+              }.to raise_error(Puppet::Error, /todate/)
+            end
           end
         end
 
@@ -198,21 +221,30 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
           end
 
           it "should return false/nil if the file is bucketed but with a different path" do
-            checksum = save_bucket_file("I'm the contents of a file", '/foo/bar')
 
-            expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/baz")).to eq(false)
-            expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/baz")).to eq(nil)
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+            else
+              checksum = save_bucket_file("I'm the contents of a file", '/foo/bar')
+  
+              expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/baz")).to eq(false)
+              expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/baz")).to eq(nil)
+            end
           end
 
           it "should return true/file if the file is already bucketed with the given path" do
-            contents = "I'm the contents of a file"
-
-            checksum = save_bucket_file(contents, '/foo/bar')
-
-            expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/bar")).to eq(true)
-            find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/bar")
-            expect(find_result.checksum).to eq("{#{digest_algorithm}}#{checksum}")
-            expect(find_result.to_s).to eq(contents)
+            if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+              skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+            else
+              contents = "I'm the contents of a file"
+  
+              checksum = save_bucket_file(contents, '/foo/bar')
+  
+              expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/bar")).to eq(true)
+              find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/bar")
+              expect(find_result.checksum).to eq("{#{digest_algorithm}}#{checksum}")
+              expect(find_result.to_s).to eq(contents)
+            end
           end
         end
 
@@ -227,16 +259,21 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
               end
 
               it "should return true/file if the file is already bucketed" do
+    
                 # this one replaces most of the lets in the "when
                 # digest_digest_algorithm is set..." shared context, but it still needs digest_algorithm
-                contents = "I'm the contents of a file"
-
-                checksum = save_bucket_file(contents, '/foo/bar')
-
-                expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}#{trailing_string}")).to eq(true)
-                find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}#{trailing_string}")
-                expect(find_result.checksum).to eq("{#{digest_algorithm}}#{checksum}")
-                expect(find_result.to_s).to eq(contents)
+                if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+                  skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+                else
+                  contents = "I'm the contents of a file"
+  
+                  checksum = save_bucket_file(contents, '/foo/bar')
+  
+                  expect(Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}#{trailing_string}")).to eq(true)
+                  find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}#{trailing_string}")
+                  expect(find_result.checksum).to eq("{#{digest_algorithm}}#{checksum}")
+                  expect(find_result.to_s).to eq(contents)
+                end
               end
             end
           end
@@ -244,36 +281,54 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
       end
     end
 
-    describe "when diffing files", :unless => Puppet.features.microsoft_windows? do
+    describe "when diffing files", :unless => Puppet::Util::Platform.windows? do
       with_digest_algorithms do
         let(:not_bucketed_plaintext) { "other stuff" }
         let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }
 
         it "should generate an empty string if there is no diff" do
-          checksum = save_bucket_file("I'm the contents of a file")
-          expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => checksum)).to eq('')
+          skip("usage of fork(1) no supported on this platform") if RUBY_PLATFORM == 'java'
+          if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+            skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+          else
+            checksum = save_bucket_file("I'm the contents of a file")
+            expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => checksum)).to eq('')
+          end
         end
 
         it "should generate a proper diff if there is a diff" do
-          checksum1 = save_bucket_file("foo\nbar\nbaz")
-          checksum2 = save_bucket_file("foo\nbiz\nbaz")
-
-          diff = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}", :diff_with => checksum2)
-          expect(diff).to include("-bar\n+biz\n")
+          skip("usage of fork(1) no supported on this platform") if RUBY_PLATFORM == 'java'
+          if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+            skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+          else
+            checksum1 = save_bucket_file("foo\nbar\nbaz")
+            checksum2 = save_bucket_file("foo\nbiz\nbaz")
+  
+            diff = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}", :diff_with => checksum2)
+            expect(diff).to include("-bar\n+biz\n")
+          end
         end
 
         it "should raise an exception if the hash to diff against isn't found" do
-          checksum = save_bucket_file("whatever")
-
-          expect do
-            Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => not_bucketed_checksum)
-          end.to raise_error "could not find diff_with #{not_bucketed_checksum}"
+          if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+            skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+          else
+            checksum = save_bucket_file("whatever")
+  
+            expect do
+              Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => not_bucketed_checksum)
+            end.to raise_error "could not find diff_with #{not_bucketed_checksum}"
+          end
         end
 
         it "should return nil if the hash to diff from isn't found" do
-          checksum = save_bucket_file("whatever")
-
-          expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}", :diff_with => checksum)).to eq(nil)
+          if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
+            skip "PUP-8257: Skip file bucket test on windows for #{digest_algorithm} due to long path names"
+          else
+            checksum = save_bucket_file("whatever")
+  
+            expect(Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}", :diff_with => checksum)).to eq(nil)
+          end
         end
       end
     end
@@ -285,7 +340,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
         describe "when #{supply_path ? 'supplying' : 'not supplying'} a path" do
           with_digest_algorithms do
             before :each do
-              Puppet.settings.stubs(:use)
+              allow(Puppet.settings).to receive(:use)
               @store = Puppet::FileBucketFile::File.new
 
               @bucket_top_dir = tmpdir("bucket")
@@ -343,6 +398,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
 
             describe "when saving files" do
               it "should save the contents to the calculated path" do
+                skip("Windows Long File Name support is incomplete PUP-8257, this doesn't fail reliably so it should be skipped.") if Puppet::Util::Platform.windows? && (['sha512', 'sha384'].include? digest_algorithm)
                 options = {}
                 if override_bucket_path
                   options[:bucket_path] = @bucket_top_dir

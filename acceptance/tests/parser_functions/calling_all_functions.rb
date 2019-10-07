@@ -1,5 +1,8 @@
 test_name 'Calling all functions.. test in progress!'
 
+tag 'audit:medium',
+    'audit:acceptance'
+
 # create single manifest calling all functions
 step 'Apply manifest containing all function calls'
 def manifest_call_each_function_from_array(functions)
@@ -22,14 +25,13 @@ def manifest_call_each_function_from_array(functions)
 end
 
 
-generator = ''
 agents.each do |agent|
   testdir = agent.tmpdir('calling_all_functions')
-  if agent["platform"] =~ /win/
-    generator = {:args => '"c:/windows/system32/tasklist.exe"', :expected => /\nImage Name/}
-  else
-    generator = {:args => '"/bin/date"',                        :expected => /\w\w\w.*?\d\d:\d\d\:\d\d/}
-  end
+  # if agent["platform"] =~ /win/
+  #   generator = {:args => '"c:/windows/system32/tasklist.exe"', :expected => /\nImage Name/}
+  # else
+  #   generator = {:args => '"/bin/date"',                        :expected => /\w\w\w.*?\d\d:\d\d\:\d\d/}
+  # end
 
   # create list of 3x functions and args
   # notes: hiera functions are well tested elsewhere, included for completeness
@@ -47,8 +49,9 @@ agents.each do |agent|
     {:name => :crit,             :args => '"consider yourself critical"',      :lambda => nil, :expected => 'consider yourself critical', :rvalue => false},
     {:name => :debug,            :args => '"consider yourself bugged"',        :lambda => nil, :expected => '', :rvalue => false}, # no output expected unless run with debug
     {:name => :defined,          :args => 'File["/tmp"]',                      :lambda => nil, :expected => 'false', :rvalue => true},
-    {:name => :digest,           :args => '"Sansa"',                           :lambda => nil, :expected => 'f16491bf0133c6103918b2edcd00cf89', :rvalue => true},
     {:name => :dig,              :args => '[100]',                             :lambda => nil, :expected => '[100]', :rvalue => true},
+    # Expect sha256 hash value for the digest when running on fips enabled system
+    {:name => :digest,           :args => '"Sansa"',                           :lambda => nil, :expected => on(agent, facter("fips_enabled")).stdout =~ /true/ ? '4ebf3a5527313f06c7965749d7764c15cba6fe86da11691ca9bd0ce448563979' : 'f16491bf0133c6103918b2edcd00cf89', :rvalue => true},
     {:name => :emerg,            :args => '"consider yourself emergent"',      :lambda => nil, :expected => 'consider yourself emergent', :rvalue => false},
     {:name => :err,              :args => '"consider yourself in err"',        :lambda => nil, :expected => 'consider yourself in err', :rvalue => false},
     {:name => :file,             :args => '"call_em_all/rickon.txt"',          :lambda => nil, :expected => 'who?', :rvalue => true},
@@ -64,7 +67,8 @@ agents.each do |agent|
     {:name => :inline_template,  :args => '\'empty<%= @x %>space\'',           :lambda => nil, :expected => 'emptyspace', :rvalue => true},
     # test the living life out of this thing in lookup.rb, and it doesn't allow for a default value
     #{:name => :lookup,           :args => 'date,lookup_date',                  :lambda => nil, :expected => '', :rvalue => true},  # well tested elsewhere
-    {:name => :md5,              :args => '"Bran"',                            :lambda => nil, :expected => '723f9ac32ceb881ddf4fb8fc1020cf83', :rvalue => true},
+    # Use fips approved hash when running on fips enabled system
+    {:name => on(agent, facter("fips_enabled")).stdout =~ /true/ ?  :sha256 : :md5,              :args => '"Bran"',                            :lambda => nil, :expected => on(agent, facter("fips_enabled")).stdout =~ /true/ ? '824264f7f73d6026550b52a671c50ad0c4452af66c24f3784e30f515353f2ce0' : '723f9ac32ceb881ddf4fb8fc1020cf83' , :rvalue => true},
     # Integer.new
     {:name => :Integer,          :args => '"100"',                             :lambda => nil, :expected => '100', :rvalue => true},
     {:name => :notice,           :args => '"consider yourself under notice"',  :lambda => nil, :expected => 'consider yourself under notice', :rvalue => false},
@@ -187,15 +191,19 @@ PP
   apply_manifest_on(agent, manifest_call_each_function_from_array(functions_4x), puppet_apply_options) do |result|
        functions_4x.each do |function|
          expected = "#{function[:name].capitalize}: #{scope} #{function[:expected]}"
-         assert_match(expected, result.output,
-                      "#{function[:name]} output didn't match expected value")
+         unless agent['locale'] == 'ja'
+           assert_match(expected, result.output,
+                        "#{function[:name]} output didn't match expected value")
+         end
        end
      end
 
    file_path = agent.tmpfile('apply_manifest.pp')
+
    create_remote_file(agent, file_path, manifest_call_each_function_from_array(functions_3x))
+
    trusted_3x = puppet_version =~ /\A3\./ ? '--trusted_node_data ' : ''
-   on(agent, puppet("apply #{trusted_3x} --color=false --modulepath #{testdir}/environments/production/modules/ #{file_path}"),
+   on(agent, puppet("apply #{trusted_3x} --color=false  --modulepath #{testdir}/environments/production/modules/ #{file_path}"),
       :acceptable_exit_codes => 1 ) do |result|
         functions_3x.each do |function|
           # append the function name to the matcher so it's more expressive
@@ -219,7 +227,9 @@ PP
             raise 'unhandled function expectation type (we allow String or Regexp)'
           end
 
-          assert_match(expected, result.output, "#{function[:name]} output didn't match expected value")
+          unless agent['locale'] == 'ja'
+            assert_match(expected, result.output, "#{function[:name]} output didn't match expected value")
+          end
         end
      end
 

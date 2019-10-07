@@ -2,6 +2,8 @@ require 'puppet/ssl/base'
 require 'puppet/indirector'
 
 # Manage private and public keys as a pair.
+#
+# @deprecated Use {Puppet::SSL::SSLProvider} instead.
 class Puppet::SSL::Key < Puppet::SSL::Base
   wraps OpenSSL::PKey::RSA
 
@@ -28,11 +30,7 @@ DOC
   def initialize(name)
     super
 
-    if ca?
-      @password_file = Puppet[:capass]
-    else
-      @password_file = Puppet[:passfile]
-    end
+    @password_file = Puppet[:passfile]
   end
 
   def password
@@ -54,8 +52,8 @@ DOC
   end
 
   def to_s
-    if pass = password
-      @content.export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), pass)
+    if password
+      @content.export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), password)
     else
       return super
     end

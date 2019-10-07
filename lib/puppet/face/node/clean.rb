@@ -14,6 +14,7 @@ Puppet::Face.define(:node, '0.0.1') do
 
       <Reports> - ($vardir/reports/node.domain)
 
+      NOTE: this action now cleans up certs via Puppet Server's CA API. A running server is required for certs to be cleaned.
     EOT
 
     when_invoked do |*args|
@@ -28,12 +29,6 @@ Puppet::Face.define(:node, '0.0.1') do
       # run_mode is master. Those other behaviors are needed for cleaning the
       # certificates correctly.
       Puppet.settings.preferred_run_mode = "master"
-
-      if Puppet::SSL::CertificateAuthority.ca?
-        Puppet::SSL::Host.ca_location = :local
-      else
-        Puppet::SSL::Host.ca_location = :none
-      end
 
       Puppet::Node::Facts.indirection.terminus_class = :yaml
       Puppet::Node::Facts.indirection.cache_class = :yaml
@@ -51,12 +46,20 @@ Puppet::Face.define(:node, '0.0.1') do
     clean_reports(node)
   end
 
+  class LoggerIO
+    def err(message)
+      Puppet.err(message) unless message =~ /^\s*Error:\s*/
+    end
+
+    def inform(message)
+      Puppet.notice(message)
+    end
+  end
+
   # clean signed cert for +host+
   def clean_cert(node)
-    if Puppet::SSL::CertificateAuthority.ca?
-      Puppet::Face[:ca, :current].revoke(node)
-      Puppet::Face[:ca, :current].destroy(node)
-      Puppet.info _("%{node} certificates removed from ca") % { node: node }
+    if Puppet.features.puppetserver_ca?
+      Puppetserver::Ca::Action::Clean.new(LoggerIO.new).run({ 'certnames' => [node] })
     else
       Puppet.info _("Not managing %{node} certs as this host is not a CA") % { node: node }
     end

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:group) do
@@ -8,6 +7,14 @@ describe Puppet::Type.type(:group) do
 
   it "should have a system_groups feature" do
     expect(@class.provider_feature(:system_groups)).not_to be_nil
+  end
+
+  it 'should default to `present`' do
+    expect(@class.new(:name => "foo")[:ensure]).to eq(:present)
+  end
+
+  it 'should set ensure to whatever is passed in' do
+    expect(@class.new(:name => "foo", :ensure => 'absent')[:ensure]).to eq(:absent)
   end
 
   describe "when validating attributes" do
@@ -42,20 +49,20 @@ describe Puppet::Type.type(:group) do
 
   it "should call 'create' to create the group" do
     group = @class.new(:name => "foo", :ensure => :present)
-    group.provider.expects(:create)
+    expect(group.provider).to receive(:create)
     group.parameter(:ensure).sync
   end
 
   it "should call 'delete' to remove the group" do
     group = @class.new(:name => "foo", :ensure => :absent)
-    group.provider.expects(:delete)
+    expect(group.provider).to receive(:delete)
     group.parameter(:ensure).sync
   end
 
   it "delegates the existence check to its provider" do
     provider = @class.provide(:testing) {}
     provider_instance = provider.new
-    provider_instance.expects(:exists?).returns true
+    expect(provider_instance).to receive(:exists?).and_return(true)
 
     type = @class.new(:name => "group", :provider => provider_instance)
 
@@ -63,22 +70,29 @@ describe Puppet::Type.type(:group) do
   end
 
   describe "should delegate :members implementation to the provider:"  do
+    let (:provider) do
+      @class.provide(:testing) do
+        has_features :manages_members
 
-    let (:provider) { @class.provide(:testing) { has_features :manages_members } }
+        def members
+          []
+        end
+      end
+    end
     let (:provider_instance) { provider.new }
     let (:type) { @class.new(:name => "group", :provider => provider_instance, :members => ['user1']) }
 
     it "insync? calls members_insync?" do
-      provider_instance.expects(:members_insync?).with(['user1'], ['user1']).returns true
+      expect(provider_instance).to receive(:members_insync?).with(['user1'], ['user1']).and_return(true)
       expect(type.property(:members).insync?(['user1'])).to be_truthy
     end
 
     it "is_to_s and should_to_s call members_to_s" do
-      provider_instance.expects(:members_to_s).with(['user2', 'user1']).returns "user2 (), user1 ()"
-      provider_instance.expects(:members_to_s).with(['user1']).returns "user1 ()"
+      expect(provider_instance).to receive(:members_to_s).with(['user1', 'user2']).and_return("user1 (), user2 ()")
+      expect(provider_instance).to receive(:members_to_s).with(['user1']).and_return("user1 ()")
 
       expect(type.property(:members).is_to_s('user1')).to eq('user1 ()')
-      expect(type.property(:members).should_to_s('user2,user1')).to eq('user2 (), user1 ()')
+      expect(type.property(:members).should_to_s('user1,user2')).to eq('user1 (), user2 ()')
     end
   end
 end

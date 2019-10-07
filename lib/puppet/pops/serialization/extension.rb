@@ -30,6 +30,7 @@ module Extension
   VERSION_RANGE = 0x36
   BINARY = 0x37
   BASE64 = 0x38
+  URI    = 0x39
 
   # Marker module indicating whether or not an instance is tabulated or not
   module NotTabulated; end

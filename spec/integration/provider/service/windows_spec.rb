@@ -1,26 +1,27 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:service).provider(:windows), '(integration)',
-  :if => Puppet.features.microsoft_windows? do
+test_title = 'Integration Tests for Puppet::Type::Service::Provider::Windows'
+
+describe test_title, '(integration)', :if => Puppet::Util::Platform.windows? do
+  let(:provider_class) { Puppet::Type.type(:service).provider(:windows) }
 
   require 'puppet/util/windows'
 
   before :each do
-    Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
+    allow(Puppet::Type.type(:service)).to receive(:defaultprovider).and_return(provider_class)
   end
 
-  context 'should fail querying services that do not exist' do
+  context 'should return valid values when querying a service that does not exist' do
     let(:service) do
       Puppet::Type.type(:service).new(:name => 'foobarservice1234')
     end
 
-    it "with a Puppet::Error when querying enabled?" do
-      expect { service.provider.enabled? }.to raise_error(Puppet::Error)
+    it "with :false when asked if enabled" do
+      expect(service.provider.enabled?).to eql(:false)
     end
 
-    it "with a Puppet::Error when querying status" do
-      expect { service.provider.status }.to raise_error(Puppet::Error)
+    it "with :stopped when asked about status" do
+      expect(service.provider.status).to eql(:stopped)
     end
   end
 

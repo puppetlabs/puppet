@@ -3,12 +3,15 @@ Puppet::Parser::Functions::newfunction(:tagged, :type => :rvalue, :arity => -2, 
   tells you whether the current container is tagged with the specified tags.
   The tags are ANDed, so that all of the specified tags must be included for
   the function to return true.") do |vals|
-    configtags = compiler.catalog.tags
-    resourcetags = resource.tags
+    if Puppet[:tasks]
+      raise Puppet::ParseErrorWithIssue.from_issue_and_stack(
+        Puppet::Pops::Issues::CATALOG_OPERATION_NOT_SUPPORTED_WHEN_SCRIPTING,
+        {:operation => 'tagged'})
+    end
 
     retval = true
     vals.each do |val|
-      unless configtags.include?(val) or resourcetags.include?(val)
+      unless compiler.catalog.tagged?(val) or resource.tagged?(val)
         retval = false
         break
       end

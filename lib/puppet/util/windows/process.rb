@@ -7,15 +7,37 @@ module Puppet::Util::Windows::Process
   extend FFI::Library
 
   WAIT_TIMEOUT = 0x102
+  WAIT_INTERVAL = 200
+  # https://docs.microsoft.com/en-us/windows/desktop/ProcThread/process-creation-flags
+  CREATE_NO_WINDOW = 0x08000000
+  # https://docs.microsoft.com/en-us/windows/desktop/ProcThread/process-security-and-access-rights
+  PROCESS_QUERY_INFORMATION = 0x0400
+  # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maximum-path-length-limitation
+  MAX_PATH_LENGTH = 32767
 
   def execute(command, arguments, stdin, stdout, stderr)
-    Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr}, :close_handles => false )
+    create_args = {
+      :command_line => command,
+      :startup_info => {
+        :stdin => stdin,
+        :stdout => stdout,
+        :stderr => stderr
+      },
+      :close_handles => false,
+    }
+    if arguments[:suppress_window]
+      create_args[:creation_flags] = CREATE_NO_WINDOW
+    end
+    if arguments[:cwd]
+      create_args[:cwd] = arguments[:cwd]
+    end
+    Process.create(create_args)
   end
   module_function :execute
 
   def wait_process(handle)
-    while WaitForSingleObject(handle, 0) == WAIT_TIMEOUT
-      sleep(1)
+    while WaitForSingleObject(handle, WAIT_INTERVAL) == WAIT_TIMEOUT
+      sleep(0)
     end
 
     exit_status = -1
@@ -41,6 +63,26 @@ module Puppet::Util::Windows::Process
     GetCurrentProcess()
   end
   module_function :get_current_process
+
+  def open_process(desired_access, inherit_handle, process_id, &block)
+    phandle = nil
+    inherit = inherit_handle ? FFI::WIN32_TRUE : FFI::WIN32_FALSE
+    begin
+      phandle = OpenProcess(desired_access, inherit, process_id)
+      if phandle == FFI::Pointer::NULL_HANDLE
+        raise Puppet::Util::Windows::Error.new(
+          "OpenProcess(#{desired_access.to_s(8)}, #{inherit}, #{process_id})")
+      end
+
+      yield phandle
+    ensure
+      FFI::WIN32.CloseHandle(phandle) if phandle
+    end
+
+    # phandle has had CloseHandle called against it, so nothing to return
+    nil
+  end
+  module_function :open_process
 
   def open_process_token(handle, desired_access, &block)
     token_handle = nil
@@ -76,6 +118,32 @@ module Puppet::Util::Windows::Process
     nil
   end
   module_function :with_process_token
+
+  def get_process_image_name_by_pid(pid)
+    image_name = ""
+
+     open_process(PROCESS_QUERY_INFORMATION, false, pid) do |phandle|
+
+       FFI::MemoryPointer.new(:dword, 1) do |exe_name_length_ptr|
+        # UTF is 2 bytes/char:
+        max_chars = MAX_PATH_LENGTH + 1
+        exe_name_length_ptr.write_dword(max_chars)
+        FFI::MemoryPointer.new(:wchar, max_chars) do |exe_name_ptr|
+          use_win32_path_format = 0
+          result = QueryFullProcessImageNameW(phandle, use_win32_path_format, exe_name_ptr, exe_name_length_ptr)
+          if result == FFI::WIN32_FALSE
+            raise Puppet::Util::Windows::Error.new(
+              "QueryFullProcessImageNameW(phandle, #{use_win32_path_format}, " +
+              "exe_name_ptr, #{max_chars}")
+          end
+          image_name = exe_name_ptr.read_wide_string(exe_name_length_ptr.read_dword)
+        end
+      end
+    end
+
+    image_name
+  end
+  module_function :get_process_image_name_by_pid
 
   def lookup_privilege_value(name, system_name = '', &block)
     FFI::MemoryPointer.new(LUID.size) do |luid_ptr|
@@ -232,13 +300,21 @@ module Puppet::Util::Windows::Process
   # Note - Some env variable names start with '=' and are excluded from the return value
   # Note - The env_ptr MUST be freed using the FreeEnvironmentStringsW function
   # Note - There is no technical limitation to the size of the environment block returned.
-  #   However a pracitcal limit of 64K is used as no single environment variable can exceed 32KB
+  #   However a practical limit of 64K is used as no single environment variable can exceed 32KB
   def get_environment_strings
     env_ptr = GetEnvironmentStringsW()
 
-    pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, :double_null)
+    # pass :invalid => :replace to the Ruby String#encode to use replacement characters
+    pairs = env_ptr.read_arbitrary_wide_string_up_to(65534, :double_null, { :invalid => :replace })
       .split(?\x00)
       .reject { |env_str| env_str.nil? || env_str.empty? || env_str[0] == '=' }
+      .reject do |env_str|
+        # reject any string containing the Unicode replacement character
+        if env_str.include?("\uFFFD")
+          Puppet.warning(_("Discarding environment variable %{string} which contains invalid bytes") % { string: env_str })
+          true
+        end
+      end
       .map { |env_pair| env_pair.split('=', 2) }
     Hash[ pairs ]
   ensure
@@ -338,6 +414,16 @@ module Puppet::Util::Windows::Process
   attach_function_private :SetEnvironmentVariableW,
     [:lpcwstr, :lpcwstr], :win32_bool
 
+  # https://msdn.microsoft.com/en-us/library/windows/desktop/ms684320(v=vs.85).aspx
+  # HANDLE WINAPI OpenProcess(
+  #   _In_   DWORD DesiredAccess,
+  #   _In_   BOOL InheritHandle,
+  #   _In_   DWORD ProcessId
+  # );
+  ffi_lib :kernel32
+  attach_function_private :OpenProcess,
+    [:dword, :win32_bool, :dword], :handle
+
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
   # BOOL WINAPI OpenProcessToken(
   #   _In_   HANDLE ProcessHandle,
@@ -348,6 +434,16 @@ module Puppet::Util::Windows::Process
   attach_function_private :OpenProcessToken,
     [:handle, :dword, :phandle], :win32_bool
 
+  # https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-queryfullprocessimagenamew
+  # BOOL WINAPI QueryFullProcessImageName(
+  #   _In_   HANDLE hProcess,
+  #   _In_   DWORD dwFlags,
+  #   _Out_  LPWSTR lpExeName,
+  #   _In_   PDWORD lpdwSize,
+  # );
+  ffi_lib :kernel32
+  attach_function_private :QueryFullProcessImageNameW,
+    [:handle, :dword, :lpwstr, :pdword], :win32_bool
 
   # https://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
   # typedef struct _LUID {

@@ -9,7 +9,7 @@ module Evaluator
 # Hash
 # QualifiedName
 # Default (produced :default)
-# Regular Expression (produces ruby reqular expression)
+# Regular Expression (produces ruby regular expression)
 #
 # Not considered literal
 # QualifiedReference  # i.e. File, FooBar

@@ -30,6 +30,7 @@ class Puppet::Settings
   require 'puppet/settings/value_translator'
   require 'puppet/settings/environment_conf'
   require 'puppet/settings/server_list_setting'
+  require 'puppet/settings/certificate_revocation_setting'
 
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
@@ -81,6 +82,46 @@ class Puppet::Settings
 
   def self.default_config_file_name
     "puppet.conf"
+  end
+
+  def stringify_settings(section, settings = :all)
+    values_from_the_selected_section =
+      values(nil, section.to_sym)
+
+    loader_settings = {
+      :environmentpath => values_from_the_selected_section.interpolate(:environmentpath),
+      :basemodulepath => values_from_the_selected_section.interpolate(:basemodulepath),
+    }
+
+    Puppet.override(Puppet.base_context(loader_settings),
+                    _("New environment loaders generated from the requested section.")) do
+      # And now we can lookup values that include those from environments configured from
+      # the requested section
+      values = values(Puppet[:environment].to_sym, section.to_sym)
+
+      to_be_rendered = {}
+      settings = Puppet.settings.to_a.collect(&:first) if settings == :all
+      settings.sort.each do |setting_name|
+        to_be_rendered[setting_name] = values.print(setting_name.to_sym)
+      end
+
+      stringifyhash(to_be_rendered)
+    end
+  end
+
+  def stringifyhash(hash)
+    newhash = {}
+    hash.each do |key, val|
+      key = key.to_s
+      if val.is_a? Hash
+        newhash[key] = stringifyhash(val)
+      elsif val.is_a? Symbol
+        newhash[key] = val.to_s
+      else
+        newhash[key] = val
+      end
+    end
+    newhash
   end
 
   # Create a new collection of config settings.
@@ -254,8 +295,8 @@ class Puppet::Settings
     @global_defaults_initialized
   end
 
-  def initialize_global_settings(args = [])
-    raise Puppet::DevError, "Attempting to initialize global default settings more than once!" if global_defaults_initialized?
+  def initialize_global_settings(args = [], require_config = true)
+    raise Puppet::DevError, _("Attempting to initialize global default settings more than once!") if global_defaults_initialized?
 
     # The first two phases of the lifecycle of a puppet application are:
     # 1) Parse the command line options and handle any of them that are
@@ -263,7 +304,7 @@ class Puppet::Settings
     # 2) Parse the puppet config file(s).
 
     parse_global_options(args)
-    parse_config_files
+    parse_config_files(require_config)
 
     @global_defaults_initialized = true
   end
@@ -297,7 +338,7 @@ class Puppet::Settings
 
     # remove run_mode options from the arguments so that later parses don't think
     # it is an unknown option.
-    while option_index = args.index('--run_mode') do
+    while option_index = args.index('--run_mode') do #rubocop:disable Lint/AssignmentInCondition
       args.delete_at option_index
       args.delete_at option_index
     end
@@ -369,7 +410,7 @@ class Puppet::Settings
       begin
         setting.handle(self.value(setting.name))
       rescue InterpolationError => err
-        raise InterpolationError, err, err.backtrace unless options[:ignore_interpolation_dependency_errors]
+        raise InterpolationError, err.message, err.backtrace unless options[:ignore_interpolation_dependency_errors]
         #swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
         #we'll get another chance after application defaults are initialized
       end
@@ -379,7 +420,8 @@ class Puppet::Settings
 
   # Return a value's description.
   def description(name)
-    if obj = @config[name.to_sym]
+    obj = @config[name.to_sym]
+    if obj
       obj.desc
     else
       nil
@@ -435,7 +477,8 @@ class Puppet::Settings
       end
     end
 
-    if s = @config[str]
+    s = @config[str]
+    if s
       @deprecated_settings_that_have_been_configured << s if s.completely_deprecated?
     end
 
@@ -451,6 +494,12 @@ class Puppet::Settings
   # Prints the contents of a config file with the available config settings, or it
   # prints a single value of a config setting.
   def print_config_options
+    if Puppet::Util::Log.sendlevel?(:info)
+      Puppet::Util::Log.newdestination(:console)
+      message = (_("Using --configprint is deprecated. Use 'puppet config <subcommand>' instead."))
+      Puppet.deprecation_warning(message)
+    end
+
     env = value(:environment)
     val = value(:configprint)
     if val == "all"
@@ -583,14 +632,19 @@ class Puppet::Settings
   end
 
   # Parse the configuration file.  Just provides thread safety.
-  def parse_config_files
+  def parse_config_files(require_config = true)
     file = which_configuration_file
     if Puppet::FileSystem.exist?(file)
       begin
         text = read_file(file)
       rescue => detail
-        Puppet.log_exception(detail, "Could not load #{file}: #{detail}")
-        return
+        message = _("Could not load %{file}: %{detail}") % { file: file, detail: detail}
+        if require_config
+          Puppet.log_and_raise(detail, message)
+        else
+          Puppet.log_exception(detail, message)
+          return
+        end
       end
     else
       return
@@ -639,7 +693,8 @@ class Puppet::Settings
     # and I'm too lazy to only set the metadata once.
     if @configuration_file
       searchpath(nil, preferred_run_mode).reverse_each do |source|
-        if source.type == :section && section = @configuration_file.sections[source.name]
+        section = @configuration_file.sections[source.name] if source.type == :section
+        if section
           apply_metadata_from_section(section)
         end
       end
@@ -649,7 +704,8 @@ class Puppet::Settings
 
   def apply_metadata_from_section(section)
     section.settings.each do |setting|
-      if setting.has_metadata? && type = @config[setting.name]
+      type = @config[setting.name] if setting.has_metadata?
+      if type
         type.set_meta(setting.meta)
       end
     end
@@ -670,7 +726,8 @@ class Puppet::Settings
       :symbolic_enum   => SymbolicEnumSetting,
       :priority   => PrioritySetting,
       :autosign   => AutosignSetting,
-      :server_list => ServerListSetting
+      :server_list => ServerListSetting,
+      :certificate_revocation => CertificateRevocationSetting
   }
 
   # Create a new setting.  The value is passed in because it's used to determine
@@ -682,9 +739,11 @@ class Puppet::Settings
     klass = nil
     hash[:section] = hash[:section].to_sym if hash[:section]
 
-    if type = hash[:type]
-      unless klass = SETTING_TYPES[type]
-        raise ArgumentError, "Invalid setting type '#{type}'"
+    type = hash[:type]
+    if type
+      klass = SETTING_TYPES[type]
+      unless klass
+        raise ArgumentError, _("Invalid setting type '%{type}'") % { type: type }
       end
       hash.delete(:type)
     else
@@ -715,7 +774,8 @@ class Puppet::Settings
   # Reparse our config file, if necessary.
   def reparse_config_files
     if files
-      if filename = any_files_changed?
+      filename = any_files_changed?
+      if filename
         Puppet.notice "Config file #{filename} changed; triggering re-parse of all config files."
         parse_config_files
         reuse
@@ -822,13 +882,14 @@ class Puppet::Settings
     when :values
       @value_sets[source.name]
     when :section
-      if @configuration_file && section = @configuration_file.sections[source.name]
+      section = @configuration_file.sections[source.name] if @configuration_file
+      if section
         ValuesFromSection.new(source.name, section)
       end
     when :environment
       ValuesFromEnvironmentConf.new(source.name)
     else
-      raise(Puppet::DevError, "Unknown searchpath case: #{source.type} for the #{source} settings path element.")
+      raise Puppet::DevError, _("Unknown searchpath case: %{source_type} for the %{source} settings path element.") % { source_type: source.type, source: source}
     end
   end
 
@@ -837,7 +898,8 @@ class Puppet::Settings
   def set_by_config?(param, environment = nil, run_mode = preferred_run_mode)
     param = param.to_sym
     configsearchpath(environment, run_mode).any? do |source|
-      if vals = searchpath_values(source)
+      vals = searchpath_values(source)
+      if vals
         vals.lookup(param)
       end
     end
@@ -890,16 +952,18 @@ class Puppet::Settings
     section = section.to_sym
     call = []
     defs.each do |name, hash|
-      raise ArgumentError, "setting definition for '#{name}' is not a hash!" unless hash.is_a? Hash
+      raise ArgumentError, _("setting definition for '%{name}' is not a hash!") % { name: name } unless hash.is_a? Hash
 
       name = name.to_sym
       hash[:name] = name
       hash[:section] = section
-      raise ArgumentError, "Setting #{name} is already defined" if @config.include?(name)
+      raise ArgumentError, _("Setting %{name} is already defined") % { name: name } if @config.include?(name)
       tryconfig = newsetting(hash)
-      if short = tryconfig.short
-        if other = @shortnames[short]
-          raise ArgumentError, "Setting #{other.name} is already using short name '#{short}'"
+      short = tryconfig.short
+      if short
+        other = @shortnames[short]
+        if other
+          raise ArgumentError, _("Setting %{name} is already using short name '%{short}'") % { name: other.name, short: short }
         end
         @shortnames[short] = tryconfig
       end
@@ -933,7 +997,8 @@ class Puppet::Settings
       file = @config[key]
       next if file.value.nil?
       next unless (sections.nil? or sections.include?(file.section))
-      next unless resource = file.to_resource
+      resource = file.to_resource
+      next unless resource
       next if catalog.resource(resource.ref)
 
       Puppet.debug {"Using settings: adding file resource '#{key}': '#{resource.inspect}'"}
@@ -1134,7 +1199,8 @@ Generated on #{Time.now}.
   def record_deprecations_from_puppet_conf(puppet_conf)
     puppet_conf.sections.values.each do |section|
       section.settings.each do |conf_setting|
-        if setting = self.setting(conf_setting.name)
+        setting = self.setting(conf_setting.name)
+        if setting
           @deprecated_settings_that_have_been_configured << setting if setting.deprecated?
         end
       end
@@ -1156,9 +1222,14 @@ Generated on #{Time.now}.
       msg << " #{ref}" if ref
       Puppet.deprecation_warning(msg)
     when setting.completely_deprecated?
-      Puppet.deprecation_warning("Setting #{name} is deprecated. #{ref}", "setting-#{name}")
+      message = _("Setting %{name} is deprecated.") % { name: name }
+      message += " #{ref}"
+      Puppet.deprecation_warning(message, "setting-#{name}")
     when setting.allowed_on_commandline?
-      Puppet.deprecation_warning("Setting #{name} is deprecated in puppet.conf. #{ref}", "puppet-conf-setting-#{name}")
+      #TRANSLATORS 'puppet.conf' is a file name and should not be translated
+      message = _("Setting %{name} is deprecated in puppet.conf.") % { name: name }
+      message += " #{ref}"
+      Puppet.deprecation_warning(message, "puppet-conf-setting-#{name}")
     end
   end
 
@@ -1169,30 +1240,36 @@ Generated on #{Time.now}.
     if configured_environment == "production" && envdir && Puppet::FileSystem.exist?(envdir)
       configured_environment_path = File.join(envdir, configured_environment)
       if !Puppet::FileSystem.symlink?(configured_environment_path)
-        catalog.add_resource(
-          Puppet::Resource.new(:file,
-                               configured_environment_path,
-                               :parameters => { :ensure => 'directory' })
-        )
+        parameters = { :ensure => 'directory' }
+        unless Puppet::FileSystem.exist?(configured_environment_path)
+          parameters.merge!(:mode => '0750')
+          if Puppet.features.root?
+            parameters.merge!(:owner => Puppet[:user]) if service_user_available?
+            parameters.merge!(:group => Puppet[:group]) if service_group_available?
+          end
+        end
+        catalog.add_resource(Puppet::Resource.new(:file, configured_environment_path, :parameters => parameters))
       end
     end
   end
 
   def add_user_resources(catalog, sections)
     return unless Puppet.features.root?
-    return if Puppet.features.microsoft_windows?
+    return if Puppet::Util::Platform.windows?
     return unless self[:mkusers]
 
     @config.each do |name, setting|
       next unless setting.respond_to?(:owner)
       next unless sections.nil? or sections.include?(setting.section)
 
-      if user = setting.owner and user != "root" and catalog.resource(:user, user).nil?
+      user = setting.owner
+      if user && user != "root" && catalog.resource(:user, user).nil?
         resource = Puppet::Resource.new(:user, user, :parameters => {:ensure => :present})
         resource[:gid] = self[:group] if self[:group]
         catalog.add_resource resource
       end
-      if group = setting.group and ! %w{root wheel}.include?(group) and catalog.resource(:group, group).nil?
+      group = setting.group
+      if group && ! %w{root wheel}.include?(group) && catalog.resource(:group, group).nil?
         catalog.add_resource Puppet::Resource.new(:group, group, :parameters => {:ensure => :present})
       end
     end
@@ -1289,30 +1366,42 @@ Generated on #{Time.now}.
     # @api public
     def interpolate(name)
       setting = @defaults[name]
+      return nil unless setting
 
-      if setting
-        val = lookup(name)
-        # if we interpolate code, all hell breaks loose.
-        if name == :code
-          val
-        else
-          # Convert it if necessary
-          begin
-            val = convert(val, name)
-          rescue InterpolationError => err
-            # This happens because we don't have access to the param name when the
-            # exception is originally raised, but we want it in the message
-            raise InterpolationError, "Error converting value for param '#{name}': #{err}", err.backtrace
-          end
+      lookup_and_convert(name) do |val|
+        setting.munge(val)
+      end
+    end
 
-          setting.munge(val)
-        end
-      else
-        nil
+    def print(name)
+      setting = @defaults[name]
+      return nil unless setting
+
+      lookup_and_convert(name) do |val|
+        setting.print(val)
       end
     end
 
     private
+
+    def lookup_and_convert(name, &block)
+      val = lookup(name)
+      # if we interpolate code, all hell breaks loose.
+      if name == :code
+        val
+      else
+        # Convert it if necessary
+        begin
+          val = convert(val, name)
+        rescue InterpolationError => err
+          # This happens because we don't have access to the param name when the
+          # exception is originally raised, but we want it in the message
+          raise InterpolationError, _("Error converting value for param '%{name}': %{detail}") % { name: name, detail: err }, err.backtrace
+        end
+
+        yield val
+      end
+    end
 
     def convert(value, setting_name)
       case value
@@ -1331,7 +1420,7 @@ Generated on #{Time.now}.
             elsif !(pval = interpolate(varname.to_sym)).nil?
               pval
             else
-              raise InterpolationError, "Could not find value for #{expression}"
+              raise InterpolationError, _("Could not find value for %{expression}") % { expression: expression }
             end
           else
             failed_environment_interpolation = true
@@ -1340,7 +1429,9 @@ Generated on #{Time.now}.
           interpolated_expression
         end
         if failed_environment_interpolation
-          Puppet.warning("You cannot interpolate $environment within '#{setting_name}' when using directory environments.  Its value will remain #{interpolated_value}.")
+          #TRANSLATORS '$environment' is a Puppet specific variable and should not be translated
+          Puppet.warning(_("You cannot interpolate $environment within '%{setting_name}' when using directory environments.") % { setting_name: setting_name } +
+                             ' ' + _("Its value will remain %{value}.") % { value: interpolated_value })
         end
         interpolated_value
       else
@@ -1371,8 +1462,7 @@ Generated on #{Time.now}.
       default = @defaults[name]
 
       if !default
-        raise ArgumentError,
-          "Attempt to assign a value to unknown setting #{name.inspect}"
+        raise ArgumentError, _("Attempt to assign a value to unknown setting %{name}") % { name: name.inspect }
       end
 
       # This little exception-handling dance ensures that a hook is
@@ -1389,7 +1479,7 @@ Generated on #{Time.now}.
         @values[name] = old_value
         raise e
       end
-     end
+    end
 
     def inspect
       %Q{<#{self.class}:#{self.object_id} @name="#{@name}" @values="#{@values}">}
@@ -1443,9 +1533,11 @@ Generated on #{Time.now}.
     end
 
     def conf
-      @conf ||= if environments = Puppet.lookup(:environments) { nil }
-                  environments.get_conf(@environment_name)
-                end
+      unless @conf
+        environments = Puppet.lookup(:environments) { nil }
+        @conf = environments.get_conf(@environment_name) if environments
+      end
+      @conf
     end
 
     def inspect

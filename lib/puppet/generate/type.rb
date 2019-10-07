@@ -5,7 +5,7 @@ require 'puppet/generate/models/type/type'
 
 module Puppet
   module Generate
-    # Reponsible for generating type definitions in Puppet
+    # Responsible for generating type definitions in Puppet
     class Type
       # Represents an input to the type generator
       class Input
@@ -195,7 +195,8 @@ module Puppet
           types ||= Puppet::Type.instance_variable_get('@types')
 
           # Assume the type follows the naming convention
-          unless type = types[type_name]
+          type = types[type_name]
+          unless type
             Puppet.err _("Custom type '%{type_name}' was not defined in '%{input}'.") % { type_name: type_name, input: input }
             next
           end

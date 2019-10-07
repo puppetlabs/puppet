@@ -12,7 +12,13 @@ exec_prefix=/opt/csw
 sysconfdir=/opt/csw/etc
 sbindir=/opt/csw/sbin
 
-pidfile=/var/run/puppetlabs/agent.pid
+if [ -z $SMF_SYSVOL_FS ]; then 
+  piddir=/var/run/puppetlabs
+else
+  piddir=$SMF_SYSVOL_FS/puppetlabs
+fi;
+
+pidfile=$piddir/agent.pid
 
 case "$1" in
 start)
@@ -20,6 +26,7 @@ start)
     # Start daemons.
 
     printf "Starting Puppet client services:"
+    mkdir -p $piddir
 
     /opt/csw/sbin/puppetd
 
@@ -28,14 +35,14 @@ start)
     ;;
 stop)
     printf "Stopping Puppet client services:"
-    kill `cat $pidfile`
+    kill `cat "$pidfile"`
 
     printf " puppetd"
     echo ""
     ;;
 restart)
     printf "Restarting Puppet client services:"
-    kill -HUP `cat $pidfile`
+    kill -HUP `cat "$pidfile"`
 
     printf " puppetd"
     echo ""
@@ -43,14 +50,14 @@ restart)
 reload)
     printf "Reloading Puppet client services:"
 
-    kill -HUP `cat $pidfile`
+    kill -HUP `cat "$pidfile"`
 
     printf " puppetd"
     echo ""
     ;;
 status)
-    if [ -f $pidfile ]; then
-        pid=`cat $pidfile`
+    if [ -f "$pidfile" ]; then
+        pid=`cat "$pidfile"`
         curpid=`pgrep puppetd`
         if [ "$pid" -eq "$curpid" ]; then
             exit 0

@@ -26,7 +26,7 @@ class Puppet::Network::HTTP::API::IndirectionType
     when :master
       master_url_prefix
     else
-      raise ArgumentError, "Not a valid indirection type"
+      raise ArgumentError, _("Not a valid indirection type")
     end
   end
 end

@@ -12,7 +12,7 @@ module Puppet::Network # :nodoc:
     # are responsible for setting the values correctly, but this common
     # format makes it possible to check rights.
     def call
-      raise ArgumentError, "Request is not set up; cannot build call" unless handler and method
+      raise ArgumentError, _("Request is not set up; cannot build call") unless handler and method
 
       [handler, method].join(".")
     end

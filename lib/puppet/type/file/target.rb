@@ -72,7 +72,8 @@ module Puppet
 
 
     def retrieve
-      if stat = @resource.stat
+      stat = @resource.stat
+      if stat
         if stat.ftype == "link"
           return Puppet::FileSystem.readlink(@resource[:path])
         else

@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/network/formats'
@@ -102,14 +101,14 @@ describe "Puppet Network Format" do
     end
 
     it "should render by calling 'to_yaml' on the instance" do
-      instance = mock 'instance'
-      instance.expects(:to_yaml).returns "foo"
+      instance = double('instance')
+      expect(instance).to receive(:to_yaml).and_return("foo")
       expect(yaml.render(instance)).to eq("foo")
     end
 
     it "should render multiple instances by calling 'to_yaml' on the array" do
-      instances = [mock('instance')]
-      instances.expects(:to_yaml).returns "foo"
+      instances = [double('instance')]
+      expect(instances).to receive(:to_yaml).and_return("foo")
       expect(yaml.render_multiple(instances)).to eq("foo")
     end
 
@@ -149,6 +148,32 @@ describe "Puppet Network Format" do
       expect do
         yaml.intern_multiple(Puppet::Node, YAML.dump(["hello"]))
       end.to raise_error(Puppet::Network::FormatHandler::FormatError, /did not contain a valid instance/)
+    end
+
+    it 'accepts indirected classes' do
+      [
+        Puppet::Node::Facts.new('foo', {}),
+        Puppet::Node.new('foo'),
+        Puppet::Resource.new('File', '/foo'),
+        Puppet::Transaction::Report.new('foo'),
+        Puppet::Resource::Catalog.new
+      ].each { |obj| yaml.intern(obj.class, YAML.dump(obj.to_data_hash)) }
+    end
+
+    it 'raises when interning an instance of an unacceptable indirected type' do
+      obj = Puppet::SSL::Key.new('foo')
+
+      expect {
+        yaml.intern(obj.class, YAML.dump(obj))
+      }.to raise_error(Puppet::Network::FormatHandler::FormatError, /Tried to load unspecified class: Puppet::SSL::Key/)
+    end
+
+    it 'raises when interning multple instances of an unacceptable indirected type' do
+      obj = Puppet::SSL::Key.new('foo')
+
+      expect {
+        yaml.intern_multiple(obj.class, YAML.dump([obj]))
+      }.to raise_error(Puppet::Network::FormatHandler::FormatError, /Tried to load unspecified class: Puppet::SSL::Key/)
     end
   end
 
@@ -333,14 +358,6 @@ describe "Puppet Network Format" do
       expect(json.weight).to eq(15)
     end
 
-    it "should use a native parser implementation" do
-      expect(JSON.parser.name).to eq("JSON::Ext::Parser")
-    end
-
-    it "should use a native generator implementation" do
-      expect(JSON.generator.name).to eq("JSON::Ext::Generator")
-    end
-
     it "should render an instance as JSON" do
       instance = FormatsTest.new("foo")
       expect(json.render(instance)).to eq({"string" => "foo"}.to_json)
@@ -352,20 +369,20 @@ describe "Puppet Network Format" do
     end
 
     it "should intern an instance from a JSON hash" do
-      text = JSON.dump({"string" => "parsed_json"})
+      text = Puppet::Util::Json.dump({"string" => "parsed_json"})
       instance = json.intern(FormatsTest, text)
       expect(instance.string).to eq("parsed_json")
     end
 
     it "should skip data_to_hash if data is already an instance of the specified class" do
       # The rest terminus for the report indirected type relies on this behavior
-      data = JSON.dump([1, 2])
+      data = Puppet::Util::Json.dump([1, 2])
       instance = json.intern(Array, data)
       expect(instance).to eq([1, 2])
     end
 
     it "should intern multiple instances from a JSON array of hashes" do
-      text = JSON.dump(
+      text = Puppet::Util::Json.dump(
         [
           {
             "string" => "BAR"
@@ -379,7 +396,7 @@ describe "Puppet Network Format" do
     end
 
     it "should reject wrapped data from legacy clients as they've never supported JSON" do
-      text = JSON.dump(
+      text = Puppet::Util::Json.dump(
         {
           "type" => "FormatsTest",
           "data" => {
@@ -394,7 +411,7 @@ describe "Puppet Network Format" do
     it "fails intelligibly when given invalid data" do
       expect do
         json.intern(Puppet::Node, '')
-      end.to raise_error(JSON::ParserError, /A JSON text must at least contain two octets|unexpected token at ''/)
+      end.to raise_error(Puppet::Util::Json::ParseError)
     end
   end
 

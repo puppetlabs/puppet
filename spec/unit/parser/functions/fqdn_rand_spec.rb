@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/scope'
 
@@ -38,12 +37,36 @@ describe "the fqdn_rand function" do
     expect(val1).not_to eql(val2)
   end
 
+  it "should return a specific value with given set of inputs on non-fips enabled host" do
+    allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(false)
+
+    expect(fqdn_rand(3000, :host => 'dummy.fqdn.net')).to eql(338)
+  end
+
+  it "should return a specific value with given set of inputs on fips enabled host" do
+    allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
+
+    expect(fqdn_rand(3000, :host => 'dummy.fqdn.net')).to eql(278)
+  end
+
+  it "should return a specific value with given seed on a non-fips enabled host" do
+    allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(false)
+
+    expect(fqdn_rand(5000, :extra_identifier => ['expensive job 33'])).to eql(3374)
+  end
+
+  it "should return a specific value with given seed on a fips enabled host" do
+    allow(Puppet::Util::Platform).to receive(:fips_enabled?).and_return(true)
+
+    expect(fqdn_rand(5000, :extra_identifier => ['expensive job 33'])).to eql(2389)
+  end
+
   def fqdn_rand(max, args = {})
     host = args[:host] || '127.0.0.1'
     extra = args[:extra_identifier] || []
 
     scope = create_test_scope_for_node('localhost')
-    scope.stubs(:[]).with("::fqdn").returns(host)
+    allow(scope).to receive(:[]).with("::fqdn").and_return(host)
 
     scope.function_fqdn_rand([max] + extra)
   end

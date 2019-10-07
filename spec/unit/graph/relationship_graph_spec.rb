@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/graph'
 
@@ -295,6 +294,21 @@ describe Puppet::Graph::RelationshipGraph do
           completed_sentinel_of("class[A]"))
     end
 
+    it "admissible and completed sentinels should inherit the same tags" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        class a {
+	  tag "test_tag"
+        }
+
+        include a
+      MANIFEST
+
+      expect(vertex_called(relationship_graph, admissible_sentinel_of("class[A]")).tagged?("test_tag")).
+      to eq(true)
+      expect(vertex_called(relationship_graph, completed_sentinel_of("class[A]")).tagged?("test_tag")).
+      to eq(true)
+    end
+
     it "should remove all Component objects from the dependency graph" do
       relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
         class a {
@@ -382,6 +396,6 @@ describe Puppet::Graph::RelationshipGraph do
   end
 
   def stub_vertex(name)
-    stub "vertex #{name}", :ref => name
+    double("vertex #{name}", :ref => name)
   end
 end

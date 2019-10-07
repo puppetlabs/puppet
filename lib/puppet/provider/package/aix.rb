@@ -38,7 +38,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
-    sources = packages.collect { |name, package| package[:source] }.uniq
+    sources = packages.collect { |name, package| package[:source] }.uniq.compact
 
     updates = {}
     sources.each do |source|
@@ -52,7 +52,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
           if updates.key?(current[:name])
             previous = updates[current[:name]]
 
-            updates[ current[:name] ] = current unless Puppet::Util::Package.versioncmp(previous[:version], current[:version]) == 1
+            updates[current[:name]] = current unless Puppet::Util::Package.versioncmp(previous[:version], current[:version]) == 1
 
           else
             updates[current[:name]] = current
@@ -62,8 +62,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     end
 
     packages.each do |name, package|
-      if info = updates[package[:name]]
-        package.provider.latest_info = info[0]
+      if updates.key?(name)
+        package.provider.latest_info = updates[name]
       end
     end
   end
@@ -81,7 +81,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   end
 
   def install(useversion = true)
-    unless source = @resource[:source]
+    source = @resource[:source]
+    unless source
       self.fail _("A directory is required which will be used to find packages")
     end
 
@@ -101,7 +102,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   def self.pkglist(hash = {})
     cmd = [command(:lslpp), "-qLc"]
 
-    if name = hash[:pkgname]
+    name = hash[:pkgname]
+    if name
       cmd << name
     end
 
@@ -136,7 +138,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     unless upd.nil?
       return "#{upd[:version]}"
     else
-      raise Puppet::DevError, "Tried to get latest on a missing package" if properties[:ensure] == :absent
+      raise Puppet::DevError, _("Tried to get latest on a missing package") if properties[:ensure] == :absent
 
       return properties[:ensure]
     end

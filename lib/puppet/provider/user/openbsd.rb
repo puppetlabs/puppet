@@ -39,14 +39,16 @@ Puppet::Type.type(:user).provide :openbsd, :parent => :useradd do
   [:expiry, :password, :loginclass].each do |shadow_property|
     define_method(shadow_property) do
       if Puppet.features.libshadow?
-        if ent = Shadow::Passwd.getspnam(@resource.name)
+        ent = Shadow::Passwd.getspnam(@resource.name)
+        if ent
           method = self.class.option(shadow_property, :method)
           # ruby-shadow may not be new enough (< 2.4.1) and therefore lack the
           # sp_loginclass field.
           begin
             return unmunge(shadow_property, ent.send(method))
-          rescue => detail
-            Puppet.warning "ruby-shadow doesn't support #{method}"
+          rescue
+            #TRANSLATORS 'ruby-shadow' is a Ruby gem library
+            Puppet.warning _("ruby-shadow doesn't support %{method}") % { method: method }
           end
         end
       end

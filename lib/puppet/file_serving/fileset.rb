@@ -25,7 +25,7 @@ class Puppet::FileServing::Fileset
   end
 
   def initialize(path, options = {})
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       # REMIND: UNC path
       path = path.chomp(File::SEPARATOR) unless path =~ /^[A-Za-z]:\/$/
     else
@@ -122,7 +122,7 @@ class Puppet::FileServing::Fileset
     def children
       return [] unless directory?
 
-      Dir.entries(path).
+      Dir.entries(path, encoding: Encoding::UTF_8).
         reject { |child| ignore?(child) }.
         collect { |child| down_level(child) }
     end
@@ -148,7 +148,7 @@ class Puppet::FileServing::Fileset
 
     result = []
 
-    while entry = current_dirs.shift
+    while entry = current_dirs.shift #rubocop:disable Lint/AssignmentInCondition
       if continue_recursion_at?(entry.depth + 1)
         entry.children.each do |child|
           result << child.path

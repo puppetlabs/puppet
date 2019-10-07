@@ -1,4 +1,7 @@
 test_name "should create directory"
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
 
 agents.each do |agent|
   target = agent.tmpfile("create-dir")
@@ -31,8 +34,10 @@ agents.each do |agent|
   step "verify we can't create same dir resource with a trailing slash" do
     options = {:acceptable_exit_codes => [1]}
     on(agent, puppet_apply("--noop #{dir_manifest}"), options) do |result|
-      assert_match('Cannot alias File', result.output,
-                   'duplicate directory resources did not fail properly')
+      unless agent['locale'] == 'ja'
+        assert_match('Cannot alias File', result.output,
+                     'duplicate directory resources did not fail properly')
+      end
     end
   end
 end

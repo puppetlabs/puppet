@@ -73,7 +73,7 @@ class Puppet::Reports
     docs = ""
 
     # Use this method so they all get loaded
-    instance_loader(:report).loadall
+    instance_loader(:report).loadall(Puppet.lookup(:current_environment))
     loaded_instances(:report).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
       mod = self.report(name)
       docs << "#{name}\n#{"-" * name.to_s.length}\n"
@@ -87,7 +87,7 @@ class Puppet::Reports
   # Lists each of the reports.
   # @api private
   def self.reports
-    instance_loader(:report).loadall
+    instance_loader(:report).loadall(Puppet.lookup(:current_environment))
     loaded_instances(:report)
   end
 end

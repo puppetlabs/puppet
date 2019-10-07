@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet/parser/environment_compiler'
@@ -9,23 +8,34 @@ describe "Application instantiation" do
   let(:env) { Puppet::Node::Environment.create(:testing, []) }
   let(:node) { Puppet::Node.new('test', :environment => env) }
   let(:loaders) { Puppet::Pops::Loaders.new(env) }
+  let(:logs) { [] }
+  let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
+  let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+
+  def compile_collect_log(string)
+    Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+      compile_to_catalog(string, Puppet::Node.new('other', :environment => env))
+    end
+  end
 
   def compile_to_env_catalog(string, code_id=nil)
     Puppet[:code] = string
     Puppet::Parser::EnvironmentCompiler.compile(env, code_id).filter { |r| r.virtual? }
   end
 
-  around :each do |example|
-    Puppet::Parser::Compiler.any_instance.stubs(:loaders).returns(loaders)
-    Puppet::Parser::EnvironmentCompiler.any_instance.stubs(:loaders).returns(loaders)
-    Puppet.override(:loaders => loaders, :current_environment => env) do
-      Puppet::Type.newtype :cap, :is_capability => true do
-        newparam :name
-        newparam :host
-      end
-      example.run
-      Puppet::Type.rmtype(:cap)
+  before(:each) do
+    allow_any_instance_of(Puppet::Parser::Compiler).to receive(:loaders).and_return(loaders)
+    allow_any_instance_of(Puppet::Parser::EnvironmentCompiler).to receive(:loaders).and_return(loaders)
+    Puppet.push_context({:loaders => loaders, :current_environment => env})
+    Puppet::Type.newtype :cap, :is_capability => true do
+      newparam :name
+      newparam :host
     end
+  end
+
+  after(:each) do
+    Puppet::Type.rmtype(:cap)
+    Puppet.pop_context()
   end
 
   MANIFEST = <<-EOS
@@ -391,14 +401,14 @@ EOS
       }.each do |k,v|
         it "contains the #{v} (#{k})" do
             # Mock the connection to Puppet DB
-            Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+            expect(Puppet::Resource::CapabilityFinder).to receive(:find).and_return(cap)
             expect(compiled_catalog.resource(k)).not_to be_nil
         end
       end
 
       it "does not contain the produced resource (Prod[one])" do
         # Mock the connection to Puppet DB
-        Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+        expect(Puppet::Resource::CapabilityFinder).to receive(:find).and_return(cap)
         expect(compiled_catalog.resource("Prod[one]")).to be_nil
       end
     end
@@ -439,14 +449,14 @@ EOS
       }.each do |k,v|
         it "contains the #{v} (#{k})" do
           # Mock the connection to Puppet DB
-          Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+          expect(Puppet::Resource::CapabilityFinder).to receive(:find).and_return(cap)
           expect(compiled_catalog.resource(k)).not_to be_nil
         end
       end
 
       it "does not contain the produced resource (Class[prod])" do
         # Mock the connection to Puppet DB
-        Puppet::Resource::CapabilityFinder.expects(:find).returns(cap)
+        expect(Puppet::Resource::CapabilityFinder).to receive(:find).and_return(cap)
         expect(compiled_catalog.resource("Class[prod]")).to be_nil
       end
     end
@@ -481,19 +491,19 @@ EOS
   describe "in the environment catalog" do
     it "does not fail if there is no site expression" do
       expect {
-      catalog = compile_to_env_catalog(<<-EOC).to_resource
-        notify { 'ignore me':}
-      EOC
+        compile_to_env_catalog(<<-EOC).to_resource
+          notify { 'ignore me':}
+        EOC
       }.to_not raise_error()
     end
 
     it "ignores usage of hiera_include() at topscope for classification" do
-      Puppet.expects(:debug).with(regexp_matches /Ignoring hiera_include/)
+      expect(Puppet).to receive(:debug).with(/Ignoring hiera_include/)
 
       expect {
-        catalog = compile_to_env_catalog(<<-EOC).to_resource
-        hiera_include('classes')
-        site { }
+        compile_to_env_catalog(<<-EOC).to_resource
+          hiera_include('classes')
+          site { }
         EOC
       }.to_not raise_error()
 
@@ -589,8 +599,8 @@ EOS
 
       it "fails if there are non component resources in the site" do
         expect {
-        catalog = compile_to_env_catalog(MANIFEST_WITH_ILLEGAL_RESOURCE).to_resource
-        }.to raise_error(/Only application components can appear inside a site - Notify\[fail me\] is not allowed at line 20/)
+          compile_to_env_catalog(MANIFEST_WITH_ILLEGAL_RESOURCE).to_resource
+        }.to raise_error(/Only application components can appear inside a site - Notify\[fail me\] is not allowed \(line: 20\)/)
       end
     end
 
@@ -681,6 +691,33 @@ EOS
         }
       EOS
       }.to raise_error(Puppet::Error, /maps component P\[one\] to multiple nodes/)
+    end
+  end
+
+  describe "site containing a resource named 'plan'" do
+    it 'finds an application named plan' do
+      expect {compile_collect_log(<<-PUPPET)}.not_to raise_error
+        define plan::node_file() {
+          file { "/tmp/plans/${name}.txt":
+            content => "this is ${name}.txt",
+          }
+        }
+        Plan::Node_file produces Node_file {}
+        application plan() {
+          plan::node_file { "node_file_${name}":
+            export => Node_file["node_file_${name}"]
+          }
+        }
+        site {
+          plan { "test":
+            nodes       => {
+              Node["test.example.com"] => Plan::Node_file["node_file_plan_test"],
+            }
+          }
+        }
+        PUPPET
+
+      expect(warnings).to include(/Use of future reserved word: 'plan'/)
     end
   end
 end

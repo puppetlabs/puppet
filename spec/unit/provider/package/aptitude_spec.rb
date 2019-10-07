@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:aptitude) do
@@ -13,17 +12,17 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
     let(:dpkgquery_path) { '/bin/dpkg-query' }
 
     before do
-      Puppet::Util.stubs(:which).with('/usr/bin/dpkg-query').returns(dpkgquery_path)
+      allow(Puppet::Util).to receive(:which).with('/usr/bin/dpkg-query').and_return(dpkgquery_path)
     end
 
     { :absent   => "deinstall ok config-files faff 1.2.3-1\n",
       "1.2.3-1" => "install ok installed faff 1.2.3-1\n",
     }.each do |expect, output|
       it "detects #{expect} packages" do
-        Puppet::Util::Execution.expects(:execute).with(
+        expect(Puppet::Util::Execution).to receive(:execute).with(
           [dpkgquery_path, '-W', '--showformat', "'${Status} ${Package} ${Version}\\n'", 'faff'],
           {:failonfail => true, :combine => true, :custom_environment => {}}
-        ).returns(output)
+        ).and_return(Puppet::Util::Execution::ProcessOutput.new(output, 0))
 
         expect(pkg.property(:ensure).retrieve).to eq(expect)
       end
@@ -31,15 +30,15 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
   end
 
   it "installs when asked" do
-    pkg.provider.expects(:aptitude).
+    expect(pkg.provider).to receive(:aptitude).
       with('-y', '-o', 'DPkg::Options::=--force-confold', :install, 'faff').
-      returns(0)
+      and_return(0)
 
     pkg.provider.install
   end
 
   it "purges when asked" do
-    pkg.provider.expects(:aptitude).with('-y', 'purge', 'faff').returns(0)
+    expect(pkg.provider).to receive(:aptitude).with('-y', 'purge', 'faff').and_return(0)
     pkg.provider.purge
   end
 end

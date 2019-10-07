@@ -11,6 +11,14 @@ class Puppet::Provider::Package::Windows
 
     attr_reader :name, :version
 
+    REG_DISPLAY_VALUE_NAMES = [ 'DisplayName', 'QuietDisplayName' ]
+
+    def self.reg_value_names_to_load
+      REG_DISPLAY_VALUE_NAMES |
+      MsiPackage::REG_VALUE_NAMES |
+      ExePackage::REG_VALUE_NAMES
+    end
+
     # Enumerate each package. The appropriate package subclass
     # will be yielded.
     def self.each(&block)
@@ -18,7 +26,8 @@ class Puppet::Provider::Package::Windows
         name = key.name.match(/^.+\\([^\\]+)$/).captures[0]
 
         [MsiPackage, ExePackage].find do |klass|
-          if pkg = klass.from_registry(name, values)
+          pkg = klass.from_registry(name, values)
+          if pkg
             yield pkg
           end
         end
@@ -37,7 +46,7 @@ class Puppet::Provider::Package::Windows
             open(hive, 'Software\Microsoft\Windows\CurrentVersion\Uninstall', mode) do |uninstall|
               each_key(uninstall) do |name, wtime|
                 open(hive, "#{uninstall.keyname}\\#{name}", mode) do |key|
-                  yield key, values(key)
+                  yield key, values_by_name(key, reg_value_names_to_load)
                 end
               end
             end
@@ -71,7 +80,7 @@ class Puppet::Provider::Package::Windows
 
     def self.replace_forward_slashes(value)
       if value.include?('/')
-        value.gsub!('/', "\\")
+        value = value.gsub('/', "\\")
         Puppet.debug('Package source parameter contained /s - replaced with \\s')
       end
       value

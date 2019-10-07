@@ -22,7 +22,7 @@ describe Puppet::Forge do
   let (:mixed_utf8_query_param) { "foo + A\u06FF\u16A0\u{2070E}" } # Aۿᚠ
   let (:mixed_utf8_query_param_encoded) { "foo%20%2B%20A%DB%BF%E1%9A%A0%F0%A0%9C%8E"}
   let (:empty_json) { '{ "results": [], "pagination" : { "next" : null } }' }
-  let (:ok_response) { stub('response', :code => '200', :body => empty_json) }
+  let (:ok_response) { double('response', :code => '200', :body => empty_json) }
 
   describe "making a" do
     before :each do
@@ -30,14 +30,13 @@ describe Puppet::Forge do
     end
 
     context "search request" do
-
       it "includes any defined module_groups, ensuring to only encode them once in the URI" do
         Puppet[:module_groups] = 'base+pe'
 
         # ignores Puppet::Forge::Repository#read_response, provides response to search
         performs_an_http_request(ok_response) do |http|
           encoded_uri = "/v3/modules?query=#{mixed_utf8_query_param_encoded}&module_groups=base%20pe"
-          http.expects(:request).with(responds_with(:path, encoded_uri))
+          expect(http).to receive(:request).with(have_attributes(path: encoded_uri))
         end
 
         forge.search(mixed_utf8_query_param)
@@ -47,7 +46,7 @@ describe Puppet::Forge do
         # ignores Puppet::Forge::Repository#read_response, provides response to search
         performs_an_http_request(ok_response) do |http|
           encoded_uri = "/v3/modules?query=#{mixed_utf8_query_param_encoded}"
-          http.expects(:request).with(responds_with(:path, encoded_uri))
+          expect(http).to receive(:request).with(have_attributes(path: encoded_uri))
         end
 
         forge.search(mixed_utf8_query_param)
@@ -59,11 +58,12 @@ describe Puppet::Forge do
       it "includes any defined module_groups, ensuring to only encode them once in the URI" do
         Puppet[:module_groups] = 'base+pe'
         module_name = 'puppetlabs-acl'
+        exclusions = "readme%2Cchangelog%2Clicense%2Curi%2Cmodule%2Ctags%2Csupported%2Cfile_size%2Cdownloads%2Ccreated_at%2Cupdated_at%2Cdeleted_at"
 
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
-          encoded_uri = "/v3/releases?module=#{module_name}&module_groups=base%20pe"
-          http.expects(:request).with(responds_with(:path, encoded_uri))
+          encoded_uri = "/v3/releases?module=#{module_name}&sort_by=version&exclude_fields=#{exclusions}&module_groups=base%20pe"
+          expect(http).to receive(:request).with(have_attributes(path: encoded_uri))
         end
 
         forge.fetch(module_name)
@@ -71,11 +71,12 @@ describe Puppet::Forge do
 
       it "single encodes the module name term in the URI" do
         module_name = "puppetlabs-#{mixed_utf8_query_param}"
+        exclusions = "readme%2Cchangelog%2Clicense%2Curi%2Cmodule%2Ctags%2Csupported%2Cfile_size%2Cdownloads%2Ccreated_at%2Cupdated_at%2Cdeleted_at"
 
         # ignores Puppet::Forge::Repository#read_response, provides response to fetch
         performs_an_http_request(ok_response) do |http|
-          encoded_uri = "/v3/releases?module=puppetlabs-#{mixed_utf8_query_param_encoded}"
-          http.expects(:request).with(responds_with(:path, encoded_uri))
+          encoded_uri = "/v3/releases?module=puppetlabs-#{mixed_utf8_query_param_encoded}&sort_by=version&exclude_fields=#{exclusions}"
+          expect(http).to receive(:request).with(have_attributes(path: encoded_uri))
         end
 
         forge.fetch(module_name)
@@ -94,17 +95,15 @@ describe Puppet::Forge do
   end
 
   def mock_proxy(port, proxy_args, result, &block)
-    http = mock("http client")
-    proxy = mock("http proxy")
-    proxy_class = mock("http proxy class")
+    http = double("http client")
+    proxy = double("http proxy")
 
-    Net::HTTP.expects(:Proxy).with(*proxy_args).returns(proxy_class)
-    proxy_class.expects(:new).with(host, port).returns(proxy)
+    expect(Net::HTTP).to receive(:new).with(host, port, *proxy_args).and_return(proxy)
 
-    proxy.expects(:open_timeout=)
-    proxy.expects(:read_timeout=)
+    expect(proxy).to receive(:open_timeout=)
+    expect(proxy).to receive(:read_timeout=)
 
-    proxy.expects(:start).yields(http).returns(result)
+    expect(proxy).to receive(:start).and_yield(http).and_return(result)
     yield http
 
     proxy

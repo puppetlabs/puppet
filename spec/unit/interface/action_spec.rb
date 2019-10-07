@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/interface'
 
@@ -138,7 +137,7 @@ describe Puppet::Interface::Action do
       end
 
       it "should call #validate_and_clean on the action when invoked" do
-        face.get_action(:bar).expects(:validate_and_clean).with({}).returns({})
+        expect(face.get_action(:bar)).to receive(:validate_and_clean).with({}).and_return({})
         face.bar 1, :two, 'three'
       end
     end
@@ -246,7 +245,7 @@ describe Puppet::Interface::Action do
         face = Puppet::Interface.new(:with_options, '0.0.1') do
           action(:foo) do
             when_invoked do |options| true end
-            self.instance_eval &block
+            self.instance_eval(&block)
           end
         end
         face.get_action(:foo)
@@ -397,7 +396,7 @@ describe Puppet::Interface::Action do
 
       it "should not invoke a decorator if the options are empty" do
         face.option("--foo FOO") { before_action { |_,_,_| report :before_action } }
-        face.expects(:report).never
+        expect(face).not_to receive(:report)
         face.bar
       end
 
@@ -642,6 +641,39 @@ describe Puppet::Interface::Action do
       expect(subject.get_default_action).to be_nil
       action.default = true
       expect(subject.get_default_action).to eq(action)
+    end
+  end
+
+  context "when deprecating a face action" do
+    let :face do
+      Puppet::Interface.new(:foo, '1.0.0') do
+        action :bar do
+          option "--bar"
+          when_invoked do |options| options end
+        end
+      end
+    end
+
+    let :action do face.get_action :bar end
+
+    describe "#deprecate" do
+      it "should set the deprecated value to true" do
+        expect(action).not_to be_deprecated
+        action.deprecate
+        expect(action).to be_deprecated
+      end
+    end
+
+    describe "#deprecated?" do
+      it "should return a nil (falsey) value by default" do
+        expect(action.deprecated?).to be_falsey
+      end
+
+      it "should return true if the action has been deprecated" do
+        expect(action).not_to be_deprecated
+        action.deprecate
+        expect(action).to be_deprecated
+      end
     end
   end
 end

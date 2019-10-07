@@ -1,7 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-describe "Windows UTF8 environment variables", :if => Puppet.features.microsoft_windows? do
+describe "Windows UTF8 environment variables", :if => Puppet::Util::Platform.windows? do
   # The Puppet::Util::Windows::Process class is used to manipulate environment variables as it is known to handle UTF8 characters. Where as the implementation of ENV in ruby does not.
   # before and end all are used to inject environment variables before the test helper 'before_each_test' function is called
   # Do not use before and after hooks in these tests as it may have unintended consequences
@@ -16,7 +15,7 @@ describe "Windows UTF8 environment variables", :if => Puppet.features.microsoft_
     # Need to cleanup this environment variable otherwise it contaminates any subsequent tests
     Puppet::Util::Windows::Process.set_environment_variable(@varname, nil)
   }
-  
+
   it "#after_each_test should preserve UTF8 environment variables" do
     envhash = Puppet::Util::Windows::Process.get_environment_strings
     expect(envhash[@varname]).to eq(@rune_utf8)

@@ -1,18 +1,16 @@
-#!/usr/bin/env ruby
 require 'spec_helper'
 
-if Puppet.features.microsoft_windows?
+if Puppet::Util::Platform.windows?
   class WindowsSecurityTester
     require 'puppet/util/windows/security'
     include Puppet::Util::Windows::Security
   end
 end
 
-describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_windows? do
+describe "Puppet::Util::Windows::Security", :if => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
 
   before :all do
-
     # necessary for localized name of guests
     guests_name = Puppet::Util::Windows::SID.sid_to_name('S-1-5-32-546')
     guests = Puppet::Util::Windows::ADSI::Group.new(guests_name)
@@ -99,7 +97,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
     describe "on a volume that doesn't support ACLs" do
       [:owner, :group, :mode].each do |p|
         it "should return nil #{p}" do
-          winsec.stubs(:supports_acl?).returns false
+          allow(winsec).to receive(:supports_acl?).and_return(false)
 
           expect(winsec.send("get_#{p}", path)).to be_nil
         end
@@ -109,12 +107,12 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
     describe "on a volume that supports ACLs" do
       describe "for a normal user" do
         before :each do
-          Puppet.features.stubs(:root?).returns(false)
+          allow(Puppet.features).to receive(:root?).and_return(false)
         end
 
         after :each do
           winsec.set_mode(WindowsSecurityTester::S_IRWXU, parent)
-          winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) if Puppet::FileSystem.exist?(path)
+          begin winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) rescue nil end
         end
 
         describe "#supports_acl?" do
@@ -167,6 +165,19 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           it "should allow setting to a group the current owner is not a member of" do
             winsec.set_group(sids[:power_users], path)
           end
+
+          it "should consider a mode of 7 for group to be FullControl (F)" do
+            winsec.set_group(sids[:power_users], path)
+            winsec.set_mode(0070, path)
+
+            group_ace = winsec.get_aces_for_path_by_sid(path, sids[:power_users])
+            # there should only be a single ace for the given group
+            expect(group_ace.count).to eq(1)
+            expect(group_ace[0].mask).to eq(klass::FILE_ALL_ACCESS)
+
+            # ensure that mode is still read as 070 (written as 70)
+            expect((winsec.get_mode(path) & 0777).to_s(8).rjust(3, '0')).to eq("070")
+          end
         end
 
         describe "#group" do
@@ -211,7 +222,12 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             end
           end
 
-          it "should round-trip all 128 modes that do not require deny ACEs" do
+          it "should round-trip all 128 modes that do not require deny ACEs, where owner and group are different" do
+            # windows defaults set Administrators, None when Administrator
+            # or Administrators, SYSTEM when System
+            # but we can guarantee group is different by explicitly setting to Users
+            winsec.set_group(sids[:users], path)
+
             0.upto(1).each do |s|
               0.upto(7).each do |u|
                 0.upto(u).each do |g|
@@ -225,6 +241,53 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
                     mode = (s << 9 | u << 6 | g << 3 | o << 0)
                     winsec.set_mode(mode, path)
                     expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
+                  end
+                end
+              end
+            end
+          end
+
+          it "should round-trip all 54 modes that do not require deny ACEs, where owner and group are same" do
+            winsec.set_group(winsec.get_owner(path), path)
+
+            0.upto(1).each do |s|
+              0.upto(7).each do |ug|
+                0.upto(ug).each do |o|
+                  # if user and group superset of other, then
+                  # no deny ace is required, and mode can be converted to win32
+                  # access mask, and back to mode without loss of information
+                  # (provided the owner and group are the same)
+                  next if ((ug & o) != o)
+                  mode = (s << 9 | ug << 6 | ug << 3 | o << 0)
+                  winsec.set_mode(mode, path)
+                  expect(winsec.get_mode(path).to_s(8)).to eq(mode.to_s(8))
+                end
+              end
+            end
+          end
+
+          # The SYSTEM user is a special case therefore we need to test that we round trip correctly when set
+          it "should round-trip all 128 modes that do not require deny ACEs, when simulating a SYSTEM service" do
+            # The owner and group for files/dirs created, when running as a service under Local System are
+            # Owner = Administrators
+            # Group = SYSTEM
+            winsec.set_owner(sids[:administrators], path)
+            winsec.set_group(sids[:system], path)
+
+            0.upto(1).each do |s|
+              0.upto(7).each do |u|
+                0.upto(u).each do |g|
+                  0.upto(g).each do |o|
+                    # if user is superset of group, and group superset of other, then
+                    # no deny ace is required, and mode can be converted to win32
+                    # access mask, and back to mode without loss of information
+                    # (provided the owner and group are not the same)
+                    next if ((u & g) != g) or ((g & o) != o)
+                    applied_mode  = (s << 9 | u << 6 | g << 3 | o << 0)
+                    # SYSTEM must always be Full Control (7)
+                    expected_mode = (s << 9 | u << 6 | 7 << 3 | o << 0)
+                    winsec.set_mode(applied_mode, path)
+                    expect(winsec.get_mode(path).to_s(8)).to eq(expected_mode.to_s(8))
                   end
                 end
               end
@@ -406,13 +469,13 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "for an administrator", :if => (Puppet.features.root? && Puppet.features.microsoft_windows?) do
+      describe "for an administrator", :if => (Puppet.features.root? && Puppet::Util::Platform.windows?) do
         before :each do
           is_dir = Puppet::FileSystem.directory?(path)
           winsec.set_mode(WindowsSecurityTester::S_IRWXU | WindowsSecurityTester::S_IRWXG, path)
           set_group_depending_on_current_user(path)
           winsec.set_owner(sids[:guest], path)
-          expected_error = RUBY_VERSION =~ /^2\./ && is_dir ? Errno::EISDIR : Errno::EACCES
+          expected_error = is_dir ? Errno::EISDIR : Errno::EACCES
           expect { File.open(path, 'r') }.to raise_error(expected_error)
         end
 
@@ -551,6 +614,34 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           #   end
           #   winsec.get_mode(path).to_s(8).should == "777"
           # end
+        end
+
+        describe "#mode=" do
+          # setting owner to SYSTEM requires root
+          it "should round-trip all 54 modes that do not require deny ACEs, when simulating a SYSTEM scheduled task" do
+            # The owner and group for files/dirs created, when running as a Scheduled Task as Local System are
+            # Owner = SYSTEM
+            # Group = SYSTEM
+            winsec.set_group(sids[:system], path)
+            winsec.set_owner(sids[:system], path)
+
+            0.upto(1).each do |s|
+              0.upto(7).each do |ug|
+                0.upto(ug).each do |o|
+                  # if user and group superset of other, then
+                  # no deny ace is required, and mode can be converted to win32
+                  # access mask, and back to mode without loss of information
+                  # (provided the owner and group are the same)
+                  next if ((ug & o) != o)
+                  applied_mode  = (s << 9 | ug << 6 | ug << 3 | o << 0)
+                  # SYSTEM must always be Full Control (7)
+                  expected_mode = (s << 9 | 7 << 6 | 7 << 3 | o << 0)
+                  winsec.set_mode(applied_mode, path)
+                  expect(winsec.get_mode(path).to_s(8)).to eq(expected_mode.to_s(8))
+                end
+              end
+            end
+          end
         end
 
         describe "when the parent directory" do
@@ -734,11 +825,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       let (:explorer) { File.join(Dir::WINDOWS, "explorer.exe") }
 
       it "should get the owner" do
-        expect(winsec.get_owner(explorer)).to match /^S-1-5-/
+        expect(winsec.get_owner(explorer)).to match(/^S-1-5-/)
       end
 
       it "should get the group" do
-        expect(winsec.get_group(explorer)).to match /^S-1-5-/
+        expect(winsec.get_group(explorer)).to match(/^S-1-5-/)
       end
 
       it "should get the mode" do

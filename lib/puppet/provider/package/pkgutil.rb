@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
         { :alias => $1, :name => $2, :avail => $3 }
       else
-        Puppet.warning _("Cannot match %s") % line
+        Puppet.warning _("Cannot match %{line}") % { line: line }
       end
     end.reject { |h| h.nil? }
   end
@@ -88,7 +88,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     output = output.split("\n")
 
     if output[-1] == "Not in catalog"
-      Puppet.warning _("Package not in pkgutil catalog: %s") % hash[:justme]
+      Puppet.warning _("Package not in pkgutil catalog: %{package}") % { package: hash[:justme] }
       return nil
     end
 
@@ -142,7 +142,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
       return hash
     else
-      Puppet.warning _("Cannot match %s") % line
+      Puppet.warning _("Cannot match %{line}") % { line: line }
       return nil
     end
   end
@@ -152,9 +152,9 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     # get passed to pkgutil via one or more -t options
     if resource[:source]
       sources = [resource[:source]].flatten
-      pkguti *[sources.map{|src| [ "-t", src ]}, *args].flatten
+      pkguti(*[sources.map{|src| [ "-t", src ]}, *args].flatten)
     else
-      pkguti *args.flatten
+      pkguti(*args.flatten)
     end
   end
 
@@ -169,7 +169,8 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   end
 
   def query
-    if hash = pkgsingle(@resource)
+    hash = pkgsingle(@resource)
+    if hash
       hash
     else
       {:ensure => :absent}

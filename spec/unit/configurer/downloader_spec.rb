@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/configurer/downloader'
@@ -90,21 +89,21 @@ describe Puppet::Configurer::Downloader do
       end
 
       it "should always set the owner to the current UID" do
-        Process.expects(:uid).returns 51
+        expect(Process).to receive(:uid).and_return(51)
 
         file = generate_file_resource(:path => '/path')
         expect(file[:owner]).to eq(51)
       end
 
       it "should always set the group to the current GID" do
-        Process.expects(:gid).returns 61
+        expect(Process).to receive(:gid).and_return(61)
 
         file = generate_file_resource(:path => '/path')
         expect(file[:group]).to eq(61)
       end
     end
 
-    describe "on Windows", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows", :if => Puppet::Util::Platform.windows? do
       it "should omit the owner" do
         file = generate_file_resource(:path => 'C:/path')
 
@@ -160,6 +159,11 @@ describe Puppet::Configurer::Downloader do
       expect(@dler.catalog.host_config).to eq(false)
     end
 
+    it "should not issue a deprecation warning for source_permissions" do
+      expect(Puppet).not_to receive(:puppet_deprecation_warning)
+      catalog = @dler.catalog
+      expect(catalog.resources.size).to eq(1) # Must consume catalog to fix warnings
+    end
   end
 
   describe "when downloading" do
@@ -179,37 +183,37 @@ describe Puppet::Configurer::Downloader do
     end
 
     it "should log that it is downloading" do
-      Puppet.expects(:info)
+      expect(Puppet).to receive(:info)
 
       @dler.evaluate
     end
 
     it "should return all changed file paths" do
-      trans = mock 'transaction'
+      trans = double('transaction')
 
-      catalog = mock 'catalog'
-      @dler.expects(:catalog).returns(catalog)
-      catalog.expects(:apply).yields(trans)
+      catalog = double('catalog')
+      expect(@dler).to receive(:catalog).and_return(catalog)
+      expect(catalog).to receive(:apply).and_yield(trans)
 
-      resource = mock 'resource'
-      resource.expects(:[]).with(:path).returns "/changed/file"
+      resource = double('resource')
+      expect(resource).to receive(:[]).with(:path).and_return("/changed/file")
 
-      trans.expects(:changed?).returns([resource])
+      expect(trans).to receive(:changed?).and_return([resource])
 
       expect(@dler.evaluate).to eq(%w{/changed/file})
     end
 
     it "should yield the resources if a block is given" do
-      trans = mock 'transaction'
+      trans = double('transaction')
 
-      catalog = mock 'catalog'
-      @dler.expects(:catalog).returns(catalog)
-      catalog.expects(:apply).yields(trans)
+      catalog = double('catalog')
+      expect(@dler).to receive(:catalog).and_return(catalog)
+      expect(catalog).to receive(:apply).and_yield(trans)
 
-      resource = mock 'resource'
-      resource.expects(:[]).with(:path).returns "/changed/file"
+      resource = double('resource')
+      expect(resource).to receive(:[]).with(:path).and_return("/changed/file")
 
-      trans.expects(:changed?).returns([resource])
+      expect(trans).to receive(:changed?).and_return([resource])
 
       yielded = nil
       @dler.evaluate { |r| yielded = r }
@@ -217,10 +221,10 @@ describe Puppet::Configurer::Downloader do
     end
 
     it "should catch and log exceptions" do
-      Puppet.expects(:err)
+      expect(Puppet).to receive(:log_exception)
       # The downloader creates a new catalog for each apply, and really the only object
       # that it is possible to stub for the purpose of generating a puppet error
-      Puppet::Resource::Catalog.any_instance.stubs(:apply).raises(Puppet::Error, "testing")
+      allow_any_instance_of(Puppet::Resource::Catalog).to receive(:apply).and_raise(Puppet::Error, "testing")
 
       expect { @dler.evaluate }.not_to raise_error
     end

@@ -15,13 +15,13 @@
 module Puppet::Pops
 module Resource
 class Param
-  # This make this class instantiateable from Puppet
+  # This make this class instantiable from Puppet
   include Puppet::Pops::Types::PuppetObject
 
   def self.register_ptype(loader, ir)
     @ptype = Pcore::create_object_type(loader, ir, self, 'Puppet::Resource::Param', nil,
       {
-        Types::KEY_TYPE => Types::PType::DEFAULT,
+        Types::KEY_TYPE => Types::PTypeType::DEFAULT,
         Types::KEY_NAME => Types::PStringType::NON_EMPTY,
         'name_var' => {
           Types::KEY_TYPE => Types::PBooleanType::DEFAULT,

@@ -31,7 +31,8 @@ Puppet::Type.type(:service).provide :service do
 
   # Use either a specified command or the default for our provider.
   def ucommand(type, fof = true)
-    if c = @resource[type]
+    c = @resource[type]
+    if c
       cmd = [c]
     else
       cmd = [send("#{type}cmd")].flatten

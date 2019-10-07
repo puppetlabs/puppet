@@ -58,7 +58,7 @@ class Puppet::Resource::TypeCollection
 
   def add(instance)
     # return a merged instance, or the given
-    result = catch(:merged) {
+    catch(:merged) {
       send("add_#{instance.type}", instance)
       instance.resource_type_collection = self
       instance
@@ -124,7 +124,8 @@ class Puppet::Resource::TypeCollection
   def node(name)
     name = munge_name(name)
 
-    if node = @nodes[name]
+    node = @nodes[name]
+    if node
       return node
     end
 
@@ -208,7 +209,7 @@ class Puppet::Resource::TypeCollection
       if environment.config_version.nil? || environment.config_version == ""
         @version = Time.now.to_i
       else
-        @version = Puppet::Util::Execution.execute([environment.config_version]).strip
+        @version = Puppet::Util::Execution.execute([environment.config_version]).to_s.strip
       end
     end
 
@@ -237,6 +238,7 @@ class Puppet::Resource::TypeCollection
           debug_once _("Not attempting to load %{type} %{fqname} as this object was missing during a prior compilation") % { type: type, fqname: fqname }
         end
       else
+        fqname = munge_name(fqname)
         result = loader.try_load_fqname(type, fqname)
         @notfound[ fqname ] = result.nil?
       end
@@ -249,7 +251,8 @@ class Puppet::Resource::TypeCollection
   end
 
   def dupe_check(instance, hash)
-    return unless dupe = hash[instance.name]
+    dupe = hash[instance.name]
+    return unless dupe
     message = yield dupe
     instance.fail Puppet::ParseError, message
   end

@@ -7,8 +7,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     the packages you're managing.
 
     This provider supports the `install_options` attribute, which allows command-line flags to be passed to pkgadd.
-    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-    or an array where each element is either a string or a hash."
+    These options should be specified as an array where each element is either a string
+     or a hash."
 
   commands :pkginfo => "/usr/bin/pkginfo",
     :pkgadd => "/usr/sbin/pkgadd",

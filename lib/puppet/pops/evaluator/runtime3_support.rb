@@ -20,7 +20,7 @@ module Runtime3Support
   def fail(issue, semantic, options={}, except=nil)
     optionally_fail(issue, semantic, options, except)
     # an error should have been raised since fail always fails
-    raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+    raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
   end
 
   # Optionally (based on severity) Fails the evaluation of _semantic_ with a given issue
@@ -55,13 +55,8 @@ module Runtime3Support
   #
   def runtime_issue(issue, options={})
     # Get position from puppet runtime stack
-    stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-    if stacktrace.size > 0
-      file, line = stacktrace[0]
-    else
-      file = nil
-      line = nil
-    end
+    file, line = Puppet::Pops::PuppetStack.top_of_stack
+
     # Use a SemanticError as the sourcepos
     semantic = Puppet::Pops::SemanticError.new(issue, nil, options.merge({:file => file, :line => line}))
     optionally_fail(issue,  semantic)
@@ -150,7 +145,7 @@ module Runtime3Support
     # case - it is just wrong, the error should be reported by the caller who knows in more detail where it
     # is in the source.
     #
-    raise ArgumentError, "Internal error - attempt to create a local scope without a hash" unless hash.is_a?(Hash)
+    raise ArgumentError, _("Internal error - attempt to create a local scope without a hash") unless hash.is_a?(Hash)
     scope.ephemeral_from(hash)
   end
 
@@ -257,7 +252,8 @@ module Runtime3Support
     if v.is_a?(Numeric)
       return v
     end
-    unless n = Utils.to_n(v)
+    n = Utils.to_n(v)
+    unless n
       fail(Issues::NOT_NUMERIC, o, {:value => v})
     end
     # this point is reached if there was a conversion
@@ -281,14 +277,15 @@ module Runtime3Support
     # and it does not defined the visibility of functions from a ruby function's perspective. Instead,
     # this is done from the perspective of the environment.
     loader = loaders.private_environment_loader
-    if loader && func = loader.load(:function, name)
+    func = loader.load(:function, name) if loader
+    if func
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
         return func.call(scope, *args, &block)
       end
     end
 
     # Call via 3x API if function exists there
-    raise ArgumentError, "Unknown function '#{name}'" unless Puppet::Parser::Functions.function(name)
+    raise ArgumentError, _("Unknown function '%{name}'") % { name: name } unless Puppet::Parser::Functions.function(name)
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
@@ -301,21 +298,24 @@ module Runtime3Support
   def call_function(name, args, o, scope, &block)
     file, line = extract_file_line(o)
     loader = Adapters::LoaderAdapter.loader_for_model_object(o, file)
-    if loader && func = loader.load(:function, name)
+    # 'ruby -wc' thinks that _func is unused, because the only reference to it
+    # is inside of the Kernel.eval string below. By prefixing it with the
+    # underscore, we let Ruby know to not worry about whether it's unused or not.
+    _func = loader.load(:function, name) if loader
+    if _func
       Puppet::Util::Profiler.profile(name, [:functions, name]) do
         # Add stack frame when calling. See Puppet::Pops::PuppetStack
-        return Kernel.eval('func.call(scope, *args, &block)', Kernel.binding, file || '', line)
+        return Kernel.eval('_func.call(scope, *args, &block)'.freeze, Kernel.binding, file || '', line)
       end
     end
-    # Call via 3x API if function exists there
+    # Call via 3x API if function exists there without having been autoloaded
     fail(Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
 
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
     mapped_args = Runtime3FunctionArgumentConverter.map_args(args, scope, '')
-    result = Puppet::Pops::PuppetStack.stack(file, line, scope, "function_#{name}", [mapped_args], &block)
-    # Prevent non r-value functions from leaking their result (they are not written to care about this)
-    Puppet::Parser::Functions.rvalue?(name) ? result : nil
+    # The 3x function performs return value mapping and returns nil if it is not of rvalue type
+    Puppet::Pops::PuppetStack.stack(file, line, scope, "function_#{name}", [mapped_args], &block)
   end
 
   # The o is used for source reference
@@ -330,8 +330,7 @@ module Runtime3Support
   end
 
   def convert(value, scope, undef_value)
-    converter = scope.environment.rich_data? ? Runtime3Converter.instance : Runtime3FunctionArgumentConverter.instance
-    converter.convert(value, scope, undef_value)
+    Runtime3Converter.instance.convert(value, scope, undef_value)
   end
 
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
@@ -375,7 +374,7 @@ module Runtime3Support
     evaluated_parameters = evaluated_parameters.flatten
     evaluated_resources.each do |r|
       unless r.is_a?(Types::PResourceType) && r.type_name != 'class'
-        fail(Issues::ILLEGAL_OVERRIDEN_TYPE, o, {:actual => r} )
+        fail(Issues::ILLEGAL_OVERRIDDEN_TYPE, o, {:actual => r} )
       end
       t = Runtime3ResourceSupport.find_resource_type(scope, r.type_name)
       resource = Puppet::Parser::Resource.new(
@@ -419,7 +418,8 @@ module Runtime3Support
       # The defaults must be looked up in the scope where the resource was created (not in the given
       # scope where the lookup takes place.
       resource_scope = resource.scope
-      if val.nil? && resource_scope && defaults = resource_scope.lookupdefaults(resource.type)
+      defaults = resource_scope.lookupdefaults(resource.type) if val.nil? && resource_scope
+      if defaults
         # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
         # name and value.
         # NOTE: meta parameters that are unset ends up here, and there are no defaults for those encoded
@@ -510,6 +510,7 @@ module Runtime3Support
       p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
       p[Issues::CLASS_NOT_VIRTUALIZABLE]      = Puppet[:strict] == :off ? :warning : Puppet[:strict]
       p[Issues::NUMERIC_COERCION]             = Puppet[:strict] == :off ? :ignore : Puppet[:strict]
+      p[Issues::SERIALIZATION_DEFAULT_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
       p[Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
       p[Issues::SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING] = Puppet[:strict] == :off ? :warning : Puppet[:strict]
     end
@@ -525,7 +526,7 @@ module Runtime3Support
         :exception_class => Puppet::PreformattedError
       })
       if errors?
-        raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+        raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
       end
     end
   end

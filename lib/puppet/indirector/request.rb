@@ -3,14 +3,16 @@ require 'uri'
 require 'puppet/indirector'
 require 'puppet/network/resolver'
 require 'puppet/util/psych_support'
+require 'puppet/util/warnings'
 
 # This class encapsulates all of the information you need to make an
 # Indirection call, and as a result also handles REST calls.  It's somewhat
 # analogous to an HTTP Request object, except tuned for our Indirector.
 class Puppet::Indirector::Request
   include Puppet::Util::PsychSupport
+  include Puppet::Util::Warnings
 
-  attr_accessor :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_terminus
+  attr_accessor :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_cache_save, :ignore_terminus
 
   attr_accessor :server, :port, :uri, :protocol
 
@@ -18,7 +20,7 @@ class Puppet::Indirector::Request
 
   # trusted_information is specifically left out because we can't serialize it
   # and keep it "trusted"
-  OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
+  OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :ignore_cache_save, :instance, :environment]
 
   # Is this an authenticated request?
   def authenticated?
@@ -48,6 +50,10 @@ class Puppet::Indirector::Request
   # not be any better.
   def ignore_cache?
     ignore_cache
+  end
+
+  def ignore_cache_save?
+    ignore_cache_save
   end
 
   def ignore_terminus?
@@ -93,8 +99,9 @@ class Puppet::Indirector::Request
   end
 
   def model
-    raise ArgumentError, _("Could not find indirection '%{indirection}'") % { indirection: indirection_name } unless i = indirection
-    i.model
+    ind = indirection
+    raise ArgumentError, _("Could not find indirection '%{indirection}'") % { indirection: indirection_name } unless ind
+    ind.model
   end
 
   # Are we trying to interact with multiple resources, or just one?
@@ -163,7 +170,8 @@ class Puppet::Indirector::Request
     result = options.dup
 
     OPTION_ATTRIBUTES.each do |attribute|
-      if value = send(attribute)
+      value = send(attribute)
+      if value
         result[attribute] = value
       end
     end
@@ -181,7 +189,11 @@ class Puppet::Indirector::Request
     return yield(self) if !self.server.nil?
 
     if Puppet.settings[:use_srv_records]
-      Puppet::Network::Resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
+      # We may want to consider not creating a new resolver here
+      # every request eventually, to take advantage of the resolver's
+      # caching behavior.
+      resolver = Puppet::Network::Resolver.new
+      resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
         begin
           self.server = srv_server
           self.port   = srv_port
@@ -192,30 +204,39 @@ class Puppet::Indirector::Request
       end
     end
 
-    # ... Fall back onto the default server.
-    begin
-      bound_server = Puppet.lookup(:server)
-    rescue
-      if primary_server = Puppet.settings[:server_list][0]
-        bound_server = primary_server[0]
-      else
-        bound_server = nil
+    if default_server
+      self.server = default_server
+    else
+      self.server = Puppet.lookup(:server) do
+        primary_server = Puppet.settings[:server_list][0]
+        if primary_server
+          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+          debug_once _("Selected server from first entry of the `server_list` setting: %{server}") % {server: primary_server[0]}
+          primary_server[0]
+        else
+          #TRANSLATORS 'server' is the name of a setting and should not be translated
+          debug_once _("Selected server from the `server` setting: %{server}") % {server: Puppet.settings[:server]}
+          Puppet.settings[:server]
+        end
       end
     end
 
-    begin
-      bound_port = Puppet.lookup(:serverport)
-    rescue
-      if primary_server = Puppet.settings[:server_list][0]
-        bound_port = primary_server[1]
-      else
-        bound_port = nil
+    if default_port
+      self.port = default_port
+    else
+      self.port = Puppet.lookup(:serverport) do
+        primary_server = Puppet.settings[:server_list][0]
+        if primary_server
+          #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+          debug_once _("Selected port from the first entry of the `server_list` setting: %{port}") % {port: primary_server[1]}
+          primary_server[1]
+        else
+          #TRANSLATORS 'masterport' is the name of a setting and should not be translated
+          debug_once _("Selected port from the `masterport` setting: %{port}") % {port: Puppet.settings[:masterport]}
+          Puppet.settings[:masterport]
+        end
       end
     end
-    self.server = default_server || bound_server || Puppet.settings[:server]
-    self.port   = default_port || bound_port || Puppet.settings[:masterport]
-
-    Puppet.debug "No more servers left, falling back to #{self.server}:#{self.port}" if Puppet.settings[:use_srv_records]
 
     return yield(self)
   end

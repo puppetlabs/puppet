@@ -8,7 +8,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   require 'puppet/util/tagging'
 
   include Puppet::Util
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Errors
   include Puppet::Util::Logging
 
@@ -57,7 +56,8 @@ class Puppet::Parser::Resource < Puppet::Resource
   def add_edge_to_stage
     return unless self.class?
 
-    unless stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
+    stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
+    unless stage
       raise ArgumentError, _("Could not find stage %{stage} specified by %{resource}") % { stage: self[:stage] || :main, resource: self }
     end
 
@@ -167,6 +167,25 @@ class Puppet::Parser::Resource < Puppet::Resource
     unless self.source.object_id == resource.source.object_id || resource.source.child_of?(self.source)
       raise Puppet::ParseError.new(_("Only subclasses can override parameters"), resource.file, resource.line)
     end
+
+    if evaluated?
+      error_location_str = Puppet::Util::Errors.error_location(file, line)
+      msg = if error_location_str.empty?
+              _('Attempt to override an already evaluated resource with new values')
+            else
+              _('Attempt to override an already evaluated resource, defined at %{error_location}, with new values') % { error_location: error_location_str }
+            end
+      strict = Puppet[:strict]
+      unless strict == :off
+        if strict == :error
+          raise Puppet::ParseError.new(msg, resource.file, resource.line)
+        else
+          msg += Puppet::Util::Errors.error_location_with_space(resource.file, resource.line)
+          Puppet.warning(msg)
+        end
+      end
+    end
+
     # Some of these might fail, but they'll fail in the way we want.
     resource.parameters.each do |name, param|
       override_parameter(param)
@@ -258,7 +277,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       t = Puppet::Pops::Evaluator::Runtime3ResourceSupport.find_resource_type(scope, t) unless t == 'class' || t == 'node'
       cap = catalog.resource(t, ref.title)
       if cap.nil?
-        raise _("Resource %{ref} could not be found; it might not have been produced yet") % { ref: ref }
+        raise Puppet::Error, _("Resource %{ref} could not be found; it might not have been produced yet") % { ref: ref }
       end
 
       # Ensure that the found resource is a capability resource
@@ -280,7 +299,8 @@ class Puppet::Parser::Resource < Puppet::Resource
 
         # evaluate mappings in that scope
         resource_type.arguments.keys.each do |name|
-          if expr = blueprint[:mappings][name]
+          expr = blueprint[:mappings][name]
+          if expr
             # Explicit mapping
             value = expr.safeevaluate(cns_scope)
           else
@@ -313,7 +333,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def add_scope_tags
     scope_resource = scope.resource
     unless scope_resource.nil? || scope_resource.equal?(self)
-      merge_tags(scope_resource)
+      merge_tags_from(scope_resource)
     end
   end
 
@@ -330,22 +350,32 @@ class Puppet::Parser::Resource < Puppet::Resource
   def override_parameter(param)
     # This can happen if the override is defining a new parameter, rather
     # than replacing an existing one.
-    (set_parameter(param) and return) unless current = @parameters[param.name]
+    current = @parameters[param.name]
+    (set_parameter(param) and return) unless current
 
     # Parameter is already set - if overriding with a default - simply ignore the setting of the default value
     return if scope.is_default?(type, param.name, param.value)
 
     # The parameter is already set.  Fail if they're not allowed to override it.
     unless param.source.child_of?(current.source) || param.source.equal?(current.source) && scope.is_default?(type, param.name, current.value)
-      msg = "Parameter '#{param.name}' is already set on #{self}"
-      msg += " by #{current.source}" if current.source.to_s != ""
-      if current.file or current.line
-        fields = []
-        fields << current.file if current.file
-        fields << current.line.to_s if current.line
-        msg += " at #{fields.join(":")}"
-      end
-      msg += "; cannot redefine"
+      error_location_str = Puppet::Util::Errors.error_location(current.file, current.line)
+      msg = if current.source.to_s == ''
+              if error_location_str.empty?
+                _("Parameter '%{name}' is already set on %{resource}; cannot redefine") %
+                    { name: param.name, resource: ref }
+              else
+                _("Parameter '%{name}' is already set on %{resource} at %{error_location}; cannot redefine") %
+                    { name: param.name, resource: ref, error_location: error_location_str }
+              end
+            else
+              if error_location_str.empty?
+                _("Parameter '%{name}' is already set on %{resource} by %{source}; cannot redefine") %
+                    { name: param.name, resource: ref, source: current.source.to_s }
+              else
+                _("Parameter '%{name}' is already set on %{resource} by %{source} at %{error_location}; cannot redefine") %
+                    { name: param.name, resource: ref, source: current.source.to_s, error_location: error_location_str }
+              end
+            end
       raise Puppet::ParseError.new(msg, param.file, param.line)
     end
 

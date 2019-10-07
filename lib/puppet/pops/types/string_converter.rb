@@ -85,7 +85,8 @@ class StringConverter
 
     attr_reader :orig_fmt
 
-    FMT_PATTERN = /^%([\s\+\-#0\[\{<\(\|]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])/
+    FMT_PATTERN_STR = '^%([\s\[+#0{<(|-]*)([1-9][0-9]*)?(?:\.([0-9]+))?([a-zA-Z])$'
+    FMT_PATTERN = Regexp.compile(FMT_PATTERN_STR)
     DELIMITERS  = [ '[', '{', '(', '<', '|',]
     DELIMITER_MAP = {
       '[' => ['[', ']'],
@@ -265,13 +266,13 @@ class StringConverter
   }.freeze
 
   DEFAULT_ARRAY_FORMAT                          = Format.new('%a')
-  DEFAULT_ARRAY_FORMAT.separator                = ','.freeze
-  DEFAULT_ARRAY_FORMAT.separator2               = ','.freeze
+  DEFAULT_ARRAY_FORMAT.separator                = ', '.freeze
+  DEFAULT_ARRAY_FORMAT.separator2               = ', '.freeze
   DEFAULT_ARRAY_FORMAT.container_string_formats = DEFAULT_CONTAINER_FORMATS
   DEFAULT_ARRAY_FORMAT.freeze
 
   DEFAULT_HASH_FORMAT                           = Format.new('%h')
-  DEFAULT_HASH_FORMAT.separator                 = ','.freeze
+  DEFAULT_HASH_FORMAT.separator                 = ', '.freeze
   DEFAULT_HASH_FORMAT.separator2                = ' => '.freeze
   DEFAULT_HASH_FORMAT.container_string_formats  = DEFAULT_CONTAINER_FORMATS
   DEFAULT_HASH_FORMAT.freeze
@@ -483,8 +484,17 @@ class StringConverter
 
     value_type = TypeCalculator.infer_set(value)
     if string_formats.is_a?(String)
-      # add the format given for the exact type
-      string_formats = { value_type => string_formats }
+      # For Array and Hash, the format is given as a Hash where 'format' key is the format for the collection itself
+      if Puppet::Pops::Types::PArrayType::DEFAULT.assignable?(value_type)
+        # add the format given for the exact type
+        string_formats = { Puppet::Pops::Types::PArrayType::DEFAULT => {'format' => string_formats }}
+      elsif Puppet::Pops::Types::PHashType::DEFAULT.assignable?(value_type)
+          # add the format given for the exact type
+          string_formats = { Puppet::Pops::Types::PHashType::DEFAULT => {'format' => string_formats }}
+      else
+        # add the format given for the exact type
+        string_formats = { value_type => string_formats }
+      end
     end
 
     case string_formats
@@ -541,7 +551,7 @@ class StringConverter
 
   def validate_container_input(fmt)
     if (fmt.keys - FMT_KEYS).size > 0
-      raise ArgumentError, "only #{FMT_KEYS}.map {|k| "'#{k}'"}.join(', ')} are allowed in a container format, got #{fmt}"
+      raise ArgumentError, "only #{FMT_KEYS.map {|k| "'#{k}'"}.join(', ')} are allowed in a container format, got #{fmt}"
     end
     result                          = Format.new(fmt['format'])
     result.separator                = fmt['separator']
@@ -566,6 +576,10 @@ class StringConverter
     else
       raise FormatError.new('Object', f.format, 'spq')
     end
+  end
+
+  def string_PObjectTypeExtension(val_type, val, format_map, indentation)
+    string_PObjectType(val_type.base_type, val, format_map, indentation)
   end
 
   def string_PRuntimeType(val_type, val, format_map, indent)
@@ -714,7 +728,7 @@ class StringConverter
     when :c
       char = [val].pack("U")
       char = f.alt? ? "\"#{char}\"" : char
-      char = Kernel.format(f.orig_fmt.gsub('c','s'), char)
+      Kernel.format(f.orig_fmt.gsub('c','s'), char)
 
     when :s
       fmt = f.alt? ? 'p' : 's'
@@ -799,7 +813,7 @@ class StringConverter
       Kernel.format(f.orig_fmt, val)
 
     when :p
-      apply_string_flags(f, puppet_quote(val))
+      apply_string_flags(f, puppet_quote(val, f.alt?))
 
     when :c
       c_val = val.capitalize
@@ -831,10 +845,15 @@ class StringConverter
   # strings will be quoted using double quotes.
   #
   # @param [String] str the string that should be formatted
+  # @param [Boolean] enforce_double_quotes if true the result will be double quoted (even if single quotes would be possible)
   # @return [String] the formatted string
   #
   # @api public
-  def puppet_quote(str)
+  def puppet_quote(str, enforce_double_quotes = false)
+    if enforce_double_quotes
+      return puppet_double_quote(str)
+    end
+
     # Assume that the string can be single quoted
     bld = '\''
     bld.force_encoding(str.encoding)
@@ -901,12 +920,10 @@ class StringConverter
     f = get_format(val_type, format_map)
     case f.format
     when :p
-      rx_s = val.options == 0 ? val.source : val.to_s
-      rx_s = rx_s.gsub(/\//, '\/') unless Gem::Version.new(RUBY_VERSION.dup) < Gem::Version.new('2.0.0')
-      str_regexp = "/#{rx_s}/"
+      str_regexp = PRegexpType.regexp_to_s_with_delimiters(val)
       f.orig_fmt == '%p' ? str_regexp : Kernel.format(f.orig_fmt.gsub('p', 's'), str_regexp)
     when :s
-      str_regexp = val.options == 0 ? val.source : val.to_s
+      str_regexp = PRegexpType.regexp_to_s(val)
       str_regexp = puppet_quote(str_regexp) if f.alt?
       f.orig_fmt == '%s' ? str_regexp : Kernel.format(f.orig_fmt, str_regexp)
     else
@@ -976,12 +993,13 @@ class StringConverter
           # or, if indenting, and previous was an array or hash, then break and continue on next line
           # indented.
           if (sz_break && !is_a_or_h?(v)) || (format.alt? && i > 0 && is_a_or_h?(val[i-1]) && !is_a_or_h?(v))
+            buf.rstrip! unless buf[-1] == "\n"
             buf << "\n"
             buf << children_indentation.padding
-          elsif !(format.alt? && is_a_or_h?(v))
-            buf << ' '
           end
         end
+        # remove trailing space added by separator if followed by break
+        buf.rstrip! if buf[-1] == ' ' && str_val[0] == "\n"
         buf << str_val
       end
       buf << delims[1]
@@ -1023,7 +1041,10 @@ class StringConverter
     string_formats = format.container_string_formats || DEFAULT_CONTAINER_FORMATS
     delims         = format.delimiter_pair(DEFAULT_HASH_DELIMITERS)
 
-    sep = format.alt? ? "#{sep}\n" : "#{sep} "
+    if format.alt? 
+      sep = sep.rstrip unless sep[-1] == "\n"
+      sep = "#{sep}\n"
+    end
 
     cond_break     = ''
     padding        = ''
@@ -1073,7 +1094,7 @@ class StringConverter
   end
 
   # @api private
-  def string_PType(val_type, val, format_map, _)
+  def string_PTypeType(val_type, val, format_map, _)
     f = get_format(val_type, format_map)
     case f.format
     when :s
@@ -1083,6 +1104,23 @@ class StringConverter
       Kernel.format(f.orig_fmt.gsub('p', 's'), val.to_s)
     else
       raise FormatError.new('Type', f.format, 'sp')
+    end
+  end
+
+  # @api private
+  def string_PURIType(val_type, val, format_map, indentation)
+    f = get_format(val_type, format_map)
+    case f.format
+    when :p
+      fmt = TypeFormatter.singleton
+      indentation = indentation.indenting(f.alt? || indentation.is_indenting?)
+      fmt = fmt.indented(indentation.level, 2) if indentation.is_indenting?
+      fmt.string(val)
+    when :s
+      str_val = val.to_s
+      Kernel.format(f.orig_fmt, f.alt? ? puppet_quote(str_val) : str_val)
+    else
+      raise FormatError.new('URI', f.format, 'sp')
     end
   end
 

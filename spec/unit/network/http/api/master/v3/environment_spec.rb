@@ -9,7 +9,6 @@ describe Puppet::Network::HTTP::API::Master::V3::Environment do
   let(:loader) { Puppet::Environments::Static.new(environment) }
 
   around :each do |example|
-    Puppet[:app_management] = true
     Puppet.override(:environments => loader) do
       Puppet::Type.newtype :sql, :is_capability => true do
         newparam :name, :namevar => true
@@ -176,7 +175,7 @@ describe Puppet::Network::HTTP::API::Master::V3::Environment do
   it "uses code_id from the catalog if it differs from the request" do
     request = Puppet::Network::HTTP::Request.from_hash(:params => {:code_id => '12345'}, :routing_path => "environment/production")
 
-    Puppet::Resource::Catalog.any_instance.stubs(:code_id).returns('67890')
+    allow_any_instance_of(Puppet::Resource::Catalog).to receive(:code_id).and_return('67890')
 
     subject.call(request, response)
 

@@ -4,6 +4,12 @@
 # details see PUP-3591.
 test_name "Agent should pluginsync with the environment the agent resolves to"
 
+tag 'audit:high',
+    'audit:integration',
+    'audit:refactor',  # Inquire as to whether this is still a risk with puppet 5+
+                       # Use mk_temp_environment_with_teardown helper
+    'server'
+
 testdir = create_tmpdir_for_user master, 'environment_resolve'
 
 create_remote_file master, "#{testdir}/enc.rb", <<END
@@ -55,7 +61,7 @@ master_opts = {
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    on(agent, puppet("agent", "-t", "--server #{master}"))
+    on(agent, puppet("agent", "-t"))
     on(agent, "cat \"#{agent.puppet['vardir']}/lib/puppet/foo.rb\"")
     assert_match(/#correct_version/, stdout, "The plugin from environment 'correct' was not synced")
     on(agent, "rm -rf \"#{agent.puppet['vardir']}/lib\"")

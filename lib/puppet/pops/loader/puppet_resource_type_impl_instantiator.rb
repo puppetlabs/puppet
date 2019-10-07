@@ -8,7 +8,7 @@ class PuppetResourceTypeImplInstantiator
   # given puppet source does not produce such an instance when evaluated.
   #
   # @param loader [Loader] The loader the function is associated with
-  # @param typed_name [TypedName] the type / name of the resoure type impl to load
+  # @param typed_name [TypedName] the type / name of the resource type impl to load
   # @param source_ref [URI, String] a reference to the source / origin of the puppet code to evaluate
   # @param pp_code_string [String] puppet code in a string
   #
@@ -20,14 +20,14 @@ class PuppetResourceTypeImplInstantiator
     # parse and validate
     model = parser.parse_string(pp_code_string, source_ref)
     statements = if model.is_a?(Model::Program)
-      if model.body.is_a?(Model::BlockExpression)
-        statements = model.body.statements
-      else
-        statements = [model.body]
-      end
-    else
-      statements = EMPTY_ARRAY
-    end
+                   if model.body.is_a?(Model::BlockExpression)
+                     model.body.statements
+                   else
+                     [model.body]
+                   end
+                 else
+                   EMPTY_ARRAY
+                 end
     statements = statements.reject { |s| s.is_a?(Model::Nop) }
     if statements.empty?
       raise ArgumentError, _("The code loaded from %{source_ref} does not create the resource type '%{type_name}' - it is empty") % { source_ref: source_ref, type_name: typed_name.name }
@@ -41,7 +41,7 @@ class PuppetResourceTypeImplInstantiator
           functor_expr.left_expr.is_a?(Model::QualifiedReference) &&
           functor_expr.left_expr.cased_value == rname &&
           functor_expr.right_expr.is_a?(Model::QualifiedName) &&
-          functor_expr.right_expr.value == _('new')
+          functor_expr.right_expr.value == 'new'
       else
         false
       end

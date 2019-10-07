@@ -42,6 +42,7 @@ module Puppet::ModuleTool::Errors
       message += @required_by.map do |mod|
         _("    '%{module_name}' (%{version}) requires '%{module_dep}' (%{dep_version})") % { module_name: mod['name'], version: v(mod['version']), module_dep: @module_name, dep_version: v(mod['version_requirement']) }
       end
+      #TRANSLATORS `puppet module uninstall --force` is a command line option that should not be translated
       message << _("    Use `puppet module uninstall --force` to uninstall this module anyway")
       message.join("\n")
     end

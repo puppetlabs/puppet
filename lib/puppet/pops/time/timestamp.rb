@@ -1,8 +1,8 @@
 module Puppet::Pops
 module Time
 class Timestamp < TimeData
-  DEFAULT_FORMATS_WO_TZ = ['%FT%T.%N', '%FT%T', '%F']
-  DEFAULT_FORMATS = ['%FT%T.%N %Z', '%FT%T %Z', '%F %Z'] + DEFAULT_FORMATS_WO_TZ
+  DEFAULT_FORMATS_WO_TZ = ['%FT%T.%N', '%FT%T', '%F %T.%N', '%F %T', '%F']
+  DEFAULT_FORMATS = ['%FT%T.%N %Z', '%FT%T %Z', '%F %T.%N %Z', '%F %T %Z', '%F %Z'] + DEFAULT_FORMATS_WO_TZ
 
   CURRENT_TIMEZONE = 'current'.freeze
   KEY_TIMEZONE = 'timezone'.freeze
@@ -71,31 +71,43 @@ class Timestamp < TimeData
     parsed = nil
     if format.is_a?(Array)
       format.each do |fmt|
-        assert_no_tz_extractor(fmt) if has_timezone
-        begin
-          parsed = DateTime.strptime(str, fmt)
-          break
-        rescue ArgumentError
+        parsed = DateTime._strptime(str, fmt)
+        next if parsed.nil?
+        if parsed.include?(:leftover) || (has_timezone && parsed.include?(:zone))
+          parsed = nil
+          next
         end
+        break
       end
-      raise ArgumentError, _("Unable to parse '%{str}' using any of the formats %{formats}") % { str: str, formats: format.join(', ') } if parsed.nil?
+      if parsed.nil?
+        raise ArgumentError, _(
+          "Unable to parse '%{str}' using any of the formats %{formats}") % { str: str, formats: format.join(', ') }
+      end
     else
-      assert_no_tz_extractor(format) if has_timezone
-      begin
-        parsed = DateTime.strptime(str, format)
-      rescue ArgumentError
+      parsed = DateTime._strptime(str, format)
+      if parsed.nil? || parsed.include?(:leftover)
         raise ArgumentError, _("Unable to parse '%{str}' using format '%{format}'") % { str: str, format: format }
       end
+      if has_timezone && parsed.include?(:zone)
+        raise ArgumentError, _(
+          'Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument')
+      end
     end
-    parsed_time = parsed.to_time
-    parsed_time -= utc_offset(timezone) if has_timezone
-    from_time(parsed_time)
-  end
+    unless has_timezone
+      timezone = parsed[:zone]
+      has_timezone = !timezone.nil?
+    end
+    fraction = parsed[:sec_fraction]
 
-  def self.assert_no_tz_extractor(format)
-    if format =~ /[^%]%[zZ]/
-      raise ArgumentError, _('Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument')
-    end
+    # Convert msec rational found in _strptime hash to usec
+    fraction = fraction * 1000000 unless fraction.nil?
+
+    # Create the Time instance and adjust for timezone
+    parsed_time = ::Time.utc(parsed[:year], parsed[:mon], parsed[:mday], parsed[:hour], parsed[:min], parsed[:sec], fraction)
+    parsed_time -= utc_offset(timezone) if has_timezone
+
+    # Convert to Timestamp
+    from_time(parsed_time)
   end
 
   undef_method :-@, :+@, :div, :fdiv, :abs, :abs2, :magnitude # does not make sense on a Timestamp

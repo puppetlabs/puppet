@@ -103,13 +103,33 @@ module Puppet::Etc
       override_field_values_to_utf8(::Etc.getpwuid(id))
     end
 
+    # Etc::group returns a Ruby iterator that executes a block for
+    # each entry in the /etc/group file. The code-block is passed
+    # a Group struct. See getgrent above for more details.
+    def group
+      # The implementation here duplicates the logic in https://github.com/ruby/etc/blob/master/ext/etc/etc.c#L523-L537
+      # Note that we do not call ::Etc.group directly, because we
+      # want to use our wrappers for methods like getgrent, setgrent,
+      # endgrent, etc.
+      return getgrent unless block_given?
+
+      setgrent
+      begin
+        while cur_group = getgrent #rubocop:disable Lint/AssignmentInCondition
+          yield cur_group
+        end
+      ensure
+        endgrent
+      end
+    end
+
     private
 
     # @api private
     # Defines Puppet::Etc::Passwd struct class. Contains all of the original
     # member fields of Etc::Passwd, and additional "canonical_" versions of
     # these fields as well. API compatible with Etc::Passwd. Because Struct.new
-    # defines a new Class object, we memozie to avoid superfluous extra Class
+    # defines a new Class object, we memoize to avoid superfluous extra Class
     # instantiations.
     def puppet_etc_passwd_class
       @password_class ||= Struct.new(*Etc::Passwd.members, *Etc::Passwd.members.map { |member| "canonical_#{member}".to_sym })
@@ -133,7 +153,7 @@ module Puppet::Etc
     # @api private
     # @param [Etc::Passwd or Etc::Group struct]
     # @return [Puppet::Etc::Passwd or Puppet::Etc::Group struct] a new struct
-    #   object with the original struct values overidden to UTF-8, if valid. For
+    #   object with the original struct values overridden to UTF-8, if valid. For
     #   invalid values originating in UTF-8, invalid characters are replaced with
     #   '?'. For each member the struct also contains a corresponding
     #   :canonical_<member name> struct member.
@@ -143,10 +163,12 @@ module Puppet::Etc
       struct.each_pair do |member, value|
         if value.is_a?(String)
           new_struct["canonical_#{member}".to_sym] = value.dup
-          new_struct[member] = Puppet::Util::CharacterEncoding.scrub(Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(value))
+          new_struct[member] = Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(value).scrub
         elsif value.is_a?(Array)
           new_struct["canonical_#{member}".to_sym] = value.inject([]) { |acc, elem| acc << elem.dup }
-          new_struct[member] = value.inject([]) { |acc, elem| acc << Puppet::Util::CharacterEncoding.scrub(Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(elem)) }
+          new_struct[member] = value.inject([]) do |acc, elem|
+            acc << Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(elem).scrub
+          end
         else
           new_struct["canonical_#{member}".to_sym] = value
           new_struct[member] = value
@@ -156,6 +178,3 @@ module Puppet::Etc
     end
   end
 end
-
-
-

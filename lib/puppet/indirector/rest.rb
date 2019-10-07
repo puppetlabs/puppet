@@ -1,6 +1,7 @@
 require 'net/http'
 require 'uri'
-require 'json'
+require 'puppet/util/json'
+require 'puppet/util/connection'
 require 'semantic_puppet'
 
 require 'puppet/network/http'
@@ -39,68 +40,16 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     @srv_service || :puppet
   end
 
-  # The logic for server and port is kind of gross. In summary:
-  # IF an endpoint-specific setting is requested AND that setting has been set by the user
-  #    Use that setting.
-  #         The defaults for these settings are the "normal" server/masterport settings, so
-  #         when they are unset we instead want to "fall back" to the failover-selected
-  #         host/port pair.
-  # ELSE IF we have a failover-selected host/port
-  #    Use what the failover logic came up with
-  # ELSE IF the server_list setting is in use
-  #    Use the first entry - failover hasn't happened yet, but that
-  #    setting is still authoritative
-  # ELSE
-  #    Go for the legacy server/masterport settings, and hope for the best
+  # Select the server to use based on the settings configuration
+  # for this indirection, taking into account the HA server list.
   def self.server
-    setting = server_setting()
-    if setting && setting != :server && Puppet.settings.set_by_config?(setting)
-      Puppet.settings[setting]
-    else
-      begin
-        Puppet.lookup(:server)
-      rescue
-        if primary_server = Puppet.settings[:server_list][0]
-          Puppet.debug "Dynamically-bound server lookup failed; using first entry"
-          primary_server[0]
-        else
-          setting ||= :server
-          Puppet.debug "Dynamically-bound server lookup failed, falling back to #{setting} setting"
-          Puppet.settings[setting]
-        end
-      end
-    end
+    Puppet::Util::Connection.determine_server(server_setting)
   end
 
-  # For port there's a little bit of an extra snag: setting a specific
-  # server setting and relying on the default port for that server is
-  # common, so we also want to check if the assocaited SERVER setting
-  # has been set by the user. If either of those are set we ignore the
-  # failover-selected port.
+  # Select the port to use based on the settings configuration
+  # for this indirection, taking into account the HA server list.
   def self.port
-    setting = port_setting()
-    srv_setting = server_setting()
-    if (setting && setting != :masterport && Puppet.settings.set_by_config?(setting)) ||
-       (srv_setting && srv_setting != :server && Puppet.settings.set_by_config?(srv_setting))
-      Puppet.settings[setting].to_i
-    else
-      begin
-        Puppet.lookup(:serverport).to_i
-      rescue
-        if primary_server = Puppet.settings[:server_list][0]
-          Puppet.debug "Dynamically-bound port lookup failed; using first entry"
-
-          # Port might not be set, so we want to fallback in that
-          # case. We know we don't need to use `setting` here, since
-          # the default value of every port setting is `masterport`
-          (primary_server[1] || Puppet.settings[:masterport]).to_i
-        else
-          setting ||= :masterport
-          Puppet.debug "Dynamically-bound port lookup failed; falling back to #{setting} setting"
-          Puppet.settings[setting].to_i
-        end
-      end
-    end
+    Puppet::Util::Connection.determine_port(port_setting, server_setting)
   end
 
   # Provide appropriate headers.
@@ -124,8 +73,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def network(request)
-    Puppet::Network::HttpPool.http_instance(request.server || self.class.server,
-                                            request.port || self.class.port)
+    ssl_context = Puppet.lookup(:ssl_context)
+    Puppet::Network::HttpPool.connection(request.server || self.class.server,
+                                         request.port || self.class.port,
+                                         ssl_context: ssl_context)
   end
 
   def http_get(request, path, headers = nil, *args)
@@ -183,7 +134,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       # While this way of handling the issue is not perfect, there is at least an error
       # that makes a user aware of the reason for the failure.
       #
-      content_type, body = parse_response(response)
+      _, body = parse_response(response)
       msg = _("Find %{uri} resulted in 404 with the message: %{body}") % { uri: elide(uri_with_query_string, 100), body: body }
       raise Puppet::Error, msg
     else
@@ -262,11 +213,16 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   def handle_response(request, response)
     server_version = response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION]
-    if server_version &&
-       SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
-       Puppet[:preferred_serialization_format] != 'pson'
-      Puppet.warning("Downgrading to PSON for future requests")
-      Puppet[:preferred_serialization_format] = 'pson'
+    if server_version
+      Puppet.lookup(:server_agent_version) do
+        Puppet.push_context(:server_agent_version => server_version)
+      end
+      if SemanticPuppet::Version.parse(server_version).major < MAJOR_VERSION_JSON_DEFAULT &&
+          Puppet[:preferred_serialization_format] != 'pson'
+        #TRANSLATORS "PSON" should not be translated
+        Puppet.warning(_("Downgrading to PSON for future requests"))
+        Puppet[:preferred_serialization_format] = 'pson'
+      end
     end
   end
 
@@ -298,7 +254,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     elsif response['content-type'].is_a?(String)
       content_type, body = parse_response(response)
       if content_type =~ /[pj]son/
-        returned_message = JSON.parse(body)["message"]
+        returned_message = Puppet::Util::Json.load(body)["message"]
       else
         returned_message = uncompress_body(response)
       end
@@ -315,8 +271,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   # uncompress_body)
   def parse_response(response)
     if response['content-type']
-      [ response['content-type'].gsub(/\s*;.*$/,''),
-        body = uncompress_body(response) ]
+      [ response['content-type'].gsub(/\s*;.*$/,''), uncompress_body(response) ]
     else
       raise _("No content type in http response; cannot parse")
     end

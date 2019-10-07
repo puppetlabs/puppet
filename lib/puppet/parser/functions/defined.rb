@@ -103,5 +103,5 @@ defined('$tmp_file2')
 - Since 4.0.0 includes all future parser features
 DOC
 ) do |vals|
-  Error.is4x('defined')
+  Puppet::Parser::Functions::Error.is4x('defined')
 end

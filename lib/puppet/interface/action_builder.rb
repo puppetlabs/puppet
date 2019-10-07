@@ -17,6 +17,14 @@ class Puppet::Interface::ActionBuilder
     new(face, name, &block).action
   end
 
+  # Deprecates the action
+  # @return [void]
+  # @api private
+  # @dsl Faces
+  def deprecate
+    @action.deprecate
+  end
+
   # Ideally the method we're defining here would be added to the action, and a
   # method on the face would defer to it, but we can't get scope correct, so
   # we stick with this. --daniel 2011-03-24
@@ -49,10 +57,12 @@ class Puppet::Interface::ActionBuilder
   # @dsl Faces
   def when_rendering(type = nil, &block)
     if type.nil? then           # the default error message sucks --daniel 2011-04-18
-      raise ArgumentError, 'You must give a rendering format to when_rendering'
+      #TRANSLATORS 'when_rendering' is a method name and should not be translated
+      raise ArgumentError, _('You must give a rendering format to when_rendering')
     end
     if block.nil? then
-      raise ArgumentError, 'You must give a block to when_rendering'
+      #TRANSLATORS 'when_rendering' is a method name and should not be translated
+      raise ArgumentError, _('You must give a block to when_rendering')
     end
     @action.set_rendering_method_for(type, block)
   end
@@ -111,11 +121,15 @@ class Puppet::Interface::ActionBuilder
   # Sets the default rendering format
   # @api private
   def render_as(value = nil)
-    value.nil? and raise ArgumentError, "You must give a rendering format to render_as"
+    if value.nil?
+      #TRANSLATORS 'render_as' is a method name and should not be translated
+      raise ArgumentError, _("You must give a rendering format to render_as")
+    end
 
     formats = Puppet::Network::FormatHandler.formats
     unless formats.include? value
-      raise ArgumentError, "#{value.inspect} is not a valid rendering format: #{formats.sort.join(", ")}"
+      raise ArgumentError, _("%{value} is not a valid rendering format: %{formats_list}") %
+          { value: value.inspect, formats_list: formats.sort.join(", ")}
     end
 
     @action.render_as = value
@@ -144,6 +158,9 @@ class Puppet::Interface::ActionBuilder
     @face   = face
     @action = Puppet::Interface::Action.new(face, name)
     instance_eval(&block)
-    @action.when_invoked or raise ArgumentError, "actions need to know what to do when_invoked; please add the block"
+    unless @action.when_invoked
+      #TRANSLATORS 'when_invoked' is a method name and should not be translated and 'block' is a Ruby code block
+      raise ArgumentError, _("actions need to know what to do when_invoked; please add the block")
+    end
   end
 end

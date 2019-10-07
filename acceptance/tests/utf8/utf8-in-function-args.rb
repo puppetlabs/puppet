@@ -1,4 +1,9 @@
 test_name 'utf-8 characters in function parameters' do
+
+  tag 'audit:high',        # utf-8 is high impact in general
+      'audit:integration', # not package dependent but may want to vary platform by LOCALE/encoding
+      'audit:refactor'     # if keeping, use mk_temp_environment_with_teardown
+
   confine :except, :platform => [
     'windows',      # PUP-6983
     'eos-4',        # PUP-7146

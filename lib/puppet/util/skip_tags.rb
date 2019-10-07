@@ -6,4 +6,8 @@ class Puppet::Util::SkipTags
   def initialize(stags)
     self.tags = stags unless defined?(@tags)
   end
+
+  def split_qualified_tags?
+    false
+  end
 end

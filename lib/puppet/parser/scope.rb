@@ -1,4 +1,3 @@
-
 # The scope class, which handles storing and retrieving variables and types and
 # such.
 require 'forwardable'
@@ -7,8 +6,6 @@ require 'puppet/parser'
 require 'puppet/parser/templatewrapper'
 require 'puppet/parser/resource'
 
-require 'puppet/util/methodhelper'
-
 # This class is part of the internal parser/evaluator/compiler functionality of Puppet.
 # It is passed between the various classes that participate in evaluation.
 # None of its methods are API except those that are clearly marked as such.
@@ -16,7 +13,6 @@ require 'puppet/util/methodhelper'
 # @api public
 class Puppet::Parser::Scope
   extend Forwardable
-  include Puppet::Util::MethodHelper
 
   # Variables that always exist with nil value even if not set
   BUILT_IN_VARS = ['module_name'.freeze, 'caller_module_name'.freeze].freeze
@@ -374,14 +370,15 @@ class Puppet::Parser::Scope
   end
 
   # Initialize our new scope.  Defaults to having no parent.
-  def initialize(compiler, options = EMPTY_HASH)
-    if compiler.is_a? Puppet::Parser::Compiler
+  def initialize(compiler, source: nil, resource: nil)
+    if compiler.is_a? Puppet::Parser::AbstractCompiler
       @compiler = compiler
     else
-      raise Puppet::DevError, "you must pass a compiler instance to a new scope object"
+      raise Puppet::DevError, _("you must pass a compiler instance to a new scope object")
     end
 
-    set_options(options)
+    @source = source
+    @resource = resource
 
     extend_with_functions_module
 
@@ -611,6 +608,7 @@ class Puppet::Parser::Scope
       begin
         qs = qualified_scope(class_name)
         unless qs.nil?
+          return qs.get_local_variable(leaf_name) if qs.has_local_variable?(leaf_name)
           iscope = qs.inherited_scope
           return lookup_qualified_variable("#{iscope.source.name}::#{leaf_name}", options) unless iscope.nil?
         end
@@ -623,15 +621,23 @@ class Puppet::Parser::Scope
     return handle_not_found('', fqn, options)
   end
 
+  # @api private
+  def has_local_variable?(name)
+    @ephemeral.last.include?(name)
+  end
+
+  # @api private
+  def get_local_variable(name)
+    @ephemeral.last[name]
+  end
+
   def handle_not_found(class_name, variable_name, position, reason = nil)
     unless Puppet[:strict_variables]
       # Do not issue warning if strict variables are on, as an error will be raised by variable_not_found
       location = if position[:lineproc]
-                   " at #{position[:lineproc].call}"
-                 elsif position[:file] && position[:line]
-                   " at #{position[:file]}:#{position[:line]}"
+                   Puppet::Util::Errors.error_location_with_space(nil, position[:lineproc].call)
                  else
-                   ""
+                   Puppet::Util::Errors.error_location_with_space(position[:file], position[:line])
                  end
       variable_not_found("#{class_name}::#{variable_name}", "#{reason}#{location}")
       return nil
@@ -645,8 +651,10 @@ class Puppet::Parser::Scope
   private :has_enclosing_scope?
 
   def qualified_scope(classname)
-    raise _("class %{classname} could not be found") % { classname: classname }     unless klass = find_hostclass(classname)
-    raise _("class %{classname} has not been evaluated") % { classname: classname } unless kscope = class_scope(klass)
+    klass = find_hostclass(classname)
+    raise _("class %{classname} could not be found") % { classname: classname }     unless klass
+    kscope = class_scope(klass)
+    raise _("class %{classname} has not been evaluated") % { classname: classname } unless kscope
     kscope
   end
   private :qualified_scope
@@ -699,7 +707,8 @@ class Puppet::Parser::Scope
 
   # Merge all settings for the given _env_name_ into this scope
   # @param env_name [Symbol] the name of the environment
-  def merge_settings(env_name)
+  # @param set_in_this_scope [Boolean] if the settings variables should also be set in this instance of scope
+  def merge_settings(env_name, set_in_this_scope=true)
     settings = Puppet.settings
     table = effective_symtable(false)
     global_table = compiler.qualified_variables
@@ -708,7 +717,9 @@ class Puppet::Parser::Scope
       next if :name == name
       key = name.to_s
       value = transform_setting(settings.value_sym(name, env_name))
-      table[key] = value
+      if set_in_this_scope
+        table[key] = value
+      end
       all_local[key] = value
       # also write the fqn into global table for direct lookup
       global_table["settings::#{key}"] = value
@@ -751,7 +762,7 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError.new(_("Cannot assign to a numeric match result variable '$%{name}'") % { name: name }) # unless options[:ephemeral]
     end
     unless name.is_a? String
-      raise Puppet::ParseError, _("Scope variable name %{value0} is a %{value1}, not a string") % { value0: name.inspect, value1: name.class }
+      raise Puppet::ParseError, _("Scope variable name %{name} is a %{class_type}, not a string") % { name: name.inspect, class_type: name.class }
     end
 
     # Check for reserved variable names
@@ -759,8 +770,8 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError, _("Attempt to assign to a reserved variable name: '%{name}'") % { name: name }
     end
 
-    # Check for server_facts reserved variable name if the trusted_sever_facts setting is true
-    if name == VARNAME_SERVER_FACTS && !options[:privileged] && Puppet[:trusted_server_facts]
+    # Check for server_facts reserved variable name
+    if name == VARNAME_SERVER_FACTS && !options[:privileged]
       raise Puppet::ParseError, _("Attempt to assign to a reserved variable name: '%{name}'") % { name: name }
     end
 
@@ -804,7 +815,7 @@ class Puppet::Parser::Scope
   end
 
   # Deeply freezes the given object. The object and its content must be of the types:
-  # Array, Hash, Numeric, Boolean, Symbol, Regexp, NilClass, or String. All other types raises an Error.
+  # Array, Hash, Numeric, Boolean, Regexp, NilClass, or String. All other types raises an Error.
   # (i.e. if they are assignable to Puppet::Pops::Types::Data type).
   #
   def deep_freeze(object)
@@ -859,7 +870,26 @@ class Puppet::Parser::Scope
 
   # Used mainly for logging
   def to_s
-    "Scope(#{@resource})"
+    # As this is used for logging, this should really not be done in this class at all...
+    return "Scope(#{@resource})" unless @resource.nil?
+
+    # For logging of function-scope - it is now showing the file and line.
+    detail = Puppet::Pops::PuppetStack.top_of_stack
+    return "Scope()" if detail.empty?
+
+    # shorten the path if possible
+    path = detail[0]
+    env_path = nil
+    env_path = environment.configuration.path_to_env unless (environment.nil? || environment.configuration.nil?)
+    # check module paths first since they may be in the environment (i.e. they are longer)
+    module_path = environment.full_modulepath.detect {|m_path| path.start_with?(m_path) }
+    if module_path
+      path = "<module>" + path[module_path.length..-1]
+    elsif env_path && path && path.start_with?(env_path)
+      path = "<env>" + path[env_path.length..-1]
+    end
+    # Make the output appear as "Scope(path, line)"
+    "Scope(#{[path, detail[1]].join(', ')})" 
   end
 
   alias_method :inspect, :to_s
@@ -986,17 +1016,17 @@ class Puppet::Parser::Scope
 
   # @api private
   def find_resource_type(type)
-    raise Puppet::DevError, "Scope#find_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
+    raise Puppet::DevError, _("Scope#find_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead")
   end
 
   # @api private
   def find_builtin_resource_type(type)
-    raise Puppet::DevError, "Scope#find_builtin_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
+    raise Puppet::DevError, _("Scope#find_builtin_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead")
   end
 
   # @api private
   def find_defined_resource_type(type)
-    raise Puppet::DevError, "Scope#find_defined_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
+    raise Puppet::DevError, _("Scope#find_defined_resource_type() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead")
   end
 
 
@@ -1010,14 +1040,14 @@ class Puppet::Parser::Scope
     if respond_to? method
       send(method, *args)
     else
-      raise Puppet::DevError, "Function #{name} not defined despite being loaded!"
+      raise Puppet::DevError, _("Function %{name} not defined despite being loaded!") % { name: name }
     end
   end
 
   # To be removed when enough time has passed after puppet 5.0.0
   # @api private
   def resolve_type_and_titles(type, titles)
-    raise Puppet::DevError, "Scope#resolve_type_and_title() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead"
+    raise Puppet::DevError, _("Scope#resolve_type_and_title() is no longer supported, use Puppet::Pops::Evaluator::Runtime3ResourceSupport instead")
   end
 
   # Transforms references to classes to the form suitable for
@@ -1036,14 +1066,17 @@ class Puppet::Parser::Scope
   def transform_and_assert_classnames(names)
     names.map do |name|
       case name
+      when NilClass
+        raise ArgumentError, _("Cannot use undef as a class name")
       when String
+        raise ArgumentError, _("Cannot use empty string as a class name") if name.empty?
         name.sub(/^([^:]{1,2})/, '::\1')
 
       when Puppet::Resource
         assert_class_and_title(name.type, name.title)
         name.title.sub(/^([^:]{1,2})/, '::\1')
 
-      when Puppet::Pops::Types::PHostClassType
+      when Puppet::Pops::Types::PClassType
         #TRANSLATORS "Class" and "Type" are Puppet keywords and should not be translated
         raise ArgumentError, _("Cannot use an unspecific Class[] Type") unless name.class_name
         name.class_name.sub(/^([^:]{1,2})/, '::\1')

@@ -50,7 +50,7 @@ module Manager
   # @return [void]
   #
   def loadall
-    typeloader.loadall
+    typeloader.loadall(Puppet.lookup(:current_environment))
   end
 
   # Defines a new type or redefines an existing type with the given name.
@@ -72,7 +72,9 @@ module Manager
   def newtype(name, options = {}, &block)
     # Handle backward compatibility
     unless options.is_a?(Hash)
-      Puppet.warning "Puppet::Type.newtype(#{name}) now expects a hash as the second argument, not #{options.inspect}"
+      #TRANSLATORS 'Puppet::Type.newtype' should not be translated
+      Puppet.warning(_("Puppet::Type.newtype(%{name}) now expects a hash as the second argument, not %{argument}") %
+                         { name: name, argument: options.inspect})
     end
 
     # First make sure we don't have a method sitting around
@@ -91,8 +93,6 @@ module Manager
       end
     end
 
-    options = symbolize_options(options)
-
     # Then create the class.
 
     klass = genclass(
@@ -107,7 +107,8 @@ module Manager
     # Now define a "new<type>" method for convenience.
     if self.respond_to? newmethod
       # Refuse to overwrite existing methods like 'newparam' or 'newtype'.
-      Puppet.warning "'new#{name.to_s}' method already exists; skipping"
+      #TRANSLATORS 'new%{method}' will become a method name, do not translate this string
+      Puppet.warning(_("'new%{method}' method already exists; skipping") % { method: name.to_s })
     else
       selfobj.send(:define_method, newmethod) do |*args|
         klass.new(*args)
@@ -123,7 +124,7 @@ module Manager
     klass.providerloader = Puppet::Util::Autoload.new(klass, "puppet/provider/#{klass.name.to_s}")
 
     # We have to load everything so that we can figure out the default provider.
-    klass.providerloader.loadall Puppet.lookup(:current_environment)
+    klass.providerloader.loadall(Puppet.lookup(:current_environment))
     klass.providify unless klass.providers.empty?
 
     loc = block_given? ? block.source_location : nil
@@ -169,7 +170,8 @@ module Manager
     end
     # Try loading the type.
     if typeloader.load(name, Puppet.lookup(:current_environment))
-      Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
+      #TRANSLATORS 'puppet/type/%{name}' should not be translated
+      Puppet.warning(_("Loaded puppet/type/%{name} but no class was created") % { name: name }) unless @types.include? name
     elsif !Puppet[:always_retry_plugins]
       # PUP-5482 - Only look for a type once if plugin retry is disabled
       @types[name] = nil

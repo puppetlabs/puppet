@@ -9,7 +9,6 @@ module PuppetSpec::Files
     $global_tempfiles ||= []
     while path = $global_tempfiles.pop do
       begin
-        Dir.unstub(:entries)
         FileUtils.rm_rf path, :secure => true
       rescue Errno::ENOENT
         # nothing to do
@@ -17,36 +16,31 @@ module PuppetSpec::Files
     end
   end
 
-  def make_absolute(path) PuppetSpec::Files.make_absolute(path) end
-  def self.make_absolute(path)
+  module_function
+
+  def make_absolute(path)
     path = File.expand_path(path)
-    path[0] = 'c' if Puppet.features.microsoft_windows?
+    path[0] = 'c' if Puppet::Util::Platform.windows?
     path
   end
 
-  def tmpfile(name, dir = nil) PuppetSpec::Files.tmpfile(name, dir) end
-  def self.tmpfile(name, dir = nil)
-    # Generate a temporary file, just for the name...
-    source = dir ? Tempfile.new(name, dir) : Tempfile.new(name)
-    path = Puppet::FileSystem.expand_path(source.path.encode(Encoding::UTF_8))
-    source.close!
-
+  def tmpfile(name, dir = nil)
+    dir ||= Dir.tmpdir
+    path = Puppet::FileSystem.expand_path(make_tmpname(name, nil).encode(Encoding::UTF_8), dir)
     record_tmp(File.expand_path(path))
 
     path
   end
 
-  def file_containing(name, contents) PuppetSpec::Files.file_containing(name, contents) end
-  def self.file_containing(name, contents)
+  def file_containing(name, contents)
     file = tmpfile(name)
     File.open(file, 'wb') { |f| f.write(contents) }
     file
   end
 
-  def script_containing(name, contents) PuppetSpec::Files.script_containing(name, contents) end
-  def self.script_containing(name, contents)
+  def script_containing(name, contents)
     file = tmpfile(name)
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       file += '.bat'
       text = contents[:windows]
     else
@@ -57,8 +51,7 @@ module PuppetSpec::Files
     file
   end
 
-  def tmpdir(name) PuppetSpec::Files.tmpdir(name) end
-  def self.tmpdir(name)
+  def tmpdir(name)
     dir = Puppet::FileSystem.expand_path(Dir.mktmpdir(name).encode!(Encoding::UTF_8))
 
     record_tmp(dir)
@@ -66,13 +59,24 @@ module PuppetSpec::Files
     dir
   end
 
-  def dir_containing(name, contents_hash) PuppetSpec::Files.dir_containing(name, contents_hash) end
-  def self.dir_containing(name, contents_hash)
+  # Copied from ruby 2.4 source
+  def make_tmpname((prefix, suffix), n)
+    prefix = (String.try_convert(prefix) or
+              raise ArgumentError, "unexpected prefix: #{prefix.inspect}")
+    suffix &&= (String.try_convert(suffix) or
+                raise ArgumentError, "unexpected suffix: #{suffix.inspect}")
+    t = Time.now.strftime("%Y%m%d")
+    path = "#{prefix}#{t}-#{$$}-#{rand(0x100000000).to_s(36)}".dup
+    path << "-#{n}" if n
+    path << suffix if suffix
+    path
+  end
+
+  def dir_containing(name, contents_hash)
     dir_contained_in(tmpdir(name), contents_hash)
   end
 
-  def dir_contained_in(dir, contents_hash) PuppetSpec::Files.dir_contained_in(dir, contents_hash) end
-  def self.dir_contained_in(dir, contents_hash)
+  def dir_contained_in(dir, contents_hash)
     contents_hash.each do |k,v|
       if v.is_a?(Hash)
         Dir.mkdir(tmp = File.join(dir,k))
@@ -85,7 +89,7 @@ module PuppetSpec::Files
     dir
   end
 
-  def self.record_tmp(tmp)
+  def record_tmp(tmp)
     # ...record it for cleanup,
     $global_tempfiles ||= []
     $global_tempfiles << tmp
@@ -93,7 +97,7 @@ module PuppetSpec::Files
 
   def expect_file_mode(file, mode)
     actual_mode = "%o" % Puppet::FileSystem.stat(file).mode
-    target_mode = if Puppet.features.microsoft_windows?
+    target_mode = if Puppet::Util::Platform.windows?
       mode
     else
       "10" + "%04i" % mode.to_i

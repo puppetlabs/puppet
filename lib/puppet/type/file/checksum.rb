@@ -9,10 +9,16 @@ Puppet::Type.type(:file).newparam(:checksum) do
 
     The default checksum type is md5."
 
-  newvalues "md5", "md5lite", "sha256", "sha256lite", "mtime", "ctime", "none"
+  newvalues "md5", "md5lite", "sha224", "sha256", "sha256lite", "sha384", "sha512", "mtime", "ctime", "none"
 
   defaultto do
     Puppet[:digest_algorithm].to_sym
+  end
+
+  validate do |value|
+    if Puppet::Util::Platform.fips_enabled? && (value == :md5 || value == :md5lite)
+      raise ArgumentError, _("MD5 is not supported in FIPS mode")
+    end
   end
 
   def sum(content)

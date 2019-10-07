@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'digest/md5'
 require 'cgi'
 require 'etc'
@@ -12,7 +13,6 @@ require 'puppet/util/backups'
 require 'puppet/util/symbolic_file_mode'
 
 Puppet::Type.newtype(:file) do
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Checksums
   include Puppet::Util::Backups
   include Puppet::Util::SymbolicFileMode
@@ -31,7 +31,12 @@ Puppet::Type.newtype(:file) do
 
     **Autorequires:** If Puppet is managing the user or group that owns a
     file, the file resource will autorequire them. If Puppet is managing any
-    parent directories of a file, the file resource will autorequire them."
+    parent directories of a file, the file resource autorequires them.
+
+    Warning: Enabling `recurse` on directories containing large numbers of
+    files slows agent runs. To manage file attributes for many files,
+    consider using alternative methods such as the `chmod_r`, `chown_r`,
+     or `recursive_file_permissions` modules from the Forge."
 
   feature :manages_symlinks,
     "The provider can manage symbolic links."
@@ -74,7 +79,7 @@ Puppet::Type.newtype(:file) do
       (`File { backup => main }`), so it can affect all file resources.
 
       * If set to `false`, file content won't be backed up.
-      * If set to a string beginning with `.` (e.g., `.puppet-bak`), Puppet will
+      * If set to a string beginning with `.`, such as `.puppet-bak`, Puppet will
         use copy the file in the same directory with that value as the extension
         of the backup. (A value of `true` is a synonym for `.puppet-bak`.)
       * If set to any other string, Puppet will try to back up to a filebucket
@@ -187,8 +192,7 @@ Puppet::Type.newtype(:file) do
       Setting `recurselimit => 2` will manage the direct contents of the
       directory, as well as the contents of the _first_ level of subdirectories.
 
-      And so on --- 3 will manage the contents of the second level of
-      subdirectories, etc."
+      This pattern continues for each incremental value of `recurselimit`."
 
     newvalues(/^[0-9]+$/)
 
@@ -208,7 +212,7 @@ Puppet::Type.newtype(:file) do
       whose content doesn't match what the `source` or `content` attribute
       specifies.  Setting this to false allows file resources to initialize files
       without overwriting future changes.  Note that this only affects content;
-      Puppet will still manage ownership and permissions. Defaults to `true`."
+      Puppet will still manage ownership and permissions."
     defaultto :true
   end
 
@@ -225,9 +229,9 @@ Puppet::Type.newtype(:file) do
   newparam(:ignore) do
     desc "A parameter which omits action on files matching
       specified patterns during recursion.  Uses Ruby's builtin globbing
-      engine, so shell metacharacters are fully supported, e.g. `[a-z]*`.
+      engine, so shell metacharacters such as `[a-z]*` are fully supported.
       Matches that would descend into the directory structure are ignored,
-      e.g., `*/*`."
+      such as `*/*`."
 
     validate do |value|
       unless value.is_a?(Array) or value.is_a?(String) or value == false
@@ -294,6 +298,30 @@ Puppet::Type.newtype(:file) do
     defaultto :true
   end
 
+  newparam(:staging_location) do
+    desc "When rendering a file first render it to this location. The default
+         location is the same path as the desired location with a unique filename.
+         This parameter is useful in conjuction with validate_cmd to test a
+         file before moving the file to it's final location.
+         WARNING: File replacement is only guaranteed to be atomic if the staging
+         location is on the same filesystem as the final location."
+
+    validate do |value|
+      unless Puppet::Util.absolute_path?(value)
+        fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
+      end
+    end
+
+    munge do |value|
+      if value.start_with?('//') and ::File.basename(value) == "/"
+        # This is a UNC path pointing to a share, so don't add a trailing slash
+        ::File.expand_path(value)
+      else
+        ::File.join(::File.split(::File.expand_path(value)))
+      end
+    end
+  end
+
   newparam(:validate_cmd) do
     desc "A command for validating the file's syntax before replacing it. If
       Puppet would need to rewrite a file due to new `source` or `content`, it
@@ -321,7 +349,7 @@ Puppet::Type.newtype(:file) do
 
   newparam(:validate_replacement) do
     desc "The replacement string in a `validate_cmd` that will be replaced
-      with an input file name. Defaults to: `%`"
+      with an input file name."
 
     defaultto '%'
   end
@@ -333,7 +361,8 @@ Puppet::Type.newtype(:file) do
     if !path.root?
       # Start at our parent, to avoid autorequiring ourself
       parents = path.parent.enum_for(:ascend)
-      if found = parents.find { |p| catalog.resource(:file, p.to_s) }
+      found = parents.find { |p| catalog.resource(:file, p.to_s) }
+      if found
         req << found.to_s
       end
     end
@@ -347,7 +376,8 @@ Puppet::Type.newtype(:file) do
     autorequire(type) do
       if @parameters.include?(property)
         # The user/group property automatically converts to IDs
-        next unless should = @parameters[property].shouldorig
+        should = @parameters[property].shouldorig
+        next unless should
         val = should[0]
         if val.is_a?(Integer) or val =~ /^\d+$/
           nil
@@ -430,7 +460,8 @@ Puppet::Type.newtype(:file) do
       fail _("Can not find filebucket for backups without a catalog")
     end
 
-    unless catalog and filebucket = catalog.resource(:filebucket, backup) or backup == "puppet"
+    filebucket = catalog.resource(:filebucket, backup) if catalog
+    if !catalog || (!filebucket && backup != 'puppet')
       fail _("Could not find filebucket %{backup} specified in backup") % { backup: backup }
     end
 
@@ -541,7 +572,8 @@ Puppet::Type.newtype(:file) do
   def pathbuilder
     # We specifically need to call the method here, so it looks
     # up our parent in the catalog graph.
-    if parent = parent()
+    parent = parent()
+    if parent
       # We only need to behave specially when our parent is also
       # a file
       if parent.is_a?(self.class)
@@ -664,14 +696,16 @@ Puppet::Type.newtype(:file) do
     total = self[:source].collect do |source|
       # For each inlined file resource, the catalog contains a hash mapping
       # source path to lists of metadata returned by a server-side search.
-      if recursive_metadata = catalog.recursive_metadata[title]
+      recursive_metadata = catalog.recursive_metadata[title]
+      if recursive_metadata
         result = recursive_metadata[source]
       else
         result = perform_recursion(source)
       end
 
       next unless result
-      return [] if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
+      top = result.find { |r| r.relative_path == "." }
+      return [] if top && top.ftype != "directory"
       result.each do |data|
         if data.relative_path == '.'
           data.source = source
@@ -714,7 +748,7 @@ Puppet::Type.newtype(:file) do
   #
   # @param  [Symbol] should The file type replacing the current content.
   # @return [Boolean] True if the file was removed, else False
-  # @raises [fail???] If the current file isn't one of %w{file link directory} and can't be removed.
+  # @raises [fail???] If the file could not be backed up or could not be removed.
   def remove_existing(should)
     wanted_type = should.to_s
     current_type = read_current_type
@@ -723,8 +757,12 @@ Puppet::Type.newtype(:file) do
       return false
     end
 
-    if can_backup?(current_type)
-      backup_existing
+    if self[:backup]
+      if can_backup?(current_type)
+        backup_existing
+      else
+        self.warning _("Could not back up file of type %{current_type}") % { current_type: current_type }
+      end
     end
 
     if wanted_type != "link" and current_type == wanted_type
@@ -734,10 +772,11 @@ Puppet::Type.newtype(:file) do
     case current_type
     when "directory"
       return remove_directory(wanted_type)
-    when "link", "file"
+    when "link", "file", "fifo", "socket"
       return remove_file(current_type, wanted_type)
     else
-      self.fail _("Could not back up files of type %{current_type}") % { current_type: current_type }
+      # Including: “blockSpecial”, “characterSpecial”, “unknown”
+      self.fail _("Could not remove files of type %{current_type}") % { current_type: current_type }
     end
   end
 
@@ -745,8 +784,9 @@ Puppet::Type.newtype(:file) do
     # This check is done in retrieve to ensure it happens before we try to use
     # metadata in `copy_source_values`, but so it only fails the resource and not
     # catalog validation (because that would be a breaking change from Puppet 4).
-    if Puppet.features.microsoft_windows? && parameter(:source) &&
+    if Puppet::Util::Platform.windows? && parameter(:source) &&
       [:use, :use_when_creating].include?(self[:source_permissions])
+      #TRANSLATORS "source_permissions => ignore" should not be translated
       err_msg = _("Copying owner/mode/group from the source file on Windows is not supported; use source_permissions => ignore.")
       if self[:owner] == nil || self[:group] == nil || self[:mode] == nil
         # Fail on Windows if source permissions are being used and the file resource
@@ -789,12 +829,12 @@ Puppet::Type.newtype(:file) do
     return true if self[:ensure] == :file
 
     # I.e., it's set to something like "directory"
-    return false if e = self[:ensure] and e != :present
+    return false if self[:ensure] && self[:ensure] != :present
 
     # The user doesn't really care, apparently
     if self[:ensure] == :present
-      return true unless s = stat
-      return(s.ftype == "file" ? true : false)
+      return true unless stat
+      return(stat.ftype == "file" ? true : false)
     end
 
     # If we've gotten here, then :ensure isn't set
@@ -823,12 +863,15 @@ Puppet::Type.newtype(:file) do
 
     @stat = begin
       Puppet::FileSystem.send(method, self[:path])
-    rescue Errno::ENOENT => error
+    rescue Errno::ENOENT
       nil
-    rescue Errno::ENOTDIR => error
+    rescue Errno::ENOTDIR
       nil
-    rescue Errno::EACCES => error
+    rescue Errno::EACCES
       warning _("Could not stat; permission denied")
+      nil
+    rescue Errno::EINVAL
+      warning _("Could not stat; invalid pathname")
       nil
     end
   end
@@ -849,7 +892,16 @@ Puppet::Type.newtype(:file) do
     mode_int = mode ? symbolic_mode_to_int(mode, Puppet::Util::DEFAULT_POSIX_MODE) : nil
 
     if write_temporary_file?
-      Puppet::Util.replace_file(self[:path], mode_int) do |file|
+      if self[:validate_cmd]
+        validate_callback = proc { |path|
+          output = Puppet::Util::Execution.execute(self[:validate_cmd].gsub(self[:validate_replacement], path), :failonfail => true, :combine => true)
+          output.split(/\n/).each { |line|
+            self.debug(line)
+          }
+        }
+      end
+
+      Puppet::Util.replace_file(self[:path], mode_int, staging_location: self[:staging_location], validate_callback: validate_callback) do |file|
         file.binmode
         devfail 'a property should have been provided if write_temporary_file? returned true' if property.nil?
         content_checksum = property.write(file)
@@ -867,12 +919,6 @@ Puppet::Type.newtype(:file) do
         end
 
         fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
-        if self[:validate_cmd]
-          output = Puppet::Util::Execution.execute(self[:validate_cmd].gsub(self[:validate_replacement], file.path), :failonfail => true, :combine => true)
-          output.split(/\n/).each { |line|
-            self.debug(line)
-          }
-        end
       end
     else
       umask = mode ? 000 : 022
@@ -930,18 +976,21 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  # @return [Boolean] If the current file can be backed up and needs to be backed up.
+  # @return [Boolean] If the current file should be backed up and can be backed up.
   def can_backup?(type)
-    if type == "directory" and not force?
-      # (#18110) Directories cannot be removed without :force, so it doesn't
-      # make sense to back them up.
-      false
-    else
+    if type == "directory" and force?
+      # (#18110) Directories cannot be removed without :force,
+      # so it doesn't make sense to back them up unless removing with :force.
       true
+    elsif type == "file" or type == "link"
+      true
+    else
+      # Including: “blockSpecial”, “characterSpecial”, "fifo", "socket", “unknown”
+      false
     end
   end
 
-  # @return [Boolean] True if the directory was removed
+  # @return [Boolean] if the directory was removed (which is always true currently)
   # @api private
   def remove_directory(wanted_type)
     if force?
@@ -975,7 +1024,7 @@ Puppet::Type.newtype(:file) do
   def backup_existing
     unless perform_backup
       #TRANSLATORS refers to a file which could not be backed up
-      raise Puppet::Error, _("Could not back up; will not replace")
+      raise Puppet::Error, _("Could not back up; will not remove")
     end
   end
 

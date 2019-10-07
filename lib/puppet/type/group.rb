@@ -24,7 +24,7 @@ module Puppet
 
     feature :libuser,
       "Allows local groups to be managed on systems that also use some other
-       remote NSS method of managing accounts."
+       remote Name Switch Service (NSS) method of managing accounts."
 
     ensurable do
       desc "Create or remove the group."
@@ -36,6 +36,9 @@ module Puppet
       newvalue(:absent) do
         provider.delete
       end
+
+      defaultto :present
+
     end
 
     newproperty(:gid) do
@@ -54,7 +57,7 @@ module Puppet
 
       def sync
         if self.should == :absent
-          raise Puppet::DevError, "GID cannot be deleted"
+          raise Puppet::DevError, _("GID cannot be deleted")
         else
           provider.gid = self.should
         end
@@ -84,6 +87,8 @@ module Puppet
         behavior can be configured with `auth_membership`."
 
       def change_to_s(currentvalue, newvalue)
+        newvalue = actual_should(currentvalue, newvalue)
+
         currentvalue = currentvalue.join(",") if currentvalue != :absent
         newvalue = newvalue.join(",")
         super(currentvalue, newvalue)
@@ -107,7 +112,33 @@ module Puppet
 
         super(currentvalue)
       end
-      alias :should_to_s :is_to_s
+
+      def should_to_s(newvalue)
+        is_to_s(actual_should(retrieve, newvalue))
+      end
+
+      # Calculates the actual should value given the current and
+      # new values. This is only used in should_to_s and change_to_s
+      # to fix the change notification issue reported in PUP-6542.
+      def actual_should(currentvalue, newvalue)
+        currentvalue = munge_members_value(currentvalue)
+        newvalue = munge_members_value(newvalue)
+
+        if @resource[:auth_membership]
+          newvalue.uniq.sort 
+        else
+          (currentvalue + newvalue).uniq.sort
+        end
+      end
+
+      # Useful helper to handle the possible property value types that we can
+      # both pass-in and return. It munges the value into an array
+      def munge_members_value(value)
+        return [] if value == :absent
+        return value.split(',') if value.is_a?(String)
+
+        value
+      end
 
       validate do |value|
         if provider.respond_to?(:member_valid?)
@@ -138,7 +169,7 @@ module Puppet
     end
 
     newparam(:allowdupe, :boolean => true, :parent => Puppet::Parameter::Boolean) do
-      desc "Whether to allow duplicate GIDs. Defaults to `false`."
+      desc "Whether to allow duplicate GIDs."
 
       defaultto false
     end
@@ -151,16 +182,14 @@ module Puppet
       desc "Specify group AIX attributes, as an array of `'key=value'` strings. This
         parameter's behavior can be configured with `attribute_membership`."
 
+      self.log_only_changed_or_new_keys = true
+
       def membership
         :attribute_membership
       end
 
       def delimiter
         " "
-      end
-
-      validate do |value|
-        raise ArgumentError, _("Attributes value pairs must be separated by an =") unless value.include?("=")
       end
     end
 
@@ -187,7 +216,9 @@ module Puppet
              :required_features => :libuser,
              :parent => Puppet::Parameter::Boolean) do
       desc "Forces the management of local accounts when accounts are also
-            being managed by some other NSS"
+            being managed by some other Name Switch Service (NSS).
+            
+            This option relies on your operating system's implementation of `luser*` commands, such as `luseradd` , `lgroupadd`, and `lusermod`. The `forcelocal` option could behave unpredictably in some circumstances. If the tools it depends on are not available, it might have no effect at all."
       defaultto false
     end
 

@@ -13,24 +13,24 @@
 #
 # @example Matching a regular expression in a string
 #
-# ~~~ ruby
+# ```puppet
 # $matches = "abc123".match(/[a-z]+[1-9]+/)
 # # $matches contains [abc123]
-# ~~~
+# ```
 #
 # @example Matching a regular expressions with grouping captures in a string
 #
-# ~~~ ruby
+# ```puppet
 # $matches = "abc123".match(/([a-z]+)([1-9]+)/)
 # # $matches contains [abc123, abc, 123]
-# ~~~
+# ```
 #
 # @example Matching a regular expression with grouping captures in an array of strings
 #
-# ~~~ ruby
+# ```puppet
 # $matches = ["abc123","def456"].match(/([a-z]+)([1-9]+)/)
 # # $matches contains [[abc123, abc, 123], [def456, def, 456]]
-# ~~~
+# ```
 #
 # @since 4.0.0
 #
@@ -90,6 +90,17 @@ Puppet::Functions.create_function(:match) do
     do_match(s, regexp)
   end
 
+  def match_PTypeAliasType(alias_t, s)
+    match(s, alias_t.resolved_type)
+  end
+
+  def match_PVariantType(var_t, s)
+    # Find first matching type (or error out if one of the variants is not acceptable)
+    result = nil
+    var_t.types.find {|t| result = match(s, t) }
+    result
+  end
+
   def match_PRegexpType(regexp_t, s)
     raise ArgumentError, _("Given Regexp Type has no regular expression") unless regexp_t.pattern
     do_match(s, regexp_t.regexp)
@@ -113,8 +124,7 @@ Puppet::Functions.create_function(:match) do
   private
 
   def do_match(s, regexp)
-    if result = regexp.match(s)
-      result.to_a
-    end
+    result = regexp.match(s)
+    result.to_a if result
   end
 end

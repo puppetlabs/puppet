@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet_spec/files'
@@ -47,7 +46,7 @@ describe 'The lookup function' do
   def compile_and_get_notifications(code)
     Puppet[:code] = code
     node.environment.check_for_reparse
-    catalog = block_given? ? compiler.compile { |catalog| yield(compiler.topscope); catalog } : compiler.compile
+    catalog = block_given? ? compiler.compile { |cat| yield(compiler.topscope); cat } : compiler.compile
     catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
   end
 

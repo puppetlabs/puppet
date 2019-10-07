@@ -1,20 +1,24 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:package).provider(:windows) do
-  let (:name)        { 'mysql-5.1.58-win-x64' }
-  let (:source)      { 'E:\mysql-5.1.58-win-x64.msi' }
-  let (:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :windows, :source => source) }
-  let (:provider)    { resource.provider }
-  let (:execute_options) do {:failonfail => false, :combine => true} end
+describe Puppet::Type.type(:package).provider(:windows), :if => Puppet.features.microsoft_windows? do
+  let(:name)        { 'mysql-5.1.58-win-x64' }
+  let(:source)      { 'E:\Rando\Directory\mysql-5.1.58-win-x64.msi' }
+  let(:resource)    {  Puppet::Type.type(:package).new(:name => name, :provider => :windows, :source => source) }
+  let(:provider)    { resource.provider }
+  let(:execute_options) do {:failonfail => false, :combine => true, :suppress_window => true} end
 
-  before :each do
+  before(:each) do
     # make sure we never try to execute anything
-    provider.expects(:execute).never
+    @times_execute_called = 0
+    allow(provider).to receive(:execute) { @times_execute_called += 1}
+  end
+
+  after(:each) do
+    expect(@times_execute_called).to eq(0)
   end
 
   def expect_execute(command, status)
-    provider.expects(:execute).with(command, execute_options).returns(Puppet::Util::Execution::ProcessOutput.new('',status))
+    expect(provider).to receive(:execute).with(command, execute_options).and_return(Puppet::Util::Execution::ProcessOutput.new('',status))
   end
 
   describe 'provider features' do
@@ -25,7 +29,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
     it { is_expected.to be_versionable }
   end
 
-  describe 'on Windows', :if => Puppet.features.microsoft_windows? do
+  describe 'on Windows', :if => Puppet::Util::Platform.windows? do
     it 'should be the default provider' do
       expect(Puppet::Type.type(:package).defaultprovider).to eq(subject.class)
     end
@@ -33,13 +37,13 @@ describe Puppet::Type.type(:package).provider(:windows) do
 
   context '::instances' do
     it 'should return an array of provider instances' do
-      pkg1 = stub('pkg1')
-      pkg2 = stub('pkg2')
+      pkg1 = double('pkg1')
+      pkg2 = double('pkg2')
 
-      prov1 = stub('prov1', :name => 'pkg1', :version => '1.0.0', :package => pkg1)
-      prov2 = stub('prov2', :name => 'pkg2', :version => nil, :package => pkg2)
+      prov1 = double('prov1', :name => 'pkg1', :version => '1.0.0', :package => pkg1)
+      prov2 = double('prov2', :name => 'pkg2', :version => nil, :package => pkg2)
 
-      Puppet::Provider::Package::Windows::Package.expects(:map).multiple_yields([prov1], [prov2]).returns([prov1, prov2])
+      expect(Puppet::Provider::Package::Windows::Package).to receive(:map).and_yield(prov1).and_yield(prov2).and_return([prov1, prov2])
 
       providers = provider.class.instances
       expect(providers.count).to eq(2)
@@ -53,7 +57,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
     end
 
     it 'should return an empty array if none found' do
-      Puppet::Provider::Package::Windows::Package.expects(:map).returns([])
+      expect(Puppet::Provider::Package::Windows::Package).to receive(:map).and_return([])
 
       expect(provider.class.instances).to eq([])
     end
@@ -61,23 +65,23 @@ describe Puppet::Type.type(:package).provider(:windows) do
 
   context '#query' do
     it 'should return the hash of the matched packaged' do
-      pkg = mock(:name => 'pkg1', :version => nil)
-      pkg.expects(:match?).returns(true)
-      Puppet::Provider::Package::Windows::Package.expects(:find).yields(pkg)
+      pkg = double(:name => 'pkg1', :version => nil)
+      expect(pkg).to receive(:match?).and_return(true)
+      expect(Puppet::Provider::Package::Windows::Package).to receive(:find).and_yield(pkg)
 
       expect(provider.query).to eq({ :name => 'pkg1', :ensure => :installed, :provider => :windows })
     end
 
     it 'should include the version string when present' do
-      pkg = mock(:name => 'pkg1', :version => '1.0.0')
-      pkg.expects(:match?).returns(true)
-      Puppet::Provider::Package::Windows::Package.expects(:find).yields(pkg)
+      pkg = double(:name => 'pkg1', :version => '1.0.0')
+      expect(pkg).to receive(:match?).and_return(true)
+      expect(Puppet::Provider::Package::Windows::Package).to receive(:find).and_yield(pkg)
 
       expect(provider.query).to eq({ :name => 'pkg1', :ensure => '1.0.0', :provider => :windows })
     end
 
     it 'should return nil if no package was found' do
-      Puppet::Provider::Package::Windows::Package.expects(:find)
+      expect(Puppet::Provider::Package::Windows::Package).to receive(:find)
 
       expect(provider.query).to be_nil
     end
@@ -85,10 +89,10 @@ describe Puppet::Type.type(:package).provider(:windows) do
 
   context '#install' do
     let(:command) { 'blarg.exe /S' }
-    let(:klass) { mock('installer', :install_command => ['blarg.exe', '/S'] ) }
-
+    let(:klass) { double('installer', :install_command => ['blarg.exe', '/S'] ) }
+    let(:execute_options) do {:failonfail => false, :combine => true, :cwd => nil, :suppress_window => true} end
     before :each do
-      Puppet::Provider::Package::Windows::Package.expects(:installer_class).returns(klass)
+      expect(Puppet::Provider::Package::Windows::Package).to receive(:installer_class).and_return(klass)
     end
 
     it 'should join the install command and options' do
@@ -107,26 +111,26 @@ describe Puppet::Type.type(:package).provider(:windows) do
 
     it 'should not warn if the package install succeeds' do
       expect_execute(command, 0)
-      provider.expects(:warning).never
+      expect(provider).not_to receive(:warning)
 
       provider.install
     end
 
     it 'should warn if reboot initiated' do
       expect_execute(command, 1641)
-      provider.expects(:warning).with('The package installed successfully and the system is rebooting now.')
+      expect(provider).to receive(:warning).with('The package installed successfully and the system is rebooting now.')
 
       provider.install
     end
 
     it 'should warn if reboot required' do
       expect_execute(command, 3010)
-      provider.expects(:warning).with('The package installed successfully, but the system must be rebooted.')
+      expect(provider).to receive(:warning).with('The package installed successfully, but the system must be rebooted.')
 
       provider.install
     end
 
-    it 'should fail otherwise', :if => Puppet.features.microsoft_windows? do
+    it 'should fail otherwise', :if => Puppet::Util::Platform.windows? do
       expect_execute(command, 5)
 
       expect do
@@ -136,11 +140,22 @@ describe Puppet::Type.type(:package).provider(:windows) do
         expect(error.code).to eq(5) # ERROR_ACCESS_DENIED
       end
     end
+
+    context 'With a real working dir' do
+      let(:execute_options) do {:failonfail => false, :combine => true, :cwd => 'E:\Rando\Directory', :suppress_window => true} end
+
+      it 'should not try to set the working directory' do
+        expect(Puppet::FileSystem).to receive(:exist?).with('E:\Rando\Directory').and_return(true)
+        expect_execute(command, 0)
+
+        provider.install
+      end
+    end
   end
 
   context '#uninstall' do
     let(:command) { 'unblarg.exe /Q' }
-    let(:package) { mock('package', :uninstall_command => ['unblarg.exe', '/Q'] ) }
+    let(:package) { double('package', :uninstall_command => ['unblarg.exe', '/Q'] ) }
 
     before :each do
       resource[:ensure] = :absent
@@ -162,26 +177,26 @@ describe Puppet::Type.type(:package).provider(:windows) do
 
     it 'should not warn if the package install succeeds' do
       expect_execute(command, 0)
-      provider.expects(:warning).never
+      expect(provider).not_to receive(:warning)
 
       provider.uninstall
     end
 
     it 'should warn if reboot initiated' do
       expect_execute(command, 1641)
-      provider.expects(:warning).with('The package uninstalled successfully and the system is rebooting now.')
+      expect(provider).to receive(:warning).with('The package uninstalled successfully and the system is rebooting now.')
 
       provider.uninstall
     end
 
     it 'should warn if reboot required' do
       expect_execute(command, 3010)
-      provider.expects(:warning).with('The package uninstalled successfully, but the system must be rebooted.')
+      expect(provider).to receive(:warning).with('The package uninstalled successfully, but the system must be rebooted.')
 
       provider.uninstall
     end
 
-    it 'should fail otherwise', :if => Puppet.features.microsoft_windows? do
+    it 'should fail otherwise', :if => Puppet::Util::Platform.windows? do
       expect_execute(command, 5)
 
       expect do

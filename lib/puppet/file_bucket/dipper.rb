@@ -17,7 +17,6 @@ class Puppet::FileBucket::Dipper
     # Emulate the XMLRPC client
     server      = hash[:Server]
     port        = hash[:Port] || Puppet[:masterport]
-    environment = Puppet[:environment]
 
     if hash.include?(:Path)
       @local_path = hash[:Path]
@@ -46,7 +45,7 @@ class Puppet::FileBucket::Dipper
 
       # Make a HEAD request for the file so that we don't waste time
       # uploading it if it already exists in the bucket.
-      unless Puppet::FileBucket::File.indirection.head(file_bucket_path)
+      unless Puppet::FileBucket::File.indirection.head(file_bucket_path, :bucket_path => file_bucket_file.bucket_path)
         Puppet::FileBucket::File.indirection.save(file_bucket_file, dest_path)
       end
 
@@ -78,7 +77,7 @@ class Puppet::FileBucket::Dipper
           tmp_file.unlink
         end
       else
-        raise Puppet::Error, _("Please provide a file or checksum do diff with")
+        raise Puppet::Error, _("Please provide a file or checksum to diff with")
       end
     elsif file_a
       if checksum_b
@@ -127,7 +126,8 @@ class Puppet::FileBucket::Dipper
     end
 
     if restore
-      if newcontents = get_bucket_file(sum)
+      newcontents = get_bucket_file(sum)
+      if newcontents
         newsum = newcontents.checksum_data
         changed = nil
         if Puppet::FileSystem.exist?(file_handle) and ! Puppet::FileSystem.writable?(file_handle)

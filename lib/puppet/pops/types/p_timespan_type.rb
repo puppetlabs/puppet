@@ -3,7 +3,7 @@ module Types
   class PAbstractTimeDataType < PScalarType
     # @param from [AbstractTime] lower bound for this type. Nil or :default means unbounded
     # @param to [AbstractTime] upper bound for this type. Nil or :default means unbounded
-    def initialize(from, to)
+    def initialize(from, to = nil)
       @from = convert_arg(from, true)
       @to = convert_arg(to, false)
       raise ArgumentError, "'from' must be less or equal to 'to'. Got (#{@from}, #{@to}" unless @from <= @to
@@ -50,10 +50,6 @@ module Types
       self.class == o.class && @from == o.numeric_from && @to == o.numeric_to
     end
 
-    def instance?(o, guard = nil)
-      o.is_a?(Numeric) && o >= @from && o <= @to
-    end
-
     def unbounded?
       @from == -Float::INFINITY && @to == Float::INFINITY
     end
@@ -69,9 +65,9 @@ module Types
       when String
         impl_class.parse(arg)
       when Integer
-        arg == impl_class.new(arg * Time::NSECS_PER_SEC)
+        impl_class.new(arg * Time::NSECS_PER_SEC)
       when Float
-        arg == (min ? -Float::INFINITY : Float::INFINITY) ? arg : impl_class.new(arg * Time::NSECS_PER_SEC)
+        impl_class.new(arg * Time::NSECS_PER_SEC)
       else
         raise ArgumentError, "Unable to create a #{impl_class.name} from a #{arg.class.name}" unless arg.nil? || arg == :default
         nil
@@ -107,10 +103,10 @@ module Types
       )
     end
 
-    def self.new_function(_, loader)
-      @new_function ||= Puppet::Functions.create_loaded_function(:new_timespan, loader) do
+    def self.new_function(type)
+      @new_function ||= Puppet::Functions.create_loaded_function(:new_timespan, type.loader) do
         local_types do
-          type 'Formats = Variant[String[2],Array[String[2]], 1]'
+          type 'Formats = Variant[String[2],Array[String[2], 1]]'
         end
 
         dispatch :from_seconds do
@@ -165,7 +161,7 @@ module Types
         end
 
         def from_fields(days, hours, minutes, seconds, milliseconds = 0, microseconds = 0, nanoseconds = 0)
-          Time::Timespan.from_fields(days, hours, minutes, seconds, milliseconds, microseconds, nanoseconds)
+          Time::Timespan.from_fields(false, days, hours, minutes, seconds, milliseconds, microseconds, nanoseconds)
         end
 
         def from_string_hash(args_hash)
@@ -184,6 +180,10 @@ module Types
 
     def impl_class
       Time::Timespan
+    end
+
+    def instance?(o, guard = nil)
+      o.is_a?(Time::Timespan) && o >= @from && o <= @to
     end
 
     DEFAULT = PTimespanType.new(nil, nil)

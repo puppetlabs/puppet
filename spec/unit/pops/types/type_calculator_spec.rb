@@ -42,6 +42,13 @@ describe 'The type calculator' do
     TypeFactory.variant(*types)
   end
 
+  def empty_variant_t()
+    t = TypeFactory.variant()
+    # assert this to ensure we did get an empty variant (or tests may pass when not being empty)
+    raise 'typefactory did not return empty variant' unless t.types.empty?
+    t
+  end
+
   def type_alias_t(name, type_string)
     type_expr = Parser::EvaluatingParser.new.parse_string(type_string)
     TypeFactory.type_alias(name, type_expr)
@@ -60,7 +67,7 @@ describe 'The type calculator' do
   end
 
   def empty_array_t
-  empty_array = array_t(unit_t, range_t(0,0))
+    array_t(unit_t, range_t(0,0))
   end
 
   def hash_t(k,v,s = nil)
@@ -124,6 +131,10 @@ describe 'The type calculator' do
     TypeFactory.object(hash)
   end
 
+  def iterable_t(t = nil)
+    TypeFactory.iterable(t)
+  end
+
   def types
     Types
   end
@@ -152,12 +163,12 @@ describe 'The type calculator' do
       expect(t.value).to eq('foo')
     end
 
-    it 'boolean true translates to PBooleanType' do
-      expect(calculator.infer(true).class).to eq(PBooleanType)
+    it 'boolean true translates to PBooleanType::TRUE' do
+      expect(calculator.infer(true)).to eq(PBooleanType::TRUE)
     end
 
-    it 'boolean false translates to PBooleanType' do
-      expect(calculator.infer(false).class).to eq(PBooleanType)
+    it 'boolean false translates to PBooleanType::FALSE' do
+      expect(calculator.infer(false)).to eq(PBooleanType::FALSE)
     end
 
     it 'regexp translates to PRegexpType' do
@@ -188,11 +199,11 @@ describe 'The type calculator' do
       end
     end
 
-    it 'Class Foo translates to PType[PRuntimeType[ruby, Foo]]' do
+    it 'Class Foo translates to PTypeType[PRuntimeType[ruby, Foo]]' do
       ::Foo = Class.new
       begin
         t = calculator.infer(::Foo)
-        expect(t.class).to eq(PType)
+        expect(t.class).to eq(PTypeType)
         tt = t.type
         expect(tt.class).to eq(PRuntimeType)
         expect(tt.runtime).to eq(:ruby)
@@ -202,11 +213,11 @@ describe 'The type calculator' do
       end
     end
 
-    it 'Module FooModule translates to PType[PRuntimeType[ruby, FooModule]]' do
+    it 'Module FooModule translates to PTypeType[PRuntimeType[ruby, FooModule]]' do
       ::FooModule = Module.new
       begin
         t = calculator.infer(::FooModule)
-        expect(t.class).to eq(PType)
+        expect(t.class).to eq(PTypeType)
         tt = t.type
         expect(tt.class).to eq(PRuntimeType)
         expect(tt.runtime).to eq(:ruby)
@@ -523,6 +534,19 @@ describe 'The type calculator' do
         end
       end
     end
+
+    it 'infers an instance of an anonymous class to Runtime[ruby]' do
+      cls = Class.new do
+        attr_reader :name
+        def initialize(name)
+          @name = name
+        end
+      end
+      t = calculator.infer(cls.new('test'))
+      expect(t.class).to eql(PRuntimeType)
+      expect(t.runtime).to eql(:ruby)
+      expect(t.name_or_pattern).to eql(nil)
+    end
   end
 
   context 'patterns' do
@@ -563,17 +587,17 @@ describe 'The type calculator' do
     end
 
     it 'computes given hostclass type commonality' do
-      r1 = PHostClassType.new('foo')
-      r2 = PHostClassType.new('foo')
+      r1 = PClassType.new('foo')
+      r2 = PClassType.new('foo')
       expect(calculator.common_type(r1, r2).to_s).to eq('Class[foo]')
 
-      r2 = PHostClassType.new('bar')
+      r2 = PClassType.new('bar')
       expect(calculator.common_type(r1, r2).to_s).to eq('Class')
 
-      r2 = PHostClassType.new(nil)
+      r2 = PClassType.new(nil)
       expect(calculator.common_type(r1, r2).to_s).to eq('Class')
 
-      r1 = PHostClassType.new(nil)
+      r1 = PClassType.new(nil)
       expect(calculator.common_type(r1, r2).to_s).to eq('Class')
     end
 
@@ -834,14 +858,13 @@ describe 'The type calculator' do
         t = PTypeReferenceType::DEFAULT
         all_instances = (all_types - [
           PTypeReferenceType, # Avoid comparison with t
-          PVariantType,   # DEFAULT contains no variants, so assignability is never tested and always true
           PTypeAliasType      # DEFAULT resolves to PTypeReferenceType::DEFAULT, i.e. t
         ]).map {|c| c::DEFAULT }
 
         # Add a non-empty variant
         all_instances << variant_t(PAnyType::DEFAULT, PUnitType::DEFAULT)
         # Add a type alias that doesn't resolve to 't'
-        all_instances << type_alias_t('MyInt', 'Integer').resolve(TypeParser.singleton, nil)
+        all_instances << type_alias_t('MyInt', 'Integer').resolve(nil)
 
         all_instances.each { |i| expect(i).not_to be_assignable_to(t) }
       end
@@ -862,19 +885,50 @@ describe 'The type calculator' do
     context 'for Data, such that' do
       let(:data) { TypeFactory.data }
       data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
-        it "#{tc.name} is assignable to Data" do
+        it "it is assignable from #{tc.name}" do
           expect(tc).to be_assignable_to(data)
         end
       end
 
-      it 'Data is not assignable to any of its subtypes' do
+      data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
+        it "it is assignable from Optional[#{tc.name}]" do
+          expect(optional_t(tc)).to be_assignable_to(data)
+        end
+      end
+
+      it 'it is not assignable to any of its subtypes' do
         types_to_test = data_compatible_types
         types_to_test.each {|t2| expect(data).not_to be_assignable_to(type_from_class(t2)) }
       end
 
-      it 'Data is not assignable to any disjunct type' do
-        tested_types = all_types - [PAnyType, POptionalType] - scalar_types
+      it 'it is not assignable to any disjunct type' do
+        tested_types = all_types - [PAnyType, POptionalType, PInitType] - scalar_data_types
         tested_types.each {|t2| expect(data).not_to be_assignable_to(t2::DEFAULT) }
+      end
+    end
+
+    context 'for Rich Data, such that' do
+      let(:rich_data) { TypeFactory.rich_data }
+      rich_data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
+        it "it is assignable from #{tc.name}" do
+          expect(tc).to be_assignable_to(rich_data)
+        end
+      end
+
+      rich_data_compatible_types.map { |t2| type_from_class(t2) }.each do |tc|
+        it "it is assignable from Optional[#{tc.name}]" do
+          expect(optional_t(tc)).to be_assignable_to(rich_data)
+        end
+      end
+
+      it 'it is not assignable to any of its subtypes' do
+        types_to_test = rich_data_compatible_types
+        types_to_test.each {|t2| expect(rich_data).not_to be_assignable_to(type_from_class(t2)) }
+      end
+
+      it 'it is not assignable to any disjunct type' do
+        tested_types = all_types - [PAnyType, POptionalType, PInitType] - scalar_types
+        tested_types.each {|t2| expect(rich_data).not_to be_assignable_to(t2::DEFAULT) }
       end
     end
 
@@ -894,6 +948,45 @@ describe 'The type calculator' do
         expect(v).not_to be_assignable_to(range_t(0, 4))
         expect(v).not_to be_assignable_to(string_t)
       end
+
+      it 'an empty Variant is assignable to another empty Variant' do
+        expect(empty_variant_t).to be_assignable_to(empty_variant_t)
+      end
+
+      it 'an empty Variant is assignable to Any' do
+        expect(empty_variant_t).to be_assignable_to(PAnyType::DEFAULT)
+      end
+
+      it 'an empty Variant is assignable to Unit' do
+        expect(empty_variant_t).to be_assignable_to(PUnitType::DEFAULT)
+      end
+
+      it 'an empty Variant is not assignable to any type except empty Variant, Any, NotUndef, and Unit' do
+        assignables = [PUnitType, PAnyType, PNotUndefType]
+        unassignables = all_types - assignables
+        unassignables.each {|t2| expect(empty_variant_t).not_to be_assignable_to(t2::DEFAULT) }
+        assignables.each   {|t2| expect(empty_variant_t).to be_assignable_to(t2::DEFAULT) }
+      end
+
+      it 'an empty Variant is not assignable to Optional[Any] since it is not assignable to Undef' do
+        opt_any = optional_t(any_t)
+        expect(empty_variant_t).not_to be_assignable_to(opt_any)
+      end
+
+      it 'an Optional[Any] is not assignable to empty Variant' do
+        opt_any = optional_t(any_t)
+        expect(opt_any).not_to be_assignable_to(empty_variant_t)
+      end
+
+      it 'an empty Variant is assignable to NotUndef[Variant] since Variant is not Undef' do
+        not_undef_variant = not_undef_t(empty_variant_t)
+        expect(empty_variant_t).to be_assignable_to(not_undef_variant)
+      end
+
+      it 'a NotUndef[Variant] is assignable to empty Variant' do
+        not_undef_variant = not_undef_t(empty_variant_t)
+        expect(not_undef_variant).to be_assignable_to(empty_variant_t)
+      end
     end
 
     context 'for Scalar, such that' do
@@ -909,7 +1002,7 @@ describe 'The type calculator' do
       end
 
       it 'Scalar is not assignable to any disjunct type' do
-        tested_types = all_types - [PAnyType, POptionalType, PNotUndefType] - scalar_types
+        tested_types = all_types - [PAnyType, POptionalType, PInitType, PNotUndefType] - scalar_types
         t = PScalarType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -927,10 +1020,16 @@ describe 'The type calculator' do
         types_to_test.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
 
+      it 'Numeric does not consider ruby Rational to be an instance' do
+        t = PNumericType::DEFAULT
+        expect(t).not_to be_instance(Rational(2,3))
+      end
+
       it 'Numeric is not assignable to any disjunct type' do
         tested_types = all_types - [
           PAnyType,
           POptionalType,
+          PInitType,
           PNotUndefType,
           PScalarType,
           PScalarDataType,
@@ -999,6 +1098,32 @@ describe 'The type calculator' do
 
       it 'A Tuple with <n> elements where the last 2 are optional is assignable to an array with size <n> - 2' do
         expect(constrained_tuple_t(range_t(2, :default), String,String,String,String)).to be_assignable_to(array_t(String, range_t(2, :default)))
+      end
+    end
+
+    context 'for Enum, such that' do
+      it 'Enum is assignable to an Enum with all contained options' do
+        expect(enum_t('a', 'b')).to be_assignable_to(enum_t('a', 'b', 'c'))
+      end
+
+      it 'Enum is not assignable to an Enum with fewer contained options' do
+        expect(enum_t('a', 'b')).not_to be_assignable_to(enum_t('a'))
+      end
+
+      it 'case insensitive Enum is not assignable to case sensitive Enum' do
+        expect(enum_t('a', 'b', true)).not_to be_assignable_to(enum_t('a', 'b'))
+      end
+
+      it 'case sensitive Enum is assignable to case insensitive Enum' do
+        expect(enum_t('a', 'b')).to be_assignable_to(enum_t('a', 'b', true))
+      end
+
+      it 'case sensitive Enum is not assignable to case sensitive Enum using different case' do
+        expect(enum_t('a', 'b')).not_to be_assignable_to(enum_t('A', 'B'))
+      end
+
+      it 'case sensitive Enum is assignable to case insensitive Enum using different case' do
+        expect(enum_t('a', 'b')).to be_assignable_to(enum_t('A', 'B', true))
       end
     end
 
@@ -1087,6 +1212,7 @@ describe 'The type calculator' do
         tested_types = all_types - [
           PAnyType,
           POptionalType,
+          PInitType,
           PNotUndefType,
           PIterableType] - collection_types
         t = PTupleType::DEFAULT
@@ -1100,7 +1226,8 @@ describe 'The type calculator' do
         tested_types = collection_types - [
           PCollectionType,
           PStructType,
-          PHashType]
+          PHashType,
+          PInitType]
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
 
@@ -1109,7 +1236,8 @@ describe 'The type calculator' do
           PAnyType,
           POptionalType,
           PNotUndefType,
-          PIterableType] - collection_types
+          PIterableType,
+          PInitType] - collection_types
         t = PStructType::DEFAULT
         tested_types.each {|t2| expect(t).not_to be_assignable_to(t2::DEFAULT) }
       end
@@ -1585,66 +1713,66 @@ describe 'The type calculator' do
       let!(:parser) { TypeParser.singleton }
 
       it 'it is assignable to the type that it is an alias for' do
-        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        t = type_alias_t('Alias', 'Integer').resolve(nil)
         expect(calculator.assignable?(integer_t, t)).to be_truthy
       end
 
       it 'the type that it is an alias for is assignable to it' do
-        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        t = type_alias_t('Alias', 'Integer').resolve(nil)
         expect(calculator.assignable?(t, integer_t)).to be_truthy
       end
 
       it 'a recursive alias can be assignable from a conformant type with any depth' do
-        scope = Object.new
+        scope = {}
 
         t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
-        loader = Object.new
-        loader.expects(:load).with(:type, 'tree').returns t
+        loader = double
+        expect(loader).to receive(:load).with(:type, 'tree').and_return(t)
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
+        expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(loader)
 
-        t.resolve(parser, scope)
+        t.resolve(scope)
         expect(calculator.assignable?(t, parser.parse('Hash[String,Variant[String,Hash[String,Variant[String,String]]]]'))).to be_truthy
       end
 
 
       it 'similar recursive aliases are assignable' do
-        scope = Object.new
+        scope = {}
 
         t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree1]]')
         t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree2]]')
-        loader = Object.new
-        loader.expects(:load).with(:type, 'tree1').returns t1
-        loader.expects(:load).with(:type, 'tree2').returns t2
+        loader = double
+        expect(loader).to receive(:load).with(:type, 'tree1').and_return(t1)
+        expect(loader).to receive(:load).with(:type, 'tree2').and_return(t2)
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
+        expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(loader)
 
-        t1.resolve(parser, scope)
-        t2.resolve(parser, scope)
+        t1.resolve(scope)
+        t2.resolve(scope)
         expect(calculator.assignable?(t1, t2)).to be_truthy
       end
 
       it 'crossing recursive aliases are assignable' do
         t1 = type_alias_t('Tree1', 'Hash[String,Variant[String,Tree2]]')
         t2 = type_alias_t('Tree2', 'Hash[String,Variant[String,Tree1]]')
-        loader = Object.new
-        loader.expects(:load).with(:type, 'tree1').returns t1
-        loader.expects(:load).with(:type, 'tree2').returns t2
+        loader = double
+        expect(loader).to receive(:load).with(:type, 'tree1').and_return(t1)
+        expect(loader).to receive(:load).with(:type, 'tree2').and_return(t2)
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
+        expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(loader)
 
-        t1.resolve(parser, loader)
-        t2.resolve(parser, loader)
+        t1.resolve(loader)
+        t2.resolve(loader)
         expect(calculator.assignable?(t1, t2)).to be_truthy
       end
 
       it 'Type[T] is assignable to Type[AT] when AT is an alias for T' do
-        scope = Object.new
+        scope = {}
 
         ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
-        loader = Object.new
-        loader.expects(:load).with(:type, 'positiveinteger').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
+        loader = double
+        expect(loader).to receive(:load).with(:type, 'positiveinteger').and_return(ta)
+        expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(loader)
 
         t1 = type_t(range_t(0, :default))
         t2 = parser.parse('Type[PositiveInteger]', scope)
@@ -1652,12 +1780,12 @@ describe 'The type calculator' do
       end
 
       it 'Type[T] is assignable to AT when AT is an alias for Type[T]' do
-        scope = Object.new
+        scope = {}
 
         ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
-        loader = Object.new
-        loader.expects(:load).with(:type, 'positiveintegertype').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
+        loader = double
+        expect(loader).to receive(:load).with(:type, 'positiveintegertype').and_return(ta)
+        expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(loader)
 
         t1 = type_t(range_t(0, :default))
         t2 = parser.parse('PositiveIntegerType', scope)
@@ -1665,12 +1793,12 @@ describe 'The type calculator' do
       end
 
       it 'Type[Type[T]] is assignable to Type[Type[AT]] when AT is an alias for T' do
-        scope = Object.new
+        scope = {}
 
         ta = type_alias_t('PositiveInteger', 'Integer[0,default]')
-        loader = Object.new
-        loader.expects(:load).with(:type, 'positiveinteger').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
+        loader = double
+        expect(loader).to receive(:load).with(:type, 'positiveinteger').and_return(ta)
+        expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(loader)
 
         t1 = type_t(type_t(range_t(0, :default)))
         t2 = parser.parse('Type[Type[PositiveInteger]]', scope)
@@ -1678,16 +1806,23 @@ describe 'The type calculator' do
       end
 
       it 'Type[Type[T]] is assignable to Type[AT] when AT is an alias for Type[T]' do
-        scope = Object.new
+        scope = {}
 
         ta = type_alias_t('PositiveIntegerType', 'Type[Integer[0,default]]')
-        loader = Object.new
-        loader.expects(:load).with(:type, 'positiveintegertype').returns ta
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
+        loader = double
+        expect(loader).to receive(:load).with(:type, 'positiveintegertype').and_return(ta)
+        expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(loader)
 
         t1 = type_t(type_t(range_t(0, :default)))
         t2 = parser.parse('Type[PositiveIntegerType]', scope)
         expect(calculator.assignable?(t2, t1)).to be_truthy
+      end
+
+      it 'An alias for a Type that describes an Iterable instance is assignable to Iterable' do
+        t = type_alias_t('MyType', 'Enum[a,b]').resolve(nil)
+
+        # True because String is iterable and an instance of Enum is a String
+        expect(calculator.assignable?(iterable_t, t)).to be_truthy
       end
     end
   end
@@ -1723,11 +1858,12 @@ describe 'The type calculator' do
       expect(calculator.instance?(POptionalType::DEFAULT, :undef)).to eq(true)
     end
 
-    it 'should not consider undef to be an instance of any other type than Any, UndefType and Data' do
+    it 'should not consider undef to be an instance of any other type than Any, Undef, Optional, and Init' do
       types_to_test = all_types - [
         PAnyType,
         PUndefType,
         POptionalType,
+        PInitType
         ]
 
       types_to_test.each {|t| expect(calculator.instance?(t::DEFAULT, nil)).to eq(false) }
@@ -1739,11 +1875,12 @@ describe 'The type calculator' do
       expect(calculator.instance?(PAnyType::DEFAULT, :default)).to eq(true)
     end
 
-    it 'should not consider "default" to be an instance of anything but Default, NotUndef, and Any' do
+    it 'should not consider "default" to be an instance of anything but Default, Init, NotUndef, and Any' do
       types_to_test = all_types - [
         PAnyType,
         PNotUndefType,
         PDefaultType,
+        PInitType,
         ]
 
       types_to_test.each {|t| expect(calculator.instance?(t::DEFAULT, :default)).to eq(false) }
@@ -1969,36 +2106,41 @@ describe 'The type calculator' do
       let!(:parser) { TypeParser.singleton }
 
       it 'should consider x an instance of the aliased simple type' do
-        t = type_alias_t('Alias', 'Integer').resolve(parser, nil)
+        t = type_alias_t('Alias', 'Integer').resolve(nil)
         expect(calculator.instance?(t, 15)).to be_truthy
       end
 
       it 'should consider x an instance of the aliased parameterized type' do
-        t = type_alias_t('Alias', 'Integer[0,20]').resolve(parser, nil)
+        t = type_alias_t('Alias', 'Integer[0,20]').resolve(nil)
         expect(calculator.instance?(t, 15)).to be_truthy
+      end
+
+      it 'should consider t an instance of Iterable when aliased type is Iterable' do
+        t = type_alias_t('Alias', 'Enum[a, b]').resolve(nil)
+        expect(calculator.instance?(iterable_t, t)).to be_truthy
       end
 
       it 'should consider x an instance of the aliased type that uses self recursion' do
         t = type_alias_t('Tree', 'Hash[String,Variant[String,Tree]]')
-        loader = Object.new
-        loader.expects(:load).with(:type, 'tree').returns t
+        loader = double
+        expect(loader).to receive(:load).with(:type, 'tree').and_return(t)
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
+        expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(loader)
 
-        t.resolve(parser, loader)
+        t.resolve(loader)
         expect(calculator.instance?(t, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
       end
 
       it 'should consider x an instance of the aliased type that uses contains an alias that causes self recursion' do
         t1 = type_alias_t('Tree', 'Hash[String,Variant[String,OtherTree]]')
         t2 = type_alias_t('OtherTree', 'Hash[String,Tree]')
-        loader = Object.new
-        loader.expects(:load).with(:type, 'tree').returns t1
-        loader.expects(:load).with(:type, 'othertree').returns t2
+        loader = double
+        expect(loader).to receive(:load).with(:type, 'tree').and_return(t1)
+        expect(loader).to receive(:load).with(:type, 'othertree').and_return(t2)
 
-        Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns loader
+        expect(Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(loader)
 
-        t1.resolve(parser, loader)
+        t1.resolve(loader)
         expect(calculator.instance?(t1, {'a'=>{'aa'=>{'aaa'=>'aaaa'}}, 'b'=>'bb'})).to be_truthy
       end
     end
@@ -2051,11 +2193,25 @@ describe 'The type calculator' do
       expect(t.key_type.class).to eq(PAnyType)
       expect(t.value_type.class).to eq(PAnyType)
     end
+
+    it 'type should yield \'PRuntimeType[ruby,Rational]\' for Rational' do
+      t = calculator.type(Rational)
+      expect(t.class).to eq(PRuntimeType)
+      expect(t.runtime).to eq(:ruby)
+      expect(t.runtime_type_name).to eq('Rational')
+    end
+
+    it 'infer should yield \'PRuntimeType[ruby,Rational]\' for Rational instance' do
+      t = calculator.infer(Rational(2, 3))
+      expect(t.class).to eq(PRuntimeType)
+      expect(t.runtime).to eq(:ruby)
+      expect(t.runtime_type_name).to eq('Rational')
+    end
   end
 
   context 'when processing meta type' do
-    it 'should infer PType as the type of all other types' do
-      ptype = PType
+    it 'should infer PTypeType as the type of all other types' do
+      ptype = PTypeType
       expect(calculator.infer(PUndefType::DEFAULT     ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PScalarType::DEFAULT    ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PScalarDataType::DEFAULT).is_a?(ptype)).to eq(true)
@@ -2070,7 +2226,7 @@ describe 'The type calculator' do
       expect(calculator.infer(PHashType::DEFAULT      ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PIterableType::DEFAULT  ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PRuntimeType::DEFAULT   ).is_a?(ptype)).to eq(true)
-      expect(calculator.infer(PHostClassType::DEFAULT ).is_a?(ptype)).to eq(true)
+      expect(calculator.infer(PClassType::DEFAULT ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PResourceType::DEFAULT  ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PEnumType::DEFAULT      ).is_a?(ptype)).to eq(true)
       expect(calculator.infer(PPatternType::DEFAULT   ).is_a?(ptype)).to eq(true)
@@ -2080,7 +2236,7 @@ describe 'The type calculator' do
       expect(calculator.infer(PCallableType::DEFAULT  ).is_a?(ptype)).to eq(true)
     end
 
-    it 'should infer PType as the type of all other types' do
+    it 'should infer PTypeType as the type of all other types' do
       expect(calculator.infer(PUndefType::DEFAULT     ).to_s).to eq('Type[Undef]')
       expect(calculator.infer(PScalarType::DEFAULT    ).to_s).to eq('Type[Scalar]')
       expect(calculator.infer(PScalarDataType::DEFAULT).to_s).to eq('Type[ScalarData]')
@@ -2094,8 +2250,8 @@ describe 'The type calculator' do
       expect(calculator.infer(PArrayType::DEFAULT     ).to_s).to eq('Type[Array]')
       expect(calculator.infer(PHashType::DEFAULT      ).to_s).to eq('Type[Hash]')
       expect(calculator.infer(PIterableType::DEFAULT  ).to_s).to eq('Type[Iterable]')
-      expect(calculator.infer(PRuntimeType::DEFAULT   ).to_s).to eq('Type[Runtime[?, ?]]')
-      expect(calculator.infer(PHostClassType::DEFAULT ).to_s).to eq('Type[Class]')
+      expect(calculator.infer(PRuntimeType::DEFAULT   ).to_s).to eq('Type[Runtime]')
+      expect(calculator.infer(PClassType::DEFAULT ).to_s).to eq('Type[Class]')
       expect(calculator.infer(PResourceType::DEFAULT  ).to_s).to eq('Type[Resource]')
       expect(calculator.infer(PEnumType::DEFAULT      ).to_s).to eq('Type[Enum]')
       expect(calculator.infer(PVariantType::DEFAULT   ).to_s).to eq('Type[Variant]')
@@ -2109,23 +2265,23 @@ describe 'The type calculator' do
       expect(calculator.infer(PResourceType.new('Foo::Fee::Fum')).to_s).to eq('Type[Foo::Fee::Fum]')
     end
 
-    it "computes the common type of PType's type parameter" do
+    it "computes the common type of PTypeType's type parameter" do
       int_t    = PIntegerType::DEFAULT
       string_t = PStringType::DEFAULT
       expect(calculator.infer([int_t]).to_s).to eq('Array[Type[Integer], 1, 1]')
       expect(calculator.infer([int_t, string_t]).to_s).to eq('Array[Type[ScalarData], 2, 2]')
     end
 
-    it 'should infer PType as the type of ruby classes' do
+    it 'should infer PTypeType as the type of ruby classes' do
       class Foo
       end
       [Object, Numeric, Integer, Fixnum, Bignum, Float, String, Regexp, Array, Hash, Foo].each do |c|
-        expect(calculator.infer(c).is_a?(PType)).to eq(true)
+        expect(calculator.infer(c).is_a?(PTypeType)).to eq(true)
       end
     end
 
-    it 'should infer PType as the type of PType (meta regression short-circuit)' do
-      expect(calculator.infer(PType::DEFAULT).is_a?(PType)).to eq(true)
+    it 'should infer PTypeType as the type of PTypeType (meta regression short-circuit)' do
+      expect(calculator.infer(PTypeType::DEFAULT).is_a?(PTypeType)).to eq(true)
     end
 
     it 'computes instance? to be true if parameterized and type match' do
@@ -2148,7 +2304,7 @@ describe 'The type calculator' do
     it 'computes instance? to be true if unparameterized and matched against a type[?]' do
       int_t    = PIntegerType::DEFAULT
       type_t   = TypeFactory.type_type(int_t)
-      expect(calculator.instance?(PType::DEFAULT, type_t)).to eq(true)
+      expect(calculator.instance?(PTypeType::DEFAULT, type_t)).to eq(true)
     end
   end
 
@@ -2170,6 +2326,11 @@ describe 'The type calculator' do
       [Object, Numeric, Float, String, Regexp, Array, Hash].each do |t|
         expect(calculator.iterable(calculator.type(t))).to eq(nil)
       end
+    end
+
+    it 'should produce an iterable for a type alias of an Iterable type' do
+      t = PTypeAliasType.new('MyAlias', nil, PIntegerType.new(1, 10))
+      expect(calculator.iterable(t).respond_to?(:each)).to eq(true)
     end
   end
 

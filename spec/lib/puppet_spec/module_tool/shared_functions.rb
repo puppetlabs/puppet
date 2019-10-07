@@ -1,4 +1,4 @@
-require 'json'
+require 'puppet/util/json'
 
 module PuppetSpec
   module ModuleTool
@@ -15,13 +15,13 @@ module PuppetSpec
         moddir = File.join(options[:into], name)
         FileUtils.mkdir_p(moddir)
         File.open(File.join(moddir, 'metadata.json'), 'w') do |file|
-          file.puts(JSON.generate(release.metadata))
+          file.puts(Puppet::Util::Json.dump(release.metadata))
         end
       end
 
       def mark_changed(path)
         app = Puppet::ModuleTool::Applications::Checksummer
-        app.stubs(:run).with(path).returns(['README'])
+        allow(app).to receive(:run).with(path).and_return(['README'])
       end
 
       def graph_should_include(name, options)

@@ -1,9 +1,9 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http/connection'
+require 'puppet_spec/validators'
+require 'puppet/test_ca'
 
 describe Puppet::Network::HTTP::Connection do
-
   let (:host) { "me" }
   let (:port) { 54321 }
   subject { Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator) }
@@ -24,8 +24,8 @@ describe Puppet::Network::HTTP::Connection do
         expect(conn).to be_use_ssl
       end
 
-      it "can disable ssl using an option" do
-        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
+      it "can disable ssl using an option and ignore the verify" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false)
 
         expect(conn).to_not be_use_ssl
       end
@@ -36,8 +36,34 @@ describe Puppet::Network::HTTP::Connection do
         expect(conn).to be_use_ssl
       end
 
+      it "ignores the ':verify' option when ssl is disabled" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
+
+        expect(conn.verifier).to be_nil
+      end
+
+      it "wraps the validator in an adapter" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+
+        expect(conn.verifier).to be_a_kind_of(Puppet::SSL::VerifierAdapter)
+      end
+
       it "should raise Puppet::Error when invalid options are specified" do
         expect { Puppet::Network::HTTP::Connection.new(host, port, :invalid_option => nil) }.to raise_error(Puppet::Error, 'Unrecognized option(s): :invalid_option')
+      end
+
+      it "accepts a verifier" do
+        verifier = Puppet::SSL::Verifier.new('fqdn', double('ssl_context'))
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verifier => verifier)
+
+        expect(conn.verifier).to eq(verifier)
+      end
+
+      it "raises if the wrong verifier class is specified" do
+        expect {
+          Puppet::Network::HTTP::Connection.new(host, port, :verifier => Puppet::SSL::Validator.default_validator)
+        }.to raise_error(ArgumentError,
+                         "Expected an instance of Puppet::SSL::Verifier but was passed a Puppet::SSL::Validator::DefaultValidator")
       end
     end
   end
@@ -52,6 +78,11 @@ describe Puppet::Network::HTTP::Connection do
       :request_post => "param: value" }.each do |method,body|
       context "##{method}" do
         it "should yield to the block" do
+          allow_any_instance_of(Net::HTTP).to receive(method) do |_, *_, &block|
+            block.call()
+            httpok
+          end
+
           block_executed = false
           subject.send(method, "/foo", body) do |response|
             block_executed = true
@@ -59,131 +90,6 @@ describe Puppet::Network::HTTP::Connection do
           expect(block_executed).to eq(true)
         end
       end
-    end
-  end
-
-  class ConstantErrorValidator
-    def initialize(args)
-      @fails_with = args[:fails_with]
-      @error_string = args[:error_string] || ""
-      @peer_certs = args[:peer_certs] || []
-    end
-
-    def setup_connection(connection)
-      connection.stubs(:start).raises(OpenSSL::SSL::SSLError.new(@fails_with))
-    end
-
-    def peer_certs
-      @peer_certs
-    end
-
-    def verify_errors
-      [@error_string]
-    end
-  end
-
-  class NoProblemsValidator
-    def initialize(cert)
-      @cert = cert
-    end
-
-    def setup_connection(connection)
-    end
-
-    def peer_certs
-      [@cert]
-    end
-
-    def verify_errors
-      []
-    end
-  end
-
-  shared_examples_for 'ssl verifier' do
-    include PuppetSpec::Files
-
-    let (:host) { "my_server" }
-    let (:port) { 8140 }
-
-    before :all do
-      WebMock.disable!
-    end
-
-    after :all do
-      WebMock.enable!
-    end
-
-    it "should provide a useful error message when one is available and certificate validation fails", :unless => Puppet.features.microsoft_windows? do
-      connection = Puppet::Network::HTTP::Connection.new(
-        host, port,
-        :verify => ConstantErrorValidator.new(:fails_with => 'certificate verify failed',
-                                              :error_string => 'shady looking signature'))
-
-      expect do
-        connection.get('request')
-      end.to raise_error(Puppet::Error, "certificate verify failed: [shady looking signature]")
-    end
-
-    it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
-      Puppet[:confdir] = tmpdir('conf')
-
-      connection = Puppet::Network::HTTP::Connection.new(
-      host, port,
-      :verify => ConstantErrorValidator.new(
-        :fails_with => 'hostname was not match with server certificate',
-        :peer_certs => [Puppet::SSL::CertificateAuthority.new.generate(
-          'not_my_server', :dns_alt_names => 'foo,bar,baz')]))
-
-      expect do
-        connection.get('request')
-      end.to raise_error(Puppet::Error) do |error|
-        error.message =~ /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
-        expect($1.split(', ')).to match_array(%w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server])
-      end
-    end
-
-    it "should pass along the error message otherwise" do
-      connection = Puppet::Network::HTTP::Connection.new(
-        host, port,
-        :verify => ConstantErrorValidator.new(:fails_with => 'some other message'))
-
-      expect do
-        connection.get('request')
-      end.to raise_error(/some other message/)
-    end
-
-    it "should check all peer certificates for upcoming expiration", :unless => Puppet.features.microsoft_windows? do
-      Puppet[:confdir] = tmpdir('conf')
-      cert = Puppet::SSL::CertificateAuthority.new.generate(
-        'server', :dns_alt_names => 'foo,bar,baz')
-
-      connection = Puppet::Network::HTTP::Connection.new(
-        host, port,
-        :verify => NoProblemsValidator.new(cert))
-
-      Net::HTTP.any_instance.stubs(:start)
-      Net::HTTP.any_instance.stubs(:request).returns(httpok)
-      Puppet::Network::HTTP::Pool.any_instance.stubs(:setsockopts)
-
-      connection.get('request')
-    end
-  end
-
-  context "when using single use HTTPS connections" do
-    it_behaves_like 'ssl verifier' do
-    end
-  end
-
-  context "when using persistent HTTPS connections" do
-    around :each do |example|
-      pool = Puppet::Network::HTTP::Pool.new
-      Puppet.override(:http_pool => pool) do
-        example.run
-      end
-      pool.close
-    end
-
-    it_behaves_like 'ssl verifier' do
     end
   end
 
@@ -196,7 +102,7 @@ describe Puppet::Network::HTTP::Connection do
     let (:httpredirection) do
       response = Net::HTTPFound.new('1.1', 302, 'Moved Temporarily')
       response['location'] = "#{other_site.addr}/#{other_path}"
-      response.stubs(:read_body).returns("This resource has moved")
+      allow(response).to receive(:read_body).and_return("This resource has moved")
       response
     end
 
@@ -206,24 +112,23 @@ describe Puppet::Network::HTTP::Connection do
     end
 
     it "should redirect to the final resource location" do
-      http = stub('http')
-      http.stubs(:request).returns(httpredirection).then.returns(httpok)
+      http = double('http')
+      allow(http).to receive(:request).and_return(httpredirection, httpok)
 
-      seq = sequence('redirection')
       pool = Puppet.lookup(:http_pool)
-      pool.expects(:with_connection).with(site, anything).yields(http).in_sequence(seq)
-      pool.expects(:with_connection).with(other_site, anything).yields(http).in_sequence(seq)
+      expect(pool).to receive(:with_connection).with(site, anything).and_yield(http).ordered
+      expect(pool).to receive(:with_connection).with(other_site, anything).and_yield(http).ordered
 
       conn = create_connection(site, :verify => verify)
       conn.get('/foo')
     end
 
     def expects_redirection(conn, &block)
-      http = stub('http')
-      http.stubs(:request).returns(httpredirection)
+      http = double('http')
+      allow(http).to receive(:request).and_return(httpredirection)
 
       pool = Puppet.lookup(:http_pool)
-      pool.expects(:with_connection).with(site, anything).yields(http)
+      expect(pool).to receive(:with_connection).with(site, anything).and_yield(http)
       pool
     end
 
@@ -237,7 +142,7 @@ describe Puppet::Network::HTTP::Connection do
       conn = create_connection(site, :verify => verify, :redirect_limit => 0)
 
       pool = expects_redirection(conn)
-      pool.expects(:with_connection).with(other_site, anything).never
+      expect(pool).not_to receive(:with_connection).with(other_site, anything)
 
       expects_limit_exceeded(conn)
     end
@@ -246,7 +151,7 @@ describe Puppet::Network::HTTP::Connection do
       conn = create_connection(site, :verify => verify, :redirect_limit => 1)
 
       pool = expects_redirection(conn)
-      pool.expects(:with_connection).with(other_site, anything).once
+      expect(pool).to receive(:with_connection).with(other_site, anything).once
 
       expects_limit_exceeded(conn)
     end
@@ -255,9 +160,96 @@ describe Puppet::Network::HTTP::Connection do
       conn = create_connection(site, :verify => verify, :redirect_limit => 3)
 
       pool = expects_redirection(conn)
-      pool.expects(:with_connection).with(other_site, anything).times(3)
+      expect(pool).to receive(:with_connection).with(other_site, anything).exactly(3).times
 
       expects_limit_exceeded(conn)
+    end
+  end
+
+  context "when response indicates an overloaded server" do
+    let(:http) { double('http') }
+    let(:site) { Puppet::Network::HTTP::Site.new('http', 'my_server', 8140) }
+    let(:verify) { Puppet::SSL::Validator.no_validator }
+    let(:httpunavailable) { Net::HTTPServiceUnavailable.new('1.1', 503, 'Service Unavailable') }
+
+    subject { Puppet::Network::HTTP::Connection.new(site.host, site.port, :use_ssl => false, :verify => verify) }
+
+    context "when parsing Retry-After headers" do
+      # Private method. Create a reference that can be called by tests.
+      let(:header_parser) { subject.method(:parse_retry_after_header) }
+
+      it "returns 0 when parsing a RFC 2822 date that has passed" do
+        test_date = 'Wed, 13 Apr 2005 15:18:05 GMT'
+
+        expect(header_parser.call(test_date)).to eq(0)
+      end
+    end
+
+    it "should return a 503 response if Retry-After is not set" do
+      allow(http).to receive(:request).and_return(httpunavailable)
+
+      pool = Puppet.lookup(:http_pool)
+      expect(pool).to receive(:with_connection).with(site, anything).and_yield(http)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(503)
+    end
+
+    it "should return a 503 response if Retry-After is not convertible to an Integer or RFC 2822 Date" do
+      httpunavailable['Retry-After'] = 'foo'
+      allow(http).to receive(:request).and_return(httpunavailable)
+
+      pool = Puppet.lookup(:http_pool)
+      expect(pool).to receive(:with_connection).with(site, anything).and_yield(http)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(503)
+    end
+
+    it "should sleep and retry if Retry-After is an Integer" do
+      httpunavailable['Retry-After'] = '42'
+      allow(http).to receive(:request).and_return(httpunavailable, httpok)
+
+      pool = Puppet.lookup(:http_pool)
+      expect(pool).to receive(:with_connection).with(site, anything).twice.and_yield(http)
+
+      expect(::Kernel).to receive(:sleep).with(42)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(200)
+    end
+
+    it "should sleep and retry if Retry-After is an RFC 2822 Date" do
+      httpunavailable['Retry-After'] = 'Wed, 13 Apr 2005 15:18:05 GMT'
+      allow(http).to receive(:request).and_return(httpunavailable, httpok)
+
+      now = DateTime.new(2005, 4, 13, 8, 17, 5, '-07:00')
+      allow(DateTime).to receive(:now).and_return(now)
+
+      pool = Puppet.lookup(:http_pool)
+      expect(pool).to receive(:with_connection).with(site, anything).twice.and_yield(http)
+
+      expect(::Kernel).to receive(:sleep).with(60)
+
+      result = subject.get('/foo')
+
+      expect(result.code).to eq(200)
+    end
+
+    it "should sleep for no more than the Puppet runinterval" do
+      httpunavailable['Retry-After'] = '60'
+      allow(http).to receive(:request).and_return(httpunavailable, httpok)
+      Puppet[:runinterval] = 30
+
+      pool = Puppet.lookup(:http_pool)
+      expect(pool).to receive(:with_connection).with(site, anything).twice.and_yield(http)
+
+      expect(::Kernel).to receive(:sleep).with(30)
+
+      subject.get('/foo')
     end
   end
 
@@ -292,17 +284,17 @@ describe Puppet::Network::HTTP::Connection do
   end
 
   def expect_request_with_basic_auth
-    Net::HTTP.any_instance.expects(:request).with do |request|
+    expect_any_instance_of(Net::HTTP).to receive(:request) do |_, request|
       expect(request['authorization']).to match(/^Basic/)
-    end.returns(httpok)
+    end.and_return(httpok)
   end
 
   it "sets HTTP User-Agent header" do
     puppet_ua = "Puppet/#{Puppet.version} Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_PLATFORM})"
 
-    Net::HTTP.any_instance.expects(:request).with do |request|
+    expect_any_instance_of(Net::HTTP).to receive(:request) do |_, request|
       expect(request['User-Agent']).to eq(puppet_ua)
-    end.returns(httpok)
+    end.and_return(httpok)
 
     subject.get('/path')
   end

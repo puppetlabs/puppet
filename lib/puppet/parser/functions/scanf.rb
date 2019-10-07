@@ -34,5 +34,5 @@ DOC
 ) do |args|
   data = args[0]
   format = args[1]
-  result = data.scanf(format)
+  data.scanf(format)
 end

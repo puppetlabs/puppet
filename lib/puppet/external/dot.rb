@@ -15,7 +15,7 @@ module DOT
 
   # if we don't like 4 spaces, we can change it any time
 
-  def change_tab (t)
+  def change_tab(t)
     $tab  = t
     $tab2 = t * 2
   end
@@ -118,7 +118,7 @@ module DOT
 
     attr_accessor :name
 
-    def initialize (params = {})
+    def initialize(params = {})
       @label = params['name'] ? params['name'] : ''
     end
 
@@ -134,7 +134,7 @@ module DOT
     # attr_reader :parent
     attr_accessor :name, :options
 
-    def initialize (params = {}, option_list = [])
+    def initialize(params = {}, option_list = [])
       super(params)
       @name   = params['name']   ? params['name']   : nil
       @parent = params['parent'] ? params['parent'] : nil
@@ -168,7 +168,7 @@ module DOT
 
     attr_accessor :label
 
-    def initialize (params = {})
+    def initialize(params = {})
       super(params)
       @name = params['label'] ? params['label'] : ''
     end
@@ -181,10 +181,7 @@ module DOT
   # node element
 
   class DOTNode < DOTElement
-
-    @ports
-
-    def initialize (params = {}, option_list = NODE_OPTS)
+    def initialize(params = {}, option_list = NODE_OPTS)
       super(params, option_list)
       @ports = params['ports'] ? params['ports'] : []
     end
@@ -193,11 +190,11 @@ module DOT
       @ports.each { |i| yield i }
     end
 
-    def << (thing)
+    def <<(thing)
       @ports << thing
     end
 
-    def push (thing)
+    def push(thing)
       @ports.push(thing)
     end
 
@@ -205,16 +202,16 @@ module DOT
       @ports.pop
     end
 
-    def to_s (t = '')
+    def to_s(t = '')
 
       # This code is totally incomprehensible; it needs to be replaced!
 
       label = @options['shape'] != 'record' && @ports.length == 0 ?
           @options['label'] ?
-            t + $tab + "label = \"#{@options['label']}\"\n" :
+            t + $tab + "label = #{stringify(@options['label'])}\n" :
             '' :
           t + $tab + 'label = "' + " \\\n" +
-          t + $tab2 + "#{@options['label']}| \\\n" +
+          t + $tab2 + "#{stringify(@options['label'])}| \\\n" +
           @ports.collect{ |i|
             t + $tab2 + i.to_s
           }.join( "| \\\n" ) + " \\\n" +
@@ -229,17 +226,19 @@ module DOT
         t + "]\n"
     end
 
+    private
+
+    def stringify(s)
+      %("#{s.gsub('"', '\\"')}")
+    end
+
   end
 
   # A subgraph element is the same to graph, but has another header in dot
   # notation.
 
   class DOTSubgraph < DOTElement
-
-    @nodes
-    @dot_string
-
-    def initialize (params = {}, option_list = GRAPH_OPTS)
+    def initialize(params = {}, option_list = GRAPH_OPTS)
       super(params, option_list)
       @nodes      = params['nodes'] ? params['nodes'] : []
       @dot_string = 'graph'
@@ -249,11 +248,11 @@ module DOT
       @nodes.each{ |i| yield i }
     end
 
-    def << (thing)
+    def <<(thing)
       @nodes << thing
     end
 
-    def push (thing)
+    def push(thing)
       @nodes.push( thing )
     end
 
@@ -261,7 +260,7 @@ module DOT
       @nodes.pop
     end
 
-    def to_s (t = '')
+    def to_s(t = '')
       hdr = t + "#{@dot_string} #{@name} {\n"
 
       options = @options.to_a.collect{ |name, val|
@@ -282,7 +281,7 @@ module DOT
 
   class DOTDigraph < DOTSubgraph
 
-  def initialize (params = {}, option_list = GRAPH_OPTS)
+  def initialize(params = {}, option_list = GRAPH_OPTS)
     super(params, option_list)
     @dot_string = 'digraph'
   end
@@ -295,7 +294,7 @@ module DOT
 
     attr_accessor :from, :to
 
-    def initialize (params = {}, option_list = EDGE_OPTS)
+    def initialize(params = {}, option_list = EDGE_OPTS)
       super(params, option_list)
       @from = params['from'] ? params['from'] : nil
       @to   = params['to'] ? params['to'] : nil
@@ -305,7 +304,7 @@ module DOT
       '--'
     end
 
-    def to_s (t = '')
+    def to_s(t = '')
       t + "#{@from} #{edge_link} #{to} [\n" +
         @options.to_a.collect{ |i|
           i[1] && i[0] != 'label' ?

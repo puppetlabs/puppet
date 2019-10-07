@@ -36,15 +36,15 @@ throwaway systems.
 All of the acceptance tests for Puppet are kept in the acceptance/tests/
 directory. Running the acceptance tests is much more involved than running the
 spec tests. Information about how to run them can be found in the [acceptance
-testing documentation](acceptance_tests.md)
+testing documentation](https://github.com/puppetlabs/puppet/blob/master/acceptance/README.md).
 
 ## Testing dependency version requirements
 
-Puppet is only compatible with certain versions of RSpec and Mocha. If you are
-not using Bundler to install the required test libraries you must ensure that
-you are using the right library versions. Using unsupported versions of Mocha
-and RSpec will probably display many spurious failures. The supported versions
-of RSpec and Mocha can be found in the project Gemfile.
+Puppet is only compatible with a specific version of RSpec. If you are not
+using Bundler to install the required test libraries you must ensure that you
+are using the right library version. Using an unsupported version of RSpec will
+probably display many spurious failures. The supported version of RSpec can be
+found in the project Gemfile.
 
 ## Puppet Continuous integration
 
@@ -187,11 +187,7 @@ individual tests are only running the code being tested. You can stub out entire
 objects, or just stub out individual methods on an object. When a method is
 stubbed the method itself will never be called.
 
-While RSpec comes with its own stubbing framework, Puppet uses the Mocha
-framework.
-
-A brief usage guide for Mocha is available at http://gofreerange.com/mocha/docs/#Usage,
-and an overview of Mocha expectations is available at http://gofreerange.com/mocha/docs/Mocha/Expectation.html
+The RSpec Mocks documentation can be found at https://relishapp.com/rspec/rspec-mocks/v/3-8/docs/
 
 ```ruby
 describe "stubbing a method on an object" do
@@ -205,7 +201,7 @@ describe "stubbing a method on an object" do
 
   describe 'when stubbing the size' do
     before :each do
-      my_helper.stubs(:size).returns 10
+      allow(my_helper).to receive(:size).and_return(10)
     end
 
     it 'has the stubbed value for size' do
@@ -220,7 +216,7 @@ Entire objects can be stubbed as well.
 ```ruby
 describe "stubbing an object" do
   let(:my_helper) do
-    stub(:not_an_array, :size => 10)
+    double(:not_an_array, :size => 10)
   end
 
   it 'has the stubbed size'
@@ -243,7 +239,7 @@ describe "mocking a method on an object" do
 
   describe "when mocking the size" do
     before :each do
-      my_helper.expects(:size).returns 10
+      expect(my_helper).to receive(:size).and_return(10)
     end
 
     it "adds an expectation that a method was called" do
@@ -258,11 +254,11 @@ Like stubs, entire objects can be mocked.
 ```ruby
 describe "mocking an object" do
   let(:my_helper) do
-    mock(:not_an_array)
+    double(:not_an_array)
   end
 
   before :each do
-    not_an_array.expects(:size).returns 10
+    expect(not_an_array).to receive(:size).and_return(10)
   end
 
   it "adds an expectation that the method was called" do
@@ -285,7 +281,7 @@ a full spec run, you can often narrow down the culprit by a two-step process.
 First, run:
 
 ```
-bundle exec rake ci:spec
+bundle exec rake spec
 ```
 
 which should generate a spec_order.txt file.
@@ -314,7 +310,7 @@ order.
 ```ruby
 # test.rb
 RSpec.configure do |c|
-  c.mock_framework = :mocha
+  c.mock_with :rspec
 end
 
 describe "fixture data" do
@@ -324,11 +320,11 @@ describe "fixture data" do
     before :all do
       # This fixture will be created only once and will retain the `foo` stub
       # between tests.
-      @fixture = stub 'test data'
+      @fixture = double('test data')
     end
 
     it "can be stubbed" do
-      @fixture.stubs(:foo).returns :bar
+      allow(@fixture).to receive(:foo).and_return(:bar)
       expect(@fixture.foo).to eq(:bar)
     end
 
@@ -343,10 +339,10 @@ describe "fixture data" do
 
     # GOOD
     # This will be recreated between tests so that state isn't retained.
-    let(:fixture) { stub 'test data' }
+    let(:fixture) { double('test data') }
 
     it "can be stubbed" do
-      fixture.stubs(:foo).returns :bar
+      allow(fixture).to receive(:foo).and_return(:bar)
       expect(fixture.foo).to eq(:bar)
     end
 

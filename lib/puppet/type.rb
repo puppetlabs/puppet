@@ -391,7 +391,13 @@ class Type
     @key_attributes_cache ||= key_attribute_parameters.collect { |p| p.name }
   end
 
-  # Returns a mapping from the title string to setting of attribute value(s).
+  # Returns any parameters that should be included by default in puppet resource's output
+  # @return [Array<Symbol>] the parameters to include
+  def self.parameters_to_include
+    []
+  end
+
+  # Returns a mapping from the title string to setting of attribute values.
   # This default implementation provides a mapping of title to the one and only _namevar_ present
   # in the type's definition.
   # @note Advanced: some logic requires this mapping to be done differently, using a different
@@ -425,7 +431,7 @@ class Type
     when 1;
       [ [ /(.*)/m, [ [key_attributes.first] ] ] ]
     else
-      raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
+      raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
     end
   end
 
@@ -500,13 +506,13 @@ class Type
     # This is here for types that might still have the old method of defining
     # a parent class.
     unless options.is_a? Hash
-      raise Puppet::DevError,
-        "Options must be a hash, not #{options.inspect}"
+      raise Puppet::DevError, _("Options must be a hash, not %{type}") % { type: options.inspect }
     end
 
-    raise Puppet::DevError, "Class #{self.name} already has a property named #{name}" if @validproperties.include?(name)
+    raise Puppet::DevError, _("Class %{class_name} already has a property named %{property}") % { class_name: self.name, property: name } if @validproperties.include?(name)
 
-    if parent = options[:parent]
+    parent = options[:parent]
+    if parent
       options.delete(:parent)
     else
       parent = Puppet::Property
@@ -590,7 +596,7 @@ class Type
 
   # @return [Boolean] Returns true if the given name is the name of an existing parameter
   def self.validparameter?(name)
-    raise Puppet::DevError, "Class #{self} has not defined parameters" unless defined?(@parameters)
+    raise Puppet::DevError, _("Class %{class_name} has not defined parameters") % { class_name: self } unless defined?(@parameters)
     !!(@paramhash.include?(name) or @@metaparamhash.include?(name))
   end
 
@@ -639,11 +645,13 @@ class Type
     name = name.intern
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
 
-    if name == :name && nv = name_var
-      name = nv
+    if name == :name
+      nv = name_var
+      name = nv if nv
     end
 
-    if obj = @parameters[name]
+    obj = @parameters[name]
+    if obj
       # Note that if this is a property, then the value is the "should" value,
       # not the current value.
       obj.value
@@ -662,8 +670,9 @@ class Type
 
     fail("no parameter named '#{name}'") unless self.class.validattr?(name)
 
-    if name == :name && nv = name_var
-      name = nv
+    if name == :name
+      nv = name_var
+      name = nv if nv
     end
     raise Puppet::Error.new("Got nil value for #{name}") if value.nil?
 
@@ -674,7 +683,8 @@ class Type
         # make sure the parameter doesn't have any errors
         property.value = value
       rescue Puppet::Error, ArgumentError => detail
-        error = Puppet::ResourceError.new("Parameter #{name} failed on #{ref}: #{detail}")
+        error = Puppet::ResourceError.new(_("Parameter %{name} failed on %{ref}: %{detail}") %
+                                              { name: name, ref: ref, detail: detail })
         adderrorcontext(error, detail)
         raise error
       end
@@ -696,7 +706,7 @@ class Type
     if @parameters.has_key?(attr)
       @parameters.delete(attr)
     else
-      raise Puppet::DevError.new("Undefined attribute '#{attr}' in #{self}")
+      raise Puppet::DevError.new(_("Undefined attribute '%{attribute}' in %{name}") % { attribute: attr, name: self})
     end
   end
 
@@ -739,8 +749,12 @@ class Type
   # @return [Object, nil] Returns the 'should' (wanted state) value for a specified property, or nil if the
   #   given attribute name is not a property (i.e. if it is a parameter, meta-parameter, or does not exist).
   def should(name)
-    name = name.intern
-    (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
+    prop = @parameters[name.intern]
+    if prop && prop.is_a?(Puppet::Property)
+      prop.should
+    else
+      nil
+    end
   end
 
   # Registers an attribute to this resource type instance.
@@ -762,7 +776,8 @@ class Type
       name = klass.name
     end
 
-    unless klass = self.class.attrclass(name)
+    klass = self.class.attrclass(name)
+    unless klass
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
     end
 
@@ -813,7 +828,12 @@ class Type
   #   this one should probably go away at some point. - Does this mean it should be deprecated ?
   # @return [Puppet::Property] the property with the given name, or nil if not a property or does not exist.
   def property(name)
-    (obj = @parameters[name.intern] and obj.is_a?(Puppet::Property)) ? obj : nil
+    obj = @parameters[name.intern]
+    if obj && obj.is_a?(Puppet::Property)
+      obj
+    else
+      nil
+    end
   end
 
   # @todo comment says "For any parameters or properties that have defaults and have not yet been
@@ -825,13 +845,17 @@ class Type
   # @return [void]
   #
   def set_default(attr)
-    return unless klass = self.class.attrclass(attr)
+    klass = self.class.attrclass(attr)
+    return unless klass
+    # TODO this is not a necessary check, as we define a class level attr_reader
     return unless klass.method_defined?(:default)
     return if @parameters.include?(klass.name)
 
-    return unless parameter = newattr(klass.name)
+    parameter = newattr(klass.name)
+    return unless parameter
 
-    if value = parameter.default and ! value.nil?
+    value = parameter.default
+    if value and ! value.nil?
       parameter.value = value
     else
       @parameters.delete(parameter.name)
@@ -873,7 +897,12 @@ class Type
   def value(name)
     name = name.intern
 
-    (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
+    obj = @parameters[name]
+    if obj && obj.respond_to?(:value)
+      obj.value
+    else
+      nil
+    end
   end
 
   # @todo What is this used for? Needs a better explanation.
@@ -1016,10 +1045,11 @@ class Type
   def insync?(is)
     insync = true
 
-    if property = @parameters[:ensure]
+    property = @parameters[:ensure]
+    if property
       unless is.include? property
-        raise Puppet::DevError,
-          "The is value is not in the is array for '#{property.name}'"
+        #TRANSLATORS 'is' is a variable name and should not be translated
+        raise Puppet::DevError, _("The 'is' value is not in the 'is' array for '%{name}'") % { name: property.name }
       end
       ensureis = is[property]
       if property.safe_insync?(ensureis) and property.should == :absent
@@ -1029,8 +1059,8 @@ class Type
 
     properties.each { |prop|
       unless is.include? prop
-        raise Puppet::DevError,
-          "The is value is not in the is array for '#{prop.name}'"
+        #TRANSLATORS 'is' is a variable name and should not be translated
+        raise Puppet::DevError, _("The 'is' value is not in the 'is' array for '%{name}'") % { name: prop.name }
       end
 
       propis = is[prop]
@@ -1066,7 +1096,12 @@ class Type
     # Provide the name, so we know we'll always refer to a real thing
     result[:name] = self[:name] unless self[:name] == title
 
-    if ensure_prop = property(:ensure) or (self.class.needs_ensure_retrieved and self.class.validattr?(:ensure) and ensure_prop = newattr(:ensure))
+    ensure_prop = property(:ensure)
+    if !ensure_prop && self.class.needs_ensure_retrieved && self.class.validattr?(:ensure)
+      ensure_prop = newattr(:ensure)
+    end
+
+    if ensure_prop
       result[:ensure] = ensure_state = ensure_prop.retrieve
     else
       ensure_state = nil
@@ -1156,7 +1191,7 @@ class Type
   # Either requires providers or must be overridden.
   # @raise [Puppet::DevError] when there are no providers and the implementation has not overridden this method.
   def self.instances
-    raise Puppet::DevError, "#{self.name} has no providers and has not overridden 'instances'" if provider_hash.empty?
+    raise Puppet::DevError, _("%{name} has no providers and has not overridden 'instances'") % { name: self.name } if provider_hash.empty?
 
     # Put the default provider first, then the rest of the suitable providers.
     provider_instances = {}
@@ -1164,7 +1199,8 @@ class Type
       provider.instances.collect do |instance|
         # We always want to use the "first" provider instance we find, unless the resource
         # is already managed and has a different provider set
-        if other = provider_instances[instance.name]
+        other = provider_instances[instance.name]
+        if other
           Puppet.debug "%s %s found in both %s and %s; skipping the %s version" %
             [self.name.to_s.capitalize, instance.name, other.class.name, instance.class.name, instance.class.name]
           next
@@ -1212,7 +1248,8 @@ class Type
     resource = Puppet::Resource.new(self, title)
     resource.catalog = hash.delete(:catalog)
 
-    if sensitive = hash.delete(:sensitive_parameters)
+    sensitive = hash.delete(:sensitive_parameters)
+    if sensitive
       resource.sensitive_parameters = sensitive
     end
 
@@ -1229,7 +1266,8 @@ class Type
   #
   # @api private
   def pathbuilder
-    if p = parent
+    p = parent
+    if p
       [p.pathbuilder, self.ref].flatten
     else
       [self.ref]
@@ -1252,7 +1290,7 @@ class Type
       event _would_ have been sent.
 
       **Important note:**
-      [The `noop` setting](https://docs.puppetlabs.com/puppet/latest/reference/configuration.html#noop)
+      [The `noop` setting](https://puppet.com/docs/puppet/latest/configuration.html#noop)
       allows you to globally enable or disable noop mode, but it will _not_ override
       the `noop` metaparameter on individual resources. That is, the value of the
       global `noop` setting will _only_ affect resources that do not have an explicit
@@ -1272,7 +1310,7 @@ class Type
       The value of this metaparameter must be the `name` of a `schedule`
       resource. This means you must declare a schedule resource, then
       refer to it by name; see
-      [the docs for the `schedule` type](https://docs.puppetlabs.com/puppet/latest/reference/type.html#schedule)
+      [the docs for the `schedule` type](https://puppet.com/docs/puppet/latest/type.html#schedule)
       for more info.
 
           schedule { 'everyday':
@@ -1289,9 +1327,7 @@ class Type
   end
 
   newmetaparam(:audit) do
-    desc "(This metaparameter is deprecated and will be ignored in a future release.)
-
-      Marks a subset of this resource's unmanaged attributes for auditing. Accepts an
+    desc "Marks a subset of this resource's unmanaged attributes for auditing. Accepts an
       attribute name, an array of attribute names, or `all`.
 
       Auditing a resource attribute has two effects: First, whenever a catalog
@@ -1312,12 +1348,6 @@ class Type
       and the second run will log the edit made by Puppet.)"
 
     validate do |list|
-      if Puppet.settings[:strict] != :off
-        # Only warn if `audit` metaparam came from a manifest
-        if file && line
-          puppet_deprecation_warning(_("The `audit` metaparameter is deprecated and will be ignored in a future release."), { :line => line, :file => file })
-        end
-      end
       list = Array(list).collect {|p| p.to_sym}
       unless list == [:all]
         list.each do |param|
@@ -1344,9 +1374,9 @@ class Type
 
     def properties_to_audit(list)
       if !list.kind_of?(Array) && list.to_sym == :all
-        list = all_properties
+        all_properties
       else
-        list = Array(list).collect { |p| p.to_sym }
+        Array(list).collect { |p| p.to_sym }
       end
     end
   end
@@ -1358,9 +1388,9 @@ class Type
 
       The order of the log levels, in decreasing priority, is:
 
-      * `crit`
       * `emerg`
       * `alert`
+      * `crit`
       * `err`
       * `warning`
       * `notice`
@@ -1423,10 +1453,11 @@ class Type
     munge do |aliases|
       aliases = [aliases] unless aliases.is_a?(Array)
 
-      raise(ArgumentError, "Cannot add aliases without a catalog") unless @resource.catalog
+      raise(ArgumentError, _("Cannot add aliases without a catalog")) unless @resource.catalog
 
       aliases.each do |other|
-        if obj = @resource.catalog.resource(@resource.class.name, other)
+        obj = @resource.catalog.resource(@resource.class.name, other)
+        if obj
           unless obj.object_id == @resource.object_id
             self.fail("#{@resource.title} can not create alias #{other}: object already exists")
           end
@@ -1455,7 +1486,7 @@ class Type
           }
 
       Tags are useful for things like applying a subset of a host's configuration
-      with [the `tags` setting](/puppet/latest/reference/configuration.html#tags)
+      with [the `tags` setting](/puppet/latest/configuration.html#tags)
       (e.g. `puppet agent --test --tags bootstrap`)."
 
     munge do |tags|
@@ -1482,7 +1513,7 @@ class Type
       @subclasses << sub
     end
 
-    # @return [Array<Puppet::Resource>] turns attribute value(s) into list of resources
+    # @return [Array<Puppet::Resource>] turns attribute values into list of resources
     def munge(references)
       references = [references] unless references.is_a?(Array)
       references.collect do |ref|
@@ -1502,7 +1533,8 @@ class Type
       @value.each do |ref|
         unless @resource.catalog.resource(ref.to_s)
           description = self.class.direction == :in ? "dependency" : "dependent"
-          fail ResourceError, "Could not find #{description} #{ref} for #{resource.ref}"
+          fail ResourceError, _("Could not find %{description} %{ref} for %{resource}") %
+              { description: description, ref: ref, resource: resource.ref }
         end
       end
     end
@@ -1526,7 +1558,8 @@ class Type
 
         # Either of the two retrieval attempts could have returned
         # nil.
-        unless related_resource = reference.resolve
+        related_resource = reference.resolve
+        unless related_resource
           self.fail "Could not retrieve dependency '#{reference}' of #{@resource.ref}"
         end
 
@@ -1540,17 +1573,31 @@ class Type
           target = related_resource
         end
 
-        if method = self.class.callback
+        method = self.class.callback
+        if method
           subargs = {
             :event => self.class.events,
             :callback => method
           }
-          self.debug { "subscribes to #{related_resource.ref}" }
         else
           # If there's no callback, there's no point in even adding
           # a label.
           subargs = nil
-          self.debug { "subscribes to #{related_resource.ref}" }
+        end
+
+        ## Corrected syntax of debug statement to reflect the way this was called.
+        # i.e. before, after, subscribe, notify
+        self.debug do
+          relation = case self.class.name
+          when "subscribe"
+            "subscribes"
+          when "notify"
+            "notifies"
+          else
+            self.class.name
+          end
+
+          "#{relation} to #{related_resource.ref}"
         end
 
         Puppet::Relationship.new(source, target, subargs)
@@ -1572,25 +1619,25 @@ class Type
 
   newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
     desc "One or more resources that this resource depends on, expressed as
-      [resource references](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
+      [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
-      * The required resource(s) will be applied **before** this resource.
+      * The required resources will be applied **before** this resource.
 
       This is one of the four relationship metaparameters, along with
       `before`, `notify`, and `subscribe`. For more context, including the
       alternate chaining arrow (`->` and `~>`) syntax, see
-      [the language page on relationships](https://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
+      [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
   newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
     desc "One or more resources that this resource depends on, expressed as
-      [resource references](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
+      [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
-      * The subscribed resource(s) will be applied _before_ this resource.
+      * The subscribed resources will be applied _before_ this resource.
       * If Puppet makes changes to any of the subscribed resources, it will cause
         this resource to _refresh._ (Refresh behavior varies by resource
         type: services will restart, mounts will unmount and re-mount, etc. Not
@@ -1599,30 +1646,30 @@ class Type
       This is one of the four relationship metaparameters, along with
       `before`, `require`, and `notify`. For more context, including the
       alternate chaining arrow (`->` and `~>`) syntax, see
-      [the language page on relationships](https://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
+      [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
   newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
     desc "One or more resources that depend on this resource, expressed as
-      [resource references](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
+      [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
-      * This resource will be applied _before_ the dependent resource(s).
+      * This resource will be applied _before_ the dependent resources.
 
       This is one of the four relationship metaparameters, along with
       `require`, `notify`, and `subscribe`. For more context, including the
       alternate chaining arrow (`->` and `~>`) syntax, see
-      [the language page on relationships](https://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
+      [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
   newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
     desc "One or more resources that depend on this resource, expressed as
-      [resource references](https://docs.puppetlabs.com/puppet/latest/reference/lang_data_resource_reference.html).
+      [resource references](https://puppet.com/docs/puppet/latest/lang_data_resource_reference.html).
       Multiple resources can be specified as an array of references. When this
       attribute is present:
 
-      * This resource will be applied _before_ the notified resource(s).
+      * This resource will be applied _before_ the notified resources.
       * If Puppet makes changes to this resource, it will cause all of the
         notified resources to _refresh._ (Refresh behavior varies by resource
         type: services will restart, mounts will unmount and re-mount, etc. Not
@@ -1631,7 +1678,7 @@ class Type
       This is one of the four relationship metaparameters, along with
       `before`, `require`, and `subscribe`. For more context, including the
       alternate chaining arrow (`->` and `~>`) syntax, see
-      [the language page on relationships](https://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
+      [the language page on relationships](https://puppet.com/docs/puppet/latest/lang_relationships.html)."
   end
 
   newmetaparam(:stage) do
@@ -1644,7 +1691,7 @@ class Type
       By default, all classes are declared in the `main` stage. To assign a class
       to a different stage, you must:
 
-      * Declare the new stage as a [`stage` resource](https://docs.puppetlabs.com/puppet/latest/reference/type.html#stage).
+      * Declare the new stage as a [`stage` resource](https://puppet.com/docs/puppet/latest/type.html#stage).
       * Declare an order relationship between the new stage and the `main` stage.
       * Use the resource-like syntax to declare the class, and set the `stage`
         metaparameter to the name of the desired stage.
@@ -1694,7 +1741,7 @@ The value of this parameter must be a reference to a capability resource,
 or an array of such references. Each capability resource referenced here
 must have been exported by another resource in the same environment.
 
-The referenced capability resource(s) will be looked up, added to the
+The referenced capability resources will be looked up, added to the
 current node catalog, and processed following the underlying consumes
 clause.
 
@@ -1761,9 +1808,8 @@ end
     defaults = defaults.find_all { |provider| provider.specificity == max }
 
     if defaults.length > 1
-      Puppet.warning(
-        "Found multiple default providers for #{self.name}: #{defaults.collect { |i| i.name.to_s }.join(", ")}; using #{defaults[0].name}"
-      )
+      Puppet.warning(_("Found multiple default providers for %{name}: %{provider_list}; using %{selected_provider}") %
+                         { name: self.name, provider_list:  defaults.collect { |i| i.name.to_s }.join(", "), selected_provider: defaults[0].name })
     end
 
     @defaultprovider = defaults.shift unless defaults.empty?
@@ -1793,7 +1839,7 @@ end
     name = name.intern
 
     # If we don't have it yet, try loading it.
-    @providerloader.load(name) unless provider_hash.has_key?(name)
+    @providerloader.load(name, Puppet.lookup(:current_environment)) unless provider_hash.has_key?(name)
     provider_hash[name]
   end
 
@@ -1839,16 +1885,17 @@ end
       Puppet.debug "Reloading #{name} #{self.name} provider"
     end
 
-    parent = if pname = options[:parent]
+    pname = options[:parent]
+    parent = if pname
       options.delete(:parent)
       if pname.is_a? Class
         pname
       else
-        if provider = self.provider(pname)
+        provider = self.provider(pname)
+        if provider
           provider
         else
-          raise Puppet::DevError,
-            "Could not find parent provider #{pname} of #{name}"
+          raise Puppet::DevError, _("Could not find parent provider %{parent} of %{name}") % { parent: pname, name: name }
         end
       end
     else
@@ -1924,7 +1971,7 @@ end
         provider_class = provider_class.class.name if provider_class.is_a?(Puppet::Provider)
 
         unless @resource.class.provider(provider_class)
-          raise ArgumentError, "Invalid #{@resource.class.name} provider '#{provider_class}'"
+          raise ArgumentError, _("Invalid %{resource} provider '%{provider_class}'") % { resource: @resource.class.name, provider_class: provider_class}
         end
       end
 
@@ -1961,7 +2008,7 @@ end
   # @return [Array<Puppet::Provider>] Returns an array of all suitable providers.
   #
   def self.suitableprovider
-    providerloader.loadall if provider_hash.empty?
+    providerloader.loadall(Puppet.lookup(:current_environment)) if provider_hash.empty?
     provider_hash.find_all { |name, provider|
       provider.suitable?
     }.collect { |name, provider|
@@ -2004,10 +2051,13 @@ end
     if name.is_a?(Puppet::Provider)
       @provider = name
       @provider.resource = self
-    elsif klass = self.class.provider(name)
-      @provider = klass.new(self)
     else
-      raise ArgumentError, "Could not find #{name} provider of #{self.class.name}"
+      klass = self.class.provider(name)
+      if klass
+        @provider = klass.new(self)
+      else
+        raise ArgumentError, _("Could not find %{name} provider of %{provider}") % { name: name, provider: self.class.name }
+      end
     end
   end
 
@@ -2124,7 +2174,7 @@ end
   #
   def autorelation(rel_type, rel_catalog = nil)
     rel_catalog ||= catalog
-    raise(Puppet::DevError, "You cannot add relationships without a catalog") unless rel_catalog
+    raise Puppet::DevError, _("You cannot add relationships without a catalog") unless rel_catalog
 
     reqs = []
 
@@ -2135,7 +2185,8 @@ end
       next unless Puppet::Type.type(type)
 
       # Retrieve the list of names from the block.
-      next unless list = self.instance_eval(&block)
+      list = self.instance_eval(&block)
+      next unless list
       list = [list] unless list.is_a?(Array)
 
       # Collect the current prereqs
@@ -2145,9 +2196,8 @@ end
         # Support them passing objects directly, to save some effort.
         unless dep.is_a?(Puppet::Type)
           # Skip autorelation that we aren't managing
-          unless dep = rel_catalog.resource(type, dep)
-            next
-          end
+          dep = rel_catalog.resource(type, dep)
+          next unless dep
         end
 
         if [:require, :subscribe].include?(rel_type)
@@ -2157,7 +2207,6 @@ end
         end
       }
     }
-
     reqs
   end
 
@@ -2183,9 +2232,8 @@ end
   def builddepends
     # Handle the requires
     self.class.relationship_params.collect do |klass|
-      if param = @parameters[klass.name]
-        param.to_edges
-      end
+      param = @parameters[klass.name]
+      param.to_edges if param
     end.flatten.reject { |r| r.nil? }
   end
 
@@ -2227,8 +2275,6 @@ end
   include Enumerable
 
   # class methods dealing with Type management
-
-  public
 
   # The Type class attribute accessors
   class << self
@@ -2339,8 +2385,6 @@ end
   # instance methods related to instance intrinsics
   # e.g., initialize and name
 
-  public
-
   # @return [Hash] hash of parameters originally defined
   # @api private
   attr_reader :original_parameters
@@ -2379,12 +2423,11 @@ end
 
     [:file, :line, :catalog, :exported, :virtual].each do |getter|
       setter = getter.to_s + "="
-      if val = resource.send(getter)
-        self.send(setter, val)
-      end
+      val = resource.send(getter)
+      self.send(setter, val) if val
     end
 
-    @tags = resource.tags
+    merge_tags_from(resource)
 
     @original_parameters = resource.to_hash
 
@@ -2435,11 +2478,19 @@ end
       if p.is_a?(Puppet::Property)
         p.sensitive = true
       elsif p.is_a?(Puppet::Parameter)
-        warning("Unable to mark '#{name}' as sensitive: #{name} is a parameter and not a property, and cannot be automatically redacted.")
+        warning(_("Unable to mark '%{name}' as sensitive: %{name} is a parameter and not a property, and cannot be automatically redacted.") %
+                    { name: name })
       elsif self.class.attrclass(name)
-        warning("Unable to mark '#{name}' as sensitive: the property itself was not assigned a value.")
+        warning(_("Unable to mark '%{name}' as sensitive: the property itself was not assigned a value.") % { name: name })
       else
-        err("Unable to mark '#{name}' as sensitive: the property itself is not defined on #{type}.")
+        err(_("Unable to mark '%{name}' as sensitive: the property itself is not defined on %{type}.") % { name: name, type: type })
+      end
+    end
+
+    parameters.each do |name, param|
+      next if param.sensitive
+      if param.is_a?(Puppet::Parameter)
+        param.sensitive = param.is_sensitive if param.respond_to?(:is_sensitive)
       end
     end
   end
@@ -2490,7 +2541,7 @@ end
       rescue ArgumentError, Puppet::Error, TypeError
         raise
       rescue => detail
-        error = Puppet::DevError.new( "Could not set #{attr} on #{self.class.name}: #{detail}")
+        error = Puppet::DevError.new(_("Could not set %{attribute} on %{class_name}: %{detail}") % { attribute: attr, class_name: self.class.name, detail: detail })
         error.set_backtrace(detail.backtrace)
         raise error
       end
@@ -2521,9 +2572,8 @@ end
     # Make sure all of our relationships are valid.  Again, must be done
     # when the entire catalog is instantiated.
     self.class.relationship_params.collect do |klass|
-      if param = @parameters[klass.name]
-        param.validate_relationship
-      end
+      param = @parameters[klass.name]
+      param.validate_relationship if param
     end.flatten.reject { |r| r.nil? }
   end
 
@@ -2545,13 +2595,13 @@ end
   #   resource.
   def parent
     return nil unless catalog
-
-    @parent ||=
-      if parents = catalog.adjacent(self, :direction => :in)
-        parents.shift
-      else
-        nil
-      end
+    return @parent if @parent
+    parents = catalog.adjacent(self, :direction => :in)
+    @parent = if parents
+      parents.shift
+    else
+      nil
+    end
   end
 
   # Returns a reference to this as a string in "Type[name]" format.
@@ -2627,7 +2677,7 @@ end
   #
   def to_resource
     resource = self.retrieve_resource
-    resource.tag(*self.tags)
+    resource.merge_tags_from(self)
 
     @parameters.each do |name, param|
       # Avoid adding each instance name twice

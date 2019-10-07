@@ -5,6 +5,8 @@ require 'puppet/ssl/base'
 # for turning CSRs into certificates; we can only
 # retrieve them from the CA (or not, as is often
 # the case).
+#
+# @deprecated Use {Puppet::SSL::SSLProvider} instead.
 class Puppet::SSL::Certificate < Puppet::SSL::Base
   # This is defined from the base class
   wraps OpenSSL::X509::Certificate
@@ -21,10 +23,14 @@ DOC
     [:s]
   end
 
-  def subject_alt_names
-    alts = content.extensions.find{|ext| ext.oid == "subjectAltName"}
+  def self.subject_alt_names_for(cert)
+    alts = cert.extensions.find{|ext| ext.oid == "subjectAltName"}
     return [] unless alts
     alts.value.split(/\s*,\s*/)
+  end
+
+  def subject_alt_names
+    self.class.subject_alt_names_for(content)
   end
 
   def expiration
@@ -35,7 +41,7 @@ DOC
   # This name is what gets extracted from the subject before being passed
   # to the constructor, so it's not downcased
   def unmunged_name
-    self.class.name_from_subject(content.subject)
+    self.class.name_from_subject(content.subject.to_utf8)
   end
 
   # Any extensions registered with custom OIDs as defined in module

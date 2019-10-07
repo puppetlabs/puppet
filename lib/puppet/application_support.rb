@@ -14,10 +14,12 @@ module Puppet
     # before being set in a pushed Puppet Context.
     #
     # @param run_mode [Puppet::Util::RunMode] Puppet's current Run Mode.
+    # @param environment_mode [Symbol] optional, Puppet's
+    #   current Environment Mode. Defaults to :local
     # @return [void]
     # @api private
-    def self.push_application_context(run_mode)
-      Puppet.push_context(Puppet.base_context(Puppet.settings), "Update for application settings (#{run_mode})")
+    def self.push_application_context(run_mode, environment_mode = :local)
+      Puppet.push_context_global(Puppet.base_context(Puppet.settings), "Update for application settings (#{run_mode})")
       # This use of configured environment is correct, this is used to establish
       # the defaults for an application that does not override, or where an override
       # has not been made from the command line.
@@ -25,6 +27,9 @@ module Puppet
       configured_environment_name = Puppet[:environment]
       if run_mode.name == :agent
         configured_environment = Puppet::Node::Environment.remote(configured_environment_name)
+      elsif environment_mode == :not_required
+        configured_environment =
+          Puppet.lookup(:environments).get(configured_environment_name) || Puppet::Node::Environment.remote(configured_environment_name)
       else
         configured_environment = Puppet.lookup(:environments).get!(configured_environment_name)
       end
@@ -47,11 +52,10 @@ module Puppet
     def self.configure_indirector_routes(application_name)
       route_file = Puppet[:route_file]
       if Puppet::FileSystem.exist?(route_file)
-        routes = YAML.load_file(route_file)
+        routes = Puppet::Util::Yaml.safe_load_file(route_file, [Symbol])
         application_routes = routes[application_name]
         Puppet::Indirector.configure_routes(application_routes) if application_routes
       end
     end
-
   end
 end

@@ -18,9 +18,8 @@ class Puppet::Parameter::ValueCollection
   #
   def aliasvalue(name, other)
     other = other.to_sym
-    unless value = match?(other)
-      raise Puppet::DevError, "Cannot alias nonexistent value #{other}"
-    end
+    value = match?(other)
+    raise Puppet::DevError, _("Cannot alias nonexistent value %{value}") % { value: other } unless value
 
     value.alias(name)
   end
@@ -35,7 +34,8 @@ class Puppet::Parameter::ValueCollection
       unless values.empty?
         @doc << "Valid values are "
         @doc << @strings.collect do |value|
-          if aliases = value.aliases and ! aliases.empty?
+          aliases = value.aliases
+          if aliases && ! aliases.empty?
             "`#{value.name}` (also called `#{aliases.join(", ")}`)"
           else
             "`#{value.name}`"
@@ -81,9 +81,8 @@ class Puppet::Parameter::ValueCollection
   #
   def match?(test_value)
     # First look for normal values
-    if value = @strings.find { |v| v.match?(test_value) }
-      return value
-    end
+    value = @strings.find { |v| v.match?(test_value) }
+    return value if value
 
     # Then look for a regex match
     @regexes.find { |v| v.match?(test_value) }
@@ -100,7 +99,8 @@ class Puppet::Parameter::ValueCollection
   def munge(value)
     return value if empty?
 
-    if instance = match?(value)
+    instance = match?(value)
+    if instance
       if instance.regex?
         return value
       else
@@ -133,7 +133,10 @@ class Puppet::Parameter::ValueCollection
     call_opt = options[:call]
     unless call_opt.nil?
       devfail "Cannot use obsolete :call value '#{call_opt}' for property '#{self.class.name}'" unless call_opt == :none || call_opt == :instead
-      Puppet.deprecation_warning(_("Property option :call is deprecated and no longer used. Please remove it."))
+      #TRANSLATORS ':call' is a property and should not be translated
+      message = _("Property option :call is deprecated and no longer used.")
+      message += ' ' + _("Please remove it.")
+      Puppet.deprecation_warning(message)
       options = options.reject { |k,v| k == :call }
     end
 
@@ -180,13 +183,10 @@ class Puppet::Parameter::ValueCollection
   def validate(value)
     return if empty?
 
-    unless @values.detect { |name, v| v.match?(value) }
-      str = _("Invalid value %{value}. ") % { value: value.inspect }
-
-      str += _("Valid values are %{value_list}. ") % { value_list: values.join(", ") } unless values.empty?
-
-      str += _("Valid values match %{pattern}.") % { pattern: regexes.join(", ") } unless regexes.empty?
-
+    unless @values.detect {|name, v| v.match?(value)}
+      str = _("Invalid value %{value}.") % { value: value.inspect }
+      str += " " + _("Valid values are %{value_list}.") % { value_list: values.join(", ") } unless values.empty?
+      str += " " + _("Valid values match %{pattern}.") % { pattern: regexes.join(", ") } unless regexes.empty?
       raise ArgumentError, str
     end
   end

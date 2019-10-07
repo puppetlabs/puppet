@@ -111,19 +111,18 @@ describe Puppet::Util::IniConfig::PhysicalFile do
 
   describe "when reading a file" do
     it "raises an error if the file does not exist" do
-      subject.filetype.stubs(:read)
+      allow(subject.filetype).to receive(:read)
       expect {
         subject.read
       }.to raise_error(%r[Cannot read nonexistent file .*/some/nonexistent/file])
     end
 
     it "passes the contents of the file to #parse" do
-      subject.filetype.stubs(:read).returns "[section]"
-      subject.expects(:parse).with("[section]")
+      allow(subject.filetype).to receive(:read).and_return("[section]")
+      expect(subject).to receive(:parse).with("[section]")
 
       subject.read
     end
-
   end
 
   describe "when parsing a file" do
@@ -133,7 +132,7 @@ describe Puppet::Util::IniConfig::PhysicalFile do
 
         subject.parse(text)
 
-        expect(subject.contents).to have(1).items
+        expect(subject.contents.count).to eq 1
         sect = subject.contents[0]
         expect(sect.name).to eq "mysect"
       end
@@ -148,7 +147,7 @@ describe Puppet::Util::IniConfig::PhysicalFile do
       end
 
       it "raises an error if a section is redefined in the file collection" do
-        subject.file_collection = stub('file collection', :get_section => true)
+        subject.file_collection = double('file collection', :get_section => true)
         text = "[mysect]\n[mysect]\n"
 
         expect {
@@ -156,11 +155,10 @@ describe Puppet::Util::IniConfig::PhysicalFile do
         }.to raise_error(Puppet::Util::IniConfig::IniParseError,
                          /Section "mysect" is already defined, cannot redefine/)
       end
-
     end
 
-    describe "parsing properties" do
-      it "raises an error if the property is not within a section" do
+    describe 'parsing properties' do
+      it 'raises an error if the property is not within a section' do
         text = "key=val\n"
 
         expect {
@@ -169,23 +167,53 @@ describe Puppet::Util::IniConfig::PhysicalFile do
                          /Property with key "key" outside of a section/)
       end
 
-      it "adds the property to the current section" do
+      it 'adds the property to the current section' do
         text = "[main]\nkey=val\n"
 
         subject.parse(text)
-        expect(subject.contents).to have(1).items
+        expect(subject.contents.count).to eq 1
         sect = subject.contents[0]
-        expect(sect['key']).to eq "val"
+        expect(sect['key']).to eq 'val'
+      end
+
+      context 'with white space' do
+        let(:section) do
+          text = <<-INIFILE
+[main]
+  leading_white_space=value1
+white_space_after_key =value2
+white_space_after_equals= value3
+white_space_after_value=value4\t
+INIFILE
+          subject.parse(text)
+          expect(subject.contents.count).to eq 1
+          subject.contents[0]
+        end
+
+        it 'allows and ignores white space before the key' do
+          expect(section['leading_white_space']).to eq('value1')
+        end
+
+        it 'allows and ignores white space before the equals' do
+          expect(section['white_space_after_key']).to eq('value2')
+        end
+
+        it 'allows and ignores white space after the equals' do
+          expect(section['white_space_after_equals']).to eq('value3')
+        end
+
+        it 'allows and ignores white spaces after the value' do
+          expect(section['white_space_after_value']).to eq('value4')
+        end
       end
     end
 
     describe "parsing line continuations" do
-
       it "adds the continued line to the last parsed property" do
         text = "[main]\nkey=val\n moreval"
 
         subject.parse(text)
-        expect(subject.contents).to have(1).items
+        expect(subject.contents.count).to eq 1
         sect = subject.contents[0]
         expect(sect['key']).to eq "val\n moreval"
       end
@@ -233,7 +261,7 @@ describe Puppet::Util::IniConfig::PhysicalFile do
     subject.parse(text)
 
     sections = subject.sections
-    expect(sections).to have(2).items
+    expect(sections.count).to eq 2
     expect(sections[0].name).to eq "first"
     expect(sections[1].name).to eq "second"
   end
@@ -252,7 +280,6 @@ describe Puppet::Util::IniConfig::PhysicalFile do
   end
 
   describe "formatting" do
-
     it "concatenates each formatted section in order" do
       subject.contents << first_sect << second_sect
 
@@ -295,7 +322,7 @@ describe Puppet::Util::IniConfig::PhysicalFile do
       describe "and destroy_empty is true" do
         before { subject.destroy_empty = true }
         it "removes the file if there are no sections" do
-          File.expects(:unlink)
+          expect(File).to receive(:unlink)
           subject.store
         end
 
@@ -304,7 +331,7 @@ describe Puppet::Util::IniConfig::PhysicalFile do
           first_sect.destroy = true
           second_sect.destroy = true
 
-          File.expects(:unlink)
+          expect(File).to receive(:unlink)
           subject.store
         end
 
@@ -313,8 +340,8 @@ describe Puppet::Util::IniConfig::PhysicalFile do
           first_sect.destroy = true
           second_sect.destroy = false
 
-          File.expects(:unlink).never
-          subject.filetype.stubs(:write)
+          expect(File).not_to receive(:unlink)
+          allow(subject.filetype).to receive(:write)
           subject.store
         end
       end
@@ -324,9 +351,9 @@ describe Puppet::Util::IniConfig::PhysicalFile do
         first_sect.destroy = true
         second_sect.destroy = true
 
-        File.expects(:unlink).never
-        subject.stubs(:format).returns "formatted"
-        subject.filetype.expects(:write).with("formatted")
+        expect(File).not_to receive(:unlink)
+        allow(subject).to receive(:format).and_return("formatted")
+        expect(subject.filetype).to receive(:write).with("formatted")
         subject.store
       end
     end
@@ -336,8 +363,8 @@ describe Puppet::Util::IniConfig::PhysicalFile do
       first_sect.mark_dirty
       second_sect.mark_clean
 
-      subject.stubs(:format).returns "formatted"
-      subject.filetype.expects(:write).with("formatted")
+      allow(subject).to receive(:format).and_return("formatted")
+      expect(subject.filetype).to receive(:write).with("formatted")
       subject.store
     end
 
@@ -346,15 +373,14 @@ describe Puppet::Util::IniConfig::PhysicalFile do
       first_sect.mark_clean
       second_sect.mark_clean
 
-      subject.stubs(:format).returns "formatted"
-      subject.filetype.expects(:write).never
+      allow(subject).to receive(:format).and_return("formatted")
+      expect(subject.filetype).not_to receive(:write)
       subject.store
     end
   end
 end
 
 describe Puppet::Util::IniConfig::FileCollection do
-
   let(:path_a) { '/some/nonexistent/file/a' }
   let(:path_b) { '/some/nonexistent/file/b' }
 
@@ -373,20 +399,20 @@ describe Puppet::Util::IniConfig::FileCollection do
   end
 
   describe "reading a file" do
-    let(:stub_file) { stub('Physical file') }
+    let(:stub_file) { double('Physical file') }
 
     it "creates a new PhysicalFile and uses that to read the file" do
-      stub_file.expects(:read)
-      stub_file.expects(:file_collection=)
-      Puppet::Util::IniConfig::PhysicalFile.expects(:new).with(path_a).returns stub_file
+      expect(stub_file).to receive(:read)
+      expect(stub_file).to receive(:file_collection=)
+      expect(Puppet::Util::IniConfig::PhysicalFile).to receive(:new).with(path_a).and_return(stub_file)
 
       subject.read(path_a)
     end
 
     it "stores the PhysicalFile and the path to the file" do
-      stub_file.stubs(:read)
-      stub_file.stubs(:file_collection=)
-      Puppet::Util::IniConfig::PhysicalFile.stubs(:new).with(path_a).returns stub_file
+      allow(stub_file).to receive(:read)
+      allow(stub_file).to receive(:file_collection=)
+      allow(Puppet::Util::IniConfig::PhysicalFile).to receive(:new).with(path_a).and_return(stub_file)
       subject.read(path_a)
 
       path, physical_file = subject.files.first
@@ -403,8 +429,8 @@ describe Puppet::Util::IniConfig::FileCollection do
     end
 
     it "stores all files in the collection" do
-      file_a.expects(:store).once
-      file_b.expects(:store).once
+      expect(file_a).to receive(:store).once
+      expect(file_b).to receive(:store).once
 
       subject.store
     end
@@ -418,7 +444,7 @@ describe Puppet::Util::IniConfig::FileCollection do
 
     it "yields every section from every file" do
       [sect_a1, sect_a2, sect_b1, sect_b2].each do |sect|
-        sect.expects(:touch).once
+        expect(sect).to receive(:touch).once
       end
 
       subject.each_section do |sect|
@@ -485,7 +511,7 @@ describe Puppet::Util::IniConfig::FileCollection do
     end
 
     it "adds the section to the appropriate file" do
-      file_a.expects(:add_section).with('newsect')
+      expect(file_a).to receive(:add_section).with('newsect')
       subject.add_section('newsect', path_a)
     end
   end

@@ -1,21 +1,19 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-
-describe Puppet::Type.type(:service).provider(:upstart) do
+describe 'Puppet::Type::Service::Provider::Upstart', unless: Puppet::Util::Platform.jruby? do
   let(:manual) { "\nmanual" }
   let(:start_on_default_runlevels) {  "\nstart on runlevel [2,3,4,5]" }
-  let(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
+  let!(:provider_class) { Puppet::Type.type(:service).provider(:upstart) }
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     # Get a pid for $CHILD_STATUS to latch on to
     command = "cmd.exe /c \"exit 0\""
     Puppet::Util::Execution.execute(command, {:failonfail => false})
   end
 
   def given_contents_of(file, content)
-    File.open(file, 'w') do |file|
-      file.write(content)
+    File.open(file, 'w') do |f|
+      f.write(content)
     end
   end
 
@@ -24,21 +22,43 @@ describe Puppet::Type.type(:service).provider(:upstart) do
   end
 
   def lists_processes_as(output)
-    Puppet::Util::Execution.stubs(:execpipe).with("/sbin/initctl list").yields(output)
-    provider_class.stubs(:which).with("/sbin/initctl").returns("/sbin/initctl")
+    allow(Puppet::Util::Execution).to receive(:execpipe).with("/sbin/initctl list").and_yield(output)
+    allow(provider_class).to receive(:which).with("/sbin/initctl").and_return("/sbin/initctl")
   end
 
   it "should be the default provider on Ubuntu" do
-    Facter.expects(:value).with(:operatingsystem).returns("Ubuntu")
-    Facter.expects(:value).with(:operatingsystemmajrelease).returns("12.04")
-    expect(described_class.default?).to be_truthy
+    expect(Facter).to receive(:value).with(:operatingsystem).and_return("Ubuntu")
+    expect(Facter).to receive(:value).with(:operatingsystemmajrelease).and_return("12.04")
+    expect(provider_class.default?).to be_truthy
+  end
+
+  context "upstart daemon existence confine" do
+    let(:initctl_version) { ['/sbin/initctl', 'version', '--quiet'] }
+
+    before(:each) do
+      allow(Puppet::Util).to receive(:which).with('/sbin/initctl').and_return('/sbin/initctl')
+    end
+
+    it "should return true when the daemon is running" do
+      expect(Puppet::Util::Execution).to receive(:execute).with(initctl_version, instance_of(Hash))
+
+      expect(provider_class).to be_has_initctl
+    end
+
+    it "should return false when the daemon is not running" do
+      expect(Puppet::Util::Execution).to receive(:execute)
+        .with(initctl_version, instance_of(Hash))
+        .and_raise(Puppet::ExecutionFailure, "initctl failed!")
+
+      expect(provider_class).to_not be_has_initctl
+    end
   end
 
   describe "excluding services" do
     it "ignores tty and serial on Redhat systems" do
-      Facter.stubs(:value).with(:osfamily).returns('RedHat')
-      expect(described_class.excludes).to include 'serial'
-      expect(described_class.excludes).to include 'tty'
+      allow(Facter).to receive(:value).with(:osfamily).and_return('RedHat')
+      expect(provider_class.excludes).to include 'serial'
+      expect(provider_class.excludes).to include 'tty'
     end
   end
 
@@ -57,7 +77,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
     it "should attach the job name for network interface security" do
       processes = "network-interface-security (network-interface/eth0)"
-      provider_class.stubs(:execpipe).yields(processes)
+      allow(provider_class).to receive(:execpipe).and_yield(processes)
       expect(provider_class.instances.first.name).to eq("network-interface-security JOB=network-interface/eth0")
     end
 
@@ -69,16 +89,16 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       processes += "\ncryptdisks-udev stop/waiting"
       processes += "\nstatd-mounting stop/waiting"
       processes += "\ngssd-mounting stop/waiting"
-      provider_class.stubs(:execpipe).yields(processes)
+      allow(provider_class).to receive(:execpipe).and_yield(processes)
       expect(provider_class.instances).to be_empty
     end
   end
 
   describe "#search" do
     it "searches through paths to find a matching conf file" do
-      File.stubs(:directory?).returns(true)
-      Puppet::FileSystem.stubs(:exist?).returns(false)
-      Puppet::FileSystem.expects(:exist?).with("/etc/init/foo-bar.conf").returns(true)
+      allow(File).to receive(:directory?).and_return(true)
+      allow(Puppet::FileSystem).to receive(:exist?).and_return(false)
+      expect(Puppet::FileSystem).to receive(:exist?).with("/etc/init/foo-bar.conf").and_return(true)
       resource = Puppet::Type.type(:service).new(:name => "foo-bar", :provider => :upstart)
       provider = provider_class.new(resource)
 
@@ -86,9 +106,9 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     end
 
     it "searches for just the name of a compound named service" do
-      File.stubs(:directory?).returns(true)
-      Puppet::FileSystem.stubs(:exist?).returns(false)
-      Puppet::FileSystem.expects(:exist?).with("/etc/init/network-interface.conf").returns(true)
+      allow(File).to receive(:directory?).and_return(true)
+      allow(Puppet::FileSystem).to receive(:exist?).and_return(false)
+      expect(Puppet::FileSystem).to receive(:exist?).with("/etc/init/network-interface.conf").and_return(true)
       resource = Puppet::Type.type(:service).new(:name => "network-interface INTERFACE=lo", :provider => :upstart)
       provider = provider_class.new(resource)
 
@@ -100,10 +120,10 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     it "should use the default status command if none is specified" do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
       provider = provider_class.new(resource)
-      provider.stubs(:is_upstart?).returns(true)
+      allow(provider).to receive(:is_upstart?).and_return(true)
 
-      provider.expects(:status_exec).with(["foo"]).returns("foo start/running, process 1000")
-      Process::Status.any_instance.stubs(:exitstatus).returns(0)
+      expect(provider).to receive(:status_exec).with(["foo"]).and_return("foo start/running, process 1000")
+      allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
       expect(provider.status).to eq(:running)
     end
 
@@ -111,33 +131,33 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       it "should use the provided status command" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        Process::Status.any_instance.stubs(:exitstatus).returns(0)
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
         provider.status
       end
 
       it "should return :stopped when the provided status command return non-zero" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        $CHILD_STATUS.stubs(:exitstatus).returns 1
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
         expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running when the provided status command return zero" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        $CHILD_STATUS.stubs(:exitstatus).returns 0
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect(provider.status).to eq(:running)
       end
     end
@@ -146,20 +166,20 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       it "should return :stopped if the pid can not be found" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:getpid).returns nil
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:getpid).and_return(nil)
         expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running if the pid can be found" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:getpid).returns 2706
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:getpid).and_return(2706)
         expect(provider.status).to eq(:running)
       end
     end
@@ -168,33 +188,33 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       it "should use the provided status command" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        Process::Status.any_instance.stubs(:exitstatus).returns(0)
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
         provider.status
       end
 
       it "should return :stopped when the provided status command return non-zero" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        $CHILD_STATUS.stubs(:exitstatus).returns 1
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        allow($CHILD_STATUS).to receive(:exitstatus).and_return(1)
         expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running when the provided status command return zero" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :provider => :upstart, :status => '/bin/foo')
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
-        $CHILD_STATUS.stubs(:exitstatus).returns 0
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
+        allow($CHILD_STATUS).to receive(:exitstatus).and_return(0)
         expect(provider.status).to eq(:running)
       end
     end
@@ -203,20 +223,20 @@ describe Puppet::Type.type(:service).provider(:upstart) do
       it "should return :stopped if the pid can not be found" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:getpid).returns nil
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:getpid).and_return(nil)
         expect(provider.status).to eq(:stopped)
       end
 
       it "should return :running if the pid can be found" do
         resource = Puppet::Type.type(:service).new(:name => 'foo', :hasstatus => false, :provider => :upstart)
         provider = provider_class.new(resource)
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
 
-        provider.expects(:status_exec).with(['foo']).never
-        provider.expects(:getpid).returns 2706
+        expect(provider).not_to receive(:status_exec).with(['foo'])
+        expect(provider).to receive(:getpid).and_return(2706)
         expect(provider.status).to eq(:running)
       end
     end
@@ -224,32 +244,34 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     it "should properly handle services with 'start' in their name" do
       resource = Puppet::Type.type(:service).new(:name => "foostartbar", :provider => :upstart)
       provider = provider_class.new(resource)
-      provider.stubs(:is_upstart?).returns(true)
+      allow(provider).to receive(:is_upstart?).and_return(true)
 
-      provider.expects(:status_exec).with(["foostartbar"]).returns("foostartbar stop/waiting")
-      Process::Status.any_instance.stubs(:exitstatus).returns(0)
+      expect(provider).to receive(:status_exec).with(["foostartbar"]).and_return("foostartbar stop/waiting")
+      allow_any_instance_of(Process::Status).to receive(:exitstatus).and_return(0)
       expect(provider.status).to eq(:stopped)
     end
   end
 
   describe "inheritance" do
     let :resource do
-      resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
+      Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart)
     end
 
     let :provider do
-      provider = provider_class.new(resource)
+      provider_class.new(resource)
     end
 
     describe "when upstart job" do
       before(:each) do
-        provider.stubs(:is_upstart?).returns(true)
+        allow(provider).to receive(:is_upstart?).and_return(true)
       end
-      ["start", "stop"].each do |command|
-        it "should return the #{command}cmd of its parent provider" do
-          expect(provider.send("#{command}cmd".to_sym)).to eq([provider.command(command.to_sym), resource.name])
+
+      ["start", "stop"].each do |action|
+        it "should return the #{action}cmd of its parent provider" do
+          expect(provider.send("#{action}cmd".to_sym)).to eq([provider.command(action.to_sym), resource.name])
         end
       end
+
       it "should return nil for the statuscmd" do
         expect(provider.statuscmd).to be_nil
       end
@@ -328,9 +350,9 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
     describe "Upstart version < 0.6.7" do
       before(:each) do
-        provider.stubs(:is_upstart?).returns(true)
-        provider.stubs(:upstart_version).returns("0.6.5")
-        provider.stubs(:search).returns(init_script)
+        allow(provider).to receive(:is_upstart?).and_return(true)
+        allow(provider).to receive(:upstart_version).and_return("0.6.5")
+        allow(provider).to receive(:search).and_return(init_script)
       end
 
       [:enabled?,:enable,:disable].each do |enableable|
@@ -414,9 +436,9 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
     describe "Upstart version < 0.9.0" do
       before(:each) do
-        provider.stubs(:is_upstart?).returns(true)
-        provider.stubs(:upstart_version).returns("0.7.0")
-        provider.stubs(:search).returns(init_script)
+        allow(provider).to receive(:is_upstart?).and_return(true)
+        allow(provider).to receive(:upstart_version).and_return("0.7.0")
+        allow(provider).to receive(:search).and_return(init_script)
       end
 
       [:enabled?,:enable,:disable].each do |enableable|
@@ -532,10 +554,10 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
     describe "Upstart version > 0.9.0" do
       before(:each) do
-        provider.stubs(:is_upstart?).returns(true)
-        provider.stubs(:upstart_version).returns("0.9.5")
-        provider.stubs(:search).returns(init_script)
-        provider.stubs(:overscript).returns(over_script)
+        allow(provider).to receive(:is_upstart?).and_return(true)
+        allow(provider).to receive(:upstart_version).and_return("0.9.5")
+        allow(provider).to receive(:search).and_return(init_script)
+        allow(provider).to receive(:overscript).and_return(over_script)
       end
 
       [:enabled?,:enable,:disable].each do |enableable|
@@ -633,6 +655,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
             expect(provider.enabled?).to eq(:false)
           end
         end
+
         describe "with override file" do
           it "should consider 'start on ...' to be disabled if there is manual in override file" do
             given_contents_of(init_script, enabled_content)

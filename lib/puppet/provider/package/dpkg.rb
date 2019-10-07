@@ -30,7 +30,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     dpkgquery_piped('-W', '--showformat', self::DPKG_QUERY_FORMAT_STRING) do |pipe|
       # now turn each returned line into a package object
       pipe.each_line do |line|
-        if hash = parse_line(line)
+        hash = parse_line(line)
+        if hash
           packages << new(hash)
         end
       end
@@ -53,7 +54,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   def self.parse_line(line)
     hash = nil
 
-    if match = self::FIELDS_REGEX.match(line)
+    match = self::FIELDS_REGEX.match(line)
+    if match
       hash = {}
 
       self::FIELDS.zip(match.captures) do |field,value|
@@ -78,10 +80,10 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   public
 
   def install
-    unless file = @resource[:source]
+    file = @resource[:source]
+    unless file
       raise ArgumentError, _("You cannot install dpkg packages without a source")
     end
-
     args = []
 
     # We always unhold when installing to remove any prior hold.
@@ -146,7 +148,9 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   end
 
   def hold
-    self.install
+    if package_not_installed?(@resource[:name])
+      self.install
+    end
     Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
       tmpfile.write("#{@resource[:name]} hold\n")
       tmpfile.flush
@@ -162,4 +166,16 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
   end
 
+  def package_not_installed?(name)
+    if !name.nil? && !name.empty?
+      begin
+       dpkgquery("-W", "--showformat", self.class::DPKG_QUERY_FORMAT_STRING, name)
+      rescue Puppet::ExecutionFailure
+        # return true if exception is generated because package is not found
+        return true
+      end
+      return false
+    end
+    raise ArgumentError.new("Package name is nil or empty")
+  end
 end

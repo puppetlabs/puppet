@@ -2,8 +2,15 @@ require 'base64'
 module Puppet::Pops
 module Types
 
-# A Puppet Language Type that exposes the {{SemanticPuppet::Version}} and {{SemanticPuppet::VersionRange}}.
-# The version type is parameterized with version ranges.
+# A Puppet Language Type that represents binary data content (a sequence of 8-bit bytes).
+# Instances of this data type can be created from `String` and `Array[Integer[0,255]]`
+# values. Also see the `binary_file` function for reading binary content from a file.
+#
+# A `Binary` can be converted to `String` and `Array` form - see function `new` for
+# the respective target data type for more information.
+#
+# Instances of this data type serialize as base 64 encoded strings when the serialization
+# format is textual, and as binary content when a serialization format supports this.
 #
 # @api public
 class PBinaryType < PAnyType
@@ -84,8 +91,7 @@ class PBinaryType < PAnyType
     # @api private
     #
     def initialize(bin)
-      # TODO: When Ruby 1.9.3 support is dropped change this to `bin.b` for binary encoding instead of force_encoding
-      @binary_buffer = (bin.encoding.name == "ASCII-8BIT" ? bin : bin.dup.force_encoding("ASCII-8BIT")).freeze
+      @binary_buffer = (bin.encoding.name == "ASCII-8BIT" ? bin : bin.b).freeze
     end
 
     # Presents the binary content as a string base64 encoded string (without line breaks).
@@ -144,8 +150,8 @@ class PBinaryType < PAnyType
   end
 
   # @api private
-  def self.new_function(_, loader)
-    @new_function ||= Puppet::Functions.create_loaded_function(:new_Binary, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_Binary, type.loader) do
       local_types do
         type 'ByteInteger = Integer[0,255]'
         type 'Base64Format = Enum["%b", "%u", "%B", "%s", "%r"]'

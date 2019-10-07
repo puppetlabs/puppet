@@ -105,11 +105,11 @@ module Utils
 
   # is the name absolute (i.e. starts with ::)
   def self.is_absolute? name
-    name.start_with? "::"
+    name.start_with? "::".freeze
   end
 
   def self.name_to_segments name
-    name.split("::")
+    name.split("::".freeze)
   end
 
   def self.relativize_name name

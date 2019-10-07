@@ -1,9 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'rbconfig'
 require 'fileutils'
-
-provider_class = Puppet::Type.type(:service).provider(:init)
 
 describe "base service provider" do
   include PuppetSpec::Files
@@ -17,10 +14,10 @@ describe "base service provider" do
 
   subject { provider }
 
-  if Puppet.features.microsoft_windows?
+  if Puppet::Util::Platform.windows?
     # Get a pid for $CHILD_STATUS to latch on to
-    command = "cmd.exe /c \"exit 0\""
-    Puppet::Util::Execution.execute(command, {:failonfail => false})
+    cmd = "cmd.exe /c \"exit 0\""
+    Puppet::Util::Execution.execute(cmd, {:failonfail => false})
   end
 
   context "basic operations" do
@@ -43,7 +40,7 @@ describe "base service provider" do
         return 'started'
       when status_command
         expect(options[:failonfail]).to eq(false)
-        $CHILD_STATUS.expects(:exitstatus).at_least(1).returns(@running ? 0 : 1)
+        allow($CHILD_STATUS).to receive(:exitstatus) {@running ? 0 : 1}
         return @running ? 'running' : 'not running'
       when stop_command
         expect(options[:failonfail]).to eq(true)
@@ -57,7 +54,7 @@ describe "base service provider" do
 
     before :each do
       @running = false
-      executor.expects(:execute).at_least(1).with { |command, options| execute_command(command, options) }
+      expect(executor).to receive(:execute).at_least(:once) { |command, options| execute_command(command, options) }
     end
 
     it "should invoke the start command if not running" do
@@ -89,6 +86,26 @@ describe "base service provider" do
       subject.start
       subject.stop
       expect {subject.stop }.to raise_error(Puppet::Error, 'Could not stop Service[test]: failed to stop')
+    end
+  end
+
+  context "when hasstatus is false" do
+    subject do
+      type.new(
+         :name  => "status test",
+         :provider => :base,
+         :hasstatus => false,
+         :pattern => "majestik m\u00f8\u00f8se",
+      ).provider
+    end
+
+    it "retrieves a PID from the process table" do
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return("CentOS")
+      ps_output = File.binread(my_fixture("ps_ef.mixed_encoding")).force_encoding(Encoding::UTF_8)
+
+      expect(executor).to receive(:execute).with("ps -ef").and_return(ps_output)
+
+      expect(subject.status).to eq(:running)
     end
   end
 end

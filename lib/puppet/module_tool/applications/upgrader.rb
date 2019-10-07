@@ -20,13 +20,15 @@ module Puppet::ModuleTool
         @name                = name
         @ignore_changes      = forced? || options[:ignore_changes]
         @ignore_dependencies = forced? || options[:ignore_dependencies]
-        @strict_semver       = !!options[:strict_semver]
 
         SemanticPuppet::Dependency.add_source(installed_modules_source)
         SemanticPuppet::Dependency.add_source(module_repository)
       end
 
       def run
+        # Disallow anything that invokes md5 to avoid un-friendly termination due to FIPS
+        raise _("Module upgrade is prohibited in FIPS mode.") if Facter.value(:fips_enabled)
+
         name = @name.tr('/', '-')
         version = options[:version] || '>= 0.0.0'
 
@@ -91,7 +93,7 @@ module Puppet::ModuleTool
           if available_versions.empty?
             raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
           elsif results[:requested_version] != :latest
-            requested = SemanticPuppet::VersionRange.parse(results[:requested_version], @strict_semver)
+            requested = Puppet::Module.parse_range(results[:requested_version])
             unless available_versions.any? {|m| requested.include? m.version}
               raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
             end
@@ -120,7 +122,7 @@ module Puppet::ModuleTool
               # module, locking it to upgrades within the same major version.
               installed_range = ">=#{version} #{version.major}.x"
               graph.add_constraint('installed', installed_module, installed_range) do |node|
-                SemanticPuppet::VersionRange.parse(installed_range, @strict_semver).include? node.version
+                Puppet::Module.parse_range(installed_range).include? node.version
               end
 
               release.mod.dependencies.each do |dep|
@@ -128,7 +130,7 @@ module Puppet::ModuleTool
 
                 range = dep['version_requirement']
                 graph.add_constraint("#{installed_module} constraint", dep_name, range) do |node|
-                  SemanticPuppet::VersionRange.parse(range, @strict_semver).include? node.version
+                  Puppet::Module.parse_range(range).include? node.version
                 end
               end
             end
@@ -142,7 +144,8 @@ module Puppet::ModuleTool
           end
 
           releases.each do |rel|
-            if mod = installed_modules_source.by_name[rel.name.split('-').last]
+            mod = installed_modules_source.by_name[rel.name.split('-').last]
+            if mod
               next if mod.has_metadata? && mod.forge_name.tr('/', '-') == rel.name
 
               if rel.name != name
@@ -187,7 +190,8 @@ module Puppet::ModuleTool
 
           Puppet.notice _('Upgrading -- do not interrupt ...')
           releases.each do |release|
-            if installed = installed_modules[release.name]
+            installed = installed_modules[release.name]
+            if installed
               release.install(Pathname.new(installed.mod.modulepath))
             else
               release.install(dir)
@@ -216,7 +220,7 @@ module Puppet::ModuleTool
 
       private
       def module_repository
-        @repo ||= Puppet::Forge.new
+        @repo ||= Puppet::Forge.new(Puppet[:module_repository])
       end
 
       def installed_modules_source
@@ -228,7 +232,7 @@ module Puppet::ModuleTool
       end
 
       def build_single_module_graph(name, version)
-        range = SemanticPuppet::VersionRange.parse(version, @strict_semver)
+        range = Puppet::Module.parse_range(version)
         graph = SemanticPuppet::Dependency::Graph.new(name => range)
         releases = SemanticPuppet::Dependency.fetch_releases(name)
         releases.each { |release| release.dependencies.clear }

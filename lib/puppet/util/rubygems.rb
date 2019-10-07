@@ -21,7 +21,7 @@ module Puppet::Util::RubyGems
       # @api private
       def source
         if has_rubygems?
-          Gem::Specification.respond_to?(:latest_specs) ? Gems18Source : OldGemsSource
+          Gems18Source
         else
           NoGemsSource
         end
@@ -44,18 +44,6 @@ module Puppet::Util::RubyGems
       Gem::Specification.latest_specs(true).collect do |spec|
         File.join(spec.full_gem_path, 'lib')
       end
-    end
-
-    def clear_paths
-      Gem.clear_paths
-    end
-  end
-
-  # RubyGems < 1.8.0
-  # @api private
-  class OldGemsSource < Source
-    def directories
-      @paths ||= Gem.latest_load_paths
     end
 
     def clear_paths

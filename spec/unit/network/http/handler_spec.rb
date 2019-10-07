@@ -1,12 +1,8 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet_spec/handler'
-
 require 'puppet/indirector_testing'
-
 require 'puppet/network/authorization'
-
 require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::Handler do
@@ -52,9 +48,10 @@ describe Puppet::Network::HTTP::Handler do
 
     it "raises an error if multiple routes with the same path regex are registered" do
       expect do
-        handler = PuppetSpec::Handler.new(
+        PuppetSpec::Handler.new(
           Puppet::Network::HTTP::Route.path(%r{^/foo}).get(respond("ignored")),
-          Puppet::Network::HTTP::Route.path(%r{^/foo}).post(respond("also ignored")))
+          Puppet::Network::HTTP::Route.path(%r{^/foo}).post(respond("also ignored"))
+        )
       end.to raise_error(ArgumentError)
     end
 
@@ -83,7 +80,7 @@ describe Puppet::Network::HTTP::Handler do
         Puppet::Network::HTTP::Route.path(/.*/).get(lambda { |_, _| raise error}))
 
       # Stacktraces should be included in logs
-      Puppet.expects(:err).with("Server Error: the sky is falling!\na.rb\nb.rb")
+      expect(Puppet).to receive(:err).with("Server Error: the sky is falling!\na.rb\nb.rb")
 
       req = a_request("GET", "/vtest/foo")
       res = {}
@@ -106,8 +103,8 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     before do
-      handler.stubs(:check_authorization)
-      handler.stubs(:warn_if_near_expiration)
+      allow(handler).to receive(:check_authorization)
+      allow(handler).to receive(:warn_if_near_expiration)
     end
 
     it "should setup a profiler when the puppet-profiling header exists" do
@@ -116,13 +113,8 @@ describe Puppet::Network::HTTP::Handler do
 
       p = PuppetSpec::HandlerProfiler.new
 
-      Puppet::Util::Profiler.expects(:add_profiler).with { |profiler|
-        profiler.is_a? Puppet::Util::Profiler::WallClock
-      }.returns(p)
-
-      Puppet::Util::Profiler.expects(:remove_profiler).with { |profiler|
-        profiler == p
-      }
+      expect(Puppet::Util::Profiler).to receive(:add_profiler).with(be_a(Puppet::Util::Profiler::WallClock)).and_return(p)
+      expect(Puppet::Util::Profiler).to receive(:remove_profiler).with(p)
 
       handler.process(request, response)
     end
@@ -131,7 +123,7 @@ describe Puppet::Network::HTTP::Handler do
       request = a_request
       request[:params] = { }
 
-      Puppet::Util::Profiler.expects(:add_profiler).never
+      expect(Puppet::Util::Profiler).not_to receive(:add_profiler)
 
       handler.process(request, response)
     end
@@ -158,19 +150,19 @@ describe Puppet::Network::HTTP::Handler do
 
   describe "when resolving node" do
     it "should use a look-up from the ip address" do
-      Resolv.expects(:getname).with("1.2.3.4").returns("host.domain.com")
+      expect(Resolv).to receive(:getname).with("1.2.3.4").and_return("host.domain.com")
 
       handler.resolve_node(:ip => "1.2.3.4")
     end
 
     it "should return the look-up result" do
-      Resolv.stubs(:getname).with("1.2.3.4").returns("host.domain.com")
+      allow(Resolv).to receive(:getname).with("1.2.3.4").and_return("host.domain.com")
 
       expect(handler.resolve_node(:ip => "1.2.3.4")).to eq("host.domain.com")
     end
 
     it "should return the ip address if resolving fails" do
-      Resolv.stubs(:getname).with("1.2.3.4").raises(RuntimeError, "no such host")
+      allow(Resolv).to receive(:getname).with("1.2.3.4").and_raise(RuntimeError, "no such host")
 
       expect(handler.resolve_node(:ip => "1.2.3.4")).to eq("1.2.3.4")
     end

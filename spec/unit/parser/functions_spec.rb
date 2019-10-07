@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Parser::Functions do
@@ -27,7 +26,7 @@ describe Puppet::Parser::Functions do
 
     it "should warn if the function already exists" do
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
-      Puppet.expects(:warning)
+      expect(Puppet).to receive(:warning)
 
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
     end
@@ -48,8 +47,33 @@ describe Puppet::Parser::Functions do
   end
 
   describe "when calling function to test function existence" do
+    before :each do
+      Puppet[:strict] = :error
+    end
+
+    it "emits a deprecation warning when loading all 3.x functions" do
+      allow(Puppet::Parser::Functions.autoloader.delegatee).to receive(:loadall)
+      Puppet::Parser::Functions.autoloader.loadall
+
+      expect(@logs.map(&:to_s)).to include(/The method 'Puppet::Parser::Functions.autoloader#loadall' is deprecated in favor of using 'Scope#call_function/)
+    end
+
+    it "emits a deprecation warning when loading a single 3.x function" do
+      allow(Puppet::Parser::Functions.autoloader.delegatee).to receive(:load)
+      Puppet::Parser::Functions.autoloader.load('beatles')
+
+      expect(@logs.map(&:to_s)).to include(/The method 'Puppet::Parser::Functions.autoloader#load\("beatles"\)' is deprecated in favor of using 'Scope#call_function'/)
+    end
+
+    it "emits a deprecation warning when checking if a 3x function is loaded" do
+      allow(Puppet::Parser::Functions.autoloader.delegatee).to receive(:loaded?).and_return(false)
+      Puppet::Parser::Functions.autoloader.loaded?('beatles')
+
+      expect(@logs.map(&:to_s)).to include(/The method 'Puppet::Parser::Functions.autoloader#loaded\?\(\"beatles\"\)' is deprecated in favor of using 'Scope#call_function'/)
+    end
+
     it "should return false if the function doesn't exist" do
-      Puppet::Parser::Functions.autoloader.stubs(:load)
+      allow(Puppet::Parser::Functions.autoloader.delegatee).to receive(:load)
 
       expect(Puppet::Parser::Functions.function("name")).to be_falsey
     end
@@ -61,7 +85,7 @@ describe Puppet::Parser::Functions do
     end
 
     it "should try to autoload the function if it doesn't exist yet" do
-      Puppet::Parser::Functions.autoloader.expects(:load)
+      expect(Puppet::Parser::Functions.autoloader.delegatee).to receive(:load)
 
       Puppet::Parser::Functions.function("name")
     end

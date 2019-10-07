@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
@@ -10,6 +9,10 @@ describe 'collectors' do
     messages = catalog.resources.find_all { |resource| resource.type == 'Notify' }.
                                  collect { |notify| notify[:message] }
     expect(messages).to include(*expected_messages)
+  end
+
+  def warnings
+    @logs.select { |log| log.level == :warning }.map { |log| log.message }
   end
 
   context "virtual resource collection" do
@@ -180,7 +183,7 @@ describe 'collectors' do
     it "does not collect classes" do
       node = Puppet::Node.new('the node')
       expect do
-        catalog = compile_to_catalog(<<-MANIFEST, node)
+        compile_to_catalog(<<-MANIFEST, node)
           class theclass {
             @notify { "testing": message => "good message" }
           }
@@ -192,7 +195,7 @@ describe 'collectors' do
     it "does not collect resources that don't exist" do
       node = Puppet::Node.new('the node')
       expect do
-        catalog = compile_to_catalog(<<-MANIFEST, node)
+        compile_to_catalog(<<-MANIFEST, node)
           class theclass {
             @notify { "testing": message => "good message" }
           }
@@ -312,7 +315,38 @@ describe 'collectors' do
         MANIFEST
       end
 
+      context 'when overriding an already evaluated resource' do
+        let(:manifest) { <<-MANIFEST }
+          define foo($message) {
+            notify { "testing": message => $message }
+          }
+          foo { test: message => 'given' }
+          define delayed {
+            Foo <|  |> { message => 'overridden' }
+          }
+          delayed {'do it now': }
+        MANIFEST
+
+        it 'and --strict=off, it silently skips the override' do
+          Puppet[:strict] = :off
+          expect_the_message_to_be(['given'], manifest)
+          expect(warnings).to be_empty
+        end
+
+        it 'and --strict=warning, it warns about the attempt to override and skips it' do
+          Puppet[:strict] = :warning
+          expect_the_message_to_be(['given'], manifest)
+          expect(warnings).to include(
+            /Attempt to override an already evaluated resource, defined at \(line: 4\), with new values \(line: 6\)/)
+        end
+
+        it 'and --strict=error, it fails compilation' do
+          Puppet[:strict] = :error
+          expect { compile_to_catalog(manifest) }.to raise_error(
+            /Attempt to override an already evaluated resource, defined at \(line: 4\), with new values \(line: 6\)/)
+          expect(warnings).to be_empty
+        end
+      end
     end
   end
-
 end

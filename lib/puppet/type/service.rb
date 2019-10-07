@@ -35,7 +35,7 @@ module Puppet
     feature :refreshable, "The provider can restart the service.",
       :methods => [:restart]
 
-    feature :enableable, "The provider can enable and disable the service",
+    feature :enableable, "The provider can enable and disable the service.",
       :methods => [:disable, :enable, :enabled?]
 
     feature :controllable, "The provider uses a control variable."
@@ -45,11 +45,13 @@ module Puppet
     feature :maskable, "The provider can 'mask' the service.",
       :methods => [:mask]
 
+    feature :configurable_timeout, "The provider can specify a minumum timeout for syncing service properties"
+
     newproperty(:enable, :required_features => :enableable) do
       desc "Whether a service should be enabled to start at boot.
-        This property behaves quite differently depending on the platform;
+        This property behaves differently depending on the platform;
         wherever possible, it relies on local tools to enable or disable
-        a given service."
+        a given service. Default values depend on the platform."
 
       newvalue(:true, :event => :service_enabled) do
         provider.enable
@@ -73,6 +75,11 @@ module Puppet
         provider.enabled?
       end
 
+      # This only works on Windows systems.
+      newvalue(:delayed, :event => :service_delayed_start) do
+        provider.delayed_start
+      end
+
       # This only makes sense on systemd systems. Static services cannot be enabled
       # or disabled manually.
       def insync?(current)
@@ -85,15 +92,15 @@ module Puppet
       end
 
       validate do |value|
-        if value == :manual and !Puppet.features.microsoft_windows?
-          raise Puppet::Error.new(_("Setting enable to manual is only supported on Microsoft Windows."))
+        if (value == :manual || value == :delayed) && !Puppet::Util::Platform.windows?
+          raise Puppet::Error.new(_("Setting enable to %{value} is only supported on Microsoft Windows.") % { value: value.to_s} )
         end
       end
     end
 
     # Handle whether the service should actually be running right now.
     newproperty(:ensure) do
-      desc "Whether a service should be running."
+      desc "Whether a service should be running. Default values depend on the platform."
 
       newvalue(:stopped, :event => :service_stopped) do
         provider.stop
@@ -113,7 +120,8 @@ module Puppet
       def sync
         event = super()
 
-        if property = @resource.property(:enable)
+        property = @resource.property(:enable)
+        if property
           val = property.retrieve
           property.sync unless property.safe_insync?(val)
         end
@@ -135,8 +143,7 @@ module Puppet
 
     newparam(:hasstatus) do
       desc "Declare whether the service's init script has a functional status
-        command; defaults to `true`. This attribute's default value changed in
-        Puppet 2.7.0.
+        command. This attribute's default value changed in Puppet 2.7.0.
 
         The init script's status command must return 0 if the service is
         running and a nonzero value otherwise. Ideally, these exit codes
@@ -230,14 +237,22 @@ module Puppet
     newparam :hasrestart do
       desc "Specify that an init script has a `restart` command.  If this is
         false and you do not specify a command in the `restart` attribute,
-        the init script's `stop` and `start` commands will be used.
-
-        Defaults to false."
+        the init script's `stop` and `start` commands will be used."
       newvalues(:true, :false)
     end
 
     newparam(:manifest) do
       desc "Specify a command to config a service, or a path to a manifest to do so."
+    end
+
+    newparam(:timeout, :required_features => :configurable_timeout) do
+      desc "Specify an optional minimum timeout (in seconds) for puppet to wait when syncing service properties"
+      defaultto { provider.class.respond_to?(:default_timeout) ? provider.default_timeout : 10 }
+      validate do |value|
+        if (not value.is_a? Integer) || value < 1
+          raise Puppet::Error.new(_("\"%{value}\" is not a positive integer: the timeout parameter must be specified as a positive integer") % { value: value })
+        end
+      end
     end
 
     # Basically just a synonym for restarting.  Used to respond

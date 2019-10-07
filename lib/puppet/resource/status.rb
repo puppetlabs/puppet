@@ -31,7 +31,7 @@ module Puppet
 
       # Boolean status types set while evaluating `@real_resource`.
       STATES = [:skipped, :failed, :failed_to_restart, :restarted, :changed, :out_of_sync, :scheduled, :corrective_change]
-      attr_accessor *STATES
+      attr_accessor(*STATES)
 
       # @!attribute [r] source_description
       #   @return [String] The textual description of the path to `@real_resource`
@@ -73,6 +73,10 @@ module Puppet
       #     status.resource_type #=> 'Notify'
       #   @return [String] The class name of `@real_resource`
       attr_reader :resource_type
+
+      # @!attribute [rw] provider_used
+      #   @return [String] The class name of the provider used for the resource
+      attr_accessor :provider_used
 
       # @!attribute [r] title
       #   @return [String] The title of `@real_resource`
@@ -144,7 +148,6 @@ module Puppet
       # Puppet::Transaction::Event failure with the given message.
       # @param message [String] the reason for a status failure
       def fail_with_event(message)
-        failed = true
         add_event(@real_resource.event(:name => :resource_error, :status => "failure", :message => message))
       end
 
@@ -164,15 +167,17 @@ module Puppet
         @file = resource.file
         @line = resource.line
 
-        tag(*resource.tags)
+        merge_tags_from(resource)
         @time = Time.now
         @events = []
         @resource_type = resource.type.to_s.capitalize
+        @provider_used = resource.provider.class.name.to_s unless resource.provider.nil?
         @title = resource.title
       end
 
       def initialize_from_hash(data)
         @resource_type = data['resource_type']
+        @provider_used = data['provider_used']
         @title = data['title']
         @resource = data['resource']
         @containment_path = data['containment_path']
@@ -188,6 +193,7 @@ module Puppet
         @changed = data['changed']
         @skipped = data['skipped']
         @failed = data['failed']
+        @failed_to_restart = data['failed_to_restart']
         @corrective_change = data['corrective_change']
         @events = data['events'].map do |event|
           # Older versions contain tags that causes Psych to create instances directly
@@ -202,11 +208,13 @@ module Puppet
           'line' => @line,
           'resource' => @resource,
           'resource_type' => @resource_type,
+          'provider_used' => @provider_used,
           'containment_path' => @containment_path,
           'evaluation_time' => @evaluation_time,
           'tags' => @tags.to_a,
           'time' => @time.iso8601(9),
           'failed' => @failed,
+          'failed_to_restart' => self.failed_to_restart?,
           'changed' => @changed,
           'out_of_sync' => @out_of_sync,
           'skipped' => @skipped,

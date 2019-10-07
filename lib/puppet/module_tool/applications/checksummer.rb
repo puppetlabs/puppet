@@ -1,4 +1,4 @@
-require 'json'
+require 'puppet/util/json'
 require 'puppet/module_tool/checksums'
 
 module Puppet::ModuleTool
@@ -40,10 +40,10 @@ module Puppet::ModuleTool
 
       def checksums
         if checksums_file.exist?
-          JSON.parse(checksums_file.read)
+          Puppet::Util::Json.load(checksums_file.read)
         elsif metadata_file.exist?
           # Check metadata.json too; legacy modules store their checksums there.
-          JSON.parse(metadata_file.read)['checksums'] or
+          Puppet::Util::Json.load(metadata_file.read)['checksums'] or
           raise ArgumentError, _("No file containing checksums found.")
         else
           raise ArgumentError, _("No file containing checksums found.")

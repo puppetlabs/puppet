@@ -7,7 +7,7 @@
 
 require 'net/http'
 require 'cgi'
-require 'json'
+require 'puppet/util/json'
 
 # @api private
 module Puppet::Resource::CapabilityFinder
@@ -19,11 +19,12 @@ module Puppet::Resource::CapabilityFinder
   #
   # @param environment [String] environment name
   # @param code_id [String,nil] code_id of the catalog
-  # @param cap [Puppet::Type] the capability resource type instance
+  # @param cap [Puppet::Resource] the capability resource type instance
   # @return [Puppet::Resource,nil] The found capability resource or `nil` if it could not be found
   def self.find(environment, code_id, cap)
     unless Puppet::Util.const_defined?('Puppetdb')
-      raise Puppet::DevError, 'PuppetDB is not available'
+      #TRANSLATOR PuppetDB is a product name and should not be translated
+      raise Puppet::DevError, _('PuppetDB is not available')
     end
 
     resources = search(nil, nil, cap)
@@ -33,24 +34,26 @@ module Puppet::Resource::CapabilityFinder
       resources = resources.select { |r| r['tags'].any? { |t| t == "producer:#{environment}" } }
     end
 
-    if resources.size > 1 && code_id
-      Puppet.debug "Found multiple resources when looking up capability #{cap}, filtering by code id #{code_id}"
-      resources = search(environment, code_id, cap)
+    if resources.empty?
+      Puppet.debug "Could not find capability resource #{cap} in PuppetDB"
+    elsif resources.size == 1
+      resource_hash = resources.first
+    else
+      code_id_resource = disambiguate_by_code_id(environment, code_id, cap)
+      if code_id_resource
+        resource_hash = code_id_resource
+      else
+        #TRANSLATOR PuppetDB is a product name and should not be translated
+        message = _("Unexpected response from PuppetDB when looking up %{capability}:") % { capability: cap }
+        message += "\n" + _("expected exactly one resource but got %{count};") % { count: resources.size }
+        message += "\n" + _("returned data is:\n%{resources}") % { resources: resources.inspect }
+        raise Puppet::DevError, message
+      end
     end
 
-    if resources.size > 1
-      raise Puppet::DevError,
-        "Unexpected response from PuppetDB when looking up #{cap}:\n" \
-        "expected exactly one resource but got #{resources.size};\n" \
-        "returned data is:\n#{resources.inspect}"
-    end
-
-    if resource_hash = resources.first
+    if resource_hash
       resource_hash['type'] = cap.resource_type
       instantiate_resource(resource_hash)
-    else
-      Puppet.debug "Could not find capability resource #{cap} in PuppetDB"
-      nil
     end
   end
 
@@ -74,7 +77,8 @@ module Puppet::Resource::CapabilityFinder
             ['=', 'code_id', code_id]]]]
     end
 
-    Puppet.notice _("Looking up capability %{cap} in PuppetDB: %{query_terms}") % { cap: cap, query_terms: query_terms }
+    #TRANSLATOR PuppetDB is a product name and should not be translated
+    Puppet.notice _("Looking up capability %{capability} in PuppetDB: %{query_terms}") % { capability: cap, query_terms: query_terms }
 
     query_puppetdb(query_terms)
   end
@@ -91,25 +95,45 @@ module Puppet::Resource::CapabilityFinder
         response = Puppet::Util::Puppetdb::Http.action(url) do |conn, uri|
           conn.get(uri, { 'Accept' => 'application/json'})
         end
-        JSON.parse(response.body)
+        Puppet::Util::Json.load(response.body)
       end
 
       # The format of the response body is documented at
-      #   http://docs.puppetlabs.com/puppetdb/3.0/api/query/v4/resources.html#response-format
+      #   https://puppet.com/docs/puppetdb/3.0/api/query/v4/resources.html#response-format
       unless result.is_a?(Array)
-        raise Puppet::DevError,
-        "Unexpected response from PuppetDB when looking up #{cap}: " \
-          "expected an Array but got #{result.inspect}"
+        #TRANSLATOR PuppetDB is a product name and should not be translated
+        raise Puppet::DevError, _("Unexpected response from PuppetDB when looking up %{capability}: expected an Array but got %{result}") %
+            { capability: cap, result: result.inspect }
       end
 
       result
-    rescue JSON::JSONError => e
-      raise Puppet::DevError,
-        "Invalid JSON from PuppetDB when looking up #{cap}\n#{e}"
+    rescue Puppet::Util::Json::ParseError => e
+      #TRANSLATOR PuppetDB is a product name and should not be translated
+      raise Puppet::DevError, _("Invalid JSON from PuppetDB when looking up %{capability}\n%{detail}") % { capability: cap, detail: e }
     end
   end
 
-  private
+  # Find a distinct copy of the given capability resource by searching for only
+  # resources matching the given code_id. Returns `nil` if no code_id is
+  # supplied or if there isn't exactly one matching resource.
+  #
+  # @param environment [String] environment name
+  # @param code_id [String,nil] code_id of the catalog
+  # @param cap [Puppet::Resource] the capability resource type instance
+  def self.disambiguate_by_code_id(environment, code_id, cap)
+    if code_id
+      Puppet.debug "Found multiple resources when looking up capability #{cap}, filtering by code id #{code_id}"
+      resources = search(environment, code_id, cap)
+
+      if resources.size > 1
+        Puppet.debug "Found multiple resources matching code id #{code_id} when looking up #{cap}"
+        nil
+      else
+        resources.first
+      end
+    end
+  end
+  private_class_method :disambiguate_by_code_id
 
   def self.instantiate_resource(resource_hash)
     real_type = resource_hash['type']
@@ -117,7 +141,8 @@ module Puppet::Resource::CapabilityFinder
     real_type.parameters.each do |param|
       param = param.to_s
       next if param == 'name'
-      if value = resource_hash['parameters'][param]
+      value = resource_hash['parameters'][param]
+      if value
         resource[param] = value
       else
         Puppet.debug "No capability value for #{resource}->#{param}"
@@ -125,4 +150,5 @@ module Puppet::Resource::CapabilityFinder
     end
     return resource
   end
+  private_class_method :instantiate_resource
 end

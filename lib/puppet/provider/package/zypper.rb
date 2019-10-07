@@ -1,9 +1,9 @@
-Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
+Puppet::Type.type(:package).provide :zypper, :parent => :rpm, :source => :rpm do
   desc "Support for SuSE `zypper` package manager. Found in SLES10sp2+ and SLES11.
 
     This provider supports the `install_options` attribute, which allows command-line flags to be passed to zypper.
-    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-    or an array where each element is either a string or a hash."
+    These options should be specified as an array where each element is either a 
+    string or a hash."
 
   has_feature :versionable, :install_options, :virtual_packages
 
@@ -102,7 +102,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     options << '--name' unless major < 1 || @resource.allow_virtual? || should
     options << wanted
 
-    zypper *options
+    zypper(*options)
 
     unless self.query
       raise Puppet::ExecutionFailure.new(
@@ -126,7 +126,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
   def uninstall
     #extract version numbers and convert to integers
-    major, minor, patch = zypper_version.scan(/\d+/).map{ |x| x.to_i }
+    major, minor, _ = zypper_version.scan(/\d+/).map{ |x| x.to_i }
 
     if major < 1
       super
@@ -137,8 +137,8 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
       end
 
       options << @resource[:name]
-    	
-      zypper *options
+
+      zypper(*options)
     end
 
   end

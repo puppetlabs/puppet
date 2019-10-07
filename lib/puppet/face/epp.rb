@@ -63,7 +63,7 @@ Puppet::Face.define(:epp, '0.0.1') do
     when_invoked do |*args|
       options = args.pop
       # pass a dummy node, as facts are not needed for validation
-      options[:node] = node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
+      options[:node] = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
       compiler = create_compiler(options)
 
       status = true # no validation error yet
@@ -92,7 +92,8 @@ Puppet::Face.define(:epp, '0.0.1') do
         end
       end
       if !missing_files.empty?
-        raise Puppet::Error, _("One or more file(s) specified did not exist:\n") + missing_files.map { |f| "   #{f}" }.join("\n")
+        raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{missing_files_list}") %
+            { missing_files_list: missing_files.map { |f| "   #{f}" }.join("\n") }
       else
         # Exit with 1 if there were errors
         raise Puppet::Error, _("Errors while validating epp") unless status
@@ -103,13 +104,19 @@ Puppet::Face.define(:epp, '0.0.1') do
 
   action (:dump) do
     summary _("Outputs a dump of the internal template parse tree for debugging")
-    arguments "-e <source> | [<templates> ...] "
+    arguments "[--format <old|pn|json>] [--pretty] { -e <source> | [<templates> ...] } "
     returns _("A dump of the resulting AST model unless there are syntax or validation errors.")
     description <<-'EOT'
       The dump action parses and validates the EPP syntax and dumps the resulting AST model
       in a human readable (but not necessarily an easy to understand) format.
-      The output format of the dumped tree is intended for epp parser debugging purposes
-      and is not API, and may thus change between versions without deprecation warnings.
+
+      The output format can be controlled using the --format <old|pn|json> where:
+      * 'old' is the default, but now deprecated format which is not API.
+      * 'pn' is the Puppet Extended S-Expression Notation.
+      * 'json' outputs the same graph as 'pn' but with JSON syntax.
+
+      The output will be "pretty printed" when the option --pretty is given together with --format 'pn' or 'json'. 
+      This option has no effect on the 'old' format.
 
       The command accepts one or more templates (.epp) files, or an -e followed by the template
       source text. The given templates can be paths to template files, or references
@@ -136,6 +143,14 @@ Puppet::Face.define(:epp, '0.0.1') do
       summary _("Whether or not to validate the parsed result, if no-validate only syntax errors are reported.")
     end
 
+    option('--format ' + _('<old, pn, or json>')) do
+      summary _("Get result in 'old' (deprecated format), 'pn' (new format), or 'json' (new format in JSON).")
+    end
+
+    option('--pretty') do
+      summary _('Pretty print output. Only applicable together with --format pn or json')
+    end
+
     option("--[no-]header") do
       summary _("Whether or not to show a file name header between files.")
     end
@@ -144,7 +159,7 @@ Puppet::Face.define(:epp, '0.0.1') do
       require 'puppet/pops'
       options = args.pop
       # pass a dummy node, as facts are not needed for dump
-      options[:node] = node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
+      options[:node] = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
       options[:header] = options[:header].nil? ? true : options[:header]
       options[:validate] = options[:validate].nil? ? true : options[:validate]
 
@@ -175,12 +190,13 @@ Puppet::Face.define(:epp, '0.0.1') do
         end
 
         show_filename = templates.count > 1
-        dumps = templates.each do |file|
+        templates.each do |file|
           buffer.print dump_parse(Puppet::FileSystem.read(file, :encoding => 'utf-8'), file, options, show_filename)
         end
 
         if !missing_files.empty?
-          raise Puppet::Error, _("One or more file(s) specified did not exist:\n") + missing_files.collect { |f| "   #{f}" }.join("\n")
+          raise Puppet::Error, _("One or more file(s) specified did not exist:\n%{missing_files_list}") %
+              { missing_files_list:  missing_files.collect { |f| "   #{f}" }.join("\n") }
         end
       end
       buffer.string
@@ -316,40 +332,41 @@ Puppet::Face.define(:epp, '0.0.1') do
       options[:header] = options[:header].nil? ? true : options[:header]
 
       compiler = create_compiler(options)
+      compiler.with_context_overrides('For rendering epp') do
 
-      # Print to a buffer since the face needs to return the resulting string
-      # and the face API is "all or nothing"
-      #
-      buffer = StringIO.new
-      status = true
-      if options[:e]
-        buffer.print render_inline(options[:e], compiler, options)
-      elsif args.empty?
-        if ! STDIN.tty?
-          buffer.print render_inline(STDIN.read, compiler, options)
+        # Print to a buffer since the face needs to return the resulting string
+        # and the face API is "all or nothing"
+        #
+        buffer = StringIO.new
+        status = true
+        if options[:e]
+          buffer.print render_inline(options[:e], compiler, options)
+        elsif args.empty?
+          if ! STDIN.tty?
+            buffer.print render_inline(STDIN.read, compiler, options)
+          else
+            raise Puppet::Error, _("No input to process given on command line or stdin")
+          end
         else
-          raise Puppet::Error, _("No input to process given on command line or stdin")
-        end
-      else
-        show_filename = args.count > 1
-        file_nbr = 0
-        args.each do |file|
-          begin
-            buffer.print render_file(file, compiler, options, show_filename, file_nbr += 1)
-          rescue Puppet::ParseError => detail
-            Puppet.err(detail.message)
-            status = false
+          show_filename = args.count > 1
+          file_nbr = 0
+          args.each do |file|
+            begin
+              buffer.print render_file(file, compiler, options, show_filename, file_nbr += 1)
+            rescue Puppet::ParseError => detail
+              Puppet.err(detail.message)
+              status = false
+            end
           end
         end
+        raise Puppet::Error, _("error while rendering epp") unless status
+        buffer.string
       end
-      raise Puppet::Error, _("error while rendering epp") unless status
-      buffer.string
     end
   end
 
   def dump_parse(source, filename, options, show_filename = true)
     output = ""
-    dumper = Puppet::Pops::Model::ModelTreeDumper.new
     evaluating_parser = Puppet::Pops::Parser::EvaluatingParser::EvaluatingEppParser.new
     begin
       if options[:validate]
@@ -361,7 +378,19 @@ Puppet::Face.define(:epp, '0.0.1') do
       if show_filename && options[:header]
         output << "--- #{filename}\n"
       end
-      output << dumper.dump(parse_result) << "\n"
+      fmt = options[:format]
+      if fmt.nil? || fmt == 'old'
+        output << Puppet::Pops::Model::ModelTreeDumper.new.dump(parse_result) << "\n"
+      else
+        require 'puppet/pops/pn'
+        pn = Puppet::Pops::Model::PNTransformer.transform(parse_result)
+        case fmt
+        when 'json'
+          options[:pretty] ? JSON.pretty_unparse(pn.to_data) : JSON.dump(pn.to_data)
+        else
+          pn.format(options[:pretty] ? Puppet::Pops::PN::Indent.new('  ') : nil, output)
+        end
+      end
     rescue Puppet::ParseError => detail
       if show_filename
         Puppet.err("--- #{filename}")
@@ -373,10 +402,11 @@ Puppet::Face.define(:epp, '0.0.1') do
 
   def get_values(compiler, options)
     template_values = nil
-    if values_file = options[:values_file]
+    values_file = options[:values_file]
+    if values_file
       begin
         if values_file =~ /\.yaml$/
-          template_values = YAML.load_file(values_file)
+          template_values = Puppet::Util::Yaml.safe_load_file(values_file, [Symbol])
         elsif values_file =~ /\.pp$/
           evaluating_parser = Puppet::Pops::Parser::EvaluatingParser.new
           template_values = evaluating_parser.evaluate_file(compiler.topscope, values_file)
@@ -391,7 +421,8 @@ Puppet::Face.define(:epp, '0.0.1') do
       end
     end
 
-    if values = options[:values]
+    values = options[:values]
+    if values
       evaluating_parser = Puppet::Pops::Parser::EvaluatingParser.new
       result = evaluating_parser.evaluate_string(compiler.topscope, values, 'values-hash')
       case result
@@ -480,9 +511,9 @@ Puppet::Face.define(:epp, '0.0.1') do
       if fact_file.is_a?(Hash) # when used via the Face API
         given_facts = fact_file
       elsif fact_file.end_with?("json")
-        given_facts = JSON.parse(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+        given_facts = Puppet::Util::Json.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       else
-        given_facts = YAML.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+        given_facts = Puppet::Util::Yaml.safe_load_file(fact_file)
       end
 
       unless given_facts.instance_of?(Hash)

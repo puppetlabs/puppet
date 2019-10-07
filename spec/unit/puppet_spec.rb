@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet'
 require 'puppet_spec/files'
@@ -24,18 +23,37 @@ describe Puppet do
     expect(ENV["PATH"]).to eq(newpath)
   end
 
-  it "should change $LOAD_PATH when :libdir changes" do
-    one = tmpdir('load-path-one')
-    two = tmpdir('load-path-two')
-    expect(one).not_to eq(two)
+  it 'should propagate --modulepath to base environment' do
+    expect(Puppet::Node::Environment).to receive(:create).with(
+      be_a(Symbol), ['/my/modules'], Puppet::Node::Environment::NO_MANIFEST)
 
-    Puppet[:libdir] = one
-    expect($LOAD_PATH).to include one
-    expect($LOAD_PATH).not_to include two
+    Puppet.base_context({
+      :environmentpath => '/envs',
+      :basemodulepath => '/base/modules',
+      :modulepath => '/my/modules'
+    })
+  end
 
-    Puppet[:libdir] = two
-    expect($LOAD_PATH).not_to include one
-    expect($LOAD_PATH).to include two
+  it 'empty modulepath does not override basemodulepath' do
+    expect(Puppet::Node::Environment).to receive(:create).with(
+      be_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
+
+    Puppet.base_context({
+      :environmentpath => '/envs',
+      :basemodulepath => '/base/modules',
+      :modulepath => ''
+    })
+  end
+
+  it 'nil modulepath does not override basemodulepath' do
+    expect(Puppet::Node::Environment).to receive(:create).with(
+      be_a(Symbol), ['/base/modules'], Puppet::Node::Environment::NO_MANIFEST)
+
+    Puppet.base_context({
+      :environmentpath => '/envs',
+      :basemodulepath => '/base/modules',
+      :modulepath => nil
+    })
   end
 
   context "Puppet::OLDEST_RECOMMENDED_RUBY_VERSION" do
@@ -49,13 +67,6 @@ describe Puppet do
 
     it "should match a semver version" do
       expect(SemanticPuppet::Version).to be_valid(Puppet::OLDEST_RECOMMENDED_RUBY_VERSION)
-    end
-  end
-
-  context "newtype" do
-    it "should issue a deprecation warning" do
-      subject.expects(:deprecation_warning).with("Creating sometype via Puppet.newtype is deprecated and will be removed in a future release. Use Puppet::Type.newtype instead.")
-      subject.newtype("sometype")
     end
   end
 end

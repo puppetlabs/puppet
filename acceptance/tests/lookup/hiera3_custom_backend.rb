@@ -4,12 +4,17 @@ test_name 'C99630: hiera v3 custom backend' do
   require 'puppet/acceptance/temp_file_utils.rb'
   extend Puppet::Acceptance::TempFileUtils
 
+tag 'audit:medium',
+    'audit:acceptance',
+    'audit:refactor',  # Master is not needed for this test. Refactor
+                       # to use puppet apply with a local module tree.
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
   puppetserver_config = "#{master['puppetserver-confdir']}/puppetserver.conf"
   existing_loadpath = read_tk_config_string(on(master, "cat #{puppetserver_config}").stdout.strip)['jruby-puppet']['ruby-load-path'].first
-  confdir = master.puppet('master')['confdir']
+  confdir = puppet_config(master, 'confdir', section: 'master')
 
   hiera_conf_backup = master.tmpfile('C99629-hiera-yaml')
 
@@ -69,7 +74,7 @@ end
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
       step "agent manifest lookup on #{agent.hostname}" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           assert_match(/custom value/, result.stdout,

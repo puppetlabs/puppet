@@ -72,6 +72,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     excludes += %w{cryptdisks-udev}
     excludes += %w{statd-mounting}
     excludes += %w{gssd-mounting}
+    excludes
   end
 
   # List all services of this type.
@@ -171,7 +172,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
   def texecute(type, command, fof = true, squelch = false, combine = true)
     if type == :start && Facter.value(:osfamily) == "Solaris"
-        command =  ["/usr/bin/ctrun -l none", command].flatten.join(" ")
+        command =  ["/usr/bin/ctrun -l child", command].flatten.join(" ")
     end
     super(type, command, fof, squelch, combine)
   end

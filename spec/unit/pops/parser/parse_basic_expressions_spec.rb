@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
 
@@ -137,6 +136,7 @@ describe "egrammar parsing basic expressions" do
   context "When parsing unfold" do
     it "$a = *[1,2]" do; expect(dump(parse("$a = *[1,2]"))).to eq("(= $a (unfold ([] 1 2)))") ; end
     it "$a = *1"     do; expect(dump(parse("$a = *1"))).to eq("(= $a (unfold 1))") ; end
+    it "$a = *[1,a => 2]" do; expect(dump(parse("$a = *[1,a => 2]"))).to eq("(= $a (unfold ([] 1 ({} (a 2)))))") ; end
   end
 
   context "When parsing Lists" do
@@ -150,6 +150,26 @@ describe "egrammar parsing basic expressions" do
 
     it "$a = [1,2,3]" do
       expect(dump(parse("$a = [1,2,3]"))).to eq("(= $a ([] 1 2 3))")
+    end
+
+    it "$a = [1,a => 2]" do
+      expect(dump(parse("$a = [1,a => 2]"))).to eq('(= $a ([] 1 ({} (a 2))))')
+    end
+
+    it "$a = [1,a => 2, 3]" do
+      expect(dump(parse("$a = [1,a => 2, 3]"))).to eq('(= $a ([] 1 ({} (a 2)) 3))')
+    end
+
+    it "$a = [1,a => 2, b => 3]" do
+      expect(dump(parse("$a = [1,a => 2, b => 3]"))).to eq('(= $a ([] 1 ({} (a 2) (b 3))))')
+    end
+
+    it "$a = [1,a => 2, b => 3, 4]" do
+      expect(dump(parse("$a = [1,a => 2, b => 3, 4]"))).to eq('(= $a ([] 1 ({} (a 2) (b 3)) 4))')
+    end
+
+    it "$a = [{ x => y }, a => 2, b => 3, { z => p }]" do
+      expect(dump(parse("$a = [{ x => y }, a => 2, b => 3, { z => p }]"))).to eq('(= $a ([] ({} (x y)) ({} (a 2) (b 3)) ({} (z p))))')
     end
 
     it "[...[...[]]] should create nested arrays without trouble" do
@@ -202,8 +222,42 @@ describe "egrammar parsing basic expressions" do
       expect(dump(parse("$a = [1,2,3][2]"))).to eq("(= $a (slice ([] 1 2 3) 2))")
     end
 
+    it '$a = [1, 2, 3][a => 2]' do
+      expect(dump(parse('$a = [1,2,3][a => 2]'))).to eq('(= $a (slice ([] 1 2 3) ({} (a 2))))')
+    end
+
     it "$a = {'a' => 1, 'b' => 2}['b']" do
       expect(dump(parse("$a = {'a'=>1,'b' =>2}[b]"))).to eq("(= $a (slice ({} ('a' 1) ('b' 2)) b))")
+    end
+  end
+
+  context 'When parsing type aliases' do
+    it 'type A = B' do
+      expect(dump(parse('type A = B'))).to eq('(type-alias A B)')
+    end
+
+    it 'type A = B[]' do
+      expect{parse('type A = B[]')}.to raise_error(/Syntax error at '\]'/)
+    end
+
+    it 'type A = B[,]' do
+      expect{parse('type A = B[,]')}.to raise_error(/Syntax error at ','/)
+    end
+
+    it 'type A = B[C]' do
+      expect(dump(parse('type A = B[C]'))).to eq('(type-alias A (slice B C))')
+    end
+
+    it 'type A = B[C,]' do
+      expect(dump(parse('type A = B[C,]'))).to eq('(type-alias A (slice B C))')
+    end
+
+    it 'type A = B[C,D]' do
+      expect(dump(parse('type A = B[C,D]'))).to eq('(type-alias A (slice B (C D)))')
+    end
+
+    it 'type A = B[C,D,]' do
+      expect(dump(parse('type A = B[C,D,]'))).to eq('(type-alias A (slice B (C D)))')
     end
   end
 
@@ -250,6 +304,14 @@ describe "egrammar parsing basic expressions" do
       expect(dump(parse("$a = {'a'=>1,'b'=>2} != {'a'=>1,'b'=>2}"))).to eq("(= $a (!= ({} ('a' 1) ('b' 2)) ({} ('a' 1) ('b' 2))))")
     end
 
+    it "$a = 'a' => 1" do
+      expect{parse("$a = 'a' => 1")}.to raise_error(/Syntax error at '=>'/)
+    end
+
+    it "$a = { 'a' => 'b' => 1 }" do
+      expect{parse("$a = { 'a' => 'b' => 1 }")}.to raise_error(/Syntax error at '=>'/)
+    end
+
     it "calculates the text length of an empty hash" do
       expect(parse("{}").model.body.length).to eq(2)
       expect(parse("{ }").model.body.length).to eq(3)
@@ -276,11 +338,11 @@ describe "egrammar parsing basic expressions" do
 
   context "When parsing string interpolation" do
     it "should interpolate a bare word as a variable name, \"${var}\"" do
-      expect(dump(parse("$a = \"$var\""))).to eq("(= $a (cat '' (str $var) ''))")
+      expect(dump(parse("$a = \"$var\""))).to eq("(= $a (cat (str $var)))")
     end
 
     it "should interpolate a variable in a text expression, \"${$var}\"" do
-      expect(dump(parse("$a = \"${$var}\""))).to eq("(= $a (cat '' (str $var) ''))")
+      expect(dump(parse("$a = \"${$var}\""))).to eq("(= $a (cat (str $var)))")
     end
 
     it "should interpolate a variable, \"yo${var}yo\"" do
@@ -309,11 +371,11 @@ describe "egrammar parsing basic expressions" do
     end
 
     it "should interpolate interpolated expressions with a variable, \"yo${\"$var\"}yo\"" do
-      expect(dump(parse("$a = \"yo${\"$var\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat '' (str $var) '')) 'yo'))")
+      expect(dump(parse("$a = \"yo${\"$var\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat (str $var))) 'yo'))")
     end
 
     it "should interpolate interpolated expressions with an expression, \"yo${\"${$var+2}\"}yo\"" do
-      expect(dump(parse("$a = \"yo${\"${$var+2}\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat '' (str (+ $var 2)) '')) 'yo'))")
+      expect(dump(parse("$a = \"yo${\"${$var+2}\"}yo\""))).to eq("(= $a (cat 'yo' (str (cat (str (+ $var 2)))) 'yo'))")
     end
   end
 end

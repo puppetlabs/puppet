@@ -1,42 +1,35 @@
 language: ruby
 sudo: false
-bundler_args: --without development extra
+bundler_args: --jobs 4 --retry 2 --without packaging documentation
+before_install:
+  - gem update --system && gem install bundler --no-document
 script:
   - "bundle exec rake $CHECK"
 notifications:
   email: false
-rvm:
-  - 2.4.0
-  - 2.3.1
-  - 2.2.4
-  - 2.1.9
-  - 2.0.0
-  - 1.9.3
-
-env:
-  - "CHECK=parallel:spec\\[2\\]"
-  - "CHECK=rubocop"
-  - "CHECK=commits"
 
 matrix:
-  exclude:
-    - rvm: 2.4.0
+  include:
+    - rvm: 2.3
+      env: "CHECK=parallel:spec\\[2\\]"
+
+    - rvm: 2.4
+      env: "CHECK=parallel:spec\\[2\\]"
+
+    - rvm: 2.5
+      env: "CHECK=parallel:spec\\[2\\]"
+
+    - rvm: jruby-9.2.0.0
+      jdk: openjdk8
+      env:
+        - "_JAVA_OPTIONS='-Xmx1024m -Xms512m'"
+        - "CHECK=parallel:spec\\[2\\]"
+
+    - rvm: 2.5
       env: "CHECK=rubocop"
-    - rvm: 2.3.1
-      env: "CHECK=rubocop"
-    - rvm: 2.2.4
-      env: "CHECK=rubocop"
-    - rvm: 2.0.0
-      env: "CHECK=rubocop"
-    - rvm: 1.9.3
-      env: "CHECK=rubocop"
-    - rvm: 2.4.0
+
+    - rvm: 2.5
       env: "CHECK=commits"
-    - rvm: 2.3.1
-      env: "CHECK=commits"
-    - rvm: 2.2.4
-      env: "CHECK=commits"
-    - rvm: 2.0.0
-      env: "CHECK=commits"
-    - rvm: 1.9.3
-      env: "CHECK=commits"
+
+    - rvm: 2.5
+      env: "CHECK=warnings"

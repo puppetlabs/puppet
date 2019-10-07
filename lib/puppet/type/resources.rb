@@ -87,6 +87,12 @@ Puppet::Type.newtype(:resources) do
     end
   end
 
+  WINDOWS_SYSTEM_SID_REGEXES =
+      # Administrator, Guest, Domain Admins, Schema Admins, Enterprise Admins.
+      # https://support.microsoft.com/en-us/help/243330/well-known-security-identifiers-in-windows-operating-systems
+      [/S-1-5-21.+-500/, /S-1-5-21.+-501/, /S-1-5-21.+-512/, /S-1-5-21.+-518/,
+       /S-1-5-21.+-519/]
+
   def check(resource)
     @checkmethod ||= "#{self[:name]}_check"
     @hascheck ||= respond_to?(@checkmethod)
@@ -126,8 +132,9 @@ Puppet::Type.newtype(:resources) do
 
   def resource_type
     unless defined?(@resource_type)
-      unless type = Puppet::Type.type(self[:name])
-        raise Puppet::DevError, "Could not find resource type"
+      type = Puppet::Type.type(self[:name])
+      unless type
+        raise Puppet::DevError, _("Could not find resource type")
       end
       @resource_type = type
     end
@@ -145,8 +152,12 @@ Puppet::Type.newtype(:resources) do
 
     return false if system_users.include?(resource[:name])
     return false if unless_uids && unless_uids.include?(current_uid)
-
-    current_uid > self[:unless_system_user]
+    if current_uid.is_a?(String)
+      # Windows user; is a system user if any regex matches.
+      WINDOWS_SYSTEM_SID_REGEXES.none? { |regex| current_uid =~ regex }
+    else
+      current_uid > self[:unless_system_user]
+    end
   end
 
   def system_users

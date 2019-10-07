@@ -1,25 +1,25 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe "http compression" do
   let(:data)            { "uncompresseddata" }
-  let(:response)        { stub 'response' }
+  let(:response)        { double('response') }
   let(:compressed_zlib) { Zlib::Deflate.deflate(data) }
   let(:compressed_gzip) do
     str = StringIO.new
     writer = Zlib::GzipWriter.new(str)
     writer.write(data)
-    writer.close.string
+    writer.close
+    str.string
   end
 
   def stubs_response_with(response, content_encoding, body)
-    response.stubs(:[]).with('content-encoding').returns(content_encoding)
-    response.stubs(:body).returns(body)
+    allow(response).to receive(:[]).with('content-encoding').and_return(content_encoding)
+    allow(response).to receive(:body).and_return(body)
   end
 
   describe "when zlib is not available" do
     before(:each) do
-      Puppet.features.stubs(:zlib?).returns false
+      allow(Puppet.features).to receive(:zlib?).and_return(false)
 
       require 'puppet/network/http/compression'
       class HttpUncompressor
@@ -38,12 +38,12 @@ describe "http compression" do
     end
 
     it "should not tamper the body" do
-      response = stub 'response', :body => data
+      response = double('response', :body => data)
       expect(@uncompressor.uncompress_body(response)).to eq(data)
     end
 
     it "should yield an identity uncompressor" do
-      response = stub 'response'
+      response = double('response')
       @uncompressor.uncompress(response) { |u|
         expect(u).to be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
       }
@@ -110,9 +110,11 @@ describe "http compression" do
           # \u{2070E} - 𠜎 - http://www.fileformat.info/info/unicode/char/2070E/index.htm - 0xF0 0xA0 0x9C 0x8E / 240 160 156 142
 
           pson = "foo\u06ff\u16A0\u{2070E}".to_pson # unicode expression eqivalent of "foo\xDB\xBF\xE1\x9A\xA0\xF0\xA0\x9C\x8E\" per above
-          writer = Zlib::GzipWriter.new(StringIO.new)
+          compressed_body_io = StringIO.new
+          writer = Zlib::GzipWriter.new(compressed_body_io)
           writer.write(pson)
-          compressed_body = writer.close.string
+          writer.close
+          compressed_body = compressed_body_io.string
 
           begin
             default_external = Encoding.default_external
@@ -166,19 +168,19 @@ describe "http compression" do
 
       it "should close the underlying adapter" do
         stubs_response_with(response, 'identity', data)
-        adapter = stub_everything 'adapter'
-        Puppet::Network::HTTP::Compression::IdentityAdapter.expects(:new).returns(adapter)
+        adapter = double('adapter')
+        expect(Puppet::Network::HTTP::Compression::IdentityAdapter).to receive(:new).and_return(adapter)
 
-        adapter.expects(:close)
+        expect(adapter).to receive(:close)
         uncompressor.uncompress(response) { |u| }
       end
 
       it "should close the underlying adapter if the yielded block raises" do
         stubs_response_with(response, 'identity', data)
-        adapter = stub_everything 'adapter'
-        Puppet::Network::HTTP::Compression::IdentityAdapter.expects(:new).returns(adapter)
+        adapter = double('adapter')
+        expect(Puppet::Network::HTTP::Compression::IdentityAdapter).to receive(:new).and_return(adapter)
 
-        adapter.expects(:close)
+        expect(adapter).to receive(:close)
         expect {
           uncompressor.uncompress(response) { |u| raise ArgumentError, "whoops" }
         }.to raise_error(ArgumentError, "whoops")
@@ -187,7 +189,7 @@ describe "http compression" do
 
     describe "zlib adapter" do
       it "should initialize the underlying inflater with gzip/zlib header parsing" do
-        Zlib::Inflate.expects(:new).with(15+32)
+        expect(Zlib::Inflate).to receive(:new).with(15 + 32)
 
         Puppet::Network::HTTP::Compression::Active::ZlibAdapter.new
       end
@@ -200,7 +202,7 @@ describe "http compression" do
 
       it "should try a 'regular' inflater on Zlib::DataError" do
         inflater = Zlib::Inflate.new(15 + 32)
-        inflater.expects(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
+        expect(inflater).to receive(:inflate).and_raise(Zlib::DataError.new("not a zlib stream"))
         adapter = Puppet::Network::HTTP::Compression::Active::ZlibAdapter.new(inflater)
 
         expect(adapter.uncompress(compressed_zlib)).to eq(data)
@@ -208,25 +210,25 @@ describe "http compression" do
 
       it "should raise the error the second time" do
         inflater = Zlib::Inflate.new(15 + 32)
-        inflater.expects(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
+        expect(inflater).to receive(:inflate).and_raise(Zlib::DataError.new("not a zlib stream"))
         adapter = Puppet::Network::HTTP::Compression::Active::ZlibAdapter.new(inflater)
 
         expect { adapter.uncompress("this is not compressed data") }.to raise_error(Zlib::DataError, /incorrect header check/)
       end
 
       it "should finish and close the stream" do
-        inflater = stub 'inflater'
-        inflater.expects(:finish)
-        inflater.expects(:close)
+        inflater = double('inflater')
+        expect(inflater).to receive(:finish)
+        expect(inflater).to receive(:close)
         adapter = Puppet::Network::HTTP::Compression::Active::ZlibAdapter.new(inflater)
 
         adapter.close
       end
 
       it "should close the stream even if finish raises" do
-        inflater = stub 'inflater'
-        inflater.expects(:finish).raises(Zlib::BufError)
-        inflater.expects(:close)
+        inflater = double('inflater')
+        expect(inflater).to receive(:finish).and_raise(Zlib::BufError)
+        expect(inflater).to receive(:close)
 
         adapter = Puppet::Network::HTTP::Compression::Active::ZlibAdapter.new(inflater)
         expect {

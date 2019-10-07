@@ -38,11 +38,14 @@ class Benchmarker
       module_name = "module#{i}"
       module_base = File.join(environment, 'modules', module_name)
       manifests = File.join(module_base, 'manifests')
+      locales = File.join(module_base, 'locales')
 
       mkdir_p(manifests)
+      mkdir_p(locales)
 
       File.open(File.join(module_base, 'metadata.json'), 'w') do |f|
         JSON.dump({
+          "name" => "module#{i}",
           "types" => [],
           "source" => "",
           "author" => "ManyModules Benchmark",
@@ -52,6 +55,19 @@ class Benchmarker
           "summary" => "Just this benchmark module, you know?",
           "dependencies" => [],
         }, f)
+      end
+
+      File.open(File.join(locales, 'config.yaml'), 'w') do |f|
+        f.puts(
+          {"gettext"=>
+            {"project_name"=>"module#{i}",
+            "package_name"=>"module#{i}",
+            "default_locale"=>"en",
+            "bugs_address"=>"docs@puppet.com",
+            "copyright_holder"=>"Puppet, Inc.",
+            "comments_tag"=>"TRANSLATOR",
+            "source_files"=>["./lib/**/*.rb"]}}.to_yaml
+          )
       end
 
       render(File.join(templates, 'module', 'init.pp.erb'),

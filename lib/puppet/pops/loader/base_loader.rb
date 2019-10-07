@@ -20,6 +20,16 @@ class BaseLoader < Loader
     @last_result = nil      # the value of the last name (optimization)
   end
 
+  def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+    result = []
+    @named_values.each_pair do |key, entry|
+      result << key unless entry.nil? || entry.value.nil? || key.type != type || (block_given? && !yield(key))
+    end
+    result.concat(parent.discover(type, error_collector, name_authority, &block))
+    result.uniq!
+    result
+  end
+
   # @api public
   #
   def load_typed(typed_name)
@@ -59,7 +69,8 @@ class BaseLoader < Loader
   #
   def set_entry(typed_name, value, origin = nil)
     # It is never ok to redefine in the very same loader unless redefining a 'not found'
-    if entry = @named_values[typed_name]
+    entry = @named_values[typed_name]
+    if entry
       fail_redefine(entry) unless entry.value.nil?
     end
 
@@ -96,7 +107,8 @@ class BaseLoader < Loader
   #
   def promote_entry(named_entry)
     typed_name = named_entry.typed_name
-    if entry = @named_values[typed_name] then fail_redefine(entry); end
+    entry = @named_values[typed_name]
+    if entry then fail_redefine(entry); end
     @named_values[typed_name] = named_entry
   end
 

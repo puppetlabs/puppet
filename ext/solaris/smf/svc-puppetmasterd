@@ -8,7 +8,13 @@ exec_prefix=/opt/csw
 sysconfdir=/opt/csw/etc
 sbindir=/opt/csw/sbin
 
-pidfile=/var/run/puppetlabs/master.pid
+if [ -z $SMF_SYSVOL_FS ]; then 
+  piddir=/var/run/puppetlabs
+else
+  piddir=$SMF_SYSVOL_FS/puppetlabs
+fi;
+
+pidfile=$piddir/master.pid
 
 case "$1" in
 start)
@@ -16,6 +22,7 @@ start)
     # Start daemons.
 
     printf "Starting Puppet server services:"
+    mkdir -p $piddir
 
     /opt/csw/sbin/puppetmasterd
 
@@ -24,14 +31,14 @@ start)
     ;;
 stop)
     printf "Stopping Puppet server services:"
-    kill `cat $pidfile`
+    kill `cat "$pidfile"`
 
     printf " puppetmasterd"
     echo ""
     ;;
 restart)
     printf "Restarting Puppet server services:"
-    kill -HUP `cat $pidfile`
+    kill -HUP `cat "$pidfile"`
 
     printf " puppetmasterd"
     echo ""
@@ -39,14 +46,14 @@ restart)
 reload)
     printf "Reloading Puppet server services:"
 
-    kill -HUP `cat $pidfile`
+    kill -HUP `cat "$pidfile"`
 
     printf " puppetmasterd"
     echo ""
     ;;
 status)
-    if [ -f $pidfile ]; then
-        pid=`cat $pidfile`
+    if [ -f "$pidfile" ]; then
+        pid=`cat "$pidfile"`
         curpid=`pgrep puppetmasterd`
         if [ "$pid" -eq "$curpid" ]; then
             exit 0

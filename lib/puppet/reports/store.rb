@@ -61,7 +61,7 @@ Puppet::Reports.register_report(:store) do
 
   def validate_host(host)
     if host =~ Regexp.union(/[#{SEPARATOR}]/, /\A\.\.?\Z/)
-      raise ArgumentError, "Invalid node name #{host.inspect}"
+      raise ArgumentError, _("Invalid node name %{host}") % { host: host.inspect }
     end
   end
   module_function :validate_host

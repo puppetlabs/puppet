@@ -157,7 +157,7 @@ class Context
           tf.callable([0, 0], tf.iterable(tf.tuple([key_type, tf.any])))),
         'cached_file_data' => tf.callable(tf.string, tf.optional(tf.callable([1, 1])))
       }
-    ).resolve(Types::TypeParser.singleton, loader)
+    ).resolve(loader)
   end
 
   # Mainly for test purposes. Makes it possible to create a {Context} in Puppet code provided that a current {Invocation} exists.

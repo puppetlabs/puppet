@@ -9,7 +9,22 @@ module Puppet::Util::POSIX
   # environment for "exec" runs
   USER_ENV_VARS = ['HOME', 'USER', 'LOGNAME']
 
+  class << self
+    # Returns an array of all the groups that the user's a member of.
+    def groups_of(user)
+      groups = []
+      Puppet::Etc.group do |group|
+        groups << group.name if group.mem.include?(user)
+      end
+  
+      uniq_groups = groups.uniq
+      if uniq_groups != groups
+        Puppet.debug(_('Removing any duplicate group entries'))
+      end
 
+      uniq_groups
+    end
+  end
 
   # Retrieve a field from a POSIX Etc object.  The id can be either an integer
   # or a name.  This only works for users and groups.  It's also broken on
@@ -17,7 +32,7 @@ module Puppet::Util::POSIX
   # method search_posix_field in the gid and uid methods if a sanity check
   # fails
   def get_posix_field(space, field, id)
-    raise Puppet::DevError, "Did not get id from caller" unless id
+    raise Puppet::DevError, _("Did not get id from caller") unless id
 
     if id.is_a?(Integer)
       if id > Puppet[:maximum_uid].to_i
@@ -119,11 +134,13 @@ module Puppet::Util::POSIX
       # pass
     end
     if field.is_a?(Integer)
-      return nil unless name = get_posix_field(location, :name, field)
+      name = get_posix_field(location, :name, field)
+      return nil unless name
       id = get_posix_field(location, id_field, name)
       check_value = id
     else
-      return nil unless id = get_posix_field(location, id_field, field)
+      id = get_posix_field(location, id_field, field)
+      return nil unless id
       name = get_posix_field(location, :name, id)
       check_value = name
     end

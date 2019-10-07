@@ -15,8 +15,8 @@ module Puppet::ModuleTool::Errors
       message = []
       message << _("Could not %{action} module '%{module_name}' (%{version})") % { action: @action, module_name: @requested_name, version: vstring }
       message << _("  No version of '%{module_name}' can satisfy all dependencies") % { module_name: @requested_name }
+      #TRANSLATORS `puppet module %{action} --ignore-dependencies` is a command line and should not be translated
       message << _("    Use `puppet module %{action} --ignore-dependencies` to %{action} only this module") % { action: @action }
-
       message.join("\n")
     end
   end
@@ -39,14 +39,12 @@ module Puppet::ModuleTool::Errors
     def multiline
       message = []
       message << _("Could not %{action} '%{module_name}' (%{version})") % { action: @action, module_name: @module_name, version: vstring }
-
       if @requested_version == :latest
         message << _("  No releases are available from %{source}") % { source: @source }
         message << _("    Does '%{module_name}' have at least one published release?") % { module_name: @module_name }
       else
-        message << _("  No releases matching '%{version}' are available from %{source}") % { version: @requested_version, source: @source }
+        message << _("  No releases matching '%{requested_version}' are available from %{source}") % { requested_version: @requested_version, source: @source }
       end
-
       message.join("\n")
     end
   end
@@ -66,21 +64,22 @@ module Puppet::ModuleTool::Errors
       message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: @requested_version }
 
       if @dependency
-        message << _("  Dependency '%{name}' (%{version}) would overwrite %{dir}") % { name: @dependency[:name], version: v(@dependency[:version]), dir: @directory }
+        message << _("  Dependency '%{name}' (%{version}) would overwrite %{directory}") % { name: @dependency[:name], version: v(@dependency[:version]), directory: @directory }
       else
-        message << _("  Installation would overwrite %{dir}") % { dir: @directory }
+        message << _("  Installation would overwrite %{directory}") % { directory: @directory }
       end
 
       if @metadata
-        message << _("    Currently, '%{name}' (%{version}) is installed to that directory") % { name: @metadata["name"], version: v(@metadata["version"]) }
+        message << _("    Currently, '%{current_name}' (%{current_version}) is installed to that directory") % { current_name: @metadata["name"], current_version: v(@metadata["version"]) }
       end
 
       if @dependency
+        #TRANSLATORS `puppet module install --ignore-dependencies` is a command line and should not be translated
         message << _("    Use `puppet module install --ignore-dependencies` to install only this module")
       else
+        #TRANSLATORS `puppet module install --force` is a command line and should not be translated
         message << _("    Use `puppet module install --force` to install this module anyway")
       end
-
       message.join("\n")
     end
   end
@@ -97,17 +96,18 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      trace = []
-      trace << _("You specified '%{name}' (%{version})") % { name: @source.first[:name], version: v(@requested_version) }
-      #TRANSLATORS Second half of "You specified a module..."
-      trace += @source[1..-1].map { |m| _("which depends on '%{name}' (%{version})") % { name: m[:name], version: v(m[:version]) } }
-
+      dependency_list = []
+      dependency_list << _("You specified '%{name}' (%{version})") % { name: @source.first[:name], version: v(@requested_version) }
+      dependency_list += @source[1..-1].map do |m|
+        #TRANSLATORS This message repeats as separate lines as a list under the heading "You specified '%{name}' (%{version})\n"
+        _("This depends on '%{name}' (%{version})") % { name: m[:name], version: v(m[:version]) }
+      end
       message = []
       message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: v(@requested_version) }
       message << _("  No version of '%{module_name}' will satisfy dependencies") % { module_name: @module_name }
-      message << trace.map { |s| "    #{s}".join(",\n") }
+      message << dependency_list.map {|s| "    #{s}".join(",\n")}
+      #TRANSLATORS `puppet module install --force` is a command line and should not be translated
       message << _("    Use `puppet module install --force` to install this module anyway")
-
       message.join("\n")
     end
   end
@@ -125,8 +125,10 @@ module Puppet::ModuleTool::Errors
       message << _("Could not %{action} module '%{module_name}'") % { action: @action, module_name: @module_name }
       message << _("  Module '%{module_name}' is not installed") % { module_name: @module_name }
       message += @suggestions.map do |suggestion|
+        #TRANSLATORS `puppet module %{action} %{suggestion}` is a command line and should not be translated
         _("    You may have meant `puppet module %{action} %{suggestion}`") % { action: @action, suggestion: suggestion }
       end
+      #TRANSLATORS `puppet module install` is a command line and should not be translated
       message << _("    Use `puppet module install` to install this module") if @action == :upgrade
       message.join("\n")
     end
@@ -146,8 +148,10 @@ module Puppet::ModuleTool::Errors
       message << _("Could not %{action} module '%{module_name}'") % { action: @action, module_name: @module_name }
       message << _("  Module '%{module_name}' appears multiple places in the module path") % { module_name: @module_name }
       message += @modules.map do |mod|
+        #TRANSLATORS This is repeats as separate lines as a list under "Module '%{module_name}' appears multiple places in the module path"
         _("    '%{module_name}' (%{version}) was found in %{path}") % { module_name: @module_name, version: v(mod.version), path: mod.modulepath }
       end
+      #TRANSLATORS `--modulepath` is command line option and should not be translated
       message << _("    Use the `--modulepath` option to limit the search to specific directories")
       message.join("\n")
     end
@@ -166,6 +170,7 @@ module Puppet::ModuleTool::Errors
       message = []
       message << _("Could not %{action} module '%{module_name}' (%{version})") % { action: @action, module_name: @module_name, version: vstring }
       message << _("  Installed module has had changes made locally")
+      #TRANSLATORS `puppet module %{action} --ignore-changes` is a command line and should not be translated
       message << _("    Use `puppet module %{action} --ignore-changes` to %{action} this module anyway") % { action: @action }
       message.join("\n")
     end

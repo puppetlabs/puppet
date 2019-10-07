@@ -9,8 +9,7 @@ module Serialization
 class ObjectReader
   include InstanceReader
 
-  def read(impl_class, value_count, deserializer)
-    type = impl_class._pcore_type
+  def read(type, impl_class, value_count, deserializer)
     (names, types, required_count) = type.parameter_info(impl_class)
     max = names.size
     unless value_count >= required_count && value_count <= max
@@ -25,7 +24,7 @@ class ObjectReader
         Types::TypeAsserter.assert_instance_of(nil, ptype, arg) { "#{type.name}[#{names[index]}]" } unless arg == :default
       else
         attr = type[names[index]]
-        raise Serialization::SerializationError, _("Missing default value for %{type_name}[%{name}]") % { type_name: type.name, name: names[index] } unless attr.value?
+        raise Serialization::SerializationError, _("Missing default value for %{type_name}[%{name}]") % { type_name: type.name, name: names[index] } unless attr && attr.value?
         args << attr.value
       end
     end
@@ -43,7 +42,7 @@ class ObjectWriter
 
   def write(type, value, serializer)
     impl_class = value.class
-    (names, types, required_count) = type.parameter_info(impl_class)
+    (names, _, required_count) = type.parameter_info(impl_class)
     args = names.map { |name| value.send(name) }
 
     # Pop optional arguments that are default

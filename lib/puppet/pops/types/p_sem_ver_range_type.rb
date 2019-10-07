@@ -106,12 +106,11 @@ class PSemVerRangeType < PAnyType
     super ^ @version_range.hash
   end
 
-  def self.new_function(_, loader)
-    range_expr = "\\A#{range_pattern}\\Z"
-    @@new_function ||= Puppet::Functions.create_loaded_function(:new_VersionRange, loader) do
+  def self.new_function(type)
+    @new_function ||= Puppet::Functions.create_loaded_function(:new_VersionRange, type.loader) do
       local_types do
         type 'SemVerRangeString = String[1]'
-        type 'SemVerRangeHash = Struct[{min=>Variant[default,SemVer],Optional[max]=>Variant[default,SemVer],Optional[exclude_max]=>Boolean}]'
+        type 'SemVerRangeHash = Struct[{min=>Variant[Default,SemVer],Optional[max]=>Variant[Default,SemVer],Optional[exclude_max]=>Boolean}]'
       end
 
       # Constructs a VersionRange from a String with a format specified by
@@ -136,8 +135,8 @@ class PSemVerRangeType < PAnyType
       # default.
       #
       dispatch :from_versions do
-        param 'Variant[default,SemVer]', :min
-        param 'Variant[default,SemVer]', :max
+        param 'Variant[Default,SemVer]', :min
+        param 'Variant[Default,SemVer]', :max
         optional_param 'Boolean', :exclude_max
       end
 

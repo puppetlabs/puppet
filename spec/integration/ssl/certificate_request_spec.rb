@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_request'
@@ -12,8 +11,6 @@ describe Puppet::SSL::CertificateRequest do
 
     Puppet.settings[:confdir] = dir
     Puppet.settings[:vardir] = dir
-
-    Puppet::SSL::Host.ca_location = :none
 
     @csr = Puppet::SSL::CertificateRequest.new("luke.madstop.com")
 

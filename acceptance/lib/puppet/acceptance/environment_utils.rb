@@ -19,7 +19,7 @@ module Puppet
         manifestpath = options[:manifestpath]
         env_name = options[:env_name]
 
-        environment = <<-MANIFEST_SNIPPET
+        <<-MANIFEST_SNIPPET
           file {
             ###################################################
             # #{env_name}
@@ -40,7 +40,7 @@ module Puppet
 
       # Generate one module's manifest code.
       def generate_module(module_name, env_name, modulepath)
-        module_pp = <<-MANIFEST_SNIPPET
+        <<-MANIFEST_SNIPPET
             "#{modulepath}":;
             "#{modulepath}/#{module_name}":;
             "#{modulepath}/#{module_name}/manifests":;
@@ -62,7 +62,7 @@ module Puppet
       #   the environments live in
       # @return [String] Puppet manifest to generate all of the environment files.
       def environment_manifest(testdir)
-        manifest = <<-MANIFEST
+        <<-MANIFEST
           File {
             ensure => directory,
             owner => #{master.puppet['user']},
@@ -227,7 +227,7 @@ module Puppet
         master_puppet_conf = master_opts.dup # shallow clone
 
         results = {}
-        safely_shadow_directory_contents_and_yield(master, master.puppet('master')['codedir'], envdir) do
+        safely_shadow_directory_contents_and_yield(master, puppet_config(master, 'codedir', section: 'master'), envdir) do
           config_print = options[:config_print]
           directory_environments = options[:directory_environments]
 
@@ -348,9 +348,9 @@ module Puppet
 
       def assert_review(review)
         failures = []
-        review.each do |scenario, failed|
+        review.each do |failed|
           if !failed.empty?
-            problems = "Problems in the '#{scenario}' output reported above:\n  #{failed.join("\n  ")}"
+            problems = "Problems in the output reported above:\n  #{failed}"
             logger.warn(problems)
             failures << problems
           end

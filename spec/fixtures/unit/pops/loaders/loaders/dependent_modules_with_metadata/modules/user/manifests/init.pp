@@ -1,12 +1,12 @@
-function puppet_init_calling_puppet() {
+function user::puppet_init_calling_puppet() {
   usee::usee_puppet()
 }
 
-function puppet_init_calling_puppet_init() {
+function user::puppet_init_calling_puppet_init() {
   usee_puppet_init()
 }
 
-function puppet_init_calling_ruby() {
+function user::puppet_init_calling_ruby() {
   usee::usee_ruby()
 }
 
@@ -53,18 +53,18 @@ class user {
     7: {
       # Call a puppet function that resides in usee/functions from a puppet function in init.pp
       #
-      notify { 'case_7': message => puppet_init_calling_puppet() }
+      notify { 'case_7': message => user::puppet_init_calling_puppet() }
     }
     8: {
       # Call a puppet function that resides in usee/manifests/init.pp from a puppet function in init.pp
       #
       include usee
-      notify { 'case_8': message => puppet_init_calling_puppet_init() }
+      notify { 'case_8': message => user::puppet_init_calling_puppet_init() }
     }
     9: {
       # Call a ruby function that resides in usee from a puppet function in init.pp
       #
-      notify { 'case_9': message => puppet_init_calling_ruby() }
+      notify { 'case_9': message => user::puppet_init_calling_ruby() }
     }
     10: {
       # Call a puppet function that resides in usee/functions from a ruby function in this module

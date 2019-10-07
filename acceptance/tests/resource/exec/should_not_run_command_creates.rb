@@ -1,4 +1,7 @@
 test_name "should not run command creates"
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
 
 agents.each do |agent|
   touch      = agent.tmpfile('touched')

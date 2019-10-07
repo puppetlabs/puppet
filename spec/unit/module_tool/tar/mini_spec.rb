@@ -8,10 +8,17 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
   let(:destfile)   { '/the/dest/file.tar.gz' }
   let(:minitar)    { described_class.new }
 
-  it "unpacks a tar file" do
-    unpacks_the_entry(:file_start, 'thefile')
+  class MockFileStatEntry
+    def initialize(mode = 0100)
+      @mode = mode
+    end
+  end
+
+  it "unpacks a tar file with correct permissions" do
+    entry = unpacks_the_entry(:file_start, 'thefile')
 
     minitar.unpack(sourcefile, destdir, 'uid')
+    expect(entry.instance_variable_get(:@mode)).to eq(0755)
   end
 
   it "does not allow an absolute path" do
@@ -41,20 +48,42 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
                      "Attempt to install file with an invalid path into \"#{File.expand_path('/the/thedir')}\" under \"#{destdir}\"")
   end
 
-  it "packs a tar file" do
-    writer = stub('GzipWriter')
+  it "unpacks on Windows" do
+    unpacks_the_entry(:file_start, 'thefile', nil)
 
-    Zlib::GzipWriter.expects(:open).with(destfile).yields(writer)
-    Archive::Tar::Minitar.expects(:pack).with(sourcedir, writer)
+    entry = minitar.unpack(sourcefile, destdir, 'uid')
+    # Windows does not use these permissions.
+    expect(entry.instance_variable_get(:@mode)).to eq(nil)
+  end
+
+  it "packs a tar file" do
+    writer = double('GzipWriter')
+
+    expect(Zlib::GzipWriter).to receive(:open).with(destfile).and_yield(writer)
+    stats = {:mode => 0222}
+    expect(Archive::Tar::Minitar).to receive(:pack).with(sourcedir, writer).and_yield(:file_start, 'abc', stats)
 
     minitar.pack(sourcedir, destfile)
   end
 
-  def unpacks_the_entry(type, name)
-    reader = stub('GzipReader')
+  it "packs a tar file on Windows" do
+    writer = double('GzipWriter')
 
-    Zlib::GzipReader.expects(:open).with(sourcefile).yields(reader)
-    minitar.expects(:find_valid_files).with(reader).returns([name])
-    Archive::Tar::Minitar.expects(:unpack).with(reader, destdir, [name]).yields(type, name, nil)
+    expect(Zlib::GzipWriter).to receive(:open).with(destfile).and_yield(writer)
+    expect(Archive::Tar::Minitar).to receive(:pack).with(sourcedir, writer).
+        and_yield(:file_start, 'abc', {:entry => MockFileStatEntry.new(nil)})
+
+    minitar.pack(sourcedir, destfile)
+  end
+
+  def unpacks_the_entry(type, name, mode = 0100)
+    reader = double('GzipReader')
+
+    expect(Zlib::GzipReader).to receive(:open).with(sourcefile).and_yield(reader)
+    expect(minitar).to receive(:find_valid_files).with(reader).and_return([name])
+    entry = MockFileStatEntry.new(mode)
+    expect(Archive::Tar::Minitar).to receive(:unpack).with(reader, destdir, [name], :fsync => false).
+        and_yield(type, name, {:entry => entry})
+    entry
   end
 end

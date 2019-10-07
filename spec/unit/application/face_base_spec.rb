@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/application/face_base'
 require 'tmpdir'
@@ -9,8 +8,8 @@ end
 describe Puppet::Application::FaceBase do
   let :app do
     app = Puppet::Application::FaceBase::Basetest.new
-    app.command_line.stubs(:subcommand_name).returns('subcommand')
-    Puppet::Util::Log.stubs(:newdestination)
+    allow(app.command_line).to receive(:subcommand_name).and_return('subcommand')
+    allow(Puppet::Util::Log).to receive(:newdestination)
     app
   end
 
@@ -20,8 +19,8 @@ describe Puppet::Application::FaceBase do
 
   describe "#find_global_settings_argument" do
     it "should not match --ca to --ca-location" do
-      option = mock('ca option', :optparse_args => ["--ca"])
-      Puppet.settings.expects(:each).yields(:ca, option)
+      option = double('ca option', :optparse_args => ["--ca"])
+      expect(Puppet.settings).to receive(:each).and_yield(:ca, option)
 
       expect(app.find_global_settings_argument("--ca-location")).to be_nil
     end
@@ -29,7 +28,7 @@ describe Puppet::Application::FaceBase do
 
   describe "#parse_options" do
     before :each do
-      app.command_line.stubs(:args).returns %w{}
+      allow(app.command_line).to receive(:args).and_return(%w{})
     end
 
     describe "with just an action" do
@@ -40,8 +39,8 @@ describe Puppet::Application::FaceBase do
         #
         # It would be nice to fix this elsewhere, but it is actually hard to
         # capture this in rspec 2.5 and all. :(  --daniel 2011-04-08
-        Signal.stubs(:trap)
-        app.command_line.stubs(:args).returns %w{foo}
+        allow(Signal).to receive(:trap)
+        allow(app.command_line).to receive(:args).and_return(%w{foo})
         app.preinit
         app.parse_options
       end
@@ -57,7 +56,7 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should stop if the first thing found is not an action" do
-      app.command_line.stubs(:args).returns %w{banana count_args}
+      allow(app.command_line).to receive(:args).and_return(%w{banana count_args})
 
       expect { app.run }.to exit_with(1)
 
@@ -65,29 +64,29 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should use the default action if not given any arguments" do
-      app.command_line.stubs(:args).returns []
-      action = stub(:options => [], :render_as => nil)
-      Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
-      app.stubs(:main)
+      allow(app.command_line).to receive(:args).and_return([])
+      action = double(:options => [], :render_as => nil)
+      expect(Puppet::Face[:basetest, '0.0.1']).to receive(:get_default_action).and_return(action)
+      allow(app).to receive(:main)
       app.run
       expect(app.action).to eq(action)
       expect(app.arguments).to eq([ { } ])
     end
 
     it "should use the default action if not given a valid one" do
-      app.command_line.stubs(:args).returns %w{bar}
-      action = stub(:options => [], :render_as => nil)
-      Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
-      app.stubs(:main)
+      allow(app.command_line).to receive(:args).and_return(%w{bar})
+      action = double(:options => [], :render_as => nil)
+      expect(Puppet::Face[:basetest, '0.0.1']).to receive(:get_default_action).and_return(action)
+      allow(app).to receive(:main)
       app.run
       expect(app.action).to eq(action)
       expect(app.arguments).to eq([ 'bar', { } ])
     end
 
     it "should have no action if not given a valid one and there is no default action" do
-      app.command_line.stubs(:args).returns %w{bar}
-      Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
-      app.stubs(:main)
+      allow(app.command_line).to receive(:args).and_return(%w{bar})
+      expect(Puppet::Face[:basetest, '0.0.1']).to receive(:get_default_action).and_return(nil)
+      allow(app).to receive(:main)
       expect { app.run }.to exit_with(1)
       expect(@logs.first.message).to match(/has no 'bar' action./)
     end
@@ -95,9 +94,9 @@ describe Puppet::Application::FaceBase do
     [%w{something_I_cannot_do},
      %w{something_I_cannot_do argument}].each do |input|
       it "should report unknown actions nicely" do
-        app.command_line.stubs(:args).returns input
-        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
-        app.stubs(:main)
+        allow(app.command_line).to receive(:args).and_return(input)
+        expect(Puppet::Face[:basetest, '0.0.1']).to receive(:get_default_action).and_return(nil)
+        allow(app).to receive(:main)
         expect { app.run }.to exit_with(1)
         expect(@logs.first.message).to match(/has no 'something_I_cannot_do' action/)
       end
@@ -106,40 +105,40 @@ describe Puppet::Application::FaceBase do
     [%w{something_I_cannot_do --unknown-option},
      %w{something_I_cannot_do argument --unknown-option}].each do |input|
       it "should report unknown actions even if there are unknown options" do
-        app.command_line.stubs(:args).returns input
-        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
-        app.stubs(:main)
+        allow(app.command_line).to receive(:args).and_return(input)
+        expect(Puppet::Face[:basetest, '0.0.1']).to receive(:get_default_action).and_return(nil)
+        allow(app).to receive(:main)
         expect { app.run }.to exit_with(1)
         expect(@logs.first.message).to match(/has no 'something_I_cannot_do' action/)
       end
     end
 
     it "should report a sensible error when options with = fail" do
-      app.command_line.stubs(:args).returns %w{--action=bar foo}
+      allow(app.command_line).to receive(:args).and_return(%w{--action=bar foo})
       expect { app.preinit; app.parse_options }.
         to raise_error(OptionParser::InvalidOption, /invalid option: --action/)
     end
 
     it "should fail if an action option is before the action" do
-      app.command_line.stubs(:args).returns %w{--action foo}
+      allow(app.command_line).to receive(:args).and_return(%w{--action foo})
       expect { app.preinit; app.parse_options }.
         to raise_error(OptionParser::InvalidOption, /invalid option: --action/)
     end
 
     it "should fail if an unknown option is before the action" do
-      app.command_line.stubs(:args).returns %w{--bar foo}
+      allow(app.command_line).to receive(:args).and_return(%w{--bar foo})
       expect { app.preinit; app.parse_options }.
         to raise_error(OptionParser::InvalidOption, /invalid option: --bar/)
     end
 
     it "should fail if an unknown option is after the action" do
-      app.command_line.stubs(:args).returns %w{foo --bar}
+      allow(app.command_line).to receive(:args).and_return(%w{foo --bar})
       expect { app.preinit; app.parse_options }.
         to raise_error(OptionParser::InvalidOption, /invalid option: --bar/)
     end
 
     it "should accept --bar as an argument to a mandatory option after action" do
-      app.command_line.stubs(:args).returns %w{foo --mandatory --bar}
+      allow(app.command_line).to receive(:args).and_return(%w{foo --mandatory --bar})
       app.preinit
       app.parse_options
       expect(app.action.name).to eq(:foo)
@@ -147,7 +146,7 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should accept --bar as an argument to a mandatory option before action" do
-      app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
+      allow(app.command_line).to receive(:args).and_return(%w{--mandatory --bar foo})
       app.preinit
       app.parse_options
       expect(app.action.name).to eq(:foo)
@@ -155,13 +154,13 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should not skip when --foo=bar is given" do
-      app.command_line.stubs(:args).returns %w{--mandatory=bar --bar foo}
+      allow(app.command_line).to receive(:args).and_return(%w{--mandatory=bar --bar foo})
       expect { app.preinit; app.parse_options }.
         to raise_error(OptionParser::InvalidOption, /invalid option: --bar/)
     end
 
     it "does not skip when a puppet global setting is given as one item" do
-      app.command_line.stubs(:args).returns %w{--confdir=/tmp/puppet foo}
+      allow(app.command_line).to receive(:args).and_return(%w{--confdir=/tmp/puppet foo})
       app.preinit
       app.parse_options
       expect(app.action.name).to eq(:foo)
@@ -169,7 +168,7 @@ describe Puppet::Application::FaceBase do
     end
 
     it "does not skip when a puppet global setting is given as two items" do
-      app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo}
+      allow(app.command_line).to receive(:args).and_return(%w{--confdir /tmp/puppet foo})
       app.preinit
       app.parse_options
       expect(app.action.name).to eq(:foo)
@@ -177,7 +176,7 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should not add :debug to the application-level options" do
-      app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo --debug}
+      allow(app.command_line).to receive(:args).and_return(%w{--confdir /tmp/puppet foo --debug})
       app.preinit
       app.parse_options
       expect(app.action.name).to eq(:foo)
@@ -185,7 +184,7 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should not add :verbose to the application-level options" do
-      app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo --verbose}
+      allow(app.command_line).to receive(:args).and_return(%w{--confdir /tmp/puppet foo --verbose})
       app.preinit
       app.parse_options
       expect(app.action.name).to eq(:foo)
@@ -196,7 +195,7 @@ describe Puppet::Application::FaceBase do
       "boolean options after"  => %w{foo --trace}
     }.each do |name, args|
       it "should accept global boolean settings #{name} the action" do
-        app.command_line.stubs(:args).returns args
+        allow(app.command_line).to receive(:args).and_return(args)
         Puppet.settings.initialize_global_settings(args)
         app.preinit
         app.parse_options
@@ -208,7 +207,7 @@ describe Puppet::Application::FaceBase do
       " after" => %w{foo --syslogfacility user1}
     }.each do |name, args|
       it "should accept global settings with arguments #{name} the action" do
-        app.command_line.stubs(:args).returns args
+        allow(app.command_line).to receive(:args).and_return(args)
         Puppet.settings.initialize_global_settings(args)
         app.preinit
         app.parse_options
@@ -217,7 +216,7 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should handle application-level options" do
-      app.command_line.stubs(:args).returns %w{--verbose return_true}
+      allow(app.command_line).to receive(:args).and_return(%w{--verbose return_true})
       app.preinit
       app.parse_options
       expect(app.face.name).to eq(:basetest)
@@ -226,7 +225,7 @@ describe Puppet::Application::FaceBase do
 
   describe "#setup" do
     it "should remove the action name from the arguments" do
-      app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
+      allow(app.command_line).to receive(:args).and_return(%w{--mandatory --bar foo})
       app.preinit
       app.parse_options
       app.setup
@@ -235,7 +234,7 @@ describe Puppet::Application::FaceBase do
 
     it "should pass positional arguments" do
       myargs = %w{--mandatory --bar foo bar baz quux}
-      app.command_line.stubs(:args).returns(myargs)
+      allow(app.command_line).to receive(:args).and_return(myargs)
       app.preinit
       app.parse_options
       app.setup
@@ -245,7 +244,7 @@ describe Puppet::Application::FaceBase do
 
   describe "#main" do
     before :each do
-      app.stubs(:puts)          # don't dump text to screen.
+      allow(app).to receive(:puts)          # don't dump text to screen.
 
       app.face      = Puppet::Face[:basetest, '0.0.1']
       app.action    = app.face.get_action(:foo)
@@ -253,41 +252,41 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should send the specified verb and name to the face" do
-      app.face.expects(:foo).with(*app.arguments)
+      expect(app.face).to receive(:foo).with(*app.arguments)
       expect { app.main }.to exit_with(0)
     end
 
     it "should lookup help when it cannot do anything else" do
       app.action = nil
-      Puppet::Face[:help, :current].expects(:help).with(:basetest)
+      expect(Puppet::Face[:help, :current]).to receive(:help).with(:basetest)
       expect { app.main }.to exit_with(1)
     end
 
     it "should use its render method to render any result" do
-      app.expects(:render).with(app.arguments.length + 1, ["myname", "myarg"])
+      expect(app).to receive(:render).with(app.arguments.length + 1, ["myname", "myarg"])
       expect { app.main }.to exit_with(0)
     end
 
     it "should issue a deprecation warning if the face is deprecated" do
       # since app is shared across examples, stub to avoid affecting shared context
-      app.face.stubs(:deprecated?).returns(true)
-      app.face.expects(:foo).with(*app.arguments)
-      Puppet.expects(:deprecation_warning).with(regexp_matches(/'puppet basetest' is deprecated/))
+      allow(app.face).to receive(:deprecated?).and_return(true)
+      expect(app.face).to receive(:foo).with(*app.arguments)
+      expect(Puppet).to receive(:deprecation_warning).with(/'puppet basetest' is deprecated/)
       expect { app.main }.to exit_with(0)
     end
 
     it "should not issue a deprecation warning if the face is not deprecated" do
-      Puppet.expects(:deprecation_warning).never
+      expect(Puppet).not_to receive(:deprecation_warning)
       # since app is shared across examples, stub to avoid affecting shared context
-      app.face.stubs(:deprecated?).returns(false)
-      app.face.expects(:foo).with(*app.arguments)
+      allow(app.face).to receive(:deprecated?).and_return(false)
+      expect(app.face).to receive(:foo).with(*app.arguments)
       expect { app.main }.to exit_with(0)
     end
   end
 
   describe "error reporting" do
     before :each do
-      app.stubs(:puts)          # don't dump text to screen.
+      allow(app).to receive(:puts)          # don't dump text to screen.
 
       app.render_as = :json
       app.face      = Puppet::Face[:basetest, '0.0.1']
@@ -343,7 +342,7 @@ describe Puppet::Application::FaceBase do
 
       it "should render a non-trivially-keyed Hash with using pretty printed JSON" do
         hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
-        expect(app.render(hash, {})).to eq(JSON.pretty_generate(hash).chomp)
+        expect(app.render(hash, {})).to eq(Puppet::Util::Json.dump(hash, :pretty => true).chomp)
       end
 
       it "should render a {String,Numeric}-keyed Hash into a table" do
@@ -356,7 +355,7 @@ describe Puppet::Application::FaceBase do
         expect(app.render(hash, {})).to eq <<EOT
 5      5
 6.0    6
-four   #{object.to_json.chomp}
+four   #{Puppet::Util::Json.dump(object).chomp}
 one    1
 three  {}
 two    []
@@ -411,25 +410,25 @@ EOT
     end
 
     it "should fail early if asked to render an invalid format" do
-      app.command_line.stubs(:args).returns %w{--render-as interpretive-dance return_true}
+      allow(app.command_line).to receive(:args).and_return(%w{--render-as interpretive-dance return_true})
       # We shouldn't get here, thanks to the exception, and our expectation on
       # it, but this helps us fail if that slips up and all. --daniel 2011-04-27
-      Puppet::Face[:help, :current].expects(:help).never
+      expect(Puppet::Face[:help, :current]).not_to receive(:help)
 
-      Puppet.expects(:err).with("Could not parse application options: I don't know how to render 'interpretive-dance'")
+      expect(Puppet).to receive(:send_log).with(:err, "Could not parse application options: I don't know how to render 'interpretive-dance'")
 
       expect { app.run }.to exit_with(1)
     end
 
     it "should work if asked to render json" do
-      app.command_line.stubs(:args).returns %w{count_args a b c --render-as json}
+      allow(app.command_line).to receive(:args).and_return(%w{count_args a b c --render-as json})
       expect {
         expect { app.run }.to exit_with(0)
       }.to have_printed(/3/)
     end
 
     it "should invoke when_rendering hook 's' when asked to render-as 's'" do
-      app.command_line.stubs(:args).returns %w{with_s_rendering_hook --render-as s}
+      allow(app.command_line).to receive(:args).and_return(%w{with_s_rendering_hook --render-as s})
       app.action = app.face.get_action(:with_s_rendering_hook)
       expect {
         expect { app.run }.to exit_with(0)
@@ -439,14 +438,14 @@ EOT
 
   describe "#help" do
     it "should generate help for --help" do
-      app.command_line.stubs(:args).returns %w{--help}
-      Puppet::Face[:help, :current].expects(:help)
+      allow(app.command_line).to receive(:args).and_return(%w{--help})
+      expect(Puppet::Face[:help, :current]).to receive(:help)
       expect { app.run }.to exit_with(0)
     end
 
     it "should generate help for -h" do
-      app.command_line.stubs(:args).returns %w{-h}
-      Puppet::Face[:help, :current].expects(:help)
+      allow(app.command_line).to receive(:args).and_return(%w{-h})
+      expect(Puppet::Face[:help, :current]).to receive(:help)
       expect { app.run }.to exit_with(0)
     end
   end

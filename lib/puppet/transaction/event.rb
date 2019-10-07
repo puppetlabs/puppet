@@ -1,18 +1,16 @@
 require 'puppet/transaction'
 require 'puppet/util/tagging'
 require 'puppet/util/logging'
-require 'puppet/util/methodhelper'
 require 'puppet/network/format_support'
 
 # A simple struct for storing what happens on the system.
 class Puppet::Transaction::Event
-  include Puppet::Util::MethodHelper
   include Puppet::Util::Tagging
   include Puppet::Util::Logging
   include Puppet::Network::FormatSupport
 
   ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes, :redacted, :corrective_change]
-  attr_accessor *ATTRIBUTES
+  attr_accessor(*ATTRIBUTES)
   attr_accessor :time
   attr_reader :default_log_level
 
@@ -24,12 +22,41 @@ class Puppet::Transaction::Event
     obj
   end
 
-  def initialize(options = {})
-    @audited = false
-    @redacted = false
-    @corrective_change = false
+  def initialize(audited: false,
+                 corrective_change: false,
+                 desired_value: nil,
+                 file: nil,
+                 historical_value: nil,
+                 invalidate_refreshes: nil,
+                 line: nil,
+                 message: nil,
+                 name: nil,
+                 previous_value: nil,
+                 property: nil,
+                 redacted: false,
+                 resource: nil,
+                 source_description: nil,
+                 status: nil,
+                 tags: nil)
 
-    set_options(options)
+    @audited = audited
+    @corrective_change = corrective_change
+    @desired_value = desired_value
+    @file = file
+    @historical_value = historical_value
+    @invalidate_refreshes = invalidate_refreshes
+    @line = line
+    @message = message
+    @name = name
+    @previous_value = previous_value
+    @redacted = redacted
+    @source_description = source_description
+    @tags = tags
+
+    self.property = property if property
+    self.resource = resource if resource
+    self.status = status if status
+
     @time = Time.now
   end
 
@@ -71,13 +98,9 @@ class Puppet::Transaction::Event
       'redacted' => @redacted,
       'corrective_change' => @corrective_change,
     }
-    Puppet::Pops::Serialization::ToDataConverter.convert(hash, {
-      :rich_data => true,
-      :symbol_as_string => true,
-      :local_reference => false,
-      :type_by_reference => true,
-      :message_prefix => 'Event'
-    })
+    # Use the stringifying converter since rich data is not possible downstream.
+    # (This will destroy some data type information, but this is expected).
+    Puppet::Pops::Serialization::ToStringifiedConverter.convert(hash, :message_prefix => 'Event')
   end
 
   def property=(prop)
@@ -86,7 +109,8 @@ class Puppet::Transaction::Event
   end
 
   def resource=(res)
-    if res.respond_to?(:[]) and level = res[:loglevel]
+    level = res[:loglevel] if res.respond_to?(:[])
+    if level
       @default_log_level = level
     end
     @resource = res.to_s

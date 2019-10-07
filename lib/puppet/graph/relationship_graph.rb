@@ -70,7 +70,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     if @blockers[resource] > 0
       @blockers[resource] -= 1
     else
-      resource.warning "appears to have a negative number of dependencies"
+      resource.warning _("appears to have a negative number of dependencies")
     end
     @blockers[resource] <= 0
   end
@@ -104,7 +104,8 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     teardown = options[:teardown] || lambda {}
     graph_cycle_handler = options[:graph_cycle_handler] || lambda { [] }
 
-    if cycles = report_cycles_in_graph
+    cycles = report_cycles_in_graph
+    if cycles
       graph_cycle_handler.call(cycles)
     end
 
@@ -247,6 +248,12 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     containers.each { |x|
       admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => catalog)
       completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => catalog)
+
+      # This copies the original container's tags over to the two anchor whits.
+      # Without this, tags are not propagated to the container's resources.
+      admissible[x].set_tags(x)
+      completed[x].set_tags(x)
+
       priority = @prioritizer.priority_of(x)
       add_vertex(admissible[x], priority)
       add_vertex(completed[x], priority)

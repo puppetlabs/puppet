@@ -102,7 +102,6 @@ describe Puppet::Face[:epp, :current] do
     end
   end
 
-
   context "dump" do
     it "prints the AST of a template given with the -e option" do
       expect(eppface.dump({ :e => 'hello world' })).to eq("(lambda (epp (block\n  (render-s 'hello world')\n)))\n")
@@ -147,7 +146,7 @@ describe Puppet::Face[:epp, :current] do
       dir = dir_containing('templates', { template_name => "<% 1 2 3 %>" })
       template = File.join(dir, template_name)
       expect(eppface.dump(template, :validate => true)).to eq("")
-      expect(@logs.join).to match(/This Literal Integer has no effect.*\/template1.epp:1:4/)
+      expect(@logs.join).to match(/This Literal Integer has no effect.*\(file: .*\/template1\.epp, line: 1, column: 4\)/)
     end
 
     it "validated content by default" do
@@ -155,7 +154,7 @@ describe Puppet::Face[:epp, :current] do
       dir = dir_containing('templates', { template_name => "<% 1 2 3 %>" })
       template = File.join(dir, template_name)
       expect(eppface.dump(template)).to eq("")
-      expect(@logs.join).to match(/This Literal Integer has no effect.*\/template1.epp:1:4/)
+      expect(@logs.join).to match(/This Literal Integer has no effect.*\(file: .*\/template1\.epp, line: 1, column: 4\)/)
     end
 
     it "informs the user of files that don't exist" do
@@ -173,6 +172,59 @@ describe Puppet::Face[:epp, :current] do
       expect(eppface.dump(:validate => false)).to eq("")
       expect(@logs[0].message).to match(/Syntax error at 'b'/)
       expect(@logs[0].level).to eq(:err)
+    end
+
+    context "using 'pn' format" do
+      it "prints the AST of the given expression in PN format" do
+        expect(eppface.dump({ :format => 'pn', :e => 'hello world' })).to eq(
+          '(lambda {:body [(epp (render-s "hello world"))]})')
+      end
+
+      it "pretty prints the AST of the given expression in PN format when --pretty is given" do
+        expect(eppface.dump({ :pretty => true, :format => 'pn', :e => 'hello world' })).to eq(<<-RESULT.unindent[0..-2])
+        (lambda
+          {
+            :body [
+              (epp
+                (render-s
+                  "hello world"))]})
+        RESULT
+      end
+    end
+
+    context "using 'json' format" do
+      it "prints the AST of the given expression in JSON based on the PN format" do
+        expect(eppface.dump({ :format => 'json', :e => 'hello world' })).to eq(
+          '{"^":["lambda",{"#":["body",[{"^":["epp",{"^":["render-s","hello world"]}]}]]}]}')
+      end
+
+      it "pretty prints the AST of the given expression in JSON based on the PN format when --pretty is given" do
+        expect(eppface.dump({ :pretty => true, :format => 'json', :e => 'hello world' })).to eq(<<-RESULT.unindent[0..-2])
+        {
+          "^": [
+            "lambda",
+            {
+              "#": [
+                "body",
+                [
+                  {
+                    "^": [
+                      "epp",
+                      {
+                        "^": [
+                          "render-s",
+                          "hello world"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              ]
+            }
+          ]
+        }
+        RESULT
+      end
     end
   end
 
@@ -201,8 +253,12 @@ describe Puppet::Face[:epp, :current] do
       expect(eppface.render(:e => 'hello <%= $x %>', :values => '{x => "mr X"}')).to eq("hello mr X")
     end
 
-    it "adds values given in a puppet hash given on command line with --values" do
-      expect(eppface.render(:e => 'hello <%= $x %>', :values => '{x => "mr X"}')).to eq("hello mr X")
+    it "adds fully qualified values given in a puppet hash given on command line with --values" do
+      expect(eppface.render(:e => 'hello <%= $mr::x %>', :values => '{mr::x => "mr X"}')).to eq("hello mr X")
+    end
+
+    it "adds fully qualified values with leading :: given in a puppet hash given on command line with --values" do
+      expect(eppface.render(:e => 'hello <%= $::mr %>', :values => '{"::mr" => "mr X"}')).to eq("hello mr X")
     end
 
     it "adds values given in a puppet hash produced by a .pp file given with --values_file" do
@@ -235,6 +291,15 @@ describe Puppet::Face[:epp, :current] do
 
     it "sets $trusted" do
       expect(eppface.render({ :e => 'trusted is hash: <%= $trusted =~ Hash %>' })).to eql("trusted is hash: true")
+    end
+
+    it 'initializes the 4x loader' do
+      expect(eppface.render({ :e => <<-EPP.unindent })).to eql("\nString\n\nInteger\n\nBoolean\n")
+        <% $data = [type('a',generalized), type(2,generalized), type(true,generalized)] -%>
+        <% $data.each |$value| { %>
+        <%= $value %>
+        <% } -%>
+      EPP
     end
 
     it "facts can be added to" do
@@ -294,7 +359,6 @@ describe Puppet::Face[:epp, :current] do
       end
 
       it "renders multiple files separated by headers by default" do
-        modules_dir = File.join(dir, 'environments', 'production', 'modules')
         # chomp the last newline, it is put there by heredoc
         expect(eppface.render('m1/greetings.epp', 'm2/goodbye.epp')).to eq(<<-EOT.chomp)
 --- m1/greetings.epp
@@ -305,18 +369,17 @@ goodbye world
       end
 
       it "outputs multiple files verbatim when --no-headers is given" do
-        modules_dir = File.join(dir, 'environments', 'production', 'modules')
         expect(eppface.render('m1/greetings.epp', 'm2/goodbye.epp', :header => false)).to eq("hello worldgoodbye world")
       end
     end
   end
 
   def from_an_interactive_terminal
-    STDIN.stubs(:tty?).returns(true)
+    allow(STDIN).to receive(:tty?).and_return(true)
   end
 
   def from_a_piped_input_of(contents)
-    STDIN.stubs(:tty?).returns(false)
-    STDIN.stubs(:read).returns(contents)
+    allow(STDIN).to receive(:tty?).and_return(false)
+    allow(STDIN).to receive(:read).and_return(contents)
   end
 end

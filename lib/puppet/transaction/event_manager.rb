@@ -68,7 +68,8 @@ class Puppet::Transaction::EventManager
       received = (event.name != :restarted)
       relationship_graph.matching_edges(event, resource).each do |edge|
         received ||= true unless edge.target.is_a?(Puppet::Type.type(:whit))
-        next unless method = edge.callback
+        method = edge.callback
+        next unless method
         next unless edge.target.respond_to?(method)
 
         queue_events_for_resource(resource, edge.target, method, list)
@@ -114,7 +115,8 @@ class Puppet::Transaction::EventManager
   end
 
   def queued_events(resource)
-    return unless callbacks = @event_queues[resource]
+    callbacks = @event_queues[resource]
+    return unless callbacks
     callbacks.each do |callback, events|
       yield callback, events unless events.empty?
     end
@@ -147,15 +149,25 @@ class Puppet::Transaction::EventManager
     resource.send(callback)
 
     if not resource.is_a?(Puppet::Type.type(:whit))
-      resource.notice n_("Triggered '%{callback}' from %{count} event", "Triggered '%{callback}' from %{count} events", events.length) % { count: events.length, callback: callback }
+      message = n_("Triggered '%{callback}' from %{count} event", "Triggered '%{callback}' from %{count} events", events.length) % { count: events.length, callback: callback }
+      resource.notice message
+      add_callback_status_event(resource, callback, message, "success")
     end
+
     return true
   rescue => detail
-    resource.err _("Failed to call %{callback}: %{detail}") % { callback: callback, detail: detail }
-
+    resource_error_message = _("Failed to call %{callback}: %{detail}") % { callback: callback, detail: detail }
+    resource.err(resource_error_message)
     transaction.resource_status(resource).failed_to_restart = true
+    transaction.resource_status(resource).fail_with_event(resource_error_message)
     resource.log_exception(detail)
     return false
+  end
+
+  def add_callback_status_event(resource, callback, message, status)
+    options = { message: message, status: status, name: callback.to_s }
+    event = resource.event options
+    transaction.resource_status(resource) << event if event
   end
 
   def process_noop_events(resource, callback, events)

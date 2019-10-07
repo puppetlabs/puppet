@@ -1,0 +1,36 @@
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+
+NetworkManager.x86_64              1:1.0.0-14.git20150121.b4ea599c.el7    base
+NetworkManager-glib.x86_64         1:1.0.0-14.git20150121.b4ea599c.el7    base
+NetworkManager-tui.x86_64          1:1.0.0-14.git20150121.b4ea599c.el7    base
+alsa-firmware.noarch               1.0.28-2.el7                           base
+alsa-lib.x86_64                    1.0.28-2.el7                           base
+audit.x86_64                       2.4.1-5.el7                            base
+audit-libs.x86_64                  2.4.1-5.el7                            base
+authconfig.x86_64                  6.2.8-9.el7                            base
+avahi.x86_64                       0.6.31-14.el7                          base
+avahi-autoipd.x86_64               0.6.31-14.el7                          base
+avahi-libs.x86_64                  0.6.31-14.el7                          base
+bash.x86_64                        4.2.46-12.el7                          base
+bind-libs-lite.x86_64              32:9.9.4-18.el7_1.1                    updates
+bind-license.noarch                32:9.9.4-18.el7_1.1                    updates
+binutils.x86_64                    2.23.52.0.1-30.el7_1.2                 updates
+biosdevname.x86_64                 0.6.1-2.el7                            base
+btrfs-progs.x86_64                 3.16.2-1.el7                           base
+ca-certificates.noarch             2015.2.4-70.0.el7_1                    updates
+centos-logos.noarch                70.0.6-2.el7.centos                    updates
+centos-release.x86_64              7-1.1503.el7.centos.2.8                base
+cpp.x86_64                         4.8.3-9.el7                            base
+cronie.x86_64                      1.4.11-13.el7                          base
+cronie-anacron.x86_64              1.4.11-13.el7                          base
+cryptsetup-libs.x86_64             1.6.6-3.el7                            base
+dbus.x86_64                        1:1.6.12-11.el7                        base
+dbus-libs.x86_64                   1:1.6.12-11.el7                        base
+device-mapper.x86_64               7:1.02.93-3.el7                        base
+device-mapper-event.x86_64         7:1.02.93-3.el7                        base
+device-mapper-event-libs.x86_64    7:1.02.93-3.el7                        base
+device-mapper-libs.x86_64          7:1.02.93-3.el7                        base
+Random plugin output
+Loaded plugins: fastestmirror, product-id, fake-plugin
+Random plugin failed, is the mirror available?

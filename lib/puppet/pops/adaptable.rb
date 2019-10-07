@@ -94,11 +94,8 @@ module Adaptable
     #
     def self.adapt(o, &block)
       attr_name = self_attr_name
-      adapter = if o.instance_variable_defined?(attr_name) && value = o.instance_variable_get(attr_name)
-        value
-      else
-        associate_adapter(create_adapter(o), o)
-      end
+      value = o.instance_variable_get(attr_name) if o.instance_variable_defined?(attr_name)
+      adapter = value || associate_adapter(create_adapter(o), o)
       if block_given?
         case block.arity
           when 1

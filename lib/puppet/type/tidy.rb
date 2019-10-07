@@ -105,7 +105,7 @@ Puppet::Type.newtype(:tidy) do
     desc "Tidy files whose age is equal to or greater than
       the specified time.  You can choose seconds, minutes,
       hours, days, or weeks by specifying the first letter of any
-      of those words (e.g., '1w').
+      of those words (for example, '1w' represents one week).
 
       Specifying 0 will remove all files."
 
@@ -118,7 +118,8 @@ Puppet::Type.newtype(:tidy) do
     }
 
     def convert(unit, multi)
-      if num = AgeConvertors[unit]
+      num = AgeConvertors[unit]
+      if num
         return num * multi
       else
         self.fail _("Invalid age unit '%{unit}'") % { unit: unit }
@@ -157,7 +158,8 @@ Puppet::Type.newtype(:tidy) do
       be used."
 
     def convert(unit, multi)
-      if num = { :b => 0, :k => 1, :m => 2, :g => 3, :t => 4 }[unit]
+      num = { :b => 0, :k => 1, :m => 2, :g => 3, :t => 4 }[unit]
+      if num
         result = multi
         num.times do result *= 1024 end
         return result
@@ -188,7 +190,7 @@ Puppet::Type.newtype(:tidy) do
   end
 
   newparam(:type) do
-    desc "Set the mechanism for determining age. Default: atime."
+    desc "Set the mechanism for determining age."
 
     newvalues(:atime, :mtime, :ctime)
 
@@ -224,12 +226,20 @@ Puppet::Type.newtype(:tidy) do
   # Make a file resource to remove a given file.
   def mkfile(path)
     # Force deletion, so directories actually get deleted.
-    Puppet::Type.type(:file).new :path => path, :backup => self[:backup], :ensure => :absent, :force => true
+    parameters = {
+      :path => path, :backup => self[:backup],
+      :ensure => :absent, :force => true
+    }
+
+    parameters[:noop] = self[:noop] unless self[:noop].nil?
+
+    Puppet::Type.type(:file).new(parameters)
   end
 
   def retrieve
     # Our ensure property knows how to retrieve everything for us.
-    if obj = @parameters[:ensure]
+    obj = @parameters[:ensure]
+    if obj
       return obj.retrieve
     else
       return {}
@@ -260,8 +270,10 @@ Puppet::Type.newtype(:tidy) do
     end
     found_files = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }
     result = found_files.each { |file| debug "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
-    #TRANSLATORS "Tidy" is a program name and should not be translated
-    notice _("Tidying %{count} files") % { count: found_files.size }
+    if found_files.size > 0
+      #TRANSLATORS "Tidy" is a program name and should not be translated
+      notice _("Tidying %{count} files") % { count: found_files.size }
+    end
 
     # No need to worry about relationships if we don't have rmdirs; there won't be
     # any directories.
@@ -273,7 +285,8 @@ Puppet::Type.newtype(:tidy) do
 
     files_by_name.keys.sort { |a,b| b <=> a }.each do |path|
       dir = ::File.dirname(path)
-      next unless resource = files_by_name[dir]
+      resource = files_by_name[dir]
+      next unless resource
       if resource[:require]
         resource[:require] << Puppet::Resource.new(:file, path)
       else
@@ -301,17 +314,24 @@ Puppet::Type.newtype(:tidy) do
 
   # Should we remove the specified file?
   def tidy?(path)
-    return false unless stat = self.stat(path)
+    # ignore files that are already managed, since we can't tidy
+    # those files anyway
+    return false if catalog.resource(:file, path)
+
+    stat = self.stat(path)
+    return false unless stat
 
     return false if stat.ftype == "directory" and ! rmdirs?
 
     # The 'matches' parameter isn't OR'ed with the other tests --
     # it's just used to reduce the list of files we can match.
-    return false if param = parameter(:matches) and ! param.tidy?(path, stat)
+    param = parameter(:matches)
+    return false if param && ! param.tidy?(path, stat)
 
     tested = false
     [:age, :size].each do |name|
-      next unless param = parameter(name)
+      param = parameter(name)
+      next unless param
       tested = true
       return true if param.tidy?(path, stat)
     end
@@ -324,10 +344,10 @@ Puppet::Type.newtype(:tidy) do
   def stat(path)
     begin
       Puppet::FileSystem.lstat(path)
-    rescue Errno::ENOENT => error
-      info _("File does not exist")
+    rescue Errno::ENOENT
+      debug _("File does not exist")
       return nil
-    rescue Errno::EACCES => error
+    rescue Errno::EACCES
       #TRANSLATORS "stat" is a program name and should not be translated
       warning _("Could not stat; permission denied")
       return nil

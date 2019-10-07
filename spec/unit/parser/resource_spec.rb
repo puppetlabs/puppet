@@ -49,24 +49,24 @@ describe Puppet::Parser::Resource do
   end
 
   it "should get its environment from its scope" do
-    scope = stub 'scope', :source => stub("source")
-    scope.expects(:environment).returns("foo").at_least_once
-    scope.expects(:lookupdefaults).returns({})
+    scope = double('scope', :source => double("source"))
+    expect(scope).to receive(:environment).and_return("foo").at_least(:once)
+    expect(scope).to receive(:lookupdefaults).and_return({})
     expect(Puppet::Parser::Resource.new("file", "whatever", :scope => scope).environment).to eq("foo")
   end
 
   it "should use the scope's environment as its environment" do
-    @scope.expects(:environment).returns("myenv").at_least_once
+    expect(@scope).to receive(:environment).and_return("myenv").at_least(:once)
     expect(Puppet::Parser::Resource.new("file", "whatever", :scope => @scope).environment).to eq("myenv")
   end
 
   it "should be isomorphic if it is builtin and models an isomorphic type" do
-    Puppet::Type.type(:file).expects(:isomorphic?).returns(true)
+    expect(Puppet::Type.type(:file)).to receive(:isomorphic?).and_return(true)
     @resource = expect(Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source).isomorphic?).to be_truthy
   end
 
   it "should not be isomorphic if it is builtin and models a non-isomorphic type" do
-    Puppet::Type.type(:file).expects(:isomorphic?).returns(false)
+    expect(Puppet::Type.type(:file)).to receive(:isomorphic?).and_return(false)
     @resource = expect(Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source).isomorphic?).to be_falsey
   end
 
@@ -81,9 +81,9 @@ describe Puppet::Parser::Resource do
   end
 
   it "should use a Puppet::Resource for converting to a ral resource" do
-    trans = mock 'resource', :to_ral => "yay"
+    trans = double('resource', :to_ral => "yay")
     @resource = mkresource
-    @resource.expects(:copy_as_resource).returns trans
+    expect(@resource).to receive(:copy_as_resource).and_return(trans)
     expect(@resource.to_ral).to eq("yay")
   end
 
@@ -125,8 +125,8 @@ describe Puppet::Parser::Resource do
   describe "when evaluating" do
     before do
       @catalog = Puppet::Resource::Catalog.new
-      source = stub('source')
-      source.stubs(:module_name)
+      source = double('source')
+      allow(source).to receive(:module_name)
       @scope = Puppet::Parser::Scope.new(@compiler, :source => source)
       @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @scope))
     end
@@ -134,7 +134,7 @@ describe Puppet::Parser::Resource do
     it "should evaluate the associated AST definition" do
       definition = newdefine "mydefine"
       res = Puppet::Parser::Resource.new("mydefine", "whatever", :scope => @scope, :source => @source, :catalog => @catalog)
-      definition.expects(:evaluate_code).with(res)
+      expect(definition).to receive(:evaluate_code).with(res)
 
       res.evaluate
     end
@@ -142,14 +142,14 @@ describe Puppet::Parser::Resource do
     it "should evaluate the associated AST class" do
       @class = newclass "myclass"
       res = Puppet::Parser::Resource.new("class", "myclass", :scope => @scope, :source => @source, :catalog => @catalog)
-      @class.expects(:evaluate_code).with(res)
+      expect(@class).to receive(:evaluate_code).with(res)
       res.evaluate
     end
 
     it "should evaluate the associated AST node" do
       nodedef = newnode("mynode")
       res = Puppet::Parser::Resource.new("node", "mynode", :scope => @scope, :source => @source, :catalog => @catalog)
-      nodedef.expects(:evaluate_code).with(res)
+      expect(nodedef).to receive(:evaluate_code).with(res)
       res.evaluate
     end
 
@@ -177,7 +177,6 @@ describe Puppet::Parser::Resource do
     end
 
     it "should add edges from the class resources to the parent's stage if no stage is specified" do
-      main      = @compiler.catalog.resource(:stage, :main)
       foo_stage = Puppet::Parser::Resource.new(:stage, :foo_stage, :scope => @scope, :catalog => @catalog)
       @compiler.add_resource(@scope, foo_stage)
       @compiler.environment.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", {})
@@ -315,19 +314,19 @@ describe Puppet::Parser::Resource do
     let(:resource) { Puppet::Parser::Resource.new('file', 'whatever', :scope => @scope, :source => @source) }
 
     it 'should add all defaults available from the scope' do
-      @scope.expects(:lookupdefaults).with('File').returns(:owner => param(:owner, 'default', @source))
+      expect(@scope).to receive(:lookupdefaults).with('File').and_return(:owner => param(:owner, 'default', @source))
 
       expect(resource[:owner]).to eq('default')
     end
 
     it 'should not replace existing parameters with defaults' do
-      @scope.expects(:lookupdefaults).with('File').returns(:owner => param(:owner, 'replaced', @source))
+      expect(@scope).to receive(:lookupdefaults).with('File').and_return(:owner => param(:owner, 'replaced', @source))
       r = Puppet::Parser::Resource.new('file', 'whatever', :scope => @scope, :source => @source, :parameters => [ param(:owner, 'oldvalue', @source) ])
       expect(r[:owner]).to eq('oldvalue')
     end
 
     it 'should override defaults with new parameters' do
-      @scope.expects(:lookupdefaults).with('File').returns(:owner => param(:owner, 'replaced', @source))
+      expect(@scope).to receive(:lookupdefaults).with('File').and_return(:owner => param(:owner, 'replaced', @source))
 
       resource.set_parameter(:owner, 'newvalue')
       expect(resource[:owner]).to eq('newvalue')
@@ -337,14 +336,14 @@ describe Puppet::Parser::Resource do
       newparam = param(:owner, 'default', @source)
       other = newparam.dup
       other.value = "other"
-      newparam.expects(:dup).returns(other)
-      @scope.expects(:lookupdefaults).with('File').returns(:owner => newparam)
+      expect(newparam).to receive(:dup).and_return(other)
+      expect(@scope).to receive(:lookupdefaults).with('File').and_return(:owner => newparam)
 
       expect(resource[:owner]).to eq('other')
     end
 
     it "should tag with value of default parameter named 'tag'" do
-      @scope.expects(:lookupdefaults).with('File').returns(:tag => param(:tag, 'the_tag', @source))
+      expect(@scope).to receive(:lookupdefaults).with('File').and_return(:tag => param(:tag, 'the_tag', @source))
 
       expect(resource.tags).to include('the_tag')
     end
@@ -357,7 +356,7 @@ describe Puppet::Parser::Resource do
 
     it "should do nothing if it has already been finished" do
       @resource.finish
-      @resource.expects(:add_scope_tags).never
+      expect(@resource).not_to receive(:add_scope_tags)
       @resource.finish
     end
 
@@ -371,9 +370,9 @@ describe Puppet::Parser::Resource do
 
   describe "when being tagged" do
     before do
-      @scope_resource = stub 'scope_resource', :tags => %w{srone srtwo}
-      @scope.stubs(:resource).returns @scope_resource
-      @resource = Puppet::Parser::Resource.new("file", "yay", :scope => @scope, :source => mock('source'))
+      @scope_resource = double('scope_resource', :tags => %w{srone srtwo})
+      allow(@scope).to receive(:resource).and_return(@scope_resource)
+      @resource = Puppet::Parser::Resource.new("file", "yay", :scope => @scope, :source => double('source'))
     end
 
     it "should get tagged with the resource type" do
@@ -385,19 +384,19 @@ describe Puppet::Parser::Resource do
     end
 
     it "should get tagged with each name in the title if the title is a qualified class name" do
-      resource = Puppet::Parser::Resource.new("file", "one::two", :scope => @scope, :source => mock('source'))
+      resource = Puppet::Parser::Resource.new("file", "one::two", :scope => @scope, :source => double('source'))
       expect(resource.tags).to be_include("one")
       expect(resource.tags).to be_include("two")
     end
 
     it "should get tagged with each name in the type if the type is a qualified class name" do
-      resource = Puppet::Parser::Resource.new("one::two", "whatever", :scope => @scope, :source => mock('source'))
+      resource = Puppet::Parser::Resource.new("one::two", "whatever", :scope => @scope, :source => double('source'))
       expect(resource.tags).to be_include("one")
       expect(resource.tags).to be_include("two")
     end
 
     it "should not get tagged with non-alphanumeric titles" do
-      resource = Puppet::Parser::Resource.new("file", "this is a test", :scope => @scope, :source => mock('source'))
+      resource = Puppet::Parser::Resource.new("file", "this is a test", :scope => @scope, :source => double('source'))
       expect(resource.tags).not_to be_include("this is a test")
     end
 
@@ -427,34 +426,34 @@ describe Puppet::Parser::Resource do
 
     it "should fail when the override was not created by a parent class" do
       @override.source = "source2"
-      @override.source.expects(:child_of?).with("source1").returns(false)
+      expect(@override.source).to receive(:child_of?).with("source1").and_return(false)
       expect { @resource.merge(@override) }.to raise_error(Puppet::ParseError)
     end
 
     it "should succeed when the override was created in the current scope" do
       @resource.source = "source3"
       @override.source = @resource.source
-      @override.source.expects(:child_of?).with("source3").never
+      expect(@override.source).not_to receive(:child_of?).with("source3")
       params = {:a => :b, :c => :d}
-      @override.expects(:parameters).returns(params)
-      @resource.expects(:override_parameter).with(:b)
-      @resource.expects(:override_parameter).with(:d)
+      expect(@override).to receive(:parameters).and_return(params)
+      expect(@resource).to receive(:override_parameter).with(:b)
+      expect(@resource).to receive(:override_parameter).with(:d)
       @resource.merge(@override)
     end
 
     it "should succeed when a parent class created the override" do
       @resource.source = "source3"
       @override.source = "source4"
-      @override.source.expects(:child_of?).with("source3").returns(true)
+      expect(@override.source).to receive(:child_of?).with("source3").and_return(true)
       params = {:a => :b, :c => :d}
-      @override.expects(:parameters).returns(params)
-      @resource.expects(:override_parameter).with(:b)
-      @resource.expects(:override_parameter).with(:d)
+      expect(@override).to receive(:parameters).and_return(params)
+      expect(@resource).to receive(:override_parameter).with(:b)
+      expect(@resource).to receive(:override_parameter).with(:d)
       @resource.merge(@override)
     end
 
     it "should add new parameters when the parameter is not set" do
-      @source.stubs(:child_of?).returns true
+      allow(@source).to receive(:child_of?).and_return(true)
       @override.set_parameter(:testing, "value")
       @resource.merge(@override)
 
@@ -462,7 +461,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should replace existing parameter values" do
-      @source.stubs(:child_of?).returns true
+      allow(@source).to receive(:child_of?).and_return(true)
       @resource.set_parameter(:testing, "old")
       @override.set_parameter(:testing, "value")
 
@@ -472,7 +471,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should add values to the parameter when the override was created with the '+>' syntax" do
-      @source.stubs(:child_of?).returns true
+      allow(@source).to receive(:child_of?).and_return(true)
       param = Puppet::Parser::Resource::Param.new(:name => :testing, :value => "testing", :source => @resource.source)
       param.add = true
 
@@ -491,7 +490,7 @@ describe Puppet::Parser::Resource do
       @resource.  set_parameter(:testing, "old_val_1")
       @resource_2.set_parameter(:testing, "old_val_2")
 
-      @source.stubs(:child_of?).returns true
+      allow(@source).to receive(:child_of?).and_return(true)
       param = Puppet::Parser::Resource::Param.new(:name => :testing, :value => "new_val", :source => @resource.source)
       param.add = true
       @override.set_parameter(param)
@@ -504,7 +503,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should promote tag overrides to real tags" do
-      @source.stubs(:child_of?).returns true
+      allow(@source).to receive(:child_of?).and_return(true)
       param = Puppet::Parser::Resource::Param.new(:name => :tag, :value => "testing", :source => @resource.source)
 
       @override.set_parameter(param)
@@ -517,7 +516,7 @@ describe Puppet::Parser::Resource do
   end
 
   it "should be able to be converted to a normal resource" do
-    @source = stub 'scope', :name => "myscope"
+    @source = double('scope', :name => "myscope")
     @resource = mkresource :source => @source
     expect(@resource).to respond_to(:copy_as_resource)
   end
@@ -635,7 +634,7 @@ describe Puppet::Parser::Resource do
 
   # part of #629 -- the undef keyword.  Make sure 'undef' params get skipped.
   it "should not include 'undef' parameters when converting itself to a hash" do
-    resource = Puppet::Parser::Resource.new "file", "/tmp/testing", :source => mock("source"), :scope => @scope
+    resource = Puppet::Parser::Resource.new "file", "/tmp/testing", :source => double("source"), :scope => @scope
     resource[:owner] = :undef
     resource[:mode] = "755"
     expect(resource.to_hash[:owner]).to be_nil

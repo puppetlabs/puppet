@@ -51,7 +51,6 @@ describe 'loaders' do
   let(:empty_test_env) { environment_for() }
 
   # Loaders caches the puppet_system_loader, must reset between tests
-  before(:each) { Puppet::Pops::Loaders.clear() }
 
   context 'when loading pp resource types using auto loading' do
     let(:pp_resources) { config_dir('pp_resources') }
@@ -59,12 +58,14 @@ describe 'loaders' do
     let(:env) { Puppet::Node::Environment.create(:'pp_resources', [File.join(pp_resources, 'modules')]) }
     let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
     let(:loader) { Puppet::Pops::Loaders.loaders.find_loader(nil) }
-    around(:each) do |example|
-      Puppet.override(:environments => environments) do
-        Puppet.override(:loaders => compiler.loaders) do
-          example.run
-        end
-      end
+
+    before(:each) do
+      Puppet.push_context({ :environments => environments })
+      Puppet.push_context({ :loaders => compiler.loaders })
+    end
+
+    after(:each) do
+      Puppet.pop_context()
     end
 
     it 'finds a resource type that resides under <environment root>/.resource_types' do
@@ -92,6 +93,16 @@ describe 'loaders' do
   it 'creates a puppet_system loader' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env)
     expect(loaders.puppet_system_loader()).to be_a(Puppet::Pops::Loader::ModuleLoaders::FileBased)
+  end
+
+  it 'creates a cached_puppet loader when for_agent is set to true' do
+    loaders = Puppet::Pops::Loaders.new(empty_test_env, true)
+    expect(loaders.puppet_cache_loader()).to be_a(Puppet::Pops::Loader::ModuleLoaders::LibRootedFileBased)
+  end
+
+  it 'does not create a cached_puppet loader when for_agent is the default false value' do
+    loaders = Puppet::Pops::Loaders.new(empty_test_env)
+    expect(loaders.puppet_cache_loader()).to be(nil)
   end
 
   it 'creates an environment loader' do
@@ -156,9 +167,9 @@ describe 'loaders' do
     end
 
     it 'loader allows loading a function more than once' do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns ''
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return('')
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
 
       env = environment_for(File.join(dependent_modules_with_metadata, 'modules'))
       loaders = Puppet::Pops::Loaders.new(env)
@@ -194,7 +205,7 @@ describe 'loaders' do
 
     def compile_and_get_notifications(code)
       Puppet[:code] = code
-      catalog = block_given? ? compiler.compile { |catalog| yield(compiler.topscope); catalog } : compiler.compile
+      catalog = block_given? ? compiler.compile { |c| yield(compiler.topscope); c } : compiler.compile
       catalog.resources.map(&:ref).select { |r| r.start_with?('Notify[') }.map { |r| r[7..-2] }
     end
 
@@ -217,9 +228,9 @@ describe 'loaders' do
     end
 
     it 'all dependent modules are visible' do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'}, { 'name' => 'test-usee2'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       loaders = Puppet::Pops::Loaders.new(env)
 
       moduleb_loader = loaders.private_loader_for_module('user')
@@ -230,15 +241,27 @@ describe 'loaders' do
       expect(function.call({})).to eql("usee2::callee() was told 'passed value' + I am user::caller2()")
     end
 
+    it 'all other modules are visible when tasks are enabled' do
+      Puppet[:tasks] = true
+
+      env = environment_for(File.join(dependent_modules_with_metadata, 'modules'))
+      loaders = Puppet::Pops::Loaders.new(env)
+
+      moduleb_loader = loaders.private_loader_for_module('user')
+      function = moduleb_loader.load_typed(typed_name(:function, 'user::caller')).value
+      expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
+    end
+
     [ 'outside a function', 'a puppet function declared under functions', 'a puppet function declared in init.pp', 'a ruby function'].each_with_index do |from, from_idx|
       [ {:from => from, :called => 'a puppet function declared under functions', :expects => "I'm the function usee::usee_puppet()"},
         {:from => from, :called => 'a puppet function declared in init.pp', :expects => "I'm the function usee::usee_puppet_init()"},
         {:from => from, :called => 'a ruby function', :expects => "I'm the function usee::usee_ruby()"} ].each_with_index do |desc, called_idx|
         case_number = from_idx * 3 + called_idx + 1
+
         it "can call #{desc[:called]} from #{desc[:from]} when dependency is present in metadata.json" do
-          File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-          File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-          File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+          allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+          allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+          allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
@@ -247,28 +270,33 @@ describe 'loaders' do
         end
 
         it "can call #{desc[:called]} from #{desc[:from]} when no metadata is present" do
-          Puppet::Module.any_instance.expects('has_metadata?').at_least_once.returns(false)
+          times_has_metadata_called = 0
+          allow_any_instance_of(Puppet::Module).to receive('has_metadata?') { times_has_metadata_called += 1 }.and_return(false)
+          Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
+          catalog = compiler.compile
+          resource = catalog.resource('Notify', "case_#{case_number}")
+          expect(resource).not_to be_nil
+          expect(resource['message']).to eq(desc[:expects])
+          expect(times_has_metadata_called).to be >= 1
+        end
+
+        it "can not call #{desc[:called]} from #{desc[:from]} if dependency is missing in existing metadata.json" do
+          allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => []).to_pson)
+          allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+          allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
           Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
           catalog = compiler.compile
           resource = catalog.resource('Notify', "case_#{case_number}")
           expect(resource).not_to be_nil
           expect(resource['message']).to eq(desc[:expects])
         end
-
-        it "can not call #{desc[:called]} from #{desc[:from]} if dependency is missing in existing metadata.json" do
-          File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => []).to_pson
-          File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-          File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-          Puppet[:code] = "$case_number = #{case_number}\ninclude ::user"
-          expect { catalog = compiler.compile }.to raise_error(Puppet::Error, /Unknown function/)
-        end
       end
     end
 
     it "a type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(Usee::Zero, 0)
         notice(ok)
@@ -276,7 +304,7 @@ describe 'loaders' do
     end
 
     it "a type can reference an autoloaded type alias from another module when no metadata is present" do
-      Puppet::Module.any_instance.expects('has_metadata?').at_least_once.returns(false)
+      expect_any_instance_of(Puppet::Module).to receive('has_metadata?').at_least(:once).and_return(false)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(Usee::Zero, 0)
         notice(ok)
@@ -284,9 +312,9 @@ describe 'loaders' do
     end
 
     it "a type can reference a type alias from another module when other module has it declared in init.pp" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         include 'usee'
         assert_type(Usee::One, 1)
@@ -295,9 +323,9 @@ describe 'loaders' do
     end
 
     it "an autoloaded type can reference an autoloaded type alias from another module when dependency is present in metadata.json" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         assert_type(User::WithUseeZero, [0])
         notice(ok)
@@ -305,9 +333,9 @@ describe 'loaders' do
     end
 
     it "an autoloaded type can reference an autoloaded type alias from another module when other module has it declared in init.pp" do
-      File.stubs(:read).with(user_metadata_path, {:encoding => 'utf-8'}).returns user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson
-      File.stubs(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
-      File.stubs(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).raises Errno::ENOENT
+      allow(File).to receive(:read).with(user_metadata_path, {:encoding => 'utf-8'}).and_return(user_metadata.merge('dependencies' => [ { 'name' => 'test-usee'} ]).to_pson)
+      allow(File).to receive(:read).with(usee_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
+      allow(File).to receive(:read).with(usee2_metadata_path, {:encoding => 'utf-8'}).and_raise(Errno::ENOENT)
       expect(eval_and_collect_notices(<<-CODE, node)).to eq(['ok'])
         include 'usee'
         assert_type(User::WithUseeOne, [1])
@@ -351,7 +379,7 @@ describe 'loaders' do
         catalog = compiler.compile
         expect(catalog.resource('Notify[first]')).to be_a(Puppet::Resource)
 
-        Puppet::Pops::Loader::RubyFunctionInstantiator.expects(:create).never
+        expect(Puppet::Pops::Loader::RubyFunctionInstantiator).not_to receive(:create)
         compiler = Puppet::Parser::Compiler.new(node)
         compiler.topscope['value_from_scope'] = 'second'
         catalog = compiler.compile
@@ -367,10 +395,8 @@ describe 'loaders' do
     let(:scope) { compiler.topscope }
     let(:loader) { compiler.loaders.private_loader_for_module('user') }
 
-    around(:each) do |example|
-      Puppet.override(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders) do
-        example.run
-      end
+    before(:each) do
+      Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
     end
 
     it 'a 3x function in dependent module can be called from a 4x function' do
@@ -396,6 +422,125 @@ describe 'loaders' do
     it 'a 3x function can be called with caller scope propagated from a 4x function' do
       function = loader.load_typed(typed_name(:function, 'user::caller_ws')).value
       expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'passed in scope'")
+    end
+
+    it 'calls can be made to a non core function via the call() function' do
+      call_function = loader.load_typed(typed_name(:function, 'call')).value
+      expect(call_function.call(scope, 'user::puppetcaller4')).to eql("usee::callee() got 'first' - usee::callee() got 'second'")
+    end
+
+  end
+
+  context 'when a 3x load takes place' do
+    let(:env) { environment_for(mix_4x_and_3x_functions) }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
+    let(:scope) { compiler.topscope }
+    let(:loader) { compiler.loaders.private_loader_for_module('user') }
+
+    before(:each) do
+      Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
+    end
+    after(:each) do
+      Puppet.pop_context
+    end
+
+    it "a function with no illegal constructs can be loaded" do
+      function = loader.load_typed(typed_name(:function, 'good_func_load')).value
+      expect(function.call(scope)).to eql(Float("3.14"))
+    end
+
+    it "a function with syntax error has helpful error message" do
+      expect { loader.load_typed(typed_name(:function, 'func_with_syntax_error')) }.to raise_error(/syntax error, unexpected keyword_end/)
+    end
+  end
+
+  context 'when a 3x load has illegal method added' do
+    let(:env) { environment_for(mix_4x_and_3x_functions) }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
+    let(:scope) { compiler.topscope }
+    let(:loader) { compiler.loaders.private_loader_for_module('user') }
+
+    before(:each) do
+      Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
+    end
+    after(:each) do
+      Puppet.pop_context
+    end
+
+    it "outside function body is reported as an error" do
+      expect { loader.load_typed(typed_name(:function, 'bad_func_load')) }.to raise_error(/Illegal method definition/)
+    end
+
+    it "to self outside function body is reported as an error" do
+      expect { loader.load_typed(typed_name(:function, 'bad_func_load5')) }.to raise_error(/Illegal method definition.*'bad_func_load5_illegal_method'/)
+    end
+
+    it "outside body is reported as an error even if returning the right func_info" do
+      expect { loader.load_typed(typed_name(:function, 'bad_func_load2'))}.to raise_error(/Illegal method definition/)
+    end
+
+    it "inside function body is reported as an error" do
+      expect {
+        f = loader.load_typed(typed_name(:function, 'bad_func_load3')).value
+        f.call(scope)
+      }.to raise_error(/Illegal method definition.*'bad_func_load3_illegal_method'/)
+    end
+
+    it "to self inside function body is reported as an error" do
+      expect { 
+        f = loader.load_typed(typed_name(:function, 'bad_func_load4')).value
+        f.call(scope)
+      }.to raise_error(/Illegal method definition.*'bad_func_load4_illegal_method'/)
+    end
+  end
+
+context 'when a 3x load has illegal construct and --func3x_check is false' do
+  let(:env) { environment_for(mix_4x_and_3x_functions) }
+  let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
+  let(:scope) { compiler.topscope }
+  let(:loader) { compiler.loaders.private_loader_for_module('user') }
+
+  before(:each) do
+    Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
+    Puppet[:func3x_check] = false
+  end
+  after(:each) do
+    Puppet.pop_context
+    Puppet[:func3x_check] = true
+  end
+
+  it "an illegal function is loaded" do
+      f = loader.load_typed(typed_name(:function, 'bad_func_load3')).value
+      expect(f.call(scope)).to eql("some return value")
+  end
+end
+
+  context 'when causing a 3x load followed by a 4x load' do
+    let(:env) { environment_for(mix_4x_and_3x_functions) }
+    let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new("test", :environment => env)) }
+    let(:scope) { compiler.topscope }
+    let(:loader) { compiler.loaders.private_loader_for_module('user') }
+
+
+    before(:each) do
+      Puppet.push_context(:current_environment => scope.environment, :global_scope => scope, :loaders => compiler.loaders)
+    end
+    after(:each) do
+      Puppet.pop_context
+    end
+
+    it 'a 3x function is loaded once' do
+      # create a 3x function that when called will do a load of "callee_ws"
+      Puppet::Parser::Functions::newfunction(:callee, :type => :rvalue, :arity => 1) do |args|
+        function_callee_ws(['passed in scope'])
+      end
+      expect(Puppet).not_to receive(:warning)
+      scope['passed_in_scope'] = 'value'
+      function = loader.load_typed(typed_name(:function, 'callee')).value
+      expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'value'")
+
+      function = loader.load_typed(typed_name(:function, 'callee_ws')).value
+      expect(function.call(scope, 'passed in scope')).to eql("usee::callee_ws() got 'value'")
     end
   end
 
@@ -523,6 +668,20 @@ describe 'loaders' do
               },
               'metadata.json' => sprintf(metadata_json, 'c', '')
             },
+            'd' => {
+              'types' => {
+                'init_typeset.pp' => <<-PUPPET.unindent,
+                  type D = TypeSet[{
+                    pcore_version => '1.0.0',
+                    types => {
+                      P => Object[{}],
+                      O => Object[{ parent => P }]
+                    }
+                  }]
+                  PUPPET
+              },
+              'metadata.json' => sprintf(metadata_json, 'd', '')
+            }
           }
         }
       end
@@ -551,22 +710,22 @@ describe 'loaders' do
         expect(type).to be_a(Puppet::Pops::Types::PIntegerType)
       end
 
-      it 'will not resolve implicit transitive dependencies, a -> c' do
+      it 'will resolve implicit transitive dependencies, a -> c' do
         type = Puppet::Pops::Types::TypeParser.singleton.parse('A::N', Puppet::Pops::Loaders.find_loader('a'))
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.name).to eql('A::N')
         type = type.resolved_type
-        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
-        expect(type.type_string).to eql('C::C')
+        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+        expect(type.name).to eql('C::C')
       end
 
-      it 'will not resolve reverse dependencies, b -> a' do
+      it 'will resolve reverse dependencies, b -> a' do
         type = Puppet::Pops::Types::TypeParser.singleton.parse('B::X', Puppet::Pops::Loaders.find_loader('b'))
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.name).to eql('B::X')
         type = type.resolved_type
-        expect(type).to be_a(Puppet::Pops::Types::PTypeReferenceType)
-        expect(type.type_string).to eql('A::A')
+        expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
+        expect(type.name).to eql('A::A')
       end
 
       it 'does not resolve init_typeset when more qualified type is found in typeset' do
@@ -612,6 +771,14 @@ describe 'loaders' do
         type = p.parse('C::D::Y', l)
         expect(type).to be_a(Puppet::Pops::Types::PTypeAliasType)
         expect(type.resolved_type).to be_a(Puppet::Pops::Types::PFloatType)
+      end
+
+      it 'loads an object type from a typeset that references another type defined in the same typeset' do
+        l = Puppet::Pops::Loaders.find_loader('d').private_loader
+        p = Puppet::Pops::Types::TypeParser.singleton
+        type = p.parse('D::O', l)
+        expect(type).to be_a(Puppet::Pops::Types::PObjectType)
+        expect(type.resolved_parent).to be_a(Puppet::Pops::Types::PObjectType)
       end
     end
   end

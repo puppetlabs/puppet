@@ -60,7 +60,7 @@ class GitIgnoreSpec < RegexSpec
         pattern_segs.shift
       else
         # A pattern without a beginning slash ('/') will match any
-        # descendant path. This is equivilent to "**/{pattern}". So,
+        # descendant path. This is equivalent to "**/{pattern}". So,
         # prepend with double-asterisks to make pattern relative to
         # root.
         if pattern_segs.length == 1 && pattern_segs[0] != '**'
@@ -70,7 +70,7 @@ class GitIgnoreSpec < RegexSpec
 
       # A pattern ending with a slash ('/') will match all descendant
       # paths of if it is a directory but not if it is a regular file.
-      # This is equivilent to "{pattern}/**". So, set last segment to
+      # This is equivalent to "{pattern}/**". So, set last segment to
       # double asterisks to include all descendants.
       if pattern_segs[-1].empty?
         pattern_segs[-1] = '**'
@@ -185,13 +185,13 @@ class GitIgnoreSpec < RegexSpec
       elsif char == '?'
         regex += '[^/]'
 
-      # Braket expression wildcard. Except for the beginning
-      # exclamation mark, the whole braket expression can be used
+      # Bracket expression wildcard. Except for the beginning
+      # exclamation mark, the whole bracket expression can be used
       # directly as regex but we have to find where the expression
       # ends.
-      # - "[][!]" matchs ']', '[' and '!'.
-      # - "[]-]" matchs ']' and '-'.
-      # - "[!]a-]" matchs any character except ']', 'a' and '-'.
+      # - "[][!]" matches ']', '[' and '!'.
+      # - "[]-]" matches ']' and '-'.
+      # - "[!]a-]" matches any character except ']', 'a' and '-'.
       elsif char == '['
         j = i
         # Pass brack expression negation.
@@ -199,13 +199,13 @@ class GitIgnoreSpec < RegexSpec
           j += 1
         end
 
-        # Pass first closing braket if it is at the beginning of the
+        # Pass first closing bracket if it is at the beginning of the
         # expression.
         if j < pattern.size && pattern[j].chr == ']'
           j += 1
         end
 
-        # Find closing braket. Stop once we reach the end or find it.
+        # Find closing bracket. Stop once we reach the end or find it.
         while j < pattern.size && pattern[j].chr != ']'
           j += 1
         end
@@ -214,12 +214,12 @@ class GitIgnoreSpec < RegexSpec
         if j < pattern.size
           expr = '['
 
-          # Braket expression needs to be negated.
+          # Bracket expression needs to be negated.
           if pattern[i].chr == '!'
             expr += '^'
             i += 1
 
-          # POSIX declares that the regex braket expression negation
+          # POSIX declares that the regex bracket expression negation
           # "[^...]" is undefined in a glob pattern. Python's
           # `fnmatch.translate()` escapes the caret ('^') as a
           # literal. To maintain consistency with undefined behavior,
@@ -236,26 +236,26 @@ class GitIgnoreSpec < RegexSpec
           end
 
 
-          # Build regex braket expression. Escape slashes so they are
+          # Build regex bracket expression. Escape slashes so they are
           # treated as literal slashes by regex as defined by POSIX.
           expr += pattern[i..j].sub('\\', '\\\\')
 
-          # Add regex braket expression to regex result.
+          # Add regex bracket expression to regex result.
           regex += expr
 
-          # Found end of braket expression. Increment j to be one past
-          # the closing braket:
+          # Found end of bracket expression. Increment j to be one past
+          # the closing bracket:
           #
           #  [...]
           #   ^   ^
           #   i   j
           #
           j += 1
-          # Set i to one past the closing braket.
+          # Set i to one past the closing bracket.
           i = j
 
-        # Failed to find closing braket, treat opening braket as a
-        # braket literal instead of as an expression.
+        # Failed to find closing bracket, treat opening bracket as a
+        # bracket literal instead of as an expression.
         else
           regex += '\['
         end

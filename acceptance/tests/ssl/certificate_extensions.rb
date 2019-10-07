@@ -1,28 +1,34 @@
-require 'puppet/acceptance/common_utils'
 require 'puppet/acceptance/temp_file_utils'
-extend Puppet::Acceptance::CAUtils
 extend Puppet::Acceptance::TempFileUtils
-require 'puppet/acceptance/classifier_utils'
-extend Puppet::Acceptance::ClassifierUtils
-
-disable_pe_enterprise_mcollective_agent_classes
-
 initialize_temp_dirs
 
 test_name "certificate extensions available as trusted data" do
   confine :except, :platform => /^cisco_/ # See PUP-5827
 
+  skip_test "Test requires at least one non-master agent" if hosts.length == 1
+
+  tag 'audit:high',        # ca/cert core functionality
+      'audit:integration',
+      'server'             # Ruby implementation is deprecated
+
   agent_certnames = []
+  hostname = master.execute('facter hostname')
+  fqdn = master.execute('facter fqdn')
 
   teardown do
     step "Cleanup the test agent certs"
-    agent_certnames.each do |cn|
-      on(master, puppet("cert", "clean", cn), :acceptable_exit_codes => [0,24])
+    master_config = {
+      'main' => { 'server' => fqdn },
+      'master' => { 'dns_alt_names' => "puppet,#{hostname},#{fqdn}" }
+    }
+
+    with_puppet_running_on(master, master_config) do
+      on(master,
+         "puppetserver ca clean --certname #{agent_certnames.join(',')}",
+         :acceptable_exit_codes => [0,24])
     end
   end
 
-  hostname = master.execute('facter hostname')
-  fqdn = master.execute('facter fqdn')
   environments_dir = get_test_file_path(master, "environments")
   master_config = {
     'main' => {
@@ -83,7 +89,6 @@ test_name "certificate extensions available as trusted data" do
 
       step "Check in as #{agent_certname}"
       on(agent, puppet("agent", "--test",
-                       "--server", master,
                        "--waitforcert", 0,
                        "--csr_attributes", agent_csr_attributes,
                        "--certname", agent_certname,

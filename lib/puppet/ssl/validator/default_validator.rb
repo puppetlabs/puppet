@@ -1,35 +1,30 @@
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 require 'puppet/ssl'
 
 # Perform peer certificate verification against the known CA.
 # If there is no CA information known, then no verification is performed
 #
+# @deprecated
 # @api private
 #
 class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   attr_reader :peer_certs
   attr_reader :verify_errors
-  attr_reader :ssl_configuration
+  attr_reader :last_error
 
   FIVE_MINUTES_AS_SECONDS = 5 * 60
 
   # Creates a new DefaultValidator, optionally with an SSL Configuration and SSL Host.
   #
-  # @param ssl_configuration [Puppet::SSL::Configuration] (a default configuration) ssl_configuration the SSL configuration to use
-  # @param ssl_host [Puppet::SSL::Host] The SSL host to use
+  # @param ca_path [String] Filepath for the cacert
   #
   # @api private
   #
   def initialize(
-      ssl_configuration = Puppet::SSL::Configuration.new(
-                                        Puppet[:localcacert], {
-                                          :ca_auth_file  => Puppet[:ssl_client_ca_auth]
-                                        }),
-      ssl_host = Puppet.lookup(:ssl_host))
+    ca_path = Puppet[:ssl_client_ca_auth] || Puppet[:localcacert])
 
     reset!
-    @ssl_configuration = ssl_configuration
-    @ssl_host = ssl_host
+    @ca_path = ca_path
   end
 
 
@@ -40,6 +35,8 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   def reset!
     @peer_certs = []
     @verify_errors = []
+    @hostname = nil
+    @last_error = nil
   end
 
   # Performs verification of the SSL connection and collection of the
@@ -70,7 +67,7 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   #
   def call(preverify_ok, store_context)
     current_cert = store_context.current_cert
-    @peer_certs << Puppet::SSL::Certificate.from_instance(current_cert)
+    @peer_certs << current_cert
 
     # We must make a copy since the scope of the store_context will be lost
     # across invocations of this method.
@@ -85,6 +82,22 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
       error_string = store_context.error_string || "OpenSSL error #{error}"
 
       case error
+      when OpenSSL::X509::V_OK
+        if @hostname
+          # chain is from leaf to root, opposite of the order that `call` is invoked
+          chain_cert = store_context.chain.first
+
+          # ruby 2.4 doesn't compare certs based on value, so force to DER byte array
+          if current_cert && chain_cert && current_cert.to_der == chain_cert.to_der && !OpenSSL::SSL.verify_certificate_identity(current_cert, @hostname)
+            @last_error = Puppet::SSL::CertMismatchError.new(current_cert, @hostname)
+            return false
+          else
+            @verify_errors << "#{error_string} for #{current_cert.subject.to_utf8}"
+          end
+        else
+          @verify_errors << "#{error_string} for #{current_cert.subject.to_utf8}"
+        end
+
       when OpenSSL::X509::V_ERR_CRL_NOT_YET_VALID
         # current_crl can be nil
         # https://github.com/ruby/ruby/blob/ruby_1_9_3/ext/openssl/ossl_x509store.c#L501-L510
@@ -94,13 +107,13 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
             Puppet.debug("Ignoring CRL not yet valid, current time #{Time.now.utc}, CRL last updated #{crl.last_update.utc}")
             preverify_ok = true
           else
-            @verify_errors << "#{error_string} for #{crl.issuer}"
+            @verify_errors << "#{error_string} for #{crl.issuer.to_utf8}"
           end
         else
           @verify_errors << error_string
         end
       else
-        @verify_errors << "#{error_string} for #{current_cert.subject}"
+        @verify_errors << "#{error_string} for #{current_cert.subject.to_utf8}"
       end
     end
     preverify_ok
@@ -113,16 +126,19 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   #
   # @param [Net::HTTP] connection The connection to validate
   #
+  # @param [Puppet::SSL::Host] host The host object containing SSL data
   # @return [void]
   #
   # @api private
   #
-  def setup_connection(connection)
+  def setup_connection(connection, ssl_host = Puppet.lookup(:ssl_host))
+    @hostname = connection.address
+
     if ssl_certificates_are_present?
-      connection.cert_store = @ssl_host.ssl_store
-      connection.ca_file = @ssl_configuration.ca_auth_file
-      connection.cert = @ssl_host.certificate.content
-      connection.key = @ssl_host.key.content
+      connection.cert_store = ssl_host.ssl_store
+      connection.ca_file = @ca_path
+      connection.cert = ssl_host.certificate.content
+      connection.key = ssl_host.key.content
       connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
       connection.verify_callback = self
     else
@@ -130,19 +146,39 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
     end
   end
 
+  ##
+  # Decode a string of concatenated certificates
+  #
+  # @return [Array<OpenSSL::X509::Certificate>]
+  def decode_cert_bundle(bundle_str)
+    re = /-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----/m
+    pem_ary = bundle_str.scan(re)
+    pem_ary.map do |pem_str|
+      OpenSSL::X509::Certificate.new(pem_str)
+    end
+  end
+
+  # read_file makes testing easier.
+  def read_file(path)
+    # https://www.ietf.org/rfc/rfc2459.txt defines the x509 V3 certificate format
+    # CA bundles are concatenated X509 certificates, but may also include
+    # comments, which could have UTF-8 characters
+    Puppet::FileSystem.read(path, :encoding => Encoding::UTF_8)
+  end
+
   # Validates the peer certificates against the authorized certificates.
   #
   # @api private
   #
   def valid_peer?
-    descending_cert_chain = @peer_certs.reverse.map {|c| c.content }
-    authz_ca_certs = ssl_configuration.ca_auth_certificates
+    descending_cert_chain = @peer_certs.reverse
+    authz_ca_certs = decode_cert_bundle(read_file(@ca_path))
 
     if not has_authz_peer_cert(descending_cert_chain, authz_ca_certs)
       msg = "The server presented a SSL certificate chain which does not include a " <<
         "CA listed in the ssl_client_ca_auth file.  "
-      msg << "Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject}.join(', ')}  " <<
-        "Peer Chain: #{descending_cert_chain.collect {|c| c.subject}.join(' => ')}"
+      msg << "Authorized Issuers: #{authz_ca_certs.collect {|c| c.subject.to_utf8}.join(', ')}  " <<
+        "Peer Chain: #{descending_cert_chain.collect {|c| c.subject.to_utf8}.join(' => ')}"
       @verify_errors << msg
       false
     else
@@ -168,6 +204,6 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   # @api private
   #
   def ssl_certificates_are_present?
-    Puppet::FileSystem.exist?(Puppet[:hostcert]) && Puppet::FileSystem.exist?(@ssl_configuration.ca_auth_file)
+    Puppet::FileSystem.exist?(Puppet[:hostcert]) && Puppet::FileSystem.exist?(@ca_path)
   end
 end

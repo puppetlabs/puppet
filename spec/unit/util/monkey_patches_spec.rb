@@ -1,8 +1,6 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/monkey_patches'
-
 
 describe Symbol do
   after :all do
@@ -20,7 +18,6 @@ describe Symbol do
   end
 
   it "should have an == that is not true for a string with same letters" do
-    pending "JRuby is incompatible with MRI - Cannot test this on JRuby" if RUBY_PLATFORM == 'java'
     symbol = :undef
     expect(symbol == 'undef').to_not be(true)
   end
@@ -42,16 +39,20 @@ describe OpenSSL::SSL::SSLContext do
 
   it 'explicitly disable SSLv2 ciphers using the ! prefix so they cannot be re-added' do
     cipher_str = OpenSSL::SSL::SSLContext::DEFAULT_PARAMS[:ciphers]
-    expect(cipher_str.split(':')).to include('!SSLv2')
+    if cipher_str
+      expect(cipher_str.split(':')).to include('!SSLv2')
+    end
   end
 
   it 'does not exclude SSLv3 ciphers shared with TLSv1' do
     cipher_str = OpenSSL::SSL::SSLContext::DEFAULT_PARAMS[:ciphers]
-    expect(cipher_str.split(':')).not_to include('!SSLv3')
+    if cipher_str
+      expect(cipher_str.split(':')).not_to include('!SSLv3')
+    end
   end
 
   it 'sets parameters on initialization' do
-    described_class.any_instance.expects(:set_params)
+    expect_any_instance_of(described_class).to receive(:set_params)
     subject
   end
 
@@ -70,7 +71,7 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
   let(:samecert) { cert.dup() }
 
   def with_root_certs(certs)
-    Puppet::Util::Windows::RootCerts.expects(:instance).returns(certs)
+    expect(Puppet::Util::Windows::RootCerts).to receive(:instance).and_return(certs)
   end
 
   it "adds a root cert to the store" do
@@ -81,7 +82,7 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
 
   it "doesn't warn when calling set_default_paths multiple times" do
     with_root_certs([cert])
-    store.expects(:warn).never
+    expect(store).not_to receive(:warn)
 
     store.set_default_paths
     store.set_default_paths
@@ -92,19 +93,32 @@ describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
     expect(cert.hash).to_not eq(samecert.hash)
     with_root_certs([cert, samecert])
 
-    store.expects(:add_cert).with(cert).once
-    store.expects(:add_cert).with(samecert).never
+    expect(store).to receive(:add_cert).with(cert).once
+    expect(store).not_to receive(:add_cert).with(samecert)
 
     store.set_default_paths
   end
 
-  it "warns when adding a certificate that already exists" do
-    with_root_certs([cert])
-    store.add_cert(cert)
+  # openssl 1.1.1 ignores duplicate certs
+  # https://github.com/openssl/openssl/commit/c0452248ea1a59a41023a4765ef7d9825e80a62b
+  if OpenSSL::OPENSSL_VERSION_NUMBER < 0x10101000
+    it "warns when adding a certificate that already exists" do
+      with_root_certs([cert])
+      store.add_cert(cert)
 
-    store.expects(:warn).with('Failed to add /DC=com/DC=microsoft/CN=Microsoft Root Certificate Authority')
+      expect(store).to receive(:warn).with('Failed to add CN=Microsoft Root Certificate Authority,DC=microsoft,DC=com')
 
-    store.set_default_paths
+      store.set_default_paths
+    end
+  else
+    it "doesn't warn when adding a duplicate cert" do
+      with_root_certs([cert])
+      store.add_cert(cert)
+
+      expect(store).not_to receive(:warn)
+
+      store.set_default_paths
+    end
   end
 
   it "raises when adding an invalid certificate" do

@@ -29,11 +29,30 @@ class Loader
   attr_reader :loader_name
 
   # Describes the kinds of things that loaders can load
-  LOADABLE_KINDS = [:func_4x, :func_4xpp, :type_pp, :resource_type_pp].freeze
+  LOADABLE_KINDS = [:func_4x, :func_4xpp, :func_3x, :datatype, :type_pp, :resource_type_pp, :plan, :task].freeze
 
   # @param [String] name the name of the loader. Must be unique among all loaders maintained by a {Loader} instance
   def initialize(loader_name)
     @loader_name = loader_name.freeze
+  end
+
+  # Search all places where this loader would find values of a given type and return a list the
+  # found values for which the given block returns true. All found entries will be returned if no
+  # block is given.
+  #
+  # Errors that occur function discovery will either be logged as warnings or collected by the optional
+  # `error_collector` array. When provided, it will receive {Puppet::DataTypes::Error} instances describing
+  # each error in detail and no warnings will be logged.
+  #
+  # @param type [Symbol] the type of values to search for
+  # @param error_collector [Array<Puppet::DataTypes::Error>] an optional array that will receive errors during load
+  # @param name_authority [String] the name authority, defaults to the pcore runtime
+  # @yield [typed_name] optional block to filter the results
+  # @yieldparam [TypedName] typed_name the typed name of a found entry
+  # @yieldreturn [Boolean] `true` to keep the entry, `false` to discard it.
+  # @return [Array<TypedName>] the list of names of discovered values
+  def discover(type, error_collector = nil, name_authority = Pcore::RUNTIME_NAME_AUTHORITY, &block)
+    return EMPTY_ARRAY
   end
 
   # Produces the value associated with the given name if already loaded, or available for loading
@@ -50,7 +69,8 @@ class Loader
   # @api public
   #
   def load(type, name)
-    if result = load_typed(TypedName.new(type, name.to_s))
+    result = load_typed(TypedName.new(type, name.to_s))
+    if result
       result.value
     end
   end
@@ -71,7 +91,7 @@ class Loader
   # of the given type/name.
   #
   # @param typed_name [TypedName] - the type, name combination to lookup
-  # @param check_dependencies [Boolean] - if dependencies should be checked in additiona to here and parent
+  # @param check_dependencies [Boolean] - if dependencies should be checked in addition to here and parent
   # @return [NamedEntry, nil] the entry containing the loaded value, or nil if not found
   # @api public
   #
@@ -88,8 +108,9 @@ class Loader
   #
   # @api private
   #
-  def [] (typed_name)
-    if found = get_entry(typed_name)
+  def [](typed_name)
+    found = get_entry(typed_name)
+    if found
       found.value
     else
       nil

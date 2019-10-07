@@ -12,46 +12,60 @@ module Puppet
       * The command itself is already idempotent. (For example, `apt-get update`.)
       * The exec has an `onlyif`, `unless`, or `creates` attribute, which prevents
         Puppet from running the command unless some condition is met.
-      * The exec has `refreshonly => true`, which only allows Puppet to run the
-        command when some other resource is changed. (See the notes on refreshing
-        below.)
+      * The exec has `refreshonly => true`, which allows Puppet to run the
+        command only when some other resource is changed. (See the notes on refreshing
+        below.) 
+        
+      The state managed by an `exec` resource represents whether the specified command
+      _needs to be_ executed during the catalog run. The target state is always that
+      the command does not need to be executed. If the initial state is that the
+      command _does_ need to be executed, then successfully executing the command
+      transitions it to the target state.
+      
+      The `unless`, `onlyif`, and `creates` properties check the initial state of the
+      resource. If one or more of these properties is specified, the exec might not
+      need to run. If the exec does not need to run, then the system is already in
+      the target state. In such cases, the exec is considered successful without 
+      actually executing its command.
 
       A caution: There's a widespread tendency to use collections of execs to
       manage resources that aren't covered by an existing resource type. This
       works fine for simple tasks, but once your exec pile gets complex enough
       that you really have to think to understand what's happening, you should
-      consider developing a custom resource type instead, as it will be much
+      consider developing a custom resource type instead, as it is much
       more predictable and maintainable.
+
+      **Duplication:** Even though `command` is the namevar, Puppet allows
+      multiple `exec` resources with the same `command` value.
 
       **Refresh:** `exec` resources can respond to refresh events (via
       `notify`, `subscribe`, or the `~>` arrow). The refresh behavior of execs
       is non-standard, and can be affected by the `refresh` and
       `refreshonly` attributes:
 
-      * If `refreshonly` is set to true, the exec will _only_ run when it receives an
+      * If `refreshonly` is set to true, the exec runs _only_ when it receives an
         event. This is the most reliable way to use refresh with execs.
-      * If the exec already would have run and receives an event, it will run its
-        command **up to two times.** (If an `onlyif`, `unless`, or `creates` condition
-        is no longer met after the first run, the second run will not occur.)
-      * If the exec already would have run, has a `refresh` command, and receives an
-        event, it will run its normal command, then run its `refresh` command
-        (as long as any `onlyif`, `unless`, or `creates` conditions are still met
-        after the normal command finishes).
-      * If the exec would **not** have run (due to an `onlyif`, `unless`, or `creates`
-        attribute) and receives an event, it still will not run.
+      * If the exec has already run and then receives an event, it runs its
+        command **up to two times.** If an `onlyif`, `unless`, or `creates` condition
+        is no longer met after the first run, the second run does not occur.
+      * If the exec has already run, has a `refresh` command, and receives an
+        event, it runs its normal command. Then, if any `onlyif`, `unless`, or `creates`
+        conditions are still met, the exec runs its `refresh` command.
+      * If the exec has an `onlyif`, `unless`, or `creates` attribute that prevents it
+        from running, and it then receives an event, it still will not run.
       * If the exec has `noop => true`, would otherwise have run, and receives
-        an event from a non-noop resource, it will run once (or run its `refresh`
-        command instead, if it has one).
+        an event from a non-noop resource, it runs once. However, if it has a `refresh`
+        command, it runs that instead of its normal command.
 
       In short: If there's a possibility of your exec receiving refresh events,
-      it becomes doubly important to make sure the run conditions are restricted.
+      it is extremely important to make sure the run conditions are restricted.
 
       **Autorequires:** If Puppet is managing an exec's cwd or the executable
-      file used in an exec's command, the exec resource will autorequire those
+      file used in an exec's command, the exec resource autorequires those
       files. If Puppet is managing the user that an exec should run as, the
-      exec resource will autorequire that user."
+      exec resource autorequires that user."
 
-    # Create a new check mechanism.  It's basically just a parameter that
+    # Create a new check mechanism.  It's basically a parameter that
     # provides one extra 'check' method.
     def self.newcheck(name, options = {}, &block)
       @checks ||= {}
@@ -78,8 +92,8 @@ module Puppet
 
       attr_reader :output
       desc "The expected exit code(s).  An error will be returned if the
-        executed command has some other exit code.  Defaults to 0. Can be
-        specified as an array of acceptable exit codes or a single value.
+        executed command has some other exit code. Can be specified as an array
+        of acceptable exit codes or a single value.
 
         On POSIX systems, exit codes are always integers between 0 and 255.
 
@@ -138,7 +152,8 @@ module Puppet
           self.fail Puppet::Error, _("Command exceeded timeout"), $!
         end
 
-        if log = @resource[:logoutput]
+        log = @resource[:logoutput]
+        if log
           case log
           when :true
             log = @resource[:loglevel]
@@ -176,7 +191,10 @@ module Puppet
         succeeds, any output produced will be logged at the instance's
         normal log level (usually `notice`), but if the command fails
         (meaning its return code does not match the specified code) then
-        any output is logged at the `err` log level."
+        any output is logged at the `err` log level.
+
+        Multiple `exec` resources can use the same `command` value; Puppet
+        only uses the resource title to ensure `exec`s are unique."
 
       validate do |command|
         raise ArgumentError, _("Command must be a String, got value of class %{klass}") % { klass: command.class } unless command.is_a? String
@@ -197,17 +215,20 @@ module Puppet
     end
 
     newparam(:user) do
-      desc "The user to run the command as.  Note that if you
-        use this then any error output is not currently captured.  This
-        is because of a bug within Ruby.  If you are using Puppet to
-        create this user, the exec will automatically require the user,
-        as long as it is specified by name.
+      desc "The user to run the command as.
 
-        Please note that the $HOME environment variable is not automatically set
-        when using this attribute."
+        > **Note:** Puppet cannot execute commands as other users on Windows.
+
+        Note that if you use this attribute, any error output is not captured
+        due to a bug within Ruby. If you use Puppet to create this user, the
+        exec automatically requires the user, as long as it is specified by
+        name.
+
+        The $HOME environment variable is not automatically set when using
+        this attribute."
 
       validate do |user|
-        if Puppet.features.microsoft_windows?
+        if Puppet::Util::Platform.windows?
           self.fail _("Unable to execute commands as other users on Windows")
         elsif !Puppet.features.root? && resource.current_username() != user
           self.fail _("Only root can execute commands as other users")
@@ -230,7 +251,7 @@ module Puppet
 
     newparam(:logoutput) do
       desc "Whether to log command output in addition to logging the
-        exit code.  Defaults to `on_failure`, which only logs the output
+        exit code. Defaults to `on_failure`, which only logs the output
         when the command has an exit code that does not match any value
         specified by the `returns` attribute. As with any resource type,
         the log level can be controlled with the `loglevel` metaparameter."
@@ -256,10 +277,11 @@ module Puppet
     end
 
     newparam(:environment) do
-      desc "Any additional environment variables you want to set for a
-        command.  Note that if you use this to set PATH, it will override
-        the `path` attribute.  Multiple environment variables should be
-        specified as an array."
+      desc "An array of any additional environment variables you want to set for a
+        command, such as `[ 'HOME=/root', 'MAIL=root@example.com']`.
+        Note that if you use this to set PATH, it will override the `path`
+        attribute. Multiple environment variables should be specified as an
+        array."
 
       validate do |values|
         values = [values] unless values.is_a? Array
@@ -304,10 +326,9 @@ module Puppet
 
     newparam(:tries) do
       desc "The number of times execution of the command should be tried.
-        Defaults to '1'. This many attempts will be made to execute
-        the command until an acceptable return code is returned.
-        Note that the timeout parameter applies to each try rather than
-        to the complete set of tries."
+        This many attempts will be made to execute the command until an
+        acceptable return code is returned. Note that the timeout parameter
+        applies to each try rather than to the complete set of tries."
 
       munge do |value|
         if value.is_a?(String)
@@ -404,6 +425,8 @@ module Puppet
       # If the file exists, return false (i.e., don't run the command),
       # else return true
       def check(value)
+        #TRANSLATORS 'creates' is a parameter name and should not be translated
+        debug(_("Checking that 'creates' path '%{creates_path}' exists") % { creates_path: value })
         ! Puppet::FileSystem.exist?(value)
       end
     end
@@ -424,7 +447,7 @@ module Puppet
         `grep` determines it's already there.
 
         Note that this test command runs with the same `provider`, `path`,
-        `user`, and `group` as the main command. If the `path` isn't set, you
+        `user`, `cwd`, and `group` as the main command. If the `path` isn't set, you
         must fully qualify the command's name.
 
         This parameter can also take an array of commands. For example:
@@ -452,9 +475,13 @@ module Puppet
           return false
         end
 
-        output.split(/\n/).each { |line|
-          self.debug(line)
-        }
+        if sensitive
+          self.debug("[output redacted]")
+        else
+          output.split(/\n/).each { |line|
+            self.debug(line)
+          }
+        end
 
         status.exitstatus != 0
       end
@@ -476,7 +503,7 @@ module Puppet
         This would run `logrotate` only if that test returns true.
 
         Note that this test command runs with the same `provider`, `path`,
-        `user`, and `group` as the main command. If the `path` isn't set, you
+        `user`, `cwd`, and `group` as the main command. If the `path` isn't set, you
         must fully qualify the command's name.
 
         This parameter can also take an array of commands. For example:
@@ -504,9 +531,13 @@ module Puppet
           return false
         end
 
-        output.split(/\n/).each { |line|
-          self.debug(line)
-        }
+        if sensitive
+          self.debug("[output redacted]")
+        else
+          output.split(/\n/).each { |line|
+            self.debug(line)
+          }
+        end
 
         status.exitstatus == 0
       end
@@ -526,7 +557,7 @@ module Puppet
       # Stick the cwd in there if we have it
       reqs << self[:cwd] if self[:cwd]
 
-      file_regex = Puppet.features.microsoft_windows? ? %r{^([a-zA-Z]:[\\/]\S+)} : %r{^(/\S+)}
+      file_regex = Puppet::Util::Platform.windows? ? %r{^([a-zA-Z]:[\\/]\S+)} : %r{^(/\S+)}
 
       self[:command].scan(file_regex) { |str|
         reqs << str
@@ -537,7 +568,8 @@ module Puppet
       }
 
       [:onlyif, :unless].each { |param|
-        next unless tmp = self[param]
+        tmp = self[param]
+        next unless tmp
 
         tmp = [tmp] unless tmp.is_a? Array
 
@@ -559,7 +591,8 @@ module Puppet
 
     autorequire(:user) do
       # Autorequire users if they are specified by name
-      if user = self[:user] and user !~ /^\d+$/
+      user = self[:user]
+      if user && user !~ /^\d+$/
         user
       end
     end
@@ -578,7 +611,15 @@ module Puppet
           val = @parameters[check].value
           val = [val] unless val.is_a? Array
           val.each do |value|
-            return false unless @parameters[check].check(value)
+            if !@parameters[check].check(value)
+              # Give a debug message so users can figure out what command would have been
+              # but don't print sensitive commands or parameters in the clear
+              cmdstring = @parameters[:command].sensitive ? "[command redacted]" : @parameters[:command].value
+
+              debug(_("'%{cmd}' won't be executed because of failed check '%{check}'") % { cmd: cmdstring, check: check })
+
+              return false
+            end
           end
         end
       }
@@ -597,7 +638,8 @@ module Puppet
     # Run the command, or optionally run a separately-specified command.
     def refresh
       if self.check_all_attributes(true)
-        if cmd = self[:refresh]
+        cmd = self[:refresh]
+        if cmd
           provider.run(cmd)
         else
           self.property(:returns).sync
@@ -611,11 +653,25 @@ module Puppet
 
     private
     def set_sensitive_parameters(sensitive_parameters)
-      # Respect sensitive commands
-      if sensitive_parameters.include?(:command)
-        sensitive_parameters.delete(:command)
-        parameter(:command).sensitive = true
+      # If any are sensitive, mark all as sensitive
+      sensitive = false
+      parameters_to_check = [:command, :unless, :onlyif]
+
+      parameters_to_check.each do |p|
+        if sensitive_parameters.include?(p)
+          sensitive_parameters.delete(p)
+          sensitive = true
+        end
       end
+
+      if sensitive
+        parameters_to_check.each do |p|
+          if parameters.include?(p)
+            parameter(p).sensitive = true
+          end
+        end
+      end
+
       super(sensitive_parameters)
     end
   end

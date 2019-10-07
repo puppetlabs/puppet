@@ -7,13 +7,13 @@ module EgrammarLexer2Spec
   def tokens_scanned_from(s)
     lexer = Puppet::Pops::Parser::Lexer2.new
     lexer.string = s
-    tokens = lexer.fullscan[0..-2]
+    lexer.fullscan[0..-2]
   end
 
   def epp_tokens_scanned_from(s)
     lexer = Puppet::Pops::Parser::Lexer2.new
     lexer.string = s
-    tokens = lexer.fullscan_epp[0..-2]
+    lexer.fullscan_epp[0..-2]
   end
 end
 
@@ -101,6 +101,21 @@ describe 'Lexer2' do
   }.each do |string, name|
     it "should lex a keyword from '#{string}'" do
       expect(tokens_scanned_from(string)).to match_tokens2(name)
+    end
+  end
+
+  context 'when --no-tasks (the default)' do
+    it "should lex a NAME from 'plan'" do
+      expect(tokens_scanned_from('plan')).to match_tokens2(:NAME)
+    end
+  end
+
+  context 'when --tasks' do
+    before(:each) { Puppet[:tasks] = true }
+    after(:each) { Puppet[:tasks] = false }
+
+    it "should lex a keyword from 'plan'" do
+      expect(tokens_scanned_from('plan')).to match_tokens2(:PLAN)
     end
   end
 
@@ -448,6 +463,36 @@ describe 'Lexer2' do
         )
     end
 
+    it 'strips only last newline when using trim option' do
+      code = <<-CODE.unindent
+        @(END)
+        Line 1
+        
+        Line 2
+        -END
+        CODE
+      expect(tokens_scanned_from(code)).to match_tokens2(
+        [:HEREDOC, ''],
+        [:SUBLOCATE, ["Line 1\n", "\n", "Line 2\n"]],
+        [:STRING, "Line 1\n\nLine 2"],
+      )
+    end
+
+    it 'strips only one newline at the end when using trim option' do
+      code = <<-CODE.unindent
+        @(END)
+        Line 1
+        Line 2
+        
+        -END
+      CODE
+      expect(tokens_scanned_from(code)).to match_tokens2(
+        [:HEREDOC, ''],
+        [:SUBLOCATE, ["Line 1\n", "Line 2\n", "\n"]],
+        [:STRING, "Line 1\nLine 2\n"],
+      )
+    end
+
     context 'with bad syntax' do
       def expect_issue(code, issue)
         expect { tokens_scanned_from(code) }.to raise_error(Puppet::ParseErrorWithIssue) { |e|
@@ -495,6 +540,15 @@ describe 'Lexer2' do
         expect_issue(code, Puppet::Pops::Issues::HEREDOC_WITHOUT_TEXT)
       end
 
+      it 'detects and reports HEREDOC_EMPTY_ENDTAG' do
+        code = <<-CODE
+        @("")
+        Text
+        |-END
+        CODE
+        expect_issue(code, Puppet::Pops::Issues::HEREDOC_EMPTY_ENDTAG)
+      end
+
       it 'detects and reports HEREDOC_MULTIPLE_AT_ESCAPES' do
         code = <<-CODE
         @(END:syntax/tst)
@@ -523,7 +577,6 @@ describe 'Lexer2' do
       code = <<-CODE
       "x\\u2713y"
       CODE
-      # >= Ruby 1.9.3 reports \u
       expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u2713y"])
     end
 
@@ -531,7 +584,6 @@ describe 'Lexer2' do
       code = <<-CODE
       "x\\u2713\\u2713y"
       CODE
-      # >= Ruby 1.9.3 reports \u
       expect(tokens_scanned_from(code)).to match_tokens2([:STRING, "x\u2713\u2713y"])
     end
 
@@ -631,66 +683,107 @@ describe 'Lexer2' do
       )
     end
 
-    it 'epp can skip leading space in tail text' do
-      code = <<-CODE
-      This is <% $x=10 -%>
+    it 'epp can skip trailing space and newline in tail text' do
+      # note that trailing whitespace is significant on one of the lines
+      code = <<-CODE.unindent
+      This is <% $x=10 -%>   
       just text
       CODE
       expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
-      [:RENDER_STRING, "      This is "],
+      [:RENDER_STRING, "This is "],
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "      just text\n"]
+      [:RENDER_STRING, "just text\n"]
       )
     end
 
     it 'epp can skip comments' do
-      code = <<-CODE
+      code = <<-CODE.unindent
       This is <% $x=10 -%>
       <%# This is an epp comment -%>
       just text
       CODE
       expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
-      [:RENDER_STRING, "      This is "],
+      [:RENDER_STRING, "This is "],
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "      just text\n"]
+      [:RENDER_STRING, "just text\n"]
       )
     end
 
-    it 'epp comments strips left whitespace when preceding is right trim' do
-      code = <<-CODE
+    it 'epp comments does not strip left whitespace when preceding is right trim' do
+      code = <<-CODE.unindent
       This is <% $x=10 -%>
-      space-before-me-but-not-after   <%# This is an epp comment %>
+         <%# This is an epp comment %>
       just text
       CODE
       expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
-      [:RENDER_STRING, "      This is "],
+      [:RENDER_STRING, "This is "],
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "      space-before-me-but-not-after\n      just text\n"]
+      [:RENDER_STRING, "   \njust text\n"]
       )
     end
 
-    it 'epp comments strips left whitespace on same line when preceding is not right trim' do
-      code = <<-CODE
+    it 'epp comments does not strip left whitespace when preceding is not right trim' do
+      code = <<-CODE.unindent
       This is <% $x=10 %>
-      <%# This is an epp comment -%>
+          <%# This is an epp comment -%>
       just text
       CODE
       expect(epp_tokens_scanned_from(code)).to match_tokens2(
       :EPP_START,
-      [:RENDER_STRING, "      This is "],
+      [:RENDER_STRING, "This is "],
       [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
-      [:RENDER_STRING, "\n      just text\n"]
+      [:RENDER_STRING, "\n    just text\n"]
+      )
+    end
+
+    it 'epp comments can trim left with <%#-' do
+      # test has 4 space before comment and 3 after it
+      # check that there is 3 spaces before the 'and'
+      #
+      code = <<-CODE.unindent
+      This is <% $x=10 -%>
+      no-space-after-me:    <%#- This is an epp comment %>   and
+      some text
+      CODE
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
+      :EPP_START,
+      [:RENDER_STRING, "This is "],
+      [:VARIABLE, "x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, "no-space-after-me:   and\nsome text\n"]
+      )
+    end
+
+    it 'puppet comment in left trimming epp tag works when containing a new line' do
+      # test has 4 space before comment and 3 after it
+      # check that there is 3 spaces before the 'and'
+      #
+      code = <<-CODE.unindent
+      This is <% $x=10 -%>
+      no-space-after-me:    <%-# This is an puppet comment
+        %>   and
+      some text
+      CODE
+      expect(epp_tokens_scanned_from(code)).to match_tokens2(
+      :EPP_START,
+      [:RENDER_STRING, "This is "],
+      [:VARIABLE, "x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, "no-space-after-me:"],
+      [:RENDER_STRING, "   and\nsome text\n"]
       )
     end
 
@@ -822,14 +915,14 @@ describe Puppet::Pops::Parser::Lexer2 do
   # Section 3.2.1.3 of Ruby spec guarantees that \u strings are encoded as UTF-8
   # Runes (may show up as garbage if font is not available): ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ
   let (:rune_utf8) {
-    "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2"
-    "\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA"
+    "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2" +
+    "\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA" +
     "\u16B3\u16A2\u16D7"
   }
 
   context 'when lexing files from disk' do
     it 'should always read files as UTF-8' do
-      if Puppet.features.microsoft_windows? && Encoding.default_external == Encoding::UTF_8
+      if Puppet::Util::Platform.windows? && Encoding.default_external == Encoding::UTF_8
         raise 'This test must be run in a codepage other than 65001 to validate behavior'
       end
 
@@ -848,7 +941,7 @@ describe Puppet::Pops::Parser::Lexer2 do
         manifest = file_containing('manifest.pp', manifest_code)
 
         expect {
-          lexed_file = described_class.new.lex_file(manifest)
+          described_class.new.lex_file(manifest)
         }.to raise_error(Puppet::ParseErrorWithIssue,
           'Illegal UTF-8 Byte Order mark at beginning of input: [EF BB BF] - remove these from the puppet source')
     end

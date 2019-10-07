@@ -77,7 +77,7 @@ describe 'function for dynamically creating resources' do
     it 'should pick up and pass on file and line information' do
       # mock location as the compile_to_catalog sets Puppet[:code} which does not
       # have file/line support.
-      Puppet::Pops::PuppetStack.expects(:stacktrace).once.returns([['test.pp', 1234]])
+      expect(Puppet::Pops::PuppetStack).to receive(:top_of_stack).once.and_return(['test.pp', 1234])
       catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
       r = catalog.resource(:file, "/etc/foo")
       expect(r.file).to eq('test.pp')
@@ -323,6 +323,15 @@ describe 'function for dynamically creating resources' do
         Puppet[:modulepath] = my_fixture_dir
         compile_to_catalog('include foo')
       }.to raise_error(Puppet::Error, /Syntax error at.*/)
+    end
+
+    it 'is not available when --tasks is on' do
+      Puppet[:tasks] = true
+      expect do
+        compile_to_catalog(<<-MANIFEST)
+          create_resources('class', {'bar'=>{}}, {'one' => 'two'})
+        MANIFEST
+      end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
     end
   end
 

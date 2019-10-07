@@ -33,7 +33,7 @@ class Puppet::Application::Lookup < Puppet::Application
     options[:prefix] = arg
   end
 
-  option('--sort-merge-arrays')
+  option('--sort-merged-arrays')
 
   option('--merge-hash-arrays')
 
@@ -95,10 +95,14 @@ class Puppet::Application::Lookup < Puppet::Application
     setup_terminuses
   end
 
-  def help
-    <<-'HELP'
+  def summary
+    _("Interactive Hiera lookup")
+  end
 
-puppet-lookup(8) -- Interactive Hiera lookup
+  def help
+    <<-HELP
+
+puppet lookup(8) -- #{summary}
 ========
 
 SYNOPSIS
@@ -147,7 +151,7 @@ You can provide multiple lookup keys to this command, but it only returns a
 value for the first found key, omitting the rest.
 
 For more details about how Hiera works, see the Hiera documentation:
-https://docs.puppet.com/puppet/latest/hiera_intro.html
+https://puppet.com/docs/puppet/latest/hiera_intro.html
 
 OPTIONS
 -------
@@ -258,7 +262,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
     #  raise "No node was given via the '--node' flag for the scope of the lookup.\n#{RUN_HELP}"
     #end
 
-    if (options[:sort_merge_arrays] || options[:merge_hash_arrays] || options[:prefix]) && options[:merge] != 'deep'
+    if (options[:sort_merged_arrays] || options[:merge_hash_arrays] || options[:prefix]) && options[:merge] != 'deep'
       raise _("The options %{deep_merge_opts} are only available with '--merge deep'\n%{run_help}") % { deep_merge_opts: DEEP_MERGE_OPTIONS, run_help: RUN_HELP }
     end
 
@@ -275,7 +279,7 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
 
       if merge == 'deep'
         merge_options = {'strategy' => 'deep',
-          'sort_merge_arrays' => !options[:sort_merge_arrays].nil?,
+          'sort_merged_arrays' => !options[:sort_merged_arrays].nil?,
           'merge_hash_arrays' => !options[:merge_hash_arrays].nil?}
 
         if options[:prefix]
@@ -331,23 +335,31 @@ Copyright (c) 2015 Puppet Inc., LLC Licensed under the Apache 2.0 License
       Puppet.settings[:facts_terminus] = 'facter'
     end
 
-    node = Puppet::Node.indirection.find(node) unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
+    unless node.is_a?(Puppet::Node) # to allow unit tests to pass a node instance
+      ni = Puppet::Node.indirection
+      tc = ni.terminus_class
+      if tc == :plain || options[:compile]
+        node = ni.find(node)
+      else
+        ni.terminus_class = :plain
+        node = ni.find(node)
+        ni.terminus_class = tc
+      end
+    end
 
     fact_file = options[:fact_file]
 
     if fact_file
-      original_facts = node.parameters
       if fact_file.end_with?("json")
-        given_facts = JSON.parse(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+        given_facts = Puppet::Util::Json.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
       else
-        given_facts = YAML.load(Puppet::FileSystem.read(fact_file, :encoding => 'utf-8'))
+        given_facts = Puppet::Util::Yaml.safe_load_file(fact_file)
       end
 
       unless given_facts.instance_of?(Hash)
         raise _("Incorrect formatted data in %{fact_file} given via the --facts flag") % { fact_file: fact_file }
       end
-
-      node.parameters = original_facts.merge(given_facts)
+      node.add_extra_facts(given_facts)
     end
 
     Puppet[:code] = 'undef' unless options[:compile]

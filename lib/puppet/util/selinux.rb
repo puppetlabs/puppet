@@ -13,12 +13,16 @@ require 'pathname'
 
 module Puppet::Util::SELinux
 
-  def selinux_support?
+  def self.selinux_support?
     return false unless defined?(Selinux)
     if Selinux.is_selinux_enabled == 1
       return true
     end
     false
+  end
+
+  def selinux_support?
+    Puppet::Util::SELinux.selinux_support?
   end
 
   # Retrieve and return the full context of the file.  If we don't have
@@ -190,7 +194,7 @@ module Puppet::Util::SELinux
   def selinux_label_support?(file)
     fstype = find_fs(file)
     return false if fstype.nil?
-    filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs', 'btrfs']
+    filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs', 'btrfs', 'tmpfs']
     filesystems.include?(fstype)
   end
 
@@ -232,7 +236,8 @@ module Puppet::Util::SELinux
   # Internal helper function to return which type of filesystem a given file
   # path resides on
   def find_fs(path)
-    return nil unless mounts = read_mounts
+    mounts = read_mounts
+    return nil unless mounts
 
     # cleanpath eliminates useless parts of the path (like '.', or '..', or
     # multiple slashes), without touching the filesystem, and without
@@ -240,7 +245,7 @@ module Puppet::Util::SELinux
     # while we try and figure out what file-system the target lives on.
     path = Pathname(path).cleanpath
     unless path.absolute?
-      raise Puppet::DevError, "got a relative path in SELinux find_fs: #{path}"
+      raise Puppet::DevError, _("got a relative path in SELinux find_fs: %{path}") % { path: path }
     end
 
     # Now, walk up the tree until we find a match for that path in the hash.

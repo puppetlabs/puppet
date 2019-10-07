@@ -66,6 +66,7 @@ Puppet::Util::Log.newdesttype :file do
   def initialize(path)
     @name = path
     @json = path.end_with?('.json') ? 1 : 0
+    @jsonl = path.end_with?('.jsonl')
 
     # first make sure the directory exists
     # We can't just use 'Config.use' here, because they've
@@ -77,9 +78,10 @@ Puppet::Util::Log.newdesttype :file do
 
     # create the log file, if it doesn't already exist
     need_array_start = false
+    file_exists = File.exists?(path)
     if @json == 1
       need_array_start = true
-      if File.exists?(path)
+      if file_exists
         sz = File.size(path)
         need_array_start = sz == 0
 
@@ -93,7 +95,7 @@ Puppet::Util::Log.newdesttype :file do
     file.puts('[') if need_array_start
 
     # Give ownership to the user and group puppet will run as
-    if Puppet.features.root? && !Puppet::Util::Platform.windows?
+    if Puppet.features.root? && !Puppet::Util::Platform.windows? && !file_exists
       begin
         FileUtils.chown(Puppet[:user], Puppet[:group], path)
       rescue ArgumentError, Errno::EPERM
@@ -109,7 +111,9 @@ Puppet::Util::Log.newdesttype :file do
   def handle(msg)
     if @json > 0
       @json > 1 ? @file.puts(',') : @json = 2
-      JSON.dump(msg.to_structured_hash, @file)
+      @file.puts(Puppet::Util::Json.dump(msg.to_structured_hash))
+    elsif @jsonl
+      @file.puts(Puppet::Util::Json.dump(msg.to_structured_hash))
     else
       @file.puts("#{msg.time} #{msg.source} (#{msg.level}): #{msg}")
     end
@@ -125,7 +129,6 @@ Puppet::Util::Log.newdesttype :logstash_event do
     # logstash_event format is documented at
     # https://logstash.jira.com/browse/LOGSTASH-675
 
-    data = {}
     data = msg.to_hash
     data['version'] = 1
     data['@timestamp'] = data['time']
@@ -136,7 +139,7 @@ Puppet::Util::Log.newdesttype :logstash_event do
 
   def handle(msg)
     message = format(msg)
-    $stdout.puts message.to_json
+    $stdout.puts Puppet::Util::Json.dump(message)
   end
 end
 
@@ -217,9 +220,10 @@ Puppet::Util::Log.newdesttype :eventlog do
   Puppet::Util::Log::DestEventlog::EVENTLOG_ERROR_TYPE       = 0x0001
   Puppet::Util::Log::DestEventlog::EVENTLOG_WARNING_TYPE     = 0x0002
   Puppet::Util::Log::DestEventlog::EVENTLOG_INFORMATION_TYPE = 0x0004
+  Puppet::Util::Log::DestEventlog::EVENTLOG_CHARACTER_LIMIT  = 31838
 
   def self.suitable?(obj)
-    Puppet.features.microsoft_windows?
+    Puppet::Util::Platform.windows?
   end
 
   def initialize
@@ -232,6 +236,15 @@ Puppet::Util::Log.newdesttype :eventlog do
 
   def handle(msg)
     native_type, native_id = to_native(msg.level)
+
+    stringified_msg = msg.message.to_s
+    if stringified_msg.length > self.class::EVENTLOG_CHARACTER_LIMIT
+      warning = "...Message exceeds character length limit, truncating."
+      truncated_message_length = self.class::EVENTLOG_CHARACTER_LIMIT - warning.length
+      stringified_truncated_msg = stringified_msg[0..truncated_message_length]
+      stringified_truncated_msg << warning
+      msg.message = stringified_truncated_msg
+    end
 
     @eventlog.report_event(
       :event_type  => native_type,

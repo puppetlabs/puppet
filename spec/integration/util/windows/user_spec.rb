@@ -1,59 +1,77 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
-describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows? do
+describe "Puppet::Util::Windows::User", :if => Puppet::Util::Platform.windows? do
   describe "2003 without UAC" do
     before :each do
-      Puppet::Util::Windows::Process.stubs(:windows_major_version).returns(5)
+      allow(Puppet::Util::Windows::Process).to receive(:windows_major_version).and_return(5)
+      allow(Puppet::Util::Windows::Process).to receive(:supports_elevated_security?).and_return(false)
     end
 
     it "should be an admin if user's token contains the Administrators SID" do
-      Puppet::Util::Windows::User.expects(:check_token_membership).returns(true)
-      Puppet::Util::Windows::Process.expects(:elevated_security?).never
+      expect(Puppet::Util::Windows::User).to receive(:check_token_membership).and_return(true)
 
       expect(Puppet::Util::Windows::User).to be_admin
     end
 
     it "should not be an admin if user's token doesn't contain the Administrators SID" do
-      Puppet::Util::Windows::User.expects(:check_token_membership).returns(false)
-      Puppet::Util::Windows::Process.expects(:elevated_security?).never
+      expect(Puppet::Util::Windows::User).to receive(:check_token_membership).and_return(false)
 
       expect(Puppet::Util::Windows::User).not_to be_admin
     end
 
     it "should raise an exception if we can't check token membership" do
-      Puppet::Util::Windows::User.expects(:check_token_membership).raises(Puppet::Util::Windows::Error, "Access denied.")
-      Puppet::Util::Windows::Process.expects(:elevated_security?).never
+      expect(Puppet::Util::Windows::User).to receive(:check_token_membership).and_raise(Puppet::Util::Windows::Error, "Access denied.")
 
       expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
     end
   end
 
-  describe "2008 with UAC" do
+  context "2008 with UAC" do
     before :each do
-      Puppet::Util::Windows::Process.stubs(:windows_major_version).returns(6)
+      allow(Puppet::Util::Windows::Process).to receive(:windows_major_version).and_return(6)
+      allow(Puppet::Util::Windows::Process).to receive(:supports_elevated_security?).and_return(true)
     end
 
-    it "should be an admin if user is running with elevated privileges" do
-      Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(true)
-      Puppet::Util::Windows::User.expects(:check_token_membership).never
+    describe "in local administrators group" do
+      before :each do
+        allow(Puppet::Util::Windows::User).to receive(:check_token_membership).and_return(true)
+      end
 
-      expect(Puppet::Util::Windows::User).to be_admin
+      it "should be an admin if user is running with elevated privileges" do
+        allow(Puppet::Util::Windows::Process).to receive(:elevated_security?).and_return(true)
+
+        expect(Puppet::Util::Windows::User).to be_admin
+      end
+
+      it "should not be an admin if user is not running with elevated privileges" do
+        allow(Puppet::Util::Windows::Process).to receive(:elevated_security?).and_return(false)
+
+        expect(Puppet::Util::Windows::User).not_to be_admin
+      end
+
+      it "should raise an exception if the process fails to open the process token" do
+        allow(Puppet::Util::Windows::Process).to receive(:elevated_security?).and_raise(Puppet::Util::Windows::Error, "Access denied.")
+
+        expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
+      end
     end
 
-    it "should not be an admin if user is not running with elevated privileges" do
-      Puppet::Util::Windows::Process.stubs(:elevated_security?).returns(false)
-      Puppet::Util::Windows::User.expects(:check_token_membership).never
+    describe "not in local administrators group" do
+      before :each do
+        allow(Puppet::Util::Windows::User).to receive(:check_token_membership).and_return(false)
+      end
 
-      expect(Puppet::Util::Windows::User).not_to be_admin
-    end
+      it "should not be an admin if user is running with elevated privileges" do
+        allow(Puppet::Util::Windows::Process).to receive(:elevated_security?).and_return(true)
 
-    it "should raise an exception if the process fails to open the process token" do
-      Puppet::Util::Windows::Process.stubs(:elevated_security?).raises(Puppet::Util::Windows::Error, "Access denied.")
-      Puppet::Util::Windows::User.expects(:check_token_membership).never
+        expect(Puppet::Util::Windows::User).not_to be_admin
+      end
 
-      expect { Puppet::Util::Windows::User.admin? }.to raise_error(Puppet::Util::Windows::Error, /Access denied./)
+      it "should not be an admin if user is not running with elevated privileges" do
+        allow(Puppet::Util::Windows::Process).to receive(:elevated_security?).and_return(false)
+
+        expect(Puppet::Util::Windows::User).not_to be_admin
+      end
     end
   end
 
@@ -88,6 +106,12 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
     end
 
     describe "logon_user" do
+      let(:fLOGON32_PROVIDER_DEFAULT) {0}
+      let(:fLOGON32_LOGON_INTERACTIVE) {2}
+      let(:fLOGON32_LOGON_NETWORK) {3}
+      let(:token) {'test'}
+      let(:user) {'test'}
+      let(:passwd) {'test'}
       it "should raise an error when provided with an incorrect username and password" do
         expect_logon_failure_error {
           Puppet::Util::Windows::User.logon_user(username, bad_password)
@@ -99,7 +123,20 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
           Puppet::Util::Windows::User.logon_user(username, nil)
         }
       end
+
+      it 'should raise error given that logon returns false' do
+
+        allow(Puppet::Util::Windows::User).to receive(:logon_user_by_logon_type).with(
+            user, passwd, fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, anything).and_return (0)
+        allow(Puppet::Util::Windows::User).to receive(:logon_user_by_logon_type).with(
+            user, passwd, fLOGON32_LOGON_INTERACTIVE, fLOGON32_PROVIDER_DEFAULT, anything).and_return(0)
+
+        expect {Puppet::Util::Windows::User.logon_user(user, passwd) {}}
+            .to raise_error(Puppet::Util::Windows::Error, /Failed to logon user/)
+
+      end
     end
+
 
     describe "password_is?" do
       it "should return false given an incorrect username and password" do
@@ -113,25 +150,25 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
       context "with a correct password" do
         it "should return true even if account restrictions are in place " do
           error = Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::User::ERROR_ACCOUNT_RESTRICTION)
-          Puppet::Util::Windows::User.stubs(:logon_user).raises(error)
+          allow(Puppet::Util::Windows::User).to receive(:logon_user).and_raise(error)
           expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
         end
 
         it "should return true even for an account outside of logon hours" do
           error = Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::User::ERROR_INVALID_LOGON_HOURS)
-          Puppet::Util::Windows::User.stubs(:logon_user).raises(error)
+          allow(Puppet::Util::Windows::User).to receive(:logon_user).and_raise(error)
           expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
         end
 
         it "should return true even for an account not allowed to log into this workstation" do
           error = Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::User::ERROR_INVALID_WORKSTATION)
-          Puppet::Util::Windows::User.stubs(:logon_user).raises(error)
+          allow(Puppet::Util::Windows::User).to receive(:logon_user).and_raise(error)
           expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
         end
 
         it "should return true even for a disabled account" do
           error = Puppet::Util::Windows::Error.new('', Puppet::Util::Windows::User::ERROR_ACCOUNT_DISABLED)
-          Puppet::Util::Windows::User.stubs(:logon_user).raises(error)
+          allow(Puppet::Util::Windows::User).to receive(:logon_user).and_raise(error)
           expect(Puppet::Util::Windows::User.password_is?(username, 'p@ssword')).to be(true)
         end
       end

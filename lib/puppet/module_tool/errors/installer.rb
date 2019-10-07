@@ -14,9 +14,11 @@ module Puppet::ModuleTool::Errors
     def multiline
       message = []
       message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @module_name, version: @requested_version }
-      message << _("  Module '%{module_name}' (%{version}) is already installed") % { module_name: @module_name, version: @installed_version }
+      message << _("  Module '%{module_name}' (%{installed_version}) is already installed") % { module_name: @module_name, installed_version: @installed_version }
       message << _("    Installed module has had changes made locally") unless @local_changes.empty?
+      #TRANSLATORS `puppet module upgrade` is a command line and should not be translated
       message << _("    Use `puppet module upgrade` to install a different version")
+      #TRANSLATORS `puppet module install --force` is a command line and should not be translated
       message << _("    Use `puppet module install --force` to re-install only this module")
       message.join("\n")
     end
@@ -33,10 +35,8 @@ module Puppet::ModuleTool::Errors
     def multiline
       message = []
       message << _("Could not install '%{requested_package}'") % { requested_package: @requested_package }
-
       message << _("  No releases are available from %{source}") % { source: @source }
       message << _("    Does '%{requested_package}' have at least one published release?") % { requested_package: @requested_package }
-
       message.join("\n")
     end
   end
@@ -50,12 +50,12 @@ module Puppet::ModuleTool::Errors
     end
 
     def multiline
-      _(<<-MSG).strip % { module_name: @requested_module, version: @requested_version, dir: @directory }
-Could not install module '%{module_name}' (%{version})
-  Path '%{dir}' exists but is not a directory.
-  A potential solution is to rename the path and then
-  mkdir -p '%{dir}'
-      MSG
+      message = []
+      message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: @requested_version }
+      message << _("  Path '%{directory}' exists but is not a directory.") % { directory: @directory }
+      #TRANSLATORS "mkdir -p '%{directory}'" is a command line example and should not be translated
+      message << _("  A potential solution is to rename the path and then \"mkdir -p '%{directory}'\"") % { directory: @directory }
+      message.join("\n")
     end
   end
 
@@ -68,12 +68,11 @@ Could not install module '%{module_name}' (%{version})
     end
 
     def multiline
-      _(<<-MSG).strip % { module_name: @requested_module, version: @requested_version, dir: @directory }
-Could not install module '%{module_name}' (%{version})
-  Permission is denied when trying to create directory '%{dir}'.
-  A potential solution is to check the ownership and permissions of
-  parent directories.
-      MSG
+      message = []
+      message << _("Could not install module '%{module_name}' (%{version})") % { module_name: @requested_module, version: @requested_version }
+      message << _("  Permission is denied when trying to create directory '%{directory}'.")  % { directory: @directory }
+      message << _('  A potential solution is to check the ownership and permissions of parent directories.')
+      message.join("\n")
     end
   end
 
@@ -85,11 +84,10 @@ Could not install module '%{module_name}' (%{version})
     end
 
     def multiline
-      _(<<-MSG).strip % { path: @entry_path.inspect, dir: @directory.inspect }
-Could not install package with an invalid path.
-  Package attempted to install file into
-  %{path} under %{dir}.
-      MSG
+      message = []
+      message << _('Could not install package with an invalid path.')
+      message << _('  Package attempted to install file into %{path} under %{directory}.') % { path: @entry_path.inspect, directory: @directory.inspect }
+      message.join("\n")
     end
   end
 end

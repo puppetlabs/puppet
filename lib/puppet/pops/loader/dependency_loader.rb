@@ -23,11 +23,19 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
     @dependency_loaders = dependency_loaders
   end
 
+  def discover(type, error_collector = nil, name_authority = Puppet::Pops::Pcore::RUNTIME_NAME_AUTHORITY, &block)
+    result = []
+    @dependency_loaders.each { |loader| result.concat(loader.discover(type, error_collector, name_authority, &block)) }
+    result.concat(super)
+    result
+  end
+
   # Finds name in a loader this loader depends on / can see
   #
   def find(typed_name)
     if typed_name.qualified?
-      if l = index()[typed_name.name_parts[0]]
+      l = index()[typed_name.name_parts[0]]
+      if l
         l.load_typed(typed_name)
       else
         # no module entered as dependency with name matching first segment of wanted name
@@ -62,7 +70,8 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
 
   def loaded_entry_in_dependency(typed_name, check_dependencies)
     if typed_name.qualified?
-      if l = index[typed_name.name_parts[0]]
+      l = index[typed_name.name_parts[0]]
+      if l
         l.loaded_entry(typed_name)
       else
         # no module entered as dependency with name matching first segment of wanted name

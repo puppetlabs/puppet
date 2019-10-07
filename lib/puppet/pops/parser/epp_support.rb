@@ -44,7 +44,8 @@ module EppSupport
 
     # This is the lexer's main loop
     until queue.empty? && scn.eos? do
-      if token = queue.shift || lex_token
+      token = queue.shift || lex_token
+      if token
         yield [ ctx[:after] = token[0], token[1] ]
       end
     end
@@ -123,7 +124,7 @@ module EppSupport
   # The scanner supports
   # * scanning text until <%, <%-, <%=
   # * while scanning text:
-  #   * tokens <%% and %%> are translated to <% and %> respetively and is returned as text.
+  #   * tokens <%% and %%> are translated to <% and %>, respectively, and is returned as text.
   #   * tokens <%# and %> (or ending with -%>) and the enclosed text is a comment and is not included in the returned text
   #   * text following a comment that ends with -%> gets trailing whitespace (up to and including a line break) trimmed
   #     and this whitespace is not included in the returned text.
@@ -201,8 +202,6 @@ module EppSupport
           if s.end_with? "<%"
             @mode = :error
             @issue = Issues::EPP_UNBALANCED_EXPRESSION
-          else
-            mode = :epp
           end
           return s
 
@@ -231,6 +230,7 @@ module EppSupport
 
         when "#"
           # template comment
+
           # drop the scanned <%, and skip past -%>, or %>, but also skip %%>
           s.slice!(-2..-1)
 
@@ -242,8 +242,11 @@ module EppSupport
             @mode = :error
             return s
           end
-          # Always trim leading whitespace on the same line when there is a comment
-          s.sub!(/[ \t]*\z/, '')
+          # Trim leading whitespace on the same line when start was <%#-
+          if part[1] == '-'
+            s.sub!(/[ \t]*\z/, '')
+          end
+
           @skip_leading = true if part.end_with?("-%>")
           # Continue scanning for more text
 

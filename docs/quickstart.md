@@ -8,21 +8,18 @@ by running the puppet spec tests.
 
 ## The Puppet Codebase
 
-In order to contribute to puppet you'll need to have a github account. Once you
+In order to contribute to puppet you'll need to have a GitHub account. Once you
 have your account, fork the puppetlabs/puppet repo, and clone it onto your
-local machine. The [github docs have a good
+local machine. The [GitHub docs have a good
 explanation](https://help.github.com/articles/fork-a-repo) of how to do all of
 this.
 
 ## Ruby versions
 
-Puppet needs to work across a variety of ruby versions, including ruby
-1.9.3 and up. Ruby 1.8.7 is no longer supported.
-
-Popular ways of making sure you have access to the various versions of ruby are
-to use either [rbenv](https://github.com/sstephenson/rbenv) or
-[rvm](https://rvm.io/). You can read up on the linked sites for how to get them
-installed on your system.
+Puppet needs to work across a variety of ruby versions. Popular ways of making
+sure you have access to the various versions of ruby are to use either
+[rbenv](https://github.com/sstephenson/rbenv) or [rvm](https://rvm.io/). You can
+read up on the linked sites for how to get them installed on your system.
 
 ## Dependencies
 
@@ -33,7 +30,7 @@ simple as:
 
 Now you can get all of the dependencies using:
 
-    $ bundle install --path .bundle/gems/
+    $ bundle install --path .bundle
 
 Once this is done, you can interact with puppet through bundler using `bundle
 exec <command>` which will ensure that `<command>` is executed in the context
@@ -60,15 +57,15 @@ The tests can be run with the following rake task:
 
 To run a single file's worth of tests (much faster!), give the filename:
 
-    $ bundle exec rake spec TEST=spec/unit/ssl/host_spec.rb
+    $ bundle exec rake spec TEST=spec/unit/file_system_spec.rb
 
 To run a single test or group of tests, give the filename and line number:
 
-    $ bundle exec rake spec TEST=spec/unit/ssl/host_spec.rb:42
+    $ bundle exec rake spec TEST=spec/unit/file_system_spec.rb:42
 
-To run all tests in parallel:
+To run all tests in parallel, process count is the number of processes to use when running the tests:
 
-    $ bundle exec rake parallel:spec
+    $ bundle exec rake parallel:spec[process_count]
 
 When tests fail, it is often useful to capture Puppet's log of a test
 run. The test harness pays attention to two environment variables that can
@@ -81,3 +78,7 @@ be used to send logs to a file, and to adjust the log level:
 * `PUPPET_TEST_LOG_LEVEL`: change the log level to adjust how much detail
   is captured. It defaults to `notice`; useful values include `info` and
   `debug`.
+
+## Running Acceptance Tests
+
+For details on how to run puppet acceptance tests, please see the [acceptance readme](../acceptance/README.md)

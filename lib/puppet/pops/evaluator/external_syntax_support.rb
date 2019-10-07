@@ -3,11 +3,11 @@
 #
 require 'puppet/plugins/syntax_checkers'
 module Puppet::Pops::Evaluator::ExternalSyntaxSupport
-  def assert_external_syntax(scope, result, syntax, reference_expr)
+  def assert_external_syntax(_, result, syntax, reference_expr)
     # ignore 'unspecified syntax'
     return if syntax.nil? || syntax == ''
 
-    checker = checker_for_syntax(scope, syntax)
+    checker = checker_for_syntax(nil, syntax)
     # ignore syntax with no matching checker
     return unless checker
 
@@ -19,14 +19,14 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
     if acceptor.error_count > 0
       checker_message = "Invalid produced text having syntax: '#{syntax}'."
       Puppet::Pops::IssueReporter.assert_and_report(acceptor, :message => checker_message)
-      raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+      raise ArgumentError, _("Internal Error: Configuration of runtime error handling wrong: should have raised exception")
     end
   end
 
   # Finds the most significant checker for the given syntax (most significant is to the right).
   # Returns nil if there is no registered checker.
   #
-  def checker_for_syntax(scope, syntax)
+  def checker_for_syntax(_, syntax)
     checkers_hash = Puppet.lookup(:plugins)[Puppet::Plugins::SyntaxCheckers::SYNTAX_CHECKERS_KEY]
     checkers_hash[lookup_keys_for_syntax(syntax).find {|x| checkers_hash[x] }]
   end

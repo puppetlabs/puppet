@@ -15,13 +15,15 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
     # use a default mtime in case there is no usable HTTP header
     @checksums[:mtime] = "{mtime}#{Time.now}"
 
-    if checksum = http_response['content-md5']
+    checksum = http_response['content-md5']
+    if checksum
       # convert base64 digest to hex
       checksum = checksum.unpack("m0").first.unpack("H*").first
       @checksums[:md5] = "{md5}#{checksum}"
     end
 
-    if last_modified = http_response['last-modified']
+    last_modified = http_response['last-modified']
+    if last_modified
       mtime = DateTime.httpdate(last_modified).to_time
       @checksums[:mtime] = "{mtime}#{mtime.utc}"
     end
@@ -37,7 +39,7 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
   def collect
     # Prefer the checksum_type from the indirector request options
     # but fall back to the alternative otherwise
-    [ @checksum_type, :md5, :mtime ].each do |type|
+    [ @checksum_type, :md5, :sha256, :sha384, :sha512, :sha224, :mtime ].each do |type|
       @checksum_type = type
       @checksum = @checksums[type]
       return if @checksum

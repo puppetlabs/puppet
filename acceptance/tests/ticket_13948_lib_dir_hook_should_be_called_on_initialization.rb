@@ -7,6 +7,11 @@ extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs()
 all_tests_passed = false
 
+tag 'audit:medium',      # tests basic custom module/pluginsync handling?
+    'audit:refactor',    # Use block style `test_namme`
+    'audit:integration',
+    'server'
+
 ###############################################################################
 # BEGIN TEST LOGIC
 ###############################################################################
@@ -19,8 +24,6 @@ agent_lib_dir = "#{agent_var_dir}/lib"
 app_name = "superbogus"
 app_desc = "a simple %1$s for testing %1$s delivery via plugin sync"
 app_output = "Hello from the #{app_name} %s"
-
-master_module_file_content = {}
 
 master_module_face_content = <<-HERE
 Puppet::Face.define(:#{app_name}, '0.0.1') do
@@ -113,7 +116,7 @@ begin
           on(agent, puppet('agent',
                            "--vardir=\"#{get_test_file_path(agent, agent_var_dir)}\" ",
                            "--ssldir=\"#{agent_ssldir}\" ",
-                           "--trace  --test --server #{master}")
+                           "--trace  --test")
           )
         end
       end

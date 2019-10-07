@@ -90,7 +90,7 @@ describe 'the return function' do
         $result = with(1) |$x| { with($x) |$x| {return(100) }}
         notice $result
       CODE
-    end.to raise_error(/return\(\) from context where this is illegal at unknown:3 on node.*/)
+    end.to raise_error(/return\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
   end
 
   it 'can not be called from top scope' do
@@ -100,6 +100,6 @@ describe 'the return function' do
         # line 2
         return()
       CODE
-    end.to raise_error(/return\(\) from context where this is illegal at unknown:3 on node.*/)
+    end.to raise_error(/return\(\) from context where this is illegal \(file: unknown, line: 3\) on node.*/)
   end
 end

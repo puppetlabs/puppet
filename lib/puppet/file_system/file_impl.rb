@@ -54,14 +54,17 @@ class Puppet::FileSystem::FileImpl
     while !written
       ::File.open(path, options, mode) do |rf|
         if rf.flock(::File::LOCK_EX|::File::LOCK_NB)
+          Puppet.debug(_("Locked '%{path}'") % { path: path })
           yield rf
           written = true
+          Puppet.debug(_("Unlocked '%{path}'") % { path: path })
         else
+          Puppet.debug("Failed to lock '%s' retrying in %.2f milliseconds" % [path, wait * 1000])
           sleep wait
           timeout -= wait
           wait *= 2
           if timeout < 0
-            raise Timeout::Error, _("Timeout waiting for exclusive lock on %{path}") % { path: @path }
+            raise Timeout::Error, _("Timeout waiting for exclusive lock on %{path}") % { path: path }
           end
         end
       end
@@ -108,8 +111,8 @@ class Puppet::FileSystem::FileImpl
     path.writable?
   end
 
-  def touch(path)
-    ::FileUtils.touch(path)
+  def touch(path, mtime: nil)
+    ::FileUtils.touch(path, mtime: mtime)
   end
 
   def mkpath(path)
@@ -150,5 +153,30 @@ class Puppet::FileSystem::FileImpl
 
   def chmod(mode, path)
     FileUtils.chmod(mode, path)
+  end
+
+  def replace_file(path, mode = nil)
+    mode ||= begin
+               stat = Puppet::FileSystem.lstat(path)
+               stat.mode & 07777
+             rescue Errno::ENOENT
+               0640
+             end
+
+    tempfile = Puppet::FileSystem::Uniquefile.new(Puppet::FileSystem.basename_string(path), Puppet::FileSystem.dir_string(path))
+    begin
+      begin
+        yield tempfile
+        tempfile.flush
+        tempfile.fsync
+      ensure
+        tempfile.close
+      end
+
+      chmod(mode, tempfile.path)
+      File.rename(tempfile.path, Puppet::FileSystem.path_string(path))
+    ensure
+      tempfile.close!
+    end
   end
 end

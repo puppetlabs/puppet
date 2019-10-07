@@ -11,10 +11,10 @@ module Serialization
     # @param value [Object] the value to convert
     # @param options {Symbol => <Boolean,String>} options hash
     # @option options [Boolean] :rich_data `true` if rich data is enabled
-    # @option options [Boolean] :local_references use local references instead of duplicating complex entries
+    # @option options [Boolean] :local_reference use local references instead of duplicating complex entries
     # @option options [Boolean] :type_by_reference `true` if Object types are converted to references rather than embedded.
     # @option options [Boolean] :symbol_as_string `true` if Symbols should be converted to strings (with type loss)
-    # @option options [String] :path_prefix String to prepend to path in warnings and errors
+    # @option options [String] :message_prefix String to prepend to in warnings and errors
     # @return [Data] the processed result. An object assignable to `Data`.
     #
     # @api public
@@ -70,12 +70,29 @@ module Serialization
 
     def to_data(value)
       if value.nil? || Types::PScalarDataType::DEFAULT.instance?(value)
-        value
-      elsif value.is_a?(Symbol)
-        if value == :default
+        if @rich_data && value.is_a?(String) && value.encoding == Encoding::ASCII_8BIT
+          # Transform the binary string to rich Binary
+          {
+            PCORE_TYPE_KEY => PCORE_TYPE_BINARY,
+            PCORE_VALUE_KEY => Puppet::Pops::Types::PBinaryType::Binary.from_binary_string(value).to_s
+          }
+        else
+          value
+        end
+      elsif :default == value
+        if @rich_data
           { PCORE_TYPE_KEY => PCORE_TYPE_DEFAULT }
         else
-          @symbol_as_string ? value.to_s : { PCORE_TYPE_KEY => PCORE_TYPE_SYMBOL, PCORE_VALUE_KEY => value.to_s }
+          serialization_issue(Issues::SERIALIZATION_DEFAULT_CONVERTED_TO_STRING, :path => path_to_s)
+          'default'
+        end
+      elsif value.is_a?(Symbol)
+        if @symbol_as_string
+          value.to_s
+        elsif @rich_data
+          { PCORE_TYPE_KEY => PCORE_TYPE_SYMBOL, PCORE_VALUE_KEY => value.to_s }
+        else
+          unknown_to_string_with_warning(value)
         end
       elsif value.instance_of?(Array)
         process(value) do
@@ -87,7 +104,7 @@ module Serialization
         end
       elsif value.instance_of?(Hash)
         process(value) do
-          if value.keys.all? { |key| key.is_a?(String) }
+          if value.keys.all? { |key| key.is_a?(String) && key != PCORE_TYPE_KEY }
             result = {}
             value.each_pair { |key, elem| with(key) { result[key] = to_data(elem) } }
             result
@@ -179,15 +196,19 @@ module Serialization
     end
 
     def unknown_key_to_string_with_warning(value)
-      str = value.to_s
+      str = unknown_to_string(value)
       serialization_issue(Issues::SERIALIZATION_UNKNOWN_KEY_CONVERTED_TO_STRING, :path => path_to_s, :klass => value.class, :value => str)
       str
     end
 
     def unknown_to_string_with_warning(value)
-      str = value.to_s
+      str = unknown_to_string(value)
       serialization_issue(Issues::SERIALIZATION_UNKNOWN_CONVERTED_TO_STRING, :path => path_to_s, :klass => value.class, :value => str)
       str
+    end
+
+    def unknown_to_string(value)
+      value.is_a?(Regexp) ? Puppet::Pops::Types::PRegexpType.regexp_to_s_with_delimiters(value) : value.to_s
     end
 
     def non_string_keyed_hash_to_data(hash)
@@ -243,7 +264,7 @@ module Serialization
           end
         else
           process(value) do
-            (names, types, required_count) = pcore_type.parameter_info(value.class)
+            (names, _, required_count) = pcore_type.parameter_info(value.class)
             args = names.map { |name| value.send(name) }
 
             # Pop optional arguments that are default
@@ -277,12 +298,12 @@ module Serialization
     def serialization_issue(issue, options = EMPTY_HASH)
       semantic = @semantic
       if semantic.nil?
-        stacktrace = Puppet::Pops::PuppetStack.stacktrace()
-        if stacktrace.size > 0
-          file, line = stacktrace[0]
-          semantic = Puppet::Pops::SemanticError.new(issue, nil, {:file => file, :line => line})
-        else
+        tos = Puppet::Pops::PuppetStack.top_of_stack
+        if tos.empty?
           semantic = Puppet::Pops::SemanticError.new(issue, nil, EMPTY_HASH)
+        else
+          file, line = stacktrace
+          semantic = Puppet::Pops::SemanticError.new(issue, nil, {:file => file, :line => line})
         end
       end
       optionally_fail(issue,  semantic, options)

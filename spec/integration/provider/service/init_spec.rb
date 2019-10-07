@@ -1,12 +1,14 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-provider = Puppet::Type.type(:service).provider(:init)
+test_title = 'Integration Tests for Puppet::Type::Service::Provider::Init'
 
-describe provider do
+describe test_title, unless: Puppet::Util::Platform.jruby? do
+  let(:provider) { Puppet::Type.type(:service).provider(:init) }
+
   describe "when running on FreeBSD" do
     before :each do
-      Facter.stubs(:value).with(:operatingsystem).returns 'FreeBSD'
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('FreeBSD')
+      allow(Facter).to receive(:value).with(:osfamily).and_return('FreeBSD')
     end
 
     it "should set its default path to include /etc/rc.d and /usr/local/etc/rc.d" do
@@ -16,7 +18,7 @@ describe provider do
 
   describe "when running on HP-UX" do
     before :each do
-      Facter.stubs(:value).with(:operatingsystem).returns 'HP-UX'
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('HP-UX')
     end
 
     it "should set its default path to include /sbin/init.d" do
@@ -26,7 +28,7 @@ describe provider do
 
   describe "when running on Archlinux" do
     before :each do
-      Facter.stubs(:value).with(:operatingsystem).returns 'Archlinux'
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('Archlinux')
     end
 
     it "should set its default path to include /etc/rc.d" do
@@ -36,7 +38,7 @@ describe provider do
 
   describe "when not running on FreeBSD, HP-UX or Archlinux" do
     before :each do
-      Facter.stubs(:value).with(:operatingsystem).returns 'RedHat'
+      allow(Facter).to receive(:value).with(:operatingsystem).and_return('RedHat')
     end
 
     it "should set its default path to include /etc/init.d" do

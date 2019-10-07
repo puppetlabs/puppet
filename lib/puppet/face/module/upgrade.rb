@@ -5,6 +5,7 @@ Puppet::Face.define(:module, '1.0.0') do
     summary _("Upgrade a puppet module.")
     description <<-EOT
       Upgrades a puppet module.
+      Note: Module upgrade uses MD5 checksums, which are prohibited on FIPS enabled systems.
     EOT
 
     returns "Hash"
@@ -59,10 +60,6 @@ Puppet::Face.define(:module, '1.0.0') do
       description <<-EOT
         The version of the module to upgrade to.
       EOT
-    end
-
-    option '--strict-semver' do
-      summary _('Whether version ranges should exclude pre-release versions')
     end
 
     when_invoked do |name, options|

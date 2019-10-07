@@ -6,8 +6,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   desc "Support for the Package Manager Utility (pacman) used in Archlinux.
 
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to pacman.
-  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-  or an array where each element is either a string or a hash."
+  These options should be specified as an array where each element is either a string or a hash."
 
   # If yaourt is installed, we can make use of it
   def self.yaourt?
@@ -79,7 +78,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
         # pacman -Q output is 'packagename version-rel'
         regex = %r{^(\S+)\s(\S+)}
         pipe.each_line do |line|
-          if match = regex.match(line)
+          match = regex.match(line)
+          if match
             packages[match.captures[0]] = match.captures[1]
           else
             warning(_("Failed to match line '%{line}'") % { line: line })
@@ -209,9 +209,9 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     cmd << resource_name
 
     if self.class.yaourt?
-      yaourt *cmd
+      yaourt(*cmd)
     else
-      pacman *cmd
+      pacman(*cmd)
     end
   end
 
@@ -258,9 +258,9 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     cmd << "-Sy" << resource_name
 
     if self.class.yaourt?
-      yaourt *cmd
+      yaourt(*cmd)
     else
-      pacman *cmd
+      pacman(*cmd)
     end
   end
 

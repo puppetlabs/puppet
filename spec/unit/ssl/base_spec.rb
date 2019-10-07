@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/ssl/certificate'
@@ -15,23 +14,23 @@ describe Puppet::SSL::Certificate do
 
   describe "when creating new instances" do
     it "should fail if given an object that is not an instance of the wrapped class" do
-      obj = stub 'obj', :is_a? => false
+      obj = double('obj', :is_a? => false)
       expect { @class.from_instance(obj) }.to raise_error(ArgumentError)
     end
 
     it "should fail if a name is not supplied and can't be determined from the object" do
-      obj = stub 'obj', :is_a? => true
+      obj = double('obj', :is_a? => true)
       expect { @class.from_instance(obj) }.to raise_error(ArgumentError)
     end
 
     it "should determine the name from the object if it has a subject" do
-      obj = stub 'obj', :is_a? => true, :subject => '/CN=foo'
+      obj = double('obj', :is_a? => true, :subject => '/CN=foo')
 
-      inst = stub 'base'
-      inst.expects(:content=).with(obj)
+      inst = double('base')
+      expect(inst).to receive(:content=).with(obj)
 
-      @class.expects(:new).with('foo').returns inst
-      @class.expects(:name_from_subject).with('/CN=foo').returns('foo')
+      expect(@class).to receive(:new).with('foo').and_return(inst)
+      expect(@class).to receive(:name_from_subject).with('/CN=foo').and_return('foo')
 
       expect(@class.from_instance(obj)).to eq(inst)
     end
@@ -39,8 +38,8 @@ describe Puppet::SSL::Certificate do
 
   describe "when determining a name from a certificate subject" do
     it "should extract only the CN and not any other components" do
-      subject = stub 'sub'
-      Puppet::Util::SSL.expects(:cn_from_subject).with(subject).returns 'host.domain.com'
+      subject = double('sub')
+      expect(Puppet::Util::SSL).to receive(:cn_from_subject).with(subject).and_return('host.domain.com')
       expect(@class.name_from_subject(subject)).to eq('host.domain.com')
     end
   end
@@ -48,14 +47,14 @@ describe Puppet::SSL::Certificate do
   describe "when initializing wrapped class from a file with #read" do
     it "should open the file with ASCII encoding" do
       path = '/foo/bar/cert'
-      Puppet::SSL::Base.stubs(:valid_certname).returns(true)
-      Puppet::FileSystem.expects(:read).with(path, :encoding => Encoding::ASCII).returns("bar")
+      allow(Puppet::SSL::Base).to receive(:valid_certname).and_return(true)
+      expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding::ASCII).and_return("bar")
       @base.read(path)
     end
   end
 
   describe "#digest_algorithm" do
-    let(:content) { stub 'content' }
+    let(:content) { double('content') }
     let(:base) {
       b = Puppet::SSL::Base.new('base')
       b.content = content
@@ -79,13 +78,13 @@ describe Puppet::SSL::Certificate do
       'dsaWithSHA1' => 'sha1',
     }.each do |signature, digest|
       it "returns '#{digest}' for signature algorithm '#{signature}'" do
-        content.stubs(:signature_algorithm).returns(signature)
+        allow(content).to receive(:signature_algorithm).and_return(signature)
         expect(base.digest_algorithm).to eq(digest)
       end
     end
 
     it "raises an error on an unknown signature algorithm" do
-      content.stubs(:signature_algorithm).returns("nonsense")
+      allow(content).to receive(:signature_algorithm).and_return("nonsense")
       expect {
         base.digest_algorithm
       }.to raise_error(Puppet::Error, "Unknown signature algorithm 'nonsense'")

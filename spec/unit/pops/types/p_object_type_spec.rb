@@ -9,13 +9,17 @@ describe 'The Object Type' do
 
   let(:parser) { TypeParser.singleton }
   let(:pp_parser) { Parser::EvaluatingParser.new }
+  let(:env) { Puppet::Node::Environment.create(:testing, []) }
+  let(:node) { Puppet::Node.new('testnode', :environment => env) }
   let(:loader) { Loaders.find_loader(nil) }
   let(:factory) { TypeFactory }
 
-  around(:each) do |example|
-    Puppet.override(:loaders => Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
-      example.run
-    end
+  before(:each) do
+    Puppet.push_context(:loaders => Loaders.new(env))
+  end
+
+  after(:each) do
+    Puppet.pop_context()
   end
 
   def type_object_t(name, body_string)
@@ -26,7 +30,7 @@ describe 'The Object Type' do
 
   def parse_object(name, body_string)
     type_object_t(name, body_string)
-    parser.parse(name, loader)
+    parser.parse(name, loader).resolve(loader)
   end
 
   context 'when dealing with attributes' do
@@ -70,6 +74,26 @@ describe 'The Object Type' do
         /expects a match for Enum\['constant', 'derived', 'given_or_derived', 'reference'\], got 'derivd'/)
     end
 
+    it 'raises an error if the name is __ptype' do
+      obj = <<-OBJECT
+        attributes => {
+          __ptype => String
+        }
+      OBJECT
+      expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+        /The attribute '__ptype' is reserved and cannot be used/)
+    end
+
+    it 'raises an error if the name is __pvalue' do
+      obj = <<-OBJECT
+        attributes => {
+          __pvalue => String
+        }
+      OBJECT
+      expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+        /The attribute '__pvalue' is reserved and cannot be used/)
+    end
+
     it 'stores value in attribute' do
       tp = parse_object('MyObject', <<-OBJECT)
         attributes => {
@@ -89,6 +113,19 @@ describe 'The Object Type' do
       OBJECT
       attr = tp['a']
       expect(attr.value?).to be_truthy
+    end
+
+    it 'attribute value can be defined using heredoc?' do
+      tp = parse_object('MyObject', <<-OBJECT.unindent)
+        attributes => {
+          a => { type => String, value => @(END) }
+            The value is some
+            multiline text
+            |-END
+        }
+      OBJECT
+      attr = tp['a']
+      expect(attr.value).to eql("The value is some\nmultiline text")
     end
 
     it 'attribute without defined value responds false to value?' do
@@ -122,44 +159,88 @@ describe 'The Object Type' do
     end
 
     context 'that are constants' do
-      it 'sets final => true' do
-        tp = parse_object('MyObject', <<-OBJECT)
-          attributes => {
-            a => {
-              type => Integer,
-              kind => constant,
-              value => 3
+      context 'and declared under key "constants"' do
+        it 'sets final => true' do
+          tp = parse_object('MyObject', <<-OBJECT)
+            constants => {
+              a => 3
             }
-          }
-        OBJECT
-        expect(tp['a'].final?).to be_truthy
+          OBJECT
+          expect(tp['a'].final?).to be_truthy
+        end
+
+        it 'sets kind => constant' do
+          tp = parse_object('MyObject', <<-OBJECT)
+            constants => {
+              a => 3
+            }
+          OBJECT
+          expect(tp['a'].constant?).to be_truthy
+        end
+
+        it 'infers generic type from value' do
+          tp = parse_object('MyObject', <<-OBJECT)
+            constants => {
+              a => 3
+            }
+          OBJECT
+          expect(tp['a'].type.to_s).to eql('Integer')
+        end
+
+        it 'cannot have the same name as an attribute' do
+          obj = <<-OBJECT
+            constants => {
+              a => 3
+            },
+            attributes => {
+              a => Integer
+            }
+          OBJECT
+          expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+            'attribute MyObject[a] is defined as both a constant and an attribute')
+        end
       end
 
-      it 'raises an error when no value is declared' do
-        obj = <<-OBJECT
-          attributes => {
-            a => {
-              type => Integer,
-              kind => constant
+      context 'and declared under key "attributes"' do
+        it 'sets final => true when declard in attributes' do
+          tp = parse_object('MyObject', <<-OBJECT)
+            attributes => {
+              a => {
+                type => Integer,
+                kind => constant,
+                value => 3
+              }
             }
-          }
-        OBJECT
-        expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-          "attribute MyObject[a] of kind 'constant' requires a value")
-      end
+          OBJECT
+          expect(tp['a'].final?).to be_truthy
+        end
 
-      it 'raises an error when final => false' do
-        obj = <<-OBJECT
-          attributes => {
-            a => {
-              type => Integer,
-              kind => constant,
-              final => false
+        it 'raises an error when no value is declared' do
+          obj = <<-OBJECT
+            attributes => {
+              a => {
+                type => Integer,
+                kind => constant
+              }
             }
-          }
-        OBJECT
-        expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
-          "attribute MyObject[a] of kind 'constant' cannot be combined with final => false")
+          OBJECT
+          expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+            "attribute MyObject[a] of kind 'constant' requires a value")
+        end
+
+        it 'raises an error when final => false' do
+          obj = <<-OBJECT
+            attributes => {
+              a => {
+                type => Integer,
+                kind => constant,
+                final => false
+              }
+            }
+          OBJECT
+          expect { parse_object('MyObject', obj) }.to raise_error(Puppet::ParseError,
+            "attribute MyObject[a] of kind 'constant' cannot be combined with final => false")
+        end
       end
     end
   end
@@ -205,6 +286,24 @@ describe 'The Object Type' do
       parse_object('MyObject', parent)
       tp = parse_object('MyDerivedObject', obj)
       expect(tp['a'].type).to eql(PIntegerType.new(0,10))
+    end
+
+    it 'can redefine inherited constant to assignable type' do
+      parent = <<-OBJECT
+        constants => {
+          a => 23
+        }
+      OBJECT
+      obj = <<-OBJECT
+        parent => MyObject,
+        constants => {
+          a => 46
+        }
+      OBJECT
+      tp = parse_object('MyObject', parent)
+      td = parse_object('MyDerivedObject', obj)
+      expect(tp['a'].value).to eql(23)
+      expect(td['a'].value).to eql(46)
     end
 
     it 'raises an error when an attribute overrides a function' do
@@ -597,7 +696,7 @@ describe 'The Object Type' do
     end
   end
 
-  context 'when producing an i12n_type' do
+  context 'when producing an init_hash_type' do
     it 'produces a struct of all attributes that are not derived or constant' do
       t = parse_object('MyObject', <<-OBJECT)
         attributes => {
@@ -607,7 +706,7 @@ describe 'The Object Type' do
           d => { type => Integer, kind => constant, value => 4 }
         }
       OBJECT
-      expect(t.i12n_type).to eql(factory.struct({
+      expect(t.init_hash_type).to eql(factory.struct({
         'a' => factory.integer,
         'b' => factory.integer
       }))
@@ -620,7 +719,7 @@ describe 'The Object Type' do
           b => { type => Integer, value => 4 }
         }
       OBJECT
-      expect(t.i12n_type).to eql(factory.struct({
+      expect(t.init_hash_type).to eql(factory.struct({
         'a' => factory.integer,
         factory.optional('b') => factory.integer
       }))
@@ -638,8 +737,8 @@ describe 'The Object Type' do
           b => { type => Integer }
         }
       OBJECT
-      expect(t1.i12n_type).to eql(factory.struct({ 'a' => factory.integer }))
-      expect(t2.i12n_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
+      expect(t1.init_hash_type).to eql(factory.struct({ 'a' => factory.integer }))
+      expect(t2.init_hash_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
     end
 
     it 'produces a struct that reflects overrides made in derived type' do
@@ -655,8 +754,8 @@ describe 'The Object Type' do
           b => { type => Integer, override => true, value => 5 }
         }
       OBJECT
-      expect(t1.i12n_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
-      expect(t2.i12n_type).to eql(factory.struct({ 'a' => factory.integer, factory.optional('b') => factory.integer }))
+      expect(t1.init_hash_type).to eql(factory.struct({ 'a' => factory.integer, 'b' => factory.integer }))
+      expect(t2.init_hash_type).to eql(factory.struct({ 'a' => factory.integer, factory.optional('b') => factory.integer }))
     end
   end
 
@@ -682,7 +781,7 @@ describe 'The Object Type' do
 
   context 'when using the initialization hash' do
     it 'produced hash that contains features using short form (type instead of detailed hash when only type is declared)' do
-      obj = t = parse_object('MyObject', <<-OBJECT)
+      obj = parse_object('MyObject', <<-OBJECT)
         attributes => {
           a => { type => Integer }
         }
@@ -690,18 +789,34 @@ describe 'The Object Type' do
       expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => Integer}}]")
     end
 
-    it 'produced hash that does not include defaults' do
-      obj = t = parse_object('MyObject', <<-OBJECT)
-        attributes => {
-          a => { type => Integer, value => 23, kind => constant, final => true },
-        },
+    it 'produced hash that does not include default for equality_include_type' do
+      obj = parse_object('MyObject', <<-OBJECT)
+        attributes => { a => Integer },
         equality_include_type => true
       OBJECT
-      expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => {type => Integer, kind => constant, value => 23}}}]")
+      expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => Integer}}]")
+    end
+
+    it 'constants are presented in a separate hash if they use a generic type' do
+      obj = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer, value => 23, kind => constant },
+        },
+      OBJECT
+      expect(obj.to_s).to eql("Object[{name => 'MyObject', constants => {'a' => 23}}]")
+    end
+
+    it 'constants are not presented in a separate hash unless they use a generic type' do
+      obj = parse_object('MyObject', <<-OBJECT)
+        attributes => {
+          a => { type => Integer[0, 30], value => 23, kind => constant },
+        },
+      OBJECT
+      expect(obj.to_s).to eql("Object[{name => 'MyObject', attributes => {'a' => {type => Integer[0, 30], kind => constant, value => 23}}}]")
     end
 
     it 'can create an equal copy from produced hash' do
-      obj = t = parse_object('MyObject', <<-OBJECT)
+      obj = parse_object('MyObject', <<-OBJECT)
         attributes => {
           a => { type => Struct[{x => Integer, y => Integer}], value => {x => 4, y => 9}, kind => constant },
           b => Integer
@@ -845,6 +960,123 @@ describe 'The Object Type' do
         /attribute MySecondObject\[a\] attempts to override final attribute MyObject\[a\]/)
     end
 
+    it 'a type cannot be created using an unresolved parent' do
+      code = <<-CODE
+      notice(Object[{ name => 'MyObject', parent => Type('NoneSuch'), attributes => { a => String}}].new('hello'))
+      CODE
+      expect { eval_and_collect_notices(code) }.to raise_error(Puppet::Error,
+        /reference to unresolved type 'NoneSuch'/)
+    end
+
+    context 'type alias using bracket-less (implicit Object) form' do
+      let(:logs) { [] }
+      let(:notices) { logs.select { |log| log.level == :notice }.map { |log| log.message } }
+      let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+      let(:node) { Puppet::Node.new('example.com') }
+      let(:compiler) { Puppet::Parser::Compiler.new(node) }
+
+      def compile(code)
+        Puppet[:code] = code
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) { compiler.compile }
+      end
+
+      it 'Object is implicit' do
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => Integer}}
+          notice(MyObject =~ Type)
+          notice(MyObject(3))
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(['true', "MyObject({'a' => 3})"])
+      end
+
+      it 'Object can be specified' do
+        compile(<<-CODE)
+          type MyObject = Object { name => 'MyFirstObject', attributes => { a =>Integer }}
+          notice(MyObject =~ Type)
+          notice(MyObject(3))
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(['true', "MyObject({'a' => 3})"])
+      end
+
+      it 'parent can be specified before the hash' do
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+          notice(MySecondObject < MyObject)
+          notice(MyObject('hi'))
+          notice(MySecondObject('hello', 'world'))
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(
+          ['true', 'true', "MyObject({'a' => 'hi'})", "MySecondObject({'a' => 'hello', 'b' => 'world'})"])
+      end
+
+      it 'parent can be specified in the hash' do
+        Puppet[:strict] = 'warning'
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = { parent => MyObject, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(['true'])
+      end
+
+      it 'Object before the hash and parent inside the hash can be combined' do
+        Puppet[:strict] = 'warning'
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = Object { parent => MyObject, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+        expect(warnings).to be_empty
+        expect(notices).to eql(['true'])
+      end
+
+      it 'if strict == warning, a warning is issued when the same is parent specified both before and inside the hash' do
+        Puppet[:strict] = 'warning'
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { parent => MyObject, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+        expect(notices).to eql(['true'])
+        expect(warnings).to eql(["The key 'parent' is declared more than once"])
+      end
+
+      it 'if strict == warning, a warning is issued when different parents are specified before and inside the hash. The former overrides the latter' do
+        Puppet[:strict] = 'warning'
+        compile(<<-CODE)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { parent => MyObject, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+        expect(notices).to eql(['true'])
+        expect(warnings).to eql(["The key 'parent' is declared more than once"])
+      end
+
+      it 'if strict == error, an error is raised when the same parent is specified both before and inside the hash' do
+        Puppet[:strict] = 'error'
+        expect { compile(<<-CODE) }.to raise_error(/The key 'parent' is declared more than once/)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { parent => MyObject, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+      end
+
+      it 'if strict == error, an error is raised when different parents are specified before and inside the hash' do
+        Puppet[:strict] = 'error'
+        expect { compile(<<-CODE) }.to raise_error(/The key 'parent' is declared more than once/)
+          type MyObject = { name => 'MyFirstObject', attributes => { a => String }}
+          type MySecondObject = MyObject { parent => MyOtherType, attributes => { b => String }}
+          notice(MySecondObject =~ Type)
+        CODE
+      end
+    end
+
     it 'can inherit from an aliased type' do
       code = <<-CODE
       type MyObject = Object[{ name => 'MyFirstObject', attributes => { a => Integer }}]
@@ -917,10 +1149,12 @@ describe 'The Object Type' do
           "name => 'MyFirstObject', "+
           "attributes => {"+
           "'first_a' => Integer, "+
-          "'first_b' => {type => String, kind => constant, value => 'the first constant'}, "+
           "'first_c' => {type => String, final => true, kind => derived}, "+
           "'first_d' => {type => String, kind => given_or_derived}, "+
           "'first_e' => String"+
+          "}, "+
+          "constants => {"+
+          "'first_b' => 'the first constant'"+
           "}, "+
           "functions => {"+
           "'first_x' => Callable[Integer], "+
@@ -933,8 +1167,10 @@ describe 'The Object Type' do
           "parent => MyFirstObject, "+
           "attributes => {"+
           "'second_a' => Integer, "+
-          "'second_b' => {type => String, kind => constant, value => 'the second constant'}, "+
           "'first_e' => {type => Enum['fee', 'foo', 'fum'], final => true, override => true, value => 'fee'}"+
+          "}, "+
+          "constants => {"+
+          "'second_b' => 'the second constant'"+
           "}, "+
           "functions => {"+
           "'second_x' => Callable[Integer], "+
@@ -943,6 +1179,247 @@ describe 'The Object Type' do
           "equality => ['second_a']"+
           "}]"
         ])
+    end
+
+    context 'object with type parameters' do
+      it 'can be declared' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['ok'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          }]
+        notice('ok')
+        PUPPET
+      end
+
+      it 'can be referenced' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["MyType['hello']"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          }]
+
+        notice(MyType['hello'])
+        PUPPET
+      end
+
+      it 'leading unset parameters are represented as default in string representation' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["MyType[default, 'world']"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String,
+            p2 => String,
+          }]
+
+        notice(MyType[default, 'world'])
+        PUPPET
+      end
+
+      it 'trailing unset parameters are skipped in string representation' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["MyType['my']"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String,
+            p2 => String,
+          }]
+
+        notice(MyType['my'])
+        PUPPET
+      end
+
+      it 'a type with more than 2 type parameters uses named arguments in string representation' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["MyType[{'p1' => 'my'}]"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String,
+            p2 => String,
+            p3 => String,
+          }]
+
+        notice(MyType['my'])
+        PUPPET
+      end
+
+      it 'can be used without parameters' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(["Object[{name => 'MyType', type_parameters => {'p1' => String}}]"])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          }]
+
+        notice(MyType)
+        PUPPET
+      end
+
+      it 'involves type parameter values when testing instance of' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'false', 'true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          },
+          attributes => {
+            p1 => String
+          }]
+
+        $x = MyType('world')
+        notice($x =~ MyType)
+        notice($x =~ MyType['hello'])
+        notice($x =~ MyType['world'])
+        PUPPET
+      end
+
+      it 'involves type parameter values when testing assignability' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'false', 'true', 'true', 'false', 'true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String
+          },
+          attributes => {
+            p1 => String
+          }]
+
+        $x = MyType['world']
+        notice($x <= MyType)
+        notice($x <= MyType['hello'])
+        notice($x <= MyType['world'])
+
+        notice(MyType >= $x)
+        notice(MyType['hello'] >= $x)
+        notice(MyType['world'] >= $x)
+        PUPPET
+      end
+
+      it 'parameters can be types' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'true', 'true', 'true', 'false'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef]],
+            p2 => Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        $x = MyType('good bye', 'cruel world')
+        notice($x =~ MyType)
+        notice($x =~ MyType[Enum['hello', 'good bye']])
+        notice($x =~ MyType[Enum['hello', 'good bye'], Pattern[/world/, /universe/]])
+        notice($x =~ MyType[NotUndef, NotUndef])
+        notice($x =~ MyType[Enum['hello', 'yo']])
+        PUPPET
+      end
+
+      it 'parameters can be provided using named arguments' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'false', 'true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => String,
+            p2 => String
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        $x = MyType('good bye', 'cruel world')
+        notice($x =~ MyType)
+        notice($x =~ MyType[p1 => 'hello', p2 => 'cruel world'])
+        notice($x =~ MyType[p1 => 'good bye', p2 => 'cruel world'])
+        PUPPET
+      end
+
+      it 'at least one parameter must be given' do
+        expect{eval_and_collect_notices(<<-PUPPET, node)}.to raise_error(/The MyType-Type cannot be parameterized using an empty parameter list/)
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+          }]
+        notice(MyType[default])
+        PUPPET
+      end
+
+      it 'undef is a valid value for a type parameter' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'false'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Optional[String],
+          },
+          attributes => {
+            p1 => Optional[String],
+          }]
+        notice(MyType() =~ MyType[undef])
+        notice(MyType('hello') =~ MyType[undef])
+        PUPPET
+      end
+
+      it 'Type parameters does not mean that type must be parameterized' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+            p2 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        notice(MyType('hello', 'world') =~ MyType)
+        PUPPET
+      end
+
+      it 'A parameterized type is assignable to another parameterized type if base type and parameters are assignable' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+            p2 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        notice(MyType[Pattern[/a/,/b/]] > MyType[Enum['a','b']])
+        PUPPET
+      end
+
+      it 'Instance is inferred to parameterized type' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['true', 'true', 'true', 'true', 'true'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+            p2 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        $x = MyType('hello', 'world')
+        notice(type($x, generalized) == MyType)
+        notice(type($x) < MyType)
+        notice(type($x) < MyType['hello'])
+        notice(type($x) < MyType[/hello/, /world/])
+        notice(type($x) == MyType['hello', 'world'])
+        PUPPET
+      end
+
+      it 'Attributes of instance of parameterized type can be accessed using function calls' do
+        expect(eval_and_collect_notices(<<-PUPPET, node)).to eql(['hello', 'world'])
+        type MyType = Object[
+          type_parameters => {
+            p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+            p2 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]],
+          },
+          attributes => {
+            p1 => String,
+            p2 => String
+          }]
+        $x = MyType('hello', 'world')
+        notice($x.p1)
+        notice($x.p2)
+        PUPPET
+      end
     end
   end
 

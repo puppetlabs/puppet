@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/file_serving/fileset'
@@ -18,49 +17,49 @@ describe Puppet::FileServing::Fileset do
 
     it "removes a trailing file path separator" do
       path_with_separator = "#{somefile}#{File::SEPARATOR}"
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       fileset = Puppet::FileServing::Fileset.new(path_with_separator)
       expect(fileset.path).to eq(somefile)
     end
 
     it "can be created from the root directory" do
       path = File.expand_path(File::SEPARATOR)
-      Puppet::FileSystem.expects(:lstat).with(path).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(path).and_return(double('stat'))
       fileset = Puppet::FileServing::Fileset.new(path)
       expect(fileset.path).to eq(path)
     end
 
     it "fails if its path does not exist" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).raises(Errno::ENOENT)
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_raise(Errno::ENOENT)
       expect { Puppet::FileServing::Fileset.new(somefile) }.to raise_error(ArgumentError, "Fileset paths must exist")
     end
 
     it "accepts a 'recurse' option" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       set = Puppet::FileServing::Fileset.new(somefile, :recurse => true)
       expect(set.recurse).to be_truthy
     end
 
     it "accepts a 'recurselimit' option" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       set = Puppet::FileServing::Fileset.new(somefile, :recurselimit => 3)
       expect(set.recurselimit).to eq(3)
     end
 
     it "accepts an 'ignore' option" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       set = Puppet::FileServing::Fileset.new(somefile, :ignore => ".svn")
       expect(set.ignore).to eq([".svn"])
     end
 
     it "accepts a 'links' option" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       set = Puppet::FileServing::Fileset.new(somefile, :links => :manage)
       expect(set.links).to eq(:manage)
     end
 
     it "accepts a 'checksum_type' option" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       set = Puppet::FileServing::Fileset.new(somefile, :checksum_type => :test)
       expect(set.checksum_type).to eq(:test)
     end
@@ -70,22 +69,22 @@ describe Puppet::FileServing::Fileset do
     end
 
     it "defaults to 'false' for recurse" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       expect(Puppet::FileServing::Fileset.new(somefile).recurse).to eq(false)
     end
 
     it "defaults to :infinite for recurselimit" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       expect(Puppet::FileServing::Fileset.new(somefile).recurselimit).to eq(:infinite)
     end
 
     it "defaults to an empty ignore list" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       expect(Puppet::FileServing::Fileset.new(somefile).ignore).to eq([])
     end
 
     it "defaults to :manage for links" do
-      Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+      expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       expect(Puppet::FileServing::Fileset.new(somefile).links).to eq(:manage)
     end
 
@@ -93,7 +92,7 @@ describe Puppet::FileServing::Fileset do
       let(:values) { { :links => :manage, :ignore => %w{a b}, :recurse => true, :recurselimit => 1234 } }
 
       before :each do
-        Puppet::FileSystem.expects(:lstat).with(somefile).returns stub('stat')
+        expect(Puppet::FileSystem).to receive(:lstat).with(somefile).and_return(double('stat'))
       end
 
       [:recurse, :recurselimit, :ignore, :links].each do |option|
@@ -130,16 +129,16 @@ describe Puppet::FileServing::Fileset do
   context "when recursing" do
     before do
       @path = make_absolute("/my/path")
-      Puppet::FileSystem.stubs(:lstat).with(@path).returns stub('stat', :directory? => true)
+      allow(Puppet::FileSystem).to receive(:lstat).with(@path).and_return(double('stat', :directory? => true))
 
       @fileset = Puppet::FileServing::Fileset.new(@path)
 
-      @dirstat = stub 'dirstat', :directory? => true
-      @filestat = stub 'filestat', :directory? => false
+      @dirstat = double('dirstat', :directory? => true)
+      @filestat = double('filestat', :directory? => false)
     end
 
     def mock_dir_structure(path, stat_method = :lstat)
-      Puppet::FileSystem.stubs(stat_method).with(path).returns @dirstat
+      allow(Puppet::FileSystem).to receive(stat_method).with(path).and_return(@dirstat)
 
       # Keep track of the files we're stubbing.
       @files = %w{.}
@@ -147,17 +146,40 @@ describe Puppet::FileServing::Fileset do
       top_names = %w{one two .svn CVS}
       sub_names = %w{file1 file2 .svn CVS 0 false}
 
-      Dir.stubs(:entries).with(path).returns(top_names)
+      allow(Dir).to receive(:entries).with(path, encoding: Encoding::UTF_8).and_return(top_names)
       top_names.each do |subdir|
         @files << subdir # relative path
         subpath = File.join(path, subdir)
-        Puppet::FileSystem.stubs(stat_method).with(subpath).returns @dirstat
-        Dir.stubs(:entries).with(subpath).returns(sub_names)
+        allow(Puppet::FileSystem).to receive(stat_method).with(subpath).and_return(@dirstat)
+        allow(Dir).to receive(:entries).with(subpath, encoding: Encoding::UTF_8).and_return(sub_names)
         sub_names.each do |file|
           @files << File.join(subdir, file) # relative path
           subfile_path = File.join(subpath, file)
-          Puppet::FileSystem.stubs(stat_method).with(subfile_path).returns(@filestat)
+          allow(Puppet::FileSystem).to receive(stat_method).with(subfile_path).and_return(@filestat)
         end
+      end
+    end
+
+    def setup_mocks_for_dir(mock_dir, base_path)
+      path = File.join(base_path, mock_dir.name)
+      allow(Puppet::FileSystem).to receive(:lstat).with(path).and_return(MockStat.new(path, true))
+      allow(Dir).to receive(:entries).with(path, encoding: Encoding::UTF_8).and_return(['.', '..'] + mock_dir.entries.map(&:name))
+      mock_dir.entries.each do |entry|
+        setup_mocks_for_entry(entry, path)
+      end
+    end
+
+    def setup_mocks_for_file(mock_file, base_path)
+      path = File.join(base_path, mock_file.name)
+      allow(Puppet::FileSystem).to receive(:lstat).with(path).and_return(MockStat.new(path, false))
+    end
+
+    def setup_mocks_for_entry(entry, base_path)
+      case entry
+      when MockDirectory
+        setup_mocks_for_dir(entry, base_path)
+      when MockFile
+        setup_mocks_for_file(entry, base_path)
       end
     end
 
@@ -168,32 +190,15 @@ describe Puppet::FileServing::Fileset do
       end
     end
 
-    MockDirectory = Struct.new(:name, :entries) do
-      def mock(base_path)
-        extend Mocha::API
-        path = File.join(base_path, name)
-        Puppet::FileSystem.stubs(:lstat).with(path).returns MockStat.new(path, true)
-        Dir.stubs(:entries).with(path).returns(['.', '..'] + entries.map(&:name))
-        entries.each do |entry|
-          entry.mock(path)
-        end
-      end
-    end
-
-    MockFile = Struct.new(:name) do
-      def mock(base_path)
-        extend Mocha::API
-        path = File.join(base_path, name)
-        Puppet::FileSystem.stubs(:lstat).with(path).returns MockStat.new(path, false)
-      end
-    end
+    MockDirectory = Struct.new(:name, :entries)
+    MockFile = Struct.new(:name)
 
     it "doesn't ignore pending directories when the last entry at the top level is a file" do
       structure = MockDirectory.new('path',
                     [MockDirectory.new('dir1',
                                    [MockDirectory.new('a', [MockFile.new('f')])]),
                      MockFile.new('file')])
-      structure.mock(make_absolute('/your'))
+      setup_mocks_for_dir(structure, make_absolute('/your'))
       fileset = Puppet::FileServing::Fileset.new(make_absolute('/your/path'))
       fileset.recurse = true
       fileset.links = :manage
@@ -276,9 +281,8 @@ describe Puppet::FileServing::Fileset do
 
     it "works when paths have regexp significant characters" do
       @path = make_absolute("/my/path/rV1x2DafFr0R6tGG+1bbk++++TM")
-      stat = stub('dir_stat', :directory? => true)
-      stub_file = stub(@path, :stat => stat, :lstat => stat)
-      Puppet::FileSystem.expects(:lstat).with(@path).returns stub(@path, :stat => stat, :lstat => stat)
+      stat = double('dir_stat', :directory? => true)
+      expect(Puppet::FileSystem).to receive(:lstat).with(@path).and_return(double(@path, :stat => stat, :lstat => stat))
       @fileset = Puppet::FileServing::Fileset.new(@path)
       mock_dir_structure(@path)
       @fileset.recurse = true
@@ -288,15 +292,15 @@ describe Puppet::FileServing::Fileset do
 
   it "manages the links to missing files" do
     path = make_absolute("/my/path")
-    stat = stub 'stat', :directory? => true
+    stat = double('stat', :directory? => true)
 
-    Puppet::FileSystem.expects(:stat).with(path).returns stat
-    Puppet::FileSystem.expects(:lstat).with(path).returns stat
+    expect(Puppet::FileSystem).to receive(:stat).with(path).and_return(stat)
+    expect(Puppet::FileSystem).to receive(:lstat).with(path).and_return(stat)
 
     link_path = File.join(path, "mylink")
-    Puppet::FileSystem.expects(:stat).with(link_path).raises(Errno::ENOENT)
+    expect(Puppet::FileSystem).to receive(:stat).with(link_path).and_raise(Errno::ENOENT)
 
-    Dir.stubs(:entries).with(path).returns(["mylink"])
+    allow(Dir).to receive(:entries).with(path, encoding: Encoding::UTF_8).and_return(["mylink"])
 
     fileset = Puppet::FileServing::Fileset.new(path)
 
@@ -309,20 +313,20 @@ describe Puppet::FileServing::Fileset do
   context "when merging other filesets" do
     before do
       @paths = [make_absolute("/first/path"), make_absolute("/second/path"), make_absolute("/third/path")]
-      Puppet::FileSystem.stubs(:lstat).returns stub('stat', :directory? => false)
+      allow(Puppet::FileSystem).to receive(:lstat).and_return(double('stat', :directory? => false))
 
       @filesets = @paths.collect do |path|
-        Puppet::FileSystem.stubs(:lstat).with(path).returns stub('stat', :directory? => true)
+        allow(Puppet::FileSystem).to receive(:lstat).with(path).and_return(double('stat', :directory? => true))
         Puppet::FileServing::Fileset.new(path, :recurse => true)
       end
 
-      Dir.stubs(:entries).returns []
+      allow(Dir).to receive(:entries).and_return([])
     end
 
     it "returns a hash of all files in each fileset with the value being the base path" do
-      Dir.expects(:entries).with(make_absolute("/first/path")).returns(%w{one uno})
-      Dir.expects(:entries).with(make_absolute("/second/path")).returns(%w{two dos})
-      Dir.expects(:entries).with(make_absolute("/third/path")).returns(%w{three tres})
+      expect(Dir).to receive(:entries).with(make_absolute("/first/path"), encoding: Encoding::UTF_8).and_return(%w{one uno})
+      expect(Dir).to receive(:entries).with(make_absolute("/second/path"), encoding: Encoding::UTF_8).and_return(%w{two dos})
+      expect(Dir).to receive(:entries).with(make_absolute("/third/path"), encoding: Encoding::UTF_8).and_return(%w{three tres})
 
       expect(Puppet::FileServing::Fileset.merge(*@filesets)).to eq({
         "." => make_absolute("/first/path"),
@@ -336,15 +340,15 @@ describe Puppet::FileServing::Fileset do
     end
 
     it "includes the base directory from the first fileset" do
-      Dir.expects(:entries).with(make_absolute("/first/path")).returns(%w{one})
-      Dir.expects(:entries).with(make_absolute("/second/path")).returns(%w{two})
+      expect(Dir).to receive(:entries).with(make_absolute("/first/path"), encoding: Encoding::UTF_8).and_return(%w{one})
+      expect(Dir).to receive(:entries).with(make_absolute("/second/path"), encoding: Encoding::UTF_8).and_return(%w{two})
 
       expect(Puppet::FileServing::Fileset.merge(*@filesets)["."]).to eq(make_absolute("/first/path"))
     end
 
     it "uses the base path of the first found file when relative file paths conflict" do
-      Dir.expects(:entries).with(make_absolute("/first/path")).returns(%w{one})
-      Dir.expects(:entries).with(make_absolute("/second/path")).returns(%w{one})
+      expect(Dir).to receive(:entries).with(make_absolute("/first/path"), encoding: Encoding::UTF_8).and_return(%w{one})
+      expect(Dir).to receive(:entries).with(make_absolute("/second/path"), encoding: Encoding::UTF_8).and_return(%w{one})
 
       expect(Puppet::FileServing::Fileset.merge(*@filesets)["one"]).to eq(make_absolute("/first/path"))
     end

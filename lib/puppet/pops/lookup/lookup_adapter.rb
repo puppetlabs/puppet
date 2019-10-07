@@ -16,6 +16,8 @@ class LookupAdapter < DataAdapter
 
   HASH = 'hash'.freeze
   MERGE = 'merge'.freeze
+  CONVERT_TO = 'convert_to'.freeze
+  NEW = 'new'.freeze
 
   def self.create_adapter(compiler)
     new(compiler)
@@ -25,6 +27,8 @@ class LookupAdapter < DataAdapter
     super()
     @compiler = compiler
     @lookup_options = {}
+    # Get a KeyRecorder from context, and set a "null recorder" if not defined
+    @key_recorder = Puppet.lookup(:lookup_key_recorder) { KeyRecorder.singleton }
   end
 
   # Performs a lookup using global, environment, and module data providers. Merge the result using the given
@@ -46,29 +50,81 @@ class LookupAdapter < DataAdapter
       end
     end
 
+    # Record that the key was looked up. This will record all keys for which a lookup is performed
+    # except 'lookup_options' (since that is illegal from a user perspective,
+    # and from an impact perspective is always looked up).
+    @key_recorder.record(key)
+
     key = LookupKey.new(key)
     lookup_invocation.lookup(key, key.module_name) do
-      merge_explained = false
       if lookup_invocation.only_explain_options?
         catch(:no_such_key) { do_lookup(LookupKey::LOOKUP_OPTIONS, lookup_invocation, HASH) }
         nil
       else
+        lookup_options = lookup_lookup_options(key, lookup_invocation) || {}
+
         if merge.nil?
           # Used cached lookup_options
-          merge = lookup_merge_options(key, lookup_invocation)
+          # merge = lookup_merge_options(key, lookup_invocation)
+          merge = lookup_options[MERGE]
           lookup_invocation.report_merge_source(LOOKUP_OPTIONS) unless merge.nil?
         end
-        lookup_invocation.with(:data, key.to_s) do
-          catch(:no_such_key) { return do_lookup(key, lookup_invocation, merge) }
-          throw :no_such_key if lookup_invocation.global_only?
-          key.dig(lookup_invocation, lookup_default_in_module(key, lookup_invocation))
-        end
+        convert_result(key.to_s, lookup_options, lookup_invocation, lambda do
+          lookup_invocation.with(:data, key.to_s) do
+            catch(:no_such_key) { return do_lookup(key, lookup_invocation, merge) }
+            throw :no_such_key if lookup_invocation.global_only?
+            key.dig(lookup_invocation, lookup_default_in_module(key, lookup_invocation))
+          end
+        end)
       end
     end
   end
 
+  # Performs a possible conversion of the result of calling `the_lookup` lambda
+  # The conversion takes place if there is a 'convert_to' key in the lookup_options
+  # If there is no conversion, the result of calling `the_lookup` is returned
+  # otherwise the successfully converted value.
+  # Errors are raised if the convert_to is faulty (bad type string, or if a call to
+  # new(T, <args>) fails.
+  #
+  # @param key [String] The key to lookup
+  # @param lookup_options [Hash] a hash of options
+  # @param lookup_invocation [Invocation] the lookup invocation
+  # @param the_lookup [Lambda] zero arg lambda that performs the lookup of a value
+  # @return [Object] the looked up value, or converted value if there was conversion
+  # @throw :no_such_key when the object is not found (if thrown by `the_lookup`)
+  #
+  def convert_result(key, lookup_options, lookup_invocation, the_lookup)
+    result = the_lookup.call
+    convert_to = lookup_options[CONVERT_TO]
+    return result if convert_to.nil?
+
+    convert_to = convert_to.is_a?(Array) ? convert_to : [convert_to]
+    if convert_to[0].is_a?(String)
+      begin
+        convert_to[0] = Puppet::Pops::Types::TypeParser.singleton.parse(convert_to[0])
+      rescue StandardError => e
+        raise Puppet::DataBinding::LookupError,
+          _("Invalid data type in lookup_options for key '%{key}' could not parse '%{source}', error: '%{msg}") %
+            { key: key, source: convert_to[0], msg: e.message}
+      end
+    end
+    begin
+      result = lookup_invocation.scope.call_function(NEW, [convert_to[0], result, *convert_to[1..-1]])
+      # TRANSLATORS 'lookup_options', 'convert_to' and args_string variable should not be translated,
+      args_string = Puppet::Pops::Types::StringConverter.singleton.convert(convert_to)
+      lookup_invocation.report_text { _("Applying convert_to lookup_option with arguments %{args}") % { args: args_string } }
+    rescue StandardError => e
+      raise Puppet::DataBinding::LookupError,
+        _("The convert_to lookup_option for key '%{key}' raised error: %{msg}") %
+          { key: key, msg: e.message}
+    end
+    result
+  end
+
   def lookup_global(key, lookup_invocation, merge_strategy)
-    terminus = Puppet[:data_binding_terminus]
+    # hiera_xxx will always use global_provider regardless of data_binding_terminus setting
+    terminus = lookup_invocation.hiera_xxx_call? ? :hiera : Puppet[:data_binding_terminus]
     case terminus
     when :hiera, 'hiera'
       provider = global_provider(lookup_invocation)
@@ -382,8 +438,8 @@ class LookupAdapter < DataAdapter
       mp
     else
       unless Puppet[:strict] == :off
-        msg = _("Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated") % { name: provider_name }
-        msg += _(". A '%{config}' file should be used instead") % { config: HieraConfig::CONFIG_FILE_NAME } if mp.nil?
+        msg = _("Defining \"data_provider\": \"%{name}\" in metadata.json is deprecated.") % { name: provider_name }
+        msg += " " + _("A '%{hiera_config}' file should be used instead") % { hiera_config: HieraConfig::CONFIG_FILE_NAME } if mp.nil?
         Puppet.warn_once('deprecations', "metadata.json#data_provider-#{module_name}", msg, mod.metadata_file)
       end
 
@@ -436,8 +492,8 @@ class LookupAdapter < DataAdapter
       ep
     else
       unless Puppet[:strict] == :off
-        msg = _("Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated") % { provider_name: provider_name }
-        msg += _(". A '%{config}' file should be used instead") % { config: HieraConfig::CONFIG_FILE_NAME } if ep.nil?
+        msg = _("Defining environment_data_provider='%{provider_name}' in environment.conf is deprecated.") % { provider_name: provider_name }
+        msg += " " + _("A '%{hiera_config}' file should be used instead") % { hiera_config: HieraConfig::CONFIG_FILE_NAME } if ep.nil?
         Puppet.warn_once('deprecations', 'environment.conf#data_provider', msg, env_path + 'environment.conf')
       end
 

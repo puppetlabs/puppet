@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet/parser/functions'
@@ -6,7 +5,6 @@ require 'matchers/containment_matchers'
 require 'matchers/resource'
 require 'matchers/include_in_order'
 require 'unit/functions/shared'
-
 
 describe 'The "include" function' do
   include PuppetSpec::Compiler
@@ -92,11 +90,25 @@ describe 'The "include" function' do
 
   it "raises an error if class does not exist" do
     expect {
-      catalog = compile_to_catalog(<<-MANIFEST)
+      compile_to_catalog(<<-MANIFEST)
         include the_god_in_your_religion
       MANIFEST
     }.to raise_error(Puppet::Error)
   end
+
+    { "''"      => 'empty string', 
+      'undef'   => 'undef',
+      "['']"    => 'empty string',
+      "[undef]" => 'undef'
+    }.each_pair do |value, name_kind|
+      it "raises an error if class is #{name_kind}" do
+        expect {
+          compile_to_catalog(<<-MANIFEST)
+            include #{value}
+          MANIFEST
+        }.to raise_error(/Cannot use #{name_kind}/)
+      end
+    end
 
   it "does not contained the included class in the current class" do
     catalog = compile_to_catalog(<<-MANIFEST)
@@ -113,7 +125,6 @@ describe 'The "include" function' do
 
     expect(catalog).to_not contain_class("not_contained").in("container")
   end
-
 
   it 'produces an array with a single class references given a single argument' do
     catalog = compile_to_catalog(<<-MANIFEST)
@@ -171,5 +182,5 @@ describe 'The "include" function' do
 
   it_should_behave_like 'all functions transforming relative to absolute names', :include
   it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :include
-
+  it_should_behave_like 'an inclusion function, when --tasks is on,', :include
 end

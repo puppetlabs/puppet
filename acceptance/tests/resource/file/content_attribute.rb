@@ -1,4 +1,7 @@
 test_name "Content Attribute"
+tag 'audit:high',
+    'audit:refactor',   # Use block stype test_name
+    'audit:acceptance'
 
 agents.each do |agent|
   target = agent.tmpfile('content_file_test')
@@ -8,7 +11,15 @@ agents.each do |agent|
 
   step "Content Attribute: using raw content"
 
-  checksums = ['md5', 'md5lite', 'sha256', 'sha256lite']
+  checksums_fips = ['sha256', 'sha256lite']
+  checksums_no_fips = ['md5', 'md5lite', 'sha256', 'sha256lite']
+
+  if on(agent, facter("fips_enabled")).stdout =~ /true/
+    checksums = checksums_fips
+  else
+    checksums = checksums_no_fips
+  end
+
   manifest = "file { '#{target}': content => 'This is the test file content', ensure => present }"
   manifest += checksums.collect {|checksum_type|
     "file { '#{target+checksum_type}': content => 'This is the test file content', ensure => present, checksum => #{checksum_type} }"
@@ -20,14 +31,14 @@ agents.each do |agent|
   end
 
   on agent, "cat #{target}" do
-    assert_match(/This is the test file content/, stdout, "File content not matched on #{agent}")
+    assert_match(/This is the test file content/, stdout, "File content not matched on #{agent}") unless agent['locale'] == 'ja'
   end
 
   step "Content Attribute: illegal timesteps"
   ['mtime', 'ctime'].each do |checksum_type|
     manifest = "file { '#{target+checksum_type}': content => 'This is the test file content', ensure => present, checksum => #{checksum_type} }"
     apply_manifest_on agent, manifest, :acceptable_exit_codes => [1] do
-      assert_match(/Error: Validation of File\[#{target+checksum_type}\] failed: You cannot specify content when using checksum '#{checksum_type}'/, stderr, "#{agent}: expected failure")
+      assert_match(/Error: Validation of File\[#{target+checksum_type}\] failed: You cannot specify content when using checksum '#{checksum_type}'/, stderr, "#{agent}: expected failure") unless agent['locale'] == 'ja'
     end
   end
 
@@ -40,28 +51,44 @@ agents.each do |agent|
   step "Backup file into the filebucket"
   on agent, puppet_filebucket("backup --local #{target}")
 
-  bucketdir="not set"
-  on agent, puppet_filebucket("--configprint bucketdir") do
-    bucketdir = stdout.chomp
-  end
+  step "Modify file to force apply to retrieve file from local clientbucket"
+  on agent, "echo 'This is the modified file contents' > #{target}"
 
-  manifest = %Q|
+  dir = on(agent, puppet_filebucket("--configprint clientbucketdir")).stdout.chomp
+
+  md5_manifest = %Q|
     filebucket { 'local':
-      path => '#{bucketdir}',
+      path => '#{dir}',
     }
 
     file { '#{target}':
+      ensure  => present,
       content => '{md5}18571d3a04b2bb7ccfdbb2c44c72caa9',
-      ensure => present,
-      backup => local,
+      backup  => local,
+    }
+  |
+
+  sha256_manifest = %Q|
+    filebucket { 'local':
+      path => '#{dir}',
+    }
+
+    file { '#{target}':
+      ensure  => present,
+      content => '{sha256}3b9238769b033b48073267b8baea00fa51c598dc14081da51f2e510c37c46a28',
+      backup  => local,
     }
   |
 
   step "Applying Manifest on Agent"
-  apply_manifest_on agent, manifest
+  if on(agent, facter("fips_enabled")).stdout =~ /true/
+    apply_manifest_on agent, sha256_manifest
+  else    
+    apply_manifest_on agent, md5_manifest
+  end
 
   step "Validate filebucket checksum file contents"
   on agent, "cat #{target}" do
-    assert_match(/This is the checksum file content/, stdout, "File content not matched on #{agent}")
+    assert_match(/This is the checksum file content/, stdout, "File content not matched on #{agent}") unless agent['locale'] == 'ja'
   end
 end

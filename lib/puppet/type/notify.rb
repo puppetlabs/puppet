@@ -4,7 +4,7 @@
 
 module Puppet
   Type.newtype(:notify) do
-    @doc = "Sends an arbitrary message to the agent run-time log."
+    @doc = "Sends an arbitrary message to the agent run-time log. It's important to note that the notify resource type is not idempotent. As a result, notifications are shown as a change on every Puppet run."
 
     apply_to_all
 
@@ -32,7 +32,7 @@ module Puppet
     end
 
     newparam(:withpath) do
-      desc "Whether to show the full object path. Defaults to false."
+      desc "Whether to show the full object path."
       defaultto :false
 
       newvalues(:true, :false)

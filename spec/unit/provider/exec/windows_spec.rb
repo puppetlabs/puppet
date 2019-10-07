@@ -1,8 +1,6 @@
-#! /usr/bin/env ruby
-
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet::Util::Platform.windows? do
   include PuppetSpec::Files
 
   let(:resource) { Puppet::Type.type(:exec).new(:title => 'C:\foo', :provider => :windows) }
@@ -45,7 +43,7 @@ describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.mic
   end
 
   describe "#checkexe" do
-    describe "when the command is absolute", :if => Puppet.features.microsoft_windows? do
+    describe "when the command is absolute", :if => Puppet::Util::Platform.windows? do
       it "should return if the command exists and is a file" do
         command = tmpfile('command')
         FileUtils.touch(command)
@@ -68,12 +66,12 @@ describe Puppet::Type.type(:exec).provider(:windows), :if => Puppet.features.mic
     describe "when the command is relative" do
       describe "and a path is specified" do
         before :each do
-          provider.stubs(:which)
+          allow(provider).to receive(:which)
         end
 
         it "should search for executables with no extension" do
           provider.resource[:path] = [File.expand_path('/bogus/bin')]
-          provider.expects(:which).with('foo').returns('foo')
+          expect(provider).to receive(:which).with('foo').and_return('foo')
 
           provider.checkexe('foo')
         end

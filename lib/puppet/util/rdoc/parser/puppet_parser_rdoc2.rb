@@ -8,7 +8,7 @@ module RDoc
     include PuppetParserCore
 
     def create_rdoc_preprocess
-      preprocess = Markup::PreProcess.new(@input_file_name, @options.rdoc_include)
+      Markup::PreProcess.new(@input_file_name, @options.rdoc_include)
     end
   end
 end

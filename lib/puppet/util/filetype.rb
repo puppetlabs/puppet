@@ -42,7 +42,7 @@ class Puppet::Util::FileType
           else
             return ""
           end
-        rescue Puppet::Error => detail
+        rescue Puppet::Error
           raise
         rescue => detail
           message = _("%{klass} could not read %{path}: %{detail}") % { klass: self.class, path: @path, detail: detail }
@@ -58,7 +58,7 @@ class Puppet::Util::FileType
           val = real_write(text)
           @synced = Time.now
           return val
-        rescue Puppet::Error => detail
+        rescue Puppet::Error
           raise
         rescue => detail
           message = _("%{klass} could not write %{path}: %{detail}") % { klass: self.class, path: @path, detail: detail }
@@ -88,7 +88,8 @@ class Puppet::Util::FileType
   # to the target user if the target user and the current user are not
   # the same
   def cronargs
-    if uid = Puppet::Util.uid(@path) and uid == Puppet::Util::SUIDManager.uid
+    uid = Puppet::Util.uid(@path)
+    if uid && uid == Puppet::Util::SUIDManager.uid
       {:failonfail => true, :combine => true}
     else
       {:failonfail => true, :combine => true, :uid => @path}
@@ -166,6 +167,12 @@ class Puppet::Util::FileType
   end
 
   # Handle Linux-style cron tabs.
+  #
+  # TODO: We can possibly eliminate the "-u <username>" option in cmdbase
+  # by just running crontab under <username>'s uid (like we do for suntab
+  # and aixtab). It may be worth investigating this alternative
+  # implementation in the future. This way, we can refactor all three of
+  # our cron file types into a common crontab file type.
   newfiletype(:crontab) do
     def initialize(user)
       self.path = user
@@ -185,21 +192,47 @@ class Puppet::Util::FileType
 
     # Read a specific @path's cron tab.
     def read
-      %x{#{cmdbase} -l 2>/dev/null}
+      unless Puppet::Util.uid(@path)
+        Puppet.debug _("The %{path} user does not exist. Treating their crontab file as empty in case Puppet creates them in the middle of the run.") % { path: @path }
+
+        return ""
+      end
+
+      Puppet::Util::Execution.execute("#{cmdbase} -l", failonfail: true, combine: true)
+    rescue => detail
+      case detail.to_s
+      when /no crontab for/
+        return ""
+      when /are not allowed to/
+        Puppet.debug _("The %{path} user is not authorized to use cron. Their crontab file is treated as empty in case Puppet authorizes them in the middle of the run (by, for example, modifying the cron.deny or cron.allow files).") % { path: @path }
+
+        return ""
+      else
+        raise FileReadError, _("Could not read crontab for %{path}: %{detail}") % { path: @path, detail: detail }, detail.backtrace
+      end
     end
 
     # Remove a specific @path's cron tab.
     def remove
+      cmd = "#{cmdbase} -r"
       if %w{Darwin FreeBSD DragonFly}.include?(Facter.value("operatingsystem"))
-        %x{/bin/echo yes | #{cmdbase} -r 2>/dev/null}
-      else
-        %x{#{cmdbase} -r 2>/dev/null}
+        cmd = "/bin/echo yes | #{cmd}"
       end
+
+      Puppet::Util::Execution.execute(cmd, failonfail: true, combine: true)
     end
 
     # Overwrite a specific @path's cron tab; must be passed the @path name
     # and the text with which to create the cron tab.
+    #
+    # TODO: We should refactor this at some point to make it identical to the
+    # :aixtab and :suntab's write methods so that, at the very least, the pipe
+    # is not created and the crontab command's errors are not swallowed.
     def write(text)
+      unless Puppet::Util.uid(@path)
+        raise Puppet::Error, _("Cannot write the %{path} user's crontab: The user does not exist") % { path: @path }
+      end
+
       # this file is managed by the OS and should be using system encoding
       IO.popen("#{cmdbase()} -", "w", :encoding => Encoding.default_external) { |p|
         p.print text
@@ -224,13 +257,21 @@ class Puppet::Util::FileType
   newfiletype(:suntab) do
     # Read a specific @path's cron tab.
     def read
+      unless Puppet::Util.uid(@path)
+        Puppet.debug _("The %{path} user does not exist. Treating their crontab file as empty in case Puppet creates them in the middle of the run.") % { path: @path }
+
+        return ""
+      end
+
       Puppet::Util::Execution.execute(%w{crontab -l}, cronargs)
     rescue => detail
       case detail.to_s
       when /can't open your crontab/
         return ""
       when /you are not authorized to use cron/
-        raise FileReadError, _("User %{path} not authorized to use cron") % { path: @path }, detail.backtrace
+        Puppet.debug _("The %{path} user is not authorized to use cron. Their crontab file is treated as empty in case Puppet authorizes them in the middle of the run (by, for example, modifying the cron.deny or cron.allow files).") % { path: @path }
+
+        return ""
       else
         raise FileReadError, _("Could not read crontab for %{path}: %{detail}") % { path: @path, detail: detail }, detail.backtrace
       end
@@ -267,13 +308,21 @@ class Puppet::Util::FileType
   newfiletype(:aixtab) do
     # Read a specific @path's cron tab.
     def read
+      unless Puppet::Util.uid(@path)
+        Puppet.debug _("The %{path} user does not exist. Treating their crontab file as empty in case Puppet creates them in the middle of the run.") % { path: @path }
+
+        return ""
+      end
+
       Puppet::Util::Execution.execute(%w{crontab -l}, cronargs)
     rescue => detail
       case detail.to_s
-      when /Cannot open a file in the .* directory/
+      when /open.*in.*directory/
         return ""
-      when /You are not authorized to use the cron command/
-        raise FileReadError, _("User %{path} not authorized to use cron") % { path: @path }, detail.backtrace
+      when /not.*authorized.*cron/
+        Puppet.debug _("The %{path} user is not authorized to use cron. Their crontab file is treated as empty in case Puppet authorizes them in the middle of the run (by, for example, modifying the cron.deny or cron.allow files).") % { path: @path }
+
+        return ""
       else
         raise FileReadError, _("Could not read crontab for %{path}: %{detail}") % { path: @path, detail: detail }, detail.backtrace
       end

@@ -5,8 +5,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   desc "Provides packaging support for Gentoo's portage system.
 
     This provider supports the `install_options` and `uninstall_options` attributes, which allows command-line
-    flags to be passed to emerge.  These options should be specified as a string (e.g. '--flag'), a hash
-    (e.g. {'--flag' => 'value'}), or an array where each element is either a string or a hash."
+    flags to be passed to emerge. These options should be specified as an array where each element is either a string or a hash."
 
   has_features :install_options, :purgeable, :reinstallable, :uninstall_options, :versionable, :virtual_packages
 
@@ -40,7 +39,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do
-        search_output = eix *(self.eix_search_arguments + ['--installed'])
+        search_output = eix(*(self.eix_search_arguments + ['--installed']))
       end
 
       packages = []
@@ -74,7 +73,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     cmd << '--update' if [:latest].include?(should)
     cmd += install_options if @resource[:install_options]
     cmd << name
-    emerge *cmd
+    emerge(*cmd)
   end
 
   def uninstall
@@ -89,10 +88,10 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     cmd << name
     if [:purged].include?(should)
       Puppet::Util.withenv :CONFIG_PROTECT => "-*" do
-        emerge *cmd
+        emerge(*cmd)
       end
     else
-      emerge *cmd
+      emerge(*cmd)
     end
   end
 
@@ -109,16 +108,24 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     result_format = self.qatom_result_format
     result_fields = self.qatom_result_fields
     @atom ||= begin
-      search_output = nil
       package_info = {}
       # do the search
-      search_output = qatom_bin *([@resource[:name], '--format', output_format])
+      should = @resource[:ensure]
+      case should
+      # The terms present, absent, purged, held, installed, latest in :ensure 
+      # resolve as Symbols, and we do not need specific package version in this case
+      when true, false, Symbol
+        search = @resource[:name]
+      else
+        search = '=' + @resource[:name] + '-' + "#{should}"
+      end
+      search_output = qatom_bin(*([search, '--format', output_format]))
       # verify if the search found anything
       match = result_format.match(search_output)
       if match
         result_fields.zip(match.captures) do |field, value|
           # some fields can be empty or (null) (if we are not passed a category in the package name for instance)
-          if value == '(null)'
+          if value == '(null)' || value == '<unset>'
             package_info[field] = nil
           elsif !value or value.empty?
             package_info[field] = nil
@@ -134,7 +141,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def qatom_output_format
-    '"[%{CATEGORY}] [%{PN}] [%{PV}] [%[PR]] [%[SLOT]] [%[pfx]] [%[sfx]]"'
+    '"[%[CATEGORY]] [%[PN]] [%[PV]] [%[PR]] [%[SLOT]] [%[pfx]] [%[sfx]]"'
   end
 
   def qatom_result_format
@@ -147,7 +154,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
   def self.get_sets
     @sets ||= begin
-      @sets = emerge *(['--list-sets'])
+      @sets = emerge(*(['--list-sets']))
     end
   end
 
@@ -171,8 +178,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
       end
 
       if @resource[:name].match(/^@/)
-         if package_sets.include?(@resource[:name][1..-1].to_s)
-           return({:name => "#{@resource[:name]}", :ensure => '9999', :version_available => nil, :installed_versions => nil, :installable_versions => "9999,"})
+        if package_sets.include?(@resource[:name][1..-1].to_s)
+          return({:name => "#{@resource[:name]}", :ensure => '9999', :version_available => nil, :installed_versions => nil, :installable_versions => "9999,"})
         end
       end
 
@@ -181,7 +188,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
       search_output = nil
       Puppet::Util.withenv :EIX_LIMIT => limit, :LASTVERSION => version_format, :LASTSLOTVERSIONS => slot_versions_format, :INSTALLEDVERSIONS => installed_versions_format, :STABLEVERSIONS => installable_versions_format do
-        search_output = eix *(self.class.eix_search_arguments + ['--exact',search_field,search_value])
+        search_output = eix(*(self.class.eix_search_arguments + ['--exact',search_field,search_value]))
       end
 
       packages = []
@@ -198,9 +205,11 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
           # ensure is what is currently installed
           # This DOES NOT choose to install/upgrade or not, just provides current info
           # prefer checking versions to slots as versions are finer grained
-          if qatom[:pv]
-            package[:version_available] = eix_get_version_for_versions(package[:installable_versions], qatom[:pv])
-            package[:ensure] = eix_get_version_for_versions(package[:installed_versions], qatom[:pv])
+          search = qatom[:pv]
+          search = search + '-' + qatom[:pr] if qatom[:pr]
+          if search
+            package[:version_available] = eix_get_version_for_versions(package[:installable_versions], search)
+            package[:ensure] = eix_get_version_for_versions(package[:installed_versions], search)
           elsif qatom[:slot]
             package[:version_available] = eix_get_version_for_slot(package[:slot_versions_available], qatom[:slot])
             package[:ensure] = eix_get_version_for_slot(package[:installed_slots], qatom[:slot])

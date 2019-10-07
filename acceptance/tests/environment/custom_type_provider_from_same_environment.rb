@@ -2,6 +2,10 @@ test_name 'C59122: ensure provider from same env as custom type' do
 require 'puppet/acceptance/environment_utils'
 extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:integration',  # This behavior is specific to the master to 'do the right thing'
+    'server'
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
   file_correct    = "#{tmp_environment}-correct.txt"
@@ -96,7 +100,7 @@ MANIFEST
   step "run agent in #{tmp_environment}, ensure it finds the correct provider" do
     with_puppet_running_on(master,{}) do
       agents.each do |agent|
-        on(agent, puppet("agent -t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet("agent -t --environment #{tmp_environment}"),
           :accept_all_exit_codes => true) do |result|
           assert_equal(2, result.exit_code, 'agent did not exit with the correct code of 2')
           assert_match(/#{file_correct}/, result.stdout, 'agent did not ensure the correct file')

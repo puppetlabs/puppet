@@ -2,8 +2,6 @@
 results
 tags
 .*.sw[op]
-ext/packaging
-pkg
 test.pp
 # YARD generated documentation
 .yardoc
@@ -12,20 +10,24 @@ test.pp
 # to work around that.  Which we don't want committed, so we can ignore it here.
 /.rvmrc
 .bundle/
-ext/packaging/
-pkg/
+.byebug_history
+/ext/packaging/
+/pkg/
 Gemfile.lock
 Gemfile.local
-.bundle/
+Guardfile
 puppet-acceptance/
 /.project
-.idea/
 .ruby-version
 .ruby-gemset
-acceptance/junit
-acceptance/log
-acceptance/.bundle
+/acceptance/junit
+/acceptance/log
+/acceptance/.beaker
 # emacs backup files
 *~
 /*.samples
 coverage/
+# Files and directory added by RubyMine IDE
+*.iml
+.rakeTasks
+.idea/

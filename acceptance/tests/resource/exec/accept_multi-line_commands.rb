@@ -1,5 +1,8 @@
 test_name "Be able to execute multi-line commands (#9996)"
 confine :except, :platform => 'windows'
+tag 'audit:high',
+    'audit:refactor',  # Use block style `test_name`
+    'audit:acceptance'
 
 agents.each do |agent|
   temp_file_name = agent.tmpfile('9996-multi-line-commands')

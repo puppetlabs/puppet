@@ -4,10 +4,11 @@
 # @api private
 #
 class Puppet::Network::HTTP::Session
-  attr_reader :connection
+  attr_reader :connection, :verifier
 
-  def initialize(connection, expiration_time)
+  def initialize(connection, verifier, expiration_time)
     @connection = connection
+    @verifier = verifier
     @expiration_time = expiration_time
   end
 

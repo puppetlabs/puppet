@@ -2,7 +2,8 @@
 
 If you'd like to run Puppet from source on Windows platforms, follow the [Quickstart](./quickstart.md) to using bundler and installing the necessary gems on Windows.
 
-You will need to install Ruby on Windows from [rubyinstaller.org](http://rubyinstaller.org).
+You will need to install Ruby on Windows from [rubyinstaller.org](http://rubyinstaller.org)
+or from [Choclately](https://chocolatey.org/packages/ruby).
 
     C:\> cd C:\work\puppet
     C:\work\puppet> gem install bundler
@@ -13,23 +14,23 @@ You will need to install Ruby on Windows from [rubyinstaller.org](http://rubyins
 When writing a test that cannot possibly run on Windows, e.g. there is
 no mount type on windows, do the following:
 
-    describe Puppet::MyClass, :unless => Puppet.features.microsoft_windows? do
+    describe Puppet::MyClass, :unless => Puppet::Util::Platform.windows? do
       ..
     end
 
 If the test doesn't currently pass on Windows, e.g. due to on going porting, then use an rspec conditional pending block:
 
-    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+    pending("porting to Windows", :if => Puppet::Util::Platform.windows?) do
       <example1>
     end
 
-    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+    pending("porting to Windows", :if => Puppet::Util::Platform.windows?) do
       <example2>
     end
 
 Then run the test as:
 
-    C:\work\puppet> bundle exec rspec spec
+    C:\work\puppet> bundle exec rspec spec/path/to/test.rb
 
 ## Common Issues ##
 
@@ -68,4 +69,3 @@ Then run the test as:
  * Don't assume 'C' drive.  Use environment variables to look these up:
 
     "#{ENV['windir']}/system32/netsh.exe"
-

@@ -34,5 +34,5 @@ Would notice the value `[10, 200, 30]`
 * Since 4.8.0
 DOC
 ) do |args|
-  Error.is4x('next')
+  Puppet::Parser::Functions::Error.is4x('next')
 end

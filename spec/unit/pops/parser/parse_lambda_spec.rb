@@ -13,7 +13,7 @@ describe 'egrammar parsing lambda definitions' do
 
   context 'with return type' do
     it 'f() |$x| >> Integer { 1 }' do
-      expect(dump(parse('f() |$x| >> Integer { 1 }'))).to eq("(invoke f (lambda (parameters x) (return_type integer) (block\n  1\n)))")
+      expect(dump(parse('f() |$x| >> Integer { 1 }'))).to eq("(invoke f (lambda (parameters x) (return_type Integer) (block\n  1\n)))")
     end
   end
 end

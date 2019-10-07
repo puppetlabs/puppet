@@ -23,7 +23,7 @@ class CompareOperator
     @@include_visitor ||= Visitor.new(self, "include", 2, 2)
   end
 
-  def equals (a, b)
+  def equals(a, b)
     @@equals_visitor.visit_this_1(self, a, b)
   end
 
@@ -34,7 +34,7 @@ class CompareOperator
   end
 
   # Performs a match of a and b, and returns true if b matches a
-  def match(a, b, scope)
+  def match(a, b, scope = nil)
     @@match_visitor.visit_this_2(self, b, a, scope)
   end
 
@@ -59,6 +59,8 @@ class CompareOperator
   def cmp_Numeric(a, b)
     if b.is_a?(Numeric)
       a <=> b
+    elsif b.is_a?(Time::Timespan) || b.is_a?(Time::Timestamp)
+      -(b <=> a) # compare other way and invert result
     else
       raise ArgumentError.new(_("A Numeric is not comparable to non Numeric"))
     end
@@ -133,7 +135,7 @@ class CompareOperator
   def include_String(a, b, scope)
     case b
     when String
-      # subsstring search downcased
+      # substring search downcased
       a.downcase.include?(b.downcase)
     when Regexp
       matched = a.match(b)           # nil, or MatchData
@@ -200,7 +202,7 @@ class CompareOperator
   def match_Regexp(regexp, left, scope)
     return false unless left.is_a? String
     matched = regexp.match(left)
-    set_match_data(matched, scope) # creates or clears ephemeral
+    set_match_data(matched, scope) unless scope.nil? # creates or clears ephemeral
     !!matched # convert to boolean
   end
 
@@ -245,7 +247,7 @@ class CompareOperator
 
   def match_Symbol(symbol, left, scope)
     return true if symbol == :default
-    equals(left, default, scope)
+    equals(left, default)
   end
 end
 end

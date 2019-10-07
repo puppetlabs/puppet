@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/graph'
 
@@ -81,6 +80,22 @@ describe Puppet::Graph::SimpleGraph do
     it "should do nothing when a non-vertex is asked to be removed" do
       expect { @graph.remove_vertex!(:one) }.to_not raise_error
     end
+
+    describe "when managing resources with quotes in their title" do
+      subject do
+        v = Puppet::Type.type(:notify).new(:name => 'GRANT ALL ON DATABASE "puppetdb" TO "puppetdb"')
+        @graph.add_vertex(v)
+        @graph.to_dot
+      end
+
+      it "should escape quotes in node name" do
+        expect(subject).to match(/^[[:space:]]{4}"Notify\[GRANT ALL ON DATABASE \\"puppetdb\\" TO \\"puppetdb\\"\]" \[$/)
+      end
+
+      it "should escape quotes in node label" do
+        expect(subject).to match(/^[[:space:]]{8}label = "Notify\[GRANT ALL ON DATABASE \\"puppetdb\\" TO \\"puppetdb\\"\]"$/)
+      end
+    end
   end
 
   describe "when managing edges" do
@@ -112,6 +127,23 @@ describe Puppet::Graph::SimpleGraph do
     it "should provide a method to add an edge by specifying the two vertices and a label" do
       @graph.add_edge(:one, :two, :callback => :awesome)
       expect(@graph.edge?(:one, :two)).to be_truthy
+    end
+
+    describe "when managing edges between nodes with quotes in their title" do
+      let(:vertex) do
+        Hash.new do |hash, key|
+          hash[key] = Puppet::Type.type(:notify).new(:name => key.to_s)
+        end
+      end
+
+      subject do
+        @graph.add_edge(vertex['Postgresql_psql[CREATE DATABASE "ejabberd"]'], vertex['Postgresql_psql[REVOKE CONNECT ON DATABASE "ejabberd" FROM public]'])
+        @graph.to_dot
+      end
+
+      it "should escape quotes in edge" do
+        expect(subject).to match(/^[[:space:]]{4}"Notify\[Postgresql_psql\[CREATE DATABASE \\"ejabberd\\"\]\]" -> "Notify\[Postgresql_psql\[REVOKE CONNECT ON DATABASE \\"ejabberd\\" FROM public\]\]" \[$/)
+      end
     end
 
     describe "when retrieving edges between two nodes" do
@@ -302,30 +334,37 @@ describe Puppet::Graph::SimpleGraph do
       end
     end
 
+    it "should report one-vertex loops" do
+      add_edges :a => :a
+      expect(Puppet).to receive(:err).with(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[a\]\)/)
+      cycle = @graph.report_cycles_in_graph.first
+      expect_cycle_to_include(cycle, :a)
+    end
+
     it "should report two-vertex loops" do
       add_edges :a => :b, :b => :a
-      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/))
+      expect(Puppet).to receive(:err).with(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/)
       cycle = @graph.report_cycles_in_graph.first
       expect_cycle_to_include(cycle, :a, :b)
     end
 
     it "should report multi-vertex loops" do
       add_edges :a => :b, :b => :c, :c => :a
-      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[c\] => Notify\[a\]\)/))
+      expect(Puppet).to receive(:err).with(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[c\] => Notify\[a\]\)/)
       cycle = @graph.report_cycles_in_graph.first
       expect_cycle_to_include(cycle, :a, :b, :c)
     end
 
     it "should report when a larger tree contains a small cycle" do
       add_edges :a => :b, :b => :a, :c => :a, :d => :c
-      Puppet.expects(:err).with(regexp_matches(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/))
+      expect(Puppet).to receive(:err).with(/Found 1 dependency cycle:\n\(Notify\[a\] => Notify\[b\] => Notify\[a\]\)/)
       cycle = @graph.report_cycles_in_graph.first
       expect_cycle_to_include(cycle, :a, :b)
     end
 
     it "should succeed on trees with no cycles" do
       add_edges :a => :b, :b => :e, :c => :a, :d => :c
-      Puppet.expects(:err).never
+      expect(Puppet).not_to receive(:err)
       expect(@graph.report_cycles_in_graph).to be_nil
     end
 
@@ -429,14 +468,14 @@ describe Puppet::Graph::SimpleGraph do
     end
 
     it "should only write when graphing is enabled" do
-      File.expects(:open).with(@file).never
+      expect(File).not_to receive(:open).with(@file)
       Puppet[:graph] = false
       @graph.write_graph(@name)
     end
 
     it "should write a dot file based on the passed name" do
-      File.expects(:open).with(@file, "w:UTF-8").yields(stub("file", :puts => nil))
-      @graph.expects(:to_dot).with("name" => @name.to_s.capitalize)
+      expect(File).to receive(:open).with(@file, "w:UTF-8").and_yield(double("file", :puts => nil))
+      expect(@graph).to receive(:to_dot).with("name" => @name.to_s.capitalize)
       Puppet[:graph] = true
       @graph.write_graph(@name)
     end
@@ -464,7 +503,7 @@ describe Puppet::Graph::SimpleGraph do
       # because indexing a String with a non-Integer throws an exception (and none of
       # these tests need anything meaningful from []).
       resource = "a"
-      resource.stubs(:[])
+      allow(resource).to receive(:[])
       @event = Puppet::Transaction::Event.new(:name => :yay, :resource => resource)
       @none = Puppet::Transaction::Event.new(:name => :NONE, :resource => resource)
 
@@ -596,7 +635,7 @@ describe Puppet::Graph::SimpleGraph do
           # the serialized objects easily without invoking any
           # yaml_initialize hooks.
           yaml_form.gsub!('!ruby/object:Puppet::', '!hack/object:Puppet::')
-          serialized_object = YAML.load(yaml_form)
+          serialized_object = Puppet::Util::Yaml.safe_load(yaml_form, [Symbol,Puppet::Graph::SimpleGraph])
 
           # Check that the object contains instance variables @edges and
           # @vertices only.  @reversal is also permitted, but we don't
@@ -664,7 +703,7 @@ describe Puppet::Graph::SimpleGraph do
           reference_graph = Puppet::Graph::SimpleGraph.new
           send(graph_to_test, reference_graph)
           yaml_form = graph_to_yaml(reference_graph, which_format)
-          recovered_graph = YAML.load(yaml_form)
+          recovered_graph = Puppet::Util::Yaml.safe_load(yaml_form, [Symbol,Puppet::Graph::SimpleGraph])
 
           # Test that the recovered vertices match the vertices in the
           # reference graph.
@@ -708,7 +747,7 @@ describe Puppet::Graph::SimpleGraph do
       derived.add_edge('a', 'b')
       derived.foo = 1234
       yaml = YAML.dump(derived)
-      recovered_derived = YAML.load(yaml)
+      recovered_derived = Puppet::Util::Yaml.safe_load(yaml, [Puppet::TestDerivedClass])
       expect(recovered_derived.class).to equal(Puppet::TestDerivedClass)
       expect(recovered_derived.edges.length).to eq(1)
       expect(recovered_derived.edges[0].source).to eq('a')

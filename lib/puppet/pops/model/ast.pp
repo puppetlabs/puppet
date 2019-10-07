@@ -163,6 +163,9 @@ type Puppet::AST = TypeSet[{
         }
       }
     }],
+    ApplyBlockExpression => Object[{
+      parent => BlockExpression,
+    }],
     CaseOption => Object[{
       parent => Expression,
       attributes => {
@@ -377,6 +380,9 @@ type Puppet::AST = TypeSet[{
         }
       }
     }],
+    PlanDefinition => Object[{
+      parent => FunctionDefinition,
+    }],
     LambdaExpression => Object[{
       parent => Expression,
       attributes => {
@@ -389,6 +395,19 @@ type Puppet::AST = TypeSet[{
           value => undef
         },
         'return_type' => {
+          type => Optional[Expression],
+          value => undef
+        }
+      }
+    }],
+    ApplyExpression => Object[{
+      parent => Expression,
+      attributes => {
+        'arguments' => {
+          type => Array[Expression],
+          value => []
+        },
+        'body' => {
           type => Optional[Expression],
           value => undef
         }

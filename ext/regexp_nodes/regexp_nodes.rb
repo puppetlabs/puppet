@@ -2,24 +2,24 @@
 
 # = Synopsis
 # This is an external node classifier script, after
-# https://docs.puppetlabs.com/guides/external_nodes.html
+# https://puppet.com/docs/puppet/latest/lang_write_functions_in_puppet.html
 #
 # = Usage
 # regexp_nodes.rb <host>
 #
 # = Description
 # This classifier implements filesystem autoloading: It looks through classes,
-# parameters, and environment subdirectories, looping through each file it 
-# finds.  Each file's contents are a regexp-per-line which, if they match the 
-# hostname passed to the program as ARGV[0], sets a class, parameter value 
+# parameters, and environment subdirectories, looping through each file it
+# finds.  Each file's contents are a regexp-per-line which, if they match the
+# hostname passed to the program as ARGV[0], sets a class, parameter value
 # or environment named the same thing as the file itself. At the end, the
-# resultant data structure is returned back to the puppet master process as 
+# resultant data structure is returned back to the puppet master process as
 # yaml.
 #
 # = Caveats
 # Since the files are read in directory order, multiple matches for a given
 # hostname in the parameters/ and environment/ subdirectories will return the
-# last-read value.  (Multiple classes/ matches don't cause a problem; the 
+# last-read value.  (Multiple classes/ matches don't cause a problem; the
 # class is either incuded or it isn't)
 #
 # Unmatched hostnames in any of the environment/ files will cause 'production'
@@ -28,10 +28,10 @@
 #
 # = Examples
 # Based on the example files in the classes/ and parameters/ subdirectories
-# in the distribution, classes/database will set the 'database' class for 
-# hosts matching %r{db\d{2}} (that is, 'db' followed by two digits) or with 
-# 'mysql' anywhere in the hostname.  Similarly, hosts beginning with 'www' or 
-# 'web' or the hostname 'leterel' (my workstation) will be assigned the 
+# in the distribution, classes/database will set the 'database' class for
+# hosts matching %r{db\d{2}} (that is, 'db' followed by two digits) or with
+# 'mysql' anywhere in the hostname.  Similarly, hosts beginning with 'www' or
+# 'web' or the hostname 'leterel' (my workstation) will be assigned the
 # 'webserver' class.
 #
 # Under parameters/ there is one subdirectory 'service' which
@@ -42,7 +42,7 @@
 #
 # In the environment/ subdirectory, any hosts matching '^dev-' and a single
 # production host which serves as 'canary in the coal mine' will be put into
-# the development environment 
+# the development environment
 #
 # = Author
 # Eric Sorenson <eric@explosive.net>
@@ -89,7 +89,6 @@ class ExternalNode
   # parameters
   def initialize(hostname, classdir = 'classes/', parameterdir = 'parameters/', environmentdir = 'environment/')
     # instance variables that contain the lists of classes and parameters
-    @hostname
     @classes = Set.new
     @parameters = Hash.new("unknown")  # sets a default value of "unknown"
     @environment = "production"
@@ -134,13 +133,13 @@ class ExternalNode
     patternlist = []
 
     begin
-      open(filepath).each { |l|
+      open(filepath).each do |l|
         l.chomp!
 
         next if l =~ /^$/
         next if l =~ /^#/
 
-		if l =~ /^\s*(\S+)/
+        if l =~ /^\s*(\S+)/
           m = Regexp.last_match
           log("found a non-comment line, transforming [#{l}] into [#{m[1]}]")
           l.gsub!(l,m[1])
@@ -151,7 +150,7 @@ class ExternalNode
         pattern = %r{#{l}}
         patternlist <<  pattern
         log("appending [#{pattern}] to patternlist for [#{filepath}]")
-      }
+      end
     rescue StandardError
       log("Problem reading #{filepath}: #{$!}",:err)
       exit(1)
@@ -187,7 +186,7 @@ class ExternalNode
     end
   end
 
-  # match_environment is similar to match_classes but it overwrites 
+  # match_environment is similar to match_classes but it overwrites
   # any previously set value (usually just the default, 'production')
   # with a match
   def match_environment(fullpath)

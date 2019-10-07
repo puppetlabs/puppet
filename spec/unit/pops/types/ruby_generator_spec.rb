@@ -15,54 +15,265 @@ describe 'Puppet Ruby Generator' do
   let!(:parser) { TypeParser.singleton }
   let(:generator) { RubyGenerator.new }
 
+  context 'when generating classes for Objects having attribute names that are Ruby reserved words' do
+    let (:source) { <<-PUPPET }
+      type MyObject = Object[{
+        attributes => {
+          alias => String,
+          begin => String,
+          break => String,
+          def => String,
+          do => String,
+          end => String,
+          ensure => String,
+          for => String,
+          module => String,
+          next => String,
+          nil => String,
+          not => String,
+          redo => String,
+          rescue => String,
+          retry => String,
+          return => String,
+          self => String,
+          super => String,
+          then => String,
+          until => String,
+          when => String,
+          while => String,
+          yield => String,
+        },
+      }]
+      $x = MyObject({
+        alias => 'value of alias',
+        begin => 'value of begin',
+        break => 'value of break',
+        def => 'value of def',
+        do => 'value of do',
+        end => 'value of end',
+        ensure => 'value of ensure',
+        for => 'value of for',
+        module => 'value of module',
+        next => 'value of next',
+        nil => 'value of nil',
+        not => 'value of not',
+        redo => 'value of redo',
+        rescue => 'value of rescue',
+        retry => 'value of retry',
+        return => 'value of return',
+        self => 'value of self',
+        super => 'value of super',
+        then => 'value of then',
+        until => 'value of until',
+        when => 'value of when',
+        while => 'value of while',
+        yield => 'value of yield',
+      })
+      notice($x.alias)
+      notice($x.begin)
+      notice($x.break)
+      notice($x.def)
+      notice($x.do)
+      notice($x.end)
+      notice($x.ensure)
+      notice($x.for)
+      notice($x.module)
+      notice($x.next)
+      notice($x.nil)
+      notice($x.not)
+      notice($x.redo)
+      notice($x.rescue)
+      notice($x.retry)
+      notice($x.return)
+      notice($x.self)
+      notice($x.super)
+      notice($x.then)
+      notice($x.until)
+      notice($x.when)
+      notice($x.while)
+      notice($x.yield)
+    PUPPET
+
+    it 'can create an instance and access all attributes' do
+      expect(eval_and_collect_notices(source)).to eql([
+        'value of alias',
+        'value of begin',
+        'value of break',
+        'value of def',
+        'value of do',
+        'value of end',
+        'value of ensure',
+        'value of for',
+        'value of module',
+        'value of next',
+        'value of nil',
+        'value of not',
+        'value of redo',
+        'value of rescue',
+        'value of retry',
+        'value of return',
+        'value of self',
+        'value of super',
+        'value of then',
+        'value of until',
+        'value of when',
+        'value of while',
+        'value of yield',
+      ])
+    end
+  end
+
+  context 'when generating classes for Objects having function names that are Ruby reserved words' do
+    let (:source) { <<-PUPPET }
+      type MyObject = Object[{
+        functions => {
+          alias  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of alias'" }}},
+          begin  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of begin'" }}},
+          break  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of break'" }}},
+          def    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of def'" }}},
+          do     => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of do'" }}},
+          end    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of end'" }}},
+          ensure => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of ensure'" }}},
+          for    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of for'" }}},
+          module => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of module'" }}},
+          next   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of next'" }}},
+          nil    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of nil'" }}},
+          not    => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of not'" }}},
+          redo   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of redo'" }}},
+          rescue => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of rescue'" }}},
+          retry  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of retry'" }}},
+          return => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of return'" }}},
+          self   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of self'" }}},
+          super  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of super'" }}},
+          then   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of then'" }}},
+          until  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of until'" }}},
+          when   => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of when'" }}},
+          while  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of while'" }}},
+          yield  => { type => Callable[[0,0],String], annotations => {RubyMethod => { 'body' => "'value of yield'" }}},
+        },
+      }]
+      $x = MyObject()
+      notice($x.alias)
+      notice($x.begin)
+      notice($x.break)
+      notice($x.def)
+      notice($x.do)
+      notice($x.end)
+      notice($x.ensure)
+      notice($x.for)
+      notice($x.module)
+      notice($x.next)
+      notice($x.nil)
+      notice($x.not)
+      notice($x.redo)
+      notice($x.rescue)
+      notice($x.retry)
+      notice($x.return)
+      notice($x.self)
+      notice($x.super)
+      notice($x.then)
+      notice($x.until)
+      notice($x.when)
+      notice($x.while)
+      notice($x.yield)
+    PUPPET
+
+    it 'can create an instance and call all functions' do
+      expect(eval_and_collect_notices(source)).to eql([
+        'value of alias',
+        'value of begin',
+        'value of break',
+        'value of def',
+        'value of do',
+        'value of end',
+        'value of ensure',
+        'value of for',
+        'value of module',
+        'value of next',
+        'value of nil',
+        'value of not',
+        'value of redo',
+        'value of rescue',
+        'value of retry',
+        'value of return',
+        'value of self',
+        'value of super',
+        'value of then',
+        'value of until',
+        'value of when',
+        'value of while',
+        'value of yield',
+      ])
+    end
+  end
+
   context 'when generating from Object types' do
-    def source
-      <<-CODE
-        type MyModule::FirstGenerated = Object[{
-          attributes => {
-            name => String,
-            age  => { type => Integer, value => 30 },
-            what => { type => String, value => 'what is this', kind => constant },
-            uc_name => {
-              type => String,
-              kind => derived,
-              annotations => {
-                RubyMethod => { body => '@name.upcase' }
-              }
-            },
-            other_name => {
-              type => String,
-              kind => derived
+    let (:type_decls) { <<-CODE.unindent }
+      type MyModule::FirstGenerated = Object[{
+        attributes => {
+          name => String,
+          age  => { type => Integer, value => 30 },
+          what => { type => String, value => 'what is this', kind => constant },
+          uc_name => {
+            type => String,
+            kind => derived,
+            annotations => {
+              RubyMethod => { body => '@name.upcase' }
             }
           },
-          functions => {
-            some_other => {
-              type => Callable[1,1]
-            },
-            name_and_age => {
-              type => Callable[1,1],
-              annotations => {
-                RubyMethod => {
-                  parameters => 'joiner',
-                  body => '"\#{@name}\#{joiner}\#{@age}"'
-                }
+          other_name => {
+            type => String,
+            kind => derived
+          },
+        },
+        functions => {
+          some_other => {
+            type => Callable[1,1]
+          },
+          name_and_age => {
+            type => Callable[1,1],
+            annotations => {
+              RubyMethod => {
+                parameters => 'joiner',
+                body => '"\#{@name}\#{joiner}\#{@age}"'
               }
-            },
+            }
+          },
+          '[]' => {
+            type => Callable[1,1],
+            annotations => {
+              RubyMethod => {
+                parameters => 'key',
+                body => @(EOF)
+                  case key
+                  when 'name'
+                    name
+                  when 'age'
+                    age
+                  else
+                    nil
+                  end
+                |-EOF
+              }
+            }
           }
-        }]
-        type MyModule::SecondGenerated = Object[{
-          parent => MyModule::FirstGenerated,
-          attributes => {
-            address => String,
-            zipcode => String,
-            email => String,
-            another => { type => Optional[MyModule::FirstGenerated], value => undef },
-            number => Integer,
-            aref => { type => Optional[MyModule::FirstGenerated], value => undef, kind => reference }
-          }
-        }]
+        }
+      }]
+      type MyModule::SecondGenerated = Object[{
+        parent => MyModule::FirstGenerated,
+        attributes => {
+          address => String,
+          zipcode => String,
+          email => String,
+          another => { type => Optional[MyModule::FirstGenerated], value => undef },
+          number => Integer,
+          aref => { type => Optional[MyModule::FirstGenerated], value => undef, kind => reference }
+        }
+      }]
       CODE
-    end
+
+    let(:type_usage) { '' }
+    let(:source) { type_decls + type_usage }
 
     context 'when generating anonymous classes' do
 
@@ -72,14 +283,13 @@ describe 'Puppet Ruby Generator' do
       let(:second_type) { parser.parse('MyModule::SecondGenerated', loader) }
       let(:first) { generator.create_class(first_type) }
       let(:second) { generator.create_class(second_type) }
+      let(:notices) { [] }
 
       before(:each) do
-        eval_and_collect_notices(source) do |topscope|
+        notices.concat(eval_and_collect_notices(source) do |topscope|
           loader = topscope.compiler.loaders.find_loader(nil)
-        end
+        end)
       end
-
-      after(:each) { typeset = nil }
 
       context 'the generated class' do
         it 'inherits the PuppetObject module' do
@@ -102,6 +312,12 @@ describe 'Puppet Ruby Generator' do
           expect(inst).to be_a(first)
           expect(inst.name).to eq('Bob Builder')
           expect(inst.age).to eq(52)
+        end
+
+        it 'created instance has a [] method' do
+          inst = first.create('Bob Builder', 52)
+          expect(inst['name']).to eq('Bob Builder')
+          expect(inst['age']).to eq(52)
         end
 
         it 'will perform type assertion of the arguments' do
@@ -187,6 +403,18 @@ describe 'Puppet Ruby Generator' do
           expect(results).to eq([inst])
         end
       end
+
+      context 'when used from Puppet' do
+        let(:type_usage) { <<-PUPPET.unindent }
+          $i = MyModule::FirstGenerated('Bob Builder', 52)
+          notice($i['name'])
+          notice($i['age'])
+        PUPPET
+
+        it 'The [] method is present on a created instance' do
+          expect(notices).to eql(['Bob Builder', '52'])
+        end
+      end
     end
 
     context 'when generating static code' do
@@ -202,10 +430,9 @@ describe 'Puppet Ruby Generator' do
             first_type = parser.parse('MyModule::FirstGenerated')
             second_type = parser.parse('MyModule::SecondGenerated')
 
-            loader = Loaders.find_loader(nil)
             Loaders.implementation_registry.register_type_mapping(
               PRuntimeType.new(:ruby, [/^PuppetSpec::RubyGenerator::(\w+)$/, 'MyModule::\1']),
-              [/^MyModule::(\w+)$/, 'PuppetSpec::RubyGenerator::\1'], loader)
+              [/^MyModule::(\w+)$/, 'PuppetSpec::RubyGenerator::\1'])
 
             module_def = generator.module_definition([first_type, second_type], 'Generated stuff')
           end
@@ -221,7 +448,7 @@ describe 'Puppet Ruby Generator' do
 
       after(:all) do
         # Don't want generated module to leak outside this test
-        PuppetSpec.send(:remove_const, :RubyGenerator)
+        PuppetSpec.send(:remove_const, :RubyGenerator) if PuppetSpec.const_defined?(:RubyGenerator)
       end
 
       it 'the #_pcore_type class method returns a resolved Type' do
@@ -379,28 +606,15 @@ describe 'Puppet Ruby Generator' do
 
       context 'the typeset' do
         it 'produces expected string representation' do
-          typeset.to_s == "TypeSet[{"+
-            "pcore_version => '1.0.0', "+
-            "name_authority => 'http://puppet.com/2016.1/runtime', "+
-            "name => 'OtherModule', "+
-            "version => '1.0.0', "+
-            "types => {"+
-            "MyFloat => Float, "+
-            "ThirdGenerated => Object[{"+
-            "attributes => {"+
-            "'first' => MyModule::FirstGenerated}}], "+
-            "FourthGenerated => Object[{"+
-            "parent => MyModule::SecondGenerated, "+
-            "attributes => {"+
-            "'complex' => {"+
-            "type => Optional[ThirdGenerated], "+
-            "value => ?}, "+
-            "'n1' => MyModule::MyInteger, "+
-            "'n2' => MyFloat}}]}, "+
-            "references => [{"+
-            "'name' => 'MyModule', "+
-            "'alias' => 'My', "+
-            "'version_range' => '1.x'}]}]"
+          expect(typeset.to_s).to eq(
+            "TypeSet[{pcore_version => '1.0.0', name_authority => 'http://puppet.com/2016.1/runtime', name => 'OtherModule', version => '1.0.0', types => {"+
+              "MyFloat => Float, "+
+              "ThirdGenerated => Object[{attributes => {'first' => My::FirstGenerated}}], "+
+              "FourthGenerated => Object[{parent => My::SecondGenerated, attributes => {"+
+                "'complex' => {type => Optional[ThirdGenerated], value => undef}, "+
+                "'n1' => My::MyInteger, "+
+                "'n2' => MyFloat"+
+              "}}]}, references => {My => {'name' => 'MyModule', 'version_range' => '1.x'}}}]")
         end
       end
 
@@ -523,19 +737,17 @@ describe 'Puppet Ruby Generator' do
         # Ideally, this would be in a before(:all) but that is impossible since lots of Puppet
         # environment specific settings are configured by the spec_helper in before(:each)
         if module_def.nil?
-          typeset = nil
           eval_and_collect_notices(source) do
             typeset1 = parser.parse('MyModule')
             typeset2 = parser.parse('OtherModule')
 
-            loader = Loaders.find_loader(nil)
             Loaders.implementation_registry.register_type_mapping(
               PRuntimeType.new(:ruby, [/^PuppetSpec::RubyGenerator::My::(\w+)$/, 'MyModule::\1']),
-              [/^MyModule::(\w+)$/, 'PuppetSpec::RubyGenerator::My::\1'], loader)
+              [/^MyModule::(\w+)$/, 'PuppetSpec::RubyGenerator::My::\1'])
 
             Loaders.implementation_registry.register_type_mapping(
               PRuntimeType.new(:ruby, [/^PuppetSpec::RubyGenerator::Other::(\w+)$/, 'OtherModule::\1']),
-              [/^OtherModule::(\w+)$/, 'PuppetSpec::RubyGenerator::Other::\1'], loader)
+              [/^OtherModule::(\w+)$/, 'PuppetSpec::RubyGenerator::Other::\1'])
 
             module_def = generator.module_definition_from_typeset(typeset1)
             module_def2 = generator.module_definition_from_typeset(typeset2)
@@ -553,7 +765,7 @@ describe 'Puppet Ruby Generator' do
 
       after(:all) do
         # Don't want generated module to leak outside this test
-        PuppetSpec.send(:remove_const, :RubyGenerator)
+        PuppetSpec.send(:remove_const, :RubyGenerator) if PuppetSpec.const_defined?(:RubyGenerator)
       end
 
       it 'the #_pcore_type class method returns a resolved Type' do

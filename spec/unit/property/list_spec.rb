@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/property/list'
@@ -15,7 +14,7 @@ describe list_class do
     before do
       # Wow that's a messy interface to the resource.
       list_class.initvars
-      @resource = stub 'resource', :[]= => nil, :property => nil
+      @resource = double('resource', :[]= => nil, :property => nil)
       @property = list_class.new(:resource => @resource)
     end
 
@@ -55,20 +54,20 @@ describe list_class do
 
     describe "when calling inclusive?" do
       it "should use the membership method to look up on the @resource" do
-        @property.expects(:membership).returns(:membership)
-        @resource.expects(:[]).with(:membership)
+        expect(@property).to receive(:membership).and_return(:membership)
+        expect(@resource).to receive(:[]).with(:membership)
         @property.inclusive?
       end
 
       it "should return true when @resource[membership] == inclusive" do
-        @property.stubs(:membership).returns(:membership)
-        @resource.stubs(:[]).with(:membership).returns(:inclusive)
+        allow(@property).to receive(:membership).and_return(:membership)
+        allow(@resource).to receive(:[]).with(:membership).and_return(:inclusive)
         expect(@property.inclusive?).to eq(true)
       end
 
       it "should return false when @resource[membership] != inclusive" do
-        @property.stubs(:membership).returns(:membership)
-        @resource.stubs(:[]).with(:membership).returns(:minimum)
+        allow(@property).to receive(:membership).and_return(:membership)
+        allow(@resource).to receive(:[]).with(:membership).and_return(:minimum)
         expect(@property.inclusive?).to eq(false)
       end
     end
@@ -80,14 +79,14 @@ describe list_class do
 
       it "should return the sorted values of @should as a string if inclusive" do
         @property.should = ["foo", "bar"]
-        @property.expects(:inclusive?).returns(true)
+        expect(@property).to receive(:inclusive?).and_return(true)
         expect(@property.should).to eq("bar,foo")
       end
 
       it "should return the uniq sorted values of @should + retrieve as a string if !inclusive" do
         @property.should = ["foo", "bar"]
-        @property.expects(:inclusive?).returns(false)
-        @property.expects(:retrieve).returns(["foo","baz"])
+        expect(@property).to receive(:inclusive?).and_return(false)
+        expect(@property).to receive(:retrieve).and_return(["foo","baz"])
         expect(@property.should).to eq("bar,baz,foo")
       end
     end
@@ -95,25 +94,25 @@ describe list_class do
     describe "when calling retrieve" do
       let(:provider) { @provider }
       before do
-        @provider = mock("provider")
-        @property.stubs(:provider).returns(provider)
+        @provider = double("provider")
+        allow(@property).to receive(:provider).and_return(provider)
       end
 
       it "should send 'name' to the provider" do
-        @provider.expects(:send).with(:group)
-        @property.expects(:name).returns(:group)
+        expect(@provider).to receive(:send).with(:group)
+        expect(@property).to receive(:name).and_return(:group)
         @property.retrieve
       end
 
       it "should return an array with the provider returned info" do
-        @provider.stubs(:send).with(:group).returns("foo,bar,baz")
-        @property.stubs(:name).returns(:group)
+        allow(@provider).to receive(:send).with(:group).and_return("foo,bar,baz")
+        allow(@property).to receive(:name).and_return(:group)
         @property.retrieve == ["foo", "bar", "baz"]
       end
 
       it "should return :absent when the provider returns :absent" do
-        @provider.stubs(:send).with(:group).returns(:absent)
-        @property.stubs(:name).returns(:group)
+        allow(@provider).to receive(:send).with(:group).and_return(:absent)
+        allow(@property).to receive(:name).and_return(:group)
         @property.retrieve == :absent
       end
 
@@ -137,35 +136,35 @@ describe list_class do
 
       it "should call prepare_is_for_comparison with value passed in and should" do
         @property.should = "foo"
-        @property.expects(:prepare_is_for_comparison).with("bar")
-        @property.expects(:should)
+        expect(@property).to receive(:prepare_is_for_comparison).with("bar")
+        expect(@property).to receive(:should)
         @property.safe_insync?("bar")
       end
 
       it "should return true if 'is' value is array of comma delimited should values" do
         @property.should = "bar,foo"
-        @property.expects(:inclusive?).returns(true)
+        expect(@property).to receive(:inclusive?).and_return(true)
         expect(@property).to be_safe_insync(["bar","foo"])
       end
 
       it "should return true if 'is' value is :absent and should value is empty string" do
         @property.should = ""
-        @property.expects(:inclusive?).returns(true)
+        expect(@property).to receive(:inclusive?).and_return(true)
         expect(@property).to be_safe_insync([])
       end
 
       it "should return false if prepared value != should value" do
         @property.should = "bar,baz,foo"
-        @property.expects(:inclusive?).returns(true)
+        expect(@property).to receive(:inclusive?).and_return(true)
         expect(@property).to_not be_safe_insync(["bar","foo"])
       end
     end
 
     describe "when calling dearrayify" do
       it "should sort and join the array with 'delimiter'" do
-        array = mock "array"
-        array.expects(:sort).returns(array)
-        array.expects(:join).with(@property.delimiter)
+        array = double("array")
+        expect(array).to receive(:sort).and_return(array)
+        expect(array).to receive(:join).with(@property.delimiter)
         @property.dearrayify(array)
       end
     end

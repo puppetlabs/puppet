@@ -72,14 +72,14 @@ describe Puppet::Parser::Compiler do
     # hidden away in the implementation and we keep losing the race.)
     # --daniel 2011-04-21
     now = Time.now
-    Time.stubs(:now).returns(now)
+    allow(Time).to receive(:now).and_return(now)
 
     @node = Puppet::Node.new("testnode",
                              :facts => Puppet::Node::Facts.new("facts", {}),
                              :environment => environment)
     @known_resource_types = environment.known_resource_types
     @compiler = Puppet::Parser::Compiler.new(@node)
-    @scope = Puppet::Parser::Scope.new(@compiler, :source => stub('source'))
+    @scope = Puppet::Parser::Scope.new(@compiler, :source => double('source'))
     @scope_resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope)
     @scope.resource = @scope_resource
   end
@@ -145,8 +145,8 @@ describe Puppet::Parser::Compiler do
           }
         MANIFEST
 
-      Puppet::Parser::Resource::Catalog.any_instance.expects(:to_resource).with do |catalog|
-        Puppet.lookup(:current_environment).name == :production
+      expect_any_instance_of(Puppet::Parser::Resource::Catalog).to receive(:to_resource) do |catalog|
+        expect(Puppet.lookup(:current_environment).name).to eq(:production)
       end
 
       Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
@@ -211,7 +211,7 @@ describe Puppet::Parser::Compiler do
   describe "the compiler when using 4.x language constructs" do
     include PuppetSpec::Compiler
 
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       it "should be able to determine the configuration version from a local version control repository" do
         pending("Bug #14071 about semantics of Puppet::Util::Execute on Windows")
         # This should always work, because we should always be
@@ -259,7 +259,7 @@ describe Puppet::Parser::Compiler do
     it "should not create duplicate resources when a class is referenced both directly and indirectly by the node classifier (4792)" do
       node = Puppet::Node.new("testnodex")
       node.classes = ['foo', 'bar']
-      catalog = compile_to_catalog(<<-PP, node)
+      compile_to_catalog(<<-PP, node)
         class foo
         {
           notify { foo_notify: }
@@ -401,7 +401,7 @@ describe Puppet::Parser::Compiler do
 
       it "should not favor local name scope" do
         expect {
-          catalog = compile_to_catalog(<<-PP)
+          compile_to_catalog(<<-PP)
             class experiment {
               class baz {
               }
@@ -447,10 +447,10 @@ describe Puppet::Parser::Compiler do
       Puppet[:code] = 'class foo { }'
       first_time = Time.at(1)
       second_time = Time.at(200)
-      Time.stubs(:now).returns(first_time)
+      allow(Time).to receive(:now).and_return(first_time)
       node = Puppet::Node.new('mynode')
       expect(Puppet::Parser::Compiler.compile(node).version).to eq(first_time.to_i)
-      Time.stubs(:now).returns(second_time)
+      allow(Time).to receive(:now).and_return(second_time)
       expect(Puppet::Parser::Compiler.compile(node).version).to eq(first_time.to_i) # no change because files didn't change
       Puppet[:code] = nil
       expect(Puppet::Parser::Compiler.compile(node).version).to eq(second_time.to_i)
@@ -483,13 +483,6 @@ describe Puppet::Parser::Compiler do
     end
 
     describe "relationships to non existing resources (even with strict==off)" do
-      # At some point in the future, this test can be modified to simply ignore the strict flag,
-      # but since the current version is a change from being under control of strict, this is now
-      # explicit - the standard setting is strict == warning, here setting it to off
-      #
-      before(:each) do
-        Puppet[:strict] = :off
-      end
 
       [ 'before',
         'subscribe',
@@ -519,6 +512,15 @@ describe Puppet::Parser::Compiler do
             realize(Notify['x'])
           PP
         }.to raise_error(/Could not find resource 'Notify\[tooth_fairy\]' in parameter 'require'/)
+      end
+
+      it 'faulty references are reported with source location' do
+        expect { 
+          compile_to_catalog(<<-PP)
+            notify{ x : 
+              require => tooth_fairy }
+          PP
+        }.to raise_error(/"tooth_fairy" is not a valid resource reference.*\(line: 2\)/)
       end
     end
 
@@ -683,7 +685,7 @@ describe Puppet::Parser::Compiler do
 
       it 'an initial underscore in not ok if elsewhere than last segment' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class a { $_a = 10}
             include a
             notify { 'test': message => $_a::_a }
@@ -769,7 +771,7 @@ describe Puppet::Parser::Compiler do
 
       it 'accepts anything when parameters are untyped' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
           define foo($a, $b, $c) { }
           foo { 'test': a => String, b=>10, c=>undef }
           MANIFEST
@@ -778,7 +780,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies non type compliant arguments' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Integer $x) { }
             foo { 'test': x =>'say friend' }
           MANIFEST
@@ -787,7 +789,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies undef for a non-optional type' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Integer $x) { }
             foo { 'test': x => undef }
           MANIFEST
@@ -796,7 +798,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies non type compliant default argument' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Integer $x = 'pow') { }
             foo { 'test':  }
           MANIFEST
@@ -805,7 +807,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies undef as the default for a non-optional type' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Integer $x = undef) { }
             foo { 'test':  }
           MANIFEST
@@ -826,7 +828,7 @@ describe Puppet::Parser::Compiler do
 
       it 'uses infer_set when reporting type mismatch' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             define foo(Struct[{b => Integer, d=>String}] $a) { }
             foo{ bar: a => {b => 5, c => 'stuff'}}
           MANIFEST
@@ -855,7 +857,7 @@ describe Puppet::Parser::Compiler do
 
       it 'accepts anything when parameters are untyped' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo($a, $b, $c) { }
             class { 'foo': a => String, b=>10, c=>undef }
           MANIFEST
@@ -864,7 +866,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies non type compliant arguments' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo(Integer $x) { }
             class { 'foo': x =>'say friend' }
           MANIFEST
@@ -873,7 +875,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies undef for a non-optional type' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo(Integer $x) { }
             class { 'foo': x => undef }
           MANIFEST
@@ -882,7 +884,7 @@ describe Puppet::Parser::Compiler do
 
       it 'denies non type compliant default argument' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo(Integer $x = 'pow') { }
             class { 'foo':  }
           MANIFEST
@@ -891,11 +893,29 @@ describe Puppet::Parser::Compiler do
 
       it 'denies undef as the default for a non-optional type' do
         expect do
-          catalog = compile_to_catalog(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             class foo(Integer $x = undef) { }
             class { 'foo':  }
           MANIFEST
         end.to raise_error(/Class\[Foo\]: parameter 'x' expects an Integer value, got Undef/)
+      end
+
+      it 'denies a regexp (rich data) argument given to class String parameter (even if later encoding of it is a string)' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            class foo(String $x) { }
+            class { 'foo':  x => /I am a regexp and I don't want to be a String/}
+          MANIFEST
+        end.to raise_error(/Class\[Foo\]: parameter 'x' expects a String value, got Regexp/)
+      end
+
+      it 'denies a regexp (rich data) argument given to define String parameter (even if later encoding of it is a string)' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            define foo(String $x) { }
+            foo { 'foo':  x => /I am a regexp and I don't want to be a String/}
+          MANIFEST
+        end.to raise_error(/Foo\[foo\]: parameter 'x' expects a String value, got Regexp/)
       end
 
       it 'accepts a Resource as a Type' do
@@ -1144,7 +1164,7 @@ describe Puppet::Parser::Compiler do
     it 'errors when an alias cannot be found when relationship is formed with -> operator' do
       node = Puppet::Node.new("testnodex")
       expect {
-        catalog = compile_to_catalog(<<-PP, node)
+        compile_to_catalog(<<-PP, node)
           notify { 'actual_2':  }
           notify { 'actual_1': alias => 'alias_1' }
           Notify[actual_2] -> Notify[alias_2]
@@ -1172,7 +1192,6 @@ describe Puppet::Parser::Compiler do
         include foo
         include bar
       MANIFEST
-      package = catalog.resource('Package', 'pip')
       expect(catalog.resource('Package', 'pip')[:require].to_s).to eql('Package[python]')
     end
 

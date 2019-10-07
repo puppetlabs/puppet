@@ -8,6 +8,7 @@ Puppet::Face.define(:module, '1.0.0') do
     summary _("Install a module from the Puppet Forge or a release archive.")
     description <<-EOT
       Installs a module from the Puppet Forge or from a release archive file.
+      Note: Module install uses MD5 checksums, which are prohibited on FIPS enabled systems.
 
       The specified module will be installed into the directory
       specified with the `--target-dir` option, which defaults to the first
@@ -117,10 +118,6 @@ Puppet::Face.define(:module, '1.0.0') do
         Module version to install; can be an exact version or a requirement string,
         eg '>= 1.0.3'. Defaults to latest version.
       EOT
-    end
-
-    option '--strict-semver' do
-      summary _('Whether version ranges should exclude pre-release versions')
     end
 
     when_invoked do |name, options|

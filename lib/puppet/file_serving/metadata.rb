@@ -65,7 +65,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   end
 
   class WindowsStat < MetaStat
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       require 'puppet/util/windows/security'
     end
 
@@ -88,7 +88,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   def collect_stat(path)
     stat = stat()
 
-    if Puppet.features.microsoft_windows?
+    if Puppet::Util::Platform.windows?
       WindowsStat.new(stat, path, @source_permissions)
     else
       MetaStat.new(stat, @source_permissions)
@@ -127,7 +127,8 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     @owner       = data.delete('owner')
     @group       = data.delete('group')
     @mode        = data.delete('mode')
-    if checksum = data.delete('checksum')
+    checksum = data.delete('checksum')
+    if checksum
       @checksum_type = checksum['type']
       @checksum      = checksum['value']
     end
@@ -136,7 +137,8 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     @destination = data.delete('destination')
     @source      = data.delete('source')
     @content_uri = data.delete('content_uri')
-    super(path,data)
+
+    super(path, data.map { |k, v| [k.to_sym, v] }.to_h)
   end
 
   def to_data_hash

@@ -10,10 +10,6 @@ module Puppet
       Puppet::Network::HTTP::MASTER_URL_PREFIX
     end
 
-    def self.ca_url_prefix
-      Puppet::Network::HTTP::CA_URL_PREFIX
-    end
-
     def self.default_acl
       [
       # Master API V3
@@ -28,17 +24,8 @@ module Puppet
       { :acl => "#{master_url_prefix}/v3/file" },
 
       { :acl => "#{master_url_prefix}/v3/status", :method => [:find], :authenticated => true },
-
-      # CA API V1
-      { :acl => "#{ca_url_prefix}/v1/certificate_revocation_list/ca", :method => :find, :authenticated => true },
-
-      # These allow `auth any`, because if you can do them anonymously you
-      # should probably also be able to do them when trusted.
-      { :acl => "#{ca_url_prefix}/v1/certificate/ca", :method => :find, :authenticated => :any },
-      { :acl => "#{ca_url_prefix}/v1/certificate/", :method => :find, :authenticated => :any },
-      { :acl => "#{ca_url_prefix}/v1/certificate_request", :method => [:find, :save], :authenticated => :any },
       ]
-      end
+    end
 
     # Just proxy the setting methods to our rights stuff
     [:allow, :deny].each do |method|
@@ -67,7 +54,8 @@ module Puppet
       right = @rights.newright(acl[:acl])
       right.allow(acl[:allow] || "*")
 
-      if method = acl[:method]
+      method = acl[:method]
+      if method
         method = [method] unless method.is_a?(Array)
         method.each { |m| right.restrict_method(m) }
       end
@@ -78,7 +66,8 @@ module Puppet
     # raise an Puppet::Network::AuthorizedError if the request
     # is denied.
     def check_authorization(method, path, params)
-      if authorization_failure_exception = @rights.is_request_forbidden_and_why?(method, path, params)
+      authorization_failure_exception = @rights.is_request_forbidden_and_why?(method, path, params)
+      if authorization_failure_exception
         Puppet.warning(_("Denying access: %{authorization_failure_exception}") % { authorization_failure_exception: authorization_failure_exception })
         raise authorization_failure_exception
       end

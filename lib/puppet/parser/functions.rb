@@ -30,11 +30,43 @@ module Puppet::Parser::Functions
     end
   end
 
+  class AutoloaderDelegate
+    attr_reader :delegatee
+
+    def initialize
+      @delegatee = Puppet::Util::Autoload.new(self, "puppet/parser/functions")
+    end
+
+    def loadall(env = Puppet.lookup(:current_environment))
+      if Puppet[:strict] != :off
+        Puppet.warn_once('deprecations', 'Puppet::Parser::Functions#loadall', _("The method 'Puppet::Parser::Functions.autoloader#loadall' is deprecated in favor of using 'Scope#call_function'."))
+      end
+
+      @delegatee.loadall(env)
+    end
+
+    def load(name, env = Puppet.lookup(:current_environment))
+      if Puppet[:strict] != :off
+        Puppet.warn_once('deprecations', "Puppet::Parser::Functions#load('#{name}')", _("The method 'Puppet::Parser::Functions.autoloader#load(\"%{name}\")' is deprecated in favor of using 'Scope#call_function'.") % {name: name})
+      end
+
+      @delegatee.load(name, env)
+    end
+
+    def loaded?(name)
+      if Puppet[:strict] != :off
+        Puppet.warn_once('deprecations', "Puppet::Parser::Functions.loaded?('#{name}')", _("The method 'Puppet::Parser::Functions.autoloader#loaded?(\"%{name}\")' is deprecated in favor of using 'Scope#call_function'.") % {name: name})
+      end
+
+      @delegatee.loaded?(name)
+    end
+  end
+
   # Accessor for singleton autoloader
   #
   # @api private
   def self.autoloader
-    @autoloader ||= Puppet::Util::Autoload.new(self, "puppet/parser/functions")
+    @autoloader ||= AutoloaderDelegate.new
   end
 
   # An adapter that ties the anonymous module that acts as the container for all 3x functions to the environment
@@ -82,7 +114,7 @@ module Puppet::Parser::Functions
   # extend the behavior and functionality of Puppet.
   #
   # See also [Docs: Custom
-  # Functions](https://docs.puppetlabs.com/guides/custom_functions.html)
+  # Functions](https://puppet.com/docs/puppet/5.5/lang_write_functions_in_puppet.html)
   #
   # @example Define a new Puppet DSL Function
   #     >> Puppet::Parser::Functions.newfunction(:double, :arity => 1,
@@ -152,7 +184,7 @@ module Puppet::Parser::Functions
     ftype = options[:type] || :statement
 
     unless ftype == :statement or ftype == :rvalue
-      raise Puppet::DevError, "Invalid statement type #{ftype.inspect}"
+      raise Puppet::DevError, _("Invalid statement type %{type}") % { type: ftype.inspect }
     end
 
     # the block must be installed as a method because it may use "return",
@@ -171,7 +203,9 @@ module Puppet::Parser::Functions
           elsif arity < 0 and args[0].size < (arity+1).abs
             raise ArgumentError, _("%{name}(): Wrong number of arguments given (%{arg_count} for minimum %{min_arg_count})") % { name: name, arg_count: args[0].size, min_arg_count: (arity+1).abs }
           end
-          self.send(real_fname, args[0])
+          r = Puppet::Pops::Evaluator::Runtime3FunctionArgumentConverter.convert_return(self.send(real_fname, args[0]))
+          # avoid leaking aribtrary value if not being an rvalue function
+          options[:type] == :rvalue ? r : nil
         else
           raise ArgumentError, _("custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)")
         end
@@ -198,9 +232,9 @@ module Puppet::Parser::Functions
   def self.function(name, environment = Puppet.lookup(:current_environment))
     name = name.intern
 
-    func = nil
-    unless func = get_function(name, environment)
-      autoloader.load(name, environment)
+    func = get_function(name, environment)
+    unless func
+      autoloader.delegatee.load(name, environment)
       func = get_function(name, environment)
     end
 
@@ -212,7 +246,7 @@ module Puppet::Parser::Functions
   end
 
   def self.functiondocs(environment = Puppet.lookup(:current_environment))
-    autoloader.loadall
+    autoloader.delegatee.loadall(environment)
 
     ret = ""
 

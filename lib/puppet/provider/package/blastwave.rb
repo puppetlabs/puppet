@@ -93,7 +93,8 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
   end
 
   def query
-    if hash = self.class.blastlist(:justme => @resource[:name])
+    hash = self.class.blastlist(:justme => @resource[:name])
+    if hash
       hash
     else
       {:ensure => :absent}

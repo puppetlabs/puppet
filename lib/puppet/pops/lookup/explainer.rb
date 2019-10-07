@@ -491,7 +491,8 @@ module Lookup
         when :invalid_key
           ExplainInvalidKey.new(@current, qualifier)
         else
-          raise ArgumentError, "Unknown Explain type #{qualifier_type}"
+          #TRANSLATORS 'Explain' is referring to the 'Explainer' class and should not be translated
+          raise ArgumentError, _("Unknown Explain type %{qualifier_type}") % { qualifier_type: qualifier_type }
         end
       @current.branches << node
       @current = node

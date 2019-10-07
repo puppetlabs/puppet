@@ -59,7 +59,7 @@ class Puppet::InfoService::ClassInformationService
       {:classes =>
         parse_result.definitions.select {|d| d.is_a?(Puppet::Pops::Model::HostClassDefinition)}.map do |d|
           {:name   => d.name,
-           :params => params = d.parameters.map {|p| extract_param(p) }
+           :params => d.parameters.map {|p| extract_param(p) }
           }
         end
       }

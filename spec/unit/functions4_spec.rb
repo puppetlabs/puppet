@@ -56,7 +56,7 @@ describe 'the 4x function api' do
   it 'refuses to create functions that are not based on the Function class' do
     expect do
       Puppet::Functions.create_function('testing', Object) {}
-    end.to raise_error(ArgumentError, 'Functions must be based on Puppet::Pops::Functions::Function. Got Object')
+    end.to raise_error(ArgumentError, /function 'testing'.*Functions must be based on Puppet::Pops::Functions::Function. Got Object/)
   end
 
   it 'refuses to create functions with parameters that are not named with a symbol' do
@@ -96,7 +96,6 @@ describe 'the 4x function api' do
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
-    signature = 'Any x, Any y'
     expect do
       func.call({}, 10)
     end.to raise_error(ArgumentError, "'min' expects 2 arguments, got 1")
@@ -107,7 +106,6 @@ describe 'the 4x function api' do
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_truthy
-    signature = 'Any x, Any y'
     expect do
       func.call({}, 10, 10, 10)
     end.to raise_error(ArgumentError, "'min' expects 2 arguments, got 3")
@@ -122,7 +120,7 @@ describe 'the 4x function api' do
 
   it 'an error is raised if simple function-name and method are not matched' do
     expect do
-      f = create_badly_named_method_function_class()
+      create_badly_named_method_function_class()
     end.to raise_error(ArgumentError, /Function Creation Error, cannot create a default dispatcher for function 'mix', no method with this name found/)
   end
 
@@ -212,15 +210,18 @@ describe 'the 4x function api' do
     end
 
     it 'a function can not be created with parameters declared after a repeated parameter' do
-      expect { create_function_with_param_after_repeated }.to raise_error(ArgumentError, 'Parameters cannot be added after a repeated parameter')
+      expect { create_function_with_param_after_repeated }.to raise_error(ArgumentError,
+        /function 't1'.*Parameters cannot be added after a repeated parameter/)
     end
 
     it 'a function can not be created with required parameters declared after optional ones' do
-      expect { create_function_with_rq_after_opt }.to raise_error(ArgumentError, 'A required parameter cannot be added after an optional parameter')
+      expect { create_function_with_rq_after_opt }.to raise_error(ArgumentError,
+        /function 't1'.*A required parameter cannot be added after an optional parameter/)
     end
 
     it 'a function can not be created with required repeated parameters declared after optional ones' do
-      expect { create_function_with_rq_repeated_after_opt }.to raise_error(ArgumentError, 'A required repeated parameter cannot be added after an optional parameter')
+      expect { create_function_with_rq_repeated_after_opt }.to raise_error(ArgumentError,
+        /function 't1'.*A required repeated parameter cannot be added after an optional parameter/)
     end
 
     it 'an error is raised with reference to multiple methods when called with mis-matched arguments' do
@@ -391,11 +392,11 @@ describe 'the 4x function api' do
     end
 
     context 'supports calling other functions' do
-      before(:all) do
+      before(:each) do
         Puppet.push_context( {:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))})
       end
 
-      after(:all) do
+      after(:each) do
         Puppet.pop_context()
       end
 
@@ -424,12 +425,12 @@ describe 'the 4x function api' do
       end
     end
 
-    context 'supports calling ruby functions with lambda from puppet' do
-      before(:all) do
+    context 'functions in a context with a compiler' do
+      before(:each) do
         Puppet.push_context( {:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))})
       end
 
-      after(:all) do
+      after(:each) do
         Puppet.pop_context()
       end
 
@@ -440,29 +441,81 @@ describe 'the 4x function api' do
       let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
       let(:node) { 'node.example.com' }
       let(:scope) { s = create_test_scope_for_node(node); s }
+      let(:loader) { Puppet::Pops::Loaders.find_loader(nil) }
 
-      it 'function with required block can be called' do
-        # construct ruby function to call
-        fc = Puppet::Functions.create_function('testing::test') do
-          dispatch :test do
-            param 'Integer', :x
-            # block called 'the_block', and using "all_callables"
-            required_block_param #(all_callables(), 'the_block')
+      context 'supports calling ruby functions with lambda from puppet' do
+        it 'function with required block can be called' do
+          # construct ruby function to call
+          fc = Puppet::Functions.create_function('testing::test') do
+            dispatch :test do
+              param 'Integer', :x
+              # block called 'the_block', and using "all_callables"
+              required_block_param #(all_callables(), 'the_block')
+            end
+            def test(x)
+              # call the block with x
+              yield(x)
+            end
           end
-          def test(x)
-            # call the block with x
-            yield(x)
-          end
+          # add the function to the loader (as if it had been loaded from somewhere)
+          the_loader = loader
+          f = fc.new({}, the_loader)
+          loader.set_entry(Puppet::Pops::Loader::TypedName.new(:function, 'testing::test'), f)
+          # evaluate a puppet call
+          source = "testing::test(10) |$x| { $x+1 }"
+          program = parser.parse_string(source, __FILE__)
+          expect(Puppet::Pops::Adapters::LoaderAdapter).to receive(:loader_for_model_object).at_least(:once).and_return(the_loader)
+          expect(parser.evaluate(scope, program)).to eql(11)
         end
-        # add the function to the loader (as if it had been loaded from somewhere)
+      end
+
+      it 'supports injection of a cache' do
+        the_function = create_function_with_cache_param.new(:closure_scope, :loader)
+        expect(the_function.call(scope, 'key', 10)).to eql(nil)
+        expect(the_function.call(scope, 'key', 20)).to eql(10)
+        expect(the_function.call(scope, 'key', 30)).to eql(20)
+      end
+    end
+
+    context 'reports meaningful errors' do
+      let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
+
+      it 'syntax error in local type is reported with puppet source, puppet location, and ruby file containing function' do
         the_loader = loader()
-        f = fc.new({}, the_loader)
-        loader.add_function('testing::test', f)
-        # evaluate a puppet call
-        source = "testing::test(10) |$x| { $x+1 }"
-        program = parser.parse_string(source, __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).at_least_once.returns(the_loader)
-        expect(parser.evaluate(scope, program)).to eql(11)
+        here = get_binding(the_loader)
+        expect do
+          eval(<<-CODE, here)
+            Puppet::Functions.create_function('testing::test') do
+              local_types do
+                type 'MyType += Array[Integer]'
+              end
+              dispatch :test do
+                param 'MyType', :x
+              end
+              def test(x)
+                x
+              end
+            end
+          CODE
+        end.to raise_error(/MyType \+\= Array.*<Syntax error at '\+\=' \(line: 1, column: [0-9]+\)>.*functions4_spec\.rb.*/m)
+        # Note that raised error reports this spec file as the function source since the function is defined here
+      end
+
+      it 'syntax error in param type is reported with puppet source, puppet location, and ruby file containing function' do
+        the_loader = loader()
+        here = get_binding(the_loader)
+        expect do
+          eval(<<-CODE, here)
+            Puppet::Functions.create_function('testing::test') do
+              dispatch :test do
+                param 'Array[1+=1]', :x
+              end
+              def test(x)
+                x
+              end
+            end
+          CODE
+        end.to raise_error(/Parsing of type string '"Array\[1\+=1\]"' failed with message: <Syntax error at '\]' \(line: 1, column: [0-9]+\)>/m)
       end
     end
 
@@ -485,7 +538,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test(10)', __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
+        expect(Puppet::Pops::Adapters::LoaderAdapter).to receive(:loader_for_model_object).and_return(the_loader)
         expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error,
           /value returned from function 'test' has wrong type, expects a String value, got Integer/)
       end
@@ -507,7 +560,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test(10)', __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
+        expect(Puppet::Pops::Adapters::LoaderAdapter).to receive(:loader_for_model_object).and_return(the_loader)
         expect(parser.evaluate({}, program)).to eql(10)
       end
 
@@ -526,7 +579,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test(10)', __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
+        expect(Puppet::Pops::Adapters::LoaderAdapter).to receive(:loader_for_model_object).and_return(the_loader)
         expect { parser.evaluate({}, program) }.to raise_error(Puppet::Error, /parameter 'x' references an unresolved type 'MyAlias'/)
       end
 
@@ -548,7 +601,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string('testing::test([10,20])', __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
+        expect(Puppet::Pops::Adapters::LoaderAdapter).to receive(:loader_for_model_object).and_return(the_loader)
         expect(parser.evaluate({}, program)).to eq([10,20])
       end
 
@@ -571,7 +624,7 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string("testing::test({'x' => [10,20]})", __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
+        expect(Puppet::Pops::Adapters::LoaderAdapter).to receive(:loader_for_model_object).and_return(the_loader)
         expect(parser.evaluate({}, program)).to eq({'x' => [10,20]})
       end
 
@@ -593,15 +646,14 @@ describe 'the 4x function api' do
         CODE
         the_loader.add_function('testing::test', fc.new({}, the_loader))
         program = parser.parse_string("testing::test({'x' => {'y' => 'n'}})", __FILE__)
-        Puppet::Pops::Adapters::LoaderAdapter.expects(:loader_for_model_object).returns(the_loader)
+        expect(Puppet::Pops::Adapters::LoaderAdapter).to receive(:loader_for_model_object).and_return(the_loader)
         expect(parser.evaluate({}, program)).to eq({'x' => {'y' => 'n'}})
       end
     end
   end
 
-
   def create_noargs_function_class
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       def test()
         10
       end
@@ -609,7 +661,7 @@ describe 'the 4x function api' do
   end
 
   def create_min_function_class
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       def min(x,y)
         x <= y ? x : y
       end
@@ -617,7 +669,7 @@ describe 'the 4x function api' do
   end
 
   def create_max_function_class
-    f = Puppet::Functions.create_function('max') do
+    Puppet::Functions.create_function('max') do
       def max(x,y)
         x >= y ? x : y
       end
@@ -625,7 +677,7 @@ describe 'the 4x function api' do
   end
 
   def create_badly_named_method_function_class
-    f = Puppet::Functions.create_function('mix') do
+    Puppet::Functions.create_function('mix') do
       def mix_up(x,y)
         x <= y ? x : y
       end
@@ -633,7 +685,7 @@ describe 'the 4x function api' do
   end
 
   def create_min_function_class_using_dispatch
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
         dispatch :min do
           param 'Numeric', :a
           param 'Numeric', :b
@@ -645,7 +697,7 @@ describe 'the 4x function api' do
   end
 
   def create_min_function_class_disptaching_to_two_methods
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       dispatch :min do
         param 'Numeric', :a
         param 'Numeric', :b
@@ -668,7 +720,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optionals_and_repeated
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       def min(x,y,a=1, b=1, *c)
         x <= y ? x : y
       end
@@ -676,7 +728,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optionals_and_repeated_via_dispatch
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       dispatch :min do
         param 'Numeric', :x
         param 'Numeric', :y
@@ -691,7 +743,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optionals_and_repeated_via_multiple_dispatch
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       dispatch :min do
         param 'Numeric', :x
         param 'Numeric', :y
@@ -711,7 +763,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_repeated_via_dispatch
-    f = Puppet::Functions.create_function('min') do
+    Puppet::Functions.create_function('min') do
       dispatch :min do
         param 'Numeric', :x
         param 'Numeric', :y
@@ -724,7 +776,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_repeated
-    f = Puppet::Functions.create_function('count_args') do
+    Puppet::Functions.create_function('count_args') do
       dispatch :count_args do
         repeated_param 'Any', :c
       end
@@ -735,7 +787,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optional_repeated
-    f = Puppet::Functions.create_function('count_args') do
+    Puppet::Functions.create_function('count_args') do
       dispatch :count_args do
         optional_repeated_param 'Any', :c
       end
@@ -746,7 +798,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_repeated
-    f = Puppet::Functions.create_function('count_args') do
+    Puppet::Functions.create_function('count_args') do
       dispatch :count_args do
         required_repeated_param 'Any', :c
       end
@@ -757,7 +809,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_inexact_dispatch
-    f = Puppet::Functions.create_function('t1') do
+    Puppet::Functions.create_function('t1') do
       dispatch :t1 do
         param 'Numeric', :x
         param 'Numeric', :y
@@ -775,7 +827,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_rq_after_opt
-    f = Puppet::Functions.create_function('t1') do
+    Puppet::Functions.create_function('t1') do
       dispatch :t1 do
         optional_param 'Numeric', :x
         param 'Numeric', :y
@@ -787,7 +839,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_rq_repeated_after_opt
-    f = Puppet::Functions.create_function('t1') do
+    Puppet::Functions.create_function('t1') do
       dispatch :t1 do
         optional_param 'Numeric', :x
         required_repeated_param 'Numeric', :y
@@ -799,7 +851,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_param_after_repeated
-    f = Puppet::Functions.create_function('t1') do
+    Puppet::Functions.create_function('t1') do
       dispatch :t1 do
         repeated_param 'Numeric', :x
         param 'Numeric', :y
@@ -810,28 +862,29 @@ describe 'the 4x function api' do
     end
   end
 
-  def create_function_with_param_injection_regular
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
-      attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
-      attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
-      attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
-
-      dispatch :test do
-        injected_param Puppet::Pops::Types::TypeFactory.string, :x, 'a_string'
-        injected_producer_param Puppet::Pops::Types::TypeFactory.integer, :y, 'an_int'
-        param 'Scalar', :a
-        param 'Scalar', :b
-      end
-
-      def test(x,y,a,b)
-        y_produced = y.produce(nil)
-        "#{x}! #{a}, and #{b} < #{y_produced} = #{ !!(a < y_produced && b < y_produced)}"
-      end
-    end
-  end
+# DEAD TODO REMOVE
+#  def create_function_with_param_injection_regular
+#    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+#      attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
+#      attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
+#      attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
+#
+#      dispatch :test do
+#        injected_param Puppet::Pops::Types::TypeFactory.string, :x, 'a_string'
+#        injected_producer_param Puppet::Pops::Types::TypeFactory.integer, :y, 'an_int'
+#        param 'Scalar', :a
+#        param 'Scalar', :b
+#      end
+#
+#      def test(x,y,a,b)
+#        y_produced = y.produce(nil)
+#        "#{x}! #{a}, and #{b} < #{y_produced} = #{ !!(a < y_produced && b < y_produced)}"
+#      end
+#    end
+#  end
 
   def create_function_with_required_block_all_defaults
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         # use defaults, any callable, name is 'block'
@@ -844,7 +897,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_scope_required_block_all_defaults
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       dispatch :test do
         scope_param
         param 'Integer', :x
@@ -858,7 +911,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_block_default_type
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         # use defaults, any callable, name is 'block'
@@ -871,7 +924,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_scope_param_required_repeat
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       dispatch :test do
         scope_param
         param 'Any', :extra
@@ -884,7 +937,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_block_given_type
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         required_block_param
@@ -896,7 +949,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_required_block_fully_specified
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         # use defaults, any callable, name is 'block'
@@ -909,7 +962,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_optional_block_all_defaults
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
         # use defaults, any callable, name is 'block'
@@ -922,7 +975,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_no_parameter_dispatch
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test_no_args do
       end
       dispatch :test_one_arg do
@@ -938,7 +991,7 @@ describe 'the 4x function api' do
   end
 
   def create_function_with_mismatch_handler
-    f = Puppet::Functions.create_function('test') do
+    Puppet::Functions.create_function('test') do
       dispatch :test do
         param 'Integer', :x
       end
@@ -953,6 +1006,22 @@ describe 'the 4x function api' do
 
       def on_error(x)
         "It's not OK to pass a string"
+      end
+    end
+  end
+
+  def create_function_with_cache_param
+    Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
+      dispatch :test do
+        cache_param
+        param 'String', :key
+        param 'Any', :value
+      end
+      def test(cache, k, v)
+        h = cache.retrieve(self)
+        previous = h[k]
+        h[k] = v
+        previous
       end
     end
   end

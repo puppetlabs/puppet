@@ -4,7 +4,7 @@ Puppet::Parser::Functions::newfunction(
   :arity => -1,
   :doc => <<-DOC
 Reverses the order of the elements of something that is iterable and optionally runs a
-[lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) for each
+[lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html) for each
 element.
 
 This function takes one to two arguments:
@@ -40,7 +40,7 @@ $reverse_data = reverse_each($data)
 When no second argument is present, Puppet returns an `Iterable` that represents the reverse
 order of its first argument. This allows methods on `Iterable` to be chained.
 
-When a lamdba is given as the second argument, Puppet iterates the first argument in reverse
+When a lambda is given as the second argument, Puppet iterates the first argument in reverse
 order and passes each value in turn to the lambda, then returns `undef`.
 
 **Example:** Using the `reverse_each` function with an array and a one-parameter lambda
@@ -79,5 +79,5 @@ $transformed_data = map(reverse_each($data)) |$item| { $item * 10 }
 
 DOC
 ) do |args|
-  Error.is4x('reverse_each')
+  Puppet::Parser::Functions::Error.is4x('reverse_each')
 end

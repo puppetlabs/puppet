@@ -27,10 +27,11 @@ class Puppet::Node
     @name       = data['name']       || (raise ArgumentError, _("No name provided in serialized data"))
     @classes    = data['classes']    || []
     @parameters = data['parameters'] || {}
-    env_name = data['environment']
-    env_name = env_name.intern unless env_name.nil?
-    @environment_name = env_name
-    environment = env_name
+    env_name = data['environment'] || @parameters[ENVIRONMENT]
+    unless env_name.nil?
+      @parameters[ENVIRONMENT] = env_name
+      @environment_name = env_name.intern
+    end
   end
 
   def self.from_data_hash(data)
@@ -45,22 +46,30 @@ class Puppet::Node
       'environment' => environment.name.to_s,
     }
     result['classes'] = classes unless classes.empty?
-    result['parameters'] = parameters unless parameters.empty?
+    serialized_params = self.serializable_parameters
+    result['parameters'] = serialized_params unless serialized_params.empty?
     result
+  end
+
+  def serializable_parameters
+    new_params = parameters.dup
+    new_params.delete(ENVIRONMENT)
+    new_params
   end
 
   def environment
     if @environment
       @environment
     else
-      if env = parameters[ENVIRONMENT]
+      env = parameters[ENVIRONMENT]
+      if env
         self.environment = env
       elsif environment_name
         self.environment = environment_name
       else
         # This should not be :current_environment, this is the default
         # for a node when it has not specified its environment
-        # Tt will be used to establish what the current environment is.
+        # it will be used to establish what the current environment is.
         #
         self.environment = Puppet.lookup(:environments).get!(Puppet[:environment])
       end
@@ -78,7 +87,8 @@ class Puppet::Node
 
     # Keep environment_name attribute and parameter in sync if they have been set
     unless @environment.nil?
-      @parameters[ENVIRONMENT] = @environment.name.to_s if @parameters.include?(ENVIRONMENT)
+      # always set the environment parameter. It becomes top scope $environment for a manifest during catalog compilation.
+      @parameters[ENVIRONMENT] = @environment.name.to_s
       self.environment_name = @environment.name if instance_variable_defined?(:@environment_name)
     end
     @environment
@@ -92,7 +102,8 @@ class Puppet::Node
     raise ArgumentError, _("Node names cannot be nil") unless name
     @name = name
 
-    if classes = options[:classes]
+    classes = options[:classes]
+    if classes
       if classes.is_a?(String)
         @classes = [classes]
       else
@@ -108,7 +119,8 @@ class Puppet::Node
 
     @server_facts = {}
 
-    if env = options[:environment]
+    env = options[:environment]
+    if env
       self.environment = env
     end
 
@@ -132,7 +144,10 @@ class Puppet::Node
 
     if !@facts.nil?
       @facts.sanitize
+      # facts should never modify the environment parameter
+      orig_param_env = @parameters[ENVIRONMENT]
       merge(@facts.values)
+      @parameters[ENVIRONMENT] = orig_param_env
     end
   end
 
@@ -145,8 +160,16 @@ class Puppet::Node
         @parameters[name] = value
       end
     end
+  end
 
-    @parameters[ENVIRONMENT] ||= self.environment.name.to_s
+  # Add extra facts, such as facts given to lookup on the command line The
+  # extra facts will override existing ones.
+  # @param extra_facts [Hash{String=>Object}] the facts to tadd
+  # @api private
+  def add_extra_facts(extra_facts)
+    @facts.add_extra_values(extra_facts)
+    @parameters.merge!(extra_facts)
+    nil
   end
 
   def add_server_facts(facts)
@@ -167,7 +190,8 @@ class Puppet::Node
     names += split_name(name) if name.include?(".")
 
     # First, get the fqdn
-    unless fqdn = parameters["fqdn"]
+    fqdn = parameters["fqdn"]
+    unless fqdn
       if parameters["hostname"] and parameters["domain"]
         fqdn = parameters["hostname"] + "." + parameters["domain"]
       else
@@ -205,5 +229,57 @@ class Puppet::Node
   def trusted_data=(data)
     Puppet.warning(_("Trusted node data modified for node %{name}") % { name: name }) unless @trusted_data.nil?
     @trusted_data = data.freeze
+  end
+
+  # Resurrects and sanitizes trusted information in the node by modifying it and setting
+  # the trusted_data in the node from parameters.
+  # This modifies the node
+  #
+  def sanitize
+    # Resurrect "trusted information" that comes from node/fact terminus.
+    # The current way this is done in puppet db (currently the only one)
+    # is to store the node parameter 'trusted' as a hash of the trusted information.
+    #
+    # Thus here there are two main cases:
+    # 1. This terminus was used in a real agent call (only meaningful if someone curls the request as it would
+    #  fail since the result is a hash of two catalogs).
+    # 2  It is a command line call with a given node that use a terminus that:
+    # 2.1 does not include a 'trusted' fact - use local from node trusted information
+    # 2.2 has a 'trusted' fact - this in turn could be
+    # 2.2.1 puppet db having stored trusted node data as a fact (not a great design)
+    # 2.2.2 some other terminus having stored a fact called "trusted" (most likely that would have failed earlier, but could
+    #       be spoofed).
+    #
+    # For the reasons above, the resurrection of trusted node data with authenticated => true is only performed
+    # if user is running as root, else it is resurrected as unauthenticated.
+    #
+    trusted_param = @parameters['trusted']
+    if trusted_param
+      # Blows up if it is a parameter as it will be set as $trusted by the compiler as if it was a variable
+      @parameters.delete('trusted')
+      unless trusted_param.is_a?(Hash) && %w{authenticated certname extensions}.all? {|key| trusted_param.has_key?(key) }
+        # trusted is some kind of garbage, do not resurrect
+        trusted_param = nil
+      end
+    else
+      # trusted may be Boolean false if set as a fact by someone
+      trusted_param = nil
+    end
+
+    # The options for node.trusted_data in priority order are:
+    # 1) node came with trusted_data so use that
+    # 2) else if there is :trusted_information in the puppet context
+    # 3) else if the node provided a 'trusted' parameter (parsed out above)
+    # 4) last, fallback to local node trusted information
+    #
+    # Note that trusted_data should be a hash, but (2) and (4) are not
+    # hashes, so we to_h at the end
+    if !trusted_data
+      trusted = Puppet.lookup(:trusted_information) do
+        trusted_param || Puppet::Context::TrustedInformation.local(self)
+      end
+
+      self.trusted_data = trusted.to_h
+    end
   end
 end

@@ -1,5 +1,7 @@
 # Manage systemd services using systemctl
 
+require 'puppet/file_system'
+
 Puppet::Type.type(:service).provide :systemd, :parent => :base do
   desc "Manages `systemd` services using `systemctl`.
 
@@ -9,22 +11,20 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   commands :systemctl => "systemctl"
 
-  if Facter.value(:osfamily).downcase == 'debian'
-    # With multiple init systems on Debian, it is possible to have
-    # pieces of systemd around (e.g. systemctl) but not really be
-    # using systemd.  We do not do this on other platforms as it can
-    # cause issues when running in a chroot without /run mounted
-    # (PUP-5577)
-    confine :exists => "/run/systemd/system"
-  end
+  confine :true => Puppet::FileSystem.exist?('/proc/1/comm') && Puppet::FileSystem.read('/proc/1/comm').include?('systemd')
 
   defaultfor :osfamily => [:archlinux]
-  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
+  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => ["7", "8"]
   defaultfor :osfamily => :redhat, :operatingsystem => :fedora
   defaultfor :osfamily => :suse
   defaultfor :osfamily => :coreos
-  defaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["8", "stretch/sid", "9", "buster/sid"]
-  defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["15.04","15.10","16.04","16.10"]
+  defaultfor :operatingsystem => :amazon, :operatingsystemmajrelease => ["2"]
+  defaultfor :operatingsystem => :debian
+  notdefaultfor :operatingsystem => :debian, :operatingsystemmajrelease => ["5", "6", "7"] # These are using the "debian" method
+  defaultfor :operatingsystem => :LinuxMint
+  notdefaultfor :operatingsystem => :LinuxMint, :operatingsystemmajrelease => ["10", "11", "12", "13", "14", "15", "16", "17"] # These are using upstart
+  defaultfor :operatingsystem => :ubuntu
+  notdefaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"] # These are using upstart
   defaultfor :operatingsystem => :cumuluslinux, :operatingsystemmajrelease => ["3"]
 
   def self.instances
@@ -120,6 +120,21 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
     end
   end
 
+  # Define the daemon_reload? function to check if the unit is requiring to trigger a "systemctl daemon-reload"
+  # If the unit file is flagged with NeedDaemonReload=yes, then a systemd daemon-reload will be run.
+  # If multiple unit files have been updated, the first one flagged will trigger the daemon-reload for all of them.
+  # The others will be then flagged with NeedDaemonReload=no. So the command will run only once in a puppet run.
+  # This function is called only on start & restart unit options.
+  # Reference: (PUP-3483) Systemd provider doesn't scan for changed units
+  def daemon_reload?
+    cmd = [command(:systemctl), 'show', @resource[:name], '--property=NeedDaemonReload']
+    daemon_reload = execute(cmd, :failonfail => false).strip.split('=').last
+    if daemon_reload == 'yes'
+      daemon_reload_cmd = [command(:systemctl), 'daemon-reload']
+      execute(daemon_reload_cmd, :failonfail => false)
+    end
+  end
+
   def enable
     self.unmask
     systemctl_change_enable(:enable)
@@ -153,6 +168,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def restart
     begin
+      daemon_reload?
       super
     rescue Puppet::Error => e
       raise Puppet::Error.new(prepare_error_message(@resource[:name], 'restart', e))
@@ -161,6 +177,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def start
     begin
+      daemon_reload?
       super
     rescue Puppet::Error => e
       raise Puppet::Error.new(prepare_error_message(@resource[:name], 'start', e))
@@ -178,7 +195,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def prepare_error_message(name, action, exception)
     error_return = "Systemd #{action} for #{name} failed!\n"
     journalctl_command = "journalctl -n 50 --since '5 minutes ago' -u #{name} --no-pager"
-    Puppet.debug("Runing journalctl command to get logs for systemd #{action} failure: #{journalctl_command}")
+    Puppet.debug("Running journalctl command to get logs for systemd #{action} failure: #{journalctl_command}")
     journalctl_output = execute(journalctl_command)
     error_return << "journalctl log for #{name}:\n#{journalctl_output}"
   end

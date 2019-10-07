@@ -148,7 +148,7 @@ module Puppet::Util::IniConfig
     )
     INI_CONTINUATION = /^[ \t\r\n\f]/
     INI_SECTION_NAME = /^\[([^\]]+)\]/
-    INI_PROPERTY     = /^\s*([^\s=]+)\s*\=(.*)$/
+    INI_PROPERTY     = /^\s*([^\s=]+)\s*\=\s*(.*)$/
 
     # @api private
     def parse(text)
@@ -177,10 +177,9 @@ module Puppet::Util::IniConfig
           section = add_section(section_name)
           optname = nil
         elsif (match = l.match(INI_PROPERTY))
-          # We allow space around the keys, but not the values
-          # For the values, we don't know if space is significant
+          # the regex strips leading white space from the value, and here we strip the trailing white space as well
           key = match[1]
-          val = match[2]
+          val = match[2].rstrip
 
           if section.nil?
             raise IniParseError.new(_("Property with key %{key} outside of a section") % { key: key.inspect })

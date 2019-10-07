@@ -20,6 +20,10 @@ describe 'Sensitive Type' do
       expect(t.type).to eql(PIntegerType::DEFAULT)
     end
 
+    it 'string representation of unparameterized instance is "Sensitive"' do
+      expect(PSensitiveType::DEFAULT.to_s).to eql('Sensitive')
+    end
+
     context 'when used in Puppet expressions' do
       it 'is equal to itself only' do
         code = <<-CODE

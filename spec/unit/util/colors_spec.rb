@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Util::Colors do
@@ -31,7 +30,7 @@ describe Puppet::Util::Colors do
       it "should colorize console output" do
         Puppet[:color] = true
 
-        subject.expects(:console_color).with(color, message)
+        expect(subject).to receive(:console_color).with(color, message)
         subject.colorize(:black, message)
       end
 

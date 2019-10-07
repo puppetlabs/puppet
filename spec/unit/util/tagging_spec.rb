@@ -1,4 +1,4 @@
-#! /usr/bin/env ruby
+# coding: utf-8
 require 'spec_helper'
 
 require 'puppet/util/tagging'
@@ -9,13 +9,6 @@ describe Puppet::Util::Tagging do
   it "should add tags to the returned tag list" do
     tagger.tag("one")
     expect(tagger.tags).to include("one")
-  end
-
-  it "should return a duplicate of the tag list, rather than the original" do
-    tagger.tag("one")
-    tags = tagger.tags
-    tags << "two"
-    expect(tagger.tags).to_not include("two")
   end
 
   it "should add all provided tags to the tag list" do
@@ -97,11 +90,25 @@ describe Puppet::Util::Tagging do
     "\"",
     "'",
   ].each do |char|
-    it "should not allow UTF-8 punctuation characters" do
+    it "should not allow UTF-8 punctuation characters, e.g. #{char}" do
       expect { tagger.tag(char) }.to raise_error(Puppet::ParseError)
     end
   end
 
+  it "should allow encodings that can be coerced to UTF-8" do
+     chinese = "標記你是它".force_encoding(Encoding::UTF_8)
+     ascii   = "tags--".force_encoding(Encoding::ASCII_8BIT)
+     jose    = "jos\xE9".force_encoding(Encoding::ISO_8859_1)
+
+     [chinese, ascii, jose].each do |tag|
+       expect(tagger.valid_tag?(tag)).to be_truthy
+     end
+  end
+
+  it "should not allow strings that cannot be converted to UTF-8" do
+    invalid = "\xA0".force_encoding(Encoding::ASCII_8BIT)
+    expect(tagger.valid_tag?(invalid)).to be_falsey
+  end
 
   it "should add qualified classes as tags" do
     tagger.tag("one::two")
@@ -157,6 +164,17 @@ describe Puppet::Util::Tagging do
     it "accepts hyphenated tags" do
       tagger.tag("my-tag")
       expect(tagger).to be_tagged("my-tag")
+    end
+
+    it 'skips undef /nil tags' do
+      tagger.tag('before')
+      tagger.tag(nil)
+      tagger.tag('after')
+      expect(tagger).to_not be_tagged(nil)
+      expect(tagger).to_not be_tagged('')
+      expect(tagger).to_not be_tagged('undef')
+      expect(tagger).to be_tagged('before')
+      expect(tagger).to be_tagged('after')
     end
   end
 

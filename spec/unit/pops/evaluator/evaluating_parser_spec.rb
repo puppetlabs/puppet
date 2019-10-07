@@ -202,6 +202,42 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "true  == true " => true,
       "false == false" => true,
       "true == false"  => false,
+
+      "Timestamp(1) < Timestamp(2)"  => true,
+      "Timespan(1) < Timespan(2)"    => true,
+      "Timestamp(1) > Timestamp(2)"  => false,
+      "Timespan(1) > Timespan(2)"    => false,
+      "Timestamp(1) == Timestamp(1)" => true,
+      "Timespan(1) == Timespan(1)"   => true,
+
+      "1 < Timestamp(2)"  => true,
+      "1 < Timespan(2)"   => true,
+      "1 > Timestamp(2)"  => false,
+      "1 > Timespan(2)"   => false,
+      "1 == Timestamp(1)" => true,
+      "1 == Timespan(1)"  => true,
+
+      "1.0 < Timestamp(2)"  => true,
+      "1.0 < Timespan(2)"   => true,
+      "1.0 > Timestamp(2)"  => false,
+      "1.0 > Timespan(2)"   => false,
+      "1.0 == Timestamp(1)" => true,
+      "1.0 == Timespan(1)"  => true,
+
+      "Timestamp(1) < 2"  => true,
+      "Timespan(1) < 2"   => true,
+      "Timestamp(1) > 2"  => false,
+      "Timespan(1) > 2"   => false,
+      "Timestamp(1) == 1" => true,
+      "Timespan(1) == 1"  => true,
+
+      "Timestamp(1) < 2.0"  => true,
+      "Timespan(1) < 2.0"   => true,
+      "Timestamp(1) > 2.0"  => false,
+      "Timespan(1) > 2.0"   => false,
+      "Timestamp(1) == 1.0" => true,
+      "Timespan(1) == 1.0"  => true,
+
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
@@ -1017,7 +1053,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
 
     it "provides location information on error in unparenthesized call logic" do
-    expect{parser.evaluate_string(scope, "include non_existing_class", __FILE__)}.to raise_error(Puppet::ParseError, /:1:1/)
+    expect{parser.evaluate_string(scope, "include non_existing_class", __FILE__)}.to raise_error(Puppet::ParseError, /line: 1, column: 1/)
     end
 
     it 'defaults can be given in a lambda and used only when arg is missing' do
@@ -1103,14 +1139,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it 'does not map :undef to empty string in arrays' do
         Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0][0] }
-        expect(parser.evaluate_string(scope, "$a = {} $b = [$a[nope]] bazinga($b)", __FILE__)).to eq(:undef)
-        expect(parser.evaluate_string(scope, "bazinga([undef])", __FILE__)).to eq(:undef)
+        expect(parser.evaluate_string(scope, "$a = {} $b = [$a[nope]] bazinga($b)", __FILE__)).to eq(nil)
+        expect(parser.evaluate_string(scope, "bazinga([undef])", __FILE__)).to eq(nil)
       end
 
       it 'does not map :undef to empty string in hashes' do
         Puppet::Parser::Functions.newfunction("bazinga", :type => :rvalue) { |args| args[0]['a'] }
-        expect(parser.evaluate_string(scope, "$a = {} $b = {a => $a[nope]} bazinga($b)", __FILE__)).to eq(:undef)
-        expect(parser.evaluate_string(scope, "bazinga({a => undef})", __FILE__)).to eq(:undef)
+        expect(parser.evaluate_string(scope, "$a = {} $b = {a => $a[nope]} bazinga($b)", __FILE__)).to eq(nil)
+        expect(parser.evaluate_string(scope, "bazinga({a => undef})", __FILE__)).to eq(nil)
       end
     end
   end
@@ -1146,7 +1182,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       source = '"value is ${{a=>1,b=>2}} yo"'
       # This test requires testing against two options because a hash to string
       # produces a result that is unordered
-      hashstr = {'a' => 1, 'b' => 2}.to_s
       alt_results = ["value is {a => 1, b => 2} yo", "value is {b => 2, a => 1} yo" ]
       populate
       parse_result = parser.evaluate_string(scope, source, __FILE__)
@@ -1204,7 +1239,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "a lex error should be raised for '$foo::::bar'" do
-      expect { parser.evaluate_string(scope, "$foo::::bar") }.to raise_error(Puppet::ParseErrorWithIssue, /Illegal fully qualified name at line 1:7/)
+      expect { parser.evaluate_string(scope, "$foo::::bar") }.to raise_error(Puppet::ParseErrorWithIssue, /Illegal fully qualified name \(line: 1, column: 7\)/)
     end
 
     { '$a = $0'   => nil,
@@ -1350,6 +1385,24 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect(parser.evaluate_string(scope, src)).to eq('dGhlIHF1aWNrIHJlZCBmb3g=')
     end
 
+    it "parses pp syntax checked specification" do
+      src = <<-CODE
+      @(END:pp)
+        $x = 42
+        |- END
+      CODE
+      expect(parser.evaluate_string(scope, src)).to eq('$x = 42')
+    end
+
+    it "parses epp syntax checked specification" do
+      src = <<-CODE
+      @(END:epp)
+        <% $x = 42 %><%= $x %>
+        |- END
+      CODE
+      expect(parser.evaluate_string(scope, src)).to eq('<% $x = 42 %><%= $x %>')
+    end
+
     it "parses json syntax checked specification with error and reports it" do
       src = <<-CODE
       @(END:json)
@@ -1366,6 +1419,24 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         |- END
       CODE
       expect { parser.evaluate_string(scope, src)}.to raise_error(/Cannot parse invalid Base64 string/)
+    end
+
+    it "parses pp syntax checked specification with error and reports it" do
+      src = <<-CODE
+      @(END:pp)
+        $x ==== 42
+        |- END
+      CODE
+      expect{parser.evaluate_string(scope, src)}.to raise_error(/Invalid produced text having syntax: 'pp'/)
+    end
+
+    it "parses epp syntax checked specification with error and reports it" do
+      src = <<-CODE
+      @(END:epp)
+        <% $x ==== 42 %>
+        |- END
+      CODE
+      expect{parser.evaluate_string(scope, src)}.to raise_error(/Invalid produced text having syntax: 'epp'/)
     end
 
     it "parses interpolated heredoc expression" do
@@ -1394,7 +1465,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       source = "\nimport foo"
       # Error references position 5 at the opening '{'
       # Set file to nil to make it easier to match with line number (no file name in output)
-      expect { parser.evaluate_string(scope, source) }.to raise_error(/'import' has been discontinued.*line 2:1/)
+      expect { parser.evaluate_string(scope, source) }.to raise_error(/'import' has been discontinued.* \(line: 2, column: 1\)/)
     end
   end
 
@@ -1404,26 +1475,26 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       # Error references position 5 at the opening '{'
       # Set file to nil to make it easier to match with line number (no file name in output)
       expect { parser.evaluate_string(scope, source) }.to raise_error(
-        /Illegal Resource Type expression, expected result to be a type name, or untitled Resource.*line 1:2/)
+        /Illegal Resource Type expression, expected result to be a type name, or untitled Resource.* \(line: 1, column: 2\)/)
     end
 
     it 'for non r-value producing <| |>' do
-      expect { parser.parse_string("$a = File <| |>", nil) }.to raise_error(/A Virtual Query does not produce a value at line 1:6/)
+      expect { parser.parse_string("$a = File <| |>", nil) }.to raise_error(/A Virtual Query does not produce a value \(line: 1, column: 6\)/)
     end
 
     it 'for non r-value producing <<| |>>' do
-      expect { parser.parse_string("$a = File <<| |>>", nil) }.to raise_error(/An Exported Query does not produce a value at line 1:6/)
+      expect { parser.parse_string("$a = File <<| |>>", nil) }.to raise_error(/An Exported Query does not produce a value \(line: 1, column: 6\)/)
     end
 
     it 'for non r-value producing define' do
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => "Invalid use of expression. A 'define' expression does not produce a value", :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => "Invalid use of expression. A 'define' expression does not produce a value", :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = define foo { }", nil) }.to raise_error(/2 errors/)
     end
 
     it 'for non r-value producing class' do
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Invalid use of expression. A Host Class Definition does not produce a value', :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Invalid use of expression. A Host Class Definition does not produce a value', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = class foo { }", nil) }.to raise_error(/2 errors/)
     end
 
@@ -1433,19 +1504,19 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       yyy
       SOURCE
       # first char after opening " reported as being in error.
-      expect { parser.parse_string(source) }.to raise_error(/Unclosed quote after '"' followed by 'xx\\nyy\.\.\.' at line 1:7/)
+      expect { parser.parse_string(source) }.to raise_error(/Unclosed quote after '"' followed by 'xx\\nyy\.\.\.' \(line: 1, column: 7\)/)
     end
 
     it 'for multiple errors with a summary exception' do
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Invalid use of expression. A Node Definition does not produce a value', :line => 1, :pos => 6))
-      Puppet::Util::Log.expects(:create).with(has_entries(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Invalid use of expression. A Node Definition does not produce a value', :line => 1, :pos => 6))
+      expect(Puppet::Util::Log).to receive(:create).with(hash_including(:level => :err, :message => 'Classes, definitions, and nodes may only appear at toplevel or inside other classes', :line => 1, :pos => 6))
       expect { parser.parse_string("$a = node x { }",nil) }.to raise_error(/2 errors/)
     end
 
     it 'for a bad hostname' do
       expect {
         parser.parse_string("node 'macbook+owned+by+name' { }", nil)
-      }.to raise_error(/The hostname 'macbook\+owned\+by\+name' contains illegal characters.*at line 1:6/)
+      }.to raise_error(/The hostname 'macbook\+owned\+by\+name' contains illegal characters.* \(line: 1, column: 6\)/)
     end
 
     it 'for a hostname with interpolation' do
@@ -1455,7 +1526,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       SOURCE
       expect {
         parser.parse_string(source, nil)
-      }.to raise_error(/An interpolated expression is not allowed in a hostname of a node at line 2:23/)
+      }.to raise_error(/An interpolated expression is not allowed in a hostname of a node \(line: 2, column: 23\)/)
     end
 
   end
@@ -1493,9 +1564,36 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
   end
 
-  matcher :have_relationship do |expected|
-    calc = Puppet::Pops::Types::TypeCalculator.new
+  context 'with --tasks' do
+    before(:each) do
+      Puppet[:tasks] = true
+    end
 
+    context 'when evaluating apply' do
+      let(:applicator) { double('apply_executor') }
+
+      it 'invokes an apply_executor' do
+        expect(applicator).to receive(:apply).with(['arg1', 'arg2'], nil, scope).and_return(:result)
+        src = "apply('arg1', 'arg2') { }"
+        Puppet.override(apply_executor: applicator) do
+          expect(parser.evaluate_string(scope, src)).to eq(:result)
+        end
+      end
+
+      it 'passes the declared ast' do
+        expect(applicator).to receive(:apply).with(
+          [['arg1']],
+          instance_of(Puppet::Pops::Model::ResourceExpression),
+          scope).and_return(:result)
+        src = "apply(['arg1']) { notify { 'hello': } }"
+        Puppet.override(apply_executor: applicator) do
+          expect(parser.evaluate_string(scope, src)).to eq(:result)
+        end
+      end
+    end
+  end
+
+  matcher :have_relationship do |expected|
     match do |compiler|
       op_name = {'->' => :relationship, '~>' => :subscription}
       compiler.relationships.any? do | relation |
@@ -1517,5 +1615,4 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       parser.evaluate_string(scope, code, __FILE__)
     end
   end
-
 end

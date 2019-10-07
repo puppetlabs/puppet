@@ -9,7 +9,7 @@ require 'puppet_spec/character_encoding'
 # - We correctly set external encoding values IF they're valid UTF-8 bytes
 # - We do not modify non-UTF-8 values if they're NOT valid UTF-8 bytes
 
-describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
+describe Puppet::Etc, :if => !Puppet::Util::Platform.windows? do
   # http://www.fileformat.info/info/unicode/char/5e0c/index.htm
   # 希 Han Character 'rare; hope, expect, strive for'
   # In EUC_KR: \xfd \xf1 - 253 241
@@ -102,12 +102,11 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     user
   end
 
-  shared_examples "methods that return an overridden group struct from Etc" do |params|
-
+  shared_examples "methods that return an overridden group struct from Etc" do |param|
     it "should return a new Struct object with corresponding canonical_ members" do
       group = Etc::Group.new
-      Etc.expects(subject).with(*params).returns(group)
-      puppet_group = Puppet::Etc.send(subject, *params)
+      expect(Etc).to receive(subject).with(param.nil? ? no_args : param).and_return(group)
+      puppet_group = Puppet::Etc.send(subject, *param)
 
       expect(puppet_group.members).to include(*group.members)
       expect(puppet_group.members).to include(*group.members.map { |mem| "canonical_#{mem}".to_sym })
@@ -118,12 +117,12 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
 
     context "when Encoding.default_external is UTF-8" do
       before do
-        Etc.expects(subject).with(*params).returns(utf_8_group_struct)
+        expect(Etc).to receive(subject).with(param.nil? ? no_args : param).and_return(utf_8_group_struct)
       end
 
       let(:overridden) {
         PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::UTF_8) do
-          Puppet::Etc.send(subject, *params)
+          Puppet::Etc.send(subject, *param)
         end
       }
 
@@ -168,12 +167,12 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
 
     context "when Encoding.default_external is EUC_KR (i.e., neither UTF-8 nor POSIX)" do
       before do
-        Etc.expects(subject).with(*params).returns(euc_kr_group_struct)
+        expect(Etc).to receive(subject).with(param.nil? ? no_args : param).and_return(euc_kr_group_struct)
       end
 
       let(:overridden) {
         PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::EUC_KR) do
-          Puppet::Etc.send(subject, *params)
+          Puppet::Etc.send(subject, *param)
         end
       }
 
@@ -210,12 +209,12 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
 
     context "when Encoding.default_external is POSIX (ASCII-7bit)" do
       before do
-        Etc.expects(subject).with(*params).returns(ascii_group_struct)
+        expect(Etc).to receive(subject).with(param.nil? ? no_args : param).and_return(ascii_group_struct)
       end
 
       let(:overridden) {
         PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ASCII) do
-          Puppet::Etc.send(subject, *params)
+          Puppet::Etc.send(subject, *param)
         end
       }
 
@@ -251,12 +250,11 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     end
   end
 
-  shared_examples "methods that return an overridden user struct from Etc" do |params|
-
+  shared_examples "methods that return an overridden user struct from Etc" do |param|
     it "should return a new Struct object with corresponding canonical_ members" do
       user = Etc::Passwd.new
-      Etc.expects(subject).with(*params).returns(user)
-      puppet_user = Puppet::Etc.send(subject, *params)
+      expect(Etc).to receive(subject).with(param.nil? ? no_args : param).and_return(user)
+      puppet_user = Puppet::Etc.send(subject, *param)
 
       expect(puppet_user.members).to include(*user.members)
       expect(puppet_user.members).to include(*user.members.map { |mem| "canonical_#{mem}".to_sym })
@@ -266,12 +264,12 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
 
     context "when Encoding.default_external is UTF-8" do
       before do
-        Etc.expects(subject).with(*params).returns(utf_8_user_struct)
+        expect(Etc).to receive(subject).with(param.nil? ? no_args : param).and_return(utf_8_user_struct)
       end
 
       let(:overridden) {
         PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::UTF_8) do
-          Puppet::Etc.send(subject, *params)
+          Puppet::Etc.send(subject, *param)
         end
       }
 
@@ -303,12 +301,12 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
 
     context "when Encoding.default_external is EUC_KR (i.e., neither UTF-8 nor POSIX)" do
       before do
-        Etc.expects(subject).with(*params).returns(euc_kr_user_struct)
+        expect(Etc).to receive(subject).with(param.nil? ? no_args : param).and_return(euc_kr_user_struct)
       end
 
       let(:overridden) {
         PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::EUC_KR) do
-          Puppet::Etc.send(subject, *params)
+          Puppet::Etc.send(subject, *param)
         end
       }
 
@@ -336,12 +334,12 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
 
     context "when Encoding.default_external is POSIX (ASCII-7bit)" do
       before do
-        Etc.expects(subject).with(*params).returns(ascii_user_struct)
+        expect(Etc).to receive(subject).with(param.nil? ? no_args : param).and_return(ascii_user_struct)
       end
 
       let(:overridden) {
         PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::ASCII) do
-          Puppet::Etc.send(subject, *params)
+          Puppet::Etc.send(subject, *param)
         end
       }
 
@@ -376,7 +374,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     it_should_behave_like "methods that return an overridden group struct from Etc", 'foo'
 
     it "should call Etc.getgrnam with the supplied group name" do
-      Etc.expects(:getgrnam).with('foo')
+      expect(Etc).to receive(:getgrnam).with('foo')
       Puppet::Etc.getgrnam('foo')
     end
   end
@@ -385,7 +383,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     it_should_behave_like "methods that return an overridden group struct from Etc", 0
 
     it "should call Etc.getgrgid with supplied group id" do
-      Etc.expects(:getgrgid).with(0)
+      expect(Etc).to receive(:getgrgid).with(0)
       Puppet::Etc.getgrgid(0)
     end
   end
@@ -398,7 +396,7 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     it_should_behave_like "methods that return an overridden user struct from Etc", 'foo'
 
     it "should call Etc.getpwnam with that username" do
-      Etc.expects(:getpwnam).with('foo')
+      expect(Etc).to receive(:getpwnam).with('foo')
       Puppet::Etc.getpwnam('foo')
     end
   end
@@ -407,35 +405,60 @@ describe Puppet::Etc, :if => !Puppet.features.microsoft_windows? do
     it_should_behave_like "methods that return an overridden user struct from Etc", 2
 
     it "should call Etc.getpwuid with the id" do
-      Etc.expects(:getpwuid).with(2)
+      expect(Etc).to receive(:getpwuid).with(2)
       Puppet::Etc.getpwuid(2)
+    end
+  end
+
+  describe :group do
+    it 'should return the next group struct if a block is not provided' do
+      expect(Puppet::Etc).to receive(:getgrent).and_return(ascii_group_struct)
+
+      expect(Puppet::Etc.group).to eql(ascii_group_struct)
+    end
+
+    it 'should iterate over the available groups if a block is provided' do
+      expected_groups = [
+        utf_8_group_struct,
+        euc_kr_group_struct,
+        ascii_group_struct
+      ]
+      allow(Puppet::Etc).to receive(:getgrent).and_return(*(expected_groups + [nil]))
+
+      expect(Puppet::Etc).to receive(:setgrent)
+      expect(Puppet::Etc).to receive(:endgrent)
+
+      actual_groups = []
+      Puppet::Etc.group { |group| actual_groups << group }
+
+      expect(actual_groups).to eql(expected_groups)
     end
   end
 
   describe "endgrent" do
     it "should call Etc.getgrent" do
-      Etc.expects(:getgrent)
+      expect(Etc).to receive(:getgrent)
       Puppet::Etc.getgrent
     end
   end
 
   describe "setgrent" do
     it "should call Etc.setgrent" do
-      Etc.expects(:setgrent)
+      expect(Etc).to receive(:setgrent)
       Puppet::Etc.setgrent
     end
   end
 
   describe "endpwent" do
     it "should call Etc.endpwent" do
-      Etc.expects(:endpwent)
+      expect(Etc).to receive(:endpwent)
       Puppet::Etc.endpwent
     end
   end
 
   describe "setpwent" do
     it "should call Etc.setpwent" do
-      Etc.expects(:setpwent)
+      expect(Etc).to receive(:setpwent)
       Puppet::Etc.setpwent
     end
   end

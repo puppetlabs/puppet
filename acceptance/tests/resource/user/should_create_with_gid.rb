@@ -3,6 +3,13 @@ confine :except, :platform => 'windows'
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:acceptance' # Could be done as integration tests, but would
+                       # require changing the system running the test
+                       # in ways that might require special permissions
+                       # or be harmful to the system running the test
+
 user = "pl#{rand(999999).to_i}"
 group = "gp#{rand(999999).to_i}"
 
@@ -21,10 +28,7 @@ agents.each do |host|
 
   step "verify that the user has that as their gid"
   host.user_get(user) do |result|
-    if host['platform'] =~ /osx/
-        match = result.stdout.match(/gid: (\d+)/)
-        user_gid = match ? match[1] : nil
-    elsif host['platform'] =~ /aix/
+    if host['platform'] =~ /aix/
         match = result.stdout.match(/pgrp=([^\s\\]+)/)
         user_gid = match ? host.group_gid(match[1]) : nil
     else

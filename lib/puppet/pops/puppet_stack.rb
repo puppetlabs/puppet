@@ -17,6 +17,9 @@ module Puppet::Pops
 # will be represented with the text `unknown` and `0´ respectively.
 #
 module PuppetStack
+  # Pattern matching an entry in the ruby stack that is a puppet entry
+  PP_ENTRY_PATTERN = /^(.*\.pp)?:([0-9]+):in (`stack'|`block in call_function'|`<eval>')/
+
   # Sends a message to an obj such that it appears to come from
   # file, line when calling stacktrace.
   #
@@ -33,11 +36,22 @@ module PuppetStack
 
   def self.stacktrace
     caller().reduce([]) do |memo, loc|
-      if loc =~ /^(.*\.pp)?:([0-9]+):in (`stack'|`block in call_function')/
+      if loc =~ PP_ENTRY_PATTERN
         memo << [$1.nil? ? 'unknown' : $1, $2.to_i]
       end
       memo
     end
+  end
+
+  # Returns an Array with the top of the puppet stack, or an empty Array if there was no such entry.
+  #
+  def self.top_of_stack
+    caller.each do |loc|
+      if loc =~ PP_ENTRY_PATTERN
+        return [$1.nil? ? 'unknown' : $1, $2.to_i]
+      end
+    end
+    []
   end
 end
 end

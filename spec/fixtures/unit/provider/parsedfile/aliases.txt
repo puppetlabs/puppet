@@ -1,0 +1,2 @@
+manager:  root
+dumper:   postmaster

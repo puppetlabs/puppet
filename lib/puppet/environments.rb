@@ -115,7 +115,7 @@ module Puppet::Environments
     def get_conf(name)
       env = get(name)
       if env
-        Puppet::Settings::EnvironmentConf.static_for(env, 0, Puppet[:static_catalogs], Puppet[:rich_data])
+        Puppet::Settings::EnvironmentConf.static_for(env, Puppet[:environment_timeout], Puppet[:static_catalogs], Puppet[:rich_data])
       else
         nil
       end
@@ -135,6 +135,22 @@ module Puppet::Environments
     # @!macro loader_list
     def list
       []
+    end
+  end
+
+  class StaticDirectory < Static
+    # Accepts a single environment in the given directory having the given name (not required to be reflected as the name
+    # of the directory)
+    def initialize(env_name, env_dir, environment)
+      super(environment)
+      @env_dir = env_dir
+      @env_name = env_name.intern
+    end
+
+    # @!macro loader_get_conf
+    def get_conf(name)
+      return nil unless name.intern == @env_name
+      Puppet::Settings::EnvironmentConf.load_from(@env_dir, [])
     end
   end
 
@@ -251,7 +267,8 @@ module Puppet::Environments
     # @!macro loader_get
     def get(name)
       @loaders.each do |loader|
-        if env = loader.get(name)
+        env = loader.get(name)
+        if env 
           return env
         end
       end
@@ -261,7 +278,8 @@ module Puppet::Environments
     # @!macro loader_get_conf
     def get_conf(name)
       @loaders.each do |loader|
-        if conf = loader.get_conf(name)
+        conf = loader.get_conf(name)
+        if conf
           return conf
         end
       end
@@ -296,14 +314,9 @@ module Puppet::Environments
       @cache_expiration_service || DefaultCacheExpirationService.new
     end
 
-    # Returns the end of time (the next Mesoamerican Long Count cycle-end after 2012 (5125+2012) = 7137,
-    # of for a 32 bit machine using Ruby < 1.9.3, the year 2038.
+    # Returns the end of time (the next Mesoamerican Long Count cycle-end after 2012 (5125+2012) = 7137
     def self.end_of_time
-      begin
-        Time.gm(7137)
-      rescue ArgumentError
-        Time.gm(2038)
-      end
+      Time.gm(7137)
     end
 
     END_OF_TIME = end_of_time
@@ -337,7 +350,8 @@ module Puppet::Environments
       # This strategy favors smaller memory footprint over environment
       # retrieval time.
       clear_all_expired
-      if result = @cache[name]
+      result = @cache[name]
+      if result
         # found in cache
         return result.value
       elsif (result = @loader.get(name))
@@ -365,6 +379,7 @@ module Puppet::Environments
     # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear(name)
       @cache.delete(name)
+      Puppet::GettextConfig.delete_text_domain(name)
     end
 
     # Clears all cached environments.
@@ -374,6 +389,7 @@ module Puppet::Environments
       @cache = {}
       @expirations.clear
       @next_expiration = END_OF_TIME
+      Puppet::GettextConfig.delete_environment_text_domains
     end
 
     # Clears all environments that have expired, either by exceeding their time to live, or
@@ -424,10 +440,9 @@ module Puppet::Environments
     # Also clears caches in Settings that may prevent the entry from being updated
     def evict_if_expired(name)
       if (result = @cache[name]) && (result.expired? || @cache_expiration_service.expired?(name))
-      Puppet.debug {"Evicting cache entry for environment '#{name}'"}
-        @cache.delete(name)
+        Puppet.debug {"Evicting cache entry for environment '#{name}'"}
         @cache_expiration_service.evicted(name)
-
+        clear(name)
         Puppet.settings.clear_environment_settings(name)
       end
     end

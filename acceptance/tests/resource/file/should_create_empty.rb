@@ -1,4 +1,7 @@
 test_name "should create empty file for 'present'"
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
 
 agents.each do |agent|
   target = agent.tmpfile("empty")

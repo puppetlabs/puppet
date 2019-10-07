@@ -168,6 +168,15 @@ describe 'the type mismatch describer' do
       /parameter 'arg' expects a match for Enum\['a', 'b'\], got Sensitive/))
   end
 
+  it "will report the parameter of Type[<type alias>] using the alias name" do
+    code = <<-CODE
+      type Custom = String[1]
+      Custom.each |$x| { notice($x) }
+    CODE
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /expects an Iterable value, got Type\[Custom\]/))
+  end
+
   context 'when reporting a mismatch between' do
     let(:parser) { TypeParser.singleton }
     let(:subject) { TypeMismatchDescriber.singleton }
@@ -223,6 +232,27 @@ describe 'the type mismatch describer' do
       expect(subject.describe_signatures('function', [dispatch], args_tuple)).to eq("'function' block return expects a String value, got Integer")
     end
   end
+
+  it "reports struct mismatch correctly when hash doesn't contain required keys" do
+    code = <<-PUPPET
+      type Test::Options = Struct[{
+        var => String
+      }]
+      class test(String $var, Test::Options $opts) {}
+      class { 'test': var => 'hello', opts => {} }
+    PUPPET
+    expect { eval_and_collect_notices(code) }.to(raise_error(Puppet::Error,
+      /Class\[Test\]: parameter 'opts' expects size to be 1, got 0/))
+  end
+
+  it "treats Optional as Optional[Any]" do
+    code = <<-PUPPET
+      class test(Optional $var=undef) {}
+      class { 'test': var => 'hello' }
+    PUPPET
+    expect { eval_and_collect_notices(code) }.not_to raise_error
+  end
+
 end
 end
 end

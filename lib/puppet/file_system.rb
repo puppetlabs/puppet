@@ -10,10 +10,13 @@ module Puppet::FileSystem
   @impl = if Puppet::Util::Platform.windows?
            require 'puppet/file_system/windows'
            Puppet::FileSystem::Windows
-         else
-           require 'puppet/file_system/posix'
-           Puppet::FileSystem::Posix
-         end.new()
+          elsif Puppet::Util::Platform.jruby?
+            require 'puppet/file_system/jruby'
+            Puppet::FileSystem::JRuby
+          else
+            require 'puppet/file_system/posix'
+            Puppet::FileSystem::Posix
+          end.new()
 
   # Allows overriding the filesystem for the duration of the given block.
   # The filesystem will only contain the given file(s).
@@ -211,10 +214,12 @@ module Puppet::FileSystem
 
   # Touches the file. On most systems this updates the mtime of the file.
   #
+  # @param mtime [Time] The last modified time or nil to use the current time
+  #
   # @api public
   #
-  def self.touch(path)
-    @impl.touch(assert_path(path))
+  def self.touch(path, mtime: nil)
+    @impl.touch(assert_path(path), mtime: mtime)
   end
 
   # Creates directories for all parts of the given path.
@@ -400,5 +405,22 @@ module Puppet::FileSystem
   #
   def self.chmod(mode, path)
     @impl.chmod(mode, path)
+  end
+
+  # Replace the contents of a file atomically, creating the file if necessary.
+  # If a `mode` is specified, then it will always be applied to the file. If
+  # a `mode` is not specified and the file exists, its mode will be preserved.
+  # If the file doesn't exist, the mode will be set to a platform-specific
+  # default.
+  #
+  # @param path [String] The path to the file, can also accept [PathName]
+  # @param mode [Integer] Optional mode for the file.
+  #
+  # @raise [Errno::EISDIR]: path is a directory
+  #
+  # @api public
+  #
+  def self.replace_file(path, mode = nil, &block)
+    @impl.replace_file(assert_path(path), mode, &block)
   end
 end

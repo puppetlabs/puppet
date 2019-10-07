@@ -1,5 +1,8 @@
+require 'forwardable'
 class Hiera
   class Scope
+    extend Forwardable
+
     CALLING_CLASS = 'calling_class'.freeze
     CALLING_CLASS_PATH = 'calling_class_path'.freeze
     CALLING_MODULE = 'calling_module'.freeze
@@ -20,12 +23,34 @@ class Hiera
       elsif key == CALLING_CLASS_PATH
         ans = find_hostclass(@real).gsub(/::/, '/')
       elsif key == CALLING_MODULE
-        ans = @real.lookupvar(MODULE_NAME)
+        ans = safe_lookupvar(MODULE_NAME)
       else
-        ans = @real.lookupvar(key)
+        ans = safe_lookupvar(key)
       end
       ans == EMPTY_STRING ? nil : ans
     end
+
+    # This method is used to handle the throw of :undefined_variable since when
+    # strict variables is not in effect, missing handling of the throw leads to
+    # a more expensive code path.
+    #
+    def safe_lookupvar(key)
+      reason = catch :undefined_variable do
+        return @real.lookupvar(key)
+      end
+
+      case Puppet[:strict]
+      when :off
+        # do nothing
+      when :warning
+        Puppet.warn_once(Puppet::Parser::Scope::UNDEFINED_VARIABLES_KIND, _("Variable: %{name}") % { name: key },
+        _("Undefined variable '%{name}'; %{reason}") % { name: key, reason: reason } )
+      when :error
+        raise ArgumentError, _("Undefined variable '%{name}'; %{reason}") % { name: key, reason: reason }
+      end
+      nil
+    end
+    private :safe_lookupvar
 
     def exist?(key)
       CALLING_KEYS.include?(key) || @real.exist?(key)
@@ -57,5 +82,9 @@ class Hiera
       end
     end
     private :find_hostclass
+
+    # This is needed for type conversion to work
+    def_delegators :@real, :call_function
+
   end
 end

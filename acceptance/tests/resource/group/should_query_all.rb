@@ -1,8 +1,13 @@
 test_name "should query all groups"
 confine :except, :platform => /^cisco_/ # See PUP-5828
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:integration' # Does not modify system running test
 
 agents.each do |agent|
+  skip_test('this test fails on windows French due to Cygwin/UTF Issues - PUP-8319,IMAGES-492') if agent['platform'] =~ /windows/ && agent['locale'] == 'fr'
   step "query natively"
+
   groups = agent.group_list
 
   fail_test("No groups found") unless groups

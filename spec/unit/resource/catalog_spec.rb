@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
@@ -11,7 +10,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
   before do
     @basepath = make_absolute("/somepath")
     # stub this to not try to create state.yaml
-    Puppet::Util::Storage.stubs(:store)
+    allow(Puppet::Util::Storage).to receive(:store)
   end
 
   it "should support json, pson, dot, yaml" do
@@ -48,8 +47,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
     catalog.add_resource(res, res2, res3, res4, comp_res)
     catalog.write_resource_file
     expect(File.readlines(resourcefile).map(&:chomp)).to match_array([
-      "file[#{File.expand_path('/tmp/sam')}]",
-      "exec[#{File.expand_path('/bin/rm')} -rf /]"
+      "file[#{res.title.downcase}]",
+      "exec[#{res2.title.downcase}]"
     ])
   end
 
@@ -71,11 +70,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     Puppet[:classfile] = File.expand_path("/class/file")
 
-    fh = mock 'filehandle'
+    fh = double('filehandle')
     classfile = Puppet.settings.setting(:classfile)
-    Puppet::FileSystem.expects(:open).with(classfile.value, classfile.mode.to_i(8), "w:UTF-8").yields fh
+    expect(Puppet::FileSystem).to receive(:open).with(classfile.value, classfile.mode.to_i(8), "w:UTF-8").and_yield(fh)
 
-    fh.expects(:puts).with "foo\nbar"
+    expect(fh).to receive(:puts).with("foo\nbar")
 
     @catalog.write_class_file
   end
@@ -98,7 +97,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
   end
 
   it "should include a catalog_uuid" do
-    SecureRandom.stubs(:uuid).returns ("827a74c8-cf98-44da-9ff7-18c5e4bee41e")
+    allow(SecureRandom).to receive(:uuid).and_return("827a74c8-cf98-44da-9ff7-18c5e4bee41e")
     catalog = Puppet::Resource::Catalog.new("host")
     expect(catalog.catalog_uuid).to eq("827a74c8-cf98-44da-9ff7-18c5e4bee41e")
   end
@@ -160,7 +159,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     before do
       @original = Puppet::Resource::Catalog.new("mynode")
       @original.tag(*%w{one two three})
-      @original.add_class *%w{four five six}
+      @original.add_class(*%w{four five six})
 
       @top            = Puppet::Resource.new :class, 'top'
       @topobject      = Puppet::Resource.new :file, @basepath+'/topobject'
@@ -233,17 +232,31 @@ describe Puppet::Resource::Catalog, "when compiling" do
     before :each do
       @original = Puppet::Resource::Catalog.new("mynode")
       @original.tag(*%w{one two three})
-      @original.add_class *%w{four five six}
+      @original.add_class(*%w{four five six})
 
-      @r1 = stub_everything 'r1', :ref => "File[/a]"
-      @r1.stubs(:respond_to?).with(:ref).returns(true)
-      @r1.stubs(:copy_as_resource).returns(@r1)
-      @r1.stubs(:is_a?).with(Puppet::Resource).returns(true)
+      @r1 = double(
+        'r1',
+        :ref      => "File[/a]",
+        :[]       => nil,
+        :virtual  => nil,
+        :catalog= => nil,
+      )
+      allow(@r1).to receive(:respond_to?)
+      allow(@r1).to receive(:respond_to?).with(:ref).and_return(true)
+      allow(@r1).to receive(:copy_as_resource).and_return(@r1)
+      allow(@r1).to receive(:is_a?).with(Puppet::Resource).and_return(true)
 
-      @r2 = stub_everything 'r2', :ref => "File[/b]"
-      @r2.stubs(:respond_to?).with(:ref).returns(true)
-      @r2.stubs(:copy_as_resource).returns(@r2)
-      @r2.stubs(:is_a?).with(Puppet::Resource).returns(true)
+      @r2 = double(
+        'r2',
+        :ref      => "File[/b]",
+        :[]       => nil,
+        :virtual  => nil,
+        :catalog= => nil,
+      )
+      allow(@r2).to receive(:respond_to?)
+      allow(@r2).to receive(:respond_to?).with(:ref).and_return(true)
+      allow(@r2).to receive(:copy_as_resource).and_return(@r2)
+      allow(@r2).to receive(:is_a?).with(Puppet::Resource).and_return(true)
 
       @resources = [@r1,@r2]
 
@@ -251,13 +264,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should transform the catalog to a resource catalog" do
-      @original.expects(:to_catalog).with { |h,b| h == :to_resource }
+      expect(@original).to receive(:to_catalog).with(:to_resource)
 
       @original.filter
     end
 
     it "should scan each catalog resource in turn and apply filtering block" do
-      @resources.each { |r| r.expects(:test?) }
+      @resources.each { |r| expect(r).to receive(:test?) }
       @original.filter do |r|
         r.test?
       end
@@ -321,7 +334,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should set itself as the resource's catalog if it is not a relationship graph" do
-      @one.expects(:catalog=).with(@catalog)
+      expect(@one).to receive(:catalog=).with(@catalog)
       @catalog.add_resource @one
     end
 
@@ -401,9 +414,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
           expect(error).to be_a Puppet::Resource::Catalog::DuplicateResourceError
 
           expect(error.message).to match %r[Duplicate declaration: Notify\[duplicate-title\] is already declared]
-          expect(error.message).to match %r[in file /path/to/orig/file:42]
+          expect(error.message).to match %r[at \(file: /path/to/orig/file, line: 42\)]
           expect(error.message).to match %r[cannot redeclare]
-          expect(error.message).to match %r[at /path/to/dupe/file:314]
+          expect(error.message).to match %r[\(file: /path/to/dupe/file, line: 314\)]
         }
       end
     end
@@ -411,14 +424,14 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should remove all resources when asked" do
       @catalog.add_resource @one
       @catalog.add_resource @two
-      @one.expects :remove
-      @two.expects :remove
+      expect(@one).to receive(:remove)
+      expect(@two).to receive(:remove)
       @catalog.clear(true)
     end
 
     it "should support a mechanism for finishing resources" do
-      @one.expects :finish
-      @two.expects :finish
+      expect(@one).to receive(:finish)
+      expect(@two).to receive(:finish)
       @catalog.add_resource @one
       @catalog.add_resource @two
 
@@ -426,7 +439,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should make default resources when finalizing" do
-      @catalog.expects(:make_default_resources)
+      expect(@catalog).to receive(:make_default_resources)
       @catalog.finalize
     end
 
@@ -436,16 +449,16 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should optionally support an initialization block and should finalize after such blocks" do
-      @one.expects :finish
-      @two.expects :finish
-      config = Puppet::Resource::Catalog.new("host") do |conf|
+      expect(@one).to receive(:finish)
+      expect(@two).to receive(:finish)
+      Puppet::Resource::Catalog.new("host") do |conf|
         conf.add_resource @one
         conf.add_resource @two
       end
     end
 
     it "should inform the resource that it is the resource's catalog" do
-      @one.expects(:catalog=).with(@catalog)
+      expect(@one).to receive(:catalog=).with(@catalog)
       @catalog.add_resource @one
     end
 
@@ -528,14 +541,14 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should remove resource aliases when the target resource is removed" do
       @catalog.add_resource @one
       @catalog.alias(@one, "other")
-      @one.expects :remove
+      expect(@one).to receive(:remove)
       @catalog.remove_resource(@one)
       expect(@catalog.resource("notify", "other")).to be_nil
     end
 
     it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
       resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
-      resource.expects(:isomorphic?).returns(true)
+      expect(resource).to receive(:isomorphic?).and_return(true)
       @catalog.add_resource(resource)
       expect(@catalog.resource(:file, "other")).to equal(resource)
       expect(@catalog.resource(:file, @basepath+"/something").ref).to eq(resource.ref)
@@ -543,7 +556,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should not add an alias for the namevar when the title and name differ on non-isomorphic resource types" do
       resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
-      resource.expects(:isomorphic?).returns(false)
+      expect(resource).to receive(:isomorphic?).and_return(false)
       @catalog.add_resource(resource)
       expect(@catalog.resource(:file, resource.title)).to equal(resource)
       # We can't use .should here, because the resources respond to that method.
@@ -552,8 +565,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should provide a method to create additional resources that also registers the resource" do
       args = {:name => "/yay", :ensure => :file}
-      resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
-      Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
+      resource = double('file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay")
+      expect(Puppet::Type.type(:file)).to receive(:new).with(args).and_return(resource)
       @catalog.create_resource :file, args
       expect(@catalog.resource("File[/yay]")).to equal(resource)
     end
@@ -616,16 +629,21 @@ describe Puppet::Resource::Catalog, "when compiling" do
     before :each do
       @catalog = Puppet::Resource::Catalog.new("host")
 
-      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
-      Puppet::Transaction.stubs(:new).returns(@transaction)
-      @transaction.stubs(:evaluate)
-      @transaction.stubs(:for_network_device=)
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::SequentialPrioritizer.new)
+      allow(Puppet::Transaction).to receive(:new).and_return(@transaction)
+      allow(@transaction).to receive(:evaluate)
+      allow(@transaction).to receive(:for_network_device=)
 
-      Puppet.settings.stubs(:use)
+      allow(Puppet.settings).to receive(:use)
     end
 
     it "should create and evaluate a transaction" do
-      @transaction.expects(:evaluate)
+      expect(@transaction).to receive(:evaluate)
+      @catalog.apply
+    end
+
+    it "should add a transaction evalution time to the report" do
+      expect(@transaction.report).to receive(:add_times).with(:transaction_evaluation, kind_of(Numeric))
       @catalog.apply
     end
 
@@ -649,41 +667,48 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should pass supplied tags on to the transaction" do
-      @transaction.expects(:tags=).with(%w{one two})
+      expect(@transaction).to receive(:tags=).with(%w{one two})
       @catalog.apply(:tags => %w{one two})
     end
 
     it "should set ignoreschedules on the transaction if specified in apply()" do
-      @transaction.expects(:ignoreschedules=).with(true)
+      expect(@transaction).to receive(:ignoreschedules=).with(true)
       @catalog.apply(:ignoreschedules => true)
     end
 
-    describe "host catalogs" do
+    it "should detect transaction failure and report it" do
+      allow(@transaction).to receive(:evaluate).and_raise(RuntimeError, 'transaction failed.')
+      report = Puppet::Transaction::Report.new('apply')
 
+      expect { @catalog.apply(:report => report) }.to raise_error(RuntimeError)
+      report.finalize_report
+
+      expect(report.status).to eq('failed')
+    end
+
+    describe "host catalogs" do
       # super() doesn't work in the setup method for some reason
       before do
         @catalog.host_config = true
-        Puppet::Util::Storage.stubs(:store)
+        allow(Puppet::Util::Storage).to receive(:store)
       end
 
       it "should initialize the state database before applying a catalog" do
-        Puppet::Util::Storage.expects(:load)
+        expect(Puppet::Util::Storage).to receive(:load)
 
         # Short-circuit the apply, so we know we're loading before the transaction
-        Puppet::Transaction.expects(:new).raises ArgumentError
+        expect(Puppet::Transaction).to receive(:new).and_raise(ArgumentError)
         expect { @catalog.apply }.to raise_error(ArgumentError)
       end
 
       it "should sync the state database after applying" do
-        Puppet::Util::Storage.expects(:store)
-        @transaction.stubs :any_failed? => false
+        expect(Puppet::Util::Storage).to receive(:store)
+        allow(@transaction).to receive(:any_failed?).and_return(false)
         @catalog.apply
       end
-
     end
 
     describe "non-host catalogs" do
-
       before do
         @catalog.host_config = false
       end
@@ -695,11 +720,10 @@ describe Puppet::Resource::Catalog, "when compiling" do
       end
 
       it "should never modify the state database" do
-        Puppet::Util::Storage.expects(:load).never
-        Puppet::Util::Storage.expects(:store).never
+        expect(Puppet::Util::Storage).not_to receive(:load)
+        expect(Puppet::Util::Storage).not_to receive(:store)
         @catalog.apply
       end
-
     end
   end
 
@@ -709,7 +733,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should get removed when the catalog is cleaned up" do
-      @catalog.relationship_graph.expects(:clear)
+      expect(@catalog.relationship_graph).to receive(:clear)
 
       @catalog.clear
 
@@ -725,19 +749,18 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should only write when it is a host catalog" do
-      Puppet::FileSystem.expects(:open).with(@file, 0640, "w:UTF-8").never
+      expect(Puppet::FileSystem).not_to receive(:open).with(@file, 0640, "w:UTF-8")
       @catalog.host_config = false
       Puppet[:graph] = true
       @catalog.write_graph(@name)
     end
-
   end
 
   describe "when indirecting" do
     before do
       @real_indirection = Puppet::Resource::Catalog.indirection
 
-      @indirection = stub 'indirection', :name => :catalog
+      @indirection = double('indirection', :name => :catalog)
     end
 
     it "should use the value of the 'catalog_terminus' setting to determine its terminus class" do
@@ -777,7 +800,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.add_edge("one", "two")
 
       text = YAML.dump(@catalog)
-      @newcatalog = YAML.load(text)
+      @newcatalog = Puppet::Util::Yaml.safe_load(text, [Puppet::Resource::Catalog])
     end
 
     it "should get converted back to a catalog" do
@@ -853,21 +876,20 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
   context 'when dealing with parameters that have non-Data values' do
     context 'and rich_data is enabled' do
       before(:each) do
-        Puppet.push_context(:loaders => Puppet::Pops::Loaders.new(Puppet.lookup(:environments).get(Puppet[:environment])))
-        Puppet[:rich_data] = true
+        Puppet.push_context(
+          :loaders => Puppet::Pops::Loaders.new(Puppet.lookup(:environments).get(Puppet[:environment])),
+          :rich_data => true)
       end
 
       after(:each) do
-        Puppet[:rich_data] = false
         Puppet.pop_context
       end
-
 
       let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
 
       it 'should generate rich value hash for parameter values that are not Data' do
         s = catalog_w_regexp.to_json
-        expect(s).to include('"parameters":{"message":{"__pcore_type__":"Regexp","__pcore_value__":"[a-z]+"}}')
+        expect(s).to include('"parameters":{"message":{"__ptype":"Regexp","__pvalue":"[a-z]+"}}')
       end
 
       it 'should read and convert rich value hash containing Regexp from json' do
@@ -936,7 +958,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
       let(:catalog_w_regexp)  { compile_to_catalog("notify {'foo': message => /[a-z]+/ }") }
 
       it 'should not generate rich value hash for parameter values that are not Data' do
-        expect(catalog_w_regexp.to_json).not_to include('"__pcore_type__"')
+        expect(catalog_w_regexp.to_json).not_to include('"__ptype"')
       end
 
       it 'should convert parameter containing Regexp into strings' do
@@ -997,9 +1019,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to json"
         expect(message['a']).to eql(nil)
         expect(message['b']).to eql(10)
       end
-
     end
-
   end
 end
 
@@ -1030,30 +1050,29 @@ describe Puppet::Resource::Catalog, "when converting to json" do
   end
 
   it "should convert its resources to a JSON-encoded array and store it as the 'resources' data" do
-    one = stub 'one', :to_data_hash => "one_resource", :ref => "Foo[one]"
-    two = stub 'two', :to_data_hash => "two_resource", :ref => "Foo[two]"
+    one = double('one', :to_data_hash => "one_resource", :ref => "Foo[one]")
+    two = double('two', :to_data_hash => "two_resource", :ref => "Foo[two]")
 
-    one.expects(:'[]').with(:alias).returns nil
-    two.expects(:'[]').with(:alias).returns nil
+    expect(one).to receive(:'[]').with(:alias).and_return(nil)
+    expect(two).to receive(:'[]').with(:alias).and_return(nil)
 
     @catalog.add_resource(one)
     @catalog.add_resource(two)
 
     # TODO this should really guarantee sort order
     expect(JSON.parse(@catalog.to_json,:create_additions => false)['resources'].sort).to eq(["one_resource", "two_resource"].sort)
-
   end
 
   it "should convert its edges to a JSON-encoded array and store it as the 'edges' data" do
-    one   = stub 'one',   :to_data_hash => "one_resource",   :ref => 'Foo[one]'
-    two   = stub 'two',   :to_data_hash => "two_resource",   :ref => 'Foo[two]'
-    three = stub 'three', :to_data_hash => "three_resource", :ref => 'Foo[three]'
+    one   = double('one',   :to_data_hash => "one_resource",   :ref => 'Foo[one]')
+    two   = double('two',   :to_data_hash => "two_resource",   :ref => 'Foo[two]')
+    three = double('three', :to_data_hash => "three_resource", :ref => 'Foo[three]')
 
     @catalog.add_edge(one, two)
     @catalog.add_edge(two, three)
 
-    @catalog.edges_between(one, two  )[0].expects(:to_data_hash).returns "one_two_json"
-    @catalog.edges_between(two, three)[0].expects(:to_data_hash).returns "two_three_json"
+    expect(@catalog.edges_between(one, two  )[0]).to receive(:to_data_hash).and_return("one_two_json")
+    expect(@catalog.edges_between(two, three)[0]).to receive(:to_data_hash).and_return("two_three_json")
 
     expect(JSON.parse(@catalog.to_json,:create_additions => false)['edges'].sort).to eq(%w{one_two_json two_three_json}.sort)
   end

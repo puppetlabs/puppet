@@ -1,7 +1,9 @@
-require 'openssl'
+require 'puppet/ssl/openssl_loader'
 require 'puppet/ssl'
 
 # Performs no SSL verification
+#
+# @deprecated
 # @api private
 #
 class Puppet::SSL::Validator::NoValidator < Puppet::SSL::Validator

@@ -6,15 +6,13 @@ describe "puppet module install" do
   include PuppetSpec::Files
 
   describe "action" do
-    let(:name)        { stub(:name) }
+    let(:name)        { double(:name) }
     let(:target_dir)  { tmpdir('module install face action') }
     let(:options)     { { :target_dir => target_dir } }
 
     it 'should invoke the Installer app' do
-      Puppet::ModuleTool.expects(:set_option_defaults).with(options)
-      Puppet::ModuleTool::Applications::Installer.expects(:run).with do |*args|
-        mod, target, opts = args
-
+      expect(Puppet::ModuleTool).to receive(:set_option_defaults).with(options)
+      expect(Puppet::ModuleTool::Applications::Installer).to receive(:run) do |mod, target, opts|
         expect(mod).to eql(name)
         expect(opts).to eql(options)
         expect(target).to be_a(Puppet::ModuleTool::InstallDirectory)

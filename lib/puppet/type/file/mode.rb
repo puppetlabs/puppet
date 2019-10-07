@@ -40,7 +40,7 @@ module Puppet
       Symbolic modes should be represented as a string of comma-separated
       permission clauses, in the form `<WHO><OP><PERM>`:
 
-      * "Who" should be u (user), g (group), o (other), and/or a (all)
+      * "Who" should be any combination of u (user), g (group), and o (other), or a (all)
       * "Op" should be = (set exact permissions), + (add select permissions),
         or - (remove select permissions)
       * "Perm" should be one or more of:
@@ -116,8 +116,14 @@ module Puppet
     # If we're not following links and we're a link, then we just turn
     # off mode management entirely.
     def insync?(currentvalue)
-      if stat = @resource.stat and stat.ftype == "link" and @resource[:links] != :follow
-        self.debug "Not managing symlink mode"
+      if provider.respond_to?(:munge_windows_system_group)
+        munged_mode = provider.munge_windows_system_group(currentvalue, @should)
+        return false if munged_mode.nil?
+        currentvalue = munged_mode
+      end
+      stat = @resource.stat
+      if stat && stat.ftype == "link" && @resource[:links] != :follow
+        self.debug _("Not managing symlink mode")
         return true
       else
         return super(currentvalue)

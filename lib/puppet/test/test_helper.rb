@@ -113,8 +113,8 @@ module Puppet::Test
       indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
       indirections.each do |indirector|
         $saved_indirection_state[indirector.name] = {
-            :@terminus_class => indirector.instance_variable_get(:@terminus_class),
-            :@cache_class    => indirector.instance_variable_get(:@cache_class)
+            :@terminus_class => indirector.instance_variable_get(:@terminus_class).value,
+            :@cache_class    => indirector.instance_variable_get(:@cache_class).value
         }
       end
 
@@ -134,14 +134,18 @@ module Puppet::Test
 
       Puppet.push_context(
         {
-          :trusted_information =>
+          trusted_information:
             Puppet::Context::TrustedInformation.new('local', 'testing', {}),
+          ssl_context: Puppet::SSL::SSLContext.new(cacerts: []).freeze
         },
         "Context for specs")
 
       Puppet::Parser::Functions.reset
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
+
+      Puppet::SSL::Host.reset
+      Puppet::Rest::Routes.clear
 
       Puppet.clear_deprecation_warnings
     end
@@ -168,7 +172,7 @@ module Puppet::Test
       indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
       indirections.each do |indirector|
         $saved_indirection_state.fetch(indirector.name, {}).each do |variable, value|
-          indirector.instance_variable_set(variable, value)
+          indirector.instance_variable_get(variable).value = value
         end
       end
       $saved_indirection_state = nil
@@ -220,9 +224,6 @@ module Puppet::Test
       Puppet.settings.preferred_run_mode = "user"
       # Initialize "app defaults" settings to a good set of test values
       Puppet.settings.initialize_app_defaults(app_defaults_for_tests)
-
-      # Avoid opening ports to the outside world
-      Puppet.settings[:bindaddress] = "127.0.0.1"
 
       # We don't want to depend upon the reported domain name of the
       # machine running the tests, nor upon the DNS setup of that

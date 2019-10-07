@@ -76,10 +76,10 @@ module Puppet::ModuleTool::Shared
       }
 
       if forced?
-        range = SemanticPuppet::VersionRange.parse(@version, @strict_semver) rescue SemanticPuppet::VersionRange.parse('>= 0.0.0', @strict_semver)
+        range = Puppet::Module.parse_range(@version) rescue Puppet::Module.parse_range('>= 0.0.0')
       else
         range = (@conditions[mod]).map do |r|
-          SemanticPuppet::VersionRange.parse(r[:dependency], @strict_semver) rescue SemanticPuppet::VersionRange.parse('>= 0.0.0', @strict_semver)
+          Puppet::Module.parse_range(r[:dependency]) rescue Puppet::Module.parse_range('>= 0.0.0')
         end.inject(&:&)
       end
 
@@ -111,7 +111,8 @@ module Puppet::ModuleTool::Shared
       valid_versions = versions.select { |x| x[:semver].special == '' }
       valid_versions = versions if valid_versions.empty?
 
-      unless version = valid_versions.last
+      version = valid_versions.last
+      unless version
         req_module   = @module_name
         req_versions = @versions["#{@module_name}"].map { |v| v[:semver] }
         raise NoVersionsSatisfyError,

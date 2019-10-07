@@ -3,6 +3,43 @@ module Types
 
 # @api private
 class RubyGenerator < TypeFormatter
+
+  RUBY_RESERVED_WORDS = {
+    'alias' => '_alias',
+    'begin' => '_begin',
+    'break' => '_break',
+    'def' => '_def',
+    'do' => '_do',
+    'end' => '_end',
+    'ensure' => '_ensure',
+    'for' => '_for',
+    'module' => '_module',
+    'next' => '_next',
+    'nil' => '_nil',
+    'not' => '_not',
+    'redo' => '_redo',
+    'rescue' => '_rescue',
+    'retry' => '_retry',
+    'return' => '_return',
+    'self' => '_self',
+    'super' => '_super',
+    'then' => '_then',
+    'until' => '_until',
+    'when' => '_when',
+    'while' => '_while',
+    'yield' => '_yield',
+  }
+
+  RUBY_RESERVED_WORDS_REVERSED = Hash[RUBY_RESERVED_WORDS.map { |k, v| [v, k] }]
+
+  def self.protect_reserved_name(name)
+    RUBY_RESERVED_WORDS[name] || name
+  end
+
+  def self.unprotect_reserved_name(name)
+    RUBY_RESERVED_WORDS_REVERSED[name] || name
+  end
+
   def remove_common_namespace(namespace_segments, name)
     segments = name.split(TypeFormatter::NAME_SEGMENT_SEPARATOR)
     namespace_segments.size.times do |idx|
@@ -60,6 +97,7 @@ class RubyGenerator < TypeFormatter
       index += 1
       len > segments.size ? segments.size : len
     end
+    min_prefix_length = 0 if min_prefix_length == Float::INFINITY
 
     common_prefix = []
     segments_array = names_by_prefix.keys
@@ -120,7 +158,7 @@ class RubyGenerator < TypeFormatter
       ir = Loaders.implementation_registry
       impl_name = ir.module_name_for_type(type)
       raise Puppet::Error, "Unable to create an instance of #{type.name}. No mapping exists to runtime object" if impl_name.nil?
-      impl_name[0]
+      impl_name
     end
   end
 
@@ -141,9 +179,8 @@ class RubyGenerator < TypeFormatter
     unless obj.parent.nil?
       if impl_subst.empty?
         ir = Loaders.implementation_registry
-        parent_impl = ir.module_name_for_type(obj.parent)
-        raise Puppet::Error, "Unable to create an instance of #{obj.parent.name}. No mapping exists to runtime object" if parent_impl.nil?
-        parent_name = parent_impl[0]
+        parent_name = ir.module_name_for_type(obj.parent)
+        raise Puppet::Error, "Unable to create an instance of #{obj.parent.name}. No mapping exists to runtime object" if parent_name.nil?
       else
         parent_name = obj.parent.name.gsub(*impl_subst)
       end
@@ -162,7 +199,7 @@ class RubyGenerator < TypeFormatter
   end
 
   def class_body(obj, segments, bld)
-    if obj.parent.nil?
+    unless obj.parent.is_a?(PObjectType)
       bld << "\n  include " << namespace_relative(segments, Puppet::Pops::Types::PuppetObject.name) << "\n\n" # marker interface
       bld << "  def self.ref(type_string)\n"
       bld << '    ' << namespace_relative(segments, Puppet::Pops::Types::PTypeReferenceType.name) << ".new(type_string)\n"
@@ -173,8 +210,8 @@ class RubyGenerator < TypeFormatter
     constants, others = obj.attributes(true).values.partition { |a| a.kind == PObjectType::ATTRIBUTE_KIND_CONSTANT }
     constants = constants.select { |ca| ca.container.equal?(obj) }
     unless constants.empty?
-      constants.each { |ca| bld << "\n  def self." << ca.name << "\n    _pcore_type['" << ca.name << "'].value\n  end\n" }
-      constants.each { |ca| bld << "\n  def " << ca.name << "\n    self.class." << ca.name << "\n  end\n" }
+      constants.each { |ca| bld << "\n  def self." << rname(ca.name) << "\n    _pcore_type['" << ca.name << "'].value\n  end\n" }
+      constants.each { |ca| bld << "\n  def " << rname(ca.name) << "\n    self.class." << ca.name << "\n  end\n" }
     end
 
     init_params = others.reject { |a| a.kind == PObjectType::ATTRIBUTE_KIND_DERIVED }
@@ -188,66 +225,66 @@ class RubyGenerator < TypeFormatter
       eq_names = obj.equality
     end
 
-    unless obj.parent.is_a?(PObjectType) && obj_attrs.empty?
-      # Output type safe hash constructor
-      bld << "\n  def self.from_hash(i12n)\n"
-      bld << '    from_asserted_hash(' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
-      bld << "'" << obj.label << " initializer', _pcore_type.i12n_type, i12n))\n  end\n\n  def self.from_asserted_hash(i12n)\n    new"
-      unless non_opt.empty? && opt.empty?
-        bld << "(\n"
-        non_opt.each { |ip| bld << "      i12n['" << ip.name << "'],\n" }
-        opt.each do |ip|
-          if ip.value.nil?
-            bld << "      i12n['" << ip.name << "'],\n"
-          else
-            bld << "      i12n.fetch('" << ip.name << "') { "
-            default_string(bld, ip)
-            bld << " },\n"
-          end
-        end
-        bld.chomp!(",\n")
-        bld << ')'
-      end
-      bld << "\n  end\n"
-
-      # Output type safe constructor
-      bld << "\n  def self.create"
-      if init_params.empty?
-        bld << "\n    new"
-      else
-        bld << '('
-        non_opt.each { |ip| bld << ip.name << ', ' }
-        opt.each do |ip|
-          bld << ip.name << ' = '
+    # Output type safe hash constructor
+    bld << "\n  def self.from_hash(init_hash)\n"
+    bld << '    from_asserted_hash(' << namespace_relative(segments, TypeAsserter.name) << '.assert_instance_of('
+    bld << "'" << obj.label << " initializer', _pcore_type.init_hash_type, init_hash))\n  end\n\n  def self.from_asserted_hash(init_hash)\n    new"
+    unless non_opt.empty? && opt.empty?
+      bld << "(\n"
+      non_opt.each { |ip| bld << "      init_hash['" << ip.name << "'],\n" }
+      opt.each do |ip|
+        if ip.value.nil?
+          bld << "      init_hash['" << ip.name << "'],\n"
+        else
+          bld << "      init_hash.fetch('" << ip.name << "') { "
           default_string(bld, ip)
-          bld << ', '
+          bld << " },\n"
         end
-        bld.chomp!(', ')
-        bld << ")\n"
-        bld << '    ta = ' << namespace_relative(segments, TypeAsserter.name) << "\n"
-        bld << "    attrs = _pcore_type.attributes(true)\n"
-        init_params.each do |a|
-          bld << "    ta.assert_instance_of('" << a.container.name << '[' << a.name << ']'
-          bld << "', attrs['" << a.name << "'].type, " << a.name << ")\n"
-        end
-        bld << '    new('
-        non_opt.each { |a| bld << a.name << ', ' }
-        opt.each { |a| bld << a.name << ', ' }
-        bld.chomp!(', ')
-        bld << ')'
       end
-      bld << "\n  end\n"
+      bld.chomp!(",\n")
+      bld << ')'
+    end
+    bld << "\n  end\n"
 
+    # Output type safe constructor
+    bld << "\n  def self.create"
+    if init_params.empty?
+      bld << "\n    new"
+    else
+      bld << '('
+      non_opt.each { |ip| bld << rname(ip.name) << ', ' }
+      opt.each do |ip|
+        bld << rname(ip.name) << ' = '
+        default_string(bld, ip)
+        bld << ', '
+      end
+      bld.chomp!(', ')
+      bld << ")\n"
+      bld << '    ta = ' << namespace_relative(segments, TypeAsserter.name) << "\n"
+      bld << "    attrs = _pcore_type.attributes(true)\n"
+      init_params.each do |a|
+        bld << "    ta.assert_instance_of('" << a.container.name << '[' << a.name << ']'
+        bld << "', attrs['" << a.name << "'].type, " << rname(a.name) << ")\n"
+      end
+      bld << '    new('
+      non_opt.each { |a| bld << rname(a.name) << ', ' }
+      opt.each { |a| bld << rname(a.name) << ', ' }
+      bld.chomp!(', ')
+      bld << ')'
+    end
+    bld << "\n  end\n"
+
+    unless obj.parent.is_a?(PObjectType) && obj_attrs.empty?
       # Output attr_readers
       unless obj_attrs.empty?
         bld << "\n"
-        obj_attrs.each { |a| bld << '  attr_reader :' << a.name << "\n" }
+        obj_attrs.each { |a| bld << '  attr_reader :' << rname(a.name) << "\n" }
       end
 
       bld << "  attr_reader :hash\n" if obj.parent.nil?
 
       derived_attrs.each do |a|
-        bld << "\n  def " << a.name << "\n"
+        bld << "\n  def " << rname(a.name) << "\n"
         code_annotation = RubyMethod.annotate(a)
         ruby_body = code_annotation.nil? ? nil: code_annotation.body
         if ruby_body.nil?
@@ -264,9 +301,9 @@ class RubyGenerator < TypeFormatter
         # Output initializer
         bld << "\n  def initialize"
         bld << '('
-        non_opt.each { |ip| bld << ip.name << ', ' }
+        non_opt.each { |ip| bld << rname(ip.name) << ', ' }
         opt.each do |ip|
-          bld << ip.name << ' = '
+          bld << rname(ip.name) << ' = '
           default_string(bld, ip)
           bld << ', '
         end
@@ -281,31 +318,29 @@ class RubyGenerator < TypeFormatter
           bld << "\n    super("
           super_args = (non_opt + opt).select { |ip| !ip.container.equal?(obj) }
           unless super_args.empty?
-            super_args.each { |ip| bld << ip.name << ', ' }
+            super_args.each { |ip| bld << rname(ip.name) << ', ' }
             bld.chomp!(', ')
           end
           bld << ")\n"
           bld << '    @hash = @hash ^ ' unless hash_participants.empty?
         end
         unless hash_participants.empty?
-          hash_participants.each { |a| bld << a.name << '.hash ^ ' if a.container.equal?(obj) }
+          hash_participants.each { |a| bld << rname(a.name) << '.hash ^ ' if a.container.equal?(obj) }
           bld.chomp!(' ^ ')
           bld << "\n"
         end
-        init_params.each { |a| bld << '    @' << a.name << ' = ' << a.name << "\n" if a.container.equal?(obj) }
+        init_params.each { |a| bld << '    @' << rname(a.name) << ' = ' << rname(a.name) << "\n" if a.container.equal?(obj) }
         bld << "  end\n"
       end
     end
 
-    if obj_attrs.empty?
-      bld << "\n  def _pcore_init_hash\n    {}\n  end\n" unless obj.parent.is_a?(PObjectType)
-    else
+    unless obj_attrs.empty? && obj.parent.nil?
       bld << "\n  def _pcore_init_hash\n"
       bld << '    result = '
       bld << (obj.parent.nil? ? '{}' : 'super')
       bld << "\n"
       obj_attrs.each do |a|
-        bld << "    result['" << a.name << "'] = @" << a.name
+        bld << "    result['" << a.name << "'] = @" << rname(a.name)
         if a.value?
           bld << ' unless '
           equals_default_string(bld, a)
@@ -325,31 +360,25 @@ class RubyGenerator < TypeFormatter
       bld << "\n  def _pcore_contents\n"
       content_participants.each do |cp|
         if array_type?(cp.type)
-          bld << '    @' << cp.name << ".each { |value| yield(value) }\n"
+          bld << '    @' << rname(cp.name) << ".each { |value| yield(value) }\n"
         else
-          bld << '    yield(@' << cp.name << ') unless @' << cp.name  << ".nil?\n"
+          bld << '    yield(@' << rname(cp.name) << ') unless @' << rname(cp.name)  << ".nil?\n"
         end
       end
       bld << "  end\n\n  def _pcore_all_contents(path, &block)\n    path << self\n"
       content_participants.each do |cp|
         if array_type?(cp.type)
-          bld << '    @' << cp.name << ".each do |value|\n"
+          bld << '    @' << rname(cp.name) << ".each do |value|\n"
           bld << "      block.call(value, path)\n"
           bld << "      value._pcore_all_contents(path, &block)\n"
         else
-          bld << '    unless @' << cp.name << ".nil?\n"
-          bld << '      block.call(@' << cp.name << ", path)\n"
-          bld << '      @' << cp.name << "._pcore_all_contents(path, &block)\n"
+          bld << '    unless @' << rname(cp.name) << ".nil?\n"
+          bld << '      block.call(@' << rname(cp.name) << ", path)\n"
+          bld << '      @' << rname(cp.name) << "._pcore_all_contents(path, &block)\n"
         end
         bld << "    end\n"
       end
       bld << "    path.pop\n  end\n"
-    end
-
-    unless obj.parent.is_a?(PObjectType)
-      bld << "\n  def to_s\n"
-      bld << '    ' << namespace_relative(segments, TypeFormatter.name) << ".string(self)\n"
-      bld << "  end\n"
     end
 
     # Output function placeholders
@@ -358,13 +387,13 @@ class RubyGenerator < TypeFormatter
       if code_annotation
         body = code_annotation.body
         params = code_annotation.parameters
-        bld << "\n  def " << func.name
+        bld << "\n  def " << rname(func.name)
         unless params.nil? || params.empty?
           bld << '(' << params << ')'
         end
         bld << "\n    " << body << "\n"
       else
-        bld << "\n  def " << func.name << "(*args)\n"
+        bld << "\n  def " << rname(func.name) << "(*args)\n"
         bld << "    # Placeholder for #{func.type}\n"
         bld << "    raise Puppet::Error, \"no method is implemented for #{func.label}\"\n"
       end
@@ -375,7 +404,7 @@ class RubyGenerator < TypeFormatter
       bld << "\n  def eql?(o)\n"
       bld << "    super &&\n" unless obj.parent.nil?
       bld << "    o.instance_of?(self.class) &&\n" if include_type
-      eq_names.each { |eqn| bld << '    @' << eqn << '.eql?(o.' <<  eqn << ") &&\n" }
+      eq_names.each { |eqn| bld << '    @' << rname(eqn) << '.eql?(o.' <<  rname(eqn) << ") &&\n" }
       bld.chomp!(" &&\n")
       bld << "\n  end\n  alias == eql?\n"
     end
@@ -433,6 +462,10 @@ class RubyGenerator < TypeFormatter
     else
       bld << "_pcore_type['" << a.name << "'].default_value?(@" << a.name << ')'
     end
+  end
+
+  def rname(name)
+    RUBY_RESERVED_WORDS[name] || name
   end
 end
 end

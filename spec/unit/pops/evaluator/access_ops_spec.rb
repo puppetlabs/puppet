@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/pops'
@@ -539,6 +538,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(type_expr)).to eql(tf.callable([String], Integer))
     end
 
+    # Variant Type
+    it 'does not allow Variant declarations with non-type arguments' do
+      type_expr = fqr('Variant').access_at(fqr('Integer'), 'not a type')
+      expect { evaluate(type_expr) }.to raise_error(/Cannot use String where Any-Type is expected/)
+    end
   end
 
   matcher :be_the_type do |type|

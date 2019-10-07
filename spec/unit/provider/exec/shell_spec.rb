@@ -1,7 +1,7 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec).provider(:shell), :unless => Puppet.features.microsoft_windows? do
+describe Puppet::Type.type(:exec).provider(:shell),
+         unless: Puppet::Util::Platform.windows? || Puppet::Util::Platform.jruby? do
   let(:resource) { Puppet::Type.type(:exec).new(:title => 'foo', :provider => 'shell') }
   let(:provider) { described_class.new(resource) }
 

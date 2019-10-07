@@ -31,7 +31,8 @@ module Puppet
     # Return the +username+ and +modname+ for a given +full_module_name+, or raise an
     # ArgumentError if the argument isn't parseable.
     def self.username_and_modname_from(full_module_name)
-      if matcher = full_module_name.match(FULL_MODULE_NAME_PATTERN)
+      matcher = full_module_name.match(FULL_MODULE_NAME_PATTERN)
+      if matcher
         return matcher.captures
       else
         raise ArgumentError, _("Not a valid full name: %{full_module_name}") % { full_module_name: full_module_name }
@@ -131,8 +132,6 @@ module Puppet
       # Note: environment will have expanded the path
       options[:target_dir] = face_environment.full_modulepath.first
 
-      # Default false to retain backward compatibility with SemanticPuppet 0.1.4
-      options[:strict_semver] = false
     end
 
     # Given a hash of options, we should discover or create a
@@ -165,16 +164,15 @@ module Puppet
     # @param where [String] a description of the thing we're parsing the
     #        dependency expression for
     # @param dep [Hash] the dependency description to parse
-    # @param strict_semver [Boolean] set to `false` to relax range semantics to include pre-releases
     # @return [Array(String, SemanticPuppet::VersionRange, String)] a tuple of the
     #         dependent module's name, the version range dependency, and the
     #         unparsed range expression.
-    def self.parse_module_dependency(where, dep, strict_semver = true)
+    def self.parse_module_dependency(where, dep)
       dep_name = dep['name'].tr('/', '-')
       range = dep['version_requirement'] || '>= 0.0.0'
 
       begin
-        parsed_range = SemanticPuppet::VersionRange.parse(range, strict_semver)
+        parsed_range = Module.parse_range(range)
       rescue ArgumentError => e
         Puppet.debug "Error in #{where} parsing dependency #{dep_name} (#{e.message}); using empty range."
         parsed_range = SemanticPuppet::VersionRange::EMPTY_RANGE

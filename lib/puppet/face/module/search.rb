@@ -23,7 +23,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
     when_invoked do |term, options|
       Puppet::ModuleTool.set_option_defaults options
-      Puppet::ModuleTool::Applications::Searcher.new(term, Puppet::Forge.new, options).run
+      Puppet::ModuleTool::Applications::Searcher.new(term, Puppet::Forge.new(options[:module_repository] || Puppet[:module_repository]), options).run
     end
 
     when_rendering :console do |results, term, options|
@@ -44,13 +44,15 @@ Puppet::Face.define(:module, '1.0.0') do
       min_widths = Hash[ *headers.map { |k,v| [k, v.length] }.flatten ]
       min_widths['full_name'] = min_widths['author'] = 12
 
-      min_width = min_widths.inject(0) { |sum,pair| sum += pair.last } + (padding.length * (headers.length - 1))
+      min_width = min_widths.inject(0) { |sum,pair| sum + pair.last } + (padding.length * (headers.length - 1))
 
       terminal_width = [Puppet::Util::Terminal.width, min_width].max
 
       columns = results[:answers].inject(min_widths) do |hash, result|
+        deprecated_buffer = result['deprecated_at'].nil? ? 0 : 11 # ' DEPRECATED'.length
+
         {
-          'full_name' => [ hash['full_name'], result['full_name'].length          ].max,
+          'full_name' => [ hash['full_name'], result['full_name'].length + deprecated_buffer ].max,
           'desc'      => [ hash['desc'],      result['desc'].length               ].max,
           'author'    => [ hash['author'],    "@#{result['author']}".length       ].max,
           'tag_list'  => [ hash['tag_list'],  result['tag_list'].join(' ').length ].max,
@@ -80,12 +82,14 @@ Puppet::Face.define(:module, '1.0.0') do
       highlight = proc do |s|
         s = s.gsub(term, colorize(:green, term))
         s = s.gsub(term.gsub('/', '-'), colorize(:green, term.gsub('/', '-'))) if term =~ /\//
+        s = s.gsub(' DEPRECATED', colorize(:red, ' DEPRECATED'))
         s
       end
 
       format % [ headers['full_name'], headers['desc'], headers['author'], headers['tag_list'] ] +
       results[:answers].map do |match|
         name, desc, author, keywords = %w{full_name desc author tag_list}.map { |k| match[k] }
+        name += ' DEPRECATED' unless match['deprecated_at'].nil?
         desc = desc[0...(columns['desc'] - 3)] + '...' if desc.length > columns['desc']
         highlight[format % [ name.sub('/', '-'), desc, "@#{author}", [keywords].flatten.join(' ') ]]
       end.join

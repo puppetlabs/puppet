@@ -12,46 +12,13 @@ describe 'when calling' do
     ---
     :backends:
       - yaml
-      - custom
+      - hieraspec
     :yaml:
       :datadir: #{global_dir}/hieradata
     :hierarchy:
       - first
       - second
     YAML
-
-  let(:ruby_stuff_files) do
-    {
-      'hiera' => {
-        'backend' => {
-          'custom_backend.rb' => <<-RUBY.unindent
-            class Hiera::Backend::Custom_backend
-              def initialize(cache = nil)
-                Hiera.debug('Custom_backend starting')
-              end
-
-              def lookup(key, scope, order_override, resolution_type, context)
-                case key
-                when 'datasources'
-                  Hiera::Backend.datasources(scope, order_override) { |source| source }
-                when 'resolution_type'
-                  if resolution_type == :hash
-                    { key => resolution_type.to_s }
-                  elsif resolution_type == :array
-                    [ key, resolution_type.to_s ]
-                  else
-                    "resolution_type=\#{resolution_type}"
-                  end
-                else
-                  throw :no_such_key
-                end
-              end
-            end
-            RUBY
-        }
-      }
-    }
-  end
 
   let(:hieradata_files) do
     {
@@ -143,7 +110,6 @@ describe 'when calling' do
   let(:global_files) do
     {
       'hiera.yaml' => hiera_yaml,
-      'ruby_stuff' => ruby_stuff_files,
       'hieradata' => hieradata_files,
       'environments' => environment_files
     }
@@ -158,23 +124,24 @@ describe 'when calling' do
   let(:compiler) { Puppet::Parser::Compiler.new(node) }
   let(:the_func) { Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'hiera') }
 
+  before(:all) do
+    $LOAD_PATH.unshift(File.join(my_fixture_dir))
+  end
+
+  after(:all) do
+    Hiera::Backend.send(:remove_const, :Hieraspec_backend) if Hiera::Backend.const_defined?(:Hieraspec_backend)
+    $LOAD_PATH.shift
+  end
+
   before(:each) do
     Puppet.settings[:codedir] = global_dir
     Puppet.settings[:hiera_config] = File.join(global_dir, 'hiera.yaml')
   end
 
   around(:each) do |example|
-    # Faking the load path to enable 'require' to load from 'ruby_stuff'. It removes the need for a static fixture
-    # for the custom backend
     dir_contained_in(global_dir, global_files)
-    $LOAD_PATH.unshift(File.join(global_dir, 'ruby_stuff'))
-    begin
-      Puppet.override(:environments => environments, :current_environment => env) do
-        example.run
-      end
-    ensure
-      Hiera::Backend.send(:remove_const, :Custom_backend) if Hiera::Backend.const_defined?(:Custom_backend)
-      $LOAD_PATH.shift
+    Puppet.override(:environments => environments, :current_environment => env) do
+      example.run
     end
   end
 
@@ -182,7 +149,6 @@ describe 'when calling' do
     result = nil
     Puppet[:code] = 'undef'
     Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
-      compiler.topscope['environment'] = 'test'
       compiler.compile do |catalog|
         result = yield(compiler.topscope)
         catalog
@@ -293,6 +259,11 @@ describe 'when calling' do
         expect(func('mod::c')).to eql('mod::c (from module)')
       end
     end
+
+    it 'should not be disabled by data_binding_terminus setting' do
+      Puppet[:data_binding_terminus] = 'none'
+      expect(func('a')).to eql('first a')
+    end
   end
 
   context 'hiera_array' do
@@ -402,7 +373,7 @@ describe 'when calling' do
         ---
         :backends:
           - yaml
-          - custom
+          - hieraspec
         :yaml:
           :datadir: #{global_dir}/hieradata
         :hierarchy:
@@ -451,8 +422,7 @@ describe 'when calling' do
               - x3
               - x4
             YAML
-        },
-        'ruby_stuff' => ruby_stuff_files
+        }
       }
     end
 

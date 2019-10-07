@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/util/filetype'
@@ -16,15 +15,15 @@ describe Puppet::Util::FileType do
 
     describe "when the file already exists" do
       it "should return the file's contents when asked to read it" do
-        Puppet::FileSystem.expects(:exist?).with(path).returns true
-        Puppet::FileSystem.expects(:read).with(path, :encoding => Encoding.default_external).returns "my text"
+        expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
+        expect(Puppet::FileSystem).to receive(:read).with(path, :encoding => Encoding.default_external).and_return("my text")
 
         expect(file.read).to eq("my text")
       end
 
       it "should unlink the file when asked to remove it" do
-        Puppet::FileSystem.expects(:exist?).with(path).returns true
-        Puppet::FileSystem.expects(:unlink).with(path)
+        expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
+        expect(Puppet::FileSystem).to receive(:unlink).with(path)
 
         file.remove
       end
@@ -32,57 +31,58 @@ describe Puppet::Util::FileType do
 
     describe "when the file does not exist" do
       it "should return an empty string when asked to read the file" do
-        Puppet::FileSystem.expects(:exist?).with(path).returns false
+        expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(false)
 
         expect(file.read).to eq("")
       end
     end
 
     describe "when writing the file" do
-      let(:tempfile) { stub 'tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file" }
+      let(:tempfile) { double('tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file") }
+
       before do
-        FileUtils.stubs(:cp)
-        Tempfile.stubs(:new).returns tempfile
+        allow(FileUtils).to receive(:cp)
+        allow(Tempfile).to receive(:new).and_return(tempfile)
       end
 
       it "should first create a temp file and copy its contents over to the file location" do
-        Tempfile.expects(:new).with("puppet", :encoding => Encoding.default_external).returns tempfile
-        tempfile.expects(:print).with("my text")
-        tempfile.expects(:flush)
-        tempfile.expects(:close)
-        FileUtils.expects(:cp).with(tempfile.path, path)
+        expect(Tempfile).to receive(:new).with("puppet", :encoding => Encoding.default_external).and_return(tempfile)
+        expect(tempfile).to receive(:print).with("my text")
+        expect(tempfile).to receive(:flush)
+        expect(tempfile).to receive(:close)
+        expect(FileUtils).to receive(:cp).with(tempfile.path, path)
 
         file.write "my text"
       end
 
       it "should set the selinux default context on the file" do
-        file.expects(:set_selinux_default_context).with(path)
+        expect(file).to receive(:set_selinux_default_context).with(path)
         file.write "eh"
       end
     end
 
     describe "when backing up a file" do
       it "should do nothing if the file does not exist" do
-        Puppet::FileSystem.expects(:exist?).with(path).returns false
-        file.expects(:bucket).never
+        expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(false)
+        expect(file).not_to receive(:bucket)
         file.backup
       end
 
       it "should use its filebucket to backup the file if it exists" do
-        Puppet::FileSystem.expects(:exist?).with(path).returns true
+        expect(Puppet::FileSystem).to receive(:exist?).with(path).and_return(true)
 
-        bucket = mock 'bucket'
-        bucket.expects(:backup).with(path)
+        bucket = double('bucket')
+        expect(bucket).to receive(:backup).with(path)
 
-        file.expects(:bucket).returns bucket
+        expect(file).to receive(:bucket).and_return(bucket)
         file.backup
       end
 
       it "should use the default filebucket" do
-        bucket = mock 'bucket'
-        bucket.expects(:bucket).returns "mybucket"
+        bucket = double('bucket')
+        expect(bucket).to receive(:bucket).and_return("mybucket")
 
-        Puppet::Type.type(:filebucket).expects(:mkdefaultbucket).returns bucket
+        expect(Puppet::Type.type(:filebucket)).to receive(:mkdefaultbucket).and_return(bucket)
 
         expect(file.bucket).to eq("mybucket")
       end
@@ -103,45 +103,57 @@ describe Puppet::Util::FileType do
     # make Puppet::Util::SUIDManager return something deterministic, not the
     # uid of the user running the tests, except where overridden below.
     before :each do
-      Puppet::Util::SUIDManager.stubs(:uid).returns 1234
+      allow(Puppet::Util::SUIDManager).to receive(:uid).and_return(1234)
     end
 
     describe "#read" do
+      before(:each) do
+        allow(Puppet::Util).to receive(:uid).with(uid).and_return(9000)
+      end
+
       it "should run crontab -l as the target user" do
-        Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], user_options).returns crontab
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(['crontab', '-l'], user_options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new(crontab, 0))
         expect(cron.read).to eq(crontab)
       end
 
       it "should not switch user if current user is the target user" do
-        Puppet::Util.expects(:uid).with(uid).returns 9000
-        Puppet::Util::SUIDManager.expects(:uid).returns 9000
-        Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], options).returns crontab
+        expect(Puppet::Util).to receive(:uid).with(uid).twice.and_return(9000)
+        expect(Puppet::Util::SUIDManager).to receive(:uid).and_return(9000)
+        expect(Puppet::Util::Execution).to receive(:execute)
+          .with(['crontab', '-l'], options)
+          .and_return(Puppet::Util::Execution::ProcessOutput.new(crontab, 0))
         expect(cron.read).to eq(crontab)
       end
 
       it "should treat an absent crontab as empty" do
-        Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], user_options).raises(Puppet::ExecutionFailure, absent_crontab)
+        expect(Puppet::Util::Execution).to receive(:execute).with(['crontab', '-l'], user_options).and_raise(Puppet::ExecutionFailure, absent_crontab)
         expect(cron.read).to eq('')
       end
 
-      it "should raise an error if the user is not authorized to use cron" do
-        Puppet::Util::Execution.expects(:execute).with(['crontab', '-l'], user_options).raises(Puppet::ExecutionFailure, unauthorized_crontab)
-        expect {
-          cron.read
-        }.to raise_error Puppet::Error, /User #{uid} not authorized to use cron/
+      it "should treat a nonexistent user's crontab as empty" do
+        expect(Puppet::Util).to receive(:uid).with(uid).and_return(nil)
+
+        expect(cron.read).to eq('')
+      end
+
+      it "should return empty if the user is not authorized to use cron" do
+        expect(Puppet::Util::Execution).to receive(:execute).with(['crontab', '-l'], user_options).and_raise(Puppet::ExecutionFailure, unauthorized_crontab)
+        expect(cron.read).to eq('')
       end
     end
 
     describe "#remove" do
       it "should run crontab -r as the target user" do
-        Puppet::Util::Execution.expects(:execute).with(['crontab', '-r'], user_options)
+        expect(Puppet::Util::Execution).to receive(:execute).with(['crontab', '-r'], user_options)
         cron.remove
       end
 
       it "should not switch user if current user is the target user" do
-        Puppet::Util.expects(:uid).with(uid).returns 9000
-        Puppet::Util::SUIDManager.expects(:uid).returns 9000
-        Puppet::Util::Execution.expects(:execute).with(['crontab','-r'], options)
+        expect(Puppet::Util).to receive(:uid).with(uid).and_return(9000)
+        expect(Puppet::Util::SUIDManager).to receive(:uid).and_return(9000)
+        expect(Puppet::Util::Execution).to receive(:execute).with(['crontab','-r'], options)
         cron.remove
       end
     end
@@ -150,8 +162,8 @@ describe Puppet::Util::FileType do
       before :each do
         @tmp_cron = Tempfile.new("puppet_crontab_spec")
         @tmp_cron_path = @tmp_cron.path
-        Puppet::Util.stubs(:uid).with(uid).returns 9000
-        Tempfile.expects(:new).with("puppet_#{name}", :encoding => Encoding.default_external).returns @tmp_cron
+        allow(Puppet::Util).to receive(:uid).with(uid).and_return(9000)
+        expect(Tempfile).to receive(:new).with("puppet_#{name}", :encoding => Encoding.default_external).and_return(@tmp_cron)
       end
 
       after :each do
@@ -159,25 +171,25 @@ describe Puppet::Util::FileType do
       end
 
       it "should run crontab as the target user on a temporary file" do
-        File.expects(:chown).with(9000, nil, @tmp_cron_path)
-        Puppet::Util::Execution.expects(:execute).with(["crontab", @tmp_cron_path], user_options)
+        expect(File).to receive(:chown).with(9000, nil, @tmp_cron_path)
+        expect(Puppet::Util::Execution).to receive(:execute).with(["crontab", @tmp_cron_path], user_options)
 
-        @tmp_cron.expects(:print).with("foo\n")
+        expect(@tmp_cron).to receive(:print).with("foo\n")
         cron.write "foo\n"
       end
 
       it "should not switch user if current user is the target user" do
-        Puppet::Util::SUIDManager.expects(:uid).returns 9000
-        File.expects(:chown).with(9000, nil, @tmp_cron_path)
-        Puppet::Util::Execution.expects(:execute).with(["crontab", @tmp_cron_path], options)
+        expect(Puppet::Util::SUIDManager).to receive(:uid).and_return(9000)
+        expect(File).to receive(:chown).with(9000, nil, @tmp_cron_path)
+        expect(Puppet::Util::Execution).to receive(:execute).with(["crontab", @tmp_cron_path], options)
 
-        @tmp_cron.expects(:print).with("foo\n")
+        expect(@tmp_cron).to receive(:print).with("foo\n")
         cron.write "foo\n"
       end
     end
   end
 
-  describe "the suntab filetype", :unless => Puppet.features.microsoft_windows? do
+  describe "the suntab filetype", :unless => Puppet::Util::Platform.windows? do
     let(:type)           { Puppet::Util::FileType.filetype(:suntab) }
     let(:name)           { type.name }
     let(:crontab_output) { 'suntab_output' }
@@ -194,7 +206,7 @@ describe Puppet::Util::FileType do
     it_should_behave_like "crontab provider"
   end
 
-  describe "the aixtab filetype", :unless => Puppet.features.microsoft_windows? do
+  describe "the aixtab filetype", :unless => Puppet::Util::Platform.windows? do
     let(:type)           { Puppet::Util::FileType.filetype(:aixtab) }
     let(:name)           { type.name }
     let(:crontab_output) { 'aixtab_output' }

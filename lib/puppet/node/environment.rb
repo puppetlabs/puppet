@@ -25,11 +25,6 @@ class Puppet::Node::Environment
   NO_MANIFEST = :no_manifest
 
   # The create() factory method should be used instead.
-  #
-  # @api private
-  def self.new(*args)
-    create(*args)
-  end
   private_class_method :new
 
   # Create a new environment with the given name
@@ -44,13 +39,7 @@ class Puppet::Node::Environment
   #
   # @api public
   def self.create(name, modulepath, manifest = NO_MANIFEST, config_version = nil)
-    obj = self.allocate
-    obj.send(:initialize,
-             name.intern,
-             expand_dirs(extralibs() + modulepath),
-             manifest == NO_MANIFEST ? manifest : Puppet::FileSystem.expand_path(manifest),
-             config_version)
-    obj
+    new(name, modulepath, manifest, config_version)
   end
 
   # A remote subclass to make it easier to trace instances when debugging.
@@ -81,11 +70,11 @@ class Puppet::Node::Environment
   #
   # @param name [Symbol] The environment name
   def initialize(name, modulepath, manifest, config_version)
-    @name = name
-    @modulepath = modulepath
-    @manifest = manifest
+    @name = name.intern
+    @modulepath = self.class.expand_dirs(self.class.extralibs() + modulepath)
+    @manifest = manifest == NO_MANIFEST ? manifest : Puppet::FileSystem.expand_path(manifest)
+
     @config_version = config_version
-    @modules_strict_semver = false
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding any of the passed
@@ -240,22 +229,6 @@ class Puppet::Node::Environment
     Puppet.settings.value(param, self.name)
   end
 
-  # A SemanticPuppet::VersionRange version >= 1.0.0 will not include versions with pre-release
-  # identifiers unless that is explicitly declared. This may cause backward compatibility
-  # issues when resolving module dependencies and the flag is therefore set to `false` by default.
-  #
-  # @param flag [Boolean] set to true to resolve module dependencies using strict SemVer semantics
-  #
-  def modules_strict_semver=(flag)
-    @modules_strict_semver = flag
-  end
-
-  # @return [Boolean] the current value of the modules_strict_semver flag.
-  # @api public
-  def modules_strict_semver?
-    @modules_strict_semver
-  end
-
   # @api public
   # @return [Puppet::Resource::TypeCollection] The current global TypeCollection
   def known_resource_types
@@ -295,7 +268,7 @@ class Puppet::Node::Environment
   # @param forge_name [String] The module name
   # @return [Puppet::Module, nil] The module if found, else nil
   def module_by_forge_name(forge_name)
-    author, modname = forge_name.split('/')
+    _, modname = forge_name.split('/')
     found_mod = self.module(modname)
     found_mod and found_mod.forge_name == forge_name ?
       found_mod :
@@ -330,7 +303,7 @@ class Puppet::Node::Environment
 
       @modules = module_references.collect do |reference|
         begin
-          Puppet::Module.new(reference[:name], reference[:path], self, modules_strict_semver?)
+          Puppet::Module.new(reference[:name], reference[:path], self)
         rescue Puppet::Module::Error => e
           Puppet.log_exception(e)
           nil
@@ -372,7 +345,7 @@ class Puppet::Node::Environment
             Puppet::Module.is_module_directory?(name, path)
           end
           modules_by_path[path] = module_names.sort.map do |name|
-            Puppet::Module.new(name, File.join(path, name), self, modules_strict_semver?)
+            Puppet::Module.new(name, File.join(path, name), self)
           end
         end
       else
@@ -431,6 +404,26 @@ class Puppet::Node::Environment
     end
 
     deps
+  end
+
+  # Loads module translations for the current environment once for
+  # the lifetime of the environment. Execute a block in the context
+  # of that translation domain.
+  def with_text_domain
+    return yield if Puppet[:disable_i18n]
+
+    if @text_domain.nil?
+      @text_domain = @name
+      Puppet::GettextConfig.reset_text_domain(@text_domain)
+      Puppet::ModuleTranslations.load_from_modulepath(modules)
+    else
+      Puppet::GettextConfig.use_text_domain(@text_domain)
+    end
+
+    yield
+  ensure
+    # Is a noop if disable_i18n is true
+    Puppet::GettextConfig.clear_text_domain
   end
 
   # Checks if a reparse is required (cache of files is stale).

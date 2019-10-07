@@ -6,10 +6,10 @@ Puppet::Type.type(:package).provide :dnf, :parent => :yum do
   feature is destructive and should be used with the utmost care.
 
   This provider supports the `install_options` attribute, which allows command-line flags to be passed to dnf.
-  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-  or an array where each element is either a string or a hash."
+  These options should be specified as an array where each element is either
+   a string or a hash."
 
-  has_feature :install_options, :versionable, :virtual_packages
+  has_feature :install_options, :versionable, :virtual_packages, :install_only
 
   commands :cmd => "dnf", :rpm => "rpm"
 
@@ -28,7 +28,10 @@ Puppet::Type.type(:package).provide :dnf, :parent => :yum do
       end
   end
 
-  defaultfor :operatingsystem => :fedora, :operatingsystemmajrelease => ['22', '23', '24', '25']
+  defaultfor :operatingsystem => :fedora
+  notdefaultfor :operatingsystem => :fedora, :operatingsystemmajrelease => (19..21).to_a
+  defaultfor :osfamily => :redhat
+  notdefaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
 
   def self.update_command
     # In DNF, update is deprecated for upgrade

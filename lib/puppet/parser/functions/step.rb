@@ -4,7 +4,7 @@ Puppet::Parser::Functions::newfunction(
   :arity => -1,
   :doc => <<-DOC
 Provides stepping with given interval over elements in an iterable and optionally runs a
-[lambda](http://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) for each
+[lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html) for each
 element.
 
 This function takes two to three arguments:
@@ -80,5 +80,5 @@ $transformed_data contains [0,50,100,150,200]
 
 DOC
 ) do |args|
-  Error.is4x('step')
+  Puppet::Parser::Functions::Error.is4x('step')
 end

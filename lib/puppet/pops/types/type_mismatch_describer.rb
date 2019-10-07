@@ -19,7 +19,7 @@ module Types
     def eql?(o)
       self == o
     end
-   end
+  end
 
   # @api private
   class SubjectPathElement < TypePathElement
@@ -89,51 +89,6 @@ module Types
   class SignaturePathElement < VariantPathElement
     def to_s
       "#{key+1}."
-    end
-  end
-
-  # Module to handle present/past tense.
-  #
-  # All method names prefixed with "it_" to avoid conflict with Mocha expectations. Adding a method
-  # named 'expects' just doesn't work.
-  #
-  # @deprecated Will be removed in Puppet 5
-  # @api private
-  module TenseVariants
-    def it_expects(tense)
-      case tense
-      when :present
-        'expects'
-      else
-        'expected'
-      end
-    end
-
-    def it_does_not_expect(tense)
-      case tense
-      when :present
-        'does not expect'
-      else
-        'did not expect'
-      end
-    end
-
-    def it_has_no(tense)
-      case tense
-      when :present
-        'has no'
-      else
-        'did not have a'
-      end
-    end
-
-    def it_references(tense)
-      case tense
-        when :present
-          'references'
-        else
-          'referenced'
-      end
     end
   end
 
@@ -293,11 +248,6 @@ module Types
       super(path)
       @expected = (expected.is_a?(Array) ? PVariantType.maybe_create(expected) : expected).normalize
       @actual = actual.normalize
-      @optional = false
-    end
-
-    def set_optional
-      @optional = true
     end
 
     def ==(o)
@@ -306,12 +256,6 @@ module Types
 
     def hash
       [canonical_path, expected, actual].hash
-    end
-
-    def swap_expected(expected)
-      copy = self.clone
-      copy.instance_variable_set(:@expected, expected)
-      copy
     end
   end
 
@@ -328,15 +272,12 @@ module Types
       e = expected
       a = actual
       multi = false
-      if @optional
-        if e.is_a?(PVariantType)
-          e = e.types
-          e = [PUndefType::DEFAULT] + e unless e.include?(PUndefType::DEFAULT)
-        else
-          er = all_resolved(e)
-          e = [PUndefType::DEFAULT, e] unless er.is_a?(PVariantType) && er.types.include?(PUndefType::DEFAULT)
-        end
-      elsif e.is_a?(PVariantType)
+      if e.is_a?(POptionalType)
+        e = e.optional_type
+        optional = true
+      end
+
+      if e.is_a?(PVariantType)
         e = e.types
       end
 
@@ -345,9 +286,10 @@ module Types
           a = detailed_actual_to_s(e, a)
           e = e.map { |t| t.to_alias_expanded_s }
         else
-          e = e.map { |t| t.simple_name }.uniq
-          a = a.simple_name
+          e = e.map { |t| short_name(t) }.uniq
+          a = short_name(a)
         end
+        e.insert(0, 'Undef') if optional
         case e.size
         when 1
           e = e[0]
@@ -363,8 +305,12 @@ module Types
           a = detailed_actual_to_s(e, a)
           e = e.to_alias_expanded_s
         else
-          e = e.simple_name
-          a = a.simple_name
+          e = short_name(e)
+          a = short_name(a)
+        end
+        if optional
+          e = "Undef or #{e}"
+          multi = true
         end
       end
       if multi
@@ -379,6 +325,16 @@ module Types
     end
 
     private
+
+    def short_name(t)
+      # Ensure that Optional, NotUndef, Sensitive, and Type are reported with included
+      # type parameter.
+      if t.is_a?(PTypeWithContainedType) && !(t.type.nil? || t.type.class == PAnyType)
+        "#{t.name}[#{t.type.name}]"
+      else
+        t.name.nil? ? t.simple_name : t.name
+      end
+    end
 
     # Answers the question if `e` is a specialized type of `a`
     # @param e [PAnyType] the expected type
@@ -473,12 +429,18 @@ module Types
   # @api private
   class PatternMismatch < TypeMismatch
     def message(variant, position)
-      "#{variant}#{position} expects a match for #{expected.to_alias_expanded_s}, got #{actual_string}"
+      e = expected
+      value_pfx = ''
+      if e.is_a?(POptionalType)
+        e = e.optional_type
+        value_pfx = 'an undef value or '
+      end
+      "#{variant}#{position} expects #{value_pfx}a match for #{e.to_alias_expanded_s}, got #{actual_string}"
     end
 
     def actual_string
       a = actual
-      a.is_a?(PStringType) && !a.value.nil? ? "'#{a.value}'" : a.simple_name
+      a.is_a?(PStringType) && !a.value.nil? ? "'#{a.value}'" : short_name(a)
     end
   end
 
@@ -550,7 +512,10 @@ module Types
     end
 
     def tense_deprecated
-      Puppet.warn_once('deprecations', 'typemismatch#tense', "Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored. Everything is now reported using present tense")
+      #TRANSLATORS TypeMismatchDescriber is a class name and 'tense' is a method name and should not be translated
+      message = _("Passing a 'tense' argument to the TypeMismatchDescriber is deprecated and ignored.")
+      message += ' ' + _("Everything is now reported using present tense")
+      Puppet.warn_once('deprecations', 'typemismatch#tense', message)
     end
 
     # Validates that all entries in the give_hash exists in the given param_struct, that their type conforms
@@ -747,14 +712,23 @@ module Types
       end
     end
 
-    def describe_PVariantType(expected, actual, path)
+    def describe_PVariantType(expected, original, actual, path)
       variant_descriptions = []
-      expected.types.each_with_index do |vt, index|
+      types = expected.types
+      types = [PUndefType::DEFAULT] + types if original.is_a?(POptionalType)
+      types.each_with_index do |vt, index|
         d = describe(vt, actual, path + [VariantPathElement.new(index)])
         return EMPTY_ARRAY if d.empty?
         variant_descriptions << d
       end
-      merge_descriptions(path.length, SizeMismatch, variant_descriptions)
+      descriptions = merge_descriptions(path.length, SizeMismatch, variant_descriptions)
+      if original.is_a?(PTypeAliasType) && descriptions.size == 1
+        # All variants failed in this alias so we report it as a mismatch on the alias
+        # rather than reporting individual failures of the variants
+        [TypeMismatch.new(path, original, actual)]
+      else
+        descriptions
+      end
     end
 
     def merge_descriptions(varying_path_position, size_mismatch_class, variant_descriptions)
@@ -778,33 +752,24 @@ module Types
       descriptions.size == 1 ? [descriptions[0].chop_path(varying_path_position)] : descriptions
     end
 
-    def describe_POptionalType(expected, actual, path)
-      return EMPTY_ARRAY if actual.is_a?(PUndefType)
-      descriptions = describe(expected.optional_type, actual, path)
-      descriptions.each { |description| description.set_optional }
-      descriptions
+    def describe_POptionalType(expected, original, actual, path)
+      return EMPTY_ARRAY if actual.is_a?(PUndefType) || expected.optional_type.nil?
+      internal_describe(expected.optional_type, original.is_a?(PTypeAliasType) ? original : expected, actual, path)
     end
 
-    def describe_PEnumType(expected, actual, path)
-      [PatternMismatch.new(path, expected, actual)]
+    def describe_PEnumType(expected, original, actual, path)
+      [PatternMismatch.new(path, original, actual)]
     end
 
-    def describe_PPatternType(expected, actual, path)
-      [PatternMismatch.new(path, expected, actual)]
+    def describe_PPatternType(expected, original, actual, path)
+      [PatternMismatch.new(path, original, actual)]
     end
 
-    def describe_PTypeAliasType(expected, actual, path)
-      resolved_type = expected.resolved_type
-      describe(resolved_type, actual, path).map do |description|
-        if description.is_a?(ExpectedActualMismatch)
-          description.swap_expected(expected)
-        else
-          description
-        end
-      end
+    def describe_PTypeAliasType(expected, original, actual, path)
+      internal_describe(expected.resolved_type.normalize, expected, actual, path)
     end
 
-    def describe_PArrayType(expected, actual, path)
+    def describe_PArrayType(expected, original, actual, path)
       descriptions = []
       element_type = expected.element_type || PAnyType::DEFAULT
       if actual.is_a?(PTupleType)
@@ -822,17 +787,17 @@ module Types
         expected_size = expected.size_type
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
         if expected_size.nil? || expected_size.assignable?(actual_size)
-          descriptions << TypeMismatch.new(path, expected, PArrayType.new(actual.element_type))
+          descriptions << TypeMismatch.new(path, original, PArrayType.new(actual.element_type))
         else
           descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
       else
-        descriptions << TypeMismatch.new(path, expected, actual)
+        descriptions << TypeMismatch.new(path, original, actual)
       end
       descriptions
     end
 
-    def describe_PHashType(expected, actual, path)
+    def describe_PHashType(expected, original, actual, path)
       descriptions = []
       key_type = expected.key_type || PAnyType::DEFAULT
       value_type = expected.value_type || PAnyType::DEFAULT
@@ -852,17 +817,17 @@ module Types
         expected_size = expected.size_type
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
         if expected_size.nil? || expected_size.assignable?(actual_size)
-          descriptions << TypeMismatch.new(path, expected, PHashType.new(actual.key_type, actual.value_type))
+          descriptions << TypeMismatch.new(path, original, PHashType.new(actual.key_type, actual.value_type))
         else
           descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
       else
-        descriptions << TypeMismatch.new(path, expected, actual)
+        descriptions << TypeMismatch.new(path, original, actual)
       end
       descriptions
     end
 
-    def describe_PStructType(expected, actual, path)
+    def describe_PStructType(expected, original, actual, path)
       elements = expected.elements
       descriptions = []
       if actual.is_a?(PStructType)
@@ -882,25 +847,25 @@ module Types
         actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
         expected_size = PIntegerType.new(elements.count { |e| !e.key_type.assignable?(PUndefType::DEFAULT) }, elements.size)
         if expected_size.assignable?(actual_size)
-          descriptions << TypeMismatch.new(path, expected, PHashType.new(actual.key_type, actual.value_type))
+          descriptions << TypeMismatch.new(path, original, PHashType.new(actual.key_type, actual.value_type))
         else
           descriptions << SizeMismatch.new(path, expected_size, actual_size)
         end
       else
-        descriptions << TypeMismatch.new(path, expected, actual)
+        descriptions << TypeMismatch.new(path, original, actual)
       end
       descriptions
     end
 
-    def describe_PTupleType(expected, actual, path)
-      describe_tuple(expected, actual, path, SizeMismatch)
+    def describe_PTupleType(expected, original, actual, path)
+      describe_tuple(expected, original, actual, path, SizeMismatch)
     end
 
     def describe_argument_tuple(expected, actual, path)
-      describe_tuple(expected, actual, path, CountMismatch)
+      describe_tuple(expected, expected, actual, path, CountMismatch)
     end
 
-    def describe_tuple(expected, actual, path, size_mismatch_class)
+    def describe_tuple(expected, original, actual, path, size_mismatch_class)
       return EMPTY_ARRAY if expected == actual || expected.types.empty? && (actual.is_a?(PArrayType))
       expected_size = expected.size_type || TypeFactory.range(*expected.size_range)
 
@@ -928,7 +893,7 @@ module Types
           # Array of anything can not be assigned (unless tuple is tuple of anything) - this case
           # was handled at the top of this method.
           #
-          [TypeMismatch.new(path, expected, actual)]
+          [TypeMismatch.new(path, original, actual)]
         else
           expected_size = expected.size_type || TypeFactory.range(*expected.size_range)
           actual_size = actual.size_type || PCollectionType::DEFAULT_SIZE
@@ -943,11 +908,11 @@ module Types
           end
         end
       else
-        [TypeMismatch.new(path, expected, actual)]
+        [TypeMismatch.new(path, original, actual)]
       end
     end
 
-    def describe_PCallableType(expected, actual, path)
+    def describe_PCallableType(expected, original, actual, path)
       if actual.is_a?(PCallableType)
         # nil param_types means, any other Callable is assignable
         if expected.param_types.nil? && expected.return_type.nil?
@@ -977,12 +942,12 @@ module Types
           end
         end
       else
-        [TypeMismatch.new(path, expected, actual)]
+        [TypeMismatch.new(path, original, actual)]
       end
     end
 
-    def describe_PAnyType(expected, actual, path)
-      expected.assignable?(actual) ? EMPTY_ARRAY : [TypeMismatch.new(path, expected, actual)]
+    def describe_PAnyType(expected, original, actual, path)
+      expected.assignable?(actual) ? EMPTY_ARRAY : [TypeMismatch.new(path, original, actual)]
     end
 
     class UnresolvedTypeFinder
@@ -1008,33 +973,37 @@ module Types
       if unresolved
         [UnresolvedTypeReference.new(path, unresolved)]
       else
-        expected = expected.normalize
-        case expected
-        when PVariantType
-          describe_PVariantType(expected, actual, path)
-        when PStructType
-          describe_PStructType(expected, actual, path)
-        when PHashType
-          describe_PHashType(expected, actual, path)
-        when PTupleType
-          describe_PTupleType(expected, actual, path)
-        when PArrayType
-          describe_PArrayType(expected, actual, path)
-        when PCallableType
-          describe_PCallableType(expected, actual, path)
-        when POptionalType
-          describe_POptionalType(expected, actual, path)
-        when PPatternType
-          describe_PPatternType(expected, actual, path)
-        when PEnumType
-          describe_PEnumType(expected, actual, path)
-        when PTypeAliasType
-          describe_PTypeAliasType(expected, actual, path)
-        else
-          describe_PAnyType(expected, actual, path)
-        end
+        internal_describe(expected.normalize, expected, actual, path)
       end
     end
+
+    def internal_describe(expected, original, actual, path)
+      case expected
+      when PVariantType
+        describe_PVariantType(expected, original, actual, path)
+      when PStructType
+        describe_PStructType(expected, original, actual, path)
+      when PHashType
+        describe_PHashType(expected, original, actual, path)
+      when PTupleType
+        describe_PTupleType(expected, original, actual, path)
+      when PArrayType
+        describe_PArrayType(expected, original, actual, path)
+      when PCallableType
+        describe_PCallableType(expected, original, actual, path)
+      when POptionalType
+        describe_POptionalType(expected, original, actual, path)
+      when PPatternType
+        describe_PPatternType(expected, original, actual, path)
+      when PEnumType
+        describe_PEnumType(expected, original, actual, path)
+      when PTypeAliasType
+        describe_PTypeAliasType(expected, original, actual, path)
+      else
+        describe_PAnyType(expected, original, actual, path)
+      end
+    end
+    private :internal_describe
 
     # Produces a string for the signature(s)
     #

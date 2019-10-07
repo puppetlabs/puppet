@@ -13,9 +13,9 @@ class Puppet::FileServing::Configuration::Parser
     @mounts = {}
     @count = 0
 
-    File.open(@file) { |f|
+    File.open(@file) do |f|
       mount = nil
-      f.each_line { |line|
+      f.each_line do |line|
         # Have the count increment at the top, in case we throw exceptions.
         @count += 1
 
@@ -37,13 +37,17 @@ class Puppet::FileServing::Configuration::Parser
           when "deny"
             deny(mount, value)
           else
-            raise ArgumentError.new(_("Invalid argument '%{var}' in %{file}, line %{line_num}") % { var: var, file: @file.filename, line_num: @count })
+            error_location_str = Puppet::Util::Errors.error_location(@file.filename, @count)
+            raise ArgumentError.new(_("Invalid argument '%{var}' at %{error_location}") %
+                                        { var: var, error_location: error_location_str })
           end
         else
-          raise ArgumentError.new(_("Invalid line '%{line}' at %{file}, line %{line_num}") % { line: line.chomp, file: @file.filename, line_num: @count })
+          error_location_str = Puppet::Util::Errors.error_location(@file.filename, @count)
+          raise ArgumentError.new(_("Invalid entry at %{error_location}: '%{file_text}'") %
+                                      { file_text: line.chomp, error_location: error_location_str })
         end
-      }
-    }
+      end
+    end
 
     validate
 
@@ -67,7 +71,9 @@ class Puppet::FileServing::Configuration::Parser
         mount.info _("allowing %{val} access") % { val: val }
         mount.allow(val)
       rescue Puppet::AuthStoreError => detail
-        raise ArgumentError.new(_("%{detail} in %{file}, line %{line_num}") % { detail: detail.to_s, file: @file, line_num: @count })
+        error_location_str = Puppet::Util::Errors.error_location(@file, @count)
+        raise ArgumentError.new("%{detail} %{error_location}" %
+                                    { detail: detail.to_s, error_location: error_location_str })
       end
     }
   end
@@ -79,19 +85,29 @@ class Puppet::FileServing::Configuration::Parser
         mount.info _("denying %{val} access") % { val: val }
         mount.deny(val)
       rescue Puppet::AuthStoreError => detail
-        raise ArgumentError.new(_("%{detail} in %{file}, line %{line_num}") % { detail: detail.to_s, file: @file, line_num: @count })
+        error_location_str = Puppet::Util::Errors.error_location(@file, @count)
+        raise ArgumentError.new("%{detail} %{error_location}" %
+                                    { detail: detail.to_s, error_location: error_location_str  })
       end
     }
   end
 
   # Create a new mount.
   def newmount(name)
-    raise ArgumentError.new(_("%{mount} is already mounted at %{name} in %{file}, line %{line_num}") % { mount: @mounts[name], name: name, file: @file, line_num: @count }) if @mounts.include?(name)
+    if @mounts.include?(name)
+      error_location_str = Puppet::Util::Errors.error_location(@file, @count)
+      raise ArgumentError.new(_("%{mount} is already mounted at %{name} at %{error_location}") %
+                                  { mount: @mounts[name], name: name, error_location: error_location_str })
+    end
     case name
     when "modules"
       mount = Mount::Modules.new(name)
     when "plugins"
       mount = Mount::Plugins.new(name)
+    when "tasks"
+      mount = Mount::Tasks.new(name)
+    when "locales"
+      mount = Mount::Locales.new(name)
     else
       mount = Mount::File.new(name)
     end

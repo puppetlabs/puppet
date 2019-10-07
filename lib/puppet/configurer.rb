@@ -4,18 +4,19 @@ require 'timeout'
 require 'puppet/network/http_pool'
 require 'puppet/util'
 require 'securerandom'
+#require 'puppet/parser/script_compiler'
+require 'puppet/pops/evaluator/deferred_resolver'
 
 class Puppet::Configurer
   require 'puppet/configurer/fact_handler'
   require 'puppet/configurer/plugin_handler'
-  require 'puppet/configurer/downloader_factory'
 
   include Puppet::Configurer::FactHandler
 
   # For benchmarking
   include Puppet::Util
 
-  attr_reader :compile_time, :environment
+  attr_reader :environment
 
   # Provide more helpful strings to the logging that the Agent does
   def self.to_s
@@ -23,14 +24,10 @@ class Puppet::Configurer
   end
 
   def self.should_pluginsync?
-    if Puppet.settings.set_by_cli?(:pluginsync) || Puppet.settings.set_by_config?(:pluginsync)
-      Puppet[:pluginsync]
+    if Puppet[:use_cached_catalog]
+      false
     else
-      if Puppet[:use_cached_catalog]
-        false
-      else
-        true
-      end
+      true
     end
   end
 
@@ -45,7 +42,6 @@ class Puppet::Configurer
   # Initialize and load storage
   def init_storage
       Puppet::Util::Storage.load
-      @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
   rescue => detail
     Puppet.log_exception(detail, _("Removing corrupt state file %{file}: %{detail}") % { file: Puppet[:statefile], detail: detail })
     begin
@@ -56,7 +52,7 @@ class Puppet::Configurer
     end
   end
 
-  def initialize(factory = Puppet::Configurer::DownloaderFactory.new, transaction_uuid = nil, job_id = nil)
+  def initialize(transaction_uuid = nil, job_id = nil)
     @running = false
     @splayed = false
     @cached_catalog_status = 'not_used'
@@ -65,13 +61,14 @@ class Puppet::Configurer
     @job_id = job_id
     @static_catalog = true
     @checksum_type = Puppet[:supported_checksum_types]
-    @handler = Puppet::Configurer::PluginHandler.new(factory)
+    @handler = Puppet::Configurer::PluginHandler.new()
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
   def retrieve_catalog(query_options)
     query_options ||= {}
-    if (Puppet[:use_cached_catalog] && result = retrieve_catalog_from_cache(query_options))
+    result = retrieve_catalog_from_cache(query_options) if Puppet[:use_cached_catalog]
+    if result
       @cached_catalog_status = 'explicitly_requested'
 
       Puppet.info _("Using cached catalog from environment '%{environment}'") % { environment: result.environment }
@@ -103,19 +100,37 @@ class Puppet::Configurer
   end
 
   # Convert a plain resource catalog into our full host catalog.
-  def convert_catalog(result, duration)
-    catalog = result.to_ral
-    catalog.finalize
-    catalog.retrieval_duration = duration
-    catalog.write_class_file
-    catalog.write_resource_file
+  def convert_catalog(result, duration, options = {})
+    catalog = nil
+
+    catalog_conversion_time = thinmark do
+      # Will mutate the result and replace all Deferred values with resolved values
+      facts = options[:convert_with_facts]
+      if facts
+        Puppet::Pops::Evaluator::DeferredResolver.resolve_and_replace(facts, result)
+      end
+
+      catalog = result.to_ral
+      catalog.finalize
+      catalog.retrieval_duration = duration
+      catalog.write_class_file
+      catalog.write_resource_file
+    end
+    options[:report].add_times(:convert_catalog, catalog_conversion_time) if options[:report]
+
     catalog
   end
 
   def get_facts(options)
     if options[:pluginsync]
-      remote_environment_for_plugins = Puppet::Node::Environment.remote(@environment)
-      download_plugins(remote_environment_for_plugins)
+      plugin_sync_time = thinmark do
+        remote_environment_for_plugins = Puppet::Node::Environment.remote(@environment)
+        download_plugins(remote_environment_for_plugins)
+
+        Puppet::GettextConfig.reset_text_domain('agent')
+        Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
+      end
+      options[:report].add_times(:plugin_sync, plugin_sync_time) if options[:report]
     end
 
     facts_hash = {}
@@ -125,7 +140,12 @@ class Puppet::Configurer
       # get a hash with both of these pieces of information.
       #
       # facts_for_uploading may set Puppet[:node_name_value] as a side effect
-      facts_hash = facts_for_uploading
+      facter_time = thinmark do
+        facts = find_facts
+        options[:convert_with_facts] =  facts
+        facts_hash = encode_facts(facts) # encode for uploading # was: facts_for_uploading
+      end
+      options[:report].add_times(:fact_generation, facter_time) if options[:report]
     end
     facts_hash
   end
@@ -147,17 +167,19 @@ class Puppet::Configurer
 
     # retrieve_catalog returns json catalog
     catalog = retrieve_catalog(query_options)
-    return convert_catalog(catalog, @duration) if catalog
+    return convert_catalog(catalog, @duration, options) if catalog
 
     Puppet.err _("Could not retrieve catalog; skipping run")
     nil
   end
 
-  def prepare_and_retrieve_catalog_from_cache
+  def prepare_and_retrieve_catalog_from_cache(options = {})
     result = retrieve_catalog_from_cache({:transaction_uuid => @transaction_uuid, :static_catalog => @static_catalog})
     if result
       Puppet.info _("Using cached catalog from environment '%{catalog_env}'") % { catalog_env: result.environment }
-      return convert_catalog(result, @duration)
+      # get facts now so that the convert_catalog method can resolve deferred values
+      get_facts(options)
+      return convert_catalog(result, @duration, options)
     end
     nil
   end
@@ -165,15 +187,15 @@ class Puppet::Configurer
   # Apply supplied catalog and return associated application report
   def apply_catalog(catalog, options)
     report = options[:report]
-    begin
-      report.configuration_version = catalog.version
+    report.configuration_version = catalog.version
 
-      benchmark(:notice, _("Applied catalog")) do
+    benchmark(:notice, _("Applied catalog in %{seconds} seconds")) do
+      apply_catalog_time = thinmark do
         catalog.apply(options)
       end
-    ensure
-      report.finalize_report
+      options[:report].add_times(:catalog_application, apply_catalog_time)
     end
+
     report
   end
 
@@ -192,48 +214,53 @@ class Puppet::Configurer
 
     Puppet::Util::Log.newdestination(report)
 
+    completed = nil
     begin
       Puppet.override(:http_pool => pool) do
 
         # Skip failover logic if the server_list setting is empty
         if Puppet.settings[:server_list].nil? || Puppet.settings[:server_list].empty?
-          do_failover = false;
+          do_failover = false
         else
           do_failover = true
         end
         # When we are passed a catalog, that means we're in apply
         # mode. We shouldn't try to do any failover in that case.
         if options[:catalog].nil? && do_failover
-          found = find_functional_server()
-          server = found[:server]
+          server, port = find_functional_server
           if server.nil?
-            Puppet.warning _("Could not select a functional puppet master")
-            server = [nil, nil]
+            raise Puppet::Error, _("Could not select a functional puppet master from server_list: '%{server_list}'") % { server_list: Puppet.settings.value(:server_list, Puppet[:environment].to_sym, true) }
+          else
+            #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+            Puppet.debug _("Selected puppet server from the `server_list` setting: %{server}:%{port}") % { server: server, port: port }
+            report.master_used = "#{server}:#{port}"
           end
-          Puppet.override(:server => server[0], :serverport => server[1]) do
-            if !server.first.nil?
-              Puppet.debug "Selected master: #{server[0]}:#{server[1]}"
-              report.master_used = "#{server[0]}:#{server[1]}"
-            end
-
-            run_internal(options.merge(:node => found[:node]))
+          Puppet.override(server: server, serverport: port) do
+            completed = run_internal(options)
           end
         else
-          run_internal(options)
+          completed = run_internal(options)
         end
       end
     ensure
       pool.close
     end
+
+    completed ? report.exit_status : nil
   end
 
   def run_internal(options)
+    start = Time.now
     report = options[:report]
 
     # If a cached catalog is explicitly requested, attempt to retrieve it. Skip the node request,
     # don't pluginsync and switch to the catalog's environment if we successfully retrieve it.
     if Puppet[:use_cached_catalog]
-      if catalog = prepare_and_retrieve_catalog_from_cache
+      Puppet::GettextConfig.reset_text_domain('agent')
+      Puppet::ModuleTranslations.load_from_vardir(Puppet[:vardir])
+
+      catalog = prepare_and_retrieve_catalog_from_cache(options)
+      if catalog
         options[:catalog] = catalog
         @cached_catalog_status = 'explicitly_requested'
 
@@ -262,13 +289,18 @@ class Puppet::Configurer
       # We only need to find out the environment to run in if we don't already have a catalog
       unless (options[:catalog] || Puppet[:strict_environment_mode])
         begin
-          if node = options[:node] || Puppet::Node.indirection.find(Puppet[:node_name_value],
+          node = nil
+          node_retr_time = thinmark do
+            node = Puppet::Node.indirection.find(Puppet[:node_name_value],
               :environment => Puppet::Node::Environment.remote(@environment),
               :configured_environment => configured_environment,
               :ignore_cache => true,
               :transaction_uuid => @transaction_uuid,
               :fail_on_404 => true)
+          end
+          options[:report].add_times(:node_retrieval, node_retr_time)
 
+          if node
             # If we have deserialized a node from a rest call, we want to set
             # an environment instance as a simple 'remote' environment reference.
             if !node.has_environment_instance? && node.environment_name
@@ -293,21 +325,25 @@ class Puppet::Configurer
       end
 
       current_environment = Puppet.lookup(:current_environment)
-      local_node_environment =
       if current_environment.name == @environment.intern
-        current_environment
+        local_node_environment = current_environment
       else
-        Puppet::Node::Environment.create(@environment,
+        local_node_environment = Puppet::Node::Environment.create(@environment,
                                          current_environment.modulepath,
                                          current_environment.manifest,
                                          current_environment.config_version)
       end
-      Puppet.push_context({:current_environment => local_node_environment}, "Local node environment for configurer transaction")
+      Puppet.push_context({
+        :current_environment => local_node_environment, 
+        :loaders => Puppet::Pops::Loaders.new(local_node_environment, true)
+      }, "Local node environment for configurer transaction")
 
       query_options = get_facts(options) unless query_options
       query_options[:configured_environment] = configured_environment
+      options[:convert_for_node] = node
 
-      unless catalog = prepare_and_retrieve_catalog(options, query_options)
+      catalog = prepare_and_retrieve_catalog(options, query_options)
+      unless catalog
         return nil
       end
 
@@ -332,7 +368,8 @@ class Puppet::Configurer
         query_options = get_facts(options)
         query_options[:configured_environment] = configured_environment
 
-        return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
+        catalog = prepare_and_retrieve_catalog(options, query_options)
+        return nil unless catalog
         tries += 1
       end
 
@@ -342,7 +379,7 @@ class Puppet::Configurer
       options[:report].catalog_uuid = catalog.catalog_uuid
       options[:report].cached_catalog_status = @cached_catalog_status
       apply_catalog(catalog, options)
-      report.exit_status
+      true
     rescue => detail
       Puppet.log_exception(detail, _("Failed to apply catalog: %{detail}") % { detail: detail })
       return nil
@@ -351,38 +388,32 @@ class Puppet::Configurer
     end
   ensure
     report.cached_catalog_status ||= @cached_catalog_status
+    report.add_times(:total, Time.now - start)
+    report.finalize_report
     Puppet::Util::Log.close(report)
     send_report(report)
     Puppet.pop_context
   end
   private :run_internal
 
-  def find_functional_server()
-    configured_environment = Puppet[:environment] if Puppet.settings.set_by_config?(:environment)
+  def find_functional_server
+    Puppet.settings[:server_list].each do |server|
+      host = server[0]
+      port = server[1] || Puppet[:masterport]
+      begin
+        ssl_context = Puppet.lookup(:ssl_context)
+        http = Puppet::Network::HttpPool.connection(host, port.to_i, ssl_context: ssl_context)
+        response = http.get('/status/v1/simple/master')
+        return [host, port] if response.is_a?(Net::HTTPOK)
 
-    node = nil
-    selected_server = Puppet.settings[:server_list].find do |server|
-      # Puppet.override doesn't return the result of its block, so we
-      # need to handle this manually
-      found = false
-      server[1] ||= Puppet[:masterport]
-      Puppet.override(:server => server[0], :serverport => server[1]) do
-        begin
-          node = Puppet::Node.indirection.find(Puppet[:node_name_value],
-              :environment => Puppet::Node::Environment.remote(@environment),
-              :configured_environment => configured_environment,
-              :ignore_cache => true,
-              :transaction_uuid => @transaction_uuid,
-              :fail_on_404 => false)
-          found = true
-        rescue Exception => e
-          # Nothing to see here
-        end
+        Puppet.debug(_("Puppet server %{host}:%{port} is unavailable: %{code} %{reason}") %
+                     { host: host, port: port, code: response.code, reason: response.message })
+      rescue => detail
+        #TRANSLATORS 'server_list' is the name of a setting and should not be translated
+        Puppet.debug _("Unable to connect to server from server_list setting: %{detail}") % {detail: detail}
       end
-      found
     end
-    { :node => node,
-      :server => selected_server }
+    [nil, nil]
   end
   private :find_functional_server
 
@@ -420,8 +451,13 @@ class Puppet::Configurer
   def retrieve_catalog_from_cache(query_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value],
-        query_options.merge(:ignore_terminus => true, :environment => Puppet::Node::Environment.remote(@environment)))
+      result = Puppet::Resource::Catalog.indirection.find(
+        Puppet[:node_name_value],
+        query_options.merge(
+          :ignore_terminus => true,
+          :environment     => Puppet::Node::Environment.remote(@environment)
+        )
+      )
     end
     result
   rescue => detail
@@ -432,8 +468,16 @@ class Puppet::Configurer
   def retrieve_new_catalog(query_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value],
-        query_options.merge(:ignore_cache => true, :environment => Puppet::Node::Environment.remote(@environment), :fail_on_404 => true))
+      result = Puppet::Resource::Catalog.indirection.find(
+        Puppet[:node_name_value],
+        query_options.merge(
+          :ignore_cache      => true,
+          # We never want to update the cached Catalog if we're running in noop mode.
+          :ignore_cache_save => Puppet[:noop],
+          :environment       => Puppet::Node::Environment.remote(@environment),
+          :fail_on_404       => true
+        )
+      )
     end
     result
   rescue StandardError => detail

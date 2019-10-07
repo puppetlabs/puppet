@@ -10,7 +10,7 @@ module Puppet::Pops::Parser::InterpolationSupport
 
   # This is the starting point for a double quoted string with possible interpolation
   # The structure mimics that of the grammar.
-  # The logic is explicit (where the former implementation used parameters/strucures) given to a
+  # The logic is explicit (where the former implementation used parameters/structures) given to a
   # generic handler.
   # (This is both easier to understand and faster).
   #
@@ -37,7 +37,8 @@ module Puppet::Pops::Parser::InterpolationSupport
         enqueue_until count
         break
       when '$'
-        if varname = scn.scan(PATTERN_VARIABLE)
+        varname = scn.scan(PATTERN_VARIABLE)
+        if varname
           # The $ is counted towards the variable
           enqueue_completed([:DQPRE, text, after-before-1], before)
           enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
@@ -78,7 +79,8 @@ module Puppet::Pops::Parser::InterpolationSupport
         enqueue_until count
         break
       when '$'
-        if varname = scn.scan(PATTERN_VARIABLE)
+        varname = scn.scan(PATTERN_VARIABLE)
+        if varname
           # The $ is counted towards the variable
           enqueue_completed([:DQMID, text, after-before-1], before)
           enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
@@ -122,7 +124,8 @@ module Puppet::Pops::Parser::InterpolationSupport
         enqueue_until count
         break
       when '$'
-        if varname = scn.scan(PATTERN_VARIABLE)
+        varname = scn.scan(PATTERN_VARIABLE)
+        if varname
           # The $ is counted towards the variable
           enqueue_completed([:DQPRE, text, after-before-1], before)
           enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
@@ -162,7 +165,8 @@ module Puppet::Pops::Parser::InterpolationSupport
         enqueue_until count
         break
       when '$'
-        if varname = scn.scan(PATTERN_VARIABLE)
+        varname = scn.scan(PATTERN_VARIABLE)
+        if varname
           # The $ is counted towards the variable
           enqueue_completed([:DQMID, text, after-before-1], before)
           enqueue_completed([:VARIABLE, varname, scn.pos - after + 1], after - 1)
@@ -190,7 +194,8 @@ module Puppet::Pops::Parser::InterpolationSupport
     scn.skip(self.class::PATTERN_WS)
     queue_size = queue.size
     until scn.eos? do
-      if token = lex_token
+      token = lex_token
+      if token
         if token.equal?(queue_base)
           # A nested #interpolate_dq call shifted the queue_base token from the @token_queue. It must
           # be put back since it is intended for the top level #interpolate_dq call only.
@@ -221,7 +226,7 @@ module Puppet::Pops::Parser::InterpolationSupport
 
   def transform_to_variable(token)
     token_name = token[0]
-    if [:NUMBER, :NAME, :WORD].include?(token_name) || self.class::KEYWORD_NAMES[token_name]
+    if [:NUMBER, :NAME, :WORD].include?(token_name) || self.class::KEYWORD_NAMES[token_name] || @taskm_keywords[token_name]
       t = token[1]
       ta = t.token_array
       [:VARIABLE, self.class::TokenValue.new([:VARIABLE, ta[1], ta[2]], t.offset, t.locator)]

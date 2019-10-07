@@ -70,12 +70,18 @@ module Puppet::SSL::Oids
     ["1.3.6.1.4.1.34380.1.3.13", 'pp_auth_role', 'Puppet Node Role Name for Authorization'],
   ]
 
+  @did_register_puppet_oids = false
+
   # Register our custom Puppet OIDs with OpenSSL so they can be used as CSR
   # extensions. Without registering these OIDs, OpenSSL will fail when it
   # encounters such an extension in a CSR.
   def self.register_puppet_oids()
-    PUPPET_OIDS.each do |oid_defn|
-      OpenSSL::ASN1::ObjectId.register(*oid_defn)
+    if !@did_register_puppet_oids
+      PUPPET_OIDS.each do |oid_defn|
+        OpenSSL::ASN1::ObjectId.register(*oid_defn)
+      end
+
+      @did_register_puppet_oids = true
     end
   end
 
@@ -98,7 +104,7 @@ module Puppet::SSL::Oids
     if File.exists?(custom_oid_file) && File.readable?(custom_oid_file)
       mapping = nil
       begin
-        mapping = YAML.load_file(custom_oid_file)
+        mapping = Puppet::Util::Yaml.safe_load_file(custom_oid_file, [Symbol])
       rescue => err
         raise Puppet::Error, _("Error loading ssl custom OIDs mapping file from '%{custom_oid_file}': %{err}") % { custom_oid_file: custom_oid_file, err: err }, err.backtrace
       end
@@ -181,7 +187,7 @@ module Puppet::SSL::Oids
     else
       second_oid.index(first_oid) == 0
     end
-  rescue OpenSSL::ASN1::ASN1Error
+  rescue OpenSSL::ASN1::ASN1Error, TypeError
     false
   end
 end

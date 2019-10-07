@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/configurer'
@@ -20,10 +19,10 @@ describe Puppet::Configurer do
     end
 
     it "should send a transaction report with valid data" do
-
-      @configurer.stubs(:save_last_run_summary)
-      Puppet::Transaction::Report.indirection.expects(:save).with do |report, x|
-        report.time.class == Time and report.logs.length > 0
+      allow(@configurer).to receive(:save_last_run_summary)
+      expect(Puppet::Transaction::Report.indirection).to receive(:save) do |report, x|
+        expect(report.time).to be_a(Time)
+        expect(report.logs.length).to be > 0
       end
 
       Puppet[:report] = true
@@ -33,7 +32,7 @@ describe Puppet::Configurer do
 
     it "should save a correct last run summary" do
       report = Puppet::Transaction::Report.new
-      Puppet::Transaction::Report.indirection.stubs(:save)
+      allow(Puppet::Transaction::Report.indirection).to receive(:save)
 
       Puppet[:lastrunfile] = tmpfile("lastrunfile")
       Puppet.settings.setting(:lastrunfile).mode = 0666
@@ -47,14 +46,11 @@ describe Puppet::Configurer do
       t2 = Time.now.tv_sec
 
       # sticky bit only applies to directories in windows
-      file_mode = Puppet.features.microsoft_windows? ? '666' : '100666'
+      file_mode = Puppet::Util::Platform.windows? ? '666' : '100666'
 
       expect(Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode.to_s(8)).to eq(file_mode)
 
-      summary = nil
-      File.open(Puppet[:lastrunfile], "r") do |fd|
-        summary = YAML.load(fd.read)
-      end
+      summary = Puppet::Util::Yaml.safe_load_file(Puppet[:lastrunfile])
 
       expect(summary).to be_a(Hash)
       %w{time changes events resources}.each do |key|

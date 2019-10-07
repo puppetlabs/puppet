@@ -61,7 +61,7 @@ class Runtime3Converter
   end
 
   def convert_NilClass(o, scope, undef_value)
-    @inner ? :undef : undef_value
+    @inner ? nil : undef_value
   end
 
   def convert_Integer(o, scope, undef_value)
@@ -78,8 +78,10 @@ class Runtime3Converter
   end
 
   def convert_String(o, scope, undef_value)
-    # although wasteful, needed because user code may mutate these strings in Resources
-    o.frozen? ? o.dup : o
+    # Although wasteful, a dup is needed because user code may mutate these strings when applying
+    # Resources. This does not happen when in master mode since it only uses Resources that are
+    # in puppet core and those are all safe.
+    o.frozen? && !Puppet.run_mode.master? ? o.dup : o
   end
 
   def convert_Object(o, scope, undef_value)
@@ -103,7 +105,8 @@ class Runtime3Converter
   end
 
   def convert_Symbol(o, scope, undef_value)
-    o == :undef && !@inner ? undef_value : o
+    return o unless o == :undef
+    !@inner ? undef_value : nil
   end
 
   def convert_PAnyType(o, scope, undef_value)
@@ -127,9 +130,9 @@ class Runtime3Converter
   # Ensures that resources are *not* absolute.
   #
   def catalog_type_to_split_type_title(catalog_type)
-    split_type = catalog_type.is_a?(Puppet::Pops::Types::PType) ? catalog_type.type : catalog_type
+    split_type = catalog_type.is_a?(Puppet::Pops::Types::PTypeType) ? catalog_type.type : catalog_type
     case split_type
-      when Puppet::Pops::Types::PHostClassType
+      when Puppet::Pops::Types::PClassType
         class_name = split_type.class_name
         ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
       when Puppet::Pops::Types::PResourceType
@@ -143,7 +146,9 @@ class Runtime3Converter
           [type_name.nil? ? nil : type_name.sub(/^::/, '').downcase, title.nil? ? '' : title]
         end
       else
-        raise ArgumentError, "Cannot split the type #{catalog_type.class}, it represents neither a PHostClassType, nor a PResourceType."
+        #TRANSLATORS 'PClassType' and 'PResourceType' are Puppet types and should not be translated
+        raise ArgumentError, _("Cannot split the type %{class_name}, it represents neither a PClassType, nor a PResourceType.") %
+            { class_name: catalog_type.class }
     end
   end
 
@@ -164,7 +169,7 @@ end
 class Runtime3FunctionArgumentConverter < Runtime3Converter
 
   def convert_Regexp(o, scope, undef_value)
-    # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
+    # Puppet 3x cannot handle parameter values that are regular expressions. Turn into regexp string in
     # source form
     o.inspect
   end
@@ -192,6 +197,22 @@ class Runtime3FunctionArgumentConverter < Runtime3Converter
   def convert_Timestamp(o, scope, undef_value)
     # Puppet 3x cannot handle Timestamps. Use the string form
     o.to_s
+  end
+
+  # Converts result back to 4.x by replacing :undef with nil in Array and Hash objects
+  #
+  def self.convert_return(val3x)
+    if val3x == :undef
+      nil
+    elsif val3x.is_a?(Array)
+      val3x.map {|v| convert_return(v) }
+    elsif val3x.is_a?(Hash)
+      hsh = {}
+      val3x.each_pair {|k,v| hsh[convert_return(k)] = convert_return(v)}
+      hsh
+    else
+      val3x
+    end
   end
 
   @instance = self.new

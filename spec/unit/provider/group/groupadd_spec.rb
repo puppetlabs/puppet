@@ -1,12 +1,15 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
+
+RSpec::Matchers.define_negated_matcher :excluding, :include
 
 describe Puppet::Type.type(:group).provider(:groupadd) do
   before do
-    described_class.stubs(:command).with(:add).returns '/usr/sbin/groupadd'
-    described_class.stubs(:command).with(:delete).returns '/usr/sbin/groupdel'
-    described_class.stubs(:command).with(:modify).returns '/usr/sbin/groupmod'
-    described_class.stubs(:command).with(:localadd).returns '/usr/sbin/lgroupadd'
+    allow(described_class).to receive(:command).with(:add).and_return('/usr/sbin/groupadd')
+    allow(described_class).to receive(:command).with(:delete).and_return('/usr/sbin/groupdel')
+    allow(described_class).to receive(:command).with(:modify).and_return('/usr/sbin/groupmod')
+    allow(described_class).to receive(:command).with(:localadd).and_return('/usr/sbin/lgroupadd')
+    allow(described_class).to receive(:command).with(:localdelete).and_return('/usr/sbin/lgroupdel')
+    allow(described_class).to receive(:command).with(:localmodify).and_return('/usr/sbin/lgroupmod')
   end
 
   let(:resource) { Puppet::Type.type(:group).new(:name => 'mygroup', :provider => provider) }
@@ -14,19 +17,19 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
 
   describe "#create" do
     before do
-       provider.stubs(:exists?).returns(false)
+       allow(provider).to receive(:exists?).and_return(false)
     end
 
     it "should add -o when allowdupe is enabled and the group is being created" do
       resource[:allowdupe] = :true
-      provider.expects(:execute).with(['/usr/sbin/groupadd', '-o', 'mygroup'], kind_of(Hash))
+      expect(provider).to receive(:execute).with(['/usr/sbin/groupadd', '-o', 'mygroup'], kind_of(Hash))
       provider.create
     end
 
     describe "on system that feature system_groups", :if => described_class.system_groups? do
       it "should add -r when system is enabled and the group is being created" do
         resource[:system] = :true
-        provider.expects(:execute).with(['/usr/sbin/groupadd', '-r', 'mygroup'], kind_of(Hash))
+        expect(provider).to receive(:execute).with(['/usr/sbin/groupadd', '-r', 'mygroup'], kind_of(Hash))
         provider.create
       end
     end
@@ -34,7 +37,7 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
     describe "on system that do not feature system_groups", :unless => described_class.system_groups? do
       it "should not add -r when system is enabled and the group is being created" do
         resource[:system] = :true
-        provider.expects(:execute).with(['/usr/sbin/groupadd', 'mygroup'], kind_of(Hash))
+        expect(provider).to receive(:execute).with(['/usr/sbin/groupadd', 'mygroup'], kind_of(Hash))
         provider.create
       end
     end
@@ -46,31 +49,108 @@ describe Puppet::Type.type(:group).provider(:groupadd) do
       end
  
       it "should use lgroupadd instead of groupadd" do
-        provider.expects(:execute).with(includes('/usr/sbin/lgroupadd'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        expect(provider).to receive(:execute).with(including('/usr/sbin/lgroupadd'), hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
         provider.create
       end
 
       it "should NOT pass -o to lgroupadd" do
         resource[:allowdupe] = :true
-        provider.expects(:execute).with(Not(includes('-o')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
+        expect(provider).to receive(:execute).with(excluding('-o'), hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
         provider.create
       end
 
       it "should raise an exception for duplicate GID if allowdupe is not set and duplicate GIDs exist" do
         resource[:gid] = 505
-        provider.stubs(:findgroup).returns(true)
+        allow(provider).to receive(:findgroup).and_return(true)
         expect { provider.create }.to raise_error(Puppet::Error, "GID 505 already exists, use allowdupe to force group creation")
      end
     end
+  end
 
+  describe "#modify" do
+    before do
+       allow(provider).to receive(:exists?).and_return(true)
+    end
+
+    describe "on systems with the libuser and forcelocal=false" do
+      before do
+        described_class.has_feature(:libuser)
+        resource[:forcelocal] = :false
+      end
+
+      it "should use groupmod" do
+        expect(provider).to receive(:execute).with(['/usr/sbin/groupmod', '-g', 150, 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
+        provider.gid = 150
+      end
+
+      it "should pass -o to groupmod" do
+        resource[:allowdupe] = :true
+        expect(provider).to receive(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
+        provider.gid = 150
+      end
+    end
+
+    describe "on systems with the libuser and forcelocal=true" do
+      before do
+        described_class.has_feature(:libuser)
+        resource[:forcelocal] = :true
+      end
+
+      it "should use lgroupmod instead of groupmod" do
+        expect(provider).to receive(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'], hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
+        provider.gid = 150
+      end
+
+      it "should NOT pass -o to lgroupmod" do
+        resource[:allowdupe] = :true
+        expect(provider).to receive(:execute).with(['/usr/sbin/lgroupmod', '-g', 150, 'mygroup'], hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
+        provider.gid = 150
+      end
+
+      it "should raise an exception for duplicate GID if allowdupe is not set and duplicate GIDs exist" do
+        resource[:gid] = 150
+        resource[:allowdupe] = :false
+        allow(provider).to receive(:findgroup).and_return(true)
+        expect { provider.gid = 150 }.to raise_error(Puppet::Error, "GID 150 already exists, use allowdupe to force group creation")
+     end
+    end
   end
 
   describe "#gid=" do
     it "should add -o when allowdupe is enabled and the gid is being modified" do
       resource[:allowdupe] = :true
-      provider.expects(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'])
+      expect(provider).to receive(:execute).with(['/usr/sbin/groupmod', '-g', 150, '-o', 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
       provider.gid = 150
     end
   end
-end
 
+  describe "#delete" do
+    before do
+      allow(provider).to receive(:exists?).and_return(true)
+    end
+
+    describe "on systems with the libuser and forcelocal=false" do
+      before do
+        described_class.has_feature(:libuser)
+        resource[:forcelocal] = :false
+      end
+
+      it "should use groupdel" do
+        expect(provider).to receive(:execute).with(['/usr/sbin/groupdel', 'mygroup'], hash_including({:failonfail => true, :combine => true, :custom_environment => {}}))
+        provider.delete
+      end
+    end
+
+    describe "on systems with the libuser and forcelocal=true" do
+      before do
+        described_class.has_feature(:libuser)
+        resource[:forcelocal] = :true
+      end
+
+      it "should use lgroupdel instead of groupdel" do
+        expect(provider).to receive(:execute).with(['/usr/sbin/lgroupdel', 'mygroup'], hash_including(:custom_environment => hash_including('LIBUSER_CONF')))
+        provider.delete
+      end
+    end
+  end
+end

@@ -58,4 +58,13 @@ describe "the realize function" do
       realize([])
     EOM
   end
+
+  it 'is not available when --tasks is on' do
+    Puppet[:tasks] = true
+    expect do
+      compile_to_catalog(<<-MANIFEST)
+        realize([])
+      MANIFEST
+    end.to raise_error(Puppet::ParseError, /is only available when compiling a catalog/)
+  end
 end

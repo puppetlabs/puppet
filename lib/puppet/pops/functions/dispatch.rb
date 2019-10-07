@@ -1,5 +1,5 @@
 module Puppet::Pops
-  module Functions
+module Functions
 # Defines a connection between a implementation method and the signature that
 # the method will handle.
 #
@@ -72,14 +72,21 @@ class Dispatch < Evaluator::CallableSignature
       new_args = []
       @weaving.each do |knit|
         if knit.is_a?(Array)
-          injection_data = @injections[knit[0]]
+          injection_name = @injections[knit[0]]
           new_args <<
-            case injection_data[3]
-            when :dispatcher_internal
-              # currently only supports :scope injection
+            case injection_name
+            when :scope
               scope
+            when :pal_script_compiler
+              Puppet.lookup(:pal_script_compiler)
+            when :cache
+              Puppet::Pops::Adapters::ObjectIdCacheAdapter.adapt(scope.compiler)
+            when :pal_catalog_compiler
+              Puppet.lookup(:pal_catalog_compiler)
+            when :pal_compiler
+              Puppet.lookup(:pal_compiler)
             else
-              raise_error ArgumentError, "Unknown injection #{injection_data[3]}"
+              raise ArgumentError, _("Unknown injection %{injection_name}") % { injection_name: injection_name }
             end
         else
           # Careful so no new nil arguments are added since they would override default

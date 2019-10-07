@@ -2,9 +2,16 @@ test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
   require 'puppet/acceptance/puppet_type_test_tools.rb'
   extend Puppet::Acceptance::PuppetTypeTestTools
 
+tag 'audit:high',
+    'audit:acceptance',   # Tests that sensitive data is retains integrity
+                          # between server and agent transport/application.
+                          # Leaving at acceptance layer due to validate
+                          # written logs.
+    'server'
+
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type)
-  fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
 
   tmp_filename_win = tmp_filename_else = ''
   agents.each do |agent|
@@ -15,11 +22,6 @@ test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
       tmp_filename_win  = "C:\\cygwin64\\tmp\\#{tmp_environment}.txt"
     end
     tmp_filename_else = "/tmp/#{tmp_environment}.txt"
-    if agent.platform =~ /windows/
-      tmp_filename = tmp_filename_win
-    else
-      tmp_filename = tmp_filename_else
-    end
     on agent, "echo 'old content' > /tmp/#{tmp_environment}.txt"
   end
 
@@ -100,19 +102,14 @@ test_name 'C98120, C98077: Sensitive Data is redacted on CLI, logs, reports' do
     with_puppet_running_on(master,{}) do
       agents.each do |agent|
         # redirect logging to a temp location to avoid platform specific syslogs
-        logfile = agent.tmpfile("tmpdest.log")
-        # specifying a file with `--logdest` overrides printing debug output to the console,
-        # so we must also explicitly send the output to the console.
-        on(agent, puppet("agent -t --debug --trace --show_diff --server #{master.hostname} --environment #{tmp_environment} --logdest '#{logfile}' --logdest 'console'"),
-           :accept_all_exit_codes => true) do |result|
-          assert(result.exit_code==2,'puppet agent run failed')
-          run_assertions(assertion_code, result)
-        end
+        on(agent, puppet("agent -t --debug --trace --show_diff --environment #{tmp_environment}"), :accept_all_exit_codes => true) do |result|
+          assert_equal(result.exit_code, 2,'puppet agent run failed')
 
-        step "assert no redacted data in log" do
-          result = agent.exec(Command.new("tail -100 #{logfile}"),
-                                                    :acceptable_exit_codes => [0, 1]).stdout.chomp
-          run_assertions(refutation_code, result)
+          run_assertions(assertion_code, result) unless agent['locale'] == 'ja'
+
+          step "assert no redacted data in log" do
+            run_assertions(refutation_code, result)
+          end
         end
 
         # don't do this before the agent log scanning, above. it will skew the results

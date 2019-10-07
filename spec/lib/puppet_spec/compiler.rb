@@ -44,7 +44,7 @@ module PuppetSpec::Compiler
 
   def apply_with_error_check(manifest)
     apply_compiled_manifest(manifest) do |res|
-      res.expects(:err).never
+      expect(res).not_to receive(:err)
     end
   end
 
@@ -80,6 +80,33 @@ module PuppetSpec::Compiler
       else
         compiler.compile
       end
+    end
+  end
+
+  # Compiles a catalog, and if source is given evaluates it and returns its result.
+  # The catalog is returned if no source is given.
+  # Topscope variables are set before compilation
+  # Uses a created node 'testnode' if none is given.
+  # (Parameters given by name)
+  #
+  def evaluate(code: 'undef', source: nil, node: Puppet::Node.new('testnode'), variables: {})
+    source_location = caller[0]
+    Puppet[:code] = code
+    compiler = Puppet::Parser::Compiler.new(node)
+    unless variables.empty?
+      scope = compiler.topscope
+      variables.each {|k,v| scope.setvar(k, v) }
+    end
+
+    if source.nil?
+      compiler.compile
+      # see lib/puppet/indirector/catalog/compiler.rb#filter
+      return compiler.filter { |r| r.virtual? }
+    end
+
+    # evaluate given source is the context of the compiled state and return its result
+    compiler.compile do |catalog |
+      Puppet::Pops::Parser::EvaluatingParser.singleton.evaluate_string(compiler.topscope, source, source_location)
     end
   end
 end

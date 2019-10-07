@@ -4,6 +4,13 @@ confine :except, :platform => /aix/ # PUP-5358
 confine :except, :platform => /^eos-/ # See ARISTA-37
 confine :except, :platform => /^cisco_/ # See PUP-5828
 
+tag 'audit:medium',
+    'audit:refactor',  # Use block style `test_run`
+    'audit:acceptance' # Could be done as integration tests, but would
+                       # require changing the system running the test
+                       # in ways that might require special permissions
+                       # or be harmful to the system running the test
+
 user = "u#{rand(99999).to_i}"
 group1 = "#{user}o"
 group2 = "#{user}n"
@@ -19,12 +26,7 @@ agents.each do |host|
   step "verify that the user has the correct gid"
   group_gid1 = host.group_gid(group1)
   host.user_get(user) do |result|
-    if host['platform'] =~ /osx/
-        match = result.stdout.match(/gid: (\d+)/)
-        user_gid1 = match ? match[1] : nil
-    else
-        user_gid1 = result.stdout.split(':')[3]
-    end
+    user_gid1 = result.stdout.split(':')[3]
 
     fail_test "didn't have the expected old GID #{group_gid1}, but got: #{user_gid1}" unless group_gid1 == user_gid1
   end
@@ -35,12 +37,7 @@ agents.each do |host|
   step "verify that the user has the updated gid"
   group_gid2 = host.group_gid(group2)
   host.user_get(user) do |result|
-    if host['platform'] =~ /osx/
-        match = result.stdout.match(/gid: (\d+)/)
-        user_gid2 = match ? match[1] : nil
-    else
-        user_gid2 = result.stdout.split(':')[3]
-    end
+    user_gid2 = result.stdout.split(':')[3]
 
     fail_test "didn't have the expected old GID #{group_gid}, but got: #{user_gid2}" unless group_gid2 == user_gid2
   end

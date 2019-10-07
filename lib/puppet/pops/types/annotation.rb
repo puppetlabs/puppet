@@ -21,29 +21,29 @@ module Types
     # If no annotation was found and no block is given, this method returns `nil`
     #
     # @param o [Object] object to annotate
-    # @param block [Proc] optional, evaluated when a new annotation must be created. Should return the i12n hash
+    # @param block [Proc] optional, evaluated when a new annotation must be created. Should return the init hash
     # @return [Annotation<self>] an annotation of the same class as the receiver of the call
     #
     def self.annotate(o)
       adapter = get(o)
       if adapter.nil?
         if o.is_a?(Annotatable)
-          i12n = o.annotations[_pcore_type]
-          i12n = yield if i12n.nil? && block_given?
+          init_hash = o.annotations[_pcore_type]
+          init_hash = yield if init_hash.nil? && block_given?
         else
-          i12n = yield if block_given?
+          init_hash = yield if block_given?
         end
-        adapter = associate_adapter(_pcore_type.from_hash(i12n), o) unless i12n.nil?
+        adapter = associate_adapter(_pcore_type.from_hash(init_hash), o) unless init_hash.nil?
       end
       adapter
     end
 
     # Forces the creation or removal of an annotation of this type.
-    # If `i21n` is a hash, a new annotation is created and returned
-    # If `i12n` is `nil`, then the annotation is cleared and the previous annotation is returned.
+    # If `init_hash` is a hash, a new annotation is created and returned
+    # If `init_hash` is `nil`, then the annotation is cleared and the previous annotation is returned.
     #
     # @param o [Object] object to annotate
-    # @param i12n [Hash{String,Object},nil] the initializer for the annotation or `nil` to clear the annotation
+    # @param init_hash [Hash{String,Object},nil] the initializer for the annotation or `nil` to clear the annotation
     # @return [Annotation<self>] an annotation of the same class as the receiver of the call
     #
     def self.annotate_new(o, init_hash)

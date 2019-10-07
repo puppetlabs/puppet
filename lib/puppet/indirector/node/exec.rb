@@ -3,7 +3,7 @@ require 'puppet/indirector/exec'
 
 class Puppet::Node::Exec < Puppet::Indirector::Exec
   desc "Call an external program to get node information.  See
-  the [External Nodes](https://docs.puppetlabs.com/guides/external_nodes.html) page for more information."
+  the [External Nodes](https://puppet.com/docs/puppet/latest/lang_write_functions_in_puppet.html) page for more information."
   include Puppet::Util
 
   def command
@@ -38,11 +38,10 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
   # Turn our outputted objects into a Puppet::Node instance.
   def create_node(name, result, facts = nil)
     node = Puppet::Node.new(name)
-    set = false
     [:parameters, :classes, :environment].each do |param|
-      if value = result[param]
+      value = result[param]
+      if value
         node.send(param.to_s + "=", value)
-        set = true
       end
     end
 
@@ -52,7 +51,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
 
   # Translate the yaml string into Ruby objects.
   def translate(name, output)
-    YAML.load(output).inject({}) do |hash, data|
+    Puppet::Util::Yaml.safe_load(output, [Symbol]).inject({}) do |hash, data|
       case data[0]
       when String
         hash[data[0].intern] = data[1]

@@ -82,7 +82,7 @@ class Puppet::Pops::Model::AstTransformer
   # Ensures transformation fails if a 3.1 non supported object is encountered in a query expression
   #
   def query_Object(o)
-    raise _("Not a valid expression in a collection query: ")+o.class.name
+    raise _("Not a valid expression in a collection query: %{class_name}") % { class_name: o.class.name }
   end
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName

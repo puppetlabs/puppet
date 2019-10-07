@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 [:seluser, :selrole, :seltype, :selrange].each do |param|
@@ -10,26 +9,26 @@ require 'spec_helper'
       @path = make_absolute("/my/file")
       @resource = Puppet::Type.type(:file).new :path => @path
       @sel = property.new :resource => @resource
-      @sel.stubs(:normalize_selinux_category).with("s0").returns("s0")
-      @sel.stubs(:normalize_selinux_category).with(nil).returns(nil)
+      allow(@sel).to receive(:normalize_selinux_category).with("s0").and_return("s0")
+      allow(@sel).to receive(:normalize_selinux_category).with(nil).and_return(nil)
     end
 
     it "retrieve on #{param} should return :absent if the file isn't statable" do
-      @resource.expects(:stat).returns nil
+      expect(@resource).to receive(:stat).and_return(nil)
       expect(@sel.retrieve).to eq(:absent)
     end
 
     it "should retrieve nil for #{param} if there is no SELinux support" do
-      stat = stub 'stat', :ftype => "foo"
-      @resource.expects(:stat).returns stat
-      @sel.expects(:get_selinux_current_context).with(@path).returns nil
+      stat = double('stat', :ftype => "foo")
+      expect(@resource).to receive(:stat).and_return(stat)
+      expect(@sel).to receive(:get_selinux_current_context).with(@path).and_return(nil)
       expect(@sel.retrieve).to be_nil
     end
 
     it "should retrieve #{param} if a SELinux context is found with a range" do
-      stat = stub 'stat', :ftype => "foo"
-      @resource.expects(:stat).returns stat
-      @sel.expects(:get_selinux_current_context).with(@path).returns "user_u:role_r:type_t:s0"
+      stat = double('stat', :ftype => "foo")
+      expect(@resource).to receive(:stat).and_return(stat)
+      expect(@sel).to receive(:get_selinux_current_context).with(@path).and_return("user_u:role_r:type_t:s0")
       expectedresult = case param
         when :seluser; "user_u"
         when :selrole; "role_r"
@@ -40,9 +39,9 @@ require 'spec_helper'
     end
 
     it "should retrieve #{param} if a SELinux context is found without a range" do
-      stat = stub 'stat', :ftype => "foo"
-      @resource.expects(:stat).returns stat
-      @sel.expects(:get_selinux_current_context).with(@path).returns "user_u:role_r:type_t"
+      stat = double('stat', :ftype => "foo")
+      expect(@resource).to receive(:stat).and_return(stat)
+      expect(@sel).to receive(:get_selinux_current_context).with(@path).and_return("user_u:role_r:type_t")
       expectedresult = case param
         when :seluser; "user_u"
         when :selrole; "role_r"
@@ -53,13 +52,13 @@ require 'spec_helper'
     end
 
     it "should handle no default gracefully" do
-      @sel.expects(:get_selinux_default_context).with(@path).returns nil
+      expect(@sel).to receive(:get_selinux_default_context).with(@path).and_return(nil)
       expect(@sel.default).to be_nil
     end
 
     it "should be able to detect matchpathcon defaults" do
-      @sel.stubs(:debug)
-      @sel.expects(:get_selinux_default_context).with(@path).returns "user_u:role_r:type_t:s0"
+      allow(@sel).to receive(:debug)
+      expect(@sel).to receive(:get_selinux_default_context).with(@path).and_return("user_u:role_r:type_t:s0")
       expectedresult = case param
         when :seluser; "user_u"
         when :selrole; "role_r"
@@ -75,17 +74,15 @@ require 'spec_helper'
     end
 
     it "should be able to set a new context" do
-      stat = stub 'stat', :ftype => "foo"
       @sel.should = %w{newone}
-      @sel.expects(:set_selinux_context).with(@path, ["newone"], param)
+      expect(@sel).to receive(:set_selinux_context).with(@path, ["newone"], param)
       @sel.sync
     end
 
     it "should do nothing for safe_insync? if no SELinux support" do
       @sel.should = %{newcontext}
-      @sel.expects(:selinux_support?).returns false
+      expect(@sel).to receive(:selinux_support?).and_return(false)
       expect(@sel.safe_insync?("oldcontext")).to eq(true)
     end
   end
 end
-

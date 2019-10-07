@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/character_encoding'
 require 'puppet_spec/character_encoding'
@@ -22,7 +21,7 @@ describe Puppet::Util::CharacterEncoding do
         let(:invalid_utf8_string) { "\xfd\xf1".force_encoding(Encoding::UTF_8) }
 
         it "should issue a debug message" do
-          Puppet.expects(:debug).with(regexp_matches(/encoding is invalid/))
+          expect(Puppet).to receive(:debug).with(/encoding is invalid/)
           Puppet::Util::CharacterEncoding.convert_to_utf_8(invalid_utf8_string)
         end
 
@@ -81,7 +80,7 @@ describe Puppet::Util::CharacterEncoding do
         end
 
         it "should issue a debug message that the string was not transcodable" do
-          Puppet.expects(:debug).with(regexp_matches(/cannot be transcoded/))
+          expect(Puppet).to receive(:debug).with(/cannot be transcoded/)
           PuppetSpec::CharacterEncoding.with_external_encoding(Encoding::Windows_31J) do
             Puppet::Util::CharacterEncoding.convert_to_utf_8(invalid_win_31j)
           end
@@ -125,7 +124,7 @@ describe Puppet::Util::CharacterEncoding do
           let(:euc_kr) { [253, 241].pack('C*').force_encoding(Encoding::ASCII) }
 
           it "should issue a debug message" do
-            Puppet.expects(:debug).with(regexp_matches(/cannot be transcoded/))
+            expect(Puppet).to receive(:debug).with(/cannot be transcoded/)
             Puppet::Util::CharacterEncoding.convert_to_utf_8(euc_kr)
           end
 
@@ -167,8 +166,9 @@ describe Puppet::Util::CharacterEncoding do
       # Invalid in UTF-8 without transcoding
       let(:oslash) { [216].pack('C*').force_encoding(Encoding::ISO_8859_1) }
       let(:foo) { 'foo' }
+
       it "should issue a debug message" do
-        Puppet.expects(:debug).with(regexp_matches(/not valid UTF-8/))
+        expect(Puppet).to receive(:debug).with(/not valid UTF-8/)
         Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(oslash)
       end
 
@@ -180,49 +180,6 @@ describe Puppet::Util::CharacterEncoding do
       it "should not modify the string" do
         Puppet::Util::CharacterEncoding.override_encoding_to_utf_8(oslash)
         expect(oslash).to eq([216].pack('C*').force_encoding(Encoding::ISO_8859_1))
-      end
-    end
-  end
-
-  describe "::scrub" do
-    let(:utf_8_string_to_scrub) { "\xfdfoo".force_encoding(Encoding::UTF_8) } # invalid in UTF-8
-    # The invalid-ness of this string comes from unpaired surrogates, ie:
-    #  "any value in the range D80016 to DBFF16 not followed by a value in the
-    #  range DC0016 to DFFF16, or any value in the range DC0016 to DFFF16 not
-    #  preceded by a value in the range D80016 to DBFF16"
-    # http://unicode.org/faq/utf_bom.html#utf16-7
-    # "a\ud800b"
-    # We expect the "b" to be replaced as that is what makes the string invalid
-    let(:utf_16LE_string_to_scrub) { [97, 237, 160, 128, 98].pack('C*').force_encoding(Encoding::UTF_16LE) } # invalid in UTF-16
-    let(:invalid_non_utf) { "foo\u2603".force_encoding(Encoding::EUC_KR) } # EUC_KR foosnowman!
-
-    it "should defer to String#scrub if defined", :if => String.method_defined?(:scrub) do
-      result = Puppet::Util::CharacterEncoding.scrub(utf_8_string_to_scrub)
-      # The result should have the UTF-8 replacement character if we're using Ruby scrub
-      expect(result).to eq("\uFFFDfoo".force_encoding(Encoding::UTF_8))
-      expect(result.bytes.to_a).to eq([239, 191, 189, 102, 111, 111])
-    end
-
-    context "when String#scrub is not defined" do
-      it "should still issue unicode replacement characters if the string is UTF-8" do
-        utf_8_string_to_scrub.stubs(:respond_to?).with(:scrub).returns(false)
-        result = Puppet::Util::CharacterEncoding.scrub(utf_8_string_to_scrub)
-        expect(result).to eq("\uFFFDfoo".force_encoding(Encoding::UTF_8))
-      end
-
-      it "should still issue unicode replacement characters if the string is UTF-16LE" do
-        utf_16LE_string_to_scrub.stubs(:respond_to?).with(:scrub).returns(false)
-        result = Puppet::Util::CharacterEncoding.scrub(utf_16LE_string_to_scrub)
-        # Bytes of replacement character on UTF_16LE are [253, 255]
-        # We just check for bytes because something (ruby?) interprets this array of bytes as:
-        # (97) (237 160) (128 253 255) rather than (97) (237 160 128) (253 255)
-        expect(result).to eq([97, 237, 160, 128, 253, 255].pack('C*').force_encoding(Encoding::UTF_16LE))
-      end
-
-      it "should issue '?' characters if the string is not one of UTF_8 or UTF_16LE" do
-        invalid_non_utf.stubs(:respond_to?).with(:scrub).returns(false)
-        result = Puppet::Util::CharacterEncoding.scrub(invalid_non_utf)
-        expect(result).to eq("foo???".force_encoding(Encoding::EUC_KR))
       end
     end
   end

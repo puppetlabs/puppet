@@ -1,9 +1,14 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'matchers/resource'
 
 require 'puppet/indirector/catalog/compiler'
+
+def set_facts(fact_hash)
+  fact_hash.each do |key, value|
+    allow(Facter).to receive(:value).with(key).and_return(value)
+  end
+end
 
 describe Puppet::Resource::Catalog::Compiler do
   let(:compiler) { described_class.new }
@@ -11,14 +16,17 @@ describe Puppet::Resource::Catalog::Compiler do
   let(:node) { Puppet::Node.new(node_name)}
 
   before do
-    Facter.stubs(:to_hash).returns({})
+    allow(Facter).to receive(:to_hash).and_return({})
   end
 
   describe "when initializing" do
     before do
-      Puppet.expects(:version).returns(1)
-      Facter.expects(:value).with('fqdn').returns("my.server.com")
-      Facter.expects(:value).with('ipaddress').returns("my.ip.address")
+      expect(Puppet).to receive(:version).and_return(1)
+      set_facts({
+        'fqdn'       => "my.server.com",
+        'ipaddress'  => "my.ip.address",
+        'ipaddress6' => nil
+        })
     end
 
     it "should gather data about itself" do
@@ -30,7 +38,7 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Node.indirection.save(Puppet::Node.new("node1"))
       Puppet::Node.indirection.save(Puppet::Node.new("node2"))
 
-      compiler.stubs(:compile)
+      allow(compiler).to receive(:compile)
 
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node1', nil, :node => 'node1'))
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node2', nil, :node => 'node2'))
@@ -39,72 +47,71 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when finding catalogs" do
     before do
-      Facter.stubs(:value).returns("whatever")
+      allow(Facter).to receive(:value).and_return("whatever")
 
-      node.stubs(:merge)
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(node).to receive(:merge)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       @request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil, :node => node_name)
     end
 
     it "should directly use provided nodes for a local request" do
-      Puppet::Node.indirection.expects(:find).never
-      compiler.expects(:compile).with(node, anything)
-      @request.stubs(:options).returns(:use_node => node)
-      @request.stubs(:remote?).returns(false)
+      expect(Puppet::Node.indirection).not_to receive(:find)
+      expect(compiler).to receive(:compile).with(node, anything)
+      allow(@request).to receive(:options).and_return(:use_node => node)
+      allow(@request).to receive(:remote?).and_return(false)
       compiler.find(@request)
     end
 
     it "rejects a provided node if the request is remote" do
-      @request.stubs(:options).returns(:use_node => node)
-      @request.stubs(:remote?).returns(true)
+      allow(@request).to receive(:options).and_return(:use_node => node)
+      allow(@request).to receive(:remote?).and_return(true)
       expect {
         compiler.find(@request)
       }.to raise_error Puppet::Error, /invalid option use_node/i
     end
 
     it "should use the authenticated node name if no request key is provided" do
-      @request.stubs(:key).returns(nil)
-      Puppet::Node.indirection.expects(:find).with(node_name, anything).returns(node)
-      compiler.expects(:compile).with(node, anything)
+      allow(@request).to receive(:key).and_return(nil)
+      expect(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
+      expect(compiler).to receive(:compile).with(node, anything)
       compiler.find(@request)
     end
 
     it "should use the provided node name by default" do
-      @request.expects(:key).returns "my_node"
+      expect(@request).to receive(:key).and_return("my_node")
 
-      Puppet::Node.indirection.expects(:find).with("my_node", anything).returns node
-      compiler.expects(:compile).with(node, anything)
+      expect(Puppet::Node.indirection).to receive(:find).with("my_node", anything).and_return(node)
+      expect(compiler).to receive(:compile).with(node, anything)
       compiler.find(@request)
     end
 
     it "should fail if no node is passed and none can be found" do
-      Puppet::Node.indirection.stubs(:find).with(node_name, anything).returns(nil)
+      allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(nil)
       expect { compiler.find(@request) }.to raise_error(ArgumentError)
     end
 
     it "should fail intelligently when searching for a node raises an exception" do
-      Puppet::Node.indirection.stubs(:find).with(node_name, anything).raises "eh"
+      allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_raise("eh")
       expect { compiler.find(@request) }.to raise_error(Puppet::Error)
     end
 
     it "should pass the found node to the compiler for compiling" do
-      Puppet::Node.indirection.expects(:find).with(node_name, anything).returns(node)
-      config = mock 'config'
-      Puppet::Parser::Compiler.expects(:compile).with(node, anything)
+      expect(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
+      expect(Puppet::Parser::Compiler).to receive(:compile).with(node, anything)
       compiler.find(@request)
     end
 
     it "should pass node containing percent character to the compiler" do
       node_with_percent_character = Puppet::Node.new "%6de"
-      Puppet::Node.indirection.stubs(:find).returns(node_with_percent_character)
-      Puppet::Parser::Compiler.expects(:compile).with(node_with_percent_character, anything)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node_with_percent_character)
+      expect(Puppet::Parser::Compiler).to receive(:compile).with(node_with_percent_character, anything)
       compiler.find(@request)
     end
 
     it "should extract any facts from the request" do
-      Puppet::Node.indirection.expects(:find).with(node_name, anything).returns node
-      compiler.expects(:extract_facts_from_request).with(@request)
-      Puppet::Parser::Compiler.stubs(:compile)
+      expect(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
+      expect(compiler).to receive(:extract_facts_from_request).with(@request)
+      allow(Puppet::Parser::Compiler).to receive(:compile)
       compiler.find(@request)
     end
 
@@ -127,129 +134,129 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     it "should return the results of compiling as the catalog" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       catalog = Puppet::Resource::Catalog.new(node.name)
-      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+      allow(Puppet::Parser::Compiler).to receive(:compile).and_return(catalog)
 
       expect(compiler.find(@request)).to equal(catalog)
     end
 
     it "passes the code_id from the request to the compiler" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
       @request.options[:code_id] = code_id
 
-      Puppet::Parser::Compiler.expects(:compile).with(anything, code_id)
+      expect(Puppet::Parser::Compiler).to receive(:compile).with(anything, code_id)
 
       compiler.find(@request)
     end
 
     it "returns a catalog with the code_id from the request" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       code_id = 'b59e5df0578ef411f773ee6c33d8073c50e7b8fe'
       @request.options[:code_id] = code_id
 
       catalog = Puppet::Resource::Catalog.new(node.name, node.environment, code_id)
-      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+      allow(Puppet::Parser::Compiler).to receive(:compile).and_return(catalog)
 
       expect(compiler.find(@request).code_id).to eq(code_id)
     end
 
     it "does not inline metadata when the static_catalog option is false" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       @request.options[:static_catalog] = false
       @request.options[:code_id] = 'some_code_id'
-      node.environment.stubs(:static_catalogs?).returns true
+      allow(node.environment).to receive(:static_catalogs?).and_return(true)
 
       catalog = Puppet::Resource::Catalog.new(node.name, node.environment)
-      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+      allow(Puppet::Parser::Compiler).to receive(:compile).and_return(catalog)
 
-      compiler.expects(:inline_metadata).never
+      expect(compiler).not_to receive(:inline_metadata)
       compiler.find(@request)
     end
 
     it "does not inline metadata when static_catalogs are disabled" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = 'md5'
       @request.options[:code_id] = 'some_code_id'
-      node.environment.stubs(:static_catalogs?).returns false
+      allow(node.environment).to receive(:static_catalogs?).and_return(false)
 
       catalog = Puppet::Resource::Catalog.new(node.name, node.environment)
-      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+      allow(Puppet::Parser::Compiler).to receive(:compile).and_return(catalog)
 
-      compiler.expects(:inline_metadata).never
+      expect(compiler).not_to receive(:inline_metadata)
       compiler.find(@request)
     end
 
     it "does not inline metadata when code_id is not specified" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = 'md5'
-      node.environment.stubs(:static_catalogs?).returns true
+      allow(node.environment).to receive(:static_catalogs?).and_return(true)
 
       catalog = Puppet::Resource::Catalog.new(node.name, node.environment)
-      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+      allow(Puppet::Parser::Compiler).to receive(:compile).and_return(catalog)
 
-      compiler.expects(:inline_metadata).never
+      expect(compiler).not_to receive(:inline_metadata)
       expect(compiler.find(@request)).to eq(catalog)
     end
 
     it "inlines metadata when the static_catalog option is true, static_catalogs are enabled, and a code_id is provided" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = 'sha256'
       @request.options[:code_id] = 'some_code_id'
-      node.environment.stubs(:static_catalogs?).returns true
+      allow(node.environment).to receive(:static_catalogs?).and_return(true)
 
       catalog = Puppet::Resource::Catalog.new(node.name, node.environment)
-      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+      allow(Puppet::Parser::Compiler).to receive(:compile).and_return(catalog)
 
-      compiler.expects(:inline_metadata).with(catalog, :sha256).returns catalog
+      expect(compiler).to receive(:inline_metadata).with(catalog, :sha256).and_return(catalog)
       compiler.find(@request)
     end
 
     it "inlines metadata with the first common checksum type" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = 'atime.md5.sha256.mtime'
       @request.options[:code_id] = 'some_code_id'
-      node.environment.stubs(:static_catalogs?).returns true
+      allow(node.environment).to receive(:static_catalogs?).and_return(true)
 
       catalog = Puppet::Resource::Catalog.new(node.name, node.environment)
-      Puppet::Parser::Compiler.stubs(:compile).returns catalog
+      allow(Puppet::Parser::Compiler).to receive(:compile).and_return(catalog)
 
-      compiler.expects(:inline_metadata).with(catalog, :md5).returns catalog
+      expect(compiler).to receive(:inline_metadata).with(catalog, :md5).and_return(catalog)
       compiler.find(@request)
     end
 
     it "errors if checksum_type contains no shared checksum types" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       @request.options[:static_catalog] = true
-      @request.options[:checksum_type] = 'atime.sha512'
+      @request.options[:checksum_type] = 'atime.md2'
       @request.options[:code_id] = 'some_code_id'
-      node.environment.stubs(:static_catalogs?).returns true
+      allow(node.environment).to receive(:static_catalogs?).and_return(true)
 
       expect { compiler.find(@request) }.to raise_error Puppet::Error,
-        "Unable to find a common checksum type between agent 'atime.sha512' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :mtime, :ctime, :none]'."
+        "Unable to find a common checksum type between agent 'atime.md2' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :sha512, :sha384, :sha224, :mtime, :ctime, :none]'."
     end
 
     it "errors if checksum_type contains no shared checksum types" do
-      Puppet::Node.indirection.stubs(:find).returns(node)
+      allow(Puppet::Node.indirection).to receive(:find).and_return(node)
       @request.options[:static_catalog] = true
       @request.options[:checksum_type] = nil
       @request.options[:code_id] = 'some_code_id'
-      node.environment.stubs(:static_catalogs?).returns true
+      allow(node.environment).to receive(:static_catalogs?).and_return(true)
 
       expect { compiler.find(@request) }.to raise_error Puppet::Error,
-        "Unable to find a common checksum type between agent '' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :mtime, :ctime, :none]'."
+        "Unable to find a common checksum type between agent '' and master '[:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite, :sha512, :sha384, :sha224, :mtime, :ctime, :none]'."
     end
   end
 
   describe "when handling a request with facts" do
     before do
       Puppet::Node::Facts.indirection.terminus_class = :memory
-      Facter.stubs(:value).returns "something"
+      allow(Facter).to receive(:value).and_return("something")
 
       @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
     end
@@ -257,14 +264,14 @@ describe Puppet::Resource::Catalog::Compiler do
     def a_legacy_request_that_contains(facts, format = :pson)
       request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
       request.options[:facts_format] = format.to_s
-      request.options[:facts] = Puppet::Util.uri_encode(facts.render(format))
+      request.options[:facts] = Puppet::Util.uri_query_encode(facts.render(format))
       request
     end
 
     def a_request_that_contains(facts)
       request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
       request.options[:facts_format] = "application/json"
-      request.options[:facts] = facts.render('json')
+      request.options[:facts] = Puppet::Util.uri_query_encode(facts.render('json'))
       request
     end
 
@@ -287,21 +294,12 @@ describe Puppet::Resource::Catalog::Compiler do
       it "accepts PSON facts from older agents" do
         request = a_legacy_request_that_contains(@facts)
 
-        options = {
-          :environment => request.environment,
-          :transaction_uuid => request.options[:transaction_uuid],
-        }
         facts = compiler.extract_facts_from_request(request)
         expect(facts).to eq(@facts)
       end
 
       it "rejects YAML facts" do
         request = a_legacy_request_that_contains(@facts, :yaml)
-
-        options = {
-          :environment => request.environment,
-          :transaction_uuid => request.options[:transaction_uuid],
-        }
 
         expect {
           compiler.extract_facts_from_request(request)
@@ -311,11 +309,6 @@ describe Puppet::Resource::Catalog::Compiler do
       it "rejects unknown fact formats" do
         request = a_request_that_contains(@facts)
         request.options[:facts_format] = 'unknown-format'
-
-        options = {
-          :environment => request.environment,
-          :transaction_uuid => request.options[:transaction_uuid],
-        }
 
         expect {
           compiler.extract_facts_from_request(request)
@@ -332,7 +325,7 @@ describe Puppet::Resource::Catalog::Compiler do
           :transaction_uuid => request.options[:transaction_uuid],
         }
 
-        Puppet::Node::Facts.indirection.expects(:save).with(equals(@facts), nil, options)
+        expect(Puppet::Node::Facts.indirection).to receive(:save).with(@facts, nil, options)
         compiler.find(request)
       end
 
@@ -344,7 +337,7 @@ describe Puppet::Resource::Catalog::Compiler do
           :transaction_uuid => request.options[:transaction_uuid],
         }
 
-        Puppet::Node::Facts.indirection.expects(:save).with(equals(@facts), nil, options).never
+        expect(Puppet::Node::Facts.indirection).not_to receive(:save).with(@facts, nil, options)
         compiler.find(request)
       end
     end
@@ -352,53 +345,53 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when finding nodes" do
     it "should look node information up via the Node class with the provided key" do
-      Facter.stubs(:value).returns("whatever")
+      allow(Facter).to receive(:value).and_return("whatever")
       request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil)
-      compiler.stubs(:compile)
+      allow(compiler).to receive(:compile)
 
-      Puppet::Node.indirection.expects(:find).with(node_name, anything).returns(node)
+      expect(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
 
       compiler.find(request)
     end
 
     it "should pass the transaction_uuid to the node indirection" do
       uuid = '793ff10d-89f8-4527-a645-3302cbc749f3'
-      compiler.stubs(:compile)
+      allow(compiler).to receive(:compile)
       request = Puppet::Indirector::Request.new(:catalog, :find, node_name,
                                                 nil, :transaction_uuid => uuid)
 
-      Puppet::Node.indirection.expects(:find).with(
+      expect(Puppet::Node.indirection).to receive(:find).with(
         node_name,
-        has_entries(:transaction_uuid => uuid)
-      ).returns(node)
+        hash_including(:transaction_uuid => uuid)
+      ).and_return(node)
 
       compiler.find(request)
     end
 
     it "should pass the configured_environment to the node indirection" do
       environment = 'foo'
-      compiler.stubs(:compile)
+      allow(compiler).to receive(:compile)
       request = Puppet::Indirector::Request.new(:catalog, :find, node_name,
                                                 nil, :configured_environment => environment)
 
-      Puppet::Node.indirection.expects(:find).with(
+      expect(Puppet::Node.indirection).to receive(:find).with(
         node_name,
-        has_entries(:configured_environment => environment)
-      ).returns(node)
+        hash_including(:configured_environment => environment)
+      ).and_return(node)
 
       compiler.find(request)
     end
 
     it "should pass a facts object from the original request facts to the node indirection" do
       facts = Puppet::Node::Facts.new("hostname", :afact => "avalue")
-      compiler.expects(:extract_facts_from_request).returns(facts)
-      compiler.expects(:save_facts_from_request)
+      expect(compiler).to receive(:extract_facts_from_request).and_return(facts)
+      expect(compiler).to receive(:save_facts_from_request)
 
       request = Puppet::Indirector::Request.new(:catalog, :find, "hostname",
                                                 nil, :facts_format => "application/json",
                                                 :facts => facts.render('json'))
 
-      Puppet::Node.indirection.expects(:find).with("hostname", has_entries(:facts => facts)).returns(node)
+      expect(Puppet::Node.indirection).to receive(:find).with("hostname", hash_including(:facts => facts)).and_return(node)
 
       compiler.find(request)
     end
@@ -406,62 +399,109 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "after finding nodes" do
     before do
-      Puppet.expects(:version).returns(1)
-      Facter.expects(:value).with('fqdn').returns("my.server.com")
-      Facter.expects(:value).with('ipaddress').returns("my.ip.address")
+      allow(Puppet).to receive(:version).and_return(1)
+      set_facts({
+        'fqdn'       => "my.server.com",
+        'ipaddress'  => "my.ip.address",
+        'ipaddress6' => nil
+        })
       @request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil)
-      compiler.stubs(:compile)
-      Puppet::Node.indirection.stubs(:find).with(node_name, anything).returns(node)
+      allow(compiler).to receive(:compile)
+      allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
     end
 
     it "should add the server's Puppet version to the node's parameters as 'serverversion'" do
-      node.expects(:merge).with { |args| args["serverversion"] == "1" }
+      expect(node).to receive(:merge).with(hash_including("serverversion" => "1"))
       compiler.find(@request)
     end
 
     it "should add the server's fqdn to the node's parameters as 'servername'" do
-      node.expects(:merge).with { |args| args["servername"] == "my.server.com" }
+      expect(node).to receive(:merge).with(hash_including("servername" => "my.server.com"))
       compiler.find(@request)
     end
 
     it "should add the server's IP address to the node's parameters as 'serverip'" do
-      node.expects(:merge).with { |args| args["serverip"] == "my.ip.address" }
+      expect(node).to receive(:merge).with(hash_including("serverip" => "my.ip.address"))
       compiler.find(@request)
+    end
+
+    it "shouldn't warn if there is at least one ip fact" do
+      expect(node).to receive(:merge).with(hash_including("serverip" => "my.ip.address"))
+      compiler.find(@request)
+      expect(@logs).not_to be_any {|log| log.level == :warning and log.message =~ /Could not retrieve either serverip or serverip6 fact/}
+    end
+  end
+
+  describe "in an IPv6 only environment" do
+    before do |example|
+      allow(Puppet).to receive(:version).and_return(1)
+      set_facts({
+        'fqdn'       => "my.server.com",
+        'ipaddress'  => nil,
+      })
+      if example.metadata[:nil_ipv6]
+        set_facts({
+          'ipaddress6' => nil
+        })
+      else
+        set_facts({
+          'ipaddress6' => "my.ipv6.address"
+        })
+      end
+      @request = Puppet::Indirector::Request.new(:catalog, :find, node_name, nil)
+      allow(compiler).to receive(:compile)
+      allow(Puppet::Node.indirection).to receive(:find).with(node_name, anything).and_return(node)
+    end
+
+    it "should populate the :serverip6 fact" do
+      expect(node).to receive(:merge).with(hash_including("serverip6" => "my.ipv6.address"))
+      compiler.find(@request)
+    end
+
+    it "shouldn't warn if there is at least one ip fact" do
+      expect(node).to receive(:merge).with(hash_including("serverip6" => "my.ipv6.address"))
+      compiler.find(@request)
+      expect(@logs).not_to be_any {|log| log.level == :warning and log.message =~ /Could not retrieve either serverip or serverip6 fact/}
+    end
+
+    it "should warn if there are no ip facts", :nil_ipv6 do
+      expect(node).to receive(:merge)
+      compiler.find(@request)
+      expect(@logs).to be_any {|log| log.level == :warning and log.message =~ /Could not retrieve either serverip or serverip6 fact/}
     end
   end
 
   describe "when filtering resources" do
     before :each do
-      Facter.stubs(:value)
-      @catalog = stub_everything 'catalog'
-      @catalog.stubs(:respond_to?).with(:filter).returns(true)
+      allow(Facter).to receive(:value)
+      @catalog = double('catalog')
+      allow(@catalog).to receive(:respond_to?).with(:filter).and_return(true)
     end
 
     it "should delegate to the catalog instance filtering" do
-      @catalog.expects(:filter)
+      expect(@catalog).to receive(:filter)
       compiler.filter(@catalog)
     end
 
     it "should filter out virtual resources" do
-      resource = mock 'resource', :virtual? => true
-      @catalog.stubs(:filter).yields(resource)
+      resource = double('resource', :virtual? => true)
+      allow(@catalog).to receive(:filter).and_yield(resource)
 
       compiler.filter(@catalog)
     end
 
     it "should return the same catalog if it doesn't support filtering" do
-      @catalog.stubs(:respond_to?).with(:filter).returns(false)
+      allow(@catalog).to receive(:respond_to?).with(:filter).and_return(false)
 
       expect(compiler.filter(@catalog)).to eq(@catalog)
     end
 
     it "should return the filtered catalog" do
-      catalog = stub 'filtered catalog'
-      @catalog.stubs(:filter).returns(catalog)
+      catalog = double('filtered catalog')
+      allow(@catalog).to receive(:filter).and_return(catalog)
 
       expect(compiler.filter(@catalog)).to eq(catalog)
     end
-
   end
 
   describe "when inlining metadata" do
@@ -476,33 +516,33 @@ describe Puppet::Resource::Catalog::Compiler do
     def stubs_resource_metadata(ftype, relative_path, full_path = nil)
       full_path ||=  File.join(Puppet[:environmentpath], 'production', relative_path)
 
-      metadata = stub 'metadata'
-      metadata.stubs(:ftype).returns(ftype)
-      metadata.stubs(:full_path).returns(full_path)
-      metadata.stubs(:relative_path).returns(relative_path)
-      metadata.stubs(:source).returns("puppet:///#{relative_path}")
-      metadata.stubs(:source=)
-      metadata.stubs(:content_uri=)
+      metadata = double('metadata')
+      allow(metadata).to receive(:ftype).and_return(ftype)
+      allow(metadata).to receive(:full_path).and_return(full_path)
+      allow(metadata).to receive(:relative_path).and_return(relative_path)
+      allow(metadata).to receive(:source).and_return("puppet:///#{relative_path}")
+      allow(metadata).to receive(:source=)
+      allow(metadata).to receive(:content_uri=)
 
       metadata
     end
 
     def stubs_file_metadata(checksum_type, sha, relative_path, full_path = nil)
       metadata = stubs_resource_metadata('file', relative_path, full_path)
-      metadata.stubs(:checksum).returns("{#{checksum_type}}#{sha}")
-      metadata.stubs(:checksum_type).returns(checksum_type)
+      allow(metadata).to receive(:checksum).and_return("{#{checksum_type}}#{sha}")
+      allow(metadata).to receive(:checksum_type).and_return(checksum_type)
       metadata
     end
 
     def stubs_link_metadata(relative_path, destination)
       metadata = stubs_resource_metadata('link', relative_path)
-      metadata.stubs(:destination).returns(destination)
+      allow(metadata).to receive(:destination).and_return(destination)
       metadata
     end
 
     def stubs_directory_metadata(relative_path)
       metadata = stubs_resource_metadata('directory', relative_path)
-      metadata.stubs(:relative_path).returns('.')
+      allow(metadata).to receive(:relative_path).and_return('.')
       metadata
     end
 
@@ -515,8 +555,8 @@ describe Puppet::Resource::Catalog::Compiler do
       MANIFEST
 
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
-      metadata.expects(:source=).with(source)
-      metadata.expects(:content_uri=).with('puppet:///modules/mymodule/files/config_file.txt')
+      expect(metadata).to receive(:source=).with(source)
+      expect(metadata).to receive(:content_uri=).with('puppet:///modules/mymodule/files/config_file.txt')
 
       options = {
         :environment => catalog.environment_instance,
@@ -524,7 +564,7 @@ describe Puppet::Resource::Catalog::Compiler do
         :checksum_type => checksum_type.to_sym,
         :source_permissions => :ignore
       }
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, options).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, options).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -543,8 +583,8 @@ describe Puppet::Resource::Catalog::Compiler do
       MANIFEST
 
       metadata = stubs_link_metadata('modules/mymodule/files/config_file.txt', '/tmp/some/absolute/path')
-      metadata.expects(:source=).with(source)
-      metadata.expects(:content_uri=).with('puppet:///modules/mymodule/files/config_file.txt')
+      expect(metadata).to receive(:source=).with(source)
+      expect(metadata).to receive(:content_uri=).with('puppet:///modules/mymodule/files/config_file.txt')
 
       options = {
         :environment        => catalog.environment_instance,
@@ -552,7 +592,7 @@ describe Puppet::Resource::Catalog::Compiler do
         :checksum_type      => checksum_type.to_sym,
         :source_permissions => :use
       }
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, options).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, options).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -583,7 +623,7 @@ describe Puppet::Resource::Catalog::Compiler do
         :source_permissions => default_file[:source_permissions]
       }
 
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, options).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, options).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
     end
@@ -598,10 +638,10 @@ describe Puppet::Resource::Catalog::Compiler do
       MANIFEST
 
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
-      metadata.expects(:source=).with(source)
-      metadata.expects(:content_uri=).with('puppet:///modules/mymodule/files/config_file.txt')
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(alt_source, anything).returns(nil)
+      expect(metadata).to receive(:source=).with(source)
+      expect(metadata).to receive(:content_uri=).with('puppet:///modules/mymodule/files/config_file.txt')
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(alt_source, anything).and_return(nil)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -628,7 +668,7 @@ describe Puppet::Resource::Catalog::Compiler do
             :checksum_type      => checksum_type.to_sym,
             :source_permissions => :ignore
           }
-          Puppet::FileServing::Metadata.indirection.expects(:find).with(source, options).returns(metadata)
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, options).and_return(metadata)
 
           compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -649,11 +689,11 @@ describe Puppet::Resource::Catalog::Compiler do
       MANIFEST
 
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
-      metadata.stubs(:source).returns(source)
+      allow(metadata).to receive(:source).and_return(source)
 
-      metadata.expects(:content_uri=).with('puppet://myhost:8888/modules/mymodule/files/config_file.txt')
+      expect(metadata).to receive(:content_uri=).with('puppet://myhost:8888/modules/mymodule/files/config_file.txt')
 
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
     end
@@ -720,7 +760,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
       full_path = File.join(Puppet[:codedir], "modules/mymodule/files/config_file.txt")
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt', full_path)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
       expect(catalog.metadata).to be_empty
@@ -738,7 +778,7 @@ describe Puppet::Resource::Catalog::Compiler do
       MANIFEST
 
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'secure/files/data.txt')
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
       expect(catalog.metadata).to be_empty
@@ -754,7 +794,7 @@ describe Puppet::Resource::Catalog::Compiler do
       MANIFEST
 
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/not_in_files/config_file.txt')
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
       expect(catalog.metadata).to be_empty
@@ -771,7 +811,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
       # note empty module name "modules//files"
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules//files/config_file.txt')
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
       expect(catalog.metadata).to be_empty
@@ -791,9 +831,9 @@ describe Puppet::Resource::Catalog::Compiler do
 
       # See https://github.com/puppetlabs/control-repo/blob/508b9cc/site/profile/files/puppetmaster/update-classes.sh
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'site/profile/files/puppetmaster/update-classes.sh')
-      metadata.stubs(:source).returns(source)
+      allow(metadata).to receive(:source).and_return(source)
 
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
       expect(catalog.metadata[path]).to eq(metadata)
@@ -813,9 +853,9 @@ describe Puppet::Resource::Catalog::Compiler do
       MANIFEST
 
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/myfile')
-      metadata.stubs(:source).returns(source)
+      allow(metadata).to receive(:source).and_return(source)
 
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
       expect(catalog.metadata[path]).to eq(metadata)
@@ -835,8 +875,8 @@ describe Puppet::Resource::Catalog::Compiler do
             }
           MANIFEST
 
-          metadata.expects(:content_uri=).with('puppet:///modules/mymodule/files/directory')
-          Puppet::FileServing::Metadata.indirection.expects(:find).with(source_dir, anything).returns(metadata)
+          expect(metadata).to receive(:content_uri=).with('puppet:///modules/mymodule/files/directory')
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source_dir, anything).and_return(metadata)
 
           compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -857,8 +897,8 @@ describe Puppet::Resource::Catalog::Compiler do
             }
           MANIFEST
 
-          metadata.expects(:content_uri=).with('puppet:///modules/mymodule/files/directory')
-          child_metadata.expects(:content_uri=).with('puppet:///modules/mymodule/files/directory/myfile.txt')
+          expect(metadata).to receive(:content_uri=).with('puppet:///modules/mymodule/files/directory')
+          expect(child_metadata).to receive(:content_uri=).with('puppet:///modules/mymodule/files/directory/myfile.txt')
 
           options = {
             :environment        => catalog.environment_instance,
@@ -869,7 +909,7 @@ describe Puppet::Resource::Catalog::Compiler do
             :recurselimit       => nil,
             :ignore             => nil,
           }
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(source_dir, options).returns([metadata, child_metadata])
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source_dir, options).and_return([metadata, child_metadata])
 
           compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -900,7 +940,7 @@ describe Puppet::Resource::Catalog::Compiler do
             :recurselimit       => 2,
             :ignore             => 'foo.+',
           }
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(source_dir, options).returns([metadata, child_metadata])
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source_dir, options).and_return([metadata, child_metadata])
 
           compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -919,8 +959,8 @@ describe Puppet::Resource::Catalog::Compiler do
             }
           MANIFEST
 
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(source_dir, anything).returns([metadata, child_metadata])
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(alt_source_dir, anything).returns([metadata, child_metadata])
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source_dir, anything).and_return([metadata, child_metadata])
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(alt_source_dir, anything).and_return([metadata, child_metadata])
 
           compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -939,8 +979,8 @@ describe Puppet::Resource::Catalog::Compiler do
             }
           MANIFEST
 
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(source_dir, anything).returns(nil)
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(alt_source_dir, anything).returns([metadata, child_metadata])
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source_dir, anything).and_return(nil)
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(alt_source_dir, anything).and_return([metadata, child_metadata])
 
           compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -961,9 +1001,9 @@ describe Puppet::Resource::Catalog::Compiler do
           MANIFEST
 
           metadata = stubs_directory_metadata('secure/files/data')
-          metadata.stubs(:source).returns(source)
+          allow(metadata).to receive(:source).and_return(source)
 
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(source, anything).returns([metadata])
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source, anything).and_return([metadata])
 
           compiler.send(:inline_metadata, catalog, checksum_type)
           expect(catalog.metadata).to be_empty
@@ -982,7 +1022,7 @@ describe Puppet::Resource::Catalog::Compiler do
           MANIFEST
 
           metadata = stubs_directory_metadata('modules/mymodule/not_in_files/directory')
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(source, anything).returns([metadata])
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source, anything).and_return([metadata])
 
           compiler.send(:inline_metadata, catalog, checksum_type)
           expect(catalog.metadata).to be_empty
@@ -1003,12 +1043,12 @@ describe Puppet::Resource::Catalog::Compiler do
 
           # See https://github.com/puppetlabs/control-repo/blob/508b9cc/site/profile/files/puppetmaster/update-classes.sh
           dir_metadata = stubs_directory_metadata('site/profile/files/puppetmaster')
-          dir_metadata.stubs(:source).returns(source)
+          allow(dir_metadata).to receive(:source).and_return(source)
 
           child_metadata = stubs_file_metadata(checksum_type, checksum_value, './update-classes.sh')
-          child_metadata.stubs(:source).returns("#{source}/update-classes.sh")
+          allow(child_metadata).to receive(:source).and_return("#{source}/update-classes.sh")
 
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(source, anything).returns([dir_metadata, child_metadata])
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source, anything).and_return([dir_metadata, child_metadata])
 
           compiler.send(:inline_metadata, catalog, checksum_type)
           expect(catalog.metadata).to be_empty
@@ -1027,12 +1067,12 @@ describe Puppet::Resource::Catalog::Compiler do
           MANIFEST
 
           dir_metadata = stubs_directory_metadata('modules/mymodule/files/directory')
-          dir_metadata.stubs(:source).returns(source)
+          allow(dir_metadata).to receive(:source).and_return(source)
 
           child_metadata = stubs_file_metadata(checksum_type, checksum_value, './file')
-          child_metadata.stubs(:source).returns("#{source}/file")
+          allow(child_metadata).to receive(:source).and_return("#{source}/file")
 
-          Puppet::FileServing::Metadata.indirection.expects(:search).with(source, anything).returns([dir_metadata, child_metadata])
+          expect(Puppet::FileServing::Metadata.indirection).to receive(:search).with(source, anything).and_return([dir_metadata, child_metadata])
 
           compiler.send(:inline_metadata, catalog, checksum_type)
 
@@ -1061,7 +1101,7 @@ describe Puppet::Resource::Catalog::Compiler do
       MANIFEST
 
       metadata = stubs_file_metadata(checksum_type, checksum_value, 'modules/mymodule/files/config_file.txt')
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(source, anything).returns(metadata)
+      expect(Puppet::FileServing::Metadata.indirection).to receive(:find).with(source, anything).and_return(metadata)
 
       compiler.send(:inline_metadata, catalog, checksum_type)
       expect(catalog.metadata['c:/foo']).to eq(metadata)

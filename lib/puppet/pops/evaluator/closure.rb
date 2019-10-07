@@ -78,13 +78,20 @@ class Closure < CallableSignature
     end
   end
 
-  # Call closure with argument assignment by name
+  def call_by_name_with_scope(scope, args_hash, enforce_parameters)
+    call_by_name_internal(scope, args_hash, enforce_parameters)
+  end
+
   def call_by_name(args_hash, enforce_parameters)
-    closure_scope = enclosing_scope
+    call_by_name_internal(enclosing_scope, args_hash, enforce_parameters)
+  end
+
+  # Call closure with argument assignment by name
+  def call_by_name_internal(closure_scope, args_hash, enforce_parameters)
     if enforce_parameters
       # Push a temporary parameter scope used while resolving the parameter defaults
       closure_scope.with_parameter_scope(closure_name, parameter_names) do |param_scope|
-        # Assign all non-nil values, even those that represent non-existent paramaters.
+        # Assign all non-nil values, even those that represent non-existent parameters.
         args_hash.each { |k, v| param_scope[k] = v unless v.nil? }
         parameters.each do |p|
           name = p.name
@@ -112,6 +119,7 @@ class Closure < CallableSignature
       @evaluator.evaluate_block_with_bindings(closure_scope, args_hash, @model.body)
     end
   end
+  private :call_by_name_internal
 
   def parameters
     @model.parameters
@@ -310,7 +318,7 @@ class Closure < CallableSignature
     closure_scope = enclosing_scope
 
     parameters.each do |param|
-      arg_type, param_range = create_param_type(param, closure_scope)
+      arg_type, _ = create_param_type(param, closure_scope)
       key_type = type_factory.string(param.name.to_s)
       key_type = type_factory.optional(key_type) unless param.value.nil?
       members[key_type] = arg_type

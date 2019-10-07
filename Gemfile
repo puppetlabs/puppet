@@ -1,103 +1,68 @@
 source ENV['GEM_SOURCE'] || "https://rubygems.org"
 
+gemspec
+
 def location_for(place, fake_version = nil)
   if place =~ /^(git[:@][^#]*)#(.*)/
-    [fake_version, { :git => $1, :branch => $2, :require => false }].compact
+    [fake_version, { git: $1, branch: $2, require: false }].compact
   elsif place =~ /^file:\/\/(.*)/
-    ['>= 0', { :path => File.expand_path($1), :require => false }]
+    ['>= 0', { path: File.expand_path($1), require: false }]
   else
-    [place, { :require => false }]
+    [place, { require: false }]
   end
 end
 
-# C Ruby (MRI) or Rubinius, but NOT Windows
-platforms :ruby do
-  gem 'pry', :group => :development
-  gem 'redcarpet', '~> 2.0', :group => :development
-  gem "racc", "1.4.9", :group => :development
+# override .gemspec deps - may issue warning depending on Bundler version
+gem "facter", *location_for(ENV['FACTER_LOCATION']) if ENV.has_key?('FACTER_LOCATION')
+gem "hiera", *location_for(ENV['HIERA_LOCATION']) if ENV.has_key?('HIERA_LOCATION')
+gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ["~> 1.0"])
+gem "puppet-resource_api", *location_for(ENV['RESOURCE_API_LOCATION'] || ["~> 1.5"])
 
-  # To enable the augeas feature, use this gem.
-  # Note that it is a native gem, so the augeas headers/libs
-  # are neeed.
-  #gem 'ruby-augeas', :group => :development
+group(:features) do
+  gem 'diff-lcs', '~> 1.3', require: false
+  gem 'hiera-eyaml', require: false
+  gem 'hocon', '~> 1.0', require: false
+  # requires native libshadow headers/libs
+  #gem 'ruby-shadow', '~> 2.5', require: false, platforms: [:ruby]
+  gem 'minitar', '~> 0.9', require: false
+  gem 'msgpack', '~> 1.2', require: false
+  gem 'rdoc', '~> 6.0', require: false, platforms: [:ruby]
+  # requires native augeas headers/libs
+  # gem 'ruby-augeas', require: false, platforms: [:ruby]
+  # requires native ldap headers/libs
+  # gem 'ruby-ldap', '~> 0.9', require: false, platforms: [:ruby]
+  gem 'puppetserver-ca', '~> 1.1', require: false
 end
 
-gem "puppet", :path => File.dirname(__FILE__), :require => false
-gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 2.0', '< 4'])
-gem "hiera", *location_for(ENV['HIERA_LOCATION'] || ['>= 3.2.1', '< 4'])
-# PUP-7115 - return to a gem dependency in Puppet 5
-# gem "semantic_puppet", *location_for(ENV['SEMANTIC_PUPPET_LOCATION'] || ['>= 0.1.3', '< 2'])
-# i18n support (gettext-setup and dependencies)
-gem 'gettext-setup', '>= 0.10', '< 1.0', :require => false
-gem 'locale', '~> 2.1', :require => false
+group(:test) do
+  gem "json-schema", "~> 2.0", require: false
+  gem "rake", *location_for(ENV['RAKE_LOCATION'] || '~> 12.2')
+  gem "rspec", "~> 3.1", require: false
+  gem "rspec-its", "~> 1.1", require: false
+  gem 'vcr', '~> 2.9', require: false
+  gem 'webmock', '~> 1.24', require: false
+  gem 'yard', require: false
 
-group(:development, :test) do
-  gem "rake", "10.1.1", :require => false
-  gem "rspec", "~> 3.1", :require => false
-  gem "rspec-its", "~> 1.1", :require => false
-  gem "rspec-collection_matchers", "~> 1.1", :require => false
-  gem "rspec-legacy_formatters", "~> 1.0", :require => false
-
-  # Mocha is not compatible across minor version changes; because of this only
-  # versions matching ~> 0.10.5 are supported. All other versions are unsupported
-  # and can be expected to fail.
-  gem "mocha", "~> 0.10.5", :require => false
-
-  gem "yarjuf", "~> 2.0"
-
-  # json-schema does not support windows, so omit it from the platforms list
-  # json-schema uses multi_json, but chokes with multi_json 1.7.9, so prefer 1.7.7
-  gem "multi_json", "1.7.7", :require => false, :platforms => [:ruby, :jruby]
-  gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
-
-  gem "rubocop", "~> 0.39.0", :platforms => [:ruby]
-  # pin rainbow gem as 2.2.1 requires rubygems 2.6.9+ and (donotwant)
-  gem "rainbow", "< 2.2.1", :platforms => [:ruby]
-
-  gem 'rdoc', "~> 4.1", :platforms => [:ruby]
-  gem 'yard'
-
-  # webmock requires addressable as as of 2.5.0 addressable started
-  # requiring the public_suffix gem which requires Ruby 2
-  gem 'addressable', '< 2.5.0'
-  gem 'webmock', '~> 1.24'
-  gem 'vcr', '~> 2.9'
-  gem "hiera-eyaml", :require => false
+  gem 'rubocop', '~> 0.49', require: false, platforms: [:ruby]
+  gem 'rubocop-i18n', '~> 1.2.0', require: false, platforms: [:ruby]
 end
 
-group(:development) do
+group(:development, optional: true) do
+  gem 'memory_profiler', require: false, platforms: [:mri]
+  gem 'pry', require: false, platforms: [:ruby]
+  gem "racc", "1.4.9", require: false, platforms: [:ruby]
   if RUBY_PLATFORM != 'java'
-    gem 'ruby-prof', '>= 0.16.0', :require => false
+    gem 'ruby-prof', '>= 0.16.0', require: false
   end
 end
 
-group(:extra) do
-  gem "rack", "~> 1.4", :require => false
-  gem "puppetlabs_spec_helper", :require => false
-  gem "msgpack", :require => false
+group(:packaging) do
+  gem 'packaging', *location_for(ENV['PACKAGING_LOCATION'] || '~> 0.99')
 end
 
-require 'yaml'
-data = YAML.load_file(File.join(File.dirname(__FILE__), 'ext', 'project_data.yaml'))
-bundle_platforms = data['bundle_platforms']
-x64_platform = Gem::Platform.local.cpu == 'x64'
-data['gem_platform_dependencies'].each_pair do |gem_platform, info|
-  next if gem_platform == 'x86-mingw32' && x64_platform
-  next if gem_platform == 'x64-mingw32' && !x64_platform
-  if bundle_deps = info['gem_runtime_dependencies']
-    bundle_platform = bundle_platforms[gem_platform] or raise "Missing bundle_platform"
-    if bundle_platform == "all"
-      bundle_deps.each_pair do |name, version|
-        gem(name, version, :require => false)
-      end
-    else
-      platform(bundle_platform.intern) do
-        bundle_deps.each_pair do |name, version|
-          gem(name, version, :require => false)
-        end
-      end
-    end
-  end
+group(:documentation) do
+  gem 'gettext-setup', '~> 0.28', require: false, platforms: [:ruby]
+  gem 'ronn', '~> 0.7.3', require: false, platforms: [:ruby]
 end
 
 if File.exists? "#{__FILE__}.local"

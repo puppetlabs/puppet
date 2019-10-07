@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
@@ -125,6 +124,16 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       it "'012.3' + '010'  ==  20.3 (not error, floats can start with 0)" do
         expect(evaluate(literal('012.3') + literal('010'))).to eq(20.3)
+      end
+    end
+
+    context 'on binary values' do
+      include PuppetSpec::Compiler
+      require 'base64'
+      encoded = Base64.encode64('Hello world').chomp
+      it 'Binary + Binary' do
+        code = 'notice(assert_type(Binary, Binary([72,101,108,108,111,32]) + Binary([119,111,114,108,100])))'
+        expect(eval_and_collect_notices(code)).to eql([encoded])
       end
     end
 

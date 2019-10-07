@@ -23,13 +23,12 @@ class Puppet::SyntaxCheckers::Base64 < Puppet::Plugins::SyntaxCheckers::SyntaxCh
       # Do a strict decode64 on text with all whitespace stripped since the non strict version
       # simply skips all non base64 characters
       Base64.strict_decode64(cleaned_text)
-    rescue => e
-      if (cleaned_text.bytes.to_a.size * 8) % 6 != 0
-        msg2 = _("padding is not correct")
-      else
-        msg2 = _("contains letters outside strict base 64 range (or whitespace)")
-      end
-      msg = _("Base64 syntax checker: Cannot parse invalid Base64 string - %{msg2}") % { msg2: msg2 }
+    rescue
+      msg = if (cleaned_text.bytes.to_a.size * 8) % 6 != 0
+              _("Base64 syntax checker: Cannot parse invalid Base64 string - padding is not correct")
+            else
+              _("Base64 syntax checker: Cannot parse invalid Base64 string - contains letters outside strict base 64 range (or whitespace)")
+            end
 
       # TODO: improve the pops API to allow simpler diagnostic creation while still maintaining capabilities
       # and the issue code. (In this case especially, where there is only a single error message being issued).

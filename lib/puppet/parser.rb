@@ -2,6 +2,7 @@
 module Puppet::Parser; end
 
 require 'puppet/parser/ast'
+require 'puppet/parser/abstract_compiler'
 require 'puppet/parser/compiler'
 require 'puppet/parser/compiler/catalog_validator'
 require 'puppet/resource/type_collection'

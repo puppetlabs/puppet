@@ -1,11 +1,9 @@
-#!/usr/bin/env ruby
-
 require 'spec_helper'
 
 describe Puppet::Util do
   include PuppetSpec::Files
 
-  describe "#execute" do
+  describe "#execute", unless: Puppet::Util::Platform.jruby? do
     it "should properly allow stdout and stderr to share a file" do
       command = "ruby -e '(1..10).each {|i| (i%2==0) ? $stdout.puts(i) : $stderr.puts(i)}'"
 
@@ -29,7 +27,7 @@ describe Puppet::Util do
     end
   end
 
-  describe "#replace_file on Windows", :if => Puppet.features.microsoft_windows? do
+  describe "#replace_file on Windows", :if => Puppet::Util::Platform.windows? do
     it "replace_file should preserve original ACEs from existing replaced file on Windows" do
 
       file = tmpfile("somefile")
@@ -109,17 +107,17 @@ describe Puppet::Util do
     end
   end
 
-  describe "#which on Windows", :if => Puppet.features.microsoft_windows? do
+  describe "#which on Windows", :if => Puppet::Util::Platform.windows? do
     let (:rune_utf8) { "\u16A0\u16C7\u16BB\u16EB\u16D2\u16E6\u16A6\u16EB\u16A0\u16B1\u16A9\u16A0\u16A2\u16B1\u16EB\u16A0\u16C1\u16B1\u16AA\u16EB\u16B7\u16D6\u16BB\u16B9\u16E6\u16DA\u16B3\u16A2\u16D7" }
     let (:filename) { 'foo.exe' }
     let (:filepath) { File.expand_path('C:\\' + rune_utf8 + '\\' + filename) }
 
     before :each do
-      FileTest.stubs(:file?).returns false
-      FileTest.stubs(:file?).with(filepath).returns true
+      allow(FileTest).to receive(:file?).and_return(false)
+      allow(FileTest).to receive(:file?).with(filepath).and_return(true)
 
-      FileTest.stubs(:executable?).returns false
-      FileTest.stubs(:executable?).with(filepath).returns true
+      allow(FileTest).to receive(:executable?).and_return(false)
+      allow(FileTest).to receive(:executable?).with(filepath).and_return(true)
     end
 
     it "should be able to use UTF8 characters in the path" do
@@ -129,5 +127,4 @@ describe Puppet::Util do
       end
     end
   end
-
 end

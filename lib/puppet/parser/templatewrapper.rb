@@ -61,8 +61,9 @@ class Puppet::Parser::TemplateWrapper
 
   # @api private
   def file=(filename)
-    unless @__file__ = Puppet::Parser::Files.find_template(filename, scope.compiler.environment)
-      raise Puppet::ParseError, "Could not find template '#{filename}'"
+    @__file__ = Puppet::Parser::Files.find_template(filename, scope.compiler.environment)
+    unless @__file__
+      raise Puppet::ParseError, _("Could not find template '%{filename}'") % { filename: filename }
     end
   end
 
@@ -78,7 +79,8 @@ class Puppet::Parser::TemplateWrapper
     # Expose all the variables in our scope as instance variables of the
     # current object, making it possible to access them without conflict
     # to the regular methods.
-    benchmark(:debug, _("Bound template variables for %{template_source}") % { template_source: template_source }) do
+    escaped_template_source = template_source.gsub(/%/, '%%')
+    benchmark(:debug, _("Bound template variables for %{template_source} in %%{seconds} seconds") % { template_source: escaped_template_source }) do
       scope.to_hash.each do |name, value|
         realname = name.gsub(/[^\w]/, "_")
         instance_variable_set("@#{realname}", value)
@@ -86,7 +88,7 @@ class Puppet::Parser::TemplateWrapper
     end
 
     result = nil
-    benchmark(:debug, _("Interpolated template %{template_source}") % { template_source: template_source }) do
+    benchmark(:debug, _("Interpolated template %{template_source} in %%{seconds} seconds") % { template_source: escaped_template_source }) do
       template = ERB.new(string, 0, "-")
       template.filename = @__file__
       result = template.result(binding)

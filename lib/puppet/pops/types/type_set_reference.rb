@@ -36,7 +36,7 @@ class TypeSetReference
     result
   end
 
-  def resolve(type_parser, loader)
+  def resolve(loader)
     typed_name = Loader::TypedName.new(:type, @name, @name_authority)
     loaded_entry = loader.load_typed(typed_name)
     type_set = loaded_entry.nil? ? nil : loaded_entry.value
@@ -44,7 +44,7 @@ class TypeSetReference
     raise ArgumentError, "#{self} cannot be resolved" if type_set.nil?
     raise ArgumentError, "#{self} resolves to a #{type_set.name}" unless type_set.is_a?(PTypeSetType)
 
-    @type_set = type_set.resolve(type_parser, loader)
+    @type_set = type_set.resolve(loader)
     unless @version_range.include?(@type_set.version)
       raise ArgumentError, "#{self} resolves to an incompatible version. Expected #{@version_range}, got #{type_set.version}"
     end

@@ -36,6 +36,7 @@ module Puppet::ModuleTool::Errors
           end
         end
       end
+      #TRANSLATORS `puppet module upgrade --force` is a command line option that should not be translated
       message << _("    Use `puppet module upgrade --force` to upgrade only this module")
       message.join("\n")
     end
@@ -56,7 +57,6 @@ module Puppet::ModuleTool::Errors
       message = []
       message << _("Could not %{action} module '%{module_name}' (%{version})") % { action: @action, module_name: @module_name, version: vstring }
       message << _("  Downgrading is not allowed.")
-
       message.join("\n")
     end
   end

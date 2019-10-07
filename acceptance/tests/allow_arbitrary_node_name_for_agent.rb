@@ -1,5 +1,10 @@
 test_name "node_name_value should be used as the node name for puppet agent"
 
+tag 'audit:medium',
+    'audit:integration',  # Tests that the server properly overrides certname with node_name fact.
+                          # Testing of passenger master is no longer needed.
+    'server'
+
 success_message = "node_name_value setting was correctly used as the node name"
 testdir = master.tmpdir('nodenamevalue')
 
@@ -149,7 +154,7 @@ step "Ensure nodes are classified based on the node name fact" do
     },
   }
   with_puppet_running_on(master, master_opts, testdir) do
-    on(agents, puppet('agent', "-t --node_name_value specified_node_name --server #{master}"), :acceptable_exit_codes => [0,2]) do
+    on(agents, puppet('agent', "-t --node_name_value specified_node_name"), :acceptable_exit_codes => [0,2]) do
       assert_match(/defined 'message'.*#{success_message}/, stdout)
     end
   end

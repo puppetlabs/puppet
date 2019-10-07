@@ -16,7 +16,8 @@ class Puppet::Pops::Evaluator::Collectors::FixedSetCollector < Puppet::Pops::Eva
   def collect
     resolved = []
     result = @resources.reduce([]) do |memo, ref|
-      if res = @scope.findresource(ref.to_s)
+      res = @scope.findresource(ref.to_s)
+      if res
         res.virtual = false
         memo << res
         resolved << ref

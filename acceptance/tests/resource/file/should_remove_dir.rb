@@ -1,4 +1,7 @@
 test_name "should remove directory, but force required"
+tag 'audit:high',
+    'audit:refactor',   # Use block style `test_name`
+    'audit:acceptance'
 
 agents.each do |agent|
   target = agent.tmpdir("delete-dir")
@@ -9,7 +12,7 @@ agents.each do |agent|
   step "verify we can't remove a directory without 'force'"
   on(agent, puppet_resource("file", target, 'ensure=absent')) do
     fail_test "didn't tell us that force was required" unless
-      stdout.include? "Not removing directory; use 'force' to override"
+      stdout.include? "Not removing directory; use 'force' to override" unless agent['locale'] == 'ja'
   end
 
   step "verify the directory still exists"

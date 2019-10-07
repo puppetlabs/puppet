@@ -3,6 +3,8 @@ require 'puppet/face'
 require 'puppet/file_serving/metadata'
 require 'puppet/file_serving/content'
 require 'puppet/indirector/memory'
+require 'puppet/indirector/file_metadata'
+require 'puppet/indirector/file_content'
 
 module PuppetFaceIntegrationSpecs
 describe "Puppet plugin face" do
@@ -28,6 +30,7 @@ describe "Puppet plugin face" do
   before do
     FileUtils.mkdir(File.join(Puppet[:vardir], 'lib'))
     FileUtils.mkdir(File.join(Puppet[:vardir], 'facts.d'))
+    FileUtils.mkdir(File.join(Puppet[:vardir], 'locales'))
     @termini_classes = {}
     INDIRECTED_CLASSES.each do |indirected|
       @termini_classes[indirected] = indirected.indirection.terminus_class
@@ -43,7 +46,7 @@ describe "Puppet plugin face" do
   end
 
   def init_cli_args_and_apply_app(args = ["download"])
-    Puppet::Application.find(:plugin).new(stub('command_line', :subcommand_name => :plugin, :args => args))
+    Puppet::Application.find(:plugin).new(double('command_line', :subcommand_name => :plugin, :args => args))
   end
 
   it "processes a download request" do

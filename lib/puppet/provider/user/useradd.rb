@@ -16,6 +16,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   options :groups, :flag => "-G"
   options :password_min_age, :flag => "-m", :method => :sp_min
   options :password_max_age, :flag => "-M", :method => :sp_max
+  options :password_warn_days, :flag => "-W", :method => :sp_warn
   options :password, :method => :sp_pwdp
   options :expiry, :method => :sp_expire,
     :munge => proc { |value|
@@ -41,7 +42,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       end
     }
 
-  optional_commands :localadd => "luseradd"
+  optional_commands :localadd => "luseradd", :localdelete => "luserdel", :localmodify => "lusermod", :localpassword => "lchage"
   has_feature :libuser if Puppet.features.libuser?
 
   def exists?
@@ -104,11 +105,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # because by default duplicates are allowed.  This check is
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
-    if not @resource.allowdupe? and @resource.forcelocal?
-       if @resource.should(:uid) and finduser('uid', @resource.should(:uid).to_s)
+    if (!@resource.allowdupe?) && @resource.forcelocal?
+       if @resource.should(:uid) && finduser('uid', @resource.should(:uid).to_s)
            raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
        end
-    elsif @resource.allowdupe? and not @resource.forcelocal?
+    elsif @resource.allowdupe? && (!@resource.forcelocal?)
        return ["-o"]
     end
     []
@@ -125,25 +126,16 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def check_manage_home
     cmd = []
-    if @resource.managehome? and not @resource.forcelocal?
+    if @resource.managehome? && (!@resource.forcelocal?)
       cmd << "-m"
-    elsif not @resource.managehome? and Facter.value(:osfamily) == 'RedHat'
+    elsif (!@resource.managehome?) && Facter.value(:osfamily) == 'RedHat'
       cmd << "-M"
     end
     cmd
   end
 
-  def check_manage_expiry
-    cmd = []
-    if @resource[:expiry] and not @resource.forcelocal?
-      cmd << "-e #{@resource[:expiry]}"
-    end
-
-    cmd
-  end
-
   def check_system_users
-    if self.class.system_users? and resource.system?
+    if self.class.system_users? && resource.system?
       ["-r"]
     else
       []
@@ -155,17 +147,33 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # validproperties is a list of properties in undefined order
     # sort them to have a predictable command line in tests
     Puppet::Type.type(:user).validproperties.sort.each do |property|
-      next if property == :ensure
-      next if property.to_s =~ /password_.+_age/
-      next if property == :groups and @resource.forcelocal?
-      next if property == :expiry and @resource.forcelocal?
+      value = get_value_for_property(property)
+      next if value.nil?
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
-      if value = @resource.should(property) and value != ""
-        cmd << flag(property) << munge(property, value)
-      end
+      cmd << flag(property) << munge(property, value)
     end
     cmd
+  end
+
+  def get_value_for_property(property)
+    return nil if property == :ensure
+    return nil if property_manages_password_age?(property)
+    return nil if property == :groups and @resource.forcelocal?
+    return nil if property == :expiry and @resource.forcelocal?
+    value = @resource.should(property)
+    return nil if !value || value == ""
+
+    value
+  end
+
+  def has_sensitive_data?(property = nil)
+    #Check for sensitive values?
+    properties = property ? [property] : Puppet::Type.type(:user).validproperties
+    properties.any? do |prop|
+      p = @resource.parameter(prop)
+      p && p.respond_to?(:is_sensitive) && p.is_sensitive
+    end
   end
 
   def addcmd
@@ -175,7 +183,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     else
       cmd = [command(:add)]
     end
-    if not @resource.should(:gid) and Puppet::Util.gid(@resource[:name])
+    if (!@resource.should(:gid)) && Puppet::Util.gid(@resource[:name])
       cmd += ["-g", @resource[:name]]
     end
     cmd += add_properties
@@ -185,25 +193,59 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd << @resource[:name]
   end
 
+  def modifycmd(param, value)
+    if @resource.forcelocal?
+      case param
+      when :groups, :expiry
+        cmd = [command(:modify)]
+      else
+        cmd = [command(property_manages_password_age?(param) ? :localpassword : :localmodify)]
+      end
+      @custom_environment = Puppet::Util::Libuser.getenv
+    else
+      cmd = [command(property_manages_password_age?(param) ? :password : :modify)]
+    end
+    cmd << flag(param) << value
+    cmd += check_allow_dup if param == :uid
+    cmd << @resource[:name]
+
+    cmd
+  end
+
   def deletecmd
-    cmd = [command(:delete)]
-    cmd += @resource.managehome? ? ['-r'] : []
+    if @resource.forcelocal?
+      cmd = [command(:localdelete)]
+      @custom_environment = Puppet::Util::Libuser.getenv
+    else
+      cmd = [command(:delete)]
+    end
+    # Solaris `userdel -r` will fail if the homedir does not exist.
+    if @resource.managehome? && (('Solaris' != Facter.value(:operatingsystem)) || Dir.exist?(Dir.home(@resource[:name])))
+      cmd << '-r'
+    end
     cmd << @resource[:name]
   end
 
   def passcmd
-    age_limits = [:password_min_age, :password_max_age].select { |property| @resource.should(property) }
+    if @resource.forcelocal?
+      cmd = command(:localpassword)
+      @custom_environment = Puppet::Util::Libuser.getenv
+    else
+      cmd = command(:password)
+    end
+    age_limits = [:password_min_age, :password_max_age, :password_warn_days].select { |property| @resource.should(property) }
     if age_limits.empty?
       nil
     else
-      [command(:password),age_limits.collect { |property| [flag(property), @resource.should(property)]}, @resource[:name]].flatten
+      [cmd, age_limits.collect { |property| [flag(property), @resource.should(property)]}, @resource[:name]].flatten
     end
   end
 
-  [:expiry, :password_min_age, :password_max_age, :password].each do |shadow_property|
+  [:expiry, :password_min_age, :password_max_age, :password_warn_days, :password].each do |shadow_property|
     define_method(shadow_property) do
       if Puppet.features.libshadow?
-        if ent = Shadow::Passwd.getspnam(@canonical_name)
+        ent = Shadow::Passwd.getspnam(@canonical_name)
+        if ent
           method = self.class.option(shadow_property, :method)
           return unmunge(shadow_property, ent.send(method))
         end
@@ -217,15 +259,19 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       check_valid_shell
     end
      super
-     if @resource.forcelocal? and self.groups?
+     if @resource.forcelocal? && self.groups?
        set(:groups, @resource[:groups])
      end
-     if @resource.forcelocal? and @resource[:expiry]
+     if @resource.forcelocal? && @resource[:expiry]
        set(:expiry, @resource[:expiry])
      end
   end
 
   def groups?
     !!@resource[:groups]
+  end
+
+  def property_manages_password_age?(property)
+    property.to_s =~ /password_.+_age|password_warn_days/
   end
 end

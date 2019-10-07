@@ -24,8 +24,8 @@ module Puppet::Indirector
       indirection = Puppet::Indirector::Indirection.instance(indirection_name)
       raise _("Indirection %{indirection_name} does not exist") % { indirection_name: indirection_name } unless indirection
 
-      indirection.terminus_class = terminus_name if terminus_name
-      indirection.cache_class = cache_name if cache_name
+      indirection.set_global_setting(:terminus_class, terminus_name) if terminus_name
+      indirection.set_global_setting(:cache_class, cache_name) if cache_name
     end
   end
 

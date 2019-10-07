@@ -2,22 +2,22 @@
 name="default"
  
 if [ $# -gt 0 ]; then
-    name=$1
+    name="$1"
     shift 1
 fi
 
 export dir="${HOME}/test/master/${name}"
-mkdir -p ${dir}
+mkdir -p "${dir}"
  
 if [ ! -f $dir/auth.conf ]; then
   # Edit this file to change default puppet authorizations.
   cp ./conf/auth.conf "${dir}/auth.conf"
 fi
-mkdir -p ${dir}/manifests
-touch ${dir}/manifests/site.pp
+mkdir -p "${dir}/manifests"
+touch "${dir}/manifests/site.pp"
  
 # Work around Redmine #21908 where the master generates a warning if agent pluginsyncs
 # and there isn't at least one module with a libdir.
-mkdir -p ${dir}/modules/foo/lib
+mkdir -p "${dir}/modules/foo/lib"
  
-bundle exec puppet master --no-daemonize --autosign=true --confdir=${dir} --vardir=${dir} --certname puppetmaster $@
+bundle exec puppet master --no-daemonize --autosign=true --confdir="$dir" --vardir="${dir}" --certname puppetmaster "$@"

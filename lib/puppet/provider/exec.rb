@@ -4,73 +4,73 @@ require 'puppet/util/execution'
 class Puppet::Provider::Exec < Puppet::Provider
   include Puppet::Util::Execution
 
+  def environment
+    env = {}
+
+    if (path = resource[:path])
+      env[:PATH] = path.join(File::PATH_SEPARATOR)
+    end
+
+    return env unless (envlist = resource[:environment])
+
+    envlist = [envlist] unless envlist.is_a? Array
+    envlist.each do |setting|
+      unless (match = /^(\w+)=((.|\n)*)$/.match(setting))
+        warning _("Cannot understand environment setting %{setting}") % { setting: setting.inspect }
+        next
+      end
+      var = match[1]
+      value = match[2]
+
+      if env.include?(var) || env.include?(var.to_sym)
+        warning _("Overriding environment setting '%{var}' with '%{value}'") % { var: var, value: value }
+      end
+
+      if value.nil? || value.empty?
+        msg = _("Empty environment setting '%{var}'") % {var: var}
+        Puppet.warn_once('undefined_variables', "empty_env_var_#{var}", msg, resource.file, resource.line)
+      end
+
+      env[var] = value
+    end
+
+    env
+  end
+
   def run(command, check = false)
     output = nil
-    status = nil
-    dir = nil
     sensitive = resource.parameters[:command].sensitive
 
     checkexe(command)
 
-    if dir = resource[:cwd]
-      unless File.directory?(dir)
-        if check
-          dir = nil
-        else
-          self.fail _("Working directory '%{dir}' does not exist") % { dir: dir }
-        end
-      end
-    end
-
-    dir ||= Dir.pwd
-
     debug "Executing#{check ? " check": ""} '#{sensitive ? '[redacted]' : command}'"
-    begin
-      # Do our chdir
-      Dir.chdir(dir) do
-        environment = {}
 
-        environment[:PATH] = resource[:path].join(File::PATH_SEPARATOR) if resource[:path]
+    # Ruby 2.1 and later interrupt execution in a way that bypasses error
+    # handling by default. Passing Timeout::Error causes an exception to be
+    # raised that can be rescued inside of the block by cleanup routines.
+    #
+    # This is backwards compatible all the way to Ruby 1.8.7.
+    Timeout::timeout(resource[:timeout], Timeout::Error) do
+      cwd = resource[:cwd]
+      cwd ||= Dir.pwd
 
-        if envlist = resource[:environment]
-          envlist = [envlist] unless envlist.is_a? Array
-          envlist.each do |setting|
-            if setting =~ /^(\w+)=((.|\n)+)$/
-              env_name = $1
-              value = $2
-              if environment.include?(env_name) || environment.include?(env_name.to_sym)
-                warning _("Overriding environment setting '%{env_name}' with '%{value}'") % { env_name: env_name, value: value }
-              end
-              environment[env_name] = value
-            else
-              warning _("Cannot understand environment setting %{setting}") % { setting: setting.inspect }
-            end
-          end
-        end
-
-        # Ruby 2.1 and later interrupt execution in a way that bypasses error
-        # handling by default. Passing Timeout::Error causes an exception to be
-        # raised that can be rescued inside of the block by cleanup routines.
-        #
-        # This is backwards compatible all the way to Ruby 1.8.7.
-        Timeout::timeout(resource[:timeout], Timeout::Error) do
-          # note that we are passing "false" for the "override_locale" parameter, which ensures that the user's
-          # default/system locale will be respected.  Callers may override this behavior by setting locale-related
-          # environment variables (LANG, LC_ALL, etc.) in their 'environment' configuration.
-          output = Puppet::Util::Execution.execute(command, :failonfail => false, :combine => true,
-                                  :uid => resource[:user], :gid => resource[:group],
-                                  :override_locale => false,
-                                  :custom_environment => environment,
-                                  :sensitive => sensitive)
-        end
-        # The shell returns 127 if the command is missing.
-        if output.exitstatus == 127
-          raise ArgumentError, output
-        end
-
-      end
-    rescue Errno::ENOENT => detail
-      self.fail Puppet::Error, detail.to_s, detail
+      # note that we are passing "false" for the "override_locale" parameter, which ensures that the user's
+      # default/system locale will be respected.  Callers may override this behavior by setting locale-related
+      # environment variables (LANG, LC_ALL, etc.) in their 'environment' configuration.
+      output = Puppet::Util::Execution.execute(
+        command,
+        :failonfail => false,
+        :combine => true,
+        :cwd => cwd,
+        :uid => resource[:user], :gid => resource[:group],
+        :override_locale => false,
+        :custom_environment => environment(),
+        :sensitive => sensitive
+      )
+    end
+    # The shell returns 127 if the command is missing.
+    if output.exitstatus == 127
+      raise ArgumentError, output
     end
 
     # Return output twice as processstatus was returned before, but only exitstatus was ever called.
@@ -82,11 +82,14 @@ class Puppet::Provider::Exec < Puppet::Provider
   def extractexe(command)
     if command.is_a? Array
       command.first
-    elsif match = /^"([^"]+)"|^'([^']+)'/.match(command)
-      # extract whichever of the two sides matched the content.
-      match[1] or match[2]
     else
-      command.split(/ /)[0]
+      match = /^"([^"]+)"|^'([^']+)'/.match(command)
+      if match
+        # extract whichever of the two sides matched the content.
+        match[1] or match[2]
+      else
+        command.split(/ /)[0]
+      end
     end
   end
 

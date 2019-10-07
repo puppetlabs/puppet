@@ -95,7 +95,8 @@ class Puppet::Property < Puppet::Parameter
     #
     def array_matching=(value)
       value = value.intern if value.is_a?(String)
-      raise ArgumentError, "Supported values for Property#array_matching are 'first' and 'all'" unless [:first, :all].include?(value)
+      #TRANSLATORS 'Property#array_matching', 'first', and 'all' should not be translated
+      raise ArgumentError, _("Supported values for Property#array_matching are 'first' and 'all'") unless [:first, :all].include?(value)
       @array_matching = value
     end
 
@@ -122,9 +123,8 @@ class Puppet::Property < Puppet::Parameter
   # @api private
   #
   def self.value_name(name)
-    if value = value_collection.match?(name)
-      value.name
-    end
+    value = value_collection.match?(name)
+    value.name if value
   end
 
   # Returns the value of the given option (set when a valid value with the given "name" was defined).
@@ -136,9 +136,8 @@ class Puppet::Property < Puppet::Parameter
   # @api private
   #
   def self.value_option(name, option)
-    if value = value_collection.value(name)
-      value.send(option)
-    end
+    value = value_collection.value(name)
+    value.send(option) if value
   end
 
   # Defines a new valid value for this property.
@@ -167,7 +166,7 @@ class Puppet::Property < Puppet::Parameter
       method = value.method.to_sym
       if value.block
         if instance_methods(false).include?(method)
-          raise ArgumentError, "Attempt to redefine method #{method} with block"
+          raise ArgumentError, _("Attempt to redefine method %{method} with block") % { method: method }
         end
         define_method(method, &value.block)
       else
@@ -211,7 +210,7 @@ class Puppet::Property < Puppet::Parameter
     rescue Puppet::Error, Puppet::DevError
       raise
     rescue => detail
-      message = "Could not convert change '#{name}' to string: #{detail}"
+      message = _("Could not convert change '%{name}' to string: %{detail}") % { name: name, detail: detail }
       Puppet.log_exception(detail, message)
       raise Puppet::DevError, message, detail.backtrace
     end
@@ -254,9 +253,9 @@ class Puppet::Property < Puppet::Parameter
   # @see Puppet::Type#event
   def event(options = {})
     attrs = { :name => event_name, :desired_value => should, :property => self, :source_description => path }.merge(options)
-    if should and value = self.class.value_collection.match?(should)
-      attrs[:invalidate_refreshes] = true if value.invalidate_refreshes
-    end
+    value = self.class.value_collection.match?(should) if should
+    
+    attrs[:invalidate_refreshes] = true if value && value.invalidate_refreshes 
     attrs[:redacted] = @sensitive
     resource.event attrs
   end
@@ -364,10 +363,12 @@ class Puppet::Property < Puppet::Parameter
     begin
       @should = should
       insync?(is)
-    rescue => detail
+    rescue
       # Certain operations may fail, but we don't want to fail the transaction if we can
       # avoid it
-      msg = "Unknown failure using insync_values? on type: #{self.resource.ref} / property: #{self.name} to compare values #{should} and #{is}"
+      #TRANSLATORS 'insync_values?' should not be translated
+      msg = _("Unknown failure using insync_values? on type: %{type} / property: %{name} to compare values %{should} and %{is}") %
+          { type: self.resource.ref, name: self.name, should: should, is: is }
       Puppet.info(msg)
 
       # Return nil, ie. unknown
@@ -483,23 +484,28 @@ class Puppet::Property < Puppet::Parameter
   def set(value)
     # Set a name for looking up associated options like the event.
     name = self.class.value_name(value)
-    if method = self.class.value_option(name, :method) and self.respond_to?(method)
+    method = self.class.value_option(name, :method)
+    if method && self.respond_to?(method)
       begin
         self.send(method)
       rescue Puppet::Error
         raise
       rescue => detail
-        error = Puppet::ResourceError.new("Could not set '#{value}' on #{self.class.name}: #{detail}", @resource.file, @resource.line, detail)
+        error = Puppet::ResourceError.new(_("Could not set '%{value}' on %{class_name}: %{detail}") %
+                                              { value: value, class_name: self.class.name, detail: detail }, @resource.file, @resource.line, detail)
         error.set_backtrace detail.backtrace
         Puppet.log_exception(detail, error.message)
         raise error
       end
-    elsif block = self.class.value_option(name, :block)
-      # FIXME It'd be better here to define a method, so that
-      # the blocks could return values.
-      self.instance_eval(&block)
     else
-      call_provider(value)
+      block = self.class.value_option(name, :block)
+      if block
+        # FIXME It'd be better here to define a method, so that
+        # the blocks could return values.
+        self.instance_eval(&block)
+      else
+        call_provider(value)
+      end
     end
   end
 
@@ -581,10 +587,15 @@ class Puppet::Property < Puppet::Parameter
   # @api private
   #
   def validate_features_per_value(value)
-    if features = self.class.value_option(self.class.value_name(value), :required_features)
+    features = self.class.value_option(self.class.value_name(value), :required_features)
+    if features
       features = Array(features)
       needed_features = features.collect { |f| f.to_s }.join(", ")
-      raise ArgumentError, "Provider #{provider.class.name} must have features '#{needed_features}' to set '#{self.class.name}' to '#{value}'" unless provider.satisfies?(features)
+      unless provider.satisfies?(features)
+        #TRANSLATORS 'Provider' refers to a Puppet provider class
+        raise ArgumentError, _("Provider %{provider} must have features '%{needed_features}' to set '%{property}' to '%{value}'") %
+            { provider: provider.class.name, needed_features: needed_features, property: self.class.name, value: value }
+      end
     end
   end
 

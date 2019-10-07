@@ -7,11 +7,11 @@ def self.register_ptypes(loader, ir)
   types = [Param, ResourceTypeImpl].map do |c|
     c.register_ptype(loader, ir)
   end
-  types.each {|t| t.resolve(Types::TypeParser.singleton, loader) }
+  types.each {|t| t.resolve(loader) }
 end
 
 class ResourceTypeImpl
-  # Make instances of this class directly createable from the Puppet Language
+  # Make instances of this class directly creatable from the Puppet Language
   # as object.
   #
   include Puppet::Pops::Types::PuppetObject
@@ -149,7 +149,7 @@ class ResourceTypeImpl
         # Here it is silently ignored.
         nil
       when 1
-        if @title_pattners_hash.nil?
+        if @title_patterns_hash.nil?
           [ [ /(.*)/m, [ [@key_attributes.first] ] ] ]
         else
           # TechDebt: The case of having one namevar and an empty title patterns is unspecified behavior in puppet.
@@ -164,7 +164,7 @@ class ResourceTypeImpl
           # the 'package' type where 'provider' attribute is handled as part of the key without being
           # set from the title.
           #
-          raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
+          raise Puppet::DevError, _("you must specify title patterns when there are two or more key attributes")
         end
         @title_patterns_hash.nil? ? [] : @title_patterns_hash.map { |k,v| [ k, v.map { |n| [ n.to_sym] } ] }
       end

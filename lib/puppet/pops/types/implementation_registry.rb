@@ -8,20 +8,15 @@ module Types
   class ImplementationRegistry
     TYPE_REGEXP_SUBST = TypeFactory.tuple([PRegexpType::DEFAULT, PStringType::NON_EMPTY])
 
-    def self.singleton
-      @singleton ||= new(Loaders.static_loader)
-    end
-
     # Create a new instance. This method is normally only called once
     #
-    # The initializer will create mappings for well known types that can be loaded using the static loader
-    #
-    def initialize(static_loader)
+    # @param parent [ImplementationRegistry, nil] the parent of this registry
+    def initialize(parent = nil)
+      @parent = parent
       @type_names_per_implementation = {}
       @implementations_per_type_name = {}
       @type_name_substitutions = []
       @impl_name_substitutions = []
-      TypeParser.type_map.values.each { |type| register_implementation(type.simple_name, type.class.name, static_loader) }
     end
 
     # Register a bidirectional type mapping.
@@ -29,20 +24,18 @@ module Types
     # @overload register_type_mapping(runtime_type, puppet_type)
     #   @param runtime_type [PRuntimeType] type that represents the runtime module or class to map to a puppet type
     #   @param puppet_type [PAnyType] type that will be mapped to the runtime module or class
-    #   @param loader [Loader::Loader] the loader to use when resolving names
     # @overload register_type_mapping(runtime_type, pattern_replacement)
     #   @param runtime_type [PRuntimeType] type containing the pattern and replacement to map the runtime type to a puppet type
     #   @param puppet_type [Array(Regexp,String)] the pattern and replacement to map a puppet type to a runtime type
-    #   @param loader [Loader::Loader] the loader to use when resolving names
-    def register_type_mapping(runtime_type, puppet_type_or_pattern, loader)
+    def register_type_mapping(runtime_type, puppet_type_or_pattern, _ = nil)
       TypeAsserter.assert_assignable('First argument of type mapping', PRuntimeType::RUBY, runtime_type)
       expr = runtime_type.name_or_pattern
       if expr.is_a?(Array)
         TypeAsserter.assert_instance_of('Second argument of type mapping', TYPE_REGEXP_SUBST, puppet_type_or_pattern)
-        register_implementation_regexp(puppet_type_or_pattern, expr, loader)
+        register_implementation_regexp(puppet_type_or_pattern, expr)
       else
-        TypeAsserter.assert_instance_of('Second argument of type mapping', PType::DEFAULT, puppet_type_or_pattern)
-        register_implementation(puppet_type_or_pattern, expr, loader)
+        TypeAsserter.assert_instance_of('Second argument of type mapping', PTypeType::DEFAULT, puppet_type_or_pattern)
+        register_implementation(puppet_type_or_pattern, expr)
       end
     end
 
@@ -50,23 +43,20 @@ module Types
     #
     # @param type_namespace [String] the namespace for the puppet types
     # @param impl_namespace [String] the namespace for the implementations
-    # @param loader [Loader::Loader] the loader to use when resolving names
-    def register_implementation_namespace(type_namespace, impl_namespace, loader)
+    def register_implementation_namespace(type_namespace, impl_namespace, _ = nil)
       ns = TypeFormatter::NAME_SEGMENT_SEPARATOR
       register_implementation_regexp(
         [/\A#{type_namespace}#{ns}(\w+)\z/, "#{impl_namespace}#{ns}\\1"],
-        [/\A#{impl_namespace}#{ns}(\w+)\z/, "#{type_namespace}#{ns}\\1"],
-        loader)
+        [/\A#{impl_namespace}#{ns}(\w+)\z/, "#{type_namespace}#{ns}\\1"])
     end
 
     # Register a bidirectional regexp mapping
     #
     # @param type_name_subst [Array(Regexp,String)] regexp and replacement mapping type names to runtime names
     # @param impl_name_subst [Array(Regexp,String)] regexp and replacement mapping runtime names to type names
-    # @param loader [Loader::Loader] the loader to use when resolving names
-    def register_implementation_regexp(type_name_subst, impl_name_subst, loader)
-      @type_name_substitutions << [type_name_subst, loader]
-      @impl_name_substitutions << [impl_name_subst, loader]
+    def register_implementation_regexp(type_name_subst, impl_name_subst, _ = nil)
+      @type_name_substitutions << type_name_subst
+      @impl_name_substitutions << impl_name_subst
       nil
     end
 
@@ -74,12 +64,11 @@ module Types
     #
     # @param type [PAnyType,String] the type or type name
     # @param impl_module[Module,String] the module or module name
-    # @param loader [Loader::Loader] the loader to use when resolving names
-    def register_implementation(type, impl_module, loader)
+    def register_implementation(type, impl_module, _ = nil)
       type = type.name if type.is_a?(PAnyType)
       impl_module = impl_module.name if impl_module.is_a?(Module)
-      @type_names_per_implementation[impl_module] = [type, loader]
-      @implementations_per_type_name[type] = [impl_module, loader]
+      @type_names_per_implementation[impl_module] = type
+      @implementations_per_type_name[type] = impl_module
       nil
     end
 
@@ -89,7 +78,8 @@ module Types
     # @return [String,nil] the name of the implementation module, or `nil` if no mapping was found
     def module_name_for_type(type)
       type = type.name if type.is_a?(PAnyType)
-      find_mapping(type, @implementations_per_type_name, @type_name_substitutions)
+      name = @parent.module_name_for_type(type) unless @parent.nil?
+      name.nil? ? find_mapping(type, @implementations_per_type_name, @type_name_substitutions) : name
     end
 
     # Find the module that corresponds to the given type or type name
@@ -97,18 +87,19 @@ module Types
     # @param type [PAnyType,String] the name of the type
     # @return [Module,nil] the name of the implementation module, or `nil` if no mapping was found
     def module_for_type(type)
-      name_and_loader = module_name_for_type(type)
+      name = module_name_for_type(type)
       # TODO Shouldn't ClassLoader be module specific?
-      name_and_loader.nil? ? nil : ClassLoader.provide(name_and_loader[0])
+      name.nil? ? nil : ClassLoader.provide(name)
     end
 
     # Find the type name and loader that corresponds to the given runtime module or module name
     #
     # @param impl_module [Module,String] the implementation class or class name
-    # @return [Array(String,Loader::Loader),nil] the name and loader of the type, or `nil` if no mapping was found
+    # @return [String,nil] the name of the type, or `nil` if no mapping was found
     def type_name_for_module(impl_module)
       impl_module = impl_module.name if impl_module.is_a?(Module)
-      find_mapping(impl_module, @type_names_per_implementation, @impl_name_substitutions)
+      name = @parent.type_name_for_module(impl_module) unless @parent.nil?
+      name.nil? ? find_mapping(impl_module, @type_names_per_implementation, @impl_name_substitutions) : name
     end
 
     # Find the name for, and then load, the type  that corresponds to the given runtime module or module name
@@ -118,20 +109,22 @@ module Types
     # @param impl_module [Module,String] the implementation class or class name
     # @return [PAnyType,nil] the type, or `nil` if no mapping was found
     def type_for_module(impl_module)
-      name_and_loader = type_name_for_module(impl_module)
-      if name_and_loader.nil?
+      name = type_name_for_module(impl_module)
+      if name.nil?
         nil
       else
-        TypeParser.singleton.parse(*name_and_loader)
+        TypeParser.singleton.parse(name)
       end
     end
+
+    private
 
     def find_mapping(name, names, substitutions)
       found = names[name]
       if found.nil?
         substitutions.each do |subst|
-          substituted = name.sub(*subst[0])
-          return [substituted, subst[1]] unless substituted == name
+          substituted = name.sub(*subst)
+          return substituted unless substituted == name
         end
       end
       found

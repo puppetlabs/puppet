@@ -6,7 +6,7 @@ module Puppet::Parser::Functions
     :arity => -2,
     :doc => <<-DOC
 Assigns classes to a node using an
-[array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge)
+[array merge lookup](https://puppet.com/docs/hiera/latest/lookup_types.html#array-merge)
 that retrieves the value for a user-specified key from Hiera's data.
 
 The `hiera_include` function requires:
@@ -25,13 +25,13 @@ The function takes up to three arguments, in this order:
     * If this argument isn't provided and this function results in a lookup failure, Puppet
     fails with a compilation error.
 3. The optional name of an arbitrary
-[hierarchy level](https://docs.puppetlabs.com/hiera/latest/hierarchy.html) to insert at the
+[hierarchy level](https://puppet.com/docs/hiera/latest/hierarchy.html) to insert at the
 top of the hierarchy. This lets you temporarily modify the hierarchy for a single lookup.
     * If Hiera doesn't find a matching key in the overriding hierarchy level, it continues
     searching the rest of the hierarchy.
 
 The function uses an
-[array merge lookup](https://docs.puppetlabs.com/hiera/latest/lookup_types.html#array-merge)
+[array merge lookup](https://puppet.com/docs/hiera/latest/lookup_types.html#array-merge)
 to retrieve the `classes` array, so every node gets every class from the hierarchy.
 
 **Example**: Using `hiera_include`
@@ -59,7 +59,7 @@ hiera_include('classes', undef)
 ~~~
 
 You can optionally generate the default value with a
-[lambda](https://docs.puppetlabs.com/puppet/latest/reference/lang_lambdas.html) that
+[lambda](https://puppet.com/docs/puppet/latest/lang_lambdas.html) that
 takes one parameter.
 
 **Example**: Using `hiera_include` with a lambda
@@ -75,9 +75,8 @@ hiera_include('classes') | $key | {"Key \'${key}\' not found" }
 # "Key 'classes' not found".
 ~~~
 
-`hiera_include` is deprecated in favor of using a combination of `include`and `lookup` and will be
-removed in 6.0.0. See  https://docs.puppet.com/puppet/#{Puppet.minor_version}/reference/deprecated_language.html.
-Replace the calls as follows:
+`hiera_include` is deprecated in favor of using a combination of `include` and `lookup` and will be
+removed in Puppet 6.0.0. Replace the calls as follows:
 
 | from  | to |
 | ----  | ---|
@@ -85,13 +84,13 @@ Replace the calls as follows:
 | hiera_include($key, $default) | include(lookup($key, { 'default_value' => $default, 'merge' => 'unique' })) |
 | hiera_include($key, $default, $level) | override level not supported |
 
+See
+[the Upgrading to Hiera 5 migration guide](https://puppet.com/docs/puppet/5.5/hiera_migrate.html)
+for more information.
+
 Note that calls using the 'override level' option are not directly supported by 'lookup' and the produced
 result must be post processed to get exactly the same result, for example using simple hash/array `+` or
 with calls to stdlib's `deep_merge` function depending on kind of hiera call and setting of merge in hiera.yaml.
-
-See [the documentation](http://links.puppet.com/hierainclude) for more information
-and a more detailed example of how `hiera_include` uses array merge lookups to classify
-nodes.
 
 - Since 4.0.0
 DOC

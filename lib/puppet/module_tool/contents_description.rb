@@ -43,7 +43,8 @@ module Puppet::ModuleTool
         end
 
         type_names.each do |name|
-          if type = Puppet::Type.type(name.to_sym)
+          type = Puppet::Type.type(name.to_sym)
+          if type
             type_hash = {:name => name, :doc => type.doc}
             type_hash[:properties] = attr_doc(type, :property)
             type_hash[:parameters] = attr_doc(type, :param)

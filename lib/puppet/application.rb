@@ -209,7 +209,14 @@ class Application
     # @return [Array<String>] the names of available applications
     # @api public
     def available_application_names
-      @loader.files_to_load.map do |fn|
+      # Use our configured environment to load the application, as it may
+      # be in a module we installed locally, otherwise fallback to our
+      # current environment (*root*). Once we load the application the
+      # current environment will change from *root* to the application
+      # specific environment.
+      environment = Puppet.lookup(:environments).get(Puppet[:environment]) ||
+                    Puppet.lookup(:current_environment)
+      @loader.files_to_load(environment).map do |fn|
         ::File.basename(fn, '.rb')
       end.uniq
     end
@@ -281,6 +288,23 @@ class Application
       @run_mode = Puppet::Util::RunMode[ mode_name || Puppet.settings.preferred_run_mode ]
     end
 
+    # Sets environment_mode name
+    # @param mode_name [Symbol] The name of the environment mode to run in. May
+    #   be one of :local, :remote, or :not_required. This impacts where the
+    #   application looks for its specified environment. If :not_required or
+    #   :remote are set, the application will not fail if the environment does
+    #   not exist on the local filesystem.
+    def environment_mode(mode_name)
+      raise Puppet::Error, _("Invalid environment mode '%{mode_name}'") % { mode_name: mode_name } unless [:local, :remote, :not_required].include?(mode_name)
+      @environment_mode = mode_name
+    end
+
+    # Gets environment_mode name. If none is set with `environment_mode=`,
+    # default to :local.
+    def get_environment_mode
+      @environment_mode || :local
+    end
+
     # This is for testing only
     def clear_everything_for_tests
       @run_mode = @banner = @run_status = @option_parser_commands = nil
@@ -294,13 +318,13 @@ class Application
   # handling of this.
   option("--version", "-V") do |arg|
     puts "#{Puppet.version}"
-    exit
+    exit(0)
   end
 
   # Every app responds to --help
   option("--help", "-h") do |v|
     puts help
-    exit
+    exit(0)
   end
 
   def app_defaults()
@@ -339,23 +363,23 @@ class Application
     # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
     # names, and make deprecated aliases.  --cprice 2012-03-16
 
-    exit_on_fail(_("get application-specific default settings")) do
+    exit_on_fail(_("Could not get application-specific default settings")) do
       initialize_app_defaults
     end
 
-    Puppet::ApplicationSupport.push_application_context(self.class.run_mode)
+    Puppet::ApplicationSupport.push_application_context(self.class.run_mode, self.class.get_environment_mode)
 
-    exit_on_fail(_("initialize"))                                   { preinit }
-    exit_on_fail(_("parse application options"))                    { parse_options }
-    exit_on_fail(_("prepare for execution"))                        { setup }
+    exit_on_fail(_("Could not initialize"))                { preinit }
+    exit_on_fail(_("Could not parse application options")) { parse_options }
+    exit_on_fail(_("Could not prepare for execution"))     { setup }
 
     if deprecated?
       Puppet.deprecation_warning(_("`puppet %{name}` is deprecated and will be removed in a future release.") % { name: name })
     end
 
-    exit_on_fail(_("configure routes from %{route_file}") % { route_file: Puppet[:route_file] }) { configure_indirector_routes }
-    exit_on_fail(_("log runtime debug info"))                       { log_runtime_environment }
-    exit_on_fail(_("run"))                                          { run_command }
+    exit_on_fail(_("Could not configure routes from %{route_file}") % { route_file: Puppet[:route_file] }) { configure_indirector_routes }
+    exit_on_fail(_("Could not log runtime debug info"))                       { log_runtime_environment }
+    exit_on_fail(_("Could not run"))                                          { run_command }
   end
 
   def main
@@ -371,6 +395,8 @@ class Application
   end
 
   def setup_logs
+    handle_logdest_arg(Puppet[:logdest]) if !options[:setdest]
+
     unless options[:setdest]
       if options[:debug] || options[:verbose]
         Puppet::Util::Log.newdestination(:console)
@@ -392,11 +418,14 @@ class Application
   end
 
   def handle_logdest_arg(arg)
+    return if arg.nil?
+
     begin
+      Puppet[:logdest] = arg
       Puppet::Util::Log.newdestination(arg)
       options[:setdest] = true
     rescue => detail
-      Puppet.log_exception(detail)
+      Puppet.log_and_raise(detail, _("Could not set logdest to %{dest}.") % { dest: arg })
     end
   end
 
@@ -473,6 +502,13 @@ class Application
 
   def help
     _("No help available for puppet %{app_name}") % { app_name: name }
+  end
+
+  # The description used in top level `puppet help` output
+  # If left empty in implementations, we will attempt to extract
+  # the summary from the help text itself.
+  def summary
+    ""
   end
 end
 end

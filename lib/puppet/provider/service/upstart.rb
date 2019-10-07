@@ -12,17 +12,40 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   confine :any => [
     Facter.value(:operatingsystem) == 'Ubuntu',
     (Facter.value(:osfamily) == 'RedHat' and Facter.value(:operatingsystemrelease) =~ /^6\./),
-    Facter.value(:operatingsystem) == 'Amazon',
+    (Facter.value(:operatingsystem) == 'Amazon' and Facter.value(:operatingsystemmajrelease) =~ /\d{4}/),
     Facter.value(:operatingsystem) == 'LinuxMint',
   ]
 
   defaultfor :operatingsystem => :ubuntu, :operatingsystemmajrelease => ["10.04", "12.04", "14.04", "14.10"]
+  defaultfor :operatingsystem => :LinuxMint, :operatingsystemmajrelease => ["10", "11", "12", "13", "14", "15", "16", "17"]
 
   commands :start   => "/sbin/start",
            :stop    => "/sbin/stop",
            :restart => "/sbin/restart",
            :status_exec  => "/sbin/status",
            :initctl => "/sbin/initctl"
+
+  # We only want to use upstart as our provider if the upstart daemon is running.
+  # This can be checked by running `initctl version --quiet` on a machine that has
+  # upstart installed.
+  confine :true => lambda { has_initctl? }
+
+  def self.has_initctl?
+    # Puppet::Util::Execution.execute does not currently work on jRuby.
+    # Unfortunately, since this confine is invoked whenever we check for
+    # provider suitability and since provider suitability is still checked
+    # on the master, this confine will still be invoked on the master. Thus
+    # to avoid raising an exception, we do an early return if we're running
+    # on jRuby.
+    return false if Puppet::Util::Platform.jruby?
+
+    begin
+      initctl('version', '--quiet')
+      true
+    rescue
+      false
+    end
+  end
 
   # upstart developer haven't implemented initctl enable/disable yet:
   # http://www.linuxplanet.com/linuxplanet/tutorials/7033/2/
@@ -53,14 +76,17 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
         # network-interface (lo) start/running
         # network-interface (eth0) start/running
         # network-interface-security start/running
-        name = \
-          if matcher = line.match(/^(network-interface)\s\(([^\)]+)\)/)
-            "#{matcher[1]} INTERFACE=#{matcher[2]}"
-          elsif matcher = line.match(/^(network-interface-security)\s\(([^\)]+)\)/)
-            "#{matcher[1]} JOB=#{matcher[2]}"
-          else
-            line.split.first
-          end
+        matcher = line.match(/^(network-interface)\s\(([^\)]+)\)/)
+        name = if matcher
+                 "#{matcher[1]} INTERFACE=#{matcher[2]}"
+               else
+                 matcher = line.match(/^(network-interface-security)\s\(([^\)]+)\)/)
+                 if matcher
+                   "#{matcher[1]} JOB=#{matcher[2]}"
+                 else
+                   line.split.first
+                 end
+               end
         instances << new(:name => name)
       }
     }

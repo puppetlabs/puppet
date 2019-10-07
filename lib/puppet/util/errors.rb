@@ -31,20 +31,71 @@ module Puppet::Util::Errors
     error
   end
 
+  # Return a human-readable string of this object's file, line, and pos attributes,
+  # if set.
+  #
+  # @param file [String] the file path for the error (nil or "", for not known)
+  # @param line [String] the line number for the error (nil or "", for not known)
+  # @param column [String] the column number for the error (nil or "",  for not known)
+  # @return [String] description of file, line, and column
+  #
+  def self.error_location(file, line=nil, column=nil)
+    file = nil if (file.is_a?(String) && file.empty?)
+    line = nil if (line.is_a?(String) && line.empty?)
+    column = nil if (column.is_a?(String) && column.empty?)
+    if file and line and column
+      _("(file: %{file}, line: %{line}, column: %{column})") % { file: file, line: line, column: column }
+    elsif file and line
+      _("(file: %{file}, line: %{line})") % { file: file, line: line }
+    elsif line and column
+      _("(line: %{line}, column: %{column})") % { line: line, column: column }
+    elsif line
+      _("(line: %{line})") % { line: line }
+    elsif file
+      _("(file: %{file})") % { file: file }
+    else
+      ''
+    end
+  end
+
+  # Return a human-readable string of this object's file, line, and pos attributes,
+  # with a proceeding space in the output
+  # if set.
+  #
+  # @param file [String] the file path for the error (nil or "", for not known)
+  # @param line [String] the line number for the error (nil or "", for not known)
+  # @param column [String] the column number for the error (nil or "",  for not known)
+  # @return [String] description of file, line, and column
+  #
+  def self.error_location_with_space(file, line=nil, column=nil)
+    error_location_str = error_location(file, line, column)
+    if error_location_str.empty?
+      ''
+    else
+      ' ' + error_location_str
+    end
+  end
+
+  # Return a human-readable string of this object's file and line
+  # where unknown entries are listed as 'unknown'
+  #
+  # @param file [String] the file path for the error (nil or "", for not known)
+  # @param line [String] the line number for the error (nil or "", for not known)
+  # @return [String] description of file, and line
+  def self.error_location_with_unknowns(file, line)
+    file = nil if (file.is_a?(String) && file.empty?)
+    line = nil if (line.is_a?(String) && line.empty?)
+    file = _('unknown') unless file
+    line = _('unknown') unless line
+    error_location(file, line)
+  end
+
   # Return a human-readable string of this object's file and line attributes,
   # if set.
   #
-  # @return [String] description of file and line
+  # @return [String] description of file and line with a leading space
   def error_context
-    if file and line
-      _(" at %{file}:%{line}") % { file: file, line: line }
-    elsif line
-      _(" at line %{line}") % { line: line }
-    elsif file
-      _(" in %{file}") % { file: file }
-    else
-      ""
-    end
+    Puppet::Util::Errors.error_location_with_space(file, line)
   end
 
   # Wrap a call in such a way that we always throw the right exception and keep

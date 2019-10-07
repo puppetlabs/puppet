@@ -19,6 +19,10 @@ test_name "Exercise a module with 4x function and 4x system function"
 
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
+
+tag 'audit:medium',
+    'audit:unit'    # This should be covered adequately by unit tests
+
 initialize_temp_dirs
 
 agents.each do |agent|

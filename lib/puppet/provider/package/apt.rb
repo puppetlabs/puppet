@@ -5,8 +5,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   desc "Package management via `apt-get`.
 
     This provider supports the `install_options` attribute, which allows command-line flags to be passed to apt-get.
-    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
-    or an array where each element is either a string or a hash."
+    These options should be specified as an array where each element is either a
+     string or a hash."
 
   has_feature :versionable, :install_options
 
@@ -49,7 +49,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     checkforcdrom
     cmd = %w{-q -y}
 
-    if config = @resource[:configfiles]
+    config = @resource[:configfiles]
+    if config
       if config == :keep
         cmd << "-o" << 'DPkg::Options::=--force-confold'
       else
@@ -89,7 +90,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # preseeds answers to dpkg-set-selection from the "responsefile"
   #
   def run_preseed
-    if response = @resource[:responsefile] and Puppet::FileSystem.exist?(response)
+    response = @resource[:responsefile]
+    if response && Puppet::FileSystem.exist?(response)
       self.info(_("Preseeding %{response} to debconf-set-selections") % { response: response })
 
       preseed response

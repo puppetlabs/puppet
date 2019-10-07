@@ -13,8 +13,23 @@ describe "the epp function" do
       expect(eval_template("all your base <%= $what %> to us")).to eq("all your base are belong to us")
     end
 
+    it "looks up a fully qualified value from the scope" do
+      scope["what::is"] = "are belong"
+      expect(eval_template("all your base <%= $what::is %> to us")).to eq("all your base are belong to us")
+    end
+
     it "get nil accessing a variable that does not exist" do
       expect(eval_template("<%= $kryptonite == undef %>")).to eq("true")
+    end
+
+    it "gets error accessing a variable that is malformed" do
+      expect { eval_template("<%= $kryptonite::bbbbbbbbbbbb::cccccccc::ddd::USER %>")}.to raise_error(
+        /Illegal variable name, The given name 'kryptonite::bbbbbbbbbbbb::cccccccc::ddd::USER' does not conform to the naming rule/)
+    end
+
+    it "gets error accessing a variable that is malformed as reported in PUP-7848" do
+      expect { eval_template("USER='<%= $hg_oais::archivematica::requirements::automation_tools::USER %>'")}.to raise_error(
+        /Illegal variable name, The given name 'hg_oais::archivematica::requirements::automation_tools::USER' does not conform to the naming rule/)
     end
 
     it "get nil accessing a variable that is undef" do
@@ -102,6 +117,9 @@ describe "the epp function" do
     end
   end
 
+  it "preserves CRLF when reading the template" do
+    expect(eval_template("some text that\r\nis static with CRLF")).to eq("some text that\r\nis static with CRLF")
+  end
 
   # although never a problem with epp
   it "is not interfered with by having a variable named 'string' (#14093)" do
@@ -133,22 +151,22 @@ describe "the epp function" do
   def eval_template_with_args(content, args_hash)
     file_path = tmpdir('epp_spec_content')
     filename = File.join(file_path, "template.epp")
-    File.open(filename, "w+") { |f| f.write(content) }
+    File.open(filename, "wb+") { |f| f.write(content) }
 
-    Puppet::Parser::Files.stubs(:find_template).returns(filename)
+    allow(Puppet::Parser::Files).to receive(:find_template).and_return(filename)
     epp_function.call(scope, 'template', args_hash)
   end
 
   def eval_template(content)
     file_path = tmpdir('epp_spec_content')
     filename = File.join(file_path, "template.epp")
-    File.open(filename, "w+") { |f| f.write(content) }
+    File.open(filename, "wb+") { |f| f.write(content) }
 
-    Puppet::Parser::Files.stubs(:find_template).returns(filename)
+    allow(Puppet::Parser::Files).to receive(:find_template).and_return(filename)
     epp_function.call(scope, 'template')
   end
 
   def epp_function()
-    epp_func = scope.compiler.loaders.public_environment_loader.load(:function, 'epp')
+    scope.compiler.loaders.public_environment_loader.load(:function, 'epp')
   end
 end

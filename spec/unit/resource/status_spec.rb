@@ -1,6 +1,4 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/resource/status'
 
 describe Puppet::Resource::Status do
@@ -11,7 +9,7 @@ describe Puppet::Resource::Status do
   let(:status) { Puppet::Resource::Status.new(resource) }
 
   before do
-    resource.stubs(:pathbuilder).returns(containment_path)
+    allow(resource).to receive(:pathbuilder).and_return(containment_path)
   end
 
   it "should compute type and title correctly" do
@@ -32,7 +30,7 @@ describe Puppet::Resource::Status do
       expect(status.send(attr)).to eq("foo")
     end
 
-    it "should have a boolean method for determining whehter it was #{attr}" do
+    it "should have a boolean method for determining whether it was #{attr}" do
       status.send(attr.to_s + "=", "foo")
       expect(status).to send("be_#{attr}")
     end
@@ -43,7 +41,7 @@ describe Puppet::Resource::Status do
   end
 
   it "should set its source description to the resource's path" do
-    resource.expects(:path).returns "/my/path"
+    expect(resource).to receive(:path).and_return("/my/path")
     expect(Puppet::Resource::Status.new(resource).source_description).to eq("/my/path")
   end
 
@@ -53,21 +51,30 @@ describe Puppet::Resource::Status do
 
   [:file, :line].each do |attr|
     it "should copy the resource's #{attr}" do
-      resource.expects(attr).returns "foo"
+      expect(resource).to receive(attr).and_return("foo")
       expect(Puppet::Resource::Status.new(resource).send(attr)).to eq("foo")
     end
   end
 
   it "should copy the resource's tags" do
-    resource.expects(:tags).returns %w{foo bar}
+    resource.tag('foo', 'bar')
     status = Puppet::Resource::Status.new(resource)
     expect(status).to be_tagged("foo")
     expect(status).to be_tagged("bar")
   end
 
   it "should always convert the resource to a string" do
-    resource.expects(:to_s).returns "foo"
+    expect(resource).to receive(:to_s).and_return("foo")
     expect(Puppet::Resource::Status.new(resource).resource).to eq("foo")
+  end
+
+  it 'should set the provider_used correctly' do
+    expected_name = if Puppet::Util::Platform.windows?
+                      'windows'
+                    else
+                      'posix'
+                    end
+    expect(status.provider_used).to eq(expected_name)
   end
 
   it "should support tags" do
@@ -102,8 +109,8 @@ describe Puppet::Resource::Status do
 
   it "fails and records a failure event with a given exception" do
     error = StandardError.new("the message")
-    resource.expects(:log_exception).with(error, "Could not evaluate: the message")
-    status.expects(:fail_with_event).with("the message")
+    expect(resource).to receive(:log_exception).with(error, "Could not evaluate: the message")
+    expect(status).to receive(:fail_with_event).with("the message")
 
     status.failed_because(error)
   end
@@ -146,7 +153,7 @@ describe Puppet::Resource::Status do
   context 'when serializing' do
     let(:status) do
       s = Puppet::Resource::Status.new(resource)
-      s.file = "/foo.rb"
+      s.file = '/foo.rb'
       s.line = 27
       s.evaluation_time = 2.7
       s.tags = %w{one two}
@@ -155,10 +162,12 @@ describe Puppet::Resource::Status do
       s.changed = true
       s.out_of_sync = true
       s.skipped = false
+      s.provider_used = 'provider_used_class_name'
+      s.failed_to_restart = false
       s
     end
 
-    it "should round trip through json" do
+    it 'should round trip through json' do
       expect(status.containment_path).to eq(containment_path)
 
       tripped = Puppet::Resource::Status.from_data_hash(JSON.parse(status.to_json))
@@ -169,6 +178,7 @@ describe Puppet::Resource::Status do
       expect(tripped.line).to eq(status.line)
       expect(tripped.resource).to eq(status.resource)
       expect(tripped.resource_type).to eq(status.resource_type)
+      expect(tripped.provider_used).to eq(status.provider_used)
       expect(tripped.evaluation_time).to eq(status.evaluation_time)
       expect(tripped.tags).to eq(status.tags)
       expect(tripped.time).to eq(status.time)
@@ -176,6 +186,7 @@ describe Puppet::Resource::Status do
       expect(tripped.changed).to eq(status.changed)
       expect(tripped.out_of_sync).to eq(status.out_of_sync)
       expect(tripped.skipped).to eq(status.skipped)
+      expect(tripped.failed_to_restart).to eq(status.failed_to_restart)
 
       expect(tripped.change_count).to eq(status.change_count)
       expect(tripped.out_of_sync_count).to eq(status.out_of_sync_count)

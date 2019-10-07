@@ -29,10 +29,13 @@ class Puppet::Indirector::Terminus
     def indirection=(name)
       if name.is_a?(Puppet::Indirector::Indirection)
         @indirection = name
-      elsif ind = Puppet::Indirector::Indirection.instance(name)
-        @indirection = ind
       else
-        raise ArgumentError, _("Could not find indirection instance %{name} for %{terminus}") % { name: name, terminus: self.name }
+        ind = Puppet::Indirector::Indirection.instance(name)
+        if ind
+          @indirection = ind
+        else
+          raise ArgumentError, _("Could not find indirection instance %{name} for %{terminus}") % { name: name, terminus: self.name }
+        end
       end
     end
 
@@ -46,7 +49,7 @@ class Puppet::Indirector::Terminus
     def inherited(subclass)
       longname = subclass.to_s
       if longname =~ /#<Class/
-        raise Puppet::DevError, "Terminus subclasses must have associated constants"
+        raise Puppet::DevError, _("Terminus subclasses must have associated constants")
       end
       names = longname.split("::")
 
@@ -71,7 +74,7 @@ class Puppet::Indirector::Terminus
       processed_name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_#{i.downcase}" }
 
       if processed_name.empty?
-        raise Puppet::DevError, "Could not discern indirection model from class constant"
+        raise Puppet::DevError, _("Could not discern indirection model from class constant")
       end
 
       # This will throw an exception if the indirection instance cannot be found.
@@ -112,7 +115,7 @@ class Puppet::Indirector::Terminus
     # Return all terminus classes for a given indirection.
     def terminus_classes(indirection_name)
       setup_instance_loading indirection_name
-      instance_loader(indirection_name).files_to_load.map do |file|
+      instance_loader(indirection_name).files_to_load(Puppet.lookup(:current_environment)).map do |file|
         File.basename(file).chomp(".rb").intern
       end
     end
@@ -129,7 +132,7 @@ class Puppet::Indirector::Terminus
   end
 
   def initialize
-    raise Puppet::DevError, "Cannot create instances of abstract terminus types" if self.class.abstract_terminus?
+    raise Puppet::DevError, _("Cannot create instances of abstract terminus types") if self.class.abstract_terminus?
   end
 
   def model

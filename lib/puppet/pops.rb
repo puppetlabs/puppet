@@ -70,6 +70,7 @@ module Puppet
       require 'puppet/pops/evaluator/epp_evaluator'
       require 'puppet/pops/evaluator/collector_transformer'
       require 'puppet/pops/evaluator/puppet_proc'
+      require 'puppet/pops/evaluator/deferred_resolver'
       module Collectors
         require 'puppet/pops/evaluator/collectors/abstract_collector'
         require 'puppet/pops/evaluator/collectors/fixed_set_collector'
@@ -113,8 +114,8 @@ module Puppet
   end
 
   require 'puppet/parser/ast/pops_bridge'
-  require 'puppet/bindings'
   require 'puppet/functions'
+  require 'puppet/datatypes'
 
   Puppet::Pops::Model.register_pcore_types
 end

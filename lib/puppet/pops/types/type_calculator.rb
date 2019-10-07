@@ -108,7 +108,7 @@ class TypeCalculator
   # Answers, does the given callable accept the arguments given in args (an array or a tuple)
   # @param callable [PCallableType] - the callable
   # @param args [PArrayType, PTupleType] args optionally including a lambda callable at the end
-  # @return [Boolan] true if the callable accepts the arguments
+  # @return [Boolean] true if the callable accepts the arguments
   #
   # @api public
   def self.callable?(callable, args)
@@ -159,11 +159,12 @@ class TypeCalculator
       t = type(t)
     end
     t.is_a?(PAnyType) ? t.assignable?(t2) : false
- end
+  end
 
   # Returns an iterable if the t represents something that can be iterated
   def enumerable(t)
-    Puppet.deprecation_warning('TypeCalculator.enumerable is deprecated. Use iterable')
+    #TRANSLATOR 'TypeCalculator.enumerable' and 'iterable' are methods and should not be translated
+    Puppet.deprecation_warning(_('TypeCalculator.enumerable is deprecated. Use iterable'))
     iterable(t)
   end
 
@@ -212,7 +213,7 @@ class TypeCalculator
     when c == FalseClass, c == TrueClass
       type = PBooleanType::DEFAULT
     when c == Class
-      type = PType::DEFAULT
+      type = PTypeType::DEFAULT
     when c == Array
       # Assume array of any
       type = PArrayType::DEFAULT
@@ -347,8 +348,8 @@ class TypeCalculator
     end
 
     # when both are host-classes, reduce to PHostClass[] (since one was not assignable to the other)
-    if t1.is_a?(PHostClassType) && t2.is_a?(PHostClassType)
-      return PHostClassType::DEFAULT
+    if t1.is_a?(PClassType) && t2.is_a?(PClassType)
+      return PClassType::DEFAULT
     end
 
     # when both are resources, reduce to Resource[T] or Resource[] (since one was not assignable to the other)
@@ -427,8 +428,8 @@ class TypeCalculator
     end
 
     # Meta types Type[Integer] + Type[String] => Type[Data]
-    if t1.is_a?(PType) && t2.is_a?(PType)
-      return PType.new(common_type(t1.type, t2.type))
+    if t1.is_a?(PTypeType) && t2.is_a?(PTypeType)
+      return PTypeType.new(common_type(t1.type, t2.type))
     end
 
     if common_rich_data?(t1,t2)
@@ -463,7 +464,7 @@ class TypeCalculator
   # Produces the superclasses of the given class, including the class
   def superclasses(c)
     result = [c]
-    while s = c.superclass
+    while s = c.superclass #rubocop:disable Lint/AssignmentInCondition
       result << s
       c = s
     end
@@ -484,11 +485,11 @@ class TypeCalculator
     reduce_type(enumerable.map {|o| infer(o) })
   end
 
-  # The type of all modules is PType
+  # The type of all modules is PTypeType
   # @api private
   #
   def infer_Module(o)
-    PType::new(PRuntimeType.new(:ruby, o.name))
+    PTypeType::new(PRuntimeType.new(:ruby, o.name))
   end
 
   # @api private
@@ -512,25 +513,30 @@ class TypeCalculator
       o._pcore_type
     else
       name = o.class.name
+      return PRuntimeType.new(:ruby, nil) if name.nil? # anonymous class that doesn't implement PuppetObject is impossible to infer
       ir = Loaders.implementation_registry
       type = ir.nil? ? nil : ir.type_for_module(name)
-      type.nil? ? PRuntimeType.new(:ruby, name) : type
+      return PRuntimeType.new(:ruby, name) if type.nil?
+      if type.is_a?(PObjectType) && type.parameterized?
+        type = PObjectTypeExtension.create_from_instance(type, o)
+      end
+      type
     end
   end
 
-  # The type of all types is PType
+  # The type of all types is PTypeType
   # @api private
   #
   def infer_PAnyType(o)
-    PType.new(o)
+    PTypeType.new(o)
   end
 
-  # The type of all types is PType
+  # The type of all types is PTypeType
   # This is the metatype short circuit.
   # @api private
   #
-  def infer_PType(o)
-    PType.new(o)
+  def infer_PTypeType(o)
+    PTypeType.new(o)
   end
 
   # @api private
@@ -550,7 +556,7 @@ class TypeCalculator
 
   # @api private
   def infer_Regexp(o)
-    PRegexpType.new(o.source)
+    PRegexpType.new(o)
   end
 
   # @api private
@@ -613,12 +619,17 @@ class TypeCalculator
 
   # @api private
   def infer_TrueClass(o)
-    PBooleanType::DEFAULT
+    PBooleanType::TRUE
   end
 
   # @api private
   def infer_FalseClass(o)
-    PBooleanType::DEFAULT
+    PBooleanType::FALSE
+  end
+
+  # @api private
+  def infer_URI(o)
+    PURIType.new(o)
   end
 
   # @api private
@@ -629,7 +640,7 @@ class TypeCalculator
     # A mapping must be made to empty string. A nil value will result in an error later
     title = o.title
     title = '' if :undef == title
-    PType.new(PResourceType.new(o.type.to_s, title))
+    PTypeType.new(PResourceType.new(o.type.to_s, title))
   end
 
   # @api private

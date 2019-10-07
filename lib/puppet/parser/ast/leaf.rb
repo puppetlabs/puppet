@@ -16,6 +16,11 @@ class Puppet::Parser::AST::Leaf < Puppet::Parser::AST
   def to_s
     @value.to_s unless @value.nil?
   end
+
+  def initialize(value: nil, **options)
+    @value = value
+    super(**options)
+  end
 end
 
 # Host names, either fully qualified or just the short name, or even a regex
@@ -28,7 +33,7 @@ class Puppet::Parser::AST::HostName < Puppet::Parser::AST::Leaf
     unless @value.is_a?(Regex)
       @value = @value.to_s.downcase
       if @value =~ /[^-\w.]/
-        raise Puppet::DevError, "'#{@value}' is not a valid hostname"
+        raise Puppet::DevError, _("'%{value}' is not a valid hostname") % { value: @value }
       end
     end
   end
@@ -70,6 +75,6 @@ class Puppet::Parser::AST::Regex < Puppet::Parser::AST::Leaf
   end
 
   def to_s
-    "/#{@value.source}/"
+    Puppet::Pops::Types::PRegexpType.regexp_to_s_with_delimiters(@value)
   end
 end

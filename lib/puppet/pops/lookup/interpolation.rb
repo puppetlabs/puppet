@@ -125,7 +125,7 @@ module Interpolation
     interpolate_method
   end
 
-  # Because the semanitcs of Puppet::Parser::Scope#include? differs from Hash#include?
+  # Because the semantics of Puppet::Parser::Scope#include? differs from Hash#include?
   def nil_in_scope?(scope, key)
     if scope.is_a?(Hash)
       scope.include?(key)
@@ -135,7 +135,8 @@ module Interpolation
   end
 
   def get_method_and_data(data, allow_methods)
-    if match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
+    match = data.match(/^(\w+)\((?:["]([^"]+)["]|[']([^']+)['])\)$/)
+    if match
       fail(Issues::HIERA_INTERPOLATION_METHOD_SYNTAX_NOT_ALLOWED) unless allow_methods
       key = match[1].to_sym
       data = match[2] || match[3] # double or single qouted

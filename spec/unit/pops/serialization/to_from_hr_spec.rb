@@ -30,6 +30,13 @@ module Serialization
     io.rewind
   end
 
+  def write_raw(value)
+    io.reopen
+    expect(Types::TypeFactory.data).to be_instance(value)
+    io << [value].to_json
+    io.rewind
+  end
+
   def read
     from_converter.convert(::JSON.parse(io.read)[0])
   end
@@ -146,6 +153,23 @@ module Serialization
       expect(val2).to eql(val)
     end
 
+    it 'ACII_8BIT String as Binary' do
+      val = Types::PBinaryType::Binary.from_base64('w5ZzdGVuIG1lZCByw7ZzdGVuCg==')
+      strval = val.binary_buffer
+      write(strval)
+      val2 = read
+      expect(val2).to be_a(Types::PBinaryType::Binary)
+      expect(val2).to eql(val)
+    end
+
+    it 'URI' do
+      val = URI('http://bob:ewing@dallas.example.com:8080/oil/baron?crude=cash#leftovers')
+      write(val)
+      val2 = read
+      expect(val2).to be_a(URI)
+      expect(val2).to eql(val)
+    end
+
     it 'Sensitive with rich data' do
       sval = Time::Timestamp.now
       val = Types::PSensitiveType::Sensitive.new(sval)
@@ -251,7 +275,30 @@ module Serialization
         expect(val2).to be_a(Types::PObjectType)
         expect(val2).to eql(val)
       end
+
+      context 'ObjectType' do
+        let(:type) do
+          Types::PObjectType.new({
+            'name' => 'MyType',
+            'type_parameters' => {
+              'x' => Types::PIntegerType::DEFAULT
+            },
+            'attributes' => {
+              'x' => Types::PIntegerType::DEFAULT
+            }
+          })
+        end
+
+        it 'with preserved parameters' do
+          val = type.create(34)._pcore_type
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Types::PObjectTypeExtension)
+          expect(val2).to eql(val)
+        end
+      end
     end
+
 
     it 'Array of rich data' do
       # Sensitive omitted because it doesn't respond to ==
@@ -321,7 +368,7 @@ module Serialization
 
           def self.register_ptype(loader, ir)
             @type = Pcore.create_object_type(loader, ir, DerivedArray, 'DerivedArray', nil, 'values' => Types::PArrayType::DEFAULT)
-              .resolve(Types::TypeParser.singleton, loader)
+              .resolve(loader)
           end
 
           def initialize(values)
@@ -342,7 +389,7 @@ module Serialization
 
           def self.register_ptype(loader, ir)
             @type = Pcore.create_object_type(loader, ir, DerivedHash, 'DerivedHash', nil, '_pcore_init_hash' => Types::PHashType::DEFAULT)
-              .resolve(Types::TypeParser.singleton, loader)
+              .resolve(loader)
           end
 
           def initialize(_pcore_init_hash)
@@ -416,11 +463,18 @@ module Serialization
         expect{ read }.to raise_error(Puppet::Error, 'No implementation mapping found for Puppet Type MyType')
       end
 
-      context "succeds but produces an rich_type hash when deserializer has 'allow_unresolved' set to true" do
+      it 'succeeds and produces a hash when a read __ptype key is something other than a string or a hash' do
+        # i.e. this is for content that is not produced by ToDataHash - writing on-the-wire-format directly
+        # to test that it does not crash.
+        write_raw({'__ptype' => 10, 'x'=> 32})
+        expect(read).to eql({'__ptype'=>10, 'x'=>32})
+      end
+
+      context "succeeds but produces an rich_type hash when deserializer has 'allow_unresolved' set to true" do
         let(:from_converter) { FromDataConverter.new(:allow_unresolved => true) }
         it do
           write(type.create(32))
-          expect(read).to eql({'__pcore_type__'=>'MyType', 'x'=>32})
+          expect(read).to eql({'__ptype'=>'MyType', 'x'=>32})
         end
       end
     end
@@ -428,7 +482,7 @@ module Serialization
     it 'succeeds when deserializer is aware of the referenced type' do
       obj = type.create(32)
       write(obj)
-      loaders.find_loader(nil).expects(:load).with(:type, 'mytype').returns(type)
+      expect(loaders.find_loader(nil)).to receive(:load).with(:type, 'mytype').and_return(type)
       expect(read).to eql(obj)
     end
   end
@@ -465,7 +519,7 @@ module Serialization
     end
 
     context 'and symbol_as_string is set to true' do
-      let(:to_converter) { ToDataConverter.new(:symbol_as_string => true) }
+      let(:to_converter) { ToDataConverter.new(:rich_data => false, :symbol_as_string => true) }
 
       it 'A Hash with Symbol keys is silently converted to hash with String keys' do
         val = { :one => 'one', :two => 'two' }
@@ -474,6 +528,82 @@ module Serialization
           val2 = read
           expect(val2).to be_a(Hash)
           expect(val2).to eql({ 'one' => 'one', 'two' => 'two' })
+        end
+        expect(warnings).to be_empty
+      end
+
+      it 'A Hash with Symbol values is silently converted to hash with String values' do
+        val = { 'one' => :one, 'two' => :two  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'one' => 'one', 'two' => 'two' })
+        end
+        expect(warnings).to be_empty
+      end
+
+      it 'A Hash with default values will have the values converted to string with a warning' do
+        val = { 'key' => :default  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'key' => 'default' })
+        end
+        expect(warnings).to eql(["['key'] contains the special value default. It will be converted to the String 'default'"])
+      end
+    end
+  end
+
+  context 'with rich_data is set to true' do
+    let(:to_converter) { ToDataConverter.new(:message_prefix => 'Test Hash', :rich_data => true) }
+    let(:logs) { [] }
+    let(:warnings) { logs.select { |log| log.level == :warning }.map { |log| log.message } }
+
+    context 'and symbol_as_string is set to true' do
+      let(:to_converter) { ToDataConverter.new(:rich_data => true, :symbol_as_string => true) }
+
+      it 'A Hash with Symbol keys is silently converted to hash with String keys' do
+        val = { :one => 'one', :two => 'two' }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'one' => 'one', 'two' => 'two' })
+        end
+        expect(warnings).to be_empty
+      end
+
+      it 'A Hash with Symbol values is silently converted to hash with String values' do
+        val = { 'one' => :one, 'two' => :two  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'one' => 'one', 'two' => 'two' })
+        end
+        expect(warnings).to be_empty
+      end
+
+      it 'A Hash with __ptype, __pvalue keys will not be taken as a pcore meta tag' do
+        val = { '__ptype' => 42, '__pvalue' => 43  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ '__ptype' => 42, '__pvalue' => 43 })
+        end
+        expect(warnings).to be_empty
+      end
+
+      it 'A Hash with default values will not loose type information' do
+        val = { 'key' => :default  }
+        Puppet::Util::Log.with_destination(Puppet::Test::LogCollector.new(logs)) do
+          write(val)
+          val2 = read
+          expect(val2).to be_a(Hash)
+          expect(val2).to eql({ 'key' => :default })
         end
         expect(warnings).to be_empty
       end
@@ -487,6 +617,14 @@ module Serialization
       val = {}
       val['myself'] = val
       expect { write(val) }.to raise_error(/Endless recursion detected when attempting to serialize value of class Hash/)
+    end
+  end
+
+  context 'will fail when' do
+    it 'the value of a type description is something other than a String or a Hash' do
+      expect do
+        from_converter.convert({ '__ptype' => { '__ptype' => 'Pcore::TimestampType', '__pvalue' => 12345 }})
+      end.to raise_error(/Cannot create a Pcore::TimestampType from a (Fixnum|Integer)/)
     end
   end
 end

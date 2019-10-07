@@ -31,7 +31,31 @@ module Pcore
     instance
   end
 
-  def self.init(loader, ir, for_agent)
+  def self.init_env(loader)
+    if Puppet[:tasks]
+      add_object_type('Task', <<-PUPPET, loader)
+        {
+          attributes => {
+            # Fully qualified name of the task
+            name => { type => Pattern[/\\A[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*\\z/] },
+
+            # List of file references referenced by metadata and their paths on disk.
+            # If there are no implementations listed in metadata, the first file is always
+            # the task executable.
+            files => { type => Array[Struct[name => String, path => String]] },
+
+            # Task metadata
+            metadata => { type => Hash[String, Any] },
+
+            # Map parameter names to their parsed data type
+            parameters => { type => Optional[Hash[Pattern[/\\A[a-z][a-z0-9_]*\\z/], Type]], value => undef },
+          }
+        }
+      PUPPET
+    end
+  end
+
+  def self.init(loader, ir)
     add_alias('Pcore::URI_RX', TYPE_URI_RX, loader)
     add_type(TYPE_URI_ALIAS, loader)
     add_alias('Pcore::SimpleTypeName', TYPE_SIMPLE_TYPE_NAME, loader)
@@ -42,14 +66,23 @@ module Pcore
 
     @type = create_object_type(loader, ir, Pcore, 'Pcore', nil)
 
-    ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore', loader)
-    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model', loader)
-    ir.register_implementation('Puppet::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19', loader)
-    unless for_agent
-      Resource.register_ptypes(loader, ir)
-      Lookup::Context.register_ptype(loader, ir);
-      Lookup::DataProvider.register_types(loader)
-    end
+    ir.register_implementation_namespace('Pcore', 'Puppet::Pops::Pcore')
+    ir.register_implementation_namespace('Puppet::AST', 'Puppet::Pops::Model')
+    ir.register_implementation('Puppet::AST::Locator', 'Puppet::Pops::Parser::Locator::Locator19')
+    Resource.register_ptypes(loader, ir)
+    Lookup::Context.register_ptype(loader, ir);
+    Lookup::DataProvider.register_types(loader)
+
+    add_object_type('Deferred', <<-PUPPET, loader)
+      {
+        attributes => {
+          # Fully qualified name of the function
+          name  => { type => Pattern[/\\A[$]?[a-z][a-z0-9_]*(?:::[a-z][a-z0-9_]*)*\\z/] },
+          arguments => { type => Optional[Array[Any]], value => undef},
+        }
+      }
+    PUPPET
+
   end
 
   # Create and register a new `Object` type in the Puppet Type System and map it to an implementation class
@@ -71,7 +104,7 @@ module Pcore
     init_hash[Types::KEY_ATTRIBUTES] = attributes_hash unless attributes_hash.empty?
     init_hash[Types::KEY_FUNCTIONS] = functions_hash unless functions_hash.empty?
     init_hash[Types::KEY_EQUALITY] = equality unless equality.nil?
-    ir.register_implementation(type_name, impl_class, loader)
+    ir.register_implementation(type_name, impl_class)
     add_type(Types::PObjectType.new(type_name, init_hash), loader)
   end
 
@@ -96,8 +129,7 @@ module Pcore
     aliases.each do |name, type_string|
       add_type(Types::PTypeAliasType.new(name, Types::TypeFactory.type_reference(type_string), nil), loader, name_authority)
     end
-    parser = Types::TypeParser.singleton
-    aliases.each_key.map { |name| loader.load(:type, name).resolve(parser, loader) }
+    aliases.each_key.map { |name| loader.load(:type, name).resolve(loader) }
   end
 end
 end

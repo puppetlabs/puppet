@@ -90,4 +90,11 @@ describe Hiera::Scope do
       expect(scope.include?("calling_module")).to eq(true)
     end
   end
+
+  describe "#call_function" do
+    it "should delegate a call to call_function to the real scope" do
+      expect(real).to receive(:call_function).once
+      scope.call_function('some_function', [1,2,3])
+    end
+  end
 end

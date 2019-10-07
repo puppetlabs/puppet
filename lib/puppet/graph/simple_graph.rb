@@ -208,7 +208,7 @@ class Puppet::Graph::SimpleGraph
 
     # frame struct is vertex, [path]
     stack = [[cycle.first, []]]
-    while frame = stack.shift do
+    while frame = stack.shift do #rubocop:disable Lint/AssignmentInCondition
       if frame[1].member?(frame[0]) then
         found << frame[1] + [frame[0]]
         break if found.length >= max_paths
@@ -229,17 +229,17 @@ class Puppet::Graph::SimpleGraph
     return if number_of_cycles == 0
 
     message = n_("Found %{num} dependency cycle:\n", "Found %{num} dependency cycles:\n", number_of_cycles) % { num: number_of_cycles }
+
     cycles.each do |cycle|
       paths = paths_in_cycle(cycle)
-      message += paths.map{ |path| '(' + path.join(" => ") + ')'}.join("\n") + "\n"
+      message += paths.map{ |path| '(' + path.join(' => ') + ')'}.join('\n') + '\n'
     end
 
     if Puppet[:graph] then
       filename = write_cycles_to_graph(cycles)
       message += _("Cycle graph written to %{filename}.") % { filename: filename }
     else
-      #TRANSLATORS "graph" refers to a command line option and should not be translated
-      #TRANSLATORS OmniGraffle and GraphViz and program names and should not be translated
+      #TRANSLATORS '--graph' refers to a command line option and OmniGraffle and GraphViz are program names and should not be translated
       message += _("Try the '--graph' option and opening the resulting '.dot' file in OmniGraffle or GraphViz")
     end
     Puppet.err(message)
@@ -343,7 +343,8 @@ class Puppet::Graph::SimpleGraph
 
   # Find adjacent edges.
   def adjacent(v, options = {})
-    return [] unless ns = (options[:direction] == :in) ? @in_to[v] : @out_from[v]
+    ns = (options[:direction] == :in) ? @in_to[v] : @out_from[v]
+    return [] unless ns
     (options[:type] == :edges) ? ns.values.flatten : ns.keys
   end
 
@@ -436,14 +437,14 @@ class Puppet::Graph::SimpleGraph
   # undirected Graph.  _params_ can contain any graph property specified in
   # rdot.rb. If an edge or vertex label is a kind of Hash then the keys
   # which match +dot+ properties will be used as well.
-  def to_dot_graph (params = {})
+  def to_dot_graph(params = {})
     params['name'] ||= self.class.name.gsub(/:/,'_')
     fontsize   = params['fontsize'] ? params['fontsize'] : '8'
     graph      = (directed? ? DOT::DOTDigraph : DOT::DOTSubgraph).new(params)
     edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge
     vertices.each do |v|
       name = v.ref
-      params = {'name'     => '"'+name+'"',
+      params = {'name'     => stringify(name),
         'fontsize' => fontsize,
         'label'    => name}
       v_label = v.ref
@@ -451,8 +452,8 @@ class Puppet::Graph::SimpleGraph
       graph << DOT::DOTNode.new(params)
     end
     edges.each do |e|
-      params = {'from'     => '"'+ e.source.ref + '"',
-        'to'       => '"'+ e.target.ref + '"',
+      params = {'from'     => stringify(e.source.ref),
+        'to'       => stringify(e.target.ref),
         'fontsize' => fontsize }
       e_label = e.ref
       params.merge!(e_label) if e_label and e_label.kind_of? Hash
@@ -461,8 +462,12 @@ class Puppet::Graph::SimpleGraph
     graph
   end
 
+  def stringify(s)
+    %("#{s.gsub('"', '\\"')}")
+  end
+
   # Output the dot format as a string
-  def to_dot (params={}) to_dot_graph(params).to_s; end
+  def to_dot(params={}) to_dot_graph(params).to_s; end
 
   # Produce the graph files if requested.
   def write_graph(name)

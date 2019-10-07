@@ -12,7 +12,7 @@ class Puppet::Resource
 
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :strict
-  attr_reader :type, :title, :parameters, :rich_data_enabled
+  attr_reader :type, :title, :parameters
 
   # @!attribute [rw] sensitive_parameters
   #   @api private
@@ -34,7 +34,7 @@ class Puppet::Resource
   TYPE_NODE  = 'Node'.freeze
   TYPE_SITE  = 'Site'.freeze
 
-  PCORE_TYPE_KEY = '__pcore_type__'.freeze
+  PCORE_TYPE_KEY = '__ptype'.freeze
   VALUE_KEY = 'value'.freeze
 
   def self.from_data_hash(data)
@@ -44,11 +44,14 @@ class Puppet::Resource
   end
 
   def initialize_from_hash(data)
-    raise ArgumentError, _('No resource type provided in serialized data') unless type = data['type']
-    raise ArgumentError, _('No resource title provided in serialized data') unless title = data['title']
+    type = data['type']
+    raise ArgumentError, _('No resource type provided in serialized data') unless type
+    title = data['title']
+    raise ArgumentError, _('No resource title provided in serialized data') unless title
     @type, @title = self.class.type_and_title(type, title)
 
-    if params = data['parameters']
+    params = data['parameters']
+    if params
       params = Puppet::Pops::Serialization::FromDataConverter.convert(params)
       @parameters = {}
       params.each { |param, value| self[param] = value }
@@ -56,14 +59,16 @@ class Puppet::Resource
       @parameters = EMPTY_HASH
     end
 
-    if sensitives = data['sensitive_parameters']
+    sensitives = data['sensitive_parameters']
+    if sensitives
       @sensitive_parameters = sensitives.map(&:to_sym)
     else
       @sensitive_parameters = EMPTY_ARRAY
     end
 
-    if tags = data['tags']
-      tags.each { |t| tag(t) }
+    tags = data['tags']
+    if tags
+      tag(*tags)
     end
 
     ATTRIBUTES.each do |a|
@@ -76,6 +81,13 @@ class Puppet::Resource
     "#{@type}[#{@title}]#{to_hash.inspect}"
   end
 
+  # Produces a Data compliant hash of the resource.
+  # The result depends on the --rich_data setting, and the context value
+  # for Puppet.lookup(:stringify_rich), that if it is `true` will use the
+  # ToStringifiedConverter to produce the value per parameter.
+  # (Note that the ToStringifiedConverter output is lossy and should not
+  # be used when producing a catalog serialization).
+  #
   def to_data_hash
     data = {
       'type' => type,
@@ -89,17 +101,27 @@ class Puppet::Resource
 
     data['exported'] ||= false
 
+    # To get stringified parameter values the flag :stringify_rich can be set
+    # in the puppet context.
+    #
+    stringify = Puppet.lookup(:stringify_rich) { false }
+    converter = stringify ? Puppet::Pops::Serialization::ToStringifiedConverter.new : nil
+
     params = {}
     self.to_hash.each_pair do |param, value|
       # Don't duplicate the title as the namevar
       unless param == namevar && value == title
-        params[param.to_s] = Puppet::Resource.value_to_json_data(value)
+        if stringify
+          params[param.to_s] = converter.convert(value)
+        else
+          params[param.to_s] = Puppet::Resource.value_to_json_data(value)
+        end
       end
     end
 
     unless params.empty?
       data['parameters'] = Puppet::Pops::Serialization::ToDataConverter.convert(params, {
-        :rich_data => environment.rich_data?,
+        :rich_data => Puppet.lookup(:rich_data),
         :symbol_as_string => true,
         :local_reference => false,
         :type_by_reference => true,
@@ -251,11 +273,12 @@ class Puppet::Resource
       @sensitive_parameters.replace(type.sensitive_parameters)
     else
       if type.is_a?(Hash)
-        raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
-          "Did you mean (#{(type[:type] || type["type"]).inspect}, #{(type[:title] || type["title"]).inspect }) ?"
+        #TRANSLATORS 'Puppet::Resource.new' should not be translated
+        raise ArgumentError, _("Puppet::Resource.new does not take a hash as the first argument.") + ' ' +
+          _("Did you mean (%{type}, %{title}) ?") %
+              { type: (type[:type] || type["type"]).inspect, title: (type[:title] || type["title"]).inspect }
       end
 
-      environment = attributes[:environment]
       # In order to avoid an expensive search of 'known_resource_types" and
       # to obey/preserve the implementation of the resource's type - if the
       # given type is a resource type implementation (one of):
@@ -277,7 +300,7 @@ class Puppet::Resource
       end
       @exported = false
 
-      # Set things like strictness first.
+      # Set things like environment, strictness first.
       attributes.each do |attr, value|
         next if attr == :parameters
         send(attr.to_s + "=", value)
@@ -289,9 +312,9 @@ class Puppet::Resource
 
       if strict? && rt.nil?
         if self.class?
-          raise ArgumentError, "Could not find declared class #{title}"
+          raise ArgumentError, _("Could not find declared class %{title}") % { title: title }
         else
-          raise ArgumentError, "Invalid resource type #{type}"
+          raise ArgumentError, _("Invalid resource type %{type}") % { type: type }
         end
       end
 
@@ -409,6 +432,8 @@ class Puppet::Resource
   end
 
   # Convert our resource to yaml for Hiera purposes.
+  #
+  # @deprecated Use {to_hiera_hash} instead.
   def to_hierayaml
     # Collect list of attributes to align => and move ensure first
     attr = parameters.keys
@@ -426,6 +451,21 @@ class Puppet::Resource
     }.join
 
     "  %s:\n%s" % [self.title, attributes]
+  end
+
+  # Convert our resource to a hiera hash suitable for serialization.
+  def to_hiera_hash
+    # to_data_hash converts to safe Data types, e.g. no symbols, unicode replacement character
+    h = to_data_hash
+
+    params = h['parameters'] || {}
+    value = params.delete('ensure')
+
+    res = {}
+    res['ensure'] = value if value
+    res.merge!(Hash[params.sort])
+
+    return { h['title'] => res }
   end
 
   # Convert our resource to Puppet code.
@@ -536,7 +576,8 @@ class Puppet::Resource
     arg_types = resource_type.argument_types
     # Parameters is a map from name, to parameter, and the parameter again has name and value
     parameters.each do |name, value|
-      next unless t = arg_types[name.to_s]  # untyped, and parameters are symbols here (aargh, strings in the type)
+      t = arg_types[name.to_s] # untyped, and parameters are symbols here (aargh, strings in the type)
+      next unless t
       unless Puppet::Pops::Types::TypeCalculator.instance?(t, value.value)
         inferred_type = Puppet::Pops::Types::TypeCalculator.infer_set(value.value)
         actual = inferred_type.generalize()
@@ -565,7 +606,9 @@ class Puppet::Resource
         delete(attribute)
       end
 
-      parameters_to_include = options[:parameters_to_include] || []
+      parameters_to_include = resource_type.parameters_to_include
+      parameters_to_include += options[:parameters_to_include] || []
+
       delete(attribute) unless properties.include?(attribute) || parameters_to_include.include?(attribute)
     end
     self
@@ -588,7 +631,7 @@ class Puppet::Resource
     elsif argtitle.nil? && argtype =~ /^([^\[\]]+)\[(.+)\]$/m  then [ $1,                 $2            ]
     elsif argtitle                                             then [ argtype,            argtitle      ]
     elsif argtype.is_a?(Puppet::Type)                          then [ argtype.class.name, argtype.title ]
-    else  raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
+    else  raise ArgumentError, _("No title provided and %{type} is not a valid resource reference") % { type: argtype.inspect }
     end
   end
   private_class_method :extract_type_and_title
@@ -637,8 +680,9 @@ class Puppet::Resource
     h = {}
     type = resource_type
     if type.respond_to?(:title_patterns) && !type.title_patterns.nil?
-      type.title_patterns.each { |regexp, symbols_and_lambdas|
-        if captures = regexp.match(title.to_s)
+      type.title_patterns.each do |regexp, symbols_and_lambdas|
+        captures = regexp.match(title.to_s)  
+        if captures
           symbols_and_lambdas.zip(captures[1..-1]).each do |symbol_and_lambda,capture|
             symbol, proc = symbol_and_lambda
             # Many types pass "identity" as the proc; we might as well give
@@ -657,7 +701,7 @@ class Puppet::Resource
           end
           return h
         end
-      }
+      end
       # If we've gotten this far, then none of the provided title patterns
       # matched. Since there's no way to determine the title then the
       # resource should fail here.

@@ -2,6 +2,13 @@ test_name 'C99578: hiera5 lookup config with interpolated scoped nested variable
   require 'puppet/acceptance/environment_utils.rb'
   extend Puppet::Acceptance::EnvironmentUtils
 
+tag 'audit:medium',
+    'audit:integration',
+    'audit:refactor',  # This test specifically tests interpolation on the master.
+                       # Recommend adding an additonal test that validates
+                       # lookup in a masterless setup.
+    'server'
+
   app_type        = File.basename(__FILE__, '.*')
   tmp_environment = mk_tmp_environment_with_teardown(master, app_type + '1')
   fq_tmp_environmentpath  = "#{environmentpath}/#{tmp_environment}"
@@ -88,7 +95,7 @@ notify{"hiera_array_data2: ${hiera_array_data2}":}
   with_puppet_running_on(master,{}) do
     agents.each do |agent|
       step "agent lookups: #{agent.hostname}, hiera5" do
-        on(agent, puppet('agent', "-t --server #{master.hostname} --environment #{tmp_environment}"),
+        on(agent, puppet('agent', "-t --environment #{tmp_environment}"),
            :accept_all_exit_codes => true) do |result|
           assert(result.exit_code == 2, "agent lookup didn't exit properly: (#{result.exit_code})")
           assert_match(/data: \[from global, from test1/, result.stdout,

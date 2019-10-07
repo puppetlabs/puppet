@@ -8,7 +8,7 @@
 #
 # @api private
 #
-class Puppet::Network::HTTP::Pool
+class Puppet::Network::HTTP::Pool < Puppet::Network::HTTP::BasePool
   FIFTEEN_SECONDS = 15
 
   attr_reader :factory
@@ -19,10 +19,10 @@ class Puppet::Network::HTTP::Pool
     @keepalive_timeout = keepalive_timeout
   end
 
-  def with_connection(site, verify, &block)
+  def with_connection(site, verifier, &block)
     reuse = true
 
-    http = borrow(site, verify)
+    http = borrow(site, verifier)
     begin
       if http.use_ssl? && http.verify_mode != OpenSSL::SSL::VERIFY_PEER
         reuse = false
@@ -34,7 +34,7 @@ class Puppet::Network::HTTP::Pool
       raise detail
     ensure
       if reuse
-        release(site, http)
+        release(site, verifier, http)
       else
         close_connection(site, http)
       end
@@ -69,18 +69,17 @@ class Puppet::Network::HTTP::Pool
   # connection is created, it will be started prior to being returned.
   #
   # @api private
-  def borrow(site, verify)
+  def borrow(site, verifier)
     @pool[site] = active_sessions(site)
-    session = @pool[site].shift
+    index = @pool[site].index { |session| verifier.reusable?(session.verifier) }
+    session = index ? @pool[site].delete_at(index) : nil
     if session
       Puppet.debug("Using cached connection for #{site}")
       session.connection
     else
       http = @factory.create_connection(site)
-      verify.setup_connection(http)
 
-      Puppet.debug("Starting connection for #{site}")
-      http.start
+      start(site, verifier, http)
       setsockopts(http.instance_variable_get(:@socket))
       http
     end
@@ -97,9 +96,9 @@ class Puppet::Network::HTTP::Pool
   # Release a connection back into the pool.
   #
   # @api private
-  def release(site, http)
+  def release(site, verifier, http)
     expiration = Time.now + @keepalive_timeout
-    session = Puppet::Network::HTTP::Session.new(http, expiration)
+    session = Puppet::Network::HTTP::Session.new(http, verifier, expiration)
     Puppet.debug("Caching connection for #{site}")
 
     sessions = @pool[site]

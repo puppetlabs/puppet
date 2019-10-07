@@ -130,6 +130,12 @@ class Puppet::Transaction::Report
   #
   attr_accessor :resources_failed_to_generate
 
+  # @return [Boolean] true if the transaction completed it's evaluate
+  #
+  attr_accessor :transaction_completed
+
+  TOTAL = "total".freeze
+
   def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
@@ -147,8 +153,12 @@ class Puppet::Transaction::Report
   end
 
   # @api private
-  def add_times(name, value)
-    @external_times[name] = value
+  def add_times(name, value, accumulate = true)
+    if @external_times[name] && accumulate
+      @external_times[name] += value
+    else
+      @external_times[name] = value
+    end
   end
 
   # @api private
@@ -171,6 +181,7 @@ class Puppet::Transaction::Report
   # @api private
   def compute_status(resource_metrics, change_metric)
     if resources_failed_to_generate ||
+       !transaction_completed ||
        (resource_metrics["failed"] || 0) > 0 ||
        (resource_metrics["failed_to_restart"] || 0) > 0
       'failed'
@@ -199,7 +210,7 @@ class Puppet::Transaction::Report
     resource_metrics = add_metric(:resources, calculate_resource_metrics)
     add_metric(:time, calculate_time_metrics)
     change_metric = calculate_change_metric
-    add_metric(:changes, {"total" => change_metric})
+    add_metric(:changes, {TOTAL => change_metric})
     add_metric(:events, calculate_event_metrics)
     @status = compute_status(resource_metrics, change_metric)
     @noop_pending = @resource_statuses.any? { |name,res| has_noop_events?(res) }
@@ -213,7 +224,7 @@ class Puppet::Transaction::Report
     @external_times ||= {}
     @host = Puppet[:node_name_value]
     @time = Time.now
-    @report_format = 7
+    @report_format = 10
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @transaction_uuid = transaction_uuid
@@ -227,6 +238,7 @@ class Puppet::Transaction::Report
     @noop = Puppet[:noop]
     @noop_pending = false
     @corrective_change = false
+    @transaction_completed = false
   end
 
   # @api private
@@ -237,30 +249,31 @@ class Puppet::Transaction::Report
     @transaction_uuid = data['transaction_uuid']
     @environment = data['environment']
     @status = data['status']
+    @transaction_completed = data['transaction_completed']
     @noop = data['noop']
     @noop_pending = data['noop_pending']
     @host = data['host']
     @time = data['time']
     @corrective_change = data['corrective_change']
 
-    if master_used = data['master_used']
-      @master_used = master_used
+    if data['master_used']
+      @master_used = data['master_used']
     end
 
-    if catalog_uuid = data['catalog_uuid']
-      @catalog_uuid = catalog_uuid
+    if data['catalog_uuid']
+      @catalog_uuid = data['catalog_uuid']
     end
 
-    if job_id = data['job_id']
-      @job_id = job_id
+    if data['job_id']
+      @job_id = data['job_id']
     end
 
-    if code_id = data['code_id']
-      @code_id = code_id
+    if data['code_id']
+      @code_id = data['code_id']
     end
 
-    if cached_catalog_status = data['cached_catalog_status']
-      @cached_catalog_status = cached_catalog_status
+    if data['cached_catalog_status']
+      @cached_catalog_status = data['cached_catalog_status']
     end
 
     if @time.is_a? String
@@ -298,6 +311,7 @@ class Puppet::Transaction::Report
       'report_format' => @report_format,
       'puppet_version' => @puppet_version,
       'status' => @status,
+      'transaction_completed' => @transaction_completed,
       'noop' => @noop,
       'noop_pending' => @noop_pending,
       'environment' => @environment,
@@ -337,9 +351,9 @@ class Puppet::Transaction::Report
 
       report[key].keys.sort { |a,b|
         # sort by label
-        if a == :total
+        if a == TOTAL
           1
-        elsif b == :total
+        elsif b == TOTAL
           -1
         else
           report[key][a].to_s <=> report[key][b].to_s
@@ -367,7 +381,7 @@ class Puppet::Transaction::Report
       metric.values.each do |metric_name, label, value|
         report[key][metric_name.to_s] = value
       end
-      report[key]["total"] = 0 unless key == "time" or report[key].include?("total")
+      report[key][TOTAL] = 0 unless key == "time" or report[key].include?(TOTAL)
     end
     (report["time"] ||= {})["last_run"] = Time.now.tv_sec
     report
@@ -385,9 +399,15 @@ class Puppet::Transaction::Report
   #
   def exit_status
     status = 0
-    status |= 2 if @metrics["changes"]["total"] > 0
-    status |= 4 if @metrics["resources"]["failed"] > 0
-    status |= 4 if @metrics["resources"]["failed_to_restart"] > 0
+    if @metrics["changes"] && @metrics["changes"][TOTAL] &&
+        @metrics["resources"] && @metrics["resources"]["failed"] &&
+        @metrics["resources"]["failed_to_restart"]
+      status |= 2 if @metrics["changes"][TOTAL] > 0
+      status |= 4 if @metrics["resources"]["failed"] > 0
+      status |= 4 if @metrics["resources"]["failed_to_restart"] > 0
+    else
+      status = -1
+    end
     status
   end
 
@@ -408,7 +428,7 @@ class Puppet::Transaction::Report
     metrics = Hash.new(0)
     %w{total failure success}.each { |m| metrics[m] = 0 }
     resource_statuses.each do |name, status|
-      metrics["total"] += status.events.length
+      metrics[TOTAL] += status.events.length
       status.events.each do |event|
         metrics[event.status] += 1
       end
@@ -419,7 +439,7 @@ class Puppet::Transaction::Report
 
   def calculate_resource_metrics
     metrics = {}
-    metrics["total"] = resource_statuses.length
+    metrics[TOTAL] = resource_statuses.length
 
     # force every resource key in the report to be present
     # even if no resources is in this given state
@@ -439,15 +459,12 @@ class Puppet::Transaction::Report
   def calculate_time_metrics
     metrics = Hash.new(0)
     resource_statuses.each do |name, status|
-      type = Puppet::Resource.new(name).type
-      metrics[type.to_s.downcase] += status.evaluation_time if status.evaluation_time
+      metrics[status.resource_type.downcase] += status.evaluation_time if status.evaluation_time
     end
 
     @external_times.each do |name, value|
       metrics[name.to_s.downcase] = value
     end
-
-    metrics["total"] = metrics.values.inject(0) { |a,b| a+b }
 
     metrics
   end

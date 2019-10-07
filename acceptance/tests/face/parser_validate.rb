@@ -1,4 +1,9 @@
 test_name 'parser validate' do
+
+tag 'audit:medium',
+    'audit:unit'   # Parser validation should be core to ruby
+                   # and platform agnostic.
+
   require 'puppet/acceptance/environment_utils'
   extend Puppet::Acceptance::EnvironmentUtils
   require 'puppet/acceptance/temp_file_utils'
@@ -7,6 +12,7 @@ test_name 'parser validate' do
   app_type = File.basename(__FILE__, '.*')
 
   agents.each do |agent|
+    skip_test('this test fails on windows French due to Cygwin/UTF Issues - PUP-8319,IMAGES-492') if agent['platform'] =~ /windows/ && agent['locale'] == 'fr'
 
     step 'manifest with parser function call' do
       if agent.platform !~ /windows/
@@ -39,8 +45,8 @@ notice 42 =~ MyInteger
       tmp_manifest = get_test_file_path(agent, "#{app_type}_broken.pp")
       on(agent, puppet("parser validate #{tmp_manifest}"), :accept_all_exit_codes => true) do |result|
         assert_equal(result.exit_code, 1, 'parser validate did not exit with 1 upon parse failure')
-        expected = /Error: Could not parse for environment production: This Name has no effect\. A value was produced and then forgotten \(one or more preceding expressions may have the wrong form\) at .*_broken\.pp:1:1/
-        assert_match(expected, result.output, "parser validate did not output correctly: '#{result.output}'. expected: '#{expected.to_s}'")
+        expected = /Error: Could not parse for environment production: This Name has no effect\. A value was produced and then forgotten \(one or more preceding expressions may have the wrong form\) \(file: .*_broken\.pp, line: 1, column: 1\)/
+        assert_match(expected, result.output, "parser validate did not output correctly: '#{result.output}'. expected: '#{expected.to_s}'") unless agent['locale'] == 'ja'
       end
     end
 

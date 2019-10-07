@@ -1,7 +1,6 @@
 # A module to make logging a bit easier.
 require 'puppet/util/log'
 require 'puppet/error'
-require 'puppet/util/multi_match.rb'
 
 require 'facter'
 
@@ -50,12 +49,13 @@ module Logging
   #    to take advantage of the backtrace logging.
   def log_exception(exception, message = :default, options = {})
     trace = Puppet[:trace] || options[:trace]
+    level = options[:level] || :err
     if message == :default && exception.is_a?(Puppet::ParseErrorWithIssue)
       # Retain all detailed info and keep plain message and stacktrace separate
       backtrace = []
       build_exception_trace(backtrace, exception, trace)
       Puppet::Util::Log.create({
-          :level => options[:level] || :err,
+          :level => level,
           :source => log_source,
           :message => exception.basic_message,
           :issue_code => exception.issue_code,
@@ -67,7 +67,7 @@ module Logging
           :node => exception.node
         }.merge(log_metadata))
     else
-      err(format_exception(exception, message, trace))
+      send_log(level, format_exception(exception, message, trace))
     end
   end
 
@@ -146,15 +146,12 @@ module Logging
     key = options[:key]
     file = options[:file]
     line = options[:line]
-    raise(Puppet::DevError, "Need either :file and :line, or :key") if (key.nil?) && (file.nil? || line.nil?)
+    #TRANSLATORS the literals ":file", ":line", and ":key" should not be translated
+    raise Puppet::DevError, _("Need either :file and :line, or :key") if (key.nil?) && (file.nil? || line.nil?)
 
     key ||= "#{file}:#{line}"
     issue_deprecation_warning(message, key, file, line, false)
   end
-  MM = MultiMatch
-  FILE_AND_LINE = MM::TUPLE
-  FILE_NO_LINE  = MM.new(MM::NOT_NIL, nil).freeze
-  NO_FILE_LINE  = MM.new(nil, MM::NOT_NIL).freeze
 
   # Logs a (non deprecation) warning once for a given key.
   #
@@ -162,29 +159,30 @@ module Logging
   #   kind must be one of the defined kinds for the Puppet[:disable_warnings] setting.
   # @param message [String] The message to log (logs via warning)
   # @param key [String] Key used to make this warning unique
-  # @param file [String,nil] the File related to the warning
-  # @param line [Integer,nil] the Line number related to the warning
+  # @param file [String,:default,nil] the File related to the warning
+  # @param line [Integer,:default,nil] the Line number related to the warning
   #   warning as unique
+  # @param level [Symbol] log level to use, defaults to :warning
   #
   # Either :file and :line and/or :key must be passed.
-  def warn_once(kind, key, message, file = nil, line = nil)
+  def warn_once(kind, key, message, file = nil, line = nil, level = :warning)
     return if Puppet[:disable_warnings].include?(kind)
     $unique_warnings ||= {}
     if $unique_warnings.length < 100 then
       if (! $unique_warnings.has_key?(key)) then
         $unique_warnings[key] = message
-        call_trace =
-        case MM.new(file, line)
-        when FILE_AND_LINE
-          _("\n   (at %{file}:%{line})") % { file: file, line: line }
-        when FILE_NO_LINE
-          _("\n   (in %{file})") % { file: file }
-        when NO_FILE_LINE
-          _("\n   (in unknown file, line %{line})") % { line: line }
-        else
-          _("\n   (file & line not available)")
-        end
-        warning("#{message}#{call_trace}")
+        call_trace = if file == :default and line == :default
+                       # Suppress the file and line number output
+                       ''
+                     else
+                       error_location_str = Puppet::Util::Errors.error_location(file, line)
+                       if error_location_str.empty?
+                         "\n   " + _('(file & line not available)')
+                       else
+                         "\n   %{error_location}" % { error_location: error_location_str }
+                       end
+                     end
+        send_log(level, "#{message}#{call_trace}")
       end
     end
   end
@@ -275,17 +273,17 @@ module Logging
   def issue_deprecation_warning(message, key, file, line, use_caller)
     return if Puppet[:disable_warnings].include?('deprecations')
     $deprecation_warnings ||= {}
-    if $deprecation_warnings.length < 100 then
+    if $deprecation_warnings.length < 100
       key ||= (offender = get_deprecation_offender)
-      if (! $deprecation_warnings.has_key?(key)) then
+      unless $deprecation_warnings.has_key?(key)
         $deprecation_warnings[key] = message
         # split out to allow translation
-        unknown = _('unknown')
-        call_trace = use_caller ?
-          (offender || get_deprecation_offender).join('; ') :
-          "#{file || unknown}:#{line || unknown}"
-        #TRANSLATORS error message with origin location
-        warning(_("%{message}\n   (at %{call_trace})") % { message: message, call_trace: call_trace })
+        call_trace = if use_caller
+                       _("(location: %{location})") % { location: (offender || get_deprecation_offender).join('; ') }
+                     else
+                       Puppet::Util::Errors.error_location_with_unknowns(file, line)
+                     end
+        warning("%{message}\n   %{call_trace}" % { message: message, call_trace: call_trace })
       end
     end
   end

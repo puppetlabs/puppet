@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet/indirector/request'
@@ -20,7 +19,7 @@ describe Puppet::Indirector::Request do
     end
 
     it "should use the name of the provided instance as its key if an instance is provided as the key instead of a string" do
-      instance = mock 'instance', :name => "mykey"
+      instance = double('instance', :name => "mykey")
       request = Puppet::Indirector::Request.new(:ind, :method, nil, instance)
       expect(request.key).to eq("mykey")
       expect(request.instance).to equal(instance)
@@ -195,25 +194,25 @@ describe Puppet::Indirector::Request do
   end
 
   it "should look use the Indirection class to return the appropriate indirection" do
-    ind = mock 'indirection'
-    Puppet::Indirector::Indirection.expects(:instance).with(:myind).returns ind
+    ind = double('indirection')
+    expect(Puppet::Indirector::Indirection).to receive(:instance).with(:myind).and_return(ind)
     request = Puppet::Indirector::Request.new(:myind, :method, :key, nil)
 
     expect(request.indirection).to equal(ind)
   end
 
   it "should use its indirection to look up the appropriate model" do
-    ind = mock 'indirection'
-    Puppet::Indirector::Indirection.expects(:instance).with(:myind).returns ind
+    ind = double('indirection')
+    expect(Puppet::Indirector::Indirection).to receive(:instance).with(:myind).and_return(ind)
     request = Puppet::Indirector::Request.new(:myind, :method, :key, nil)
 
-    ind.expects(:model).returns "mymodel"
+    expect(ind).to receive(:model).and_return("mymodel")
 
     expect(request.model).to eq("mymodel")
   end
 
   it "should fail intelligently when asked to find a model but the indirection cannot be found" do
-    Puppet::Indirector::Indirection.expects(:instance).with(:myind).returns nil
+    expect(Puppet::Indirector::Indirection).to receive(:instance).with(:myind).and_return(nil)
     request = Puppet::Indirector::Request.new(:myind, :method, :key, nil)
 
     expect { request.model }.to raise_error(ArgumentError)
@@ -232,13 +231,12 @@ describe Puppet::Indirector::Request do
   end
 
   it "should use its uri, if it has one, as its description" do
-    Puppet.override({
-      :environments => Puppet::Environments::Static.new(
-        Puppet::Node::Environment.create(:baz, [])
-    )},
-      "Static loader for spec") do
+    Puppet.override(
+      { :environments => Puppet::Environments::Static.new(Puppet::Node::Environment.create(:baz, [])) },
+      "Static loader for spec"
+    ) do
       expect(Puppet::Indirector::Request.new(:myind, :find, "foo://bar/baz", nil).description).to eq("foo://bar/baz")
-      end
+    end
   end
 
   it "should use its indirection name and key, if it has no uri, as its description" do
@@ -260,8 +258,6 @@ describe Puppet::Indirector::Request do
   end
 
   it "should use the current environment when none is provided" do
-    configured = Puppet::Node::Environment.create(:foo, [])
-
     Puppet[:environment] = "foo"
 
     expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil).environment).to eq(Puppet.lookup(:current_environment))
@@ -444,23 +440,25 @@ describe Puppet::Indirector::Request do
 
       context "when SRV returns servers" do
         before :each do
-          @dns_mock = mock('dns')
-          Resolv::DNS.expects(:new).returns(@dns_mock)
+          @dns_mock = double('dns')
+          expect(Resolv::DNS).to receive(:new).and_return(@dns_mock)
 
           @port = 7205
-          @host = '_x-puppet._tcp.example.com'
-          @srv_records = [Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @host)]
+          @target = 'example.com'
+          record = Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @target)
+          record.instance_variable_set(:@ttl, 10)
+          @srv_records = [record]
 
-          @dns_mock.expects(:getresources).
+          expect(@dns_mock).to receive(:getresources).
             with("_x-puppet._tcp.#{Puppet.settings[:srv_domain]}", Resolv::DNS::Resource::IN::SRV).
-            returns(@srv_records)
+            and_return(@srv_records)
         end
 
         it "yields a request using the server and port from the SRV record" do
           count = 0
           rval = @request.do_request do |got|
             count += 1
-            expect(got.server).to eq('_x-puppet._tcp.example.com')
+            expect(got.server).to eq('example.com')
             expect(got.port).to eq(7205)
 
             @block_return
@@ -477,7 +475,7 @@ describe Puppet::Indirector::Request do
           rval = @request.do_request(:puppet, 'puppet', 8140) do |got|
             count += 1
 
-            if got.server == '_x-puppet._tcp.example.com' then
+            if got.server == 'example.com' then
               raise SystemCallError, "example failure"
             else
               second_pass = got
@@ -515,6 +513,47 @@ describe Puppet::Indirector::Request do
 
     it "should be remote if node and ip are set" do
       expect(request(:node => 'example.com', :ip => '127.0.0.1')).to be_remote
+    end
+  end
+
+  describe "failover" do
+    it "should use the provided failover host and port" do
+      Puppet.override(:server => 'myhost', :serverport => 666) do
+        req = Puppet::Indirector::Request.new('node', 'find', 'localhost', nil)
+        req.do_request() do |request|
+          expect(request.server).to eq('myhost')
+          expect(request.port).to eq(666)
+        end
+      end
+    end
+
+    it "should not use raw settings when failover fails" do
+      Puppet.override(:server => nil, :serverport => nil) do
+        req = Puppet::Indirector::Request.new('node', 'find', 'localhost', nil)
+        req.do_request() do |request|
+          expect(request.server).to be_nil
+          expect(request.port).to be_nil
+          expect(Puppet.settings[:server]).not_to be_nil
+          expect(Puppet.settings[:masterport]).not_to be_nil
+        end
+      end
+    end
+
+    it "should use server_list when set and failover has not occured" do
+      Puppet.settings[:server_list] = [['myhost',666]]
+      req = Puppet::Indirector::Request.new('node', 'find', 'localhost', nil)
+      req.do_request() do |request|
+        expect(request.server).to eq('myhost')
+        expect(request.port).to eq(666)
+      end
+    end
+
+    it "should use server when server_list is not set" do
+      req = Puppet::Indirector::Request.new('node', 'find', 'localhost', nil)
+      req.do_request() do |request|
+        expect(request.server).to eq(Puppet.settings[:server])
+        expect(request.port).to eq(Puppet.settings[:masterport])
+      end
     end
   end
 end

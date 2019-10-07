@@ -1,8 +1,7 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 describe Puppet::Settings::PathSetting do
-  subject { described_class.new(:settings => mock('settings'), :desc => "test") }
+  subject { described_class.new(:settings => double('settings'), :desc => "test") }
 
   context "#munge" do
     it "should expand all path elements" do
@@ -16,7 +15,7 @@ describe Puppet::Settings::PathSetting do
       expect(subject.munge(nil)).to be_nil
     end
 
-    context "on Windows", :if => Puppet.features.microsoft_windows? do
+    context "on Windows", :if => Puppet::Util::Platform.windows? do
       it "should convert \\ to /" do
         expect(subject.munge('C:\test\directory')).to eq('C:/test/directory')
       end

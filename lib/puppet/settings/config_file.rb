@@ -25,8 +25,7 @@ class Puppet::Settings::ConfigFile
       allowed_section_names << 'main' unless allowed_section_names.include?('main')
     end
 
-    # in Ruby 1.9.3 strings are not UTF-8 by default, so ensure text is treated properly
-    ini = Puppet::Settings::IniFile.parse(StringIO.new(text).set_encoding(Encoding::UTF_8))
+    ini = Puppet::Settings::IniFile.parse(text.encode(Encoding::UTF_8))
     unique_sections_in(ini, file, allowed_section_names).each do |section_name|
       section = Section.new(section_name.to_sym)
       result.with_section(section)
@@ -83,7 +82,15 @@ private
   def unique_sections_in(ini, file, allowed_section_names)
     ini.section_lines.collect do |section|
       if !allowed_section_names.empty? && !allowed_section_names.include?(section.name)
-        raise(Puppet::Error, _("Illegal section '%{name}' in config file %{file} at line %{line}. The only valid puppet.conf sections are: [%{allowed_sections}]. Please use the directory environments feature to specify environments. (See https://docs.puppet.com/puppet/latest/reference/environments.html)") % { name: section.name, file: file, line: section.line_number, allowed_sections: allowed_section_names.join(", ") })
+        error_location_str = Puppet::Util::Errors.error_location(file, section.line_number)
+        message = _("Illegal section '%{name}' in config file at %{error_location}.") %
+            { name: section.name, error_location: error_location_str }
+        #TRANSLATORS 'puppet.conf' is the name of the puppet configuration file and should not be translated.
+        message += ' ' + _("The only valid puppet.conf sections are: [%{allowed_sections_list}].") %
+            { allowed_sections_list: allowed_section_names.join(", ") }
+        message += ' ' + _("Please use the directory environments feature to specify environments.")
+        message += ' ' + _("(See https://puppet.com/docs/puppet/latest/environments_about.html)")
+        raise(Puppet::Error, message)
       end
       section.name
     end.uniq
@@ -102,7 +109,8 @@ private
 
     # Check to see if this is a file argument and it has extra options
     begin
-      if value.is_a?(String) and options = extract_fileinfo(value)
+      options = extract_fileinfo(value) if value.is_a?(String)
+      if options
         section.with_setting(var, options[:value], Meta.new(options[:owner],
                                                             options[:group],
                                                             options[:mode]))
@@ -123,16 +131,18 @@ private
     value = string.sub(/\{\s*([^}]+)\s*\}/) do
       params = $1
       params.split(/\s*,\s*/).each do |str|
-        if str =~ /^\s*(\w+)\s*=\s*([\w\d]+)\s*$/
+        if str =~ /^\s*(\w+)\s*=\s*([\w]+)\s*$/
           param, value = $1.intern, $2
           result[param] = value
-          raise ArgumentError, "Invalid file option '#{param}'" unless [:owner, :mode, :group].include?(param)
+          unless [:owner, :mode, :group].include?(param)
+            raise ArgumentError, _("Invalid file option '%{parameter}'") % { parameter: param }
+          end
 
           if param == :mode and value !~ /^\d+$/
-            raise ArgumentError, "File modes must be numbers"
+            raise ArgumentError, _("File modes must be numbers")
           end
         else
-          raise ArgumentError, "Could not parse '#{string}'"
+          raise ArgumentError, _("Could not parse '%{string}'") % { string: string }
         end
       end
       ''

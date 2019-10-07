@@ -19,7 +19,7 @@ Find
 Get the submitted CRL
 
     GET /puppet-ca/v1/certificate_revocation_list/:nodename?environment=:environment
-    Accept: s
+    Accept: text/plain
 
 ### Supported HTTP Methods
 
@@ -27,7 +27,7 @@ GET
 
 ### Supported Response Formats
 
-s (denotes a string of text)
+`text/plain`
 
 The returned CRL is always in the `.pem` format.
 

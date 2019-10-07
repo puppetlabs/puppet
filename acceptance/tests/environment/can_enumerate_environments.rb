@@ -1,5 +1,9 @@
 test_name "Can enumerate environments via an HTTP endpoint"
 
+tag 'audit:high',
+    'audit:integration',
+    'server'
+
 confine :except, :platform => /osx/ # see PUP-4820
 
 def master_port(agent)
@@ -27,7 +31,7 @@ def curl_master_from(agent, path, headers = '', &block)
   on agent, "#{curl_base} '#{url}'", &block
 end
 
-master_user = on(master, puppet("master --configprint user")).stdout.strip
+master_user = puppet_config(master, 'user', section: 'master')
 environments_dir = create_tmpdir_for_user master, "environments"
 apply_manifest_on(master, <<-MANIFEST)
 File {

@@ -1,7 +1,12 @@
 require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package do
-  desc "OpenSolaris image packaging system. See pkg(5) for more information."
+  desc "OpenSolaris image packaging system. See pkg(5) for more information.
+
+    This provider supports the `install_options` attribute, which allows
+    command-line flags to be passed to pkg. These options should be specified as an 
+    array where each element is either a string or a hash."
+
   # https://docs.oracle.com/cd/E19963-01/html/820-6572/managepkgs.html
   # A few notes before we start:
   # Opensolaris pkg has two slightly different formats (as of now.)
@@ -18,6 +23,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   has_feature :upgradable
 
   has_feature :holdable
+
+  has_feature :install_options
 
   commands :pkg => "/usr/bin/pkg"
 
@@ -43,7 +50,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       when '-'
         {:status => 'known'}
       else
-        raise ArgumentError, _('Unknown format %s: %s[%s]') % [self.name, flags, flags[0..0]]
+        raise ArgumentError, _('Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]') %
+            { resource_name: self.name, full_flags: flags, bad_flag: flags[0..0] }
       end
     ).merge(
       case flags[1..1]
@@ -52,7 +60,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       when '-'
         {}
       else
-        raise ArgumentError, _('Unknown format %s: %s[%s]') % [self.name, flags, flags[1..1]]
+        raise ArgumentError, _('Unknown format %{resource_name}: %{full_flags}[%{bad_flag}]') %
+            { resource_name: self.name, full_flags: flags, bad_flag: flags[1..1] }
       end
     )
   end
@@ -82,7 +91,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     when /known/
       {:status => 'known'}
     else
-      raise ArgumentError, _('Unknown format %s: %s') % [self.name, state]
+      raise ArgumentError, _('Unknown format %{resource_name}: %{state}') % { resource_name: self.name, state: state }
     end
   end
 
@@ -101,7 +110,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       {:publisher => $1, :name => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
 
     else
-      raise ArgumentError, _('Unknown line format %s: %s') % [self.name, line]
+      raise ArgumentError, _('Unknown line format %{resource_name}: %{parse_line}') % { resource_name: self.name, parse_line: line }
     end).merge({:provider => self.name})
   end
 
@@ -150,7 +159,9 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       end
       potential_matches.each{ |p|
         command = is == :absent ? 'install' : 'update'
-        status = exec_cmd(command(:pkg), command, '-n', "#{name}@#{p[:ensure]}")[:exit]
+        options = ['-n']
+        options.concat(join_options(@resource[:install_options])) if @resource[:install_options]
+        status = exec_cmd(command(:pkg), command, *options, "#{name}@#{p[:ensure]}")[:exit]
         case status
         when 4
           # if the first installable match would cause no changes, we're in sync
@@ -161,7 +172,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
           return false
         end
       }
-      raise Puppet::DevError, "No version of #{name} matching #{should} is installable, even though the package is currently installed"
+      raise Puppet::DevError, _("No version of %{name} matching %{should} is installable, even though the package is currently installed") %
+          { name: name, should: should }
     end
 
     false
@@ -171,12 +183,15 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # http://defect.opensolaris.org/bz/show_bug.cgi?id=19159%
   # notes that we can't use -Ha for the same even though the manual page reads that way.
   def latest
+    # Refresh package metadata before looking for latest versions
+    pkg(:refresh)
+
     lines = pkg(:list, "-Hvn", @resource[:name]).split("\n")
 
     # remove certificate expiration warnings from the output, but report them
     cert_warnings = lines.select { |line| line =~ /^Certificate/ }
     unless cert_warnings.empty?
-      Puppet.warning("pkg warning: #{cert_warnings.join(', ')}")
+      Puppet.warning(_("pkg warning: %{warnings}") % { warnings: cert_warnings.join(', ') })
     end
 
     lst = lines.select { |line| line !~ /^Certificate/ }.map { |line| self.class.parse_line(line) }
@@ -184,8 +199,12 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     # Now we know there is a newer version. But is that installable? (i.e are there any constraints?)
     # return the first known we find. The only way that is currently available is to do a dry run of
     # pkg update and see if could get installed (`pkg update -n res`).
-    known = lst.find {|p| p[:status] == 'known' }
-    return known[:ensure] if known and exec_cmd(command(:pkg), 'update', '-n', @resource[:name])[:exit].zero?
+    known = lst.find { |p| p[:status] == 'known' }
+    if known
+      options = ['-n']
+      options.concat(join_options(@resource[:install_options])) if @resource[:install_options]
+      return known[:ensure] if exec_cmd(command(:pkg), 'update', *options, @resource[:name])[:exit].zero?
+    end
 
     # If not, then return the installed, else nil
     (lst.find {|p| p[:status] == 'installed' } || {})[:ensure]
@@ -207,6 +226,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     if Puppet::Util::Package.versioncmp(Facter.value(:operatingsystemrelease), '11.2') >= 0
       args.push('--sync-actuators-timeout', '900')
     end
+    args.concat(join_options(@resource[:install_options])) if @resource[:install_options]
     unless should.is_a? Symbol
       name += "@#{should}"
     end
