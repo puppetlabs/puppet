@@ -41,11 +41,20 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   end
 
   def self.pip_version(command)
+    version = nil
     execpipe [command, '--version'] do |process|
       process.collect do |line|
-        return line.strip.match(/^pip (\d+\.\d+\.?\d*).*$/)[1]
+        md = line.strip.match(/^pip (\d+\.\d+\.?\d*).*$/)
+        if md
+          version = md[1]
+          break
+        end
       end
     end
+
+    raise Puppet::Error, _("Cannot resolve pip version") unless version
+
+    version
   end
 
   # Return an array of structured information about every installed package
