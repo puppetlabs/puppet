@@ -105,7 +105,7 @@ Puppet::Type.newtype(:interface) do
 
       def value_to_s(value)
         value = [value] unless value.is_a?(Array)
-        value.map{ |v| "#{v[1].to_s}/#{v[0]} #{v[2]}"}.join(",")
+        value.map{ |v| "#{v[1]}/#{v[0]} #{v[2]}"}.join(",")
       end
 
       def change_to_s(currentvalue, newvalue)

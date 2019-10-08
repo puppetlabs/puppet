@@ -19,9 +19,7 @@ etc.), prevent Puppet from making changes (`noop`), and change logging verbosity
       params << param
     }
 
-    params.sort { |a,b|
-      a.to_s <=> b.to_s
-    }.each { |param|
+    params.sort_by(&:to_s).each { |param|
       str << markdown_header(param.to_s, 3)
       str << scrub(Puppet::Type.metaparamdoc(param))
       str << "\n\n"

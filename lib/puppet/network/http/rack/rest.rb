@@ -52,7 +52,7 @@ class Puppet::Network::HTTP::RackREST
   # Retrieve all headers from the http request, as a map.
   def headers(request)
     headers = request.env.select {|k,v| k.start_with? 'HTTP_'}.inject({}) do |m, (k,v)|
-      m[k.sub(/^HTTP_/, '').gsub('_','-').downcase] = v
+      m[k.sub(/^HTTP_/, '').tr('_','-').downcase] = v
       m
     end
     headers['content-type'] = request.content_type
@@ -113,7 +113,7 @@ class Puppet::Network::HTTP::RackREST
         # in contrast to the environment variable, the client cert is passed in
         # as single string, therefore restore the certificate to a valid pem
         # encoded certificate
-        cert.gsub!(/ /, "\n")
+        cert.tr!(' ', "\n")
         cert.gsub!(/BEGIN\nCERT/, "BEGIN CERT")
         cert.gsub!(/END\nCERT/, "END CERT")
         cert = Puppet::SSL::Certificate.from_instance(OpenSSL::X509::Certificate.new(cert))

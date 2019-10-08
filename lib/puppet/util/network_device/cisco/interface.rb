@@ -27,8 +27,8 @@ class Puppet::Util::NetworkDevice::Cisco::Interface
     :etherchannel  => [9, ["channel-group %s", "port group %s"]],
     :ipaddress     => [10,
       lambda do |prefix,ip,option|
-        ip.ipv6? ? "ipv6 address #{ip.to_s}/#{prefix} #{option}" :
-                   "ip address #{ip.to_s} #{netmask(Socket::AF_INET,prefix)}"
+        ip.ipv6? ? "ipv6 address #{ip}/#{prefix} #{option}" :
+                   "ip address #{ip} #{netmask(Socket::AF_INET,prefix)}"
       end],
     :ensure        => [11, lambda { |value| value == :present ? "no shutdown" : "shutdown" } ]
   }

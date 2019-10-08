@@ -45,7 +45,7 @@ module Puppet
       #
       def load_vendored
         Dir.entries(vendor_dir).each do |entry|
-          if entry.match(/load_(\w+?)\.rb$/)
+          if entry =~ /load_(\w+?)\.rb$/
             load_entry entry
           end
         end

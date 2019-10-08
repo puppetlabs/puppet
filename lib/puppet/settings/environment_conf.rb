@@ -159,6 +159,7 @@ class Puppet::Settings::EnvironmentConf
 
     return valid
   end
+  private_class_method :validate
 
   def get_setting(setting_name, default = nil)
     value = raw_setting(setting_name)

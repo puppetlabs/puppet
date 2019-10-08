@@ -507,8 +507,7 @@ class Puppet::Node::Environment
     [self.class, name, full_modulepath, manifest].hash
   end
 
-  private
-
+  # not private so it can be called in tests
   def self.extralibs()
     if Puppet::Util.get_env('PUPPETLIB')
       split_path(Puppet::Util.get_env('PUPPETLIB'))
@@ -517,11 +516,14 @@ class Puppet::Node::Environment
     end
   end
 
+  private
+
   def self.expand_dirs(dirs)
     dirs.collect do |dir|
       Puppet::FileSystem.expand_path(dir)
     end
   end
+  private_class_method :expand_dirs
 
   # Reparse the manifests for the given environment
   #

@@ -74,7 +74,7 @@ class Puppet::Reports
 
     # Use this method so they all get loaded
     instance_loader(:report).loadall
-    loaded_instances(:report).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
+    loaded_instances(:report).sort_by(&:to_s).each do |name|
       mod = self.report(name)
       docs << "#{name}\n#{"-" * name.to_s.length}\n"
 

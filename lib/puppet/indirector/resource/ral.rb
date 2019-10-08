@@ -25,9 +25,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
       res.to_resource
     end.find_all do |res|
       conditions.all? {|property, value| res.to_resource[property].to_s == value.to_s}
-    end.sort do |a,b|
-      a.title <=> b.title
-    end
+    end.sort_by(&:title)
   end
 
   def save( request )

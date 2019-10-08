@@ -180,7 +180,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       # If :ensure contains a version, use that instead of looking it up.
       # This allows for installing packages with the same stem, but multiple
       # version such as openldap-server.
-      if /(\d[^-]*)$/.match(@resource[:ensure].to_s)
+      if @resource[:ensure].to_s =~ /(\d[^-]*)$/
         use_version = @resource[:ensure]
       else
         use_version = get_version

@@ -79,7 +79,7 @@ module Puppet
             begin
               ca.verify(host) unless requests.include?(host)
             rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError => details
-              verify_error = "(#{details.to_s})"
+              verify_error = "(#{details})"
             end
 
             if verify_error

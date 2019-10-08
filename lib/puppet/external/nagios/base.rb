@@ -250,7 +250,7 @@ class Nagios::Base
     if map.include?(param)
       return map[param]
     else
-      return "nagios-" + param.id2name.gsub(/_/,'-')
+      return "nagios-" + param.id2name.tr('_','-')
     end
   end
 

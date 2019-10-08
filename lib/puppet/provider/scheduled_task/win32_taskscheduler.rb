@@ -200,12 +200,12 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
   def user=(value)
     self.fail("Invalid user: #{value}") unless Puppet::Util::Windows::SID.name_to_sid(value)
 
-    if value.to_s.downcase != 'system'
-      task.set_account_information(value, resource[:password])
-    else
+    if value.to_s.casecmp('system').zero?
       # Win32::TaskScheduler treats a nil/empty username & password as
       # requesting the SYSTEM account.
       task.set_account_information(nil, nil)
+    else
+      task.set_account_information(value, resource[:password])
     end
   end
 

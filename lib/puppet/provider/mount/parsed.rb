@@ -56,15 +56,15 @@ Puppet::Type.type(:mount).provide(
       filesystem_index = 0
       ret = Array.new
       lines.each_with_index do |line,i|
-        if line.match(%r{^\S+:})
+        if line =~ %r{^\S+:}
           # Begin new filesystem stanza and save the index
           ret[filesystem_index] = filesystem_stanza.join("\n") if filesystem_stanza
           filesystem_stanza = Array(line)
           filesystem_index = i
           # Eat the preceding blank line
-          ret[i-1] = nil if i > 0 and ret[i-1] and ret[i-1].match(%r{^\s*$})
+          ret[i-1] = nil if i > 0 and ret[i-1] and ret[i-1] =~ %r{^\s*$}
           nil
-        elsif line.match(%r{^(\s*\*.*|\s*)$})
+        elsif line =~ %r{^(\s*\*.*|\s*)$}
           # Just a comment or blank line; add in place
           ret[i] = line
         else
@@ -75,7 +75,7 @@ Puppet::Type.type(:mount).provide(
       # Add the final stanza to the return
       ret[filesystem_index] = filesystem_stanza.join("\n") if filesystem_stanza
       ret = ret.compact.flatten
-      ret.reject { |line| line.match(/^\* HEADER/) }
+      ret.reject { |line| line =~ /^\* HEADER/ }
     end
     def self.header
       super.gsub(/^#/,'*')
@@ -104,7 +104,7 @@ Puppet::Type.type(:mount).provide(
         special_options = Array.new
         result[:name] = memo[:name].sub(%r{:\s*$},'').strip
         memo.each do |_,k_v|
-          if k_v and k_v.is_a?(String) and k_v.match("=")
+          if k_v and k_v.is_a?(String) and k_v.include?("=")
             attr_name, attr_value = k_v.split("=",2).map(&:strip)
             if attr_map_name = property_map[attr_name.to_sym]
               # These are normal "options" options (see `man filesystems`)
@@ -135,10 +135,10 @@ Puppet::Type.type(:mount).provide(
       def to_line(result)
         output = Array.new
         output << "#{result[:name]}:"
-        if result[:device] and result[:device].match(%r{^/})
+        if result[:device] and result[:device] =~ %r{^/}
           output << "\tdev\t\t= #{result[:device]}"
         elsif result[:device] and result[:device] != :absent
-          if ! result[:device].match(%{^.+:/})
+          if ! result[:device] =~ %{^.+:/}
             # Just skip this entry; it was malformed to begin with
             Puppet.err _("Mount[%{name}]: Field 'device' must be in the format of <absolute path> or <host>:<absolute path>") % { name: result[:name] }
             return result[:line]
@@ -161,7 +161,7 @@ Puppet::Type.type(:mount).provide(
         if result[:options]
           options = result[:options].split(',')
           special_options = options.select do |x|
-            x.match('=') and
+            x.include?('=') and
               ["account", "boot", "check", "free", "mount", "size", "type",
                "vol", "log", "quota"].include? x.split('=').first
           end

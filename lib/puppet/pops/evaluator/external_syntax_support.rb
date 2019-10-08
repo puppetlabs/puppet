@@ -35,10 +35,11 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
   def lookup_keys_for_syntax(syntax)
     segments = syntax.split(/\+/)
     result = []
-    begin
+    loop do
       result << segments.join("+")
       segments.shift
-    end until segments.empty?
+      break if segments.empty?
+    end
     result
   end
 

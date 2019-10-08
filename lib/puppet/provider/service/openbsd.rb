@@ -79,7 +79,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   def running?
     output = execute([command(:rcctl), "check", @resource[:name]],
                      :failonfail => false, :combine => false, :squelch => false).chomp
-    return true if output.match(/\(ok\)/)
+    return true if output =~ /\(ok\)/
   end
 
   # Uses the wrapper to prevent failure when the service is not running;

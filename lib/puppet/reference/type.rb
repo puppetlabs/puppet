@@ -49,9 +49,7 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
 
   }
 
-  types.sort { |a,b|
-    a.to_s <=> b.to_s
-  }.each { |name,type|
+  types.sort_by(&:to_s).each { |name,type|
 
     str << "
 
@@ -69,9 +67,7 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
     end
 
     docs = {}
-    type.validproperties.sort { |a,b|
-      a.to_s <=> b.to_s
-    }.reject { |sname|
+    type.validproperties.sort_by(&:to_s).reject { |sname|
       property = type.propertybyname(sname)
       property.nodoc
     }.each { |sname|
@@ -91,9 +87,7 @@ Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types a
     }
 
     str << markdown_header("Parameters", 4) + "\n"
-    type.parameters.sort { |a,b|
-      a.to_s <=> b.to_s
-    }.each { |type_name, param|
+    type.parameters.sort_by(&:to_s).each { |type_name, param|
       docs[type_name] = scrub(type.paramdoc(type_name))
     }
 

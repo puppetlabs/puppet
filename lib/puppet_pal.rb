@@ -828,8 +828,8 @@ module Pal
           end
         end
 
-      rescue Puppet::ParseErrorWithIssue, Puppet::Error
-        # already logged and handled by the compiler for these two cases
+      rescue Puppet::Error
+        # already logged and handled by the compiler, including Puppet::ParseErrorWithIssue
         raise
 
       rescue => detail

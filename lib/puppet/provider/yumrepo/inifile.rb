@@ -76,8 +76,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     # Use directories in reposdir if they are set instead of default
     if reposdir
       # Follow the code from the yum/config.py
-      reposdir.gsub!("\n", ' ')
-      reposdir.gsub!(',', ' ')
+      reposdir.tr!("\n", ' ')
+      reposdir.tr!(',', ' ')
       dirs = reposdir.split
     end
     dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }

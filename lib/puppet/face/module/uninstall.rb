@@ -61,7 +61,7 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     when_invoked do |name, options|
-      name = name.gsub('/', '-')
+      name = name.tr('/', '-')
 
       Puppet::ModuleTool.set_option_defaults options
       message = if options[:version]

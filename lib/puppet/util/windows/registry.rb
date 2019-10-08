@@ -46,11 +46,12 @@ module Puppet::Util::Windows
 
       subkey_max_len, _ = reg_query_info_key_max_lengths(key)
 
-      begin
+      loop do
         subkey, filetime = reg_enum_key(key, index, subkey_max_len)
         yield subkey, filetime if !subkey.nil?
         index += 1
-      end while !subkey.nil?
+        break if subkey.nil?
+      end
 
       index
     end
@@ -93,11 +94,12 @@ module Puppet::Util::Windows
 
       _, value_max_len = reg_query_info_key_max_lengths(key)
 
-      begin
+      loop do
         subkey, type, data = reg_enum_value(key, index, value_max_len)
         yield subkey, type, data if !subkey.nil?
         index += 1
-      end while !subkey.nil?
+        break if subkey.nil?
+      end
 
       index
     end
@@ -314,7 +316,7 @@ module Puppet::Util::Windows
 
     def sanitize(value)
       # Replace null bytes with a space
-      value.gsub!("\x00", ' ')
+      value.tr!("\x00", ' ')
       value
     end
 

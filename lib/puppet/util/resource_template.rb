@@ -53,7 +53,7 @@ class Puppet::Util::ResourceTemplate
 
   def set_resource_variables
     @resource.to_hash.each do |param, value|
-      var = "@#{param.to_s}"
+      var = "@#{param}"
       instance_variable_set(var, value)
     end
   end

@@ -213,8 +213,8 @@ class Puppet::Graph::RbTreeMap
           :color => @color,
         }
       }
-      h.merge!(:left => left.to_hash) if @left
-      h.merge!(:right => right.to_hash) if @right
+      h[:left] = left.to_hash if @left
+      h[:right] = right.to_hash if @right
       h
     end
 
