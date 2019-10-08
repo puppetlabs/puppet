@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     ).merge(
       case flags[1..1]
       when 'f'
-        {:ensure => 'held'}
+        {:mark => :hold}
       when '-'
         {}
       else
@@ -105,6 +105,10 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     else
       raise ArgumentError, _('Unknown line format %{resource_name}: %{parse_line}') % { resource_name: self.name, parse_line: line }
     end).merge({:provider => self.name})
+  end
+
+  def deprecated_hold
+    hold
   end
 
   def hold
@@ -201,8 +205,6 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def install(nofail = false)
     name = @resource[:name]
     should = @resource[:ensure]
-    # always unhold if explicitly told to install/update
-    self.unhold
     is = self.query
     if is[:ensure].to_sym == :absent
       command = 'install'
@@ -216,7 +218,12 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     unless should.is_a? Symbol
       name += "@#{should}"
     end
-    r = exec_cmd(command(:pkg), command, *args, name)
+    self.unhold if self.properties[:mark] == :hold
+    begin
+      r = exec_cmd(command(:pkg), command, *args, name)
+    ensure
+      self.hold if @resource[:mark] == :hold
+    end
     return r if nofail
     raise Puppet::Error, _("Unable to update %{package}") % { package: r[:out] } if r[:exit] != 0
   end
@@ -230,7 +237,13 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       cmd << '-r'
     end
     cmd << @resource[:name]
-    pkg cmd
+    self.unhold if self.properties[:mark] == :hold
+    begin
+      pkg cmd
+    rescue StandardError, LoadError => e
+      self.hold if self.properties[:mark] == :hold
+      raise e
+    end
   end
 
   # update the package to the latest version available

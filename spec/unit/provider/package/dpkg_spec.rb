@@ -126,7 +126,10 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
 
     it "considers the package held if its state is 'hold'" do
       dpkg_query_execution_returns(bash_installed_output.gsub("install","hold"))
-      expect(provider.query[:ensure]).to eq(:held)
+      query=provider.query
+      expect(query[:ensure]).to eq("4.2-5ubuntu3")
+      expect(query[:mark]).to eq(:hold)
+
     end
 
     context "parsing tests" do
@@ -184,14 +187,15 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
 
     it "uses 'dpkg -i' to install the package" do
       expect(resource).to receive(:[]).with(:source).and_return("mypackagefile")
+      expect(provider).to receive(:properties).and_return({:mark => :hold})
       expect(provider).to receive(:unhold)
       expect(provider).to receive(:dpkg).with(any_args, "-i", "mypackagefile")
-
       provider.install
     end
 
     it "keeps old config files if told to do so" do
       expect(resource).to receive(:[]).with(:configfiles).and_return(:keep)
+      expect(provider).to receive(:properties).and_return({:mark => :hold})
       expect(provider).to receive(:unhold)
       expect(provider).to receive(:dpkg).with("--force-confold", any_args)
 
@@ -200,6 +204,7 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
 
     it "replaces old config files if told to do so" do
       expect(resource).to receive(:[]).with(:configfiles).and_return(:replace)
+      expect(provider).to receive(:properties).and_return({:mark => :hold})
       expect(provider).to receive(:unhold)
       expect(provider).to receive(:dpkg).with("--force-confnew", any_args)
 
@@ -207,6 +212,7 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
     end
 
     it "ensures any hold is removed" do
+      expect(provider).to receive(:properties).and_return({:mark => :hold})
       expect(provider).to receive(:unhold).once
       expect(provider).to receive(:dpkg)
       provider.install
@@ -222,18 +228,28 @@ describe Puppet::Type.type(:package).provider(:dpkg) do
     end
 
     it "installs first if package is not present and ensure holding" do
-
       allow(provider).to receive(:execute)
       allow(provider).to receive(:package_not_installed?).and_return(true)
       expect(provider).to receive(:install).once
-      provider.hold
+      expect(provider).to receive(:hold)
+      provider.deprecated_hold
+    end
+
+
+    it "skips install new package if hold is true" do
+      allow(provider).to receive(:execute)
+      allow(provider).to receive(:package_not_installed?).and_return(true)
+      expect(provider).to receive(:install).once
+      expect(provider).to receive(:hold)
+      provider.deprecated_hold
     end
 
     it "skips install new package if package is allready installed" do
       allow(provider).to receive(:execute)
       allow(provider).to receive(:package_not_installed?).and_return(false)
       expect(provider).not_to receive(:install)
-      provider.hold
+      expect(provider).to receive(:hold)
+      provider.deprecated_hold
     end
 
     it "executes dpkg --set-selections when holding" do

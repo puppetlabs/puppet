@@ -54,9 +54,8 @@ module Puppet
     feature :holdable, "The provider is capable of placing packages on hold
         such that they are not automatically upgraded as a result of
         other package dependencies unless explicit action is taken by
-        a user or another package. Held is considered a superset of
-        installed.",
-      :methods => [:hold]
+        a user or another package.",
+      :methods => [:hold, :unhold]
     feature :install_only, "The provider accepts options to only install packages never update (kernels, etc.)"
     feature :install_options, "The provider accepts options to be
       passed to the installer command."
@@ -101,7 +100,7 @@ module Puppet
       end
 
       newvalue(:held, :event => :package_held, :required_features => :holdable) do
-        provider.hold
+        provider.deprecated_hold
       end
 
       # Alias the 'present' value.
@@ -609,6 +608,60 @@ module Puppet
         @parameters[:ensure].value != :held
 
         provider.reinstall
+      end
+    end
+
+    newproperty(:mark, :required_features => :holdable) do
+      mark_doc='Valid values are: hold/none'
+      desc <<-EOT
+        Set to hold to tell Debian apt/Solaris pkg to hold the package version
+
+        #{mark_doc}
+        Default is "none". Mark can be specified with or without `ensure`,
+        if `ensure` is missing will default to "present".
+
+        Mark cannot be specified together with "purged", "absent" or "held"
+        values for `ensure`.
+      EOT
+      newvalues(:hold, :none)
+      munge do |value|
+        case value
+        when "hold", :hold
+          :hold
+        when "none", :none
+          :none
+        else
+          raise ArgumentError, _('Invalid hold value %{value}. %{doc}') % { value: value.inspect, doc: mark_doc}
+        end
+      end
+
+      def insync?(is)
+        @should[0] == is
+      end
+
+      def should
+        @should[0] if @should && @should.is_a?(Array) && @should.size == 1
+      end
+
+      def retrieve
+        provider.properties[:mark]
+      end
+
+      def sync
+        if @should[0] == :hold
+          provider.hold
+        else
+          provider.unhold
+        end
+      end
+    end
+
+    validate do
+      if :held == @parameters[:ensure].should
+        warning '"ensure=>held" has been deprecated and will be removed in a future version, use "mark=hold" instead'
+      end
+      if @parameters[:mark] && [:absent, :purged, :held].include?(@parameters[:ensure].should)
+        raise ArgumentError, _('You cannot use "mark" property while "ensure" is one of ["absent", "purged", "held"]')
       end
     end
   end

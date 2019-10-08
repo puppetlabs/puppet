@@ -37,7 +37,12 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
 
     cmd << :install << str
 
-    finkcmd(cmd)
+    self.unhold if self.properties[:mark] == :hold
+    begin
+      finkcmd(cmd)
+    ensure
+      self.hold if @resource[:mark] == :hold
+    end
   end
 
   # What's the latest package version available?
@@ -70,10 +75,22 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
   end
 
   def uninstall
-    finkcmd "-y", "-q", :remove, @model[:name]
+    self.unhold if self.properties[:mark] == :hold
+    begin
+      finkcmd "-y", "-q", :remove, @model[:name]
+    rescue StandardError, LoadError => e
+      self.hold if self.properties[:mark] == :hold
+      raise e
+    end
   end
 
   def purge
-    aptget '-y', '-q', 'remove', '--purge', @resource[:name]
+    self.unhold if self.properties[:mark] == :hold
+    begin
+      aptget '-y', '-q', 'remove', '--purge', @resource[:name]
+    rescue StandardError, LoadError => e
+      self.hold if self.properties[:mark] == :hold
+      raise e
+    end
   end
 end
