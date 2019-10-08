@@ -42,7 +42,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
 
   def self.pip_version(command)
     version = nil
-    execpipe [command, '--version'] do |process|
+    execpipe [quote(command), '--version'] do |process|
       process.collect do |line|
         md = line.strip.match(/^pip (\d+\.\d+\.?\d*).*$/)
         if md
@@ -219,4 +219,13 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
   def install_options
     join_options(@resource[:install_options])
   end
+
+  def self.quote(path)
+    if path.include?(" ")
+      "\"#{path}\""
+    else
+      path
+    end
+  end
+  private_class_method :quote
 end
