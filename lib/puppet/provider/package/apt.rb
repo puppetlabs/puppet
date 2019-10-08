@@ -70,7 +70,12 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     cmd += install_options if @resource[:install_options]
     cmd << :install << str
 
-    aptget(*cmd)
+    self.unhold if self.properties[:hold]
+    begin
+      aptget(*cmd)
+    ensure
+      self.hold if @resource[:hold] == :true
+    end
   end
 
   # What's the latest package version available?
@@ -100,12 +105,24 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   def uninstall
     self.run_preseed if @resource[:responsefile]
-    aptget "-y", "-q", :remove, @resource[:name]
+    self.unhold if self.properties[:hold]
+    begin
+      aptget "-y", "-q", :remove, @resource[:name]
+    rescue StandardError, LoadError => e
+      self.hold if self.properties[:hold]
+      raise e
+    end
   end
 
   def purge
     self.run_preseed if @resource[:responsefile]
-    aptget '-y', '-q', :remove, '--purge', @resource[:name]
+    self.unhold if self.properties[:hold]
+    begin
+      aptget '-y', '-q', :remove, '--purge', @resource[:name]
+    rescue StandardError, LoadError => e
+      self.hold if self.properties[:hold]
+      raise e
+    end
     # workaround a "bug" in apt, that already removed packages are not purged
     super
   end

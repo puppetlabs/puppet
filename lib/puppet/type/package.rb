@@ -6,6 +6,7 @@
 
 require 'puppet/parameter/package_options'
 require 'puppet/parameter/boolean'
+require 'puppet/property/boolean'
 
 module Puppet
   Type.newtype(:package) do
@@ -54,9 +55,8 @@ module Puppet
     feature :holdable, "The provider is capable of placing packages on hold
         such that they are not automatically upgraded as a result of
         other package dependencies unless explicit action is taken by
-        a user or another package. Held is considered a superset of
-        installed.",
-      :methods => [:hold]
+        a user or another package.",
+      :methods => [:hold, :unhold]
     feature :install_only, "The provider accepts options to only install packages never update (kernels, etc.)"
     feature :install_options, "The provider accepts options to be
       passed to the installer command."
@@ -101,7 +101,7 @@ module Puppet
       end
 
       newvalue(:held, :event => :package_held, :required_features => :holdable) do
-        provider.hold
+        provider.deprecated_hold
       end
 
       # Alias the 'present' value.
@@ -609,6 +609,64 @@ module Puppet
         @parameters[:ensure].value != :held
 
         provider.reinstall
+      end
+    end
+
+    HOLD_DOC="Valid values are: \"yes\"/\"true\"/\"no\"/\"false\""
+    newproperty(:hold, :required_features => :holdable) do
+      desc <<-EOT
+        Set to true to tell Debian apt/Solaris pkg to hold the package version
+        
+        #{HOLD_DOC}
+        Default is "false". Hold can be specified with or without `ensure`,
+        if `ensure` is missing will default to "present".
+
+        Hold cannot be specified together with "purged", "absent" or "held"
+        values for `ensure`.
+      EOT
+      newvalues(:true, :false, :yes, :no)
+      munge do |value|
+        case value
+        when true, :true, 'true', :yes, 'yes'
+          :true
+        when false, :false, 'false', :no, 'no'
+          :false
+        else
+          raise ArgumentError, _("Invalid hold value %{value}. %{doc}") % { value: value.inspect, doc: HOLD_DOC}
+        end
+      end
+
+      def insync?(is)
+        (@should[0] == :true) == is
+      end
+
+      def should_to_s(value)
+        (value == :true).to_s
+      end
+
+      def should
+        @should[0] if @should && @should.is_a?(Array) && @should.size == 1
+      end
+
+      def retrieve
+        provider.properties[:hold]
+      end
+
+      def sync
+        if @should[0] == :true
+          provider.hold
+        else
+          provider.unhold
+        end
+      end
+    end
+
+    validate do
+      if :held == @parameters[:ensure].should
+        warning "\"ensure=>held\" has been deprecated and will be removed in a future version, use \"hold=true\" instead "
+      end
+      if @parameters[:hold] && [:absent, :purged, :held].include?(@parameters[:ensure].should)
+        raise ArgumentError, _("You cannot use \"hold\" property while \"ensure\" is one of [\"absent\", \"purged\", \"held\"]")
       end
     end
   end
