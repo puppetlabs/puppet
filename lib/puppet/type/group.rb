@@ -96,7 +96,7 @@ module Puppet
 
       def insync?(current)
         if provider.respond_to?(:members_insync?)
-          return provider.members_insync?(current, munge_members_value(@should))
+          return provider.members_insync?(current, @should)
         end
 
         super(current)
@@ -136,7 +136,6 @@ module Puppet
       def munge_members_value(value)
         return [] if value == :absent
         return value.split(',') if value.is_a?(String)
-        return value.first.split(',') if value.is_a?(Array) && value.size == 1
 
         value
       end

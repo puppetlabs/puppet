@@ -68,7 +68,7 @@ Puppet::Type.type(:group).provide :libuser, :parent => Puppet::Provider::NameSer
   end
 
   def members_insync?(current, should)
-    current.sort == @resource.parameter(:members).actual_should(current, should)
+    current.uniq.sort == @resource.parameter(:members).actual_should(current, should)
   end
 
   def members_to_s(current)
