@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'puppet/application/ssl'
-require 'webmock/rspec'
 require 'openssl'
 require 'puppet/test_ca'
 
@@ -23,11 +22,6 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
   end
 
   before do
-    WebMock.disable_net_connect!
-
-    allow_any_instance_of(Net::HTTP).to receive(:start)
-    allow_any_instance_of(Net::HTTP).to receive(:finish)
-
     Puppet.settings.use(:main)
     Puppet[:certname] = name
     Puppet[:vardir] = tmpdir("ssl_testing")
@@ -126,8 +120,11 @@ describe Puppet::Application::Ssl, unless: Puppet::Util::Platform.jruby? do
     end
 
     it 'registers OIDs' do
+      stub_request(:put, %r{puppet-ca/v1/certificate_request/#{name}}).to_return(status: 200)
+      stub_request(:get, %r{puppet-ca/v1/certificate/#{name}}).to_return(status: 404)
+
       expect(Puppet::SSL::Oids).to receive(:register_puppet_oids)
-      expects_command_to_fail(%r{Failed to submit certificate request})
+      expects_command_to_pass(%r{Submitted certificate request for '#{name}' to https://.*})
     end
 
     it 'submits the CSR and saves it locally' do
