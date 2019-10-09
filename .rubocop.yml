@@ -213,14 +213,6 @@ Layout/TrailingBlankLines:
 Layout/TrailingWhitespace:
   Enabled: false
 
-# DISABLED since the instances do not seem to indicate any specific errors.
-Lint/AmbiguousOperator:
-  Enabled: false
-
-# DISABLED - the offender is just haskell envy
-Lint/AmbiguousRegexpLiteral:
-  Enabled: false
-
 # DISABLED since for all the checked, we are basically checking nil
 # TODO: Change the checking so that if the variable being assigned to has
 # a value ALREADY, then raise an error.
@@ -229,10 +221,6 @@ Lint/AssignmentInCondition:
 
 # DISABLED
 Lint/BlockAlignment:
-  Enabled: false
-
-# DISABLED
-Lint/DefEndAlignment:
   Enabled: false
 
 Lint/EmptyWhen:
