@@ -253,9 +253,6 @@ Lint/HandleExceptions:
 Lint/InheritException:
   Enabled: false
 
-Lint/LiteralInInterpolation:
-  Enabled: false
-
 Lint/NestedMethodDefinition:
   Enabled: false
 
