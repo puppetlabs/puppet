@@ -137,7 +137,7 @@ module HeredocSupport
       # simply leaves lines that have text in the margin untouched.
       #
       processed_lines = lines.collect {|s| s.gsub(leading_pattern, '') }
-      margin_per_line = processed_lines.length.times.map {|x| lines[x].length - processed_lines[x].length }
+      margin_per_line = Array.new(processed_lines.length) {|x| lines[x].length - processed_lines[x].length }
       lines = processed_lines
     else
       # Array with a 0 per line

@@ -14,11 +14,12 @@ class Puppet::FileSystem::Posix < Puppet::FileSystem::FileImpl
       bsize = stream_blksize(this, stream)
       sa = "".force_encoding('ASCII-8BIT')
       sb = "".force_encoding('ASCII-8BIT')
-      begin
+      loop do
         this.read(bsize, sa)
         stream.read(bsize, sb)
         return true if sa.empty? && sb.empty?
-      end while sa == sb
+        break if sa != sb
+      end
       false
     end
   end

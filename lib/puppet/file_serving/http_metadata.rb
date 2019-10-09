@@ -42,7 +42,7 @@ class Puppet::FileServing::HttpMetadata < Puppet::FileServing::Metadata
     [ @checksum_type, :md5, :sha256, :sha384, :sha512, :sha224, :mtime ].each do |type|
       @checksum_type = type
       @checksum = @checksums[type]
-      return if @checksum
+      break if @checksum
     end
   end
 end

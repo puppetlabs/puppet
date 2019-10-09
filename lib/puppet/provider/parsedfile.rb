@@ -74,7 +74,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     flushed = []
     begin
-      @modified.sort { |a,b| a.to_s <=> b.to_s }.uniq.each do |target|
+      @modified.sort_by(&:to_s).uniq.each do |target|
         Puppet.debug "Flushing #{@resource_type.name} provider target #{target}"
         flushed << target
         flush_target(target)

@@ -24,7 +24,7 @@ module Puppet::Parser::Functions
     Puppet::Util::Log.levels.each do |level|
       newfunction(level,
                   :environment => root_env,
-                  :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
+                  :doc => "Log a message on the server at level #{level}.") do |vals|
         send(level, vals.join(" "))
       end
     end

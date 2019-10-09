@@ -215,7 +215,7 @@ class Parser
     opts[:type] = opts[:type] || type_from_default || :flag
 
     ## fill in :long
-    opts[:long] = opts[:long] ? opts[:long].to_s : name.to_s.gsub("_", "-")
+    opts[:long] = opts[:long] ? opts[:long].to_s : name.to_s.tr("_", "-")
     opts[:long] =
       case opts[:long]
       when /^--([^-].*)$/

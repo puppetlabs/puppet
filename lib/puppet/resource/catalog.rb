@@ -631,7 +631,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       result.add_resource newres
     end
 
-    message = convert.to_s.gsub "_", " "
+    message = convert.to_s.tr "_", " "
     edges.each do |edge|
       # Skip edges between virtual resources.
       next if virtual_not_exported?(edge.source)

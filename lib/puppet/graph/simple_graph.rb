@@ -133,11 +133,12 @@ class Puppet::Graph::SimpleGraph
         else
           if s[:lowlink][vertex] == s[:index][vertex] then
             this_scc = []
-            begin
+            loop do
               top = s[:stack].pop
               s[:seen][top] = false
               this_scc << top
-            end until top == vertex
+              break if top == vertex
+            end
             s[:scc] << this_scc
           end
           recur.pop               # done with this node, finally.
@@ -438,7 +439,7 @@ class Puppet::Graph::SimpleGraph
   # rdot.rb. If an edge or vertex label is a kind of Hash then the keys
   # which match +dot+ properties will be used as well.
   def to_dot_graph(params = {})
-    params['name'] ||= self.class.name.gsub(/:/,'_')
+    params['name'] ||= self.class.name.tr(':','_')
     fontsize   = params['fontsize'] ? params['fontsize'] : '8'
     graph      = (directed? ? DOT::DOTDigraph : DOT::DOTSubgraph).new(params)
     edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge

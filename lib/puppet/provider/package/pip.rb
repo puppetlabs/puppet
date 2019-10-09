@@ -111,7 +111,7 @@ Puppet::Type.type(:package).provide :pip, :parent => ::Puppet::Provider::Package
     self.class.validate_command(command)
 
     self.class.instances(command).each do |pkg|
-      return pkg.properties if @resource[:name].downcase == pkg.name.downcase
+      return pkg.properties if @resource[:name].casecmp(pkg.name).zero?
     end
     return nil
   end

@@ -395,7 +395,7 @@ class Puppet::Util::Log
   end
 
   def to_report
-    "#{time} #{source} (#{level}): #{to_s}"
+    "#{time} #{source} (#{level}): #{self}"
   end
 
   def to_s
