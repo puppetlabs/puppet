@@ -53,6 +53,9 @@ Some flags are meant specifically for interactive use \-\-\- in particular, \'te
 .P
 \'\-\-fingerprint\' is a one\-time flag\. In this mode \'puppet agent\' runs once and displays on the console (and in the log) the current certificate (or certificate request) fingerprint\. Providing the \'\-\-digest\' option allows to use a different digest algorithm to generate the fingerprint\. The main use is to verify that before signing a certificate request on the master, the certificate request the master received is the same as the one the client sent (to prevent against man\-in\-the\-middle attacks when signing certificates)\.
 .
+.P
+\'\-\-skip_tags\' is a flag used to filter resources\. If this is set, then only resources not tagged with the specified tags will be applied\. Values must be comma\-separated\.
+.
 .SH "OPTIONS"
 Note that any Puppet setting that\'s valid in the configuration file is also a valid long argument\. For example, \'server\' is a valid setting, so you can specify \'\-\-server \fIservername\fR\' as an argument\. Boolean settings translate into \'\-\-setting\' and \'\-\-no\-setting\' pairs\.
 .
