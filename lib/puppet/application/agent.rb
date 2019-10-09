@@ -160,6 +160,9 @@ the master, the certificate request the master received is the same as
 the one the client sent (to prevent against man-in-the-middle attacks
 when signing certificates).
 
+'--skip_tags' is a flag used to filter resources. If this is set, then
+only resources not tagged with the specified tags will be applied.
+Values must be comma-separated.
 
 OPTIONS
 -------
