@@ -61,6 +61,6 @@ class Puppet::FileSystem::MemoryFile
   end
 
   def inspect
-    "<Puppet::FileSystem::MemoryFile:#{to_s}>"
+    "<Puppet::FileSystem::MemoryFile:#{self}>"
   end
 end

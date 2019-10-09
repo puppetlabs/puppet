@@ -92,14 +92,6 @@ module Puppet::FileSystem
     @impl.path_string(@impl.basename(assert_path(path)))
   end
 
-  # @return [Integer] the size of the file
-  #
-  # @api public
-  #
-  def self.size(path)
-    @impl.size(assert_path(path))
-  end
-
   # Allows exclusive updates to a file to be made by excluding concurrent
   # access using flock. This means that if the file is on a filesystem that
   # does not support flock, this method will provide no protection.

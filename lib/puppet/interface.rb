@@ -96,7 +96,7 @@ class Puppet::Interface
         if Puppet::Interface::FaceCollection[name, :current]
           raise Puppet::Error, "Could not find version #{version} of #{name}"
         else
-          raise Puppet::Error, "Could not find Puppet Face #{name.to_s}"
+          raise Puppet::Error, "Could not find Puppet Face #{name}"
         end
       end
 
@@ -234,4 +234,5 @@ class Puppet::Interface
     define_method(name, proc)
     instance_method(name)
   end
+  private_class_method :__add_method
 end

@@ -209,7 +209,7 @@ class Puppet::Resource
   end
 
   def stage?
-    @is_stage ||= @type.to_s.downcase == "stage"
+    @is_stage ||= @type.to_s.casecmp("stage").zero?
   end
 
   # Construct a resource from data.

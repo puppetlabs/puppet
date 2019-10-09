@@ -12,21 +12,7 @@ AllCops:
     - 'tasks/**/*'
     - 'ext/suse/puppet.spec'
     - 'lib/puppet/vendor/**/*'
-    - 'lib/puppet/parser/parser.rb'
     - 'lib/puppet/pops/parser/eparser.rb'
-    - 'lib/semantic_puppet/dependency/module_release.rb'
-
-Lint/ConditionPosition:
-  Enabled: true
-
-Lint/ElseLayout:
-  Enabled: true
-
-Lint/UnreachableCode:
-  Enabled: true
-
-Lint/UselessComparison:
-  Enabled: true
 
 # MAYBE useful - no return inside ensure block.
 Lint/EnsureReturn:
@@ -35,18 +21,6 @@ Lint/EnsureReturn:
 # MAYBE useful - errors when rescue {} happens.
 Lint/HandleExceptions:
   Enabled: false
-
-# MAYBE useful - catches while 1
-Lint/LiteralInCondition:
-  Enabled: false
-
-Lint/ShadowingOuterLocalVariable:
-  Enabled: true
-
-# Can catch complicated strings.
-Lint/LiteralInInterpolation:
-  Enabled: true
-
 
 # DISABLED really useless. Detects return as last statement.
 Style/RedundantReturn:
@@ -111,21 +85,10 @@ Lint/EndAlignment:
   Enabled: false
 
 # DISABLED
-Lint/DeprecatedClassMethods:
-  Enabled: false
-
-# DISABLED
-Lint/Loop:
-  Enabled: false
-
-# DISABLED
 Lint/ParenthesesAsGroupedExpression:
   Enabled: false
 
 Lint/RescueException:
-  Enabled: false
-
-Lint/StringConversionInInterpolation:
   Enabled: false
 
 Lint/UnusedBlockArgument:
@@ -133,15 +96,6 @@ Lint/UnusedBlockArgument:
 
 Lint/UnusedMethodArgument:
   Enabled: false
-
-Lint/UselessAccessModifier:
-  Enabled: true
-
-Lint/UselessAssignment:
-  Enabled: true
-
-Lint/Void:
-  Enabled: true
 
 Layout/AccessModifierIndentation:
   Enabled: false
@@ -496,9 +450,6 @@ Layout/SpaceBeforeFirstArg:
 Style/ModuleFunction:
   Enabled: false
 
-Lint/Debugger:
-  Enabled: false
-
 Style/IfWithSemicolon:
   Enabled: false
 
@@ -568,12 +519,6 @@ Metrics/ModuleLength:
 Layout/EmptyLinesAroundMethodBody:
   Enabled: false
 
-Lint/IneffectiveAccessModifier:
-  Enabled: false
-
-Performance/StringReplacement:
-  Enabled: false
-
 Layout/ClosingParenthesisIndentation:
   Enabled: false
 
@@ -607,13 +552,7 @@ Performance/RedundantBlockCall:
 Style/IdenticalConditionalBranches:
   Enabled: false
 
-Performance/RedundantMatch:
-  Enabled: false
-
 Style/CommandLiteral:
-  Enabled: false
-
-Performance/Casecmp:
   Enabled: false
 
 Lint/NestedMethodDefinition:
@@ -622,19 +561,7 @@ Lint/NestedMethodDefinition:
 Layout/SpaceInsideStringInterpolation:
   Enabled: false
 
-Performance/RedundantMerge:
-  Enabled: false
-
-Performance/ReverseEach:
-  Enabled: false
-
 Style/NestedModifier:
-  Enabled: false
-
-Lint/NonLocalExitFromIterator:
-  Enabled: false
-
-Performance/Count:
   Enabled: false
 
 Style/NestedParenthesizedCalls:
@@ -643,25 +570,10 @@ Style/NestedParenthesizedCalls:
 Layout/RescueEnsureAlignment:
   Enabled: false
 
-Lint/DuplicateMethods:
-  Enabled: false
-
-Performance/RangeInclude:
-  Enabled: false
-
 Style/TrailingUnderscoreVariable:
   Enabled: false
 
 Lint/LiteralInInterpolation:
-  Enabled: false
-
-Performance/DoubleStartEndWith:
-  Enabled: false
-
-Performance/RedundantSortBy:
-  Enabled: true
-
-Performance/TimesMap:
   Enabled: false
 
 Layout/InitialIndentation:
@@ -709,9 +621,6 @@ Layout/MultilineMethodDefinitionBraceLayout:
 Layout/SpaceInsidePercentLiteralDelimiters:
   Enabled: false
 
-Lint/EmptyExpression:
-  Enabled: true
-
 Lint/EmptyWhen:
   Enabled: false
 
@@ -721,14 +630,7 @@ Lint/InheritException:
 Lint/ScriptPermission:
   Enabled: false
 
-Lint/ShadowedException:
-  Enabled: false
-
 Metrics/BlockLength:
-  Enabled: false
-
-# TODO PUP-8003
-Performance/CompareWithBlock:
   Enabled: false
 
 Style/EmptyCaseCondition:
@@ -778,9 +680,6 @@ GetText/DecorateFunctionMessage:
 
 GetText/DecorateString:
   Enabled: false
-
-GetText/DecorateStringFormattingUsingInterpolation:
-  Enabled: true
 
 GetText/DecorateStringFormattingUsingPercent:
   Enabled: false

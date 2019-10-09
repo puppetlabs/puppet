@@ -23,7 +23,7 @@ module Puppet::Pops::Parser::InterpolationSupport
     value,terminator = slurp_dqstring()
     text = value
     after = scn.pos
-    while true
+    loop do
       case terminator
       when '"'
         # simple case, there was no interpolation, return directly
@@ -63,7 +63,7 @@ module Puppet::Pops::Parser::InterpolationSupport
     value,terminator = slurp_dqstring
     text = value
     after = scn.pos
-    while true
+    loop do
       case terminator
       when '"'
         # simple case, there was no further interpolation, return directly
@@ -107,7 +107,7 @@ module Puppet::Pops::Parser::InterpolationSupport
     value,terminator = slurp_uqstring()
     text = value
     after = scn.pos
-    while true
+    loop do
       case terminator
       when ''
         # simple case, there was no interpolation, return directly
@@ -147,7 +147,7 @@ module Puppet::Pops::Parser::InterpolationSupport
     value,terminator = slurp_uqstring
     text = value
     after = scn.pos
-    while true
+    loop do
       case terminator
       when ''
         # simple case, there was no further interpolation, return directly

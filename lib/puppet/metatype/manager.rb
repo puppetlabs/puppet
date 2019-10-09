@@ -121,7 +121,7 @@ module Manager
 
     # Now set up autoload any providers that might exist for this type.
 
-    klass.providerloader = Puppet::Util::Autoload.new(klass, "puppet/provider/#{klass.name.to_s}")
+    klass.providerloader = Puppet::Util::Autoload.new(klass, "puppet/provider/#{klass.name}")
 
     # We have to load everything so that we can figure out the default provider.
     klass.providerloader.loadall(Puppet.lookup(:current_environment))

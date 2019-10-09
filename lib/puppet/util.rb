@@ -322,7 +322,7 @@ module Util
     params = { :scheme => 'file' }
 
     if Puppet::Util::Platform.windows?
-      path = path.gsub(/\\/, '/')
+      path = path.tr('\\', '/')
 
       if unc = /^\/\/([^\/]+)(\/.+)/.match(path)
         params[:host] = unc[1]

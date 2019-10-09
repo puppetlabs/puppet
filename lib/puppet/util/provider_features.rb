@@ -78,7 +78,7 @@ module Puppet::Util::ProviderFeatures
     str = ""
     @features ||= {}
     return nil if @features.empty?
-    names = @features.keys.sort { |a,b| a.to_s <=> b.to_s }
+    names = @features.keys.sort_by(&:to_s)
     names.each do |name|
       doc = @features[name].docs.gsub(/\n\s+/, " ")
       str << "- *#{name}*: #{doc}\n"
@@ -127,9 +127,7 @@ module Puppet::Util::ProviderFeatures
       # Create a method that will list all functional features.
       @feature_module.send(:define_method, :features) do
         return false unless defined?(features)
-        features.keys.find_all { |n| feature?(n) }.sort { |a,b|
-          a.to_s <=> b.to_s
-        }
+        features.keys.find_all { |n| feature?(n) }.sort_by(&:to_s)
       end
 
       # Create a method that will determine if a provided list of

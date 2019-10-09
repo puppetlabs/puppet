@@ -92,7 +92,7 @@ defaultfor :osfamily => :redhat, :operatingsystemmajrelease => (4..7).to_a
     updates = Hash.new { |h, k| h[k] = [] }
     body.split.each_slice(3) do |tuple|
       break if tuple[0] =~ /^(Obsoleting|Security:|Update)/
-      break unless tuple[1].match(/^(?:(\d+):)?(\S+)-(\S+)$/)
+      break unless tuple[1] =~ /^(?:(\d+):)?(\S+)-(\S+)$/
       hash = update_to_hash(*tuple[0..1])
       # Create entries for both the package name without a version and a
       # version since yum considers those as mostly interchangeable.

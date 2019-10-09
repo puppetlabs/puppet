@@ -435,9 +435,9 @@ begin
             when "--node"
                 $options[:nodes] << arg
             when "--list"
-                Suite.suites.sort { |a,b| a.to_s <=> b.to_s }.each do |suite_name|
+                Suite.suites.sort_by(&:to_s).each do |suite_name|
                     suite = Suite[suite_name]
-                    tests = suite.tests.sort { |a,b| a.to_s <=> b.to_s }.join(", ")
+                    tests = suite.tests.sort_by(&:to_s).join(", ")
                     puts "%20s: %s" % [suite_name, tests]
                 end
                 exit(0)

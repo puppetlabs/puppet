@@ -81,7 +81,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
       highlight = proc do |s|
         s = s.gsub(term, colorize(:green, term))
-        s = s.gsub(term.gsub('/', '-'), colorize(:green, term.gsub('/', '-'))) if term =~ /\//
+        s = s.gsub(term.tr('/', '-'), colorize(:green, term.tr('/', '-'))) if term =~ /\//
         s = s.gsub(' DEPRECATED', colorize(:red, ' DEPRECATED'))
         s
       end
